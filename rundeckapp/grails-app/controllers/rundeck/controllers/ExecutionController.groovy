@@ -12,6 +12,7 @@ import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import grails.converters.JSON
 import org.codehaus.groovy.grails.web.json.JSONArray
 import rundeck.Execution
 import rundeck.PluginStep
@@ -194,18 +195,15 @@ class ExecutionController extends ControllerBase{
         def Execution e = Execution.get(params.id)
         if (!e) {
             log.error("Execution not found for id: " + params.id)
-            flash.error = "Execution not found for id: " + params.id
-            return render(contentType: 'application/json'){
-                delegate.'error'('not found')
-            }
+            response.status=HttpServletResponse.SC_NOT_FOUND
+            return render(contentType: 'application/json', text: [error: "Execution not found for id: " + params.id] as JSON)
         }
 
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (e && !frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_READ])) {
-            return render(contentType: 'application/json') {
-                delegate.'error'("Unauthorized: Read Execution ${params.id}")
-            }
+            response.status=HttpServletResponse.SC_FORBIDDEN
+            return render(contentType: 'application/json',text:[error: "Unauthorized: Read Execution ${params.id}"] as JSON)
         }
 
         def jobcomplete = e.dateCompleted != null

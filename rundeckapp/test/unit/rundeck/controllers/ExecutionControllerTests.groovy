@@ -21,6 +21,14 @@ import rundeck.services.logging.ExecutionLogState
 @Mock([Workflow,ScheduledExecution,Execution])
 class ExecutionControllerTests  {
 
+    /**
+     * utility method to mock a class
+     */
+    private mockWith(Class clazz, Closure clos) {
+        def mock = mockFor(clazz)
+        mock.demand.with(clos)
+        return mock.createMock()
+    }
     void testDownloadOutputNotFound() {
 
         def ec = new ExecutionController()
@@ -62,7 +70,6 @@ class ExecutionControllerTests  {
     }
 
     void testDownloadOutputNotAvailable() {
-        mockDomain(Execution)
 
         def ec = new ExecutionController()
         assert ec != null
@@ -103,8 +110,26 @@ class ExecutionControllerTests  {
         assertEquals(404,ec.response.status)
     }
 
+    void testAjaxExecState_missing(){
+        controller.params.id=123
+        controller.ajaxExecState()
+        assertEquals(404,response.status)
+        assertEquals("Execution not found for id: 123",response.json.error)
+    }
+    void testAjaxExecState_unauthorized(){
+        Execution e1 = new Execution( project: 'test1', user: 'bob', dateStarted: new Date())
+        assert e1.validate(), e1.errors.allErrors.collect { it.toString() }.join(",")
+        assert e1.save()
+        controller.params.id=e1.id
+        controller.frameworkService=mockWith(FrameworkService){
+            getAuthContextForSubject{ subj-> null }
+            authorizeProjectExecutionAll{ ctx, exec, actions-> false }
+        }
+        controller.ajaxExecState()
+        assertEquals(403,response.status)
+        assertEquals("Unauthorized: Read Execution ${e1.id}",response.json.error)
+    }
     void testDownloadOutput(){
-        mockDomain(Execution)
 
         def ec = new ExecutionController()
         assert ec != null
