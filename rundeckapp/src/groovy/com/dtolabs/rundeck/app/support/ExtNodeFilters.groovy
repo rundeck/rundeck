@@ -34,9 +34,11 @@ import grails.validation.Validateable
 public class ExtNodeFilters extends BaseNodeFilters{
 
     String project
+    String filterName
 
     static constraints={
         project(nullable:true, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
+        filterName(nullable:true,matches: /^[^<>&'"\/]+$/)
     }
 
     public boolean nodeFilterIsEmpty(){
