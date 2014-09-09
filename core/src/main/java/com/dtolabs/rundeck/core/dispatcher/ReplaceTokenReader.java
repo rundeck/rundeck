@@ -10,7 +10,7 @@ import java.util.Map;
 
 /**
  * Reader that filters text to replace delimited tokens with values, the default delimiters are '@', and the default
- * allowed token characters are alphanumeric plus punctuation characters: "+-._"
+ * allowed token characters are alphanumeric plus punctuation characters: "+-._:"
  */
 public class ReplaceTokenReader extends FilterReader {
     public static final char DEFAULT_TOKEN_START = '@';
@@ -39,7 +39,7 @@ public class ReplaceTokenReader extends FilterReader {
         tokenCharPredicate = DEFAULT_ALLOWED_PREDICATE;
     }
 
-    private static final char[] ALLOWED_CHARS = ".+-_".toCharArray();
+    private static final char[] ALLOWED_CHARS = ".+-_:".toCharArray();
     static {
         Arrays.sort(ALLOWED_CHARS);
     }

@@ -64,10 +64,19 @@ public class ReplaceTokenReaderTest {
     }
     @Test
     public void resumeTokenChars() throws IOException {
-        test("test script some data @test.data:@\n" +
+        test("test script some data \n" +
                 "test line 2 some data this is a test\n",
                 "test script some data @test.data:@\n" +
                 "test line 2 some data @test.data@\n", scriptTokens(), true, '@', '@');
+    }
+    @Test
+    public void allowedTokenChars() throws IOException {
+        Map<String, String> tokens = scriptTokens();
+        tokens.put("test.some:data", "a value");
+        test("test script some data a value\n" +
+                "test line 2 some data \n",
+                "test script some data @test.some:data@\n" +
+                        "test line 2 some data @test.other:data@\n", tokens, true, '@', '@');
     }
     @Test
     public void readLineDontReplaceWithBlank() throws IOException {

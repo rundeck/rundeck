@@ -263,6 +263,32 @@ public class TestDataContextUtils extends AbstractBaseTest {
             assertNull(br.readLine());
 
     }
+    public void testReplaceTokensInScript_namespace_attributes() throws Exception {
+        Framework fwk = getFrameworkInstance();
+            //test content
+        HashMap<String, Map<String, String>> dataContext = new HashMap<String, Map<String, String>>();
+        dataContext.put("test", new HashMap<String, String>());
+        dataContext.get("test").put("some:data", "test1");
+        File temp = DataContextUtils.replaceTokensInScript("test script some data @test.some:data@\n"
+                                                               + "test line 2 some data @test.some:data2@\n",
+                dataContext,
+                fwk);
+            assertNotNull(temp);
+            assertTrue(temp.length() > 0);
+            //test content
+            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(temp)));
+            assertTrue(br.ready());
+            final String line0 = br.readLine();
+            assertNotNull(line0);
+            assertEquals("test script some data test1", line0);
+            assertTrue(br.ready());
+            final String line1 = br.readLine();
+            assertNotNull(line1);
+            assertEquals("test line 2 some data ", line1);
+            assertFalse(br.ready());
+            assertNull(br.readLine());
+
+    }
 
     public void testReplaceTokensInScript7() throws Exception {
         Framework fwk = getFrameworkInstance();
@@ -347,7 +373,7 @@ public class TestDataContextUtils extends AbstractBaseTest {
 
     }
 
-    public void testReplaceTokensInFile() throws Exception {
+    public void testReplaceTokensInFile_null() throws Exception {
         Framework fwk = getFrameworkInstance();
         try {
             DataContextUtils.replaceTokensInFile((File) null, null, null);
@@ -356,7 +382,7 @@ public class TestDataContextUtils extends AbstractBaseTest {
         catch (NullPointerException ex) {
         }
     }
-    public void testReplaceTokensInFile2() throws Exception {
+    public void testReplaceTokensInFile_null2() throws Exception {
         Framework fwk = getFrameworkInstance();
         try {
             DataContextUtils.replaceTokensInFile(testfile1, null, null);
@@ -366,7 +392,7 @@ public class TestDataContextUtils extends AbstractBaseTest {
         }
     }
 
-    public void testReplaceTokensInFile3() throws Exception {
+    public void testReplaceTokensInFile_null3() throws Exception {
         Framework fwk = getFrameworkInstance();
         try {
             DataContextUtils.replaceTokensInFile(testfile1, new HashMap<String, Map<String, String>>(), null);
@@ -376,7 +402,7 @@ public class TestDataContextUtils extends AbstractBaseTest {
         }
     }
 
-    public void testReplaceTokensInFile4() throws Exception {
+    public void testReplaceTokensInFile_nodata() throws Exception {
         Framework fwk = getFrameworkInstance();
             assertTrue(testfile1.length() > 0);
             //null data context is ok
@@ -392,7 +418,7 @@ public class TestDataContextUtils extends AbstractBaseTest {
             temp.delete();
     }
 
-    public void testReplaceTokensInFile5() throws Exception {
+    public void testReplaceTokensInFile_emptydata() throws Exception {
         Framework fwk = getFrameworkInstance();
             //test empty data context
             File temp = DataContextUtils.replaceTokensInFile(testfile1,
