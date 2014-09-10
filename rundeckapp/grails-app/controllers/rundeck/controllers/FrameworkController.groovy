@@ -451,7 +451,7 @@ class FrameworkController extends ControllerBase {
                 frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
                         [AuthConstants.ACTION_READ],
                         query.project),
-                AuthConstants.ACTION_READ, 'Project', 'nodes')) {
+                AuthConstants.ACTION_READ, 'Project', 'nodes',true)) {
             return
         }
         def User u = userService.findOrCreateUser(session.user)
