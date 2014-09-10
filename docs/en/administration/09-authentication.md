@@ -184,7 +184,8 @@ sudo /etc/init.d/rundeckd restart
 
 ##### Step 4: Attempt to logon
 
-If everything was configured correctly, you will be able to access Rundeck using your AD credentials.  If something did not go smoothly, look at `/var/log/rundeck/service.log` for stack traces that may indicate what is wrong.    
+If everything was configured correctly, you will be able to access Rundeck using your AD credentials.  If something did not go smoothly, look at `/var/log/rundeck/service.log` for stack traces that may indicate what is wrong.
+To make troubleshooting easier, you may want to add the `-Dcom.dtolabs.rundeck.jetty.jaas.LEVEL=DEBUG` Java system property to the `RDECK_JVM` environment variable above, to have enable DEBUG logging for the authentication module.
 
 #### Login module configuration
 
