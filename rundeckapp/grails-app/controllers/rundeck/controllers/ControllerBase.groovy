@@ -137,11 +137,11 @@ class ControllerBase {
      * @param fragment if true, render only the error message content, otherwise render a view
      */
     protected void renderUnauthorized(String message, boolean fragment = false) {
-        request.error = message
+        request.errorMessage = message
         response.status = HttpServletResponse.SC_FORBIDDEN
         request.titleCode = 'request.error.unauthorized.title'
         if (fragment) {
-            response.addHeader("X-Rundeck-Error-Message", error)
+            response.addHeader("X-Rundeck-Error-Message", message)
             renderErrorFragment([:])
         } else {
             renderErrorView([:])
@@ -153,7 +153,7 @@ class ControllerBase {
      * @param message message text
      */
     protected def renderErrorView(String message) {
-        request.error = message
+        request.errorMessage = message
         render(view: "/common/error")
     }
     /**
@@ -168,7 +168,7 @@ class ControllerBase {
      * @param message message text
      */
     protected def renderErrorFragment(String message) {
-        request.error = message
+        request.errorMessage = message
         render(template: "/common/errorFragment")
     }
     /**
