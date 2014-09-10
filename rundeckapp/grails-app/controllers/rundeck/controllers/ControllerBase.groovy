@@ -169,4 +169,11 @@ class ControllerBase {
         request.error = message
         render(template: "/common/errorFragment")
     }
+    /**
+     * Send an error response fragment
+     * @param model data model
+     */
+    protected def renderErrorFragment(Map model) {
+        render(template: "/common/errorFragment",model:model)
+    }
 }
