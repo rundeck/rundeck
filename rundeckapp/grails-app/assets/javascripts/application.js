@@ -988,7 +988,7 @@ Element.addMethods({
 });
 /** node filter preview code */
 
-function _updateMatchedNodes(data, elem, project, localnodeonly, inparams, callback) {
+function _updateMatchedNodes(data, elem, project, localnodeonly, inparams, callback,errcallback) {
     var i;
     if (!project) {
         return;
@@ -1013,6 +1013,8 @@ function _updateMatchedNodes(data, elem, project, localnodeonly, inparams, callb
             if (typeof(callback) == 'function') {
                 callback(xhr);
             }
+        }else if(typeof(errcallback)=='function'){
+            errcallback(response,status,xhr);
         }
     });
 }
