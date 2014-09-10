@@ -125,6 +125,7 @@ class ControllerBase {
         response.status = HttpServletResponse.SC_FORBIDDEN
         request.titleCode = 'request.error.unauthorized.title'
         if (fragment) {
+            response.addHeader("X-Rundeck-Error-Message", g.message(code:request.errorCode,args:request.errorArgs))
             renderErrorFragment([:])
         } else {
             renderErrorView([:])
@@ -140,6 +141,7 @@ class ControllerBase {
         response.status = HttpServletResponse.SC_FORBIDDEN
         request.titleCode = 'request.error.unauthorized.title'
         if (fragment) {
+            response.addHeader("X-Rundeck-Error-Message", error)
             renderErrorFragment([:])
         } else {
             renderErrorView([:])
