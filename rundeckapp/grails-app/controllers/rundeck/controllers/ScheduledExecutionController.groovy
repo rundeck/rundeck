@@ -236,10 +236,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         request.project=scheduledExecution.project
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
-        def User user = User.findByLogin(session.user)
         //list executions using query params and pagination params
-
-        def executions=Execution.findAllByScheduledExecution(scheduledExecution,[offset: params.int('offset')?:0, max: params.int('max')?:10, sort:'dateStarted', order:'desc'])
 
         def total = Execution.countByScheduledExecution(scheduledExecution)
 
@@ -249,7 +246,6 @@ class ScheduledExecutionController  extends ControllerBase{
             remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
         }
         def dataMap= [scheduledExecution: scheduledExecution, crontab: crontab, params: params,
-                executions: executions,
                 total: total,
                 nextExecution: scheduledExecutionService.nextExecutionTime(scheduledExecution),
                 remoteClusterNodeUUID: remoteClusterNodeUUID,
