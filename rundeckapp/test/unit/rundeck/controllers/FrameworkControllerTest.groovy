@@ -342,7 +342,7 @@ class FrameworkControllerTest {
         setupFormTokens(controller)
         controller.saveProject()
         assertEquals(view, "/common/error")
-        assertNotNull(request.error)
+        assertNotNull(request.errorMessage)
     }
 
     public void testSaveProjectCancel() {
