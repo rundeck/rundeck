@@ -249,6 +249,15 @@
             _updateMatchedNodes(data, elem, '${enc(js:params.project?:request.project)}', false, {view: view, expanddetail: true,
                 inlinepaging: false, maxShown: 20, requireRunAuth:true}, function (xht) {
                 nodeFilter.loading(false);
+            },
+            function (response, status, xhr) {
+                nodeFilter.loading(false);
+                if(xhr.getResponseHeader("X-Rundeck-Error-Message")){
+                    nodeFilter.error(xhr.getResponseHeader("X-Rundeck-Error-Message"));
+                }else{
+                    nodeFilter.error(xhr.statusText);
+                }
+
             });
         }
 
@@ -452,9 +461,17 @@
                         <div class="col-sm-10 col-sm-offset-2">
                             <div class="spacing text-warning" id="emptyerror"
                                  style="display: none"
-                                 data-bind="visible: !allcount() || allcount()==0">
+                                 data-bind="visible: !error() && (!allcount() || allcount()==0)">
                                 <span class="errormessage">
                                     No nodes selected. Match nodes by selecting or entering a filter.
+                                </span>
+                            </div>
+                            <div class="spacing text-danger" id="loaderror2"
+                                 style="display: none"
+                                 data-bind="visible: error()">
+                                <i class="glyphicon glyphicon-warning-sign"></i>
+                                <span class="errormessage" data-bind="text: error()">
+
                                 </span>
                             </div>
                             <div data-bind="visible: allcount()>0 || loading()" class="well well-sm inline">
@@ -462,7 +479,7 @@
                                     <i class="glyphicon glyphicon-time"></i>
                                     <g:message code="loading.matched.nodes" />
                                 </span>
-                                <span data-bind="if: !loading()">
+                                <span data-bind="if: !loading() && !error()">
                                 <span data-bind="text: allcount()">0</span>
                                 <span data-bind="text: nodesTitle">Nodes</span> Matched.
                                 <a class="textbtn textbtn-default pull-right" data-bind="click: nodesPageView">
@@ -478,7 +495,7 @@
                 <div class="col-sm-2" >
 
                     <button class="btn btn-success runbutton pull-right"
-                            data-bind="attr: { disabled: allcount()<1 } "
+                            data-bind="attr: { disabled: allcount()<1 || error() } "
                             onclick="runFormSubmit('runbox');" data-loading-text="Running…">
                         Run on <span data-bind="text: allcount">0</span> <span data-bind="text: nodesTitle">Nodes</span> <span class="glyphicon glyphicon-play"></span>
                     </button>

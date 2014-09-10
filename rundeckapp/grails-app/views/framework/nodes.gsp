@@ -93,8 +93,17 @@
             nodeFilter.filter(filterString);
             nodeFilter.loading(true);
             _updateMatchedNodes(data,elem,'${enc(js:params.project?:request.project)}',false,{view:view,expanddetail:true,inlinepaging:true,
-                page:page,max:pagingMax},function(xht){
+                page:page,max:pagingMax},
+                    function(xht){
                 nodeFilter.loading(false);
+            },
+            function(response, status, xhr){
+                nodeFilter.loading(false);
+                if (xhr.getResponseHeader("X-Rundeck-Error-Message")) {
+                    nodeFilter.error(xhr.getResponseHeader("X-Rundeck-Error-Message"));
+                } else {
+                    nodeFilter.error(xhr.statusText);
+                }
             });
         }
         function _loadNextNodesPageTable(max,total,tbl,elem){
@@ -261,7 +270,7 @@
 </div>
     <div class="row row-space">
         <div class="col-sm-12">
-            <span class="h4" data-bind="if: !loading()">
+            <span class="h4" data-bind="if: !loading() && !error()">
                 <g:if test="${summaryOnly}">
                     <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
                     <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span>
@@ -274,6 +283,10 @@
             <span data-bind="if: loading()"  class="text-info">
                 <i class="glyphicon glyphicon-time"></i>
                 <g:message code="loading.matched.nodes"/>
+            </span>
+            <span data-bind="if: error()"  class="text-danger">
+                <i class="glyphicon glyphicon-warning-sign"></i>
+                <span data-bind="text: error()"></span>
             </span>
             <g:if test="${tagsummary}">
                 <g:render template="tagsummary"
