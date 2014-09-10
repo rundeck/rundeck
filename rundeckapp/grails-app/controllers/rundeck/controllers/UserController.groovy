@@ -123,7 +123,9 @@ class UserController extends ControllerBase{
 
         def User u = User.findByLogin(user.login)
         if(u){
-            return renderErrorView("User alread exists: ${user.login}")
+            request.errorCode = 'api.error.item.alreadyexists'
+            request.errorArgs = ['User profile', user.login]
+            return renderErrorView([:])
         }
         u = new User(user.properties.subMap(['login','firstName','lastName','email']))
 
