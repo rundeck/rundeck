@@ -42,6 +42,10 @@ public interface WorkflowExecutionItem extends StepExecutionItem {
      */
     public static final String STEP_FIRST = "step-first";
     /**
+     * Parallel strategy name
+     */
+    public static final String PARALLEL = "parallel";
+    /**
      * Provider name for node first provider implementation
      */
     public static final String COMMAND_TYPE_NODE_FIRST = "rundeck-workflow-" + NODE_FIRST;
@@ -49,6 +53,10 @@ public interface WorkflowExecutionItem extends StepExecutionItem {
      * Provider name for step first provider implementation
      */
     public static final String COMMAND_TYPE_STEP_FIRST = "rundeck-workflow-" + STEP_FIRST;
+    /**
+     * Provider name for parallel provider implementation
+     */
+    public static final String COMMAND_TYPE_PARALLEL = "rundeck-workflow-" + PARALLEL;
     /**
      * Return the workflow definition
      * @return workflow

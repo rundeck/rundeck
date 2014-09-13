@@ -44,6 +44,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * BaseWorkflowStrategy is ...
@@ -316,7 +317,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
     /**
      * Add step result failure information to the data context
      */
-    private StepExecutionContext addStepFailureContextData(StepExecutionResult stepResult,
+    protected StepExecutionContext addStepFailureContextData(StepExecutionResult stepResult,
                                                            StepExecutionContext handlerExecContext) {
         HashMap<String, String>
         resultData = new HashMap<String, String>();
@@ -347,7 +348,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
     /**
      * Add any node-specific step failure information to the node-specific data contexts
      */
-    private StepExecutionContext addNodeStepFailureContextData(StepExecutionResult dispatcherStepResult,
+    protected StepExecutionContext addNodeStepFailureContextData(StepExecutionResult dispatcherStepResult,
                                                                StepExecutionContext handlerExecContext) {
         final Map<String, ? extends NodeStepResult> resultMap;
         if (NodeDispatchStepExecutor.isWrappedDispatcherResult(dispatcherStepResult)) {
@@ -388,7 +389,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         return builder.build();
     }
 
-    private StepExecutionContext replaceFailedNodesListenerInContext(StepExecutionContext executionContext,
+    protected StepExecutionContext replaceFailedNodesListenerInContext(StepExecutionContext executionContext,
                                                                  FailedNodesListener captureFailedNodesListener) {
         ExecutionListenerOverride listen=null;
         if(null!= executionContext.getExecutionListener()) {
@@ -447,5 +448,45 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
             }
         }
         return failures;
+    }
+
+    /**
+     * Creates a copy of the given data context with the secure option values obfuscated.
+     * This does not modify the original data context.
+     *
+     * "secureOption" map values will always be obfuscated. "option" entries that are also in "secureOption"
+     * will have their values obfuscated. All other maps within the data context will be added
+     * directly to the copy.
+     */
+    protected Map<String, Map<String, String>> createPrintableDataContext(String optionKey,
+                                                                          String secureOptionKey,
+                                                                          String secureOptionValue,
+                                                                          Map<String, Map<String, String>> dataContext) {
+        Map<String, Map<String, String>> printableContext = new HashMap<String, Map<String, String>>();
+        if (dataContext != null) {
+            printableContext.putAll(dataContext);
+            Set<String> secureValues = new HashSet<String>();
+            if (dataContext.containsKey(secureOptionKey)) {
+                Map<String, String> secureOptions = new HashMap<String, String>();
+                secureOptions.putAll(dataContext.get(secureOptionKey));
+                secureValues.addAll(secureOptions.values());
+                for (Map.Entry<String, String> entry : secureOptions.entrySet()) {
+                    entry.setValue(secureOptionValue);
+                }
+                printableContext.put(secureOptionKey, secureOptions);
+            }
+
+            if (dataContext.containsKey(optionKey)) {
+                Map<String, String> options = new HashMap<String, String>();
+                options.putAll(dataContext.get(optionKey));
+                for (Map.Entry<String, String> entry : options.entrySet()) {
+                    if (secureValues.contains(entry.getValue())) {
+                        entry.setValue(secureOptionValue);
+                    }
+                }
+                printableContext.put(optionKey, options);
+            }
+        }
+        return printableContext;
     }
 }

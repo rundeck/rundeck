@@ -46,6 +46,7 @@ public class WorkflowExecutionService extends BaseProviderRegistryService<Workfl
 
         registry.put(WorkflowStrategy.STEP_FIRST, StepFirstWorkflowStrategy.class);
         registry.put(WorkflowStrategy.NODE_FIRST, NodeFirstWorkflowStrategy.class);
+        registry.put(WorkflowStrategy.PARALLEL, ParallelWorkflowStrategy.class);
     }
 
     public static WorkflowExecutionService getInstanceForFramework(Framework framework) {

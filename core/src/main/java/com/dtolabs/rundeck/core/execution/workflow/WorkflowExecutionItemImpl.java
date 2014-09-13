@@ -32,14 +32,6 @@ package com.dtolabs.rundeck.core.execution.workflow;
 public class WorkflowExecutionItemImpl implements WorkflowExecutionItem {
     final private IWorkflow workflow;
 
-    public String getType() {
-        if (NODE_FIRST.equals(getWorkflow().getStrategy())) {
-            return COMMAND_TYPE_NODE_FIRST;
-        } else {
-            return COMMAND_TYPE_STEP_FIRST;
-        }
-    }
-
     public WorkflowExecutionItemImpl(final IWorkflow workflow) {
         this.workflow = workflow;
     }
@@ -48,9 +40,20 @@ public class WorkflowExecutionItemImpl implements WorkflowExecutionItem {
         this(item.getWorkflow());
     }
 
-
     public IWorkflow getWorkflow() {
         return workflow;
+    }
+
+    public String getType() {
+        if (NODE_FIRST.equals(getWorkflow().getStrategy())) {
+            return COMMAND_TYPE_NODE_FIRST;
+        } else if (STEP_FIRST.equals(getWorkflow().getStrategy())) {
+            return COMMAND_TYPE_STEP_FIRST;
+        } else if (PARALLEL.equals(getWorkflow().getStrategy())) {
+            return COMMAND_TYPE_PARALLEL;
+        }
+
+        throw new IllegalArgumentException("Invalid workflow strategy: [" + getWorkflow().getStrategy() + "]");
     }
 
     @Override

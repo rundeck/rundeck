@@ -22,17 +22,25 @@
    $Id$
 --%>
 <g:set var="rkey" value="${g.rkey()}"/>
+<g:unless test="${isAdhoc}">
 <div>
-    <span class="label" title="Continue execution if any steps fail.">Keepgoing:</span>
+    <span class="label"><g:message code="Workflow.property.keepgoing.prompt" /></span>
     <g:if test="${edit}">
-        <label><input type="radio" name="workflow.keepgoing" value="false" ${workflow?.keepgoing?'':'checked'}/> No</label>
-        <label><input type="radio" name="workflow.keepgoing" value="true" ${workflow?.keepgoing?'checked':''}/> Yes</label>
+        <label>
+            <input type="radio" name="workflow.keepgoing" value="false" ${workflow?.keepgoing?'':'checked'}/>
+            <g:message code="Workflow.property.keepgoing.false.description"/>
+        </label>
+        <label>
+            <input type="radio" name="workflow.keepgoing" value="true" ${workflow?.keepgoing?'checked':''}/>
+            <g:message code="Workflow.property.keepgoing.true.description"/>
+        </label>
     </g:if>
     <g:else>
-        ${workflow?.keepgoing?true:false}
+        <g:message code="Workflow.property.keepgoing.${workflow?.keepgoing ? true : false}.description"/>
     </g:else>
     </div>
 <div>
+
     <span class="label" title="Strategy for iteration">Strategy:</span>
     <g:if test="${edit}">
         <label title="Execute the full workflow on each node before the next node">
@@ -42,6 +50,10 @@
         <label title="Execute each step on all nodes before the next step">
             <input type="radio" name="workflow.strategy" value="step-first" ${workflow?.strategy=='step-first'?'checked':''}/>
             <g:message code="Workflow.strategy.label.step-first"/>
+        </label>
+        <label title="Execute each step in parallel across all nodes before next step">
+            <input type="radio" name="workflow.strategy" value="parallel" ${workflow?.strategy=='parallel'?'checked':''}/>
+            <g:message code="Workflow.strategy.label.parallel"/>
         </label>
 
         <span class=" action obs_tooltip" id="nodeStratHelp"><g:img file="icon-small-help.png" width="16px" height="16px"/> Explain </span>
@@ -62,6 +74,7 @@
                 <span class="info note">Node-oriented executes the full workflow on each each node before the next node</span>
                     </td>
                     <td width="200px;"><span class="info note">Step-oriented executes each step on all nodes before the next step</span></td>
+                    <td width="200px;"><span class="info note">Parallel executes all steps in parallel across all nodes before the next step</span></td>
                 </tr>
                 <tr>
                 <td>
@@ -95,10 +108,10 @@
     <g:else>
         <g:message code="Workflow.strategy.label.${workflow?.strategy}"/>
     </g:else>
-
+</g:unless>
 %{--<span class="label">threadcount:</span> ${workflow?.threadcount}--}%
 </div>
-<div class="pflowlist ${edit?'edit':''} rounded" style="${edit?'width:600px;':''}">
+<div class="pflowlist ${edit?'edit':''} rounded ${isAdhoc?'adhoc':''}" style="">
     <g:if test="${edit}">
         <div id="wfundoredo" >
             <div style="margin-bottom:10px;">

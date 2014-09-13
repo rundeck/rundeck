@@ -23,8 +23,6 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow;
 
-import com.dtolabs.rundeck.core.execution.*;
-
 /**
  * WorkflowStrategy interface performs the workflow execution and returns an ExecutionResult
  *
@@ -34,5 +32,5 @@ import com.dtolabs.rundeck.core.execution.*;
 public interface WorkflowStrategy extends WorkflowExecutor{
     public static final String NODE_FIRST = "node-first";
     public static final String STEP_FIRST = "step-first";
-
+    public static final String PARALLEL = "parallel";
 }
