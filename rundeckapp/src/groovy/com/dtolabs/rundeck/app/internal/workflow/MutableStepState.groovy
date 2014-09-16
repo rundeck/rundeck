@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.app.internal.workflow
 
 import com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState
+import com.dtolabs.rundeck.core.execution.workflow.state.MutableExecutionState
 import com.dtolabs.rundeck.core.execution.workflow.state.StepState
 
 /**
@@ -9,7 +10,7 @@ import com.dtolabs.rundeck.core.execution.workflow.state.StepState
  * Date: 10/16/13
  * Time: 10:41 AM
  */
-public interface MutableStepState extends StepState {
+public interface MutableStepState extends StepState, MutableExecutionState {
     /**
      * The execution state
      * @return

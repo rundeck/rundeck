@@ -8,7 +8,7 @@ import java.util.Set;
 /**
  * Represents the state of a workflow
  */
-public interface WorkflowState {
+public interface WorkflowState extends HasExecutionState {
     /**
      * The set of nodes the workflow is running on
      *

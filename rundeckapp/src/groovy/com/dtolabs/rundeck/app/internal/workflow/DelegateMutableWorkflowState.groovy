@@ -37,6 +37,11 @@ class DelegateMutableWorkflowState implements MutableWorkflowState {
     }
 
     @Override
+    void setExecutionState(ExecutionState state) {
+        delegate.setExecutionState(state)
+    }
+
+    @Override
     void updateStateForStep(StepIdentifier identifier, int index, StepStateChange stepStateChange, Date timestamp) {
         delegate.updateStateForStep(identifier, index, stepStateChange, timestamp)
     }

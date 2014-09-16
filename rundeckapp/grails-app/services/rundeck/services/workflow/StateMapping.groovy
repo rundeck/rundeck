@@ -79,8 +79,9 @@ class StateMapping {
         if (null != state.getParameterizedStateMap()) {
             def map1 = state.getParameterizedStateMap()
             def sub1=[:]
-            map1.each{k,v->
-                sub1[k]= mapOf(v, parent, nodestates, allNodes)
+            def keys = new ArrayList(map1.keySet())
+            keys.each{k->
+                sub1[k]= mapOf(map1[k], parent, nodestates, allNodes)
             }
             map+=[
                     parameterStates:sub1

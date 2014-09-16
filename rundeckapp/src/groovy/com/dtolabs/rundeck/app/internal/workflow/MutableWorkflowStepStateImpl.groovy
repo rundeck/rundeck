@@ -29,8 +29,8 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
     MutableWorkflowStepStateImpl(StepIdentifier stepIdentifier,MutableWorkflowState subflow) {
         this.stepIdentifier = stepIdentifier
         this.mutableStepState=new MutableStepStateImpl()
-        this.mutableNodeStateMap = new HashMap<String, MutableStepState>()
-        this.parameterizedStepStates = new HashMap<String, MutableWorkflowStepState>()
+        this.mutableNodeStateMap = Collections.synchronizedMap(new HashMap<String, MutableStepState>())
+        this.parameterizedStepStates = Collections.synchronizedMap(new HashMap<String, MutableWorkflowStepState>())
         this.mutableSubWorkflowState=subflow
         this.nodeStep=false
     }
@@ -75,6 +75,7 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
     MutableWorkflowStepState getParameterizedStepState(StepIdentifier ident,Map<String, String> params) {
         def string = StateUtils.parameterString(params)
         if(null==parameterizedStepStates[string]){
+            assert null!=mutableSubWorkflowState
             MutableWorkflowStepStateImpl newState = new MutableWorkflowStepStateImpl(ident,
                     new MutableWorkflowStateImpl(mutableSubWorkflowState.nodeSet, mutableSubWorkflowState.stepCount))
             newState.ownerStepState=this

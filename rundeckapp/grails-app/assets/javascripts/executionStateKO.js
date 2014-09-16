@@ -111,11 +111,13 @@ function RDNode(name, steps,flow){
         //sum up duration of all completed steps
        var ms=-1;
        ko.utils.arrayForEach(self.steps(),function(x){
-           var ms2 = x.duration();
-           if(ms2>=0 && ms<0){
-               ms=ms2;
-           }else if(ms2>=0){
-               ms += ms2;
+           if(!x.parameterizedStep()){
+               var ms2 = x.duration();
+               if(ms2>=0 && ms<0){
+                   ms=ms2;
+               }else if(ms2>=0){
+                   ms += ms2;
+               }
            }
        });
        return ms;
@@ -144,18 +146,18 @@ function RDNode(name, steps,flow){
             RUNNING_HANDLER: 0,
             other: 0,
             duration_ms_total: 0,
-            pending: self.flow.pendingSteps()
+            pending: self.flow.pendingStepsForNode(self.name)
         };
 
+        var testStates= ['SUCCEEDED', 'FAILED', 'WAITING', 'NOT_STARTED', 'RUNNING', 'RUNNING_HANDLER'];
         //determine count for step states
         ko.utils.arrayForEach(self.steps(),function(step){
-            ['SUCCEEDED', 'FAILED', 'WAITING', 'NOT_STARTED', 'RUNNING', 'RUNNING_HANDLER'].each(function (z) {
-                if (null != summarydata[z] && step.executionState()==z) {
-                    summarydata[z]++;
-                } else {
-                    summarydata['other']++;
-                }
-            });
+            var z = step.executionState();
+            if(testStates.indexOf(z)>=0 && null != summarydata[z] ) {
+                summarydata[z]++;
+            } else {
+                summarydata['other']++;
+            }
             if (!currentStep && RDNodeStep.stateCompare('NONE', step.executionState())
                 || currentStep && RDNodeStep.stateCompare(currentStep.executionState(), step.executionState())) {
                 currentStep = step;
@@ -217,7 +219,7 @@ function NodeFlowViewModel(workflow,outputUrl){
     self.errorMessage=ko.observable();
     self.statusMessage=ko.observable();
     self.stateLoaded=ko.observable(false);
-    self.pendingSteps=ko.observable(0);
+    self.pendingNodeSteps=ko.observable({});
     self.nodes=ko.observableArray([ ]);
     self.followingStep=ko.observable();
     self.followingControl=null;
@@ -452,19 +454,63 @@ function NodeFlowViewModel(workflow,outputUrl){
             return step;
         }
     };
-    self.countPendingSteps = function (workflowData) {
-        var pending = 0;
-        var noTargets = !workflowData.targetNodes || workflowData.targetNodes.length < 1;
+    self.pendingStepsForNode = function(node){
+        var pendingData=self.pendingNodeSteps()
+        if(pendingData[node] != null){
+            return pendingData[node];
+        }else if(pendingData['_other'] != null){
+            return pendingData['_other'];
+        }else{
+            return 0;
+        }
+    };
+    /**
+     * Recursively count the number of steps that may be pending for the given nodes
+     * @param workflowData workflow structure
+     * @param nodes set of all nodes
+     * @param pending result dataset object
+     * @returns {*} the dataset object
+     */
+    self.countPendingStepsForNodes = function (workflowData, nodes, pending) {
+        if(typeof(pending)=='undefined'){
+            pending = {};
+        }
         for (var k = 0; k < workflowData.steps.length; k++) {
             var step = workflowData.steps[k];
-            if (step.nodeStep && noTargets) {
-                pending++;
-            } else if (step.hasSubworkflow) {
-                pending += self.countPendingSteps(step.workflow);
+
+            if (step.hasSubworkflow) {
+                self.countPendingStepsForNodes(step.workflow, nodes, pending);
+            }
+            if (step.hasSubworkflow && step.nodeStep && step.parameterStates || step.nodeStep && !step.hasSubworkflow) {
+                //node step may have empty targetNodes => implies targets unknown, so node may be pending for this step
+                //otherwise if targetNodes contains nodes => only they might be pending for this step
+                var targetNodes = null==workflowData.targetNodes || workflowData.targetNodes.length==0 ? nodes : workflowData.targetNodes
+
+                if(null != step.nodeStates){
+                    //include only nodes that do not have states for this step
+                    targetNodes=ko.utils.arrayFilter(targetNodes,function(el){
+                        return step.nodeStates[el] == null;
+                    });
+                }else if(step.parameterStates !=null ){
+                    //include only nodes that do not have parameter states for this step
+                    targetNodes = ko.utils.arrayFilter(targetNodes, function (el) {
+                        return step.parameterStates["node="+el] == null;
+                    });
+                }
+
+                //consider this step pending for these nodes
+                ko.utils.arrayForEach(targetNodes,function(node){
+                    if (null == pending[node]) {
+                        pending[node] = 1;
+                    } else {
+                        pending[node]++;
+                    }
+                });
             }
         }
         return pending;
     };
+
     self.extractNodeStepStates=function(node,steps,model){
         var count= steps?steps.length:0;
         var newsteps=[];
@@ -483,7 +529,7 @@ function NodeFlowViewModel(workflow,outputUrl){
         }
         self.stateLoaded(true);
         //determine count of unevaluated steps
-        self.pendingSteps(model.completed ? 0 : self.countPendingSteps(model));
+        self.pendingNodeSteps(model.completed ? {'_other':0} : self.countPendingStepsForNodes(model, model.allNodes));
         var nodeList= model.allNodes;
         var count = nodeList.length;
         for (var i = 0; i < count; i++) {
