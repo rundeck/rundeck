@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier
 import com.dtolabs.rundeck.core.execution.workflow.state.StepState
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowState
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowStepState
+import grails.converters.JSON
 
 import java.text.SimpleDateFormat
 
@@ -715,7 +716,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
     protected void processStateChange(MutableWorkflowStateImpl mutableWorkflowState,Map change) {
         if (change.workflow) {
             mutableWorkflowState.updateWorkflowState(parseState(change.workflow.state),
-                    parseDate(change.workflow.date), change.workflow.nodes)
+                    parseDate(change.workflow.date), change.workflow.nodes?:null)
         } else if (change.step) {
             def stepchange = change.step.node ? stepStateChange(stepState(parseState(change.step.state)),
                     change.step.node) : stepStateChange(stepState(parseState(change.step.state)))
@@ -729,7 +730,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
             mutableWorkflowState.updateSubWorkflowState(parseStepIdent(change.subworkflow.ident),
                     change.subworkflow.index, change.subworkflow.quell ? true : false,
                     parseState(change.subworkflow.state),
-                    parseDate(change.subworkflow.date), change.subworkflow.nodes, change.subworkflow.parent)
+                    parseDate(change.subworkflow.date), change.subworkflow.nodes?:null, change.subworkflow.parent?:null)
         }
     }
 
@@ -1440,6 +1441,104 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
 
         assertStepId(1, step1.stepIdentifier)
         assertEquals(ExecutionState.SUCCEEDED, step1.stepState.executionState)
+        assertEquals(ExecutionState.SUCCEEDED, subWorkflowState.executionState)
+
+    }
+    static List loadJson(String name){
+        def stream = getClassLoader().getResourceAsStream("com/dtolabs/rundeck/app/internal/workflow/"+name)
+        return JSON.parse(stream,null)
+    }
+
+    /**
+     * Multiple parallel nodes in a node-step sub workflow, with a failure node
+     */
+    public void testSubworkflowParallelNodeFailure() {
+        def nodes = (0..<40).collect { 'node-' + it }
+        //sub step 1
+        def mutableStep11 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep11.nodeStep = true
+        def mutableStep12 = new MutableWorkflowStepStateImpl(stepIdentifier(2))
+        mutableStep12.nodeStep = true
+
+        //sub workflow
+        MutableWorkflowStateImpl sub1 = new MutableWorkflowStateImpl(nodes, 1, [0: mutableStep11,1:mutableStep12],
+                StateUtils.stepIdentifier(1), 'a');
+
+        //step 1, both a node step and a subworkflow
+        def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1), sub1)
+        mutableStep1.nodeStep = true
+
+
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(nodes, 1, [0: mutableStep1]);
+
+        def changes=loadJson("state1.json")
+
+        processStateChanges(mutableWorkflowState, changes)
+
+        assertEquals(ExecutionState.FAILED, mutableWorkflowState.executionState)
+
+        def step1 = mutableWorkflowState[1]
+        assertStepId(1, step1.stepIdentifier)
+        assertEquals(ExecutionState.NODE_MIXED, step1.stepState.executionState)
+        def WorkflowState subWorkflowState = step1.subWorkflowState
+        assertEquals(ExecutionState.FAILED, subWorkflowState.executionState)
+
+    }
+    public void testSubworkflowNodeStepParallelSubworkflow() {
+        def nodes = (0..<3).collect { 'node-' + it }
+        //sub step 1
+        def mutableStep11 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep11.nodeStep = true
+        def mutableStep12 = new MutableWorkflowStepStateImpl(stepIdentifier(2))
+        mutableStep12.nodeStep = true
+
+        //sub workflow
+        MutableWorkflowStateImpl sub1 = new MutableWorkflowStateImpl(nodes, 1, [0: mutableStep11,1:mutableStep12],
+                StateUtils.stepIdentifier(1), 'a');
+
+        //step 1, both a node step and a subworkflow
+        def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1), sub1)
+        mutableStep1.nodeStep = true
+
+        def node0statetest=22
+
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(nodes, 1, [0: mutableStep1]);
+
+        def changes=loadJson("state2.json")
+        def changesa=changes[0..<node0statetest]
+        processStateChanges(mutableWorkflowState, changesa)
+
+        def changesb=[changes[node0statetest]]
+        assertEquals("was: "+changesb,"node-0",changes[node0statetest].step.node)
+        assertEquals("1@node=node-0",changes[node0statetest].step.ident)
+        assertEquals("SUCCEEDED",changes[node0statetest].step.state)
+        assertEquals(0,changes[node0statetest].step.index)
+        processStateChanges(mutableWorkflowState, changesb)
+
+        //test state after step 25
+        assertEquals(ExecutionState.RUNNING, mutableWorkflowState.executionState)
+
+        def step1 = mutableWorkflowState[1]
+        assertStepId(1, step1.stepIdentifier)
+        assertEquals(ExecutionState.RUNNING, step1.stepState.executionState)
+
+        //node-0 state should be finished for step 1, and for the parameterized substate
+        def node0state1=step1.nodeStateMap.get('node-0')
+        assertEquals(ExecutionState.SUCCEEDED,node0state1.executionState)
+        def node0stateparam1=step1.parameterizedStateMap.get('node=node-0')
+        assertEquals(ExecutionState.RUNNING,node0stateparam1.stepState.executionState)
+        def node0stateparam1sub=node0stateparam1.nodeStateMap['node-0']
+        assertEquals(ExecutionState.SUCCEEDED, node0stateparam1sub.executionState)
+
+        def changesc=changes[(node0statetest+1)..<changes.size()]
+
+        processStateChanges(mutableWorkflowState, changesc)
+
+        assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.executionState)
+
+        assertStepId(1, step1.stepIdentifier)
+        assertEquals(ExecutionState.NODE_MIXED, step1.stepState.executionState)
+        def WorkflowState subWorkflowState = step1.subWorkflowState
         assertEquals(ExecutionState.SUCCEEDED, subWorkflowState.executionState)
 
     }
