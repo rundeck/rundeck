@@ -6,7 +6,7 @@ import java.util.Map;
 /**
  * Describes the state of a step, which includes the execution status, and possible metadata
  */
-public interface StepState {
+public interface StepState extends HasExecutionState {
     /**
      * The execution state
      * @return
