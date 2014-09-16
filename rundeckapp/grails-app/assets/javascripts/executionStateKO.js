@@ -111,11 +111,13 @@ function RDNode(name, steps,flow){
         //sum up duration of all completed steps
        var ms=-1;
        ko.utils.arrayForEach(self.steps(),function(x){
-           var ms2 = x.duration();
-           if(ms2>=0 && ms<0){
-               ms=ms2;
-           }else if(ms2>=0){
-               ms += ms2;
+           if(!x.parameterizedStep()){
+               var ms2 = x.duration();
+               if(ms2>=0 && ms<0){
+                   ms=ms2;
+               }else if(ms2>=0){
+                   ms += ms2;
+               }
            }
        });
        return ms;
