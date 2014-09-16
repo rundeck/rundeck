@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.app.internal.workflow
 
 import com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState
+import com.dtolabs.rundeck.core.execution.workflow.state.MutableExecutionState
 import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
 import com.dtolabs.rundeck.core.execution.workflow.state.StepContextId
 import com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier
@@ -19,6 +20,9 @@ import static com.dtolabs.rundeck.core.execution.workflow.state.StateUtils.*
  * Time: 12:09 PM
  */
 class MutableWorkflowStateImplTest extends GroovyTestCase {
+    class TestMutableExecutionState implements MutableExecutionState{
+        ExecutionState executionState
+    }
     public void testCreate() {
         MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(null, 2);
         assertEquals(ExecutionState.WAITING,mutableWorkflowState.getExecutionState());
@@ -485,19 +489,14 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
 
     }
 
-    public void testUpdateWorkflowInvalid() {
+    public void testUpdateWorkflowFinalStateDoesntChange() {
         MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl(null, 2);
         def date = new Date(123)
         def newdate = new Date()
 
         mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, ['a', 'b'] )
         mutableWorkflowState.updateWorkflowState(ExecutionState.SUCCEEDED, newdate, null)
-        try {
-            mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, newdate, null)
-            fail("shouldn't update state")
-        } catch (IllegalStateException e) {
-            assertNotNull(e)
-        }
+        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, newdate, null)
 
         assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.executionState)
         assertEquals(newdate, mutableWorkflowState.updateTime)
@@ -1602,7 +1601,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         assertEquals(ExecutionState.RUNNING, mutableWorkflowState.mutableStepStates[0].subWorkflowState.stepStates[0].nodeStateMap.get(serverNode).executionState)
         mutableWorkflowState.updateStateForStep(paramStepId_1A1, 0, stepStateChange(stepState(ExecutionState.SUCCEEDED), serverNode), date)
         assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.mutableStepStates[0].parameterizedStateMap.get('node=a').subWorkflowState.stepStates[0].nodeStateMap.get(serverNode).executionState)
-        assertEquals(ExecutionState.RUNNING, mutableWorkflowState.mutableStepStates[0].subWorkflowState.stepStates[0].nodeStateMap.get(serverNode).executionState)
+        assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.mutableStepStates[0].subWorkflowState.stepStates[0].nodeStateMap.get(serverNode).executionState)
         mutableWorkflowState.updateStateForStep(paramStepId_1A1, 0, stepStateChange(stepState(ExecutionState.SUCCEEDED)), date)
         assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.mutableStepStates[0].parameterizedStateMap.get('node=a').subWorkflowState.stepStates[0].stepState.executionState)
         //step 1 finish workflow
@@ -1718,10 +1717,10 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         assertEquals(ExecutionState.RUNNING, mutableWorkflowState.mutableStepStates[0].subWorkflowState.stepStates[0].nodeStateMap.get(currentNode).executionState)
         mutableWorkflowState.updateStateForStep(paramStepId_1A1, 0, stepStateChange(stepState(ExecutionState.SUCCEEDED), currentNode), date)
         assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.mutableStepStates[0].parameterizedStateMap.get('node=a').subWorkflowState.stepStates[0].nodeStateMap.get(currentNode).executionState)
-        assertEquals(ExecutionState.RUNNING, mutableWorkflowState.mutableStepStates[0].subWorkflowState.stepStates[0].nodeStateMap.get(currentNode).executionState)
+        assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.mutableStepStates[0].subWorkflowState.stepStates[0].nodeStateMap.get(currentNode).executionState)
         mutableWorkflowState.updateStateForStep(paramStepId_1A1, 0, stepStateChange(stepState(ExecutionState.SUCCEEDED)), date)
         assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.mutableStepStates[0].parameterizedStateMap.get('node=a').subWorkflowState.stepStates[0].stepState.executionState)
-        assertEquals(ExecutionState.RUNNING, mutableWorkflowState.mutableStepStates[0].subWorkflowState.stepStates[0].stepState.executionState)
+        assertEquals(ExecutionState.SUCCEEDED, mutableWorkflowState.mutableStepStates[0].subWorkflowState.stepStates[0].stepState.executionState)
         //step 1 finish workflow
         mutableWorkflowState.updateSubWorkflowState(mkstepIdentifier(1, nodeA), 0, false, ExecutionState.SUCCEEDED, date, [nodeA], null)
         assertEquals(ExecutionState.RUNNING,mutableWorkflowState.stepStates[0].stepState.executionState)
@@ -1913,6 +1912,7 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
         mutableWorkflowState.updateStateForStep(stepIdentifier(2), stepStateChange(stepState(ExecutionState.FAILED)), newdate)
         mutableWorkflowState.updateStateForStep(stepIdentifier(stepContextId(2,true)), stepStateChange(stepState(ExecutionState.RUNNING_HANDLER)), newdate)
         mutableWorkflowState.updateStateForStep(stepIdentifier(stepContextId(2, true)), stepStateChange(stepState(ExecutionState.SUCCEEDED)), newdate)
+        assertEquals(ExecutionState.SUCCEEDED,mutableWorkflowState[2].stepState.executionState)
 
         //step 3:  mixed state node results
         stepIdentifier(3).with {
@@ -2035,63 +2035,51 @@ class MutableWorkflowStateImplTest extends GroovyTestCase {
 
     }
     public void testUpdateStateNormal() {
-        assertEquals(ExecutionState.WAITING, MutableWorkflowStateImpl.updateState(null, ExecutionState.WAITING))
-        assertEquals(ExecutionState.RUNNING, MutableWorkflowStateImpl.updateState(null, ExecutionState.RUNNING))
-        assertEquals(ExecutionState.RUNNING, MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, ExecutionState.RUNNING))
-        assertEquals(ExecutionState.RUNNING, MutableWorkflowStateImpl.updateState(ExecutionState.WAITING, ExecutionState.RUNNING))
-        assertEquals(ExecutionState.SUCCEEDED, MutableWorkflowStateImpl.updateState(ExecutionState.WAITING, ExecutionState.SUCCEEDED))
-        assertEquals(ExecutionState.FAILED, MutableWorkflowStateImpl.updateState(ExecutionState.WAITING, ExecutionState.FAILED))
-        assertEquals(ExecutionState.ABORTED, MutableWorkflowStateImpl.updateState(ExecutionState.WAITING, ExecutionState.ABORTED))
-        assertEquals(ExecutionState.SUCCEEDED, MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, ExecutionState.SUCCEEDED))
-        assertEquals(ExecutionState.FAILED, MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, ExecutionState.FAILED))
-        assertEquals(ExecutionState.ABORTED, MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, ExecutionState.ABORTED))
+        assertUpdateExecutionState(ExecutionState.WAITING, null, ExecutionState.WAITING)
+        assertUpdateExecutionState(ExecutionState.RUNNING, null, ExecutionState.RUNNING)
+        assertUpdateExecutionState(ExecutionState.RUNNING, ExecutionState.RUNNING, ExecutionState.RUNNING)
+        assertUpdateExecutionState(ExecutionState.RUNNING, ExecutionState.WAITING, ExecutionState.RUNNING)
+        assertUpdateExecutionState(ExecutionState.SUCCEEDED, ExecutionState.WAITING, ExecutionState.SUCCEEDED)
+        assertUpdateExecutionState(ExecutionState.FAILED, ExecutionState.WAITING, ExecutionState.FAILED)
+        assertUpdateExecutionState(ExecutionState.ABORTED, ExecutionState.WAITING, ExecutionState.ABORTED)
+        assertUpdateExecutionState(ExecutionState.SUCCEEDED, ExecutionState.RUNNING, ExecutionState.SUCCEEDED)
+        assertUpdateExecutionState(ExecutionState.FAILED, ExecutionState.RUNNING, ExecutionState.FAILED)
+        assertUpdateExecutionState(ExecutionState.ABORTED, ExecutionState.RUNNING, ExecutionState.ABORTED)
+        assertUpdateExecutionState(ExecutionState.SUCCEEDED, ExecutionState.SUCCEEDED, ExecutionState.RUNNING)
+        assertUpdateExecutionState(ExecutionState.FAILED, ExecutionState.FAILED, ExecutionState.RUNNING)
+        assertUpdateExecutionState(ExecutionState.ABORTED, ExecutionState.ABORTED, ExecutionState.RUNNING)
+        assertUpdateExecutionState(ExecutionState.ABORTED, ExecutionState.ABORTED, ExecutionState.WAITING)
     }
-    public void testUpdateStateInvalid() {
-        try {
-            MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, ExecutionState.WAITING)
-            fail("Should not succeed")
-        } catch (IllegalStateException e) {
-        }
-        try {
-            MutableWorkflowStateImpl.updateState(ExecutionState.SUCCEEDED, ExecutionState.RUNNING)
-            fail("Should not succeed")
-        } catch (IllegalStateException e) {
-        }
-        try {
-            MutableWorkflowStateImpl.updateState(ExecutionState.FAILED, ExecutionState.RUNNING)
-            fail("Should not succeed")
-        } catch (IllegalStateException e) {
-        }
-        try {
-            MutableWorkflowStateImpl.updateState(ExecutionState.ABORTED, ExecutionState.RUNNING)
-            fail("Should not succeed")
-        } catch (IllegalStateException e) {
-        }
-        try {
-            MutableWorkflowStateImpl.updateState(ExecutionState.ABORTED, ExecutionState.WAITING)
-            fail("Should not succeed")
-        } catch (IllegalStateException e) {
-        }
-        try {
-            MutableWorkflowStateImpl.updateState(ExecutionState.SUCCEEDED, null)
-            fail("Should not succeed")
-        } catch (IllegalStateException e) {
-        }
-        try {
-            MutableWorkflowStateImpl.updateState(ExecutionState.ABORTED, null)
-            fail("Should not succeed")
-        } catch (IllegalStateException e) {
-        }
-        try {
-            MutableWorkflowStateImpl.updateState(ExecutionState.FAILED, null)
-            fail("Should not succeed")
-        } catch (IllegalStateException e) {
-        }
-        try {
-            MutableWorkflowStateImpl.updateState(ExecutionState.RUNNING, null)
-            fail("Should not succeed")
-        } catch (IllegalStateException e) {
-        }
+    public void testUpdateStateErrorHandler() {
+        //error handler allows FAILED->RUNNING transition
+        assertUpdateExecutionState(ExecutionState.RUNNING, ExecutionState.FAILED, ExecutionState.RUNNING, true)
+        //other final states do not change
+        assertUpdateExecutionState(ExecutionState.SUCCEEDED, ExecutionState.SUCCEEDED, ExecutionState.RUNNING,true)
+        assertUpdateExecutionState(ExecutionState.ABORTED, ExecutionState.ABORTED, ExecutionState.RUNNING, true)
+    }
 
+    protected void assertUpdateExecutionState(ExecutionState expected, ExecutionState start, ExecutionState update, boolean errorHandler=false) {
+        def test = new TestMutableExecutionState()
+        test.executionState = start
+        MutableWorkflowStateImpl.updateState(null,test, update,errorHandler)
+        assertEquals(expected, test.executionState)
+    }
+    protected void assertUpdateExecutionStateException(ExecutionState start, ExecutionState update, boolean errorHandler=false) {
+        def test = new TestMutableExecutionState()
+        test.executionState = start
+        try {
+            MutableWorkflowStateImpl.updateState(null, test, update,errorHandler)
+            fail("Should not succeed")
+        } catch (IllegalStateException e) {
+        }
+        assertEquals(start, test.executionState)
+    }
+
+    public void testUpdateStateInvalid() {
+        assertUpdateExecutionStateException(ExecutionState.RUNNING, ExecutionState.WAITING)
+        assertUpdateExecutionStateException(ExecutionState.SUCCEEDED, null)
+        assertUpdateExecutionStateException(ExecutionState.ABORTED, null)
+        assertUpdateExecutionStateException(ExecutionState.FAILED, null)
+        assertUpdateExecutionStateException(ExecutionState.RUNNING, null)
     }
 }
