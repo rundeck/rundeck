@@ -164,6 +164,14 @@ class WorkflowService implements ApplicationContextAware{
                     persistExecutionState(storagerequest, execution.id, state, outfile)
                 }
         })
+        if (Environment.getCurrent() == Environment.DEVELOPMENT) {
+            chain << new WorkflowStateListenerAction(onWorkflowExecutionStateChanged: {
+                ExecutionState executionState, Date timestamp, List<String> nodeSet ->
+                    if (executionState.completedState) {
+                        log.debug(logstate.stateChanges.encodeAsJSON())
+                    }
+            })
+        }
         new WorkflowExecutionStateListenerAdapter(chain)
     }
 
