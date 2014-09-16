@@ -149,15 +149,15 @@ function RDNode(name, steps,flow){
             pending: self.flow.pendingSteps()
         };
 
+        var testStates= ['SUCCEEDED', 'FAILED', 'WAITING', 'NOT_STARTED', 'RUNNING', 'RUNNING_HANDLER'];
         //determine count for step states
         ko.utils.arrayForEach(self.steps(),function(step){
-            ['SUCCEEDED', 'FAILED', 'WAITING', 'NOT_STARTED', 'RUNNING', 'RUNNING_HANDLER'].each(function (z) {
-                if (null != summarydata[z] && step.executionState()==z) {
-                    summarydata[z]++;
-                } else {
-                    summarydata['other']++;
-                }
-            });
+            var z = step.executionState();
+            if(testStates.indexOf(z)>=0 && null != summarydata[z] ) {
+                summarydata[z]++;
+            } else {
+                summarydata['other']++;
+            }
             if (!currentStep && RDNodeStep.stateCompare('NONE', step.executionState())
                 || currentStep && RDNodeStep.stateCompare(currentStep.executionState(), step.executionState())) {
                 currentStep = step;
