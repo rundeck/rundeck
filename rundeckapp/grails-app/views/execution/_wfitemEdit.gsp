@@ -95,6 +95,7 @@
     <g:set var="isAdhocLocal" value="${'script'==newitemtype || item?.adhocLocalString}"/>
     <g:set var="isAdhocFileExecution" value="${'scriptfile'==newitemtype || item?.adhocFilepath}"/>
     <g:hiddenField name="adhocExecution" value="true"/>
+    <div id="scriptStep_${rkey}">
     <g:if test="${isAdhocLocal}">
         <div id="localScriptDiv" class="${hasErrors(bean:item,field:'adhocExecution','fieldError')}">
             <div class="text-muted"><g:message code="Workflow.Step.adhocLocalString.description" />:</div>
@@ -116,46 +117,45 @@
     <g:if test="${!isAdhocRemote||isAdhocFileExecution}">
     <div id="adhocScriptArgs" >
         <div class="text-muted"><g:message code="Workflow.Step.argString.description" />:</div>
-        <input type='text' name="argString" value="${enc(attr:item?.argString)}" size="100" id="argStringField"/>
+        <input type='text' name="argString" value="${enc(attr:item?.argString)}" size="100" id="argStringField"
+               data-bind="value: args, valueUpdate: 'keyup'"/>
     </div>
     </g:if>
     <g:if test="${!isAdhocRemote}">
         <g:expander key="scriptInterpreter${rkey}" open="${item?.scriptInterpreter?'true':'false'}">Advanced </g:expander>
         <div id="scriptInterpreter${enc(attr:rkey)}" style="${wdgt.styleVisible(if: item?.scriptInterpreter)}" class="presentation">
-            <div class="text-muted"><g:message code="Workflow.Step.scriptInterpreter.description"/>:</div>
+            <div class="">
+
+                <span class="text-muted"><g:message
+                        code="Workflow.Step.scriptInterpreter.label"/>:</span>
+                <span class="action obs_tooltip"
+                      id="interpreterHelp${enc(attr: rkey)}"><i
+                        class="glyphicon glyphicon-question-sign  text-info"></i> Explain</span>
+
+                <div class="popout tooltipcontent"
+                     id="interpreterHelp${enc(attr: rkey)}_tooltip"
+                     style="display:none; background:white; position:absolute; max-width: 500px; width:500px;">
+                    <div class="help-block"><g:message code="Workflow.Step.scriptInterpreter.help"/></div>
+                </div>
+            </div>
             <input type='text' name="scriptInterpreter"
                    placeholder="${enc(attr:g.message(code: 'Workflow.Step.scriptInterpreter.prompt'))}"
                    value="${enc(attr:item?.scriptInterpreter)}" size="100"
+                data-bind="value: invocationString, valueUpdate: 'keyup'"
                    id="scriptInterpreterField" autofocus/>
             <div>
                 <label>
                     <g:checkBox name="interpreterArgsQuoted" checked="${item?.interpreterArgsQuoted}"
-                                id="interpreterArgsQuotedField" value="true"/>
+                                id="interpreterArgsQuotedField" value="true" data-bind="checked: argsQuoted"/>
                     <g:message code="Workflow.Step.interpreterArgsQuoted.label"/>
                 </label>
-                <g:javascript>
-                    <wdgt:eventHandler for="scriptInterpreterField" state="unempty" inline="true" jsonly="true"
-                                       action="keyup">
-                        <wdgt:action target="interpreterArgsQuotedHelp${rkey}_preview" visible="true" test="true"/>
-                        <wdgt:action target="interpreterPreview" copy="tohtml" test="true"/>
-                    </wdgt:eventHandler>
-                    <wdgt:eventHandler for="argStringField" state="unempty" inline="true" jsonly="true"
-                                       action="keyup">
-                        <wdgt:action target="interpreterArgsQuotedHelp${rkey}_preview" visible="true" test="true"/>
-                        <wdgt:action target="interpreterArgsPreview" copy="tohtml" test="true"/>
-                    </wdgt:eventHandler>
-                    <wdgt:eventHandler for="interpreterArgsQuotedField" state="checked" inline="true" jsonly="true">
-                        <wdgt:action targetSelector="span.interpreterquotepreview" visible="true"/>
-                    </wdgt:eventHandler>
 
-                </g:javascript>
                 <span class="action obs_tooltip"
-                      id="interpreterArgsQuotedHelp${enc(attr:rkey)}"><g:img file="icon-small-help.png" width="16px"
-                                                                   height="16px"/> Explain</span>
+                      id="interpreterArgsQuotedHelp${enc(attr:rkey)}"><i class="glyphicon glyphicon-question-sign  text-info"></i> Explain</span>
 
                 <div class="popout tooltipcontent" id="interpreterArgsQuotedHelp${enc(attr:rkey)}_tooltip"
                      style="display:none; background:white; position:absolute; max-width: 500px; width:500px;">
-                    <g:message code="Workflow.Step.interpreterArgsQuoted.description"/>
+                    <div class="help-block"><g:message code="Workflow.Step.interpreterArgsQuoted.help"/></div>
                 </div>
             </div>
         </div>
@@ -163,16 +163,17 @@
         <span class="prompt">Execution Preview:</span>
 
         <div id='interpreterArgsQuotedHelp${rkey}_preview' class="presentation">
-            <code>$
-                <span id='interpreterPreview'><g:enc>${item?.scriptInterpreter}</g:enc></span>
-                <span class="interpreterquotepreview"
-                      style="${wdgt.styleVisible(if: item?.interpreterArgsQuoted)}">&quot;</span
-                ><em>scriptfile</em> <span id='interpreterArgsPreview'><g:enc>${item?.argString}</g:enc></span
-                    ><span class="interpreterquotepreview" style="${wdgt.styleVisible(if: item?.interpreterArgsQuoted)}">&quot;</span>
-            </code>
+            <code>$ <span data-bind="html: invocationPreviewHtml"></span></code>
         </div>
+            <g:embedJSON id="scriptStepData_${rkey}" data="${[invocationString: item?.scriptInterpreter?:'',args: item?.argString?:'',argsQuoted: item?.interpreterArgsQuoted?true:false]}"/>
+            <g:javascript>
+            fireWhenReady("scriptStep_${rkey}",function(){
+                workflowEditor.bindKey('${rkey}','scriptStep_${rkey}',loadJsonData('scriptStepData_${rkey}'));
+            });
+            </g:javascript>
         </div>
     </g:if>
+    </div>
 </g:elseif>
 <g:elseif test="${( newitemtype || item && item.instanceOf(PluginStep) ) && newitemDescription}">
     <div>

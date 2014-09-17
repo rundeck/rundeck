@@ -96,12 +96,6 @@
                     </div>
                 </g:if>
                 <g:elseif test="${item.adhocFilepath}">
-                    <g:if test="${item.scriptInterpreter}">
-                        <span class="argString"><g:enc>${item.scriptInterpreter}</g:enc></span>
-                        <g:if test="${item.interpreterArgsQuoted}">
-                            &quot;
-                        </g:if>
-                    </g:if>
                     <g:if test="${item.adhocFilepath=~/^https?:/}">
                         <g:set var="urlString" value="${item.adhocFilepath.replaceAll('^(https?://)([^:@/]+):[^@/]*@', '$1$2:****@')}"/>
                         <span class="argString"><g:truncate max="150"
@@ -111,21 +105,23 @@
                         <span class="argString"><g:truncate max="150"  showtitle="true"><g:enc>${item.adhocFilepath}</g:enc></g:truncate></span>
                     </g:else>
                 </g:elseif>
-                <g:if test="${item.adhocLocalString}">
-                    <g:if test="${item.scriptInterpreter}">
-                        <span class="text-muted"><g:message code="executed.as" />:</span>
-                        <span class="argString"><g:enc>${item.scriptInterpreter}</g:enc></span>
+                <g:if test="${item.scriptInterpreter}">
+                    <span class="text-muted"><g:message code="executed.as" />:</span>
+                    <span class="argString">
+                        <g:enc>${item.scriptInterpreter}</g:enc>
                         <g:if test="${item.interpreterArgsQuoted}">
                             &quot;
                         </g:if>
-                        <em title="${g.message(code:'placeholder.for.the.script.file')}"><g:message code="script" /></em>
-                    </g:if>
+                        <g:if test="${!item.scriptInterpreter.contains('${scriptfile}')}">
+                        <span title="${g.message(code:'placeholder.for.the.script.file')}"><g:message code="dollar.scriptfile" /></span>
+                        </g:if>
+                    </span>
                 </g:if>
                 <g:if test="${item.argString}">
-                   <div class="argString"><g:truncate max="150"  showtitle="true"><g:enc>${item.argString}</g:enc></g:truncate></div>
+                   <span class="argString"><g:truncate max="150"  showtitle="true"><g:enc>${item.argString}</g:enc></g:truncate></span>
                 </g:if>
                 <g:if test="${item.interpreterArgsQuoted}">
-                    &quot;
+                    <span class="argString">&quot;</span>
                 </g:if>
             </g:else>
             </span>
