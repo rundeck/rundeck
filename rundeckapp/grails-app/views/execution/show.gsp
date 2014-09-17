@@ -182,9 +182,9 @@
                 ko.applyBindings(activity, document.getElementById('activity_section'));
                 setupActivityLinks('activity_section', activity);
            }
-            $$('.apply_ace').each(function (t) {
-                _applyAce(t);
-            })
+            jQuery('.apply_ace').each(function () {
+                _applyAce(this);
+            });
             followControl.bindActions('outputappendform');
         });
       </g:javascript>

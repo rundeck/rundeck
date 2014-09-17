@@ -83,9 +83,9 @@
 
 <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
 <g:javascript>
-    fireWhenReady('schedExecPage', function (z) {
-        $$('.apply_ace').each(function (t) {
-            _applyAce(t,'400px');
-        })
+    fireWhenReady('schedExDetails${enc(attr: scheduledExecution?.id)}', function (z) {
+        jQuery('.apply_ace').each(function () {
+            _applyAce(this,'400px');
+        });
     });
 </g:javascript>
