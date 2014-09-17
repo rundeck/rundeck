@@ -47,7 +47,8 @@
             <g:message code="Workflow.strategy.label.step-first"/>
         </label>
 
-        <span class=" action obs_tooltip" id="nodeStratHelp"><g:img file="icon-small-help.png" width="16px" height="16px"/> Explain </span>
+        <span class=" action obs_tooltip" id="nodeStratHelp"><i
+                class="glyphicon glyphicon-question-sign text-info"></i> Explain </span>
         <div class="popout tooltipcontent" id="nodeStratHelp_tooltip" style="display:none; background:white; position:absolute;">
             <style type="text/css">
                 td.nodea{
