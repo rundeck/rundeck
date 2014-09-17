@@ -2,7 +2,7 @@
  * The Rundeck stub plugin build file
  */
 
-ext.pluginClassNames = 'com.dtolabs.rundeck.plugin.stub.StubFileCopier,com.dtolabs.rundeck.plugin.stub.StubNodeExecutor'
+ext.pluginClassNames = 'com.dtolabs.rundeck.plugin.stub.StubFileCopier,com.dtolabs.rundeck.plugin.stub.StubNodeExecutor,com.dtolabs.rundeck.plugin.stub.StubResourceModelSourceFactory'
 ext.pluginName = 'Stub Execution'
 ext.pluginDescription = 'Mock execution of commands and scripts'
 
