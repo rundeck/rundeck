@@ -427,7 +427,7 @@ public class WidgetTagLib {
                 funcaction='\nconsole.log(\'copy value trigger\');\n'+funcaction+'\n'
             }
         }
-        if(attrs.copy=='tohtml'){
+        if(attrs.copy=='text'){
             def trans=''
             def transend=''
             if(attrs.transformfuncname){
@@ -435,10 +435,10 @@ public class WidgetTagLib {
                 transend=')'
             }
 
-            funcaction+='$('+ftarget+').innerHTML='+trans+'$F('+varname+')'+transend+';'
+            funcaction+='setText($('+ftarget+'),'+trans+'$F('+varname+')'+transend+');'
 
             if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
-                funcaction='\nconsole.log(\'copy tohtml trigger\');\n'+funcaction+'\n'
+                funcaction='\nconsole.log(\'copy text trigger\');\n'+funcaction+'\n'
             }
         }
         if(attrs.disabled){

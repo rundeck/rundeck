@@ -256,9 +256,9 @@
         }
         <wdgt:eventHandler for="optname_${rkey}" state="unempty" inline="true" jsonly="true" action="keyup">
             <wdgt:action target="preview_${rkey}" visible="true" test="true"/>
-            <wdgt:action target="bashpreview${rkey}" copy="tohtml" test="true" transformfuncname="_tobashvar"/>
-            <wdgt:action target="clipreview${rkey}" copy="tohtml" test="true"/>
-            <wdgt:action target="scptpreview${rkey}" copy="tohtml" test="true"/>
+            <wdgt:action target="bashpreview${rkey}" copy="text" test="true" transformfuncname="_tobashvar"/>
+            <wdgt:action target="clipreview${rkey}" copy="text" test="true"/>
+            <wdgt:action target="scptpreview${rkey}" copy="text" test="true"/>
         </wdgt:eventHandler>
         <wdgt:eventHandler for="optname_${rkey}" state="empty" inline="true"  jsonly="true">
             <wdgt:action target="preview_${rkey}" visible="false"/>
