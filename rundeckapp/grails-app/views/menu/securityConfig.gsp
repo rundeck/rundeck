@@ -52,7 +52,7 @@
             <g:set var="fwkConfigDir" value="${rundeckFramework.getConfigDir()}"/>
             List of ACL Policy Files in directory <code><g:enc>${fwkConfigDir.absolutePath}</g:enc></code>:
             <ul>
-            <g:each in="${fwkConfigDir.listFiles().grep{it.name=~/\.aclpolicy$/}}" var="file">
+            <g:each in="${fwkConfigDir.listFiles().grep{it.name=~/\.aclpolicy$/}.sort()}" var="file">
                 <li class=""><g:enc>${file.name}</g:enc></li>
             </g:each>
             </ul>
