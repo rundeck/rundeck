@@ -1845,6 +1845,7 @@ class ScheduledExecutionController  extends ControllerBase{
         withForm{
             results = runJob()
         }.invalidToken{
+            results.error="Invalid request token"
             results.code= HttpServletResponse.SC_BAD_REQUEST
             request.errorCode='request.error.invalidtoken.message'
         }

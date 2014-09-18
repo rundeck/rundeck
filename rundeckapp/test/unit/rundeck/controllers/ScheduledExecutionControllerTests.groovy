@@ -1,6 +1,8 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
+import com.dtolabs.rundeck.app.support.ExtraCommand
+import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
 
@@ -725,6 +727,115 @@ class ScheduledExecutionControllerTests  {
             assertNull  response.redirectedUrl
     }
 
+    public void testRunJobNow() {
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+        )
+        se.save()
+        assertNotNull se.id
+
+        controller.frameworkService = mockWith(FrameworkService){
+            getAuthContextForSubject { Subject subject -> return null }
+            authorizeProjectJobAll { framework, resource, actions, project -> return true }
+        }
+
+        controller.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getByIDorUUID { id -> return se }
+            userAuthorizedForAdhoc { request, scheduledExecution, framework -> return true }
+            _dovalidate { params, user, rolelist, framework ->
+                assertEquals('Temporary_Job', params.jobName)
+                assertEquals('adhoc', params.groupPath)
+                [failed: false, scheduledExecution: se]
+            }
+            scheduleTempJob { auth, exec ->
+                return exec.id
+            }
+            logJobChange { changeinfo, properties -> }
+        }
+
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+                )
+        assertNotNull exec.save()
+
+        controller.executionService = mockWith(ExecutionService){
+            executeJob{ ScheduledExecution scheduledExecution, AuthContext authContext, String user, Map input->
+                [executionId:exec.id]
+            }
+        }
+
+
+        controller.metaClass.message = {params -> params?.code ?: 'messageCodeMissing'}
+        final subject = new Subject()
+        controller.session.setAttribute("subject", subject)
+
+        def command = new RunJobCommand()
+        command.id=se.id.toString()
+        def extra = new ExtraCommand()
+
+        setupFormTokens(controller)
+
+        controller.runJobNow(command,extra)
+
+        assertEquals('/scheduledExecution/show',response.redirectedUrl)
+    }
+    public void testRunJobNow_missingToken() {
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+        )
+        se.save()
+//
+        assertNotNull se.id
+
+        controller.frameworkService = mockWith(FrameworkService) {
+            getAuthContextForSubject { Subject subject -> return null }
+            authorizeProjectJobAll { framework, resource, actions, project -> return true }
+        }
+
+        controller.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getByIDorUUID { id -> return se }
+            userAuthorizedForAdhoc { request, scheduledExecution, framework -> return true }
+            _dovalidate { params, user, rolelist, framework ->
+                assertEquals('Temporary_Job', params.jobName)
+                assertEquals('adhoc', params.groupPath)
+                [failed: false, scheduledExecution: se]
+            }
+            scheduleTempJob { auth, exec ->
+                return exec.id
+            }
+            logJobChange { changeinfo, properties -> }
+        }
+
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+                )
+        assertNotNull exec.save()
+
+        controller.executionService = mockWith(ExecutionService){
+            executeJob{ ScheduledExecution scheduledExecution, AuthContext authContext, String user, Map input->
+                [executionId:exec.id]
+            }
+        }
+
+
+        controller.metaClass.message = {params -> params?.code ?: 'messageCodeMissing'}
+
+
+        def command = new RunJobCommand()
+        command.id=se.id.toString()
+        def extra = new ExtraCommand()
+
+        //setupFormTokens(controller)//XXX: don't set up tokens
+
+        controller.runJobNow(command,extra)
+
+        assertEquals(400,response.status)
+        assertEquals('request.error.invalidtoken.message',request.errorCode)
+    }
     public void testRunAdhocBasic() {
 
             def se = new ScheduledExecution(
