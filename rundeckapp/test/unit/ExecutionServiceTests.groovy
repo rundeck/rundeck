@@ -1282,6 +1282,42 @@ class ExecutionServiceTests  {
         assertEquals("a,args", val.nodeSelector.include.toMap().monkey)
         assertEquals("b,something,d", val.nodeSelector.exclude.toMap().environment)
     }
+    /**
+     * Test use of ${option.x} parameter expansion in node filter string
+     */
+    void testCreateContextParameterizedWholeFilter() {
+
+        service.frameworkService = mockWith(FrameworkService){
+            filterNodeSet(1..1) { fwk, sel, proj ->
+                new NodeSetImpl()
+            }
+            filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
+                new NodeSetImpl()
+            }
+        }
+        service.storageService = mockWith(StorageService) {
+            storageTreeWithContext { ctx ->
+                null
+            }
+        }
+        //create mock user
+        User u1 = new User(login: 'testuser')
+        u1.save()
+
+        Execution execution = new Execution(argString: "-test 'tags: args'", user: "testuser", project: "testproj", loglevel: 'WARN',
+            doNodedispatch: true,
+            filter: "\${option.test}",
+        )
+        def val = service.createContext(execution, null, null, null, null, [id:'3',name:'blah',group:'something/else',
+                username:'bill',project:'testproj'], null, null)
+        assertNotNull(val)
+        assertNotNull(val.nodeSelector)
+        assertNotNull(val.nodeSelector.exclude)
+        assertNotNull(val.nodeSelector.include)
+        assertNull( val.nodeSelector.include.toMap().name)
+        assertEquals("args", val.nodeSelector.include.toMap().tags)
+        assertNull(val.nodeSelector.exclude.toMap().environment)
+    }
 
     void testItemForWFCmdItem(){
         def testService = new ExecutionService()

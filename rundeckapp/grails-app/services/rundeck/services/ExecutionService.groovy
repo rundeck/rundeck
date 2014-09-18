@@ -940,7 +940,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         if (execMap.doNodedispatch) {
             //set nodeset for the context if doNodedispatch parameter is true
-            NodeSet nodeset = filtersAsNodeSet(execMap,datacontext)
+            def filter = DataContextUtils.replaceDataReferences(execMap.asFilter(), datacontext)
+            NodeSet nodeset = filtersAsNodeSet([filter:filter, nodeExcludePrecedence:execMap.nodeExcludePrecedence,nodeThreadcount: execMap.nodeThreadcount])
             nodeselector=nodeset
             // enhnacement to allow ${option.xyz} in tags and names
             if (nodeset != null) {
