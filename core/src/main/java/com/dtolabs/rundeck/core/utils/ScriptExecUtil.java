@@ -37,7 +37,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -122,7 +125,7 @@ public class ScriptExecUtil {
      * @param filepath              remote filepath for the script
      * @param scriptargs            arguments to the script file
      * @param scriptargsarr         arguments to the script file as an array
-     * @param scriptinterpreter     interpreter invocation for the file, or null to invoke it directly
+     * @param scriptinterpreter     interpreter invocation for the file, or null to invoke it directly, can include ${scriptfile}
      * @param interpreterargsquoted if true, pass the script file and args as a single argument to the interpreter
      */
     public static ExecArgList createScriptArgList(final String filepath, final String scriptargs,
@@ -131,15 +134,27 @@ public class ScriptExecUtil {
             final boolean interpreterargsquoted) {
 
         ExecArgList.Builder builder = ExecArgList.builder();
+        boolean seenFilepath=false;
         if (null != scriptinterpreter) {
-            builder.args(Arrays.asList(OptsUtil.burst(scriptinterpreter)), false);
+            String[] burst = OptsUtil.burst(scriptinterpreter);
+            List<String> args = new ArrayList<String>();
+            for (String arg : burst) {
+                if (arg.contains("${scriptfile}")) {
+                    args.add(arg.replaceAll(Pattern.quote("${scriptfile}"),
+                            Matcher.quoteReplacement(filepath)));
+                    seenFilepath = true;
+                }else{
+                    args.add(arg);
+                }
+            }
+            builder.args(args, false);
         }
         if (null != scriptinterpreter && interpreterargsquoted) {
             ExecArgList.Builder sub = builder.subList(true);
-            addScriptFileArgList(filepath, scriptargs, scriptargsarr, sub, needsQuoting);
+            addScriptFileArgList(seenFilepath?null:filepath, scriptargs, scriptargsarr, sub, needsQuoting);
             sub.parent();
         } else {
-            addScriptFileArgList(filepath, scriptargs, scriptargsarr, builder, needsQuoting);
+            addScriptFileArgList(seenFilepath ? null : filepath, scriptargs, scriptargsarr, builder, needsQuoting);
         }
         return builder.build();
     }
@@ -157,7 +172,9 @@ public class ScriptExecUtil {
 
     private static void addScriptFileArgList(String filepath, String scriptargs, String[] scriptargsarr,
             ExecArgList.Builder builder, Predicate quoted) {
-        builder.arg(filepath, false);
+        if(null!=filepath){
+            builder.arg(filepath, false);
+        }
         if (null != scriptargs) {
             builder.args(OptsUtil.burst(scriptargs), quoted);
         } else if (null != scriptargsarr) {

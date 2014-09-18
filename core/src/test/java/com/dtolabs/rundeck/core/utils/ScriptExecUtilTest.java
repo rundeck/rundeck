@@ -135,6 +135,21 @@ public class ScriptExecUtilTest {
         );
     }
     @Test
+    public void customInterpreterFilePathlocation() {
+        testCreateScriptArgs("unix", DataContextUtils.addContext("option", new HashMap<String,
+                String>() {{
+            put("test", "test1");
+            put("test2", "test 2");
+        }}, null),
+                new String[]{"arg1 arg2", "${option.test}"},
+                "Powershell -Noprofile -Command 'Invoke-Command -ScriptBlock " +
+                        "([ScriptBlock]::Create((Get-Content ${scriptfile})))'",
+                "\\path\\to\\file",
+                false,
+                new String[]{"Powershell", "-Noprofile", "-Command", "Invoke-Command -ScriptBlock ([ScriptBlock]::Create((Get-Content \\path\\to\\file)))","'arg1 arg2'", "test1"}
+        );
+    }
+    @Test
     public void dataContextOptionWithSpacesQuoted() {
         testCreateScriptArgs("unix", DataContextUtils.addContext("option", new HashMap<String,
                 String>() {{
