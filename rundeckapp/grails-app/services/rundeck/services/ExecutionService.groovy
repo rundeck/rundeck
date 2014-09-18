@@ -708,11 +708,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         //TODO: method can be transactional readonly
         metricService.markMeter(this.class.name,'executionStartMeter')
         execution.refresh()
-        def ExecutionLogWriter loghandler= loggingService.openLogWriter(execution,
-                                                                          logLevelForString(execution.loglevel),
-                                                                          [user:execution.user,
-                                                                                  node: framework.getFrameworkNodeName()])
-        execution.outputfilepath= loghandler.filepath?.getAbsolutePath()
+        def ExecutionLogWriter loghandler= loggingService.openLogWriter(
+                execution,
+                logLevelForString(execution.loglevel),
+                [user:execution.user, node: framework.getFrameworkNodeName()]
+        )
+        execution.outputfilepath = loghandler.filepath?.getAbsolutePath()
         execution.save(flush:true)
         if(execution.scheduledExecution){
             metricService.markMeter(this.class.name,'executionJobStartMeter')
