@@ -1177,6 +1177,58 @@ class ExecutionServiceTests  {
             assertNull(val.nodeSelector.include.tags)
             assertEquals("basic", val.nodeSelector.include.name)
     }
+    /**
+     * Test node keepgoing, threadcount filter values
+     */
+    void testCreateContextNodeDispatchOptions() {
+        def fcontrol = mockFor(FrameworkService, true)
+        fcontrol.demand.parseOptsFromString(1..1) {argString ->
+            [test: 'args',test3:'something']
+        }
+        fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
+            new NodeSetImpl()
+        }
+        fcontrol.demand.filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
+            new NodeSetImpl()
+        }
+        service.frameworkService = fcontrol.createMock()
+        service.storageService = mockWith(StorageService) {
+            storageTreeWithContext { ctx ->
+                null
+            }
+        }
+        //create mock user
+        User u1 = new User(login: 'testuser')
+        u1.save()
+
+        //basic test
+
+            Execution execution = new Execution(
+                    argString: "-test args -test3 something",
+                    user: "testuser",
+                    project: "testproj",
+                    loglevel: 'WARN',
+                    doNodedispatch: true,
+                    filter:"name: basic",
+                    nodeThreadcount: 2,
+                    nodeKeepgoing: true,
+                    nodeExcludePrecedence: false,
+            )
+            def val = service.createContext(execution, null, null, null, null, [id:'3',name:'blah',group:'something/else',
+                    username:'bill',project:'testproj'], null, null)
+            assertNotNull(val)
+            assertNotNull(val.nodeSelector)
+            assertNotNull(val.nodeSelector.exclude)
+            assertFalse(val.nodeSelector.exclude.dominant)
+            assertNotNull(val.nodeSelector.include)
+            assertTrue(val.nodeSelector.include.dominant)
+            assertNull(val.nodeSelector.exclude.tags)
+            assertNull(val.nodeSelector.exclude.name)
+            assertNull(val.nodeSelector.include.tags)
+            assertEquals("basic", val.nodeSelector.include.name)
+            assertEquals(2, val.threadCount)
+            assertEquals(true, val.keepgoing)
+    }
 
     /**
      * Test use of ${option.x} and ${job.y} parameter expansion in node filter tag and name filters.
