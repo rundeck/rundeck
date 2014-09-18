@@ -1533,7 +1533,7 @@ class ScheduledExecutionController  extends ControllerBase{
         //test nodeset to make sure there are matches
         if(scheduledExecution.doNodedispatch){
             NodeSet nset = ExecutionService.filtersAsNodeSet(scheduledExecution)
-            model.nodeset=nset
+            model.nodefilter=scheduledExecution.asFilter()
             //check nodeset filters for variable expansion
             def varfound = scheduledExecution.asFilter().contains("\${")
             if (varfound) {

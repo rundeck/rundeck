@@ -25,8 +25,8 @@
         <g:if test="${nodesetvariables && !failedNodes}">
             %{--show node filters--}%
             <div>
-                <span class="query form-control-static">
-                    <g:render template="/framework/displayNodeSetFilters" model="${[nodeset: nodeset]}"/>
+                <span class="query form-control-static ">
+                   <span class="queryvalue text"><g:enc>${nodefilter}</g:enc></span>
                 </span>
             </div>
 

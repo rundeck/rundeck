@@ -141,28 +141,29 @@
                 <td >
                     <span id="matchednodes_${rkey}" class="matchednodes embed">
                         <span class="text-muted"><g:message code="include.nodes.matching" /></span>
-                        <g:set var="jsdata" value="${execdata.properties.findAll{it.key==~/^(filter|node(In|Ex)clude.*)$/ &&it.value}}"/>
+                        <g:set var="filterstring" value="${execdata.asFilter()}"/>
+                        <g:set var="jsdata" value="${[filter:filterstring]}"/>
                     <g:set var="varStr" value=""/>
                     <%varStr='${'%>
-                    <g:set var="hasVar" value="${jsdata.find{it.value.toString()?.contains(varStr)}}"/>
+                    <g:set var="hasVar" value="${filterstring?.contains(varStr)}"/>
                     <g:if test="${hasVar}">
                         <span class="query">
-                        <g:render template="/framework/displayNodeFilters" model="${[displayParams: execdata]}"/>
+                            <span class="queryvalue text"><g:enc>${filterstring}</g:enc></span>
                         </span>
                     </g:if>
                     <g:else>
-                    <g:embedJSON id="nodeFilterData" data="${jsdata}"/>
-                    <g:javascript>
-                        jQuery(function(){
-                            jQuery('#nodeFilterUpdate').click(function(e){
+                        <g:embedJSON id="nodeFilterData" data="${jsdata}"/>
+                        <g:javascript>
+                            jQuery(function(){
                                 var nfilter=loadJsonData('nodeFilterData');
-                                _updateMatchedNodes(nfilter,'matchednodes_${ enc(js: rkey) }','${enc(js:execdata?.project)}',false,{requireRunAuth:true});
+                                jQuery('#nodeFilterUpdate').click(function(e){
+                                    _updateMatchedNodes(nfilter,'matchednodes_${ enc(js: rkey) }','${enc(js:execdata?.project)}',false,{requireRunAuth:true});
+                                });
                             });
-                        });
-                    </g:javascript>
-                    <span class="action textbtn  textbtn query " title="Display matching nodes" id="nodeFilterUpdate">
-                        <g:render template="/framework/displayNodeFilters" model="${[displayParams:execdata]}"/>
-                    </span>
+                        </g:javascript>
+                        <span class="action textbtn  textbtn query " title="Display matching nodes" id="nodeFilterUpdate">
+                            <g:render template="/framework/displayNodeFilters" model="${[displayParams:execdata]}"/>
+                        </span>
                     </g:else>
                     </span>
 
