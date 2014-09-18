@@ -1,21 +1,4 @@
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants; rundeck.Execution" %>
-<g:javascript>
-/** START history
-         *
-         */
-
-
-    function init(){
-        <g:if test="${!(grailsApplication.config.rundeck?.gui?.enableJobHoverInfo in ['false', false])}">
-        $$('.obs_bubblepopup').each(function(e) {
-            new BubbleController(e,null,{offx:-14,offy:null}).startObserving();
-        });
-        </g:if>
-    }
-    Event.observe(window,'load',init);
-
-</g:javascript>
-
 <div class="row">
     <g:render template="/scheduledExecution/showHead"
               model="[scheduledExecution: scheduledExecution, followparams: [mode: followmode, lastlines: params.lastlines]]"/>

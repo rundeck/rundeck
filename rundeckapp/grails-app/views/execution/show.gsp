@@ -151,12 +151,6 @@
             },{},nodeflowvm);
             ko.applyBindings(nodeflowvm,jQuery('#execution_main')[0]);
 
-            <g:if test="${!(grailsApplication.config.rundeck?.gui?.enableJobHoverInfo in ['false', false])}">
-            $$('.obs_bubblepopup').each(function(e) {
-                new BubbleController(e,null,{offx:-14,offy:null}).startObserving();
-            });
-            </g:if>
-
             //link flow and output tabs to initialize following
             //by default show state
             followState();
