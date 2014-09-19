@@ -1,3 +1,7 @@
+% Version 2.2.2
+% greg
+% 09/19/2014
+
 Release 2.2.2
 =============
 
@@ -26,16 +30,16 @@ you will see an "Invalid token" error.
 If this becomes a problem for you
 you can either change the expiration time for these tokens,
 or switch to using non-expiring tokens.
-See [Administration - Configuration File Reference - Security](http://rundeck.org/2.2.2/administration/configuration-file-reference.html#security).
+See [Administration - Configuration File Reference - Security](../administration/configuration-file-reference.html#security).
 
 To add a Password field definition to your plugin, 
-see [Plugin Development - Description Properties](http://rundeck.org/2.2.2/developer/plugin-development.html#description-properties). 
+see [Plugin Development - Description Properties](../developer/plugin-development.html#description-properties). 
 (Note that currently using property annotations is not supported 
 for the three plugin types that can use Password properties.)
 
 *Upgrade notes:* 
 
-See the [Upgrading Guide](http://rundeck.org/2.2.2/upgrading/index.html).
+See the [Upgrading Guide](../upgrading/index.html).
 
 
 ## Contributors
