@@ -73,11 +73,11 @@
     </td>
     <td>
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
-    <g:if test="${prop.renderingOptions?.('displayType') == StringRenderingConstants.DisplayType.MULTI_LINE}">
+    <g:if test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.MULTI_LINE, 'MULTI_LINE']}">
         <g:textArea name="${fieldname}" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
                  id="${fieldid}" rows="10" cols="100"/>
     </g:if>
-    <g:elseif test="${prop.renderingOptions?.('displayType') == StringRenderingConstants.DisplayType.PASSWORD}">
+    <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.PASSWORD, 'PASSWORD']}">
         <g:passwordField name="${fieldname}" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
                     id="${fieldid}" rows="10" cols="100"/>
     </g:elseif>

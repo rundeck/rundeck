@@ -1,7 +1,7 @@
 <%@ page import="com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants" %>
 <g:set var="scopeinfo" value="${g.rkey()}"/>
 
-<g:if test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) == StringRenderingConstants.DisplayType.PASSWORD}">
+<g:if test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.PASSWORD, 'PASSWORD']}">
     <g:set var="propValue" value="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"/>
 </g:if>
 <g:else>
