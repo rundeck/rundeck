@@ -51,7 +51,30 @@ public class WidgetTagLib {
             out<<cssDisplayNone
         }
     }
+    /**
+     * Output a css class if a test condition is true, or a different one if the test condition is false.
+     * @attr if test condition that should be true
+     * @attr unless  test condition that should be false
+     * @attr then css class if the test condition is true
+     * @attr else css class if the test condition is false
+     */
+    def css={attrs,body->
+        if (attrs.keySet().contains('if') && attrs.keySet().contains('unless')) {
+            throw new Exception("styleVisible: both if and unless attributes cannot be specified")
+        } else if (!attrs.keySet().contains('if') && !attrs.keySet().contains('unless')) {
+            throw new Exception("styleVisible: if or unless attribute must be specified")
+        }
+        def testvalue = attrs.keySet().contains('if') ? attrs.'if' : attrs.'unless'
+        def testtrue = attrs.keySet().contains('if');
+        def onclass=attrs['then']?:''
+        def offclass=attrs['else']?:''
 
+        if ((testtrue && testvalue && testvalue != 'false') || (!testtrue && (!testvalue || testvalue == 'false'))) {
+            out << onclass
+        } else {
+            out << offclass
+        }
+    }
 
     /**
     * This tag simply calls the normal "eventHandler" tag and sets jsonly="true" automatically.
