@@ -101,7 +101,7 @@ When connecting to the remote node, Rundeck will look for a property/attribute s
 2. **Project level**: `project.ssh-keypath` property in `project.properties`.  Applies to any project node by default.
 3. **Rundeck level**: `framework.ssh-keypath` property in `framework.properties`. Applies to all projects by default.
 
-If you private key is encrypted with a passphrase, then you can use a "Secure Option" to prompt the user to enter the passphrase when executing on the Node.  See below.
+If you private key is encrypted with a passphrase, then you can use a "Secure Remote Authentication Option" to prompt the user to enter the passphrase when executing on the Node.  See below.
 
 You can embed context property references within the keypath such as `${job.project}`. See [Context Variables][].
 
@@ -123,7 +123,7 @@ When connecting to the remote node, Rundeck will look for a property/attribute s
 2. **Project level**: `project.ssh-key-storage-path` property in `project.properties`.  Applies to any project node by default.
 3. **Rundeck level**: `framework.ssh-key-storage-path` property in `framework.properties`. Applies to all projects by default.
 
-If you private key is encrypted with a passphrase, then you can use a "Secure Option" to prompt the user to enter the passphrase when executing on the Node.  See below.
+If you private key is encrypted with a passphrase, then you can use a "Secure Remote Authentication Option" to prompt the user to enter the passphrase when executing on the Node.  See below.
 
 **Note:** If both `ssh-key-storage-path` and `ssh-keypath` resolve to a value, then the `ssh-key-storage-path` will be used.
 
@@ -135,15 +135,15 @@ You can embed context property references within the key storage path such as `$
 
 Using a passphrase for privateKey authentication works in the following way:
 
-* A Job must be defined specifying a Secure Option to prompt the user for the key's passphrase.
+* A Job must be defined specifying a Secure Remote Authentication Option to prompt the user for the key's passphrase.
 * Target nodes must be configured to use privateKey authentication.
-* When the user executes the Job, they are prompted for the key's passphrase.  The Secure Option value for the passphrase is not stored in the database, and is used only for that execution.
+* When the user executes the Job, they are prompted for the key's passphrase.  The Secure Remote Authentication Option value for the passphrase is not stored in the database, and is used only for that execution.
 
 Therefore Private Key Passphrase authentication has several requirements and some limitations:
 
 1. Private Key-authenticated nodes requiring passphrases can only be executed on via a defined Job, not via Ad-hoc commands (yet).
-2. Each Job that will execute on such Nodes must define a Secure Option to prompt the user for the key's passphrase before execution.
-3. All Nodes using passphrase protected private keys for a Job must have a matching Secure Option defined, or may use the same option name (or the default) if they share the key's passphrase (e.g. using the same private key).
+2. Each Job that will execute on such Nodes must define a Secure Remote Authentication Option to prompt the user for the key's passphrase before execution.
+3. All Nodes using passphrase protected private keys for a Job must have a matching Secure Remote Authentication Option defined, or may use the same option name (or the default) if they share the key's passphrase (e.g. using the same private key).
 
 Passphrases are input either via the GUI or arguments to the job if executed via CLI or API.
 
@@ -153,7 +153,7 @@ Next, configure a Job, and include an Option definition where `secureInput` is s
 
 If the value is not `sshKeyPassphrase`, then make sure to set the following attribute on each Node for password authentication:
 
-* `ssh-key-passphrase-option` = "`option.NAME`" where NAME is the name of the Job's secure option.
+* `ssh-key-passphrase-option` = "`option.NAME`" where NAME is the name of the Job's Secure Remote Authentication Option.
 
 An example Node and Job option configuration are below:
 
@@ -189,15 +189,15 @@ Job:
 
 Password authentication works in the following way:
 
-* A Job must be defined specifying a Secure Option to prompt the user for the password
+* A Job must be defined specifying a Secure Remote Authentication Option to prompt the user for the password
 * Target nodes must be configured for password authentication
-* When the user executes the Job, they are prompted for the password.  The Secure Option value for the password is not stored in the database, and is used only for that execution.
+* When the user executes the Job, they are prompted for the password.  The Secure Remote Authentication Option value for the password is not stored in the database, and is used only for that execution.
 
 Therefore Password authentication has several requirements and some limitations:
 
 1. Password-authenticated nodes can only be executed on via a defined Job, not via Ad-hoc commands (yet).
-2. Each Job that will execute on password-authenticated Nodes must define a Secure Option to prompt the user for the password before execution.
-3. All Nodes using password authentication for a Job must have an equivalent Secure Option defined, or may use the same option name (or the default) if they share authentication passwords.
+2. Each Job that will execute on password-authenticated Nodes must define a Secure Remote Authentication Option to prompt the user for the password before execution.
+3. All Nodes using password authentication for a Job must have an equivalent Secure Remote Authentication Option defined, or may use the same option name (or the default) if they share authentication passwords.
 
 Passwords for the nodes are input either via the GUI or arguments to the job if executed via CLI or API.
 
@@ -207,7 +207,7 @@ Next, configure a Job, and include an Option definition where `secureInput` is s
 
 If the value is not `sshPassword`, then make sure to set the following attribute on each Node for password authentication:
 
-* `ssh-password-option` = "`option.NAME`" where NAME is the name of the Job's secure option.
+* `ssh-password-option` = "`option.NAME`" where NAME is the name of the Job's Secure Remote Authentication Option.
 
 An example Node and Job option configuration are below:
 
@@ -250,15 +250,15 @@ This works in the following way:
 
 Similarly to SSH Password authentication, Sudo Password Authentication requires:
 
-* A Job must be defined specifying a Secure Option to prompt the user for the password
+* A Job must be defined specifying a Secure Remote Authentication Option to prompt the user for the password
 * Target nodes must be configured for Sudo authentication
-* When the user executes the Job, they are prompted for the password.  The Secure Option value for the password is not stored in the database, and is used only for that execution.
+* When the user executes the Job, they are prompted for the password.  The Secure Remote Authentication Option value for the password is not stored in the database, and is used only for that execution.
 
 Therefore Sudo Password Authentication has several requirements and some limitations:
 
 1. Sudo Password authenticated nodes can only be executed on via a defined Job, not via Ad-hoc commands (yet).
-2. Each Job that will execute on Sudo Password Authenticated Nodes must define a Secure Option to prompt the user for the Sudo password before execution.
-3. All Nodes using Sudo password authentication for a Job must have an equivalent Secure Option defined, or may use the same option name (or the default) if they share sudo authentication passwords.
+2. Each Job that will execute on Sudo Password Authenticated Nodes must define a Secure Remote Authentication Option to prompt the user for the Sudo password before execution.
+3. All Nodes using Sudo password authentication for a Job must have an equivalent Secure Remote Authentication Option defined, or may use the same option name (or the default) if they share sudo authentication passwords.
 
 Passwords for the nodes are input either via the GUI or arguments to the job if executed via CLI or API.
 
@@ -268,7 +268,7 @@ You can configure the way the Sudo Password Authentication works by setting thes
  
 * `sudo-command-enabled` - set to "true" to enable Sudo Password Authentication.
 * `sudo-command-pattern` - a regular expression to detect when a command execution should expect to require Sudo authentication. Default pattern is `^sudo$`.
-* `sudo-password-option` - an option reference ("option.NAME") to define which secure option value to use as password.  The default is `option.sudoPassword`.
+* `sudo-password-option` - an option reference ("option.NAME") to define which secure remote authentication option value to use as password.  The default is `option.sudoPassword`.
 * `sudo-prompt-pattern` - a regular expression to detect the password prompt for the Sudo authentication. The default pattern is `^\[sudo\] password for .+: .*`
 * `sudo-failure-pattern` - a regular expression to detect the password failure response.  The default pattern is `^.*try again.*`.
 * `sudo-prompt-max-lines` - maximum lines to read when expecting the password prompt. (default: `12`).
@@ -286,7 +286,7 @@ Next, configure a Job, and include an Option definition where `secureInput` is s
 
 If the value is not `sudoPassword`, then make sure to set the following attribute on each Node for password authentication:
 
-* `sudo-password-option` = "`option.NAME`" where NAME is the name of the Job's secure option.
+* `sudo-password-option` = "`option.NAME`" where NAME is the name of the Job's Secure Remote Authentication Option.
 
 An example Node and Job option configuration are below:
 
