@@ -18,7 +18,7 @@
     </g:if>
     <g:else>
         <li id="projectSelect" class="${selected == 'project' ? 'active' : ''} dropdown">
-            <span class="action textbtn button" onclick="loadProjectSelect({page:'configure'});"
+            <span class="action textbtn" onclick="loadProjectSelect({page:'configure'});"
                   title="Select project...">
                 Project Configuration:
                 <g:enc>${params.project ?: request.project ?: 'Select project...'}</g:enc>
