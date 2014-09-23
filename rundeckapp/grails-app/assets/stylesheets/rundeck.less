@@ -106,10 +106,17 @@
   }
   /* use glyphicon folder icons */
   .expandComponentHolder  > div > span.expandComponentControl.jobgroupexpand span.foldertoggle{
+    width: 16px;
+    height: 14px;
+    display: inline-block;
       .glyphicon();
       .glyphicon-folder-close();
   }
   .expandComponentHolder.expanded  > div > span.expandComponentControl.jobgroupexpand span.foldertoggle{
+    width: 16px;
+    /*padding-bottom:14px;*/
+    height: 14px;
+    display: inline-block;
       .glyphicon();
       .glyphicon-folder-open();
   }
@@ -794,6 +801,9 @@ section{
 
   tr.alternateRow {
     background-color: @table-bg-accent;
+    &.selected {
+      border: 1px solid #999;
+    }
   }
 
   .tab-content{
@@ -1316,3 +1326,151 @@ pre.filtererror{
     overflow-x: scroll;
   }
 }
+
+
+//rundeck icons
+
+  .rdicon {
+    display: inline-block;
+    vertical-align: middle;
+    background-repeat: no-repeat;
+    &.icon-small {
+      width: 16px;
+      height: 16px;
+
+      &.shell, &.command {
+        background-image: url("icon-small-shell.png");
+      }
+
+      &.script {
+        background-image: url("icon-small-script.png");
+      }
+
+      &.scriptfile {
+        background-image: url("icon-small-scriptfile.png");
+      }
+
+      &.plugin {
+        background-image: url("icon-small-plugin.png");
+      }
+      &.node {
+        height: 10px;
+        background-image: url("icon-small-Node.png");
+      }
+
+      &.node.node-runnable {
+        background-image: url("icon-small-Node-run.png");
+      }
+    }
+    &.icon {
+      width: 32px;
+      height: 32px;
+
+      &.shell, &.command {
+        background-image: url("icon-shell.png");
+      }
+
+      &.script {
+        background-image: url("icon-script.png");
+      }
+
+      &.scriptfile {
+        background-image: url("icon-scriptfile.png");
+      }
+    }
+    &.icon-med {
+      width: 24px;
+      height: 24px;
+
+      &.shell, &.command {
+        background-image: url("icon-med-shell.png");
+      }
+      &.script {
+        background-image: url("icon-med-script.png");
+      }
+
+      &.scriptfile {
+        background-image: url("icon-med-scriptfile.png");
+      }
+    }
+
+    &.app-logo.middle {
+      vertical-align: middle;
+    }
+
+    //retina/@2x images
+    @media
+    only screen and (-webkit-min-device-pixel-ratio: 2),
+    only screen and (   min--moz-device-pixel-ratio: 2),
+    only screen and (     -o-min-device-pixel-ratio: 2/1),
+    only screen and (        min-device-pixel-ratio: 2),
+    only screen and (                min-resolution: 192dpi),
+    only screen and (                min-resolution: 2dppx) {
+
+
+      &.icon-small {
+        background-size: 16px 16px;
+
+        &.node {
+          background-size: 16px 10px;
+          background-image: url("icon-small-Node@2x.png");
+        }
+
+        &.node.node-runnable {
+          background-image: url("icon-small-Node-run@2x.png");
+        }
+
+        &.shell, &.command {
+          background-image: url("icon-small-shell@2x.png");
+        }
+
+        &.script {
+          background-image: url("icon-small-script@2x.png");
+        }
+
+        &.scriptfile {
+          background-image: url("icon-small-scriptfile@2x.png");
+        }
+
+        &.plugin {
+          background-image: url("icon-small-plugin@2x.png");
+        }
+      }
+
+      &.icon {
+        background-size: 32px 32px;
+
+        &.shell, &.command {
+          background-image: url("icon-shell@2x.png");
+        }
+
+        &.script {
+          background-image: url("icon-script@2x.png");
+        }
+
+        &.scriptfile {
+          background-image: url("icon-scriptfile@2x.png");
+        }
+
+      }
+
+      &.icon-med {
+        background-size: 24px 24px;
+
+        &.shell, &.command {
+          background-image: url("icon-med-shell@2x.png");
+        }
+
+        &.script {
+          background-image: url("icon-med-script@2x.png");
+        }
+
+        &.scriptfile {
+          background-image: url("icon-med-scriptfile@2x.png");
+        }
+
+      }
+
+    }
+
+  }

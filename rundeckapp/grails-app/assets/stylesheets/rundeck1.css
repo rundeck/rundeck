@@ -2065,3 +2065,7 @@ span.apitoken.empty {
     border-radius: 3px;
     margin-right: 2px;
 }
+
+.embed .node_entry.glow {
+    background: #cfc;
+}

@@ -36,9 +36,6 @@
                 <td style="display: none" class="eventicon obs_bulk_edit_enable">
                 </td>
                 <td style="width:12px;" class="eventicon">
-                %{--<g:if test="${!noimgs}"><img--}%
-                        %{--src="${resource(dir: 'images', file: "icon-small-" + fileName + ".png")}"--}%
-                        %{--alt="job" style="border:0;" width="12px" height="12px"/></g:if>--}%
                 <g:set var="gicon"
                        value="${execution.status == 'true' ? 'ok-circle' : null == execution.dateCompleted ? 'play-circle' : execution.cancelled ? 'minus-sign' : 'warning-sign'}"/>
 
