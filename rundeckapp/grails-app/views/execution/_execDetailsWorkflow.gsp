@@ -101,7 +101,7 @@
 <div class="pflowlist ${edit?'edit':''} rounded ${isAdhoc?'adhoc':''}" style="">
     <g:if test="${edit}">
         <div id="wfundoredo" class="undoredocontrols">
-            <g:render template="/common/undoRedoControls"/>
+            <g:render template="/common/undoRedoControls" model="[key:'workflow']"/>
         </div>
     </g:if>
     <ol id="wfilist_${rkey}" class="flowlist">

@@ -26,7 +26,7 @@
 
     <g:if test="${edit}">
         <div id="optundoredo" class="undoredocontrols">
-            <g:render template="/common/undoRedoControls"/>
+            <g:render template="/common/undoRedoControls" model="[key: 'opts']"/>
         </div>
     </g:if>
 
