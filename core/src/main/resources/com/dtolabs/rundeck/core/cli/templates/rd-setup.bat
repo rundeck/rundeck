@@ -11,14 +11,24 @@ GOTO:Start
 
 :Start
 
+rem Guess RDECK_BASE if not defined
+set "CURRENT_DIR=%cd%"
+if not "%RDECK_BASE%" == "" goto gotRdeckBase
+set "RDECK_BASE=%CURRENT_DIR%"
+if exist "%RDECK_BASE%\etc\profile.bat" goto gotRdeckBase
+set "RDECK_BASE="
+:gotRdeckBase
+
+IF NOT EXIST "%RDECK_BASE%\etc\profile.bat" (
+   ECHO Unable to source %RDECK_BASE%\etc\profile.bat
+   GOTO:EOF
+) ELSE (
+	CALL "%RDECK_BASE%\etc\profile.bat"
+)
+
 IF NOT DEFINED RDECK_BASE (
    ECHO RDECK_BASE not set
    GOTO:EOF
-)
-
-
-IF NOT DEFINED ANT_HOME (
-	SET ANT_HOME=%RDECK_BASE%\pkgs\apache-ant-1.8.1
 )
 
 IF "%JAVA_HOME%" =="" (
@@ -33,11 +43,12 @@ IF NOT EXIST "%JAVA_HOME%\bin\java.exe" (
 
 set Path=%JAVA_HOME%\bin:%ANT_HOME%\bin:%Path%
 
-CALL %JAVA_HOME%\bin\java "-Dant.home=%ANT_HOME%" ^
-                          "-Duser.java_home=%JAVA_HOME%" ^
-                          "-Drdeck.base=%RDECK_BASE%" ^
-                          -cp "%RDECK_BASE%\classes;%ANT_HOME%\lib\ant.jar;%ANT_HOME%\lib\ant-launcher.jar;%ANT_HOME%\lib\regexp-1.5.jar;%ANT_HOME%\lib\ant-apache-regexp.jar" ^
-                          com.dtolabs.launcher.Setup %*
+CALL "%JAVA_HOME%\bin\java" ^
+    "-Duser.java_home=%JAVA_HOME%" ^
+    %RDECK_CLI_OPTS% ^
+    "-Drdeck.base=%RDECK_BASE%" ^
+    -Djava.ext.dirs=%RD_LIBDIR% ^
+    com.dtolabs.launcher.Setup %*
 
 IF NOT "%ERRORLEVEL%"=="0" GOTO:EXITSetup
 
