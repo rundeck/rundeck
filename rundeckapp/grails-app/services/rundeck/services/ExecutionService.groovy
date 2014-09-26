@@ -807,9 +807,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
 
     /**
-     * Return an StepExecutionItem instance for the given workflow Execution, suitable for the ExecutionService layer
+     * Return an WorkflowExecutionItem instance for the given workflow Execution,
+     * suitable for the ExecutionService layer
      */
-    public WorkflowExecutionItem createExecutionItemForWorkflowContext(ExecutionContext execMap, Framework framework, String userName=null) {
+    public WorkflowExecutionItem createExecutionItemForWorkflowContext(
+            ExecutionContext execMap,
+            Framework framework,
+            String userName=null
+    )
+    {
         if (!execMap.workflow.commands || execMap.workflow.commands.size() < 1) {
             throw new Exception("Workflow is empty")
         }
@@ -817,9 +823,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             userName = execMap.user
         }
 
-        //create thread object with an execution item, and start it
         final WorkflowExecutionItemImpl item = new WorkflowExecutionItemImpl(
-            new WorkflowImpl(execMap.workflow.commands.collect {itemForWFCmdItem(it,it.errorHandler?itemForWFCmdItem(it.errorHandler):null)}, execMap.workflow.threadcount, execMap.workflow.keepgoing,execMap.workflow.strategy?execMap.workflow.strategy: "node-first"))
+            new WorkflowImpl(
+                    execMap.workflow.commands.collect {
+                        itemForWFCmdItem(
+                                it,
+                                it.errorHandler?itemForWFCmdItem(it.errorHandler):null
+                        )
+                    },
+                    execMap.workflow.threadcount,
+                    execMap.workflow.keepgoing,
+                    execMap.workflow.strategy?execMap.workflow.strategy: "node-first"
+            )
+        )
         return item
     }
 
@@ -858,9 +874,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 } else {
                     args = new String[0];
                 }
-                return ExecutionItemFactory.createScriptFileItem(cmd.getScriptInterpreter(),
+                return ExecutionItemFactory.createScriptFileItem(
+                        cmd.getScriptInterpreter(),
+                        cmd.getFileExtension(),
                         !!cmd.interpreterArgsQuoted,
-                        script, args, handler, !!cmd.keepgoingOnSuccess);
+                        script,
+                        args,
+                        handler,
+                        !!cmd.keepgoingOnSuccess);
 
             } else if (null != cmd.getAdhocFilepath()) {
                 final String filepath = cmd.getAdhocFilepath();
@@ -872,11 +893,23 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     args = new String[0];
                 }
                 if(filepath ==~ /^(?i:https?|file):.*$/) {
-                    return ExecutionItemFactory.createScriptURLItem(cmd.getScriptInterpreter(),
-                            !!cmd.interpreterArgsQuoted, filepath, args, handler, !!cmd.keepgoingOnSuccess)
+                    return ExecutionItemFactory.createScriptURLItem(
+                            cmd.getScriptInterpreter(),
+                            cmd.getFileExtension(),
+                            !!cmd.interpreterArgsQuoted,
+                            filepath,
+                            args,
+                            handler,
+                            !!cmd.keepgoingOnSuccess)
                 }else {
-                    return ExecutionItemFactory.createScriptFileItem(cmd.getScriptInterpreter(),
-                            !!cmd.interpreterArgsQuoted, new File(filepath), args, handler, !!cmd.keepgoingOnSuccess);
+                    return ExecutionItemFactory.createScriptFileItem(
+                            cmd.getScriptInterpreter(),
+                            cmd.getFileExtension(),
+                            !!cmd.interpreterArgsQuoted,
+                            new File(filepath),
+                            args,
+                            handler,
+                            !!cmd.keepgoingOnSuccess);
 
                 }
             }

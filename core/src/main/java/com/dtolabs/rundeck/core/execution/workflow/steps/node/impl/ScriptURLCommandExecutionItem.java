@@ -50,6 +50,13 @@ public interface ScriptURLCommandExecutionItem extends HandlerExecutionItem {
     public abstract String getScriptInterpreter();
 
     /**
+     * Get the temp file extension
+     *
+     * @return file extension
+     */
+    public abstract String getFileExtension();
+
+    /**
      * Get the server-local script path
      *
      * @return server-side script path

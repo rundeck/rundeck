@@ -134,9 +134,9 @@
                        for="scriptInterpreterField"><g:message
                         code="Workflow.Step.scriptInterpreter.label"/>:</label>
                 <div class="col-sm-10">
-                    <div class="popout tooltipcontent"
+                    <div class="popout tooltipcontent helptooltip"
                          id="interpreterHelp${enc(attr: rkey)}_tooltip"
-                         style="display:none; background:white; position:absolute; max-width: 500px; width:500px;">
+                         style="display:none;">
                         <div class="help-block"><g:message
                                 code="Workflow.Step.scriptInterpreter.help"/></div>
                     </div>
@@ -175,14 +175,49 @@
                                 id="interpreterArgsQuotedHelp${enc(attr: rkey)}"><i
                                   class="glyphicon glyphicon-question-sign  text-info"></i>
                           </span>
-                        <div class="popout tooltipcontent"
+                        <div class="popout tooltipcontent helptooltip"
                              id="interpreterArgsQuotedHelp${enc(attr: rkey)}_tooltip"
-                             style="display:none; background:white; position:absolute; max-width: 500px; width:500px;">
+                             style="display:none; ">
                             <div class="help-block"><g:message
                                     code="Workflow.Step.interpreterArgsQuoted.help"/></div>
                         </div>
 
                     </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+
+                <label class="col-sm-2 text-right form-control-static"
+                       for="fileExtensionField"><g:message
+                        code="Workflow.Step.fileExtension.label"/>:</label>
+
+                <div class="col-sm-10">
+                    <div class="popout tooltipcontent helptooltip"
+                         id="fileExtensionHelp${enc(attr: rkey)}_tooltip"
+                         style="display: none;">
+                        <div class="panel-body">
+                        <div class="help-block"><g:message
+                                code="Workflow.Step.fileExtension.help"/></div>
+                        </div>
+                    </div>
+                    <span class="input-group">
+
+                        <input type='text' name="fileExtension"
+                               placeholder="${enc(attr: g.message(code: 'Workflow.Step.fileExtension.prompt'))}"
+                               value="${enc(attr: item?.fileExtension)}" size="100"
+                               class="form-control"
+                               data-bind="value: fileExtension, valueUpdate: 'keyup'"
+                               id="fileExtensionField" />
+
+                        <div class="input-group-addon">
+                            <span class="action obs_tooltip"
+                                  id="fileExtensionHelp${enc(attr: rkey)}"><i
+                                    class="glyphicon glyphicon-question-sign  text-info"></i></span>
+
+                        </div>
+
+                    </span>
                 </div>
             </div>
         </div>
@@ -192,7 +227,7 @@
         <div id='interpreterArgsQuotedHelp${rkey}_preview' class="presentation">
             <code>$ <span data-bind="html: invocationPreviewHtml"></span></code>
         </div>
-            <g:embedJSON id="scriptStepData_${rkey}" data="${[invocationString: item?.scriptInterpreter?:'',args: item?.argString?:'',argsQuoted: item?.interpreterArgsQuoted?true:false]}"/>
+            <g:embedJSON id="scriptStepData_${rkey}" data="${[invocationString: item?.scriptInterpreter?:'',fileExtension: item?.fileExtension?:'',args: item?.argString?:'',argsQuoted: item?.interpreterArgsQuoted?true:false]}"/>
             <g:javascript>
             fireWhenReady("scriptStep_${rkey}",function(){
                 workflowEditor.bindKey('${rkey}','scriptStep_${rkey}',loadJsonData('scriptStepData_${rkey}'));

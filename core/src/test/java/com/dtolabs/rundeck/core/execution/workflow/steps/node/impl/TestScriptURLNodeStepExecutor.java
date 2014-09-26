@@ -260,6 +260,11 @@ public class TestScriptURLNodeStepExecutor extends AbstractBaseTest {
                 return null;
             }
 
+            @Override
+            public String getFileExtension() {
+                return null;
+            }
+
             public boolean getInterpreterArgsQuoted() {
                 return false;
             }

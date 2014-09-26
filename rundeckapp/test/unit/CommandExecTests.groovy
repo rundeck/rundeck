@@ -59,6 +59,11 @@ class CommandExecTests extends GrailsUnitTestCase{
         assertEquals([scriptfile: 'test3', errorhandler: [script: 'testerr',args: 'err args']], t.toMap())
     }
 
+    void testFileExtensionToMap() {
+        CommandExec t = new CommandExec(adhocLocalString: 'test1', fileExtension: '.ext')
+        assertEquals([script: 'test1',fileExtension:'.ext'], t.toMap())
+    }
+
     //test fromMap
 
     void testExecFromMap(){
@@ -82,6 +87,13 @@ class CommandExecTests extends GrailsUnitTestCase{
         assertEquals('scriptstring', t2.adhocLocalString)
         assertEquals('arg string', t2.argString)
         assertNull(t2.errorHandler)
+    }
+    void testScriptFileExtensionFromMap(){
+        CommandExec t=CommandExec.fromMap([script: 'scriptstring',fileExtension: 'boogy'])
+        assertEquals('scriptstring',t.adhocLocalString)
+        assertEquals('boogy', t.fileExtension)
+        assertNull(t.argString)
+        assertNull(t.errorHandler)
     }
     void testFileFromMap(){
         CommandExec t=CommandExec.fromMap([scriptfile: 'scriptfile'])
@@ -117,6 +129,14 @@ class CommandExecTests extends GrailsUnitTestCase{
         CommandExec t = new CommandExec(adhocLocalString: 'test1')
         CommandExec t1 = t.createClone()
         assertEquals('test1', t1.adhocLocalString)
+        assertNull(t1.argString)
+    }
+    void testCreateCloneScriptFileExtension() {
+        mockDomain(CommandExec)
+        CommandExec t = new CommandExec(adhocLocalString: 'test1',fileExtension: 'ext')
+        CommandExec t1 = t.createClone()
+        assertEquals('test1', t1.adhocLocalString)
+        assertEquals('ext', t1.fileExtension)
         assertNull(t1.argString)
     }
     void testCreateCloneFile() {
