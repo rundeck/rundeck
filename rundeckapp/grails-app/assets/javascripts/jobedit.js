@@ -604,7 +604,7 @@ function _optview(name, target) {
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
     }
-    jQuery('#'+target).load(_genUrl(appLinks.editOptsRender,params), _showOptControls);
+    jQuery(target).load(_genUrl(appLinks.editOptsRender,params), _showOptControls);
 }
 function _optsave(formelem, tokendataid, target) {
     $('optsload').loading();
