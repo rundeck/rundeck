@@ -11,12 +11,20 @@
     </div>
     <div class="row row-space">
         <div class="col-sm-12">
-    <div data-bind="if: upPath() && !invalid()">
+    <div >
+        <span data-bind="if: upPath() && !invalid()">
         <button type="button" class="btn btn-sm btn-default" data-bind="click: function(){$root.loadDir(upPath())}" >
             <i class="glyphicon glyphicon-folder-open"></i>
             <i class="glyphicon glyphicon-arrow-up"></i>
             <span data-bind="text: $root.dirName(upPath())"></span>
         </button>
+        </span>
+        <span data-bind="if: allowUpload() && !notFound()" class="pull-right">
+            <button class="btn btn-sm btn-default"
+                    data-toggle="modal"
+                    data-target="#storageupload">Upload <i class="glyphicon glyphicon-upload"></i>
+            </button>
+        </span>
     </div>
     <div class="loading-area text-info " data-bind="visible: loading()"
          style="width: 100%; height: 200px; padding: 50px; background-color: #eee;">
@@ -40,10 +48,25 @@
             </td>
         </tr>
         </tbody>
-        <tbody data-bind="if: filteredFiles().length<1">
+        <tbody data-bind="if: filteredFiles().length<1 && !notFound()">
         <tr>
             <td colspan="2" class="text-muted">
                 No files
+            </td>
+        </tr>
+        </tbody>
+        <tbody data-bind="if: notFound()">
+        <tr>
+            <td colspan="2">
+                <span class="text-muted">Nothing found at this path. Would you like to upload a new file?</span>
+                <div
+                        data-bind="if: allowUpload()" >
+                    <button class="btn btn-sm btn-default"
+                            data-toggle="modal"
+                            data-target="#storageupload">Upload <i
+                            class="glyphicon glyphicon-upload"></i>
+                    </button>
+                </div>
             </td>
         </tr>
         </tbody>

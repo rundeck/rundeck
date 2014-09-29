@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageAuthorizationException
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
+import org.springframework.web.multipart.MultipartHttpServletRequest
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
@@ -29,7 +30,9 @@ class StorageController {
     FrameworkService frameworkService
     static allowedMethods = [
             apiKeys: ['GET','POST','PUT','DELETE'],
-            storageAccess:['GET']
+            keyStorageAccess:['GET'],
+            keyStorageUpload:['POST'],
+            keyStorageMkdir:['POST']
     ]
 
     private def pathUrl(path){
@@ -181,6 +184,82 @@ class StorageController {
      * non-api action wrapper for apiKeys method
      */
     public def keyStorageAccess(){
+        params.resourcePath = "/keys/${params.resourcePath ?: ''}"
+        getResource()
+    }
+    /**
+     * non-api action wrapper for apiKeys method
+     */
+    public def keyStorageUpload(){
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def resourcePath = params.resourcePath
+        def valid=false
+        withForm {
+            valid=true
+        }.invalidToken{
+            def message = g.message(code: 'request.error.invalidtoken.message')
+            log.error(message)
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'request.error.invalidtoken.message'
+            ])
+        }
+        if(!valid){
+            return
+        }
+        def contentType= null
+        def contentLength = -1
+        def inputStream = null
+        if (request instanceof MultipartHttpServletRequest) {
+            contentType = request.getFile('storagefile').getContentType()
+            contentLength = request.getFile('storagefile').getSize()
+            inputStream = request.getFile('storagefile').inputStream
+            def filename = request.getFile('storagefile').originalFilename
+            resourcePath = resourcePath + '/' + filename
+            System.err.println("uploadpath: "+resourcePath+", file: "+ request.getFile('storagefile'))
+        }else{
+            //no file uploaded
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.upload.missing',
+                    args: ['storagefile']
+            ])
+        }
+        if (storageService.hasResource(authContext, resourcePath)) {
+            response.status = 409
+            return renderError("resource already exists: ${resourcePath}")
+        } else if (storageService.hasPath(authContext, resourcePath)) {
+            response.status = 409
+            return renderError("directory already exists: ${resourcePath}")
+        }
+        Map<String, String> map = [
+                (RES_META_RUNDECK_CONTENT_TYPE): contentType,
+                (RES_META_RUNDECK_CONTENT_SIZE): contentLength,
+        ]
+        try {
+            def resource = storageService.createResource(authContext, resourcePath, map, inputStream)
+            response.status = 201
+            renderResourceFile(request, response, resource)
+        } catch (StorageAuthorizationException e) {
+            log.error("Unauthorized: resource ${resourcePath}: ${e.message}")
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_FORBIDDEN,
+                    code: 'api.error.item.unauthorized',
+                    args: [e.event.toString(), 'Path', e.path.toString()]
+            ])
+        } catch (StorageException e) {
+            log.error("Error creating resource ${resourcePath}: ${e.message}")
+            log.debug("Error creating resource ${resourcePath}", e)
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    message: e.message
+            ])
+        }
+    }
+    /**
+     * non-api action wrapper for apiKeys method
+     */
+    public def keyStorageMkdir(){
         params.resourcePath = "/keys/${params.resourcePath ?: ''}"
         getResource()
     }

@@ -27,6 +27,10 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
     self.resources = ko.observableArray([]);
     self.loading=ko.observable(false);
     self.invalid=ko.observable(false);
+    self.allowUpload=ko.observable(false);
+    self.allowSelection=ko.observable(true);
+    self.allowNotFound=ko.observable(false);
+    self.notFound=ko.observable(false);
     self.files = ko.computed(function () {
         return ko.utils.arrayFilter(self.resources(), function (res) {
             return res.type() == 'file';
@@ -99,15 +103,34 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
         self.path(self.rootPath());
     }
     self.selectFile = function(res){
-        if(self.selectedPath()==res.path()){
-            self.selectedPath(null);
-        }else{
-            self.selectedPath(res.path());
+        if(self.allowSelection()){
+            if(self.selectedPath()==res.path()){
+                self.selectedPath(null);
+            }else{
+                self.selectedPath(res.path());
+            }
         }
     }
     self.browseToInputPath = function(){
         self.path(self.inputPath());
-    }
+    };
+    self.pathNotFound=function(path){
+        self.notFound(true);
+        if(!self.allowNotFound()){
+            self.invalid(true);
+            self.errorMsg("Path not found: " + path);
+        }else{
+            self.resources([]);
+            var reload=false;
+            if(path.lastIndexOf('/') != path.length-1){
+                path=path+'/';
+                reload=true;
+            }
+            self.selectedPath(path);
+            self.inputPath(path)
+            self.browseToInputPath();
+        }
+    };
     self.path.subscribe(function (val) {
         if(val==''){
             return;
@@ -136,14 +159,13 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
                 }
                 self.errorMsg(null);
                 self.invalid(false);
+                self.notFound(false);
                 ko.mapping.fromJS(data, mapping, self);
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 self.loading(false);
                 if(jqXHR.status==404){
-                    self.invalid(true);
-
-                    self.errorMsg("Path not found: "+val);
+                    self.pathNotFound(val);
                 }else{
                     self.errorMsg(textStatus + ": " + errorThrown);
                 }
