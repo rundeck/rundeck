@@ -3,6 +3,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageAuthorizationException
+import com.dtolabs.rundeck.server.plugins.storage.KeyStorageLayer
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
 import org.springframework.web.multipart.MultipartHttpServletRequest
@@ -23,7 +24,8 @@ class StorageController {
             (RES_META_RUNDECK_CONTENT_TYPE):"contentType",
             (RES_META_RUNDECK_CONTENT_SIZE):"contentLength",
             (RES_META_RUNDECK_CONTENT_MASK): RES_META_RUNDECK_CONTENT_MASK,
-            (RES_META_RUNDECK_KEY_TYPE): RES_META_RUNDECK_KEY_TYPE
+            (RES_META_RUNDECK_KEY_TYPE): RES_META_RUNDECK_KEY_TYPE,
+            (KeyStorageLayer.RUNDECK_DATA_TYPE): KeyStorageLayer.RUNDECK_DATA_TYPE,
     ]
     StorageService storageService
     ApiService apiService
@@ -31,8 +33,9 @@ class StorageController {
     static allowedMethods = [
             apiKeys: ['GET','POST','PUT','DELETE'],
             keyStorageAccess:['GET'],
+            keyStorageDownload:['GET'],
             keyStorageUpload:['POST'],
-            keyStorageMkdir:['POST']
+            keyStorageDelete:['POST']
     ]
 
     private def pathUrl(path){
@@ -122,7 +125,7 @@ class StorageController {
             }
         }
     }
-    private def renderResourceFile(HttpServletRequest request, HttpServletResponse response, Resource resource) {
+    private def renderResourceFile(HttpServletRequest request, HttpServletResponse response, Resource resource, boolean forceDownload=false) {
         def contents = resource.contents
         def meta = contents?.meta
         def resContentType= meta?.getAt(RES_META_RUNDECK_CONTENT_TYPE)
@@ -130,7 +133,7 @@ class StorageController {
         //
         def maskContent=cmask?.contains('content')
 
-        def askedForContent= resContentType && request.getHeader('Accept')?.contains(resContentType)
+        def askedForContent= forceDownload || resContentType && request.getHeader('Accept')?.contains(resContentType)
         def anyContent= response.format == 'all'
 
         if (askedForContent && maskContent) {
@@ -140,6 +143,10 @@ class StorageController {
         }
         if((askedForContent || anyContent) && !maskContent) {
             response.contentType=resContentType
+            if(forceDownload){
+                def filename= resource.path.name
+                response.setHeader("Content-Disposition", "attachment; filename=\"${filename}\"")
+            }
             def len=contents.writeContent(response.outputStream)
             response.outputStream.close()
             return
@@ -190,6 +197,15 @@ class StorageController {
     /**
      * non-api action wrapper for apiKeys method
      */
+    public def keyStorageDownload(){
+        if(!params.resourcePath.startsWith("keys")){
+            params.resourcePath = "/keys/${params.resourcePath ?: ''}"
+        }
+        getResource(true)
+    }
+    /**
+     * non-api action wrapper for apiKeys method
+     */
     public def keyStorageUpload(){
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def resourcePath = params.resourcePath
@@ -215,8 +231,57 @@ class StorageController {
             contentLength = request.getFile('storagefile').getSize()
             inputStream = request.getFile('storagefile').inputStream
             def filename = request.getFile('storagefile').originalFilename
+            if(params.fileName){
+                filename=params.fileName
+            }
+            //XXX: sanitize
             resourcePath = resourcePath + '/' + filename
-            System.err.println("uploadpath: "+resourcePath+", file: "+ request.getFile('storagefile'))
+        }else if(params.uploadKeyType && params.uploadText){
+            //store a public/private key
+
+            if (!params.fileName) {
+                //invalid
+                return apiService.renderErrorFormat(response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code: 'api.error.parameter.required',
+                        args: ['fileName']
+                ])
+            }
+            if(params.uploadKeyType=='public'){
+                contentType= KeyStorageLayer.PUBLIC_KEY_MIME_TYPE
+            }else if(params.uploadKeyType == 'private'){
+                contentType = KeyStorageLayer.PRIVATE_KEY_MIME_TYPE
+            }else{
+                //invalid
+                return apiService.renderErrorFormat(response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code: 'api.error.parameter.invalid',
+                        args: [params.uploadKeyType,'uploadKeyType']
+                ])
+            }
+            def inputBytes = params.uploadText.bytes
+            inputStream = new ByteArrayInputStream(inputBytes)
+            contentLength= inputBytes.length
+            def filename = params.fileName
+            //XXX: sanitize
+            resourcePath = resourcePath + '/' + filename
+        }else if(params.uploadPassword){
+            //store a password
+            if (!params.fileName) {
+                //invalid
+                return apiService.renderErrorFormat(response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code: 'api.error.parameter.required',
+                        args: ['fileName']
+                ])
+            }
+            contentType = KeyStorageLayer.PASSWORD_MIME_TYPE
+            def inputBytes = params.uploadPassword.bytes
+            inputStream = new ByteArrayInputStream(inputBytes)
+            contentLength= inputBytes.length
+            def filename = params.fileName
+            //XXX: sanitize
+            resourcePath = resourcePath + '/' + filename
         }else{
             //no file uploaded
             return apiService.renderErrorFormat(response, [
@@ -238,8 +303,10 @@ class StorageController {
         ]
         try {
             def resource = storageService.createResource(authContext, resourcePath, map, inputStream)
-            response.status = 201
-            renderResourceFile(request, response, resource)
+//            response.status = 201
+            //renderResourceFile(request, response, resource)
+//            flash.message="File successfully uploaded: "+resourcePath
+            return redirect(controller: 'menu', action: 'storage', params: [project: params.project,resourcePath:resourcePath])
         } catch (StorageAuthorizationException e) {
             log.error("Unauthorized: resource ${resourcePath}: ${e.message}")
             apiService.renderErrorFormat(response, [
@@ -257,11 +324,28 @@ class StorageController {
         }
     }
     /**
-     * non-api action wrapper for apiKeys method
+     * non-api action wrapper for deleteResource method
      */
-    public def keyStorageMkdir(){
-        params.resourcePath = "/keys/${params.resourcePath ?: ''}"
-        getResource()
+    public def keyStorageDelete() {
+        if (!params.resourcePath.startsWith("keys")) {
+            params.resourcePath = "/keys/${params.resourcePath ?: ''}"
+        }
+        def valid = false
+        withForm {
+            valid = true
+            g.refreshFormTokensHeader()
+        }.invalidToken {
+            def message = g.message(code: 'request.error.invalidtoken.message')
+            log.error(message)
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'request.error.invalidtoken.message'
+            ])
+        }
+        if (!valid) {
+            return
+        }
+        deleteResource()
     }
     /**
      * Handle resource requests to the /ssh-key path
@@ -417,7 +501,7 @@ class StorageController {
         }
         return getResource()
     }
-    private def getResource() {
+    private def getResource(boolean forceDownload=false) {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String resourcePath = params.resourcePath
         def found = storageService.hasPath(authContext, resourcePath)
@@ -432,7 +516,7 @@ class StorageController {
                 def dirlist = storageService.listDir(authContext, resourcePath)
                 return renderDirectory(request, response, resource,dirlist)
             } else {
-                return renderResourceFile(request, response, resource)
+                return renderResourceFile(request, response, resource, forceDownload)
             }
         } catch (StorageAuthorizationException e) {
             log.error("Unauthorized: resource ${resourcePath}: ${e.message}")

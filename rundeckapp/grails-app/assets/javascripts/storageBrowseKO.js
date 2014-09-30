@@ -21,7 +21,9 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
     self.errorMsg = ko.observable();
     self.path = ko.observable('');
     self.inputPath = ko.observable('');
+    self.inputFilename = ko.observable('');
     self.selectedPath=ko.observable();
+    self.selectedIsDownloadable=ko.observable(false);
     self.fileFilter=ko.observable();
     self.fieldTarget=ko.observable();
     self.resources = ko.observableArray([]);
@@ -82,6 +84,15 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
             return elem.name();
         }
     };
+    /**
+     * Returns the full path for the inputPath (dir) and inputFilename
+     * @type {*}
+     */
+    self.inputFullpath=ko.computed(function(){
+        var name = self.inputFilename();
+        var path = self.inputPath();
+        return (path? (path.lastIndexOf('/')==path.length-1 ? path : path + '/'): '') + name;
+    });
     self.upPath = ko.computed(function(){
         if(self.path()!=self.rootPath() && self.path() != self.rootPath()+'/'){
             if(self.path().indexOf('/')>=0){
@@ -104,13 +115,50 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
     }
     self.selectFile = function(res){
         if(self.allowSelection()){
-            if(self.selectedPath()==res.path()){
+            var candownload=false;
+            if(self.selectedPath() == res.path()){
                 self.selectedPath(null);
             }else{
                 self.selectedPath(res.path());
+                candownload = ! ( (res.meta['Rundeck-key-type'] && res.meta['Rundeck-key-type']()=='private')
+                    || (res.meta['Rundeck-data-type'] && res.meta['Rundeck-data-type']() =='password') ) ;
             }
+            self.selectedIsDownloadable(candownload);
         }
     }
+    self.download = function(){
+        if(self.selectedPath()){
+            document.location = _genUrl(appLinks.storageKeysDownload, {resourcePath:self.selectedPath()});
+        }
+    };
+    self.delete = function(){
+        if(!self.selectedPath()){
+            return;
+        }
+        jQuery.ajax({
+            dataType: "json",
+            method: 'post',
+            url: _genUrl(appLinks.storageKeysDelete, {resourcePath: self.selectedPath() } ),
+            beforeSend: _ajaxSendTokens.curry('storage_browser_token'),
+            data: {},
+            success: function (data, status, jqXHR) {
+                self.selectedPath(null);
+                self.loadPath(self.path());
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                self.loading(false);
+                if (jqXHR.status == 404) {
+                    self.pathNotFound(val);
+                } else {
+                    if(jqXHR.responseJSON && jqXHR.responseJSON.message){
+                        self.errorMsg(jqXHR.responseJSON.message);
+                    }else{
+                        self.errorMsg(textStatus + ": " + errorThrown);
+                    }
+                }
+            }
+        }).success(_ajaxReceiveTokens.curry('storage_browser_token'));
+    };
     self.browseToInputPath = function(){
         self.path(self.inputPath());
     };
@@ -122,19 +170,17 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
         }else{
             self.resources([]);
             var reload=false;
-            if(path.lastIndexOf('/') != path.length-1){
-                path=path+'/';
-                reload=true;
-            }
-            self.selectedPath(path);
+            self.selectedPath(null);
             self.inputPath(path)
-            self.browseToInputPath();
+            if(reload){
+                self.browseToInputPath();
+            }
         }
     };
-    self.path.subscribe(function (val) {
-        if(val==''){
-            return;
-        }
+    self.loadPath = function (val) {
+//        if(val==''){
+//            return;
+//        }
         var mapping = {
             'resources': {
                 key: function (data) {
@@ -160,17 +206,23 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
                 self.errorMsg(null);
                 self.invalid(false);
                 self.notFound(false);
+                if (!data.resources) {
+                    data.resources=[];
+                }
                 ko.mapping.fromJS(data, mapping, self);
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 self.loading(false);
-                if(jqXHR.status==404){
+                if (jqXHR.status == 404) {
                     self.pathNotFound(val);
-                }else{
+                } else {
                     self.errorMsg(textStatus + ": " + errorThrown);
                 }
             }
         });
+    };
+    self.path.subscribe(function (val){
+        self.loadPath(val);
     });
 
     self.browse=function(rootPath, filter, selectedPath){

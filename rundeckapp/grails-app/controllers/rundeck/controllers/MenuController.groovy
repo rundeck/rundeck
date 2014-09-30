@@ -483,15 +483,15 @@ class MenuController extends ControllerBase{
     }
 
     def storage={
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(authContext,
-                        frameworkService.authResourceForProject(params.project),
-                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
-                                AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE]),
-                AuthConstants.ACTION_ADMIN, 'Project', params.project)) {
-            return
-        }
+//        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+//        if (unauthorizedResponse(
+//                frameworkService.authorizeApplicationResourceAny(authContext,
+//                        frameworkService.authResourceForProject(params.project),
+//                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
+//                                AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE]),
+//                AuthConstants.ACTION_ADMIN, 'Project', params.project)) {
+//            return
+//        }
 
     }
     def admin={
