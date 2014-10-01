@@ -73,11 +73,11 @@ grails.project.dependency.resolution = {
     println "Application Version: ${rundeckVersion}"
     plugins {
         runtime ":hibernate:$grailsVersion"
-        compile ":code-coverage:1.2.6"
-        build ':jetty:2.0.3'
-        compile ":twitter-bootstrap:3.0.3"
-        compile ":asset-pipeline:1.3.3"
-        compile ":less-asset-pipeline:1.2.1"
+        compile ':code-coverage:1.2.6'
+        build   ':jetty:2.0.3'
+        compile ':twitter-bootstrap:3.0.3'
+        compile ':asset-pipeline:1.3.3'
+        compile ':less-asset-pipeline:1.2.1'
     }
     dependencies {
         
@@ -93,7 +93,7 @@ grails.project.dependency.resolution = {
                 'com.jcraft:jsch:0.1.50','log4j:log4j:1.2.16','commons-collections:commons-collections:3.2.1',
                 'commons-codec:commons-codec:1.5', 'com.fasterxml.jackson.core:jackson-databind:2.0.2',
                 'com.codahale.metrics:metrics-core:3.0.1',
-                'com.google.guava:guava:15.0','org.owasp.encoder:encoder:1.1.1'
+                'com.google.guava:guava:15.0','org.owasp.encoder:encoder:1.1.1', 'org.quartz-scheduler:quartz:1.7.3'
         compile("org.rundeck:rundeck-core:${rundeckVersion}") {
             changing = true
             excludes("xalan")
