@@ -26,33 +26,19 @@
                 Action <span class="caret"></span>
             </button>
             <ul class="dropdown-menu" role="menu">
-                <li><a href="#" data-bind=" click: $root.delete"><i class="glyphicon glyphicon-remove"></i> Delete File</a></li>
+                <li><a href="#" data-bind=" click: $root.delete"><i class="glyphicon glyphicon-remove"></i> Delete Selected Path</a></li>
 
                 <li class="" data-bind=" if: selectedIsDownloadable()">
-                    <a href="#" data-bind="click: download"><i class="glyphicon glyphicon-download"></i> Download File</a>
+                    <a href="#" data-bind="click: download"><i class="glyphicon glyphicon-download"></i> Download Contents</a>
                 </li>
             </ul>
         </div>
 
         <div class="btn-group" data-bind="if: allowUpload() ">
-            <button type="button" class="btn btn-sm btn-success dropdown-toggle"
-                    data-toggle="dropdown">
-                <i class="glyphicon glyphicon-plus"></i> Add a File <span class="caret"></span>
-            </button>
-            <ul class="dropdown-menu" role="menu">
-                <li>
-                    <a href="#storageuploadkey" data-toggle="modal">Add a Public/Private Key</a>
-                </li>
-                <li>
-                    <a href="#storageuploadpassword" data-toggle="modal">Add a Password</a>
-                </li>
-                <li class="divider"></li>
-                <li>
-                    <a data-toggle="modal" href="#storageupload">
-                        <i class="glyphicon glyphicon-upload"></i> Upload
-                    </a>
-                </li>
-            </ul>
+            <a href="#storageuploadkey" data-toggle="modal"
+               class="btn btn-sm btn-success dropdown-toggle">
+                <i class="glyphicon glyphicon-plus"></i> Add or Upload a Key</span>
+            </a>
         </div>
     </div>
     <div class="loading-area text-info " data-bind="visible: loading()"

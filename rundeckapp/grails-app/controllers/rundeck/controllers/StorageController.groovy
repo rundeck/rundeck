@@ -226,59 +226,72 @@ class StorageController extends ControllerBase{
         def contentType= null
         def contentLength = -1
         def inputStream = null
-        if (request instanceof MultipartHttpServletRequest) {
-            contentType = request.getFile('storagefile').getContentType()
-            contentLength = request.getFile('storagefile').getSize()
-            inputStream = request.getFile('storagefile').inputStream
-            def filename = request.getFile('storagefile').originalFilename
-            if(params.fileName){
-                filename=params.fileName
-            }
-            resourcePath = resourcePath + '/' + filename
-        }else if(params.uploadKeyType && params.uploadText){
-            //store a public/private key
 
-            if (!params.fileName) {
+        if (params.uploadKeyType == 'public') {
+            contentType = KeyStorageLayer.PUBLIC_KEY_MIME_TYPE
+        } else if (params.uploadKeyType == 'private') {
+            contentType = KeyStorageLayer.PRIVATE_KEY_MIME_TYPE
+        } else if (params.uploadKeyType == 'password') {
+            contentType = KeyStorageLayer.PASSWORD_MIME_TYPE
+        } else {
+            //invalid
+            request.errorCode = 'api.error.parameter.invalid'
+            request.errorArgs = [params.uploadKeyType, 'uploadKeyType']
+            return renderErrorView([:])
+        }
+        if( !(params.inputType in ['file','text'])){
+            request.errorCode = 'api.error.parameter.not.inList'
+            request.errorArgs = [params.inputType, 'inputType']
+            return renderErrorView([:])
+        }
+
+        def hasUploadedFile = request instanceof MultipartHttpServletRequest && params.inputType == 'file' && request.getFile('storagefile')
+        if (!params.fileName && !hasUploadedFile) {
+            //invalid
+            request.errorCode = 'api.error.parameter.required'
+            request.errorArgs = ['fileName']
+            return renderErrorView([:])
+        }
+        def filename = params.fileName
+
+        if(params.inputType == 'text' && params.uploadKeyType in ['public','private'] ){
+            //store a public/private key
+            if(!params.uploadText){
                 //invalid
                 request.errorCode = 'api.error.parameter.required'
-                request.errorArgs = ['fileName']
+                request.errorArgs = ['uploadText']
                 return renderErrorView([:])
             }
-            if(params.uploadKeyType=='public'){
-                contentType= KeyStorageLayer.PUBLIC_KEY_MIME_TYPE
-            }else if(params.uploadKeyType == 'private'){
-                contentType = KeyStorageLayer.PRIVATE_KEY_MIME_TYPE
-            }else{
-                //invalid
-                request.errorCode = 'api.error.parameter.invalid'
-                request.errorArgs = [params.uploadKeyType, 'uploadKeyType']
-                return renderErrorView([:])
-            }
+
             def inputBytes = params.uploadText.bytes
             inputStream = new ByteArrayInputStream(inputBytes)
             contentLength= inputBytes.length
-            def filename = params.fileName
-            resourcePath = resourcePath + '/' + filename
-        }else if(params.uploadPassword){
+        }else if(params.inputType == 'text' && params.uploadKeyType == 'password' ){
             //store a password
-            if (!params.fileName) {
+            if (!params.uploadPassword) {
                 //invalid
                 request.errorCode = 'api.error.parameter.required'
-                request.errorArgs = ['fileName']
+                request.errorArgs = ['uploadPassword']
                 return renderErrorView([:])
             }
-            contentType = KeyStorageLayer.PASSWORD_MIME_TYPE
             def inputBytes = params.uploadPassword.bytes
             inputStream = new ByteArrayInputStream(inputBytes)
             contentLength= inputBytes.length
-            def filename = params.fileName
-            resourcePath = resourcePath + '/' + filename
+        }else if (hasUploadedFile) {
+            //nb: don't allow arbitrary content type
+//            contentType = request.getFile('storagefile').getContentType()
+            contentLength = request.getFile('storagefile').getSize()
+            inputStream = request.getFile('storagefile').inputStream
+            if(!filename){
+                filename = request.getFile('storagefile').originalFilename
+            }
         }else{
             //no file uploaded
             request.errorCode = 'api.error.upload.missing'
             request.errorArgs = ['storagefile']
             return renderErrorView([:])
         }
+        resourcePath = resourcePath + '/' + filename
         def newparams=new StorageParams()
         newparams.resourcePath=resourcePath
         newparams.validate()
