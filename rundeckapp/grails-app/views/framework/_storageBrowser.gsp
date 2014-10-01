@@ -63,7 +63,19 @@
             <td >
                 <i class="glyphicon "
                    data-bind="css: $root.selectedPath()==path() ? 'glyphicon-ok' : 'glyphicon-unchecked' "></i>
-                <i class="glyphicon glyphicon-file"></i>
+
+                <span data-bind="if: $data.meta['Rundeck-key-type'] && $data.meta['Rundeck-key-type']()=='private'"
+                      title="This path contains a private key that can be used for remote node execution.">
+                    <i class="glyphicon glyphicon-lock"></i>
+                </span>
+                <span data-bind="if: $data.meta['Rundeck-key-type'] && $data.meta['Rundeck-key-type']()=='public'">
+                    <i class="glyphicon glyphicon-eye-open"></i>
+                </span>
+                <span data-bind="if: $data.meta['Rundeck-data-type'] && $data.meta['Rundeck-data-type']()=='password'"
+                      title="This path contains a password that can be used for remote node execution.">
+                    <i class="glyphicon glyphicon-lock"></i>
+                </span>
+
                 <span data-bind="text: name"></span>
             </td>
             <td class="text-muted">
@@ -72,16 +84,13 @@
                     title="This path contains a private key that can be used for remote node execution."
                 >
                     Private key
-                    <i class="glyphicon glyphicon-lock"></i>
                 </span>
                 <span data-bind="if: $data.meta['Rundeck-key-type'] && $data.meta['Rundeck-key-type']()=='public'">
                     Public key
-                    <i class="glyphicon glyphicon-eye-open"></i>
                 </span>
                 <span data-bind="if: $data.meta['Rundeck-data-type'] && $data.meta['Rundeck-data-type']()=='password'"
                     title="This path contains a password that can be used for remote node execution.">
                     Password
-                    <i class="glyphicon glyphicon-lock"></i>
                 </span>
                 </span>
             </td>
@@ -104,6 +113,29 @@
             </td>
         </tr>
         </tbody>
+
     </table>
+
         </div>
+    </div>
+    <div class="row row-space" data-bind="if: selectedPath()">
+    <div class="col-sm-12">
+        <div class="well">
+            <div>
+                Storage path:
+                <code class="text-success"
+                      data-bind="text: selectedPath()"></code>
+                <a href="#" data-bind="attr: { href: selectedPathUrl() }"><i class="glyphicon glyphicon-link"></i></a>
+            </div>
+
+            %{--todo: view contents--}%
+            %{--<div data-bind="if: selectedResource() && selectedResource().meta['Rundeck-key-type'] && selectedResource().meta['Rundeck-key-type']()=='public'">
+                <div id="publicKeyContents">
+                    <button data-bind="click: viewContents('publicKeyContents')" class="btn btn-sm btn-default">View Public Key Contents</button>
+                </div>
+            </div>--}%
+        </div>
+
+
+    </div>
     </div>
