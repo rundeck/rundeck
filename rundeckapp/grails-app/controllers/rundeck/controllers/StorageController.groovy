@@ -1,5 +1,6 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.support.StorageParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageAuthorizationException
@@ -15,7 +16,7 @@ import rundeck.services.StorageService
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
-class StorageController {
+class StorageController extends ControllerBase{
     public static final String RES_META_RUNDECK_CONTENT_TYPE = 'Rundeck-content-type'
     public static final String RES_META_RUNDECK_CONTENT_SIZE = 'Rundeck-content-size'
     public static final String RES_META_RUNDECK_CONTENT_MASK = 'Rundeck-content-mask'
@@ -190,9 +191,9 @@ class StorageController {
     /**
      * non-api action wrapper for apiKeys method
      */
-    public def keyStorageAccess(){
+    public def keyStorageAccess(StorageParams storageParams){
         params.resourcePath = "/keys/${params.resourcePath ?: ''}"
-        getResource()
+        getResource(storageParams)
     }
     /**
      * non-api action wrapper for apiKeys method
@@ -206,19 +207,18 @@ class StorageController {
     /**
      * non-api action wrapper for apiKeys method
      */
-    public def keyStorageUpload(){
+    public def keyStorageUpload(StorageParams storageParams){
+        if (storageParams.hasErrors()) {
+            return renderErrorView([beanErrors: storageParams.errors])
+        }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def resourcePath = params.resourcePath
         def valid=false
         withForm {
             valid=true
         }.invalidToken{
-            def message = g.message(code: 'request.error.invalidtoken.message')
-            log.error(message)
-            apiService.renderErrorFormat(response, [
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'request.error.invalidtoken.message'
-            ])
+            request.errorCode= 'request.error.invalidtoken.message'
+            return renderErrorView([:])
         }
         if(!valid){
             return
@@ -234,18 +234,15 @@ class StorageController {
             if(params.fileName){
                 filename=params.fileName
             }
-            //XXX: sanitize
             resourcePath = resourcePath + '/' + filename
         }else if(params.uploadKeyType && params.uploadText){
             //store a public/private key
 
             if (!params.fileName) {
                 //invalid
-                return apiService.renderErrorFormat(response, [
-                        status: HttpServletResponse.SC_BAD_REQUEST,
-                        code: 'api.error.parameter.required',
-                        args: ['fileName']
-                ])
+                request.errorCode = 'api.error.parameter.required'
+                request.errorArgs = ['fileName']
+                return renderErrorView([:])
             }
             if(params.uploadKeyType=='public'){
                 contentType= KeyStorageLayer.PUBLIC_KEY_MIME_TYPE
@@ -253,43 +250,43 @@ class StorageController {
                 contentType = KeyStorageLayer.PRIVATE_KEY_MIME_TYPE
             }else{
                 //invalid
-                return apiService.renderErrorFormat(response, [
-                        status: HttpServletResponse.SC_BAD_REQUEST,
-                        code: 'api.error.parameter.invalid',
-                        args: [params.uploadKeyType,'uploadKeyType']
-                ])
+                request.errorCode = 'api.error.parameter.invalid'
+                request.errorArgs = [params.uploadKeyType, 'uploadKeyType']
+                return renderErrorView([:])
             }
             def inputBytes = params.uploadText.bytes
             inputStream = new ByteArrayInputStream(inputBytes)
             contentLength= inputBytes.length
             def filename = params.fileName
-            //XXX: sanitize
             resourcePath = resourcePath + '/' + filename
         }else if(params.uploadPassword){
             //store a password
             if (!params.fileName) {
                 //invalid
-                return apiService.renderErrorFormat(response, [
-                        status: HttpServletResponse.SC_BAD_REQUEST,
-                        code: 'api.error.parameter.required',
-                        args: ['fileName']
-                ])
+                request.errorCode = 'api.error.parameter.required'
+                request.errorArgs = ['fileName']
+                return renderErrorView([:])
             }
             contentType = KeyStorageLayer.PASSWORD_MIME_TYPE
             def inputBytes = params.uploadPassword.bytes
             inputStream = new ByteArrayInputStream(inputBytes)
             contentLength= inputBytes.length
             def filename = params.fileName
-            //XXX: sanitize
             resourcePath = resourcePath + '/' + filename
         }else{
             //no file uploaded
-            return apiService.renderErrorFormat(response, [
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.upload.missing',
-                    args: ['storagefile']
-            ])
+            request.errorCode = 'api.error.upload.missing'
+            request.errorArgs = ['storagefile']
+            return renderErrorView([:])
         }
+        def newparams=new StorageParams()
+        newparams.resourcePath=resourcePath
+        newparams.validate()
+        if(newparams.hasErrors()){
+            return renderErrorView([beanErrors: newparams.errors])
+        }
+
+        //TODO: overwrite
         if (storageService.hasResource(authContext, resourcePath)) {
             response.status = 409
             return renderError("resource already exists: ${resourcePath}")
@@ -302,25 +299,21 @@ class StorageController {
                 (RES_META_RUNDECK_CONTENT_SIZE): contentLength,
         ]
         try {
+            //TODO: overwrite
             def resource = storageService.createResource(authContext, resourcePath, map, inputStream)
-//            response.status = 201
-            //renderResourceFile(request, response, resource)
-//            flash.message="File successfully uploaded: "+resourcePath
             return redirect(controller: 'menu', action: 'storage', params: [project: params.project,resourcePath:resourcePath])
         } catch (StorageAuthorizationException e) {
             log.error("Unauthorized: resource ${resourcePath}: ${e.message}")
-            apiService.renderErrorFormat(response, [
-                    status: HttpServletResponse.SC_FORBIDDEN,
-                    code: 'api.error.item.unauthorized',
-                    args: [e.event.toString(), 'Path', e.path.toString()]
-            ])
+            response.status= HttpServletResponse.SC_FORBIDDEN
+            request.errorCode = 'api.error.item.unauthorized'
+            request.errorArgs = [e.event.toString(), 'Path', e.path.toString()]
+            return renderErrorView([:])
         } catch (StorageException e) {
             log.error("Error creating resource ${resourcePath}: ${e.message}")
             log.debug("Error creating resource ${resourcePath}", e)
-            apiService.renderErrorFormat(response, [
-                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    message: e.message
-            ])
+            response.status = HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+            request.errorMessage = e.message
+            return renderErrorView([:])
         }
     }
     /**
@@ -495,13 +488,20 @@ class StorageController {
         }
     }
 
-    def apiGetResource() {
+    def apiGetResource(StorageParams storageParams) {
         if (!apiService.requireApi(request, response)) {
             return
         }
-        return getResource()
+        return getResource(storageParams)
     }
-    private def getResource(boolean forceDownload=false) {
+    private def getResource(StorageParams storageParams,boolean forceDownload=false) {
+        if (storageParams.hasErrors()) {
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.invalid.request',
+                    args: [storageParams.errors.allErrors.collect { g.message(error: it) }.join(",")]
+            ])
+        }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String resourcePath = params.resourcePath
         def found = storageService.hasPath(authContext, resourcePath)
