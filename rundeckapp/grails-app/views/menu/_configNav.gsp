@@ -31,7 +31,7 @@
         <li class="${selected == 'storage' ? 'active' : ''}">
             <g:link controller="menu" action="storage"
                     params="[project: params.project ?: request.project]">
-                <g:message code="gui.menu.Storage" default="Storage"/>
+                <g:message code="gui.menu.KeyStorage" default="Key Storage"/>
             </g:link>
         </li>
         <li class="${selected == 'syscfg' ? 'active' : ''}">

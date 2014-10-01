@@ -51,8 +51,13 @@
     </div>
 
     <div class="col-sm-9">
+        <h3><g:message code="gui.menu.KeyStorage" /></h3>
 
-        <span class="h3">Storage</span>
+        <div class="well well-sm">
+            <div class="text-info">
+                <g:message code="page.keyStorage.description" />
+            </div>
+        </div>
 
         <g:render template="/framework/storageBrowser"/>
 
