@@ -50,10 +50,10 @@
         <tr>
             <td colspan="2" class="text-muted">
                 <span data-bind="if: filteredFiles().length < 1">
-                    No files
+                    No keys
                 </span>
                 <span data-bind="if: filteredFiles().length > 0">
-                    <span data-bind="text: filteredFiles().length"></span> files
+                    <span data-bind="text: filteredFiles().length"></span> keys
                 </span>
             </td>
         </tr>
