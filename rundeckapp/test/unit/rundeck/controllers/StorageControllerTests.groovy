@@ -1,5 +1,6 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.support.StorageParams
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import grails.test.mixin.*
@@ -341,5 +342,42 @@ class StorageControllerTests {
         }
         params.resourcePath = 'abc/test1'
         def result = controller.apiDeleteResource()
+    }
+
+    @Test
+    void storageParamsValidationBasic(){
+        def params=new StorageParams()
+        params.resourcePath='keys/monkey/bonanza'
+        assertTrue(params.validate())
+    }
+    @Test
+    void storageParamsValidation_allowdotdot(){
+        def params=new StorageParams()
+        params.resourcePath='keys/monkey/bonanza..double'
+        assertTrue(params.validate())
+    }
+    @Test
+    void storageParamsValidation_allowdotdot2(){
+        def params=new StorageParams()
+        params.resourcePath='keys/monkey/bonanza/..double'
+        assertTrue(params.validate())
+    }
+    @Test
+    void storageParamsValidation_allowdotdot3(){
+        def params=new StorageParams()
+        params.resourcePath='keys/monkey/bonanza../double'
+        assertTrue(params.validate())
+    }
+    @Test
+    void storageParamsValidation_invaliddotdot(){
+        def params=new StorageParams()
+        params.resourcePath='keys/monkey/../bonanza'
+        assertFalse("should not allow /../",params.validate())
+    }
+    @Test
+    void storageParamsValidation_invalidspace(){
+        def params=new StorageParams()
+        params.resourcePath='keys/monkey/ bonanza'
+        assertFalse(params.validate())
     }
 }

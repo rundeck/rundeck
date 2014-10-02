@@ -28,6 +28,12 @@
 </g:else>
     <g:if test="${auth.resourceAllowedTest(type: 'resource',kind:'system',
                     action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN], any: true, context: 'application')}">
+        <li class="${selected == 'storage' ? 'active' : ''}">
+            <g:link controller="menu" action="storage"
+                    params="[project: params.project ?: request.project]">
+                <g:message code="gui.menu.KeyStorage" default="Key Storage"/>
+            </g:link>
+        </li>
         <li class="${selected == 'syscfg' ? 'active' : ''}">
             <g:link controller="menu" action="systemConfig" params="[project: params.project ?: request.project]">
                 <g:message code="gui.menu.SystemConfig" default="System Configuration"/>
