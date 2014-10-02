@@ -185,6 +185,16 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="form-group">
+                            <div class=" col-sm-offset-3 col-sm-9">
+                                <div class="checkbox">
+                                    <label>
+                                    <input type="checkbox" value="true" name="dontOverwrite"/>
+                                    Do not overwrite a file with the same name.
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
 
                         <div class="form-group">
                             <div class="col-sm-12">

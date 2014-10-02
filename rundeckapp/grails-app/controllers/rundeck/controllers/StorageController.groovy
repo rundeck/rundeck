@@ -299,21 +299,32 @@ class StorageController extends ControllerBase{
             return renderErrorView([beanErrors: newparams.errors])
         }
 
-        //TODO: overwrite
-        if (storageService.hasResource(authContext, resourcePath)) {
+        boolean overwrite=true
+        if(params.dontOverwrite in [true,'true']){
+            overwrite=false
+        }
+        def hasResource = storageService.hasResource(authContext, resourcePath)
+        if (!overwrite && hasResource) {
             response.status = 409
-            return renderError("resource already exists: ${resourcePath}")
-        } else if (storageService.hasPath(authContext, resourcePath)) {
+            request.errorMessage = g.message(code: 'api.error.item.alreadyexists',
+                    args: ['Storage file', resourcePath])
+            return renderErrorView([:])
+        } else if (!hasResource && storageService.hasPath(authContext, resourcePath)) {
             response.status = 409
-            return renderError("directory already exists: ${resourcePath}")
+            request.errorMessage = g.message(code: 'api.error.item.alreadyexists',
+                    args: ['Storage directory path', resourcePath])
+            return renderErrorView([:])
         }
         Map<String, String> map = [
                 (RES_META_RUNDECK_CONTENT_TYPE): contentType,
                 (RES_META_RUNDECK_CONTENT_SIZE): contentLength,
         ]
         try {
-            //TODO: overwrite
-            def resource = storageService.createResource(authContext, resourcePath, map, inputStream)
+            if(hasResource){
+                def resource = storageService.updateResource(authContext, resourcePath, map, inputStream)
+            }else{
+                def resource = storageService.createResource(authContext, resourcePath, map, inputStream)
+            }
             return redirect(controller: 'menu', action: 'storage', params: [project: params.project,resourcePath:resourcePath])
         } catch (StorageAuthorizationException e) {
             log.error("Unauthorized: resource ${resourcePath}: ${e.message}")
