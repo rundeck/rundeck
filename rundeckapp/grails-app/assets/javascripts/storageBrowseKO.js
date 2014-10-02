@@ -19,7 +19,11 @@ function StorageUpload(storage){
     self.keyType=ko.observable('private');
     self.inputType=ko.observable('text');
     self.file=ko.observable('');
+    self.textArea=ko.observable('');
+    self.password=ko.observable('');
     self.fileName=ko.observable('');
+
+    //computed
     self.fileInputName=ko.computed(function(){
         var file = self.file();
         if(file){
@@ -40,6 +44,24 @@ function StorageUpload(storage){
         var file = self.fileInputName();
         var path = self.storage.inputPath();
         return (path ? (path.lastIndexOf('/') == path.length - 1 ? path : path + '/') : '') + (name?name: file);
+    });
+
+    //subscriptions to clear values when one input type is selected
+    self.inputType.subscribe(function(newvalue){
+       if(newvalue=='text'){
+           self.file('');
+       } else{
+           self.textArea('');
+           self.password('');
+       }
+    });
+    //subscriptions to clear values when one input type is selected
+    self.keyType.subscribe(function(newvalue){
+       if(newvalue=='password'){
+           self.textArea('');
+       } else{
+           self.password('');
+       }
     });
 }
 function StorageBrowser(baseUrl, rootPath, fileSelect) {

@@ -105,15 +105,17 @@
 
                                 <div data-bind="if: upload.inputType()=='text' && upload.keyType()!='password' ">
                                     <textarea class="form-control" rows="5" id="storageuploadtext"
+                                        data-bind="value: upload.textArea"
                                               name="uploadText"></textarea>
                                 </div>
 
-                                <div data-bind="if: upload.inputType()=='file' ">
+                                <div data-bind="visible: upload.inputType()=='file' ">
                                     <input type="file" name="storagefile" id="storageuploadfile" data-bind="value: upload.file"/>
                                 </div>
 
                                 <div data-bind="if: upload.inputType()=='text' && upload.keyType()=='password' ">
                                     <input name="uploadPassword" type="password" placeholder="Enter a password"
+                                        data-bind="value: upload.password"
                                            id="uploadpasswordfield" class="form-control"/>
                                 </div>
                             </div>
