@@ -26,7 +26,7 @@
                 Action <span class="caret"></span>
             </button>
             <ul class="dropdown-menu" role="menu">
-                <li><a href="#" data-bind=" click: $root.delete"><i class="glyphicon glyphicon-remove"></i> Delete Selected Path</a></li>
+                <li><a href="#storageconfirmdelete" data-toggle="modal"><i class="glyphicon glyphicon-remove"></i> Delete Selected Item</a></li>
 
                 <li class="" data-bind=" if: selectedIsDownloadable()">
                     <a href="#" data-bind="click: download"><i class="glyphicon glyphicon-download"></i> Download Contents</a>
