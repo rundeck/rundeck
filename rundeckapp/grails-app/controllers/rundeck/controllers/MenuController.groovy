@@ -12,7 +12,11 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
+import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
 import rundeck.Execution
@@ -29,6 +33,7 @@ import rundeck.services.FrameworkService
 import rundeck.services.LogFileStorageService
 import rundeck.services.LoggingService
 import rundeck.services.NotificationService
+import rundeck.services.PluginService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.UserService
 
@@ -43,6 +48,9 @@ class MenuController extends ControllerBase{
     NotificationService notificationService
     LoggingService LoggingService
     LogFileStorageService logFileStorageService
+    StoragePluginProviderService storagePluginProviderService
+    StorageConverterPluginProviderService storageConverterPluginProviderService
+    PluginService pluginService
     def quartzScheduler
     def ApiService apiService
     static allowedMethods = [
@@ -742,6 +750,12 @@ class MenuController extends ControllerBase{
         pluginDescs[logFileStorageService.executionFileStoragePluginProviderService.name]= logFileStorageService.listLogFileStoragePlugins().collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
+        pluginDescs[storagePluginProviderService.name]= pluginService.listPlugins(StoragePlugin.class,storagePluginProviderService).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+        pluginDescs[storageConverterPluginProviderService.name] = pluginService.listPlugins(StorageConverterPlugin.class, storageConverterPluginProviderService).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
 
         def defaultScopes=[
                 (framework.getNodeStepExecutorService().name) : PropertyScope.InstanceOnly,
@@ -752,9 +766,26 @@ class MenuController extends ControllerBase{
                 (framework.getFileCopierService().name): framework.getFileCopierService().getBundledProviderNames(),
                 (framework.getResourceFormatParserService().name): framework.getResourceFormatParserService().getBundledProviderNames(),
                 (framework.getResourceFormatGeneratorService().name): framework.getResourceFormatGeneratorService().getBundledProviderNames(),
+                (storagePluginProviderService.name): storagePluginProviderService.getBundledProviderNames()+['db'],
+        ]
+        def specialConfiguration=[
+                (storagePluginProviderService.name):[
+                        description: "Configure this plugin within the rundeck-config.properties " +
+                                "file. \nDeclare the provider with 'rundeck.storage.provider.[index].type=\${pluginName}', " +
+                                "and declare the path you want this plugin to apply to with " +
+                                "'rundeck.storage.provider.[index].path=<storagepath>'",
+                        prefix:"rundeck.storage.provider.[index]."
+                ],
+                (storageConverterPluginProviderService.name):[
+                        description: "Configure this plugin within the rundeck-config.properties " +
+                                "file. \nDeclare the provider with 'rundeck.storage.converter.[index].type=\${pluginName}', " +
+                                "and declare the path you want this plugin to apply to with " +
+                                "'rundeck.storage.converter.[index].path=<storagepath>'",
+                        prefix:"rundeck.storage.converter.[index]."
+                ]
         ]
 
-        [descriptions:pluginDescs,serviceDefaultScopes: defaultScopes, bundledPlugins: bundledPlugins]
+        [descriptions:pluginDescs,serviceDefaultScopes: defaultScopes, bundledPlugins: bundledPlugins, specialConfiguration: specialConfiguration]
     }
 
     def home(){

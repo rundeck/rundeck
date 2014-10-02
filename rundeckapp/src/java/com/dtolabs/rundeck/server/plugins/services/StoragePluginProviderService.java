@@ -11,6 +11,7 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -26,10 +27,17 @@ public class StoragePluginProviderService extends ChainedProviderService<Storage
 
     private List<ProviderService<StoragePlugin>> serviceList;
     private PluggableStoragePluginProviderService pluggableStoragePluginProviderService;
+    private BuiltinResourceStoragePluginProviderService builtinResourceStoragePluginProviderService;
 
     public StoragePluginProviderService(Framework framework) {
         serviceList = new ArrayList<ProviderService<StoragePlugin>>();
-        serviceList.add(new BuiltinResourceStoragePluginProviderService(framework, SERVICE_NAME));
+        builtinResourceStoragePluginProviderService =
+                new BuiltinResourceStoragePluginProviderService(framework, SERVICE_NAME);
+        serviceList.add(builtinResourceStoragePluginProviderService);
+    }
+
+    public List<String> getBundledProviderNames() {
+        return builtinResourceStoragePluginProviderService.getBundledProviderNames();
     }
 
     @Override
