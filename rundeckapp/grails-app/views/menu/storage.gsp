@@ -22,6 +22,7 @@
 //                rootPath = "keys";
 //            }
             storageBrowse = new StorageBrowser(appLinks.storageKeysApi, rootPath);
+            storageBrowse.browseMode('browse');
             storageBrowse.allowUpload(true);
             storageBrowse.allowNotFound(true);
             ko.applyBindings(storageBrowse);

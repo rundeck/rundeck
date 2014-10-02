@@ -19,7 +19,7 @@
             <span data-bind="text: upPath() ? $root.dirName(upPath()) : '' "></span>
         </button>
 
-        <div class="btn-group" >
+        <div class="btn-group" data-bind="if: browseMode()=='browse'">
             <button type="button" class="btn btn-sm btn-default dropdown-toggle"
                     data-bind="css: { disabled: !selectedPath() }"
                     data-toggle="dropdown">

@@ -58,6 +58,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
     self.resources = ko.observableArray([]);
     self.loading=ko.observable(false);
     self.invalid=ko.observable(false);
+    self.browseMode=ko.observable('browse');
     self.allowUpload=ko.observable(false);
     self.allowSelection=ko.observable(true);
     self.allowNotFound=ko.observable(false);

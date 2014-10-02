@@ -33,7 +33,7 @@
             var storageBrowseTarget = jQuery(evt.relatedTarget).data('field');
             if (storageBrowse == null) {
                 storageBrowse= new StorageBrowser(appLinks.storageKeysApi, rootPath);
-
+                storageBrowse.browseMode('select');
                 jQuery('body').data('storageBrowser', storageBrowse );
                 jQuery(evt.delegateTarget).data('storageBrowser', storageBrowse);
                 ko.applyBindings(storageBrowse);
