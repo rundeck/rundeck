@@ -101,12 +101,12 @@ public class AuthRundeckStorageTree implements AuthStorageTree {
 
     @Override
     public boolean hasResource(AuthContext auth, Path path) {
-        return authorizedPath(auth, path, READ) && storageTree.hasPath(path);
+        return authorizedPath(auth, path, READ) && storageTree.hasResource(path);
     }
 
     @Override
     public boolean hasDirectory(AuthContext auth, Path path) {
-        return authorizedPath(auth, path, READ) && storageTree.hasPath(path);
+        return authorizedPath(auth, path, READ) && storageTree.hasDirectory(path);
     }
 
     @Override
