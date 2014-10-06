@@ -56,10 +56,7 @@ import org.apache.tools.ant.Project;
 import org.rundeck.storage.api.Path;
 import org.rundeck.storage.api.PathUtil;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import java.io.*;
 import java.net.NoRouteToHostException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
@@ -86,6 +83,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         "Authentication failure connecting to node: \"{0}\". Password incorrect.";
     public static final String NODE_ATTR_SSH_KEYPATH = "ssh-keypath";
     public static final String NODE_ATTR_SSH_KEY_RESOURCE = "ssh-key-storage-path";
+    public static final String NODE_ATTR_SSH_PASSWORD_STORAGE_PATH= "ssh-password-storage-path";
 
     public static final String PROJ_PROP_PREFIX = "project.";
     public static final String FWK_PROP_PREFIX = "framework.";
@@ -93,7 +91,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String FWK_PROP_SSH_KEYPATH = FWK_PROP_PREFIX + NODE_ATTR_SSH_KEYPATH;
     public static final String PROJ_PROP_SSH_KEYPATH = PROJ_PROP_PREFIX + NODE_ATTR_SSH_KEYPATH;
     public static final String FWK_PROP_SSH_KEY_RESOURCE = FWK_PROP_PREFIX + NODE_ATTR_SSH_KEY_RESOURCE;
+    public static final String FWK_PROP_SSH_PASSWORD_STORAGE_PATH= FWK_PROP_PREFIX + NODE_ATTR_SSH_PASSWORD_STORAGE_PATH;
     public static final String PROJ_PROP_SSH_KEY_RESOURCE = PROJ_PROP_PREFIX + NODE_ATTR_SSH_KEY_RESOURCE;
+    public static final String PROJ_PROP_SSH_PASSWORD_STORAGE_PATH = PROJ_PROP_PREFIX + NODE_ATTR_SSH_PASSWORD_STORAGE_PATH;
 
     public static final String NODE_ATTR_SSH_AUTHENTICATION = "ssh-authentication";
     public static final String NODE_ATTR_SSH_PASSWORD_OPTION = "ssh-password-option";
@@ -515,6 +515,18 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                     .getContents();
             return contents.getInputStream();
         }
+        public byte[] getPasswordStorageData() throws IOException{
+            String passwordStoragePath = getPasswordStoragePath();
+            if (null == passwordStoragePath) {
+                return null;
+            }
+            Path path = PathUtil.asPath(passwordStoragePath);
+            ResourceMeta contents = context.getStorageTree().getResource(path)
+                    .getContents();
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            contents.writeContent(byteArrayOutputStream);
+            return byteArrayOutputStream.toByteArray();
+        }
 
         public String getPrivateKeyResourcePath() {
             String path = null;
@@ -527,6 +539,21 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             } else if (framework.hasProperty(Constants.SSH_KEYRESOURCE_PROP)) {
                 //return default framework level
                 path = framework.getProperty(Constants.SSH_KEYRESOURCE_PROP);
+            }
+            //expand properties in path
+            if (path != null && path.contains("${")) {
+                path = DataContextUtils.replaceDataReferences(path, context.getDataContext());
+            }
+            return path;
+        }
+        public String getPasswordStoragePath() {
+            String path = null;
+            if (null != nonBlank(node.getAttributes().get(NODE_ATTR_SSH_PASSWORD_STORAGE_PATH))) {
+                path = node.getAttributes().get(NODE_ATTR_SSH_PASSWORD_STORAGE_PATH);
+            } else if (frameworkProject.hasProperty(PROJ_PROP_SSH_PASSWORD_STORAGE_PATH)) {
+                path = frameworkProject.getProperty(PROJ_PROP_SSH_PASSWORD_STORAGE_PATH);
+            } else if (framework.hasProperty(FWK_PROP_SSH_PASSWORD_STORAGE_PATH)) {
+                path = framework.getProperty(FWK_PROP_SSH_PASSWORD_STORAGE_PATH);
             }
             //expand properties in path
             if (path != null && path.contains("${")) {
