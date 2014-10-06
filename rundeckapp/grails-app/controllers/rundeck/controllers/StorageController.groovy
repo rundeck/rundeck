@@ -193,15 +193,17 @@ class StorageController extends ControllerBase{
      * non-api action wrapper for apiKeys method
      */
     public def keyStorageAccess(StorageParams storageParams){
-        params.resourcePath = "/keys/${params.resourcePath ?: ''}"
+        if (!params.resourcePath && null != params.relativePath) {
+            params.resourcePath = "keys${params.relativePath ? ('/' + params.relativePath) : ''}"
+        }
         getResource(storageParams)
     }
     /**
      * non-api action wrapper for apiKeys method
      */
     public def keyStorageDownload(StorageParams storageParams){
-        if (!params.resourcePath && params.relativePath) {
-            params.resourcePath = "/keys/${params.relativePath ?: ''}"
+        if (!params.resourcePath && null != params.relativePath) {
+            params.resourcePath = "keys${params.relativePath ? ('/' + params.relativePath) : ''}"
         }
         getResource(storageParams,true)
     }
@@ -386,8 +388,8 @@ class StorageController extends ControllerBase{
      * non-api action wrapper for deleteResource method
      */
     public def keyStorageDelete() {
-        if (!params.resourcePath.startsWith("keys")) {
-            params.resourcePath = "/keys/${params.resourcePath ?: ''}"
+        if (!params.resourcePath && null != params.relativePath) {
+            params.resourcePath = "keys${params.relativePath ? ('/' + params.relativePath) : ''}"
         }
         def valid = false
         withForm {

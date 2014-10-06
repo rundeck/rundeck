@@ -56,7 +56,7 @@
         menuJobsPicker: '${createLink(controller:"menu",action:"jobsPicker",params:projParams)}',
         scheduledExecutionGroupTreeFragment: '${createLink(controller:"scheduledExecution",action:"groupTreeFragment",params:projParams)}',
         storageKeysBrowse: '${createLink(controller: 'menu',action: 'storage')}',
-        storageKeysApi: '${createLink(uri:'/storage/access/')}',
+        storageKeysApi: '${createLink(uri:'/storage/access/keys')}',
         storageKeysDownload: '${createLink(uri:'/storage/download/keys')}',
         storageKeysDelete: '${createLink(uri:'/storage/delete/keys')}',
         apiExecutionsBulkDelete: '${createLink(controller:'execution',action: 'deleteBulkApi')}'

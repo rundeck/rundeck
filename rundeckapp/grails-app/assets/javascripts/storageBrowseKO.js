@@ -225,7 +225,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
     }
     self.download = function(){
         if(self.selectedPath()){
-            document.location = _genUrl(appLinks.storageKeysDownload, {resourcePath:self.selectedPath()});
+            document.location = _genUrl(appLinks.storageKeysDownload, {relativePath:self.relativePath(self.selectedPath())});
         }
     };
     self.delete = function(){
@@ -235,7 +235,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
         jQuery.ajax({
             dataType: "json",
             method: 'post',
-            url: _genUrl(appLinks.storageKeysDelete, {resourcePath: self.selectedPath() } ),
+            url: _genUrl(appLinks.storageKeysDelete, {relativePath: self.relativePath(self.selectedPath()) } ),
             beforeSend: _ajaxSendTokens.curry('storage_browser_token'),
             data: {},
             success: function (data, status, jqXHR) {
@@ -286,7 +286,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
         self.inputPath(self.relativePath(val));
         jQuery.ajax({
             dataType: "json",
-            url: self.baseUrl + val,
+            url: _genUrl(self.baseUrl ,{relativePath: self.relativePath(val) } ),
             data: {},
             success: function (data, status, jqXHR) {
                 self.loading(false);
