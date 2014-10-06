@@ -35,6 +35,17 @@ function StorageUpload(storage){
             return '';
         }
     });
+    self.validInput = ko.computed(function(){
+        var intype = self.inputType();
+        var file = self.file();
+        var textarea=self.textArea();
+        var pass=self.password();
+        if(intype=='text'){
+            return (textarea || pass )? true:false;
+        }else{
+            return file?true:false;
+        }
+    });
     /**
      * Returns the full path for the inputPath (dir) and inputFilename
      * @type {*}

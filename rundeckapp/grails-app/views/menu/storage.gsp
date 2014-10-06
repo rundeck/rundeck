@@ -126,7 +126,8 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group"
+                             data-bind="css: { 'has-warning': !upload.validInput(), 'has-success': upload.validInput() }">
                             <div  class="col-sm-3">
 
                                 <select class="form-control" data-bind="value: upload.inputType"
@@ -212,9 +213,12 @@
                         <button type="button" class="btn btn-sm btn-default"
                                 data-dismiss="modal">Cancel</button>
 
-                        <input type="submit"
+                        <input
+                                type="submit"
                                 class="btn btn-sm btn-success obs-storageupload-select"
-                                value="Save"/>
+                            data-bind="attr: { disabled: !upload.validInput() }"
+                                value="Save"
+                        />
                     </div>
                 </div>
             </div>
