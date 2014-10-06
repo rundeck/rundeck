@@ -130,6 +130,11 @@ public class PathUtil {
         return "";
     }
 
+    /**
+     * Clean the path string by removing leading and trailing slashes and removing duplicate slashes.
+     * @param path input path
+     * @return cleaned path string
+     */
     public static String cleanPath(String path) {
         if (path.endsWith("/")) {
             path = path.replaceAll("/+$", "");
