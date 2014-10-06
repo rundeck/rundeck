@@ -209,7 +209,8 @@ class StorageController extends ControllerBase{
      */
     public def keyStorageUpload(StorageParams storageParams){
         if (storageParams.hasErrors()) {
-            return renderErrorView([beanErrors: storageParams.errors])
+            flash.errors=storageParams.errors
+            return redirect(controller: 'menu',action: 'storage',params: [project:params.project])
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def resourcePath = params.resourcePath
@@ -217,8 +218,8 @@ class StorageController extends ControllerBase{
         withForm {
             valid=true
         }.invalidToken{
-            request.errorCode= 'request.error.invalidtoken.message'
-            return renderErrorView([:])
+            flash.errorCode= 'request.error.invalidtoken.message'
+            return redirect(controller: 'menu', action: 'storage', params: [project: params.project])
         }
         if(!valid){
             return
@@ -235,32 +236,50 @@ class StorageController extends ControllerBase{
             contentType = KeyStorageLayer.PASSWORD_MIME_TYPE
         } else {
             //invalid
-            request.errorCode = 'api.error.parameter.invalid'
-            request.errorArgs = [params.uploadKeyType, 'uploadKeyType']
-            return renderErrorView([:])
+            flash.errorCode = 'api.error.parameter.invalid'
+            flash.errorArgs = [params.uploadKeyType, 'uploadKeyType']
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
         }
         if( !(params.inputType in ['file','text'])){
-            request.errorCode = 'api.error.parameter.not.inList'
-            request.errorArgs = [params.inputType, 'inputType']
-            return renderErrorView([:])
+            flash.errorCode = 'api.error.parameter.not.inList'
+            flash.errorArgs = [params.inputType, 'inputType']
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
         }
 
-        def hasUploadedFile = request instanceof MultipartHttpServletRequest && params.inputType == 'file' && request.getFile('storagefile')
-        if (!params.fileName && !hasUploadedFile) {
-            //invalid
-            request.errorCode = 'api.error.parameter.required'
-            request.errorArgs = ['fileName']
-            return renderErrorView([:])
+        def hasUploadedFile = request instanceof MultipartHttpServletRequest &&
+                params.inputType == 'file' &&
+                request.getFile('storagefile') &&
+                !request.getFile('storagefile').empty
+
+        if (params.inputType == 'file' && !hasUploadedFile) {
+            //mising file upload
+            flash.errorCode = 'api.error.upload.missing'
+            flash.errorArgs = ['storagefile']
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
         }
+
+        if (params.inputType == 'text' && !params.fileName) {
+            //invalid
+            flash.errorCode = 'api.error.parameter.required'
+            flash.errorArgs = ['fileName']
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
+        }
+
         def filename = params.fileName
 
         if(params.inputType == 'text' && params.uploadKeyType in ['public','private'] ){
             //store a public/private key
             if(!params.uploadText){
                 //invalid
-                request.errorCode = 'api.error.parameter.required'
-                request.errorArgs = ['uploadText']
-                return renderErrorView([:])
+                flash.errorCode = 'api.error.parameter.required'
+                flash.errorArgs = ['uploadText']
+
+                return redirect(controller: 'menu', action: 'storage',
+                        params: [project: params.project])
             }
 
             def inputBytes = params.uploadText.bytes
@@ -270,9 +289,11 @@ class StorageController extends ControllerBase{
             //store a password
             if (!params.uploadPassword) {
                 //invalid
-                request.errorCode = 'api.error.parameter.required'
-                request.errorArgs = ['uploadPassword']
-                return renderErrorView([:])
+                flash.errorCode = 'api.error.parameter.required'
+                flash.errorArgs = ['uploadPassword']
+
+                return redirect(controller: 'menu', action: 'storage',
+                        params: [project: params.project])
             }
             def inputBytes = params.uploadPassword.bytes
             inputStream = new ByteArrayInputStream(inputBytes)
@@ -287,11 +308,24 @@ class StorageController extends ControllerBase{
             }
         }else{
             //no file uploaded
-            request.errorCode = 'api.error.upload.missing'
-            request.errorArgs = ['storagefile']
-            return renderErrorView([:])
+            flash.errorCode = 'api.error.upload.missing'
+            flash.errorArgs = ['storagefile']
+
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
         }
+
+        if(!filename){
+
+            flash.errorCode = 'api.error.upload.missing'
+            flash.errorArgs = ['fileName']
+
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
+        }
+
         resourcePath = resourcePath + '/' + filename
+
         def newparams=new StorageParams()
         newparams.resourcePath=resourcePath
         newparams.validate()
@@ -305,15 +339,17 @@ class StorageController extends ControllerBase{
         }
         def hasResource = storageService.hasResource(authContext, resourcePath)
         if (!overwrite && hasResource) {
-            response.status = 409
-            request.errorMessage = g.message(code: 'api.error.item.alreadyexists',
+            flash.error = g.message(code: 'api.error.item.alreadyexists',
                     args: ['Storage file', resourcePath])
-            return renderErrorView([:])
+
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
         } else if (!hasResource && storageService.hasPath(authContext, resourcePath)) {
-            response.status = 409
-            request.errorMessage = g.message(code: 'api.error.item.alreadyexists',
+            flash.error = g.message(code: 'api.error.item.alreadyexists',
                     args: ['Storage directory path', resourcePath])
-            return renderErrorView([:])
+
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
         }
         Map<String, String> map = [
                 (RES_META_RUNDECK_CONTENT_TYPE): contentType,
@@ -328,16 +364,16 @@ class StorageController extends ControllerBase{
             return redirect(controller: 'menu', action: 'storage', params: [project: params.project,resourcePath:resourcePath])
         } catch (StorageAuthorizationException e) {
             log.error("Unauthorized: resource ${resourcePath}: ${e.message}")
-            response.status= HttpServletResponse.SC_FORBIDDEN
-            request.errorCode = 'api.error.item.unauthorized'
-            request.errorArgs = [e.event.toString(), 'Path', e.path.toString()]
-            return renderErrorView([:])
+            flash.errorCode = 'api.error.item.unauthorized'
+            flash.errorArgs = [e.event.toString(), 'Path', e.path.toString()]
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
         } catch (StorageException e) {
             log.error("Error creating resource ${resourcePath}: ${e.message}")
             log.debug("Error creating resource ${resourcePath}", e)
-            response.status = HttpServletResponse.SC_INTERNAL_SERVER_ERROR
-            request.errorMessage = e.message
-            return renderErrorView([:])
+            flash.error= e.message
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
         }
     }
     /**
