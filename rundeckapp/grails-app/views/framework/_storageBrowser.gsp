@@ -4,9 +4,14 @@
     </div>
     <div class="row text-info form-inline">
         <div class="form-group col-sm-12" data-bind="css: invalid()?'has-error':'' ">
-            <input type="text" class="form-control"
-                   data-bind="value: inputPath, valueUpdate: 'input', attr: {disabled: loading() }, executeOnEnter: browseToInputPath"
-                   placeholder="Enter a path"/>
+            <div class="input-group">
+                <div class="input-group-addon" data-bind="if: staticRoot()">
+                    <span data-bind="text: rootPath() + '/'"></span>
+                </div>
+                <input type="text" class="form-control"
+                       data-bind="value: inputPath, valueUpdate: 'input', attr: {disabled: loading() }, executeOnEnter: browseToInputPath"
+                       placeholder="Enter a path"/>
+            </div>
         </div>
     </div>
     <div class="row row-space">
@@ -100,7 +105,9 @@
         <tbody data-bind="if: notFound()">
         <tr>
             <td colspan="2">
-                <span class="text-muted">Nothing found at this path. Select "Add a File" if you would like to upload a new file.</span>
+                <span class="text-muted">Nothing found at this path.
+                <span data-bind="if: allowUpload()">Select "Add or Upload a Key" if you would like to create a new key.</span>
+                </span>
             </td>
         </tr>
         </tbody>

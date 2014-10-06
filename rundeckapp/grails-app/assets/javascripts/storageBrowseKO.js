@@ -53,7 +53,7 @@ function StorageUpload(storage){
     self.inputFullpath = ko.computed(function () {
         var name = self.fileName();
         var file = self.fileInputName();
-        var path = self.storage.inputPath();
+        var path = self.storage.absolutePath(self.storage.inputPath());
         return (path ? (path.lastIndexOf('/') == path.length - 1 ? path : path + '/') : '') + (name?name: file);
     });
 
@@ -80,6 +80,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
     self.baseUrl = baseUrl;
     self.fileSelect=fileSelect;
     self.rootPath = ko.observable(rootPath);
+    self.staticRoot = ko.observable(false);
     self.errorMsg = ko.observable();
     self.path = ko.observable('');
     self.inputPath = ko.observable('');
@@ -132,6 +133,37 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
 
     //functions
 
+    self.cleanPath = function (path) {
+        if(path != null){
+            while(path.indexOf('/')==0){
+                path = path.substring(1);
+            }
+        }else{
+            return '';
+        }
+        return path;
+    };
+    self.relativePath = function (path) {
+        var root = self.rootPath();
+        var statroot = self.staticRoot();
+        if(!statroot){
+            return path;
+        }
+        var newpath='';
+        if(path && root){
+            path = self.cleanPath(path);
+            newpath = self.cleanPath(path.substring(root.length));
+        }
+        return newpath;
+    };
+    self.absolutePath=function(relpath){
+        var root = self.rootPath();
+        var statroot = self.staticRoot();
+        if (!statroot) {
+            return relpath;
+        }
+        return root+'/'+relpath;
+    };
     self.dirNameString = function(dir){
         if (dir.lastIndexOf('/') >= 0) {
             return dir.substring(dir.lastIndexOf('/') + 1);
@@ -225,7 +257,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
         }).success(_ajaxReceiveTokens.curry('storage_browser_token'));
     };
     self.browseToInputPath = function(){
-        self.path(self.inputPath());
+        self.path(self.absolutePath(self.inputPath()));
     };
     self.pathNotFound=function(path){
         self.notFound(true);
@@ -236,16 +268,13 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
             self.resources([]);
             var reload=false;
             self.selectedPath(null);
-            self.inputPath(path)
+            self.inputPath(self.relativePath(path));
             if(reload){
                 self.browseToInputPath();
             }
         }
     };
     self.loadPath = function (val) {
-//        if(val==''){
-//            return;
-//        }
         var mapping = {
             'resources': {
                 key: function (data) {
@@ -254,7 +283,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
             }
         };
         self.loading(true);
-        self.inputPath(val);
+        self.inputPath(self.relativePath(val));
         jQuery.ajax({
             dataType: "json",
             url: self.baseUrl + val,
@@ -264,7 +293,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
                 if (data.type == 'file') {
                     //select the path and load the parent dir
                     self.selectedPath(val);
-                    self.inputPath(self.parentDirString(val))
+                    self.inputPath(self.relativePath(self.parentDirString(val)))
                     self.browseToInputPath();
                     return;
                 }
@@ -292,7 +321,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
 
     self.browse=function(rootPath, filter, selectedPath){
         if(rootPath){
-            self.rootPath(rootPath);
+            self.rootPath(self.cleanPath(rootPath));
         }
         if (filter) {
             self.fileFilter(filter);
@@ -300,12 +329,25 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
             self.fileFilter(null);
         }
         if (selectedPath) {
-            self.selectedPath(selectedPath);
-            self.path(self.parentDirString(selectedPath));
+            var selpath= self.cleanPath(selectedPath);
+            self.selectedPath(selpath);
+            self.path(self.parentDirString(selpath));
         } else {
             self.initialLoad();
         }
     };
+    self.pathInRoot = ko.computed(function () {
+        var root = self.rootPath();
+        var statroot = self.staticRoot();
+        var path = self.path();
+        return self.relativePath(path);
+    });
+    self.selectedPathInRoot = ko.computed(function () {
+        var root = self.rootPath();
+        var statroot = self.staticRoot();
+        var path = self.selectedPath();
+        return self.relativePath(path);
+    });
 
     //upload link
 

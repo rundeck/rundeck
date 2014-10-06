@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageAuthorizationException
 import com.dtolabs.rundeck.server.plugins.storage.KeyStorageLayer
+import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
 import org.springframework.web.multipart.MultipartHttpServletRequest
@@ -198,11 +199,11 @@ class StorageController extends ControllerBase{
     /**
      * non-api action wrapper for apiKeys method
      */
-    public def keyStorageDownload(){
-        if(!params.resourcePath.startsWith("keys")){
-            params.resourcePath = "/keys/${params.resourcePath ?: ''}"
+    public def keyStorageDownload(StorageParams storageParams){
+        if (!params.resourcePath && params.relativePath) {
+            params.resourcePath = "/keys/${params.relativePath ?: ''}"
         }
-        getResource(true)
+        getResource(storageParams,true)
     }
     /**
      * non-api action wrapper for apiKeys method
@@ -211,6 +212,9 @@ class StorageController extends ControllerBase{
         if (storageParams.hasErrors()) {
             flash.errors=storageParams.errors
             return redirect(controller: 'menu',action: 'storage',params: [project:params.project])
+        }
+        if (!params.resourcePath && null!=params.relativePath) {
+            params.resourcePath = "keys${params.relativePath ? ('/'+params.relativePath): ''}"
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def resourcePath = params.resourcePath
@@ -324,13 +328,15 @@ class StorageController extends ControllerBase{
                     params: [project: params.project])
         }
 
-        resourcePath = resourcePath + '/' + filename
+        resourcePath = PathUtil.cleanPath(resourcePath + '/' + filename)
 
         def newparams=new StorageParams()
         newparams.resourcePath=resourcePath
         newparams.validate()
         if(newparams.hasErrors()){
-            return renderErrorView([beanErrors: newparams.errors])
+            flash.errors=newparams.errors
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
         }
 
         boolean overwrite=true

@@ -16,7 +16,7 @@
                 <button type="button" class="btn btn-sm btn-success obs-storagebrowse-select"
                         data-bind="css: selectedPath()?'active':'disabled' "
                         data-dismiss="modal">
-                    Choose Selected File
+                    Choose Selected Key
                 </button>
             </div>
         </div>
@@ -34,6 +34,7 @@
             if (storageBrowse == null) {
                 storageBrowse= new StorageBrowser(appLinks.storageKeysApi, rootPath);
                 storageBrowse.browseMode('select');
+                storageBrowse.staticRoot(true);
                 jQuery('body').data('storageBrowser', storageBrowse );
                 jQuery(evt.delegateTarget).data('storageBrowser', storageBrowse);
                 ko.applyBindings(storageBrowse);

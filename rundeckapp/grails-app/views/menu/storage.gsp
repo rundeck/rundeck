@@ -18,10 +18,8 @@
         var storageBrowse;
         function init() {
             var rootPath = 'keys';
-//            if (!rootPath.startsWith("keys/")) {
-//                rootPath = "keys";
-//            }
             storageBrowse = new StorageBrowser(appLinks.storageKeysApi, rootPath);
+            storageBrowse.staticRoot(true);
             storageBrowse.browseMode('browse');
             storageBrowse.allowUpload(true);
             storageBrowse.allowNotFound(true);
@@ -162,9 +160,14 @@
                             </label>
 
                             <div class="col-sm-9">
+                                <div class="input-group">
+                                    <div class="input-group-addon" data-bind="if: staticRoot()">
+                                        <span data-bind="text: rootPath() + '/'"></span>
+                                    </div>
                                 <input data-bind="value: inputPath, valueUpdate: 'keyup' "
-                                       id="uploadResourcePath2" name="resourcePath"
+                                       id="uploadResourcePath2" name="relativePath"
                                        class="form-control" placeholder="Enter the directory name"/>
+                                </div>
                             </div>
                         </div>
 

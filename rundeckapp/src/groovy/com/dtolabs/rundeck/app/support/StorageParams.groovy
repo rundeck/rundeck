@@ -26,11 +26,13 @@ import grails.validation.Validateable
 @Validateable
 class StorageParams {
     String resourcePath
+    String relativePath
     String fileName
     String inputType
     String uploadKeyType
     static constraints={
         resourcePath(nullable: true, matches: /^\/?((?!\.\.(\/|$))[a-zA-Z0-9,\.+_-][\sa-zA-Z0-9,\.+_-]*?\/?)+$/)
+        relativePath(nullable: true, matches: /^\/?((?!\.\.(\/|$))[a-zA-Z0-9,\.+_-][\sa-zA-Z0-9,\.+_-]*?\/?)+$/)
         fileName(nullable: true, matches: /^(?!\.\.(\/|$))[a-zA-Z0-9,\.+_-][\sa-zA-Z0-9,\.+_-]*$/)
         inputType(nullable: true, inList: ['file','text'])
         uploadKeyType(nullable: true,inList: ['private','public','password'])
