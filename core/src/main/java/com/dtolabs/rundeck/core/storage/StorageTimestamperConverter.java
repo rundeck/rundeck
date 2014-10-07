@@ -23,6 +23,7 @@ public class StorageTimestamperConverter implements StorageConverterPlugin {
     public HasInputStream createResource(Path path, ResourceMetaBuilder resourceMetaBuilder,
             HasInputStream hasInputStream) {
         resourceMetaBuilder.setCreationTime(new Date());
+        resourceMetaBuilder.setModificationTime(new Date());
         return null;
     }
 
