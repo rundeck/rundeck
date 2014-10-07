@@ -2,8 +2,10 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.StorageParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.storage.AuthStorageUsernameMeta
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageAuthorizationException
+import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.server.plugins.storage.KeyStorageLayer
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
@@ -18,16 +20,17 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 class StorageController extends ControllerBase{
-    public static final String RES_META_RUNDECK_CONTENT_TYPE = 'Rundeck-content-type'
-    public static final String RES_META_RUNDECK_CONTENT_SIZE = 'Rundeck-content-size'
     public static final String RES_META_RUNDECK_CONTENT_MASK = 'Rundeck-content-mask'
-    public static final String RES_META_RUNDECK_KEY_TYPE = 'Rundeck-key-type'
-    public static final Map<String,String> RES_META_RUNDECK_OUTPUT = [
-            (RES_META_RUNDECK_CONTENT_TYPE):"contentType",
-            (RES_META_RUNDECK_CONTENT_SIZE):"contentLength",
-            (RES_META_RUNDECK_CONTENT_MASK): RES_META_RUNDECK_CONTENT_MASK,
-            (RES_META_RUNDECK_KEY_TYPE): RES_META_RUNDECK_KEY_TYPE,
-            (KeyStorageLayer.RUNDECK_DATA_TYPE): KeyStorageLayer.RUNDECK_DATA_TYPE,
+    public static final List<String> RES_META_RUNDECK_OUTPUT = [
+            StorageUtil.RES_META_RUNDECK_CONTENT_TYPE,
+            StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH,
+            StorageUtil.RES_META_RUNDECK_CONTENT_CREATION_TIME,
+            StorageUtil.RES_META_RUNDECK_CONTENT_MODIFY_TIME,
+            AuthStorageUsernameMeta.RUNDECK_AUTH_CREATED_USERNAME,
+            AuthStorageUsernameMeta.RUNDECK_AUTH_MODIFIED_USERNAME,
+            KeyStorageLayer.RUNDECK_KEY_TYPE,
+            KeyStorageLayer.RUNDECK_DATA_TYPE,
+            RES_META_RUNDECK_CONTENT_MASK,
     ]
     StorageService storageService
     ApiService apiService
@@ -60,7 +63,7 @@ class StorageController extends ControllerBase{
                 if (meta1) {
                     def bd = delegate
                     def meta=[:]
-                    RES_META_RUNDECK_OUTPUT.each{k,v->
+                    RES_META_RUNDECK_OUTPUT.each{k->
                         if(meta1[k]){
                             meta[k]= meta1[k]
                         }
@@ -95,7 +98,7 @@ class StorageController extends ControllerBase{
                 def data = res.contents.meta
                 delegate.'resource-meta' {
                     def bd = delegate
-                    RES_META_RUNDECK_OUTPUT.each { k, v ->
+                    RES_META_RUNDECK_OUTPUT.each { k ->
                         if (res.contents.meta[k]) {
                             bd."${k}"(res.contents.meta[k])
                         }
@@ -130,7 +133,7 @@ class StorageController extends ControllerBase{
     private def renderResourceFile(HttpServletRequest request, HttpServletResponse response, Resource resource, boolean forceDownload=false) {
         def contents = resource.contents
         def meta = contents?.meta
-        def resContentType= meta?.getAt(RES_META_RUNDECK_CONTENT_TYPE)
+        def resContentType= meta?.getAt(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE)
         def cmask=meta?.getAt(RES_META_RUNDECK_CONTENT_MASK)?.split(',') as Set
         //
         def maskContent=cmask?.contains('content')
@@ -360,8 +363,8 @@ class StorageController extends ControllerBase{
                     params: [project: params.project])
         }
         Map<String, String> map = [
-                (RES_META_RUNDECK_CONTENT_TYPE): contentType,
-                (RES_META_RUNDECK_CONTENT_SIZE): contentLength,
+                (StorageUtil.RES_META_RUNDECK_CONTENT_TYPE): contentType,
+                (StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH): contentLength,
         ]
         try {
             if(hasResource){
@@ -450,8 +453,8 @@ class StorageController extends ControllerBase{
             return renderError("directory already exists: ${resourcePath}")
         }
         Map<String,String> map = [
-                (RES_META_RUNDECK_CONTENT_TYPE): request.contentType,
-                (RES_META_RUNDECK_CONTENT_SIZE): Integer.toString(request.contentLength),
+                (StorageUtil.RES_META_RUNDECK_CONTENT_TYPE): request.contentType,
+                (StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH): Integer.toString(request.contentLength),
         ] + (request.resourcePostMeta?:[:])
         try{
             def resource = storageService.createResource(authContext,resourcePath, map, request.inputStream)
@@ -533,8 +536,8 @@ class StorageController extends ControllerBase{
             return renderError("resource not found: ${resourcePath}")
         }
         Map<String, String> map = [
-                (RES_META_RUNDECK_CONTENT_TYPE): request.contentType,
-                (RES_META_RUNDECK_CONTENT_SIZE): Integer.toString(request.contentLength),
+                (StorageUtil.RES_META_RUNDECK_CONTENT_TYPE): request.contentType,
+                (StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH): Integer.toString(request.contentLength),
         ] + (request.resourcePostMeta ?: [:])
         try {
             def resource = storageService.updateResource(authContext,resourcePath, map, request.inputStream)
