@@ -13,6 +13,26 @@ function StorageResource() {
         }
         return false;
     });
+    self.isPrivateKey=ko.computed(function(){
+        //$data.meta['Rundeck-key-type'] && $data.meta['Rundeck-key-type']()=='private'
+        if (self.meta() && self.meta()['Rundeck-key-type'] && self.meta()['Rundeck-key-type']()=='private') {
+            return true;
+        }
+        return false;
+    });
+    self.isPublicKey=ko.computed(function(){
+        //$data.meta['Rundeck-key-type'] && $data.meta['Rundeck-key-type']()=='private'
+        if (self.meta() && self.meta()['Rundeck-key-type'] && self.meta()['Rundeck-key-type']()=='public') {
+            return true;
+        }
+        return false;
+    });
+    self.isPassword=ko.computed(function(){
+        if (self.meta() && self.meta()['Rundeck-data-type'] && self.meta()['Rundeck-data-type']()=='password') {
+            return true;
+        }
+        return false;
+    });
     self.createdUsername=ko.computed(function(){
         var value='';
         if(self.meta() && self.meta()['Rundeck-auth-created-username'] && self.meta()['Rundeck-auth-created-username']()){

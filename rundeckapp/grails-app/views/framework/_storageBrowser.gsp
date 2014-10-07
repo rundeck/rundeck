@@ -69,14 +69,14 @@
                 <i class="glyphicon "
                    data-bind="css: $root.selectedPath()==path() ? 'glyphicon-ok' : 'glyphicon-unchecked' "></i>
 
-                <span data-bind="if: $data.meta['Rundeck-key-type'] && $data.meta['Rundeck-key-type']()=='private'"
+                <span data-bind="if: $data.isPrivateKey()"
                       title="This path contains a private key that can be used for remote node execution.">
                     <i class="glyphicon glyphicon-lock"></i>
                 </span>
-                <span data-bind="if: $data.meta['Rundeck-key-type'] && $data.meta['Rundeck-key-type']()=='public'">
+                <span data-bind="if: $data.isPublicKey()">
                     <i class="glyphicon glyphicon-eye-open"></i>
                 </span>
-                <span data-bind="if: $data.meta['Rundeck-data-type'] && $data.meta['Rundeck-data-type']()=='password'"
+                <span data-bind="if: $data.isPassword()"
                       title="This path contains a password that can be used for remote node execution.">
                     <i class="glyphicon glyphicon-lock"></i>
                 </span>
@@ -85,15 +85,15 @@
             </td>
             <td class="text-muted">
                 <span class="pull-right">
-                <span data-bind="if: $data.meta['Rundeck-key-type'] && $data.meta['Rundeck-key-type']()=='private'"
+                <span data-bind="if: $data.isPrivateKey()"
                     title="This path contains a private key that can be used for remote node execution."
                 >
                     Private key
                 </span>
-                <span data-bind="if: $data.meta['Rundeck-key-type'] && $data.meta['Rundeck-key-type']()=='public'">
+                <span data-bind="if: $data.isPublicKey()">
                     Public key
                 </span>
-                <span data-bind="if: $data.meta['Rundeck-data-type'] && $data.meta['Rundeck-data-type']()=='password'"
+                <span data-bind="if: $data.isPassword()"
                     title="This path contains a password that can be used for remote node execution.">
                     Password
                 </span>
@@ -136,7 +136,7 @@
             </div>
 
             %{--todo: view contents--}%
-            %{--<div data-bind="if: selectedResource() && selectedResource().meta['Rundeck-key-type'] && selectedResource().meta['Rundeck-key-type']()=='public'">
+            %{--<div data-bind="if: selectedResource() && selectedResource().isPublicKey()">
                 <div id="publicKeyContents">
                     <button data-bind="click: viewContents('publicKeyContents')" class="btn btn-sm btn-default">View Public Key Contents</button>
                 </div>
