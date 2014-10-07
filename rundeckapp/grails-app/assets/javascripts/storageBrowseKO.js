@@ -1,11 +1,47 @@
+//= require momentutil
 //= require knockout.min
 //= require knockout-mapping
 //= require knockout-onenter
 
 
-function StorageResource(browser, path, data) {
+function StorageResource() {
     var self = this;
-
+    self.meta = ko.observable({});
+    self.wasModified=ko.computed(function(){
+        if (self.meta() && self.meta()['Rundeck-content-creation-time']()&& self.meta()['Rundeck-content-modify-time']()) {
+            return self.meta()['Rundeck-content-creation-time']() != self.meta()['Rundeck-content-modify-time']();
+        }
+        return false;
+    });
+    self.createdTime=ko.computed(function(){
+        var value='';
+        if(self.meta() && self.meta()['Rundeck-content-creation-time']()){
+            value = MomentUtil.formatTimeAtDate(self.meta()['Rundeck-content-creation-time']());
+        }
+        return value;
+    });
+    self.modifiedTime=ko.computed(function(){
+        var value='';
+        if(self.meta() && self.meta()['Rundeck-content-modify-time']()){
+            value = MomentUtil.formatTimeAtDate(self.meta()['Rundeck-content-modify-time']());
+        }
+        return value;
+    });
+    self.modifiedTimeAgoText = ko.computed(function () {
+        var value = '';
+        if (self.meta() && self.meta()['Rundeck-content-modify-time']()) {
+            var time = self.meta()['Rundeck-content-modify-time']();
+            value = MomentUtil.formatDurationHumanize(MomentUtil.duration(time));
+        }
+        return value;
+    });
+    self.modifiedTimeAgo = function (label) {
+        var value = self.modifiedTimeAgoText();
+        if(value){
+            return value +" "+label;
+        }
+        return "";
+    };
 }
 function StorageDir(browser, path, data) {
     var self = this;
@@ -279,6 +315,10 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
             'resources': {
                 key: function (data) {
                     return ko.utils.unwrapObservable(data.path);
+                },
+                create: function (options) {
+                    var res=new StorageResource();
+                    return ko.mapping.fromJS(options.data,{},res);
                 }
             }
         };

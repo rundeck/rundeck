@@ -141,6 +141,33 @@
                     <button data-bind="click: viewContents('publicKeyContents')" class="btn btn-sm btn-default">View Public Key Contents</button>
                 </div>
             </div>--}%
+            <div data-bind="if: selectedResource() && selectedResource().meta()['Rundeck-content-creation-time']"
+                class="text-muted">
+                <div >
+                    Created:
+                    <span class="timeabs" data-bind="text: selectedResource().createdTime()"></span>
+
+                    <span data-bind="if: selectedResource().meta()['Rundeck-auth-created-username']">
+                        by:
+
+                        <span data-bind="text: selectedResource().meta()['Rundeck-auth-created-username']"></span>
+                    </span>
+
+                </div>
+            </div>
+            <div data-bind="if: selectedResource() && selectedResource().wasModified()"
+                 class="text-muted">
+                <div >
+                    Modified:
+                    <span class="timeago" data-bind="text: selectedResource().modifiedTimeAgo('ago')"></span>
+
+                    <span data-bind="if: selectedResource().meta()['Rundeck-auth-modified-username']">
+                        by:
+
+                        <span data-bind="text: selectedResource().meta()['Rundeck-auth-modified-username']"></span>
+                    </span>
+                </div>
+            </div>
         </div>
 
 
