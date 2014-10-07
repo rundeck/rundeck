@@ -86,6 +86,8 @@ function StorageDir(browser, path, data) {
 function StorageUpload(storage){
     var self = this;
     self.storage=storage;
+    //if true, modifying existing path, otherwise, false
+    self.modifyMode=ko.observable(false);
     self.keyType=ko.observable('private');
     self.inputType=ko.observable('text');
     self.file=ko.observable('');
@@ -293,6 +295,20 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
             self.selectedIsDownloadable(candownload);
         }
     }
+    self.actionUploadModify=function(){
+        if(self.selectedResource()){
+            self.upload.fileName(self.selectedResource().name());
+            self.inputPath(self.relativePath(self.parentDirString(self.selectedResource().path())));
+            self.upload.keyType(self.selectedResource().isPrivateKey()?'private': self.selectedResource().isPublicKey()?'public':'password');
+            self.upload.modifyMode(true);
+            jQuery("#storageuploadkey").modal('show');
+        }
+    };
+    self.actionUpload=function(){
+        self.upload.modifyMode(false);
+        self.upload.fileName('');
+        jQuery("#storageuploadkey").modal('show');
+    };
     self.download = function(){
         if(self.selectedPath()){
             document.location = _genUrl(appLinks.storageKeysDownload, {relativePath:self.relativePath(self.selectedPath())});

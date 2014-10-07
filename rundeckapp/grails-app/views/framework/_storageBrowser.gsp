@@ -40,9 +40,15 @@
         </div>
 
         <div class="btn-group" data-bind="if: allowUpload() ">
-            <a href="#storageuploadkey" data-toggle="modal"
-               class="btn btn-sm btn-success dropdown-toggle">
+            <a href="#storageuploadkey" data-bind="click: actionUpload"
+               class="btn btn-sm btn-success ">
                 <i class="glyphicon glyphicon-plus"></i> Add or Upload a Key</span>
+            </a>
+        </div>
+        <div class="btn-group" data-bind="if: allowUpload() && selectedPath() ">
+            <a href="#storageuploadkey" data-bind="click: actionUploadModify"
+               class="btn btn-sm btn-info ">
+                <i class="glyphicon glyphicon-pencil"></i> Overwrite Key</span>
             </a>
         </div>
     </div>
