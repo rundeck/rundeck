@@ -32,6 +32,10 @@ class StorageController extends ControllerBase{
             KeyStorageLayer.RUNDECK_DATA_TYPE,
             RES_META_RUNDECK_CONTENT_MASK,
     ]
+    /**
+     * Metadata fields not included in masked resource output
+     */
+    public static final Set<String> RES_META_MASKED = [StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH]
     StorageService storageService
     ApiService apiService
     FrameworkService frameworkService
@@ -50,7 +54,7 @@ class StorageController extends ControllerBase{
         }
         return createLink(absolute: true, uri: uriString)
     }
-    private def jsonRenderResource(builder,Resource res, dirlist=[]){
+    private def jsonRenderResource(builder, Resource res, dirlist=[]){
         builder.with{
             path = res.path.toString()
             type = res.directory ? 'directory' : 'file'
@@ -61,15 +65,16 @@ class StorageController extends ControllerBase{
             if (!res.directory) {
                 def meta1 = res.contents.meta
                 if (meta1) {
+                    def masked = resourceContentsMasked(res)
                     def bd = delegate
-                    def meta=[:]
-                    RES_META_RUNDECK_OUTPUT.each{k->
-                        if(meta1[k]){
-                            meta[k]= meta1[k]
+                    def meta = [:]
+                    RES_META_RUNDECK_OUTPUT.each { k ->
+                        if ((!masked || !(k in StorageController.RES_META_MASKED)) && meta1[k]) {
+                            meta[k] = meta1[k]
                         }
                     }
-                    if(meta){
-                        bd.meta=meta
+                    if (meta) {
+                        bd.meta = meta
                     }
 
                 }
@@ -95,11 +100,12 @@ class StorageController extends ControllerBase{
         }
         builder.'resource'(map) {
             if (!res.directory) {
+                def masked=resourceContentsMasked(res)
                 def data = res.contents.meta
                 delegate.'resource-meta' {
                     def bd = delegate
                     RES_META_RUNDECK_OUTPUT.each { k ->
-                        if (res.contents.meta[k]) {
+                        if ((!masked || !(k in StorageController.RES_META_MASKED)) && res.contents.meta[k]) {
                             bd."${k}"(res.contents.meta[k])
                         }
                     }
@@ -130,13 +136,17 @@ class StorageController extends ControllerBase{
             }
         }
     }
+    private boolean resourceContentsMasked(Resource resource){
+        def meta = resource.contents?.meta
+        def cmask = meta?.getAt(RES_META_RUNDECK_CONTENT_MASK)?.split(',') as Set
+        return cmask?.contains('content')
+    }
     private def renderResourceFile(HttpServletRequest request, HttpServletResponse response, Resource resource, boolean forceDownload=false) {
         def contents = resource.contents
         def meta = contents?.meta
         def resContentType= meta?.getAt(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE)
-        def cmask=meta?.getAt(RES_META_RUNDECK_CONTENT_MASK)?.split(',') as Set
-        //
-        def maskContent=cmask?.contains('content')
+
+        def maskContent= resourceContentsMasked(resource)
 
         def askedForContent= forceDownload || resContentType && request.getHeader('Accept')?.contains(resContentType)
         def anyContent= response.format == 'all'
