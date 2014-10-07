@@ -29,6 +29,10 @@ public class JsonMetadataMapper implements MetadataMapper {
             destination.getParentFile().mkdirs();
         }
         HashMap<String, String> stringStringHashMap = new HashMap<String, String>();
+        //merge metadata by reading in existing metadata
+        if(destination.exists()) {
+            stringStringHashMap.putAll(readMetadata(destination));
+        }
         Map map=meta;
         for (Object o : map.keySet()) {
             if (null != o && null != map.get(o)) {
