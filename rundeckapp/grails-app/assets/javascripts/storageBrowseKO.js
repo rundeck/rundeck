@@ -8,30 +8,44 @@ function StorageResource() {
     var self = this;
     self.meta = ko.observable({});
     self.wasModified=ko.computed(function(){
-        if (self.meta() && self.meta()['Rundeck-content-creation-time']()&& self.meta()['Rundeck-content-modify-time']()) {
+        if (self.meta() && self.meta()['Rundeck-content-creation-time'] && self.meta()['Rundeck-content-modify-time']()) {
             return self.meta()['Rundeck-content-creation-time']() != self.meta()['Rundeck-content-modify-time']();
         }
         return false;
     });
+    self.createdUsername=ko.computed(function(){
+        var value='';
+        if(self.meta() && self.meta()['Rundeck-auth-created-username'] && self.meta()['Rundeck-auth-created-username']()){
+            return self.meta()['Rundeck-auth-created-username']();
+        }
+        return value;
+    });
     self.createdTime=ko.computed(function(){
         var value='';
-        if(self.meta() && self.meta()['Rundeck-content-creation-time']()){
+        if(self.meta() && self.meta()['Rundeck-content-creation-time'] && self.meta()['Rundeck-content-creation-time']()){
             value = MomentUtil.formatTimeAtDate(self.meta()['Rundeck-content-creation-time']());
         }
         return value;
     });
     self.modifiedTime=ko.computed(function(){
         var value='';
-        if(self.meta() && self.meta()['Rundeck-content-modify-time']()){
+        if(self.meta() && self.meta()['Rundeck-content-modify-time'] && self.meta()['Rundeck-content-modify-time']()){
             value = MomentUtil.formatTimeAtDate(self.meta()['Rundeck-content-modify-time']());
         }
         return value;
     });
     self.modifiedTimeAgoText = ko.computed(function () {
         var value = '';
-        if (self.meta() && self.meta()['Rundeck-content-modify-time']()) {
+        if (self.meta() && self.meta()['Rundeck-content-modify-time'] && self.meta()['Rundeck-content-modify-time']()) {
             var time = self.meta()['Rundeck-content-modify-time']();
             value = MomentUtil.formatDurationHumanize(MomentUtil.duration(time));
+        }
+        return value;
+    });
+    self.modifiedUsername = ko.computed(function () {
+        var value = '';
+        if (self.meta() && self.meta()['Rundeck-auth-modified-username'] && self.meta()['Rundeck-auth-modified-username']()) {
+            return self.meta()['Rundeck-auth-modified-username']();
         }
         return value;
     });
@@ -344,6 +358,18 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
                     data.resources=[];
                 }
                 ko.mapping.fromJS(data, mapping, self);
+                if(self.selectedPath()){
+                    //select correct resource
+                    var selected=ko.utils.arrayFirst(self.resources(),function(a){
+                       return a.path()==self.selectedPath();
+                    });
+                    if(selected){
+                        self.selectedPath(null);//otherwise gets deselected
+                        self.selectFile(selected);
+                    }else{
+                        self.selectedPath(null);
+                    }
+                }
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 self.loading(false);

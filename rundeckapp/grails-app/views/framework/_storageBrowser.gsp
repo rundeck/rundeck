@@ -141,16 +141,16 @@
                     <button data-bind="click: viewContents('publicKeyContents')" class="btn btn-sm btn-default">View Public Key Contents</button>
                 </div>
             </div>--}%
-            <div data-bind="if: selectedResource() && selectedResource().meta()['Rundeck-content-creation-time']"
+            <div data-bind="if: selectedResource() && selectedResource().createdTime()"
                 class="text-muted">
                 <div >
                     Created:
-                    <span class="timeabs" data-bind="text: selectedResource().createdTime()"></span>
+                    <span class="timeabs" data-bind="text: selectedResource().createdTime(), attr: { title:  selectedResource().meta()['Rundeck-content-creation-time'] }"></span>
 
-                    <span data-bind="if: selectedResource().meta()['Rundeck-auth-created-username']">
+                    <span data-bind="if: selectedResource().createdUsername()">
                         by:
 
-                        <span data-bind="text: selectedResource().meta()['Rundeck-auth-created-username']"></span>
+                        <span data-bind="text: selectedResource().createdUsername()"></span>
                     </span>
 
                 </div>
@@ -159,12 +159,12 @@
                  class="text-muted">
                 <div >
                     Modified:
-                    <span class="timeago" data-bind="text: selectedResource().modifiedTimeAgo('ago')"></span>
+                    <span class="timeago" data-bind="text: selectedResource().modifiedTimeAgo('ago'), attr: { title:  selectedResource().meta()['Rundeck-content-modify-time'] }"></span>
 
-                    <span data-bind="if: selectedResource().meta()['Rundeck-auth-modified-username']">
+                    <span data-bind="if: selectedResource().modifiedUsername()">
                         by:
 
-                        <span data-bind="text: selectedResource().meta()['Rundeck-auth-modified-username']"></span>
+                        <span data-bind="text: selectedResource().modifiedUsername()"></span>
                     </span>
                 </div>
             </div>
