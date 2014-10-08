@@ -141,12 +141,6 @@
                 <a href="#" data-bind="attr: { href: selectedPathUrl() }"><i class="glyphicon glyphicon-link"></i></a>
             </div>
 
-            %{--todo: view contents--}%
-            %{--<div data-bind="if: selectedResource() && selectedResource().isPublicKey()">
-                <div id="publicKeyContents">
-                    <button data-bind="click: viewContents('publicKeyContents')" class="btn btn-sm btn-default">View Public Key Contents</button>
-                </div>
-            </div>--}%
             <div data-bind="if: selectedResource() && selectedResource().createdTime()"
                 class="text-muted">
                 <div >
@@ -173,6 +167,21 @@
                         <span data-bind="text: selectedResource().modifiedUsername()"></span>
                     </span>
                 </div>
+            </div>
+
+            %{--todo: view contents--}%
+            <div data-bind="if: selectedResource() && selectedResource().isPublicKey()">
+                    <button
+                            data-bind="click: function(){$root.actionLoadContents('publicKeyContents');}, visible: !selectedResource().wasDownloaded()"
+                            class="btn btn-sm btn-default"
+                            data-loading-text="Loading…"
+                    >
+                        View Public Key Contents (<span data-bind="text: selectedResource().contentSize()"></span> bytes)
+                    </button>
+
+                <pre id="publicKeyContents"  class="pre-scrollable" data-bind="visible: selectedResource().wasDownloaded()">
+
+                </pre>
             </div>
         </div>
 

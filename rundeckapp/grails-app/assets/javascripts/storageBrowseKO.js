@@ -7,6 +7,7 @@
 function StorageResource() {
     var self = this;
     self.meta = ko.observable({});
+    self.wasDownloaded=ko.observable(false);
     self.wasModified=ko.computed(function(){
         if (self.meta() && self.meta()['Rundeck-content-creation-time'] && self.meta()['Rundeck-content-modify-time']()) {
             return self.meta()['Rundeck-content-creation-time']() != self.meta()['Rundeck-content-modify-time']();
@@ -32,6 +33,13 @@ function StorageResource() {
             return true;
         }
         return false;
+    });
+    self.contentSize=ko.computed(function(){
+        var value='';
+        if(self.meta() && self.meta()['Rundeck-content-size'] && self.meta()['Rundeck-content-size']()){
+            return self.meta()['Rundeck-content-size']();
+        }
+        return value;
     });
     self.createdUsername=ko.computed(function(){
         var value='';
@@ -309,6 +317,19 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
         self.upload.fileName('');
         jQuery("#storageuploadkey").modal('show');
     };
+    self.actionLoadContents=function(destid,btn){
+        if(self.selectedResource() && self.selectedResource().isPublicKey()){
+            jQuery(btn).button('loading');
+            jQuery.ajax({
+                url: _genUrl(appLinks.storageKeysDownload, {relativePath: self.relativePath(self.selectedPath())}),
+                success:function(data,jqxhr){
+                    var found = jQuery('#' + destid);
+                    setText(found[0],data);
+                    self.selectedResource().wasDownloaded(true);
+                }
+            });
+        }
+    };
     self.download = function(){
         if(self.selectedPath()){
             document.location = _genUrl(appLinks.storageKeysDownload, {relativePath:self.relativePath(self.selectedPath())});
@@ -420,6 +441,12 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
     self.path.subscribe(function (val){
         self.loadPath(val);
     });
+    self.selectedResource.subscribe(function (oldval) {
+        if(oldval){
+            //mark previous selected resource as not downloaded when another one is selected
+            oldval.wasDownloaded(false);
+        }
+    }, null, "beforeChange");
 
     self.browse=function(rootPath, filter, selectedPath){
         if(rootPath){
