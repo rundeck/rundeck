@@ -1,11 +1,89 @@
+//= require momentutil
 //= require knockout.min
 //= require knockout-mapping
 //= require knockout-onenter
 
 
-function StorageResource(browser, path, data) {
+function StorageResource() {
     var self = this;
-
+    self.meta = ko.observable({});
+    self.wasDownloaded=ko.observable(false);
+    self.wasModified=ko.computed(function(){
+        if (self.meta() && self.meta()['Rundeck-content-creation-time'] && self.meta()['Rundeck-content-modify-time']()) {
+            return self.meta()['Rundeck-content-creation-time']() != self.meta()['Rundeck-content-modify-time']();
+        }
+        return false;
+    });
+    self.isPrivateKey=ko.computed(function(){
+        //$data.meta['Rundeck-key-type'] && $data.meta['Rundeck-key-type']()=='private'
+        if (self.meta() && self.meta()['Rundeck-key-type'] && self.meta()['Rundeck-key-type']()=='private') {
+            return true;
+        }
+        return false;
+    });
+    self.isPublicKey=ko.computed(function(){
+        //$data.meta['Rundeck-key-type'] && $data.meta['Rundeck-key-type']()=='private'
+        if (self.meta() && self.meta()['Rundeck-key-type'] && self.meta()['Rundeck-key-type']()=='public') {
+            return true;
+        }
+        return false;
+    });
+    self.isPassword=ko.computed(function(){
+        if (self.meta() && self.meta()['Rundeck-data-type'] && self.meta()['Rundeck-data-type']()=='password') {
+            return true;
+        }
+        return false;
+    });
+    self.contentSize=ko.computed(function(){
+        var value='';
+        if(self.meta() && self.meta()['Rundeck-content-size'] && self.meta()['Rundeck-content-size']()){
+            return self.meta()['Rundeck-content-size']();
+        }
+        return value;
+    });
+    self.createdUsername=ko.computed(function(){
+        var value='';
+        if(self.meta() && self.meta()['Rundeck-auth-created-username'] && self.meta()['Rundeck-auth-created-username']()){
+            return self.meta()['Rundeck-auth-created-username']();
+        }
+        return value;
+    });
+    self.createdTime=ko.computed(function(){
+        var value='';
+        if(self.meta() && self.meta()['Rundeck-content-creation-time'] && self.meta()['Rundeck-content-creation-time']()){
+            value = MomentUtil.formatTimeAtDate(self.meta()['Rundeck-content-creation-time']());
+        }
+        return value;
+    });
+    self.modifiedTime=ko.computed(function(){
+        var value='';
+        if(self.meta() && self.meta()['Rundeck-content-modify-time'] && self.meta()['Rundeck-content-modify-time']()){
+            value = MomentUtil.formatTimeAtDate(self.meta()['Rundeck-content-modify-time']());
+        }
+        return value;
+    });
+    self.modifiedTimeAgoText = ko.computed(function () {
+        var value = '';
+        if (self.meta() && self.meta()['Rundeck-content-modify-time'] && self.meta()['Rundeck-content-modify-time']()) {
+            var time = self.meta()['Rundeck-content-modify-time']();
+            value = MomentUtil.formatDurationHumanize(MomentUtil.duration(time));
+        }
+        return value;
+    });
+    self.modifiedUsername = ko.computed(function () {
+        var value = '';
+        if (self.meta() && self.meta()['Rundeck-auth-modified-username'] && self.meta()['Rundeck-auth-modified-username']()) {
+            return self.meta()['Rundeck-auth-modified-username']();
+        }
+        return value;
+    });
+    self.modifiedTimeAgo = function (label) {
+        var value = self.modifiedTimeAgoText();
+        if(value){
+            return value +" "+label;
+        }
+        return "";
+    };
 }
 function StorageDir(browser, path, data) {
     var self = this;
@@ -16,6 +94,8 @@ function StorageDir(browser, path, data) {
 function StorageUpload(storage){
     var self = this;
     self.storage=storage;
+    //if true, modifying existing path, otherwise, false
+    self.modifyMode=ko.observable(false);
     self.keyType=ko.observable('private');
     self.inputType=ko.observable('text');
     self.file=ko.observable('');
@@ -223,6 +303,33 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
             self.selectedIsDownloadable(candownload);
         }
     }
+    self.actionUploadModify=function(){
+        if(self.selectedResource()){
+            self.upload.fileName(self.selectedResource().name());
+            self.inputPath(self.relativePath(self.parentDirString(self.selectedResource().path())));
+            self.upload.keyType(self.selectedResource().isPrivateKey()?'private': self.selectedResource().isPublicKey()?'public':'password');
+            self.upload.modifyMode(true);
+            jQuery("#storageuploadkey").modal('show');
+        }
+    };
+    self.actionUpload=function(){
+        self.upload.modifyMode(false);
+        self.upload.fileName('');
+        jQuery("#storageuploadkey").modal('show');
+    };
+    self.actionLoadContents=function(destid,btn){
+        if(self.selectedResource() && self.selectedResource().isPublicKey()){
+            jQuery(btn).button('loading');
+            jQuery.ajax({
+                url: _genUrl(appLinks.storageKeysDownload, {relativePath: self.relativePath(self.selectedPath())}),
+                success:function(data,jqxhr){
+                    var found = jQuery('#' + destid);
+                    setText(found[0],data);
+                    self.selectedResource().wasDownloaded(true);
+                }
+            });
+        }
+    };
     self.download = function(){
         if(self.selectedPath()){
             document.location = _genUrl(appLinks.storageKeysDownload, {relativePath:self.relativePath(self.selectedPath())});
@@ -279,6 +386,10 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
             'resources': {
                 key: function (data) {
                     return ko.utils.unwrapObservable(data.path);
+                },
+                create: function (options) {
+                    var res=new StorageResource();
+                    return ko.mapping.fromJS(options.data,{},res);
                 }
             }
         };
@@ -304,6 +415,18 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
                     data.resources=[];
                 }
                 ko.mapping.fromJS(data, mapping, self);
+                if(self.selectedPath()){
+                    //select correct resource
+                    var selected=ko.utils.arrayFirst(self.resources(),function(a){
+                       return a.path()==self.selectedPath();
+                    });
+                    if(selected){
+                        self.selectedPath(null);//otherwise gets deselected
+                        self.selectFile(selected);
+                    }else{
+                        self.selectedPath(null);
+                    }
+                }
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 self.loading(false);
@@ -318,6 +441,12 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
     self.path.subscribe(function (val){
         self.loadPath(val);
     });
+    self.selectedResource.subscribe(function (oldval) {
+        if(oldval){
+            //mark previous selected resource as not downloaded when another one is selected
+            oldval.wasDownloaded(false);
+        }
+    }, null, "beforeChange");
 
     self.browse=function(rootPath, filter, selectedPath){
         if(rootPath){

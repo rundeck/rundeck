@@ -40,9 +40,15 @@
         </div>
 
         <div class="btn-group" data-bind="if: allowUpload() ">
-            <a href="#storageuploadkey" data-toggle="modal"
-               class="btn btn-sm btn-success dropdown-toggle">
+            <a href="#storageuploadkey" data-bind="click: actionUpload"
+               class="btn btn-sm btn-success ">
                 <i class="glyphicon glyphicon-plus"></i> Add or Upload a Key</span>
+            </a>
+        </div>
+        <div class="btn-group" data-bind="if: allowUpload() && selectedPath() ">
+            <a href="#storageuploadkey" data-bind="click: actionUploadModify"
+               class="btn btn-sm btn-info ">
+                <i class="glyphicon glyphicon-pencil"></i> Overwrite Key</span>
             </a>
         </div>
     </div>
@@ -69,14 +75,14 @@
                 <i class="glyphicon "
                    data-bind="css: $root.selectedPath()==path() ? 'glyphicon-ok' : 'glyphicon-unchecked' "></i>
 
-                <span data-bind="if: $data.meta['Rundeck-key-type'] && $data.meta['Rundeck-key-type']()=='private'"
+                <span data-bind="if: $data.isPrivateKey()"
                       title="This path contains a private key that can be used for remote node execution.">
                     <i class="glyphicon glyphicon-lock"></i>
                 </span>
-                <span data-bind="if: $data.meta['Rundeck-key-type'] && $data.meta['Rundeck-key-type']()=='public'">
+                <span data-bind="if: $data.isPublicKey()">
                     <i class="glyphicon glyphicon-eye-open"></i>
                 </span>
-                <span data-bind="if: $data.meta['Rundeck-data-type'] && $data.meta['Rundeck-data-type']()=='password'"
+                <span data-bind="if: $data.isPassword()"
                       title="This path contains a password that can be used for remote node execution.">
                     <i class="glyphicon glyphicon-lock"></i>
                 </span>
@@ -85,15 +91,15 @@
             </td>
             <td class="text-muted">
                 <span class="pull-right">
-                <span data-bind="if: $data.meta['Rundeck-key-type'] && $data.meta['Rundeck-key-type']()=='private'"
+                <span data-bind="if: $data.isPrivateKey()"
                     title="This path contains a private key that can be used for remote node execution."
                 >
                     Private key
                 </span>
-                <span data-bind="if: $data.meta['Rundeck-key-type'] && $data.meta['Rundeck-key-type']()=='public'">
+                <span data-bind="if: $data.isPublicKey()">
                     Public key
                 </span>
-                <span data-bind="if: $data.meta['Rundeck-data-type'] && $data.meta['Rundeck-data-type']()=='password'"
+                <span data-bind="if: $data.isPassword()"
                     title="This path contains a password that can be used for remote node execution.">
                     Password
                 </span>
@@ -135,12 +141,48 @@
                 <a href="#" data-bind="attr: { href: selectedPathUrl() }"><i class="glyphicon glyphicon-link"></i></a>
             </div>
 
-            %{--todo: view contents--}%
-            %{--<div data-bind="if: selectedResource() && selectedResource().meta['Rundeck-key-type'] && selectedResource().meta['Rundeck-key-type']()=='public'">
-                <div id="publicKeyContents">
-                    <button data-bind="click: viewContents('publicKeyContents')" class="btn btn-sm btn-default">View Public Key Contents</button>
+            <div data-bind="if: selectedResource() && selectedResource().createdTime()"
+                class="text-muted">
+                <div >
+                    Created:
+                    <span class="timeabs" data-bind="text: selectedResource().createdTime(), attr: { title:  selectedResource().meta()['Rundeck-content-creation-time'] }"></span>
+
+                    <span data-bind="if: selectedResource().createdUsername()">
+                        by:
+
+                        <span data-bind="text: selectedResource().createdUsername()"></span>
+                    </span>
+
                 </div>
-            </div>--}%
+            </div>
+            <div data-bind="if: selectedResource() && selectedResource().wasModified()"
+                 class="text-muted">
+                <div >
+                    Modified:
+                    <span class="timeago" data-bind="text: selectedResource().modifiedTimeAgo('ago'), attr: { title:  selectedResource().meta()['Rundeck-content-modify-time'] }"></span>
+
+                    <span data-bind="if: selectedResource().modifiedUsername()">
+                        by:
+
+                        <span data-bind="text: selectedResource().modifiedUsername()"></span>
+                    </span>
+                </div>
+            </div>
+
+            %{--todo: view contents--}%
+            <div data-bind="if: selectedResource() && selectedResource().isPublicKey()">
+                    <button
+                            data-bind="click: function(){$root.actionLoadContents('publicKeyContents');}, visible: !selectedResource().wasDownloaded()"
+                            class="btn btn-sm btn-default"
+                            data-loading-text="Loading…"
+                    >
+                        View Public Key Contents (<span data-bind="text: selectedResource().contentSize()"></span> bytes)
+                    </button>
+
+                <pre id="publicKeyContents"  class="pre-scrollable" data-bind="visible: selectedResource().wasDownloaded()">
+
+                </pre>
+            </div>
         </div>
 
 

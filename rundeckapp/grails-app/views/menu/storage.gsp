@@ -103,7 +103,13 @@
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal"
                                 aria-hidden="true">&times;</button>
-                        <h4 class="modal-title" id="storageuploadtitle2">Add or Upload a Key</h4>
+                        <h4 class="modal-title" id="storageuploadtitle2" data-bind="if: !upload.modifyMode()">
+                            Add or Upload a Key
+                        </h4>
+                        <h4 class="modal-title" id="storageuploadtitle3"
+                            data-bind="if: upload.modifyMode()">
+                            Overwrite a Key
+                        </h4>
                     </div>
 
                     <div class="modal-body" style="max-height: 500px; overflow-y: scroll">
@@ -160,13 +166,17 @@
                             </label>
 
                             <div class="col-sm-9">
-                                <div class="input-group">
+                                <div class="input-group" >
                                     <div class="input-group-addon" data-bind="if: staticRoot()">
                                         <span data-bind="text: rootPath() + '/'"></span>
                                     </div>
-                                <input data-bind="value: inputPath, valueUpdate: 'keyup' "
+                                    <input data-bind="value: inputPath, valueUpdate: 'keyup', attr: { disabled: upload.modifyMode() } "
                                        id="uploadResourcePath2" name="relativePath"
                                        class="form-control" placeholder="Enter the directory name"/>
+                                    <input id="uploadResourcePath3"
+                                           type="hidden"
+                                           data-bind="value: inputPath,  attr: { disabled: !upload.modifyMode() } "
+                                           name="relativePath"/>
                                 </div>
                             </div>
                         </div>
@@ -179,14 +189,17 @@
 
                             <div class="col-sm-9">
                                 <input id="uploadResourceName2"
-                                       data-bind="value: upload.fileName, valueUpdate: 'keyup' "
+                                       data-bind="value: upload.fileName, valueUpdate: 'keyup', attr: { disabled: upload.modifyMode() } "
                                        name="fileName" class="form-control"
                                        placeholder="Specify a name."/>
-
                                 <div class="help-block"
                                      data-bind="if: upload.inputType() == 'file'">
                                     If not set, the name of the uploaded file is used.
                                 </div>
+                                <input id="uploadResourceName3"
+                                    type="hidden"
+                                       data-bind="value: upload.fileName,  attr: { disabled: !upload.modifyMode() } "
+                                       name="fileName" />
                             </div>
                         </div>
                         <div class="form-group">
