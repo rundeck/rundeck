@@ -52,7 +52,7 @@ class StorageControllerTests {
             getAuthContextForSubject{subject-> null }
         }
         def mContent = mockWith(ContentMeta) {
-            getMeta{->
+            getMeta(2..2){->
                 ['Rundeck-content-type': 'test/data']
             }
             writeContent {OutputStream out->
@@ -63,7 +63,7 @@ class StorageControllerTests {
         }
         def mRes = mockWith(Resource) {
             isDirectory{-> false }
-            getContents{-> mContent }
+            getContents(2..2){-> mContent }
         }
         controller.storageService=mockWith(StorageService){
             hasPath{ctx,path-> true }
