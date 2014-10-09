@@ -8,6 +8,9 @@ function StorageResource() {
     var self = this;
     self.meta = ko.observable({});
     self.wasDownloaded=ko.observable(false);
+    self.metaValue=function(key){
+        return self.meta()&& self.meta()[key]?self.meta()[key]():null;
+    };
     self.wasModified=ko.computed(function(){
         if (self.meta() && self.meta()['Rundeck-content-creation-time'] && self.meta()['Rundeck-content-modify-time']()) {
             return self.meta()['Rundeck-content-creation-time']() != self.meta()['Rundeck-content-modify-time']();
@@ -193,7 +196,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
                 if(filt.length>1){
                     var key=filt[0];
                     var value=filt[1];
-                    return res.meta ? res.meta[key]!=null && res.meta[key]()==value : true;
+                    return res.metaValue(key) == value;
                 }
             }
             return true;
@@ -297,8 +300,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
             }else{
                 self.selectedPath(res.path());
                 self.selectedResource(res);
-                candownload = ! ( (res.meta['Rundeck-key-type'] && res.meta['Rundeck-key-type']()=='private')
-                    || (res.meta['Rundeck-data-type'] && res.meta['Rundeck-data-type']() =='password') ) ;
+                candownload = ( res.metaValue('Rundeck-key-type') != 'private' && res.metaValue('Rundeck-data-type')!='password') ;
             }
             self.selectedIsDownloadable(candownload);
         }
