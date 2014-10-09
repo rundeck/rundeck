@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
@@ -242,35 +243,98 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     }
 
     /**
-     * Loads the plugin configuration values stored in project or framework properties,
-     * also
-     * @param context execution context
+     * Map node attributes as instance configuration values based on property descriptions.
+     * If a property has a rendering option key of
+     * {@link StringRenderingConstants#INSTANCE_SCOPE_NODE_ATTRIBUTE_KEY}
+     * then use the value of that option as the node attribute name to use.
+     *
+     * @param node        node
+     * @param description plugin description
+     *
+     * @return instance config data
+     */
+    protected Map<String, Object> loadInstanceDataFromNodeAttributes(
+            final INodeEntry node,
+            final Description description
+    )
+    {
+        HashMap<String, Object> config = new HashMap<String, Object>();
+
+        for (Property property : description.getProperties()) {
+
+            Map<String, Object> renderingOptions = property.getRenderingOptions();
+
+            if (null == renderingOptions) {
+                continue;
+            }
+
+            Object o = renderingOptions.get(
+                    StringRenderingConstants.INSTANCE_SCOPE_NODE_ATTRIBUTE_KEY
+            );
+
+            if (null == o || !(o instanceof String)) {
+                continue;
+            }
+
+            String attribute = (String) o;
+
+            String s = node.getAttributes().get(attribute);
+
+            if (s == null) {
+                continue;
+            }
+
+            config.put(property.getName(), s);
+        }
+        return config;
+    }
+
+    /**
+     * Loads the plugin configuration values stored in project or framework properties, also
+     *
+     * @param context          execution context
      * @param localDataContext current context data
-     * @return context data with a new "config" entry containing the loaded plugin config properties.
+     * @param description
+     *
+     * @return context data with a new "config" entry containing the loaded plugin config
+     *         properties.
      */
     protected Map<String, Map<String, String>> loadConfigData(
             final ExecutionContext context,
-            final Map<String, Map<String, String>> localDataContext
+            final Map<String, Object> instanceData,
+            final Map<String, Map<String, String>> localDataContext,
+            final Description description
     ) throws ConfigurationException
     {
-        Description description1 = getDescription();
 
-        final PropertyResolver resolver = PropertyResolverFactory.createPluginRuntimeResolver
-                (context,
-                        null,
-                        ServiceNameConstants.NodeExecutor,
-                        getProvider().getName());
+        final PropertyResolver resolver = PropertyResolverFactory.createPluginRuntimeResolver(
+                context,
+                instanceData,
+                ServiceNameConstants.NodeExecutor,
+                getProvider().getName()
+        );
 
-        final Map<String, Object> config = PluginAdapterUtility.mapDescribedProperties(resolver,
-                description1, PropertyScope.Project);
+        final Map<String, Object> config =
+                PluginAdapterUtility.mapDescribedProperties(
+                        resolver,
+                        description,
+                        PropertyScope.Instance
+                );
 
         //expand properties
-        Map<String, Object> expanded = DataContextUtils.replaceDataReferences(config,
-                localDataContext);
+        Map<String, Object> expanded =
+                DataContextUtils.replaceDataReferences(
+                        config,
+                        localDataContext
+                );
 
         Map<String, String> data = toStringStringMap(expanded);
 
-        loadStoragePathProperties(data, context.getStorageTree(), description1.getProperties());
+        loadStoragePathProperties(
+                data,
+                context.getStorageTree(),
+                description.getProperties()
+        );
 
 
         return DataContextUtils.addContext("config", data, localDataContext);

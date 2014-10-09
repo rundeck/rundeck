@@ -25,6 +25,7 @@ public class StringRenderingConstants {
     
     public static final String SELECTION_ACCESSOR_KEY = "selectionAccessor";
     public static final String VALUE_CONVERSION_KEY = "valueConversion";
+    public static final String INSTANCE_SCOPE_NODE_ATTRIBUTE_KEY = "instance-scope-node-attribute";
     public static final String STORAGE_PATH_ROOT_KEY = "storage-path-root";
     public static final String STORAGE_FILE_META_FILTER_KEY = "storage-file-meta-filter";
     /**

@@ -27,7 +27,6 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
@@ -36,8 +35,6 @@ import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
-import com.dtolabs.rundeck.plugins.ServiceNameConstants;
-import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.io.IOException;
@@ -77,6 +74,7 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
 
     public NodeExecutorResult executeCommand(final ExecutionContext executionContext, final String[] command,
                                              final INodeEntry node)  {
+        Description pluginDesc = getDescription();
         final ScriptPluginProvider plugin = getProvider();
         final String pluginname = plugin.getName();
         executionContext.getExecutionListener().log(3,
@@ -94,7 +92,7 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
         //load config.* property values in from project or framework scope
         final Map<String, Map<String, String>> finalDataContext;
         try {
-            finalDataContext = loadConfigData(executionContext, localDataContext);
+            finalDataContext = loadConfigData(executionContext, loadInstanceDataFromNodeAttributes(node, pluginDesc), localDataContext, pluginDesc);
         } catch (ConfigurationException e) {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.ConfigurationFailure,
                     e.getMessage(),
