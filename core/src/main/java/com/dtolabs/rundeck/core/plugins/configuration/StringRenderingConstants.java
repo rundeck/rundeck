@@ -17,13 +17,14 @@
 package com.dtolabs.rundeck.core.plugins.configuration;
 
 /**
- * Constants that govern the different ways a {@link Property.Type.String} can be rendered.
+ * Constants that govern the different ways a {@link Property.Type#String} can be rendered.
  * 
  * @author Kim Ho <a href="mailto:kim.ho@salesforce.com">kim.ho@salesforce.com</a>
  */
 public class StringRenderingConstants {
     
     public static final String SELECTION_ACCESSOR_KEY = "selectionAccessor";
+    public static final String VALUE_CONVERSION_KEY = "valueConversion";
     public static final String STORAGE_PATH_ROOT_KEY = "storage-path-root";
     public static final String STORAGE_FILE_META_FILTER_KEY = "storage-file-meta-filter";
     /**
@@ -37,9 +38,23 @@ public class StringRenderingConstants {
     public enum DisplayType {
         SINGLE_LINE,
         MULTI_LINE,
-        PASSWORD
+        PASSWORD;
+        public boolean equalsOrString(Object o) {
+            return this == o || toString().equals(o);
+        }
     }
     public enum SelectionAccessor{
-        STORAGE_PATH,
+        STORAGE_PATH;
+
+        public boolean equalsOrString(Object o) {
+            return this == o || toString().equals(o);
+        }
+    }
+    public enum ValueConversion{
+        STORAGE_PATH_AUTOMATIC_READ;
+
+        public boolean equalsOrString(Object o) {
+            return this == o || toString().equals(o);
+        }
     }
 }
