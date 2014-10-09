@@ -23,6 +23,8 @@ import java.io.*;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -81,8 +83,11 @@ public class Preferences {
             jhome = JAVA_HOME;
         }
         defaultProperties.setProperty("user.java_home", forwardSlashPath(jhome));
+        defaultProperties.setProperty("user.java_home.win", backSlashPath(jhome));
         defaultProperties.setProperty("java.home", forwardSlashPath(jhome));
+        defaultProperties.setProperty("java.home.win", backSlashPath(jhome));
         defaultProperties.setProperty("rdeck.base", forwardSlashPath(base));
+        defaultProperties.setProperty("rdeck.base.win", backSlashPath(base));
 
         //
         // additional properties needed for successful rdeck setup, based on above
@@ -90,11 +95,17 @@ public class Preferences {
         //
         defaultProperties.setProperty("framework.projects.dir", forwardSlashPath(Constants.getFrameworkProjectsDir(
             base)));
+        defaultProperties.setProperty("framework.projects.dir.win", backSlashPath(Constants.getFrameworkProjectsDir(
+            base)));
         defaultProperties.setProperty("framework.rdeck.base", forwardSlashPath(base));
+        defaultProperties.setProperty("framework.rdeck.base.win", backSlashPath(base));
         final String configDir = Constants.getFrameworkConfigDir(base);
         defaultProperties.setProperty("framework.etc.dir", forwardSlashPath(configDir));
+        defaultProperties.setProperty("framework.etc.dir.win", backSlashPath(configDir));
         defaultProperties.setProperty("framework.var.dir", forwardSlashPath(Constants.getBaseVar(base)));
+        defaultProperties.setProperty("framework.var.dir.win", backSlashPath(Constants.getBaseVar(base)));
         defaultProperties.setProperty("framework.logs.dir", forwardSlashPath(Constants.getFrameworkLogsDir(base)));
+        defaultProperties.setProperty("framework.logs.dir.win", backSlashPath(Constants.getFrameworkLogsDir(base)));
 
         Enumeration propEnum = systemProperties.propertyNames();
         //list of path properties to convert slashes on
@@ -261,6 +272,13 @@ public class Preferences {
     public static String forwardSlashPath(String input) {
         if (System.getProperties().get("file.separator").equals("\\")) {
             return input.replaceAll("\\\\", "/");
+        }
+        return input;
+    }
+
+    public static String backSlashPath(String input) {
+        if (System.getProperties().get("file.separator").equals("\\")) {
+            return input.replaceAll(Pattern.quote("/"), Matcher.quoteReplacement("\\"));
         }
         return input;
     }

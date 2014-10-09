@@ -18,10 +18,6 @@ package com.dtolabs.launcher;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.CLIToolLogger;
-import com.dtolabs.rundeck.core.cli.project.BaseAction;
-import com.dtolabs.rundeck.core.cli.project.CreateAction;
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.utils.Streams;
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.types.FilterSet;
 import org.apache.tools.ant.types.FilterSetCollection;
@@ -170,8 +166,8 @@ public class Setup implements CLIToolLogger {
                         if (!destFile.setWritable(false, false)) {
                             logger.warn("Failed to remove writable flag for file: " + destFile.getAbsolutePath());
                         }
-
                     }
+
                 }
             }
         } catch (IOException e) {
@@ -218,13 +214,34 @@ public class Setup implements CLIToolLogger {
         File templateFile=null;
         final String resource = TEMPLATE_RESOURCES_PATH + "/" + filename;
         InputStream is = Setup.class.getClassLoader().getResourceAsStream(resource);
-        if(null!=is) {
-                templateFile = File.createTempFile("temp", filename);
-                Streams.copyStream(is, new FileOutputStream(templateFile));
-                return templateFile;
-        }else {
+        if (null == is) {
             throw new RuntimeException("Unable to load required template: " + resource);
         }
+        templateFile = File.createTempFile("temp", filename);
+        try {
+            return copyToNativeLineEndings(is, templateFile);
+        } finally {
+            is.close();
+        }
+    }
+
+    private File copyToNativeLineEndings(InputStream input, File destFile) throws IOException {
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(input));
+        final OutputStream out= new FileOutputStream(destFile);
+        try{
+            final BufferedWriter writer=new BufferedWriter(new OutputStreamWriter(out));
+            String line=bufferedReader.readLine();
+            while (line != null) {
+                writer.write(line);
+                writer.newLine();
+                line = bufferedReader.readLine();
+            }
+            writer.flush();
+        }finally {
+            out.close();
+        }
+        return destFile;
+
     }
 
     /**
