@@ -34,7 +34,9 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureRea
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -51,7 +53,12 @@ import java.util.*;
 class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFileCopier {
     @Override
     public boolean isAllowCustomProperties() {
-        return false;
+        return true;
+    }
+
+    @Override
+    public boolean isUseConventionalPropertiesMapping() {
+        return true;
     }
 
     ScriptPluginFileCopier(final ScriptPluginProvider provider, final Framework framework) {
@@ -62,6 +69,11 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
         if (null == plugin.getScriptArgs()) {
             throw new PluginException(
                 "no script-args defined for provider: " + plugin);
+        }
+        try {
+            createDescription(plugin, true, DescriptionBuilder.builder());
+        } catch (ConfigurationException e) {
+            throw new PluginException(e);
         }
     }
 
@@ -138,6 +150,15 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
         //add node context data
         localDataContext.put("node", DataContextUtils.nodeData(node));
 
+        //load config.* property values in from project or framework scope
+        final Map<String, Map<String, String>> finalDataContext;
+        try {
+            finalDataContext = loadConfigData(executionContext, localDataContext);
+        } catch (ConfigurationException e) {
+            throw new FileCopierException("[" + pluginname + "]: Configuration failure: "+e.getMessage(),
+                    StepFailureReason.ConfigurationFailure, e);
+        }
+
         final File srcFile =
                 expandTokens ?
                         //write the temp file and replace tokens in a script with values from the dataContext
@@ -158,16 +179,16 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
         //set up the data context to include the local temp file
         scptexec.put("file", srcFile.getAbsolutePath());
         scptexec.put("destination", null != destFilePath ? destFilePath : "");
-        localDataContext.put("file-copy", scptexec);
+        finalDataContext.put("file-copy", scptexec);
 
-        final String[] finalargs = createScriptArgs(localDataContext);
+        final String[] finalargs = createScriptArgs(finalDataContext);
         executionContext.getExecutionListener().log(3, "[" + getProvider().getName() + "] executing: " + Arrays.asList(
             finalargs));
 
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try {
             final int result = ScriptExecUtil.runLocalCommand(finalargs,
-                                                    DataContextUtils.generateEnvVarsFromContext(localDataContext),
+                                                    DataContextUtils.generateEnvVarsFromContext(finalDataContext),
                                                     null,
                                                     byteArrayOutputStream,
                                                     System.err

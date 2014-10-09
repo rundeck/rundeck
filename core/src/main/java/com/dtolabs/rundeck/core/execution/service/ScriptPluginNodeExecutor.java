@@ -27,13 +27,18 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
+import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
+import com.dtolabs.rundeck.plugins.step.PluginStepContext;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -54,10 +59,20 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
 
     @Override
     public boolean isAllowCustomProperties() {
-        return false;
+        return true;
+    }
+
+    @Override
+    public boolean isUseConventionalPropertiesMapping() {
+        return true;
     }
 
     static void validateScriptPlugin(final ScriptPluginProvider plugin) throws PluginException {
+        try {
+            createDescription(plugin, true, DescriptionBuilder.builder());
+        } catch (ConfigurationException e) {
+            throw new PluginException(e);
+        }
     }
 
     public NodeExecutorResult executeCommand(final ExecutionContext executionContext, final String[] command,
@@ -76,7 +91,18 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
         scptexec.put("command", StringArrayUtil.asString(command, " "));
         localDataContext.put("exec", scptexec);
 
-        final String[] finalargs = createScriptArgs(localDataContext);
+        //load config.* property values in from project or framework scope
+        final Map<String, Map<String, String>> finalDataContext;
+        try {
+            finalDataContext = loadConfigData(executionContext, localDataContext);
+        } catch (ConfigurationException e) {
+            return NodeExecutorResultImpl.createFailure(StepFailureReason.ConfigurationFailure,
+                    e.getMessage(),
+                    e,
+                    node, -1);
+        }
+
+        final String[] finalargs = createScriptArgs(finalDataContext);
 
         executionContext.getExecutionListener().log(3, "[" + getProvider().getName() + "] executing: " + Arrays.asList(
             finalargs));
@@ -84,7 +110,7 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
         int result = -1;
         try {
             result = ScriptExecUtil.runLocalCommand(finalargs,
-                                                    DataContextUtils.generateEnvVarsFromContext(localDataContext),
+                                                    DataContextUtils.generateEnvVarsFromContext(finalDataContext),
                                                     null,
                                                     System.out,
                                                     System.err
