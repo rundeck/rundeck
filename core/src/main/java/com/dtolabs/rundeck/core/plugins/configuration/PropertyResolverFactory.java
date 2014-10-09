@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.plugins.configuration;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 
 import java.util.HashMap;
@@ -77,6 +78,24 @@ public class PropertyResolverFactory {
      * Create a PropertyResolver for a plugin for resolving Framework, Project and instance scoped properties.
      */
     public static PropertyResolver createStepPluginRuntimeResolver(final StepExecutionContext context,
+                                                                   final Map<String, Object> instanceProperties,
+                                                                   final String pluginType,
+                                                                   final String providerName) {
+
+        final String projectPrefix = projectPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
+        final String frameworkPrefix = frameworkPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
+
+        return createResolver(instanceRetriever(instanceProperties),
+                                           projectRetriever(projectPrefix,
+                                                            context.getFramework(),
+                                                            context.getFrameworkProject()),
+                                           frameworkRetriever(frameworkPrefix, context.getFramework())
+        );
+    }
+    /**
+     * Create a PropertyResolver for a plugin for resolving Framework, Project and instance scoped properties.
+     */
+    public static PropertyResolver createPluginRuntimeResolver(final ExecutionContext context,
                                                                    final Map<String, Object> instanceProperties,
                                                                    final String pluginType,
                                                                    final String providerName) {
