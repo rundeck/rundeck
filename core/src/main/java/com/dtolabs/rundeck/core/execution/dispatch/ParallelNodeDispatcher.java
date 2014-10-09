@@ -160,10 +160,11 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         return new Callable() {
             public Object call() throws Exception {
                 final NodeStepResult dispatch = toDispatch.dispatch(context, node);
+                resultMap.put(node.getNodename(), dispatch);
                 if (!dispatch.isSuccess()) {
                     failureMap.put(node.getNodename(), dispatch);
+                    throw new Exception();
                 }
-                resultMap.put(node.getNodename(), dispatch);
                 return dispatch;
             }
         };
