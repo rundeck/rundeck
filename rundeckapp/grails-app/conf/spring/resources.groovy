@@ -50,6 +50,7 @@ beans={
     File pluginDir = new File(serverLibextDir)
     def serverLibextCacheDir = application.config.rundeck?.server?.plugins?.cacheDir?:"${serverLibextDir}/cache"
     File cacheDir= new File(serverLibextCacheDir)
+    File varDir= new File(Constants.getBaseVar(rdeckBase))
 
     /*
      * Define the single Framework instance to use
@@ -105,6 +106,7 @@ beans={
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
 
+    def storageDir= new File(varDir, 'storage')
     rundeckStorageTree(StorageTreeFactory){
         rundeckFramework=ref('rundeckFramework')
         pluginRegistry=ref("rundeckPluginRegistry")
@@ -114,7 +116,7 @@ beans={
         storageConfigPrefix='provider'
         converterConfigPrefix='converter'
         baseStorageType='file'
-        baseStorageConfig=['baseDir':'${framework.var.dir}/storage']
+        baseStorageConfig=['baseDir':storageDir.getAbsolutePath()]
         loggerName='org.rundeck.storage.events'
     }
     authRundeckStorageTree(AuthRundeckStorageTree, rundeckStorageTree)
