@@ -11,7 +11,8 @@ import java.util.regex.PatternSyntaxException;
  */
 public class PathUtil {
 
-    public static final Path ROOT = asPath("/");
+    public static final String SEPARATOR = "/";
+    public static final Path ROOT = asPath(SEPARATOR);
 
     public static class PathImpl implements Path {
         String pathString;
@@ -62,6 +63,41 @@ public class PathUtil {
     }
 
     /**
+     * create a path from an array of components
+     * @param components
+     * @return
+     */
+    public static Path pathFromComponents(String[] components) {
+        if (null == components || components.length == 0) {
+            return null;
+        }
+        return new PathImpl(pathStringFromComponents(components));
+    }
+
+    /**
+     * create a path from an array of components
+     * @param components
+     * @return
+     */
+    public static String pathStringFromComponents(String[] components) {
+        if (null == components || components.length == 0) {
+            return null;
+        }
+        return cleanPath(join(components, SEPARATOR));
+    }
+
+    private static String join(String[] components, String sep) {
+        StringBuilder sb = new StringBuilder();
+        for (String component : components) {
+            if (sb.length() > 0) {
+                sb.append(sep);
+            }
+            sb.append(component);
+        }
+        return sb.toString();
+    }
+
+    /**
      * Return true if the given path starts with the given root
      *
      * @param path
@@ -84,7 +120,7 @@ public class PathUtil {
     public static boolean hasRoot(String path, String root) {
         String p = cleanPath(path);
         String r = cleanPath(root);
-        return p.equals(r) || p.startsWith(r + "/");
+        return p.equals(r) || p.startsWith(r + SEPARATOR);
     }
 
     public static Path parentPath(Path path) {
@@ -116,12 +152,12 @@ public class PathUtil {
      * @return parent path string
      */
     public static String parentPathString(String path) {
-        String[] split = cleanPath(path).split("/");
+        String[] split = cleanPath(path).split(SEPARATOR);
         if (split.length > 1) {
             StringBuilder stringBuilder = new StringBuilder();
             for (int i = 0; i < split.length - 1; i++) {
                 if (i > 0) {
-                    stringBuilder.append("/");
+                    stringBuilder.append(SEPARATOR);
                 }
                 stringBuilder.append(split[i]);
             }
@@ -136,17 +172,17 @@ public class PathUtil {
      * @return cleaned path string
      */
     public static String cleanPath(String path) {
-        if (path.endsWith("/")) {
-            path = path.replaceAll("/+$", "");
+        if (path.endsWith(SEPARATOR)) {
+            path = path.replaceAll(SEPARATOR + "+$", "");
         }
-        if (path.startsWith("/")) {
-            path = path.replaceAll("^/+", "");
+        if (path.startsWith(SEPARATOR)) {
+            path = path.replaceAll("^" + SEPARATOR + "+", "");
         }
-        return path.replaceAll("/+", "/");
+        return path.replaceAll("/+", SEPARATOR);
     }
 
     public static String pathName(String path) {
-        String[] split = cleanPath(path).split("/");
+        String[] split = cleanPath(path).split(SEPARATOR);
         if (split.length > 0) {
             return split[split.length - 1];
         }
@@ -181,7 +217,7 @@ public class PathUtil {
      * @return sub path appended to the prefix
      */
     public static String appendPath(String prefixPath, String subpath) {
-        return cleanPath(prefixPath) + "/" + cleanPath(subpath);
+        return cleanPath(prefixPath) + SEPARATOR + cleanPath(subpath);
     }
 
     /**

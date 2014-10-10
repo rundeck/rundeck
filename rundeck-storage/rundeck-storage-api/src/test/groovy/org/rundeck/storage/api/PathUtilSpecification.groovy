@@ -5,6 +5,8 @@ import spock.lang.Specification
 import static PathUtil.cleanPath
 import static PathUtil.parentPathString
 import static PathUtil.pathName
+import static org.rundeck.storage.api.PathUtil.pathFromComponents
+import static org.rundeck.storage.api.PathUtil.pathStringFromComponents
 
 /**
  * $INTERFACE is ...
@@ -52,6 +54,15 @@ class PathUtilSpecification extends Specification {
         pathName("abc//xyz/") == "xyz"
         pathName("abc///") == "abc"
         pathName("abc") == "abc"
+    }
+    def "pathFromComponents joins components"() {
+        expect:
+        pathFromComponents(['a','b','c'] as String[]).path == "a/b/c"
+    }
+
+    def "pathStringFromComponents joins components"() {
+        expect:
+        pathStringFromComponents(['a','b','c'] as String[]) == "a/b/c"
     }
 
     def "hasRoot"() {
