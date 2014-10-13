@@ -116,7 +116,7 @@ class ScheduledExecution extends ExecutionContext {
 
         argString type: 'text'
         description type: 'text'
-        jobName type: 'text'
+        jobName (type: 'text', sqlType: "varchar(255)")
         groupPath type: 'text'
         options lazy: false
         timeout(type: 'text')
