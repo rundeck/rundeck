@@ -6,7 +6,7 @@
   To change this template use File | Settings | File Templates.
 --%>
 
-<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope" contentType="text/html;charset=UTF-8" %>
+<%@ page import="java.util.regex.Pattern; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope" contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
@@ -103,13 +103,19 @@
 
             <div id="${enc(attr:ukeyx)}" class="panel-collapse collapse">
                 <div class="panel-body">
+                    <g:if test="${specialConfiguration[serviceName]}">
+                        <div class="text-info">
+                        <g:enc>${specialConfiguration[serviceName].description.replaceAll(Pattern.quote('${pluginName}'), pluginName)}</g:enc>
+                        </div>
+                    </g:if>
                     <g:each in="${pluginDescription?.properties}" var="prop">
                         <g:set var="outofscope"
                                value="${prop.scope && !prop.scope.isInstanceLevel() && !prop.scope.isUnspecified()}"/>
-                        <g:if test="${true}">
                             <g:render
                                     template="/framework/pluginConfigPropertyFormField"
-                                    model="${[prop: prop, prefix: '',
+                                    model="${[prop: prop,
+                                            prefix: specialConfiguration[serviceName]?.prefix,
+                                            specialConfiguration: specialConfiguration[serviceName],
                                             error: null,
                                             values: [:],
                                             fieldname: prop.name,
@@ -124,7 +130,6 @@
                                             frameworkMapping: pluginDescription.fwkPropertiesMapping,
                                             hideMissingFrameworkMapping:(serviceName in ['NodeExecutor','FileCopier'])
                                     ]}"/>
-                        </g:if>
                     </g:each>
                     <g:unless test="${pluginDescription?.properties?.any{!(it.scope==null||it.scope==PropertyScope.Unspecified? serviceDefaultScope.isInstanceLevel(): it.scope.isInstanceLevel())}}">
                         %{--no config properties--}%

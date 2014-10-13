@@ -11,10 +11,13 @@ IF DEFINED USER (
    set USER_NAME=%USERNAME%
 )
 
-IF NOT DEFINED RDECK_BASE (
-   ECHO RDECK_BASE not set
-   GOTO:EOF
-)
+rem Guess RDECK_BASE if not defined
+set "CURRENT_DIR=%cd%"
+if not "%RDECK_BASE%" == "" goto gotRdeckBase
+set "RDECK_BASE=%CURRENT_DIR%"
+if exist "%RDECK_BASE%\etc\profile.bat" goto gotRdeckBase
+set "RDECK_BASE="
+:gotRdeckBase
 
 IF NOT EXIST "%RDECK_BASE%\etc\profile.bat" (
    ECHO Unable to source %RDECK_BASE%\etc\profile.bat
@@ -23,26 +26,34 @@ IF NOT EXIST "%RDECK_BASE%\etc\profile.bat" (
 	CALL "%RDECK_BASE%\etc\profile.bat"
 )
 
-IF NOT EXIST "%ANT_HOME%\bin\ant.bat" (
-    ECHO ANT_HOME not configured or non-existent.
+IF NOT DEFINED RDECK_BASE (
+   ECHO RDECK_BASE not set
    GOTO:EOF
 )
 
-
-::echo Classpath is %cp%
-SET cp=%RDECK_BASE%\classes;%ANT_HOME%\lib\xerces-2.6.0.jar;%ANT_HOME%\lib\xml-apis.jar
-
-
+IF "%JAVA_HOME%" =="" (
+   echo JAVA_HOME not set
+   GOTO:EOF
+)
+IF NOT EXIST "%JAVA_HOME%\bin\java.exe" (
+   ECHO JAVA_HOME not set or set incorrectly
+   GOTO:EOF
+)
 
 ::
 :: run dispatch main class
 ::
 call "%JAVA_HOME%\bin\java.exe" ^
-    -Xms64m -Xmx128m ^
-	-classpath "%cp%" ^
+    %RDECK_CLI_OPTS% ^
+    -Djava.ext.dirs=%RD_LIBDIR% ^
     -Drdeck.base="%RDECK_BASE%" ^
-	-Dant.home="%ANT_HOME%" ^
     %RDECK_SSL_OPTS% ^
     -Drdeck.traceExceptions="%RUNDECK_TRACE_EXCEPTIONS%" ^
     -Drdeck.cli.terse="%RUNDECK_CLI_TERSE%" ^
 	com.dtolabs.rundeck.core.cli.ExecTool %*
+
+IF NOT "%ERRORLEVEL%"=="0" GOTO:EXITSetup
+
+:EXITSetup
+
+EXIT /B %ERRORLEVEL%

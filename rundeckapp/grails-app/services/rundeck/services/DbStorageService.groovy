@@ -278,7 +278,8 @@ class DbStorageService implements NamespacedStorage{
 
                 storage.namespace = namespace ? namespace : null
                 storage.path = path.path
-                storage.storageMeta = content.meta
+                Map<String, String> newdata = storage.storageMeta?:[:]
+                storage.storageMeta = newdata + content.meta
                 storage.data = data
                 saved = storage.save(flush: true)
                 if (!saved) {

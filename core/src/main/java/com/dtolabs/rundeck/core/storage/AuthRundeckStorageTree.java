@@ -1,9 +1,6 @@
 package com.dtolabs.rundeck.core.storage;
 
-import com.dtolabs.rundeck.core.authorization.Attribute;
-import com.dtolabs.rundeck.core.authorization.AuthContext;
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
-import com.dtolabs.rundeck.core.authorization.Decision;
+import com.dtolabs.rundeck.core.authorization.*;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import org.rundeck.storage.api.Path;
@@ -101,12 +98,12 @@ public class AuthRundeckStorageTree implements AuthStorageTree {
 
     @Override
     public boolean hasResource(AuthContext auth, Path path) {
-        return authorizedPath(auth, path, READ) && storageTree.hasPath(path);
+        return authorizedPath(auth, path, READ) && storageTree.hasResource(path);
     }
 
     @Override
     public boolean hasDirectory(AuthContext auth, Path path) {
-        return authorizedPath(auth, path, READ) && storageTree.hasPath(path);
+        return authorizedPath(auth, path, READ) && storageTree.hasDirectory(path);
     }
 
     @Override
@@ -186,7 +183,22 @@ public class AuthRundeckStorageTree implements AuthStorageTree {
         if (!authorizedPath(auth, path, CREATE)) {
             throw new StorageAuthorizationException("Unauthorized access", StorageException.Event.CREATE, path);
         }
-        return storageTree.createResource(path, content);
+        return storageTree.createResource(path, withUsername(auth,content,true));
+    }
+
+    private ResourceMeta withUsername(AuthContext auth, ResourceMeta content, boolean create) {
+        if(auth instanceof NamedAuthContext) {
+            NamedAuthContext byUser = (NamedAuthContext) auth;
+            ResourceMetaBuilder resourceMetaBuilder = StorageUtil.create(new HashMap<String,
+                    String>(content.getMeta()));
+            if(create){
+                AuthStorageUsernameMeta.createResource(byUser, resourceMetaBuilder);
+            }else{
+                AuthStorageUsernameMeta.updateResource(byUser, resourceMetaBuilder);
+            }
+            return StorageUtil.withStream(content, resourceMetaBuilder.getResourceMeta());
+        }
+        return content;
     }
 
     @Override
@@ -194,6 +206,6 @@ public class AuthRundeckStorageTree implements AuthStorageTree {
         if (!authorizedPath(auth, path, UPDATE)) {
             throw new StorageAuthorizationException("Unauthorized access", StorageException.Event.UPDATE, path);
         }
-        return storageTree.updateResource(path, content);
+        return storageTree.updateResource(path, withUsername(auth, content, false));
     }
 }

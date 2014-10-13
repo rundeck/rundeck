@@ -5,6 +5,10 @@ import com.dtolabs.rundeck.core.plugins.BaseProviderRegistryService;
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
 import com.dtolabs.rundeck.server.plugins.storage.FileStoragePlugin;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * BuiltinResourceStoragePluginProviderService holds built in plugins
  *
@@ -18,6 +22,9 @@ public class BuiltinResourceStoragePluginProviderService extends BaseProviderReg
         super(framework);
         this.setName(name);
         registerClass(FileStoragePlugin.PROVIDER_NAME, FileStoragePlugin.class);
+    }
+    public List<String> getBundledProviderNames(){
+        return Collections.unmodifiableList(new ArrayList<String>(registry.keySet()));
     }
 
     public String getName() {

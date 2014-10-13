@@ -16,6 +16,8 @@
 
 package com.dtolabs.rundeck.core.authorization;
 
+import com.dtolabs.rundeck.core.authentication.Username;
+
 import javax.security.auth.Subject;
 import java.util.Map;
 import java.util.Set;
@@ -23,13 +25,22 @@ import java.util.Set;
 /**
  * Wraps a Subject and Authorization to provide AuthContext
  */
-public class SubjectAuthContext implements AuthContext {
+public class SubjectAuthContext implements NamedAuthContext {
     private Subject subject;
     private Authorization authorization;
 
     public SubjectAuthContext(Subject subject, Authorization authorization) {
         this.subject = subject;
         this.authorization = authorization;
+    }
+
+    @Override
+    public String getUsername() {
+        Set<Username> principals = subject.getPrincipals(Username.class);
+        if(principals!=null && principals.size()>0){
+            return principals.iterator().next().getName();
+        }
+        return null;
     }
 
     @Override

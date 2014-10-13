@@ -12,6 +12,7 @@
     <g:expander key="${scopeinfo}">Admin configuration info</g:expander>
 </g:unless>
 <div class="" id="${enc(attr:scopeinfo)}" style="${wdgt.styleVisible(if: outofscopeShown)}">
+    <g:if test="${!specialConfiguration}">
     <g:if test="${propScope?.isProjectLevel()}">
        <div>configure project:
         <code>
@@ -41,6 +42,13 @@
         </code>
             </div>
     </g:if>
+    </g:if><g:else>
+    <div>configuration:
+        <code>
+            <g:enc>${prefix+prop.name}=${prop.defaultValue ?: 'value'}</g:enc>
+        </code>
+    </div>
+    </g:else>
     <div class="text-info">
         <g:if test="${prop.defaultValue}">
             Default value: <code><g:enc>${propValue}</g:enc></code>

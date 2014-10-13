@@ -1,10 +1,16 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.support.StorageParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.storage.AuthStorageUsernameMeta
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageAuthorizationException
+import com.dtolabs.rundeck.core.storage.StorageUtil
+import com.dtolabs.rundeck.server.plugins.storage.KeyStorageLayer
+import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
+import org.springframework.web.multipart.MultipartHttpServletRequest
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
@@ -13,23 +19,32 @@ import rundeck.services.StorageService
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
-class StorageController {
-    public static final String RES_META_RUNDECK_CONTENT_TYPE = 'Rundeck-content-type'
-    public static final String RES_META_RUNDECK_CONTENT_SIZE = 'Rundeck-content-size'
+class StorageController extends ControllerBase{
     public static final String RES_META_RUNDECK_CONTENT_MASK = 'Rundeck-content-mask'
-    public static final String RES_META_RUNDECK_KEY_TYPE = 'Rundeck-key-type'
-    public static final Map<String,String> RES_META_RUNDECK_OUTPUT = [
-            (RES_META_RUNDECK_CONTENT_TYPE):"contentType",
-            (RES_META_RUNDECK_CONTENT_SIZE):"contentLength",
-            (RES_META_RUNDECK_CONTENT_MASK): RES_META_RUNDECK_CONTENT_MASK,
-            (RES_META_RUNDECK_KEY_TYPE): RES_META_RUNDECK_KEY_TYPE
+    public static final List<String> RES_META_RUNDECK_OUTPUT = [
+            StorageUtil.RES_META_RUNDECK_CONTENT_TYPE,
+            StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH,
+            StorageUtil.RES_META_RUNDECK_CONTENT_CREATION_TIME,
+            StorageUtil.RES_META_RUNDECK_CONTENT_MODIFY_TIME,
+            AuthStorageUsernameMeta.RUNDECK_AUTH_CREATED_USERNAME,
+            AuthStorageUsernameMeta.RUNDECK_AUTH_MODIFIED_USERNAME,
+            KeyStorageLayer.RUNDECK_KEY_TYPE,
+            KeyStorageLayer.RUNDECK_DATA_TYPE,
+            RES_META_RUNDECK_CONTENT_MASK,
     ]
+    /**
+     * Metadata fields not included in masked resource output
+     */
+    public static final Set<String> RES_META_MASKED = [StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH]
     StorageService storageService
     ApiService apiService
     FrameworkService frameworkService
     static allowedMethods = [
             apiKeys: ['GET','POST','PUT','DELETE'],
-            storageAccess:['GET']
+            keyStorageAccess:['GET'],
+            keyStorageDownload:['GET'],
+            keyStorageUpload:['POST'],
+            keyStorageDelete:['POST']
     ]
 
     private def pathUrl(path){
@@ -39,7 +54,7 @@ class StorageController {
         }
         return createLink(absolute: true, uri: uriString)
     }
-    private def jsonRenderResource(builder,Resource res, dirlist=[]){
+    private def jsonRenderResource(builder, Resource res, dirlist=[]){
         builder.with{
             path = res.path.toString()
             type = res.directory ? 'directory' : 'file'
@@ -50,15 +65,16 @@ class StorageController {
             if (!res.directory) {
                 def meta1 = res.contents.meta
                 if (meta1) {
+                    def masked = resourceContentsMasked(res)
                     def bd = delegate
-                    def meta=[:]
-                    RES_META_RUNDECK_OUTPUT.each{k,v->
-                        if(meta1[k]){
-                            meta[k]= meta1[k]
+                    def meta = [:]
+                    RES_META_RUNDECK_OUTPUT.each { k ->
+                        if ((!masked || !(k in StorageController.RES_META_MASKED)) && meta1[k]) {
+                            meta[k] = meta1[k]
                         }
                     }
-                    if(meta){
-                        bd.meta=meta
+                    if (meta) {
+                        bd.meta = meta
                     }
 
                 }
@@ -84,11 +100,12 @@ class StorageController {
         }
         builder.'resource'(map) {
             if (!res.directory) {
+                def masked=resourceContentsMasked(res)
                 def data = res.contents.meta
                 delegate.'resource-meta' {
                     def bd = delegate
-                    RES_META_RUNDECK_OUTPUT.each { k, v ->
-                        if (res.contents.meta[k]) {
+                    RES_META_RUNDECK_OUTPUT.each { k ->
+                        if ((!masked || !(k in StorageController.RES_META_MASKED)) && res.contents.meta[k]) {
                             bd."${k}"(res.contents.meta[k])
                         }
                     }
@@ -119,15 +136,19 @@ class StorageController {
             }
         }
     }
-    private def renderResourceFile(HttpServletRequest request, HttpServletResponse response, Resource resource) {
+    private boolean resourceContentsMasked(Resource resource){
+        def meta = resource.contents?.meta
+        def cmask = meta?.getAt(RES_META_RUNDECK_CONTENT_MASK)?.split(',') as Set
+        return cmask?.contains('content')
+    }
+    private def renderResourceFile(HttpServletRequest request, HttpServletResponse response, Resource resource, boolean forceDownload=false) {
         def contents = resource.contents
         def meta = contents?.meta
-        def resContentType= meta?.getAt(RES_META_RUNDECK_CONTENT_TYPE)
-        def cmask=meta?.getAt(RES_META_RUNDECK_CONTENT_MASK)?.split(',') as Set
-        //
-        def maskContent=cmask?.contains('content')
+        def resContentType= meta?.getAt(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE)
 
-        def askedForContent= resContentType && request.getHeader('Accept')?.contains(resContentType)
+        def maskContent= resourceContentsMasked(resource)
+
+        def askedForContent= forceDownload || resContentType && request.getHeader('Accept')?.contains(resContentType)
         def anyContent= response.format == 'all'
 
         if (askedForContent && maskContent) {
@@ -137,6 +158,10 @@ class StorageController {
         }
         if((askedForContent || anyContent) && !maskContent) {
             response.contentType=resContentType
+            if(forceDownload){
+                def filename= resource.path.name
+                response.setHeader("Content-Disposition", "attachment; filename=\"${filename}\"")
+            }
             def len=contents.writeContent(response.outputStream)
             response.outputStream.close()
             return
@@ -180,9 +205,221 @@ class StorageController {
     /**
      * non-api action wrapper for apiKeys method
      */
-    public def keyStorageAccess(){
-        params.resourcePath = "/keys/${params.resourcePath ?: ''}"
-        getResource()
+    public def keyStorageAccess(StorageParams storageParams){
+        if (!params.resourcePath && null != params.relativePath) {
+            params.resourcePath = "keys${params.relativePath ? ('/' + params.relativePath) : ''}"
+        }
+        getResource(storageParams)
+    }
+    /**
+     * non-api action wrapper for apiKeys method
+     */
+    public def keyStorageDownload(StorageParams storageParams){
+        if (!params.resourcePath && null != params.relativePath) {
+            params.resourcePath = "keys${params.relativePath ? ('/' + params.relativePath) : ''}"
+        }
+        getResource(storageParams,true)
+    }
+    /**
+     * non-api action wrapper for apiKeys method
+     */
+    public def keyStorageUpload(StorageParams storageParams){
+        if (storageParams.hasErrors()) {
+            flash.errors=storageParams.errors
+            return redirect(controller: 'menu',action: 'storage',params: [project:params.project])
+        }
+        if (!params.resourcePath && null!=params.relativePath) {
+            params.resourcePath = "keys${params.relativePath ? ('/'+params.relativePath): ''}"
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def resourcePath = params.resourcePath
+        def valid=false
+        withForm {
+            valid=true
+        }.invalidToken{
+            flash.errorCode= 'request.error.invalidtoken.message'
+            return redirect(controller: 'menu', action: 'storage', params: [project: params.project])
+        }
+        if(!valid){
+            return
+        }
+        def contentType= null
+        def contentLength = -1
+        def inputStream = null
+
+        if (params.uploadKeyType == 'public') {
+            contentType = KeyStorageLayer.PUBLIC_KEY_MIME_TYPE
+        } else if (params.uploadKeyType == 'private') {
+            contentType = KeyStorageLayer.PRIVATE_KEY_MIME_TYPE
+        } else if (params.uploadKeyType == 'password') {
+            contentType = KeyStorageLayer.PASSWORD_MIME_TYPE
+        } else {
+            //invalid
+            flash.errorCode = 'api.error.parameter.invalid'
+            flash.errorArgs = [params.uploadKeyType, 'uploadKeyType']
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
+        }
+        if( !(params.inputType in ['file','text'])){
+            flash.errorCode = 'api.error.parameter.not.inList'
+            flash.errorArgs = [params.inputType, 'inputType']
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
+        }
+
+        def hasUploadedFile = request instanceof MultipartHttpServletRequest &&
+                params.inputType == 'file' &&
+                request.getFile('storagefile') &&
+                !request.getFile('storagefile').empty
+
+        if (params.inputType == 'file' && !hasUploadedFile) {
+            //mising file upload
+            flash.errorCode = 'api.error.upload.missing'
+            flash.errorArgs = ['storagefile']
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
+        }
+
+        if (params.inputType == 'text' && !params.fileName) {
+            //invalid
+            flash.errorCode = 'api.error.parameter.required'
+            flash.errorArgs = ['fileName']
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
+        }
+
+        def filename = params.fileName
+
+        if(params.inputType == 'text' && params.uploadKeyType in ['public','private'] ){
+            //store a public/private key
+            if(!params.uploadText){
+                //invalid
+                flash.errorCode = 'api.error.parameter.required'
+                flash.errorArgs = ['uploadText']
+
+                return redirect(controller: 'menu', action: 'storage',
+                        params: [project: params.project])
+            }
+
+            def inputBytes = params.uploadText.bytes
+            inputStream = new ByteArrayInputStream(inputBytes)
+            contentLength= inputBytes.length
+        }else if(params.inputType == 'text' && params.uploadKeyType == 'password' ){
+            //store a password
+            if (!params.uploadPassword) {
+                //invalid
+                flash.errorCode = 'api.error.parameter.required'
+                flash.errorArgs = ['uploadPassword']
+
+                return redirect(controller: 'menu', action: 'storage',
+                        params: [project: params.project])
+            }
+            def inputBytes = params.uploadPassword.bytes
+            inputStream = new ByteArrayInputStream(inputBytes)
+            contentLength= inputBytes.length
+        }else if (hasUploadedFile) {
+            //nb: don't allow arbitrary content type
+//            contentType = request.getFile('storagefile').getContentType()
+            contentLength = request.getFile('storagefile').getSize()
+            inputStream = request.getFile('storagefile').inputStream
+            if(!filename){
+                filename = request.getFile('storagefile').originalFilename
+            }
+        }else{
+            //no file uploaded
+            flash.errorCode = 'api.error.upload.missing'
+            flash.errorArgs = ['storagefile']
+
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
+        }
+
+        if(!filename){
+
+            flash.errorCode = 'api.error.upload.missing'
+            flash.errorArgs = ['fileName']
+
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
+        }
+
+        resourcePath = PathUtil.cleanPath(resourcePath + '/' + filename)
+
+        def newparams=new StorageParams()
+        newparams.resourcePath=resourcePath
+        newparams.validate()
+        if(newparams.hasErrors()){
+            flash.errors=newparams.errors
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
+        }
+
+        boolean overwrite=true
+        if(params.dontOverwrite in [true,'true']){
+            overwrite=false
+        }
+        def hasResource = storageService.hasResource(authContext, resourcePath)
+        if (!overwrite && hasResource) {
+            flash.error = g.message(code: 'api.error.item.alreadyexists',
+                    args: ['Storage file', resourcePath])
+
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
+        } else if (!hasResource && storageService.hasPath(authContext, resourcePath)) {
+            flash.error = g.message(code: 'api.error.item.alreadyexists',
+                    args: ['Storage directory path', resourcePath])
+
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
+        }
+        Map<String, String> map = [
+                (StorageUtil.RES_META_RUNDECK_CONTENT_TYPE): contentType,
+                (StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH): contentLength,
+        ]
+        try {
+            if(hasResource){
+                def resource = storageService.updateResource(authContext, resourcePath, map, inputStream)
+            }else{
+                def resource = storageService.createResource(authContext, resourcePath, map, inputStream)
+            }
+            return redirect(controller: 'menu', action: 'storage', params: [project: params.project,resourcePath:resourcePath])
+        } catch (StorageAuthorizationException e) {
+            log.error("Unauthorized: resource ${resourcePath}: ${e.message}")
+            flash.errorCode = 'api.error.item.unauthorized'
+            flash.errorArgs = [e.event.toString(), 'Path', e.path.toString()]
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
+        } catch (StorageException e) {
+            log.error("Error creating resource ${resourcePath}: ${e.message}")
+            log.debug("Error creating resource ${resourcePath}", e)
+            flash.error= e.message
+            return redirect(controller: 'menu', action: 'storage',
+                    params: [project: params.project])
+        }
+    }
+    /**
+     * non-api action wrapper for deleteResource method
+     */
+    public def keyStorageDelete() {
+        if (!params.resourcePath && null != params.relativePath) {
+            params.resourcePath = "keys${params.relativePath ? ('/' + params.relativePath) : ''}"
+        }
+        def valid = false
+        withForm {
+            valid = true
+            g.refreshFormTokensHeader()
+        }.invalidToken {
+            def message = g.message(code: 'request.error.invalidtoken.message')
+            log.error(message)
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'request.error.invalidtoken.message'
+            ])
+        }
+        if (!valid) {
+            return
+        }
+        deleteResource()
     }
     /**
      * Handle resource requests to the /ssh-key path
@@ -226,8 +463,8 @@ class StorageController {
             return renderError("directory already exists: ${resourcePath}")
         }
         Map<String,String> map = [
-                (RES_META_RUNDECK_CONTENT_TYPE): request.contentType,
-                (RES_META_RUNDECK_CONTENT_SIZE): Integer.toString(request.contentLength),
+                (StorageUtil.RES_META_RUNDECK_CONTENT_TYPE): request.contentType,
+                (StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH): Integer.toString(request.contentLength),
         ] + (request.resourcePostMeta?:[:])
         try{
             def resource = storageService.createResource(authContext,resourcePath, map, request.inputStream)
@@ -309,8 +546,8 @@ class StorageController {
             return renderError("resource not found: ${resourcePath}")
         }
         Map<String, String> map = [
-                (RES_META_RUNDECK_CONTENT_TYPE): request.contentType,
-                (RES_META_RUNDECK_CONTENT_SIZE): Integer.toString(request.contentLength),
+                (StorageUtil.RES_META_RUNDECK_CONTENT_TYPE): request.contentType,
+                (StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH): Integer.toString(request.contentLength),
         ] + (request.resourcePostMeta ?: [:])
         try {
             def resource = storageService.updateResource(authContext,resourcePath, map, request.inputStream)
@@ -332,13 +569,20 @@ class StorageController {
         }
     }
 
-    def apiGetResource() {
+    def apiGetResource(StorageParams storageParams) {
         if (!apiService.requireApi(request, response)) {
             return
         }
-        return getResource()
+        return getResource(storageParams)
     }
-    private def getResource() {
+    private def getResource(StorageParams storageParams,boolean forceDownload=false) {
+        if (storageParams.hasErrors()) {
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.invalid.request',
+                    args: [storageParams.errors.allErrors.collect { g.message(error: it) }.join(",")]
+            ])
+        }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String resourcePath = params.resourcePath
         def found = storageService.hasPath(authContext, resourcePath)
@@ -353,7 +597,7 @@ class StorageController {
                 def dirlist = storageService.listDir(authContext, resourcePath)
                 return renderDirectory(request, response, resource,dirlist)
             } else {
-                return renderResourceFile(request, response, resource)
+                return renderResourceFile(request, response, resource, forceDownload)
             }
         } catch (StorageAuthorizationException e) {
             log.error("Unauthorized: resource ${resourcePath}: ${e.message}")

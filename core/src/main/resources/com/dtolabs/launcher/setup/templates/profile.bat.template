@@ -1,7 +1,7 @@
 
-set RDECK_BASE=@rdeck.base@
+set RDECK_BASE=@rdeck.base.win@
 
-set JAVA_HOME=@user.java_home@
+set JAVA_HOME=@user.java_home.win@
 
 :: Unsetting JRE_HOME to ensure there is no conflict with JAVA_HOME
 (set JRE_HOME=)
@@ -9,3 +9,5 @@ set JAVA_HOME=@user.java_home@
 set Path=%JAVA_HOME%\bin;%RDECK_BASE%\tools\bin;%Path%
 
 set RDECK_SSL_OPTS="-Djavax.net.ssl.trustStore=%RDECK_BASE%\etc\truststore -Djavax.net.ssl.trustStoreType=jks -Djava.protocol.handler.pkgs=com.sun.net.ssl.internal.www.protocol"
+set RDECK_CLI_OPTS=-Xms64m -Xmx128m
+set RD_LIBDIR=%RDECK_BASE%\tools\lib
