@@ -84,6 +84,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String NODE_ATTR_SSH_KEYPATH = "ssh-keypath";
     public static final String NODE_ATTR_SSH_KEY_RESOURCE = "ssh-key-storage-path";
     public static final String NODE_ATTR_SSH_PASSWORD_STORAGE_PATH= "ssh-password-storage-path";
+    public static final String NODE_ATTR_LOCAL_SSH_AGENT = "local-ssh-agent";
 
     public static final String PROJ_PROP_PREFIX = "project.";
     public static final String FWK_PROP_PREFIX = "framework.";
@@ -94,6 +95,8 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String FWK_PROP_SSH_PASSWORD_STORAGE_PATH= FWK_PROP_PREFIX + NODE_ATTR_SSH_PASSWORD_STORAGE_PATH;
     public static final String PROJ_PROP_SSH_KEY_RESOURCE = PROJ_PROP_PREFIX + NODE_ATTR_SSH_KEY_RESOURCE;
     public static final String PROJ_PROP_SSH_PASSWORD_STORAGE_PATH = PROJ_PROP_PREFIX + NODE_ATTR_SSH_PASSWORD_STORAGE_PATH;
+    public static final String FWK_PROP_LOCAL_SSH_AGENT = FWK_PROP_PREFIX + NODE_ATTR_LOCAL_SSH_AGENT;
+    public static final String PROJ_PROP_LOCAL_SSH_AGENT= PROJ_PROP_PREFIX + NODE_ATTR_LOCAL_SSH_AGENT;
 
     public static final String NODE_ATTR_SSH_AUTHENTICATION = "ssh-authentication";
     public static final String NODE_ATTR_SSH_PASSWORD_OPTION = "ssh-password-option";
@@ -656,6 +659,18 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                 return DataContextUtils.replaceDataReferences(user, context.getDataContext());
             }
             return user;
+        }
+        
+        public Boolean getLocalSSHAgent() {
+        	Boolean localSSHAgent = false;
+            if (node.getLocalSSHAgent()) {
+            	localSSHAgent = node.getLocalSSHAgent();
+            } else if (Boolean.valueOf(frameworkProject.hasProperty(PROJ_PROP_LOCAL_SSH_AGENT))) {
+            	localSSHAgent = Boolean.valueOf(frameworkProject.hasProperty(PROJ_PROP_LOCAL_SSH_AGENT));
+            } else {
+            	localSSHAgent = Boolean.valueOf(framework.getProperty(Constants.LOCAL_SSH_AGENT));
+            }
+            return localSSHAgent;
         }
 
         public static Map<String, String> sshConfigFromFramework(Framework framework) {

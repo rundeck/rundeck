@@ -47,6 +47,7 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
     public static final String DESCRIPTION = "description";
     public static final String NAME = "nodename";
     public static final String TAGS = "tags";
+    public static final String LOCAL_SSH_AGENT = "localSSHAgent";
 
     /**
      * All attribute names for predefined properties.
@@ -176,7 +177,14 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
     public void setUsername(final String username) {
         setAttribute(USERNAME, username);
     }
-
+    
+	public void setLocalSSHAgent(Boolean localSHHAgent) {
+		setAttribute(LOCAL_SSH_AGENT, localSHHAgent.toString());
+	}
+	
+	public boolean getLocalSSHAgent() {
+		return Boolean.valueOf(getAttribute(LOCAL_SSH_AGENT));
+	}
 
     public boolean equals(final INodeDesc node) {
         return getNodename().equals(node.getNodename());

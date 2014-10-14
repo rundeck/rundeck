@@ -27,6 +27,8 @@ package com.dtolabs.rundeck.core.tasks.net;
 
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.jcraft.jsch.*;
+import com.jcraft.jsch.agentproxy.connector.SSHAgentProcess;
+
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.optional.ssh.SSHBase;
@@ -73,6 +75,9 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
 
     private Resource commandResource = null;
     private List<Environment.Variable> envVars=null;
+    
+    private Boolean enableSSHAgent=false;
+    private SSHAgentProcess sshAgentProcess=null;
 
     private static final String TIMEOUT_MESSAGE =
         "Timeout period exceeded, connection dropped.";
@@ -234,6 +239,14 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
         return sshKeyData;
     }
 
+    public SSHAgentProcess getSSHAgentProcess() {
+		return this.sshAgentProcess;
+	}
+
+	public void setSSHAgentProcess(SSHAgentProcess sshAgentProcess) {
+		this.sshAgentProcess = sshAgentProcess;
+	}
+
     /**
      * Allows disconnecting the ssh connection
      */
@@ -328,6 +341,14 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
                 log("Caught exception: " + e.getMessage(), Project.MSG_ERR);
             }
         } finally {
+        	try { 
+        		if(null!=this.sshAgentProcess){
+        			this.sshAgentProcess.stopAgent();
+        		}
+        	} catch (IOException e) {
+        		log("Caught exception: " + e.getMessage(),
+                        Project.MSG_ERR);
+        	}
             if (outputProperty != null) {
                 getProject().setNewProperty(outputProperty, output.toString());
             }
@@ -390,6 +411,10 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
             session.setTimeout((int) maxwait);
             /* execute the command */
             channel = (ChannelExec) session.openChannel("exec");
+            if(null != this.sshAgentProcess){
+                channel.setAgentForwarding(true);
+            }
+            
             channel.setCommand(cmd);
             channel.setOutputStream(tee);
             channel.setExtOutputStream(new KeepAliveOutputStream(System.err), true);
@@ -593,4 +618,14 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
     public SSHUserInfo getUserInfo(){
         return super.getUserInfo();
     }
+
+	@Override
+	public void setEnableSSHAgent(Boolean enableSSHAgent) {
+		this.enableSSHAgent=enableSSHAgent;
+	}
+	
+	@Override
+	public Boolean getEnableSSHAgent() {
+		return this.enableSSHAgent;
+	}
 }

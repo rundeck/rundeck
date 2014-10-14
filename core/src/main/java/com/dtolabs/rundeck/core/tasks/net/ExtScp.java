@@ -3,6 +3,8 @@ package com.dtolabs.rundeck.core.tasks.net;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
+import com.jcraft.jsch.agentproxy.connector.SSHAgentProcess;
+
 import org.apache.tools.ant.taskdefs.optional.ssh.SSHUserInfo;
 import org.apache.tools.ant.taskdefs.optional.ssh.Scp;
 
@@ -78,4 +80,18 @@ public class ExtScp extends Scp implements SSHTaskBuilder.SCPInterface {
     public void setPluginLogger(PluginLogger pluginLogger) {
         this.pluginLogger = pluginLogger;
     }
+    
+    public SSHAgentProcess getSSHAgentProcess() {
+    	return null;
+    }
+    
+	public void setSSHAgentProcess(SSHAgentProcess sshAgentProcess) {
+	}
+
+	public void setEnableSSHAgent(Boolean enableSSHAgent) {
+	}
+
+	public Boolean getEnableSSHAgent() {
+		return Boolean.FALSE;
+	}
 }
