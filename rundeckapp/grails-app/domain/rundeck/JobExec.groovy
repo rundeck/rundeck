@@ -43,7 +43,10 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
 
     static mapping = {
         argString type: 'text'
-        jobName (type: 'text', sqlType: "varchar(255)")
+        jobName type: 'string'
+		/**
+		* jobName (type: 'text', sqlType: "varchar(255)")
+		*/
         jobGroup type: 'text'
     }
 
