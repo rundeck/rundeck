@@ -141,6 +141,13 @@ public abstract class ExecArg {
         protected void setArgs(ExecArgList list) {
             this.args = list;
         }
+
+        @Override
+        public String toString() {
+            return "[" +
+                    args +
+                    ']';
+        }
     }
 
     public static ExecArg fromString(String arg, boolean quoted) {

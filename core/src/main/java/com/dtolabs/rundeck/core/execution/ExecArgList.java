@@ -360,4 +360,9 @@ public class ExecArgList {
             return argList;
         }
     }
+
+    @Override
+    public String toString() {
+        return asFlatStringList().toString();
+    }
 }
