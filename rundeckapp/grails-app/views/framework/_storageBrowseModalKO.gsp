@@ -4,7 +4,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" id="storagebrowsetitle">Select a Storage File</h4>
+                <h4 class="modal-title" id="storagebrowsetitle"><g:message code="storage.select.a.file" /></h4>
             </div>
 
             <div class="modal-body" style="max-height: 500px; overflow-y: scroll">
@@ -12,11 +12,11 @@
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn btn-sm btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-sm btn-default" data-dismiss="modal"><g:message code="cancel" /></button>
                 <button type="button" class="btn btn-sm btn-success obs-storagebrowse-select"
                         data-bind="css: selectedPath()?'active':'disabled' "
                         data-dismiss="modal">
-                    Choose Selected Key
+                    <g:message code="storage.choose.selected.key" />
                 </button>
             </div>
         </div>

@@ -28,13 +28,13 @@
             <button type="button" class="btn btn-sm btn-default dropdown-toggle"
                     data-bind="css: { disabled: !selectedPath() }"
                     data-toggle="dropdown">
-                Action <span class="caret"></span>
+                <g:message code="button.Action" /> <span class="caret"></span>
             </button>
             <ul class="dropdown-menu" role="menu">
-                <li><a href="#storageconfirmdelete" data-toggle="modal"><i class="glyphicon glyphicon-remove"></i> Delete Selected Item</a></li>
+                <li><a href="#storageconfirmdelete" data-toggle="modal"><i class="glyphicon glyphicon-remove"></i> <g:message code="button.delete.selected.item" /></a></li>
 
                 <li class="" data-bind=" if: selectedIsDownloadable()">
-                    <a href="#" data-bind="click: download"><i class="glyphicon glyphicon-download"></i> Download Contents</a>
+                    <a href="#" data-bind="click: download"><i class="glyphicon glyphicon-download"></i> <g:message code="button.download.contents" /></a>
                 </li>
             </ul>
         </div>
@@ -42,29 +42,29 @@
         <div class="btn-group" data-bind="if: allowUpload() ">
             <a href="#storageuploadkey" data-bind="click: actionUpload"
                class="btn btn-sm btn-success ">
-                <i class="glyphicon glyphicon-plus"></i> Add or Upload a Key</span>
+                <i class="glyphicon glyphicon-plus"></i> <g:message code="storage.add.or.upload.a.key" />
             </a>
         </div>
         <div class="btn-group" data-bind="if: allowUpload() && selectedPath() ">
             <a href="#storageuploadkey" data-bind="click: actionUploadModify"
                class="btn btn-sm btn-info ">
-                <i class="glyphicon glyphicon-pencil"></i> Overwrite Key</span>
+                <i class="glyphicon glyphicon-pencil"></i> <g:message code="storage.overwrite.key" />
             </a>
         </div>
     </div>
     <div class="loading-area text-info " data-bind="visible: loading()"
          style="width: 100%; height: 200px; padding: 50px; background-color: #eee;">
-        <i class="glyphicon glyphicon-time"></i> Loading...
+        <i class="glyphicon glyphicon-time"></i> <g:message code="loading.text" />
     </div>
     <table class="table table-hover table-condensed" data-bind="if: !invalid() && !loading()">
         <tbody data-bind="if: !notFound()">
         <tr>
             <td colspan="2" class="text-muted">
                 <span data-bind="if: filteredFiles().length < 1">
-                    No keys
+                    <g:message code="storage.no.keys" />
                 </span>
                 <span data-bind="if: filteredFiles().length > 0">
-                    <span data-bind="text: filteredFiles().length"></span> keys
+                    <span data-bind="text: filteredFiles().length"></span> <g:message code="storage.keys.plural" />
                 </span>
             </td>
         </tr>
@@ -92,16 +92,16 @@
             <td class="text-muted">
                 <span class="pull-right">
                 <span data-bind="if: $data.isPrivateKey()"
-                    title="This path contains a private key that can be used for remote node execution."
+                    title="${g.enc(code: 'storage.private.key.description')}"
                 >
-                    Private key
+                    <g:message code="storage.private.key"/>
                 </span>
                 <span data-bind="if: $data.isPublicKey()">
-                    Public key
+                    <g:message code="storage.public.key"/>
                 </span>
                 <span data-bind="if: $data.isPassword()"
-                    title="This path contains a password that can be used for remote node execution.">
-                    Password
+                    title="${g.enc(code: 'storage.password.description')}">
+                    <g:message code="storage.password"/>
                 </span>
                 </span>
             </td>
@@ -111,8 +111,8 @@
         <tbody data-bind="if: notFound()">
         <tr>
             <td colspan="2">
-                <span class="text-muted">Nothing found at this path.
-                <span data-bind="if: allowUpload()">Select "Add or Upload a Key" if you would like to create a new key.</span>
+                <span class="text-muted"><g:message code="storage.nothing.found.at.this.path" />
+                <span data-bind="if: allowUpload()"><g:message code="storage.nothing.found.prompt" /></span>
                 </span>
             </td>
         </tr>
@@ -135,7 +135,7 @@
     <div class="col-sm-12">
         <div class="well">
             <div>
-                Storage path:
+                <g:message code="storage.path.prompt" />
                 <code class="text-success"
                       data-bind="text: selectedPath()"></code>
                 <a href="#" data-bind="attr: { href: selectedPathUrl() }"><i class="glyphicon glyphicon-link"></i></a>
@@ -144,11 +144,11 @@
             <div data-bind="if: selectedResource() && selectedResource().createdTime()"
                 class="text-muted">
                 <div >
-                    Created:
+                    <g:message code="created.prompt" />
                     <span class="timeabs" data-bind="text: selectedResource().createdTime(), attr: { title:  selectedResource().meta()['Rundeck-content-creation-time'] }"></span>
 
                     <span data-bind="if: selectedResource().createdUsername()">
-                        by:
+                        <g:message code="by.prompt" />
 
                         <span data-bind="text: selectedResource().createdUsername()"></span>
                     </span>
@@ -158,25 +158,24 @@
             <div data-bind="if: selectedResource() && selectedResource().wasModified()"
                  class="text-muted">
                 <div >
-                    Modified:
+                    <g:message code="modified.prompt" />
                     <span class="timeago" data-bind="text: selectedResource().modifiedTimeAgo('ago'), attr: { title:  selectedResource().meta()['Rundeck-content-modify-time'] }"></span>
 
                     <span data-bind="if: selectedResource().modifiedUsername()">
-                        by:
+                        <g:message code="by.prompt"/>
 
                         <span data-bind="text: selectedResource().modifiedUsername()"></span>
                     </span>
                 </div>
             </div>
 
-            %{--todo: view contents--}%
             <div data-bind="if: selectedResource() && selectedResource().isPublicKey()">
                     <button
                             data-bind="click: function(){$root.actionLoadContents('publicKeyContents');}, visible: !selectedResource().wasDownloaded()"
                             class="btn btn-sm btn-default"
-                            data-loading-text="Loading…"
+                            data-loading-text="${g.enc(code:"loading")}"
                     >
-                        View Public Key Contents (<span data-bind="text: selectedResource().contentSize()"></span> bytes)
+                        <g:message code="button.view.public.key.contents" /> (<span data-bind="text: selectedResource().contentSize()"></span> <g:message code="bytes" />)
                     </button>
 
                 <pre id="publicKeyContents"  class="pre-scrollable" data-bind="visible: selectedResource().wasDownloaded()">
