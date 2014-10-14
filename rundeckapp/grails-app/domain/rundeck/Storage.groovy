@@ -22,7 +22,7 @@ class Storage {
     static constraints = {
         namespace(nullable: true, blank: true, size: 0..255)
         jsonData(nullable: true, blank: true)
-        data(nullable: true)
+        data(nullable: true, maxSize: 5000000) /* Setting to max of ~4.7MB, should be plenty for ssh keys */
         name(nullable: false, blank: false)
         dir(nullable: true, blank: true)
         pathSha(nullable: false, blank: false, size: 40..40, unique: true)
@@ -42,7 +42,10 @@ class Storage {
         setupSha()
     }
     static mapping= {
-        data(type: 'binary', sqlType: "longblob")
+		data(type: 'binary')
+        /** 
+		* data(type: 'binary', sqlType: "longblob")
+		*/
         name(type: 'text')
         dir(type: 'text')
         jsonData(type: 'text')
