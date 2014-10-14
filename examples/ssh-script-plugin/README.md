@@ -46,7 +46,7 @@ Configure the `node-executor` and/or the `file-copier` attributes for your nodes
 
     <node name="mynode" hostname="mynode" username="username">
         <attribute name="node-executor" value="ssh-example"/>
-        <attribute name="file-copier" value="ssh-example"/>
+        <attribute name="file-copier" value="scp-example"/>
 
         <!-- 
             See below for more info on supported node attributes
