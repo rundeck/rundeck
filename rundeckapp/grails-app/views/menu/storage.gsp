@@ -12,7 +12,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="configure"/>
-    <title>Storage</title>
+    <title><g:message code="gui.menu.KeyStorage" /></title>
     <asset:javascript src="storageBrowseKO.js"/>
     <g:javascript>
         var storageBrowse;
@@ -69,11 +69,11 @@
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal"
                                 aria-hidden="true">&times;</button>
-                        <h4 class="modal-title" id="storageconfirmdeletetitle">Delete Selected Key</h4>
+                        <h4 class="modal-title" id="storageconfirmdeletetitle"><g:message code="storage.delete.selected.key" /></h4>
                     </div>
 
                     <div class="modal-body" style="max-height: 500px; overflow-y: scroll">
-                        <p>Really delete the selected key at this path?</p>
+                        <p><g:message code="storage.delete.selected.key.confirm" /></p>
 
                         <p><strong data-bind="text: selectedPath()"
                                    class="text-info"></strong></p>
@@ -81,13 +81,13 @@
 
                     <div class="modal-footer">
                         <button type="button" class="btn btn-sm btn-default"
-                                data-dismiss="modal">Cancel</button>
+                                data-dismiss="modal"><g:message code="cancel" /></button>
 
                         <button
                                data-bind=" click: $root.delete"
                                data-dismiss="modal"
                                class="btn btn-sm btn-danger obs-storagedelete-select"
-                               >Delete</button>
+                               ><g:message code="delete" /></button>
                     </div>
                 </div>
             </div>
@@ -104,11 +104,11 @@
                         <button type="button" class="close" data-dismiss="modal"
                                 aria-hidden="true">&times;</button>
                         <h4 class="modal-title" id="storageuploadtitle2" data-bind="if: !upload.modifyMode()">
-                            Add or Upload a Key
+                            <g:message code="storage.add.or.upload.a.key" />
                         </h4>
                         <h4 class="modal-title" id="storageuploadtitle3"
                             data-bind="if: upload.modifyMode()">
-                            Overwrite a Key
+                            <g:message code="storage.overwrite.a.key" />
                         </h4>
                     </div>
 
@@ -116,16 +116,16 @@
 
                         <div class="form-group">
                             <label for="storageuploadtype" class="col-sm-3 control-label">
-                               Key Type:
+                               <g:message code="storage.key.type.prompt" />
                             </label>
                             <div class="col-sm-9">
                                 <select name="uploadKeyType" id="storageuploadtype" class="form-control" data-bind="value: upload.keyType">
-                                    <option value="private">Private Key</option>
-                                    <option value="public">Public Key</option>
-                                    <option value="password">Password</option>
+                                    <option value="private"><g:message code="storage.private.key" /></option>
+                                    <option value="public"><g:message code="storage.public.key" /></option>
+                                    <option value="password"><g:message code="storage.password" /></option>
                                 </select>
                                 <div class="help-block">
-                                    Private Keys and Passwords are not available to download once they are stored. Public keys can be downloaded.
+                                    <g:message code="storage.keyType.help.text" />
                                 </div>
                             </div>
                         </div>
@@ -136,8 +136,8 @@
 
                                 <select class="form-control" data-bind="value: upload.inputType"
                                         name="inputType">
-                                    <option value="text">Enter text</option>
-                                    <option value="file">Upload File</option>
+                                    <option value="text"><g:message code="enter.text" /></option>
+                                    <option value="file"><g:message code="upload.file" /></option>
                                 </select>
                             </div>
                             <div class="col-sm-9">
@@ -162,7 +162,7 @@
 
                         <div class="form-group">
                             <label for="uploadResourcePath2" class="col-sm-3 control-label">
-                                Storage path:
+                                <g:message code="storage.path.prompt" />
                             </label>
 
                             <div class="col-sm-9">
@@ -184,7 +184,7 @@
                         <div class="form-group"
                              data-bind="css: { 'has-warning': !upload.fileName()&&upload.inputType()!='file', 'has-success': upload.fileName() && upload.inputType()!='file' }">
                             <label for="uploadResourceName2" class="col-sm-3 control-label">
-                                Name:
+                                <g:message code="name.prompt" />
                             </label>
 
                             <div class="col-sm-9">
@@ -194,7 +194,7 @@
                                        placeholder="Specify a name."/>
                                 <div class="help-block"
                                      data-bind="if: upload.inputType() == 'file'">
-                                    If not set, the name of the uploaded file is used.
+                                    <g:message code="storage.upload.file.name.description" />
                                 </div>
                                 <input id="uploadResourceName3"
                                     type="hidden"
@@ -207,7 +207,7 @@
                                 <div class="checkbox">
                                     <label>
                                     <input type="checkbox" value="true" name="dontOverwrite"/>
-                                    Do not overwrite a file with the same name.
+                                    <g:message code="storage.upload.dontOverwrite.label" />
                                     </label>
                                 </div>
                             </div>
@@ -216,7 +216,7 @@
                         <div class="form-group">
                             <div class="col-sm-12">
                                 <div class="help-block">
-                                    <p>You can reference this stored Key using the storage path:</p>
+                                    <p><g:message code="storage.upload.fullpath.label" /></p>
 
                                     <p><strong data-bind="text: upload.inputFullpath()"
                                                class="text-info"></strong></p>
@@ -227,7 +227,7 @@
 
                     <div class="modal-footer">
                         <button type="button" class="btn btn-sm btn-default"
-                                data-dismiss="modal">Cancel</button>
+                                data-dismiss="modal"><g:message code="cancel" /></button>
 
                         <input
                                 type="submit"

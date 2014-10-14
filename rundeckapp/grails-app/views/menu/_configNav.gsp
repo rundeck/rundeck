@@ -20,7 +20,7 @@
         <li id="projectSelect" class="${selected == 'project' ? 'active' : ''} dropdown">
             <span class="action textbtn" onclick="loadProjectSelect({page:'configure'});"
                   title="Select project...">
-                Project Configuration:
+                    <g:message code="project.configuration" />
                 <g:enc>${params.project ?: request.project ?: 'Select project...'}</g:enc>
             </span>
         </li>
