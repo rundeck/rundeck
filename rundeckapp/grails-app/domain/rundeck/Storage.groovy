@@ -46,7 +46,7 @@ class Storage {
         /** 
 		* data(type: 'binary', sqlType: "longblob")
 		*/
-        name(type: 'text')
+        name(type: 'string')
         dir(type: 'text')
         jsonData(type: 'text')
     }
