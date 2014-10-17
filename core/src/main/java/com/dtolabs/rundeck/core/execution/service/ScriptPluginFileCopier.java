@@ -171,7 +171,13 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
                                 //write the temp file and do not replace tokens, the file will not be modified
                                 : BaseFileCopier.writeTempFile(executionContext, file, input, content);
 
-        String destFilePath=destination;
+        String destFilePath = destination;
+        if (null == destFilePath) {
+            destFilePath = BaseFileCopier.generateRemoteFilepathForNode(
+                    node,
+                    (null != file ? file.getName() : "dispatch-script")
+            );
+        }
         //put file in a directory
         if (null != destFilePath && destFilePath.endsWith("/")) {
             destFilePath += srcFile.getName();
@@ -207,7 +213,7 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
             throw new FileCopierException(e.getMessage(), StepFailureReason.Interrupted);
         }
 
-        if (null != destination) {
+        if (null != destFilePath) {
             return destFilePath;
         }
 
