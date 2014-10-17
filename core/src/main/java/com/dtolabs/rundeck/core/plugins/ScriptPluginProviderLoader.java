@@ -203,7 +203,7 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
         try {
             pluginMeta = getPluginMeta();
         } catch (IOException e) {
-            log.debug("Unable to load file meta: " + e.getMessage());
+            debug("Unable to load file meta: " + e.getMessage());
         }
         if (null == pluginMeta) {
             return providerIdents;
@@ -219,10 +219,14 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
      * Get plugin metadatat from a zip file
      */
     static PluginMeta loadMeta(final File jar) throws IOException {
-        final ZipInputStream zipinput = new ZipInputStream(new FileInputStream(jar));
-        final PluginMeta metadata = ScriptPluginProviderLoader.loadMeta(jar, zipinput);
-        zipinput.close();
-        return metadata;
+        FileInputStream fileInputStream = new FileInputStream(jar);
+        try{
+            final ZipInputStream zipinput = new ZipInputStream(fileInputStream);
+            final PluginMeta metadata = ScriptPluginProviderLoader.loadMeta(jar, zipinput);
+            return metadata;
+        }finally {
+            fileInputStream.close();
+        }
     }
 
     /**
