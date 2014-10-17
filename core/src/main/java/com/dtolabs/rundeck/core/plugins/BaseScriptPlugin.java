@@ -26,12 +26,15 @@ package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.execution.ExecArgList;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -123,6 +126,23 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
         return ScriptExecUtil.createScriptArgs(localDataContext,
                                                scriptargs, null, scriptinterpreter, interpreterargsquoted,
                                                scriptfile.getAbsolutePath());
+    }
+    /**
+     * Create the command array for the data context.
+     */
+    protected ExecArgList createScriptArgsList(final Map<String, Map<String,
+            String>> dataContext) {
+
+        final ScriptPluginProvider plugin = getProvider();
+        final File scriptfile = plugin.getScriptFile();
+        final String scriptargs =
+                DataContextUtils.replaceDataReferences(plugin.getScriptArgs(), dataContext);
+        final String scriptinterpreter = plugin.getScriptInterpreter();
+        final boolean interpreterargsquoted = plugin.getInterpreterArgsQuoted();
+
+
+        return ScriptExecUtil.createScriptArgList(scriptfile.getAbsolutePath(),
+                scriptargs, null, scriptinterpreter, interpreterargsquoted);
     }
 
 }

@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.execution.service;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
@@ -88,6 +89,12 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
         final HashMap<String, String> scptexec = new HashMap<String, String>();
         scptexec.put("command", StringArrayUtil.asString(command, " "));
         localDataContext.put("exec", scptexec);
+        final Map<String, Map<String, String>> nodeExecContext =
+                DataContextUtils.addContext(
+                        "exec",
+                        scptexec,
+                        null
+                );
 
         //load config.* property values in from project or framework scope
         final Map<String, Map<String, String>> finalDataContext;
@@ -100,18 +107,21 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
                     node, -1);
         }
 
-        final String[] finalargs = createScriptArgs(finalDataContext);
+        final ExecArgList execArgList = createScriptArgsList(nodeExecContext);
+        final String localNodeOsFamily = getFramework().createFrameworkNode().getOsFamily();
 
         executionContext.getExecutionListener().log(3, "[" + getProvider().getName() + "] executing: " + Arrays.asList(
-            finalargs));
+                execArgList));
 
         int result = -1;
         try {
-            result = ScriptExecUtil.runLocalCommand(finalargs,
-                                                    DataContextUtils.generateEnvVarsFromContext(finalDataContext),
-                                                    null,
-                                                    System.out,
-                                                    System.err
+            result = ScriptExecUtil.runLocalCommand(
+                    localNodeOsFamily,
+                    execArgList,
+                    finalDataContext,
+                    null,
+                    System.out,
+                    System.err
             );
             executionContext.getExecutionListener().log(3,
                                                         "[" + pluginname + "]: result code: " + result + ", success: "

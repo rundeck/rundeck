@@ -23,9 +23,9 @@
 */
 package com.dtolabs.rundeck.core.execution.service;
 
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
@@ -188,18 +188,28 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
         scptexec.put("file", srcFile.getAbsolutePath());
         scptexec.put("destination", null != destFilePath ? destFilePath : "");
         finalDataContext.put("file-copy", scptexec);
+        Map<String, Map<String, String>> fileCopyContext =
+                DataContextUtils.addContext(
+                        "file-copy",
+                        scptexec,
+                        null
+                );
 
-        final String[] finalargs = createScriptArgs(finalDataContext);
+        final ExecArgList execArgList = createScriptArgsList(fileCopyContext);
+        final String localNodeOsFamily=getFramework().createFrameworkNode().getOsFamily();
+
         executionContext.getExecutionListener().log(3, "[" + getProvider().getName() + "] executing: " + Arrays.asList(
-            finalargs));
+                execArgList));
 
-        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        final ByteArrayOutputStream captureSysOut = new ByteArrayOutputStream();
         try {
-            final int result = ScriptExecUtil.runLocalCommand(finalargs,
-                                                    DataContextUtils.generateEnvVarsFromContext(finalDataContext),
-                                                    null,
-                                                    byteArrayOutputStream,
-                                                    System.err
+            final int result = ScriptExecUtil.runLocalCommand(
+                    localNodeOsFamily,
+                    execArgList,
+                    finalDataContext,
+                    null,
+                    captureSysOut,
+                    System.err
             );
             executionContext.getExecutionListener().log(3, "[" + pluginname + "]: result code: " + result);
             if(result!=0){
@@ -218,7 +228,7 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
         }
 
         //load string of output from outputstream
-        final String output = byteArrayOutputStream.toString();
+        final String output = captureSysOut.toString();
         if (null == output || output.length() < 1) {
             throw new FileCopierException("[" + pluginname + "]: No output from external script",
                                           ScriptPluginFailureReason.ScriptPluginFileCopierOutputMissing
