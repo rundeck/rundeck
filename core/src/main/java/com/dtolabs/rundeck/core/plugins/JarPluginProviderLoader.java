@@ -287,7 +287,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
                 if (isEquivalentPluginJar(f)) {
                     debug(String.format("Found %s, deleting...", f));
                     if (!f.delete()) {
-                        log.warn(String.format("Could not delete %s", f));
+                        debug(String.format("Could not delete %s", f));
                     }
                 }
             }
