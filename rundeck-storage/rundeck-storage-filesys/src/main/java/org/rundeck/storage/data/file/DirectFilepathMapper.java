@@ -1,7 +1,6 @@
 package org.rundeck.storage.data.file;
 
 import org.rundeck.storage.api.Path;
-import org.rundeck.storage.api.PathUtil;
 
 import java.io.File;
 
@@ -42,24 +41,6 @@ public class DirectFilepathMapper implements FilepathMapper {
         return new File(dir, path.getPath());
     }
 
-    /**
-     * Determine path given a file
-     *
-     * @param file file
-     * @param dir root dir to use
-     *
-     * @return sub path corresponding to the file
-     */
-    private Path withFile(File file, File dir) {
-        String absolutePath = file.getAbsolutePath();
-        String rootPath = dir.getAbsolutePath();
-        if (!absolutePath.startsWith(rootPath)) {
-            throw new IllegalArgumentException("not a file in the root directory: " + file);
-        }
-        return PathUtil.asPath(absolutePath.substring(rootPath.length()));
-    }
-
-
     @Override
     public File contentFileForPath(Path path) {
         return withPath(path, contentDir);
@@ -77,16 +58,16 @@ public class DirectFilepathMapper implements FilepathMapper {
 
     @Override
     public Path pathForContentFile(File datafile) {
-        return withFile(datafile, contentDir);
+        return FileTreeUtil.pathForFileInRoot(contentDir, datafile);
     }
 
     @Override
     public Path pathForMetadataFile(File metafile) {
-        return withFile(metafile, metaDir);
+        return FileTreeUtil.pathForFileInRoot(metaDir, metafile);
     }
 
     @Override
     public Path pathForDirectory(File directory) {
-        return withFile(directory, contentDir);
+        return FileTreeUtil.pathForFileInRoot(contentDir, directory);
     }
 }

@@ -53,6 +53,45 @@ public class ScriptExecUtil {
     /**
      * Run a command with environment variables in a working dir, and copy the streams
      *
+     *
+     * @param osFamily local node os family
+     * @param execArgList      the ExecArgList to run
+     * @param workingdir   optional working dir location (or null)
+     * @param outputStream stream for stdout
+     * @param errorStream  stream for stderr
+     *
+     * @return the exit code of the command
+     *
+     * @throws IOException          if any IO exception occurs
+     * @throws InterruptedException if interrupted while waiting for the command to finish
+     */
+    public static int runLocalCommand(
+            final String osFamily,
+            final ExecArgList execArgList,
+            final Map<String, Map<String, String>> dataContext,
+            final File workingdir,
+            final OutputStream outputStream,
+            final OutputStream errorStream
+    )
+            throws IOException, InterruptedException
+    {
+        final Map<String, String> envVars =
+                DataContextUtils.generateEnvVarsFromContext(dataContext);
+
+        final ArrayList<String> strings =
+                execArgList.buildCommandForNode(dataContext, osFamily);
+
+        return runLocalCommand(
+                strings.toArray(new String[strings.size()]),
+                envVars,
+                workingdir,
+                outputStream,
+                errorStream
+        );
+    }
+    /**
+     * Run a command with environment variables in a working dir, and copy the streams
+     *
      * @param command      the command array to run
      * @param envMap       the environment variables to pass in
      * @param workingdir   optional working dir location (or null)

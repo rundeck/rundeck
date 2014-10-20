@@ -24,10 +24,20 @@
 package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.core.storage.ResourceMeta;
+import com.dtolabs.rundeck.core.storage.StorageTree;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
+import org.rundeck.storage.api.Resource;
+import org.rundeck.storage.api.StorageException;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -63,6 +73,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     public static final String CONFIG_DEFAULT = "default";
     public static final String CONFIG_VALUES = "values";
     public static final String CONFIG_SCOPE = "scope";
+    public static final String CONFIG_RENDERING_OPTIONS = "renderingOptions";
 
     private final ScriptPluginProvider provider;
     private final Framework framework;
@@ -87,8 +98,12 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     }
 
 
-    static private void createProperties(final ScriptPluginProvider provider,
-                                                   final DescriptionBuilder dbuilder) throws ConfigurationException {
+    static private void createProperties(
+            final ScriptPluginProvider provider,
+            final boolean useConventionalPropertiesMapping,
+            final DescriptionBuilder dbuilder)
+            throws ConfigurationException
+    {
         final Map<String, Object> metadata = provider.getMetadata();
         final Object config = metadata.get("config");
         if (config instanceof List) {
@@ -98,15 +113,15 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                     final PropertyBuilder pbuild = PropertyBuilder.builder();
                     final Map<String, Object> itemmeta = (Map<String, Object>) citem;
                     final String typestr = metaStringProp(itemmeta, CONFIG_TYPE);
-                    final Property.Type type;
                     try {
                         pbuild.type(Property.Type.valueOf(typestr));
                     } catch (IllegalArgumentException e) {
                         throw new ConfigurationException("Invalid property type: " + typestr);
                     }
 
+                    String propName = metaStringProp(itemmeta, CONFIG_NAME);
                     pbuild
-                        .name(metaStringProp(itemmeta, CONFIG_NAME))
+                        .name(propName)
                         .title(metaStringProp(itemmeta, CONFIG_TITLE))
                         .description(metaStringProp(itemmeta, CONFIG_DESCRIPTION));
 
@@ -159,6 +174,36 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                             throw new ConfigurationException("Invalid property scope: " + scopeString);
                         }
                     }
+                    if(useConventionalPropertiesMapping) {
+                        final String projectPropertyPrefix =
+                                PropertyResolverFactory.projectPropertyPrefix
+                                        (
+                                                PropertyResolverFactory
+                                                        .pluginPropertyPrefix(
+                                                                provider.getService(),
+                                                                provider.getName()
+                                                        )
+                                        ) ;
+                        dbuilder.mapping(propName, projectPropertyPrefix + propName);
+
+                        final String frameworkPropertyPrefix =
+                                PropertyResolverFactory.frameworkPropertyPrefix
+                                        (
+                                                PropertyResolverFactory
+                                                        .pluginPropertyPrefix(
+                                                                provider.getService(),
+                                                                provider.getName()
+                                                        )
+                                        );
+
+                        dbuilder.frameworkMapping(propName, frameworkPropertyPrefix + propName);
+                    }
+                    //rendering options
+                    final Object renderingOpts = itemmeta.get(CONFIG_RENDERING_OPTIONS);
+                    if(null != renderingOpts && renderingOpts instanceof Map){
+                        Map<String,Object> renderingOptsMap=(Map<String,Object>) renderingOpts;
+                        pbuild.renderingOptions(renderingOptsMap);
+                    }
 
                     try {
                         dbuilder.property(pbuild.build());
@@ -181,22 +226,208 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     protected static void createDescription(final ScriptPluginProvider provider,
                                                    final boolean allowCustomProperties,
                                                    final DescriptionBuilder builder) throws ConfigurationException {
+        createDescription(provider, allowCustomProperties, false, builder);
+    }
+    protected static void createDescription(final ScriptPluginProvider provider,
+                                                   final boolean allowCustomProperties,
+                                                   final boolean useConventionalPropertiesMapping,
+                                                   final DescriptionBuilder builder) throws ConfigurationException {
         builder
             .name(provider.getName())
             .title(metaStringProp(provider.getMetadata(), TITLE_PROP, provider.getName() + " Script Plugin"))
             .description(metaStringProp(provider.getMetadata(), DESCRIPTION_PROP, ""));
 
         if(allowCustomProperties) {
-            createProperties(provider, builder);
+            createProperties(provider, useConventionalPropertiesMapping, builder);
         }
     }
+
+    /**
+     * Map node attributes as instance configuration values based on property descriptions.
+     * If a property has a rendering option key of
+     * {@link StringRenderingConstants#INSTANCE_SCOPE_NODE_ATTRIBUTE_KEY}
+     * then use the value of that option as the node attribute name to use.
+     *
+     * @param node        node
+     * @param description plugin description
+     *
+     * @return instance config data
+     */
+    protected Map<String, Object> loadInstanceDataFromNodeAttributes(
+            final INodeEntry node,
+            final Description description
+    )
+    {
+        HashMap<String, Object> config = new HashMap<String, Object>();
+
+        for (Property property : description.getProperties()) {
+
+            Map<String, Object> renderingOptions = property.getRenderingOptions();
+
+            if (null == renderingOptions) {
+                continue;
+            }
+
+            Object o = renderingOptions.get(
+                    StringRenderingConstants.INSTANCE_SCOPE_NODE_ATTRIBUTE_KEY
+            );
+
+            if (null == o || !(o instanceof String)) {
+                continue;
+            }
+
+            String attribute = (String) o;
+
+            String s = node.getAttributes().get(attribute);
+
+            if (s == null) {
+                continue;
+            }
+
+            config.put(property.getName(), s);
+        }
+        return config;
+    }
+
+    /**
+     * Loads the plugin configuration values stored in project or framework properties, also
+     *
+     * @param context          execution context
+     * @param localDataContext current context data
+     * @param description
+     *
+     * @return context data with a new "config" entry containing the loaded plugin config
+     *         properties.
+     */
+    protected Map<String, Map<String, String>> loadConfigData(
+            final ExecutionContext context,
+            final Map<String, Object> instanceData,
+            final Map<String, Map<String, String>> localDataContext,
+            final Description description
+    ) throws ConfigurationException
+    {
+
+        final PropertyResolver resolver = PropertyResolverFactory.createPluginRuntimeResolver(
+                context,
+                instanceData,
+                ServiceNameConstants.NodeExecutor,
+                getProvider().getName()
+        );
+
+        final Map<String, Object> config =
+                PluginAdapterUtility.mapDescribedProperties(
+                        resolver,
+                        description,
+                        PropertyScope.Instance
+                );
+
+        //expand properties
+        Map<String, Object> expanded =
+                DataContextUtils.replaceDataReferences(
+                        config,
+                        localDataContext
+                );
+
+        Map<String, String> data = toStringStringMap(expanded);
+
+        loadStoragePathProperties(
+                data,
+                context.getStorageTree(),
+                description.getProperties()
+        );
+
+
+        return DataContextUtils.addContext("config", data, localDataContext);
+    }
+
+    /**
+     * Looks for storage path properties, and loads the values into the config data.
+     * @param data map of values for config properties
+     * @param storageTree storage tree
+     * @param pluginProperties definition of plugin properties
+     */
+    private void loadStoragePathProperties(
+            Map<String, String> data,
+            StorageTree storageTree,
+            List<Property> pluginProperties
+    ) throws ConfigurationException{
+        //look for "storageAccessor" properties
+        List<Property> properties = pluginProperties;
+        for (Property property : properties) {
+            String name = property.getName();
+            String propValue = data.get(name);
+            if (null == propValue) {
+                continue;
+            }
+            Map<String, Object> renderingOptions = property.getRenderingOptions();
+            if(renderingOptions !=null){
+                Object conversion = renderingOptions.get(StringRenderingConstants.VALUE_CONVERSION_KEY);
+                if (StringRenderingConstants.ValueConversion.STORAGE_PATH_AUTOMATIC_READ.equalsOrString(conversion)) {
+
+                    //a storage path property
+                    String root = null;
+                    if (null != renderingOptions.get(StringRenderingConstants
+                            .STORAGE_PATH_ROOT_KEY)) {
+                        root = renderingOptions.get(StringRenderingConstants
+                                .STORAGE_PATH_ROOT_KEY).toString();
+                    }
+                    String filter = null;
+                    if (null != renderingOptions.get(StringRenderingConstants
+                            .STORAGE_FILE_META_FILTER_KEY)) {
+                        filter = renderingOptions.get(StringRenderingConstants
+                                .STORAGE_FILE_META_FILTER_KEY).toString();
+                    }
+
+                    if (null != root && !propValue.startsWith(root + "/")) {
+                        continue;
+                    }
+                    try {
+                        Resource<ResourceMeta> resource = storageTree.getResource
+                                (propValue);
+                        ResourceMeta contents = resource.getContents();
+                        //test filter
+                        if (filter != null) {
+                            String[] filterComponents = filter.split("=", 2);
+                            if (filterComponents != null && filterComponents.length == 2) {
+                                String key = filterComponents[0];
+                                String test = filterComponents[1];
+                                Map<String, String> meta = contents.getMeta();
+                                if (meta == null || !test.equals(meta.get(key))) {
+                                    continue;
+                                }
+                            }
+                        }
+                        //finally load storage contents into a string
+                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                        contents.writeContent(byteArrayOutputStream);
+                        data.put(name, new String(byteArrayOutputStream.toByteArray()));
+                    } catch (StorageException e) {
+                        throw new ConfigurationException("Unable to load configuration key '" +
+                                name + "' value from storage path:  " + propValue, e);
+                    } catch (IOException e) {
+                        throw new ConfigurationException("Unable to load configuration key '" +
+                                name + "' value from storage path:  " + propValue, e);
+                    }
+                }
+            }
+        }
+    }
+
+    private static Map<String, String> toStringStringMap(Map input) {
+        Map<String, String> map = new HashMap<String, String>();
+        for (Object o : input.keySet()) {
+            map.put(o.toString(), input.get(o) != null ? input.get(o).toString() : "");
+        }
+        return map;
+    }
+
 
     @Override
     public Description getDescription() {
         if(null==description){
             final DescriptionBuilder builder = DescriptionBuilder.builder();
             try {
-                createDescription(provider, isAllowCustomProperties(), builder);
+                createDescription(provider, isAllowCustomProperties(), isUseConventionalPropertiesMapping(), builder);
             } catch (ConfigurationException e) {
                 e.printStackTrace();
             }
@@ -209,6 +440,12 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
      * Subclasses return true if the script-plugin allows custom configuration properties defined in plugin metadata.
      */
     public abstract boolean isAllowCustomProperties();
+    /**
+     * Return true to provide conventional mapping from config properties to framework/project properties.
+     */
+    public boolean isUseConventionalPropertiesMapping(){
+        return false;
+    }
 
     public ScriptPluginProvider getProvider() {
         return provider;

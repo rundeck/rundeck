@@ -23,9 +23,9 @@
 */
 package com.dtolabs.rundeck.core.execution.service;
 
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
@@ -34,7 +34,10 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureRea
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -51,7 +54,12 @@ import java.util.*;
 class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFileCopier {
     @Override
     public boolean isAllowCustomProperties() {
-        return false;
+        return true;
+    }
+
+    @Override
+    public boolean isUseConventionalPropertiesMapping() {
+        return true;
     }
 
     ScriptPluginFileCopier(final ScriptPluginProvider provider, final Framework framework) {
@@ -62,6 +70,11 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
         if (null == plugin.getScriptArgs()) {
             throw new PluginException(
                 "no script-args defined for provider: " + plugin);
+        }
+        try {
+            createDescription(plugin, true, DescriptionBuilder.builder());
+        } catch (ConfigurationException e) {
+            throw new PluginException(e);
         }
     }
 
@@ -138,6 +151,16 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
         //add node context data
         localDataContext.put("node", DataContextUtils.nodeData(node));
 
+        Description pluginDesc = getDescription();
+        //load config.* property values in from project or framework scope
+        final Map<String, Map<String, String>> finalDataContext;
+        try {
+            finalDataContext = loadConfigData(executionContext, loadInstanceDataFromNodeAttributes(node, pluginDesc), localDataContext, pluginDesc);
+        } catch (ConfigurationException e) {
+            throw new FileCopierException("[" + pluginname + "]: Configuration failure: "+e.getMessage(),
+                    StepFailureReason.ConfigurationFailure, e);
+        }
+
         final File srcFile =
                 expandTokens ?
                         //write the temp file and replace tokens in a script with values from the dataContext
@@ -148,7 +171,13 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
                                 //write the temp file and do not replace tokens, the file will not be modified
                                 : BaseFileCopier.writeTempFile(executionContext, file, input, content);
 
-        String destFilePath=destination;
+        String destFilePath = destination;
+        if (null == destFilePath) {
+            destFilePath = BaseFileCopier.generateRemoteFilepathForNode(
+                    node,
+                    (null != file ? file.getName() : "dispatch-script")
+            );
+        }
         //put file in a directory
         if (null != destFilePath && destFilePath.endsWith("/")) {
             destFilePath += srcFile.getName();
@@ -158,19 +187,29 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
         //set up the data context to include the local temp file
         scptexec.put("file", srcFile.getAbsolutePath());
         scptexec.put("destination", null != destFilePath ? destFilePath : "");
-        localDataContext.put("file-copy", scptexec);
+        finalDataContext.put("file-copy", scptexec);
+        Map<String, Map<String, String>> fileCopyContext =
+                DataContextUtils.addContext(
+                        "file-copy",
+                        scptexec,
+                        null
+                );
 
-        final String[] finalargs = createScriptArgs(localDataContext);
+        final ExecArgList execArgList = createScriptArgsList(fileCopyContext);
+        final String localNodeOsFamily=getFramework().createFrameworkNode().getOsFamily();
+
         executionContext.getExecutionListener().log(3, "[" + getProvider().getName() + "] executing: " + Arrays.asList(
-            finalargs));
+                execArgList));
 
-        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        final ByteArrayOutputStream captureSysOut = new ByteArrayOutputStream();
         try {
-            final int result = ScriptExecUtil.runLocalCommand(finalargs,
-                                                    DataContextUtils.generateEnvVarsFromContext(localDataContext),
-                                                    null,
-                                                    byteArrayOutputStream,
-                                                    System.err
+            final int result = ScriptExecUtil.runLocalCommand(
+                    localNodeOsFamily,
+                    execArgList,
+                    finalDataContext,
+                    null,
+                    captureSysOut,
+                    System.err
             );
             executionContext.getExecutionListener().log(3, "[" + pluginname + "]: result code: " + result);
             if(result!=0){
@@ -184,12 +223,12 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
             throw new FileCopierException(e.getMessage(), StepFailureReason.Interrupted);
         }
 
-        if (null != destination) {
+        if (null != destFilePath) {
             return destFilePath;
         }
 
         //load string of output from outputstream
-        final String output = byteArrayOutputStream.toString();
+        final String output = captureSysOut.toString();
         if (null == output || output.length() < 1) {
             throw new FileCopierException("[" + pluginname + "]: No output from external script",
                                           ScriptPluginFailureReason.ScriptPluginFileCopierOutputMissing

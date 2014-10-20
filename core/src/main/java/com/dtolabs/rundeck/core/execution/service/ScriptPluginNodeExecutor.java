@@ -26,14 +26,17 @@ package com.dtolabs.rundeck.core.execution.service;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
+import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -54,14 +57,25 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
 
     @Override
     public boolean isAllowCustomProperties() {
-        return false;
+        return true;
+    }
+
+    @Override
+    public boolean isUseConventionalPropertiesMapping() {
+        return true;
     }
 
     static void validateScriptPlugin(final ScriptPluginProvider plugin) throws PluginException {
+        try {
+            createDescription(plugin, true, DescriptionBuilder.builder());
+        } catch (ConfigurationException e) {
+            throw new PluginException(e);
+        }
     }
 
     public NodeExecutorResult executeCommand(final ExecutionContext executionContext, final String[] command,
                                              final INodeEntry node)  {
+        Description pluginDesc = getDescription();
         final ScriptPluginProvider plugin = getProvider();
         final String pluginname = plugin.getName();
         executionContext.getExecutionListener().log(3,
@@ -75,19 +89,39 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
         final HashMap<String, String> scptexec = new HashMap<String, String>();
         scptexec.put("command", StringArrayUtil.asString(command, " "));
         localDataContext.put("exec", scptexec);
+        final Map<String, Map<String, String>> nodeExecContext =
+                DataContextUtils.addContext(
+                        "exec",
+                        scptexec,
+                        null
+                );
 
-        final String[] finalargs = createScriptArgs(localDataContext);
+        //load config.* property values in from project or framework scope
+        final Map<String, Map<String, String>> finalDataContext;
+        try {
+            finalDataContext = loadConfigData(executionContext, loadInstanceDataFromNodeAttributes(node, pluginDesc), localDataContext, pluginDesc);
+        } catch (ConfigurationException e) {
+            return NodeExecutorResultImpl.createFailure(StepFailureReason.ConfigurationFailure,
+                    e.getMessage(),
+                    e,
+                    node, -1);
+        }
+
+        final ExecArgList execArgList = createScriptArgsList(nodeExecContext);
+        final String localNodeOsFamily = getFramework().createFrameworkNode().getOsFamily();
 
         executionContext.getExecutionListener().log(3, "[" + getProvider().getName() + "] executing: " + Arrays.asList(
-            finalargs));
+                execArgList));
 
         int result = -1;
         try {
-            result = ScriptExecUtil.runLocalCommand(finalargs,
-                                                    DataContextUtils.generateEnvVarsFromContext(localDataContext),
-                                                    null,
-                                                    System.out,
-                                                    System.err
+            result = ScriptExecUtil.runLocalCommand(
+                    localNodeOsFamily,
+                    execArgList,
+                    finalDataContext,
+                    null,
+                    System.out,
+                    System.err
             );
             executionContext.getExecutionListener().log(3,
                                                         "[" + pluginname + "]: result code: " + result + ", success: "

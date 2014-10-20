@@ -174,10 +174,16 @@ public class ZipUtil {
                         throw new IOException("Unable to create file: " + destFile.getAbsolutePath());
                     }
                 }
-                if (null != copier) {
-                    copier.copyStream(jar.getInputStream(entry), new FileOutputStream(destFile));
-                } else {
-                    copyStream(jar.getInputStream(entry), new FileOutputStream(destFile));
+                InputStream entryStream = jar.getInputStream(entry);
+                FileOutputStream fileOut = new FileOutputStream(destFile);
+                try{
+                    if (null != copier) {
+                        copier.copyStream(entryStream, fileOut);
+                    } else {
+                        copyStream(entryStream, fileOut);
+                    }
+                }finally{
+                    fileOut.close();
                 }
             }
         }
