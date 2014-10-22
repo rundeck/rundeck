@@ -212,6 +212,7 @@ These are the Application scope actions that can be allowed or denied via the
 aclpolicy:
 
 * Create Jobs ('create' action on a resource type with kind 'job')
+* Delete Jobs ('delete' action on a resource type with kind 'job')
 * Read Node data ('read' action on a resource type with kind 'node')
 * Update/Refresh node data ('create','update','refresh' action on a resource type with kind 'node')
 * Read history events ('read' action on a resource type with kind 'event')
@@ -226,6 +227,7 @@ actions you can restrict in the project scope:
 Type       Resource Kind     Actions   Description
 ------     --------------    --------  ------------
 `resource` `job`             `create`  Create a new Job
+"          "                 `delete`  Delete jobs
 "          `node`            `read`    Read node information
 "          "                 `create`  Create new node entries
 "          "                 `update`  Modify node entries
@@ -257,11 +259,16 @@ Type      Properties                         Actions  Description
 
 Table: Project scope specific resource actions
 
-Note: see [Node resource properties](#node-resource-properties) for more node resource properties for authorization.
+*Note*: see [Node resource properties](#node-resource-properties) for more node resource properties for authorization.
 
-Note: `runAs` and `killAs` actions only apply to certain API endpoints, and allow running jobs or adhoc executions or killing executions to be performed with a different username attached as the author of the action.  See [Rundeck API - Running a Job](../api/index.html#running-a-job).
+*Note*: `runAs` and `killAs` actions only apply to certain API endpoints, and allow running jobs or adhoc executions or killing executions to be performed with a different username attached as the author of the action.  See [Rundeck API - Running a Job](../api/index.html#running-a-job).
 
-Recall that defining rules for a resource type is done in this way:
+*Note*: 
+Job deletion requires allowing the 'delete' action
+both at the generic type 
+and specific resource levels.
+
+Recall that defining rules for a generic resource type is done in this way:
 
 ~~~~~~~~ {.yaml}
 for:
