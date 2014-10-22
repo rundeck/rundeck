@@ -141,9 +141,11 @@ function _wfiview(key,num,isErrorHandler) {
     jQuery('#wfli_' + key).load(_genUrl(appLinks.workflowRender,params),_showWFItemControls);
 }
 function _wfisave(key,num, formelem,iseh) {
+    var data= jQuery("#"+formelem+" :input").serialize();
     jQuery.ajax({
         type: 'POST',
-        url: _genUrl(appLinks.workflowSave, Form.serialize(formelem)),
+        url: _genUrl(appLinks.workflowSave),
+        data: data,
         beforeSend: _ajaxSendTokens.curry('job_edit_tokens'),
         success: function (resp, status, jqxhr) {
             var litem = jQuery('#wfli_' + key);
@@ -245,10 +247,11 @@ function _addAceTextarea(textarea){
     textarea.insert({before:_ctrls});
 }
 function _wfisavenew(formelem) {
-    var params = Form.serialize(formelem);
+    var data = jQuery("#" + formelem + " :input").serialize();
     jQuery.ajax({
         type:'POST',
-        url:_genUrl(appLinks.workflowSave,params),
+        url:_genUrl(appLinks.workflowSave),
+        data:data,
         beforeSend:_ajaxSendTokens.curry('job_edit_tokens'),
         success:function(resp,status,jqxhr){
             jQuery(newitemElem).html(resp);
@@ -430,7 +433,8 @@ function _ajaxWFAction(url, params){
     }
     jQuery.ajax({
         type: 'POST',
-        url: _genUrl(url,params),
+        url: _genUrl(url),
+        data: params,
         beforeSend: _ajaxSendTokens.curry(tokendataid),
         success: function (data, status, jqxhr) {
             jQuery('#workflowContent').find('ol').html(data);
@@ -611,7 +615,7 @@ function _optsave(formelem, tokendataid, target) {
     jQuery.ajax({
         type: "POST",
         url:_genUrl(appLinks.editOptsSave),
-        data:Form.serialize(formelem),
+        data: jQuery('#'+formelem+" :input").serialize(),
         beforeSend: _ajaxSendTokens.curry(tokendataid),
         success:function(data,status,xhr){
             jQuery(target).html(data);
@@ -691,7 +695,7 @@ function _summarizeOpts() {
 }
 
 function _optsavenew(formelem,tokendataid) {
-    var params = Form.serialize(formelem);
+    var params = jQuery('#'+formelem+' :input').serialize();
     $('optsload').loading();
     jQuery.ajax({
         type: "POST",
