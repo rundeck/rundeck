@@ -203,7 +203,6 @@ function _wfiaddnew(type,nodestep) {
         $(newitemElem).down('input[type=text]').focus();
         initTooltipForElements('#wfli_' + num + ' .obs_tooltip');
         $(newitemElem).select('textarea.apply_ace').each(_addAceTextarea);
-        $(newitemElem).select('textarea.apply_resize').each(_applyTextareaResizer);
 
     });
 }
@@ -401,7 +400,6 @@ function _wfiaddNewErrorHandler(elem,type,num,nodestep){
             }
         });
         wfiehli.find('textarea.apply_ace').each(function (){_addAceTextarea(this);});
-        wfiehli.find('textarea.apply_resize').each(function(){_applyTextareaResizer(this);});
         initTooltipForElements('#wfli_' + key + ' .obs_tooltip');
     });
 }
