@@ -132,9 +132,15 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
             success = true;
         } catch (BuildException e) {
             buildException=e;
-            context.getExecutionListener().log(0, e.getMessage());
-            if (!keepgoing) {
-                throw new DispatcherException(e);
+            if(e.getCause() !=null && e.getCause() instanceof DispatchFailure) {
+                DispatchFailure df = (DispatchFailure) e.getCause();
+                //parallel step failed
+                context.getExecutionListener().log(3, "Dispatch failed on node: " +df.getNode());
+            }else{
+                context.getExecutionListener().log(0, e.getMessage());
+                if (!keepgoing) {
+                    throw new DispatcherException(e);
+                }
             }
         }
         //evaluate the failed nodes
@@ -153,7 +159,18 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
 
         return new DispatcherResultImpl(resultMap, status, "Parallel dispatch: (" + status + ") " + resultMap);
     }
+    private static class DispatchFailure extends Exception{
+        private String node;
 
+        private DispatchFailure(String node) {
+            super("Dispatch failed on node: " + node);
+            this.node = node;
+        }
+
+        public String getNode() {
+            return node;
+        }
+    }
     private Callable dispatchableCallable(final ExecutionContext context, final Dispatchable toDispatch,
                                           final HashMap<String, NodeStepResult> resultMap, final INodeEntry node,
                                           final Map<String, NodeStepResult> failureMap) {
@@ -163,7 +180,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
                 resultMap.put(node.getNodename(), dispatch);
                 if (!dispatch.isSuccess()) {
                     failureMap.put(node.getNodename(), dispatch);
-                    throw new Exception();
+                    throw new DispatchFailure(node.getNodename());
                 }
                 return dispatch;
             }
