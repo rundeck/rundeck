@@ -31,6 +31,7 @@ public class CommandExec extends WorkflowStep  {
     String adhocFilepath
     Boolean adhocExecution = false
     String scriptInterpreter
+    String fileExtension
     Boolean interpreterArgsQuoted
     static transients = ['nodeStep']
 
@@ -40,6 +41,7 @@ public class CommandExec extends WorkflowStep  {
         adhocFilepath type: 'text'
         argString type: 'text'
         scriptInterpreter type: 'text'
+        fileExtension type: 'text'
     }
     public String toString() {
         StringBuffer sb = new StringBuffer()
@@ -48,6 +50,7 @@ public class CommandExec extends WorkflowStep  {
         sb << (adhocLocalString ? "script: ${adhocLocalString}" : '')
         sb << (adhocFilepath ? "scriptfile: ${adhocFilepath}" : '')
         sb << (scriptInterpreter ? "interpreter: ${scriptInterpreter} " : '')
+        sb << (fileExtension ? "ext: ${fileExtension} " : '')
         sb << (interpreterArgsQuoted ? "quoted?: ${interpreterArgsQuoted} " : '')
         sb << (argString ? "scriptargs: ${argString}" : '')
         sb << (description ? "description: ${description}" : '')
@@ -68,6 +71,7 @@ public class CommandExec extends WorkflowStep  {
         sb << (argString ? " -- ${argString}" : '')
         sb << (interpreterArgsQuoted ? "'" : '')
         sb << (description ?( " ('" + description + "')" ) : '')
+        sb << (fileExtension ?( " [" + fileExtension + "]" ) : '')
         return sb.toString()
     }
 
@@ -80,6 +84,7 @@ public class CommandExec extends WorkflowStep  {
         interpreterArgsQuoted(nullable:true)
         errorHandler(nullable: true)
         keepgoingOnSuccess(nullable: true)
+        fileExtension(nullable: true, maxSize: 255)
     }
 
     public CommandExec createClone(){
@@ -110,6 +115,9 @@ public class CommandExec extends WorkflowStep  {
         if(scriptInterpreter && !adhocRemoteString) {
             map.scriptInterpreter = scriptInterpreter
             map.interpreterArgsQuoted = !!interpreterArgsQuoted
+        }
+        if(fileExtension && !adhocRemoteString) {
+            map.fileExtension = fileExtension
         }
         if(argString && !adhocRemoteString){
             map.args=argString
@@ -143,6 +151,9 @@ public class CommandExec extends WorkflowStep  {
         if(data.scriptInterpreter != null && !ce.adhocRemoteString){
             ce.scriptInterpreter=data.scriptInterpreter
             ce.interpreterArgsQuoted = !!data.interpreterArgsQuoted
+        }
+        if(data.fileExtension != null && !ce.adhocRemoteString){
+            ce.fileExtension=data.fileExtension
         }
         if(data.args != null && !ce.adhocRemoteString){
             ce.argString=data.args.toString()

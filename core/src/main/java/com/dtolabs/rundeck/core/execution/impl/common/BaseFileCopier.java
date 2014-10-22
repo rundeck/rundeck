@@ -42,6 +42,8 @@ import java.util.*;
  */
 public class BaseFileCopier {
     public static final String FILE_COPY_DESTINATION_DIR = "file-copy-destination-dir";
+    public static final String DEFAULT_WINDOWS_FILE_EXT = ".bat";
+    public static final String DEFAULT_UNIX_FILE_EXT = ".sh";
 
     /**
      * Copy a script file, script source stream, or script string into a temp file, and replace \
@@ -110,19 +112,36 @@ public class BaseFileCopier {
     }
 
     /**
-     * Return a string with an appropriate script file extension appended if it is not already on the file path
-     * provided. The OS-family of the node determines the appropriate extension to use.
-     *
-     * @param node     node destination
-     * @param filepath the file path string
+     * Return the default file extension for a temp file based on the type of node
+     * @param node
+     * @return
      */
-    public static String appendRemoteFileExtensionForNode(final INodeEntry node, final String filepath) {
-        String result = filepath;
+    public static String defaultRemoteFileExtensionForNode(final INodeEntry node){
         if (null != node.getOsFamily() && "windows".equalsIgnoreCase(node.getOsFamily().trim())) {
-            result += (filepath.endsWith(".bat") ? "" : ".bat");
+            return DEFAULT_WINDOWS_FILE_EXT;
         } else {
-            result += (filepath.endsWith(".sh") ? "" : ".sh");
+            return DEFAULT_UNIX_FILE_EXT;
         }
+    }
+
+    /**
+     * Return a string with a file extension appended if it is not already on the file path
+     * provided.
+     *
+     * @param filepath the file path string
+     * @param fileext  the file extension, if it does not start with a "." one will be prepended
+     *                 first. If null, the unmodified filepath will be returned.
+     */
+    public static String appendRemoteFileExtension(final String filepath, final String fileext) {
+        if (null == fileext) {
+            return filepath;
+        }
+        String result = filepath;
+        String ext = fileext;
+        if (!ext.startsWith(".")) {
+            ext = "." + fileext;
+        }
+        result += (filepath.endsWith(ext) ? "" : ext);
         return result;
     }
 
@@ -161,8 +180,32 @@ public class BaseFileCopier {
      *         date.
      */
     public static String generateRemoteFilepathForNode(final INodeEntry node, final String scriptfileName) {
-        final String remoteFilename = appendRemoteFileExtensionForNode(node,
-                cleanFileName((System.currentTimeMillis() + "-" + node.getNodename() + "-" + scriptfileName)));
+        return generateRemoteFilepathForNode(node, scriptfileName, null);
+    }
+    /**
+     * Return a temporary filepath for a file to be copied to the node, given the input filename (without directory
+     * path)
+     *
+     * @param node           the destination node
+     * @param scriptfileName the name of the file to copy
+     * @param fileExtension optional extension to use for the temp file, or null for default
+     *
+     * @return a filepath specifying destination of the file to copy that should be unique for the node and current
+     *         date.
+     */
+    public static String generateRemoteFilepathForNode(final INodeEntry node, final String scriptfileName, final String fileExtension) {
+        String tempfilename = System.currentTimeMillis()
+                + "-" + node.getNodename()
+                + "-" + scriptfileName;
+        String extension = fileExtension;
+        if (null == extension) {
+            //determine based on node
+            extension = defaultRemoteFileExtensionForNode(node);
+        }
+        final String remoteFilename = appendRemoteFileExtension(
+                cleanFileName(tempfilename),
+                null != extension ? cleanFileName(extension) : null
+        );
         final String remotedir = getRemoteDirForNode(node);
 
         return remotedir + remoteFilename;
