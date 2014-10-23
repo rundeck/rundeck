@@ -124,7 +124,7 @@ class ExecutionJob implements InterruptableJob {
     }
 
     /**
-     * Attempt to get the list of failed nodes from a caught NodesetFailureException if the thread is
+     * Attempt to get the list of failed nodes
      * @return the list of failed node names, or null
      */
     private static Map<String,Object> extractFailedNodes(Map execmap=null) {
@@ -138,8 +138,8 @@ class ExecutionJob implements InterruptableJob {
         return null;
     }
     /**
-     * Attempt to get the list of failed nodes from a caught NodesetFailureException if the thread is
-     * @return the list of failed node names, or null
+     * Attempt to get the list of successful nodes
+     * @return the list of successful node names, or null
      */
     private static Set<String> extractSucceededNodes(Map execmap=null) {
         if(null==execmap){
