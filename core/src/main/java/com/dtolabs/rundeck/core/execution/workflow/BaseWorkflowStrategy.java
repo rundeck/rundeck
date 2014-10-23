@@ -437,20 +437,20 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
             } else if (NodeDispatchStepExecutor.isWrappedDispatcherException(o)) {
                 DispatcherException e = NodeDispatchStepExecutor.extractDispatcherException(o);
                 final INodeEntry node = e.getNode();
+                final Map<String, NodeStepResult> resultMap = e.getResultMap();
                 if (null != node) {
                     //dispatch failed for a specific node
                     final String key = node.getNodename();
                     if (!failures.containsKey(key)) {
                         failures.put(key, new ArrayList<StepExecutionResult>());
                     }
-                    Map<String, NodeStepResult> resultMap = e.getResultMap();
                     if (null != resultMap && null != resultMap.get(node.getNodename())) {
                         failures.get(key).add(resultMap.get(node.getNodename()));
                     }
-                } else {
+                } else if (resultMap != null) {
                     //dispatch failed for a set of nodes
-                    for (final String s : e.getResultMap().keySet()) {
-                        final NodeStepResult interpreterResult = e.getResultMap().get(s);
+                    for (final String s : resultMap.keySet()) {
+                        final NodeStepResult interpreterResult = resultMap.get(s);
                         if (!failures.containsKey(s)) {
                             failures.put(s, new ArrayList<StepExecutionResult>());
                         }
