@@ -67,7 +67,7 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
     }
 
     @Override
-    MutableWorkflowState createMutableSubWorkflowState(Set<String> nodeSet,int count) {
+    MutableWorkflowState createMutableSubWorkflowState(List<String> nodeSet,long count) {
         mutableSubWorkflowState = new MutableWorkflowStateImpl(nodeSet, count)
     }
 
@@ -75,7 +75,9 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
     MutableWorkflowStepState getParameterizedStepState(StepIdentifier ident,Map<String, String> params) {
         def string = StateUtils.parameterString(params)
         if(null==parameterizedStepStates[string]){
-            assert null!=mutableSubWorkflowState
+            if (null == mutableSubWorkflowState) {
+                createMutableSubWorkflowState([], 1)
+            }
             MutableWorkflowStepStateImpl newState = new MutableWorkflowStepStateImpl(ident,
                     new MutableWorkflowStateImpl(mutableSubWorkflowState.nodeSet, mutableSubWorkflowState.stepCount))
             newState.ownerStepState=this

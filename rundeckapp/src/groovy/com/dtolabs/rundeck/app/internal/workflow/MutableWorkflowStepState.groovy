@@ -27,7 +27,13 @@ public interface MutableWorkflowStepState extends WorkflowStepState{
      */
     Map<String, MutableStepState> getMutableNodeStateMap();
 
-    MutableWorkflowStepState getParameterizedStepState(StepIdentifier ident,Map<String,String> params);
+    /**
+     * Return a parameterized step state
+     * @param ident
+     * @param params
+     * @return
+     */
+    public MutableWorkflowStepState getParameterizedStepState(StepIdentifier ident,Map<String,String> params);
 
     /**
      * Return a map of node name to step states for the step
@@ -48,7 +54,7 @@ public interface MutableWorkflowStepState extends WorkflowStepState{
      * Creates a mutable sub workflow state and enables it
      * @return
      */
-    MutableWorkflowState createMutableSubWorkflowState(Set<String> nodeSet, int count);
+    MutableWorkflowState createMutableSubWorkflowState(List<String> nodeSet, long count);
 
     /**
      * Indicates that the step is a node step with the given targets
