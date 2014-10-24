@@ -43,6 +43,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
 import org.apache.log4j.Logger;
@@ -408,10 +409,9 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
                 }else if (NodeDispatchStepExecutor.isWrappedDispatcherException(executionResult)) {
                     DispatcherException exception
                         = NodeDispatchStepExecutor.extractDispatcherException(executionResult);
-                    Map<String, NodeStepResult> resultMap = exception.getResultMap();
-                    if(null!=resultMap && null!= resultMap.get(node.getNodename())){
-                        NodeStepResult stepResult = resultMap.get(node.getNodename());
-                        results.add(stepResult);
+                    NodeStepException nodeStepException = exception.getNodeStepException();
+                    if (null != nodeStepException) {
+                        results.add(nodeStepResultFromNodeStepException(node, nodeStepException));
                     }
                 }
             }
@@ -435,10 +435,12 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
                 } else if (NodeDispatchStepExecutor.isWrappedDispatcherException(executionResult)) {
                     DispatcherException exception
                         = NodeDispatchStepExecutor.extractDispatcherException(executionResult);
-                    Map<String, NodeStepResult> resultMap = exception.getResultMap();
-                    if (null!=resultMap && null != resultMap.get(node.getNodename())) {
-                        NodeStepResult stepResult = resultMap.get(node.getNodename());
-                        results.put(num, stepResult);
+                    NodeStepException nodeStepException = exception.getNodeStepException();
+                    if (null != nodeStepException) {
+                        results.put(
+                                num,
+                                nodeStepResultFromNodeStepException(node, nodeStepException)
+                        );
                     }
                 }
             }
