@@ -233,6 +233,9 @@ You can specify "rendering options" to affect the property being rendered in the
 * Textarea: renders the input as a multi-line text area.
 * Password: renders the input as a password input.
 
+For more information see the options under [Property Rendering options](#property-rendering-options).
+
+A set of constants for the supported rendering option keys and some values are provided in the [StringRenderingConstants](../javadoc/com/dtolabs/rundeck/core/plugins/configuration/StringRenderingConstants.html).
 
 ## Script Plugin Development
 
@@ -370,7 +373,7 @@ map entries for each configuration property you want to define. In the map entry
 * `default` - A default value to use (optional)
 * `values` - A comma-separated list of values to use for Select or FreeSelect. Required for Select/FreeSelect.
 * `scope` - Resolution scope for the property. Default: "Instance".
-* `renderingOptions` - A Map containing a definition of rendering option keys/values. (See below.)
+* `renderingOptions` - A Map containing a definition of rendering option keys/values. (See [Property Rendering Options](#property-rendering-options) below.)
 
 When your script is invoked, each configuration property defined for the plugin will be set as `RD_CONFIG_[PROPERTY]` variables passed to your script (see below). "_PROPERTY_" refers to your plugin property name in uppercase. A plugin property named "foo" will translate to the shell variable `RD_CONFIG_FOO`.
 
@@ -549,3 +552,24 @@ Define the `renderingOptions` property entry, and add a `instance-scope-node-att
 When resolving the property value at execution time
 the node attribute "my-prop" will be used for the value (if present),
 before resolving other allowed scopes.
+
+## Property Rendering Options
+
+Rendering options define special attributes of a property, which can be used to declare how it is shown in the GUI, or how the value is loaded at resolution time.
+
+Available rendering option keys:
+
+* `displayType`, values:
+    - `SINGLE_LINE` - display input as a single text field.
+    - `MULTI_LINE` - display input as a multi-line text area.
+    - `PASSWORD` - display input as a password field
+* `instance-scope-node-attribute`
+    - Value is the name of a Node attribute to use for instance-scoped properties for *Node Services* plugins `NodeExecutor` and `FileCopier` only.
+* `selectionAccessor`, values:
+    - `STORAGE_PATH` - display an additional input to select a Storage Path string from Rundeck's [Key Storage Facility](../administration/key-storage.html).
+* `storage-path-root` 
+    - Value is a Storage Path indicating the root to use if the selectionAccessor is `STORAGE_PATH`.
+* `storage-file-meta-filter`
+    - Value is a Storage metadata filter string, indicating the types of Storage Files to select from if selectionAccessor is `STORAGE_PATH`. Filt string format: `metadatakey=value`, e.g. `Rundeck-key-type=private`.
+* `valueConversion` defines a way to convert a the value of the resolved property. Allowed values:
+    - `STORAGE_PATH_AUTOMATIC_READ` - automatically loads the storage contents from the given Storage Path, replacing the path with the loaded file contents as a String. E.g. can be used to load a Password file contents.
