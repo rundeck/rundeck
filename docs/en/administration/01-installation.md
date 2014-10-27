@@ -190,7 +190,7 @@ Use the launcher as an alternative to a system package:
 
     ~~~~~~~ {.bash}
     cd $RDECK_BASE    
-    java -jar rundeck-launcher-2.0.0.jar
+    java -XX:MaxPermSize=256m -Xmx1024m -jar rundeck-launcher-2.0.0.jar
     ~~~~~~~
 
 1. Wait for the Started message.
@@ -221,7 +221,7 @@ rundeck launcher process.
 The launcher jar can take a number of options to specify how the server should start. If you execute with a "-h" you will see the usage information:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-java -jar rundeck-launcher-2.1.0.jar -h
+java -XX:MaxPermSize=256m -Xmx1024m -jar rundeck-launcher-2.1.0.jar -h
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
     usage: java [JAVA_OPTIONS] -jar rundeck-launcher.jar  [-c PATH] [-d]
