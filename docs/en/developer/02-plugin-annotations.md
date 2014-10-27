@@ -86,23 +86,8 @@ private String fruit;
 
 ## Property Scopes
 
-You can define the scope for a property by adding `scope` to the PluginProperty annotation.  Refer to the class [PropertyScope](../javadoc/com/dtolabs/rundeck/core/plugins/configuration/PropertyScope.html).  These are the available scopes and how the property values can be resolved:
-
-* `Framework` - Only framework properties
-* `ProjectOnly` - Only Project properties
-* `Project` - Project and Framework properties
-* `InstanceOnly` - Only instance properties
-* `Instance` - Instance and all earlier levels
+You can define the scope for a property by adding `scope` to the PluginProperty annotation.  Refer to the class [PropertyScope](../javadoc/com/dtolabs/rundeck/core/plugins/configuration/PropertyScope.html).  
 
 The default effective scope if you do not specify it in the annotation is `InstanceOnly`.
 
-When resolving a property in a Project or Framework scope, the following properties will be searched:
-
-* Framework scope
-    * file: `$RDECK_BASE/etc/framework.properties`
-    * property: `framework.plugin.[ServiceName].[providerName].[propertyname]`
-
-* Project scope
-    * file: `$RDECK_BASE/projects/[ProjectName]/etc/project.properties`
-    * property: `project.plugin.[ServiceName].[providerName].[propertyname]`
-
+For more information see [Property Scopes](plugin-development.html#property-scopes).
