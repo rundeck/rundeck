@@ -9,35 +9,36 @@ the base directory for Rundeck and generate configuration files.
 
         cd $RDECK_BASE;  java -jar rundeck-launcher-1.1.0.jar
 
-This will start the server and generate necessary config files.  Press
-control-c to shut down the server.
+    This will start the server and generate necessary config files.  Press
+    control-c to shut down the server.
 
 (2)  Using the [keytool] command, generate a keystore for use as the
 server cert and client truststore. Specify passwords for key and keystore:
 
+[keytool]: http://linux.die.net/man/1/keytool-java-1.6.0-openjdk
+
         keytool -keystore etc/keystore -alias rundeck -genkey -keyalg RSA -keypass admin -storepass admin
     
-Be sure to specify the correct hostname of the server as the response
-to the question "What is your first and last name?".  Answer "yes" to
-the final question.
+    Be sure to specify the correct hostname of the server as the response
+    to the question "What is your first and last name?".  Answer "yes" to
+    the final question.
 
-You can pass all the answers to the tool on the command-line by using
-a HERE document.
+    You can pass all the answers to the tool on the command-line by using
+    a HERE document.
 
-Replace the first line "Venkman.local" with the hostname for your
-server, and use any other organizational values you like:
-    
-        keytool -keystore etc/keystore -alias rundeck -genkey -keyalg RSA -keypass adminadmin -storepass adminadmin  <<!
-        Venkman.local
-        devops
-        My org
-        my city
-        my state
-        US
-        yes
-        !
+    Replace the first line "Venkman.local" with the hostname for your
+    server, and use any other organizational values you like:
+        
+            keytool -keystore etc/keystore -alias rundeck -genkey -keyalg RSA -keypass adminadmin -storepass adminadmin  <<!
+            Venkman.local
+            devops
+            My org
+            my city
+            my state
+            US
+            yes
+            !
 
-[keytool]: http://linux.die.net/man/1/keytool-java-1.6.0-openjdk
 
 (3) CLI tools that communicate to the Rundeck server need to trust the
 SSL certificate provided by the server.  They are preconfigured to
@@ -52,14 +53,14 @@ keystore and the appropriate passwords:
 
         vi server/config/ssl.properties
 
-An example ssl.properties file (from the RPM package).
+    An example ssl.properties file (from the RPM package).
 
         keystore=/etc/rundeck/ssl/keystore
         keystore.password=adminadmin
         key.password=adminadmin
         truststore=/etc/rundeck/ssl/truststore
         truststore.password=adminadmin
-        
+            
 (5) Configure client properties.  Modify the file
 `$RDECK_BASE/etc/framework.properties` and change these properties: 
 
@@ -67,30 +68,34 @@ An example ssl.properties file (from the RPM package).
     * `framework.rundeck.url`
     * `framework.server.port` 
     
-Set them to the appropriate https protocol, and change the port to
-4443, or to the value of your `-Dserver.https.port` runtime
-configuration property.
+    Set them to the appropriate https protocol, and change the port to
+    4443, or to the value of your `-Dserver.https.port` runtime
+    configuration property.
         
-(7) Configure server URL so that Rundeck knows its external address.  Modify the file
+(6) Configure server URL so that Rundeck knows its external address.  Modify the file
 `$RDECK_BASE/server/config/rundeck-config.properties` and change the `grails.serverURL`: 
 
     * `grails.serverURL=https://myhostname:4443`
     
-Set the URL to include the appropriate https protocol, and change the port to
-4443, or to the value of your `-Dserver.https.port` runtime
-configuration property.
+    Set the URL to include the appropriate https protocol, and change the port to
+    4443, or to the value of your `-Dserver.https.port` runtime
+    configuration property.
 
-(7) Launch the rundeck launcher and tell it where to read the ssl.properties
+(7) For Debian/RPM installation, uncomment line 43 in `/etc/rundeck/profile`:
+
+        export RDECK_JVM="$RDECK_JVM -Drundeck.ssl.config=/etc/rundeck/ssl/ssl.properties -Dserver.https.port=${RDECK_HTTPS_PORT}"
+
+(8) Start the server.  For the rundeck launcher, tell it where to read the ssl.properties
 
         java -Drundeck.ssl.config=$RDECK_BASE/server/config/ssl.properties -jar rundeck-launcher-1.1.0.jar
     
-You can change port by adding `-Dserver.https.port`:
-    
-        java -Drundeck.ssl.config=$RDECK_BASE/server/config/ssl.properties -Dserver.https.port=1234 rundeck-launcher-1.1.0.jar
-    
-If successful, you will see a line indicating the SSl connector has started:
+    You can change port by adding `-Dserver.https.port`:
+        
+            java -Drundeck.ssl.config=$RDECK_BASE/server/config/ssl.properties -Dserver.https.port=1234 rundeck-launcher-1.1.0.jar
+        
+    If successful, you will see a line indicating the SSl connector has started:
 
-    Started SslSocketConnector@0.0.0.0:4443
+        Started SslSocketConnector@0.0.0.0:4443
 
 ### Securing passwords
 
