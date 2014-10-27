@@ -10,7 +10,7 @@
     </button>
     <a class="navbar-brand" href="http://rundeck.org/index.html">
       Rundeck
-      <p class="small rd_version">Enables Self-Service Operations</p>
+      <p class="small rd_version">Job Scheduler and Runbook Automation</p>
     </a>
   </div>
   <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
