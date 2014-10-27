@@ -161,4 +161,23 @@ when a forwarded request is first received.
 in [rundeck-config.properties][]
 to let Rundeck know how to properly generate absolute URLs.
 
+## Disabling SSL Protocols
+
+You can disable SSL protocols using this JVM variable:
+
+* `rundeck.jetty.connector.ssl.excludedProtocols` set to a comma-separated list of SSL protocols to disable.
+
+If unset, the default value of 'SSLv3' will be  used.
+
+E.g. modify the `RDECK_JVM` variable
+in the file `/etc/rundeck/profile`
+and add:
+
+    -Drundeck.jetty.connector.ssl.excludedProtocols=SSLv3,SSLv2Hello
+
+When starting up the Jetty container will log a list of the disabled protocols:
+
+    2014-10-27 11:08:41.225:INFO:oejus.SslContextFactory:Enabled Protocols [SSLv2Hello, TLSv1] of [SSLv2Hello, SSLv3, TLSv1]
+
+
 [rundeck-config.properties]: configuration-file-reference.html#rundeck-config.properties
