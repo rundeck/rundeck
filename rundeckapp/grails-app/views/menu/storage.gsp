@@ -132,14 +132,19 @@
 
                         <div class="form-group"
                              data-bind="css: { 'has-warning': !upload.validInput(), 'has-success': upload.validInput() }">
-                            <div  class="col-sm-3">
-
+                            <div  class="col-sm-3"
+                                  data-bind="visible:  upload.keyType()!='password'">
                                 <select class="form-control" data-bind="value: upload.inputType"
                                         name="inputType">
                                     <option value="text"><g:message code="enter.text" /></option>
                                     <option value="file"><g:message code="upload.file" /></option>
                                 </select>
                             </div>
+                            <label for="uploadpasswordfield"
+                                   class="col-sm-3 control-label"
+                                   data-bind="visible:  upload.keyType()=='password'">
+                                <g:message code="enter.text"/>
+                            </label>
                             <div class="col-sm-9">
 
                                 <div data-bind="if: upload.inputType()=='text' && upload.keyType()!='password' ">
