@@ -70,7 +70,6 @@ public class TestSSHTaskBuilder extends TestCase {
         private Boolean enableSSHAgent;
         private SSHAgentProcess sshAgentProcess;
 
-
         public void setFailonerror(boolean failonerror) {
             this.failonerror = failonerror;
         }
