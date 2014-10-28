@@ -164,7 +164,7 @@ After the key has been saved, the browser will be updated.
 
 ### Add Private Key with file
 
-![Key Storage file upload](../figures/fig0727.png)
+![Key Storage file upload](../figures/fig0728.png)
 
 ### Add a password
 
