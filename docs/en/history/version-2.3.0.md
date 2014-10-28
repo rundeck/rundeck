@@ -1,3 +1,7 @@
+% Version 2.3.0
+% greg
+% 10/28/2014
+
 Release 2.3.0
 =============
 
@@ -15,7 +19,7 @@ Date: 2014-10-28
     The built-in SSH execution and SCP file copy 
     both now support using stored passwords.
     Note: the Key Storage facility is not encrypted by default, see
-    [Key Storage](http://rundeck.org/docs/administration/key-storage.html).
+    [Key Storage](../administration/key-storage.html).
 * Added a new GUI for uploading Passwords and public/private keys
     to the Key Storage facility
 * Bug fixes
