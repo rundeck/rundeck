@@ -198,8 +198,8 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         builder.frameworkMapping(CONFIG_KEYPATH, FWK_PROP_SSH_KEYPATH);
         builder.mapping(CONFIG_KEYSTORE_PATH, PROJ_PROP_SSH_KEY_RESOURCE);
         builder.frameworkMapping(CONFIG_KEYSTORE_PATH, FWK_PROP_SSH_KEY_RESOURCE);
-        builder.mapping(CONFIG_KEYSTORE_PATH, PROJ_PROP_SSH_PASSWORD_STORAGE_PATH);
-        builder.frameworkMapping(CONFIG_KEYSTORE_PATH, FWK_PROP_SSH_PASSWORD_STORAGE_PATH);
+        builder.mapping(CONFIG_PASSSTORE_PATH, PROJ_PROP_SSH_PASSWORD_STORAGE_PATH);
+        builder.frameworkMapping(CONFIG_PASSSTORE_PATH, FWK_PROP_SSH_PASSWORD_STORAGE_PATH);
         builder.mapping(CONFIG_AUTHENTICATION, PROJ_PROP_SSH_AUTHENTICATION);
         builder.frameworkMapping(CONFIG_AUTHENTICATION, FWK_PROP_SSH_AUTHENTICATION);
 
