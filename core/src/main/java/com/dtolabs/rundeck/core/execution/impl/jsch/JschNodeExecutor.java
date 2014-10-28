@@ -147,6 +147,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
     public static final String CONFIG_KEYPATH = "keypath";
     public static final String CONFIG_KEYSTORE_PATH = "keystoragepath";
+    public static final String CONFIG_PASSSTORE_PATH = "passwordstoragepath";
     public static final String CONFIG_AUTHENTICATION = "authentication";
 
     static final Description DESC ;
@@ -165,6 +166,16 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             .renderingOption(StringRenderingConstants.STORAGE_PATH_ROOT_KEY, "keys")
             .renderingOption(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY, "Rundeck-key-type=private")
             .build();
+    static final Property SSH_PASSWORD_STORAGE_PROP = PropertyBuilder.builder()
+            .string(CONFIG_PASSSTORE_PATH)
+            .required(false)
+            .title("SSH Password Storage Path")
+            .description("Path to the Password to use within Rundeck Storage. E.g. \"keys/path/my.password\". Can be overridden by a Node attribute named 'ssh-password-storage-path'.")
+            .renderingOption(StringRenderingConstants.SELECTION_ACCESSOR_KEY,
+                    StringRenderingConstants.SelectionAccessor.STORAGE_PATH)
+            .renderingOption(StringRenderingConstants.STORAGE_PATH_ROOT_KEY, "keys")
+            .renderingOption(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY, "Rundeck-data-type=password")
+            .build();
 
     public static final Property SSH_AUTH_TYPE_PROP = PropertyUtil.select(CONFIG_AUTHENTICATION, "SSH Authentication",
             "Type of SSH Authentication to use",
@@ -180,12 +191,15 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
         builder.property(SSH_KEY_FILE_PROP);
         builder.property(SSH_KEY_STORAGE_PROP);
+        builder.property(SSH_PASSWORD_STORAGE_PROP);
         builder.property(SSH_AUTH_TYPE_PROP);
 
         builder.mapping(CONFIG_KEYPATH, PROJ_PROP_SSH_KEYPATH);
         builder.frameworkMapping(CONFIG_KEYPATH, FWK_PROP_SSH_KEYPATH);
         builder.mapping(CONFIG_KEYSTORE_PATH, PROJ_PROP_SSH_KEY_RESOURCE);
         builder.frameworkMapping(CONFIG_KEYSTORE_PATH, FWK_PROP_SSH_KEY_RESOURCE);
+        builder.mapping(CONFIG_KEYSTORE_PATH, PROJ_PROP_SSH_PASSWORD_STORAGE_PATH);
+        builder.frameworkMapping(CONFIG_KEYSTORE_PATH, FWK_PROP_SSH_PASSWORD_STORAGE_PATH);
         builder.mapping(CONFIG_AUTHENTICATION, PROJ_PROP_SSH_AUTHENTICATION);
         builder.frameworkMapping(CONFIG_AUTHENTICATION, FWK_PROP_SSH_AUTHENTICATION);
 
