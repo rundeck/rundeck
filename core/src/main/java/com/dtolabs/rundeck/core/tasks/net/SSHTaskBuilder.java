@@ -89,7 +89,7 @@ public class SSHTaskBuilder {
             ConnectorFactory cf = ConnectorFactory.getDefault();
             try {
                 base.setSSHAgentProcess(new SSHAgentProcess());
-                cf.setSocketPath(base.getSSHAgentProcess().getSocketPath());
+                cf.setPreferredUSocketPath(base.getSSHAgentProcess().getSocketPath());
                 cf.setPreferredUSocketFactories("jna,nc");
                 base.getPluginLogger().log(Project.MSG_DEBUG, "ssh-agent started.");
                 try {
