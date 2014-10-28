@@ -216,13 +216,17 @@ public class TestSSHTaskBuilder extends TestCase {
         SSHTaskBuilder.AuthenticationType authenticationType;
         String privateKeyfilePath;
         String privateKeyResourcePath;
+        String passwordStoragePath;
         String password;
         int SSHTimeout;
         String username;
         String privateKeyPassphrase;
         InputStream privateKeyResourceData;
         IOException privateKeyResourceDataIOException;
+        IOException passwordStorageDataIOException;
+        byte[] passwordStorageData;
         StorageException privateKeyResourceDataStorageException;
+        StorageException passwordStorageDataStorageException;
         Map<String,String> sshConfig;
 
         public SSHTaskBuilder.AuthenticationType getAuthenticationType() {
@@ -261,6 +265,21 @@ public class TestSSHTaskBuilder extends TestCase {
                 throw privateKeyResourceDataStorageException;
             }
             return privateKeyResourceData;
+        }
+
+        @Override
+        public String getPasswordStoragePath() {
+            return passwordStoragePath;
+        }
+
+        public byte[] getPasswordStorageData() throws IOException{
+            if (null != passwordStorageDataIOException) {
+                throw passwordStorageDataIOException;
+            }
+            if (null != passwordStorageDataStorageException) {
+                throw passwordStorageDataStorageException;
+            }
+            return passwordStorageData;
         }
 
         public Map<String, String> getSshConfig() {

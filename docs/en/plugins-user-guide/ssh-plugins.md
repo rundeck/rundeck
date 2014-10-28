@@ -109,11 +109,11 @@ You can embed context property references within the keypath such as `${job.proj
 
 ### SSH private key storage
 
-An alternate method allows you to use a private key file you have uploaded via the Rundeck [SSH Key Storage API](../administration/ssh-key-storage.html).  The storage facility can be configured to store the keys on disk, or in the database, and can use plugins to provide encryption of the data.
+An alternate method allows you to use a private key file you have uploaded via the Rundeck [SSH Key Storage API](../administration/ssh-key-storage.html) or the GUI. The storage facility can be configured to store the keys on disk, or in the database, and can use plugins to provide encryption of the data.
 
 When uploaded, private keys are identified by a *path* which locates them in the storage facility.  The *path* looks similar to a unix filesystem path.
 
-All SSH Keys are stored under the `ssh-key/` top-level path.
+All SSH Keys are stored under the `keys/` top-level path.
 
 You can configure the built-in SSH connector to load the private key file from the storage facility.  You can configure it per-node, per-project, or per-Rundeck instance.
 
@@ -187,25 +187,25 @@ Job:
 
 ### SSH Password Authentication
 
-Password authentication works in the following way:
+Password authentication works in one of two ways:
 
-* A Job must be defined specifying a Secure Remote Authentication Option to prompt the user for the password
-* Target nodes must be configured for password authentication
-* When the user executes the Job, they are prompted for the password.  The Secure Remote Authentication Option value for the password is not stored in the database, and is used only for that execution.
+(1)  Using a Job defined with a Secure Remote Authentication Option to prompt the user for the password
+(2)  **OR** Using a password stored using [SSH Password Storage](#ssh-password-storage).
 
-Therefore Password authentication has several requirements and some limitations:
+In both cases, to enable SSH Password authentication, first make sure the `ssh-authentication` value is set as described in [Authentication types](#authentication-types).
 
-1. Password-authenticated nodes can only be executed on via a defined Job, not via Ad-hoc commands (yet).
-2. Each Job that will execute on password-authenticated Nodes must define a Secure Remote Authentication Option to prompt the user for the password before execution.
-3. All Nodes using password authentication for a Job must have an equivalent Secure Remote Authentication Option defined, or may use the same option name (or the default) if they share authentication passwords.
+Both methods can be used for multiple nodes within a Job.  I.e. some nodes could be authenticated via stored password, and others via Job option user input.
+
+#### SSH Password with a Job Option
 
 Passwords for the nodes are input either via the GUI or arguments to the job if executed via CLI or API.
 
-To enable SSH Password authentication, first make sure the `ssh-authentication` value is set as described in [Authentication types](#authentication-types).
+1. The Job must define a Secure Remote Authentication Option to prompt the user for the password before execution.
+2. All Nodes using this method must have an equivalent Secure Remote Authentication Option defined, or may use the same option name (or the default) if they share authentication passwords.
 
-Next, configure a Job, and include an Option definition where `secureInput` is set to `true`.  The name of this option can be anything you want, but the default value of `sshPassword` assumed by the node configuration is easiest.
+First configure a Job and include one or more Option definitions where Secure Remote Authentication type is selected. (In XML/YAML, `secure` is set to `true`, and `valueExposed` is set to `false`.)  The name of this option can be anything you want, but the default value of `sshPassword` assumed by the node configuration is easiest. If you need multiple different passwords for different nodes, you must define multiple options in this way.
 
-If the value is not `sshPassword`, then make sure to set the following attribute on each Node for password authentication:
+If the option name is not `sshPassword`, then make sure to set the following attribute on each Node for password authentication:
 
 * `ssh-password-option` = "`option.NAME`" where NAME is the name of the Job's Secure Remote Authentication Option.
 
@@ -217,7 +217,7 @@ An example Node and Job option configuration are below:
     hostname="egon"
     ssh-authentication="password"
     ssh-password-option="option.sshPassword1" />
-~~~~~~~~~~~~~
+~~~~~~~~~
 
 Job:
 
@@ -228,13 +228,41 @@ Job:
         <context>
           <project>project</project>
           <options>
-            <option required='true' name='sshPassword1' secure='true' />
+            <option required='true' name='sshPassword1' secure='true' valueExposed="false"/>
           </options>
         </context>
         <!-- ... -->
     </job>
 </joblist>
-~~~~~~~~
+~~~~~~
+
+#### SSH Password Storage
+
+Just like the [SSH Private Key Storage](#ssh-private-key-storage),
+passwords can also be stored in the Key Storage Facility and used for authentication.
+
+When connecting to the remote node, Rundeck will look for a property/attribute specifying the location of the **password storage path**, in this order, with the first match having precedence:
+
+1. **Node level**: `ssh-password-storage-path` attribute on the Node. Applies only to the target node.
+2. **Project level**: `project.ssh-password-storage-path` property in `project.properties`.  Applies to any project node by default.
+3. **Rundeck level**: `framework.ssh-password-storage-path` property in `framework.properties`. Applies to all projects by default.
+
+**Note:** If both `ssh-password-storage-path` and `ssh-password-option` resolve to a value, then the `ssh-password-storage-path` will be used.
+
+You can embed context property references within the password storage path such as `${job.project}` or `${node.name}`. See [Context Variables][].
+
+[Context Variables]: ../manual/jobs.html#context-variables
+
+
+An example Node using password storage:
+
+~~~~~~~~~ {.xml .numberLines}
+<node name="egon" description="egon" osFamily="unix"
+    username="rundeck"
+    hostname="egon"
+    ssh-authentication="password"
+    ssh-password-storage-path="keys/projects/${job.project}/nodes/${node.name}/rundeck.password" />
+~~~~~~~~~
 
 ### Secondary Sudo Password Authentication
 
