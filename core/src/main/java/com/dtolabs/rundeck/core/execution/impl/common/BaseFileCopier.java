@@ -47,8 +47,9 @@ public class BaseFileCopier {
 
     /**
      * Copy a script file, script source stream, or script string into a temp file, and replace \
-     * embedded tokens with values from the dataContext for the latter two. Marks the file as executable and delete-on-exit. This will not
-     * rewrite any content if the input is originally a file.
+     * embedded tokens with values from the dataContext for the latter two. Marks the file as
+     * executable and delete-on-exit. This will not rewrite any content if the input is originally a
+     * file.
      *
      * @param context  execution context
      * @param original local system file, or null
@@ -56,29 +57,72 @@ public class BaseFileCopier {
      * @param script   file content string, or null
      * @param node     destination node entry, to provide node data context
      *
-     * @return temp file path
+     * @return file where the script was stored
      *
      * @throws com.dtolabs.rundeck.core.execution.ExecutionException
      *          if an IO problem occurs
      */
-    public static File writeScriptTempFile(final ExecutionContext context, final File original, final InputStream input,
-                                           final String script, final INodeEntry node) throws
-        FileCopierException {
+    public static File writeScriptTempFile(
+            final ExecutionContext context,
+            final File original,
+            final InputStream input,
+            final String script,
+            final INodeEntry node
+    ) throws FileCopierException
+    {
+        return writeScriptTempFile(context, original, input, script, node, null);
+    }
+    /**
+     * Copy a script file, script source stream, or script string into a temp file, and replace \
+     * embedded tokens with values from the dataContext for the latter two. Marks the file as
+     * executable and delete-on-exit. This will not rewrite any content if the input is originally a
+     * file.
+     *
+     * @param context  execution context
+     * @param original local system file, or null
+     * @param input    input stream to write, or null
+     * @param script   file content string, or null
+     * @param node     destination node entry, to provide node data context
+     * @param destination destination file, or null to generate a new temp file
+     *
+     * @return file where the script was stored
+     *
+     * @throws com.dtolabs.rundeck.core.execution.ExecutionException
+     *          if an IO problem occurs
+     */
+    public static File writeScriptTempFile(
+            final ExecutionContext context,
+            final File original,
+            final InputStream input,
+            final String script,
+            final INodeEntry node,
+            final File destination
+    ) throws FileCopierException
+    {
         final Framework framework = context.getFramework();
 
-        //create new dataContext with the node data, and write the script (file,content or strea) to a temp file
+        //create new dataContext with the node data, and write the script (file,
+        // content or strea) to a temp file
         //using the dataContext for substitution.
         final Map<String, Map<String, String>> origContext = context.getDataContext();
-        final Map<String, Map<String, String>> dataContext = DataContextUtils.addContext("node",
-            DataContextUtils.nodeData(node), origContext);
+        final Map<String, Map<String, String>> dataContext = DataContextUtils.addContext(
+                "node",
+                DataContextUtils.nodeData(node), origContext
+        );
 
-        File tempfile = null;
+        final File tempfile;
+        ScriptfileUtils.LineEndingStyle style = ScriptfileUtils.lineEndingStyleForNode(node);
+
         try {
+            if (null == destination) {
+                tempfile = ScriptfileUtils.createTempFile(framework);
+            } else {
+                tempfile = destination;
+            }
             if (null != original) {
                 //don't replace tokens
-                tempfile = ScriptfileUtils.createTempFile(framework);
                 final FileInputStream in = new FileInputStream(original);
-                try{
+                try {
                     final FileOutputStream out = new FileOutputStream(tempfile);
                     try {
                         Streams.copyStream(in, out);
@@ -89,24 +133,37 @@ public class BaseFileCopier {
                     in.close();
                 }
             } else if (null != script) {
-                tempfile = DataContextUtils.replaceTokensInScript(script,
-                    dataContext, framework);
+                DataContextUtils.replaceTokensInScript(
+                        script,
+                        dataContext,
+                        framework,
+                        style,
+                        tempfile
+                );
             } else if (null != input) {
-                tempfile = DataContextUtils.replaceTokensInStream(input,
-                    dataContext, framework);
+                DataContextUtils.replaceTokensInStream(
+                        input,
+                        dataContext,
+                        framework,
+                        style,
+                        tempfile
+                );
             } else {
                 return null;
             }
         } catch (IOException e) {
-            throw new FileCopierException("error writing script to tempfile: " + e.getMessage(),
-                                          StepFailureReason.IOFailure, e);
+            throw new FileCopierException(
+                    "error writing script to tempfile: " + e.getMessage(),
+                    StepFailureReason.IOFailure, e
+            );
         }
-//        System.err.println("Wrote script content to file: " + tempfile);
         try {
             ScriptfileUtils.setExecutePermissions(tempfile);
         } catch (IOException e) {
             System.err.println(
-                "Failed to set execute permissions on tempfile, execution may fail: " + tempfile.getAbsolutePath());
+                    "Failed to set execute permissions on tempfile, execution may fail: " +
+                    tempfile.getAbsolutePath()
+            );
         }
         return tempfile;
     }
@@ -236,8 +293,22 @@ public class BaseFileCopier {
         return writeLocalFile(original, input, script, tempfile);
     }
 
-    protected static File writeLocalFile(File original, InputStream input, String script,
-            File destinationFile) throws FileCopierException {
+    /**
+     *
+     * @param original
+     * @param input
+     * @param script
+     * @param destinationFile
+     * @return
+     * @throws FileCopierException
+     */
+    protected static File writeLocalFile(
+            File original,
+            InputStream input,
+            String script,
+            File destinationFile
+    ) throws FileCopierException
+    {
         try {
 
             if (null != original) {

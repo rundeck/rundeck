@@ -6,6 +6,13 @@ DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
 
 ###
+# scripts to test with
+###
+
+SCRIPT_FILE_1=$DIR/job-run-steps-test-script1.txt
+SCRIPT_FILE_2=$DIR/job-run-steps-test-script2.txt
+DOS_LINE_SCRIPT=`cat $SCRIPT_FILE_2`
+###
 # setup: create a new job and acquire the ID
 ###
 
@@ -26,7 +33,7 @@ cat > $DIR/temp.out <<END
 <joblist>
    <job>
       <name>cli job</name>
-      <group>api-test/job-run</group>
+      <group>api-test/job-run-steps</group>
       <description></description>
       <loglevel>INFO</loglevel>
       <context>
@@ -44,11 +51,36 @@ cat > $DIR/temp.out <<END
         <command>
         <exec>$xmlargs</exec>
         </command>
+         <command>
+        <scriptargs>\${option.opt2}</scriptargs>
+        <script><![CDATA[#!/bin/bash
+
+echo "option opt1: \$RD_OPTION_OPT1"
+echo "option opt1: @option.opt1@"
+echo "option opt2: \$1"]]></script>
+      </command>
+         <command>
+        <scriptargs>\${option.opt2}</scriptargs>
+        <script><![CDATA[$DOS_LINE_SCRIPT]]></script>
+      </command>
+      <command>
+        <jobref name='cli job' group='api-test/job-run'>
+          <arg line='-opt1 asdf -opt2 asdf2' />
+        </jobref>
+      </command>
+      <command>
+        <scriptfile>$SCRIPT_FILE_1</scriptfile>
+        <scriptargs />
+      </command>
       </sequence>
    </job>
 </joblist>
 
 END
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: failed job xml generation"
+    exit 2
+fi
 
 # now submit req
 runurl="${APIURL}/jobs/import"
@@ -102,13 +134,15 @@ execcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
 execid=$($XMLSTARLET sel -T -t -v "/result/executions/execution/@id" $DIR/curl.out)
 
 if [ "1" == "${execcount}" -a "" != "${execid}" ] ; then
-    :
+    echo "OK"
 else
     errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
     exit 2
 fi
 
 #wait for execution to complete
+#
+echo "TEST: execution ${execid} should succeed"
 
 rd-queue follow -q -e $execid || fail "Failed waiting for execution $execid to complete"
 
@@ -135,27 +169,46 @@ assert "succeeded" "$status" "execution status should be succeeded"
 
 echo "OK"
 
-###
-# Run the chosen id, leave off required option value
-###
-
-echo "TEST: job/id/run without required opt should fail"
+echo "TEST: execution ${execid} output"
 
 
 # now submit req
-runurl="${APIURL}/job/${jobid}/run"
-params=""
-execargs=""
+runurl="${APIURL}/execution/${execid}/output.text"
 
-# let job finish executing
-sleep 2
+doff=0
+ddone="false"
+dlast=0
+dmax=20
+dc=0
+OUTFILE=$DIR/job-run-steps-test-observed.output
+TESTFILE=$DIR/job-run-steps-test-expected.output
+
+cat > $TESTFILE <<END
+hello there
+option opt1: testvalue
+option opt1: testvalue
+option opt2: a
+this is script 2, opt1 is testvalue
+hello there
+option opt1: asdf
+option opt2: asdf2
+this is script 1, opt1 is testvalue
+END
+#statements
+params="offset=0"
 
 # get listing
-$CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
-
-sh $SRC_DIR/api-test-error.sh $DIR/curl.out "Job options were not valid: Option 'opt2' is required." || exit 2
-
+docurl ${runurl}?${params} > $OUTFILE
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: failed query request"
+    exit 2
+fi
+diff -q $TESTFILE $OUTFILE
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: Expected output was different"
+    exit 2
+fi
 echo "OK"
 
-rm $DIR/curl.out
-
+rm $TESTFILE
+rm $OUTFILE
