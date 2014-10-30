@@ -963,23 +963,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
 
     InputStream instream = System.in;
 
-    protected File writeInputToFile(final InputStream input) {
-        verbose("reading stdin and saving it to file...");
-        final File tempfile;
-        try {
-            tempfile = ScriptfileUtils.writeScriptTempfile(framework, input);
-        } catch (IOException e) {
-            throw new CoreException("error while reading script input from stdin: " + e.getMessage());
-        }
-        verbose("Wrote stdin input to file: " + tempfile);
-        try {
-            ScriptfileUtils.setExecutePermissions(tempfile);
-        } catch (IOException e) {
-            warn(
-                    "Failed to set execute permissions on tempfile, execution may fail: " + tempfile.getAbsolutePath());
-        }
-        return tempfile;
-    }
 
     /**
      * Return the Ant loglevel equivalent to the input flags (verbose,debug,quiet).

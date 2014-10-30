@@ -584,39 +584,6 @@ public class TestExecTool extends AbstractBaseTest {
     private final List<String> testStrings = Arrays.asList(testData1, testData2, testData3);
 
 
-    /**
-     * Test the writeInputToFile method.  InputStream should be written to match the input
-     *
-     * @throws Exception
-     */
-    public void testWriteInputToFile() throws Exception {
-        final org.apache.tools.ant.util.FileUtils utils = org.apache.tools.ant.util.FileUtils.getFileUtils();
-        int index = 0;
-        for (String testData : testStrings) {
-            index++;
-            ExecTool main = newExecTool();
-            File t = File.createTempFile(TEST_EXEC_TOOL_PROJECT, ".txt");
-            t.deleteOnExit();
-            FileOutputStream fos=new FileOutputStream(t);
-            try{
-	            OutputStreamWriter osw = new OutputStreamWriter(fos);
-	            osw.write(testData);
-	            osw.flush();
-	            osw.close();
-            }finally{
-            	fos.close();
-            }
-
-            InputStream ins = new FileInputStream(t);
-            try{
-	            File temp = main.writeInputToFile(ins);
-	            //compare file contents
-	            assertTrue("File contents were not the same (data " + index + ")", utils.contentEquals(t, temp, true));
-            }finally{
-            	ins.close();
-            }
-        }
-    }
 
     public void testCreateNodeSet() throws Exception {
         {
