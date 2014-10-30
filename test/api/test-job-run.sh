@@ -102,7 +102,7 @@ execcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
 execid=$($XMLSTARLET sel -T -t -v "/result/executions/execution/@id" $DIR/curl.out)
 
 if [ "1" == "${execcount}" -a "" != "${execid}" ] ; then
-    echo "OK"
+    :
 else
     errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
     exit 2
@@ -111,6 +111,29 @@ fi
 #wait for execution to complete
 
 rd-queue follow -q -e $execid || fail "Failed waiting for execution $execid to complete"
+
+# test execution status
+# 
+runurl="${APIURL}/execution/${execid}"
+
+params=""
+
+# get listing
+docurl ${runurl}?${params} > $DIR/curl.out
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: failed query request"
+    exit 2
+fi
+
+sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+
+#Check projects list
+itemcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
+assert "1" "$itemcount" "execution count should be 1"
+status=$($XMLSTARLET sel -T -t -v "/result/executions/execution/@status" $DIR/curl.out)
+assert "succeeded" "$status" "execution status should be succeeded"
+
+echo "OK"
 
 ###
 # Run the chosen id, leave off required option value
