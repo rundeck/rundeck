@@ -269,7 +269,7 @@ public class ParallelWorkflowStrategy extends BaseWorkflowStrategy {
             }
         } finally {
             if (null != wlistener) {
-                wlistener.finishWorkflowItem(stepNum, cmd);
+                wlistener.finishWorkflowItem(stepNum, cmd, stepResult);
             }
         }
 
