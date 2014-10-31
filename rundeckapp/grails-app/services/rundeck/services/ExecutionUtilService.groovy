@@ -53,8 +53,7 @@ class ExecutionUtilService {
                 Throwable exc = thread.getThrowable()
                 def errmsgs = []
 
-                if (exc && (exc instanceof com.dtolabs.rundeck.core.NodesetFailureException
-                        || exc instanceof com.dtolabs.rundeck.core.NodesetEmptyException)) {
+                if (exc && exc instanceof com.dtolabs.rundeck.core.NodesetEmptyException) {
                     errmsgs << exc.getMessage()
                 } else if (exc) {
                     errmsgs << exc.getMessage()

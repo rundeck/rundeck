@@ -190,7 +190,7 @@ Use the launcher as an alternative to a system package:
 
     ~~~~~~~ {.bash}
     cd $RDECK_BASE    
-    java -jar rundeck-launcher-2.0.0.jar
+    java -XX:MaxPermSize=256m -Xmx1024m -jar rundeck-launcher-2.0.0.jar
     ~~~~~~~
 
 1. Wait for the Started message.
@@ -221,7 +221,7 @@ rundeck launcher process.
 The launcher jar can take a number of options to specify how the server should start. If you execute with a "-h" you will see the usage information:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-java -jar rundeck-launcher-2.1.0.jar -h
+java -XX:MaxPermSize=256m -Xmx1024m -jar rundeck-launcher-2.1.0.jar -h
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
     usage: java [JAVA_OPTIONS] -jar rundeck-launcher.jar  [-c PATH] [-d]
@@ -269,6 +269,8 @@ to the `java` command:
 * `loginmodule.conf.name` Name of a custom JAAS config file, located in the server's config dir.
 * `rundeck.config.name` Name of a custom rundeck config file, located in the server's config dir.
 * `rundeck.ssl.config` Path to the SSL config properties file to enable SSL. If not set, SSL is not enabled.
+* `rundeck.jetty.connector.forwarded` true/false. Set to true to enable support for "X-forwarded-*" headers which may be sent by a front-end proxy to the rundeck server. See [Using an SSL Terminated Proxy](configuring-ssl.html#using-an-ssl-terminated-proxy).
+* `rundeck.jetty.connector.ssl.excludedProtocols` Comma-separated list of SSL protocols to disable. Default: 'SSLv3'. See [Disabling SSL Protocols](configuring-ssl.html#disabling-ssl-protocols).
 
 For more information about using SSL, see [Configuring Rundeck for SSL](configuring-ssl.html).
 

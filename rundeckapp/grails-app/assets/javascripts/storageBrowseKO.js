@@ -153,6 +153,7 @@ function StorageUpload(storage){
     self.keyType.subscribe(function(newvalue){
        if(newvalue=='password'){
            self.textArea('');
+           self.inputType('text');
        } else{
            self.password('');
        }

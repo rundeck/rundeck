@@ -95,12 +95,12 @@ public class SSHTaskBuilder {
         Session session = jsch.getSession(base.getUserInfo().getName(), base.getHost(), base.getPort());
         session.setTimeout((int) base.getTimeout());
         if (base.getVerbose()) {
-            base.getPluginLogger().log(Project.MSG_INFO, "Set timeout to " + base.getTimeout());
+            base.getPluginLogger().log(Project.MSG_DEBUG, "Set timeout to " + base.getTimeout());
         }
 
         session.setUserInfo(base.getUserInfo());
         if (base.getVerbose()) {
-            base.getPluginLogger().log(Project.MSG_INFO, "Connecting to " + base.getHost() + ":" + base.getPort());
+            base.getPluginLogger().log(Project.MSG_DEBUG, "Connecting to " + base.getHost() + ":" + base.getPort());
         }
         SSHTaskBuilder.configureSession(base.getSshConfig(), session);
 
@@ -472,12 +472,39 @@ public class SSHTaskBuilder {
                 }
                 break;
             case password:
-                final String password = sshConnectionInfo.getPassword();
-                final boolean valid = null != password && !"".equals(password);
-                if (!valid) {
-                    throw new BuilderException("SSH Password was not set");
+                final String passwordStoragePath = sshConnectionInfo.getPasswordStoragePath();
+                if (null != passwordStoragePath) {
+                    if (!PathUtil.asPath(passwordStoragePath).getPath().startsWith("keys/")) {
+                        throw new BuilderException("SSH Password storage path is expected to start with \"keys/\": " +
+                                passwordStoragePath);
+                    }
+                    logger.log(Project.MSG_DEBUG, "Using ssh password storage path: " + passwordStoragePath);
+                    try {
+                        byte[] data = sshConnectionInfo.getPasswordStorageData();
+                        String password = new String(data);
+                        if ("".equals(password)) {
+                            throw new BuilderException("SSH Password was not set");
+                        }
+                        sshbase.setPassword(password);
+                    } catch (StorageException e) {
+                        logger.log(Project.MSG_ERR, "Failed to read SSH Password stored at path: " +
+                                passwordStoragePath + ": " + e);
+                        throw new BuilderException("Failed to read SSH Password stored at path: " +
+                                passwordStoragePath, e);
+                    } catch (IOException e) {
+                        logger.log(Project.MSG_ERR, "Failed to read SSH Password stored at path: " +
+                                passwordStoragePath + ": " + e);
+                        throw new BuilderException("Failed to read SSH Password stored at path: " +
+                                passwordStoragePath, e);
+                    }
+                }else{
+                    final String password = sshConnectionInfo.getPassword();
+                    final boolean valid = null != password && !"".equals(password);
+                    if (!valid) {
+                        throw new BuilderException("SSH Password was not set");
+                    }
+                    sshbase.setPassword(password);
                 }
-                sshbase.setPassword(password);
                 break;
         }
         Map<String, String> sshConfig = sshConnectionInfo.getSshConfig();
@@ -557,9 +584,11 @@ public class SSHTaskBuilder {
         public String getPrivateKeyfilePath();
 
         public String getPrivateKeyResourcePath();
+        public String getPasswordStoragePath();
 
         public InputStream getPrivateKeyResourceData() throws IOException;
 
+        public byte[] getPasswordStorageData() throws IOException;
         /**
          * Return the private key passphrase if set, or null.
          */

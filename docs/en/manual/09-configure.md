@@ -108,6 +108,72 @@ Select the Default File Copier you wish to use for all remote Nodes for the proj
 
 You can install more types of File Copiers as plugins, see [Node Execution Plugins](../plugins-user-guide/node-execution-plugins.html).
 
+## Key Storage
+
+The Key Storage facility provides an [API](../api/rundeck-api.html#key-storage) and GUI to manage public, private keys and passwords.
+These stored keys are used by both Node Executor and File Copier plugins.
+Project configuration settings allow you to reference a key path for both the default Node Executor and File Copier 
+([see above](configure.html#default-node-executor-configuration)). 
+
+Keys can be stored either using an uploaded file or as text input. Public key data can be retrieved once stored. Private key and password data is only available to the node execution plugins.
+
+### Key store organization
+
+You can organize the keys similar to how you locate files in a file system, using convention to define the folder structure.
+Here's an example convention that uses three fields to manage keys.
+
+    keys/projects/{project}/nodes/{node}/{identity}.pem convention
+
+The fields in the pattern provide slots to allow multiple projects and users.
+
+* project: project name
+* node: might be a specific node or could be a class name like 'www'.
+* identity: the name of the user. 
+
+
+### Add Private Key with text
+
+The Key Store page provides a simple browser to navigate the folders and perform actions on the keys.
+
+Press the "Add or Upload a Key" button.
+
+![Key Storage browser](../figures/fig0720.png)
+
+Next, choose "Private Key" for the Key type.
+
+![Key Type menu](../figures/fig0722.png)
+
+Key data can be added using the content of an uploaded file or as text input.
+
+Choose the "Enter text" option. Paste the key content here.
+
+You will also need to enter the storage path and give the key a name.
+
+
+![Add a key and enter text](../figures/fig0721.png)
+
+Here's the form with all the input.
+
+Press the "Save" button.
+
+![Key Storage UI](../figures/fig0724.png)
+
+After the key has been saved, the browser will be updated.
+
+![Key Storage page listing](../figures/fig0725.png)
+
+### Add Private Key with file
+
+![Key Storage file upload](../figures/fig0728.png)
+
+### Add a password
+
+![Key Storage UI](../figures/fig0726.png)
+
+### Delete a key
+
+![Key Storage UI](../figures/fig0727.png)
+
 ## System Configuration
 
 This page displays key configuration settings. 

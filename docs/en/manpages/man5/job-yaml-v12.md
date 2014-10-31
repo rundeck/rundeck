@@ -439,6 +439,10 @@ Optional map entries are:
 
 :   "true/false" - whether the option is a secure input option. Not compatible with "multivalued"
 
+`valueExposed`
+
+:   "true/false" - whether a secure input option value is exposed to scripts or not. `false` means the option will be used only as a Secure Remote Authentication option.  default: `false`.
+
 `sortIndex`
 
 :   *integer* - A number indicating the order this option should appear in the GUI.  If specified this

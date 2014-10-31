@@ -58,6 +58,11 @@ public class ScriptFileCommandBase extends ScriptFileCommand implements HasFailu
         return false;
     }
 
+    @Override
+    public String getFileExtension() {
+        return null;
+    }
+
     public String getScriptInterpreter() {
         return null;
     }

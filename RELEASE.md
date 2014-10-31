@@ -1,93 +1,67 @@
-Release 2.2.3
+Release 2.3.0
 =============
 
-Date: 2014-09-24
+Date: 2014-10-28
 
-Fix several issues found in 2.2.2:
-
-* [2.2.2: Workflow editor drag/drop or step delete doesn't work](https://github.com/rundeck/rundeck/issues/943)
-* [Documentation: Sudo password option type incorrect: should specify Secure Remote Authentication option](https://github.com/rundeck/rundeck/issues/940)
-* [plugin development: plugin properties using rendering options should allow String values](https://github.com/rundeck/rundeck/issues/939)
-
-Release notes from 2.2.2 follow:
-
-This release fixes a number of bugs and addresses several potential security issues:
-
-1. Require a unique token for each form request from the GUI, which prevents replay and CSRF attacks
-2. Updated all pages to prevent unencoded data from being written to the response, preventing XSS style attacks.
-3. Prevent access to the /api URLs via the web GUI.
-4. Some plugins (Resource model, Node Executor and File Copier) now support using Password fields displayed in the Project config page. The field values once set are never revealed in clear text via the GUI.
-
-Please see the Notes below for some configuration information
-related to these changes.
-
-**A big Thank You to one of our clients for sponsoring the work for these enhancements.**
-
-*Security Notes:*
-
-The new form tokens used in all form requests
-by default will expire in 30 minutes.
-This means that if your session timeout is larger than 30 minutes
-and you attempt to e.g. run a job
-after your web page has been sitting open for longer than that,
-you will see an "Invalid token" error.
-If this becomes a problem for you
-you can either change the expiration time for these tokens,
-or switch to using non-expiring tokens.
-See [Administration - Configuration File Reference - Security](http://rundeck.org/2.2.2/administration/configuration-file-reference.html#security).
-
-To add a Password field definition to your plugin, 
-see [Plugin Development - Description Properties](http://rundeck.org/2.2.2/developer/plugin-development.html#description-properties). 
-(Note that currently using property annotations is not supported 
-for the three plugin types that can use Password properties.)
-
-*Upgrade notes:* 
-
-See the [Upgrading Guide](http://rundeck.org/2.2.2/upgrading/index.html).
-
+* Improved support for use of Windows, both as a Rundeck server 
+    and a remote node.
+    * Fixed outstanding issues with CLI .bat scripts
+    * Support powershell scripts by allowing configuration
+        of file extension to be used in workflow script steps. 
+        E.g use ".ps1" because powershell will not execute a script 
+        that doesn't end in .ps1.
+    * Other fixes for issues with script-based plugins and Windows paths.
+* Added support for storing Passwords in the Key Storage facility.  
+    The built-in SSH execution and SCP file copy 
+    both now support using stored passwords.
+    Note: the Key Storage facility is not encrypted by default, see
+    [Key Storage](http://rundeck.org/docs/administration/key-storage.html).
+* Added a new GUI for uploading Passwords and public/private keys
+    to the Key Storage facility
+* Bug fixes
+* Disable SSLv3 by default
 
 ## Contributors
 
-* Andreas Knifh (knifhen)
-* Daniel Serodio (dserodio)
 * Greg Schueler (gschueler)
+* JayKim (c-jason-kim)
 
 ## Bug Reporters
 
-* adolfocorreia
-* ahonor
-* arjones85
-* danpilch
+* aparsons
+* c-jason-kim
+* csciarri
 * dennis-benzinger-hybris
-* dserodio
-* garyhodgson
+* desaim
 * gschueler
-* jerome83136
-* knifhen
-* majkinetor
-* rfletcher
-* schicky
+* jdmulloy
+* jefffiser
+* jippi
+* lmayorga1980
+* pwhack
+* stagrlee
 
 ## Issues
 
-* [dynamic node filter string incorrectly includes name: prefix](https://github.com/rundeck/rundeck/issues/934)
-* [aclpolicy files are listed in random order in Configure page](https://github.com/rundeck/rundeck/issues/931)
-* [Improve "Authenticating Users" docs re. logging](https://github.com/rundeck/rundeck/pull/925)
-* [Security: allow plugins to specify password properties that are obscured in project config page](https://github.com/rundeck/rundeck/pull/919)
-* [Job Variable Length is too low](https://github.com/rundeck/rundeck/issues/915)
-* [Config toggle: Hide error page stacktrace](https://github.com/rundeck/rundeck/pull/910)
-* [Security: CSRF prevention](https://github.com/rundeck/rundeck/pull/909)
-* [Security: prevent XSS issues](https://github.com/rundeck/rundeck/pull/908)
-* [Cannot pass multiple values to multivalued option with enforced values](https://github.com/rundeck/rundeck/issues/907)
-* [Rundeck 2.1.1 scheduling bug](https://github.com/rundeck/rundeck/issues/905)
-* [Selectively Disable metrics servlets features](https://github.com/rundeck/rundeck/pull/904)
-* [Broken Link in Documentation](https://github.com/rundeck/rundeck/issues/903)
-* [Machine tag style attributes don't get replaced ](https://github.com/rundeck/rundeck/issues/901)
-* [Scheduled job with retry never completes 2.2.1](https://github.com/rundeck/rundeck/issues/900)
-* [API docs state latest version is 11, but it is 12](https://github.com/rundeck/rundeck/issues/898)
-* [NPE: Cannot get property 'nodeSet' on null object since upgrade to 2.2.1-1](https://github.com/rundeck/rundeck/issues/896)
-* [Powershell and script-exec - extension problem](https://github.com/rundeck/rundeck/issues/894)
-* [Ldap nestedGroup examples](https://github.com/rundeck/rundeck/pull/892)
-* ["Retry failed nodes" does not seem to work, when using dynamic nodes filters](https://github.com/rundeck/rundeck/issues/883)
-* [UI job status incorrect](https://github.com/rundeck/rundeck/issues/861)
-* [Odd page when not allowing node info access](https://github.com/rundeck/rundeck/issues/844)
+* [Disable SSL Undesired Versions](https://github.com/rundeck/rundeck/issues/987)
+* [add MaxPermSize to default JVM args](https://github.com/rundeck/rundeck/issues/985)
+* [script-based file-copier plugin: always pass a destination path](https://github.com/rundeck/rundeck/issues/981)
+* [windows launcher: first run causes a '${framework.var.dir}' directory to be created](https://github.com/rundeck/rundeck/issues/980)
+* [node exec script plugins: allow custom plugin config properties](https://github.com/rundeck/rundeck/issues/979)
+* [2.2: windows: file storage shows incorrect paths](https://github.com/rundeck/rundeck/issues/978)
+* [windows script-plugins: first invocation might fail because extracted file stream is not closed](https://github.com/rundeck/rundeck/issues/977)
+* [Broken Status Command in Rundeck Launcher Init Script ](https://github.com/rundeck/rundeck/issues/973)
+* [Execution of reference job (by Parent Job) not working in v2.2.3-1](https://github.com/rundeck/rundeck/issues/968)
+* [java.lang.NullPointerException thrown when starting a job](https://github.com/rundeck/rundeck/issues/964)
+* [Can't save script step with a long script](https://github.com/rundeck/rundeck/issues/963)
+* [parallel execution continues after a node failure even if keepgoing is false](https://github.com/rundeck/rundeck/pull/962)
+* [Can't delete jobs using ACL Policy in documentation](https://github.com/rundeck/rundeck/issues/961)
+* [SSH key upload via GUI](https://github.com/rundeck/rundeck/issues/957)
+* [Broken link: "Option model provider" link to guide when adding job option](https://github.com/rundeck/rundeck/issues/945)
+* [Allow custom file extension for script temp files](https://github.com/rundeck/rundeck/issues/933)
+* [Documentation: SSL on Debian/Ubuntu Installs](https://github.com/rundeck/rundeck/issues/914)
+* [Issue with run.bat file on windows hosted rundeck instance](https://github.com/rundeck/rundeck/issues/843)
+* [Add a MaxPermSize to recommended launcher commandline](https://github.com/rundeck/rundeck/issues/687)
+* [profile.bat needs RDECK_JVM](https://github.com/rundeck/rundeck/issues/570)
+* [unix format on windows for profile.bat](https://github.com/rundeck/rundeck/issues/569)
+* [Add support for password storage to SSH plugins](https://github.com/rundeck/rundeck/issues/989)

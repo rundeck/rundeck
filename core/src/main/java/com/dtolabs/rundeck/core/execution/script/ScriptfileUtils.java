@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.core.execution.script;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.INodeEntry;
 
 import java.io.*;
 
@@ -24,6 +25,70 @@ import java.io.*;
  * Utility methods for writing temp files for scripts and setting file permissions.
  */
 public class ScriptfileUtils {
+    /**
+     * Return the line ending style for the node, based on the osFamily, or use LOCAL if
+     * undetermined
+     *
+     * @param node
+     *
+     * @return
+     */
+    public static LineEndingStyle lineEndingStyleForNode(final INodeEntry node) {
+        return LineEndingStyle.forOsFamily(node.getOsFamily());
+    }
+
+    /**
+     * Line ending style
+     */
+    public static enum LineEndingStyle {
+        /**
+         * Unix line endings, "\n"
+         */
+        UNIX,
+        /**
+         * Windows line endings, "\r\n"
+         */
+        WINDOWS,
+        /**
+         * Local line endings of the jvm host
+         */
+        LOCAL;
+
+        /**
+         * Return line ending style given an OS Family string, or returns the Local line ending
+         * style if the string does not map to a known style
+         *
+         * @param family
+         *
+         * @return
+         */
+        public static LineEndingStyle forOsFamily(final String family) {
+            if (null != family) {
+                try {
+                    return valueOf(family.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                }
+            }
+            return LOCAL;
+        }
+
+        /**
+         * Return the line separator string for this style
+         *
+         * @return
+         */
+        public String getLineSeparator() {
+            switch (this) {
+                case UNIX:
+                    return "\n";
+                case WINDOWS:
+                    return "\r\n";
+                case LOCAL:
+                default:
+                    return System.getProperty("line.separator");
+            }
+        }
+    }
 
     /**
      * Write an inputstream to a FileWriter
@@ -31,18 +96,32 @@ public class ScriptfileUtils {
      * @param writer writer
      * @throws IOException if an error occurs
      */
-    private static void writeStream(final InputStream input, final FileWriter writer) throws IOException {
-        final InputStreamReader inStream = new InputStreamReader(input);
-        final BufferedReader inbuff = new BufferedReader(inStream);
-        String inData;
-        final String linesep = System.getProperty("line.separator");
-        while ((inData = inbuff.readLine()) != null) {
-            writer.write(inData);
-            writer.write(linesep);
-        }
-        inbuff.close();
+    private static void writeStream(final InputStream input, final FileWriter writer)
+            throws IOException
+    {
+        writeStream(input, writer, LineEndingStyle.LOCAL);
     }
-    
+
+    /**
+     * Write an inputstream to a FileWriter
+     * @param input input stream
+     * @param writer writer
+     * @throws IOException if an error occurs
+     */
+    private static void writeStream(
+            final InputStream input,
+            final FileWriter writer,
+            final LineEndingStyle style
+    ) throws IOException
+    {
+        final InputStreamReader inStream = new InputStreamReader(input);
+        try {
+            writeReader(inStream, writer, style);
+        }finally{
+            inStream.close();
+        }
+    }
+
     /**
      * Copy from a Reader to a FileWriter
      * @param reader reader
@@ -50,9 +129,29 @@ public class ScriptfileUtils {
      * @throws IOException if an error occurs
      */
     private static void writeReader(final Reader reader, final FileWriter writer) throws IOException {
+        writeReader(reader, writer, LineEndingStyle.LOCAL);
+    }
+
+    /**
+     * Copy from a Reader to a FileWriter
+     *
+     * @param reader reader
+     * @param writer writer
+     *
+     * @throws IOException if an error occurs
+     */
+    private static void writeReader(
+            final Reader reader,
+            final FileWriter writer,
+            final LineEndingStyle style
+    ) throws IOException
+    {
         final BufferedReader inbuff = new BufferedReader(reader);
         String inData;
-        final String linesep = System.getProperty("line.separator");
+        final String linesep =
+                null == style ?
+                        LineEndingStyle.LOCAL.getLineSeparator() :
+                        style.getLineSeparator();
         while ((inData = inbuff.readLine()) != null) {
             writer.write(inData);
             writer.write(linesep);
@@ -69,6 +168,7 @@ public class ScriptfileUtils {
      * @return tempfile
      *
      * @throws IOException if an error occurs
+     * @deprecated
      */
     public static File writeScriptTempfile(final Framework framework, final File sourcefile) throws IOException {
         return writeScriptTempfile(framework, new FileInputStream(sourcefile), null, null);
@@ -83,6 +183,7 @@ public class ScriptfileUtils {
      * @return tempfile
      *
      * @throws IOException if an error occurs
+     * @deprecated
      */
     public static File writeScriptTempfile(final Framework framework, final InputStream stream) throws IOException {
         return writeScriptTempfile(framework, stream, null, null);
@@ -97,6 +198,7 @@ public class ScriptfileUtils {
      * @return tempfile
      *
      * @throws IOException if an error occurs
+     * @deprecated
      */
     public static File writeScriptTempfile(final Framework framework, final String source) throws IOException {
         return writeScriptTempfile(framework, null, source, null);
@@ -111,9 +213,29 @@ public class ScriptfileUtils {
      * @return tempfile
      *
      * @throws IOException if an error occurs
+     * @deprecated
      */
     public static File writeScriptTempfile(final Framework framework, final Reader source) throws IOException {
         return writeScriptTempfile(framework, null, null, source);
+    }
+    /**
+     * Copy reader content to a tempfile for script execution
+     *
+     * @param framework framework
+     * @param source    string content
+     *
+     * @return tempfile
+     *
+     * @throws IOException if an error occurs
+     */
+    public static File writeScriptTempfile(
+            final Framework framework,
+            final Reader source,
+            final LineEndingStyle style
+    )
+            throws IOException
+    {
+        return writeScriptTempfile(framework, null, null, source, style);
     }
 
     /**
@@ -122,15 +244,23 @@ public class ScriptfileUtils {
      * @param framework framework
      * @param stream    source stream
      * @param source    content
-     *
      * @param reader
+     *
      * @return tempfile
      *
      * @throws IOException if an error occurs
+     * @deprecated use {@link #writeScriptTempfile(com.dtolabs.rundeck.core.common.Framework,
+     *             java.io.InputStream, String, java.io.Reader,
+     *             com.dtolabs.rundeck.core.execution.script.ScriptfileUtils.LineEndingStyle)}
      */
-    private static File writeScriptTempfile(final Framework framework, final InputStream stream,
-                                            final String source, final Reader reader) throws
-        IOException {
+    private static File writeScriptTempfile(
+            final Framework framework,
+            final InputStream stream,
+            final String source,
+            final Reader reader
+    )
+            throws IOException
+    {
         /**
          * Prepare a file to save the content
          */
@@ -143,7 +273,7 @@ public class ScriptfileUtils {
             if (null != source) {
                 //write script content to temp file
                 writer.write(source);
-            }else if (null != reader) {
+            } else if (null != reader) {
                 ScriptfileUtils.writeReader(reader, writer);
             } else if (null != stream) {
                 ScriptfileUtils.writeStream(stream, writer);
@@ -153,6 +283,74 @@ public class ScriptfileUtils {
         }
 
         return scriptfile;
+    }
+
+    /**
+     * Copy a source stream or string content to a tempfile for script execution
+     *
+     * @param framework framework
+     * @param stream    source stream
+     * @param source    content
+     * @param style     file line ending style to use
+     * @param reader
+     *
+     * @return tempfile
+     *
+     * @throws IOException if an error occurs
+     */
+    public static File writeScriptTempfile(
+            final Framework framework,
+            final InputStream stream,
+            final String source,
+            final Reader reader,
+            final LineEndingStyle style
+    ) throws IOException
+    {
+        /**
+         * Prepare a file to save the content
+         */
+        final File scriptfile;
+        scriptfile = createTempFile(framework);
+
+        writeScriptFile(stream, source, reader, style, scriptfile);
+
+        return scriptfile;
+    }
+
+    /**
+     * Write script content to a destination file from one of the sources
+     *
+     * @param stream       stream source
+     * @param scriptString script content
+     * @param reader       reader source
+     * @param style        line ending style
+     * @param scriptfile   destination file
+     *
+     * @throws IOException
+     */
+    public static void writeScriptFile(
+            InputStream stream,
+            String scriptString,
+            Reader reader,
+            LineEndingStyle style,
+            File scriptfile
+    ) throws IOException
+    {
+        final FileWriter writer = new FileWriter(scriptfile);
+
+        try {
+            if (null != scriptString) {
+                ScriptfileUtils.writeReader(new StringReader(scriptString), writer, style);
+            } else if (null != reader) {
+                ScriptfileUtils.writeReader(reader, writer, style);
+            } else if (null != stream) {
+                ScriptfileUtils.writeStream(stream, writer, style);
+            } else {
+                throw new IllegalArgumentException("no script source argument");
+            }
+        } finally {
+            writer.close();
+        }
     }
 
     /**

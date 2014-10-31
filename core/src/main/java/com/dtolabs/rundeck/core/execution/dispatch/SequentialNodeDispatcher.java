@@ -91,7 +91,7 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                 context.isNodeRankOrderAscending());
         //reorder based on configured rank property and order
 
-        Throwable caught = null;
+        NodeStepException caught = null;
         INodeEntry failedNode = null;
         for (final INodeEntry node : nodes1) {
             if (thread.isInterrupted()

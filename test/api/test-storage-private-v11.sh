@@ -55,7 +55,7 @@ assert_xml_value "file" "/resource/@type" $DIR/curl.out
 assert_xml_value "key1.private" "/resource/@name" $DIR/curl.out
 assert_xml_value "$testurl" "/resource/@url" $DIR/curl.out
 assert_xml_value "application/octet-stream" "/resource/resource-meta/Rundeck-content-type" $DIR/curl.out
-assert_xml_value "10" "/resource/resource-meta/Rundeck-content-size" $DIR/curl.out
+assert_xml_value "" "/resource/resource-meta/Rundeck-content-size" $DIR/curl.out
 assert_xml_value "content" "/resource/resource-meta/Rundeck-content-mask" $DIR/curl.out
 assert_xml_value "private" "/resource/resource-meta/Rundeck-key-type" $DIR/curl.out
 
@@ -77,7 +77,7 @@ assert_json_value "file" ".type" $DIR/curl.out
 assert_json_value "key1.private" ".name" $DIR/curl.out
 assert_json_value "$testurl" ".url" $DIR/curl.out
 assert_json_value "application/octet-stream" .meta['"Rundeck-content-type"'] $DIR/curl.out
-assert_json_value "10" ".meta[\"Rundeck-content-size\"]" $DIR/curl.out
+assert_json_null  ".meta[\"Rundeck-content-size\"]" $DIR/curl.out
 assert_json_value "content" ".meta[\"Rundeck-content-mask\"]" $DIR/curl.out
 assert_json_value "private" ".meta[\"Rundeck-key-type\"]" $DIR/curl.out
 

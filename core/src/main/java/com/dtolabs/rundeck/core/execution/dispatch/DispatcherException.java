@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution.dispatch;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 
 import java.util.Map;
@@ -36,8 +37,7 @@ import java.util.Map;
  */
 public class DispatcherException extends Exception {
     private INodeEntry node;
-    private Map<String, NodeStepResult> resultMap;
-
+    private NodeStepException nodeStepException;
 
     public DispatcherException(String s) {
         super(s);
@@ -47,13 +47,15 @@ public class DispatcherException extends Exception {
         super(throwable);
     }
 
-    public DispatcherException(String s, Throwable throwable, INodeEntry node) {
+    public DispatcherException(String s, NodeStepException throwable, INodeEntry node) {
         super(s, throwable);
+        nodeStepException=throwable;
         this.node = node;
     }
 
-    public DispatcherException(Throwable throwable, INodeEntry node) {
+    public DispatcherException(NodeStepException throwable, INodeEntry node) {
         super(throwable);
+        nodeStepException=throwable;
         this.node = node;
     }
 
@@ -65,11 +67,7 @@ public class DispatcherException extends Exception {
         this.node = node;
     }
 
-    public Map<String, NodeStepResult> getResultMap() {
-        return resultMap;
-    }
-
-    protected void setResultMap(Map<String, NodeStepResult> resultMap) {
-        this.resultMap = resultMap;
+    public NodeStepException getNodeStepException() {
+        return nodeStepException;
     }
 }

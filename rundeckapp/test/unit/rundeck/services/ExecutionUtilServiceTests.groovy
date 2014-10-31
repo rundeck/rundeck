@@ -155,35 +155,4 @@ class ExecutionUtilServiceTests {
 
         executionUtilService.finishExecutionLogging([thread: thread,loghandler: loghandler,execution:[id:1]])
     }
-    /**
-     * Finish logging when no error cause, with result
-     */
-    void testFinishExecutionLoggingCausedByNodeSetFailureException(){
-
-        def executionUtilService = new ExecutionUtilService()
-        def thread = new ServiceThreadBase()
-        thread.success = false
-        thread.resultObject="abcd123"
-        thread.thrown=new com.dtolabs.rundeck.core.NodesetFailureException(['a','b'])
-        def logcontrol = mockFor(ExecutionLogWriter)
-        logcontrol.demand.logError(1..1){String value->
-            assertEquals("Execution failed on the following 2 nodes: [a, b]",value)
-        }
-        logcontrol.demand.logVerbose(1..1){String value->
-            assertNotNull(value)
-            assertTrue(value.contains("Execution failed on the following 2 nodes"))
-        }
-        logcontrol.demand.close(1..1){->
-        }
-        def loghandler=logcontrol.createMock()
-
-        def stbocontrol=mockFor(ThreadBoundOutputStream)
-        def stbecontrol=mockFor(ThreadBoundOutputStream)
-        stbocontrol.demand.removeThreadStream(1..1){->}
-        stbecontrol.demand.removeThreadStream(1..1){->}
-        executionUtilService.sysThreadBoundOut=stbocontrol.createMock()
-        executionUtilService.sysThreadBoundErr=stbecontrol.createMock()
-
-        executionUtilService.finishExecutionLogging([thread: thread,loghandler: loghandler,execution:[id:1]])
-    }
 }

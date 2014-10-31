@@ -70,15 +70,27 @@ public class LocalFileCopier extends BaseFileCopier implements FileCopier, Desti
         return copyFile(context, scriptfile, input, script, node, null);
     }
 
-    private String copyFile(final ExecutionContext context, File scriptfile, InputStream input, String script,
-            INodeEntry node, final String destination) throws FileCopierException {
+    private String copyFile(
+            final ExecutionContext context,
+            File scriptfile,
+            InputStream input,
+            String script,
+            INodeEntry node,
+            final String destination
+    ) throws FileCopierException
+    {
 
         //write the temp file and replace tokens in the script with values from the dataContext
-        if(null!=destination) {
-            return writeLocalFile(scriptfile, input, script, new File(destination)).getAbsolutePath();
-        }else{
-            return writeScriptTempFile(context, scriptfile, input, script, node).getAbsolutePath();
-        }
+        return writeScriptTempFile(
+                context,
+                scriptfile,
+                input,
+                script,
+                node,
+                null != destination ?
+                        new File(destination) :
+                        null
+        ).getAbsolutePath();
     }
 
     public String copyFileStream(ExecutionContext context, InputStream input, INodeEntry node, String destination) throws FileCopierException {

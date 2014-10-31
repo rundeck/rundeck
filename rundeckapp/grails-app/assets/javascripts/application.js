@@ -726,11 +726,20 @@ function _initCollapseExpander(){
             .children('.glyphicon')
             .removeClass('glyphicon-chevron-right')
             .addClass('glyphicon-chevron-down');
+        var hrefs=jQuery('[data-toggle=collapse][data-target=\'#'+elem.attr('id')+'\']')
+            .addClass('active')
+            .children('.glyphicon')
+            .removeClass('glyphicon-chevron-right')
+            .addClass('glyphicon-chevron-down');
     });
     jQuery(document).on('hide.bs.collapse', '.in.collapse-expandable',function(e){
         var elem=jQuery(this);
-        console.log(elem.attr('class'));
         var hrefs=jQuery('[data-toggle=collapse][href=\'#'+elem.attr('id')+'\']')
+            .removeClass('active')
+            .children('.glyphicon')
+            .removeClass('glyphicon-chevron-down')
+            .addClass('glyphicon-chevron-right');
+        var hrefs=jQuery('[data-toggle=collapse][data-target=\'#'+elem.attr('id')+'\']')
             .removeClass('active')
             .children('.glyphicon')
             .removeClass('glyphicon-chevron-down')

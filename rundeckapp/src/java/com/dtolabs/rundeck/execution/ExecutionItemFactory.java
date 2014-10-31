@@ -38,9 +38,14 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class ExecutionItemFactory {
-    public static StepExecutionItem createScriptFileItem(final String scriptInterpreter, final boolean interpreterArgsQuoted,
+    public static StepExecutionItem createScriptFileItem(
+            final String scriptInterpreter,
+            final String fileExtension,
+            final boolean interpreterArgsQuoted,
             final String script,
-            final String[] strings, final StepExecutionItem handler, final boolean keepgoingOnSuccess) {
+            final String[] strings,
+            final StepExecutionItem handler,
+            final boolean keepgoingOnSuccess) {
         return new ScriptFileCommandBase() {
             @Override
             public String getScript() {
@@ -66,17 +71,25 @@ public class ExecutionItemFactory {
                 return scriptInterpreter;
             }
 
+            @Override
+            public String getFileExtension() {
+                return fileExtension;
+            }
+
             public boolean getInterpreterArgsQuoted() {
                 return interpreterArgsQuoted;
             }
         };
     }
 
-    public static StepExecutionItem createScriptFileItem(final String scriptInterpreter, final boolean
-            interpreterArgsQuoted,
+    public static StepExecutionItem createScriptFileItem(
+            final String scriptInterpreter,
+            final String fileExtension,
+            final boolean interpreterArgsQuoted,
             final File file,
             final String[] strings,
-            final StepExecutionItem handler, final boolean keepgoingOnSuccess) {
+            final StepExecutionItem handler,
+            final boolean keepgoingOnSuccess) {
         final String filepath = file.getAbsolutePath();
         return new ScriptFileCommandBase() {
             @Override
@@ -99,6 +112,11 @@ public class ExecutionItemFactory {
                 return keepgoingOnSuccess;
             }
 
+            @Override
+            public String getFileExtension() {
+                return fileExtension;
+            }
+
             public String getScriptInterpreter() {
                 return scriptInterpreter;
             }
@@ -109,8 +127,10 @@ public class ExecutionItemFactory {
         };
     }
 
-    public static StepExecutionItem createScriptURLItem(final String scriptInterpreter, final boolean
-            interpreterArgsQuoted,
+    public static StepExecutionItem createScriptURLItem(
+            final String scriptInterpreter,
+            final String fileExtension,
+            final boolean interpreterArgsQuoted,
             final String urlString, final String[] strings,
             final StepExecutionItem handler, final boolean keepgoingOnSuccess) {
         return new ScriptURLCommandBase() {
@@ -134,6 +154,11 @@ public class ExecutionItemFactory {
 
             public boolean getInterpreterArgsQuoted() {
                 return interpreterArgsQuoted;
+            }
+
+            @Override
+            public String getFileExtension() {
+                return fileExtension;
             }
 
             public String getScriptInterpreter() {

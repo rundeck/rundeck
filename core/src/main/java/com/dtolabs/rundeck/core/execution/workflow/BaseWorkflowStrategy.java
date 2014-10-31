@@ -30,13 +30,16 @@ import com.dtolabs.rundeck.core.common.SelectorUtils;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -364,36 +367,52 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
             DispatcherResult dispatcherResult = NodeDispatchStepExecutor.extractDispatcherResult(dispatcherStepResult);
             resultMap = dispatcherResult.getResults();
         } else if (NodeDispatchStepExecutor.isWrappedDispatcherException(dispatcherStepResult)) {
-            DispatcherException exception = NodeDispatchStepExecutor.extractDispatcherException(dispatcherStepResult);
-            resultMap = exception.getResultMap();
+            DispatcherException exception
+                    = NodeDispatchStepExecutor.extractDispatcherException(dispatcherStepResult);
+            HashMap<String, NodeStepResult> stringNodeStepResultHashMap = new HashMap<String,
+                    NodeStepResult>();
+            resultMap = stringNodeStepResultHashMap;
+            NodeStepException nodeStepException = exception.getNodeStepException();
+            if (null != nodeStepException && null != exception.getNode()) {
+                NodeStepResult nodeExecutorResult = nodeStepResultFromNodeStepException(
+                        exception.getNode(),
+                        nodeStepException
+                );
+                stringNodeStepResultHashMap.put(
+                        nodeStepException.getNodeName(),
+                        nodeExecutorResult
+                );
+            }
         } else {
             return handlerExecContext;
         }
         ExecutionContextImpl.Builder builder = ExecutionContextImpl.builder(handlerExecContext);
-        for (final Map.Entry<String, ? extends NodeStepResult> dentry : resultMap.entrySet()) {
-            String nodename = dentry.getKey();
-            NodeStepResult stepResult = dentry.getValue();
-            HashMap<String, String> resultData = new HashMap<String, String>();
-            if (null != stepResult.getFailureData()) {
-                //convert values to string
-                for (final Map.Entry<String, Object> entry : stepResult.getFailureData().entrySet()) {
-                    resultData.put(entry.getKey(), entry.getValue().toString());
+        if(null!= resultMap){
+            for (final Map.Entry<String, ? extends NodeStepResult> dentry : resultMap.entrySet()) {
+                String nodename = dentry.getKey();
+                NodeStepResult stepResult = dentry.getValue();
+                HashMap<String, String> resultData = new HashMap<String, String>();
+                if (null != stepResult.getFailureData()) {
+                    //convert values to string
+                    for (final Map.Entry<String, Object> entry : stepResult.getFailureData().entrySet()) {
+                        resultData.put(entry.getKey(), entry.getValue().toString());
+                    }
                 }
+                FailureReason reason = stepResult.getFailureReason();
+                if (null == reason) {
+                    reason = StepFailureReason.Unknown;
+                }
+                resultData.put("reason", reason.toString());
+                String message = stepResult.getFailureMessage();
+                if (null == message) {
+                    message = "No message";
+                }
+                resultData.put("message", message);
+                //add to data context
+                HashMap<String, Map<String, String>> ndata = new HashMap<String, Map<String, String>>();
+                ndata.put("result", resultData);
+                builder.nodeDataContext(nodename, ndata);
             }
-            FailureReason reason = stepResult.getFailureReason();
-            if (null == reason) {
-                reason = StepFailureReason.Unknown;
-            }
-            resultData.put("reason", reason.toString());
-            String message = stepResult.getFailureMessage();
-            if (null == message) {
-                message = "No message";
-            }
-            resultData.put("message", message);
-            //add to data context
-            HashMap<String, Map<String, String>> ndata = new HashMap<String, Map<String, String>>();
-            ndata.put("result", resultData);
-            builder.nodeDataContext(nodename, ndata);
         }
         return builder.build();
     }
@@ -443,22 +462,34 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                     if (!failures.containsKey(key)) {
                         failures.put(key, new ArrayList<StepExecutionResult>());
                     }
-                    Map<String, NodeStepResult> resultMap = e.getResultMap();
-                    if (null != resultMap && null != resultMap.get(node.getNodename())) {
-                        failures.get(key).add(resultMap.get(node.getNodename()));
-                    }
-                } else {
-                    //dispatch failed for a set of nodes
-                    for (final String s : e.getResultMap().keySet()) {
-                        final NodeStepResult interpreterResult = e.getResultMap().get(s);
-                        if (!failures.containsKey(s)) {
-                            failures.put(s, new ArrayList<StepExecutionResult>());
-                        }
-                        failures.get(s).add(interpreterResult);
+                    NodeStepException nodeStepException = e.getNodeStepException();
+                    if (null != nodeStepException) {
+                        failures.get(key).add(
+                                nodeStepResultFromNodeStepException(node, nodeStepException)
+                        );
                     }
                 }
             }
         }
         return failures;
+    }
+
+    /**
+     * Return a failure result with components from an exception
+     * @param node
+     * @param nodeStepException
+     * @return
+     */
+    static protected NodeStepResult nodeStepResultFromNodeStepException(
+            final INodeEntry node,
+            final NodeStepException nodeStepException
+    )
+    {
+        return new NodeStepResultImpl(
+            nodeStepException.getCause(),
+            nodeStepException.getFailureReason(),
+            nodeStepException.getMessage(),
+            node
+        );
     }
 }

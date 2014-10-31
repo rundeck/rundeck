@@ -42,11 +42,14 @@ import java.util.*;
  */
 public class BaseFileCopier {
     public static final String FILE_COPY_DESTINATION_DIR = "file-copy-destination-dir";
+    public static final String DEFAULT_WINDOWS_FILE_EXT = ".bat";
+    public static final String DEFAULT_UNIX_FILE_EXT = ".sh";
 
     /**
      * Copy a script file, script source stream, or script string into a temp file, and replace \
-     * embedded tokens with values from the dataContext for the latter two. Marks the file as executable and delete-on-exit. This will not
-     * rewrite any content if the input is originally a file.
+     * embedded tokens with values from the dataContext for the latter two. Marks the file as
+     * executable and delete-on-exit. This will not rewrite any content if the input is originally a
+     * file.
      *
      * @param context  execution context
      * @param original local system file, or null
@@ -54,29 +57,72 @@ public class BaseFileCopier {
      * @param script   file content string, or null
      * @param node     destination node entry, to provide node data context
      *
-     * @return temp file path
+     * @return file where the script was stored
      *
      * @throws com.dtolabs.rundeck.core.execution.ExecutionException
      *          if an IO problem occurs
      */
-    public static File writeScriptTempFile(final ExecutionContext context, final File original, final InputStream input,
-                                           final String script, final INodeEntry node) throws
-        FileCopierException {
+    public static File writeScriptTempFile(
+            final ExecutionContext context,
+            final File original,
+            final InputStream input,
+            final String script,
+            final INodeEntry node
+    ) throws FileCopierException
+    {
+        return writeScriptTempFile(context, original, input, script, node, null);
+    }
+    /**
+     * Copy a script file, script source stream, or script string into a temp file, and replace \
+     * embedded tokens with values from the dataContext for the latter two. Marks the file as
+     * executable and delete-on-exit. This will not rewrite any content if the input is originally a
+     * file.
+     *
+     * @param context  execution context
+     * @param original local system file, or null
+     * @param input    input stream to write, or null
+     * @param script   file content string, or null
+     * @param node     destination node entry, to provide node data context
+     * @param destination destination file, or null to generate a new temp file
+     *
+     * @return file where the script was stored
+     *
+     * @throws com.dtolabs.rundeck.core.execution.ExecutionException
+     *          if an IO problem occurs
+     */
+    public static File writeScriptTempFile(
+            final ExecutionContext context,
+            final File original,
+            final InputStream input,
+            final String script,
+            final INodeEntry node,
+            final File destination
+    ) throws FileCopierException
+    {
         final Framework framework = context.getFramework();
 
-        //create new dataContext with the node data, and write the script (file,content or strea) to a temp file
+        //create new dataContext with the node data, and write the script (file,
+        // content or strea) to a temp file
         //using the dataContext for substitution.
         final Map<String, Map<String, String>> origContext = context.getDataContext();
-        final Map<String, Map<String, String>> dataContext = DataContextUtils.addContext("node",
-            DataContextUtils.nodeData(node), origContext);
+        final Map<String, Map<String, String>> dataContext = DataContextUtils.addContext(
+                "node",
+                DataContextUtils.nodeData(node), origContext
+        );
 
-        File tempfile = null;
+        final File tempfile;
+        ScriptfileUtils.LineEndingStyle style = ScriptfileUtils.lineEndingStyleForNode(node);
+
         try {
+            if (null == destination) {
+                tempfile = ScriptfileUtils.createTempFile(framework);
+            } else {
+                tempfile = destination;
+            }
             if (null != original) {
                 //don't replace tokens
-                tempfile = ScriptfileUtils.createTempFile(framework);
                 final FileInputStream in = new FileInputStream(original);
-                try{
+                try {
                     final FileOutputStream out = new FileOutputStream(tempfile);
                     try {
                         Streams.copyStream(in, out);
@@ -87,42 +133,72 @@ public class BaseFileCopier {
                     in.close();
                 }
             } else if (null != script) {
-                tempfile = DataContextUtils.replaceTokensInScript(script,
-                    dataContext, framework);
+                DataContextUtils.replaceTokensInScript(
+                        script,
+                        dataContext,
+                        framework,
+                        style,
+                        tempfile
+                );
             } else if (null != input) {
-                tempfile = DataContextUtils.replaceTokensInStream(input,
-                    dataContext, framework);
+                DataContextUtils.replaceTokensInStream(
+                        input,
+                        dataContext,
+                        framework,
+                        style,
+                        tempfile
+                );
             } else {
                 return null;
             }
         } catch (IOException e) {
-            throw new FileCopierException("error writing script to tempfile: " + e.getMessage(),
-                                          StepFailureReason.IOFailure, e);
+            throw new FileCopierException(
+                    "error writing script to tempfile: " + e.getMessage(),
+                    StepFailureReason.IOFailure, e
+            );
         }
-//        System.err.println("Wrote script content to file: " + tempfile);
         try {
             ScriptfileUtils.setExecutePermissions(tempfile);
         } catch (IOException e) {
             System.err.println(
-                "Failed to set execute permissions on tempfile, execution may fail: " + tempfile.getAbsolutePath());
+                    "Failed to set execute permissions on tempfile, execution may fail: " +
+                    tempfile.getAbsolutePath()
+            );
         }
         return tempfile;
     }
 
     /**
-     * Return a string with an appropriate script file extension appended if it is not already on the file path
-     * provided. The OS-family of the node determines the appropriate extension to use.
-     *
-     * @param node     node destination
-     * @param filepath the file path string
+     * Return the default file extension for a temp file based on the type of node
+     * @param node
+     * @return
      */
-    public static String appendRemoteFileExtensionForNode(final INodeEntry node, final String filepath) {
-        String result = filepath;
+    public static String defaultRemoteFileExtensionForNode(final INodeEntry node){
         if (null != node.getOsFamily() && "windows".equalsIgnoreCase(node.getOsFamily().trim())) {
-            result += (filepath.endsWith(".bat") ? "" : ".bat");
+            return DEFAULT_WINDOWS_FILE_EXT;
         } else {
-            result += (filepath.endsWith(".sh") ? "" : ".sh");
+            return DEFAULT_UNIX_FILE_EXT;
         }
+    }
+
+    /**
+     * Return a string with a file extension appended if it is not already on the file path
+     * provided.
+     *
+     * @param filepath the file path string
+     * @param fileext  the file extension, if it does not start with a "." one will be prepended
+     *                 first. If null, the unmodified filepath will be returned.
+     */
+    public static String appendRemoteFileExtension(final String filepath, final String fileext) {
+        if (null == fileext) {
+            return filepath;
+        }
+        String result = filepath;
+        String ext = fileext;
+        if (!ext.startsWith(".")) {
+            ext = "." + fileext;
+        }
+        result += (filepath.endsWith(ext) ? "" : ext);
         return result;
     }
 
@@ -161,8 +237,32 @@ public class BaseFileCopier {
      *         date.
      */
     public static String generateRemoteFilepathForNode(final INodeEntry node, final String scriptfileName) {
-        final String remoteFilename = appendRemoteFileExtensionForNode(node,
-                cleanFileName((System.currentTimeMillis() + "-" + node.getNodename() + "-" + scriptfileName)));
+        return generateRemoteFilepathForNode(node, scriptfileName, null);
+    }
+    /**
+     * Return a temporary filepath for a file to be copied to the node, given the input filename (without directory
+     * path)
+     *
+     * @param node           the destination node
+     * @param scriptfileName the name of the file to copy
+     * @param fileExtension optional extension to use for the temp file, or null for default
+     *
+     * @return a filepath specifying destination of the file to copy that should be unique for the node and current
+     *         date.
+     */
+    public static String generateRemoteFilepathForNode(final INodeEntry node, final String scriptfileName, final String fileExtension) {
+        String tempfilename = System.currentTimeMillis()
+                + "-" + node.getNodename()
+                + "-" + scriptfileName;
+        String extension = fileExtension;
+        if (null == extension) {
+            //determine based on node
+            extension = defaultRemoteFileExtensionForNode(node);
+        }
+        final String remoteFilename = appendRemoteFileExtension(
+                cleanFileName(tempfilename),
+                null != extension ? cleanFileName(extension) : null
+        );
         final String remotedir = getRemoteDirForNode(node);
 
         return remotedir + remoteFilename;
@@ -193,8 +293,22 @@ public class BaseFileCopier {
         return writeLocalFile(original, input, script, tempfile);
     }
 
-    protected static File writeLocalFile(File original, InputStream input, String script,
-            File destinationFile) throws FileCopierException {
+    /**
+     *
+     * @param original
+     * @param input
+     * @param script
+     * @param destinationFile
+     * @return
+     * @throws FileCopierException
+     */
+    protected static File writeLocalFile(
+            File original,
+            InputStream input,
+            String script,
+            File destinationFile
+    ) throws FileCopierException
+    {
         try {
 
             if (null != original) {

@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
+import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
@@ -54,27 +55,71 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
         this.framework = framework;
     }
 
-    public NodeStepResult executeNodeStep(StepExecutionContext context, NodeStepExecutionItem item, INodeEntry node)
-        throws
-        NodeStepException {
+    public NodeStepResult executeNodeStep(
+            StepExecutionContext context,
+            NodeStepExecutionItem item,
+            INodeEntry node
+    )
+        throws NodeStepException
+    {
+
         final ScriptFileCommand script = (ScriptFileCommand) item;
         final ExecutionService executionService = framework.getExecutionService();
-        final String filepath; //result file path
+        final String filename;
+
+        if (null != script.getScript()) {
+            filename = "dispatch-script.tmp";
+        } else if (null != script.getServerScriptFilePath()) {
+            filename = new File(script.getServerScriptFilePath()).getName();
+        } else {
+            filename = "dispatch-script.tmp";
+        }
+        String filepath = BaseFileCopier.generateRemoteFilepathForNode(
+                node,
+                filename,
+                script.getFileExtension()
+        );
         try {
             if (null != script.getScript()) {
-                filepath = executionService.fileCopyScriptContent(context, script.getScript(), node);
+                filepath = executionService.fileCopyScriptContent(
+                        context,
+                        script.getScript(),
+                        node,
+                        filepath
+                );
             } else if (null != script.getServerScriptFilePath()) {
-                filepath = executionService.fileCopyFile(context, new File(
-                    script.getServerScriptFilePath()), node);
+                filepath = executionService.fileCopyFile(
+                        context,
+                        new File(script.getServerScriptFilePath()),
+                        node,
+                        filepath
+                );
             } else {
-                filepath = executionService.fileCopyFileStream(context, script.getScriptAsStream(), node);
+                filepath = executionService.fileCopyFileStream(
+                        context,
+                        script.getScriptAsStream(),
+                        node,
+                        filepath
+                );
             }
         } catch (FileCopierException e) {
-            throw new NodeStepException(e.getMessage(), e, e.getFailureReason(), node.getNodename());
+            throw new NodeStepException(
+                    e.getMessage(),
+                    e,
+                    e.getFailureReason(),
+                    node.getNodename()
+            );
         }
 
-        return executeRemoteScript(context, context.getFramework(), node, script.getArgs(), filepath,
-                script.getScriptInterpreter(), script.getInterpreterArgsQuoted());
+        return executeRemoteScript(
+                context,
+                context.getFramework(),
+                node,
+                script.getArgs(),
+                filepath,
+                script.getScriptInterpreter(),
+                script.getInterpreterArgsQuoted()
+        );
     }
 
     /**

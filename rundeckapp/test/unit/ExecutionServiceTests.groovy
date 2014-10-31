@@ -1371,10 +1371,8 @@ class ExecutionServiceTests  {
         assertNull(val.nodeSelector.exclude.toMap().environment)
     }
 
-    void testItemForWFCmdItem(){
-        def testService = new ExecutionService()
-
-        t:{
+    void testItemForWFCmdItem_command(){
+        def testService = service
             //exec
             CommandExec ce = new CommandExec(adhocRemoteString: 'exec command')
             def res = testService.itemForWFCmdItem(ce)
@@ -1384,7 +1382,9 @@ class ExecutionServiceTests  {
             ExecCommandExecutionItem item=(ExecCommandExecutionItem) res
             assertEquals(['exec','command'],item.command as List)
         }
-        t:{
+
+    void testItemForWFCmdItem_script() {
+        def testService = service
             //adhoc local string
             CommandExec ce = new CommandExec(adhocLocalString: 'local script')
             def res = testService.itemForWFCmdItem(ce)
@@ -1398,7 +1398,26 @@ class ExecutionServiceTests  {
             assertNotNull(item.args)
             assertEquals(0,item.args.length)
         }
-        t:{
+
+    void testItemForWFCmdItem_script_fileextension() {
+        def testService = service
+        //adhoc local string
+        CommandExec ce = new CommandExec(adhocLocalString: 'local script',fileExtension: 'abc')
+        def res = testService.itemForWFCmdItem(ce)
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertTrue(res instanceof ScriptFileCommandExecutionItem)
+        ScriptFileCommandExecutionItem item=(ScriptFileCommandExecutionItem) res
+        assertEquals('local script',item.script)
+        assertNull(item.scriptAsStream)
+        assertNull(item.serverScriptFilePath)
+        assertNotNull(item.args)
+        assertEquals(0,item.args.length)
+        assertEquals('abc',item.fileExtension)
+    }
+
+    void testItemForWFCmdItem_scriptArgs() {
+        def testService = service
             //adhoc local string, args
             CommandExec ce = new CommandExec(adhocLocalString: 'local script',argString: 'some args')
             def res = testService.itemForWFCmdItem(ce)
@@ -1412,33 +1431,69 @@ class ExecutionServiceTests  {
             assertNotNull(item.args)
             assertEquals(['some', 'args'], item.args as List)
         }
-        t: {
-            //adhoc file path
-            CommandExec ce = new CommandExec(adhocFilepath: '/some/path', argString: 'some args')
-            def res = testService.itemForWFCmdItem(ce)
-            assertNotNull(res)
-            assertTrue(res instanceof StepExecutionItem)
-            assertTrue(res instanceof ScriptFileCommandExecutionItem)
-            ScriptFileCommandExecutionItem item = (ScriptFileCommandExecutionItem) res
-            assertEquals('/some/path', item.serverScriptFilePath)
-            assertNull(item.scriptAsStream)
-            assertNull(item.script)
-            assertNotNull(item.args)
-            assertEquals(['some', 'args'], item.args as List)
-        }
-        t: {
-            //http url script path
-            CommandExec ce = new CommandExec(adhocFilepath: 'http://example.com/script', argString: 'some args')
-            def res = testService.itemForWFCmdItem(ce)
-            assertNotNull(res)
-            assertTrue(res instanceof StepExecutionItem)
-            assertTrue(res instanceof ScriptURLCommandExecutionItem)
-            ScriptURLCommandExecutionItem item = (ScriptURLCommandExecutionItem) res
-            assertEquals('http://example.com/script', item.URLString)
-            assertNotNull(item.args)
-            assertEquals(['some', 'args'], item.args as List)
-        }
-        t: {
+
+    void testItemForWFCmdItem_scriptfile() {
+        def testService = service
+        //adhoc file path
+        CommandExec ce = new CommandExec(adhocFilepath: '/some/path', argString: 'some args')
+        def res = testService.itemForWFCmdItem(ce)
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertTrue(res instanceof ScriptFileCommandExecutionItem)
+        ScriptFileCommandExecutionItem item = (ScriptFileCommandExecutionItem) res
+        assertEquals('/some/path', item.serverScriptFilePath)
+        assertNull(item.scriptAsStream)
+        assertNull(item.script)
+        assertNotNull(item.args)
+        assertEquals(['some', 'args'], item.args as List)
+    }
+    void testItemForWFCmdItem_scriptfile_fileextension() {
+        def testService = service
+        //adhoc file path
+        CommandExec ce = new CommandExec(adhocFilepath: '/some/path', argString: 'some args',fileExtension: 'xyz')
+        def res = testService.itemForWFCmdItem(ce)
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertTrue(res instanceof ScriptFileCommandExecutionItem)
+        ScriptFileCommandExecutionItem item = (ScriptFileCommandExecutionItem) res
+        assertEquals('/some/path', item.serverScriptFilePath)
+        assertNull(item.scriptAsStream)
+        assertNull(item.script)
+        assertNotNull(item.args)
+        assertEquals(['some', 'args'], item.args as List)
+        assertEquals('xyz', item.fileExtension)
+    }
+
+    void testItemForWFCmdItem_scripturl() {
+        def testService = service
+        //http url script path
+        CommandExec ce = new CommandExec(adhocFilepath: 'http://example.com/script', argString: 'some args')
+        def res = testService.itemForWFCmdItem(ce)
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertTrue(res instanceof ScriptURLCommandExecutionItem)
+        ScriptURLCommandExecutionItem item = (ScriptURLCommandExecutionItem) res
+        assertEquals('http://example.com/script', item.URLString)
+        assertNotNull(item.args)
+        assertEquals(['some', 'args'], item.args as List)
+    }
+    void testItemForWFCmdItem_scripturl_fileextension() {
+        def testService = service
+        //http url script path
+        CommandExec ce = new CommandExec(adhocFilepath: 'http://example.com/script', argString: 'some args',fileExtension: 'mdd')
+        def res = testService.itemForWFCmdItem(ce)
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertTrue(res instanceof ScriptURLCommandExecutionItem)
+        ScriptURLCommandExecutionItem item = (ScriptURLCommandExecutionItem) res
+        assertEquals('http://example.com/script', item.URLString)
+        assertNotNull(item.args)
+        assertEquals(['some', 'args'], item.args as List)
+        assertEquals('mdd', item.fileExtension)
+    }
+
+    void testItemForWFCmdItem_scripturl_https() {
+        def testService = service
             //https url script path
             CommandExec ce = new CommandExec(adhocFilepath: 'https://example.com/script', argString: 'some args')
             def res = testService.itemForWFCmdItem(ce)
@@ -1450,7 +1505,9 @@ class ExecutionServiceTests  {
             assertNotNull(item.args)
             assertEquals(['some', 'args'], item.args as List)
         }
-        t: {
+
+    void testItemForWFCmdItem_scripturl_file() {
+        def testService = service
             //file url script path
             CommandExec ce = new CommandExec(adhocFilepath: 'file:/some/script')
             def res = testService.itemForWFCmdItem(ce)
@@ -1462,7 +1519,9 @@ class ExecutionServiceTests  {
             assertNotNull(item.args)
             assertEquals(0, item.args.length)
         }
-        t: {
+
+    void testItemForWFCmdItem_scripturl_file_args() {
+        def testService = service
             //file url script path
             CommandExec ce = new CommandExec(adhocFilepath: 'file:/some/script', argString: 'some args')
             def res = testService.itemForWFCmdItem(ce)
@@ -1473,7 +1532,6 @@ class ExecutionServiceTests  {
             assertEquals('file:/some/script', item.URLString)
             assertNotNull(item.args)
             assertEquals(['some', 'args'], item.args as List)
-        }
     }
 
     private ExecutionService setupCleanupService(){

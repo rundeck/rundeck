@@ -35,6 +35,11 @@ public class RunServer {
 
     public static final String SERVER_HTTP_HOST = "server.http.host";
     public static final String RUNDECK_JETTY_CONNECTOR_FORWARDED = "rundeck.jetty.connector.forwarded";
+    public static final String RUNDECK_JETTY_SSL_CONNECTOR_EXCLUDED_PROTOCOLS= "rundeck.jetty.connector.ssl.excludedProtocols";
+
+    public static final String DEFAULT_SSL_CONNECTER_EXCLUDED_PROTOCOLS = "SSLv3";
+
+
     int port = Integer.getInteger("server.http.port", 4440);
     int httpsPort = Integer.getInteger("server.https.port", 4443);
     File basedir;
@@ -152,6 +157,12 @@ public class RunServer {
         cf.setKeyManagerPassword(keyPassword);
         cf.setTrustStore(truststore);
         cf.setTrustStorePassword(truststorePassword);
+        cf.setExcludeProtocols(
+                System.getProperty(
+                        RUNDECK_JETTY_SSL_CONNECTOR_EXCLUDED_PROTOCOLS,
+                        DEFAULT_SSL_CONNECTER_EXCLUDED_PROTOCOLS
+                ).split(",")
+        );
         connector.setHost(System.getProperty(SERVER_HTTP_HOST, null));
         server.addConnector(connector);
     }

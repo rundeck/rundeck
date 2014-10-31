@@ -111,9 +111,11 @@ stop() {
 status() {
     RETVAL=0
     printf "%s" "Status $prog: "
-    [ -f "$PID_FILE" ] || {
+    test -f "$PID_FILE"
+    RETVAL=$?
+    [ $RETVAL -eq 0 ] || {
 	echo "$prog is stopped";
-	return $RETVAL;
+	return 3;
     }
     PID=`cat $PID_FILE`
     ps -p "$PID" >/dev/null

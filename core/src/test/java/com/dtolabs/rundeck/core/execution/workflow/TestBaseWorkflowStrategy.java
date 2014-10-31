@@ -24,21 +24,15 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow;
 
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
-import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.common.NodeFileParserException;
+import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
+import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
+import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResultImpl;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.*;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.NodeSet;
@@ -47,11 +41,7 @@ import org.apache.tools.ant.BuildListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -158,6 +148,11 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
 
         public List<Map<String, Object>> getInputs() {
             return inputs;
+        }
+
+        public Map<String, Collection<StepExecutionResult>> convertFailures(final Map<Integer,
+                StepExecutionResult> failedMap) {
+            return super.convertFailures(failedMap);
         }
     }
 
@@ -372,6 +367,53 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         );
 
 
+    }
+
+    public void testConvertFailures_wrappedDispatcherResult() throws Exception {
+        testWorkflowStrategy strategy = new testWorkflowStrategy(testFramework);
+
+        HashMap<Integer, StepExecutionResult> failedMap = new
+                HashMap<Integer, StepExecutionResult>();
+
+        //fill
+        Map<String, NodeStepResult> resultsMap = new HashMap<String, NodeStepResult>();
+        NodeEntryImpl node = new NodeEntryImpl("node1");
+        NodeStepResultImpl stepResult = new NodeStepResultImpl(node);
+        resultsMap.put("node1", stepResult);
+        failedMap.put(1, NodeDispatchStepExecutor.wrapDispatcherResult(new DispatcherResultImpl(resultsMap, false)));
+
+        Map<String, Collection<StepExecutionResult>> stringCollectionMap = strategy
+                .convertFailures(failedMap);
+
+        //assert
+        assertNotNull(stringCollectionMap);
+        assertNotNull(stringCollectionMap.get("node1"));
+        assertEquals(1, stringCollectionMap.get("node1").size());
+        StepExecutionResult node1 = stringCollectionMap.get("node1").iterator().next();
+        assertEquals(stepResult, node1);
+    }
+    public void testConvertFailures_wrappedDispatcherException_singleNode() throws Exception {
+        testWorkflowStrategy strategy = new testWorkflowStrategy(testFramework);
+
+        HashMap<Integer, StepExecutionResult> failedMap = new
+                HashMap<Integer, StepExecutionResult>();
+
+        //fill
+        NodeEntryImpl node = new NodeEntryImpl("node1");
+
+        failedMap.put(1, NodeDispatchStepExecutor.wrapDispatcherException(new DispatcherException(
+                "test failure", new NodeStepException("failure",
+                NodeStepFailureReason.HostNotFound, "node1"), node)));
+
+        Map<String, Collection<StepExecutionResult>> stringCollectionMap = strategy
+                .convertFailures(failedMap);
+
+        //assert
+        assertNotNull(stringCollectionMap);
+        assertNotNull(stringCollectionMap.get("node1"));
+        assertEquals(1, stringCollectionMap.get("node1").size());
+        StepExecutionResult node1 = stringCollectionMap.get("node1").iterator().next();
+        assertEquals(NodeStepFailureReason.HostNotFound, node1.getFailureReason());
     }
 
     public void testExecuteWorkflowItemsForNodeSetFailureHandlerFailureNoKeepgoingWithHandler2() throws Exception {

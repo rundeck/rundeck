@@ -233,6 +233,9 @@ You can specify "rendering options" to affect the property being rendered in the
 * Textarea: renders the input as a multi-line text area.
 * Password: renders the input as a password input.
 
+For more information see the options under [Property Rendering options](#property-rendering-options).
+
+A set of constants for the supported rendering option keys and some values are provided in the [StringRenderingConstants](../javadoc/com/dtolabs/rundeck/core/plugins/configuration/StringRenderingConstants.html).
 
 ## Script Plugin Development
 
@@ -339,7 +342,79 @@ Optional entries:
      `${interpreter} "${file} ${arg1} ${arg2}..."`. If false,
     the execution will be done by passing the file and args as separate arguments:
      `${interpreter} ${file} ${arg1} ${arg2}...`
+* `config` - a Map defining custom plugin properties (see below.)
 
+### Plugin properties
+
+Custom plugin properties are supported in script-based plugins for these plugin types:
+
+* `ResourceModelSource`
+* `NodeExecutor`
+* `FileCopier`
+* `WorkflowNodeStep`
+* `RemoteScriptNodeStep`
+
+You can use the metadata entries to declare properties about your plugin.
+
+Create a `config` entry in each provider definition, containing a sequence of
+map entries for each configuration property you want to define. In the map entry include:
+
+* `type` - The type of property.  Must be one of:
+    * `String`
+    * `Boolean` value must be "true" or "false"
+    * `Integer`
+    * `Long`
+    * `Select` must be on of a set of values
+    * `FreeSelect` may be one of a set of values
+* `name` - Name to identify the property
+* `title` - Title to display in the GUI (optional)
+* `description` - Description to display in the GUI (optional)
+* `required` - (true/false) if true, require a non-empty value (optional)
+* `default` - A default value to use (optional)
+* `values` - A comma-separated list of values to use for Select or FreeSelect. Required for Select/FreeSelect.
+* `scope` - Resolution scope for the property. Default: "Instance".
+* `renderingOptions` - A Map containing a definition of rendering option keys/values. (See [Property Rendering Options](#property-rendering-options) below.)
+
+When your script is invoked, each configuration property defined for the plugin will be set as `RD_CONFIG_[PROPERTY]` variables passed to your script (see below). "_PROPERTY_" refers to your plugin property name in uppercase. A plugin property named "foo" will translate to the shell variable `RD_CONFIG_FOO`.
+
+See [Property Scopes](#property-scopes) below.
+
+#### Example script plugin property
+
+Here is an example:
+
+~~~~~~~ {.yaml}
+# yaml plugin metadata
+ 
+name: plugin name
+version: plugin version
+rundeckPluginVersion: 1.0
+author: author name
+date: release date
+providers:
+    - name: provider
+      service: service name
+      plugin-type: script
+      script-interpreter: [interpreter]
+      script-file: [script file name]
+      script-args: [script file args]
+      config:
+        - name: myprop
+          title: My Property
+          type: String
+          required: false
+          description: "A custom property"
+          scope: Instance
+          renderingOptions:
+            instance-scope-node-attribute: "my-prop"
+        - name: myprop2
+          title: Another Property
+          type: Integer
+          required: true
+          description: "Must be present"
+          default: '123'
+          scope: Framework
+~~~~~~~~~~~~
 
 ### How script plugin providers are invoked
 
@@ -416,3 +491,85 @@ For `ResourceModelSource`
 
 :   All output on `STDOUT` will be captured and passed to a `ResourceFormatParser` for the specified `resource-format` to create the Node definitions.
 
+## Property scopes
+
+The `scope` determines how the value of the property is resolved.
+
+These are the available scopes and how the property values can be resolved:
+
+* `Framework` - Only framework properties
+* `ProjectOnly` - Only Project properties
+* `Project` - Project and Framework properties
+* `InstanceOnly` - Only instance properties
+* `Instance` - Instance and all earlier levels
+
+When resolving a property in a Project or Framework scope, the following properties will be searched:
+
+* Framework scope
+    * file: `$RDECK_BASE/etc/framework.properties`
+    * property: `framework.plugin.[ServiceName].[providerName].[propertyname]`
+
+* Project scope
+    * file: `$RDECK_BASE/projects/[ProjectName]/etc/project.properties`
+    * property: `project.plugin.[ServiceName].[providerName].[propertyname]`
+
+Instance scope refers to the configuration for a plugin "instance".  For different plugin types, due to the differences between how they are configured, this scope is resolved in different ways.
+
+For `ResourceModelSource`:
+
+:   Resolved for each indexed source via the configuration in the `project.properties` file.
+
+For `NodeExecutor`, and `FileCopier`:
+
+:   Custom properties are *only* supported in Script-based plugins.  The instance scoped-property values are only loaded via Node attributes at execution time, based on the mapping provided in the `renderingOptions`.  See [Node services instance scope](#node-services-instance-scope).
+
+For Workflow Step services:
+
+:   Resolved from the step configuration defined in the workflow.
+
+For `Notification`:
+
+:   Resolved from the notification trigger configuration defined in the workflow.
+
+### Node services instance scope
+
+For script-based `NodeExecutor` and `FileCopier` plugins, Instance-scope properties can be defined to retrieve values from the Node's attributes at execution time.
+
+Define the `renderingOptions` property entry, and add a `instance-scope-node-attribute` key:
+
+~~~~{.yaml}
+      config:
+        - name: myprop
+          title: My Property
+          type: String
+          required: false
+          description: "A custom property"
+          scope: Instance
+          renderingOptions:
+            instance-scope-node-attribute: "my-prop"
+~~~~
+
+When resolving the property value at execution time
+the node attribute "my-prop" will be used for the value (if present),
+before resolving other allowed scopes.
+
+## Property Rendering Options
+
+Rendering options define special attributes of a property, which can be used to declare how it is shown in the GUI, or how the value is loaded at resolution time.
+
+Available rendering option keys:
+
+* `displayType`, values:
+    - `SINGLE_LINE` - display input as a single text field.
+    - `MULTI_LINE` - display input as a multi-line text area.
+    - `PASSWORD` - display input as a password field
+* `instance-scope-node-attribute`
+    - Value is the name of a Node attribute to use for instance-scoped properties for *Node Services* plugins `NodeExecutor` and `FileCopier` only.
+* `selectionAccessor`, values:
+    - `STORAGE_PATH` - display an additional input to select a Storage Path string from Rundeck's [Key Storage Facility](../administration/key-storage.html).
+* `storage-path-root` 
+    - Value is a Storage Path indicating the root to use if the selectionAccessor is `STORAGE_PATH`.
+* `storage-file-meta-filter`
+    - Value is a Storage metadata filter string, indicating the types of Storage Files to select from if selectionAccessor is `STORAGE_PATH`. Filt string format: `metadatakey=value`, e.g. `Rundeck-key-type=private`.
+* `valueConversion` defines a way to convert a the value of the resolved property. Allowed values:
+    - `STORAGE_PATH_AUTOMATIC_READ` - automatically loads the storage contents from the given Storage Path, replacing the path with the loaded file contents as a String. E.g. can be used to load a Password file contents.

@@ -71,6 +71,8 @@ function ScriptStep(data) {
      */
     self.invocationString = ko.observable('');
 
+    self.fileExtension = ko.observable('');
+
     self.args = ko.observable('');
 
     self.argsQuoted = ko.observable(false);
@@ -80,8 +82,19 @@ function ScriptStep(data) {
         return self.args() ? isq + self.args() + isq : '';
     });
 
+    self.fileExtensionDotted = ko.computed(function () {
+        var ext = self.fileExtension();
+        return ext? (ext.charAt(0)=='.'?ext:'.'+ext):'';
+    });
+    self.scriptfileText = ko.computed(function () {
+        return self.fileExtensionDotted() ? "scriptfile" + self.fileExtensionDotted() : 'scriptfile';
+    });
     self.argStringAsQuotedWithScriptfile = ko.computed(function () {
-        return (self.argsQuoted() ? "'<em>scriptfile</em> " : '<em>scriptfile</em> ') + self.args() + (self.argsQuoted() ? "'" : '');
+        var isq = self.argsQuoted() ? '"' : '';
+        return isq
+            + '<em>' + self.scriptfileText() +'</em> '
+            + self.args()
+            + isq;
     });
 
     /**
@@ -91,7 +104,7 @@ function ScriptStep(data) {
     self.invocationPreviewHtml = ko.computed(function () {
         var text = '';
         if (self.invocationString() && self.invocationString().indexOf('${scriptfile}') >= 0) {
-            text += self.invocationString().split('\$\{scriptfile\}').join('<em>scriptfile</em>') + ' ' + self.argStringAsQuoted();
+            text += self.invocationString().split('\$\{scriptfile\}').join('<em>' + self.scriptfileText() +'</em>') + ' ' + self.argStringAsQuoted();
         } else if (self.invocationString()) {
             text += self.invocationString() + ' ' + self.argStringAsQuotedWithScriptfile();
         } else {

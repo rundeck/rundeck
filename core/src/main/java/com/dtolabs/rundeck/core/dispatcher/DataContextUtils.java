@@ -345,27 +345,93 @@ public class DataContextUtils {
      * @param framework   the framework
      *
      * @return the token replaced temp file, or null if an error occurs.
+     * @deprecated
      */
     public static File replaceTokensInFile(final String sourceFile, final Map<String, Map<String, String>> dataContext,
                                            final Framework framework) throws IOException {
         return replaceTokensInFile(new File(sourceFile), dataContext, framework);
     }
+
     /**
-     * Copies the source file to a temp file, replacing the @key.X@ tokens with the values from the data context
+     * Copies the source file to a temp file, replacing the @key.X@ tokens with the values from the
+     * data context
      *
      * @param sourceFile  source file
      * @param dataContext input data context
      * @param framework   the framework
      *
      * @return the token replaced temp file, or null if an error occurs.
+     *
+     * @deprecated use {@link #replaceTokensInFile(java.io.File, java.util.Map,
+     *             com.dtolabs.rundeck.core.common.Framework,
+     *             com.dtolabs.rundeck.core.execution.script.ScriptfileUtils.LineEndingStyle)}
      */
-    public static File replaceTokensInFile(final File sourceFile, final Map<String, Map<String, String>> dataContext,
-                                           final Framework framework) throws IOException {
+    public static File replaceTokensInFile(
+            final File sourceFile,
+            final Map<String, Map<String, String>> dataContext,
+            final Framework framework
+    )
+            throws IOException
+    {
+        return replaceTokensInFile(sourceFile, dataContext, framework, null);
+    }
+
+    /**
+     * Copies the source file to a temp file, replacing the @key.X@ tokens with the values from the
+     * data context
+     *
+     * @param sourceFile  source file
+     * @param dataContext input data context
+     * @param framework   the framework
+     * @param style       line ending style
+     *
+     * @return the token replaced temp file, or null if an error occurs.
+     */
+    public static File replaceTokensInFile(
+            final File sourceFile,
+            final Map<String, Map<String, String>> dataContext,
+            final Framework framework,
+            final ScriptfileUtils.LineEndingStyle style
+    ) throws IOException
+    {
+        return replaceTokensInFile(sourceFile, dataContext, framework, style, null);
+    }
+
+    /**
+     * Copies the source file to a destination file, replacing the @key.X@ tokens with the values
+     * from the data context
+     *
+     * @param sourceFile  source file
+     * @param dataContext input data context
+     * @param framework   the framework
+     * @param style       line ending style
+     * @param destination destination file, or null to create a new temp file
+     *
+     * @return the token replaced file, or null if an error occurs.
+     */
+    public static File replaceTokensInFile(
+            final File sourceFile,
+            final Map<String, Map<String, String>> dataContext,
+            final Framework framework,
+            final ScriptfileUtils.LineEndingStyle style,
+            final File destination
+    ) throws IOException
+    {
         //use ReplaceTokens to replace tokens within the file
         final Map<String, String> toks = flattenDataContext(dataContext);
-        final ReplaceTokenReader replaceTokens = new ReplaceTokenReader(new InputStreamReader(new FileInputStream
-                (sourceFile)), toks, true, '@', '@');
-        final File temp = ScriptfileUtils.writeScriptTempfile(framework, replaceTokens);
+        final ReplaceTokenReader replaceTokens = new ReplaceTokenReader(
+                new InputStreamReader(
+                        new FileInputStream
+                                (sourceFile)
+                ), toks, true, '@', '@'
+        );
+        final File temp;
+        if (null != destination) {
+            ScriptfileUtils.writeScriptFile(null, null, replaceTokens, style, destination);
+            temp = destination;
+        } else {
+            temp = ScriptfileUtils.writeScriptTempfile(framework, replaceTokens, style);
+        }
         ScriptfileUtils.setExecutePermissions(temp);
         return temp;
     }
@@ -378,14 +444,75 @@ public class DataContextUtils {
      * @param framework   the framework
      *
      * @return the token replaced temp file, or null if an error occurs.
+     * @deprecated use {@link #replaceTokensInScript(String, java.util.Map,
+     * com.dtolabs.rundeck.core.common.Framework,
+     * com.dtolabs.rundeck.core.execution.script.ScriptfileUtils.LineEndingStyle)}
      */
     public static File replaceTokensInScript(final String script, final Map<String, Map<String, String>> dataContext,
                                            final Framework framework) throws IOException {
+        return replaceTokensInScript(script, dataContext, framework, null);
+    }
+
+    /**
+     * Copies the source file to a temp file, replacing the @key.X@ tokens with the values from the
+     * data context
+     *
+     * @param script      source file path
+     * @param dataContext input data context
+     * @param framework   the framework
+     * @param style       line ending style
+     *
+     * @return the token replaced temp file, or null if an error occurs.
+     */
+    public static File replaceTokensInScript(
+            final String script,
+            final Map<String, Map<String, String>> dataContext,
+            final Framework framework,
+            final ScriptfileUtils.LineEndingStyle style
+    )
+            throws IOException
+    {
+        return replaceTokensInScript(script, dataContext, framework, style, null);
+    }
+
+    /**
+     * Copies the source file to a file, replacing the @key.X@ tokens with the values from the data
+     * context
+     *
+     * @param script      source file path
+     * @param dataContext input data context
+     * @param framework   the framework
+     * @param style       line ending style
+     * @param destination destination file, or null to create a temp file
+     *
+     * @return the token replaced temp file, or null if an error occurs.
+     */
+    public static File replaceTokensInScript(
+            final String script,
+            final Map<String, Map<String, String>> dataContext,
+            final Framework framework,
+            final ScriptfileUtils.LineEndingStyle style,
+            final File destination
+    )
+            throws IOException
+    {
+        if (null == script) {
+            throw new NullPointerException("script cannot be null");
+        }
+        if (null == framework) {
+            throw new NullPointerException("framework cannot be null");
+        }
         //use ReplaceTokens to replace tokens within the content
         final Reader read = new StringReader(script);
         final Map<String, String> toks = flattenDataContext(dataContext);
         final ReplaceTokenReader replaceTokens = new ReplaceTokenReader(read, toks, true, '@', '@');
-        final File temp = ScriptfileUtils.writeScriptTempfile(framework, replaceTokens);
+        final File temp;
+        if (null != destination) {
+            ScriptfileUtils.writeScriptFile(null, null, replaceTokens, style, destination);
+            temp = destination;
+        } else {
+            temp = ScriptfileUtils.writeScriptTempfile(framework, replaceTokens, style);
+        }
         ScriptfileUtils.setExecutePermissions(temp);
         return temp;
     }
@@ -397,14 +524,76 @@ public class DataContextUtils {
      * @param framework   the framework
      *
      * @return the token replaced temp file, or null if an error occurs.
+     * @deprecated use {@link #replaceTokensInStream(java.io.InputStream,
+     * java.util.Map,
+     * com.dtolabs.rundeck.core.common.Framework,
+     * com.dtolabs.rundeck.core.execution.script.ScriptfileUtils.LineEndingStyle)}
+     *
      */
     public static File replaceTokensInStream(final InputStream stream, final Map<String, Map<String, String>> dataContext,
                                            final Framework framework) throws IOException {
+        return replaceTokensInStream(stream, dataContext, framework, null);
+    }
+
+    /**
+     * Copies the source stream to a temp file, replacing the @key.X@ tokens with the values from the data context
+     *
+     * @param stream  source stream
+     * @param dataContext input data context
+     * @param framework   the framework
+     * @param style script file line ending style to use
+     *
+     * @return the token replaced temp file, or null if an error occurs.
+     */
+    public static File replaceTokensInStream(
+            final InputStream stream,
+            final Map<String, Map<String, String>> dataContext,
+            final Framework framework,
+            final ScriptfileUtils.LineEndingStyle style
+    )
+            throws IOException
+    {
+        return replaceTokensInStream(stream, dataContext, framework, style, null);
+    }
+
+    /**
+     * Copies the source stream to a temp file or specific destination, replacing the @key.X@ tokens
+     * with the values from the data context
+     *
+     * @param stream      source stream
+     * @param dataContext input data context
+     * @param framework   the framework
+     * @param style       script file line ending style to use
+     * @param destination destination file
+     *
+     * @return the token replaced temp file, or null if an error occurs.
+     */
+    public static File replaceTokensInStream(
+            final InputStream stream,
+            final Map<String, Map<String, String>> dataContext,
+            final Framework framework,
+            final ScriptfileUtils.LineEndingStyle style,
+            final File destination
+    )
+            throws IOException
+    {
 
         //use ReplaceTokens to replace tokens within the stream
         final Map<String, String> toks = flattenDataContext(dataContext);
-        final ReplaceTokenReader replaceTokens = new ReplaceTokenReader(new InputStreamReader(stream), toks, true, '@', '@');
-        final File temp = ScriptfileUtils.writeScriptTempfile(framework, replaceTokens);
+        final ReplaceTokenReader replaceTokens = new ReplaceTokenReader(
+                new InputStreamReader(stream),
+                toks,
+                true,
+                '@',
+                '@'
+        );
+        final File temp;
+        if (null != destination) {
+            ScriptfileUtils.writeScriptFile(null, null, replaceTokens, style, destination);
+            temp = destination;
+        } else {
+            temp = ScriptfileUtils.writeScriptTempfile(framework, replaceTokens, style);
+        }
         ScriptfileUtils.setExecutePermissions(temp);
         return temp;
     }
