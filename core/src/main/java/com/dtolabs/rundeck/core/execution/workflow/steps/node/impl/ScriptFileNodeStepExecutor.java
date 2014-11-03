@@ -79,29 +79,36 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
                 filename,
                 script.getFileExtension()
         );
+        final File temp;
         try {
             if (null != script.getScript()) {
-                filepath = executionService.fileCopyScriptContent(
+                //expand tokens in the script
+                temp = BaseFileCopier.writeScriptTempFile(
                         context,
+                        null,
+                        null,
                         script.getScript(),
-                        node,
-                        filepath
+                        node
                 );
             } else if (null != script.getServerScriptFilePath()) {
-                filepath = executionService.fileCopyFile(
-                        context,
-                        new File(script.getServerScriptFilePath()),
-                        node,
-                        filepath
-                );
+                //DON'T expand tokens in the script
+                temp = new File(script.getServerScriptFilePath());
             } else {
-                filepath = executionService.fileCopyFileStream(
+                //expand tokens in the script
+                temp = BaseFileCopier.writeScriptTempFile(
                         context,
+                        null,
                         script.getScriptAsStream(),
-                        node,
-                        filepath
+                        null,
+                        node
                 );
             }
+            filepath = executionService.fileCopyFile(
+                    context,
+                    temp,
+                    node,
+                    filepath
+            );
         } catch (FileCopierException e) {
             throw new NodeStepException(
                     e.getMessage(),
