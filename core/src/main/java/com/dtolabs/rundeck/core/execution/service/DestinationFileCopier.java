@@ -7,7 +7,7 @@ import java.io.File;
 import java.io.InputStream;
 
 /**
- * $INTERFACE is ... User: greg Date: 8/23/13 Time: 6:07 PM
+ * Copy files to a specific destination on a remote node.
  */
 public interface DestinationFileCopier extends FileCopier {
 
