@@ -92,6 +92,7 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
                 );
             } else if (null != script.getServerScriptFilePath()) {
                 //DON'T expand tokens in the script
+                //TODO: make token expansion optional for local file sources
                 temp = new File(script.getServerScriptFilePath());
             } else {
                 //expand tokens in the script
