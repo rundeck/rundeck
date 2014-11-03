@@ -79,17 +79,11 @@ public class LocalFileCopier extends BaseFileCopier implements FileCopier, Desti
             final String destination
     ) throws FileCopierException
     {
-
-        //write the temp file and replace tokens in the script with values from the dataContext
-        return writeScriptTempFile(
-                context,
+        return BaseFileCopier.writeLocalFile(
                 scriptfile,
                 input,
                 script,
-                node,
-                null != destination ?
-                        new File(destination) :
-                        null
+                new File(destination)
         ).getAbsolutePath();
     }
 

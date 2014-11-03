@@ -35,7 +35,6 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import org.apache.tools.ant.BuildException;
@@ -46,7 +45,6 @@ import org.apache.tools.ant.taskdefs.Sequential;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.Arrays;
 
 
 /**
@@ -107,13 +105,18 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
 
     private String copyFile(final ExecutionContext context, final File scriptfile, final InputStream input,
                             final String script, final INodeEntry node) throws FileCopierException {
-        return copyFile(context, scriptfile, input, script, node, null, true);
+        return copyFile(context, scriptfile, input, script, node, null);
 
     }
 
-    private String copyFile(final ExecutionContext context, final File scriptfile, final InputStream input,
-            final String script, final INodeEntry node, final String destinationPath,
-            final boolean expandTokens) throws FileCopierException {
+    private String copyFile(
+            final ExecutionContext context,
+            final File scriptfile,
+            final InputStream input,
+            final String script,
+            final INodeEntry node,
+            final String destinationPath
+    ) throws FileCopierException {
 
         Project project = new Project();
         final Sequential seq = new Sequential();
@@ -126,9 +129,16 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
         }else {
             remotefile = destinationPath;
         }
-        //write the temp file and replace tokens in the script with values from the dataContext
-        final File localTempfile = expandTokens ? writeScriptTempFile(context, scriptfile, input, script,
-                node) : writeTempFile(context, scriptfile, input, script);
+        //write to a local temp file or use the input file
+        final File localTempfile =
+                null != scriptfile ?
+                        scriptfile :
+                        writeTempFile(
+                                context,
+                                scriptfile,
+                                input,
+                                script
+                        );
 
 
 //        logger.debug("temp file for node " + node.getNodename() + ": " + temp.getAbsolutePath() + ",
@@ -191,16 +201,16 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
 
     public String copyFileStream(ExecutionContext context, InputStream input, INodeEntry node,
             String destination) throws FileCopierException {
-        return copyFile(context, null, input, null, node, destination, false);
+        return copyFile(context, null, input, null, node, destination);
     }
 
     public String copyFile(ExecutionContext context, File file, INodeEntry node,
             String destination) throws FileCopierException {
-        return copyFile(context, file, null, null, node, destination, false);
+        return copyFile(context, file, null, null, node, destination);
     }
 
     public String copyScriptContent(ExecutionContext context, String script, INodeEntry node,
             String destination) throws FileCopierException {
-        return copyFile(context, null, null, script, node, destination, false);
+        return copyFile(context, null, null, script, node, destination);
     }
 }
