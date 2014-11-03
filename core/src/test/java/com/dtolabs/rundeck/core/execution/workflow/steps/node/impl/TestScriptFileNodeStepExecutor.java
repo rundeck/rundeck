@@ -226,6 +226,90 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(test1, testexec.testNode.get(2));
         }
     }
+    /**
+     * Inline script content is token-expanded
+     */
+    public void testInterpretCommandScriptContent_expandTokens() throws Exception {
+        final Framework frameworkInstance = getFrameworkInstance();
+        ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(getFrameworkInstance());
+
+        //setup nodeexecutor for local node
+        multiTestNodeExecutor testexec = new multiTestNodeExecutor();
+        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(getFrameworkInstance());
+        service.registerInstance("local", testexec);
+
+        testFileCopier testcopier = new testFileCopier();
+        FileCopierService copyservice = FileCopierService.getInstanceForFramework(getFrameworkInstance());
+        copyservice.registerInstance("local", testcopier);
+
+        //execute command interpreter on local node
+        final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
+        test1.setOsFamily("unix");
+        test1.getAttributes().put("bingo","fifty");
+        final StepExecutionContext context = ExecutionContextImpl.builder()
+            .frameworkProject(PROJ_NAME)
+            .framework(frameworkInstance)
+            .user("blah")
+            .threadCount(1)
+                .dataContext(DataContextUtils.addContext("option",new HashMap<String, String>(){{
+                    put("doodad","nifty");
+                }},null))
+            .build();
+        final String testScript = "a script\na line @node.bingo@\nanother @option.doodad@\nagain @option.dne@\n";
+        final String expectScript = "a script\na line fifty\nanother nifty\nagain \n";
+
+        ScriptFileCommand command = new ScriptFileCommandBase()  {
+            public String getScript() {
+                return testScript;
+            }
+        };
+        {
+            final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>();
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            testexec.testResult=nodeExecutorResults;
+            testcopier.testResult="/test/file/path";
+            final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
+
+            assertNotNull(interpreterResult);
+            assertTrue(interpreterResult.isSuccess());
+            assertEquals(interpreterResult, nodeExecutorResults.get(1));
+
+            assertEquals(context, testcopier.testContext);
+            assertNotNull(testScript, testcopier.testFile);
+            assertEquals(expectScript, getContentString(testcopier.testFile));
+            assertEquals(test1, testcopier.testNode);
+
+            //test nodeexecutor was called twice
+            assertEquals(3, testexec.index);
+            //first call is chmod +x filepath
+            final String[] strings = testexec.testCommand.get(0);
+            assertEquals(3, strings.length);
+            assertEquals("chmod", strings[0]);
+            assertEquals("+x", strings[1]);
+            assertEquals("/test/file/path", strings[2]);
+//            assertEquals(context, testexec.testContext.get(0));
+            assertEquals(test1, testexec.testNode.get(0));
+
+            //second call is to exec the filepath
+            final String[] strings2 = testexec.testCommand.get(1);
+            assertEquals(1, strings2.length);
+            assertEquals(strings2[0], strings[2]);
+            assertEquals("/test/file/path", strings2[0]);
+//            assertEquals(context, testexec.testContext.get(1));
+            assertEquals(test1, testexec.testNode.get(1));
+
+            //second call is to exec the filepath
+            final String[] strings3 = testexec.testCommand.get(2);
+            assertEquals(3, strings3.length);
+            assertEquals("rm", strings3[0]);
+            assertEquals("-f", strings3[1]);
+            assertEquals("/test/file/path", strings3[2]);
+//            assertEquals(context, testexec.testContext.get(1));
+            assertEquals(test1, testexec.testNode.get(2));
+        }
+    }
 
     /**
      * Copy to unix target with DOS source line endings, expect unix line endings
@@ -620,6 +704,109 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(test1, testexec.testNode.get(2));
         }
     }
+    /**
+     * Use script file specifier in execution item
+     */
+    public void testFile_notTokenExpanded() throws Exception {
+        final Framework frameworkInstance = getFrameworkInstance();
+        ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
+
+        //setup nodeexecutor for local node
+        multiTestNodeExecutor testexec = new multiTestNodeExecutor();
+        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(getFrameworkInstance());
+        service.registerInstance("local", testexec);
+
+        testFileCopier testcopier = new testFileCopier();
+        FileCopierService copyservice = FileCopierService.getInstanceForFramework(getFrameworkInstance());
+        copyservice.registerInstance("local", testcopier);
+
+        //execute command interpreter on local node
+        final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
+        test1.setOsFamily("unix");
+        test1.getAttributes().put("bingo", "fifty");
+
+        final StepExecutionContext context = ExecutionContextImpl.builder()
+            .frameworkProject(PROJ_NAME)
+            .framework(frameworkInstance)
+            .user("blah")
+            .dataContext(
+                    DataContextUtils.addContext(
+                            "option", new HashMap<String, String>() {{
+                        put("doodad", "nifty");
+                    }}, null
+                    )
+            )
+            .build();
+        final File testScriptFile = File.createTempFile("Testfile", "tmp");
+
+        final String testScript =
+                "a script\n" +
+                "a line @node.bingo@\n" +
+                "another @option.doodad@\n" +
+                "again @option.dne@\n";
+        final String expectScript = "a script\n" +
+                                    "a line @node.bingo@\n" +
+                                    "another @option.doodad@\n" +
+                                    "again @option.dne@\n";
+        //write tofile
+        FileOutputStream fileOutputStream = new FileOutputStream(testScriptFile);
+        fileOutputStream.write(testScript.getBytes());
+        fileOutputStream.close();
+
+        ScriptFileCommand command = new ScriptFileCommandBase() {
+
+            public String getServerScriptFilePath() {
+                return testScriptFile.getAbsolutePath();
+            }
+
+        };
+        {
+            final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>();
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            testexec.testResult = nodeExecutorResults;
+            testcopier.testResult = "/test/file/path";
+            final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
+
+            assertNotNull(interpreterResult);
+            assertTrue(interpreterResult.isSuccess());
+            assertEquals(interpreterResult, nodeExecutorResults.get(1));
+
+            assertEquals(context, testcopier.testContext);
+            assertNull(testcopier.testScript);
+            assertNull(testcopier.testInput);
+            assertEquals(testScriptFile.getAbsolutePath(), testcopier.testFile.getAbsolutePath());
+            assertEquals(expectScript, getContentString(testcopier.testFile));
+            assertEquals(test1, testcopier.testNode);
+
+            //test nodeexecutor was called twice
+            assertEquals(3, testexec.index);
+            //first call is chmod +x filepath
+            final String[] strings = testexec.testCommand.get(0);
+            assertEquals(3, strings.length);
+            assertEquals("chmod", strings[0]);
+            assertEquals("+x", strings[1]);
+            assertEquals("/test/file/path", strings[2]);
+//            assertEquals(context, testexec.testContext.get(0));
+            assertEquals(test1, testexec.testNode.get(0));
+
+            //second call is to exec the filepath
+            final String[] strings2 = testexec.testCommand.get(1);
+            assertEquals(1, strings2.length);
+            assertEquals(strings2[0], strings[2]);
+            assertEquals("/test/file/path", strings2[0]);
+//            assertEquals(context, testexec.testContext.get(1));
+            assertEquals(test1, testexec.testNode.get(1));
+            //second call is to exec the filepath
+            final String[] strings3 = testexec.testCommand.get(2);
+            assertEquals(3, strings3.length);
+            assertEquals("rm", strings3[0]);
+            assertEquals("-f", strings3[1]);
+            assertEquals("/test/file/path", strings3[2]);
+            assertEquals(test1, testexec.testNode.get(2));
+        }
+    }
 
     /**
      * Use script file specifier in execution item
@@ -889,6 +1076,102 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertNull(testcopier.testScript);
             assertNotNull(testcopier.testFile);
             assertEquals("a test script\n", getContentString(testcopier.testFile));
+            assertEquals(test1, testcopier.testNode);
+
+            //test nodeexecutor was called twice
+            assertEquals(3, testexec.index);
+            //first call is chmod +x filepath
+            final String[] strings = testexec.testCommand.get(0);
+            assertEquals(3, strings.length);
+            assertEquals("chmod", strings[0]);
+            assertEquals("+x", strings[1]);
+            assertEquals("/test/file/path", strings[2]);
+//            assertEquals(context, testexec.testContext.get(0));
+            assertEquals(test1, testexec.testNode.get(0));
+
+            //second call is to exec the filepath
+            final String[] strings2 = testexec.testCommand.get(1);
+            assertEquals(1, strings2.length);
+            assertEquals(strings2[0], strings[2]);
+            assertEquals("/test/file/path", strings2[0]);
+//            assertEquals(context, testexec.testContext.get(1));
+            assertEquals(test1, testexec.testNode.get(1));
+            //first call is chmod +x filepath
+            final String[] strings3 = testexec.testCommand.get(2);
+            assertEquals(3, strings3.length);
+            assertEquals("rm", strings3[0]);
+            assertEquals("-f", strings3[1]);
+            assertEquals("/test/file/path", strings3[2]);
+//            assertEquals(context, testexec.testContext.get(0));
+            assertEquals(test1, testexec.testNode.get(2));
+        }
+    }
+    /**
+     * Test inputstream
+     */
+    public void testInputStream_expandTokens() throws Exception {
+        final Framework frameworkInstance = getFrameworkInstance();
+        ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
+
+        //setup nodeexecutor for local node
+        multiTestNodeExecutor testexec = new multiTestNodeExecutor();
+        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(getFrameworkInstance());
+        service.registerInstance("local", testexec);
+
+        testFileCopier testcopier = new testFileCopier();
+        FileCopierService copyservice = FileCopierService.getInstanceForFramework(getFrameworkInstance());
+        copyservice.registerInstance("local", testcopier);
+
+        //execute command interpreter on local node
+        final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
+        test1.setOsFamily("unix");
+        test1.getAttributes().put("bingo", "fifty");
+
+        final StepExecutionContext context = ExecutionContextImpl.builder()
+            .frameworkProject(PROJ_NAME)
+            .framework(frameworkInstance)
+            .user("blah")
+            .dataContext(
+                    DataContextUtils.addContext(
+                            "option",
+                            new HashMap<String, String>() {{
+                                put("doodad", "nifty");
+                            }},
+                            null
+                    )
+            )
+            .build();
+
+        final String testScript =
+                "a script\na line @node.bingo@\nanother @option.doodad@\nagain @option.dne@\n";
+        final String expectScript = "a script\na line fifty\nanother nifty\nagain \n";
+        final InputStream inputStream = new ByteArrayInputStream(testScript.getBytes());
+
+
+        ScriptFileCommand command = new ScriptFileCommandBase() {
+
+            public InputStream getScriptAsStream() {
+                return inputStream;
+            }
+
+        };
+        {
+            final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>();
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            testexec.testResult = nodeExecutorResults;
+            testcopier.testResult = "/test/file/path";
+            final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
+
+            assertNotNull(interpreterResult);
+            assertTrue(interpreterResult.isSuccess());
+            assertEquals(interpreterResult, nodeExecutorResults.get(1));
+
+            assertEquals(context, testcopier.testContext);
+            assertNull(testcopier.testScript);
+            assertNotNull(testcopier.testFile);
+            assertEquals(expectScript, getContentString(testcopier.testFile));
             assertEquals(test1, testcopier.testNode);
 
             //test nodeexecutor was called twice
