@@ -39,6 +39,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 
 import java.io.File;
+import java.io.InputStream;
 
 
 /**
@@ -60,50 +61,73 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
             NodeStepExecutionItem item,
             INodeEntry node
     )
-        throws NodeStepException
+    throws NodeStepException
     {
+        ScriptFileCommand command = (ScriptFileCommand) item;
+        return executeScriptFile(
+                context,
+                node,
+                command.getScript(),
+                command.getServerScriptFilePath(),
+                command.getScriptAsStream(),
+                command.getFileExtension(),
+                command.getArgs(),
+                command.getScriptInterpreter(),
+                command.getInterpreterArgsQuoted(),
+                framework.getExecutionService()
+        );
+    }
 
-        final ScriptFileCommand script = (ScriptFileCommand) item;
-        final ExecutionService executionService = framework.getExecutionService();
+    /**
+     * Execute a script on a remote node
+     * @param context
+     * @param node
+     * @param scriptString
+     * @param serverScriptFilePath
+     * @param scriptAsStream
+     * @param fileExtension
+     * @param args
+     * @param scriptInterpreter
+     * @param quoted
+     * @param executionService
+     * @return result
+     * @throws NodeStepException
+     */
+    public static NodeStepResult executeScriptFile(
+            StepExecutionContext context,
+            INodeEntry node,
+            String scriptString,
+            String serverScriptFilePath,
+            InputStream scriptAsStream,
+            String fileExtension,
+            String[] args,
+            String scriptInterpreter,
+            boolean quoted,
+            final ExecutionService executionService
+    ) throws NodeStepException
+    {
         final String filename;
 
-        if (null != script.getScript()) {
+        if (null != scriptString) {
             filename = "dispatch-script.tmp";
-        } else if (null != script.getServerScriptFilePath()) {
-            filename = new File(script.getServerScriptFilePath()).getName();
+        } else if (null != serverScriptFilePath) {
+            filename = new File(serverScriptFilePath).getName();
         } else {
             filename = "dispatch-script.tmp";
         }
         String filepath = BaseFileCopier.generateRemoteFilepathForNode(
                 node,
                 filename,
-                script.getFileExtension()
+                fileExtension
         );
-        final File temp;
         try {
-            if (null != script.getScript()) {
-                //expand tokens in the script
-                temp = BaseFileCopier.writeScriptTempFile(
-                        context,
-                        null,
-                        null,
-                        script.getScript(),
-                        node
-                );
-            } else if (null != script.getServerScriptFilePath()) {
-                //DON'T expand tokens in the script
-                //TODO: make token expansion optional for local file sources
-                temp = new File(script.getServerScriptFilePath());
-            } else {
-                //expand tokens in the script
-                temp = BaseFileCopier.writeScriptTempFile(
-                        context,
-                        null,
-                        script.getScriptAsStream(),
-                        null,
-                        node
-                );
-            }
+            File temp = writeScriptToTempFile(
+                    context,
+                    node,
+                    scriptString,
+                    serverScriptFilePath,
+                    scriptAsStream
+            );
             filepath = executionService.fileCopyFile(
                     context,
                     temp,
@@ -123,11 +147,59 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
                 context,
                 context.getFramework(),
                 node,
-                script.getArgs(),
+                args,
                 filepath,
-                script.getScriptInterpreter(),
-                script.getInterpreterArgsQuoted()
+                scriptInterpreter,
+                quoted
         );
+    }
+
+    /**
+     * Copy the script input to a temp file and expand embedded tokens,
+     * if it is a string or inputstream.  If it is a local file,
+     * use the original without modification
+     *
+     * @param context
+     * @param node
+     * @param scriptString
+     * @param serverScriptFilePath
+     * @param scriptAsStream
+     * @return
+     * @throws FileCopierException
+     */
+    public static File writeScriptToTempFile(
+            StepExecutionContext context,
+            INodeEntry node,
+            String scriptString,
+            String serverScriptFilePath,
+            InputStream scriptAsStream
+    ) throws FileCopierException
+    {
+        File temp;
+        if (null != scriptString) {
+            //expand tokens in the script
+            temp = BaseFileCopier.writeScriptTempFile(
+                    context,
+                    null,
+                    null,
+                    scriptString,
+                    node
+            );
+        } else if (null != serverScriptFilePath) {
+            //DON'T expand tokens in the script
+            //TODO: make token expansion optional for local file sources
+            temp = new File(serverScriptFilePath);
+        } else {
+            //expand tokens in the script
+            temp = BaseFileCopier.writeScriptTempFile(
+                    context,
+                    null,
+                    scriptAsStream,
+                    null,
+                    node
+            );
+        }
+        return temp;
     }
 
     /**
@@ -182,6 +254,7 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
      * @param filepath              the remote path for the script
      * @param scriptInterpreter     interpreter used to invoke the script
      * @param interpreterargsquoted if true, pass the file and script args as a single argument to the interpreter
+     * @param removeFile            if true, remove the file after execution
      */
     public static NodeStepResult executeRemoteScript(final ExecutionContext context,
                                                      final Framework framework,
