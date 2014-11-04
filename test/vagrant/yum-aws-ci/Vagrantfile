@@ -19,8 +19,12 @@ Vagrant.configure("2") do |config|
 
 
   config.vm.provider :aws do |aws, override|
-    aws.access_key_id = ENV['AWS_ACCESS_KEY']
-    aws.secret_access_key = ENV['AWS_SECRET_KEY']
+    if ENV['AWS_USE_IAM_PROFILE']
+      aws.use_iam_profile = true
+    else
+      aws.access_key_id = ENV['AWS_ACCESS_KEY']
+      aws.secret_access_key = ENV['AWS_SECRET_KEY']
+    end
 
     aws.keypair_name = ENV['AWS_KEYPAIR_NAME']#"build-ci"
 
