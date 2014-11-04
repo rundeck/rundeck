@@ -97,13 +97,40 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         URLDownloadFailure
     }
 
-    public NodeStepResult executeNodeStep(StepExecutionContext context, NodeStepExecutionItem item, INodeEntry node) throws
-                                                                                                         NodeStepException {
+    public NodeStepResult executeNodeStep(
+            final StepExecutionContext context,
+            final NodeStepExecutionItem item,
+            final INodeEntry node
+    ) throws NodeStepException
+    {
+        final ScriptURLCommandExecutionItem script = (ScriptURLCommandExecutionItem) item;
+        File destinationTempFile = downloadURLToTempFile(context, node, script);
+        if (!USE_CACHE) {
+            destinationTempFile.deleteOnExit();
+        }
+        return ScriptFileNodeStepExecutor.executeScriptFile(
+                context,
+                node,
+                null,
+                destinationTempFile.getAbsolutePath(),
+                null,
+                null,
+                script.getArgs(),
+                script.getScriptInterpreter(),
+                script.getInterpreterArgsQuoted(),
+                framework.getExecutionService()
+        );
+    }
+
+    private File downloadURLToTempFile(
+            final StepExecutionContext context,
+            final INodeEntry node,
+            final ScriptURLCommandExecutionItem script
+    ) throws NodeStepException
+    {
         if (!cacheDir.isDirectory() && !cacheDir.mkdirs()) {
             throw new RuntimeException("Unable to create cachedir: " + cacheDir.getAbsolutePath());
         }
-        final ScriptURLCommandExecutionItem script = (ScriptURLCommandExecutionItem) item;
-        final ExecutionService executionService = framework.getExecutionService();
         //create node context for node and substitute data references in command
         final Map<String, Map<String, String>> nodeDataContext =
             DataContextUtils.addContext("node", DataContextUtils.nodeData(node), context.getDataContext());
@@ -156,41 +183,7 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
                     "Error requesting URL script: " + cleanUrl + ": " + e.getMessage(), e);
             }
         }
-
-        final String filepath; //result file path
-        try {
-            filepath = executionService.fileCopyFile(context, destinationTempFile, node);
-        } catch (FileCopierException e) {
-            throw new NodeStepException(e.getMessage(), e, StepFailureReason.IOFailure, node.getNodename());
-        }
-
-        /**
-         * TODO: Avoid this horrific hack. Discover how to get SCP task to preserve the execute bit.
-         */
-        if (!"windows".equalsIgnoreCase(node.getOsFamily())) {
-            //perform chmod+x for the file
-
-            final NodeExecutorResult nodeExecutorResult = framework.getExecutionService().executeCommand(
-                context, new String[]{"chmod", "+x", filepath}, node);
-            if (!nodeExecutorResult.isSuccess()) {
-                return nodeExecutorResult;
-            }
-        }
-
-        final String[] args = script.getArgs();
-        final String scriptInterpreter = script.getScriptInterpreter();
-        final boolean interpreterargsquoted = script.getInterpreterArgsQuoted();
-
-        //build arg list to execute the script
-        ExecArgList scriptArgList = ScriptExecUtil.createScriptArgList(
-                filepath, null,
-                args,
-                scriptInterpreter,
-                interpreterargsquoted
-        );
-
-        return framework.getExecutionService().executeCommand(context, scriptArgList, node);
-        //TODO: remove remote temp file after exec?
+        return destinationTempFile;
     }
 
     public static final Converter<String, String> urlPathEncoder = new Converter<String, String>() {
