@@ -83,7 +83,7 @@ public class LocalFileCopier extends BaseFileCopier implements FileCopier, Desti
                 scriptfile,
                 input,
                 script,
-                new File(destination)
+                null != destination ? new File(destination) : null
         ).getAbsolutePath();
     }
 
