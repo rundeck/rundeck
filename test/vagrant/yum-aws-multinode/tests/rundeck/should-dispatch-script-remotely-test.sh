@@ -24,8 +24,12 @@ it_should_dispatch_script_remotely() {
     IFS=$'\n\t'
 
     # Run the uname command across the nodes tagged 'adhoc'. Should be two nodes.
-    su - $RUNDECK_USER -c "dispatch -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE' -s /tests/rundeck/test-dispatch-script.sh -- arg1 arg2" > test.output
-
+    IFS=$'\n' read -rd '' -a rawout < <(su - $RUNDECK_USER -c "dispatch -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE' -s /tests/rundeck/test-dispatch-script.sh -- arg1 arg2")
+    test "${rawout[0]}" = "Succeeded queueing adhoc"
+    # Create an array by slicing the lines with the command ouput.
+    IFS=$'\n' read -rd '' -a cmdout < <(printf "%s\n" "${rawout[@]:2:$size}")
+    printf "%s\n" "${cmdout[@]}" > test.output
+    
     cat >expected.output <<END
 This is test-dispatch-script.sh
 On node $REMOTE_NODE $REMOTE_NODE
@@ -45,10 +49,15 @@ END
 
 it_should_dispatch_url_remotely() {
     # Parse lines into array elements.
-    IFS=$'\n\t'
+    IFS=$'\n'
 
     # Run the uname command across the nodes tagged 'adhoc'. Should be two nodes.
-    su - $RUNDECK_USER -c "dispatch -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE' -u file:/tests/rundeck/test-dispatch-script.sh -- arg1 arg2" > test.output
+    IFS=$'\n' read -rd '' -a rawout < <(su - $RUNDECK_USER -c "dispatch -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE' -u file:/tests/rundeck/test-dispatch-script.sh -- arg1 arg2")
+
+    test "${rawout[0]}" = "Succeeded queueing adhoc"
+    # Create an array by slicing the lines with the command ouput.
+    IFS=$'\n' read -rd '' -a cmdout < <(printf "%s\n" "${rawout[@]:2:$size}")
+    printf "%s\n" "${cmdout[@]}" > test.output
 
     cat >expected.output <<END
 This is test-dispatch-script.sh
@@ -58,8 +67,8 @@ With args: arg1 arg2
 END
     set +e
     diff expected.output test.output
-    set -e
     result=$?
+    set -e
     rm expected.output test.output
     if ! $result ; then
         echo "FAIL: output differed from expected"
