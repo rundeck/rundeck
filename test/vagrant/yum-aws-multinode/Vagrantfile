@@ -18,10 +18,10 @@ Vagrant.configure("2") do |config|
 
 
 
-  REMOTE1_IP="172.31.1.4"
+  REMOTE1_IP="172.31.32.201"
   REMOTE1_NODENAME="remote1"
 
-  RUNDECK_IP="172.31.1.2"
+  RUNDECK_IP="172.31.32.200"
   RUNDECK_NODENAME="rundeck"
 
   RUNDECK_USER="rundeck"
