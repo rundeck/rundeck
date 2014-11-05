@@ -203,46 +203,11 @@ The [SSH Key storage](ssh-key-storage.html) mechanism is configured within this 
 
 #### Notification email settings
 
-The URL and From: address used in email notifications are managed via the settings located in the rundeck-config.properties file.
-
-The two properties are:
-
-* grails.serverURL
-* grails.mail.default.from
-
-Here's an example:
-
-    grails.serverURL=https://node.fully.qualified.domain.name:4443
-    grails.mail.default.from=deployer@domain.com
+See [Email Settings: Notification email settings](email-settings.html#notification-email-settings)
 
 #### Custom Email Templates
 
-You can define these properties to customize the email notifications. Each property can be defined for a specific Trigger, or for the general case.  Available triggers are: `success`,`failure`, and `start`:
-
-    # trigger-specific templating
-    rundeck.mail.[trigger].template.subject=[custom subject line]
-    rundeck.mail.[trigger].template.file=[path to template file]
-    rundeck.mail.[trigger].template.log.formatted=true/false (if true, prefix log lines with context information)
-
-    # apply to any triggers not specified
-    rundeck.mail.template.subject=[Default subject line]
-    rundeck.mail.template.file=[path to template file]
-    rundeck.mail.template.log.formatted=true/false (if true, prefix log lines with context information)
-
-If a template filepath ends with `.md` or `.markdown`, then it will be interpreted as a Markdown formatted template.  Otherwise it is expected that the template file contains HTML.
-
-The Subject line, filepath, and file contents can all contain embedded property references of the form `${group.key}`.  The available properties are mostly the same as those available for Notification Plugins, including the `execution.*` and `job.*` values.  See [Plugin Development - Notification Plugin - Execution Data][].
-
-[Plugin Development - Notification Plugin - Execution Data]: ../developer/notification-plugin.html#execution-data
-
-The "Context Variables" values used within the execution are available just as they are in the execution, so options would be available as `${option.name}`.
-
-In addition these properties are defined:
-
-* `rundeck.href`: URL to the Rundeck server
-* `notification.trigger`: Trigger name
-* `notification.eventStatus`: A string indicating the combination of execution status, and notification trigger, suitable for an email subject line, such as "KILLED", "FAILURE", "STARTING", "SUCCESS".
-* `execution.projectHref`: URL to the Project within Rundeck.
+See [Email Settings: Custom Email Templates](email-settings.html#custom-email-templates)
 
 #### Execution finalize retry settings
 
@@ -276,3 +241,15 @@ Servlet names are:
 All of the servlets are enabled by default.
 
 [Resource Model Sources]: ../administration/managing-node-sources.html
+
+#### Groovy config format
+You can change you rundeck-config.properties to a rundeck-config.groovy, but you will need to modify the syntax to be groovy, and you will need to point rundeck at the new filename when you start up rundeck:
+
+Launcher:
+
+    java -jar -Drundeck.config.name=rundeck-config.groovy rundeck-launcher.jar
+
+RPM/DEB: Modify the RDECK_JVM variable in /etc/rundeck/profile, and set the "-Drundeck.config.name=/etc/rundeck/rundeck-config.groovy" entry to point to the correct file.
+
+
+
