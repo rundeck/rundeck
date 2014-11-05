@@ -26,6 +26,7 @@ Vagrant.configure("2") do |config|
 
   RUNDECK_USER="rundeck"
   RDECK_BASE="/var/lib/rundeck"
+  RDECK_PROJECTS="/var/rundeck/projects"
   PROJECT_NAME="test"
 
 
@@ -35,9 +36,9 @@ Vagrant.configure("2") do |config|
     rundeck.vm.provision :shell, :path => "provisioning/rundeck/copy-sshkey.sh", 
       :args => "#{RUNDECK_USER} #{RDECK_BASE}/.ssh /keys id_rsa"
     rundeck.vm.provision :shell, :path => "provisioning/rundeck/create-project.sh", 
-      :args => "#{RDECK_BASE} #{PROJECT_NAME} #{RUNDECK_USER} #{RDECK_BASE}/projects/#{PROJECT_NAME}/etc/resources"
+      :args => "#{RDECK_PROJECTS} #{PROJECT_NAME} #{RUNDECK_USER} #{RDECK_PROJECTS}/#{PROJECT_NAME}/etc/resources"
     rundeck.vm.provision :shell, :path => "provisioning/rundeck/add-nodes.sh", 
-      :args => "#{RDECK_BASE}/projects/#{PROJECT_NAME}/etc/resources #{RUNDECK_USER} remote #{REMOTE1_NODENAME} #{REMOTE1_IP}"
+      :args => "#{RDECK_PROJECTS}/#{PROJECT_NAME}/etc/resources #{RUNDECK_USER} remote #{REMOTE1_NODENAME} #{REMOTE1_IP}"
     
     #Run tests
     rundeck.vm.provision :shell, 
