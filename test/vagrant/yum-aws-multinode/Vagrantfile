@@ -31,17 +31,17 @@ Vagrant.configure("2") do |config|
 
   config.vm.define :rundeck do |rundeck|
     rundeck.vm.hostname = "#{RUNDECK_NODENAME}"
-    rundeck.vm.provision :shell, :path => "../provisioning/rundeck/install.sh", :args=> "#{repo_url}"
-    rundeck.vm.provision :shell, :path => "../provisioning/rundeck/copy-sshkey.sh", 
+    rundeck.vm.provision :shell, :path => "provisioning/rundeck/install.sh", :args=> "#{repo_url}"
+    rundeck.vm.provision :shell, :path => "provisioning/rundeck/copy-sshkey.sh", 
       :args => "#{RUNDECK_USER} #{RDECK_BASE}/.ssh /keys id_rsa"
-    rundeck.vm.provision :shell, :path => "../provisioning/rundeck/create-project.sh", 
+    rundeck.vm.provision :shell, :path => "provisioning/rundeck/create-project.sh", 
       :args => "#{RDECK_BASE} #{PROJECT_NAME} #{RUNDECK_USER} #{RDECK_BASE}/projects/#{PROJECT_NAME}/etc/resources"
-    rundeck.vm.provision :shell, :path => "../provisioning/rundeck/add-nodes.sh", 
+    rundeck.vm.provision :shell, :path => "provisioning/rundeck/add-nodes.sh", 
       :args => "#{RDECK_BASE}/projects/#{PROJECT_NAME}/etc/resources #{RUNDECK_USER} remote #{REMOTE1_NODENAME} #{REMOTE1_IP}"
     
     #Run tests
     rundeck.vm.provision :shell, 
-      :path => "../tests/rundeck/test-all.sh", 
+      :path => "tests/rundeck/test-all.sh", 
       :args => "--rdeck-base #{RDECK_BASE} --rundeck-project #{PROJECT_NAME} --rundeck-user #{RUNDECK_USER} --remote-node #{REMOTE1_NODENAME}"
 
 
@@ -72,8 +72,8 @@ Vagrant.configure("2") do |config|
   end
   config.vm.define :remote1 do |remote1|
     remote1.vm.hostname = "#{REMOTE1_NODENAME}"
-    remote1.vm.provision :shell, :path => "../provisioning/general/create-user.sh", :args => "#{RUNDECK_USER} #{RDECK_BASE}"    
-    remote1.vm.provision :shell, :path => "../provisioning/general/add-sshuser.sh", :args => "#{RUNDECK_USER} #{SSH_PUB_KEY}"
+    remote1.vm.provision :shell, :path => "provisioning/general/create-user.sh", :args => "#{RUNDECK_USER} #{RDECK_BASE}"    
+    remote1.vm.provision :shell, :path => "provisioning/general/add-sshuser.sh", :args => "#{RUNDECK_USER} #{SSH_PUB_KEY}"
 
 
     remote1.vm.provider :aws do |aws, override|
