@@ -104,11 +104,16 @@ main(){
             provxit=$xit
         fi
     done
-    for vmname in "${ARGS[@]}" ; do 
-        set +e
-        vagrant_destroy $vmname
-        set -e
-    done
+    local skip=${SKIP_DESTROY:-false}
+    if [ "${skip}" != "true" ] ; then
+        for vmname in "${ARGS[@]}" ; do 
+            set +e
+            vagrant_destroy $vmname
+            set -e
+        done
+    else
+        echo "Skipping ec2 instance destroy for ${ARGS[@]}"
+    fi
     exit $provxit
 }
 main
