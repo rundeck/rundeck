@@ -70,8 +70,8 @@ run_vagrant_provision_loop(){
     exit $xit
 }
 pre_run(){
-    if [ -x pre-run-vagrant-test.sh ] ; then
-        sh pre-run-vagrant-test.sh `pwd`/keys
+    if [ -f ./pre-run-vagrant-test.sh ] ; then
+        bash ./pre-run-vagrant-test.sh `pwd`/keys
     fi
 }
 main(){
