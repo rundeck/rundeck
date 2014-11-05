@@ -1,0 +1,107 @@
+
+Vagrant.configure("2") do |config|
+
+  #specify vpc subnet id, and assign IPs within the subnet
+  vpcSubnetName=ENV['AWS_SUBNET_ID']
+  SSH_PUB_KEY="/keys/id_rsa.pub"
+
+  repo_url = "https://bintray.com/rundeck/ci-snapshot-rpm/rpm"
+
+  config.vm.box = "dummy"
+  config.vm.box_url = "https://github.com/mitchellh/vagrant-aws/raw/master/dummy.box"
+
+  #config.vm.network :forwarded_port, guest: 4440, host: 14440
+
+  config.vm.synced_folder "keys", "/keys"
+  config.vm.synced_folder "tests", "/tests"
+  config.vm.synced_folder "provisioning", "/provisioning"
+
+
+
+  REMOTE1_IP="172.31.1.4"#"192.168.50.31"
+  REMOTE1_NODENAME="remote1"
+
+  RUNDECK_IPADDR="172.31.1.2"#"192.168.50.32"
+  RUNDECK_NODENAME="rundeck"
+
+  RUNDECK_USER="rundeck"
+  RDECK_BASE="/var/lib/rundeck"
+  PROJECT_NAME="test"
+
+
+  config.vm.define :rundeck do |rundeck|
+    rundeck.vm.hostname = "#{RUNDECK_NODENAME}"
+    #rundeck.vm.network :private_network, ip: "#{RUNDECK_IP}"
+    rundeck.vm.provision :shell, :path => "../provisioning/rundeck/install.sh", :args=> "#{repo_url}"
+    rundeck.vm.provision :shell, :path => "../provisioning/rundeck/copy-sshkey.sh", 
+      :args => "#{RUNDECK_USER} #{RDECK_BASE}/.ssh /keys id_rsa"
+    rundeck.vm.provision :shell, :path => "../provisioning/rundeck/create-project.sh", 
+      :args => "#{RDECK_BASE} #{PROJECT_NAME} #{RUNDECK_USER} #{RDECK_BASE}/projects/#{PROJECT_NAME}/etc/resources"
+    rundeck.vm.provision :shell, :path => "../provisioning/rundeck/add-nodes.sh", 
+      :args => "#{RDECK_BASE}/projects/#{PROJECT_NAME}/etc/resources #{RUNDECK_USER} remote #{REMOTE1_NODENAME} #{REMOTE1_IP}"
+    
+    #Run tests
+    rundeck.vm.provision :shell, 
+      :path => "../tests/rundeck/test-all.sh", 
+      :args => "--rdeck-base #{RDECK_BASE} --rundeck-project #{PROJECT_NAME} --rundeck-user #{RUNDECK_USER} --remote-node #{REMOTE1_NODENAME}"
+
+
+    config.vm.provider :aws do |aws, override|
+      if ENV['AWS_USE_IAM_PROFILE']
+        aws.use_iam_profile = true
+      else
+        aws.access_key_id = ENV['AWS_ACCESS_KEY']
+        aws.secret_access_key = ENV['AWS_SECRET_KEY']
+      end
+
+      aws.keypair_name = ENV['AWS_KEYPAIR_NAME']
+      aws.security_groups =  ENV['AWS_SG_NAME']
+
+      aws.private_ip_address=RUNDECK_IP
+      aws.subnet_id=vpcSubnetName
+
+      aws.user_data = "#!/bin/bash\necho 'Defaults:ec2-user !requiretty' > /etc/sudoers.d/999-vagrant-cloud-init-requiretty && chmod 440 /etc/sudoers.d/999-vagrant-cloud-init-requiretty\nyum update -y\n"
+      #aws.ami = "ami-a6e15bcf" #Centos 6.3 official
+      aws.ami = "ami-05355a6c" #Amazon linux amazon/amzn-ami-pv-2013.03.1.x86_64-ebs
+      aws.tags = {
+        'Name' => '#{RUNDECK_NODENAME}-CI-Test',
+      }
+
+      override.ssh.username = "ec2-user"
+      override.ssh.private_key_path = ENV['SSH_KEY_PATH']
+    end
+  end
+  config.vm.define :remote1 do |remote1|
+    remote1.vm.hostname = "#{REMOTE1_NODENAME}"
+    #remote1.vm.network :private_network, ip: "#{RUNDECK_IP}"
+    remote1.vm.provision :shell, :path => "../provisioning/general/create-user.sh", :args => "#{RUNDECK_USER} #{RDECK_BASE}"    
+    remote1.vm.provision :shell, :path => "../provisioning/general/add-sshuser.sh", :args => "#{RUNDECK_USER} #{SSH_PUB_KEY}"
+
+
+    config.vm.provider :aws do |aws, override|
+      if ENV['AWS_USE_IAM_PROFILE']
+        aws.use_iam_profile = true
+      else
+        aws.access_key_id = ENV['AWS_ACCESS_KEY']
+        aws.secret_access_key = ENV['AWS_SECRET_KEY']
+      end
+
+      aws.keypair_name = ENV['AWS_KEYPAIR_NAME']
+      aws.security_groups =  ENV['AWS_SG_NAME']
+
+      aws.private_ip_address=REMOTE1_IP
+      aws.subnet_id=vpcSubnetName
+
+      aws.user_data = "#!/bin/bash\necho 'Defaults:ec2-user !requiretty' > /etc/sudoers.d/999-vagrant-cloud-init-requiretty && chmod 440 /etc/sudoers.d/999-vagrant-cloud-init-requiretty\nyum update -y\n"
+      #aws.ami = "ami-a6e15bcf" #Centos 6.3 official
+      aws.ami = "ami-05355a6c" #Amazon linux amazon/amzn-ami-pv-2013.03.1.x86_64-ebs
+      aws.tags = {
+        'Name' => '#{RUNDECK_NODENAME}-CI-Test',
+      }
+
+      override.ssh.username = "ec2-user"
+      override.ssh.private_key_path = ENV['SSH_KEY_PATH']
+    end
+  end
+
+end
