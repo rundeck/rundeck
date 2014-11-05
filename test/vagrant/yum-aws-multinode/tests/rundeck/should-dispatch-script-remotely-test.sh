@@ -18,18 +18,36 @@
 # --------
 describe "project: dispatch script remote node"
 
-
 it_should_dispatch_script_remotely() {
-    # Parse lines into array elements.
-    IFS=$'\n\t'
+    # Run the script file on the remote node
+    su - $RUNDECK_USER -c "dispatch -p $RUNDECK_PROJECT -f -F $REMOTE_NODE -s /tests/rundeck/test-dispatch-script.sh" > test.output
+    test "$(head -n1 test.output)" = "Succeeded queueing adhoc"
+    tail -n +3 test.output > test2.output
 
-    # Run the uname command across the nodes tagged 'adhoc'. Should be two nodes.
-    IFS=$'\n' read -rd '' -a rawout < <(su - $RUNDECK_USER -c "dispatch -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE' -s /tests/rundeck/test-dispatch-script.sh -- arg1 arg2")
-    test "${rawout[0]}" = "Succeeded queueing adhoc"
-    # Create an array by slicing the lines with the command ouput.
-    IFS=$'\n' read -rd '' -a cmdout < <(printf "%s\n" "${rawout[@]:2:$size}")
-    printf "%s\n" "${cmdout[@]}" > test.output
-    
+    # diff with expected
+    cat >expected.output <<END
+This is test-dispatch-script.sh
+On node $REMOTE_NODE $REMOTE_NODE
+With tags: remote remote
+With args: 
+END
+    set +e
+    diff expected.output test2.output
+    result=$?
+    set -e
+    rm expected.output test.output test2.output
+    if [ 0 != $result ] ; then
+        echo "FAIL: output differed from expected"
+        exit 1
+    fi
+}
+
+it_should_dispatch_script_remotely_with_args() {
+    su - $RUNDECK_USER -c "dispatch -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE' -s /tests/rundeck/test-dispatch-script.sh -- arg1 arg2"> test.output
+    test "$(head -n1 test.output)" = "Succeeded queueing adhoc"
+    tail -n +3 test.output > test2.output
+
+    # diff with expected
     cat >expected.output <<END
 This is test-dispatch-script.sh
 On node $REMOTE_NODE $REMOTE_NODE
@@ -37,28 +55,22 @@ With tags: remote remote
 With args: arg1 arg2
 END
     set +e
-    diff expected.output test.output
-    set -e
+    diff expected.output test2.output
     result=$?
-    rm expected.output test.output
-    if ! $result ; then
+    set -e
+    rm expected.output test.output test2.output
+    if [ 0 != $result ] ; then
         echo "FAIL: output differed from expected"
         exit 1
     fi
 }
 
 it_should_dispatch_url_remotely() {
-    # Parse lines into array elements.
-    IFS=$'\n'
+    su - $RUNDECK_USER -c "dispatch -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE' -u file:/tests/rundeck/test-dispatch-script.sh -- arg1 arg2"> test.output
+    test "$(head -n1 test.output)" = "Succeeded queueing adhoc"
+    tail -n +3 test.output > test2.output
 
-    # Run the uname command across the nodes tagged 'adhoc'. Should be two nodes.
-    IFS=$'\n' read -rd '' -a rawout < <(su - $RUNDECK_USER -c "dispatch -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE' -u file:/tests/rundeck/test-dispatch-script.sh -- arg1 arg2")
-
-    test "${rawout[0]}" = "Succeeded queueing adhoc"
-    # Create an array by slicing the lines with the command ouput.
-    IFS=$'\n' read -rd '' -a cmdout < <(printf "%s\n" "${rawout[@]:2:$size}")
-    printf "%s\n" "${cmdout[@]}" > test.output
-
+    # diff with expected
     cat >expected.output <<END
 This is test-dispatch-script.sh
 On node @node.name@ $REMOTE_NODE
@@ -66,11 +78,11 @@ With tags: @node.tags@ remote
 With args: arg1 arg2
 END
     set +e
-    diff expected.output test.output
+    diff expected.output test2.output
     result=$?
     set -e
-    rm expected.output test.output
-    if ! $result ; then
+    rm expected.output test.output test2.output
+    if [ 0 != $result ] ; then
         echo "FAIL: output differed from expected"
         exit 1
     fi
