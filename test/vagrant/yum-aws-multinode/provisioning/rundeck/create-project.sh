@@ -2,6 +2,7 @@
 
 set -eu
 
+RDECK_BASE=$1 ; shift;
 DIR=$1 ; shift;
 PROJECT=$1; shift;
 RUNDECK_USER=$1; shift;
@@ -19,7 +20,7 @@ cat > $PROPSFILE <<EOF
 project.name=$PROJECT
 resources.source.1.type=directory
 resources.source.1.config.directory=$RESOURCES_DIR
-project.ssh-keypath=$DIR/.ssh/id_rsa
+project.ssh-keypath=$RDECK_BASE/.ssh/id_rsa
 project.ssh-authentication=privateKey
 service.NodeExecutor.default.provider=jsch-ssh
 service.FileCopier.default.provider=jsch-scp
