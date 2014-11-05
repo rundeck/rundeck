@@ -94,7 +94,7 @@ Vagrant.configure("2") do |config|
       #aws.ami = "ami-a6e15bcf" #Centos 6.3 official
       aws.ami = "ami-05355a6c" #Amazon linux amazon/amzn-ami-pv-2013.03.1.x86_64-ebs
       aws.tags = {
-        'Name' => "#{RUNDECK_NODENAME}-CI-Test"
+        'Name' => "#{REMOTE1_NODENAME}-CI-Test"
       }
 
       override.ssh.username = "ec2-user"
