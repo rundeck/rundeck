@@ -19,9 +19,9 @@
 describe "project: dispatch adhoc command to remote node"
 
 
-it_should_dispatch_whoami_locally() {
+it_should_dispatch_whoami_remotely() {
 
-    su - $RUNDECK_USER -c "dispatch -p $RUNDECK_PROJECT -I $REMOTE_NODE -f -- whoami"
+    su - $RUNDECK_USER -c "dispatch -p $RUNDECK_PROJECT -F $REMOTE_NODE -f -- whoami"
 
 }
 
@@ -31,7 +31,7 @@ it_should_dispatch_uname_remotely() {
     IFS=$'\n\t'
 
     # Run the uname command across the nodes tagged 'adhoc'. Should be two nodes.
-    rawout=($(su - $RUNDECK_USER -c "dispatch -p $RUNDECK_PROJECT  -I $REMOTE_NODE -f -F 'tags: remote' -- uname -n"))
+    rawout=($(su - $RUNDECK_USER -c "dispatch -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE tags: remote' -- uname -n"))
 
     test "${rawout[0]}" = "Succeeded queueing adhoc"
 
