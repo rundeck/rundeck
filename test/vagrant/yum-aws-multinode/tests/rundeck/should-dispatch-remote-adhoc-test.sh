@@ -41,7 +41,7 @@ it_should_dispatch_uname_remotely() {
     # Create an array by slicing the lines with the command ouput.
     eval cmdout=( ${rawout[@]:2:$size} )
 
-    # There should be two lines, one for each uname response.
+    # There should be one line for the uname response.
     if ! test 1 = ${#cmdout[*]}
     then
         echo "FAIL: command output did not contain two lines. Contained ${#cmdout[*]}"
