@@ -143,8 +143,23 @@ echo "dispatch -s scriptfile"
 cat > $DIR/dispatch-test.sh <<END
 #!/bin/bash
 echo this is a test of dispatch -s 
+echo args are \$@
 END
 dispatch -p test -s $DIR/dispatch-test.sh > $DIR/exec.out
+if [ 0 != $? ] ; then
+	echo Failed to dispatch scriptfile via cli : $!
+	cat $DIR/exec.out
+	exit 2
+fi
+grep 'Succeeded queueing' -q $DIR/exec.out 
+if [ 0 != $? ] ; then
+	echo Failed to queue scriptfile: $!
+	cat $DIR/exec.out
+	exit 2
+fi
+
+echo "dispatch -s scriptfile -- args"
+dispatch -p test -s $DIR/dispatch-test.sh -- arg1 arg2 > $DIR/exec.out
 if [ 0 != $? ] ; then
 	echo Failed to dispatch scriptfile via cli : $!
 	cat $DIR/exec.out
@@ -171,12 +186,48 @@ if [ 0 != $? ] ; then
 	exit 2
 fi
 
+echo "dispatch --follow -s scriptfile -- arg1 arg2"
+dispatch -p test --follow -s $DIR/dispatch-test.sh -- arg1 arg2  > $DIR/exec.out
+if [ 0 != $? ] ; then
+	echo Failed to follow scriptfile via cli : $!
+	cat $DIR/exec.out
+	exit 2
+fi
+grep 'this is a test of dispatch -s' -q $DIR/exec.out 
+if [ 0 != $? ] ; then
+	echo Failed to see follow output for dispatch scriptfile: $!
+	cat $DIR/exec.out
+	exit 2
+fi
+grep 'args are arg1 arg2' -q $DIR/exec.out 
+if [ 0 != $? ] ; then
+	echo Failed to see follow output for dispatch scriptfile: $!
+	cat $DIR/exec.out
+	exit 2
+fi
+
 echo "dispatch -u url"
 cat > $DIR/dispatch-test.sh <<END
 #!/bin/bash
 echo this is a test of dispatch -u url
+echo args are \$@
 END
 dispatch -p test -u file:$DIR/dispatch-test.sh  > $DIR/exec.out
+if [ 0 != $? ] ; then
+	echo Failed to dispatch url via cli : $!
+	cat $DIR/exec.out
+	exit 2
+fi
+grep 'Succeeded queueing' -q $DIR/exec.out 
+if [ 0 != $? ] ; then
+	echo Failed to queue dispatch url: $!
+	cat $DIR/exec.out
+	exit 2
+fi
+
+echo "dispatch -u url -- args"
+
+dispatch -p test -u file:$DIR/dispatch-test.sh -- arg1 arg2 > $DIR/exec.out
 if [ 0 != $? ] ; then
 	echo Failed to dispatch url via cli : $!
 	cat $DIR/exec.out
@@ -198,7 +249,27 @@ if [ 0 != $? ] ; then
 fi
 grep 'this is a test of dispatch -u url' -q $DIR/exec.out 
 if [ 0 != $? ] ; then
-	echo Failed to see follow output for dispatch scriptfile: $!
+	echo Failed to see follow output for dispatch url: $!
+	cat $DIR/exec.out
+	exit 2
+fi
+
+echo "dispatch --follow -u url -- args"
+dispatch -p test --follow -u file:$DIR/dispatch-test.sh -- argA argB > $DIR/exec.out
+if [ 0 != $? ] ; then
+	echo Failed to follow dispatch url via cli : $!
+	cat $DIR/exec.out
+	exit 2
+fi
+grep 'this is a test of dispatch -u url' -q $DIR/exec.out 
+if [ 0 != $? ] ; then
+	echo Failed to see follow output for dispatch url: $!
+	cat $DIR/exec.out
+	exit 2
+fi
+grep 'args are argA argB' -q $DIR/exec.out 
+if [ 0 != $? ] ; then
+	echo Failed to see follow output for dispatch url: $!
 	cat $DIR/exec.out
 	exit 2
 fi
