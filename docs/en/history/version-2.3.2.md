@@ -1,3 +1,7 @@
+% Version 2.3.2
+% greg
+% 11/06/2014
+
 Release 2.3.2
 =============
 
@@ -5,7 +9,7 @@ Date: 2014-11-06
 
 Fix more regressions in executing remote inline script steps.
 
-See [2.3.0 release notes](http://rundeck.org/docs/history/version-2.3.0.html).
+See [2.3.0 release notes](../history/version-2.3.0.html).
 
 ## Contributors
 
