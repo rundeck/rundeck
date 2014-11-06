@@ -18,7 +18,7 @@
     >pom</packaging
   >
     <version
-    >2.3.2-SNAPSHOT</version
+    >2.3.2</version
   >
     <name
     >RunDeck parent project</name
