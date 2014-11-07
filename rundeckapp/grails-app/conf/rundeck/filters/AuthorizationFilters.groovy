@@ -185,6 +185,9 @@ public class AuthorizationFilters {
      * @return
      */
     private String lookupToken(String authtoken, ServletContext context) {
+        if(!authtoken){
+            return null
+        }
         if (context.getAttribute("TOKENS_FILE_PROPS")) {
             Properties tokens = (Properties) context.getAttribute("TOKENS_FILE_PROPS")
             if (tokens[authtoken]) {
