@@ -523,11 +523,10 @@ class ApiService {
     /**
      * Render execution document for api response
      */
-
-    public def respondExecutionsXml(HttpServletResponse response,execlist,paging=[:]) {
-        return respondOutput(response, TEXT_XML_CONTENT_TYPE, renderSuccessXml{
+    public def respondExecutionsXml(HttpServletRequest request,HttpServletResponse response,execlist,paging=[:]) {
+        renderSuccessXml(request,response){
             renderExecutionsXml(execlist, paging, delegate)
-        })
+        }
     }
     /**
      * Render execution list xml given a List of executions, and a builder delegate

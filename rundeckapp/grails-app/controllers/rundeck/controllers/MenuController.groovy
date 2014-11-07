@@ -965,7 +965,7 @@ class MenuController extends ControllerBase{
 
         QueueQuery query = new QueueQuery(runningFilter:'running',projFilter:params.project)
         def results = nowrunning(query)
-        return executionService.respondExecutionsXml(response,results.nowrunning)
+        return executionService.respondExecutionsXml(request,response,results.nowrunning)
     }
 }
 

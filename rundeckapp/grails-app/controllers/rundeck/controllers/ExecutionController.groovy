@@ -1049,7 +1049,7 @@ class ExecutionController extends ControllerBase{
                     ])
         }
 
-        return executionService.respondExecutionsXml(response, [e])
+        return executionService.respondExecutionsXml(request,response, [e])
     }
     /**
      * API: /api/execution/{id}/state , version 10
@@ -1397,7 +1397,7 @@ class ExecutionController extends ControllerBase{
         def filtered = frameworkService.filterAuthorizedProjectExecutionsAll(authContext,result,[AuthConstants.ACTION_READ])
 
 
-        return executionService.respondExecutionsXml(response,filtered,[total:total,offset:resOffset,max:resMax])
+        return executionService.respondExecutionsXml(request,response,filtered,[total:total,offset:resOffset,max:resMax])
     }
 }
 
