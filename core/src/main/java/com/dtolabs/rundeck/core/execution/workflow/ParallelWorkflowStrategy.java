@@ -167,10 +167,11 @@ public class ParallelWorkflowStrategy extends BaseWorkflowStrategy {
         }catch (InterruptedException ioex) {
             executionContext.getExecutionListener().log(Constants.WARN_LEVEL, "Workflow execution interrupted");
         }
-
-        // Poll results, fail if there is any error
-        for (Integer stepNum : stepExecutionResults.keySet()) {
-            if (!stepExecutionResults.get(stepNum).isSuccess()) {
+        // Poll results, fail if there is any result is missing or not successful
+        for (int i = 0; i < iWorkflowCmdItems.size(); i++) {
+            int stepNum = i + executionContext.getStepNumber();
+            if (null == stepExecutionResults.get(stepNum) ||
+                !stepExecutionResults.get(stepNum).isSuccess()) {
                 return false;
             }
         }
