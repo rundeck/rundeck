@@ -46,6 +46,12 @@
             <input type="radio" name="workflow.strategy" value="step-first" ${workflow?.strategy=='step-first'?'checked':''}/>
             <g:message code="Workflow.strategy.label.step-first"/>
         </label>
+        <g:if test="${workflow?.strategy == 'parallel' || grailsApplication.config.feature?.incubator?.parallelWorkflowStrategy in [true,'true']}">
+        <label title="Execute each step in parallel across all nodes before next step">
+            <input type="radio" name="workflow.strategy" value="parallel" ${workflow?.strategy=='parallel'?'checked':''}/>
+            <g:message code="Workflow.strategy.label.parallel"/>
+        </label>
+        </g:if>
 
         <span class=" action obs_tooltip" id="nodeStratHelp"><i
                 class="glyphicon glyphicon-question-sign text-info"></i> Explain </span>
@@ -66,6 +72,9 @@
                 <span class="info note">Node-oriented: <g:message code="Workflow.strategy.description.node-first"/></span>
                     </td>
                     <td width="200px;"><span class="info note">Step-oriented: <g:message code="Workflow.strategy.description.step-first" /></span></td>
+                <g:if test="${workflow?.strategy == 'parallel' || grailsApplication.config.feature?.incubator?.parallelWorkflowStrategy in [true, 'true']}">
+                    <td width="200px;"><span class="info note">Parallel executes all steps in parallel across all nodes before the next step</span></td>
+                </g:if>
                 </tr>
                 <tr>
                 <td>

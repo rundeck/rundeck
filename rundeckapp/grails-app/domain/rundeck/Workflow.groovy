@@ -35,7 +35,7 @@ public class Workflow {
     String strategy="node-first"
     static hasMany=[commands:WorkflowStep]
     static constraints = {
-        strategy(nullable:false, inList:['node-first','step-first'])
+        strategy(nullable:false, inList:['node-first','step-first','parallel'])
     }
     static mapping = {
         commands lazy: false
