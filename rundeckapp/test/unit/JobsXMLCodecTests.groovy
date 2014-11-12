@@ -2092,7 +2092,80 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals "incorrect adhocFilepath", 'http://example.com/a/path/to/a/script', cmd1.adhocFilepath
         assertEquals "incorrect argString", '-some args -to the -script', cmd1.argString
     }
-    
+    void testDecodeWorkflowJobref(){
+        def jobs = JobsXMLCodec.decode("""<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description></description>
+    <loglevel>INFO</loglevel>
+    <context>
+        <project>test1</project>
+    </context>
+    <sequence>
+        <command>
+            <jobref name="bob" />
+        </command>
+        <command>
+            <jobref name="blang" nodeFilter="abc def" />
+        </command>
+        <command>
+            <jobref name="blang2" nodeFilter="abc def2" nodeThreadcount="2" />
+        </command>
+        <command>
+            <jobref name="blang3" nodeFilter="abc def3" nodeThreadcount="3" nodeKeepgoing="true"/>
+        </command>
+    </sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <schedule>
+      <time hour='11' minute='21' />
+      <weekday day='*' />
+      <month month='*' />
+    </schedule>
+  </job>
+</joblist>
+""")
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+        assertNotNull "incorrect workflow", jobs[0].workflow
+        assertEquals "incorrect workflow strategy", "node-first", jobs[0].workflow.strategy
+        assertNotNull "incorrect workflow strategy", jobs[0].workflow.commands
+        assertEquals "incorrect workflow strategy", 4, jobs[0].workflow.commands.size()
+
+        assertJobExec(
+                jobs[0].workflow.commands[0],
+                [argString: null, jobName: 'bob', jobGroup: null, nodeStep: false, nodeKeepgoing: false, nodeFilter: null, nodeThreadcount: null]
+        )
+        assertJobExec(
+                jobs[0].workflow.commands[1],
+                [argString: null, jobName: 'blang', jobGroup: null, nodeStep: false, nodeKeepgoing: false, nodeFilter: 'abc def', nodeThreadcount: null]
+        )
+        assertJobExec(
+                jobs[0].workflow.commands[2],
+                [argString: null, jobName: 'blang2', jobGroup: null, nodeStep: false, nodeKeepgoing: false, nodeFilter: 'abc def2', nodeThreadcount: 2]
+        )
+        assertJobExec(
+                jobs[0].workflow.commands[3],
+                [argString: null, jobName: 'blang3', jobGroup: null, nodeStep: false, nodeKeepgoing: true, nodeFilter: 'abc def3', nodeThreadcount: 3]
+        )
+
+    }
+
+    protected void assertJobExec(command, Map expected) {
+        assertNotNull "should not be null command", command
+        assertTrue "incorrect type: ${command}", (command instanceof JobExec)
+        assertEquals "incorrect argString", expected.argString,command.argString
+        assertEquals "incorrect jobName", expected.jobName, command.jobName
+        assertEquals "incorrect jobGroup", expected.jobGroup, command.jobGroup
+        assertEquals "incorrect nodeStep", expected.nodeStep, !!command.nodeStep
+        assertEquals "incorrect nodeKeepgoing", expected.nodeKeepgoing, !!command.nodeKeepgoing
+        assertEquals "incorrect nodeFilter", expected.nodeFilter, command.nodeFilter
+        assertEquals "incorrect nodeThreadcount", expected.nodeThreadcount, command.nodeThreadcount
+    }
+
     void testDecodeWorkflowOptions(){
         //simple workflow with options
             def jobs = JobsXMLCodec.decode("""<joblist>
@@ -4664,6 +4737,63 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals "wrong command/script", 0, doc.job[0].sequence[0].command[0].script.size()
         assertEquals "wrong command/exec", 1, doc.job[0].sequence[0].command[0].scriptargs.size()
         assertEquals "wrong command/exec", "test string", doc.job[0].sequence[0].command[0].scriptargs[0].text()
+
+    }
+    void testEncodeWorkflowJobExec(){
+
+        //test simple job ref workflow item
+        def jobs7 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+                        argString: '',
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true,
+                        workflow: new Workflow(keepgoing: true, commands:
+                                [
+                                        new JobExec(jobName: 'a Job'),
+                                        new JobExec(jobName: 'a Job2', jobGroup: 'job group'),
+                                        new JobExec(jobName: 'a Job3', nodeFilter: 'abc def'),
+                                        new JobExec(jobName: 'a Job4', nodeFilter: 'abc def4', nodeThreadcount: 4),
+                                        new JobExec(jobName: 'a Job5', nodeFilter: 'abc def5', nodeThreadcount: 5, nodeKeepgoing: true),
+                                ]
+                        )
+                )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs7)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+
+        def XmlParser parser = new XmlParser()
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing job", 1, doc.job.size()
+        assertEquals "missing sequence", 1, doc.job.sequence.size()
+        assertEquals "wrong command count", 5, doc.job[0].sequence[0].command.size()
+        assertXmlJobRefCommand(doc.job[0].sequence[0].command[0],
+                ['@name':'a Job', '@group':null,'nodeFilter':null,'nodeThreadcount':null, 'nodeKeepgoing':null])
+        assertXmlJobRefCommand(doc.job[0].sequence[0].command[1],
+                ['@name':'a Job2', '@group':'job group','nodeFilter':null,'nodeThreadcount':null, 'nodeKeepgoing':null])
+        assertXmlJobRefCommand(doc.job[0].sequence[0].command[2],
+                ['@name':'a Job3', '@group':null,'nodeFilter':'abc def','nodeThreadcount':null, 'nodeKeepgoing':null])
+        assertXmlJobRefCommand(doc.job[0].sequence[0].command[3],
+                ['@name':'a Job4', '@group':null,'nodeFilter':'abc def4','nodeThreadcount':'4', 'nodeKeepgoing':null])
+        assertXmlJobRefCommand(doc.job[0].sequence[0].command[4],
+                ['@name':'a Job5', '@group':null,'nodeFilter':'abc def5','nodeThreadcount':'5', 'nodeKeepgoing':'true'])
+
+    }
+
+    protected void assertXmlJobRefCommand(testCommand, Map data) {
+        assertEquals "missing command/jobref", 1, testCommand.jobref.size()
+        data.each{key,value->
+            def test = testCommand.jobref[0][key]?.size()>0? key.startsWith('@')?testCommand.jobref[0][key]:testCommand.jobref[0][key].text() : null
+            assertEquals "wrong command/jobref/${key}: " + test, value, test
+        }
 
     }
 
