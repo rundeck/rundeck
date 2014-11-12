@@ -31,6 +31,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     String jobGroup
     String jobIdentifier
     String argString
+    String nodeFilter
+    Boolean nodeKeepgoing
+    Integer nodeThreadcount
     Boolean nodeStep
     static transients=['jobIdentifier']
 
@@ -39,6 +42,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         jobGroup(nullable: true, blank: true)
         argString(nullable: true, blank: true)
         nodeStep(nullable: true)
+        nodeKeepgoing(nullable: true)
+        nodeFilter(nullable: true, maxSize: 1024)
+        nodeThreadcount(nullable: true)
     }
 
     static mapping = {
@@ -48,7 +54,12 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     }
 
     public String toString() {
-        return "jobref(name=\"${jobName}\" group=\"${jobGroup}\" argString=\"${argString}\" nodeStep=\"${nodeStep}\")" + (errorHandler ? " [handler: ${errorHandler}" : '')
+        return "jobref(name=\"${jobName}\" group=\"${jobGroup}\" argString=\"${argString}\" " +
+                "nodeStep=\"${nodeStep}\"" +
+                "nodeFilter=\"${nodeFilter}\"" +
+                "nodeKeepgoing=\"${nodeKeepgoing}\"" +
+                "nodeThreadcount=\"${nodeThreadcount}\"" +
+                ")" + (errorHandler ? " [handler: ${errorHandler}" : '')
     }
 
     public String summarize() {
@@ -88,6 +99,13 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         if (description) {
             map.description = description
         }
+        if(nodeFilter){
+            map.jobref.nodeFilter=nodeFilter
+            if(null!=nodeThreadcount && nodeThreadcount>1){
+                map.jobref.nodeThreadcount=nodeThreadcount
+            }
+            map.jobref.nodeKeepgoing=!!nodeKeepgoing
+        }
         return map
     }
 
@@ -103,6 +121,13 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         }
         exec.keepgoingOnSuccess = !!map.keepgoingOnSuccess
         exec.description=map.description?.toString()
+        if(map.jobref.nodeFilter){
+            exec.nodeFilter=map.jobref.nodeFilter.toString()
+            if(map.jobref.nodeThreadcount){
+                exec.nodeThreadcount= map.jobref.nodeThreadcount
+            }
+            exec.nodeKeepgoing = !!map.jobref.nodeKeepgoing
+        }
         //nb: error handler is created inside Workflow.fromMap
         return exec
     }
