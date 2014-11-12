@@ -200,6 +200,75 @@ class ExecutionItemFactoryTest {
         Assert.assertEquals( ['args','args2'],testcommand.args as List)
         Assert.assertEquals( false,testcommand.nodeStep)
         Assert.assertEquals( true,testcommand.keepgoingOnSuccess)
+        Assert.assertEquals(null, testcommand.nodeFilter)
+        Assert.assertEquals(false, testcommand.nodeKeepgoing)
+        Assert.assertEquals(1, testcommand.nodeThreadcount)
+    }
+    @Test
+    public void createJobRef_nodeFilter(){
+        StepExecutionItem test = ExecutionItemFactory.createJobRef(
+                "monkey/piece",
+                ['args', 'args2'] as String[],
+                false,
+                null,
+                true,
+                "abc def",
+                1,
+                false
+        )
+        Assert.assertTrue(test instanceof JobExecutionItem)
+        JobExecutionItem testcommand=(JobExecutionItem) test
+        Assert.assertEquals( 'monkey/piece',testcommand.jobIdentifier)
+        Assert.assertEquals( ['args','args2'],testcommand.args as List)
+        Assert.assertEquals( false,testcommand.nodeStep)
+        Assert.assertEquals( true,testcommand.keepgoingOnSuccess)
+        Assert.assertEquals( 'abc def',testcommand.nodeFilter)
+        Assert.assertEquals( false,testcommand.nodeKeepgoing)
+        Assert.assertEquals( 1,testcommand.nodeThreadcount)
+    }
+    @Test
+    public void createJobRef_nodeFilterThreadCount(){
+        StepExecutionItem test = ExecutionItemFactory.createJobRef(
+                "monkey/piece",
+                ['args', 'args2'] as String[],
+                false,
+                null,
+                true,
+                "abc def",
+                2,
+                false
+        )
+        Assert.assertTrue(test instanceof JobExecutionItem)
+        JobExecutionItem testcommand=(JobExecutionItem) test
+        Assert.assertEquals( 'monkey/piece',testcommand.jobIdentifier)
+        Assert.assertEquals( ['args','args2'],testcommand.args as List)
+        Assert.assertEquals( false,testcommand.nodeStep)
+        Assert.assertEquals( true,testcommand.keepgoingOnSuccess)
+        Assert.assertEquals( 'abc def',testcommand.nodeFilter)
+        Assert.assertEquals( false,testcommand.nodeKeepgoing)
+        Assert.assertEquals( 2,testcommand.nodeThreadcount)
+    }
+    @Test
+    public void createJobRef_nodeFilterThreadCountKeepgoing(){
+        StepExecutionItem test = ExecutionItemFactory.createJobRef(
+                "monkey/piece",
+                ['args', 'args2'] as String[],
+                false,
+                null,
+                true,
+                "abc def",
+                2,
+                true
+        )
+        Assert.assertTrue(test instanceof JobExecutionItem)
+        JobExecutionItem testcommand=(JobExecutionItem) test
+        Assert.assertEquals( 'monkey/piece',testcommand.jobIdentifier)
+        Assert.assertEquals( ['args','args2'],testcommand.args as List)
+        Assert.assertEquals( false,testcommand.nodeStep)
+        Assert.assertEquals( true,testcommand.keepgoingOnSuccess)
+        Assert.assertEquals( 'abc def',testcommand.nodeFilter)
+        Assert.assertEquals( true,testcommand.nodeKeepgoing)
+        Assert.assertEquals( 2,testcommand.nodeThreadcount)
     }
     @Test
     public void createJobRef_withHandler(){

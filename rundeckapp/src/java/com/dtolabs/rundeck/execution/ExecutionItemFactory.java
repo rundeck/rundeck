@@ -189,17 +189,59 @@ public class ExecutionItemFactory {
 
     /**
      * Create step execution item for a job reference
+     *
      * @param jobIdentifier
      * @param args
      * @param nodeStep
      * @param handler
      * @param keepgoingOnSuccess
+     *
+     * @return
+     *
+     * @deprecated
+     */
+    public static StepExecutionItem createJobRef(
+            final String jobIdentifier,
+            final String[] args,
+            final boolean nodeStep,
+            final StepExecutionItem handler,
+            final boolean keepgoingOnSuccess
+    )
+    {
+        return createJobRef(
+                jobIdentifier,
+                args,
+                nodeStep,
+                handler,
+                keepgoingOnSuccess,
+                null,
+                1,
+                false
+        );
+    }
+
+    /**
+     * Create step execution item for a job reference
+     *
+     * @param jobIdentifier
+     * @param args
+     * @param nodeStep
+     * @param handler
+     * @param keepgoingOnSuccess
+     *
      * @return
      */
-    public static StepExecutionItem createJobRef(final String jobIdentifier,
-            final String[] args, final boolean nodeStep,
-            final StepExecutionItem handler, final boolean keepgoingOnSuccess) {
-
+    public static StepExecutionItem createJobRef(
+            final String jobIdentifier,
+            final String[] args,
+            final boolean nodeStep,
+            final StepExecutionItem handler,
+            final boolean keepgoingOnSuccess,
+            final String nodeFilter,
+            final int nodeThreadcount,
+            final boolean nodeKeepgoing
+    )
+    {
         return new JobRefCommandBase() {
             public String getJobIdentifier() {
                 return jobIdentifier;
@@ -223,6 +265,18 @@ public class ExecutionItemFactory {
             @Override
             public boolean isKeepgoingOnSuccess() {
                 return keepgoingOnSuccess;
+            }
+
+            @Override public boolean isNodeKeepgoing() {
+                return nodeKeepgoing;
+            }
+
+            @Override public String getNodeFilter() {
+                return nodeFilter;
+            }
+
+            @Override public int getNodeThreadcount() {
+                return nodeThreadcount;
             }
         };
     }
