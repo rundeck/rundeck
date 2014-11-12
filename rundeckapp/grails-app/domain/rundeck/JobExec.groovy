@@ -104,7 +104,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
             if(null!=nodeThreadcount && nodeThreadcount>1){
                 map.jobref.nodeThreadcount=nodeThreadcount
             }
-            map.jobref.nodeKeepgoing=!!nodeKeepgoing
+            if(nodeKeepgoing){
+                map.jobref.nodeKeepgoing=!!nodeKeepgoing
+            }
         }
         return map
     }
@@ -124,7 +126,11 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         if(map.jobref.nodeFilter){
             exec.nodeFilter=map.jobref.nodeFilter.toString()
             if(map.jobref.nodeThreadcount){
-                exec.nodeThreadcount= map.jobref.nodeThreadcount
+                if(map.jobref.nodeThreadcount instanceof Integer){
+                    exec.nodeThreadcount= map.jobref.nodeThreadcount ?: 1
+                }else{
+                    exec.nodeThreadcount = Integer.parseInt(map.jobref.nodeThreadcount.toString()) ?: 1
+                }
             }
             exec.nodeKeepgoing = !!map.jobref.nodeKeepgoing
         }

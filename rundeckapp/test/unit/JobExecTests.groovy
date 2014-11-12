@@ -39,14 +39,14 @@ class JobExecTests extends GrailsUnitTestCase{
     void testBasicToMapNodeFilter() {
         JobExec t = new JobExec(jobGroup: 'group',jobName: 'name',description: 'a monkey',
                 nodeFilter: 'abc def')
-        assertEquals([jobref: [group:'group',name:'name', nodeFilter: 'abc def',nodeKeepgoing: false],
+        assertEquals([jobref: [group:'group',name:'name', nodeFilter: 'abc def'],
                 description: 'a monkey'], t.toMap())
     }
     void testBasicToMapNodeFilter_threadcount() {
         JobExec t = new JobExec(jobGroup: 'group',jobName: 'name',description: 'a monkey',
                 nodeFilter: 'abc def', nodeThreadcount: 2)
         assertEquals([jobref: [group:'group',name:'name', nodeFilter: 'abc def',
-                nodeThreadcount: 2, nodeKeepgoing: false], description: 'a monkey'], t.toMap())
+                nodeThreadcount: 2], description: 'a monkey'], t.toMap())
     }
     void testBasicToMapNodeFilter_keepgoing() {
         JobExec t = new JobExec(jobGroup: 'group',jobName: 'name',description: 'a monkey',
