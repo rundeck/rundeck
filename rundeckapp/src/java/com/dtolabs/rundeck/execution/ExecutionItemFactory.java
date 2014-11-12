@@ -215,8 +215,8 @@ public class ExecutionItemFactory {
                 handler,
                 keepgoingOnSuccess,
                 null,
-                1,
-                false
+                null,
+                null
         );
     }
 
@@ -238,8 +238,8 @@ public class ExecutionItemFactory {
             final StepExecutionItem handler,
             final boolean keepgoingOnSuccess,
             final String nodeFilter,
-            final int nodeThreadcount,
-            final boolean nodeKeepgoing
+            final Integer nodeThreadcount,
+            final Boolean nodeKeepgoing
     )
     {
         return new JobRefCommandBase() {
@@ -267,7 +267,7 @@ public class ExecutionItemFactory {
                 return keepgoingOnSuccess;
             }
 
-            @Override public boolean isNodeKeepgoing() {
+            @Override public Boolean isNodeKeepgoing() {
                 return nodeKeepgoing;
             }
 
@@ -275,7 +275,7 @@ public class ExecutionItemFactory {
                 return nodeFilter;
             }
 
-            @Override public int getNodeThreadcount() {
+            @Override public Integer getNodeThreadcount() {
                 return nodeThreadcount;
             }
         };
