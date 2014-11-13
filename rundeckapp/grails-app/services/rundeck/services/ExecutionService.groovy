@@ -48,7 +48,6 @@ import rundeck.*
 import rundeck.controllers.ExecutionController
 import rundeck.services.logging.ExecutionLogWriter
 
-import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpSession
 import java.text.MessageFormat
@@ -924,7 +923,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 args = new String[0];
             }
 
-            return ExecutionItemFactory.createJobRef(jobcmditem.getJobIdentifier(), args, !!jobcmditem.nodeStep, handler, !!jobcmditem.keepgoingOnSuccess)
+            return ExecutionItemFactory.createJobRef(
+                    jobcmditem.getJobIdentifier(),
+                    args,
+                    !!jobcmditem.nodeStep,
+                    handler,
+                    !!jobcmditem.keepgoingOnSuccess,
+                    jobcmditem.nodeFilter?:null,
+                    jobcmditem.nodeThreadcount!=null && jobcmditem.nodeThreadcount>=1?jobcmditem.nodeThreadcount:null,
+                    jobcmditem.nodeKeepgoing
+            )
         }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
             final PluginStep stepitem = step as PluginStep
             if(stepitem.nodeStep){
@@ -2006,7 +2014,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return new StepExecutionResultImpl()
         }
         JobExecutionItem jitem = (JobExecutionItem) executionItem
-        return runJobRefExecutionItem(executionContext, jitem, null, null, createFailure, createSuccess)
+        return runJobRefExecutionItem(executionContext, jitem, createFailure, createSuccess)
     }
 
     ///////////////
@@ -2081,8 +2089,76 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
           return RequestContextHolder.currentRequestAttributes().getSession()
       }
 
-    def createJobReferenceContext(ScheduledExecution se, StepExecutionContext executionContext, String[] newargs,dovalidate=true)
-        throws ExecutionServiceValidationException{
+    /**
+     * Override the node set in the context given the new filter
+     * @param origContext
+     * @param nodeFilter
+     * @param nodeThreadcount
+     * @param nodeKeepgoing
+     * @return
+     */
+    StepExecutionContext overrideJobReferenceNodeFilter(
+            StepExecutionContext origContext,
+            String nodeFilter,
+            Integer nodeThreadcount,
+            Boolean nodeKeepgoing
+    )
+    {
+        def builder = ExecutionContextImpl.builder(origContext);
+        def nodeselector
+        if (nodeFilter) {
+            //set nodeset for the context if doNodedispatch parameter is true
+            def filter = DataContextUtils.replaceDataReferences(nodeFilter, origContext.dataContext)
+            NodeSet nodeset = filtersAsNodeSet([
+                    filter               : filter,
+                    nodeExcludePrecedence: true, //XXX: fix
+                    nodeThreadcount      : nodeThreadcount?:1,
+                    nodeKeepgoing        : nodeKeepgoing
+            ])
+            nodeselector = nodeset
+
+            def INodeSet nodeSet = frameworkService.filterAuthorizedNodes(
+                    origContext.frameworkProject,
+                    new HashSet<String>(["read", "run"]),
+                    frameworkService.filterNodeSet(nodeselector, origContext.frameworkProject),
+                    origContext.authContext);
+
+            builder.nodeSelector(nodeselector).nodes(nodeSet)
+
+            if (null != nodeThreadcount) {
+                builder.threadCount(nodeThreadcount)
+            }
+            if (null != nodeKeepgoing) {
+                builder.keepgoing(nodeKeepgoing)
+            }
+        }
+
+        return builder.build()
+    }
+
+    /**
+     *
+     * @param se
+     * @param executionContext
+     * @param newargs
+     * @param nodeFilter
+     * @param nodeKeepgoing
+     * @param nodeThreadcount
+     * @param dovalidate
+     * @return
+     * @throws ExecutionServiceValidationException
+     */
+    StepExecutionContext createJobReferenceContext(
+            ScheduledExecution se,
+            StepExecutionContext executionContext,
+            String[] newargs,
+            String nodeFilter,
+            Boolean nodeKeepgoing,
+            Integer nodeThreadcount,
+            dovalidate = true
+    )
+    throws ExecutionServiceValidationException
+    {
 
         //substitute any data context references in the arguments
         if (null != newargs && executionContext.dataContext) {
@@ -2144,7 +2220,25 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         jobcontext.project = se.project
         jobcontext.username = executionContext.getUser()
         jobcontext['user.name'] = jobcontext.username
-        return createContext(se, executionContext, jobcontext, newargs, evalSecAuthOpts, evalSecOpts)
+
+        def newContext = createContext(
+                se,
+                executionContext,
+                jobcontext,
+                newargs,
+                evalSecAuthOpts,
+                evalSecOpts
+        )
+
+        if (null != newContext && nodeFilter) {
+            newContext = overrideJobReferenceNodeFilter(
+                    newContext,
+                    nodeFilter,
+                    nodeThreadcount,
+                    nodeKeepgoing
+            )
+        }
+        return newContext
     }
     /**
      * Execute a job reference workflow with a particular context, optionally overriding the target node set,
@@ -2157,8 +2251,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param createSuccess closure that returns a {@link StepExecutionResult} or {@link NodeStepResult}
      * @return
      */
-    private def runJobRefExecutionItem(StepExecutionContext executionContext, JobExecutionItem jitem,
-            NodesSelector nodeselector, INodeSet nodeSet, Closure createFailure, Closure createSuccess) {
+    private def runJobRefExecutionItem(
+            StepExecutionContext executionContext,
+            JobExecutionItem jitem,
+            Closure createFailure,
+            Closure createSuccess
+    )
+    {
         RequestHelper.doWithMockRequest {
             def id
             def result
@@ -2194,7 +2293,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
 
                 try {
-                    newContext = createJobReferenceContext(se, executionContext,jitem.args)
+                    newContext = createJobReferenceContext(
+                            se,
+                            executionContext,
+                            jitem.args,
+                            jitem.nodeFilter,
+                            jitem.nodeKeepgoing,
+                            jitem.nodeThreadcount
+                    )
                 } catch (ExecutionServiceValidationException e) {
                     executionContext.getExecutionListener().log(0, "Option input was not valid for [${jitem.jobIdentifier}]: ${e.message}");
                     def msg = "Invalid options: ${e.errors.keySet()}"
@@ -2203,14 +2309,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
             if (null != result) {
                 return result
-            }
-
-            if(null!=nodeSet && null!=nodeselector){
-                //override the node set from the filter
-                newContext = ExecutionContextImpl.builder(newContext)
-                        .nodes(nodeSet)
-                        .nodeSelector(nodeselector)
-                        .build()
             }
 
             if (newContext.getNodes().getNodeNames().size() < 1) {
@@ -2512,6 +2610,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         JobExecutionItem jitem = (JobExecutionItem) executionItem
         //don't override node filters, to allow option inputs to be used in the filters
-        return runJobRefExecutionItem(executionContext, jitem, null, null, createFailure, createSuccess)
+        return runJobRefExecutionItem(executionContext, jitem, createFailure, createSuccess)
     }
 }

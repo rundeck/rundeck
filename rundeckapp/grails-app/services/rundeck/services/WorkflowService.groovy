@@ -108,9 +108,16 @@ class WorkflowService implements ApplicationContextAware{
 
                 //generate a workflow context
                 StepExecutionContext newContext=null
-                try{
-                    newContext=executionService.createJobReferenceContext(se,parent, OptsUtil.burst(jexec.argString?:''),false)
-                }catch (ExecutionServiceValidationException e){
+                try {
+                    def jobArgs = OptsUtil.burst(jexec.argString ?: '')
+                    newContext = executionService.createJobReferenceContext(se,
+                                                                            parent,
+                                                                            jobArgs,
+                                                                            jexec.nodeFilter,
+                                                                            jexec.nodeKeepgoing,
+                                                                            jexec.nodeThreadcount,
+                                                                            false)
+                } catch (ExecutionServiceValidationException e){
                     log.error("Error validating job reference context: "+e.message,e)
                     //invalid arguments
                 }
