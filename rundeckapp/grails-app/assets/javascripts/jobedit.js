@@ -80,37 +80,6 @@ function _matchNodesKeyPress(e) {
 
 /** end Nodeset matching */
 
-function addFilter(name, isinclude, label) {
-    var prefix = (isinclude ? 'Include' : 'Exclude');
-    if ($('nodeFilter' + prefix + name)) {
-        $('nodeFilter' + prefix + name).show();
-        if ($('filterAdd' + prefix + name)) {
-            $('filterAdd' + prefix + name).hide();
-        }
-        return;
-    }
-}
-
-function setFilter(name, isinclude, value) {
-    var prefix = (isinclude ? 'Include' : 'Exclude');
-    if ($('schedJobNode' + prefix + name)) {
-        $('schedJobNode' + prefix + name).setValue(value);
-        _matchNodes();
-    }
-}
-function removeFilter(name, isinclude) {
-    var prefix = (isinclude ? 'Include' : 'Exclude');
-    if ($('nodeFilter' + prefix + name)) {
-        $('nodeFilter' + prefix + name).hide();
-        if ($('schedJobNode' + prefix + name)) {
-            $('schedJobNode' + prefix + name).setValue('');
-            if ($('filterAdd' + prefix + name)) {
-                $('filterAdd' + prefix + name).show();
-            }
-            _matchNodes();
-        }
-    }
-}
 
 /** begin wf edit code */
 
