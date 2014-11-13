@@ -37,6 +37,7 @@ import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.io.ByteArrayOutputStream;
@@ -169,7 +170,9 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
         //load config.* property values in from project or framework scope
         final Map<String, Map<String, String>> finalDataContext;
         try {
-            finalDataContext = loadConfigData(executionContext, loadInstanceDataFromNodeAttributes(node, pluginDesc), localDataContext, pluginDesc);
+            finalDataContext = loadConfigData(executionContext, loadInstanceDataFromNodeAttributes(node, pluginDesc), localDataContext, pluginDesc,
+                                              ServiceNameConstants.FileCopier
+            );
         } catch (ConfigurationException e) {
             throw new FileCopierException("[" + pluginname + "]: Configuration failure: "+e.getMessage(),
                     StepFailureReason.ConfigurationFailure, e);
