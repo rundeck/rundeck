@@ -54,7 +54,7 @@ public class JobRefCommandBase extends JobRefCommand implements HasFailureHandle
         return false;
     }
 
-    @Override public Boolean isNodeKeepgoing() {
+    @Override public Boolean getNodeKeepgoing() {
         return null;
     }
 

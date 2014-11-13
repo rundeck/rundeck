@@ -267,7 +267,7 @@ public class ExecutionItemFactory {
                 return keepgoingOnSuccess;
             }
 
-            @Override public Boolean isNodeKeepgoing() {
+            @Override public Boolean getNodeKeepgoing() {
                 return nodeKeepgoing;
             }
 
