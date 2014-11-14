@@ -15,31 +15,8 @@
             $("error").show();
         }
 
-        //method called by _nodeFilterInputs
-        function _matchNodes(){
-            expandResultNodes();
-        }
-        function _submitNodeFilters(){
-            _matchNodes();
-            return false;
-        }
 
         var nodeFilter;
-        /**
-         * node filter link action
-         * @param e
-         */
-        function selectNodeFilterLink(e) {
-            var filterName = jQuery(e).data('node-filter-name');
-            var filterString = jQuery(e).data('node-filter');
-            var filterAll = jQuery(e).data('node-filter-all')?true:false;
-            //additive filter string
-            if(filterString && !filterName && nodeFilter.filter() && !nodeFilter.filterAll() && !filterAll){
-                nodeFilter.filter(nodeFilter.filter()+' '+filterString);
-                filterString=nodeFilter.filter();
-            }
-            loadNodeFilter(filterName, filterString,filterAll);
-        }
 
         var nodespage=0;
         var pagingMax=${enc(js:params.int('max')?:20)};
@@ -166,16 +143,18 @@
                     appLinks.scheduledExecutionCreate,
                     appLinks.frameworkNodes,
                     Object.extend(filterParams,{
+                        elem: 'nodelist',
+                        project: '${enc(js:params.project?:request.project)}',
+                        paging:true,
                         nodesTitleSingular:"${g.message(code:'Node',default:'Node')}",
                         nodesTitlePlural:"${g.message(code:'Node.plural',default:'Nodes')}"
                     }));
             ko.applyBindings(nodeFilter);
             jQuery('body').on('click', '.nodefilterlink', function (evt) {
                 evt.preventDefault();
-                selectNodeFilterLink(this);
+                nodeFilter.selectNodeFilterLink(this);
             });
-            jQuery('#searchForm').submit(_submitNodeFilters);
-            loadNodeFilter();
+            nodeFilter.updateMatchedNodes();
         }
         jQuery(document).ready(init);
 

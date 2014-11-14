@@ -19,13 +19,26 @@
     </div>
     </div>
     <g:if test="${page==0 && (page+1*max<total)}">
-        <div class="row row-space">
+        <div class="row row-space" data-bind="visible: hasMoreNodes">
         <div class="col-sm-12" id="nodesPaging">
             <g:set var="remainCount" value="${total - (page+1*max)}"/>
             <g:if test="${remainCount>max}">
-            <span id="nextPageButton" class="textbtn textbtn-default" onclick="_loadNextNodesPageTable(${max},${total},'nodesTable','nodesPaging');" title="Load next ${enc(attr:max)} nodes...">Next <g:enc>${max}</g:enc>&hellip;</span>
+            <span
+                    id="nextPageButton"
+                    class="textbtn textbtn-default nodes_paging_next"
+                    data-node-table-id="nodesTable"
+                    data-node-paging-id="nodesPaging"
+                    data-bind="click: updateNodesNextPage, visible: hasMultiplePages"
+                    %{--onclick="_loadNextNodesPageTable(${max},${total},'nodesTable','nodesPaging');"--}%
+                    title="Load next ${enc(attr:max)} nodes...">Next <g:enc>${max}</g:enc>&hellip;</span>
             </g:if>
-            <span class="textbtn textbtn-default" onclick="_loadNextNodesPageTable(${max},-1,'nodesTable','nodesPaging');" title="Load all remaining nodes...">Load <span id="moreCount"><g:enc>${remainCount}</g:enc></span> remaining&hellip;</span>
+            <span
+                    class="textbtn textbtn-default nodes_paging_all"
+                    data-node-table-id="nodesTable"
+                    data-node-paging-id="nodesPaging"
+                    data-bind="click: updateNodesRemainingPages"
+                    %{--onclick="_loadNextNodesPageTable(${max},-1,'nodesTable','nodesPaging');"--}%
+                    title="Load all remaining nodes...">Load <span data-bind="text: pageRemaining"></span> remaining&hellip;</span>
         </div>
         </div>
     </g:if>
