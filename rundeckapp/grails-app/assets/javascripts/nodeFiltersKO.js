@@ -1,5 +1,6 @@
 //= require knockout.min
 //= require knockout-mapping
+//= require knockout-onenter
 /*
  Copyright 2014 SimplifyOps Inc, <http://simplifyops.com>
 
@@ -23,6 +24,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.baseNodesPageUrl = baseNodesPageUrl;
     self.filterName = ko.observable(data.filterName);
     self.filter = ko.observable(data.filter);
+    self.nodeExcludePrecedence = ko.observable(null== data.nodeExcludePrecedence || data.nodeExcludePrecedence?'true':'false');
     self.total = ko.observable(0);
     self.allcount = ko.observable(0);
     self.loading=ko.observable(false);
@@ -79,6 +81,9 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             jQuery('#'+self.elem()).empty();
             self.clear();
         }
+    });
+    self.nodeExcludePrecedence.subscribe(function(newValue){
+        self.updateMatchedNodes();
     });
     self.hasNodes = ko.computed(function () {
         return 0 != self.allcount();
@@ -171,9 +176,9 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             self.clear();
             return;
         }
-
-        if (typeof(data.nodeExcludePrecedence) == 'string' && data.nodeExcludePrecedence === "false"
-            || typeof(data.nodeExcludePrecedence) == 'boolean' && !data.nodeExcludePrecedence) {
+        var exclude=self.nodeExcludePrecedence();
+        if (typeof(exclude) == 'string' && exclude === "false"
+            || typeof(exclude) == 'boolean' && !exclude) {
             params.nodeExcludePrecedence = "false";
         } else {
             params.nodeExcludePrecedence = "true";
