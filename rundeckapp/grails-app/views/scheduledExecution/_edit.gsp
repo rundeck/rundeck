@@ -155,6 +155,7 @@ function getCurSEID(){
                 _doRevertAction(jQuery(e.target).data('undo-key'));
             });
         }
+        var nodeFilter;
         function pageinit(){
             _enableDragdrop();
 
@@ -165,28 +166,35 @@ function getCurSEID(){
                 }
                 return true;
             },false);
+            setupUndoRedoControls();
+
+            //define NodeFilters mvvm for the job
+            var filterParams = loadJsonData('filterParamsJSON');
+            nodeFilter = new NodeFilters(
+                    appLinks.frameworkAdhoc,
+                    appLinks.scheduledExecutionCreate,
+                    appLinks.frameworkNodes,
+                    Object.extend(filterParams, {
+                         elem: 'matchednodes',
+                         project: selFrameworkProject,
+                         view:'embed',
+                        nodesTitleSingular: "${g.message(code:'Node',default:'Node')}",
+                        nodesTitlePlural: "${g.message(code:'Node.plural',default:'Nodes')}"
+                    })
+            );
+            ko.applyBindings(nodeFilter,jQuery('#nodegroupitem')[0]);
+
             jQuery('body').on('click', '.nodefilterlink', function (evt) {
                 evt.preventDefault();
-                selectNodeFilterLink(this);
+                nodeFilter.selectNodeFilterLink(this);
             });
-            jQuery('.refresh_nodes').on('click', function (evt) {
-                _formUpdateMatchedNodes();
-            });
-            jQuery('.nodefilters [type=submit]').on('click', function (evt) {
-                evt.preventDefault();
-                _formUpdateMatchedNodes();
-            });
-            jQuery('#schedJobNodeFilter').on('keydown',function (evt) {
-                if(!noenter(evt)){
-                    _formUpdateMatchedNodes();
-                }
-            });
-            setupUndoRedoControls();
         }
 
         jQuery(pageinit);
 //]>
 </script>
+<g:embedJSON id="filterParamsJSON"
+             data="${[filterName: params.filterName, filter: scheduledExecution?.asFilter()]}"/>
 <style lang="text/css">
     textarea.code{
         font-family: Courier,monospace;
@@ -558,7 +566,7 @@ function getCurSEID(){
 <div class="form-group  ${hasErrors(bean: scheduledExecution, field: 'filter', 'has-error')}">
 <div style="${wdgt.styleVisible(if: scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields ">
     <label class="${labelColSize} control-label">
-        Node Filter
+        <g:message code="node.filter" />
     </label>
 
     <div class="${fieldColSize}">
@@ -615,11 +623,11 @@ function getCurSEID(){
     </div>
 </div>%{--//extended filters--}%
 
-<div style="${wdgt.styleVisible(if: scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields">
+<div class="subfields nodeFilterFields">
 
     <div class="form-group">
         <label class="${labelColClass}">
-            Matched Nodes:
+            <g:message code="matched.nodes.prompt" />
         </label>
 
         <div class=" col-sm-10  ">
@@ -627,12 +635,13 @@ function getCurSEID(){
             <div class="well well-sm embed matchednodes">
                 <button type="button" class="pull-right btn btn-info btn-sm refresh_nodes"
                         data-loading-text="Loading..."
+                    data-bind="click: updateMatchedNodes"
                         title="click to refresh">
-                    refresh
+                    <g:message code="refresh" />
                     <i class="glyphicon glyphicon-refresh"></i>
                 </button>
                 <span class="matchednodes_show text-muted" style="display: none;">
-                    <span class="matchednodes_count "></span> Nodes Matched
+                    <span class="matchednodes_count "></span> <g:message code="nodes.matched" />
                 </span>
                 <div id='matchednodes' class="clearfix">
                 </div>
@@ -652,7 +661,7 @@ function getCurSEID(){
             <div class="${fieldColSize}">
                 <div class="row">
                 <div class="col-sm-4">
-                <input type='text' name="nodeThreadcount"
+                <input type='number' name="nodeThreadcount"
                        value="${enc(attr:scheduledExecution?.nodeThreadcount)}" id="schedJobnodeThreadcount"
                        size="3"
                        class="form-control input-sm"/>

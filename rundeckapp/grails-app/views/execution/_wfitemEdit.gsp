@@ -1,4 +1,4 @@
-<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; rundeck.PluginStep; rundeck.CommandExec; rundeck.JobExec" %>
+<%@ page import="rundeck.User; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; rundeck.PluginStep; rundeck.CommandExec; rundeck.JobExec" %>
 <%--
  Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
 
@@ -67,6 +67,138 @@
         </div>
     </div>
 
+    <span class="btn btn-sm  btn-link ${wdgt.css(if: item?.nodeFilter, then: 'active')}"
+                data-toggle="collapse" data-target="#nodeFilterOverride${rkey}">
+        Override Node Filters?
+        <i class="glyphicon ${wdgt.css(if: item?.nodeFilter, then: 'glyphicon-chevron-down', else: 'glyphicon-chevron-right')} "></i>
+    </span>
+    <div id="nodeFilterOverride${enc(attr: rkey)}" class="collapse-expandable collapse ${wdgt.css(if: item?.nodeFilter, then: 'in')}">
+    <div class="form-group">
+        <div class="col-sm-12 ">
+            <div class="text-info">
+                <g:message code="JobExec.property.nodeFilter.help.description" />
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+
+        <label class="col-sm-2 text-right form-control-static" for="nodeFilterField">
+            <g:message code="node.filter.prompt"/>
+        </label>
+
+        <div class="col-sm-10">
+            <g:hiddenField name="formInput" value="true"/>
+
+            <g:set var="filtvalue" value="${item?.nodeFilter}"/>
+
+            <span class="input-group nodefilters">
+                <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
+                    <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
+                </g:if>
+                <g:render template="/framework/nodeFilterInputGroup"
+                          model="[filterFieldName: 'nodeFilter',
+                                  filterFieldId:'nodeFilterField',
+                                  queryFieldHelpId:'nodeFilterQueryFieldHelp',
+                                  queryFieldPlaceholderText: g.message(code:'enter.a.node.filter.override'),
+                                  filterset: filterset,
+                                  filtvalue: filtvalue,
+                                  filterName: null]"/>
+            </span>
+
+            <div class=" collapse" id="nodeFilterQueryFieldHelp">
+                <div class="help-block">
+                    <g:render template="/common/nodefilterStringHelp"/>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-2 text-right">
+            <g:message code="matched.nodes.prompt"/>
+        </label>
+
+        <div class=" col-sm-10  ">
+
+            <div class="well well-sm embed matchednodes">
+                <button type="button" class="pull-right btn btn-info btn-sm refresh_nodes"
+                        data-loading-text="Loading..."
+                        data-bind="click: updateMatchedNodes"
+                        title="click to refresh">
+                    <g:message code="refresh"/>
+                    <i class="glyphicon glyphicon-refresh"></i>
+                </button>
+                <span class="text-muted" data-bind="visible: allcount()>0">
+                    <span data-bind="text: allcount"></span> <g:message code="nodes.matched"/>
+                </span>
+                <span class="text-muted" data-bind="visible: !filter()">
+                    <span data-bind="text: emptyMessage"></span>
+                </span>
+
+                <div id='matchednodes${rkey}' class="clearfix matched_nodes_receiver">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+
+        <label class="col-sm-2 text-right form-control-static" for="nodeThreadcountField">
+            <g:message code="scheduledExecution.property.nodeThreadcount.prompt"/>
+        </label>
+
+        <div class="col-sm-1">
+            <input
+                    data-bind="enable: filter()"
+                    type='number'
+                    name="nodeThreadcount"
+                    min="1"
+                    value="${enc(attr: item?.nodeThreadcount)}"
+                    size="3"
+                    class="form-control"
+                    id="nodeThreadcountField"
+            />
+        </div>
+        <div class="col-sm-9 help-block">
+            <g:message code="JobExec.property.nodeThreadcount.null.description"/>
+        </div>
+    </div>
+
+    <div class="form-group">
+
+        <label class="col-sm-2 text-right ">
+            <g:message code="scheduledExecution.property.nodeKeepgoing.prompt"/>
+        </label>
+
+        <div class="col-sm-10">
+            <div class="radio">
+                <label >
+                    <g:radio name="nodeKeepgoing" value="" checked="${item?.nodeKeepgoing==null}"
+                             data-bind="enable: filter()"/>
+                    <g:message code="JobExec.property.nodeKeepgoing.null.description"/>
+                </label>
+            </div>
+
+            <div class="radio">
+                <label >
+                    <g:radio name="nodeKeepgoing" value="true" checked="${item?.nodeKeepgoing!=null&&item?.nodeKeepgoing}"
+                             data-bind="enable: filter()"/>
+                    <g:message code="Workflow.property.keepgoing.true.description"/>
+                </label>
+            </div>
+
+            <div class="radio">
+                <label >
+                    <g:radio name="nodeKeepgoing" value="false" checked="${item?.nodeKeepgoing!=null&&!item?.nodeKeepgoing}"
+                             data-bind="enable: filter()"/>
+                    <g:message  code="Workflow.property.keepgoing.false.description"/>
+                </label>
+            </div>
+        </div>
+    </div>
+    </div>
+
     <div style="margin-top:5px;">
         <g:set var="isNodeStep" value="${item ? item.nodeStep : newitemnodestep == 'true'}"/>
         <div class="prompt"><g:message code="JobExec.nodeStep.title" /></div>
@@ -89,6 +221,26 @@
             </div>
         </div>
     </div>
+    <g:javascript>
+            fireWhenReady("nodeFilterOverride${rkey}",function(){
+
+            var jobRefNodeFilter = new NodeFilters(
+                    appLinks.frameworkAdhoc,
+                    appLinks.scheduledExecutionCreate,
+                    appLinks.frameworkNodes,
+                     {
+                         elem: 'matchednodes${rkey}',
+                         project: selFrameworkProject,
+                         view:'embed',
+                         emptyMode:'blank',
+                         emptyMessage:"${g.message(code: 'JobExec.property.nodeFilter.null.description')}",
+                        nodesTitleSingular: "${g.message(code: 'Node', default: 'Node')}",
+                        nodesTitlePlural: "${g.message(code: 'Node.plural', default: 'Nodes')}"
+                    }
+            );
+            ko.applyBindings(jobRefNodeFilter,jQuery('#nodeFilterOverride${rkey}')[0]);
+        });
+    </g:javascript>
 </g:if>
 <g:elseif test="${'script'==newitemtype || 'scriptfile'==newitemtype || 'command'==newitemtype || item instanceof CommandExec }">
     <g:set var="isAdhocRemote" value="${'command'==newitemtype || item?.adhocRemoteString}"/>
