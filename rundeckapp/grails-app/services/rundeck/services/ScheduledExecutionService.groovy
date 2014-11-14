@@ -1878,9 +1878,9 @@ class ScheduledExecutionService implements ApplicationContextAware{
         }
         if (!params.jobName) {
             //TODO: finalize format
-            if (params.adhocRemoteString) {
+            if (params.metaClass.hasProperty(params, 'adhocRemoteString') && params.adhocRemoteString) {
                 params.jobName = "Remote Script Job"
-            } else if (params.adhocLocalString) {
+            } else if (params.metaClass.hasProperty(params, 'adhocLocalString') && params.adhocLocalString) {
                 params.jobName = "Inline Script Job"
             }
         }
