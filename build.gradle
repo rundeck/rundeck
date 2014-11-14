@@ -8,6 +8,16 @@
  import org.gradle.plugins.signing.Sign
  buildscript {
     repositories {
+	maven {
+		name 'mavenCentralProxy'
+		url mavenCentralUrl
+		if (project.hasProperty('mavenUser') && project.hasProperty('mavenPassword')) {
+			credentials {
+				username mavenUser
+				password mavenPassword
+			}
+		}
+	}
         mavenCentral()
     }
     dependencies {

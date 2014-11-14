@@ -205,7 +205,9 @@ task cleanGrails(type: Exec, dependsOn: [extractGrails]) {
     workingDir project.projectDir
     environment 'GRAILS_HOME', grailsHome
     commandLine grailsCommandLine
-    args "-DRUNDECK_VERSION=${version}", 'clean'
+    args "-Dmaven.central.url=${mavenCentralUrl}",
+            "${mavenCreds}",
+            "-DRUNDECK_VERSION=${version}", 'clean'
 }
 
 task clean(overwrite: true, dependsOn: [cleanEclipse, cleanWar, cleanGrails]) {
