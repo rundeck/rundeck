@@ -207,6 +207,7 @@ task cleanGrails(type: Exec, dependsOn: [extractGrails]) {
     commandLine grailsCommandLine
     args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
+            "-Dgrails.local.repo=${grailsLocalRepo}",
             "-DRUNDECK_VERSION=${version}", 'clean'
 }
 
