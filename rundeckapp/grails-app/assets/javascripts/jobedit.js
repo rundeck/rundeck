@@ -43,44 +43,6 @@ function prepJobType(data) {
     }
 }
 
-/** Nodeset matching */
-var mnodetimer = null;
-function _formUpdateMatchedNodes() {
-    var i;
-    var params = {view:'embed',declarenone:true,defaultLocalNode:true,fullresults:true,formInput:true,requireRunAuth:true};
-
-    params['filter']=$F('schedJobNodeFilter');
-    if ($('nodeExcludePrecedenceTrue').checked) {
-        params.nodeExcludePrecedence = "true";
-    } else {
-        params.nodeExcludePrecedence = "false";
-    }
-    if(typeof(_beforeMatchNodes)=='function'){
-        _beforeMatchNodes();
-    }
-    jQuery('#matchednodes').load(_genUrl(appLinks.frameworkNodesFragment,params),function(resp,status,jqxhr) {
-        if (typeof(_afterMatchNodes) == 'function') {
-            _afterMatchNodes();
-        }
-    });
-}
-function _matchNodes() {
-    if (mnodetimer) {
-        clearTimeout(mnodetimer);
-    }
-    mnodetimer = setTimeout(_formUpdateMatchedNodes, 500);
-}
-function _matchNodesKeyPress(e) {
-    if (!noenter(e)) {
-        return false;
-    }
-    _matchNodes();
-    return true;
-}
-
-/** end Nodeset matching */
-
-
 /** begin wf edit code */
 
 
