@@ -103,41 +103,7 @@ function getCurSEID(){
              return true;
          }
         function _updateBoxInfo(name, data) {
-            if(name=='nodes'){
-                if (data.total && data.total != "0") {
-                }
-                if (null != data.total) {
-                }
-                if (null != data.allcount) {
-                    jQuery('.matchednodes_count').html(data.allcount);
-                    jQuery('.matchednodes_show').show();
-                    jQuery('.matchednodes_hide').hide();
-                }else{
-                    jQuery('.matchednodes_show').hide();
-                }
-                if (null != data.filter) {
-                }
-            }
-        }
-        function selectNodeFilterLink(e){
-            var field = jQuery('#schedJobNodeFilter');
-            var oldfilter= field.val();
-            var filterName = jQuery(e).data('node-filter-name');
-            var filterString = jQuery(e).data('node-filter');
-            var filterAll = jQuery(e).data('node-filter-all');
-            if (filterString && !filterName && oldfilter && !filterAll && oldfilter!='.*') {
-                filterString = oldfilter + ' ' + filterString;
-            }else if(filterAll){
-                filterString='.*'
-            }
-            field.val(filterString);
-            _matchNodes();
-        }
-        function _beforeMatchNodes(){
-            jQuery('.btn.refresh_nodes').button('loading');
-        }
-        function _afterMatchNodes(){
-            jQuery('.btn.refresh_nodes').button('reset');
+
         }
         function setupUndoRedoControls(){
             jQuery('.undoredocontrols').on('click','.act_undo',function(e){
@@ -154,6 +120,23 @@ function getCurSEID(){
                 jQuery('#revertall_'+jQuery(e.target).data('popover-key')).popover('destroy');
                 _doRevertAction(jQuery(e.target).data('undo-key'));
             });
+        }
+        function setupJobExecNodeFilterBinding(root,target){
+            var jobRefNodeFilter = new NodeFilters(
+                    appLinks.frameworkAdhoc,
+                    appLinks.scheduledExecutionCreate,
+                    appLinks.frameworkNodes,
+                    {
+                        elem: target,
+                        project: selFrameworkProject,
+                        view: 'embed',
+                        emptyMode: 'blank',
+                        emptyMessage: "${g.message(code: 'JobExec.property.nodeFilter.null.description')}",
+                        nodesTitleSingular: "${g.message(code: 'Node', default: 'Node')}",
+                        nodesTitlePlural: "${g.message(code: 'Node.plural', default: 'Nodes')}"
+                    }
+            );
+            ko.applyBindings(jobRefNodeFilter, jQuery(root)[0]);
         }
         var nodeFilter;
         function pageinit(){
@@ -184,17 +167,22 @@ function getCurSEID(){
             );
             ko.applyBindings(nodeFilter,jQuery('#nodegroupitem')[0]);
 
-            jQuery('body').on('click', '.nodefilterlink', function (evt) {
-                evt.preventDefault();
-                nodeFilter.selectNodeFilterLink(this);
-            });
+            jQuery('body')
+//                .on('click', '.nodefilterlink', function (evt) {
+//                evt.preventDefault();
+//                nodeFilter.selectNodeFilterLink(this);
+//            })
+            .on('change','.node_dispatch_radio',function(evt){
+                nodeFilter.updateMatchedNodes();
+            })
+            ;
         }
 
         jQuery(pageinit);
 //]>
 </script>
 <g:embedJSON id="filterParamsJSON"
-             data="${[filterName: params.filterName, filter: scheduledExecution?.asFilter()]}"/>
+             data="${[filterName: params.filterName, filter: scheduledExecution?.asFilter(),nodeExcludePrecedence: scheduledExecution?.nodeExcludePrecedence]}"/>
 <style lang="text/css">
     textarea.code{
         font-family: Courier,monospace;
@@ -526,9 +514,9 @@ function getCurSEID(){
             <input type="radio"
                    name="doNodedispatch"
                    value="true"
+                    class="node_dispatch_radio"
                 ${scheduledExecution?.doNodedispatch ? 'checked' : ''}
-                   id="doNodedispatchTrue"
-                   onchange="_matchNodes()"/>
+                   id="doNodedispatchTrue"/>
             Dispatch to Nodes
         </label>
         <label id="doNodedispatchLabelFalse" class="radio-inline">
@@ -536,9 +524,9 @@ function getCurSEID(){
             <input type="radio"
                    name="doNodedispatch"
                    value="false"
+                   class="node_dispatch_radio"
                 ${!scheduledExecution?.doNodedispatch ? 'checked' : ''}
-                   id="doNodedispatchFalse"
-                   onchange="_matchNodes()"/>
+                   id="doNodedispatchFalse"/>
             Execute locally
         </label>
     </div>
@@ -611,14 +599,16 @@ function getCurSEID(){
     <div class="col-sm-10">
         <label title="Include more nodes" class="radio-inline">
             <g:radio name="nodeExcludePrecedence" value="false"
+                data-bind="checked: nodeExcludePrecedence"
                      checked="${!scheduledExecution?.nodeExcludePrecedence}"
-                     id="nodeExcludePrecedenceFalse" onchange="_matchNodes()"/>
+                     id="nodeExcludePrecedenceFalse"/>
             Included</label>
 
         <label title="Exclude more nodes" class="radio-inline">
             <g:radio name="nodeExcludePrecedence" value="true"
+                    data-bind="checked: nodeExcludePrecedence"
                      checked="${scheduledExecution?.nodeExcludePrecedence}"
-                     id="nodeExcludePrecedenceTrue" onchange="_matchNodes()"/>
+                     id="nodeExcludePrecedenceTrue"/>
             Excluded</label>
     </div>
 </div>%{--//extended filters--}%
@@ -635,7 +625,7 @@ function getCurSEID(){
             <div class="well well-sm embed matchednodes">
                 <button type="button" class="pull-right btn btn-info btn-sm refresh_nodes"
                         data-loading-text="Loading..."
-                    data-bind="click: updateMatchedNodes"
+                    data-bind="click: $data.updateMatchedNodes"
                         title="click to refresh">
                     <g:message code="refresh" />
                     <i class="glyphicon glyphicon-refresh"></i>

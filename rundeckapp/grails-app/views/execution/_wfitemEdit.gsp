@@ -124,7 +124,7 @@
             <div class="well well-sm embed matchednodes">
                 <button type="button" class="pull-right btn btn-info btn-sm refresh_nodes"
                         data-loading-text="Loading..."
-                        data-bind="click: updateMatchedNodes"
+                        data-bind="click: $data.updateMatchedNodes"
                         title="click to refresh">
                     <g:message code="refresh"/>
                     <i class="glyphicon glyphicon-refresh"></i>
@@ -223,23 +223,8 @@
     </div>
     <g:javascript>
             fireWhenReady("nodeFilterOverride${rkey}",function(){
-
-            var jobRefNodeFilter = new NodeFilters(
-                    appLinks.frameworkAdhoc,
-                    appLinks.scheduledExecutionCreate,
-                    appLinks.frameworkNodes,
-                     {
-                         elem: 'matchednodes${rkey}',
-                         project: selFrameworkProject,
-                         view:'embed',
-                         emptyMode:'blank',
-                         emptyMessage:"${g.message(code: 'JobExec.property.nodeFilter.null.description')}",
-                        nodesTitleSingular: "${g.message(code: 'Node', default: 'Node')}",
-                        nodesTitlePlural: "${g.message(code: 'Node.plural', default: 'Nodes')}"
-                    }
-            );
-            ko.applyBindings(jobRefNodeFilter,jQuery('#nodeFilterOverride${rkey}')[0]);
-        });
+                setupJobExecNodeFilterBinding('#nodeFilterOverride${rkey}','matchednodes${rkey}');
+            });
     </g:javascript>
 </g:if>
 <g:elseif test="${'script'==newitemtype || 'scriptfile'==newitemtype || 'command'==newitemtype || item instanceof CommandExec }">
