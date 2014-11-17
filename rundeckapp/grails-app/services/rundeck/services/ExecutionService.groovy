@@ -2137,16 +2137,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     *
-     * @param se
-     * @param executionContext
-     * @param newargs
-     * @param nodeFilter
-     * @param nodeKeepgoing
-     * @param nodeThreadcount
-     * @param dovalidate
+     * Create a step execution context for a Job Reference step
+     * @param se the job
+     * @param executionContext the original step context
+     * @param newargs argument strings for the job, which will have data context references expanded
+     * @param nodeFilter overriding node filter
+     * @param nodeKeepgoing overriding keepgoing
+     * @param nodeThreadcount overriding threadcount
+     * @param dovalidate if true, validate the input arguments to the job
      * @return
-     * @throws ExecutionServiceValidationException
+     * @throws ExecutionServiceValidationException if input argument validation fails
      */
     StepExecutionContext createJobReferenceContext(
             ScheduledExecution se,
