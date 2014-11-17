@@ -82,6 +82,11 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             self.clear();
         }
     });
+    self.filter.subscribe(function (newValue) {
+        if (newValue != '' && self.filterName()) {
+            self.filterName(null);
+        }
+    });
     self.nodeExcludePrecedence.subscribe(function(newValue){
         self.updateMatchedNodes();
     });
