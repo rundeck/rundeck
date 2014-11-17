@@ -1,12 +1,16 @@
+import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.common.INodeSet
+import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.common.NodesSelector
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandExecutionItem
-import grails.test.GrailsUnitTestCase
+import com.dtolabs.rundeck.core.utils.NodeSet
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
-import groovy.mock.interceptor.MockFor
 import org.grails.plugins.metricsweb.MetricService
 import rundeck.ScheduledExecution
 import rundeck.User
@@ -1625,5 +1629,142 @@ class ExecutionServiceTests  {
         assertNotNull(exec2.dateCompleted)
         assertEquals("false", exec2.status)
 
+    }
+    /**
+     * null node filter
+     */
+    void testOverrideJobReferenceNodeFilter_empty() {
+        def context = ExecutionContextImpl.builder()
+                                          .nodes(makeNodeSet(['x','y']))
+                                          .nodeSelector(makeSelector("x y", 1, false))
+                                          .threadCount(1)
+                                          .keepgoing(false)
+                                          .build()
+        def newctx=service.overrideJobReferenceNodeFilter(context, null, null, null)
+        assertEquals(['x','y'],newctx.nodes.nodeNames as List)
+        assertEquals(false,newctx.keepgoing)
+        assertEquals(1,newctx.threadCount)
+    }
+    /**
+     * null node filter should not override threadcount
+     */
+    void testOverrideJobReferenceNodeFilter_emptyWithThreadcount() {
+        def context = ExecutionContextImpl.builder()
+                                          .nodes(makeNodeSet(['x','y']))
+                                          .nodeSelector(makeSelector("x y", 1, false))
+                                          .threadCount(1)
+                                          .keepgoing(false)
+                                          .build()
+        def newctx=service.overrideJobReferenceNodeFilter(context, null, 2, null)
+        assertEquals(['x','y'],newctx.nodes.nodeNames as List)
+        assertEquals(false,newctx.keepgoing)
+        assertEquals(1,newctx.threadCount)
+    }
+    /**
+     * null node filter should not override keepgoing
+     */
+    void testOverrideJobReferenceNodeFilter_emptyWithKeepgoing() {
+        def context = ExecutionContextImpl.builder()
+                                          .nodes(makeNodeSet(['x','y']))
+                                          .nodeSelector(makeSelector("x y", 1, false))
+                                          .threadCount(1)
+                                          .keepgoing(false)
+                                          .build()
+        def newctx=service.overrideJobReferenceNodeFilter(context, null, null, true)
+        assertEquals(['x','y'],newctx.nodes.nodeNames as List)
+        assertEquals(false,newctx.keepgoing)
+        assertEquals(1,newctx.threadCount)
+    }
+    /**
+     * set node filter
+     */
+    void testOverrideJobReferenceNodeFilter_filter() {
+        def context = ExecutionContextImpl.builder()
+                                          .nodes(makeNodeSet(['x','y']))
+                                          .nodeSelector(makeSelector("x y", 1, false))
+                                          .threadCount(1)
+                                          .keepgoing(false)
+                                          .build()
+        service.frameworkService=mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                makeNodeSet(['z', 'p'])
+            }
+            filterAuthorizedNodes(1..1){ final String project, final Set<String> actions, final INodeSet unfiltered,
+                                         AuthContext authContext->
+                makeNodeSet(['z','p'])
+            }
+        }
+
+        def newctx=service.overrideJobReferenceNodeFilter(context, 'z p', null, null)
+        assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
+        assertEquals(false,newctx.keepgoing)
+        assertEquals(1,newctx.threadCount)
+    }
+    /**
+     * set node filter and threadcount
+     */
+    void testOverrideJobReferenceNodeFilter_filterAndThreadcount() {
+        def context = ExecutionContextImpl.builder()
+                                          .nodes(makeNodeSet(['x','y']))
+                                          .nodeSelector(makeSelector("x y", 1, false))
+                                          .threadCount(1)
+                                          .keepgoing(false)
+                                          .build()
+        service.frameworkService=mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                makeNodeSet(['z', 'p'])
+            }
+            filterAuthorizedNodes(1..1){ final String project, final Set<String> actions, final INodeSet unfiltered,
+                                         AuthContext authContext->
+                makeNodeSet(['z','p'])
+            }
+        }
+
+        def newctx=service.overrideJobReferenceNodeFilter(context, 'z p', 2, null)
+        assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
+        assertEquals(false,newctx.keepgoing)
+        assertEquals(2,newctx.threadCount)
+    }
+    /**
+     * set node filter and threadcount and keepgoing
+     */
+    void testOverrideJobReferenceNodeFilter_filterAndThreadcountAndKeepgoing() {
+        def context = ExecutionContextImpl.builder()
+                                          .nodes(makeNodeSet(['x','y']))
+                                          .nodeSelector(makeSelector("x y", 1, false))
+                                          .threadCount(1)
+                                          .keepgoing(false)
+                                          .build()
+        service.frameworkService=mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                makeNodeSet(['z', 'p'])
+            }
+            filterAuthorizedNodes(1..1){ final String project, final Set<String> actions, final INodeSet unfiltered,
+                                         AuthContext authContext->
+                makeNodeSet(['z','p'])
+            }
+        }
+
+        def newctx=service.overrideJobReferenceNodeFilter(context, 'z p', 2, true)
+        assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
+        assertEquals(true,newctx.keepgoing)
+        assertEquals(2,newctx.threadCount)
+    }
+
+    protected NodesSelector makeSelector(String filter, int threadcount, boolean keepgoing) {
+        def nodeset=new NodeSet()
+        def filter1 = NodeSet.parseFilter(filter)
+        nodeset.createInclude(filter1.include)
+        nodeset.createExclude(filter1.exclude)
+        nodeset.setThreadCount(threadcount)
+        nodeset.setKeepgoing(keepgoing)
+        return nodeset
+    }
+    protected INodeSet makeNodeSet(List<String> nodes) {
+        def nset=new NodeSetImpl()
+        nodes.each{
+            nset.putNode(new NodeEntryImpl(it))
+        }
+        return nset;
     }
 }
