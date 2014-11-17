@@ -36,12 +36,13 @@ def boolean grailsZipFileBasePathOverriden = hasProperty("grailsZipFileBasePath"
 def grailsZipFileBasePath = grailsZipFileBasePathOverriden ? grailsZipFileBasePath : grailsZipFileDefaultBasePath
 def grailsZipFileLocation = "${grailsZipFileBasePath}/${grailsZipFile}"
 def grailsInstallLocation = "${rootProject.projectDir}/local"
-def grailsLocalRepo = hasProperty("grailsLocalRepo") ? grailsLocalRepo : "grails-app/plugins"
+def grailsLocalRepo = hasProperty('grailsLocalRepo') ? grailsLocalRepo : 'grails-app/plugins'
+def grailsCentral = hasProperty('disableGrailsCentral') && disableGrailsCentral=='true' ? "-Ddisable.grails.central=${disableGrailsCentral}" : "-Dgrails.central.url=${grailsCentralUrl}"
 def grailsDownloadUrl = "http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-${grailsVersion}.zip"
 def grailsHome = "${grailsInstallLocation}/${grailsBaseName}"
 def grailsCommandLine = "${grailsHome}/bin/grails"
-def mavenCredsDefined = hasProperty("mavenUser") && hasProperty("mavenPassword") && hasProperty("mavenRealm") && hasProperty("mavenHost")
-def mavenCreds = mavenCredsDefined ? "-Dmaven.user=${mavenUser} -Dmaven.password=${mavenPassword} -Dmaven.realm=${mavenRealm} -Dmaven.host=${mavenHost}" : ""
+def mavenCredsDefined = hasProperty('mavenUser') && hasProperty('mavenPassword') && hasProperty('mavenRealm') && hasProperty('mavenHost')
+def mavenCreds = mavenCredsDefined ? "-Dmaven.user=${mavenUser} -Dmaven.password=${mavenPassword} -Dmaven.realm=${mavenRealm} -Dmaven.host=${mavenHost}" : ''
 def warFileName = "rundeck-${version}.war"
 def warFileLocation = "${project.projectDir}/target/${warFileName}"
 def additionalFileLocation = "${project.projectDir}/target/war-contents"
@@ -188,6 +189,7 @@ task installJettyPlugin(type: Exec, dependsOn: [extractGrails]) {
     commandLine grailsCommandLine
     args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
+            "${grailsCentral}",
             "-Dgrails.local.repo=${grailsLocalRepo}",
             "-DRUNDECK_VERSION=${version}",
             'install-plugin',
@@ -207,6 +209,7 @@ task cleanGrails(type: Exec, dependsOn: [extractGrails]) {
     commandLine grailsCommandLine
     args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
+            "${grailsCentral}",
             "-Dgrails.local.repo=${grailsLocalRepo}",
             "-DRUNDECK_VERSION=${version}", 'clean'
 }
@@ -224,6 +227,7 @@ task testGrails(type: Exec, overwrite: true, dependsOn: [installJettyPlugin, ins
     commandLine grailsCommandLine
     args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
+            "${grailsCentral}",
             "-Dgrails.local.repo=${grailsLocalRepo}",
             "-DRUNDECK_VERSION=${version}",
             "-Drdeck.base=${project.buildDir}/rdeck_base",
@@ -243,6 +247,7 @@ task grailsCompile(type: Exec, overwrite: true, dependsOn: [extractGrails]) {
     commandLine grailsCommandLine
     args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
+            "${grailsCentral}",
             "-Dgrails.local.repo=${grailsLocalRepo}",
             "-DRUNDECK_VERSION=${version}",
             'prod',
@@ -260,6 +265,7 @@ task grailsWar(type: Exec, overwrite:true, dependsOn: [installJettyPlugin, insta
     commandLine grailsCommandLine
     args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
+            "${grailsCentral}",
             "-Dgrails.local.repo=${grailsLocalRepo}",
             "-Drundeck.war.additional=${additionalFileLocation}",
             "-DRUNDECK_VERSION=${version}",
