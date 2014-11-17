@@ -121,12 +121,30 @@ function getCurSEID(){
                 _doRevertAction(jQuery(e.target).data('undo-key'));
             });
         }
+        var nodeFilter;
+        var nodeFilterMap = {};
+        function registerNodeFilters(obj,key){
+            nodeFilterMap[key]=obj;
+        }
+        function handleNodeFilterLink(link){
+            var holder = jQuery(link).parents('.node_filter_link_holder');
+            var nflinkid=holder.data('node-filter-link-id');
+            var nflinkid2=holder.attr('id');
+            if(nflinkid && nodeFilterMap[nflinkid]){
+                nodeFilterMap[nflinkid].selectNodeFilterLink(link);
+            }else if(nflinkid2 && nodeFilterMap['#'+nflinkid2]){
+                nodeFilterMap['#'+nflinkid2].selectNodeFilterLink(link);
+            }else{
+                nodeFilter.selectNodeFilterLink(link);
+            }
+        }
         function setupJobExecNodeFilterBinding(root,target){
             var jobRefNodeFilter = new NodeFilters(
                     appLinks.frameworkAdhoc,
                     appLinks.scheduledExecutionCreate,
                     appLinks.frameworkNodes,
                     {
+                        nodefilterLinkId:root,
                         elem: target,
                         project: selFrameworkProject,
                         view: 'embed',
@@ -137,8 +155,8 @@ function getCurSEID(){
                     }
             );
             ko.applyBindings(jobRefNodeFilter, jQuery(root)[0]);
+            registerNodeFilters(jobRefNodeFilter,root);
         }
-        var nodeFilter;
         function pageinit(){
             _enableDragdrop();
 
@@ -158,6 +176,7 @@ function getCurSEID(){
                     appLinks.scheduledExecutionCreate,
                     appLinks.frameworkNodes,
                     Object.extend(filterParams, {
+                        nodefilterLinkId: '#nodegroupitem',
                          elem: 'matchednodes',
                          project: selFrameworkProject,
                          view:'embed',
@@ -166,12 +185,12 @@ function getCurSEID(){
                     })
             );
             ko.applyBindings(nodeFilter,jQuery('#nodegroupitem')[0]);
+            registerNodeFilters(nodeFilter, '#nodegroupitem');
 
-            jQuery('body')
-//                .on('click', '.nodefilterlink', function (evt) {
-//                evt.preventDefault();
-//                nodeFilter.selectNodeFilterLink(this);
-//            })
+            jQuery('body').on('click', '.nodefilterlink', function (evt) {
+                evt.preventDefault();
+                handleNodeFilterLink(this);
+            })
             .on('change','.node_dispatch_radio',function(evt){
                 nodeFilter.updateMatchedNodes();
             })
@@ -502,7 +521,7 @@ function getCurSEID(){
     </div>%{--//Workflow--}%
 
 %{--Node Dispatch--}%
-<div class="list-group-item" id="nodegroupitem">
+<div class="list-group-item node_filter_link_holder" id="nodegroupitem">
 <div class="form-group">
     <label class="${labelColSize} control-label">
         Nodes

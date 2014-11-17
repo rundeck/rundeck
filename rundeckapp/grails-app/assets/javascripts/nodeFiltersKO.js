@@ -25,6 +25,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.filterName = ko.observable(data.filterName);
     self.filter = ko.observable(data.filter);
     self.nodeExcludePrecedence = ko.observable(null== data.nodeExcludePrecedence || data.nodeExcludePrecedence?'true':'false');
+    self.nodefilterLinkId=data.nodefilterLinkId;
     self.total = ko.observable(0);
     self.allcount = ko.observable(0);
     self.loading=ko.observable(false);
@@ -149,7 +150,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         var needsBinding = true;
         var project=self.project();
         var view = self.view() ? self.view() : 'table';
-        var basedata = {view: view, declarenone: true, fullresults: true, expanddetail: true, inlinepaging: true};
+        var basedata = {view: view, declarenone: true, fullresults: true, expanddetail: true, inlinepaging: true, nodefilterLinkId: self.nodefilterLinkId};
         var clearContent=true;
         if(self.paging()){
             basedata.page = page;

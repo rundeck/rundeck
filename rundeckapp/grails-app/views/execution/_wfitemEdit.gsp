@@ -68,11 +68,11 @@
     </div>
 
     <span class="btn btn-sm  btn-link ${wdgt.css(if: item?.nodeFilter, then: 'active')}"
-                data-toggle="collapse" data-target="#nodeFilterOverride${rkey}">
+                data-toggle="collapse" data-target="#nodeFilterOverride${enc(attr: rkey)}">
         Override Node Filters?
         <i class="glyphicon ${wdgt.css(if: item?.nodeFilter, then: 'glyphicon-chevron-down', else: 'glyphicon-chevron-right')} "></i>
     </span>
-    <div id="nodeFilterOverride${enc(attr: rkey)}" class="collapse-expandable collapse ${wdgt.css(if: item?.nodeFilter, then: 'in')}">
+    <div id="nodeFilterOverride${enc(attr: rkey)}" class="collapse-expandable collapse ${wdgt.css(if: item?.nodeFilter, then: 'in')} node_filter_link_holder">
     <div class="form-group">
         <div class="col-sm-12 ">
             <div class="text-info">
@@ -82,7 +82,7 @@
     </div>
     <div class="form-group">
 
-        <label class="col-sm-2 text-right form-control-static" for="nodeFilterField">
+        <label class="col-sm-2 text-right form-control-static" for="nodeFilterField${enc(attr: rkey)}">
             <g:message code="node.filter.prompt"/>
         </label>
 
@@ -97,15 +97,15 @@
                 </g:if>
                 <g:render template="/framework/nodeFilterInputGroup"
                           model="[filterFieldName: 'nodeFilter',
-                                  filterFieldId:'nodeFilterField',
-                                  queryFieldHelpId:'nodeFilterQueryFieldHelp',
+                                  filterFieldId:'nodeFilterField'+rkey,
+                                  queryFieldHelpId:'nodeFilterQueryFieldHelp'+rkey,
                                   queryFieldPlaceholderText: g.message(code:'enter.a.node.filter.override'),
                                   filterset: filterset,
                                   filtvalue: filtvalue,
                                   filterName: null]"/>
             </span>
 
-            <div class=" collapse" id="nodeFilterQueryFieldHelp">
+            <div class=" collapse" id="nodeFilterQueryFieldHelp${enc(attr: rkey)}">
                 <div class="help-block">
                     <g:render template="/common/nodefilterStringHelp"/>
                 </div>
