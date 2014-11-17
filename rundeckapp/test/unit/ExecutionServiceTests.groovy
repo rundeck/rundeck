@@ -387,6 +387,10 @@ class ExecutionServiceTests  {
             }
         }
 
+    /**
+     * Create a job definition with 4 options, test1 through test4. test3-4 are required.
+     * @return
+     */
     private ScheduledExecution prepare() {
         ScheduledExecution se = new ScheduledExecution(
                 jobName: 'blue',
@@ -1766,5 +1770,193 @@ class ExecutionServiceTests  {
             nset.putNode(new NodeEntryImpl(it))
         }
         return nset;
+    }
+
+    void testcreateJobReferenceContext_simple(){
+        ScheduledExecution job = prepare()
+
+        def context = ExecutionContextImpl.builder()
+                                          .nodes(makeNodeSet(['x', 'y']))
+                                          .nodeSelector(makeSelector("x y", 1, false))
+                                          .threadCount(1)
+                                          .keepgoing(false)
+                                          .dataContext(['option':[:],'job':['execid':'123']])
+                                          .user('aUser')
+                                          .build()
+        service.frameworkService=mockWith(FrameworkService){
+            parseOptsFromArray(1..2){String[] args->
+                ['test1':'value']
+            }
+            filterNodeSet(1..1) { NodesSelector selector, String project ->
+                makeNodeSet(['x','y'])
+            }
+            filterAuthorizedNodes(1..1) { final String project,
+                                          final Set<String> actions,
+                                          final INodeSet unfiltered,
+                                          AuthContext authContext ->
+                makeNodeSet(['x', 'y'])
+            }
+        }
+        service.storageService=mockWith(StorageService){
+            storageTreeWithContext(1..1){AuthContext->
+                null
+            }
+        }
+        def newCtxt=service.createJobReferenceContext(job,context,['-test1','value'] as String[],null,null,null,false);
+
+        //verify nodeset
+        assertEquals(['x','y'] as Set,newCtxt.nodes.nodeNames as Set)
+        assertEquals(1,newCtxt.threadCount)
+        assertEquals(false,newCtxt.keepgoing)
+        assertNotNull(newCtxt.dataContext['option'])
+
+        //values from parseOptsFromArray mock
+        assertEquals("expected options size incorrect",1,newCtxt.dataContext['option'].size())
+        assertEquals(['test1': 'value'], newCtxt.dataContext['option'])
+
+        //expected job data context
+        assertEquals("expected job data size incorrect", 8, newCtxt.dataContext['job'].size())
+        assertEquals(['id': '1',
+                      'execid': '123',
+                      'project': 'AProject',
+                      'username':'aUser',
+                      'loglevel': 'ERROR',
+                      'user.name': 'aUser',
+                      'name':'blue',
+                      'group':'some/where'
+                     ], newCtxt.dataContext['job'])
+
+    }
+    void testcreateJobReferenceContext_overrideNodefilter(){
+        ScheduledExecution job = prepare()
+
+        def context = ExecutionContextImpl.builder()
+                                          .nodes(makeNodeSet(['x', 'y']))
+                                          .nodeSelector(makeSelector("x y", 1, false))
+                                          .threadCount(1)
+                                          .keepgoing(false)
+                                          .dataContext(['option':[:],'job':['execid':'123']])
+                                          .user('aUser')
+                                          .build()
+        service.frameworkService=mockWith(FrameworkService){
+            parseOptsFromArray(1..2){String[] args->
+                ['test1':'value']
+            }
+            //called by createContext
+            filterNodeSet(1..1) { NodesSelector selector, String project ->
+                makeNodeSet(['x','y'])
+            }
+            filterAuthorizedNodes(1..1) { final String project,
+                                          final Set<String> actions,
+                                          final INodeSet unfiltered,
+                                          AuthContext authContext ->
+                makeNodeSet(['x', 'y'])
+            }
+            //called by overrideJobReferenceNodeFilter
+            filterNodeSet(1..1) { NodesSelector selector, String project ->
+                makeNodeSet(['z', 'p'])
+            }
+            filterAuthorizedNodes(1..1) { final String project,
+                                          final Set<String> actions,
+                                          final INodeSet unfiltered,
+                                          AuthContext authContext ->
+                makeNodeSet(['z', 'p'])
+            }
+        }
+        service.storageService=mockWith(StorageService){
+            storageTreeWithContext(1..1){AuthContext->
+                null
+            }
+        }
+        def newCtxt=service.createJobReferenceContext(job,context,['-test1','value'] as String[],'z p',true,3,false);
+
+        //verify nodeset
+        assertEquals(['z','p'] as Set,newCtxt.nodes.nodeNames as Set)
+        assertEquals(3,newCtxt.threadCount)
+        assertEquals(true,newCtxt.keepgoing)
+
+        assertNotNull(newCtxt.dataContext['option'])
+
+        //values from parseOptsFromArray mock
+        assertEquals("expected options size incorrect",1,newCtxt.dataContext['option'].size())
+        assertEquals(['test1':'value'],newCtxt.dataContext['option'])
+
+        //expected job data context
+        assertEquals("expected job data size incorrect", 8, newCtxt.dataContext['job'].size())
+        assertEquals(['id': '1',
+                      'execid': '123',
+                      'project': 'AProject',
+                      'username':'aUser',
+                      'loglevel': 'ERROR',
+                      'user.name': 'aUser',
+                      'name':'blue',
+                      'group':'some/where'
+                     ], newCtxt.dataContext['job'])
+
+    }
+    void testcreateJobReferenceContext_argDataReferences(){
+        ScheduledExecution job = prepare()
+
+        def context = ExecutionContextImpl.builder()
+                                          .nodes(makeNodeSet(['x', 'y']))
+                                          .nodeSelector(makeSelector("x y", 1, false))
+                                          .threadCount(1)
+                                          .keepgoing(false)
+                                          .dataContext(['option':['monkey':'wakeful'],'job':['execid':'123']])
+                                          .user('aUser')
+                                          .build()
+        def parseOptsCount=0
+        service.frameworkService=mockWith(FrameworkService){
+            parseOptsFromArray(1..2){String[] args->
+                if(parseOptsCount<1){
+                    assertEquals(['test1','wakeful'],args as List)
+                }else{
+                    assertEquals(['-test1','wakeful','-test2','val2a','-test3','val3'],args as List)
+                }
+                parseOptsCount++
+                ['test1':'wakeful']
+            }
+            //called by createContext
+            filterNodeSet(1..1) { NodesSelector selector, String project ->
+                makeNodeSet(['x','y'])
+            }
+            filterAuthorizedNodes(1..1) { final String project,
+                                          final Set<String> actions,
+                                          final INodeSet unfiltered,
+                                          AuthContext authContext ->
+                makeNodeSet(['x', 'y'])
+            }
+
+        }
+        service.storageService=mockWith(StorageService){
+            storageTreeWithContext(1..1){AuthContext->
+                null
+            }
+        }
+        def newCtxt=service.createJobReferenceContext(job,context,['test1','${option.monkey}'] as String[],null,null,null,false);
+
+        //verify nodeset
+        assertEquals(['x','y'] as Set,newCtxt.nodes.nodeNames as Set)
+        assertEquals(1,newCtxt.threadCount)
+        assertEquals(false,newCtxt.keepgoing)
+
+        assertNotNull(newCtxt.dataContext['option'])
+
+        //values from parseOptsFromArray mock
+        assertEquals("expected options size incorrect",1,newCtxt.dataContext['option'].size())
+        assertEquals(['test1':'wakeful'],newCtxt.dataContext['option'])
+
+        //expected job data context
+        assertEquals("expected job data size incorrect", 8, newCtxt.dataContext['job'].size())
+        assertEquals(['id': '1',
+                      'execid': '123',
+                      'project': 'AProject',
+                      'username':'aUser',
+                      'loglevel': 'ERROR',
+                      'user.name': 'aUser',
+                      'name':'blue',
+                      'group':'some/where'
+                     ], newCtxt.dataContext['job'])
+
     }
 }
