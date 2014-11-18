@@ -54,8 +54,8 @@
         </div>
 
         <div class="col-sm-2">
-            <span class="btn btn-sm btn-default" onclick="loadJobChooser(this, 'jobChooser');"
-                  id="jobChooseBtn"
+            <span class="btn btn-sm btn-default act_choose_job" onclick="loadJobChooser(this, 'jobChooser','jobNameField${rkey}','jobGroupField${rkey}');"
+                  id="jobChooseBtn${rkey}"
                   title="Select an existing Job to use"
                   data-loading-text="Loading...">
                 Choose A Job&hellip;
@@ -73,7 +73,7 @@
                    class="form-control"/>
         </div>
     </div>
-    <div class="popout" id="jobChooser" style="display:none; width:300px; padding: 5px; background:white; position:absolute;">
+    <div class="popout jobChooser" id="jobChooser" style="display:none; width:300px; padding: 5px; background:white; position:absolute;">
         <div style="margin-bottom:5px;">
             <span class="text-muted">Click on the name of the Job to use</span>
             <button type="button" class=" close" style="text-align:right" onclick="hideJobChooser();">

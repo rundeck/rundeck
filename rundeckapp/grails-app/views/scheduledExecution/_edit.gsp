@@ -33,23 +33,24 @@ var curSEID ='${enc(js:editSchedExecId?:"")}';
 function getCurSEID(){
     return curSEID;
 }
-
+        var jobNameFieldId;
+        var jobGroupFieldId;
         function jobChosen(name,group){
-            $('jobNameField').setValue(name);
-            $('jobNameField').highlight();
-            $('jobGroupField').setValue(group);
-            $('jobGroupField').highlight();
+            if(jobNameFieldId && jobGroupFieldId){
+                jQuery('#'+jobNameFieldId).val(name);
+                jQuery('#' + jobGroupFieldId).val(group);
+            }
             hideJobChooser();
         }
-        function loadJobChooser(elem,target){
-            if($('jobChooser').visible()){
+        function loadJobChooser(elem,target,nameid,groupid){
+            if(jQuery('.jobChooser:visible').length>0){
                 hideJobChooser();
                 return;
             }
-            var project=$F('schedEditFrameworkProject');
-            jQuery(elem).button('loading');
-
-            $(elem).addClassName('active');
+            jobNameFieldId=nameid;
+            jobGroupFieldId= groupid;
+            var project=selFrameworkProject;
+            jQuery(elem).button('loading').addClass('active');
             new Ajax.Updater(
                 'jobChooserContent',
                     appLinks.menuJobsPicker,
@@ -57,18 +58,17 @@ function getCurSEID(){
                 parameters: {jobsjscallback:'true',runAuthRequired:true},
                  onSuccess: function(transport) {
                     new MenuController().showRelativeTo(elem,target);
-                     jQuery('#jobChooseBtn').button('reset');
+                     jQuery('.btn.act_choose_job').button('reset');
                  },
                  onFailure: function(transport) {
                      showError("Error performing request: menuJobsPicker: "+ transport);
-                     jQuery('#jobChooseBtn').button('reset');
+                     jQuery('.btn.act_choose_job').button('reset');
                  }
                 });
         }
         function hideJobChooser(){
-            $('jobChooser').hide();
-            $('jobChooseBtn').removeClassName('active');
-            jQuery('#jobChooseBtn').button('reset');
+            jQuery('.jobChooser').hide();
+            jQuery('.btn.act_choose_job').removeClass('active').button('reset');
         }
 
 
