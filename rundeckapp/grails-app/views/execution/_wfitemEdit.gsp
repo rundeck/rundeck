@@ -245,9 +245,10 @@
             </div>
         </div>
     </div>
+    <g:embedJSON id="jobrefFilterParamsJSON${rkey}" data="${[filter: item?.nodeFilter]}"/>
     <g:javascript>
             fireWhenReady("nodeFilterOverride${rkey}",function(){
-                setupJobExecNodeFilterBinding('#nodeFilterOverride${rkey}','matchednodes${rkey}');
+                setupJobExecNodeFilterBinding('#nodeFilterOverride${rkey}','matchednodes${rkey}','jobrefFilterParamsJSON${rkey}');
             });
     </g:javascript>
 </g:if>

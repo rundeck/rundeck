@@ -138,12 +138,13 @@ function getCurSEID(){
                 nodeFilter.selectNodeFilterLink(link);
             }
         }
-        function setupJobExecNodeFilterBinding(root,target){
+        function setupJobExecNodeFilterBinding(root,target,dataId){
+            var filterParams = loadJsonData(dataId);
             var jobRefNodeFilter = new NodeFilters(
                     appLinks.frameworkAdhoc,
                     appLinks.scheduledExecutionCreate,
                     appLinks.frameworkNodes,
-                    {
+                    Object.extend(filterParams, {
                         nodefilterLinkId:root,
                         elem: target,
                         project: selFrameworkProject,
@@ -152,7 +153,7 @@ function getCurSEID(){
                         emptyMessage: "${g.message(code: 'JobExec.property.nodeFilter.null.description')}",
                         nodesTitleSingular: "${g.message(code: 'Node', default: 'Node')}",
                         nodesTitlePlural: "${g.message(code: 'Node.plural', default: 'Nodes')}"
-                    }
+                    })
             );
             ko.applyBindings(jobRefNodeFilter, jQuery(root)[0]);
             registerNodeFilters(jobRefNodeFilter,root);
