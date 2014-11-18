@@ -36,7 +36,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     Integer nodeThreadcount
     Boolean nodeStep
     String nodeRankAttribute
-    String nodeRankOrder
+    Boolean nodeRankOrderAscending
     static transients = ['jobIdentifier']
 
     static constraints = {
@@ -48,7 +48,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         nodeFilter(nullable: true, maxSize: 1024)
         nodeThreadcount(nullable: true)
         nodeRankAttribute(nullable: true, maxSize: 256)
-        nodeRankOrder(nullable: true, inList: ['ascending','descending'])
+        nodeRankOrderAscending(nullable: true)
     }
 
     static mapping = {
@@ -56,7 +56,6 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         jobName type: 'text'
         jobGroup type: 'text'
         nodeFilter type: 'text'
-        nodeRankOrder type: 'text'
         nodeRankAttribute type: 'text'
     }
 
@@ -67,7 +66,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
                 "nodeKeepgoing=\"${nodeKeepgoing}\"" +
                 "nodeThreadcount=\"${nodeThreadcount}\"" +
                 "nodeRankAttribute=\"${nodeRankAttribute}\"" +
-                "nodeRankOrder=\"${nodeRankOrder}\"" +
+                "nodeRankOrderAscending=\"${nodeRankOrderAscending}\"" +
                 ")" + (errorHandler ? " [handler: ${errorHandler}" : '')
     }
 
@@ -120,8 +119,8 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
             if(nodeRankAttribute){
                 dispatch.rankAttribute=nodeRankAttribute
             }
-            if(nodeRankOrder){
-                dispatch.rankOrder=nodeRankOrder
+            if(null!=nodeRankOrderAscending){
+                dispatch.rankOrder=nodeRankOrderAscending?'ascending':'descending'
             }
             if(dispatch){
                 map.jobref.nodefilters.dispatch=dispatch
@@ -162,7 +161,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
                         exec.nodeKeepgoing=false
                     }
                 }
-                exec.nodeRankOrder= dispatch?.rankOrder
+                if (null != dispatch?.rankOrder) {
+                    exec.nodeRankOrderAscending = (dispatch.rankOrder == 'ascending')
+                }
                 exec.nodeRankAttribute= dispatch?.rankAttribute
             }
         }

@@ -4828,7 +4828,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
                                         new JobExec(jobName: 'a Job5', nodeFilter: 'abc def5', nodeThreadcount: 5, nodeKeepgoing: true),
                                         new JobExec(jobName: 'a Job6', nodeFilter: 'abc def6', nodeThreadcount: 6, nodeKeepgoing: false),
                                         new JobExec(jobName: 'a Job7', nodeFilter: 'abc def7', nodeThreadcount: 7, nodeKeepgoing: false, nodeRankAttribute: 'rank'),
-                                        new JobExec(jobName: 'a Job8', nodeFilter: 'abc def8', nodeThreadcount: 8, nodeKeepgoing: false, nodeRankAttribute: 'rank',nodeRankOrder: 'descending'),
+                                        new JobExec(jobName: 'a Job8', nodeFilter: 'abc def8', nodeThreadcount: 8, nodeKeepgoing: false, nodeRankAttribute: 'rank', nodeRankOrderAscending: false),
+                                        new JobExec(jobName: 'a Job9', nodeFilter: 'abc def9', nodeThreadcount: 9, nodeKeepgoing: false, nodeRankAttribute: 'rank', nodeRankOrderAscending: true),
                                 ]
                         )
                 )
@@ -4844,7 +4845,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertNotNull doc
         assertEquals "missing job", 1, doc.job.size()
         assertEquals "missing sequence", 1, doc.job.sequence.size()
-        assertEquals "wrong command count", 8, doc.job[0].sequence[0].command.size()
+        assertEquals "wrong command count", 9, doc.job[0].sequence[0].command.size()
         assertXmlJobRefCommand(doc.job[0].sequence[0].command[0],
                 ['@name':'a Job', '@group':null,'nodefilters':null,'dispatch':null])
         assertXmlJobRefCommand(doc.job[0].sequence[0].command[1],
@@ -4875,6 +4876,11 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 ['@name':'a Job8', '@group':null,
                  nodefilters: ['filter': 'abc def8'],
                  dispatch   : ['threadcount': '8', 'keepgoing': 'false', 'rankAttribute':'rank', 'rankOrder':'descending']
+                ])
+        assertXmlJobRefCommand(doc.job[0].sequence[0].command[8],
+                ['@name':'a Job9', '@group':null,
+                 nodefilters: ['filter': 'abc def9'],
+                 dispatch   : ['threadcount': '9', 'keepgoing': 'false', 'rankAttribute':'rank', 'rankOrder':'ascending']
                 ])
 
     }

@@ -137,7 +137,7 @@ class JobExecTests extends GrailsUnitTestCase{
     }
     void testBasicToMapNodeFilter_rankOrder() {
         JobExec t = new JobExec(jobGroup: 'group',jobName: 'name',description: 'a monkey',
-                nodeFilter: 'abc def', nodeThreadcount: 2, nodeKeepgoing: true, nodeRankOrder: 'ascending')
+                nodeFilter: 'abc def', nodeThreadcount: 2, nodeKeepgoing: true, nodeRankOrderAscending: true)
         assertEquals(
                 [
                         jobref:
@@ -150,6 +150,29 @@ class JobExecTests extends GrailsUnitTestCase{
                                                         threadcount: 2,
                                                         keepgoing: true,
                                                         rankOrder: 'ascending'
+                                                ]
+                                        ]
+                                ],
+                        description: 'a monkey'
+                ],
+                t.toMap()
+        )
+    }
+    void testBasicToMapNodeFilter_rankOrderDescending() {
+        JobExec t = new JobExec(jobGroup: 'group',jobName: 'name',description: 'a monkey',
+                nodeFilter: 'abc def', nodeThreadcount: 2, nodeKeepgoing: true, nodeRankOrderAscending: false)
+        assertEquals(
+                [
+                        jobref:
+                                [
+                                        group:'group',
+                                        name:'name',
+                                        nodefilters: [
+                                                filter: 'abc def',
+                                                dispatch: [
+                                                        threadcount: 2,
+                                                        keepgoing: true,
+                                                        rankOrder: 'descending'
                                                 ]
                                         ]
                                 ],
@@ -230,7 +253,7 @@ class JobExecTests extends GrailsUnitTestCase{
         assertNull(h.nodeKeepgoing)
         assertNull(h.nodeThreadcount)
         assertNull(h.nodeRankAttribute)
-        assertNull(h.nodeRankOrder)
+        assertNull(h.nodeRankOrderAscending)
         assertNull(h.errorHandler)
     }
     /** fromMapw with nodeFilter, nodeThreadcount*/
@@ -245,7 +268,7 @@ class JobExecTests extends GrailsUnitTestCase{
         assertEquals(3,h.nodeThreadcount)
         assertNull(h.nodeKeepgoing)
         assertNull(h.nodeRankAttribute)
-        assertNull(h.nodeRankOrder)
+        assertNull(h.nodeRankOrderAscending)
         assertNull(h.errorHandler)
     }
     /** fromMapw with nodeFilter, nodeThreadcount, nodeKeepgoing*/
@@ -260,7 +283,7 @@ class JobExecTests extends GrailsUnitTestCase{
         assertEquals(3,h.nodeThreadcount)
         assertEquals(true,h.nodeKeepgoing)
         assertNull(h.nodeRankAttribute)
-        assertNull(h.nodeRankOrder)
+        assertNull(h.nodeRankOrderAscending)
         assertNull(h.errorHandler)
     }
 
@@ -276,7 +299,7 @@ class JobExecTests extends GrailsUnitTestCase{
         assertEquals(3,h.nodeThreadcount)
         assertEquals(false,h.nodeKeepgoing)
         assertNull(h.nodeRankAttribute)
-        assertNull(h.nodeRankOrder)
+        assertNull(h.nodeRankOrderAscending)
         assertNull(h.errorHandler)
     }
     /** fromMapw with nodeFilter, nodeThreadcount, nodeKeepgoing='false' (String*/
@@ -291,7 +314,7 @@ class JobExecTests extends GrailsUnitTestCase{
         assertEquals(3,h.nodeThreadcount)
         assertEquals(false,h.nodeKeepgoing)
         assertNull(h.nodeRankAttribute)
-        assertNull(h.nodeRankOrder)
+        assertNull(h.nodeRankOrderAscending)
         assertNull(h.errorHandler)
     }
     /** fromMap with nodeFilter, rankAttribute*/
@@ -306,7 +329,7 @@ class JobExecTests extends GrailsUnitTestCase{
         assertNull(h.nodeThreadcount)
         assertNull(h.nodeKeepgoing)
         assertEquals('rank',h.nodeRankAttribute)
-        assertNull(h.nodeRankOrder)
+        assertNull(h.nodeRankOrderAscending)
         assertNull(h.errorHandler)
     }
     /** fromMap with nodeFilter, rankAttribute and rankOrder*/
@@ -321,7 +344,7 @@ class JobExecTests extends GrailsUnitTestCase{
         assertNull(h.nodeThreadcount)
         assertNull(h.nodeKeepgoing)
         assertNull(h.nodeRankAttribute)
-        assertEquals('descending',h.nodeRankOrder)
+        assertEquals(false,h.nodeRankOrderAscending)
         assertNull(h.errorHandler)
     }
 

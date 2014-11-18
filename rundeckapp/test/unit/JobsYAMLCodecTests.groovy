@@ -1262,7 +1262,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals(null, cmd1.nodeThreadcount)
         assertEquals(null, cmd1.nodeKeepgoing)
         assertEquals(null, cmd1.nodeRankAttribute)
-        assertEquals(null, cmd1.nodeRankOrder)
+        assertEquals(null, cmd1.nodeRankOrderAscending)
     }
     void testDecodeJobrefNodeStep() {
         def ymlstr1 = """- project: test1
@@ -1296,7 +1296,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals(null, cmd1.nodeThreadcount)
         assertEquals(null, cmd1.nodeKeepgoing)
         assertEquals(null, cmd1.nodeRankAttribute)
-        assertEquals(null, cmd1.nodeRankOrder)
+        assertEquals(null, cmd1.nodeRankOrderAscending)
     }
     void testDecodeJobrefNodefilter() {
         def ymlstr1 = """- project: test1
@@ -1330,7 +1330,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals(null, cmd1.nodeThreadcount)
         assertEquals(null, cmd1.nodeKeepgoing)
         assertEquals(null, cmd1.nodeRankAttribute)
-        assertEquals(null, cmd1.nodeRankOrder)
+        assertEquals(null, cmd1.nodeRankOrderAscending)
     }
     void testDecodeJobrefNodefilter_threadcount() {
         def ymlstr1 = """- project: test1
@@ -1366,7 +1366,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals(1, cmd1.nodeThreadcount)
         assertEquals(null, cmd1.nodeKeepgoing)
         assertEquals(null, cmd1.nodeRankAttribute)
-        assertEquals(null, cmd1.nodeRankOrder)
+        assertEquals(null, cmd1.nodeRankOrderAscending)
     }
     void testDecodeJobrefNodefilter_keepgoing() {
         def ymlstr1 = """- project: test1
@@ -1403,7 +1403,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals(1, cmd1.nodeThreadcount)
         assertEquals(true, cmd1.nodeKeepgoing)
         assertEquals(null, cmd1.nodeRankAttribute)
-        assertEquals(null, cmd1.nodeRankOrder)
+        assertEquals(null, cmd1.nodeRankOrderAscending)
     }
     void testDecodeJobrefNodefilter_keepgoingFalse() {
         def ymlstr1 = """- project: test1
@@ -1440,7 +1440,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals(1, cmd1.nodeThreadcount)
         assertEquals(false, cmd1.nodeKeepgoing)
         assertEquals(null, cmd1.nodeRankAttribute)
-        assertEquals(null, cmd1.nodeRankOrder)
+        assertEquals(null, cmd1.nodeRankOrderAscending)
     }
     void testDecodeJobrefNodefilter_rankAttribute() {
         def ymlstr1 = """- project: test1
@@ -1478,7 +1478,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals(1, cmd1.nodeThreadcount)
         assertEquals(false, cmd1.nodeKeepgoing)
         assertEquals('rank', cmd1.nodeRankAttribute)
-        assertEquals(null, cmd1.nodeRankOrder)
+        assertEquals(null, cmd1.nodeRankOrderAscending)
     }
     void testDecodeJobrefNodefilter_rankOrder() {
         def ymlstr1 = """- project: test1
@@ -1517,7 +1517,46 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals(1, cmd1.nodeThreadcount)
         assertEquals(false, cmd1.nodeKeepgoing)
         assertEquals('rank', cmd1.nodeRankAttribute)
-        assertEquals('ascending', cmd1.nodeRankOrder)
+        assertEquals(true, cmd1.nodeRankOrderAscending)
+    }
+    void testDecodeJobrefNodefilter_rankOrderDescending() {
+        def ymlstr1 = """- project: test1
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - jobref:
+        name: jobname
+        group: jobgroup
+        nodefilters:
+          dispatch:
+            threadcount: 1
+            keepgoing: false
+            rankAttribute: rank
+            rankOrder: descending
+          filter: abc def
+  description: test descrip
+  name: test job 1
+"""
+        def list = JobsYAMLCodec.decode(ymlstr1)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+
+
+        assertNotNull se.workflow.commands[0]
+        assertTrue(se.workflow.commands[0] instanceof JobExec)
+        JobExec cmd1 = se.workflow.commands[0]
+        assertEquals('jobname', cmd1.jobName)
+        assertEquals('jobgroup', cmd1.jobGroup)
+        assertEquals('abc def', cmd1.nodeFilter)
+        assertEquals(1, cmd1.nodeThreadcount)
+        assertEquals(false, cmd1.nodeKeepgoing)
+        assertEquals('rank', cmd1.nodeRankAttribute)
+        assertEquals(false, cmd1.nodeRankOrderAscending)
     }
     void testShouldPassthruCrontabString() {
         def ymlstr2 = """
