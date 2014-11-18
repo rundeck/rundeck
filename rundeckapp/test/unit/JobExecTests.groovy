@@ -39,20 +39,124 @@ class JobExecTests extends GrailsUnitTestCase{
     void testBasicToMapNodeFilter() {
         JobExec t = new JobExec(jobGroup: 'group',jobName: 'name',description: 'a monkey',
                 nodeFilter: 'abc def')
-        assertEquals([jobref: [group:'group',name:'name', nodeFilter: 'abc def'],
+        assertEquals([jobref: [group:'group',name:'name', nodefilters:[filter: 'abc def']],
                 description: 'a monkey'], t.toMap())
     }
     void testBasicToMapNodeFilter_threadcount() {
-        JobExec t = new JobExec(jobGroup: 'group',jobName: 'name',description: 'a monkey',
-                nodeFilter: 'abc def', nodeThreadcount: 2)
-        assertEquals([jobref: [group:'group',name:'name', nodeFilter: 'abc def',
-                nodeThreadcount: 2], description: 'a monkey'], t.toMap())
+        JobExec t = new JobExec(
+                jobGroup: 'group',
+                jobName: 'name',
+                description: 'a monkey',
+                nodeFilter: 'abc def',
+                nodeThreadcount: 2
+        )
+        assertEquals(
+                [
+                        jobref: [
+                                group: 'group',
+                                name: 'name',
+                                nodefilters: [
+                                        filter: 'abc def',
+                                        dispatch: [
+                                                threadcount: 2
+                                        ]
+                                ]
+                        ],
+                        description: 'a monkey'
+                ],
+                t.toMap()
+        )
     }
+
     void testBasicToMapNodeFilter_keepgoing() {
         JobExec t = new JobExec(jobGroup: 'group',jobName: 'name',description: 'a monkey',
                 nodeFilter: 'abc def', nodeThreadcount: 2, nodeKeepgoing: true)
-        assertEquals([jobref: [group:'group',name:'name', nodeFilter: 'abc def', nodeThreadcount: 2, nodeKeepgoing: true],
-                description: 'a monkey'], t.toMap())
+        assertEquals(
+                [
+                        jobref:
+                                [
+                                        group:'group',
+                                        name:'name',
+                                        nodefilters: [
+                                                filter: 'abc def',
+                                                dispatch: [
+                                                        threadcount: 2,
+                                                        keepgoing: true
+                                                ]
+                                        ]
+                                ],
+                        description: 'a monkey'
+                ],
+                t.toMap()
+        )
+    }
+    void testBasicToMapNodeFilter_keepgoingFalse() {
+        JobExec t = new JobExec(jobGroup: 'group',jobName: 'name',description: 'a monkey',
+                nodeFilter: 'abc def', nodeThreadcount: 2, nodeKeepgoing: false)
+        assertEquals(
+                [
+                        jobref:
+                                [
+                                        group:'group',
+                                        name:'name',
+                                        nodefilters: [
+                                                filter: 'abc def',
+                                                dispatch: [
+                                                        threadcount: 2,
+                                                        keepgoing: false
+                                                ]
+                                        ]
+                                ],
+                        description: 'a monkey'
+                ],
+                t.toMap()
+        )
+    }
+    void testBasicToMapNodeFilter_rankAttribute() {
+        JobExec t = new JobExec(jobGroup: 'group',jobName: 'name',description: 'a monkey',
+                nodeFilter: 'abc def', nodeThreadcount: 2, nodeKeepgoing: true, nodeRankAttribute: 'rank')
+        assertEquals(
+                [
+                        jobref:
+                                [
+                                        group:'group',
+                                        name:'name',
+                                        nodefilters: [
+                                                filter: 'abc def',
+                                                dispatch: [
+                                                        threadcount: 2,
+                                                        keepgoing: true,
+                                                        rankAttribute: 'rank'
+                                                ]
+                                        ]
+                                ],
+                        description: 'a monkey'
+                ],
+                t.toMap()
+        )
+    }
+    void testBasicToMapNodeFilter_rankOrder() {
+        JobExec t = new JobExec(jobGroup: 'group',jobName: 'name',description: 'a monkey',
+                nodeFilter: 'abc def', nodeThreadcount: 2, nodeKeepgoing: true, nodeRankOrder: 'ascending')
+        assertEquals(
+                [
+                        jobref:
+                                [
+                                        group:'group',
+                                        name:'name',
+                                        nodefilters: [
+                                                filter: 'abc def',
+                                                dispatch: [
+                                                        threadcount: 2,
+                                                        keepgoing: true,
+                                                        rankOrder: 'ascending'
+                                                ]
+                                        ]
+                                ],
+                        description: 'a monkey'
+                ],
+                t.toMap()
+        )
     }
 
     void testBasicArgsToMap() {
@@ -117,30 +221,37 @@ class JobExecTests extends GrailsUnitTestCase{
     /** fromMapw with nodeFilter*/
     void testFromMapNodeFilter(){
         JobExec h = JobExec.jobExecFromMap([jobref: [group: 'group1', name: 'name1',
-                args: 'job args1', nodeFilter: 'abc def'], description: 'a blue'])
+                args: 'job args1', nodefilters: [filter:'abc def']], description: 'a blue'])
         assertEquals('group1',h.jobGroup)
         assertEquals('name1',h.jobName)
         assertEquals('job args1',h.argString)
         assertEquals('a blue',h.description)
         assertEquals('abc def',h.nodeFilter)
+        assertNull(h.nodeKeepgoing)
+        assertNull(h.nodeThreadcount)
+        assertNull(h.nodeRankAttribute)
+        assertNull(h.nodeRankOrder)
         assertNull(h.errorHandler)
     }
     /** fromMapw with nodeFilter, nodeThreadcount*/
     void testFromMapNodeFilterThreadCount(){
         JobExec h = JobExec.jobExecFromMap([jobref: [group: 'group1', name: 'name1',
-                args: 'job args1', nodeFilter: 'abc def', nodeThreadcount: 3], description: 'a blue'])
+                args: 'job args1', nodefilters: [filter: 'abc def', dispatch: [threadcount:3]]], description: 'a blue'])
         assertEquals('group1',h.jobGroup)
         assertEquals('name1',h.jobName)
         assertEquals('job args1',h.argString)
         assertEquals('a blue',h.description)
         assertEquals('abc def',h.nodeFilter)
         assertEquals(3,h.nodeThreadcount)
+        assertNull(h.nodeKeepgoing)
+        assertNull(h.nodeRankAttribute)
+        assertNull(h.nodeRankOrder)
         assertNull(h.errorHandler)
     }
     /** fromMapw with nodeFilter, nodeThreadcount, nodeKeepgoing*/
     void testFromMapNodeFilterThreadCountKeepgoing(){
         JobExec h = JobExec.jobExecFromMap([jobref: [group: 'group1', name: 'name1',
-                args: 'job args1', nodeFilter: 'abc def', nodeThreadcount: 3, nodeKeepgoing: true], description: 'a blue'])
+                args: 'job args1', nodefilters: [filter: 'abc def', dispatch: [threadcount: 3,keepgoing:true]]], description: 'a blue'])
         assertEquals('group1',h.jobGroup)
         assertEquals('name1',h.jobName)
         assertEquals('job args1',h.argString)
@@ -148,6 +259,54 @@ class JobExecTests extends GrailsUnitTestCase{
         assertEquals('abc def',h.nodeFilter)
         assertEquals(3,h.nodeThreadcount)
         assertEquals(true,h.nodeKeepgoing)
+        assertNull(h.nodeRankAttribute)
+        assertNull(h.nodeRankOrder)
+        assertNull(h.errorHandler)
+    }
+
+    /** fromMapw with nodeFilter, nodeThreadcount, nodeKeepgoing=false*/
+    void testFromMapNodeFilterThreadCountKeepgoingFalse(){
+        JobExec h = JobExec.jobExecFromMap([jobref: [group: 'group1', name: 'name1',
+                args: 'job args1', nodefilters: [filter: 'abc def', dispatch: [threadcount: 3,keepgoing:false]]], description: 'a blue'])
+        assertEquals('group1',h.jobGroup)
+        assertEquals('name1',h.jobName)
+        assertEquals('job args1',h.argString)
+        assertEquals('a blue',h.description)
+        assertEquals('abc def',h.nodeFilter)
+        assertEquals(3,h.nodeThreadcount)
+        assertEquals(false,h.nodeKeepgoing)
+        assertNull(h.nodeRankAttribute)
+        assertNull(h.nodeRankOrder)
+        assertNull(h.errorHandler)
+    }
+    /** fromMap with nodeFilter, rankAttribute*/
+    void testFromMapNodeFilterRankAttribute() {
+        JobExec h = JobExec.jobExecFromMap([jobref: [group: 'group1', name: 'name1',
+                                                     args: 'job args1', nodefilters: [filter: 'abc def', dispatch: [rankAttribute: 'rank']]], description: 'a blue'])
+        assertEquals('group1', h.jobGroup)
+        assertEquals('name1', h.jobName)
+        assertEquals('job args1', h.argString)
+        assertEquals('a blue', h.description)
+        assertEquals('abc def', h.nodeFilter)
+        assertNull(h.nodeThreadcount)
+        assertNull(h.nodeKeepgoing)
+        assertEquals('rank',h.nodeRankAttribute)
+        assertNull(h.nodeRankOrder)
+        assertNull(h.errorHandler)
+    }
+    /** fromMap with nodeFilter, rankAttribute and rankOrder*/
+    void testFromMapNodeFilterRankOrder() {
+        JobExec h = JobExec.jobExecFromMap([jobref: [group: 'group1', name: 'name1',
+                                                     args: 'job args1', nodefilters: [filter: 'abc def', dispatch: [rankOrder: 'descending']]], description: 'a blue'])
+        assertEquals('group1', h.jobGroup)
+        assertEquals('name1', h.jobName)
+        assertEquals('job args1', h.argString)
+        assertEquals('a blue', h.description)
+        assertEquals('abc def', h.nodeFilter)
+        assertNull(h.nodeThreadcount)
+        assertNull(h.nodeKeepgoing)
+        assertNull(h.nodeRankAttribute)
+        assertEquals('descending',h.nodeRankOrder)
         assertNull(h.errorHandler)
     }
 

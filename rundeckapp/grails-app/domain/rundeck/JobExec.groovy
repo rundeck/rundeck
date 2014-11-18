@@ -35,7 +35,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     Boolean nodeKeepgoing
     Integer nodeThreadcount
     Boolean nodeStep
-    static transients=['jobIdentifier']
+    String nodeRankAttribute
+    String nodeRankOrder
+    static transients = ['jobIdentifier']
 
     static constraints = {
         jobName(nullable: false, blank: false)
@@ -45,12 +47,17 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         nodeKeepgoing(nullable: true)
         nodeFilter(nullable: true, maxSize: 1024)
         nodeThreadcount(nullable: true)
+        nodeRankAttribute(nullable: true, maxSize: 256)
+        nodeRankOrder(nullable: true, inList: ['ascending','descending'])
     }
 
     static mapping = {
         argString type: 'text'
         jobName type: 'text'
         jobGroup type: 'text'
+        nodeFilter type: 'text'
+        nodeRankOrder type: 'text'
+        nodeRankAttribute type: 'text'
     }
 
     public String toString() {
@@ -59,6 +66,8 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
                 "nodeFilter=\"${nodeFilter}\"" +
                 "nodeKeepgoing=\"${nodeKeepgoing}\"" +
                 "nodeThreadcount=\"${nodeThreadcount}\"" +
+                "nodeRankAttribute=\"${nodeRankAttribute}\"" +
+                "nodeRankOrder=\"${nodeRankOrder}\"" +
                 ")" + (errorHandler ? " [handler: ${errorHandler}" : '')
     }
 
@@ -100,12 +109,22 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
             map.description = description
         }
         if(nodeFilter){
-            map.jobref.nodeFilter=nodeFilter
-            if(null!=nodeThreadcount && nodeThreadcount>1){
-                map.jobref.nodeThreadcount=nodeThreadcount
+            map.jobref.nodefilters=[filter:nodeFilter]
+            def dispatch=[:]
+            if(null!=nodeThreadcount && nodeThreadcount>0){
+                dispatch.threadcount=nodeThreadcount
             }
-            if(nodeKeepgoing){
-                map.jobref.nodeKeepgoing=!!nodeKeepgoing
+            if(null!=nodeKeepgoing){
+                dispatch.keepgoing=!!nodeKeepgoing
+            }
+            if(nodeRankAttribute){
+                dispatch.rankAttribute=nodeRankAttribute
+            }
+            if(nodeRankOrder){
+                dispatch.rankOrder=nodeRankOrder
+            }
+            if(dispatch){
+                map.jobref.nodefilters.dispatch=dispatch
             }
         }
         return map
@@ -123,16 +142,21 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         }
         exec.keepgoingOnSuccess = !!map.keepgoingOnSuccess
         exec.description=map.description?.toString()
-        if(map.jobref.nodeFilter){
-            exec.nodeFilter=map.jobref.nodeFilter.toString()
-            if(map.jobref.nodeThreadcount){
-                if(map.jobref.nodeThreadcount instanceof Integer){
-                    exec.nodeThreadcount= map.jobref.nodeThreadcount ?: 1
-                }else{
-                    exec.nodeThreadcount = Integer.parseInt(map.jobref.nodeThreadcount.toString()) ?: 1
+        if(map.jobref.nodefilters){
+            exec.nodeFilter=map.jobref.nodefilters.filter?.toString()
+            if(exec.nodeFilter){
+                def dispatch = map.jobref.nodefilters.dispatch
+                if(dispatch?.threadcount){
+                    if(dispatch.threadcount instanceof Integer){
+                        exec.nodeThreadcount= dispatch.threadcount ?: 1
+                    }else{
+                        exec.nodeThreadcount = Integer.parseInt(dispatch.threadcount.toString()) ?: 1
+                    }
                 }
+                exec.nodeKeepgoing = null!= dispatch?.keepgoing?!!(dispatch?.keepgoing):null
+                exec.nodeRankOrder= dispatch?.rankOrder
+                exec.nodeRankAttribute= dispatch?.rankAttribute
             }
-            exec.nodeKeepgoing = !!map.jobref.nodeKeepgoing
         }
         //nb: error handler is created inside Workflow.fromMap
         return exec
