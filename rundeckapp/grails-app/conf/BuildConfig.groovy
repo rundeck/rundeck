@@ -71,13 +71,15 @@ grails.project.dependency.resolution = {
 
     rundeckVersion = System.getProperty("RUNDECK_VERSION", appVersion)
     println "Application Version: ${rundeckVersion}"
+
     plugins {
-        compile ':less-asset-pipeline:1.2.1',':code-coverage:1.2.6',':twitter-bootstrap:3.0.3',':asset-pipeline:1.3.3'
+        test    ':code-coverage:1.2.6'
+        compile ':less-asset-pipeline:1.2.1', ':twitter-bootstrap:3.0.3', ':asset-pipeline:1.3.3'
         runtime ":hibernate:$grailsVersion", ':mail:0.9', ':codenarc:0.16.1', ':quartz:0.4.2', ':executor:0.3'
         build   ':jetty:2.0.3'
     }
+
     dependencies {
-        
         test 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.7.1', 'org.apache.ant:ant-jsch:1.7.1', 
              'com.jcraft:jsch:0.1.50', 'log4j:log4j:1.2.16', 'commons-collections:commons-collections:3.2.1',
              'commons-codec:commons-codec:1.5', 'com.fasterxml.jackson.core:jackson-databind:2.0.2',
@@ -87,7 +89,7 @@ grails.project.dependency.resolution = {
         }
              
         compile 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.7.1', 'org.apache.ant:ant-jsch:1.7.1', 
-                'com.jcraft:jsch:0.1.50','log4j:log4j:1.2.16','commons-collections:commons-collections:3.2.1',
+                'com.jcraft:jsch:0.1.50', 'log4j:log4j:1.2.16', 'commons-collections:commons-collections:3.2.1',
                 'commons-codec:commons-codec:1.5', 'com.fasterxml.jackson.core:jackson-databind:2.0.2',
                 'com.codahale.metrics:metrics-core:3.0.1', 'com.google.guava:guava:15.0',
                 'org.owasp.encoder:encoder:1.1.1', 'org.quartz-scheduler:quartz:1.7.3'
@@ -103,8 +105,8 @@ grails.project.dependency.resolution = {
         compile("org.rundeck:rundeck-storage-filesys:${rundeckVersion}")
 
         runtime 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.7.1', 'org.apache.ant:ant-launcher:1.7.1',
-                'org.apache.ant:ant-jsch:1.7.1','com.jcraft:jsch:0.1.50', 'org.springframework:spring-test:3.0.5.RELEASE',
-                'log4j:log4j:1.2.16' ,'commons-collections:commons-collections:3.2.1','commons-codec:commons-codec:1.5', 
+                'org.apache.ant:ant-jsch:1.7.1', 'com.jcraft:jsch:0.1.50', 'org.springframework:spring-test:3.0.5.RELEASE',
+                'log4j:log4j:1.2.16', 'commons-collections:commons-collections:3.2.1', 'commons-codec:commons-codec:1.5',
                 'com.fasterxml.jackson.core:jackson-databind:2.0.2', 'postgresql:postgresql:9.1-901.jdbc4',
                 'com.google.guava:guava:15.0'
         runtime("org.rundeck:rundeck-core:${rundeckVersion}") {

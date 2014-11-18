@@ -130,7 +130,6 @@ task downloadGrails {
  * Expand the downloaded archive if it hasn't already been expanded
  */
 task extractGrails(dependsOn: downloadGrails) {
-
     logger.debug("grailsZipFileLocation: ${grailsZipFileLocation}")
     inputs.file file(grailsZipFileLocation);
 
@@ -177,7 +176,6 @@ task installDependencies(dependsOn: projDeps) << {
  * Installs the jetty-plugin into the .grails folder
  */
 task installJettyPlugin(type: Exec, dependsOn: [extractGrails]) {
-
     def jettyPluginVersion = '2.0.3'
     def jettyPluginInstalled = "${System.properties['user.home']}/.grails/${grailsVersion}/projects/rundeckapp/plugins/jetty-${jettyPluginVersion}"
     
@@ -220,7 +218,7 @@ task clean(overwrite: true, dependsOn: [cleanEclipse, cleanWar, cleanGrails]) {
 /**
  * Wrapper task for grails test-app
  */
-task testGrails(type: Exec, overwrite: true, dependsOn: [installJettyPlugin, installDependencies,extractGrails]) {
+task testGrails(type: Exec, overwrite: true, dependsOn: [installJettyPlugin, installDependencies, extractGrails]) {
     inputs.dir file(grailsHome)
     workingDir project.projectDir
     environment 'GRAILS_HOME', grailsHome
