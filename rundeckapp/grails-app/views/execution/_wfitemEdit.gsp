@@ -36,18 +36,18 @@
     </g:if>
 %{--Job Reference item--}%
 <g:if test="${'job'==newitemtype || item instanceof JobExec || (item instanceof java.util.Map && item?.jobName)}">
-
+<section >
     <div class="form-group">
-       <label class="col-sm-2 control-label" for="jobNameField">Job Name/Group</label>
+       <label class="col-sm-2 control-label" for="jobNameField${rkey}">Job Name/Group</label>
         <div class="col-sm-4">
 
-            <input id="jobNameField" type="text" name="jobName" value="${enc(attr: item?.jobName)}"
+            <input id="jobNameField${rkey}" type="text" name="jobName" value="${enc(attr: item?.jobName)}"
                 placeholder="Job Name"
                 class="form-control"
                    size="100" autofocus/>
         </div>
         <div class="col-sm-4">
-            <input id="jobGroupField"  type="text" name="jobGroup" value="${enc(attr:item?.jobGroup)}" size="100"
+            <input id="jobGroupField${rkey}"  type="text" name="jobGroup" value="${enc(attr:item?.jobGroup)}" size="100"
                 placeholder="Group Name"
                 class="form-control"
             />
@@ -93,8 +93,9 @@
     </span>
     </div>
     </div>
+    </section>
 
-    <div id="nodeFilterOverride${enc(attr: rkey)}" class="collapse-expandable collapse ${wdgt.css(if: item?.nodeFilter, then: 'in')} node_filter_link_holder">
+    <section id="nodeFilterOverride${enc(attr: rkey)}" class="collapse-expandable collapse ${wdgt.css(if: item?.nodeFilter, then: 'in')} node_filter_link_holder section-separator-solo">
     <div class="form-group">
         <div class="col-sm-12 ">
             <div class="text-info">
@@ -109,8 +110,6 @@
         </label>
 
         <div class="col-sm-10">
-            <g:hiddenField name="formInput" value="true"/>
-
             <g:set var="filtvalue" value="${item?.nodeFilter}"/>
 
             <span class="input-group nodefilters">
@@ -166,11 +165,11 @@
 
     <div class="form-group">
 
-        <label class="col-sm-2 control-label" for="nodeThreadcountField">
+        <label class="col-sm-2 control-label" for="nodeThreadcountField${rkey}">
             <g:message code="scheduledExecution.property.nodeThreadcount.label"/>
         </label>
 
-        <div class="col-sm-1">
+        <div class="col-sm-2">
             <input
                     data-bind="enable: filter()"
                     type='number'
@@ -179,10 +178,10 @@
                     value="${enc(attr: item?.nodeThreadcount)}"
                     size="3"
                     class="form-control"
-                    id="nodeThreadcountField"
+                    id="nodeThreadcountField${rkey}"
             />
         </div>
-        <div class="col-sm-9 help-block">
+        <div class="col-sm-8 help-block">
             <g:message code="JobExec.property.nodeThreadcount.null.description"/>
         </div>
     </div>
@@ -219,8 +218,60 @@
             </div>
         </div>
     </div>
-    </div>
 
+        <div class="form-group">
+
+            <label class="col-sm-2 control-label" for="nodeRankAttributeField${rkey}">
+                <g:message code="scheduledExecution.property.nodeRankAttribute.label"/>
+            </label>
+
+            <div class="col-sm-10">
+                <input
+                        data-bind="enable: filter()"
+                        type='text'
+                        name="nodeRankAttribute"
+                        value="${enc(attr: item?.nodeRankAttribute)}"
+                        class="form-control"
+                        placeholder="${enc(code:'scheduledExecution.property.nodeRankAttribute.description',encodeAs:'HTMLAttribute')}"
+                        id="nodeRankAttributeField${rkey}"/>
+            </div>
+
+        </div>
+        <div class="form-group">
+
+            <label class="col-sm-2 control-label" for="nodeRankOrderField${rkey}">
+                <g:message code="scheduledExecution.property.nodeRankOrder.label"/>
+            </label>
+
+            <div class="col-sm-10">
+                <div class="radio">
+                    <label>
+                        <g:radio name="nodeRankOrder" value=""
+                                 checked="${item?.nodeRankOrder == null}"
+                                 data-bind="enable: filter()"/>
+                        <g:message code="JobExec.property.nodeRankOrder.null.description"/>
+                    </label>
+                </div>
+                <div class="radio">
+                    <label>
+                        <g:radio name="nodeRankOrder" value="ascending"
+                                 checked="${item?.nodeRankOrder == 'ascending'}"
+                                 data-bind="enable: filter()"/>
+                        <g:message code="scheduledExecution.property.nodeRankOrder.ascending.label"/>
+                    </label>
+                </div>
+                <div class="radio">
+                    <label>
+                        <g:radio name="nodeRankOrder" value="descending"
+                                 checked="${item?.nodeRankOrder == 'descending'}"
+                                 data-bind="enable: filter()"/>
+                        <g:message code="scheduledExecution.property.nodeRankOrder.descending.label"/>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section>
     <div class="form-group">
         <g:set var="isNodeStep" value="${item ? item.nodeStep : newitemnodestep == 'true'}"/>
         <label class="col-sm-2 control-label"><g:message code="JobExec.nodeStep.title" /></label>
@@ -245,6 +296,7 @@
             </div>
         </div>
     </div>
+    </section>
     <g:embedJSON id="jobrefFilterParamsJSON${rkey}" data="${[filter: item?.nodeFilter]}"/>
     <g:javascript>
             fireWhenReady("nodeFilterOverride${rkey}",function(){
@@ -261,11 +313,11 @@
     <div id="scriptStep_${rkey}">
     <g:if test="${isAdhocLocal}">
         <div id="localScriptDiv" class="form-group ${hasErrors(bean:item,field:'adhocExecution','has-error')}">
-            <label class="col-sm-12 text-form-label" for="adhocLocalStringField">
+            <label class="col-sm-12 text-form-label" for="adhocLocalStringField${rkey}">
                 <g:message code="Workflow.Step.adhocLocalString.description" />
             </label>
             <div class="col-sm-12">
-                <textarea rows="10" cols="60" name="adhocLocalString" id="adhocLocalStringField" class="form-control code apply_ace" autofocus><g:enc>${item?.adhocLocalString}</g:enc></textarea>
+                <textarea rows="10" cols="60" name="adhocLocalString" id="adhocLocalStringField${rkey}" class="form-control code apply_ace" autofocus><g:enc>${item?.adhocLocalString}</g:enc></textarea>
             </div>
         </div>
     </g:if>
@@ -331,7 +383,7 @@
             <div class="form-group">
 
                 <label class="col-sm-2 control-label"
-                       for="scriptInterpreterField"><g:message
+                       for="scriptInterpreterField${rkey}"><g:message
                         code="Workflow.Step.scriptInterpreter.label"/></label>
                 <div class="col-sm-10">
                     <div class="popout tooltipcontent helptooltip"
@@ -347,7 +399,7 @@
                                value="${enc(attr:item?.scriptInterpreter)}" size="100"
                             class="form-control"
                             data-bind="value: invocationString, valueUpdate: 'keyup'"
-                               id="scriptInterpreterField" autofocus/>
+                               id="scriptInterpreterField${rkey}" autofocus/>
 
                         <div class="input-group-addon">
                             <span class="action obs_tooltip"
@@ -389,7 +441,7 @@
             <div class="form-group">
 
                 <label class="col-sm-2 control-label"
-                       for="fileExtensionField"><g:message
+                       for="fileExtensionField${rkey}"><g:message
                         code="Workflow.Step.fileExtension.label"/></label>
 
                 <div class="col-sm-10">
@@ -408,7 +460,7 @@
                                value="${enc(attr: item?.fileExtension)}" size="100"
                                class="form-control"
                                data-bind="value: fileExtension, valueUpdate: 'keyup'"
-                               id="fileExtensionField" />
+                               id="fileExtensionField${rkey}" />
 
                         <div class="input-group-addon">
                             <span class="action obs_tooltip"

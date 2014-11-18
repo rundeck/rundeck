@@ -654,7 +654,11 @@ section{
     margin-top: @padding-large-vertical;
   }
   & + &.section-separator {
-    border-top: 1px solid @gray-light;
+    border-top: 1px solid @legend-border-color;
+  }
+  &.section-separator-solo {
+    border-top: 1px solid @legend-border-color;
+    border-bottom: 1px solid @legend-border-color;
   }
 }
 
