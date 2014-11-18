@@ -139,6 +139,8 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         }
         if(map.jobref.nodeStep in ['true',true]){
             exec.nodeStep=true
+        }else{
+            exec.nodeStep=false
         }
         exec.keepgoingOnSuccess = !!map.keepgoingOnSuccess
         exec.description=map.description?.toString()
