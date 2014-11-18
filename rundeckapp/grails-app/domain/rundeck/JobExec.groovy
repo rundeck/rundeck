@@ -155,7 +155,13 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
                         exec.nodeThreadcount = Integer.parseInt(dispatch.threadcount.toString()) ?: 1
                     }
                 }
-                exec.nodeKeepgoing = null!= dispatch?.keepgoing?!!(dispatch?.keepgoing):null
+                if(null!=dispatch?.keepgoing){
+                    if (dispatch.keepgoing in ['true', true]) {
+                        exec.nodeKeepgoing=true
+                    }else{
+                        exec.nodeKeepgoing=false
+                    }
+                }
                 exec.nodeRankOrder= dispatch?.rankOrder
                 exec.nodeRankAttribute= dispatch?.rankAttribute
             }

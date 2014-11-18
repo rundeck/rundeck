@@ -279,6 +279,21 @@ class JobExecTests extends GrailsUnitTestCase{
         assertNull(h.nodeRankOrder)
         assertNull(h.errorHandler)
     }
+    /** fromMapw with nodeFilter, nodeThreadcount, nodeKeepgoing='false' (String*/
+    void testFromMapNodeFilterThreadCountKeepgoingFalseString(){
+        JobExec h = JobExec.jobExecFromMap([jobref: [group: 'group1', name: 'name1',
+                args: 'job args1', nodefilters: [filter: 'abc def', dispatch: [threadcount: 3,keepgoing:'false']]], description: 'a blue'])
+        assertEquals('group1',h.jobGroup)
+        assertEquals('name1',h.jobName)
+        assertEquals('job args1',h.argString)
+        assertEquals('a blue',h.description)
+        assertEquals('abc def',h.nodeFilter)
+        assertEquals(3,h.nodeThreadcount)
+        assertEquals(false,h.nodeKeepgoing)
+        assertNull(h.nodeRankAttribute)
+        assertNull(h.nodeRankOrder)
+        assertNull(h.errorHandler)
+    }
     /** fromMap with nodeFilter, rankAttribute*/
     void testFromMapNodeFilterRankAttribute() {
         JobExec h = JobExec.jobExecFromMap([jobref: [group: 'group1', name: 'name1',

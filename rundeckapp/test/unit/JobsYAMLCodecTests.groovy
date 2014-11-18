@@ -1231,6 +1231,294 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals(null,cmd1.configuration)
     }
 
+    void testDecodeJobrefBasic() {
+        def ymlstr1 = """- project: test1
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - jobref:
+        name: jobname
+        group: jobgroup
+  description: test descrip
+  name: test job 1
+"""
+        def list = JobsYAMLCodec.decode(ymlstr1)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+
+
+        assertNotNull se.workflow.commands[0]
+        assertTrue(se.workflow.commands[0] instanceof JobExec)
+        JobExec cmd1 = se.workflow.commands[0]
+        assertEquals('jobname', cmd1.jobName)
+        assertEquals('jobgroup', cmd1.jobGroup)
+        assertEquals(false, cmd1.nodeStep)
+        assertEquals(null, cmd1.nodeFilter)
+        assertEquals(null, cmd1.nodeThreadcount)
+        assertEquals(null, cmd1.nodeKeepgoing)
+        assertEquals(null, cmd1.nodeRankAttribute)
+        assertEquals(null, cmd1.nodeRankOrder)
+    }
+    void testDecodeJobrefNodeStep() {
+        def ymlstr1 = """- project: test1
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - jobref:
+        name: jobname
+        group: jobgroup
+        nodeStep: true
+  description: test descrip
+  name: test job 1
+"""
+        def list = JobsYAMLCodec.decode(ymlstr1)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+
+
+        assertNotNull se.workflow.commands[0]
+        assertTrue(se.workflow.commands[0] instanceof JobExec)
+        JobExec cmd1 = se.workflow.commands[0]
+        assertEquals('jobname', cmd1.jobName)
+        assertEquals('jobgroup', cmd1.jobGroup)
+        assertEquals(true, cmd1.nodeStep)
+        assertEquals(null, cmd1.nodeFilter)
+        assertEquals(null, cmd1.nodeThreadcount)
+        assertEquals(null, cmd1.nodeKeepgoing)
+        assertEquals(null, cmd1.nodeRankAttribute)
+        assertEquals(null, cmd1.nodeRankOrder)
+    }
+    void testDecodeJobrefNodefilter() {
+        def ymlstr1 = """- project: test1
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - jobref:
+        name: jobname
+        group: jobgroup
+        nodefilters:
+          filter: abc def
+  description: test descrip
+  name: test job 1
+"""
+        def list = JobsYAMLCodec.decode(ymlstr1)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+
+
+        assertNotNull se.workflow.commands[0]
+        assertTrue(se.workflow.commands[0] instanceof JobExec)
+        JobExec cmd1 = se.workflow.commands[0]
+        assertEquals('jobname', cmd1.jobName)
+        assertEquals('jobgroup', cmd1.jobGroup)
+        assertEquals('abc def', cmd1.nodeFilter)
+        assertEquals(null, cmd1.nodeThreadcount)
+        assertEquals(null, cmd1.nodeKeepgoing)
+        assertEquals(null, cmd1.nodeRankAttribute)
+        assertEquals(null, cmd1.nodeRankOrder)
+    }
+    void testDecodeJobrefNodefilter_threadcount() {
+        def ymlstr1 = """- project: test1
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - jobref:
+        name: jobname
+        group: jobgroup
+        nodefilters:
+          dispatch:
+            threadcount: 1
+          filter: abc def
+  description: test descrip
+  name: test job 1
+"""
+        def list = JobsYAMLCodec.decode(ymlstr1)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+
+
+        assertNotNull se.workflow.commands[0]
+        assertTrue(se.workflow.commands[0] instanceof JobExec)
+        JobExec cmd1 = se.workflow.commands[0]
+        assertEquals('jobname', cmd1.jobName)
+        assertEquals('jobgroup', cmd1.jobGroup)
+        assertEquals('abc def', cmd1.nodeFilter)
+        assertEquals(1, cmd1.nodeThreadcount)
+        assertEquals(null, cmd1.nodeKeepgoing)
+        assertEquals(null, cmd1.nodeRankAttribute)
+        assertEquals(null, cmd1.nodeRankOrder)
+    }
+    void testDecodeJobrefNodefilter_keepgoing() {
+        def ymlstr1 = """- project: test1
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - jobref:
+        name: jobname
+        group: jobgroup
+        nodefilters:
+          dispatch:
+            threadcount: 1
+            keepgoing: true
+          filter: abc def
+  description: test descrip
+  name: test job 1
+"""
+        def list = JobsYAMLCodec.decode(ymlstr1)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+
+
+        assertNotNull se.workflow.commands[0]
+        assertTrue(se.workflow.commands[0] instanceof JobExec)
+        JobExec cmd1 = se.workflow.commands[0]
+        assertEquals('jobname', cmd1.jobName)
+        assertEquals('jobgroup', cmd1.jobGroup)
+        assertEquals('abc def', cmd1.nodeFilter)
+        assertEquals(1, cmd1.nodeThreadcount)
+        assertEquals(true, cmd1.nodeKeepgoing)
+        assertEquals(null, cmd1.nodeRankAttribute)
+        assertEquals(null, cmd1.nodeRankOrder)
+    }
+    void testDecodeJobrefNodefilter_keepgoingFalse() {
+        def ymlstr1 = """- project: test1
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - jobref:
+        name: jobname
+        group: jobgroup
+        nodefilters:
+          dispatch:
+            threadcount: 1
+            keepgoing: false
+          filter: abc def
+  description: test descrip
+  name: test job 1
+"""
+        def list = JobsYAMLCodec.decode(ymlstr1)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+
+
+        assertNotNull se.workflow.commands[0]
+        assertTrue(se.workflow.commands[0] instanceof JobExec)
+        JobExec cmd1 = se.workflow.commands[0]
+        assertEquals('jobname', cmd1.jobName)
+        assertEquals('jobgroup', cmd1.jobGroup)
+        assertEquals('abc def', cmd1.nodeFilter)
+        assertEquals(1, cmd1.nodeThreadcount)
+        assertEquals(false, cmd1.nodeKeepgoing)
+        assertEquals(null, cmd1.nodeRankAttribute)
+        assertEquals(null, cmd1.nodeRankOrder)
+    }
+    void testDecodeJobrefNodefilter_rankAttribute() {
+        def ymlstr1 = """- project: test1
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - jobref:
+        name: jobname
+        group: jobgroup
+        nodefilters:
+          dispatch:
+            threadcount: 1
+            keepgoing: false
+            rankAttribute: rank
+          filter: abc def
+  description: test descrip
+  name: test job 1
+"""
+        def list = JobsYAMLCodec.decode(ymlstr1)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+
+
+        assertNotNull se.workflow.commands[0]
+        assertTrue(se.workflow.commands[0] instanceof JobExec)
+        JobExec cmd1 = se.workflow.commands[0]
+        assertEquals('jobname', cmd1.jobName)
+        assertEquals('jobgroup', cmd1.jobGroup)
+        assertEquals('abc def', cmd1.nodeFilter)
+        assertEquals(1, cmd1.nodeThreadcount)
+        assertEquals(false, cmd1.nodeKeepgoing)
+        assertEquals('rank', cmd1.nodeRankAttribute)
+        assertEquals(null, cmd1.nodeRankOrder)
+    }
+    void testDecodeJobrefNodefilter_rankOrder() {
+        def ymlstr1 = """- project: test1
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - jobref:
+        name: jobname
+        group: jobgroup
+        nodefilters:
+          dispatch:
+            threadcount: 1
+            keepgoing: false
+            rankAttribute: rank
+            rankOrder: ascending
+          filter: abc def
+  description: test descrip
+  name: test job 1
+"""
+        def list = JobsYAMLCodec.decode(ymlstr1)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+
+
+        assertNotNull se.workflow.commands[0]
+        assertTrue(se.workflow.commands[0] instanceof JobExec)
+        JobExec cmd1 = se.workflow.commands[0]
+        assertEquals('jobname', cmd1.jobName)
+        assertEquals('jobgroup', cmd1.jobGroup)
+        assertEquals('abc def', cmd1.nodeFilter)
+        assertEquals(1, cmd1.nodeThreadcount)
+        assertEquals(false, cmd1.nodeKeepgoing)
+        assertEquals('rank', cmd1.nodeRankAttribute)
+        assertEquals('ascending', cmd1.nodeRankOrder)
+    }
     void testShouldPassthruCrontabString() {
         def ymlstr2 = """
 -

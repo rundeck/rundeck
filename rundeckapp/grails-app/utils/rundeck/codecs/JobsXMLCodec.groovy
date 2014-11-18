@@ -301,6 +301,9 @@ class JobsXMLCodec {
                     if (null != cmd.jobref.nodeStep) {
                         cmd.jobref.nodeStep = XmlParserUtil.stringToBool(cmd.jobref.nodeStep, false)
                     }
+                    if (null != cmd.jobref.dispatch && (cmd.jobref.nodefilters instanceof Map)) {
+                        cmd.jobref.nodefilters.dispatch = cmd.jobref.remove('dispatch')
+                    }
                 }else if(cmd['node-step-plugin'] || cmd['step-plugin']){
                     def parsePluginConfig={ plc->
                         def outconf=[:]
@@ -520,6 +523,9 @@ class JobsXMLCodec {
                 }
                 if (cmd.jobref.nodeStep) {
                     BuilderUtil.makeAttribute(cmd.jobref, 'nodeStep')
+                }
+                if(cmd.jobref.nodefilters?.dispatch){
+                    cmd.jobref.dispatch= cmd.jobref.nodefilters.remove('dispatch')
                 }
             }else if(cmd.exec){
                 //no change
