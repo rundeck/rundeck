@@ -1644,7 +1644,7 @@ class ExecutionServiceTests  {
                                           .threadCount(1)
                                           .keepgoing(false)
                                           .build()
-        def newctx=service.overrideJobReferenceNodeFilter(context, null, null, null)
+        def newctx=service.overrideJobReferenceNodeFilter(context, null, null, null, null, null)
         assertEquals(['x','y'],newctx.nodes.nodeNames as List)
         assertEquals(false,newctx.keepgoing)
         assertEquals(1,newctx.threadCount)
@@ -1659,7 +1659,7 @@ class ExecutionServiceTests  {
                                           .threadCount(1)
                                           .keepgoing(false)
                                           .build()
-        def newctx=service.overrideJobReferenceNodeFilter(context, null, 2, null)
+        def newctx=service.overrideJobReferenceNodeFilter(context, null, 2, null, null, null)
         assertEquals(['x','y'],newctx.nodes.nodeNames as List)
         assertEquals(false,newctx.keepgoing)
         assertEquals(1,newctx.threadCount)
@@ -1674,7 +1674,7 @@ class ExecutionServiceTests  {
                                           .threadCount(1)
                                           .keepgoing(false)
                                           .build()
-        def newctx=service.overrideJobReferenceNodeFilter(context, null, null, true)
+        def newctx=service.overrideJobReferenceNodeFilter(context, null, null, true, null, null)
         assertEquals(['x','y'],newctx.nodes.nodeNames as List)
         assertEquals(false,newctx.keepgoing)
         assertEquals(1,newctx.threadCount)
@@ -1699,7 +1699,7 @@ class ExecutionServiceTests  {
             }
         }
 
-        def newctx=service.overrideJobReferenceNodeFilter(context, 'z p', null, null)
+        def newctx=service.overrideJobReferenceNodeFilter(context, 'z p', null, null, null, null)
         assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(false,newctx.keepgoing)
         assertEquals(1,newctx.threadCount)
@@ -1724,7 +1724,7 @@ class ExecutionServiceTests  {
             }
         }
 
-        def newctx=service.overrideJobReferenceNodeFilter(context, 'z p', 2, null)
+        def newctx=service.overrideJobReferenceNodeFilter(context, 'z p', 2, null, null, null)
         assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(false,newctx.keepgoing)
         assertEquals(2,newctx.threadCount)
@@ -1749,10 +1749,38 @@ class ExecutionServiceTests  {
             }
         }
 
-        def newctx=service.overrideJobReferenceNodeFilter(context, 'z p', 2, true)
+        def newctx=service.overrideJobReferenceNodeFilter(context, 'z p', 2, true, null, null)
         assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(true,newctx.keepgoing)
         assertEquals(2,newctx.threadCount)
+    }
+    /**
+     * set node filter and threadcount and keepgoing
+     */
+    void testOverrideJobReferenceNodeFilter_filterAndRankAttribute() {
+        def context = ExecutionContextImpl.builder()
+                                          .nodes(makeNodeSet(['x','y']))
+                                          .nodeSelector(makeSelector("x y", 1, false))
+                                          .threadCount(1)
+                                          .keepgoing(false)
+                                          .build()
+        service.frameworkService=mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                makeNodeSet(['z', 'p'])
+            }
+            filterAuthorizedNodes(1..1){ final String project, final Set<String> actions, final INodeSet unfiltered,
+                                         AuthContext authContext->
+                makeNodeSet(['z','p'])
+            }
+        }
+        assertEquals(null, context.nodeRankAttribute)
+        assertEquals(true, context.nodeRankOrderAscending)
+        def newctx=service.overrideJobReferenceNodeFilter(context, 'z p', 2, true, 'rank', false)
+        assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
+        assertEquals(true,newctx.keepgoing)
+        assertEquals(2,newctx.threadCount)
+        assertEquals('rank',newctx.nodeRankAttribute)
+        assertEquals(false,newctx.nodeRankOrderAscending)
     }
 
     protected NodesSelector makeSelector(String filter, int threadcount, boolean keepgoing) {
@@ -1802,7 +1830,7 @@ class ExecutionServiceTests  {
                 null
             }
         }
-        def newCtxt=service.createJobReferenceContext(job,context,['-test1','value'] as String[],null,null,null,false);
+        def newCtxt=service.createJobReferenceContext(job,context,['-test1','value'] as String[],null,null,null,null,null,false);
 
         //verify nodeset
         assertEquals(['x','y'] as Set,newCtxt.nodes.nodeNames as Set)
@@ -1868,12 +1896,16 @@ class ExecutionServiceTests  {
                 null
             }
         }
-        def newCtxt=service.createJobReferenceContext(job,context,['-test1','value'] as String[],'z p',true,3,false);
+        assertEquals(null, context.nodeRankAttribute)
+        assertEquals(true, context.nodeRankOrderAscending)
+        def newCtxt=service.createJobReferenceContext(job,context,['-test1','value'] as String[],'z p',true,3, 'rank', false,false);
 
         //verify nodeset
         assertEquals(['z','p'] as Set,newCtxt.nodes.nodeNames as Set)
         assertEquals(3,newCtxt.threadCount)
         assertEquals(true,newCtxt.keepgoing)
+        assertEquals('rank',newCtxt.nodeRankAttribute)
+        assertEquals(false,newCtxt.nodeRankOrderAscending)
 
         assertNotNull(newCtxt.dataContext['option'])
 
@@ -1933,7 +1965,7 @@ class ExecutionServiceTests  {
                 null
             }
         }
-        def newCtxt=service.createJobReferenceContext(job,context,['test1','${option.monkey}'] as String[],null,null,null,false);
+        def newCtxt=service.createJobReferenceContext(job,context,['test1','${option.monkey}'] as String[],null,null,null, null, null,false);
 
         //verify nodeset
         assertEquals(['x','y'] as Set,newCtxt.nodes.nodeNames as Set)

@@ -931,7 +931,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     !!jobcmditem.keepgoingOnSuccess,
                     jobcmditem.nodeFilter?:null,
                     jobcmditem.nodeThreadcount!=null && jobcmditem.nodeThreadcount>=1?jobcmditem.nodeThreadcount:null,
-                    jobcmditem.nodeKeepgoing
+                    jobcmditem.nodeKeepgoing,
+                    jobcmditem.nodeRankAttribute,
+                    jobcmditem.nodeRankOrderAscending
             )
         }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
             final PluginStep stepitem = step as PluginStep
@@ -2101,7 +2103,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             StepExecutionContext origContext,
             String nodeFilter,
             Integer nodeThreadcount,
-            Boolean nodeKeepgoing
+            Boolean nodeKeepgoing,
+            String nodeRankAttribute,
+            Boolean nodeRankOrderAscending
     )
     {
         def builder = ExecutionContextImpl.builder(origContext);
@@ -2131,6 +2135,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if (null != nodeKeepgoing) {
                 builder.keepgoing(nodeKeepgoing)
             }
+            if (null != nodeRankAttribute) {
+                builder.nodeRankAttribute(nodeRankAttribute)
+            }
+            if (null != nodeRankOrderAscending) {
+                builder.nodeRankOrderAscending(nodeRankOrderAscending)
+            }
         }
 
         return builder.build()
@@ -2155,6 +2165,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             String nodeFilter,
             Boolean nodeKeepgoing,
             Integer nodeThreadcount,
+            String nodeRankAttribute,
+            Boolean nodeRankOrderAscending,
             dovalidate = true
     )
     throws ExecutionServiceValidationException
@@ -2235,7 +2247,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     newContext,
                     nodeFilter,
                     nodeThreadcount,
-                    nodeKeepgoing
+                    nodeKeepgoing,
+                    nodeRankAttribute,
+                    nodeRankOrderAscending
             )
         }
         return newContext
@@ -2299,7 +2313,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             jitem.args,
                             jitem.nodeFilter,
                             jitem.nodeKeepgoing,
-                            jitem.nodeThreadcount
+                            jitem.nodeThreadcount,
+                            jitem.nodeRankAttribute,
+                            jitem.nodeRankOrderAscending
                     )
                 } catch (ExecutionServiceValidationException e) {
                     executionContext.getExecutionListener().log(0, "Option input was not valid for [${jitem.jobIdentifier}]: ${e.message}");

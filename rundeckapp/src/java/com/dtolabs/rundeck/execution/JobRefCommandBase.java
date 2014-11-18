@@ -65,4 +65,12 @@ public class JobRefCommandBase extends JobRefCommand implements HasFailureHandle
     @Override public Integer getNodeThreadcount() {
         return null;
     }
+
+    @Override public String getNodeRankAttribute() {
+        return null;
+    }
+
+    @Override public Boolean getNodeRankOrderAscending() {
+        return null;
+    }
 }

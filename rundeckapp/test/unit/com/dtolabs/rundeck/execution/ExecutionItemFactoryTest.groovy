@@ -6,7 +6,6 @@ import com.dtolabs.rundeck.core.execution.HasFailureHandler
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommand
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandExecutionItem
 import junit.framework.Assert
@@ -192,18 +191,42 @@ class ExecutionItemFactoryTest {
                 ['args', 'args2'] as String[],
                 false,
                 null,
-                true
+                true,
+                null,
+                null,
+                null,
+                null,
+                null
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
         JobExecutionItem testcommand=(JobExecutionItem) test
-        Assert.assertEquals( 'monkey/piece',testcommand.jobIdentifier)
-        Assert.assertEquals( ['args','args2'],testcommand.args as List)
-        Assert.assertEquals( false,testcommand.nodeStep)
-        Assert.assertEquals( true,testcommand.keepgoingOnSuccess)
-        Assert.assertEquals(null, testcommand.nodeFilter)
-        Assert.assertEquals(null, testcommand.nodeKeepgoing)
-        Assert.assertEquals(null, testcommand.nodeThreadcount)
+        assertJobExecutionItem(testcommand, 'monkey/piece', ['args', 'args2'], false, true,  null,  null,  null,  null,  null)
     }
+
+    protected void assertJobExecutionItem(JobExecutionItem testcommand,
+                                          String identifier,
+                                          ArrayList<String> args,
+                                          boolean nodeStep,
+                                          boolean keepgoingOnSuccess,
+                                          String nodeFilter,
+                                          Boolean nodeKeepgoing,
+                                          Integer nodeThreadcount,
+                                          String nodeRankAttribute,
+                                          Boolean nodeRankOrderAscending
+    )
+    {
+
+        Assert.assertEquals(identifier, testcommand.jobIdentifier)
+        Assert.assertEquals(args, testcommand.args as List)
+        Assert.assertEquals(nodeStep, testcommand.nodeStep)
+        Assert.assertEquals(keepgoingOnSuccess, testcommand.keepgoingOnSuccess)
+        Assert.assertEquals(nodeFilter, testcommand.nodeFilter)
+        Assert.assertEquals(nodeKeepgoing, testcommand.nodeKeepgoing)
+        Assert.assertEquals(nodeThreadcount, testcommand.nodeThreadcount)
+        Assert.assertEquals(nodeRankAttribute, testcommand.nodeRankAttribute)
+        Assert.assertEquals(nodeRankOrderAscending, testcommand.nodeRankOrderAscending)
+    }
+
     @Test
     public void createJobRef_nodeFilter(){
         StepExecutionItem test = ExecutionItemFactory.createJobRef(
@@ -214,17 +237,13 @@ class ExecutionItemFactoryTest {
                 true,
                 "abc def",
                 null,
+                null,
+                null,
                 null
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
         JobExecutionItem testcommand=(JobExecutionItem) test
-        Assert.assertEquals( 'monkey/piece',testcommand.jobIdentifier)
-        Assert.assertEquals( ['args','args2'],testcommand.args as List)
-        Assert.assertEquals( false,testcommand.nodeStep)
-        Assert.assertEquals( true,testcommand.keepgoingOnSuccess)
-        Assert.assertEquals( 'abc def',testcommand.nodeFilter)
-        Assert.assertEquals( null,testcommand.nodeKeepgoing)
-        Assert.assertEquals( null,testcommand.nodeThreadcount)
+        assertJobExecutionItem(testcommand, 'monkey/piece', ['args', 'args2'], false, true, 'abc def', null, null, null, null)
     }
     @Test
     public void createJobRef_nodeThreadCount(){
@@ -236,17 +255,14 @@ class ExecutionItemFactoryTest {
                 true,
                 null,
                 2,
+                null,
+                null,
                 null
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
         JobExecutionItem testcommand=(JobExecutionItem) test
-        Assert.assertEquals( 'monkey/piece',testcommand.jobIdentifier)
-        Assert.assertEquals( ['args','args2'],testcommand.args as List)
-        Assert.assertEquals( false,testcommand.nodeStep)
-        Assert.assertEquals( true,testcommand.keepgoingOnSuccess)
-        Assert.assertEquals( null,testcommand.nodeFilter)
-        Assert.assertEquals( null,testcommand.nodeKeepgoing)
-        Assert.assertEquals( 2,testcommand.nodeThreadcount)
+        assertJobExecutionItem(testcommand, 'monkey/piece', ['args', 'args2'], false, true,
+                               null, null, 2, null, null)
     }
     @Test
     public void createJobRef_nodeKeepgoing(){
@@ -258,17 +274,14 @@ class ExecutionItemFactoryTest {
                 true,
                 null,
                 null,
-                true
+                true,
+                null,
+                null
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
         JobExecutionItem testcommand=(JobExecutionItem) test
-        Assert.assertEquals( 'monkey/piece',testcommand.jobIdentifier)
-        Assert.assertEquals( ['args','args2'],testcommand.args as List)
-        Assert.assertEquals( false,testcommand.nodeStep)
-        Assert.assertEquals( true,testcommand.keepgoingOnSuccess)
-        Assert.assertEquals( null,testcommand.nodeFilter)
-        Assert.assertEquals( true,testcommand.nodeKeepgoing)
-        Assert.assertEquals( null,testcommand.nodeThreadcount)
+        assertJobExecutionItem(testcommand, 'monkey/piece', ['args', 'args2'], false, true,
+                               null, true, null, null, null)
     }
     @Test
     public void createJobRef_nodeKeepgoingFalse(){
@@ -280,17 +293,71 @@ class ExecutionItemFactoryTest {
                 true,
                 null,
                 null,
+                false,
+                null,
+                null
+        )
+        Assert.assertTrue(test instanceof JobExecutionItem)
+        JobExecutionItem testcommand=(JobExecutionItem) test
+        assertJobExecutionItem(testcommand, 'monkey/piece', ['args', 'args2'], false, true,
+                               null, false, null, null, null)
+    }
+    @Test
+    public void createJobRef_nodeRankAttribute(){
+        StepExecutionItem test = ExecutionItemFactory.createJobRef(
+                "monkey/piece",
+                ['args', 'args2'] as String[],
+                false,
+                null,
+                true,
+                null,
+                null,
+                null,
+                'rank',
+                null
+        )
+        Assert.assertTrue(test instanceof JobExecutionItem)
+        JobExecutionItem testcommand=(JobExecutionItem) test
+        assertJobExecutionItem(testcommand, 'monkey/piece', ['args', 'args2'], false, true,
+                               null, null, null, 'rank', null)
+    }
+    @Test
+    public void createJobRef_nodeRankOrderAscending(){
+        StepExecutionItem test = ExecutionItemFactory.createJobRef(
+                "monkey/piece",
+                ['args', 'args2'] as String[],
+                false,
+                null,
+                true,
+                null,
+                null,
+                null,
+                null,
+                true
+        )
+        Assert.assertTrue(test instanceof JobExecutionItem)
+        JobExecutionItem testcommand=(JobExecutionItem) test
+        assertJobExecutionItem(testcommand, 'monkey/piece', ['args', 'args2'], false, true,
+                               null, null, null, null, true)
+    }
+    @Test
+    public void createJobRef_nodeRankOrderDescending(){
+        StepExecutionItem test = ExecutionItemFactory.createJobRef(
+                "monkey/piece",
+                ['args', 'args2'] as String[],
+                false,
+                null,
+                true,
+                null,
+                null,
+                null,
+                null,
                 false
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
         JobExecutionItem testcommand=(JobExecutionItem) test
-        Assert.assertEquals( 'monkey/piece',testcommand.jobIdentifier)
-        Assert.assertEquals( ['args','args2'],testcommand.args as List)
-        Assert.assertEquals( false,testcommand.nodeStep)
-        Assert.assertEquals( true,testcommand.keepgoingOnSuccess)
-        Assert.assertEquals( null,testcommand.nodeFilter)
-        Assert.assertEquals( false,testcommand.nodeKeepgoing)
-        Assert.assertEquals( null,testcommand.nodeThreadcount)
+        assertJobExecutionItem(testcommand, 'monkey/piece', ['args', 'args2'], false, true,
+                               null, null, null, null, false)
     }
     @Test
     public void createJobRef_withHandler(){
@@ -300,7 +367,12 @@ class ExecutionItemFactoryTest {
                 ['args', 'args2'] as String[],
                 false,
                 handler,
-                true
+                true,
+                null,
+                null,
+                null,
+                null,
+                null
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
         JobExecutionItem testcommand=(JobExecutionItem) test
@@ -318,7 +390,12 @@ class ExecutionItemFactoryTest {
                 ['args', 'args2'] as String[],
                 true,
                 null,
-                true
+                true,
+                null,
+                null,
+                null,
+                null,
+                null
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
         JobExecutionItem testcommand=(JobExecutionItem) test
@@ -335,7 +412,12 @@ class ExecutionItemFactoryTest {
                 ['args', 'args2'] as String[],
                 true,
                 handler,
-                true
+                true,
+                null,
+                null,
+                null,
+                null,
+                null
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
         JobExecutionItem testcommand=(JobExecutionItem) test

@@ -216,6 +216,8 @@ public class ExecutionItemFactory {
                 keepgoingOnSuccess,
                 null,
                 null,
+                null,
+                null,
                 null
         );
     }
@@ -239,7 +241,9 @@ public class ExecutionItemFactory {
             final boolean keepgoingOnSuccess,
             final String nodeFilter,
             final Integer nodeThreadcount,
-            final Boolean nodeKeepgoing
+            final Boolean nodeKeepgoing,
+            final String nodeRankAttribute,
+            final Boolean nodeRankOrderAscending
     )
     {
         return new JobRefCommandBase() {
@@ -277,6 +281,14 @@ public class ExecutionItemFactory {
 
             @Override public Integer getNodeThreadcount() {
                 return nodeThreadcount;
+            }
+
+            @Override public String getNodeRankAttribute() {
+                return nodeRankAttribute;
+            }
+
+            @Override public Boolean getNodeRankOrderAscending() {
+                return nodeRankOrderAscending;
             }
         };
     }
