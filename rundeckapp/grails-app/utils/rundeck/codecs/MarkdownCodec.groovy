@@ -14,7 +14,7 @@ package rundeck.codecs
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import com.petebevin.markdown.MarkdownProcessor
+import org.markdownj.MarkdownProcessor
 
 /*
  * MarkdownCodec.java
