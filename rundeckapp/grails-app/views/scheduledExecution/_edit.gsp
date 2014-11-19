@@ -33,23 +33,24 @@ var curSEID ='${enc(js:editSchedExecId?:"")}';
 function getCurSEID(){
     return curSEID;
 }
-
+        var jobNameFieldId;
+        var jobGroupFieldId;
         function jobChosen(name,group){
-            $('jobNameField').setValue(name);
-            $('jobNameField').highlight();
-            $('jobGroupField').setValue(group);
-            $('jobGroupField').highlight();
+            if(jobNameFieldId && jobGroupFieldId){
+                jQuery('#'+jobNameFieldId).val(name);
+                jQuery('#' + jobGroupFieldId).val(group);
+            }
             hideJobChooser();
         }
-        function loadJobChooser(elem,target){
-            if($('jobChooser').visible()){
+        function loadJobChooser(elem,target,nameid,groupid){
+            if(jQuery('.jobChooser:visible').length>0){
                 hideJobChooser();
                 return;
             }
-            var project=$F('schedEditFrameworkProject');
-            jQuery(elem).button('loading');
-
-            $(elem).addClassName('active');
+            jobNameFieldId=nameid;
+            jobGroupFieldId= groupid;
+            var project=selFrameworkProject;
+            jQuery(elem).button('loading').addClass('active');
             new Ajax.Updater(
                 'jobChooserContent',
                     appLinks.menuJobsPicker,
@@ -57,18 +58,17 @@ function getCurSEID(){
                 parameters: {jobsjscallback:'true',runAuthRequired:true},
                  onSuccess: function(transport) {
                     new MenuController().showRelativeTo(elem,target);
-                     jQuery('#jobChooseBtn').button('reset');
+                     jQuery('.btn.act_choose_job').button('reset');
                  },
                  onFailure: function(transport) {
                      showError("Error performing request: menuJobsPicker: "+ transport);
-                     jQuery('#jobChooseBtn').button('reset');
+                     jQuery('.btn.act_choose_job').button('reset');
                  }
                 });
         }
         function hideJobChooser(){
-            $('jobChooser').hide();
-            $('jobChooseBtn').removeClassName('active');
-            jQuery('#jobChooseBtn').button('reset');
+            jQuery('.jobChooser').hide();
+            jQuery('.btn.act_choose_job').removeClass('active').button('reset');
         }
 
 
@@ -103,41 +103,7 @@ function getCurSEID(){
              return true;
          }
         function _updateBoxInfo(name, data) {
-            if(name=='nodes'){
-                if (data.total && data.total != "0") {
-                }
-                if (null != data.total) {
-                }
-                if (null != data.allcount) {
-                    jQuery('.matchednodes_count').html(data.allcount);
-                    jQuery('.matchednodes_show').show();
-                    jQuery('.matchednodes_hide').hide();
-                }else{
-                    jQuery('.matchednodes_show').hide();
-                }
-                if (null != data.filter) {
-                }
-            }
-        }
-        function selectNodeFilterLink(e){
-            var field = jQuery('#schedJobNodeFilter');
-            var oldfilter= field.val();
-            var filterName = jQuery(e).data('node-filter-name');
-            var filterString = jQuery(e).data('node-filter');
-            var filterAll = jQuery(e).data('node-filter-all');
-            if (filterString && !filterName && oldfilter && !filterAll && oldfilter!='.*') {
-                filterString = oldfilter + ' ' + filterString;
-            }else if(filterAll){
-                filterString='.*'
-            }
-            field.val(filterString);
-            _matchNodes();
-        }
-        function _beforeMatchNodes(){
-            jQuery('.btn.refresh_nodes').button('loading');
-        }
-        function _afterMatchNodes(){
-            jQuery('.btn.refresh_nodes').button('reset');
+
         }
         function setupUndoRedoControls(){
             jQuery('.undoredocontrols').on('click','.act_undo',function(e){
@@ -155,6 +121,43 @@ function getCurSEID(){
                 _doRevertAction(jQuery(e.target).data('undo-key'));
             });
         }
+        var nodeFilter;
+        var nodeFilterMap = {};
+        function registerNodeFilters(obj,key){
+            nodeFilterMap[key]=obj;
+        }
+        function handleNodeFilterLink(link){
+            var holder = jQuery(link).parents('.node_filter_link_holder');
+            var nflinkid=holder.data('node-filter-link-id');
+            var nflinkid2=holder.attr('id');
+            if(nflinkid && nodeFilterMap[nflinkid]){
+                nodeFilterMap[nflinkid].selectNodeFilterLink(link);
+            }else if(nflinkid2 && nodeFilterMap['#'+nflinkid2]){
+                nodeFilterMap['#'+nflinkid2].selectNodeFilterLink(link);
+            }else{
+                nodeFilter.selectNodeFilterLink(link);
+            }
+        }
+        function setupJobExecNodeFilterBinding(root,target,dataId){
+            var filterParams = loadJsonData(dataId);
+            var jobRefNodeFilter = new NodeFilters(
+                    appLinks.frameworkAdhoc,
+                    appLinks.scheduledExecutionCreate,
+                    appLinks.frameworkNodes,
+                    Object.extend(filterParams, {
+                        nodefilterLinkId:root,
+                        elem: target,
+                        project: selFrameworkProject,
+                        view: 'embed',
+                        emptyMode: 'blank',
+                        emptyMessage: "${g.message(code: 'JobExec.property.nodeFilter.null.description')}",
+                        nodesTitleSingular: "${g.message(code: 'Node', default: 'Node')}",
+                        nodesTitlePlural: "${g.message(code: 'Node.plural', default: 'Nodes')}"
+                    })
+            );
+            ko.applyBindings(jobRefNodeFilter, jQuery(root)[0]);
+            registerNodeFilters(jobRefNodeFilter,root);
+        }
         function pageinit(){
             _enableDragdrop();
 
@@ -165,28 +168,41 @@ function getCurSEID(){
                 }
                 return true;
             },false);
+            setupUndoRedoControls();
+
+            //define NodeFilters mvvm for the job
+            var filterParams = loadJsonData('filterParamsJSON');
+            nodeFilter = new NodeFilters(
+                    appLinks.frameworkAdhoc,
+                    appLinks.scheduledExecutionCreate,
+                    appLinks.frameworkNodes,
+                    Object.extend(filterParams, {
+                        nodefilterLinkId: '#nodegroupitem',
+                         elem: 'matchednodes',
+                         project: selFrameworkProject,
+                         view:'embed',
+                        nodesTitleSingular: "${g.message(code:'Node',default:'Node')}",
+                        nodesTitlePlural: "${g.message(code:'Node.plural',default:'Nodes')}"
+                    })
+            );
+            ko.applyBindings(nodeFilter,jQuery('#nodegroupitem')[0]);
+            registerNodeFilters(nodeFilter, '#nodegroupitem');
+
             jQuery('body').on('click', '.nodefilterlink', function (evt) {
                 evt.preventDefault();
-                selectNodeFilterLink(this);
-            });
-            jQuery('.refresh_nodes').on('click', function (evt) {
-                _formUpdateMatchedNodes();
-            });
-            jQuery('.nodefilters [type=submit]').on('click', function (evt) {
-                evt.preventDefault();
-                _formUpdateMatchedNodes();
-            });
-            jQuery('#schedJobNodeFilter').on('keydown',function (evt) {
-                if(!noenter(evt)){
-                    _formUpdateMatchedNodes();
-                }
-            });
-            setupUndoRedoControls();
+                handleNodeFilterLink(this);
+            })
+            .on('change','.node_dispatch_radio',function(evt){
+                nodeFilter.updateMatchedNodes();
+            })
+            ;
         }
 
         jQuery(pageinit);
 //]>
 </script>
+<g:embedJSON id="filterParamsJSON"
+             data="${[filterName: params.filterName, filter: scheduledExecution?.asFilter(),nodeExcludePrecedence: scheduledExecution?.nodeExcludePrecedence]}"/>
 <style lang="text/css">
     textarea.code{
         font-family: Courier,monospace;
@@ -506,7 +522,7 @@ function getCurSEID(){
     </div>%{--//Workflow--}%
 
 %{--Node Dispatch--}%
-<div class="list-group-item" id="nodegroupitem">
+<div class="list-group-item node_filter_link_holder" id="nodegroupitem">
 <div class="form-group">
     <label class="${labelColSize} control-label">
         Nodes
@@ -518,9 +534,9 @@ function getCurSEID(){
             <input type="radio"
                    name="doNodedispatch"
                    value="true"
+                    class="node_dispatch_radio"
                 ${scheduledExecution?.doNodedispatch ? 'checked' : ''}
-                   id="doNodedispatchTrue"
-                   onchange="_matchNodes()"/>
+                   id="doNodedispatchTrue"/>
             Dispatch to Nodes
         </label>
         <label id="doNodedispatchLabelFalse" class="radio-inline">
@@ -528,9 +544,9 @@ function getCurSEID(){
             <input type="radio"
                    name="doNodedispatch"
                    value="false"
+                   class="node_dispatch_radio"
                 ${!scheduledExecution?.doNodedispatch ? 'checked' : ''}
-                   id="doNodedispatchFalse"
-                   onchange="_matchNodes()"/>
+                   id="doNodedispatchFalse"/>
             Execute locally
         </label>
     </div>
@@ -558,7 +574,7 @@ function getCurSEID(){
 <div class="form-group  ${hasErrors(bean: scheduledExecution, field: 'filter', 'has-error')}">
 <div style="${wdgt.styleVisible(if: scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields ">
     <label class="${labelColSize} control-label">
-        Node Filter
+        <g:message code="node.filter" />
     </label>
 
     <div class="${fieldColSize}">
@@ -603,23 +619,25 @@ function getCurSEID(){
     <div class="col-sm-10">
         <label title="Include more nodes" class="radio-inline">
             <g:radio name="nodeExcludePrecedence" value="false"
+                data-bind="checked: nodeExcludePrecedence"
                      checked="${!scheduledExecution?.nodeExcludePrecedence}"
-                     id="nodeExcludePrecedenceFalse" onchange="_matchNodes()"/>
+                     id="nodeExcludePrecedenceFalse"/>
             Included</label>
 
         <label title="Exclude more nodes" class="radio-inline">
             <g:radio name="nodeExcludePrecedence" value="true"
+                    data-bind="checked: nodeExcludePrecedence"
                      checked="${scheduledExecution?.nodeExcludePrecedence}"
-                     id="nodeExcludePrecedenceTrue" onchange="_matchNodes()"/>
+                     id="nodeExcludePrecedenceTrue"/>
             Excluded</label>
     </div>
 </div>%{--//extended filters--}%
 
-<div style="${wdgt.styleVisible(if: scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields">
+<div class="subfields nodeFilterFields">
 
     <div class="form-group">
         <label class="${labelColClass}">
-            Matched Nodes:
+            <g:message code="matched.nodes.prompt" />
         </label>
 
         <div class=" col-sm-10  ">
@@ -627,12 +645,13 @@ function getCurSEID(){
             <div class="well well-sm embed matchednodes">
                 <button type="button" class="pull-right btn btn-info btn-sm refresh_nodes"
                         data-loading-text="Loading..."
+                    data-bind="click: $data.updateMatchedNodes"
                         title="click to refresh">
-                    refresh
+                    <g:message code="refresh" />
                     <i class="glyphicon glyphicon-refresh"></i>
                 </button>
                 <span class="matchednodes_show text-muted" style="display: none;">
-                    <span class="matchednodes_count "></span> Nodes Matched
+                    <span class="matchednodes_count "></span> <g:message code="nodes.matched" />
                 </span>
                 <div id='matchednodes' class="clearfix">
                 </div>
@@ -652,7 +671,7 @@ function getCurSEID(){
             <div class="${fieldColSize}">
                 <div class="row">
                 <div class="col-sm-4">
-                <input type='text' name="nodeThreadcount"
+                <input type='number' name="nodeThreadcount"
                        value="${enc(attr:scheduledExecution?.nodeThreadcount)}" id="schedJobnodeThreadcount"
                        size="3"
                        class="form-control input-sm"/>

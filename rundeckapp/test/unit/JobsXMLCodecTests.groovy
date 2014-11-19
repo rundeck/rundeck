@@ -2092,7 +2092,147 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals "incorrect adhocFilepath", 'http://example.com/a/path/to/a/script', cmd1.adhocFilepath
         assertEquals "incorrect argString", '-some args -to the -script', cmd1.argString
     }
-    
+    void testDecodeWorkflowJobref(){
+        def jobs = JobsXMLCodec.decode("""<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description></description>
+    <loglevel>INFO</loglevel>
+    <context>
+        <project>test1</project>
+    </context>
+    <sequence>
+        <command>
+            <jobref name="bob" />
+        </command>
+        <command>
+            <jobref name="blang" >
+                <nodefilters>
+                    <filter>abc def</filter>
+                </nodefilters>
+            </jobref>
+        </command>
+        <command>
+            <jobref name="blang2">
+                <dispatch>
+                    <threadcount>2</threadcount>
+                </dispatch>
+                <nodefilters>
+                    <filter>abc def2</filter>
+                </nodefilters>
+            </jobref>
+        </command>
+        <command>
+            <jobref name="blang3">
+                <dispatch>
+                    <threadcount>3</threadcount>
+                    <keepgoing>true</keepgoing>
+                </dispatch>
+                <nodefilters>
+                    <filter>abc def3</filter>
+                </nodefilters>
+            </jobref>
+        </command>
+        <command>
+            <jobref name="blang4">
+                <dispatch>
+                    <threadcount>2</threadcount>
+                    <keepgoing>false</keepgoing>
+                </dispatch>
+                <nodefilters>
+                    <filter>abc def4</filter>
+                </nodefilters>
+            </jobref>
+        </command>
+        <command>
+            <jobref name="blang5">
+                <dispatch>
+                    <threadcount>2</threadcount>
+                    <keepgoing>false</keepgoing>
+                    <rankAttribute>rank</rankAttribute>
+                </dispatch>
+                <nodefilters>
+                    <filter>abc def5</filter>
+                </nodefilters>
+            </jobref>
+        </command>
+        <command>
+            <jobref name="blang6">
+                <dispatch>
+                    <threadcount>2</threadcount>
+                    <keepgoing>false</keepgoing>
+                    <rankAttribute>rank</rankAttribute>
+                    <rankOrder>descending</rankOrder>
+                </dispatch>
+                <nodefilters>
+                    <filter>abc def6</filter>
+                </nodefilters>
+            </jobref>
+        </command>
+    </sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <schedule>
+      <time hour='11' minute='21' />
+      <weekday day='*' />
+      <month month='*' />
+    </schedule>
+  </job>
+</joblist>
+""")
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+        assertNotNull "incorrect workflow", jobs[0].workflow
+        assertEquals "incorrect workflow strategy", "node-first", jobs[0].workflow.strategy
+        assertNotNull "incorrect workflow strategy", jobs[0].workflow.commands
+        assertEquals "incorrect workflow strategy", 7, jobs[0].workflow.commands.size()
+
+        assertJobExec(
+                jobs[0].workflow.commands[0],
+                [argString: null, jobName: 'bob', jobGroup: null, nodeStep: false, nodeKeepgoing: null, nodeFilter: null, nodeThreadcount: null, nodeRankAttribute: null, nodeRankOrder: null]
+        )
+        assertJobExec(
+                jobs[0].workflow.commands[1],
+                [argString: null, jobName: 'blang', jobGroup: null, nodeStep: false, nodeKeepgoing: null, nodeFilter: 'abc def', nodeThreadcount: null, nodeRankAttribute: null, nodeRankOrder: null]
+        )
+        assertJobExec(
+                jobs[0].workflow.commands[2],
+                [argString: null, jobName: 'blang2', jobGroup: null, nodeStep: false, nodeKeepgoing: null, nodeFilter: 'abc def2', nodeThreadcount: 2, nodeRankAttribute: null, nodeRankOrder: null]
+        )
+        assertJobExec(
+                jobs[0].workflow.commands[3],
+                [argString: null, jobName: 'blang3', jobGroup: null, nodeStep: false, nodeKeepgoing: true, nodeFilter: 'abc def3', nodeThreadcount: 3, nodeRankAttribute: null, nodeRankOrder: null]
+        )
+        assertJobExec(
+                jobs[0].workflow.commands[4],
+                [argString: null, jobName: 'blang4', jobGroup: null, nodeStep: false, nodeKeepgoing: false, nodeFilter: 'abc def4', nodeThreadcount: 2, nodeRankAttribute: null, nodeRankOrder: null]
+        )
+        assertJobExec(
+                jobs[0].workflow.commands[5],
+                [argString: null, jobName: 'blang5', jobGroup: null, nodeStep: false, nodeKeepgoing: false, nodeFilter: 'abc def5', nodeThreadcount: 2, nodeRankAttribute: 'rank', nodeRankOrder: null]
+        )
+        assertJobExec(
+                jobs[0].workflow.commands[6],
+                [argString: null, jobName: 'blang6', jobGroup: null, nodeStep: false, nodeKeepgoing: false, nodeFilter: 'abc def6', nodeThreadcount: 2, nodeRankAttribute: 'rank', nodeRankOrder: 'descending']
+        )
+
+    }
+
+    protected void assertJobExec(command, Map expected) {
+        assertNotNull "should not be null command", command
+        assertTrue "incorrect type: ${command}", (command instanceof JobExec)
+        assertEquals "incorrect argString", expected.argString,command.argString
+        assertEquals "incorrect jobName", expected.jobName, command.jobName
+        assertEquals "incorrect jobGroup", expected.jobGroup, command.jobGroup
+        assertEquals "incorrect nodeStep", expected.nodeStep, command.nodeStep
+        assertEquals "incorrect nodeKeepgoing", expected.nodeKeepgoing, command.nodeKeepgoing
+        assertEquals "incorrect nodeFilter", expected.nodeFilter, command.nodeFilter
+        assertEquals "incorrect nodeThreadcount", expected.nodeThreadcount, command.nodeThreadcount
+    }
+
     void testDecodeWorkflowOptions(){
         //simple workflow with options
             def jobs = JobsXMLCodec.decode("""<joblist>
@@ -4665,6 +4805,103 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals "wrong command/exec", 1, doc.job[0].sequence[0].command[0].scriptargs.size()
         assertEquals "wrong command/exec", "test string", doc.job[0].sequence[0].command[0].scriptargs[0].text()
 
+    }
+    void testEncodeWorkflowJobExec(){
+
+        //test simple job ref workflow item
+        def jobs7 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+                        argString: '',
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true,
+                        workflow: new Workflow(keepgoing: true, commands:
+                                [
+                                        new JobExec(jobName: 'a Job'),
+                                        new JobExec(jobName: 'a Job2', jobGroup: 'job group'),
+                                        new JobExec(jobName: 'a Job3', nodeFilter: 'abc def'),
+                                        new JobExec(jobName: 'a Job4', nodeFilter: 'abc def4', nodeThreadcount: 4),
+                                        new JobExec(jobName: 'a Job5', nodeFilter: 'abc def5', nodeThreadcount: 5, nodeKeepgoing: true),
+                                        new JobExec(jobName: 'a Job6', nodeFilter: 'abc def6', nodeThreadcount: 6, nodeKeepgoing: false),
+                                        new JobExec(jobName: 'a Job7', nodeFilter: 'abc def7', nodeThreadcount: 7, nodeKeepgoing: false, nodeRankAttribute: 'rank'),
+                                        new JobExec(jobName: 'a Job8', nodeFilter: 'abc def8', nodeThreadcount: 8, nodeKeepgoing: false, nodeRankAttribute: 'rank', nodeRankOrderAscending: false),
+                                        new JobExec(jobName: 'a Job9', nodeFilter: 'abc def9', nodeThreadcount: 9, nodeKeepgoing: false, nodeRankAttribute: 'rank', nodeRankOrderAscending: true),
+                                ]
+                        )
+                )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs7)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+
+        def XmlParser parser = new XmlParser()
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing job", 1, doc.job.size()
+        assertEquals "missing sequence", 1, doc.job.sequence.size()
+        assertEquals "wrong command count", 9, doc.job[0].sequence[0].command.size()
+        assertXmlJobRefCommand(doc.job[0].sequence[0].command[0],
+                ['@name':'a Job', '@group':null,'nodefilters':null,'dispatch':null])
+        assertXmlJobRefCommand(doc.job[0].sequence[0].command[1],
+                ['@name':'a Job2', '@group':'job group', 'nodefilters': null, 'dispatch': null])
+        assertXmlJobRefCommand(doc.job[0].sequence[0].command[2],
+                ['@name':'a Job3', '@group':null,nodefilters:['filter':'abc def'],dispatch:null])
+        assertXmlJobRefCommand(doc.job[0].sequence[0].command[3],
+                ['@name':'a Job4', '@group':null,
+                 nodefilters:['filter': 'abc def4'],
+                 dispatch:['threadcount': '4', 'keepgoing': null]
+                ])
+        assertXmlJobRefCommand(doc.job[0].sequence[0].command[4],
+                ['@name':'a Job5', '@group':null,
+                 nodefilters: ['filter': 'abc def5'],
+                 dispatch   : ['threadcount': '5', 'keepgoing': 'true']
+                ])
+        assertXmlJobRefCommand(doc.job[0].sequence[0].command[5],
+                ['@name':'a Job6', '@group':null,
+                 nodefilters: ['filter': 'abc def6'],
+                 dispatch   : ['threadcount': '6', 'keepgoing': 'false']
+                ])
+        assertXmlJobRefCommand(doc.job[0].sequence[0].command[6],
+                ['@name':'a Job7', '@group':null,
+                 nodefilters: ['filter': 'abc def7'],
+                 dispatch   : ['threadcount': '7', 'keepgoing': 'false', 'rankAttribute':'rank']
+                ])
+        assertXmlJobRefCommand(doc.job[0].sequence[0].command[7],
+                ['@name':'a Job8', '@group':null,
+                 nodefilters: ['filter': 'abc def8'],
+                 dispatch   : ['threadcount': '8', 'keepgoing': 'false', 'rankAttribute':'rank', 'rankOrder':'descending']
+                ])
+        assertXmlJobRefCommand(doc.job[0].sequence[0].command[8],
+                ['@name':'a Job9', '@group':null,
+                 nodefilters: ['filter': 'abc def9'],
+                 dispatch   : ['threadcount': '9', 'keepgoing': 'false', 'rankAttribute':'rank', 'rankOrder':'ascending']
+                ])
+
+    }
+
+    protected void assertXmlJobRefCommand(testCommand, Map data) {
+        assertEquals "missing command/jobref", 1, testCommand.jobref.size()
+        def elem = testCommand.jobref[0]
+        assertXmlElement("command/jobref",data, elem)
+    }
+
+    protected void assertXmlElement(String prefix,Map data, elem) {
+        data.each { key, value ->
+            if(null == value || value instanceof String){
+                def test = elem[key]?.size() > 0 ? key.startsWith('@') ? elem[key] : elem[key].text() : null
+                assertEquals "wrong ${prefix}/${key}: " + test, value, test
+            }else if(value instanceof Map){
+                assertXmlElement(prefix+"/"+key,value,elem[key])
+            }else{
+                fail('Not expected type: '+value)
+            }
+        }
     }
 
     void testEncodeOptionValues(){

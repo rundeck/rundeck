@@ -41,4 +41,9 @@ public interface JobExecutionItem extends HandlerExecutionItem, NodeStepExecutio
     public String getJobIdentifier();
     public String[] getArgs();
     public boolean isNodeStep();
+    public Boolean getNodeKeepgoing();
+    public String getNodeFilter();
+    public Integer getNodeThreadcount();
+    public String getNodeRankAttribute();
+    public Boolean getNodeRankOrderAscending();
 }

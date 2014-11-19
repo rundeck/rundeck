@@ -189,17 +189,63 @@ public class ExecutionItemFactory {
 
     /**
      * Create step execution item for a job reference
+     *
      * @param jobIdentifier
      * @param args
      * @param nodeStep
      * @param handler
      * @param keepgoingOnSuccess
+     *
+     * @return
+     *
+     * @deprecated
+     */
+    public static StepExecutionItem createJobRef(
+            final String jobIdentifier,
+            final String[] args,
+            final boolean nodeStep,
+            final StepExecutionItem handler,
+            final boolean keepgoingOnSuccess
+    )
+    {
+        return createJobRef(
+                jobIdentifier,
+                args,
+                nodeStep,
+                handler,
+                keepgoingOnSuccess,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
+    /**
+     * Create step execution item for a job reference
+     *
+     * @param jobIdentifier
+     * @param args
+     * @param nodeStep
+     * @param handler
+     * @param keepgoingOnSuccess
+     *
      * @return
      */
-    public static StepExecutionItem createJobRef(final String jobIdentifier,
-            final String[] args, final boolean nodeStep,
-            final StepExecutionItem handler, final boolean keepgoingOnSuccess) {
-
+    public static StepExecutionItem createJobRef(
+            final String jobIdentifier,
+            final String[] args,
+            final boolean nodeStep,
+            final StepExecutionItem handler,
+            final boolean keepgoingOnSuccess,
+            final String nodeFilter,
+            final Integer nodeThreadcount,
+            final Boolean nodeKeepgoing,
+            final String nodeRankAttribute,
+            final Boolean nodeRankOrderAscending
+    )
+    {
         return new JobRefCommandBase() {
             public String getJobIdentifier() {
                 return jobIdentifier;
@@ -223,6 +269,26 @@ public class ExecutionItemFactory {
             @Override
             public boolean isKeepgoingOnSuccess() {
                 return keepgoingOnSuccess;
+            }
+
+            @Override public Boolean getNodeKeepgoing() {
+                return nodeKeepgoing;
+            }
+
+            @Override public String getNodeFilter() {
+                return nodeFilter;
+            }
+
+            @Override public Integer getNodeThreadcount() {
+                return nodeThreadcount;
+            }
+
+            @Override public String getNodeRankAttribute() {
+                return nodeRankAttribute;
+            }
+
+            @Override public Boolean getNodeRankOrderAscending() {
+                return nodeRankOrderAscending;
             }
         };
     }

@@ -654,7 +654,11 @@ section{
     margin-top: @padding-large-vertical;
   }
   & + &.section-separator {
-    border-top: 1px solid @gray-light;
+    border-top: 1px solid @legend-border-color;
+  }
+  &.section-separator-solo {
+    border-top: 1px solid @legend-border-color;
+    border-bottom: 1px solid @legend-border-color;
   }
 }
 
@@ -1151,6 +1155,17 @@ section{
   span.autoedit:hover {
     padding: 2px;
     border: 1px dotted @brand-info;
+  }
+  /**
+   * single step edit box
+   */
+  .wfitemEditForm{
+    border: 2px solid @legend-border-color;
+//    border: 2px solid @table-border-color;
+
+    .border-bottom-radius(@border-radius-base);
+    .border-top-radius(@border-radius-base);
+    padding: @base-item-padding-vertical @base-item-padding-horizontal;
   }
 
 
