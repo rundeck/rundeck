@@ -85,7 +85,7 @@ public class SSHTaskBuilder {
     public static Session openSession(SSHBaseInterface base) throws JSchException {
         JSch jsch = new JSch();
         
-        if (null != base.getEnableSSHAgent()) {
+        if (base.getEnableSSHAgent()) {
             ConnectorFactory cf = ConnectorFactory.getDefault();
             try {
                 base.setSSHAgentProcess(new SSHAgentProcess());
