@@ -119,6 +119,16 @@ class PasswordFieldsServiceTests {
         ].collect { [config: it, index: i++] }
     }
 
+    private def genMissingPropField() {
+        def i=0
+        [
+                [
+                        "type": "withPasswordDescription",
+                        "props": props("simple=text", "textfield=a test field")
+                ]
+        ].collect { [config: it, index: i++] }
+    }
+
     private def genMultiConfiguration(int max=1) {
         def list=[]
         for(int j=0;j<max;j++){
@@ -348,6 +358,15 @@ class PasswordFieldsServiceTests {
         assertEquals(2, cnt)
         assertPassword("NEW_PASSWORD2", cnf[2].config)
         assertEquals(0, service.tracking())
+    }
+
+    void testAbsentPasswordField() {
+        def cnf = genMissingPropField()
+        service.track(cnf*.config, withPasswordFieldDescription)
+
+        service.untrack(cnf, withPasswordFieldDescription)
+
+        assertTrue("No exception should be thrown if password field value is not present.", true )
     }
 
     void setPassword(String password, def resource) {
