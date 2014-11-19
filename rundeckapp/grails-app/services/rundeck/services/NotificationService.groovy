@@ -178,7 +178,9 @@ public class NotificationService implements ApplicationContextAware{
                     //set up templates
                     def subjecttmpl='${notification.eventStatus} [${exec.project}] ${job.group}/${job.name} ${exec' +
                             '.argstring}'
-                    if(grailsApplication.config.rundeck.mail."${trigger}"?.template?.subject){
+					if(grailsApplication.config.rundeck.mail."${source.project}"?."${source.jobName}"?.template?.subject) {
+						subjecttmpl= grailsApplication.config.rundeck.mail."${source.project}"?."${source.jobName}"?.template?.subject.toString()
+					}else if(grailsApplication.config.rundeck.mail."${trigger}"?.template?.subject){
                         subjecttmpl= grailsApplication.config.rundeck.mail."${trigger}".template.subject.toString()
                     }else if (grailsApplication.config.rundeck.mail.template.subject) {
                         subjecttmpl=grailsApplication.config.rundeck.mail.template.subject.toString()
@@ -190,12 +192,16 @@ public class NotificationService implements ApplicationContextAware{
 
                     def htmlemail=null
                     def templatePaths=[]
-                    if (grailsApplication.config.rundeck.mail."${trigger}".template.body) {
+					if(grailsApplication.config.rundeck.mail."${source.project}"."${source.jobName}".template.body) {
+						htmlemail = renderTemplate(grailsApplication.config.rundeck.mail."${source.project}"."${source.jobName}".template.body.toString(), context)
+					}else if (grailsApplication.config.rundeck.mail."${trigger}".template.body) {
                         htmlemail = renderTemplate(grailsApplication.config.rundeck.mail."${trigger}".template.body.toString(), context)
                     }else if (grailsApplication.config.rundeck.mail.template.body) {
                         htmlemail = renderTemplate(grailsApplication.config.rundeck.mail.template.body.toString(), context)
                     }
-                    if(grailsApplication.config.rundeck.mail."${trigger}".template.file){
+					if(grailsApplication.config.rundeck.mail."${source.project}"."${source.jobName}".template.file) {
+						templatePaths << grailsApplication.config.rundeck.mail."${source.project}"."${source.jobName}".template.file.toString()
+					}else if(grailsApplication.config.rundeck.mail."${trigger}".template.file){
                         templatePaths << grailsApplication.config.rundeck.mail."${trigger}".template.file.toString()
                     }
                     if(grailsApplication.config.rundeck.mail.template.file){
@@ -224,7 +230,9 @@ public class NotificationService implements ApplicationContextAware{
                         attachlog = true
                     }
                     def isFormatted =false
-                    if( grailsApplication.config.rundeck.mail."${trigger}".template.log.formatted in [true,'true']){
+					if( grailsApplication.config.rundeck.mail."${source.project}"."${source.jobName}".template.log.formatted in [true,'true']){
+						isFormatted=true
+					}else if( grailsApplication.config.rundeck.mail."${trigger}".template.log.formatted in [true,'true']){
                         isFormatted=true
                     }else if( grailsApplication.config.rundeck.mail.template.log.formatted in [true,'true']){
                         isFormatted = true
