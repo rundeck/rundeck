@@ -107,6 +107,11 @@ public interface INodeEntry extends INodeBase, INodeDesc {
      * Return if we want a local ssh-agent
      */
 	public boolean getLocalSSHAgent();
+	
+    /**
+     * Return the time to live on a ssh-agent
+     */
+    public Integer getLocalTtlSSHAgent();
 
     /**
      * Get the map of attributes for the node, which includes all of the attributes for these accessors as well:

@@ -77,6 +77,7 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
     private List<Environment.Variable> envVars=null;
     
     private Boolean enableSSHAgent=false;
+    private Integer ttlSSHAgent=0;
     private SSHAgentProcess sshAgentProcess=null;
 
     private static final String TIMEOUT_MESSAGE =
@@ -628,4 +629,9 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
 	public Boolean getEnableSSHAgent() {
 		return this.enableSSHAgent;
 	}
+	
+	 @Override
+	  public void setTtlSSHAgent(Integer ttlSSHAgent) {
+	    this.ttlSSHAgent=ttlSSHAgent;
+	  }
 }

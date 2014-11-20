@@ -49,6 +49,7 @@ import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 import com.jcraft.jsch.JSchException;
+
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.BuildException;
@@ -666,11 +667,23 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             if (node.getLocalSSHAgent()) {
             	localSSHAgent = node.getLocalSSHAgent();
             } else if (Boolean.valueOf(frameworkProject.hasProperty(PROJ_PROP_LOCAL_SSH_AGENT))) {
-            	localSSHAgent = Boolean.valueOf(frameworkProject.hasProperty(PROJ_PROP_LOCAL_SSH_AGENT));
+            	localSSHAgent = Boolean.valueOf(frameworkProject.getProperty(PROJ_PROP_LOCAL_SSH_AGENT));
             } else {
             	localSSHAgent = Boolean.valueOf(framework.getProperty(Constants.LOCAL_SSH_AGENT));
             }
             return localSSHAgent;
+        }
+        
+        public Integer getTtlSSHAgent() {
+          Integer ttlSSHAgent = 0;
+            if (node.getLocalTtlSSHAgent() != null) {
+              ttlSSHAgent = node.getLocalTtlSSHAgent();
+            } else if (frameworkProject.hasProperty(PROJ_PROP_LOCAL_SSH_AGENT)) {
+              ttlSSHAgent = Integer.valueOf(frameworkProject.getProperty(PROJ_PROP_LOCAL_SSH_AGENT));
+            } else {
+              ttlSSHAgent = Integer.valueOf(framework.getProperty(Constants.LOCAL_SSH_AGENT));
+            }
+            return ttlSSHAgent;
         }
 
         public static Map<String, String> sshConfigFromFramework(Framework framework) {

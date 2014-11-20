@@ -89,7 +89,7 @@ public class SSHTaskBuilder {
             ConnectorFactory cf = ConnectorFactory.getDefault();
             try {
                 base.setSSHAgentProcess(new SSHAgentProcess());
-                cf.setPreferredUSocketPath(base.getSSHAgentProcess().getSocketPath());
+                cf.setUSocketPath(base.getSSHAgentProcess().getSocketPath());
                 cf.setPreferredUSocketFactories("jna,nc");
                 base.getPluginLogger().log(Project.MSG_DEBUG, "ssh-agent started.");
                 try {
@@ -212,6 +212,8 @@ public class SSHTaskBuilder {
         public Boolean getEnableSSHAgent();
         
         public SSHAgentProcess getSSHAgentProcess();
+
+        void setTtlSSHAgent(Integer ttlSSHAgent);
     }
 
     static interface SSHExecInterface extends SSHBaseInterface, DataContextUtils.EnvironmentConfigurable {
@@ -343,6 +345,12 @@ public class SSHTaskBuilder {
         @Override
         public SSHAgentProcess getSSHAgentProcess() {
             return instance.getSSHAgentProcess();
+        }
+        
+        
+        @Override
+        public void setTtlSSHAgent(Integer ttlSSHAgent) {
+            instance.setTtlSSHAgent(ttlSSHAgent);
         }
         
         @Override
@@ -573,6 +581,7 @@ public class SSHTaskBuilder {
         }
         sshbase.setSshConfig(baseConfig);
         sshbase.setEnableSSHAgent(sshConnectionInfo.getLocalSSHAgent());
+        sshbase.setTtlSSHAgent(sshConnectionInfo.getTtlSSHAgent());
         sshbase.setPluginLogger(logger);
     }
 
@@ -661,6 +670,8 @@ public class SSHTaskBuilder {
         public String getUsername();
         
         public Boolean getLocalSSHAgent();
+        
+        public Integer getTtlSSHAgent();
 
         public Map<String,String> getSshConfig();
     }

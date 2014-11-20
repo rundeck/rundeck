@@ -16,13 +16,22 @@ public class SSHAgentProcess{
   public void setSocketPath(String socketPath) {
     this.socketPath=socketPath;
   }
-
+  
   public SSHAgentProcess() throws AgentProxyException{
-    this("/usr/bin/ssh-agent");
+    this("/usr/bin/ssh-agent", 0);
   }
 
-  public SSHAgentProcess(String sshAgentPath) throws AgentProxyException{
-    ProcessBuilder builder=new ProcessBuilder(sshAgentPath);
+  public SSHAgentProcess(Integer timeToLive) throws AgentProxyException{
+    this("/usr/bin/ssh-agent", timeToLive);
+  }
+
+  public SSHAgentProcess(String sshAgentPath, Integer timeToLive) throws AgentProxyException{
+    ProcessBuilder builder;
+    if(timeToLive > 0){
+      builder=new ProcessBuilder(sshAgentPath,"-t",timeToLive.toString()); 
+    }else{
+      builder=new ProcessBuilder(sshAgentPath);
+    }
     builder.redirectErrorStream(true);
 
     try{

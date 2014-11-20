@@ -69,6 +69,7 @@ public class TestSSHTaskBuilder extends TestCase {
         private InputStream sshKeyData;
         private Boolean enableSSHAgent;
         private SSHAgentProcess sshAgentProcess;
+        private Integer ttlSSHAgent;
 
         public void setFailonerror(boolean failonerror) {
             this.failonerror = failonerror;
@@ -194,6 +195,10 @@ public class TestSSHTaskBuilder extends TestCase {
 		public void setSSHAgentProcess(SSHAgentProcess sshAgentProcess) {
 			this.sshAgentProcess = sshAgentProcess;
 		}
+		
+	  public void setTtlSSHAgent(Integer ttlSSHAgent){
+	    this.ttlSSHAgent = ttlSSHAgent;
+	  }
     }
 
     static class testSCPInterface extends testSSHBaseInterface implements SSHTaskBuilder.SCPInterface {
@@ -243,6 +248,7 @@ public class TestSSHTaskBuilder extends TestCase {
         String password;
         int SSHTimeout;
         Boolean localSSHAgent;
+        Integer localTtlSSHAgent;
         String username;
         String privateKeyPassphrase;
         InputStream privateKeyResourceData;
@@ -283,6 +289,10 @@ public class TestSSHTaskBuilder extends TestCase {
         
         public Boolean getLocalSSHAgent() {
             return localSSHAgent;
+        }
+        
+        public Integer getTtlSSHAgent() {
+          return localTtlSSHAgent;
         }
 
         public InputStream getPrivateKeyResourceData() throws IOException {
