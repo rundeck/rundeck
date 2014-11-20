@@ -43,8 +43,8 @@
                 </g:link>
             </g:if>
         </span>
-    <div class="h4 jobInfoSection">
-        <span class="text-muted"><g:enc>${scheduledExecution?.description}</g:enc></span>
+    <div class="jobInfoSection">
+        <g:render template="jobDescription" model="[scheduledExecution:scheduledExecution,textCss:'h4 text-muted']"/>
     </div>
 
 </div>

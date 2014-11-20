@@ -474,10 +474,40 @@ function getCurSEID(){
                 class="form-control"
             />
             <g:hasErrors bean="${scheduledExecution}" field="description">
-                <i class="glyphicon glyphicon-warning-sign"></i>
+                <i class="glyphicon glyphicon-warning-sign text-warning"></i>
             </g:hasErrors>
         </div>
     </div>
+    <g:set var="allowHTML" value="${grailsApplication.config.rundeck?.security?.job?.description?.allowHTML}"/>
+    <g:if test="${allowHTML}">
+        <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'descriptionFormat', 'has-error')}">
+            <label for="descriptionFormat" class="${labelColClass}">
+                <g:message code="ScheduledExecution.property.descriptionFormat.label" />
+            </label>
+
+            <div class="${fieldColSize}">
+                <label class="radio-inline">
+                    <g:radio name="descriptionFormat" value="text" checked="${scheduledExecution?.descriptionFormat in [null,'text']}"/>
+                    <g:message code="text" />
+                </label>
+
+                <label class="radio-inline">
+                    <g:radio name="descriptionFormat" value="markdown"
+                             checked="${scheduledExecution?.descriptionFormat in ['markdown']}"/>
+                    <g:message code="markdown" />
+                </label>
+
+                <label class="radio-inline">
+                    <g:radio name="descriptionFormat" value="html"
+                             checked="${scheduledExecution?.descriptionFormat in ['html']}"/>
+                    <g:message code="html" />
+                </label>
+                <div class="help-block">
+                    <g:message code="ScheduledExecution.property.descriptionFormat.description" />
+                </div>
+            </div>
+        </div>
+    </g:if>
 </div><!--/.nput-group-item -->
 
     <g:set var="projectName" value="${scheduledExecution.project?scheduledExecution.project.toString():params.project ?: request.project?: projects?.size() == 1 ? projects[0].name : ''}" />

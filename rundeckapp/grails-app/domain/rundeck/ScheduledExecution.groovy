@@ -21,6 +21,7 @@ class ScheduledExecution extends ExecutionContext {
     String year = "*"
     String crontabString
     String uuid;
+    String descriptionFormat
 
     Workflow workflow
 
@@ -82,6 +83,7 @@ class ScheduledExecution extends ExecutionContext {
         dayOfWeek(nullable:true, matches: /^[0-9a-zA-z*\/?,L#-]*$/ )
         year(nullable:true, matches: /^[0-9*\/,-]*$/)
         description(nullable:true)
+        descriptionFormat(nullable:true,inList: ['text','html','markdown'], maxSize: 64)
         uuid(unique: true, nullable:true, blank:false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
         multipleExecutions(nullable: true)
         serverNodeUUID(size: 36..36, blank: true, nullable: true, validator: { val, obj ->
@@ -116,6 +118,7 @@ class ScheduledExecution extends ExecutionContext {
 
         argString type: 'text'
         description type: 'text'
+        descriptionFormat type: 'text'
         jobName type: 'text'
         groupPath type: 'text'
         options lazy: false

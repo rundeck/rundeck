@@ -28,11 +28,15 @@
                         <g:if test="${jobsjscallback}">
                             <tr class=" expandComponentHolder expanded" id="jobrow_${scheduledExecution.id}">
                                <td class="jobname">
-                                   <div style="overflow:hidden; text-overflow: ellipsis; height:16px;">
+                                   <div style="overflow:hidden; text-overflow: ellipsis">
                                        <g:set var="jstext" value="jobChosen('${enc(js: scheduledExecution.jobName)}','${enc(js: scheduledExecution.groupPath)}')"/>
-                                       <span class="action textbtn" title="Choose this job" onclick="${enc(attr:jstext)}"><g:enc>${scheduledExecution.jobName}</g:enc></span>
+                                       <span class="textbtn textbtn-success" title="Choose this job" onclick="${enc(attr:jstext)}">
+                                           <i class="glyphicon glyphicon-book"></i>
+                                           <g:enc>${scheduledExecution.jobName}</g:enc>
+                                       </span>
 
-                                       <span class="jobdesc" title="${enc(attr:scheduledExecution.description)}"><g:enc>${scheduledExecution.description}</g:enc></span>
+                                       <g:render template="/scheduledExecution/jobDescription"
+                                                 model="[scheduledExecution: scheduledExecution, textCss: 'text-muted']"/>
                                    </div>
                                </td>
                             </tr>
@@ -83,7 +87,8 @@
                                         edit</g:link>
                                 </g:if>
 
-                                <span class="text-muted" title="${enc(attr:scheduledExecution.description)}"><g:enc>${scheduledExecution.description}</g:enc></span>
+                                    <g:render template="/scheduledExecution/jobDescription"
+                                              model="[scheduledExecution: scheduledExecution,textCss:'text-muted']"/>
 
                             </td>
                             <td class="scheduletime">
