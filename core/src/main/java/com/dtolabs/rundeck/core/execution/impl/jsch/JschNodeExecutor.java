@@ -683,7 +683,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
               ttlSSHAgent = node.getLocalTtlSSHAgent();
             } else if (frameworkProject.hasProperty(PROJ_PROP_LOCAL_TTL_SSH_AGENT)) {
               ttlSSHAgent = Integer.valueOf(frameworkProject.getProperty(PROJ_PROP_LOCAL_TTL_SSH_AGENT));
-            } else if (frameworkProject.hasProperty(FWK_PROP_LOCAL_TTL_SSH_AGENT)) {
+            } else if (framework.hasProperty(FWK_PROP_LOCAL_TTL_SSH_AGENT)) {
               ttlSSHAgent = Integer.valueOf(framework.getProperty(FWK_PROP_LOCAL_TTL_SSH_AGENT));
             }
             return ttlSSHAgent;

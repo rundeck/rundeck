@@ -181,24 +181,28 @@ public class TestSSHTaskBuilder extends TestCase {
             return sshAgentProcess;
         }
 
-		@Override
-		public void setEnableSSHAgent(Boolean enableSSHAgent) {
-			this.enableSSHAgent = enableSSHAgent;
-		}
-
-		@Override
-		public Boolean getEnableSSHAgent() {
-			return null;
-		}
-
-		@Override
-		public void setSSHAgentProcess(SSHAgentProcess sshAgentProcess) {
-			this.sshAgentProcess = sshAgentProcess;
-		}
-		
-	  public void setTtlSSHAgent(Integer ttlSSHAgent){
-	    this.ttlSSHAgent = ttlSSHAgent;
-	  }
+    		@Override
+    		public void setEnableSSHAgent(Boolean enableSSHAgent) {
+    			this.enableSSHAgent = enableSSHAgent;
+    		}
+    
+    		@Override
+    		public Boolean getEnableSSHAgent() {
+    			return null;
+    		}
+    
+    		@Override
+    		public void setSSHAgentProcess(SSHAgentProcess sshAgentProcess) {
+    			this.sshAgentProcess = sshAgentProcess;
+    		}
+    		
+    	  public void setTtlSSHAgent(Integer ttlSSHAgent){
+    	    this.ttlSSHAgent = ttlSSHAgent;
+    	  }
+    	  
+        public Integer getTtlSSHAgent(){
+          return this.ttlSSHAgent;
+        }
     }
 
     static class testSCPInterface extends testSSHBaseInterface implements SSHTaskBuilder.SCPInterface {
