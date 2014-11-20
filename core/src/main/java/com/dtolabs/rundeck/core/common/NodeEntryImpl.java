@@ -179,15 +179,15 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
         setAttribute(USERNAME, username);
     }
     
-  	public void setLocalSSHAgent(Boolean localSSHAgent) {
-  		  setAttribute(LOCAL_SSH_AGENT, localSSHAgent.toString());
-  	}
-  	
-  	public boolean getLocalSSHAgent() {
-  		  return Boolean.valueOf(getAttribute(LOCAL_SSH_AGENT));
-  	}
-  	
-  	public Integer getLocalTtlSSHAgent() {
+    public void setLocalSSHAgent(Boolean localSSHAgent) {
+        setAttribute(LOCAL_SSH_AGENT, localSSHAgent.toString());
+    }
+      
+    public boolean getLocalSSHAgent() {
+        return Boolean.valueOf(getAttribute(LOCAL_SSH_AGENT));
+    }
+      
+    public Integer getLocalTtlSSHAgent() {
         try{
             return Integer.valueOf(getAttribute(LOCAL_TTL_SSH_AGENT));
         }catch(NumberFormatException e){
