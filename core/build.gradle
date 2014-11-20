@@ -8,10 +8,6 @@ archivesBaseName = 'rundeck-core'
 defaultTasks 'clean','assemble'
 ext.rundeckToolsDependencies=''
 
-repositories {
-     mavenLocal()
-}
-
 dependencies {
     compile project(":rundeck-storage:rundeck-storage-api")
     compile project(":rundeck-storage:rundeck-storage-conf")
