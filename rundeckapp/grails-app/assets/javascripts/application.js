@@ -14,9 +14,6 @@ function setHtml(elem,html){
 function appendHtml(elem,html){
     $(elem).innerHTML+=html;
 }
-function wrapContentsHtml(elem,pref,suff){
-    elem.innerHTML = pref + elem.innerHTML + suff;
-}
 
 function setText(elem,text){
     clearHtml(elem);
