@@ -671,7 +671,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             	localSSHAgent = node.getLocalSSHAgent();
             } else if (Boolean.valueOf(frameworkProject.hasProperty(PROJ_PROP_LOCAL_SSH_AGENT))) {
             	localSSHAgent = Boolean.valueOf(frameworkProject.getProperty(PROJ_PROP_LOCAL_SSH_AGENT));
-            } else {
+            } else if (Boolean.valueOf(frameworkProject.hasProperty(FWK_PROP_LOCAL_SSH_AGENT))) {
             	localSSHAgent = Boolean.valueOf(framework.getProperty(FWK_PROP_LOCAL_SSH_AGENT));
             }
             return localSSHAgent;
@@ -683,7 +683,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
               ttlSSHAgent = node.getLocalTtlSSHAgent();
             } else if (frameworkProject.hasProperty(PROJ_PROP_LOCAL_TTL_SSH_AGENT)) {
               ttlSSHAgent = Integer.valueOf(frameworkProject.getProperty(PROJ_PROP_LOCAL_TTL_SSH_AGENT));
-            } else {
+            } else if (frameworkProject.hasProperty(FWK_PROP_LOCAL_TTL_SSH_AGENT)) {
               ttlSSHAgent = Integer.valueOf(framework.getProperty(FWK_PROP_LOCAL_TTL_SSH_AGENT));
             }
             return ttlSSHAgent;
