@@ -184,6 +184,5 @@ public final class Constants {
     public static final String SSH_KEYRESOURCE_PROP = "framework.ssh.key.resource";
     public static final String SSH_USER_PROP = "framework.ssh.user";
     public static final String SSH_TIMEOUT_PROP = "framework.ssh.timeout";
-    public static final String LOCAL_SSH_AGENT = "framework.local.ssh.agent";
 
 }
