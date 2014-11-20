@@ -129,7 +129,7 @@ class BuilderUtil{
     /**
      * Return the key as an attribute key identifier
      */
-    private static String asAttributeName(String key) {
+    public static String asAttributeName(String key) {
         return ATTR_PREFIX + key
     }
 

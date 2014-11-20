@@ -144,6 +144,9 @@ class ScheduledExecution extends ExecutionContext {
             map.id = id
         }
         map.description=description
+        if(descriptionFormat){
+            map.descriptionFormat=descriptionFormat
+        }
         map.loglevel=loglevel
         map.project=project
         if(timeout){
@@ -215,6 +218,9 @@ class ScheduledExecution extends ExecutionContext {
         se.jobName=data.name
         se.groupPath=data['group']?data['group']:null
         se.description=data.description
+        if(data.descriptionFormat){
+            se.descriptionFormat=data.descriptionFormat
+        }
         se.loglevel=data.loglevel?data.loglevel:'INFO'
         se.project=data.project
         if (data.uuid) {

@@ -36,6 +36,14 @@ class ScheduledExecutionTest  {
         assertNotNull(jobMap.retry)
         assertEquals('${option.retry}',jobMap.retry)
     }
+    void testToMapDescriptionFormat() {
+        ScheduledExecution se = createBasicScheduledExecution()
+        se.descriptionFormat='markdown'
+        def jobMap = se.toMap()
+        assertNotNull(jobMap)
+        assertNotNull(jobMap.descriptionFormat)
+        assertEquals('markdown',jobMap.descriptionFormat)
+    }
 
     void testFromMapScheduleCrontabString() {
         ScheduledExecution se = ScheduledExecution.fromMap(
@@ -131,6 +139,17 @@ class ScheduledExecutionTest  {
         assertEquals('4',se.year)
         assertEquals('?',se.dayOfMonth)
         assertEquals('*',se.dayOfWeek)
+    }
+    void testFromMapDescriptionFormat() {
+        ScheduledExecution se = ScheduledExecution.fromMap(
+                [
+                        jobName: 'abc',
+                        descriptionFormat: 'markdown'
+                ]
+        )
+        assertNotNull(se)
+        assertNotNull(se.descriptionFormat)
+        assertEquals('markdown',se.descriptionFormat)
     }
     void testFromMapScheduleDayOfMonth() {
         ScheduledExecution se = ScheduledExecution.fromMap(
