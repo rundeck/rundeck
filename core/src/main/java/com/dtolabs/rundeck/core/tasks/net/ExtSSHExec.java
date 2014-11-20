@@ -28,7 +28,6 @@ package com.dtolabs.rundeck.core.tasks.net;
 import com.dtolabs.rundeck.core.utils.SSHAgentProcess;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.jcraft.jsch.*;
-
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.optional.ssh.SSHBase;
