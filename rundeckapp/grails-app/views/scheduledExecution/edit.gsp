@@ -7,6 +7,7 @@
     <asset:javascript src="jobedit.js"/>
     <asset:javascript src="workflowStepEditorKO.js"/>
     <asset:javascript src="nodeFiltersKO.js"/>
+    <asset:javascript src="optionEditKO.js"/>
     <g:javascript>
     var workflowEditor=new WorkflowEditor();
     </g:javascript>

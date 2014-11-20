@@ -1157,15 +1157,16 @@ section{
     border: 1px dotted @brand-info;
   }
   /**
-   * single step edit box
+   * single step or option edit box
    */
-  .wfitemEditForm{
+  .wfitemEditForm, .optEditForm{
     border: 2px solid @legend-border-color;
-//    border: 2px solid @table-border-color;
-
     .border-bottom-radius(@border-radius-base);
     .border-top-radius(@border-radius-base);
     padding: @base-item-padding-vertical @base-item-padding-horizontal;
+    &.container{
+      background: white;
+    }
   }
 
 
