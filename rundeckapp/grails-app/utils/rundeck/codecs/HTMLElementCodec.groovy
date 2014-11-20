@@ -1,7 +1,7 @@
 package rundeck.codecs
 
 /**
- * HTMLElementCodec is ...
+ * encode all &lt; and &gt; chars with HTML entity equivalents.
  * @author Greg Schueler <greg@simplifyops.com>
  * @since 2014-05-15
  */

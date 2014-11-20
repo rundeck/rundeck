@@ -30,6 +30,6 @@ import org.markdownj.MarkdownProcessor
 class MarkdownCodec {
     static MarkdownProcessor p = new MarkdownProcessor();
     static decode = { str ->
-        return p.markdown(str)
+        return SanitizedHTMLCodec.encode(p.markdown(str))
     }
 }

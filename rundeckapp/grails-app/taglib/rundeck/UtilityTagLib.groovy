@@ -646,7 +646,11 @@ class UtilityTagLib{
     }
 
     def markdown={ attrs, body ->
-        out<<body().toString().decodeMarkdown()
+        if(attrs.safe){
+            out<<body().toString().encodeAsHTMLContent().decodeMarkdown()
+        }else{
+            out<<body().toString().decodeMarkdown()
+        }
     }
 
     /**
@@ -710,6 +714,8 @@ class UtilityTagLib{
     def enc={attrs,body->
         if(attrs.html){
             out << attrs.html.toString().encodeAsHTML()
+        }else if(attrs.stripHtml){
+            out << attrs.stripHtml.toString().encodeAsStripHTML()
         }else if(null!=attrs.attr){
             out << attrs.attr.toString().encodeAsHTMLAttribute()
         }else if(attrs.xml){
@@ -730,6 +736,26 @@ class UtilityTagLib{
             out << body()
         }else {
             out << body().encodeAsHTML()
+        }
+    }
+    /**
+     * Sanitize an HTML string
+     */
+    def sanitize={attrs,body->
+        if(attrs.html){
+            out<<attrs.html.encodeAsSanitizedHTML()
+        }else{
+            out<<body().encodeAsSanitizedHTML()
+        }
+    }
+    /**
+     * Strip tags out of an HTML string and then encode the remaining text
+     */
+    def strip={attrs,body->
+        if(attrs.html){
+            out<<attrs.html.encodeAsStripHTML().encodeAsHTML()
+        }else{
+            out<<body().encodeAsStripHTML().encodeAsHTML()
         }
     }
 
