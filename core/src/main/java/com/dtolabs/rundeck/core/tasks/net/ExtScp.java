@@ -85,16 +85,20 @@ public class ExtScp extends Scp implements SSHTaskBuilder.SCPInterface {
     	return null;
     }
     
-	public void setSSHAgentProcess(SSHAgentProcess sshAgentProcess) {
-	}
-
-	public void setEnableSSHAgent(Boolean enableSSHAgent) {
-	}
-
-	public Boolean getEnableSSHAgent() {
-		return Boolean.FALSE;
-	}
-	
-	public void setTtlSSHAgent(Integer ttlSSHAgent){
-	}
+  	public void setSSHAgentProcess(SSHAgentProcess sshAgentProcess) {
+  	}
+  
+  	public void setEnableSSHAgent(Boolean enableSSHAgent) {
+  	}
+  
+  	public Boolean getEnableSSHAgent() {
+  		return Boolean.FALSE;
+  	}
+  	
+  	public void setTtlSSHAgent(Integer ttlSSHAgent){
+  	}
+  	
+    public Integer getTtlSSHAgent(){
+      return 0;
+    }
 }

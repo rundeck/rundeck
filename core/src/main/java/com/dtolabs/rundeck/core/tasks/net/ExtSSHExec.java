@@ -242,11 +242,11 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
 
     public SSHAgentProcess getSSHAgentProcess() {
 		return this.sshAgentProcess;
-	}
+	  }
 
-	public void setSSHAgentProcess(SSHAgentProcess sshAgentProcess) {
-		this.sshAgentProcess = sshAgentProcess;
-	}
+	  public void setSSHAgentProcess(SSHAgentProcess sshAgentProcess) {
+  		this.sshAgentProcess = sshAgentProcess;
+  	}
 
     /**
      * Allows disconnecting the ssh connection
@@ -620,18 +620,23 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
         return super.getUserInfo();
     }
 
-	@Override
-	public void setEnableSSHAgent(Boolean enableSSHAgent) {
-		this.enableSSHAgent=enableSSHAgent;
-	}
-	
-	@Override
-	public Boolean getEnableSSHAgent() {
-		return this.enableSSHAgent;
-	}
+  	@Override
+  	public void setEnableSSHAgent(Boolean enableSSHAgent) {
+  		this.enableSSHAgent=enableSSHAgent;
+  	}
+  	
+  	@Override
+  	public Boolean getEnableSSHAgent() {
+  		return this.enableSSHAgent;
+  	}
 	
 	 @Override
 	  public void setTtlSSHAgent(Integer ttlSSHAgent) {
 	    this.ttlSSHAgent=ttlSSHAgent;
 	  }
+	  
+   @Override
+    public Integer getTtlSSHAgent() {
+      return this.ttlSSHAgent;
+    }
 }

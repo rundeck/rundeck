@@ -88,10 +88,10 @@ public class SSHTaskBuilder {
         if (base.getEnableSSHAgent()) {
             ConnectorFactory cf = ConnectorFactory.getDefault();
             try {
-                base.setSSHAgentProcess(new SSHAgentProcess());
+                base.setSSHAgentProcess(new SSHAgentProcess(base.getTtlSSHAgent()));
                 cf.setUSocketPath(base.getSSHAgentProcess().getSocketPath());
                 cf.setPreferredUSocketFactories("jna,nc");
-                base.getPluginLogger().log(Project.MSG_DEBUG, "ssh-agent started.");
+                base.getPluginLogger().log(Project.MSG_DEBUG, "ssh-agent started with ttl " + base.getTtlSSHAgent().toString());
                 try {
                     Connector c = cf.createConnector();
                     RemoteIdentityRepository identRepo = new RemoteIdentityRepository(c);
@@ -213,7 +213,9 @@ public class SSHTaskBuilder {
         
         public SSHAgentProcess getSSHAgentProcess();
 
-        void setTtlSSHAgent(Integer ttlSSHAgent);
+        public void setTtlSSHAgent(Integer ttlSSHAgent);
+        
+        public Integer getTtlSSHAgent();
     }
 
     static interface SSHExecInterface extends SSHBaseInterface, DataContextUtils.EnvironmentConfigurable {
@@ -351,6 +353,11 @@ public class SSHTaskBuilder {
         @Override
         public void setTtlSSHAgent(Integer ttlSSHAgent) {
             instance.setTtlSSHAgent(ttlSSHAgent);
+        }
+        
+        @Override
+        public Integer getTtlSSHAgent() {
+            return instance.getTtlSSHAgent();
         }
         
         @Override
