@@ -759,15 +759,19 @@ class UtilityTagLib{
         }
     }
     def textFirstLine={attrs,body->
-        if(attrs.text && attrs.text.indexOf('\n')>=0 ){
-            out<< attrs.text.substring(0,attrs.text.indexOf('\n'))
+        if(attrs.text){
+            def split=attrs.text.toString().split(/(\r\n?|\n)/,2)
+            out<< (split.length>0?split[0]:attrs.text)
         }else{
             out<<attrs.text
         }
     }
     def textRemainingLines={attrs,body->
-        if(attrs.text && attrs.text.indexOf('\n')>=0 ){
-            out<< attrs.text.substring(attrs.text.indexOf('\n')+1)
+        if(attrs.text){
+            def split=attrs.text.toString().split(/(\r\n?|\n)/,2)
+            if(split.length==2){
+                out << split[1]
+            }
         }
     }
 
