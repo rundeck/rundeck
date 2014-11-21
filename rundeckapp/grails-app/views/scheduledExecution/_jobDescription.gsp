@@ -16,18 +16,18 @@
 
 <g:set var="allowHTML"
        value="${grailsApplication.config.rundeck?.security?.job?.description?.allowHTML}"/>
-<g:if test="${allowHTML && scheduledExecution?.descriptionFormat == 'html'}">
-    <div class="${enc(attr: htmlCss ?: '')}">
-        <g:sanitize>${scheduledExecution?.description}</g:sanitize>
-    </div>
+<g:set var="firstline" value="${g.textFirstLine(text: scheduledExecution?.description)}"/>
+<g:if test="${allowHTML && !firstLineOnly}">
+    <g:set var="remainingLine" value="${g.textRemainingLines(text: scheduledExecution?.description)}"/>
+    <span class="${enc(attr: textCss ?: '')}"><g:enc>${firstline}</g:enc></span>
+    <g:if test="${remainingLine}">
+    <span class="${enc(attr: markdownCss ?: '')}">
+        <g:markdown>${remainingLine}</g:markdown>
+    </span>
+    </g:if>
 </g:if>
-<g:elseif test="${allowHTML && scheduledExecution?.descriptionFormat == 'markdown'}">
-    <div class="${enc(attr: markdownCss ?: '')}">
-        <g:markdown>${scheduledExecution?.description}</g:markdown>
-    </div>
-</g:elseif>
 <g:else>
     <span class="${enc(attr:textCss?:'')}">
-        <g:enc>${scheduledExecution?.description}</g:enc>
+        <g:enc>${firstline}</g:enc>
     </span>
 </g:else>

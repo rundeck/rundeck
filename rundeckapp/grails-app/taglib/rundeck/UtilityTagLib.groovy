@@ -14,7 +14,7 @@ class UtilityTagLib{
     def static  daysofweekkey = [Calendar.SUNDAY,Calendar.MONDAY,Calendar.TUESDAY,Calendar.WEDNESDAY,Calendar.THURSDAY,Calendar.FRIDAY,Calendar.SATURDAY];
     def public static daysofweekord = ScheduledExecution.daysofweeklist;
     def public static monthsofyearord = ScheduledExecution.monthsofyearlist;
-	static returnObjectForTags = ['rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','helpLinkParams','parseOptsFromString','relativeDateString','enc']
+	static returnObjectForTags = ['rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','helpLinkParams','parseOptsFromString','relativeDateString','enc','textFirstLine','textRemainingLines']
 
     private static Random rand=new java.util.Random()
     def HMacSynchronizerTokensManager hMacSynchronizerTokensManager
@@ -65,7 +65,7 @@ class UtilityTagLib{
         }
         out<<render(template:"/common/expander",model:attrs)
     }
-    
+
     def dayOfWeek = { attrs, body ->
 
         def java.text.DateFormatSymbols DFS = new java.text.DateFormatSymbols(request.getLocale());
@@ -756,6 +756,18 @@ class UtilityTagLib{
             out<<attrs.html.encodeAsStripHTML().encodeAsHTML()
         }else{
             out<<body().encodeAsStripHTML().encodeAsHTML()
+        }
+    }
+    def textFirstLine={attrs,body->
+        if(attrs.text && attrs.text.indexOf('\n')>=0 ){
+            out<< attrs.text.substring(0,attrs.text.indexOf('\n'))
+        }else{
+            out<<attrs.text
+        }
+    }
+    def textRemainingLines={attrs,body->
+        if(attrs.text && attrs.text.indexOf('\n')>=0 ){
+            out<< attrs.text.substring(attrs.text.indexOf('\n')+1)
         }
     }
 
