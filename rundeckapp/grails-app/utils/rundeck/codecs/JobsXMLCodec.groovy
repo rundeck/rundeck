@@ -377,7 +377,7 @@ class JobsXMLCodec {
                 BuilderUtil.makeAttribute(x,'value')
                 BuilderUtil.makeAttribute(x,'regex')
                 BuilderUtil.makeAttribute(x,'valuesUrl')
-                if(x.description.indexOf('\n')>=0 || x.description.indexOf('\r')>=0){
+                if(x.description?.indexOf('\n')>=0 || x.description?.indexOf('\r')>=0){
                     x[BuilderUtil.asCDATAName('description')]=x.remove('description')
                 }
                 //convert 'values' list to comma-separated attribute value @values
