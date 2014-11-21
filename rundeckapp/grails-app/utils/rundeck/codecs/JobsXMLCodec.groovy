@@ -354,6 +354,9 @@ class JobsXMLCodec {
         map.context=[project:map.remove('project')]
         final Map opts = map.remove('options')
         boolean preserveOrder=false
+        if(map.description.indexOf('\r')>=0){
+            map[BuilderUtil.asCDATAName('description')]=map.remove('description')
+        }
         if(null!=opts){
             preserveOrder=opts.any{it.value.sortIndex!=null}
             def optslist=[]
