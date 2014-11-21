@@ -36,14 +36,14 @@
         <g:if test="${newoption}">
             <div class="row">
             <div class="col-sm-12">
-                <span class="h4">Add New Option</span>
+                <span class="h4"><g:message code="add.new.option" /></span>
             </div>
             </div>
         </g:if>
 
         <div class="form-group">
 
-            <label for="optname_${rkey}" class="col-sm-2 control-label    ${hasErrors(bean:option,field:'name','has-error')}">Option Name</label>
+            <label for="optname_${rkey}" class="col-sm-2 control-label    ${hasErrors(bean:option,field:'name','has-error')}"><g:message code="form.option.name.label" /></label>
             <div class="col-sm-10">
                 <g:textField
                         data-bind="value: name, valueUpdate: 'keyup'"
@@ -58,7 +58,7 @@
         </div>
         <div class="form-group ${hasErrors(bean: option, field: 'description', 'has-error')}">
 
-            <label class="col-sm-2 control-label" for="optdesc_${rkey}" >Description</label>
+            <label class="col-sm-2 control-label" for="optdesc_${rkey}" ><g:message code="form.option.description.label" /></label>
             <div class="col-sm-10">
                 <g:textArea name="description"
                             value="${option?.description}"
@@ -70,7 +70,7 @@
             </div>
         </div>
         <div class="form-group ${hasErrors(bean: option, field: 'defaultValue', 'has-error')}">
-            <label class="col-sm-2 control-label">Default Value</label>
+            <label class="col-sm-2 control-label"><g:message code="form.option.defaultValue.label" /></label>
             <div class="col-sm-10">
                             <input type="text"
                                    class="form-control"
@@ -102,7 +102,7 @@
                     <div class="radio">
                         <g:radio name="inputType" value="secureExposed" checked="${option?.secureInput && option?.secureExposed}" id="sectrue_${rkey}"/>
                         <label for="sectrue_${rkey}">
-                            <g:message code="form.option.secureExposed.true.label"/><span class="aster">*</span>
+                            <g:message code="form.option.secureExposed.true.label"/> <span class="text-danger small">&dagger;</span>
                         </label>
                         <span class="text-muted">
                             <g:message code="form.option.secureExposed.true.description"/>
@@ -115,13 +115,16 @@
                             <g:radio name="inputType" value="secure"
                                      checked="${option?.secureInput && !option?.secureExposed}"
                                      id="secexpfalse_${rkey}"/>
-                            <g:message code="form.option.secureExposed.false.label"/><span class="aster">*</span>
+                            <g:message code="form.option.secureExposed.false.label"/>
+                            <span class="text-danger small">&dagger;</span>
                         </label>
-                        <span class="text-muted"><g:message
-                                code="form.option.secureExposed.false.description"/></span>
+                        <span class="text-muted">
+                            <g:message code="form.option.secureExposed.false.description"/>
+                        </span>
                     </div>
                 <div class="help-block">
-                    <span class="aster">*</span><g:message code="form.option.secureInput.description"/>
+                    <span class="text-danger small">&dagger;</span>
+                    <g:message code="form.option.secureInput.description"/>
                 </div>
             </div>
     
@@ -147,7 +150,7 @@
 
         </div>
         <div class="form-group">
-            <label class="col-sm-2 control-label">Allowed Values</label>
+            <label class="col-sm-2 control-label"><g:message code="form.option.values.label" /></label>
             <div class="col-sm-10">
                 <g:set var="valueTypeListChecked" value="${!option || !option.realValuesUrl && params.valuesType != 'url' ? true : false}"/>
                 <div>
@@ -157,7 +160,7 @@
                                      value="list"
                                      checked="${valueTypeListChecked}"
                                      id="vtrlist_${rkey}"/>
-                            List
+                            <g:message code="form.label.valuesType.list.label" />
                         </label>
                     </div>
 
@@ -166,7 +169,7 @@
                             <g:radio name="valuesType" value="url"
                                      checked="${option?.realValuesUrl || params.valuesType == 'url' ? true : false}"
                                      id="vtrurl_${rkey}"/>
-                            Remote URL
+                            <g:message code="form.option.valuesType.url.label" />
                         </label>
                     </div>
 
@@ -197,9 +200,13 @@
                            id="vurl_${enc(attr:rkey)}"
                     />
 
-                    <div class="help-block">A URL to a Remote JSON service. See <a
-                            href="${g.helpLinkUrl(path: '/manual/jobs.html#option-model-provider')}"
-                            target="_blank">Rundeck Guide - Option model provider</a>
+                    <div class="help-block">
+                        <g:message code="form.option.valuesUrl.description" />
+                        <a href="${g.helpLinkUrl(path: '/manual/jobs.html#option-model-provider')}"
+                            target="_blank">
+                            <i class="glyphicon glyphicon-question-sign"></i>
+                            <g:message code="rundeck.user.guide.option.model.provider" />
+                        </a>
                     </div>
                 </div>
 
@@ -226,26 +233,26 @@
             </div>
         </div>
         <div class="form-group">
-            <label class="col-sm-2 control-label">Restrictions</label>
+            <label class="col-sm-2 control-label"><g:message code="form.option.enforcedType.label" /></label>
             <div class="col-sm-10">
                 <div class="radio">
                     <label>
                         <g:radio name="enforcedType" value="none" checked="${!option || !option?.enforced && null==option?.regex}"
                                  class="evnonregex"/>
-                        None
+                        <g:message code="none" />
                     </label>
-                    <span class="text-muted">Any values can be used</span>
+                    <span class="text-muted"><g:message code="form.option.enforcedType.none.label" /></span>
                 </div>
                 <div class="radio">
                     <label class="${hasErrors(bean:option,field:'enforced','fieldError')}">
                         <g:radio name="enforcedType" value="enforced" checked="${option?.enforced?true:false}" class="evnonregex"/>
-                        Enforced from Allowed Values
+                        <g:message code="form.option.enforced.label" />
                     </label>
                 </div>
                 <div class="radio">
                     <label class="${hasErrors(bean:option,field:'regex','fieldError')}">
                         <g:radio name="enforcedType" value="regex" checked="${option?.regex?true:false}" id="etregex_${enc(attr:rkey)}"/>
-                        Match Regular Expression
+                        <g:message code="form.option.regex.label" />
                     </label>
                 </div>
             </div>
@@ -292,7 +299,9 @@
             </div>
         </div>
         <div class="row form-inline">
-            <label class="col-sm-2 control-label ${hasErrors(bean: option, field: 'multivalued', 'has-error')}">Multi-valued</label>
+            <label class="col-sm-2 control-label ${hasErrors(bean: option, field: 'multivalued', 'has-error')}">
+                <g:message code="form.option.multivalued.label" />
+            </label>
             <div class="col-sm-10">
                 <div class=" opt_sec_disabled" style="${wdgt.styleVisible(unless: option?.secureInput)}">
                     <div class="radio-inline">
@@ -314,7 +323,7 @@
                     <div class="form-group obs_multivalued_true" style="${wdgt.styleVisible(if: option?.multivalued)}">
                     <div class="input-group col-sm-3 ${hasErrors(bean: option, field: 'delimiter', 'has-error')}">
                             <div class="input-group-addon">
-                                Delimiter
+                                <g:message code="form.option.delimiter.label" />
                             </div>
                             <input type="text"
                                    name="delimiter"
@@ -353,17 +362,17 @@
         </div>
     <section id="preview_${enc(attr: rkey)}" style="${wdgt.styleVisible(if: option?.name)}" class="section-separator-solo" data-bind="visible: name">
         <div  class="row">
-            <label class="col-sm-2 control-label">Usage</label>
+            <label class="col-sm-2 control-label"><g:message code="usage" /></label>
             <div class="col-sm-10 opt_sec_nexp_disabled" style="${wdgt.styleVisible(unless: option?.secureInput && !option?.secureExposed)}">
-                <span class="text-muted">The option values will be available to scripts in these forms:</span>
+                <span class="text-muted"><g:message code="the.option.values.will.be.available.to.scripts.in.these.forms" /></span>
                 <div>
-                    Bash: <code>$<span data-bind="text: bashVarPreview"></span></code>
+                    <g:message code="bash.prompt" /> <code>$<span data-bind="text: bashVarPreview"></span></code>
                 </div>
                 <div>
-                    Commandline Arguments: <code>$<!-- -->{option.<span data-bind="text: name"></span>}</code>
+                    <g:message code="commandline.arguments.prompt" /> <code>$<!-- -->{option.<span data-bind="text: name"></span>}</code>
                 </div>
                 <div>
-                    Script Content: <code>@option.<span data-bind="text: name"></span>@</code>
+                    <g:message code="script.content.prompt" /> <code>@option.<span data-bind="text: name"></span>@</code>
                 </div>
             </div>
 
@@ -376,12 +385,14 @@
         <g:hiddenField name="scheduledExecutionId" value="${scheduledExecutionId}"/>
         <div class="floatr" style="margin:10px 0;">
             <span class="warn note cancelsavemsg" style="display:none;">
-                <g:message code="scheduledExecution.option.unsaved.warning" default="Discard or save changes to this option before completing changes to the job"/>
+                <g:message code="scheduledExecution.option.unsaved.warning"/>
             </span>
             <g:if test="${newoption}">
                 <g:hiddenField name="newoption" value="true"/>
-                <span class="btn btn-default btn-sm" onclick="_optcancelnew();" title="Cancel adding new option">Cancel</span>
-                <span class="btn btn-primary btn-sm" onclick="_optsavenew('optedit_${enc(attr:rkey)}', 'reqtoken_${enc(attr:rkey)}');" title="Save the new option">Save</span>
+                <span class="btn btn-default btn-sm" onclick="_optcancelnew();"
+                      title="${g.message(code:'form.option.cancel.title',encodeAs:'HTMLAttribute')}"><g:message code="cancel" /></span>
+                <span class="btn btn-primary btn-sm" onclick="_optsavenew('optedit_${enc(attr:rkey)}', 'reqtoken_${enc(attr:rkey)}');"
+                      title="${g.message(code:'form.option.create.title', encodeAs: 'HTMLAttribute')}"><g:message code="save" /></span>
                 <g:javascript>
                     fireWhenReady('optname_${enc(js:rkey)}',function(){
                         $('optname_${enc(js:rkey)}').focus();
@@ -389,8 +400,10 @@
                 </g:javascript>
             </g:if>
             <g:else>
-                <span class="btn btn-default btn-sm" onclick="_optview('${enc(js:origName?:option?.name)}',$(this).up('li.optEntry'));" title="Discard changes to the option">Discard</span>
-                <span class="btn btn-primary btn-sm" onclick="_optsave('optedit_${enc(attr:rkey)}','reqtoken_${enc(attr:rkey)}',$(this).up('li.optEntry'));" title="Save changes to the option">Save</span>
+                <span class="btn btn-default btn-sm" onclick="_optview('${enc(js:origName?:option?.name)}',$(this).up('li.optEntry'));"
+                      title="${g.message(code:'form.option.discard.title', encodeAs: 'HTMLAttribute')}"><g:message code="discard" /></span>
+                <span class="btn btn-primary btn-sm" onclick="_optsave('optedit_${enc(attr:rkey)}','reqtoken_${enc(attr:rkey)}',$(this).up('li.optEntry'));"
+                      title="${g.message(code:'form.option.save.title', encodeAs: 'HTMLAttribute')}"><g:message code="save" /></span>
             </g:else>
         </div>
         <g:jsonToken id="reqtoken_${rkey}" url="${request.forwardURI}"/>
