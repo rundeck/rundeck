@@ -56,6 +56,10 @@ these properties in the [rundeck-config.properties](configuration-file-reference
 `rundeck.gui.errorpage.hidestacktrace`      Hide Java stacktraces from the end   true/false
                                             user when an error occurs. 
                                             Default: false.                        
+
+`rundeck.gui.job.description.disableHTML`   Disable extended Job description     true/false
+                                            and Option description rendering
+                                            as HTML. (Default: false)
 -------------------------------------------------------------------------------
 
 The `rundeck.gui.errorpage.hidestacktrace` can also be set to true via a Java system property defined at system startup: 
