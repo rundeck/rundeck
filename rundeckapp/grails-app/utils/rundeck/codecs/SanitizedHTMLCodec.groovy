@@ -16,6 +16,7 @@
 
 package rundeck.codecs
 
+import org.owasp.html.HtmlPolicyBuilder
 import org.owasp.html.PolicyFactory
 import org.owasp.html.Sanitizers
 
@@ -25,8 +26,12 @@ import org.owasp.html.Sanitizers
  * @since 2014-11-19
  */
 class SanitizedHTMLCodec {
-    static final PolicyFactory POLICY = Sanitizers.BLOCKS.and(Sanitizers.FORMATTING).and(Sanitizers.IMAGES).and(Sanitizers.LINKS)
-    static encode = {  str ->
+    static final PolicyFactory POLICY = Sanitizers.BLOCKS.and(Sanitizers.FORMATTING).and(Sanitizers.IMAGES).and(Sanitizers.LINKS).and(
+            new HtmlPolicyBuilder().allowElements('em').
+            allowAttributes('class').onElements('p','i','b','div','a','span').
+                    toFactory()
+    )
+    static                     encode = { str ->
         return POLICY.sanitize(str.toString())
     }
 }
