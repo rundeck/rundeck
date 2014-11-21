@@ -449,7 +449,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
   <job>
     <id>8</id>
     <name>punch2</name>
-    <description format="markdown">         dig it potato
+    <description>         dig it potato
 
 * list item
 * list item2
@@ -516,7 +516,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                               '* list item2\n' +
                               '\n' +
                               '<b>inline html</b>', jobs[0].description
-        assertEquals  'markdown', jobs[0].descriptionFormat
         assertEquals  8, jobs[0].workflow.commands.size()
         assertEquals 'true', jobs[0].workflow.commands[0].adhocRemoteString
         assertEquals 'false', jobs[0].workflow.commands[1].adhocRemoteString
@@ -3606,7 +3605,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                                 'The spacing is very important.\n' +
                                 '\n' +
                                 'For *markdown*',
-                        descriptionFormat: 'markdown',
                         loglevel: 'INFO',
                         project:'test1',
                         workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
@@ -3630,7 +3628,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                     'The spacing is very important.\n' +
                     '\n' +
                     'For *markdown*',doc.job[0].description[0].text()
-            assertEquals "wrong format", 'markdown',doc.job[0].description[0]['@format']?.text()
             assertEquals "wrong loglevel","INFO",doc.job[0].loglevel[0].text()
             assertNotNull "missing context",doc.job[0].context
             assertEquals "incorrect context size",1,doc.job[0].context.size()

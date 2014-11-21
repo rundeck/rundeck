@@ -113,13 +113,6 @@ class JobsXMLCodec {
         }
         if(null==map.description){
             throw new JobXMLException("'description' element not found")
-        }else if(map.description instanceof Map){
-            if(map.description['format']){
-                map.descriptionFormat=map.description.remove('format')
-            }
-            if(map.description['<text>']){
-                map.description=map.description['<text>']
-            }
         }
 
 
@@ -361,9 +354,6 @@ class JobsXMLCodec {
         map.context=[project:map.remove('project')]
         final Map opts = map.remove('options')
         boolean preserveOrder=false
-        if(map.descriptionFormat){
-            map.description=['<text>':map.remove('description')]+BuilderUtil.toAttrMap('format',map.remove('descriptionFormat'))
-        }
         if(null!=opts){
             preserveOrder=opts.any{it.value.sortIndex!=null}
             def optslist=[]
