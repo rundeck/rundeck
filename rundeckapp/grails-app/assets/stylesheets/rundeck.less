@@ -1506,3 +1506,17 @@ pre.filtererror{
     .box-shadow(none);
   }
 
+//version identity
+.rundeck-version-identity{
+  .version-icon{
+    .badge();
+    background-color: #eee;
+    font-weight: normal;
+  }
+  .version-name:before{
+    content:' "';
+  }
+  .version-name:after{
+    content:'" ';
+  }
+}

@@ -1,6 +1,7 @@
 //= require noconflict
 //= require_self
 //= require menus
+//= require versionIdentity
 
 // methods for modifying inner html or text content
 

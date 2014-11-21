@@ -20,6 +20,7 @@
     <![endif]-->
     <asset:javascript src="jquery.js"/>
     <asset:javascript src="prototype.min.js"/>
+    <asset:javascript src="versionIdentity.js"/>
     <g:render template="/common/css"/>
     <script language="javascript">
         //<!--
