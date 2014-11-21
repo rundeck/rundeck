@@ -62,11 +62,17 @@
             <div class="col-sm-10">
                 <g:textArea name="description"
                             value="${option?.description}"
-                            size="40"
+                            rows="3"
                             placeholder="Description"
                             class="form-control"
                             id="optdesc_${rkey}"
                 />
+                <div class="help-block">
+                    <g:message code="Option.property.description.description"/>
+                    <a href="http://en.wikipedia.org/wiki/Markdown" target="_blank" class="text-info">
+                        <i class="glyphicon glyphicon-question-sign"></i>
+                    </a>
+                </div>
             </div>
         </div>
         <div class="form-group ${hasErrors(bean: option, field: 'defaultValue', 'has-error')}">
