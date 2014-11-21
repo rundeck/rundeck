@@ -477,7 +477,7 @@ function getCurSEID(){
                 <i class="glyphicon glyphicon-warning-sign text-warning"></i>
             </g:hasErrors>
             <g:set var="allowHTML"
-                   value="${grailsApplication.config.rundeck?.security?.job?.description?.allowHTML}"/>
+                   value="${!(grailsApplication.config.rundeck?.gui?.job?.description?.disableHTML in [true, 'true'])}"/>
             <div class="help-block">
                 <g:if test="${allowHTML}">
                     <g:message code="ScheduledExecution.property.description.description"/>

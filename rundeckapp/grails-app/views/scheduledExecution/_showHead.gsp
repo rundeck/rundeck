@@ -44,7 +44,7 @@
             </g:if>
         </span>
     <div class="jobInfoSection">
-        <g:render template="jobDescription" model="[scheduledExecution:scheduledExecution,textCss:'h4 text-muted']"/>
+        <g:render template="description" model="[description:scheduledExecution.description,textCss:'h4 text-muted']"/>
     </div>
 
 </div>

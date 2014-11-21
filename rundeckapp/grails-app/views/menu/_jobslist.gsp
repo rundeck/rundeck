@@ -34,8 +34,8 @@
                                            <g:enc>${scheduledExecution.jobName}</g:enc>
                                        </span>
 
-                                       <g:render template="/scheduledExecution/jobDescription"
-                                                 model="[scheduledExecution: scheduledExecution, textCss: 'text-muted', firstLineOnly:true]"/>
+                                       <g:render template="/scheduledExecution/description"
+                                                 model="[description: scheduledExecution?.description, textCss: 'text-muted', firstLineOnly:true]"/>
                                </td>
                             </tr>
                         </g:if>
@@ -85,8 +85,8 @@
                                         edit</g:link>
                                 </g:if>
 
-                                    <g:render template="/scheduledExecution/jobDescription"
-                                              model="[scheduledExecution: scheduledExecution,textCss:'text-muted']"/>
+                                    <g:render template="/scheduledExecution/description"
+                                              model="[description: scheduledExecution?.description,textCss:'text-muted']"/>
 
                             </td>
                             <td class="scheduletime">

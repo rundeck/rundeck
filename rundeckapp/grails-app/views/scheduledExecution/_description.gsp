@@ -15,10 +15,10 @@
   --}%
 
 <g:set var="allowHTML"
-       value="${grailsApplication.config.rundeck?.security?.job?.description?.allowHTML}"/>
-<g:set var="firstline" value="${g.textFirstLine(text: scheduledExecution?.description)}"/>
+       value="${!(grailsApplication.config.rundeck?.gui?.job?.description?.disableHTML in [true,'true'])}"/>
+<g:set var="firstline" value="${g.textFirstLine(text: description)}"/>
 <g:if test="${allowHTML && !firstLineOnly}">
-    <g:set var="remainingLine" value="${g.textRemainingLines(text: scheduledExecution?.description)}"/>
+    <g:set var="remainingLine" value="${g.textRemainingLines(text: description)}"/>
     <span class="${enc(attr: textCss ?: '')}"><g:enc>${firstline}</g:enc></span>
     <g:if test="${remainingLine}">
     <span class="${enc(attr: markdownCss ?: '')}">
