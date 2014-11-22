@@ -354,6 +354,9 @@ class JobsXMLCodec {
         map.context=[project:map.remove('project')]
         final Map opts = map.remove('options')
         boolean preserveOrder=false
+        if(map.description.indexOf('\n')>=0 ||map.description.indexOf('\n')>=0){
+            map[BuilderUtil.asCDATAName('description')]=map.remove('description')
+        }
         if(null!=opts){
             preserveOrder=opts.any{it.value.sortIndex!=null}
             def optslist=[]
@@ -374,6 +377,9 @@ class JobsXMLCodec {
                 BuilderUtil.makeAttribute(x,'value')
                 BuilderUtil.makeAttribute(x,'regex')
                 BuilderUtil.makeAttribute(x,'valuesUrl')
+                if(x.description?.indexOf('\n')>=0 || x.description?.indexOf('\r')>=0){
+                    x[BuilderUtil.asCDATAName('description')]=x.remove('description')
+                }
                 //convert 'values' list to comma-separated attribute value @values
                 if(x.values){
                     BuilderUtil.addAttribute(x,'values',x.remove('values').join(","))

@@ -44,7 +44,7 @@ Each Job definition requires these values:
 
 `description`
 
-:    the job description (can be blank)
+:    the job description (can be blank). The firstline is the "simple description". Remaining lines are the "extended description".
 
 `loglevel`
 
@@ -56,6 +56,13 @@ Each Job definition requires these values:
     * `WARN`
     * `ERROR`
 
+If the description contains more than one line of text, then the first line is used as the "short description" of the job, and rendered exactly as text. The remaining lines are the "extended description", rendered using Markdown format as HTML in the Rundeck GUI. Markdown can also embed HTML directly if you like.  See [Wikipedia - Markdown](http://en.wikipedia.org/wiki/Markdown#Example).  
+
+The HTML is sanitized to remove disallowed tags before rendering to the browser (such as `<script>`, etc.).
+You can disable all extended description HTML rendering
+via a configuration flag.
+See [GUI Customization](../administration/gui-customization.html).
+
 [`sequence`](#sequence)
 
 :    The workflow sequence definition
@@ -65,6 +72,28 @@ A minimal job definition example:
 ~~~~~~~~ {.yaml}
 - name: job name
   description: ''
+  loglevel: INFO
+  sequence: 
+    commands:
+      - exec: a command
+~~~~~~~~ 
+
+Extended description using yaml 'literal' scalar string format (beginning with a `|`). Make sure each line is indented to the correct level.
+
+~~~~~~~~ {.yaml}
+- name: job name
+  description: |
+    Performs a service
+    
+    This is <b>html</b>
+    <ul><li>bulleted list</li></ul>
+    
+    <a href="/">Top</a>
+    
+    1. this is a markdown numbered list
+    2. second item
+    
+    [a link](http://example.com)
   loglevel: INFO
   sequence: 
     commands:
@@ -401,7 +430,7 @@ Optional map entries are:
 
 `description`
 
-:    description of the option
+:    description of the option, will be rendered as Markdown
 
 `value`
 
@@ -449,6 +478,8 @@ Optional map entries are:
     option will be arranged in order with other options with a `sortIndex` value. Any options without
     a value will be arranged in alphabetical order below the other options.
 
+The `description` for an Option will be rendered with Markdown in the GUI.
+
 Example:
 
 ~~~~~~~~ {.yaml}
@@ -464,6 +495,27 @@ Example:
     multivalued: true
     delimiter: ','
 ~~~~~~~~ 
+
+Example using multiple lines for the description:
+
+~~~~~~~~ {.yaml}
+  test:
+    required: true
+    description: |
+      example option description
+
+      * this content will be rendered
+      * as markdown
+    value: dvalue
+    regex: ^[abcd]value$
+    values:
+    - avalue
+    - bvalue
+    - cvalue
+    multivalued: true
+    delimiter: ','
+~~~~~~~~ 
+
 
 #### valuesUrl JSON 
 

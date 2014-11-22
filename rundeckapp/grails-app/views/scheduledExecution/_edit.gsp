@@ -474,8 +474,21 @@ function getCurSEID(){
                 class="form-control"
             />
             <g:hasErrors bean="${scheduledExecution}" field="description">
-                <i class="glyphicon glyphicon-warning-sign"></i>
+                <i class="glyphicon glyphicon-warning-sign text-warning"></i>
             </g:hasErrors>
+            <g:set var="allowHTML"
+                   value="${!(grailsApplication.config.rundeck?.gui?.job?.description?.disableHTML in [true, 'true'])}"/>
+            <div class="help-block">
+                <g:if test="${allowHTML}">
+                    <g:message code="ScheduledExecution.property.description.description"/>
+                    <a href="http://en.wikipedia.org/wiki/Markdown" target="_blank" class="text-info">
+                        <i class="glyphicon glyphicon-question-sign"></i>
+                    </a>
+                </g:if>
+                <g:else>
+                    <g:message code="ScheduledExecution.property.description.plain.description"/>
+                </g:else>
+            </div>
         </div>
     </div>
 </div><!--/.nput-group-item -->

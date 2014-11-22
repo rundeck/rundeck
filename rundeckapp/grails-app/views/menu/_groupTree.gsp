@@ -77,11 +77,11 @@
         %{divcounts++;}%
         <div style="margin-bottom:4px;">
         <g:if test="${jscallback}">
-            <span class="expandComponentControl textbtn action groupname jobgroupexpand"
+            <span class="expandComponentControl textbtn textbtn-success groupname jobgroupexpand"
                   title="Select this group"
                 onclick="groupChosen('${enc(js:prefix ? prefix + '/' + group.key : group.key)}'); return false;"
                 style="padding-left:4px;"><%--
-            --%> <g:enc>${displaygroup}</g:enc><%--
+            --%><i class="glyphicon glyphicon-folder-close"></i> <g:enc>${displaygroup}</g:enc><%--
         --%></span>
         </g:if>
         <g:else>
