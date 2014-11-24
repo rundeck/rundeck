@@ -25,7 +25,6 @@ import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException;
 import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
 import com.dtolabs.rundeck.core.dispatcher.QueuedItem;
 import com.dtolabs.rundeck.core.dispatcher.QueuedItemResult;
-import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.utils.*;
 import org.apache.commons.cli.*;
 import org.apache.log4j.PropertyConfigurator;
@@ -115,7 +114,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
         this.framework = framework;
     }
 
-    private boolean nodeExcludePrecedence = true;
     private String scriptpath;
     private InputStream scriptAsStream;
     private boolean inlineScript;
@@ -256,7 +254,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
         excludeMap = parseExcludeArgs(keys);
         includeMap = parseIncludeArgs(keys);
 
-        setNodeExcludePrecedence(determineExclusionPrecedenceForArgs(args, cli));
         if (null == argProject) {
             throw new IllegalArgumentException("project parameter not specified");
         }
@@ -480,11 +477,9 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
             NodeSet nodeSet = NodeSet.fromFilter(nodeFilter);
             nodeSet.setKeepgoing(isKeepgoing());
             nodeSet.setThreadCount(getNodeThreadcount());
-            nodeSet.getInclude().setDominant(!getNodeExcludePrecedence());
-            nodeSet.getExclude().setDominant(getNodeExcludePrecedence());
             return nodeSet;
         }
-        return createNodeSet(includeMap, excludeMap, getNodeExcludePrecedence(), getNodeThreadcount(), argKeepgoing, null);
+        return createNodeSet(includeMap, excludeMap, getNodeThreadcount(), argKeepgoing, null);
     }
 
     /**
@@ -496,7 +491,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
      * @return NodeSet
      */
     protected NodeSet createNodeSet(final Map includeMap, final Map excludeMap) {
-        return createNodeSet(includeMap, excludeMap, true, getNodeThreadcount(), argKeepgoing, null);
+        return createNodeSet(includeMap, excludeMap, getNodeThreadcount(), argKeepgoing, null);
     }
 
     /**
@@ -504,19 +499,20 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
      *
      * @param includeMap        include map
      * @param excludeMap        exclude map
-     * @param excludePrecedence if true, exclusion has precedence
      * @param threadCount       the threadcount
      * @param keepgoing         keepgoing boolean
      * @param failedNodesfile   file indicating list of failed nodes
      *
      * @return NodeSet
      */
-    protected static NodeSet createNodeSet(final Map includeMap, final Map excludeMap, final boolean excludePrecedence,
+    protected static NodeSet createNodeSet(
+            final Map includeMap, final Map excludeMap,
             final Integer threadCount, final boolean keepgoing,
-            final File failedNodesfile) {
+            final File failedNodesfile
+    ) {
         final NodeSet nodeset = new NodeSet();
-        nodeset.createExclude(excludeMap).setDominant(excludePrecedence);
-        nodeset.createInclude(includeMap).setDominant(!excludePrecedence);
+        nodeset.createExclude(excludeMap);
+        nodeset.createInclude(includeMap);
         nodeset.setThreadCount(threadCount);
         nodeset.setKeepgoing(keepgoing);
         nodeset.setFailedNodesfile(failedNodesfile);
@@ -755,30 +751,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
         return null;
     }
 
-    /**
-     * Return true if exclusion should have precedence in node filter args
-     *
-     * @param args all commandline args
-     * @param cli  parsed CommandLine
-     *
-     * @return true if --filter-exclusion-precedence is true, or -I is not specified before -X
-     */
-    static boolean determineExclusionPrecedenceForArgs(String[] args, final CommandLine cli) {
-        if (cli.hasOption(FILTER_EXCLUDE_PRECEDENCE_OPT)) {
-            return "true".equals(cli.getOptionValue(FILTER_EXCLUDE_PRECEDENCE_OPT));
-        } else {
-            //determine if -X or -I appears first in args list, and set precendence for first item
-            for (int i = 0; i < args.length; i++) {
-                String option = args[i];
-                if ("-X".equals(option) || "--xnodes".equals(option)) {
-                    return true;
-                } else if ("-I".equals(option) || "--nodes".equals(option)) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
+
 
     /**
      * Parse the values as key=value pairs, using the set of allowed keys.  If there is only one entry in the values
@@ -892,16 +865,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
         this.nodeFilter = nodeFilter;
     }
 
-    /**
-     * boolean value specifying that exclusion node filters have precedence over inclusion filters
-     */
-    public Boolean getNodeExcludePrecedence() {
-        return nodeExcludePrecedence;
-    }
-
-    public void setNodeExcludePrecedence(boolean nodeExcludePrecedence) {
-        this.nodeExcludePrecedence = nodeExcludePrecedence;
-    }
 
     public int getNodeThreadcount() {
         return nodeThreadcount;

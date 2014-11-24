@@ -51,7 +51,6 @@ class Execution extends ExecutionContext {
         nodeExcludeOsArch(nullable:true)
         nodeIncludeOsVersion(nullable:true)
         nodeExcludeOsVersion(nullable:true)
-        nodeExcludePrecedence(nullable:true)
         nodeKeepgoing(nullable:true)
         doNodedispatch(nullable:true)
         nodeThreadcount(nullable:true)
@@ -171,7 +170,7 @@ class Execution extends ExecutionContext {
             map.willRetry=true
         }
         if(doNodedispatch){
-            map.nodefilters = [dispatch: [threadcount: nodeThreadcount?:1, keepgoing: nodeKeepgoing, excludePrecedence: nodeExcludePrecedence]]
+            map.nodefilters = [dispatch: [threadcount: nodeThreadcount?:1, keepgoing: nodeKeepgoing]]
             if (nodeRankAttribute) {
                 map.nodefilters.dispatch.rankAttribute = nodeRankAttribute
             }
@@ -221,9 +220,6 @@ class Execution extends ExecutionContext {
             exec.nodeThreadcount = XmlParserUtil.stringToInt(data.nodefilters.dispatch?.threadcount,1)
             if (data.nodefilters.dispatch?.containsKey('keepgoing')) {
                 exec.nodeKeepgoing = XmlParserUtil.stringToBool(data.nodefilters.dispatch.keepgoing, false)
-            }
-            if (data.nodefilters.dispatch?.containsKey('excludePrecedence')) {
-                exec.nodeExcludePrecedence = XmlParserUtil.stringToBool(data.nodefilters.dispatch.excludePrecedence, true)
             }
             if (data.nodefilters.dispatch?.containsKey('rankAttribute')) {
                 exec.nodeRankAttribute = data.nodefilters.dispatch.rankAttribute

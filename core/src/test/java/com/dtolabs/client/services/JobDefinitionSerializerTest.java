@@ -68,11 +68,6 @@ public class JobDefinitionSerializerTest extends TestCase {
         }
 
         @Override
-        public Boolean getNodeExcludePrecedence() {
-            return true;
-        }
-
-        @Override
         public int getNodeThreadcount() {
             return -1;
         }

@@ -427,7 +427,6 @@ public class RunTool extends BaseTool {
         final String nodeFilter = null != nodefilterOptions.getArgNodeFilter() ? nodefilterOptions.getArgNodeFilter() :
                 null != nodefilterOptions.getNodeSet() ? NodeSet.generateFilter(nodefilterOptions.getNodeSet()) : null;
         final Boolean argKeepgoing = nodefilterOptions.isKeepgoingSet() ? nodefilterOptions.isArgKeepgoing() : null;
-        final Boolean argExcludePrecedence= nodefilterOptions.isArgExcludePrecedence();
         final int nodeThreadcount = nodefilterOptions.getArgThreadCount();
         final int loglevel = loglevelOptions.getLogLevel();
         final String[] extraOpts = extendedOptions.getExtendedOptions();
@@ -452,7 +451,7 @@ public class RunTool extends BaseTool {
                 }
 
                 public Boolean getNodeExcludePrecedence() {
-                    return argExcludePrecedence;
+                    return null;
                 }
 
                 @Override

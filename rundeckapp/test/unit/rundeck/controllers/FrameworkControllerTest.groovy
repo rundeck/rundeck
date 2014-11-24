@@ -89,40 +89,6 @@ class FrameworkControllerTest {
                 'nodeExcludeOsFamily': 'osfam1',
         ],params)
     }
-    public void testextractApiNodeFilterParamsLegacyFiltersPrecedenceWithFilter(){
-        def params = FrameworkController.extractApiNodeFilterParams([
-                'exclude-precedence':'true',
-                'hostname':'boing'
-        ])
-        assertEquals(2,params.size())
-        assertEquals([
-                'nodeExcludePrecedence': true,
-                'nodeInclude': 'boing',
-        ],params)
-    }
-    public void testextractApiNodeFilterParamsLegacyFiltersPrecedenceWithoutFilter(){
-        def params = FrameworkController.extractApiNodeFilterParams([
-                'exclude-precedence':'true',
-        ])
-        assertEquals(0,params.size())
-    }
-    public void testextractApiNodeFilterParamsLegacyFiltersPrecedenceFalseWithFilter(){
-        def params = FrameworkController.extractApiNodeFilterParams([
-                'exclude-precedence':'false',
-                'hostname':'boing'
-        ])
-        assertEquals(2,params.size())
-        assertEquals([
-                'nodeExcludePrecedence': false,
-                'nodeInclude': 'boing',
-        ],params)
-    }
-    public void testextractApiNodeFilterParamsLegacyFiltersPrecedenceFalseWithoutFilter(){
-        def params = FrameworkController.extractApiNodeFilterParams([
-                'exclude-precedence':'false',
-        ])
-        assertEquals(0,params.size())
-    }
     public void testextractApiNodeFilterParamsFilterString(){
         def params = FrameworkController.extractApiNodeFilterParams([
                 'filter':'mynode !tags: blah',

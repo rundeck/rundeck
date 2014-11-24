@@ -37,11 +37,6 @@ import java.util.HashMap;
  * @version $Revision$
  */
 public class NodeFilterOptions implements CLIToolOptions {
-    /**
-     * Short option value for filter exclude precedence option
-     */
-    static final String FILTER_EXCLUDE_PRECEDENCE_OPT = "Z";
-
     private boolean argKeepgoing;
     private boolean argKeepgoingSet;
     private int argThreadCount=-1;
@@ -50,11 +45,7 @@ public class NodeFilterOptions implements CLIToolOptions {
     private String argNodeFilter;
     private String argIncludeNodes;
     private String argExcludeNodes;
-    private Boolean argExcludePrecedence;
-    /**
-     * Long option for filter exclude precedence option
-     */
-    static final String FILTER_EXCLUDE_PRECEDENCE_LONG = "filter-exclude-precedence";
+
     public static final String FILTER_INCLUDE = "I";
     public static final String FILTER_EXCLUDE = "X";
     public static final String FILTER_INCLUDE_LONG = "nodes";
@@ -92,9 +83,6 @@ public class NodeFilterOptions implements CLIToolOptions {
         options.addOption(KEEPGOING, KEEPGOING_LONG, false, "Continue node dispatch when execution on one node fails");
         options.addOption(DONTKEEPGOING, DONTKEEPGOING_LONG, false,
             "Force early failure if execution on one node fails");
-        options.addOption(FILTER_EXCLUDE_PRECEDENCE_OPT,
-            FILTER_EXCLUDE_PRECEDENCE_LONG, true,
-            "true/false. if true, exclusion filters have precedence over inclusion filters");
     }
 
     public void parseArgs(final CommandLine cli, final String[] original) {
@@ -123,7 +111,6 @@ public class NodeFilterOptions implements CLIToolOptions {
         if (cli.hasOption(FILTER_EXCLUDE)) {
             argExcludeNodes = cli.getOptionValue(FILTER_EXCLUDE);
         }
-        setArgExcludePrecedence(determineExclusionPrecedenceForArgs(original, cli));
     }
 
     public void validate(CommandLine cli, String[] original) throws CLIToolOptionsException {
@@ -201,9 +188,7 @@ public class NodeFilterOptions implements CLIToolOptions {
     public NodeSet getNodeSet() {
         final NodeSet nodeset = new NodeSet();
         final NodeSet.Include include = nodeset.createInclude(includeMap);
-        include.setDominant(!isArgExcludePrecedence());
         final NodeSet.Exclude exclude = nodeset.createExclude(excludeMap);
-        exclude.setDominant(isArgExcludePrecedence());
         nodeset.setKeepgoing(isArgKeepgoing());
         nodeset.setThreadCount(getArgThreadCount());
 
@@ -217,31 +202,6 @@ public class NodeFilterOptions implements CLIToolOptions {
      */
     public boolean isKeepgoingSet() {
         return argKeepgoingSet;
-    }
-
-    /**
-     * Return true if exclusion should have precedence in node filter args
-     *
-     * @param args all commandline args
-     * @param cli  parsed CommandLine
-     *
-     * @return true if --filter-exclusion-precedence is true, or -I is not specified before -X
-     */
-    static boolean determineExclusionPrecedenceForArgs(String[] args, final CommandLine cli) {
-        if (cli.hasOption(FILTER_EXCLUDE_PRECEDENCE_OPT)) {
-            return "true".equals(cli.getOptionValue(FILTER_EXCLUDE_PRECEDENCE_OPT));
-        } else {
-            //determine if -X or -I appears first in args list, and set precendence for first item
-            for (int i = 0 ; i < args.length ; i++) {
-                String option = args[i];
-                if ("-X".equals(option) || "--xnodes".equals(option)) {
-                    return true;
-                } else if ("-I".equals(option) || "--nodes".equals(option)) {
-                    return false;
-                }
-            }
-        }
-        return true;
     }
 
     public String getArgIncludeNodes() {
@@ -258,14 +218,6 @@ public class NodeFilterOptions implements CLIToolOptions {
 
     public void setArgNodeFilter(String argNodeFilter) {
         this.argNodeFilter = argNodeFilter;
-    }
-
-    public Boolean isArgExcludePrecedence() {
-        return argExcludePrecedence;
-    }
-
-    public void setArgExcludePrecedence(boolean argExcludePrecedence) {
-        this.argExcludePrecedence = argExcludePrecedence;
     }
 
     public boolean isArgKeepgoing() {

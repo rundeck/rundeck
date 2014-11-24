@@ -57,7 +57,7 @@ public class TestRundeckAPICentralDispatcher extends TestCase {
     public void testAddNodeSetParamsEmpty() throws Exception {
             //test null nodeset
             HashMap<String, String> params = new HashMap<String, String>();
-            RundeckAPICentralDispatcher.addAPINodeSetParams(params, null, null, -1, null);
+            RundeckAPICentralDispatcher.addAPINodeSetParams(params, null, null, -1);
             assertEquals(0, params.size());
         }
 
@@ -65,7 +65,7 @@ public class TestRundeckAPICentralDispatcher extends TestCase {
             //test empty nodeset, only has threadcount & keepgoing
             HashMap<String, String> params = new HashMap<String, String>();
             NodeSet nodeset = new NodeSet();
-            RundeckAPICentralDispatcher.addAPINodeSetParams(params, null, null, 1, null);
+            RundeckAPICentralDispatcher.addAPINodeSetParams(params, null, null, 1);
             assertEquals(1, params.size());
             assertTrue(params.containsKey("nodeThreadcount"));
             assertEquals("1", params.get("nodeThreadcount"));
@@ -75,7 +75,7 @@ public class TestRundeckAPICentralDispatcher extends TestCase {
             //test empty nodeset, only has threadcount & keepgoing
             HashMap<String, String> params = new HashMap<String, String>();
             NodeSet nodeset = new NodeSet();
-            RundeckAPICentralDispatcher.addAPINodeSetParams(params, false, null, -1, null);
+            RundeckAPICentralDispatcher.addAPINodeSetParams(params, false, null, -1);
             assertEquals(1, params.size());
             assertTrue(params.containsKey("nodeKeepgoing"));
             assertEquals("false", params.get("nodeKeepgoing"));
@@ -86,7 +86,7 @@ public class TestRundeckAPICentralDispatcher extends TestCase {
             HashMap<String, String> params = new HashMap<String, String>();
             NodeSet nodeset = new NodeSet();
             nodeset.setThreadCount(2);
-            RundeckAPICentralDispatcher.addAPINodeSetParams(params, true, null, 2, null);
+            RundeckAPICentralDispatcher.addAPINodeSetParams(params, true, null, 2);
             assertEquals(2, params.size());
             assertTrue(params.containsKey("nodeThreadcount"));
             assertEquals("2", params.get("nodeThreadcount"));
@@ -98,7 +98,7 @@ public class TestRundeckAPICentralDispatcher extends TestCase {
     public void testAddNodeSetParamsFilter() throws Exception {
             //test basic hostname
             HashMap<String, String> params = new HashMap<String, String>();
-            RundeckAPICentralDispatcher.addAPINodeSetParams(params, false, "hostname: testhostname1", 1, null);
+            RundeckAPICentralDispatcher.addAPINodeSetParams(params, false, "hostname: testhostname1", 1);
             assertEquals("incorrect size: " + params, 3 /* keepgoing==false */, params.size());
             assertTrue(params.containsKey("nodeThreadcount"));
             assertEquals("1", params.get("nodeThreadcount"));
@@ -116,7 +116,7 @@ public class TestRundeckAPICentralDispatcher extends TestCase {
     public void testAddNodeSetParamsBlankFilter() throws Exception {
             //test basic hostname
             HashMap<String, String> params = new HashMap<String, String>();
-            RundeckAPICentralDispatcher.addAPINodeSetParams(params, false, "", 1, null);
+            RundeckAPICentralDispatcher.addAPINodeSetParams(params, false, "", 1);
             assertEquals("incorrect size: " + params, 2 /* keepgoing==false */, params.size());
             assertTrue(params.containsKey("nodeThreadcount"));
             assertEquals("1", params.get("nodeThreadcount"));
@@ -132,7 +132,7 @@ public class TestRundeckAPICentralDispatcher extends TestCase {
      */
     public void testAddNodeSetParamsNoPrecedenceWithoutFilter() throws Exception {
         HashMap<String, String> params = new HashMap<String, String>();
-        RundeckAPICentralDispatcher.addAPINodeSetParams(params, null, null, -1, true);
+        RundeckAPICentralDispatcher.addAPINodeSetParams(params, null, null, -1);
         assertEquals("incorrect size: " + params, 0 /* keepgoing==false */, params.size());
     }
 
@@ -141,10 +141,9 @@ public class TestRundeckAPICentralDispatcher extends TestCase {
             //test precedence filters
             HashMap<String, String> params = new HashMap<String, String>();
             //test other include filters
-            RundeckAPICentralDispatcher.addAPINodeSetParams(params, null, "blah", -1, true);
-            assertEquals("incorrect size: " + params, 2, params.size());
+            RundeckAPICentralDispatcher.addAPINodeSetParams(params, null, "blah", -1);
+            assertEquals("incorrect size: " + params, 1, params.size());
             assertEquals("blah", params.get("filter"));
-            assertEquals("true", params.get("exclude-precedence"));
         }
 
     public void testAddNodeSetParamsFiltersPrecedence2() throws Exception {
@@ -152,9 +151,8 @@ public class TestRundeckAPICentralDispatcher extends TestCase {
         HashMap<String, String> params = new HashMap<String, String>();
 
         //test other include filters
-        RundeckAPICentralDispatcher.addAPINodeSetParams(params, null, "blah", -1, false);
-        assertEquals("incorrect size: " + params, 2, params.size());
+        RundeckAPICentralDispatcher.addAPINodeSetParams(params, null, "blah", -1);
+        assertEquals("incorrect size: " + params, 1, params.size());
         assertEquals("blah", params.get("filter"));
-        assertEquals("false", params.get("exclude-precedence"));
     }
 }

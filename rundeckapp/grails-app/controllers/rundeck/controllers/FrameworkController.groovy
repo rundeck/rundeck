@@ -1450,9 +1450,6 @@ class FrameworkController extends ControllerBase {
             result.filter=params.filter
             value=true
         }
-        if (value && null!=params.'exclude-precedence') {
-            result.nodeExcludePrecedence = params['exclude-precedence'] == 'true'
-        }
         return result
     }
 

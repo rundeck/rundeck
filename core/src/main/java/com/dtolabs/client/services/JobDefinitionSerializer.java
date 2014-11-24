@@ -26,7 +26,6 @@ package com.dtolabs.client.services;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
 import com.dtolabs.rundeck.core.execution.ExecutionUtils;
-import com.dtolabs.rundeck.core.utils.NodeSet;
 import com.dtolabs.rundeck.core.utils.OptsUtil;
 import org.dom4j.Document;
 import org.dom4j.DocumentFactory;
@@ -64,7 +63,7 @@ public class JobDefinitionSerializer {
 
         addScriptDispatch(dispatchdef, job);
 
-        addNodefilters(job, dispatchdef.getNodeThreadcount(), dispatchdef.isKeepgoing(), dispatchdef.getNodeExcludePrecedence(), dispatchdef.getNodeFilter());
+        addNodefilters(job, dispatchdef.getNodeThreadcount(), dispatchdef.isKeepgoing(), dispatchdef.getNodeFilter());
 
         return doc;
     }
@@ -136,16 +135,16 @@ public class JobDefinitionSerializer {
      *
      * @param job     job element
      * @param threadCount
-     * @param excludePrecedence
      * @param nodeFilter
      */
-    private static void addNodefilters(final Element job, int threadCount, boolean keepgoing,
-            boolean excludePrecedence, String nodeFilter) {
+    private static void addNodefilters(
+            final Element job, int threadCount, boolean keepgoing,
+            String nodeFilter
+    ) {
         final int threadcount = (threadCount > 1) ? threadCount : 1;
         if (null != nodeFilter) {
             final Element filters = job.addElement("nodefilters");;
             filters.addElement("filter").addText(nodeFilter);
-            filters.addAttribute("excludeprecedence", Boolean.toString(excludePrecedence));
         }
         final Element dispatch = job.addElement("dispatch");
         dispatch.addElement("threadcount").addText(Integer.toString(threadcount));

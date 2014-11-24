@@ -253,8 +253,6 @@ public class TestExecTool extends AbstractBaseTest {
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
             NodeSet nodeset = main.createNodeSet(incmap, exmap);
-            assertTrue(nodeset.getExclude().isDominant());
-            assertFalse(nodeset.getInclude().isDominant());
             final Collection c = main.filterNodes().getNodes();
             assertEquals("wrong size", 1, c.size());
         }
@@ -290,8 +288,6 @@ public class TestExecTool extends AbstractBaseTest {
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
             NodeSet nodeset = main.createNodeSet(incmap, exmap);
-            assertTrue(nodeset.getExclude().isDominant());
-            assertFalse(nodeset.getInclude().isDominant());
             final Collection c = main.filterNodes().getNodes();
             assertEquals("wrong size", 1, c.size());
             final String result = new ExecTool.DefaultNodeFormatter().formatResults(c).toString();
@@ -339,8 +335,6 @@ public class TestExecTool extends AbstractBaseTest {
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
             NodeSet nodeset = main.createNodeSet(incmap, exmap);
-            assertTrue(nodeset.getExclude().isDominant());
-            assertFalse(nodeset.getInclude().isDominant());
             final Collection c = main.filterNodes().getNodes();
             final TestFormatter formatter = new TestFormatter();
             main.setNodeFormatter(formatter);
@@ -646,10 +640,8 @@ public class TestExecTool extends AbstractBaseTest {
             assertNotNull(set);
             assertNotNull(set.getInclude());
             assertFalse(set.getInclude().isBlank() );
-            assertTrue(set.getInclude().isDominant() );
             assertNotNull(set.getExclude());
             assertFalse(set.getExclude().isBlank());
-            assertFalse(set.getExclude().isDominant());
         }
         {
             //test precedence setting, Exclude dominant in first position
@@ -659,10 +651,8 @@ public class TestExecTool extends AbstractBaseTest {
             assertNotNull(set);
             assertNotNull(set.getInclude());
             assertFalse(set.getInclude().isBlank() );
-            assertFalse(set.getInclude().isDominant() );
             assertNotNull(set.getExclude());
             assertFalse(set.getExclude().isBlank());
-            assertTrue(set.getExclude().isDominant());
         }
         {
             //test precedence setting, Include dominant explicitly
@@ -672,10 +662,8 @@ public class TestExecTool extends AbstractBaseTest {
             assertNotNull(set);
             assertNotNull(set.getInclude());
             assertFalse(set.getInclude().isBlank() );
-            assertTrue(set.getInclude().isDominant() );
             assertNotNull(set.getExclude());
             assertFalse(set.getExclude().isBlank());
-            assertFalse(set.getExclude().isDominant());
         }
         {
             //test precedence setting, Exclude dominant explicitly
@@ -685,10 +673,8 @@ public class TestExecTool extends AbstractBaseTest {
             assertNotNull(set);
             assertNotNull(set.getInclude());
             assertFalse(set.getInclude().isBlank() );
-            assertFalse(set.getInclude().isDominant() );
             assertNotNull(set.getExclude());
             assertFalse(set.getExclude().isBlank());
-            assertTrue(set.getExclude().isDominant());
         }
     }
 

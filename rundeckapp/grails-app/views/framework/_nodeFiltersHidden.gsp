@@ -24,5 +24,3 @@
 
 <input type="hidden" name="filter" value="${enc(attr:query?.filter)}"  class="hiddenNodeFilter"/>
 <input type="hidden" name="filterName" value="${enc(attr:filterName?:'')}"  class="hiddenNodeFilterName"/>
-
-<input type="hidden" name="nodeExcludePrecedence" value="${enc(attr:query?.nodeExcludePrecedence)}" />

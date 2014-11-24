@@ -41,7 +41,6 @@ public class NodeFilter {
     String nodeExcludeOsArch
     String nodeIncludeOsVersion
     String nodeExcludeOsVersion
-    Boolean nodeExcludePrecedence=true
     String project
     String filter
 
@@ -62,7 +61,6 @@ public class NodeFilter {
         nodeExcludeOsArch(nullable: true)
         nodeIncludeOsVersion(nullable: true)
         nodeExcludeOsVersion(nullable: true)
-        nodeExcludePrecedence(nullable: true)
         project(nullable: true)
         filter(nullable: true)
     }

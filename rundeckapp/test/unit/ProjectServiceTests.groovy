@@ -59,7 +59,6 @@ class ProjectServiceTests  {
       <dispatch>
         <threadcount>1</threadcount>
         <keepgoing>false</keepgoing>
-        <excludePrecedence>true</excludePrecedence>
         <rankOrder>ascending</rankOrder>
       </dispatch>
       <filter>hostname: test1 !tags: monkey</filter>
@@ -107,7 +106,6 @@ class ProjectServiceTests  {
       <dispatch>
         <threadcount>1</threadcount>
         <keepgoing>false</keepgoing>
-        <excludePrecedence>true</excludePrecedence>
         <rankOrder>ascending</rankOrder>
       </dispatch>
       <filter>hostname: test1 !tags: monkey</filter>

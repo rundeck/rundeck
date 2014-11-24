@@ -6253,7 +6253,7 @@ class ScheduledExServiceTests {
             <project>project1</project>
         </context>
         <dispatch threadcount="1" keepgoing="true"/>
-        <nodefilters excludeprecedence="true">
+        <nodefilters>
           <include>
              <hostname>asuka</hostname>
              <name>test</name>
@@ -6278,7 +6278,6 @@ class ScheduledExServiceTests {
                 doNodedispatch: true,
                 nodeThreadcount: 1,
                 nodeKeepgoing: true,
-                nodeExcludePrecedence: true,
                 nodeInclude: 'asuka',
                 nodeIncludeName: 'test',
                 nodeExclude: 'testo',
@@ -6440,7 +6439,6 @@ class ScheduledExServiceTests {
                 doNodedispatch: true,
                 nodeThreadcount: 4,
                 nodeKeepgoing: true,
-                nodeExcludePrecedence: true,
                 nodeInclude: 'asuka',
                 nodeIncludeName: 'test',
                 nodeExclude: 'testo',

@@ -34,11 +34,6 @@ import java.util.Map;
  * @version $Revision$
  */
 public interface IDispatchedExecution {
-    /**
-     * Return the node exclude precedence
-     * @return nodeset
-     */
-    Boolean getNodeExcludePrecedence();
 
     /**
      * Return the node dispatch threadcount

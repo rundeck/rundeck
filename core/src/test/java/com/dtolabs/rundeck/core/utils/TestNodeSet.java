@@ -676,9 +676,6 @@ public class TestNodeSet extends TestCase {
             assertTrue(set.shouldExclude(nodeimp2));
             assertTrue(set.shouldExclude(nodeimp1));
 
-            //include is dominant, so when both match the node will be included
-            inc.setDominant(true);
-            exc.setDominant(false);
             exc.setHostname("testnode2");
             inc.setHostname("test.*");
             assertTrue(set.shouldExclude(nodeimp2));
@@ -756,9 +753,6 @@ public class TestNodeSet extends TestCase {
             assertTrue(set.shouldExclude(nodeimp2));
             assertTrue(set.shouldExclude(nodeimp1));
 
-            //include is dominant, so when both match the node will be included
-            exc.setDominant(false);
-            inc.setDominant(true);
             exc.setName("testnode2");
             inc.setName("test.*");
             assertTrue(set.shouldExclude(nodeimp2));
@@ -835,9 +829,6 @@ public class TestNodeSet extends TestCase {
             assertTrue(set.shouldExclude(nodeimp2));
             assertTrue(set.shouldExclude(nodeimp1));
 
-            //include is dominant, so when both match the node will be included
-            exc.setDominant(false);
-            inc.setDominant(true);
             exc.setTags("priority2");
             inc.setTags("devenv");
             assertTrue(set.shouldExclude(nodeimp2));
