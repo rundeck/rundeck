@@ -16,6 +16,7 @@
 
 package rundeck.codecs
 
+import org.owasp.html.HtmlChangeListener
 import org.owasp.html.HtmlPolicyBuilder
 import org.owasp.html.PolicyFactory
 import org.owasp.html.Sanitizers
@@ -26,12 +27,38 @@ import org.owasp.html.Sanitizers
  * @since 2014-11-19
  */
 class SanitizedHTMLCodec {
-    static final PolicyFactory POLICY = Sanitizers.BLOCKS.and(Sanitizers.FORMATTING).and(Sanitizers.IMAGES).and(Sanitizers.LINKS).and(
-            new HtmlPolicyBuilder().allowElements('em').
-            allowAttributes('class').onElements('p','i','b','div','a','span').
-                    toFactory()
-    )
-    static                     encode = { str ->
-        return POLICY.sanitize(str.toString())
+    def grailsApplication
+    static final PolicyFactory POLICY =
+        Sanitizers.BLOCKS.
+                and(Sanitizers.FORMATTING).
+                and(Sanitizers.IMAGES).
+                and(Sanitizers.LINKS).
+                and(new HtmlPolicyBuilder().
+                            //allow 'class' attribute on these elements
+                            allowElements('em', 'p', 'i', 'b', 'div', 'a', 'span', 'h1', 'h2',
+                                          'h3', 'h4').
+                            allowAttributes('class').onElements('p', 'i', 'b', 'div', 'a',
+                                                                'span', 'h1', 'h2', 'h3', 'h4').
+                            toFactory()
+                )
+
+    static debugLog = { str ->
+        log.debug(str)
+    }
+
+    static changeListener = new HtmlChangeListener() {
+        @Override
+        void discardedTag(final Object t, final String s) {
+            debugLog("HTML Sanitizer audit: Discarding tag: " + s)
+        }
+
+        @Override
+        void discardedAttributes(final Object t, final String s, final String... strings) {
+            debugLog("HTML Sanitizer audit: Discarding attrs for tag: " + s + ": " +
+                             "attrs: " + (strings as List))
+        }
+    }
+    static encode = { str ->
+        return POLICY.sanitize(str.toString(), changeListener, null)
     }
 }
