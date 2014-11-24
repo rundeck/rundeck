@@ -44,7 +44,17 @@
     <div class="panel panel-primary ">
         <div class="panel-body">
         <form action="j_security_check" method="post" class="form " role="form">
-            <g:set var="loginmsg" value="${grailsApplication.config.rundeck?.gui?.login?.welcome ?: g.message(code: 'gui.login.welcome', default: '')}"/>
+
+            <g:set var="loginhtml" value="${grailsApplication.config.rundeck?.gui?.login?.welcomeHtml ?: ''}"/>
+            <g:if test="${loginhtml}">
+            <div class="row">
+                <span class="col-sm-12">
+                    <g:sanitize>${loginhtml}</g:sanitize>
+                </span>
+            </div>
+            </g:if>
+            <g:set var="loginmsg"
+                   value="${grailsApplication.config.rundeck?.gui?.login?.welcome ?: g.message(code: 'gui.login.welcome', default: '')}"/>
             <g:if test="${loginmsg}">
             <div class="row">
                 <span class="col-sm-12">
