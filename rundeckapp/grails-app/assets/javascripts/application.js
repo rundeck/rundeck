@@ -1008,12 +1008,6 @@ function _updateMatchedNodes(data, elem, project, localnodeonly, inparams, callb
         params.localNodeOnly = 'true';
     }
 
-    if (typeof(data.nodeExcludePrecedence) == 'string' && data.nodeExcludePrecedence === "false"
-        || typeof(data.nodeExcludePrecedence) == 'boolean' && !data.nodeExcludePrecedence) {
-        params.nodeExcludePrecedence = "false";
-    } else {
-        params.nodeExcludePrecedence = "true";
-    }
     jQuery('#' + elem).load(_genUrl(appLinks.frameworkNodesFragment, params), function (response, status, xhr) {
         jQuery('#' + elem).removeClass('depress');
         if (status == 'success') {

@@ -42,7 +42,7 @@
     </g:each>
 </g:if>
 <g:else>
-<g:each in="${displayParams.properties.keySet().grep{it=~/^(node(Include|Exclude)(?!Precedence).*)$/}.sort()}" var="qparam">
+<g:each in="${displayParams.properties.keySet().grep{it=~/^(node(Include|Exclude).*)$/}.sort()}" var="qparam">
     <g:if test="${displayParams[qparam]}">
     <span class="querykey ${qparam=~/Exclude/?'exclude':'include'}"><g:message code="BaseNodeFilters.title.${qparam}"/></span>:
     <span class="queryvalue text ${qparam=~/Exclude/?'exclude':'include'} ${displayParams[qparam].contains(varStr) ? 'variable' : ''}">

@@ -166,9 +166,7 @@ class JobsXMLCodec {
                 map.nodefilters=[:]
             }
             map.nodefilters.dispatch=map.remove('dispatch')
-            if(null!=map.nodefilters.excludeprecedence){
-                map.nodefilters.dispatch['excludePrecedence']=map.nodefilters.remove('excludeprecedence')
-            }
+
             if(null!=map.nodefilters.dispatch.threadcount && ""!= map.nodefilters.dispatch.threadcount){
                 //convert to integer
                 def value= map.nodefilters.dispatch.threadcount
@@ -183,11 +181,7 @@ class JobsXMLCodec {
                 def value= map.nodefilters.dispatch.keepgoing
                 map.nodefilters.dispatch.keepgoing= XmlParserUtil.stringToBool(value,false)
             }
-            if(null!=map.nodefilters.dispatch.excludePrecedence){
-                //convert to boolean
-                def value= map.nodefilters.dispatch.excludePrecedence
-                map.nodefilters.dispatch.excludePrecedence= XmlParserUtil.stringToBool(value,false)
-            }
+
         }
         if(map.schedule){
             if(map.schedule.month && map.schedule.month instanceof Map && map.schedule.month?.day){

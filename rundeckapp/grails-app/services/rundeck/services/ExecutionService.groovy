@@ -986,7 +986,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def filter = DataContextUtils.replaceDataReferences(execMap.asFilter(), datacontext)
             NodeSet nodeset = filtersAsNodeSet([
                     filter:filter,
-                    nodeExcludePrecedence:execMap.nodeExcludePrecedence,
                     nodeThreadcount: execMap.nodeThreadcount,
                     nodeKeepgoing: execMap.nodeKeepgoing
             ])
@@ -1208,8 +1207,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     public static NodeSet filtersAsNodeSet(BaseNodeFilters econtext) {
         final NodeSet nodeset = new NodeSet();
-        nodeset.createExclude(BaseNodeFilters.asExcludeMap(econtext)).setDominant(econtext.nodeExcludePrecedence ? true : false);
-        nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext)).setDominant(!econtext.nodeExcludePrecedence ? true : false);
+        nodeset.createExclude(BaseNodeFilters.asExcludeMap(econtext));
+        nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext));
         return nodeset
     }
     /**
@@ -1223,10 +1222,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         final NodeSet nodeset = new NodeSet();
         nodeset.createExclude(
                 DataContextUtils.replaceDataReferences(BaseNodeFilters.asExcludeMap(econtext),datacontext)
-        ).setDominant(econtext.nodeExcludePrecedence ? true : false);
+        )
         nodeset.createInclude(
                 DataContextUtils.replaceDataReferences(BaseNodeFilters.asIncludeMap(econtext),datacontext)
-        ).setDominant(!econtext.nodeExcludePrecedence ? true : false);
+        )
         nodeset.setKeepgoing(econtext.nodeKeepgoing ? true : false)
         nodeset.setThreadCount(econtext.nodeThreadcount ? econtext.nodeThreadcount : 1)
         return nodeset
@@ -1236,8 +1235,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     public static NodeSet filtersAsNodeSet(ExecutionContext econtext) {
         final NodeSet nodeset = new NodeSet();
-        nodeset.createExclude(BaseNodeFilters.asExcludeMap(econtext)).setDominant(econtext.nodeExcludePrecedence ? true : false);
-        nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext)).setDominant(!econtext.nodeExcludePrecedence ? true : false);
+        nodeset.createExclude(BaseNodeFilters.asExcludeMap(econtext))
+        nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext))
         nodeset.setKeepgoing(econtext.nodeKeepgoing?true:false)
         nodeset.setThreadCount(econtext.nodeThreadcount?econtext.nodeThreadcount:1)
         return nodeset
@@ -1248,8 +1247,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     public static NodeSet filtersAsNodeSet(Map econtext) {
         final NodeSet nodeset = new NodeSet();
-        nodeset.createExclude(BaseNodeFilters.asExcludeMap(econtext)).setDominant(econtext.nodeExcludePrecedence?true:false);
-        nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext)).setDominant(!econtext.nodeExcludePrecedence?true:false);
+        nodeset.createExclude(BaseNodeFilters.asExcludeMap(econtext));
+        nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext));
         nodeset.setKeepgoing(econtext.nodeKeepgoing?true:false)
         nodeset.setThreadCount(econtext.nodeThreadcount?econtext.nodeThreadcount:1)
         return nodeset
@@ -1263,7 +1262,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       user:params.user,loglevel:params.loglevel,
                                     doNodedispatch:params.doNodedispatch?"true" == params.doNodedispatch.toString():false,
                                     filter: params.filter,
-                                    nodeExcludePrecedence:params.nodeExcludePrecedence,
                                     nodeThreadcount:params.nodeThreadcount,
                                     nodeKeepgoing:params.nodeKeepgoing,
                                     nodeRankOrderAscending:params.nodeRankOrderAscending,
@@ -2115,7 +2113,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def filter = DataContextUtils.replaceDataReferences(nodeFilter, origContext.dataContext)
             NodeSet nodeset = filtersAsNodeSet([
                     filter               : filter,
-                    nodeExcludePrecedence: true, //XXX: fix
                     nodeThreadcount      : nodeThreadcount?:1,
                     nodeKeepgoing        : nodeKeepgoing
             ])

@@ -63,7 +63,6 @@ class ScheduledExecution extends ExecutionContext {
         nodeExcludeOsArch(nullable:true)
         nodeIncludeOsVersion(nullable:true)
         nodeExcludeOsVersion(nullable:true)
-        nodeExcludePrecedence(nullable:true)
         filter(nullable:true)
         user(nullable:true)
         userRoleList(nullable:true)
@@ -171,7 +170,7 @@ class ScheduledExecution extends ExecutionContext {
             map.multipleExecutions=true
         }
         if(doNodedispatch){
-            map.nodefilters=[dispatch:[threadcount:null!=nodeThreadcount?nodeThreadcount:1,keepgoing:nodeKeepgoing?true:false,excludePrecedence:nodeExcludePrecedence?true:false]]
+            map.nodefilters=[dispatch:[threadcount:null!=nodeThreadcount?nodeThreadcount:1,keepgoing:nodeKeepgoing?true:false]]
             if(nodeRankAttribute){
                 map.nodefilters.dispatch.rankAttribute= nodeRankAttribute
             }
@@ -280,9 +279,6 @@ class ScheduledExecution extends ExecutionContext {
             se.nodeThreadcount = data.nodefilters.dispatch.threadcount ?: 1
             if(data.nodefilters.dispatch.containsKey('keepgoing')){
                 se.nodeKeepgoing = data.nodefilters.dispatch.keepgoing
-            }
-            if(data.nodefilters.dispatch.containsKey('excludePrecedence')){
-                se.nodeExcludePrecedence = data.nodefilters.dispatch.excludePrecedence
             }
             if(data.nodefilters.dispatch.containsKey('rankAttribute')){
                 se.nodeRankAttribute = data.nodefilters.dispatch.rankAttribute

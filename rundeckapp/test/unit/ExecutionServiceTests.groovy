@@ -1220,16 +1220,13 @@ class ExecutionServiceTests  {
                     filter:"name: basic",
                     nodeThreadcount: 2,
                     nodeKeepgoing: true,
-                    nodeExcludePrecedence: false,
             )
             def val = service.createContext(execution, null, null, null, null, [id:'3',name:'blah',group:'something/else',
                     username:'bill',project:'testproj'], null, null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)
-            assertFalse(val.nodeSelector.exclude.dominant)
             assertNotNull(val.nodeSelector.include)
-            assertTrue(val.nodeSelector.include.dominant)
             assertNull(val.nodeSelector.exclude.tags)
             assertNull(val.nodeSelector.exclude.name)
             assertNull(val.nodeSelector.include.tags)

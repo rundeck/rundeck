@@ -290,7 +290,8 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         }
         addLoglevelParams(params, iDispatchedScript.getLoglevel());
         addAPINodeSetParams(params, iDispatchedScript.isKeepgoing(), iDispatchedScript.getNodeFilter(),
-                iDispatchedScript.getNodeThreadcount(), iDispatchedScript.getNodeExcludePrecedence());
+                iDispatchedScript.getNodeThreadcount()
+        );
 
         return submitRunRequest(uploadFile,
                                 params,
@@ -1371,7 +1372,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         }
 
         addAPINodeSetParams(params, dispatchedJob.isKeepgoing(), dispatchedJob
-                .getNodeFilter(), dispatchedJob.getNodeThreadcount(), dispatchedJob.getNodeExcludePrecedence());
+                .getNodeFilter(), dispatchedJob.getNodeThreadcount() );
         addLoglevelParams(params, dispatchedJob.getLoglevel());
         if (null != dispatchedJob.getArgs() && dispatchedJob.getArgs().length > 0) {
             params.put("argString", OptsUtil.join(dispatchedJob.getArgs()));
@@ -1409,13 +1410,12 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
     /**
      * Add entries to the Map for node filter parameters from the nodeset
      */
-    public static void addAPINodeSetParams(final HashMap<String, String> params,
-            final Boolean isKeepgoing, String nodeFilter, int threadcount, Boolean excludePrecedence) {
+    public static void addAPINodeSetParams(
+            final HashMap<String, String> params,
+            final Boolean isKeepgoing, String nodeFilter, int threadcount
+    ) {
         if (null != nodeFilter && !"".equals(nodeFilter.trim())) {
             params.put("filter", nodeFilter);
-            if (null != excludePrecedence) {
-                params.put("exclude-precedence", Boolean.toString(excludePrecedence));
-            }
         }
         if (threadcount > 0) {
             params.put("nodeThreadcount", Integer.toString(threadcount));

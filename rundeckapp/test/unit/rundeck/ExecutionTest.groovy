@@ -72,7 +72,6 @@ class ExecutionTest {
         assertEquals("true", exec.status)
         assertEquals(true, exec.doNodedispatch)
         assertEquals(1, exec.nodeThreadcount)
-        assertEquals(true, exec.nodeExcludePrecedence)
         assertEquals(false, exec.nodeKeepgoing)
     }
     void testFromMapNullThreadcount(){
@@ -105,7 +104,6 @@ class ExecutionTest {
         assertEquals("true", exec.status)
         assertEquals(true, exec.doNodedispatch)
         assertEquals(1, exec.nodeThreadcount)
-        assertEquals(true, exec.nodeExcludePrecedence)
         assertEquals(false, exec.nodeKeepgoing)
     }
     void testFromMapThreadcountString(){
@@ -138,7 +136,6 @@ class ExecutionTest {
         assertEquals("true", exec.status)
         assertEquals(true, exec.doNodedispatch)
         assertEquals(2, exec.nodeThreadcount)
-        assertEquals(true, exec.nodeExcludePrecedence)
         assertEquals(false, exec.nodeKeepgoing)
     }
     void testFromMapBlankKeepgoing(){
@@ -172,7 +169,6 @@ class ExecutionTest {
         assertEquals("true", exec.status)
         assertEquals(true, exec.doNodedispatch)
         assertEquals(1, exec.nodeThreadcount)
-        assertEquals(true, exec.nodeExcludePrecedence)
         assertEquals(false, exec.nodeKeepgoing)
     }
     void testFromMapKeepgoingString(){
@@ -206,112 +202,6 @@ class ExecutionTest {
         assertEquals("true", exec.status)
         assertEquals(true, exec.doNodedispatch)
         assertEquals(1, exec.nodeThreadcount)
-        assertEquals(true, exec.nodeExcludePrecedence)
-        assertEquals(true, exec.nodeKeepgoing)
-    }
-    void testFromExcludePrecedenceBlank(){
-        //blank threadcount
-        def exec = Execution.fromMap([
-                status: 'true',
-                dateStarted: new Date(),
-                dateCompleted: new Date(),
-                doNodedispatch: true,
-                nodefilters:[
-                    dispatch:[
-                            threadcount:1,
-                            keepgoing: "true",
-                            excludePrecedence:"",
-                            include:[
-                                    name:"test1"
-                            ]
-                    ]
-                ],
-                project:'test1',
-                user:'user1',
-                workflow:[
-                        keepgoing:true,
-                        commands:[
-                                [
-                                        exec:"blah"
-                                ]
-                        ]
-                ]
-        ], null)
-        assertNotNull(exec)
-        assertEquals("true", exec.status)
-        assertEquals(true, exec.doNodedispatch)
-        assertEquals(1, exec.nodeThreadcount)
-        assertEquals(true, exec.nodeExcludePrecedence)
-        assertEquals(true, exec.nodeKeepgoing)
-    }
-    void testFromExcludePrecedenceNull(){
-        //blank threadcount
-        def exec = Execution.fromMap([
-                status: 'true',
-                dateStarted: new Date(),
-                dateCompleted: new Date(),
-                doNodedispatch: true,
-                nodefilters:[
-                    dispatch:[
-                            threadcount:1,
-                            keepgoing: "true",
-                            excludePrecedence:null,
-                            include:[
-                                    name:"test1"
-                            ]
-                    ]
-                ],
-                project:'test1',
-                user:'user1',
-                workflow:[
-                        keepgoing:true,
-                        commands:[
-                                [
-                                        exec:"blah"
-                                ]
-                        ]
-                ]
-        ], null)
-        assertNotNull(exec)
-        assertEquals("true", exec.status)
-        assertEquals(true, exec.doNodedispatch)
-        assertEquals(1, exec.nodeThreadcount)
-        assertEquals(true, exec.nodeExcludePrecedence)
-        assertEquals(true, exec.nodeKeepgoing)
-    }
-    void testFromExcludePrecedenceString(){
-        //blank threadcount
-        def exec = Execution.fromMap([
-                status: 'true',
-                dateStarted: new Date(),
-                dateCompleted: new Date(),
-                doNodedispatch: true,
-                nodefilters:[
-                    dispatch:[
-                            threadcount:1,
-                            keepgoing: "true",
-                            excludePrecedence:'false',
-                            include:[
-                                    name:"test1"
-                            ]
-                    ]
-                ],
-                project:'test1',
-                user:'user1',
-                workflow:[
-                        keepgoing:true,
-                        commands:[
-                                [
-                                        exec:"blah"
-                                ]
-                        ]
-                ]
-        ], null)
-        assertNotNull(exec)
-        assertEquals("true", exec.status)
-        assertEquals(true, exec.doNodedispatch)
-        assertEquals(1, exec.nodeThreadcount)
-        assertEquals(false, exec.nodeExcludePrecedence)
         assertEquals(true, exec.nodeKeepgoing)
     }
     void testFromMapFilter(){
@@ -325,7 +215,6 @@ class ExecutionTest {
                     dispatch:[
                             threadcount:1,
                             keepgoing: "true",
-                            excludePrecedence:'false'
                     ],
                     filter: 'name: test1'
                 ],
@@ -355,7 +244,6 @@ class ExecutionTest {
                     dispatch:[
                             threadcount:1,
                             keepgoing: "true",
-                            excludePrecedence:'false'
                     ],
                     include: [
                             name: "test1"

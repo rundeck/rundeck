@@ -24,7 +24,6 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.baseNodesPageUrl = baseNodesPageUrl;
     self.filterName = ko.observable(data.filterName);
     self.filter = ko.observable(data.filter);
-    self.nodeExcludePrecedence = ko.observable(null== data.nodeExcludePrecedence || data.nodeExcludePrecedence?'true':'false');
     self.nodefilterLinkId=data.nodefilterLinkId;
     self.total = ko.observable(0);
     self.allcount = ko.observable(0);
@@ -87,9 +86,6 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         if (newValue != '' && self.filterName()) {
             self.filterName(null);
         }
-    });
-    self.nodeExcludePrecedence.subscribe(function(newValue){
-        self.updateMatchedNodes();
     });
     self.hasNodes = ko.computed(function () {
         return 0 != self.allcount();
@@ -182,13 +178,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             self.clear();
             return;
         }
-        var exclude=self.nodeExcludePrecedence();
-        if (typeof(exclude) == 'string' && exclude === "false"
-            || typeof(exclude) == 'boolean' && !exclude) {
-            params.nodeExcludePrecedence = "false";
-        } else {
-            params.nodeExcludePrecedence = "true";
-        }
+
         self.loading(true);
         jQuery(loadTarget).load(
             _genUrl(appLinks.frameworkNodesFragment, params),

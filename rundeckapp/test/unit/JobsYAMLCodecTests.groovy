@@ -108,7 +108,6 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
 
             assertEquals "incorrect dispatch threadcount", 1, doc[0].nodefilters.dispatch.threadcount
             assertTrue "incorrect dispatch keepgoing", doc[0].nodefilters.dispatch.keepgoing
-            assertTrue "incorrect dispatch excludePrecedence", doc[0].nodefilters.dispatch.excludePrecedence
             assertNotNull "missing nodefilters include", doc[0].nodefilters.filter
             assertEquals "wrong nodefilters include hostname", "hostname: testhost1 !name: x1", doc[0].nodefilters.filter
             assertEquals "missing nodefilters exclude name", null, doc[0].nodefilters.include
@@ -487,7 +486,6 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
     dispatch:
       threadcount: 1
       keepgoing: true
-      excludePrecedence: true
     include:
       hostname: testhost1
     exclude:
@@ -525,7 +523,6 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             assertTrue "wrong doNodedispatch", se.doNodedispatch
             assertEquals "wrong nodeThreadcount", 1, se.nodeThreadcount
             assertTrue "wrong nodeKeepgoing", se.nodeKeepgoing
-            assertTrue "wrong nodeExcludePrecedence", se.nodeExcludePrecedence
             assertEquals "wrong nodeInclude", null, se.nodeInclude
             assertEquals "wrong nodeExcludeName", null, se.nodeExcludeName
             assertEquals "wrong nodeInclude", "hostname: testhost1 !name: x1", se.filter
@@ -595,7 +592,6 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
     dispatch:
       threadcount: 1
       keepgoing: true
-      excludePrecedence: true
     include:
       hostname: testhost1
     exclude:
@@ -633,7 +629,6 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             assertTrue "wrong doNodedispatch", se.doNodedispatch
             assertEquals "wrong nodeThreadcount", 1, se.nodeThreadcount
             assertTrue "wrong nodeKeepgoing", se.nodeKeepgoing
-            assertTrue "wrong nodeExcludePrecedence", se.nodeExcludePrecedence
             assertEquals "wrong nodeInclude", null, se.nodeInclude
             assertEquals "wrong nodeExcludeName", null, se.nodeExcludeName
             assertEquals "wrong nodeInclude", "hostname: testhost1 !name: x1", se.filter
@@ -708,7 +703,6 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
     dispatch:
       threadcount: 3
       keepgoing: false
-      excludePrecedence: false
     include:
       name: .*
     exclude:
@@ -757,7 +751,6 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertTrue "wrong doNodedispatch", se.doNodedispatch
         assertEquals "wrong nodeThreadcount", 3, se.nodeThreadcount
         assertFalse "wrong nodeKeepgoing", se.nodeKeepgoing
-        assertFalse "wrong nodeExcludePrecedence", se.nodeExcludePrecedence
         assertEquals "wrong nodeInclude", null, se.nodeIncludeName
         assertEquals "wrong nodeExcludeName", null, se.nodeExclude
         assertEquals "wrong nodeExcludeName", null, se.nodeExcludeTags
@@ -859,7 +852,6 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
     dispatch:
       threadcount: 1
       keepgoing: true
-      excludePrecedence: true
     include:
       hostname: testhost1
     exclude:
@@ -909,7 +901,6 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
     dispatch:
       threadcount: 1
       keepgoing: true
-      excludePrecedence: true
     include:
       hostname: testhost1
     exclude:
@@ -947,7 +938,6 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             assertTrue "wrong doNodedispatch", se.doNodedispatch
             assertEquals "wrong nodeThreadcount", 1, se.nodeThreadcount
             assertTrue "wrong nodeKeepgoing", se.nodeKeepgoing
-            assertTrue "wrong nodeExcludePrecedence", se.nodeExcludePrecedence
             assertEquals "wrong nodeInclude", "hostname: testhost1 !name: x1", se.filter
             assertEquals "wrong nodeInclude", null, se.nodeInclude
             assertEquals "wrong nodeExcludeName", null, se.nodeExcludeName

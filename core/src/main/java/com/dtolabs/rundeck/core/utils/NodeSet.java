@@ -200,16 +200,23 @@ public class NodeSet  implements NodesSelector {
             return !getSingleNodeName().equals(entry.getNodename());
         }
 
-        boolean includesMatch = includes != null && includes.matches(entry);
-        boolean excludesMatch = excludes != null && excludes.matches(entry);
-        if (null==excludes ||excludes.isBlank()) {
-            return !includesMatch;
-        } else if (null==includes || includes.isBlank()) {
+        boolean hasIncludesFilter = includes != null && !includes.isBlank();
+        boolean includesMatch = hasIncludesFilter && includes.matches(entry);
+        boolean hasExcludesFilter = excludes != null && !excludes.isBlank();
+        boolean excludesMatch = hasExcludesFilter && excludes.matches(entry);
+        //case: exclude filters match
+        if (excludesMatch) {
             return excludesMatch;
-        } else if(null!=includes && includes.isDominant()) {
-            return !includesMatch && excludesMatch;
-        }else{
-            return !includesMatch || excludesMatch; 
+        }
+        //case: include filters match
+        if(includesMatch){
+            return false;
+        }
+        //default: not matched, include only if there is an exclude filter but no include filter
+        if (hasExcludesFilter && !hasIncludesFilter) {
+            return false;
+        } else {
+            return true;
         }
     }
 
@@ -591,7 +598,6 @@ public class NodeSet  implements NodesSelector {
      * SetSelector is a filter
      */
     public abstract class SetSelector {
-        private boolean dominant=false;
         private String hostname = "";
         private String osfamily = "";
         private String osarch = "";
@@ -637,7 +643,6 @@ public class NodeSet  implements NodesSelector {
             if (!isBlank(name)) {
                 builder.append("name=").append(getName()).append(", ");
             }
-            builder.append("dominant=").append(isDominant()).append(", ");
 
             if (null != getAttributesMap() && getAttributesMap().size() > 0) {
                 builder.append("attributesMap=").append(getAttributesMap());
@@ -767,13 +772,6 @@ public class NodeSet  implements NodesSelector {
             this.name = name;
         }
 
-        public boolean isDominant() {
-            return dominant;
-        }
-
-        public void setDominant(boolean dominant) {
-            this.dominant = dominant;
-        }
 
 
 
@@ -800,9 +798,6 @@ public class NodeSet  implements NodesSelector {
 
             SetSelector that = (SetSelector) o;
 
-            if (dominant != that.dominant) {
-                return false;
-            }
             if (attributesMap != null ? !attributesMap.equals(that.attributesMap) : that.attributesMap != null) {
                 return false;
             }
@@ -833,8 +828,7 @@ public class NodeSet  implements NodesSelector {
 
         @Override
         public int hashCode() {
-            int result = (dominant ? 1 : 0);
-            result = 31 * result + (hostname != null ? hostname.hashCode() : 0);
+            int result = (hostname != null ? hostname.hashCode() : 0);
             result = 31 * result + (osfamily != null ? osfamily.hashCode() : 0);
             result = 31 * result + (osarch != null ? osarch.hashCode() : 0);
             result = 31 * result + (osname != null ? osname.hashCode() : 0);

@@ -202,7 +202,7 @@ function getCurSEID(){
 //]>
 </script>
 <g:embedJSON id="filterParamsJSON"
-             data="${[filterName: params.filterName, filter: scheduledExecution?.asFilter(),nodeExcludePrecedence: scheduledExecution?.nodeExcludePrecedence]}"/>
+             data="${[filterName: params.filterName, filter: scheduledExecution?.asFilter()]}"/>
 <style lang="text/css">
     textarea.code{
         font-family: Courier,monospace;
@@ -625,26 +625,7 @@ function getCurSEID(){
 
 <div style="${wdgt.styleVisible(if: scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields ">
 
-<div class="form-group ${hasErrors(bean: scheduledExecution, field: 'nodeInclude', 'has-error')}">
-
-    <label class="col-sm-2  control-label">Precedence to:</label>
-
-    <div class="col-sm-10">
-        <label title="Include more nodes" class="radio-inline">
-            <g:radio name="nodeExcludePrecedence" value="false"
-                data-bind="checked: nodeExcludePrecedence"
-                     checked="${!scheduledExecution?.nodeExcludePrecedence}"
-                     id="nodeExcludePrecedenceFalse"/>
-            Included</label>
-
-        <label title="Exclude more nodes" class="radio-inline">
-            <g:radio name="nodeExcludePrecedence" value="true"
-                    data-bind="checked: nodeExcludePrecedence"
-                     checked="${scheduledExecution?.nodeExcludePrecedence}"
-                     id="nodeExcludePrecedenceTrue"/>
-            Excluded</label>
-    </div>
-</div>%{--//extended filters--}%
+%{--//extended filters--}%
 
 <div class="subfields nodeFilterFields">
 

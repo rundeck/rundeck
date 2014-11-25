@@ -822,7 +822,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
      <dispatch>
       <threadcount/>
       <keepgoing>false</keepgoing>
-      <excludePrecedence>false</excludePrecedence>
       <rankOrder>ascending</rankOrder>
     </dispatch>
   </job>
@@ -951,7 +950,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
     export ORACLE_HOME=/tools/oracle &amp;&amp; export
     LD_LIBRARY_PATH=/tools/oracle/lib &amp;&amp; /usr/bin/env
     python run_monthly.py test-prod</exec></command></sequence>
-    <nodefilters excludeprecedence="true">
+    <nodefilters>
       <include>
         <hostname>cypress.hill.com</hostname>
         <tags />
@@ -972,7 +971,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             def jobs = JobsXMLCodec.decode(example1)
             assertNotNull jobs
             assertNull "incorrect groupPath",jobs[0].groupPath
-            assertEquals "incorrect nodeExcludePrecedence","true",jobs[0].nodeExcludePrecedence.toString()
             assertEquals "incorrect nodeInclude",null,jobs[0].nodeInclude
             assertEquals "incorrect nodeInclude","hostname: cypress.hill.com",jobs[0].filter
             assertEquals "incorrect project","demo",jobs[0].project
@@ -1002,7 +1000,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             </errorhandler>
         </command>
     </sequence>
-    <nodefilters excludeprecedence="false">
+    <nodefilters>
       <include>
         <hostname>false</hostname>
         <tags />
@@ -1025,7 +1023,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals "false",jobs[0].jobName
         assertEquals  "false",jobs[0].groupPath
         assertEquals  "false",jobs[0].description
-        assertEquals  false, jobs[0].nodeExcludePrecedence
         assertEquals  false, jobs[0].nodeKeepgoing
         assertEquals  null, jobs[0].nodeInclude
         assertEquals  "hostname: false", jobs[0].filter
@@ -1092,7 +1089,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect nodefilter nodeExcludeOsArch",null,jobs[0].nodeExcludeOsArch
             assertEquals "incorrect nodefilter nodeExcludeOsVersion",null,jobs[0].nodeExcludeOsVersion
             assertEquals "incorrect nodefilter nodeExcludeName",null,jobs[0].nodeExcludeName
-            assertTrue "incorrect nodefilter nodeExcludePrecedence ",jobs[0].nodeExcludePrecedence
             assertTrue "incorrect nodefilter doNodedispatch",jobs[0].doNodedispatch
 
         /** node filter job */
@@ -1147,7 +1143,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect nodefilter nodeExcludeOsArch",null,jobs[0].nodeExcludeOsArch
             assertEquals "incorrect nodefilter nodeExcludeOsVersion",null,jobs[0].nodeExcludeOsVersion
             assertEquals "incorrect nodefilter nodeExcludeName",null,jobs[0].nodeExcludeName
-            assertTrue "incorrect nodefilter nodeExcludePrecedence ",jobs[0].nodeExcludePrecedence
             assertTrue "incorrect nodefilter doNodedispatch",jobs[0].doNodedispatch
 
         /** node filter job */
@@ -1165,7 +1160,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
       </options>
     </context>
     <sequence><command><exec>test</exec></command></sequence>
-    <nodefilters excludeprecedence="false">
+    <nodefilters>
         <exclude>
             <hostname>centos5</hostname>
             <tags>a+b,c</tags>
@@ -1202,7 +1197,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect nodefilter nodeExcludeOsArch", null,jobs[0].nodeExcludeOsArch
             assertEquals "incorrect nodefilter nodeExcludeOsVersion", null,jobs[0].nodeExcludeOsVersion
             assertEquals "incorrect nodefilter nodeExcludeName", null,jobs[0].nodeExcludeName
-            assertFalse "incorrect nodefilter nodeExcludePrecedence",jobs[0].nodeExcludePrecedence
             assertTrue "incorrect nodefilter doNodedispatch",jobs[0].doNodedispatch
     }
 
@@ -1302,7 +1296,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
       </options>
     </context>
     <sequence><command><exec>test</exec></command></sequence>
-    <nodefilters excludeprecedence="false">
+    <nodefilters>
         <exclude>
             <hostname>centos5</hostname>
             <tags>a+b,c</tags>
