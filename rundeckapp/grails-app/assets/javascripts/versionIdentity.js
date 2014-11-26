@@ -101,7 +101,8 @@ var VersionIdentity=function(vers,data){
         'Viennese Espresso'
     ];
     function splitVersion(version){
-        var parts=String(version).split('-');
+        var partsa=String(version).split(' ');
+        var parts=String(partsa.length>1?partsa[0]: version).split('-');
         var vparts=parts[0].split('\.');
         var data={};
         if(vparts.length>0){
@@ -121,8 +122,16 @@ var VersionIdentity=function(vers,data){
             data['point'] =0;
         }
         data['minorPoint'] = (data.minor * 10) + data.point;
-        var release=parts.length>1?parseInt(parts[1]):1;
-        data.tag=parts.length>2?parts[2]:'';
+        var release=1;
+        var tag = '';
+        if(parts.length > 1 && /^\d+$/.test(parts[1]) ){
+            release=parseInt(parts[1]);
+            tag = parts.length > 2 ? parts[2] : '';
+        }else if(parts.length>1){
+            tag=parts[1];
+        }
+
+        data['tag']=tag;
         data['release']=release;
         data['pointRelease']= data.point*10 + release;
         data['minorPointRelease']= (data.minor * 100)+ data.point*10 + release;
