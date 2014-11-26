@@ -48,6 +48,7 @@ import rundeck.*
 import rundeck.controllers.ExecutionController
 import rundeck.services.logging.ExecutionLogWriter
 
+import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpSession
 import java.text.MessageFormat
@@ -82,8 +83,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * Render execution document for api response
      */
 
-    public def respondExecutionsXml(HttpServletResponse response, List<Execution> executions, paging = [:]) {
-        return apiService.respondExecutionsXml(response,executions.collect { Execution e ->
+    public def respondExecutionsXml(HttpServletRequest request,HttpServletResponse response, List<Execution> executions, paging = [:]) {
+        return apiService.respondExecutionsXml(request,response,executions.collect { Execution e ->
                 def data=[
                         execution: e,
                         href: getFollowURLForExecution(e),

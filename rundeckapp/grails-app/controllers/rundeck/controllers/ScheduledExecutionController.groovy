@@ -2150,7 +2150,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
         def e = result.execution
-        return executionService.respondExecutionsXml(response,[e])
+        return executionService.respondExecutionsXml(request,response,[e])
     }
 
     /**
@@ -2467,7 +2467,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
 
-        return executionService.respondExecutionsXml(response,result)
+        return executionService.respondExecutionsXml(request,response,result)
     }
     /**
      * API: /api/incubator/jobs/takeoverSchedule , version 7

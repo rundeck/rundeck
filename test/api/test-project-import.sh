@@ -74,7 +74,7 @@ assert_execution_count(){
         exit 2
     fi
     assert_http_status 200 $DIR/headers.out
-    assert_xml_value $count '/result/executions/@count' $DIR/curl.out
+    assert_xml_value $count '/executions/@count' $DIR/curl.out
 }
 
 test_proj="APIImportTest"
