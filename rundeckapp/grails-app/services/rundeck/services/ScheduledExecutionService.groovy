@@ -1890,7 +1890,10 @@ class ScheduledExecutionService implements ApplicationContextAware{
         def scheduledExecution = result.scheduledExecution
         failed = result.failed
         //try to save workflow
-
+        if(failed){
+            scheduledExecution.discard()
+            return [success: false, scheduledExecution: scheduledExecution]
+        }
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_CREATE], scheduledExecution.project)) {
             scheduledExecution.discard()
             return [success: false, error: "Unauthorized: Create Job ${scheduledExecution.generateFullName()}", unauthorized: true, scheduledExecution: scheduledExecution]
