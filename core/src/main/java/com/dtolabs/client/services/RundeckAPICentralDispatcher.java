@@ -286,7 +286,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
             data.put("scriptURL", scriptURL);
         }
         if (!isExec && args.size() > 0) {
-            data.put("argString", OptsUtil.join(args));
+            params.put("argString", OptsUtil.join(args));
         }
         addLoglevelParams(params, iDispatchedScript.getLoglevel());
         addAPINodeSetParams(params, iDispatchedScript.isKeepgoing(), iDispatchedScript.getNodeFilter(),

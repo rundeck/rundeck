@@ -30,7 +30,6 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.dtolabs.rundeck.core.storage.StorageTree;
-import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 import org.rundeck.storage.api.Resource;
@@ -296,6 +295,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
      * @param localDataContext current context data
      * @param description
      *
+     * @param serviceName
      * @return context data with a new "config" entry containing the loaded plugin config
      *         properties.
      */
@@ -303,14 +303,14 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
             final ExecutionContext context,
             final Map<String, Object> instanceData,
             final Map<String, Map<String, String>> localDataContext,
-            final Description description
+            final Description description, String serviceName
     ) throws ConfigurationException
     {
 
         final PropertyResolver resolver = PropertyResolverFactory.createPluginRuntimeResolver(
                 context,
                 instanceData,
-                ServiceNameConstants.NodeExecutor,
+                serviceName,
                 getProvider().getName()
         );
 

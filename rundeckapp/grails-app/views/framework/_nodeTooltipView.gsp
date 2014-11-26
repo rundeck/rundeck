@@ -1,4 +1,5 @@
-<div id="${enc(attr:key)}_tooltip" style="display:none;" class="detailpopup node_entry ${islocal?'server':''} tooltipcontent" >
+<div id="${enc(attr:key)}_tooltip" style="display:none;" class="detailpopup node_entry ${islocal?'server':''} tooltipcontent node_filter_link_holder"
+     data-node-filter-link-id="${enc(attr:nodefilterLinkId?:'')}" >
     <span >
         <i class="rdicon node ${runnable ? 'node-runnable' : ''} icon-small"></i>
         <g:enc>${node.nodename}</g:enc>

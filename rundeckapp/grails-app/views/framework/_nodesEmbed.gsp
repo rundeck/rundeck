@@ -27,7 +27,7 @@
                 <i class="rdicon node ${runnable ? 'node-runnable' : ''} icon-small"></i>
                 <g:enc>${node.nodename}</g:enc>
             </span>
-            <g:render template="nodeTooltipView" model="[node:node,key: nkey+'_key',islocal:nodedata.islocal,runnable:runnable]"/>
+            <g:render template="nodeTooltipView" model="[node:node,key: nkey+'_key',islocal:nodedata.islocal,runnable:runnable, nodefilterLinkId: nodefilterLinkId?:'']"/>
             <% i++ %>
         </g:each>
         <g:javascript>

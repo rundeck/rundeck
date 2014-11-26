@@ -50,12 +50,20 @@ these properties in the [rundeck-config.properties](configuration-file-reference
                                             hovers over a job name in various  
                                             pages. (Default: true)
                                             
-`rundeck.gui.login.welcome    `             Text displayed in the login form.
+`rundeck.gui.login.welcome`                 Text displayed in the login form
                                             pages. (Default: blank)     
+
+`rundeck.gui.login.welcomeHtml`             HTML displayed in the login form
+                                            pages. The HTML will be sanitized
+                                            before display. (Default: blank)
 
 `rundeck.gui.errorpage.hidestacktrace`      Hide Java stacktraces from the end   true/false
                                             user when an error occurs. 
                                             Default: false.                        
+
+`rundeck.gui.job.description.disableHTML`   Disable extended Job description     true/false
+                                            and Option description rendering
+                                            as HTML. (Default: false)
 -------------------------------------------------------------------------------
 
 The `rundeck.gui.errorpage.hidestacktrace` can also be set to true via a Java system property defined at system startup: 

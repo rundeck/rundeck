@@ -37,22 +37,22 @@
         </g:if>
     </ul>
 </span>
-<input type='search' name="filter" class="schedJobNodeFilter form-control"
-       data-bind="value: filterWithoutAll"
-       placeholder="Enter a node filter"
+<input type='search' name="${filterFieldName?enc(attr:filterFieldName):'filter'}" class="schedJobNodeFilter form-control"
+       data-bind="value: filterWithoutAll, valueUpdate: 'input', executeOnEnter: updateMatchedNodes"
+       placeholder="${queryFieldPlaceholderText?:g.message(code:'enter.a.node.filter')}"
        data-toggle='popover'
-       data-popover-content-ref="#queryFilterHelp"
+       data-popover-content-ref="#${queryFieldHelpId?enc(attr:queryFieldHelpId):'queryFilterHelp'}"
        data-placement="bottom"
        data-trigger="manual"
        data-container="body"
-       value="${enc(attr:filtvalue)}" id="schedJobNodeFilter"/>
+       value="${enc(attr:filtvalue)}" id="${filterFieldId ? enc(attr: filterFieldId) : 'schedJobNodeFilter'}"/>
 
 
 <span class="input-group-btn">
-    <a class="btn btn-info" data-toggle='popover-for' data-target="#schedJobNodeFilter">
+    <a class="btn btn-info" data-toggle='popover-for' data-target="#${filterFieldId ? enc(attr: filterFieldId) : 'schedJobNodeFilter'}">
         <i class="glyphicon glyphicon-question-sign"></i>
     </a>
-    <button class="btn btn-default" type="submit">
+    <a class="btn btn-default" data-bind="click: $data.updateMatchedNodes" href="#">
         <g:message code="set.filter"/>
-    </button>
+    </a>
 </span>

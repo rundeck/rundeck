@@ -173,7 +173,7 @@ public class ScriptFileCopier implements DestinationFileCopier, Describable {
     public String copyFileStream(final ExecutionContext executionContext, final InputStream inputStream,
                                  final INodeEntry node) throws FileCopierException {
 
-        return copyFile(executionContext, null, inputStream, null, node, null, true);
+        return copyFile(executionContext, null, inputStream, null, node, null);
     }
 
     /**
@@ -181,7 +181,7 @@ public class ScriptFileCopier implements DestinationFileCopier, Describable {
      */
     public String copyFile(final ExecutionContext executionContext, final File file, final INodeEntry node) throws
                                                                                                             FileCopierException {
-        return copyFile(executionContext, file, null, null, node,null,true);
+        return copyFile(executionContext, file, null, null, node,null);
     }
 
     /**
@@ -190,7 +190,7 @@ public class ScriptFileCopier implements DestinationFileCopier, Describable {
     public String copyScriptContent(final ExecutionContext executionContext, final String s,
                                     final INodeEntry node) throws
                                                            FileCopierException {
-        return copyFile(executionContext, null, null, s, node, null, true);
+        return copyFile(executionContext, null, null, s, node, null);
     }
 
     static enum Reason implements FailureReason {
@@ -199,26 +199,32 @@ public class ScriptFileCopier implements DestinationFileCopier, Describable {
 
     @Override
     public String copyFileStream(ExecutionContext context, InputStream input, INodeEntry node, String destination) throws FileCopierException {
-        return copyFile(context, null, input, null, node, destination, destination == null);
+        return copyFile(context, null, input, null, node, destination);
     }
 
     @Override
     public String copyFile(ExecutionContext context, File file, INodeEntry node, String destination) throws FileCopierException {
-        return copyFile(context, file, null, null, node, destination, destination == null);
+        return copyFile(context, file, null, null, node, destination);
     }
 
     @Override
     public String copyScriptContent(ExecutionContext context, String script, INodeEntry node, String destination) throws FileCopierException {
-        return copyFile(context, null, null, script, node, destination, destination == null);
+        return copyFile(context, null, null, script, node, destination);
     }
 
     /**
      * Internal copy method accepting file, inputstream or string
      */
-    String copyFile(final ExecutionContext executionContext, final File file, final InputStream input,
-            final String content, final INodeEntry node, String remotePath, boolean expandTokens) throws
-                                                                 FileCopierException {
-
+    String copyFile(
+            final ExecutionContext executionContext,
+            final File file,
+            final InputStream input,
+            final String content,
+            final INodeEntry node,
+            String remotePath
+    ) throws
+      FileCopierException
+    {
         File workingdir = null;
         String scriptargs;
         String dirstring;
@@ -253,14 +259,9 @@ public class ScriptFileCopier implements DestinationFileCopier, Describable {
         }
 
         final File srcFile =
-                expandTokens ?
-                        //write the temp file and replace tokens in a script with values from the dataContext
-                        BaseFileCopier.writeScriptTempFile(executionContext, file, input, content, node)
-                        :
-                        null != file ?
-                                file
-                                //write the temp file and do not replace tokens, the file will not be modified
-                                : BaseFileCopier.writeTempFile(executionContext, file, input, content);
+                null != file ?
+                        file :
+                        BaseFileCopier.writeTempFile(executionContext, file, input, content);
 
 
         //create context data with node attributes

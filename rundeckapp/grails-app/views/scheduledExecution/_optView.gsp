@@ -27,7 +27,7 @@
     <span class="optdetail ${edit?'autohilite autoedit':''}" ${edit?'title="Click to edit"':''} ${edit?'':''}>
         <span class=" ${option?.required ? 'required' : ''}" title="${enc(attr:option?.description)}${option?.required ? ' (Required)' : ''}"><g:enc>${option.name}</g:enc></span>
         <span class=""><g:truncate max="20" showtitle="true"><g:enc>${option.secureInput && option.defaultValue?'****':option.defaultValue}</g:enc></g:truncate><g:enc>${option.multivalued?'(+)':''}</g:enc></span>
-        <span class="desc"><g:enc>${option.description}</g:enc></span>
+        <span class="desc"><g:strip>${option.description}</g:strip></span>
     </span>
     <g:if test="${option?.values || option.valuesList}">
         <g:set var="opts" value="${option.values?option.values.sort():option.valuesList.split(',').sort()}"/>

@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.io.IOException;
@@ -99,7 +100,9 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
         //load config.* property values in from project or framework scope
         final Map<String, Map<String, String>> finalDataContext;
         try {
-            finalDataContext = loadConfigData(executionContext, loadInstanceDataFromNodeAttributes(node, pluginDesc), localDataContext, pluginDesc);
+            finalDataContext = loadConfigData(executionContext, loadInstanceDataFromNodeAttributes(node, pluginDesc), localDataContext, pluginDesc,
+                                              ServiceNameConstants.NodeExecutor
+            );
         } catch (ConfigurationException e) {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.ConfigurationFailure,
                     e.getMessage(),

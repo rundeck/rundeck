@@ -31,14 +31,24 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     String jobGroup
     String jobIdentifier
     String argString
+    String nodeFilter
+    Boolean nodeKeepgoing
+    Integer nodeThreadcount
     Boolean nodeStep
-    static transients=['jobIdentifier']
+    String nodeRankAttribute
+    Boolean nodeRankOrderAscending
+    static transients = ['jobIdentifier']
 
     static constraints = {
         jobName(nullable: false, blank: false)
         jobGroup(nullable: true, blank: true)
         argString(nullable: true, blank: true)
         nodeStep(nullable: true)
+        nodeKeepgoing(nullable: true)
+        nodeFilter(nullable: true, maxSize: 1024)
+        nodeThreadcount(nullable: true)
+        nodeRankAttribute(nullable: true, maxSize: 256)
+        nodeRankOrderAscending(nullable: true)
     }
 
     static mapping = {
@@ -48,10 +58,19 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
 		* jobName (type: 'text', sqlType: "varchar(255)")
 		*/
         jobGroup type: 'text'
+        nodeFilter type: 'text'
+        nodeRankAttribute type: 'text'
     }
 
     public String toString() {
-        return "jobref(name=\"${jobName}\" group=\"${jobGroup}\" argString=\"${argString}\" nodeStep=\"${nodeStep}\")" + (errorHandler ? " [handler: ${errorHandler}" : '')
+        return "jobref(name=\"${jobName}\" group=\"${jobGroup}\" argString=\"${argString}\" " +
+                "nodeStep=\"${nodeStep}\"" +
+                "nodeFilter=\"${nodeFilter}\"" +
+                "nodeKeepgoing=\"${nodeKeepgoing}\"" +
+                "nodeThreadcount=\"${nodeThreadcount}\"" +
+                "nodeRankAttribute=\"${nodeRankAttribute}\"" +
+                "nodeRankOrderAscending=\"${nodeRankOrderAscending}\"" +
+                ")" + (errorHandler ? " [handler: ${errorHandler}" : '')
     }
 
     public String summarize() {
@@ -91,6 +110,25 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         if (description) {
             map.description = description
         }
+        if(nodeFilter){
+            map.jobref.nodefilters=[filter:nodeFilter]
+            def dispatch=[:]
+            if(null!=nodeThreadcount && nodeThreadcount>0){
+                dispatch.threadcount=nodeThreadcount
+            }
+            if(null!=nodeKeepgoing){
+                dispatch.keepgoing=!!nodeKeepgoing
+            }
+            if(nodeRankAttribute){
+                dispatch.rankAttribute=nodeRankAttribute
+            }
+            if(null!=nodeRankOrderAscending){
+                dispatch.rankOrder=nodeRankOrderAscending?'ascending':'descending'
+            }
+            if(dispatch){
+                map.jobref.nodefilters.dispatch=dispatch
+            }
+        }
         return map
     }
 
@@ -103,9 +141,35 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         }
         if(map.jobref.nodeStep in ['true',true]){
             exec.nodeStep=true
+        }else{
+            exec.nodeStep=false
         }
         exec.keepgoingOnSuccess = !!map.keepgoingOnSuccess
         exec.description=map.description?.toString()
+        if(map.jobref.nodefilters){
+            exec.nodeFilter=map.jobref.nodefilters.filter?.toString()
+            if(exec.nodeFilter){
+                def dispatch = map.jobref.nodefilters.dispatch
+                if(dispatch?.threadcount){
+                    if(dispatch.threadcount instanceof Integer){
+                        exec.nodeThreadcount= dispatch.threadcount ?: 1
+                    }else{
+                        exec.nodeThreadcount = Integer.parseInt(dispatch.threadcount.toString()) ?: 1
+                    }
+                }
+                if(null!=dispatch?.keepgoing){
+                    if (dispatch.keepgoing in ['true', true]) {
+                        exec.nodeKeepgoing=true
+                    }else{
+                        exec.nodeKeepgoing=false
+                    }
+                }
+                if (null != dispatch?.rankOrder) {
+                    exec.nodeRankOrderAscending = (dispatch.rankOrder == 'ascending')
+                }
+                exec.nodeRankAttribute= dispatch?.rankAttribute
+            }
+        }
         //nb: error handler is created inside Workflow.fromMap
         return exec
     }

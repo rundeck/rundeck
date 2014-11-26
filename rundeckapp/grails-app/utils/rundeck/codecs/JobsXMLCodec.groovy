@@ -301,6 +301,9 @@ class JobsXMLCodec {
                     if (null != cmd.jobref.nodeStep) {
                         cmd.jobref.nodeStep = XmlParserUtil.stringToBool(cmd.jobref.nodeStep, false)
                     }
+                    if (null != cmd.jobref.dispatch && (cmd.jobref.nodefilters instanceof Map)) {
+                        cmd.jobref.nodefilters.dispatch = cmd.jobref.remove('dispatch')
+                    }
                 }else if(cmd['node-step-plugin'] || cmd['step-plugin']){
                     def parsePluginConfig={ plc->
                         def outconf=[:]
@@ -351,6 +354,9 @@ class JobsXMLCodec {
         map.context=[project:map.remove('project')]
         final Map opts = map.remove('options')
         boolean preserveOrder=false
+        if(map.description.indexOf('\n')>=0 ||map.description.indexOf('\n')>=0){
+            map[BuilderUtil.asCDATAName('description')]=map.remove('description')
+        }
         if(null!=opts){
             preserveOrder=opts.any{it.value.sortIndex!=null}
             def optslist=[]
@@ -371,6 +377,9 @@ class JobsXMLCodec {
                 BuilderUtil.makeAttribute(x,'value')
                 BuilderUtil.makeAttribute(x,'regex')
                 BuilderUtil.makeAttribute(x,'valuesUrl')
+                if(x.description?.indexOf('\n')>=0 || x.description?.indexOf('\r')>=0){
+                    x[BuilderUtil.asCDATAName('description')]=x.remove('description')
+                }
                 //convert 'values' list to comma-separated attribute value @values
                 if(x.values){
                     BuilderUtil.addAttribute(x,'values',x.remove('values').join(","))
@@ -520,6 +529,9 @@ class JobsXMLCodec {
                 }
                 if (cmd.jobref.nodeStep) {
                     BuilderUtil.makeAttribute(cmd.jobref, 'nodeStep')
+                }
+                if(cmd.jobref.nodefilters?.dispatch){
+                    cmd.jobref.dispatch= cmd.jobref.nodefilters.remove('dispatch')
                 }
             }else if(cmd.exec){
                 //no change

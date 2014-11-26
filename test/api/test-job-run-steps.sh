@@ -32,12 +32,11 @@ xmlproj=$($XMLSTARLET esc "$project")
 cat > $DIR/temp.out <<END
 <joblist>
    <job>
-      <name>cli job</name>
+      <name>test job</name>
       <group>api-test/job-run-steps</group>
       <description></description>
       <loglevel>INFO</loglevel>
       <context>
-          <project>$xmlproj</project>
           <options>
               <option name="opt1" value="testvalue" required="true"/>
               <option name="opt2" values="a,b,c" required="true"/>
@@ -57,6 +56,7 @@ cat > $DIR/temp.out <<END
 
 echo "option opt1: \$RD_OPTION_OPT1"
 echo "option opt1: @option.opt1@"
+echo "node: @node.name@"
 echo "option opt2: \$1"]]></script>
       </command>
          <command>
@@ -64,7 +64,7 @@ echo "option opt2: \$1"]]></script>
         <script><![CDATA[$DOS_LINE_SCRIPT]]></script>
       </command>
       <command>
-        <jobref name='cli job' group='api-test/job-run'>
+        <jobref name='secondary job' group='api-test/job-run-steps'>
           <arg line='-opt1 asdf -opt2 asdf2' />
         </jobref>
       </command>
@@ -72,6 +72,27 @@ echo "option opt2: \$1"]]></script>
         <scriptfile>$SCRIPT_FILE_1</scriptfile>
         <scriptargs />
       </command>
+      </sequence>
+   </job>
+   <job>
+      <name>secondary job</name>
+      <group>api-test/job-run-steps</group>
+      <description></description>
+      <loglevel>INFO</loglevel>
+      <context>
+          <options>
+              <option name="opt1" value="testvalue" required="true"/>
+              <option name="opt2" values="a,b,c" required="true"/>
+          </options>
+      </context>
+      <dispatch>
+        <threadcount>1</threadcount>
+        <keepgoing>true</keepgoing>
+      </dispatch>
+      <sequence>
+        <command>
+        <exec>$xmlargs</exec>
+        </command>
       </sequence>
    </job>
 </joblist>
@@ -85,7 +106,7 @@ fi
 # now submit req
 runurl="${APIURL}/jobs/import"
 
-params=""
+params="dupeOption=update&project=test"
 
 # specify the file for upload with curl, named "xmlBatch"
 ulopts="-F xmlBatch=@$DIR/temp.out"
@@ -103,10 +124,10 @@ sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 #case there should only be 1 failed or 1 succeeded since we submit only 1
 
 succount=$($XMLSTARLET sel -T -t -v "/result/succeeded/@count" $DIR/curl.out)
-jobid=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/id" $DIR/curl.out)
+jobid=$($XMLSTARLET sel -T -t -v "/result/succeeded/job[@index=1]/id" $DIR/curl.out)
 
-if [ "1" != "$succount" -o "" == "$jobid" ] ; then
-    errorMsg  "Upload was not successful."
+if [ "2" != "$succount" -o "" == "$jobid" ] ; then
+    errorMsg  "Upload was not successful. Jobs: $succount, id: $jobid"
     exit 
 fi
 
@@ -182,16 +203,16 @@ dmax=20
 dc=0
 OUTFILE=$DIR/job-run-steps-test-observed.output
 TESTFILE=$DIR/job-run-steps-test-expected.output
+nodename=$($XMLSTARLET sel -T -t -v "/project/node[1]/@name" $RDECK_BASE/projects/test/etc/resources.xml)
 
 cat > $TESTFILE <<END
 hello there
 option opt1: testvalue
 option opt1: testvalue
+node: $nodename
 option opt2: a
 this is script 2, opt1 is testvalue
 hello there
-option opt1: asdf
-option opt2: asdf2
 this is script 1, opt1 is testvalue
 END
 #statements

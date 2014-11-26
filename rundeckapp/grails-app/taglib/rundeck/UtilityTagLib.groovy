@@ -14,7 +14,7 @@ class UtilityTagLib{
     def static  daysofweekkey = [Calendar.SUNDAY,Calendar.MONDAY,Calendar.TUESDAY,Calendar.WEDNESDAY,Calendar.THURSDAY,Calendar.FRIDAY,Calendar.SATURDAY];
     def public static daysofweekord = ScheduledExecution.daysofweeklist;
     def public static monthsofyearord = ScheduledExecution.monthsofyearlist;
-	static returnObjectForTags = ['rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','helpLinkParams','parseOptsFromString','relativeDateString','enc']
+	static returnObjectForTags = ['rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','helpLinkParams','parseOptsFromString','relativeDateString','enc','textFirstLine','textRemainingLines']
 
     private static Random rand=new java.util.Random()
     def HMacSynchronizerTokensManager hMacSynchronizerTokensManager
@@ -65,7 +65,7 @@ class UtilityTagLib{
         }
         out<<render(template:"/common/expander",model:attrs)
     }
-    
+
     def dayOfWeek = { attrs, body ->
 
         def java.text.DateFormatSymbols DFS = new java.text.DateFormatSymbols(request.getLocale());
@@ -646,7 +646,11 @@ class UtilityTagLib{
     }
 
     def markdown={ attrs, body ->
-        out<<body().toString().decodeMarkdown()
+        if(attrs.safe){
+            out<<body().toString().encodeAsHTMLContent().decodeMarkdown()
+        }else{
+            out<<body().toString().decodeMarkdown()
+        }
     }
 
     /**
@@ -710,6 +714,8 @@ class UtilityTagLib{
     def enc={attrs,body->
         if(attrs.html){
             out << attrs.html.toString().encodeAsHTML()
+        }else if(attrs.stripHtml){
+            out << attrs.stripHtml.toString().encodeAsStripHTML()
         }else if(null!=attrs.attr){
             out << attrs.attr.toString().encodeAsHTMLAttribute()
         }else if(attrs.xml){
@@ -730,6 +736,42 @@ class UtilityTagLib{
             out << body()
         }else {
             out << body().encodeAsHTML()
+        }
+    }
+    /**
+     * Sanitize an HTML string
+     */
+    def sanitize={attrs,body->
+        if(attrs.html){
+            out<<attrs.html.encodeAsSanitizedHTML()
+        }else{
+            out<<body().encodeAsSanitizedHTML()
+        }
+    }
+    /**
+     * Strip tags out of an HTML string and then encode the remaining text
+     */
+    def strip={attrs,body->
+        if(attrs.html){
+            out<<attrs.html.encodeAsStripHTML().encodeAsHTML()
+        }else{
+            out<<body().encodeAsStripHTML().encodeAsHTML()
+        }
+    }
+    def textFirstLine={attrs,body->
+        if(attrs.text){
+            def split=attrs.text.toString().split(/(\r\n?|\n)/,2)
+            out<< (split.length>0?split[0]:attrs.text)
+        }else{
+            out<<attrs.text
+        }
+    }
+    def textRemainingLines={attrs,body->
+        if(attrs.text){
+            def split=attrs.text.toString().split(/(\r\n?|\n)/,2)
+            if(split.length==2){
+                out << split[1]
+            }
         }
     }
 

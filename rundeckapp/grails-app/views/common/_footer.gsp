@@ -7,3 +7,4 @@
     <g:link controller="menu" action="licenses">Licenses</g:link>
 
     <span class="version"><g:enc>${grailsApplication.metadata['build.ident']}</g:enc></span>
+    <span class="rundeck-version-identity" data-version-string="${enc(attr: grailsApplication.metadata['build.ident'])}"></span>

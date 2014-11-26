@@ -216,7 +216,38 @@ included.
 ## description 
 
 The job description is a sub-element of [job](#job) and allows a short
-description of the job.
+description of the job.  
+
+If the description contains more than one line of text, then the first line is used as the "short description" of the job, and rendered exactly as text. The remaining lines are the "extended description", rendered using Markdown format as HTML in the Rundeck GUI. Markdown can also embed HTML directly if you like.  See [Wikipedia - Markdown](http://en.wikipedia.org/wiki/Markdown#Example).  
+
+The HTML is sanitized to remove disallowed tags before rendering to the browser (such as `<script>`, etc.). 
+You can disable all extended description HTML rendering
+via a configuration flag.
+See [GUI Customization](../administration/gui-customization.html).
+
+**Note**: To preserve formatting when defining the extended job description in XML, you should be sure to use a CDATA section. Wrap the contents in `<![CDATA[` and `]]>`.
+
+*Example Extended description*
+
+~~~~~~~~ {.xml }
+<job>
+    <name>My Job</name>
+    <description><![CDATA[Performs a service
+
+This is <b>html</b>
+<ul><li>bulleted list</li></ul>
+
+<a href="/">Top</a>
+
+1. this is a markdown numbered list
+2. second item
+
+[a link](http://example.com)
+
+]]></description>
+</job>
+~~~~~~~~ 
+
 
 ## group 
 
@@ -493,7 +524,7 @@ regex
 
 description
 
-:    Description of the option
+:    Description of the option, will be rendered as Markdown.
 
 required
 
@@ -534,6 +565,18 @@ Define defaults for the "ports" option, allowing multiple values separated by ",
 ~~~~~~~~ {.xml}
 <option name="port" value="80" values="80,8080,8888" enforcedvalues="true" 
         multivalued="true" delimiter="," />
+~~~~~~~~ 
+
+Use a multi-line description inside a CDATA section to preserve 
+whitespace. Wrap the content in `<![CDATA[` and `]]>`:
+
+~~~~~~~~ {.xml}
+<option name='example'>
+  <description><![CDATA[example option description
+
+* this content will be rendered
+* as markdown]]></description>
+</option>
 ~~~~~~~~ 
 
 

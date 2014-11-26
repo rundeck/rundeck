@@ -53,4 +53,24 @@ public class JobRefCommandBase extends JobRefCommand implements HasFailureHandle
     public boolean isKeepgoingOnSuccess() {
         return false;
     }
+
+    @Override public Boolean getNodeKeepgoing() {
+        return null;
+    }
+
+    @Override public String getNodeFilter() {
+        return null;
+    }
+
+    @Override public Integer getNodeThreadcount() {
+        return null;
+    }
+
+    @Override public String getNodeRankAttribute() {
+        return null;
+    }
+
+    @Override public Boolean getNodeRankOrderAscending() {
+        return null;
+    }
 }

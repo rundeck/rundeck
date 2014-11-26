@@ -497,6 +497,7 @@ class FrameworkController extends ControllerBase {
         if(!result.nodesvalid){
             request.error="Error parsing file \"${result.nodesfile}\": "+result.nodeserror? result.nodeserror*.message?.join("\n"):'no message'
         }
+        result['nodefilterLinkId']=params.nodefilterLinkId
         render(template:"allnodes",model: result)
     }
 

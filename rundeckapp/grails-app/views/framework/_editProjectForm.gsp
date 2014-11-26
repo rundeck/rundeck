@@ -115,6 +115,7 @@
         <span class="help-block"><g:message code="domain.Project.edit.NodeExecutor.explanation" /></span>
         <g:each in="${nodeExecDescriptions}" var="description" status="nex">
             <g:set var="nkey" value="${g.rkey()}"/>
+            <g:set var="isSelected" value="${defaultNodeExec == description.name}"/>
             <div class="radio">
                 <label>
                     <g:radio
@@ -122,7 +123,7 @@
                         value="${nex}"
                         class="nexec"
                         id="${nkey+'_input'}"
-                        checked="${defaultNodeExec?defaultNodeExec==description.name:false}"/>
+                        checked="${isSelected}"/>
                     <b><g:enc>${description.title}</g:enc></b>
                 </label>
                 <span class="help-block"><g:enc>${description.description}</g:enc></span>
@@ -142,7 +143,8 @@
                         <g:each in="${description.properties}" var="prop">
                                 <g:render
                                     template="pluginConfigPropertyFormField"
-                                    model="${[prop:prop,prefix:nodeexecprefix,error:nodeexecreport?.errors?nodeexecreport?.errors[prop.name]:null,values:nodeexecconfig,
+                                    model="${[prop:prop,prefix:nodeexecprefix,error:nodeexecreport?.errors && isSelected ?nodeexecreport?.errors[prop.name]:null,
+                                              values: isSelected ? nodeexecconfig : null,
                                 fieldname:nodeexecprefix+prop.name,origfieldname:'orig.'+nodeexecprefix+prop.name]}"/>
                         </g:each>
                     </div>
@@ -159,6 +161,7 @@
         <span class="help-block"><g:message code="domain.Project.edit.FileCopier.explanation" /></span>
         <g:each in="${fileCopyDescriptions}" var="description" status="nex">
             <g:set var="nkey" value="${g.rkey()}"/>
+            <g:set var="isSelected" value="${defaultFileCopy == description.name}"/>
             <div class="radio">
                 <label>
                     <g:radio
@@ -166,7 +169,7 @@
                         value="${nex}"
                         class="fcopy"
                         id="${nkey+'_input'}"
-                        checked="${defaultFileCopy?defaultFileCopy==description.name:false}"/>
+                        checked="${isSelected}"/>
                     <b><g:enc>${description.title}</g:enc></b>
                 </label>
                 <span class="help-block"><g:enc>${description.description}</g:enc></span>
@@ -186,7 +189,8 @@
                     <g:each in="${description.properties}" var="prop">
                             <g:render
                                 template="pluginConfigPropertyFormField"
-                                model="${[prop:prop,prefix:fcopyprefix,error:fcopyreport?.errors?fcopyreport?.errors[prop.name]:null,values:fcopyconfig,
+                                model="${[prop:prop,prefix:fcopyprefix,error:fcopyreport?.errors && isSelected ?fcopyreport?.errors[prop.name]:null,
+                                          values: isSelected?fcopyconfig:null,
                             fieldname:fcopyprefix+prop.name,origfieldname:'orig.'+fcopyprefix+prop.name]}"/>
                     </g:each>
                 </div>

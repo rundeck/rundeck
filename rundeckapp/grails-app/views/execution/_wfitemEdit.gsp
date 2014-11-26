@@ -1,4 +1,4 @@
-<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; rundeck.PluginStep; rundeck.CommandExec; rundeck.JobExec" %>
+<%@ page import="rundeck.User; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; rundeck.PluginStep; rundeck.CommandExec; rundeck.JobExec" %>
 <%--
  Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
 
@@ -23,7 +23,7 @@
     $Id$
  --%>
 <g:set var="rkey" value="${g.rkey()}"/>
-<div class="popout wfitemEditForm" style="background:white">
+<div class=" wfitemEditForm container">
 <g:hasErrors bean="${item}">
     <div class="error message">
     <g:renderErrors bean="${item}" as="list"/>
@@ -34,29 +34,46 @@
     <g:if test="${isErrorHandler}">
         <span class="text-info"><g:message code="Workflow.stepErrorHandler.description" /></span>
     </g:if>
+%{--Job Reference item--}%
 <g:if test="${'job'==newitemtype || item instanceof JobExec || (item instanceof java.util.Map && item?.jobName)}">
-    <div >
-       <div class="text-muted">Job Name</div>
-       <input id="jobNameField" type="text" name="jobName" value="${enc(attr:item?.jobName)}" size="100" autofocus/>
+<section >
+    <div class="form-group">
+       <label class="col-sm-2 control-label" for="jobNameField${rkey}">Job Name/Group</label>
+        <div class="col-sm-4">
+
+            <input id="jobNameField${rkey}" type="text" name="jobName" value="${enc(attr: item?.jobName)}"
+                placeholder="Job Name"
+                class="form-control"
+                   size="100" autofocus/>
+        </div>
+        <div class="col-sm-4">
+            <input id="jobGroupField${rkey}"  type="text" name="jobGroup" value="${enc(attr:item?.jobGroup)}" size="100"
+                placeholder="Group Name"
+                class="form-control"
+            />
+        </div>
+
+        <div class="col-sm-2">
+            <span class="btn btn-sm btn-default act_choose_job" onclick="loadJobChooser(this, 'jobChooser','jobNameField${rkey}','jobGroupField${rkey}');"
+                  id="jobChooseBtn${rkey}"
+                  title="Select an existing Job to use"
+                  data-loading-text="Loading...">
+                Choose A Job&hellip;
+                <i class="caret"></i>
+            </span>
+            <span id="jobChooseSpinner"></span>
+        </div>
     </div>
-    <div >
-        <div class="text-muted">Job Group</div>
-        <input id="jobGroupField"  type="text" name="jobGroup" value="${enc(attr:item?.jobGroup)}" size="100"/>
+    <div class="form-group" >
+        <label class="col-sm-2 control-label">Arguments</label>
+        <div class="col-sm-10">
+            <input type='text' name="argString" value="${enc(attr:item?.argString)}" size="100"
+                placeholder="Enter arguments, e.g. -option1 value -option2 value"
+                   id="jobArgStringField"
+                   class="form-control"/>
+        </div>
     </div>
-    <div  >
-        <div class="text-muted">Enter the commandline arguments for the Job:</div>
-        <input type='text' name="argString" value="${enc(attr:item?.argString)}" size="100" id="jobArgStringField"/>
-    </div>
-    <div style="margin-top:5px;">
-        <span class="btn btn-sm btn-default" onclick="loadJobChooser(this,'jobChooser');" id="jobChooseBtn"
-              title="Select an existing Job to use"
-              data-loading-text="Loading...">
-            Choose A Job&hellip;
-            <i class="caret"></i>
-        </span>
-        <span id="jobChooseSpinner"></span>
-    </div>
-    <div class="popout" id="jobChooser" style="display:none; width:300px; padding: 5px; background:white; position:absolute;">
+    <div class="popout jobChooser" id="jobChooser" style="display:none; width:300px; padding: 5px; background:white; position:absolute;">
         <div style="margin-bottom:5px;">
             <span class="text-muted">Click on the name of the Job to use</span>
             <button type="button" class=" close" style="text-align:right" onclick="hideJobChooser();">
@@ -67,29 +84,227 @@
         </div>
     </div>
 
-    <div style="margin-top:5px;">
+    <div class="row">
+    <div class="col-sm-2 control-label">
+    <span class="btn   btn-link ${wdgt.css(if: item?.nodeFilter, then: 'active')}"
+                data-toggle="collapse" data-target="#nodeFilterOverride${enc(attr: rkey)}">
+        Override Node Filters?
+        <i class="glyphicon ${wdgt.css(if: item?.nodeFilter, then: 'glyphicon-chevron-down', else: 'glyphicon-chevron-right')} "></i>
+    </span>
+    </div>
+    </div>
+    </section>
+
+    <section id="nodeFilterOverride${enc(attr: rkey)}" class="collapse-expandable collapse ${wdgt.css(if: item?.nodeFilter, then: 'in')} node_filter_link_holder section-separator-solo">
+    <div class="form-group">
+        <div class="col-sm-12 ">
+            <div class="text-info">
+                <g:message code="JobExec.property.nodeFilter.help.description" />
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+
+        <label class="col-sm-2 control-label" for="nodeFilterField${enc(attr: rkey)}">
+            <g:message code="node.filter.prompt"/>
+        </label>
+
+        <div class="col-sm-10">
+            <g:set var="filtvalue" value="${item?.nodeFilter}"/>
+
+            <span class="input-group nodefilters">
+                <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
+                    <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
+                </g:if>
+                <g:render template="/framework/nodeFilterInputGroup"
+                          model="[filterFieldName: 'nodeFilter',
+                                  filterFieldId:'nodeFilterField'+rkey,
+                                  queryFieldHelpId:'nodeFilterQueryFieldHelp'+rkey,
+                                  queryFieldPlaceholderText: g.message(code:'enter.a.node.filter.override'),
+                                  filterset: filterset,
+                                  filtvalue: filtvalue,
+                                  filterName: null]"/>
+            </span>
+
+            <div class=" collapse" id="nodeFilterQueryFieldHelp${enc(attr: rkey)}">
+                <div class="help-block">
+                    <g:render template="/common/nodefilterStringHelp"/>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-2 control-label">
+            <g:message code="matched.nodes.prompt"/>
+        </label>
+
+        <div class=" col-sm-10  ">
+
+            <div class="well well-sm embed matchednodes">
+                <button type="button" class="pull-right btn btn-info btn-sm refresh_nodes"
+                        data-loading-text="Loading..."
+                        data-bind="click: $data.updateMatchedNodes"
+                        title="click to refresh">
+                    <g:message code="refresh"/>
+                    <i class="glyphicon glyphicon-refresh"></i>
+                </button>
+                <span class="text-muted" data-bind="visible: allcount()>0">
+                    <span data-bind="text: allcount"></span> <g:message code="nodes.matched"/>
+                </span>
+                <span class="text-muted" data-bind="visible: !filter()">
+                    <span data-bind="text: emptyMessage"></span>
+                </span>
+
+                <div id='matchednodes${rkey}' class="clearfix matched_nodes_receiver">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+
+        <label class="col-sm-2 control-label" for="nodeThreadcountField${rkey}">
+            <g:message code="scheduledExecution.property.nodeThreadcount.label"/>
+        </label>
+
+        <div class="col-sm-2">
+            <input
+                    data-bind="enable: filter()"
+                    type='number'
+                    name="nodeThreadcount"
+                    min="1"
+                    value="${enc(attr: item?.nodeThreadcount)}"
+                    size="3"
+                    class="form-control"
+                    id="nodeThreadcountField${rkey}"
+            />
+        </div>
+        <div class="col-sm-8 help-block">
+            <g:message code="JobExec.property.nodeThreadcount.null.description"/>
+        </div>
+    </div>
+
+    <div class="form-group">
+
+        <label class="col-sm-2 control-label ">
+            <g:message code="scheduledExecution.property.nodeKeepgoing.prompt"/>
+        </label>
+
+        <div class="col-sm-10">
+            <div class="radio">
+                <label >
+                    <g:radio name="nodeKeepgoing" value="" checked="${item?.nodeKeepgoing==null}"
+                             data-bind="enable: filter()"/>
+                    <g:message code="JobExec.property.nodeKeepgoing.null.description"/>
+                </label>
+            </div>
+
+            <div class="radio">
+                <label >
+                    <g:radio name="nodeKeepgoing" value="true" checked="${item?.nodeKeepgoing!=null&&item?.nodeKeepgoing}"
+                             data-bind="enable: filter()"/>
+                    <g:message code="Workflow.property.keepgoing.true.description"/>
+                </label>
+            </div>
+
+            <div class="radio">
+                <label >
+                    <g:radio name="nodeKeepgoing" value="false" checked="${item?.nodeKeepgoing!=null&&!item?.nodeKeepgoing}"
+                             data-bind="enable: filter()"/>
+                    <g:message  code="Workflow.property.keepgoing.false.description"/>
+                </label>
+            </div>
+        </div>
+    </div>
+
+        <div class="form-group">
+
+            <label class="col-sm-2 control-label" for="nodeRankAttributeField${rkey}">
+                <g:message code="scheduledExecution.property.nodeRankAttribute.label"/>
+            </label>
+
+            <div class="col-sm-10">
+                <input
+                        data-bind="enable: filter()"
+                        type='text'
+                        name="nodeRankAttribute"
+                        value="${enc(attr: item?.nodeRankAttribute)}"
+                        class="form-control"
+                        placeholder="${enc(code:'scheduledExecution.property.nodeRankAttribute.description',encodeAs:'HTMLAttribute')}"
+                        id="nodeRankAttributeField${rkey}"/>
+            </div>
+
+        </div>
+        <div class="form-group">
+
+            <label class="col-sm-2 control-label" for="nodeRankOrderField${rkey}">
+                <g:message code="scheduledExecution.property.nodeRankOrder.label"/>
+            </label>
+
+            <div class="col-sm-10">
+                <div class="radio">
+                    <label>
+                        <g:radio name="nodeRankOrderAscending" value=""
+                                 checked="${item?.nodeRankOrderAscending == null}"
+                                 data-bind="enable: filter()"/>
+                        <g:message code="JobExec.property.nodeRankOrder.null.description"/>
+                    </label>
+                </div>
+                <div class="radio">
+                    <label>
+                        <g:radio name="nodeRankOrderAscending" value="true"
+                                 checked="${item?.nodeRankOrderAscending == Boolean.TRUE}"
+                                 data-bind="enable: filter()"/>
+                        <g:message code="scheduledExecution.property.nodeRankOrder.ascending.label"/>
+                    </label>
+                </div>
+                <div class="radio">
+                    <label>
+                        <g:radio name="nodeRankOrderAscending" value="false"
+                                 checked="${item?.nodeRankOrderAscending == Boolean.FALSE}"
+                                 data-bind="enable: filter()"/>
+                        <g:message code="scheduledExecution.property.nodeRankOrder.descending.label"/>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section>
+    <div class="form-group">
         <g:set var="isNodeStep" value="${item ? item.nodeStep : newitemnodestep == 'true'}"/>
-        <div class="prompt"><g:message code="JobExec.nodeStep.title" /></div>
-        <div class="presentation">
-            <div>
-                <g:radio id="jobNodeStepFieldTrue" type="checkbox" name="nodeStep" value="true"
-                         checked="${!!isNodeStep}"/>
-                <label for="jobNodeStepFieldTrue">
+        <label class="col-sm-2 control-label"><g:message code="JobExec.nodeStep.title" /></label>
+        <div class="col-sm-10">
+            <div class="radio">
+                <label>
+                    <g:radio id="jobNodeStepFieldTrue"  name="nodeStep" value="true"
+                             checked="${!!isNodeStep}"/>
+
                     <g:message code="JobExec.nodeStep.true.label" />
                 </label>
                 <span class="text-muted"><g:message code="JobExec.nodeStep.true.description"/></span>
             </div>
-            <div>
-                <g:radio id="jobNodeStepFieldFalse" type="checkbox" name="nodeStep" value="false"
-                         checked="${!isNodeStep}"/>
-                <label for="jobNodeStepFieldFalse">
+            <div class="radio">
+                <label>
+                    <g:radio id="jobNodeStepFieldFalse"  name="nodeStep" value="false"
+                             checked="${!isNodeStep}"/>
+
                     <g:message code="JobExec.nodeStep.false.label" />
                 </label>
                 <span class="text-muted"><g:message code="JobExec.nodeStep.false.description"/></span>
             </div>
         </div>
     </div>
+    </section>
+    <g:embedJSON id="jobrefFilterParamsJSON${rkey}" data="${[filter: item?.nodeFilter]}"/>
+    <g:javascript>
+            fireWhenReady("nodeFilterOverride${rkey}",function(){
+                setupJobExecNodeFilterBinding('#nodeFilterOverride${rkey}','matchednodes${rkey}','jobrefFilterParamsJSON${rkey}');
+            });
+    </g:javascript>
 </g:if>
+%{--Script or Command item--}%
 <g:elseif test="${'script'==newitemtype || 'scriptfile'==newitemtype || 'command'==newitemtype || item instanceof CommandExec }">
     <g:set var="isAdhocRemote" value="${'command'==newitemtype || item?.adhocRemoteString}"/>
     <g:set var="isAdhocLocal" value="${'script'==newitemtype || item?.adhocLocalString}"/>
@@ -97,42 +312,79 @@
     <g:hiddenField name="adhocExecution" value="true"/>
     <div id="scriptStep_${rkey}">
     <g:if test="${isAdhocLocal}">
-        <div id="localScriptDiv" class="${hasErrors(bean:item,field:'adhocExecution','fieldError')}">
-            <div class="text-muted"><g:message code="Workflow.Step.adhocLocalString.description" />:</div>
-            <textarea rows="10" cols="60" name="adhocLocalString" id="adhocLocalStringField" class="code apply_ace" autofocus><g:enc>${item?.adhocLocalString}</g:enc></textarea>
+        <div id="localScriptDiv" class="form-group ${hasErrors(bean:item,field:'adhocExecution','has-error')}">
+            <label class="col-sm-12 text-form-label" for="adhocLocalStringField${rkey}">
+                <g:message code="Workflow.Step.adhocLocalString.description" />
+            </label>
+            <div class="col-sm-12">
+                <textarea rows="10" cols="60" name="adhocLocalString" id="adhocLocalStringField${rkey}" class="form-control code apply_ace" autofocus><g:enc>${item?.adhocLocalString}</g:enc></textarea>
+            </div>
         </div>
     </g:if>
     <g:elseif test="${isAdhocFileExecution}">
-    <div id="filepathDiv" >
-        <div class="text-muted"><g:message code="Workflow.Step.adhocFilepath.description" />:</div>
-        <input type='text' name="adhocFilepath" value="${enc(attr:item?.adhocFilepath)}" size="100" id="adhocFilepathField" autofocus/>
+    <div id="filepathDiv" class="form-group">
+        <label class="col-sm-2 control-label"><g:message code="Workflow.Step.adhocFilepath.label" /></label>
+        <div class="col-sm-10">
+            <input
+                    type='text'
+                    name="adhocFilepath"
+                    value="${enc(attr:item?.adhocFilepath)}"
+                    class="form-control"
+                    id="adhocFilepathField"
+                    placeholder="${g.enc(code:'Workflow.Step.adhocFilepath.description',encodeAs:'HTMLAttribute')}"
+                    autofocus
+            />
+        </div>
     </div>
     </g:elseif>
     <g:elseif test="${isAdhocRemote}">
-    <div id="remoteScriptDiv"  class="${hasErrors(bean:item,field:'adhocExecution','fieldError')}">
-        <div class="text-muted"><g:message code="Workflow.Step.adhocRemoteString.description" />:</div>
-        <input type='text' name="adhocRemoteString" value="${enc(attr:item?.adhocRemoteString)}" size="100" id="adhocRemoteStringField" autofocus/>
+    <div id="remoteScriptDiv"  class="form-group  ${hasErrors(bean:item,field:'adhocExecution','has-error')}">
+        <label class="col-sm-2 control-label"><g:message code="Workflow.Step.adhocRemoteString.label" /></label>
+        <div class="col-sm-10">
+            <input
+                    type='text'
+                    name="adhocRemoteString"
+                    value="${enc(attr:item?.adhocRemoteString)}"
+                    class="form-control"
+                    placeholder="${g.enc(code:'Workflow.Step.adhocRemoteString.description',encodeAs:'HTMLAttribute')}"
+                    id="adhocRemoteStringField"
+                    autofocus/>
+        </div>
     </div>
     </g:elseif>
     <g:if test="${!isAdhocRemote||isAdhocFileExecution}">
-    <div id="adhocScriptArgs" >
-        <div class="text-muted"><g:message code="Workflow.Step.argString.description" />:</div>
-        <input type='text' name="argString" value="${enc(attr:item?.argString)}" size="100" id="argStringField"
-               data-bind="value: args, valueUpdate: 'keyup'"/>
+    <div id="adhocScriptArgs" class="form-group" >
+        <label class="control-label col-sm-2">
+            <g:message code="Workflow.Step.argString.label" />
+        </label>
+        <div class="col-sm-10">
+            <input type='text'
+                   name="argString"
+                   value="${enc(attr:item?.argString)}"
+                   class="form-control"
+                   id="argStringField"
+                   placeholder="${enc(code:'Workflow.Step.argString.description',encodeAs:'HTMLAttribute')}"
+                   data-bind="value: args, valueUpdate: 'keyup'"
+            />
+        </div>
     </div>
     </g:if>
     <g:if test="${!isAdhocRemote}">
         <g:set var="hasAdvanced" value="${item?.scriptInterpreter || item?.interpreterArgsQuoted || item?.fileExtension}"/>
-        <span class="btn btn-sm  btn-link ${wdgt.css(if: hasAdvanced, then:'active')}" data-toggle="collapse" data-target="#scriptInterpreter${rkey}">
-            Advanced
-            <i class="glyphicon ${wdgt.css(if: hasAdvanced, then: 'glyphicon-chevron-down', else:'glyphicon-chevron-right')} "></i>
-        </span>
+        <div class="row">
+            <div class="col-sm-2 control-label">
+                <span class="btn btn-link ${wdgt.css(if: hasAdvanced, then:'active')}" data-toggle="collapse" data-target="#scriptInterpreter${rkey}">
+                    Advanced
+                    <i class="glyphicon ${wdgt.css(if: hasAdvanced, then: 'glyphicon-chevron-down', else:'glyphicon-chevron-right')} "></i>
+                </span>
+            </div>
+        </div>
         <div id="scriptInterpreter${enc(attr:rkey)}" class="collapse-expandable collapse ${wdgt.css(if: hasAdvanced, then: 'in')}">
             <div class="form-group">
 
-                <label class="col-sm-2 text-right form-control-static"
-                       for="scriptInterpreterField"><g:message
-                        code="Workflow.Step.scriptInterpreter.label"/>:</label>
+                <label class="col-sm-2 control-label"
+                       for="scriptInterpreterField${rkey}"><g:message
+                        code="Workflow.Step.scriptInterpreter.label"/></label>
                 <div class="col-sm-10">
                     <div class="popout tooltipcontent helptooltip"
                          id="interpreterHelp${enc(attr: rkey)}_tooltip"
@@ -147,7 +399,7 @@
                                value="${enc(attr:item?.scriptInterpreter)}" size="100"
                             class="form-control"
                             data-bind="value: invocationString, valueUpdate: 'keyup'"
-                               id="scriptInterpreterField" autofocus/>
+                               id="scriptInterpreterField${rkey}" autofocus/>
 
                         <div class="input-group-addon">
                             <span class="action obs_tooltip"
@@ -188,9 +440,9 @@
 
             <div class="form-group">
 
-                <label class="col-sm-2 text-right form-control-static"
-                       for="fileExtensionField"><g:message
-                        code="Workflow.Step.fileExtension.label"/>:</label>
+                <label class="col-sm-2 control-label"
+                       for="fileExtensionField${rkey}"><g:message
+                        code="Workflow.Step.fileExtension.label"/></label>
 
                 <div class="col-sm-10">
                     <div class="popout tooltipcontent helptooltip"
@@ -208,7 +460,7 @@
                                value="${enc(attr: item?.fileExtension)}" size="100"
                                class="form-control"
                                data-bind="value: fileExtension, valueUpdate: 'keyup'"
-                               id="fileExtensionField" />
+                               id="fileExtensionField${rkey}" />
 
                         <div class="input-group-addon">
                             <span class="action obs_tooltip"
@@ -222,17 +474,20 @@
             </div>
         </div>
         <div>
-        <span class="prompt">Execution Preview:</span>
+        <div class="form-group">
+            <div class="col-sm-2 control-label">Execution Preview</div>
 
-        <div id='interpreterArgsQuotedHelp${rkey}_preview' class="presentation">
-            <code>$ <span data-bind="html: invocationPreviewHtml"></span></code>
-        </div>
-            <g:embedJSON id="scriptStepData_${rkey}" data="${[invocationString: item?.scriptInterpreter?:'',fileExtension: item?.fileExtension?:'',args: item?.argString?:'',argsQuoted: item?.interpreterArgsQuoted?true:false]}"/>
-            <g:javascript>
-            fireWhenReady("scriptStep_${rkey}",function(){
-                workflowEditor.bindKey('${rkey}','scriptStep_${rkey}',loadJsonData('scriptStepData_${rkey}'));
-            });
-            </g:javascript>
+                <div id='interpreterArgsQuotedHelp${rkey}_preview' class="col-sm-10 form-control-static">
+                    <code>$ <span data-bind="html: invocationPreviewHtml"></span></code>
+                </div>
+
+                <g:embedJSON id="scriptStepData_${rkey}" data="${[invocationString: item?.scriptInterpreter?:'',fileExtension: item?.fileExtension?:'',args: item?.argString?:'',argsQuoted: item?.interpreterArgsQuoted?true:false]}"/>
+                <g:javascript>
+                fireWhenReady("scriptStep_${rkey}",function(){
+                    workflowEditor.bindKey('${rkey}','scriptStep_${rkey}',loadJsonData('scriptStepData_${rkey}'));
+                });
+                </g:javascript>
+            </div>
         </div>
     </g:if>
     </div>
@@ -272,9 +527,14 @@
     </div>
 </g:if>
 <g:else>
-    <div>
-        <div class="info note">Step Description</div>
-        <input id="description" type="text" name="description" value="${enc(attr:item?.description)}" size="100"/>
+    <div class="form-group">
+        <label class="col-sm-2 control-label" for="description${rkey}">Step Description</label>
+        <div class="col-sm-10">
+        <input id="description${rkey}" type="text" name="description" value="${enc(attr:item?.description)}"
+            class="form-control"
+            placeholder="Description of this step"
+               size="100"/>
+        </div>
     </div>
 </g:else>
 

@@ -182,6 +182,9 @@ class PasswordFieldsService {
                 String value = config.props[key]
 
                 if (!fields.containsKey(fieldKey(key, configurationPosition))) {
+                    if (value == null) {
+                        continue
+                    }
                     config.props[key] = value
                     continue
                 }

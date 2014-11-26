@@ -654,7 +654,11 @@ section{
     margin-top: @padding-large-vertical;
   }
   & + &.section-separator {
-    border-top: 1px solid @gray-light;
+    border-top: 1px solid @legend-border-color;
+  }
+  &.section-separator-solo {
+    border-top: 1px solid @legend-border-color;
+    border-bottom: 1px solid @legend-border-color;
   }
 }
 
@@ -1152,6 +1156,18 @@ section{
     padding: 2px;
     border: 1px dotted @brand-info;
   }
+  /**
+   * single step or option edit box
+   */
+  .wfitemEditForm, .optEditForm{
+    border: 2px solid @legend-border-color;
+    .border-bottom-radius(@border-radius-base);
+    .border-top-radius(@border-radius-base);
+    padding: @base-item-padding-vertical @base-item-padding-horizontal;
+    &.container{
+      background: white;
+    }
+  }
 
 
 //option values in code sections
@@ -1490,3 +1506,17 @@ pre.filtererror{
     .box-shadow(none);
   }
 
+//version identity
+.rundeck-version-identity{
+  .version-icon{
+    .badge();
+    background-color: #eee;
+    font-weight: normal;
+  }
+  .version-name:before{
+    content:' "';
+  }
+  .version-name:after{
+    content:'" ';
+  }
+}

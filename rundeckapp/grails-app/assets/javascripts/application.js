@@ -1,6 +1,7 @@
 //= require noconflict
 //= require_self
 //= require menus
+//= require versionIdentity
 
 // methods for modifying inner html or text content
 
@@ -13,9 +14,6 @@ function setHtml(elem,html){
 }
 function appendHtml(elem,html){
     $(elem).innerHTML+=html;
-}
-function wrapContentsHtml(elem,pref,suff){
-    elem.innerHTML = pref + elem.innerHTML + suff;
 }
 
 function setText(elem,text){
