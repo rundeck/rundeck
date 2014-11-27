@@ -9,7 +9,7 @@
   </parent>
   <groupId>org.rundeck</groupId>
   <artifactId>rundeck-storage-filesys</artifactId>
-  <version>2.3.3-SNAPSHOT</version>
+  <version>2.4.0-SNAPSHOT</version>
   <name>Rundeck library rundeck-storage-filesys</name>
   <description>Rundeck</description>
   <url>http://rundeck.org</url>
@@ -37,7 +37,7 @@
     <dependency>
       <groupId>org.rundeck</groupId>
       <artifactId>rundeck-storage-data</artifactId>
-      <version>2.3.3-SNAPSHOT</version>
+      <version>2.4.0-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
     <dependency>

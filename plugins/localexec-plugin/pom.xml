@@ -5,11 +5,11 @@
   <parent>
     <artifactId>rundeck-bundled-plugins</artifactId>
     <groupId>org.rundeck</groupId>
-    <version>2.3.3-SNAPSHOT</version>
+    <version>2.4.0-SNAPSHOT</version>
   </parent>
   <groupId>org.rundeck</groupId>
   <artifactId>rundeck-localexec-plugin</artifactId>
-  <version>2.3.3-SNAPSHOT</version>
+  <version>2.4.0-SNAPSHOT</version>
   <name>RunDeck LocalExec Node Step Plugin</name>
   <url>http://rundeck.org</url>
   <inceptionYear>2011</inceptionYear>
@@ -31,7 +31,7 @@
               <Rundeck-Plugin-Classnames>com.dtolabs.rundeck.plugin.localexec.LocalExecNodeStepPlugin</Rundeck-Plugin-Classnames>
               <Rundeck-Plugin-Version>1.1</Rundeck-Plugin-Version>
               <Rundeck-Plugin-Archive>true</Rundeck-Plugin-Archive>
-              <Rundeck-Plugin-File-Version>2.3.3-SNAPSHOT</Rundeck-Plugin-File-Version>
+              <Rundeck-Plugin-File-Version>2.4.0-SNAPSHOT</Rundeck-Plugin-File-Version>
             </manifestEntries>
           </archive>
         </configuration>
@@ -42,7 +42,7 @@
     <dependency>
       <groupId>org.rundeck</groupId>
       <artifactId>rundeck-core</artifactId>
-      <version>2.3.3-SNAPSHOT</version>
+      <version>2.4.0-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
