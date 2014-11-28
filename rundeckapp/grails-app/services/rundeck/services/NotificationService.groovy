@@ -409,7 +409,9 @@ public class NotificationService implements ApplicationContextAware{
             failedNodeList: e.failedNodeList?.split(",") as List,
             succeededNodeListString: e.succeededNodeList,
             succeededNodeList: e.succeededNodeList?.split(",") as List,
-            loglevel: ExecutionService.textLogLevels[e.loglevel] ?: e.loglevel
+            loglevel: ExecutionService.textLogLevels[e.loglevel] ?: e.loglevel,
+            includeNodeFilters: e.asIncludeMap(),
+            excludeNodeFilters: e.asExcludeMap()
         ]
         if (null != e.dateCompleted) {
             emap.dateEnded = e.dateCompleted
