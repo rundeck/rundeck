@@ -49,7 +49,6 @@ import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 import com.jcraft.jsch.JSchException;
-
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.BuildException;
@@ -1069,6 +1068,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             this.description = description;
         }
     }
+
 
     static class ExtractFailure {
 

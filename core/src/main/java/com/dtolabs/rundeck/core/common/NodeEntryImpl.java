@@ -48,7 +48,6 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
     public static final String NAME = "nodename";
     public static final String TAGS = "tags";
 
-
     /**
      * All attribute names for predefined properties.
      */
@@ -177,7 +176,6 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
     public void setUsername(final String username) {
         setAttribute(USERNAME, username);
     }
-    
 
 
     public boolean equals(final INodeDesc node) {
