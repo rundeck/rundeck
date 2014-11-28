@@ -49,6 +49,7 @@ import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 import com.jcraft.jsch.JSchException;
+
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.BuildException;
@@ -665,9 +666,10 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         }
         
         public Boolean getLocalSSHAgent() {
-        	Boolean localSSHAgent = false;
-            if (node.getLocalSSHAgent()) {
-            	localSSHAgent = node.getLocalSSHAgent();
+            Boolean localSSHAgent = false;
+        	  Map<String,String> nodeAttrs = node.getAttributes();
+            if (nodeAttrs.get(NODE_ATTR_LOCAL_SSH_AGENT) != null) {
+              localSSHAgent = Boolean.valueOf(nodeAttrs.get(NODE_ATTR_LOCAL_SSH_AGENT));
             } else if (Boolean.valueOf(frameworkProject.hasProperty(PROJ_PROP_LOCAL_SSH_AGENT))) {
             	localSSHAgent = Boolean.valueOf(frameworkProject.getProperty(PROJ_PROP_LOCAL_SSH_AGENT));
             } else if (Boolean.valueOf(frameworkProject.hasProperty(FWK_PROP_LOCAL_SSH_AGENT))) {
@@ -677,9 +679,10 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         }
         
         public Integer getTtlSSHAgent() {
-          Integer ttlSSHAgent = 0;
-            if (node.getLocalTtlSSHAgent() != null) {
-              ttlSSHAgent = node.getLocalTtlSSHAgent();
+            Integer ttlSSHAgent = 0;
+            Map<String,String> nodeAttrs = node.getAttributes();
+            if (nodeAttrs.get(NODE_ATTR_LOCAL_TTL_SSH_AGENT) != null) {
+              ttlSSHAgent = Integer.valueOf(nodeAttrs.get(NODE_ATTR_LOCAL_TTL_SSH_AGENT));
             } else if (frameworkProject.hasProperty(PROJ_PROP_LOCAL_TTL_SSH_AGENT)) {
               ttlSSHAgent = Integer.valueOf(frameworkProject.getProperty(PROJ_PROP_LOCAL_TTL_SSH_AGENT));
             } else if (framework.hasProperty(FWK_PROP_LOCAL_TTL_SSH_AGENT)) {
@@ -1066,7 +1069,6 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             this.description = description;
         }
     }
-
 
     static class ExtractFailure {
 
