@@ -405,6 +405,8 @@ public class NotificationService implements ApplicationContextAware{
             description: e.scheduledExecution.description?:'',
             argstring: e.argString,
             project: e.project,
+            matchedNodeListString: e.matchedNodeList,
+            matchedNodeList: e.matchedNodeList?.split(",") as List,
             failedNodeListString: e.failedNodeList,
             failedNodeList: e.failedNodeList?.split(",") as List,
             succeededNodeListString: e.succeededNodeList,
