@@ -5,6 +5,7 @@
     All rights reserved.
 
     <g:link controller="menu" action="licenses">Licenses</g:link>
-
-    <span class="version"><g:enc>${grailsApplication.metadata['build.ident']}</g:enc></span>
-    <span class="rundeck-version-identity" data-version-string="${enc(attr: grailsApplication.metadata['build.ident'])}"></span>
+    <g:set var="buildIdent" value="${grailsApplication.metadata['build.ident']}"/>
+    <g:set var="appId" value="${g.message(code: 'main.app.name')}"/>
+    <span class="version"><g:enc>${buildIdent}</g:enc></span>
+    <span class="rundeck-version-identity"  data-version-string="${enc(attr: buildIdent)}" data-app-id="${enc(attr: appId)}"></span>

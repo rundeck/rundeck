@@ -23,9 +23,12 @@ var VersionIdentityTest = function () {
             jQuery(document.body).append(jQuery('<div></div>').append(jQuery('<span class="text-success"></span>').text("OK: " + msg)));
         }
     }
+    function mkvid(vers){
+          return new VersionIdentity({versionString:vers});
+    }
     self.basicTest = function (pref) {
         assert(pref + "success", 1, 1);
-        var data = new VersionIdentity('0').data();
+        var data = mkvid('0').data();
         assert(pref + "major", 0, data.major);
         assert(pref + "minor", 0, data.minor);
         assert(pref + "point", 0, data.point);
@@ -33,15 +36,16 @@ var VersionIdentityTest = function () {
         assert(pref + "tag", '', data.tag);
     };
     self.fullTest = function (pref) {
-        var data = new VersionIdentity('2.3.4-5-SNAPSHOT').data();
+        var data = mkvid('2.3.4-5-SNAPSHOT').data();
         assert(pref + "major", 2, data.major);
         assert(pref + "minor", 3, data.minor);
         assert(pref + "point", 4, data.point);
         assert(pref + "release", 5, data.release);
         assert(pref + "tag", 'SNAPSHOT', data.tag);
+        assert(pref + "version", '2.3.4-5-SNAPSHOT', data.version);
     };
     self.noReleaseTest = function (pref) {
-        var data = new VersionIdentity('2.3.4-SNAPSHOT').data();
+        var data = mkvid('2.3.4-SNAPSHOT').data();
         assert(pref + "major", 2, data.major);
         assert(pref + "minor", 3, data.minor);
         assert(pref + "point", 4, data.point);
@@ -49,7 +53,7 @@ var VersionIdentityTest = function () {
         assert(pref + "tag", 'SNAPSHOT', data.tag);
     };
     self.noTagTest = function (pref) {
-        var data = new VersionIdentity('2.3.4-5').data();
+        var data = mkvid('2.3.4-5').data();
         assert(pref + "major", 2, data.major);
         assert(pref + "minor", 3, data.minor);
         assert(pref + "point", 4, data.point);
@@ -57,12 +61,13 @@ var VersionIdentityTest = function () {
         assert(pref + "tag", '', data.tag);
     };
     self.multiTest = function (pref) {
-        var vers = '2.3.4-SNAPSHOT (other-data)';
-        assert(pref + "major", 2, new VersionIdentity(vers).data().major);
-        assert(pref + "minor", 3, new VersionIdentity(vers).data().minor);
-        assert(pref + "point", 4, new VersionIdentity(vers).data().point);
-        assert(pref + "release", 1, new VersionIdentity(vers).data().release);
-        assert(pref + "tag", 'SNAPSHOT', new VersionIdentity(vers).data().tag);
+        var data = mkvid('2.3.4-SNAPSHOT (other-data)').data();
+        assert(pref + "major", 2, data.major);
+        assert(pref + "minor", 3, data.minor);
+        assert(pref + "point", 4, data.point);
+        assert(pref + "release", 1, data.release);
+        assert(pref + "tag", 'SNAPSHOT', data.tag);
+        assert(pref + "version", '2.3.4-SNAPSHOT', data.version);
     };
     self.testAll = function () {
         assert("Start tests", 1, 1);
