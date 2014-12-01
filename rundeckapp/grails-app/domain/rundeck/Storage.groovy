@@ -42,10 +42,10 @@ class Storage {
         setupSha()
     }
     static mapping= {
-		data(type: 'binary')
+        data(type: 'binary')
         dir(type: 'string')
         jsonData(type: 'text')
-		name(type: 'string')
+        name(type: 'string')
     }
     //ignore fake property 'storageMeta' and 'path' and do not store it
     static transients = ['storageMeta','path']

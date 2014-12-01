@@ -113,7 +113,7 @@ class ScheduledExecution extends ExecutionContext {
         nodeExcludeOsVersion(type: 'text')
         filter(type: 'text')
         userRoleList(type: 'text')
-		jobName type: 'string'
+        jobName type: 'string'
         argString type: 'text'
         description type: 'text'
         groupPath type: 'string'
