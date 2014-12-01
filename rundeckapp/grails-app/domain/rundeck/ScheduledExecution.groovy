@@ -45,7 +45,7 @@ class ScheduledExecution extends ExecutionContext {
         workflow(nullable:true)
         options(nullable:true)
         jobName(blank: false, nullable: false, matches: "[^/]+", maxSize: 1024)
-        groupPath(nullable:true)
+        groupPath(nullable:true, maxSize: 2048)
         nextExecution(nullable:true)
         nodeKeepgoing(nullable:true)
         doNodedispatch(nullable:true)
@@ -116,7 +116,7 @@ class ScheduledExecution extends ExecutionContext {
 		jobName type: 'string'
         argString type: 'text'
         description type: 'text'
-		groupPath type: 'text'
+        groupPath type: 'string'
         options lazy: false
         timeout(type: 'text')
         retry(type: 'text')

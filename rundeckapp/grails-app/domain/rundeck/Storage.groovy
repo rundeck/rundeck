@@ -22,9 +22,9 @@ class Storage {
     static constraints = {
         namespace(nullable: true, blank: true, size: 0..255)
         jsonData(nullable: true, blank: true)
-        data(nullable: true, maxSize: 10000000) /* Setting to max of ~4.7MB, should be plenty for ssh keys */
+        data(nullable: true, maxSize: 52_428_800) /* 50MB */
         name(nullable: false, blank: false, maxSize: 1024)
-        dir(nullable: true, blank: true)
+        dir(nullable: true, blank: true, maxSize: 2048)
         pathSha(nullable: false, blank: false, size: 40..40, unique: true)
     }
 
@@ -43,7 +43,7 @@ class Storage {
     }
     static mapping= {
 		data(type: 'binary')
-        dir(type: 'text')
+        dir(type: 'string')
         jsonData(type: 'text')
 		name(type: 'string')
     }

@@ -41,7 +41,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
 
     static constraints = {
         jobName(nullable: false, blank: false, maxSize: 1024)
-		jobGroup(nullable: true, blank: true)
+        jobGroup(nullable: true, blank: true, maxSize: 2048)
         argString(nullable: true, blank: true)
         nodeStep(nullable: true)
         nodeKeepgoing(nullable: true)
@@ -54,7 +54,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     static mapping = {
         argString type: 'text'
 		jobName type: 'string'
-		jobGroup type: 'text'
+        jobGroup type: 'string'
         nodeFilter type: 'text'
         nodeRankAttribute type: 'text'
     }
