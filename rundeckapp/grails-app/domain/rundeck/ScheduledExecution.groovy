@@ -44,8 +44,8 @@ class ScheduledExecution extends ExecutionContext {
         project(nullable:false, blank: false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
         workflow(nullable:true)
         options(nullable:true)
-        jobName(blank: false, nullable: false, matches: "[^/]+")
-        groupPath(nullable:true)
+        jobName(blank: false, nullable: false, matches: "[^/]+", maxSize: 1024)
+        groupPath(nullable:true, maxSize: 2048)
         nextExecution(nullable:true)
         nodeKeepgoing(nullable:true)
         doNodedispatch(nullable:true)
@@ -113,11 +113,10 @@ class ScheduledExecution extends ExecutionContext {
         nodeExcludeOsVersion(type: 'text')
         filter(type: 'text')
         userRoleList(type: 'text')
-
+        jobName type: 'string'
         argString type: 'text'
         description type: 'text'
-        jobName type: 'text'
-        groupPath type: 'text'
+        groupPath type: 'string'
         options lazy: false
         timeout(type: 'text')
         retry(type: 'text')

@@ -22,9 +22,9 @@ class Storage {
     static constraints = {
         namespace(nullable: true, blank: true, size: 0..255)
         jsonData(nullable: true, blank: true)
-        data(nullable: true)
-        name(nullable: false, blank: false)
-        dir(nullable: true, blank: true)
+        data(nullable: true, maxSize: 52_428_800) /* 50MB */
+        name(nullable: false, blank: false, maxSize: 1024)
+        dir(nullable: true, blank: true, maxSize: 2048)
         pathSha(nullable: false, blank: false, size: 40..40, unique: true)
     }
 
@@ -42,10 +42,10 @@ class Storage {
         setupSha()
     }
     static mapping= {
-        data(type: 'binary', sqlType: "longblob")
-        name(type: 'text')
-        dir(type: 'text')
+        data(type: 'binary')
+        dir(type: 'string')
         jsonData(type: 'text')
+        name(type: 'string')
     }
     //ignore fake property 'storageMeta' and 'path' and do not store it
     static transients = ['storageMeta','path']
