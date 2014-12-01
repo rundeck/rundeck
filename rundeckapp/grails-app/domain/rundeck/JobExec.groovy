@@ -41,6 +41,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
 
     static constraints = {
         jobName(nullable: false, blank: false, maxSize: 1024)
+		jobGroup(nullable: true, blank: true)
         argString(nullable: true, blank: true)
         nodeStep(nullable: true)
         nodeKeepgoing(nullable: true)
