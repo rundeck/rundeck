@@ -22,7 +22,7 @@ class BaseReport {
         title type: 'text'
     }
    static constraints = {
-        reportId(nullable:true)
+        reportId(nullable:true, maxSize: 1024+2048 /*jobName + groupPath size limitations from ScheduledExecution*/)
         tags(nullable:true)
         node(nullable:true)
         maprefUri(nullable:true)
