@@ -52,6 +52,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
 
     static mapping = {
         argString type: 'text'
+		jobName type: 'string'
 		jobGroup type: 'text'
         nodeFilter type: 'text'
         nodeRankAttribute type: 'text'

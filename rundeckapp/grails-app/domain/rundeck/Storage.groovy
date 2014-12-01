@@ -45,6 +45,7 @@ class Storage {
 		data(type: 'binary')
         dir(type: 'text')
         jsonData(type: 'text')
+		name(type: 'string')
     }
     //ignore fake property 'storageMeta' and 'path' and do not store it
     static transients = ['storageMeta','path']
