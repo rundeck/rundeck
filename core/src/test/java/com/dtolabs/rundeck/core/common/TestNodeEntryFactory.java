@@ -92,4 +92,30 @@ public class TestNodeEntryFactory {
         Assert.assertEquals(3, node.getTags().size());
         Assert.assertTrue(node.getTags().containsAll(Arrays.asList("abc", "def", "ghi")));
     }
+    @Test
+    public void createFromMapNonStringValue() {
+        Map<String, Object> stringObjectMap = new HashMap<String, Object>();
+
+        stringObjectMap.put("nodename", "blah");
+        stringObjectMap.put("hostname", "blah");
+        stringObjectMap.put("an-attribute", 123L);
+
+        NodeEntryImpl node = NodeEntryFactory.createFromMap(stringObjectMap);
+
+        Assert.assertEquals("blah", node.getNodename());
+        Assert.assertEquals("123", node.getAttribute("an-attribute"));
+    }
+    @Test
+    public void createFromMapNullValue() {
+        Map<String, Object> stringObjectMap = new HashMap<String, Object>();
+
+        stringObjectMap.put("nodename", "blah");
+        stringObjectMap.put("hostname", "blah");
+        stringObjectMap.put("null-attribute", null);
+
+        NodeEntryImpl node = NodeEntryFactory.createFromMap(stringObjectMap);
+
+        Assert.assertEquals("blah", node.getNodename());
+        Assert.assertEquals(null, node.getAttribute("null-attribute"));
+    }
 }
