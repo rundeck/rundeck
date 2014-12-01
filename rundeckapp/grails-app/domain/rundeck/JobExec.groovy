@@ -40,8 +40,8 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     static transients = ['jobIdentifier']
 
     static constraints = {
-        jobName(nullable: false, blank: false)
-        jobGroup(nullable: true, blank: true)
+        jobName(nullable: false, blank: false, maxSize: 1024)
+        jobGroup(nullable: true, blank: true, maxSize: 1024)
         argString(nullable: true, blank: true)
         nodeStep(nullable: true)
         nodeKeepgoing(nullable: true)
@@ -53,11 +53,6 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
 
     static mapping = {
         argString type: 'text'
-        jobName type: 'string'
-		/**
-		* jobName (type: 'text', sqlType: "varchar(255)")
-		*/
-        jobGroup type: 'text'
         nodeFilter type: 'text'
         nodeRankAttribute type: 'text'
     }
