@@ -145,7 +145,7 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
      * @param inputProperty  The property which contains the input data for the remote command.
      */
     public void setInputProperty(String inputProperty) {
-    	this.inputProperty = inputProperty;
+        this.inputProperty = inputProperty;
     }
 
     /**
@@ -240,12 +240,12 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
     }
 
     public SSHAgentProcess getSSHAgentProcess() {
-		return this.sshAgentProcess;
-	  }
+        return this.sshAgentProcess;
+    }
 
-	  public void setSSHAgentProcess(SSHAgentProcess sshAgentProcess) {
-  		this.sshAgentProcess = sshAgentProcess;
-  	}
+    public void setSSHAgentProcess(SSHAgentProcess sshAgentProcess) {
+        this.sshAgentProcess = sshAgentProcess;
+    }
 
     /**
      * Allows disconnecting the ssh connection
@@ -341,14 +341,13 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
                 log("Caught exception: " + e.getMessage(), Project.MSG_ERR);
             }
         } finally {
-        	try { 
-        		if(null!=this.sshAgentProcess){
-        			this.sshAgentProcess.stopAgent();
-        		}
-        	} catch (IOException e) {
-        		log("Caught exception: " + e.getMessage(),
-                        Project.MSG_ERR);
-        	}
+            try {
+                if (null != this.sshAgentProcess) {
+                    this.sshAgentProcess.stopAgent();
+                }
+            } catch (IOException e) {
+                log( "Caught exception: " + e.getMessage(), Project.MSG_ERR);
+            }
             if (outputProperty != null) {
                 getProject().setNewProperty(outputProperty, output.toString());
             }
@@ -399,7 +398,7 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
             String inputData = getProject().getProperty(inputProperty) ;
             if (inputData != null) {
                 istream = new ByteArrayInputStream(inputData.getBytes()) ;
-            }        	
+            }
         }
 
         if(getInputStream()!=null){
@@ -619,22 +618,22 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
         return super.getUserInfo();
     }
 
-  	@Override
-  	public void setEnableSSHAgent(Boolean enableSSHAgent) {
-  		this.enableSSHAgent=enableSSHAgent;
-  	}
-  	
-  	@Override
-  	public Boolean getEnableSSHAgent() {
-  		return this.enableSSHAgent;
-  	}
-	
-	 @Override
-	  public void setTtlSSHAgent(Integer ttlSSHAgent) {
-	    this.ttlSSHAgent=ttlSSHAgent;
-	  }
-	  
-   @Override
+    @Override
+    public void setEnableSSHAgent(Boolean enableSSHAgent) {
+        this.enableSSHAgent = enableSSHAgent;
+    }
+
+    @Override
+    public Boolean getEnableSSHAgent() {
+        return this.enableSSHAgent;
+    }
+
+    @Override
+    public void setTtlSSHAgent(Integer ttlSSHAgent) {
+        this.ttlSSHAgent = ttlSSHAgent;
+    }
+
+    @Override
     public Integer getTtlSSHAgent() {
       return this.ttlSSHAgent;
     }

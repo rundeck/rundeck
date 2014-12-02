@@ -83,22 +83,29 @@ public class SSHTaskBuilder {
      */
     public static Session openSession(SSHBaseInterface base) throws JSchException {
         JSch jsch = new JSch();
-        
+
         if (base.getEnableSSHAgent()) {
             ConnectorFactory cf = ConnectorFactory.getDefault();
             try {
                 base.setSSHAgentProcess(new SSHAgentProcess(base.getTtlSSHAgent()));
                 cf.setUSocketPath(base.getSSHAgentProcess().getSocketPath());
                 cf.setPreferredUSocketFactories("jna,nc");
-                base.getPluginLogger().log(Project.MSG_DEBUG, "ssh-agent started with ttl " + base.getTtlSSHAgent().toString());
+                base.getPluginLogger().log(
+                        Project.MSG_DEBUG,
+                        "ssh-agent started with ttl " +
+                        base.getTtlSSHAgent().toString()
+                );
                 try {
                     Connector c = cf.createConnector();
                     RemoteIdentityRepository identRepo = new RemoteIdentityRepository(c);
                     jsch.setIdentityRepository(identRepo);
-                    base.getPluginLogger().log(Project.MSG_DEBUG, "ssh-agent used as identity repository.");
+                    base.getPluginLogger().log(
+                            Project.MSG_DEBUG,
+                            "ssh-agent used as identity repository."
+                    );
                     base.getSshConfig().put("ForwardAgent", "yes");
                 } catch (AgentProxyException e) {
-                    throw new JSchException("Unable to add key to ssh-agent: "+ e);
+                    throw new JSchException("Unable to add key to ssh-agent: " + e);
                 }
             } catch (AgentProxyException e) {
                 throw new JSchException("Unable to start ssh-agent: " + e);

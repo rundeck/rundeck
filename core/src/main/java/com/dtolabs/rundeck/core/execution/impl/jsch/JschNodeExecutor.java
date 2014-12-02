@@ -96,10 +96,6 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String FWK_PROP_SSH_PASSWORD_STORAGE_PATH= FWK_PROP_PREFIX + NODE_ATTR_SSH_PASSWORD_STORAGE_PATH;
     public static final String PROJ_PROP_SSH_KEY_RESOURCE = PROJ_PROP_PREFIX + NODE_ATTR_SSH_KEY_RESOURCE;
     public static final String PROJ_PROP_SSH_PASSWORD_STORAGE_PATH = PROJ_PROP_PREFIX + NODE_ATTR_SSH_PASSWORD_STORAGE_PATH;
-    public static final String FWK_PROP_LOCAL_SSH_AGENT = FWK_PROP_PREFIX + NODE_ATTR_LOCAL_SSH_AGENT;
-    public static final String PROJ_PROP_LOCAL_SSH_AGENT= PROJ_PROP_PREFIX + NODE_ATTR_LOCAL_SSH_AGENT;
-    public static final String FWK_PROP_LOCAL_TTL_SSH_AGENT= FWK_PROP_PREFIX + NODE_ATTR_LOCAL_TTL_SSH_AGENT;
-    public static final String PROJ_PROP_LOCAL_TTL_SSH_AGENT= PROJ_PROP_PREFIX + NODE_ATTR_LOCAL_TTL_SSH_AGENT;
 
     public static final String NODE_ATTR_SSH_AUTHENTICATION = "ssh-authentication";
     public static final String NODE_ATTR_SSH_PASSWORD_OPTION = "ssh-password-option";
@@ -663,31 +659,25 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             }
             return user;
         }
-        
+
         public Boolean getLocalSSHAgent() {
-            Boolean localSSHAgent = false;
-        	  Map<String,String> nodeAttrs = node.getAttributes();
-            if (nodeAttrs.get(NODE_ATTR_LOCAL_SSH_AGENT) != null) {
-              localSSHAgent = Boolean.valueOf(nodeAttrs.get(NODE_ATTR_LOCAL_SSH_AGENT));
-            } else if (Boolean.valueOf(frameworkProject.hasProperty(PROJ_PROP_LOCAL_SSH_AGENT))) {
-            	localSSHAgent = Boolean.valueOf(frameworkProject.getProperty(PROJ_PROP_LOCAL_SSH_AGENT));
-            } else if (Boolean.valueOf(frameworkProject.hasProperty(FWK_PROP_LOCAL_SSH_AGENT))) {
-            	localSSHAgent = Boolean.valueOf(framework.getProperty(FWK_PROP_LOCAL_SSH_AGENT));
-            }
-            return localSSHAgent;
+            return resolveBooleanProperty(
+                    NODE_ATTR_LOCAL_SSH_AGENT,
+                    false,
+                    node,
+                    frameworkProject,
+                    framework
+            );
         }
-        
+
         public Integer getTtlSSHAgent() {
-            Integer ttlSSHAgent = 0;
-            Map<String,String> nodeAttrs = node.getAttributes();
-            if (nodeAttrs.get(NODE_ATTR_LOCAL_TTL_SSH_AGENT) != null) {
-              ttlSSHAgent = Integer.valueOf(nodeAttrs.get(NODE_ATTR_LOCAL_TTL_SSH_AGENT));
-            } else if (frameworkProject.hasProperty(PROJ_PROP_LOCAL_TTL_SSH_AGENT)) {
-              ttlSSHAgent = Integer.valueOf(frameworkProject.getProperty(PROJ_PROP_LOCAL_TTL_SSH_AGENT));
-            } else if (framework.hasProperty(FWK_PROP_LOCAL_TTL_SSH_AGENT)) {
-              ttlSSHAgent = Integer.valueOf(framework.getProperty(FWK_PROP_LOCAL_TTL_SSH_AGENT));
-            }
-            return ttlSSHAgent;
+            return resolveIntProperty(
+                    NODE_ATTR_LOCAL_TTL_SSH_AGENT,
+                    0,
+                    node,
+                    frameworkProject,
+                    framework
+            );
         }
 
         public static Map<String, String> sshConfigFromFramework(Framework framework) {
