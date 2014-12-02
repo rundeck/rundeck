@@ -22,6 +22,12 @@ dependencies {
         'commons-cli:commons-cli:1.0',
         'org.apache.ant:ant-jsch:1.7.1',
         'com.jcraft:jsch:0.1.50',
+        'com.jcraft:jsch.agentproxy.jsch:0.0.9',
+        'com.jcraft:jsch.agentproxy.sshagent:0.0.9',
+        'com.jcraft:jsch.agentproxy.usocket-jna:0.0.9',
+        'com.jcraft:jsch.agentproxy.usocket-nc:0.0.9',
+        'com.jcraft:jsch.agentproxy.connector-factory:0.0.9',
+        'com.jcraft:jsch.agentproxy.core:0.0.9',
         'org.yaml:snakeyaml:1.9',
         'xerces:xercesImpl:2.6.2',
         'xml-apis:xml-apis:2.0.2'

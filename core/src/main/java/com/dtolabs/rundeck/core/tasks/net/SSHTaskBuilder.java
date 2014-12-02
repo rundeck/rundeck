@@ -28,12 +28,20 @@ import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
+import com.dtolabs.rundeck.core.utils.SSHAgentProcess;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.dtolabs.utils.Streams;
+import com.jcraft.jsch.IdentityRepository.Wrapper;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.KeyPair;
 import com.jcraft.jsch.Session;
+import com.jcraft.jsch.agentproxy.AgentProxyException;
+import com.jcraft.jsch.agentproxy.Connector;
+import com.jcraft.jsch.agentproxy.ConnectorFactory;
+import com.jcraft.jsch.agentproxy.RemoteIdentityRepository;
 import org.apache.commons.lang.StringUtils;
+import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.optional.ssh.SSHUserInfo;
 import org.apache.tools.ant.taskdefs.optional.ssh.Scp;
@@ -75,6 +83,28 @@ public class SSHTaskBuilder {
      */
     public static Session openSession(SSHBaseInterface base) throws JSchException {
         JSch jsch = new JSch();
+        
+        if (base.getEnableSSHAgent()) {
+            ConnectorFactory cf = ConnectorFactory.getDefault();
+            try {
+                base.setSSHAgentProcess(new SSHAgentProcess(base.getTtlSSHAgent()));
+                cf.setUSocketPath(base.getSSHAgentProcess().getSocketPath());
+                cf.setPreferredUSocketFactories("jna,nc");
+                base.getPluginLogger().log(Project.MSG_DEBUG, "ssh-agent started with ttl " + base.getTtlSSHAgent().toString());
+                try {
+                    Connector c = cf.createConnector();
+                    RemoteIdentityRepository identRepo = new RemoteIdentityRepository(c);
+                    jsch.setIdentityRepository(identRepo);
+                    base.getPluginLogger().log(Project.MSG_DEBUG, "ssh-agent used as identity repository.");
+                    base.getSshConfig().put("ForwardAgent", "yes");
+                } catch (AgentProxyException e) {
+                    throw new JSchException("Unable to add key to ssh-agent: "+ e);
+                }
+            } catch (AgentProxyException e) {
+                throw new JSchException("Unable to start ssh-agent: " + e);
+            }
+        }
+        
         if (null != base.getUserInfo().getKeyfile()) {
             jsch.addIdentity(base.getUserInfo().getKeyfile());
         }
@@ -126,6 +156,8 @@ public class SSHTaskBuilder {
     public static interface SSHBaseInterface {
         SSHUserInfo getUserInfo();
 
+        void setSSHAgentProcess(SSHAgentProcess sshAgentProcess);
+
         void setFailonerror(boolean b);
 
         void setTrust(boolean b);
@@ -173,6 +205,16 @@ public class SSHTaskBuilder {
         public PluginLogger getPluginLogger();
 
         public void setPluginLogger(PluginLogger pluginLogger);
+    
+        public void setEnableSSHAgent(Boolean enableSSHAgent);
+        
+        public Boolean getEnableSSHAgent();
+        
+        public SSHAgentProcess getSSHAgentProcess();
+
+        public void setTtlSSHAgent(Integer ttlSSHAgent);
+        
+        public Integer getTtlSSHAgent();
     }
 
     static interface SSHExecInterface extends SSHBaseInterface, DataContextUtils.EnvironmentConfigurable {
@@ -286,6 +328,37 @@ public class SSHTaskBuilder {
             return instance.getSshKeyData();
         }
 
+        @Override
+        public void setEnableSSHAgent(Boolean enableSSHAgent) {
+            instance.setEnableSSHAgent(enableSSHAgent);
+        }
+        
+        @Override
+        public Boolean getEnableSSHAgent() {
+            return instance.getEnableSSHAgent();
+        }
+        
+        @Override
+        public void setSSHAgentProcess(SSHAgentProcess sshAgentProcess) {
+             instance.setSSHAgentProcess(sshAgentProcess);
+        }
+        
+        @Override
+        public SSHAgentProcess getSSHAgentProcess() {
+            return instance.getSSHAgentProcess();
+        }
+        
+        
+        @Override
+        public void setTtlSSHAgent(Integer ttlSSHAgent) {
+            instance.setTtlSSHAgent(ttlSSHAgent);
+        }
+        
+        @Override
+        public Integer getTtlSSHAgent() {
+            return instance.getTtlSSHAgent();
+        }
+        
         @Override
         public String getKnownhosts() {
             return instance.getKnownhosts();
@@ -513,6 +586,8 @@ public class SSHTaskBuilder {
             baseConfig.putAll(sshConfig);
         }
         sshbase.setSshConfig(baseConfig);
+        sshbase.setEnableSSHAgent(sshConnectionInfo.getLocalSSHAgent());
+        sshbase.setTtlSSHAgent(sshConnectionInfo.getTtlSSHAgent());
         sshbase.setPluginLogger(logger);
     }
 
@@ -599,6 +674,10 @@ public class SSHTaskBuilder {
         public int getSSHTimeout();
 
         public String getUsername();
+        
+        public Boolean getLocalSSHAgent();
+        
+        public Integer getTtlSSHAgent();
 
         public Map<String,String> getSshConfig();
     }

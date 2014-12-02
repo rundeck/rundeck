@@ -25,8 +25,11 @@ package com.dtolabs.rundeck.core.tasks.net;
 
 import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.NodeEntryImpl;
+import com.dtolabs.rundeck.core.utils.SSHAgentProcess;
 import com.dtolabs.rundeck.plugins.PluginLogger;
+
 import junit.framework.TestCase;
+
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.optional.ssh.SSHUserInfo;
 import org.apache.tools.ant.types.Environment;
@@ -64,7 +67,9 @@ public class TestSSHTaskBuilder extends TestCase {
         private PluginLogger pluginLogger;
         private Map<String,String> sshConfig;
         private InputStream sshKeyData;
-
+        private Boolean enableSSHAgent;
+        private SSHAgentProcess sshAgentProcess;
+        private Integer ttlSSHAgent;
 
         public void setFailonerror(boolean failonerror) {
             this.failonerror = failonerror;
@@ -171,6 +176,33 @@ public class TestSSHTaskBuilder extends TestCase {
         public void setUserInfo(SSHUserInfo userInfo) {
             this.userInfo = userInfo;
         }
+        
+        public SSHAgentProcess getSSHAgentProcess() {
+            return sshAgentProcess;
+        }
+
+    		@Override
+    		public void setEnableSSHAgent(Boolean enableSSHAgent) {
+    			this.enableSSHAgent = enableSSHAgent;
+    		}
+    
+    		@Override
+    		public Boolean getEnableSSHAgent() {
+    			return null;
+    		}
+    
+    		@Override
+    		public void setSSHAgentProcess(SSHAgentProcess sshAgentProcess) {
+    			this.sshAgentProcess = sshAgentProcess;
+    		}
+    		
+    	  public void setTtlSSHAgent(Integer ttlSSHAgent){
+    	    this.ttlSSHAgent = ttlSSHAgent;
+    	  }
+    	  
+        public Integer getTtlSSHAgent(){
+          return this.ttlSSHAgent;
+        }
     }
 
     static class testSCPInterface extends testSSHBaseInterface implements SSHTaskBuilder.SCPInterface {
@@ -219,6 +251,8 @@ public class TestSSHTaskBuilder extends TestCase {
         String passwordStoragePath;
         String password;
         int SSHTimeout;
+        Boolean localSSHAgent;
+        Integer localTtlSSHAgent;
         String username;
         String privateKeyPassphrase;
         InputStream privateKeyResourceData;
@@ -255,6 +289,14 @@ public class TestSSHTaskBuilder extends TestCase {
 
         public String getPrivateKeyResourcePath() {
             return privateKeyResourcePath;
+        }
+        
+        public Boolean getLocalSSHAgent() {
+            return localSSHAgent;
+        }
+        
+        public Integer getTtlSSHAgent() {
+          return localTtlSSHAgent;
         }
 
         public InputStream getPrivateKeyResourceData() throws IOException {
