@@ -58,10 +58,10 @@ if [ -z "$XML" ] ; then
     XML=$(which xml)
 fi
 
-$XML ed -P -S -N p=http://maven.apache.org/POM/4.0.0 -u "/p:project/p:version" -v "${VNAME}${TAG}" pom.xml > pom_new.xml
+$XML ed -P -S -N p=http://maven.apache.org/POM/4.0.0 -u "/p:project/p:version" -v "${VNAME}${TAG}" pom.xml | $XML fo > pom_new.xml
 mv pom_new.xml pom.xml
 
-$XML ed -P -S -N p=http://maven.apache.org/POM/4.0.0 -u "/p:project/p:version" -v "${VNAME}${TAG}" rundeckapp/pom.xml > rundeckapp/pom_new.xml
+$XML ed -P -S -N p=http://maven.apache.org/POM/4.0.0 -u "/p:project/p:version" -v "${VNAME}${TAG}" rundeckapp/pom.xml  | $XML fo  > rundeckapp/pom_new.xml
 mv rundeckapp/pom_new.xml rundeckapp/pom.xml
 
 echo MODIFIED: `pwd`/rundeckapp/pom.xml
