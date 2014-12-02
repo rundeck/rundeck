@@ -93,6 +93,15 @@ fi
 /var/lib/rundeck/cli/icu4j-2.6.1.jar
 /var/lib/rundeck/cli/jaxen-1.1.jar
 /var/lib/rundeck/cli/jdom-1.0.jar
+/var/lib/rundeck/cli/jna-4.1.0.jar
+/var/lib/rundeck/cli/jna-platform-4.1.0.jar
+/var/lib/rundeck/cli/jsch.agentproxy.connector-factory-0.0.9.jar
+/var/lib/rundeck/cli/jsch.agentproxy.core-0.0.9.jar
+/var/lib/rundeck/cli/jsch.agentproxy.jsch-0.0.9.jar
+/var/lib/rundeck/cli/jsch.agentproxy.pageant-0.0.9.jar
+/var/lib/rundeck/cli/jsch.agentproxy.sshagent-0.0.9.jar
+/var/lib/rundeck/cli/jsch.agentproxy.usocket-jna-0.0.9.jar
+/var/lib/rundeck/cli/jsch.agentproxy.usocket-nc-0.0.9.jar
 /var/lib/rundeck/cli/jsch-0.1.50.jar
 /var/lib/rundeck/cli/log4j-1.2.16.jar
 /var/lib/rundeck/cli/rundeck-core-%{_vname}.jar
