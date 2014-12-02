@@ -85,7 +85,7 @@
                 //no node filter
                 return false;
             }
-            var data = Form.serialize(elem);
+            var data = jQuery('#'+elem+" :input").serialize();
             disableRunBar(true);
             runStarted();
             $('runcontent').loading('Starting Execution…');
@@ -186,93 +186,14 @@
             }
         }
 
-        /**
-         * override action of the filter input text field to load via ajax
-         * @private
-         */
-        function _matchNodes(){
-            //use form field
-            loadNodeFilter(null, nodeFilter.filter(), nodeFilter.filterAll());
-            return false;
-        }
-        /**
-         * node filter link action
-         * @param e
-         */
-        function selectNodeFilterLink(e){
-            jQuery(e).addClass('active');
-            var filterName = jQuery(e).data('node-filter-name');
-            var filterString = jQuery(e).data('node-filter');
-            var filterAll = jQuery(e).data('node-filter-all');
-            if (filterString && !filterName && nodeFilter.filter() && !nodeFilter.filterAll() && !filterAll) {
-                nodeFilter.filter(nodeFilter.filter() + ' ' + filterString);
-                filterString = nodeFilter.filter();
-            }
-            loadNodeFilter(filterName,filterString,filterAll);
-        }
-        /**
-         * load either filter string or saved filter
-         * @param filterName name of saved filter
-         * @param filterString string filter
-         * @param filterAll if true, "all nodes" was selected
-         * @param elem target element
-         */
-        function loadNodeFilter(filterName, filterString, filterAll, elem) {
-            jQuery('.nodefilterlink').removeClass('active');
-            if (!elem) {
-                elem = '${ukey}nodeForm';
-            }
-            if (!filterName && !filterString && null == filterAll) {
-                filterName = nodeFilter.filterName();
-                filterString = nodeFilter.filter();
-                filterAll = nodeFilter.filterAll();
-            }
-            if (!filterName && !filterString) {
-                //if blank input and no filtername selected, do nothing
-                return;
-            }
-            var view = 'embed';
-            var data = filterName ? {filterName: filterName} : {filter: filterString};
-            data.nodeExcludePrecedence = 'true';
-            if (filterName) {
-                jQuery('a[data-node-filter-name=\'' + filterName + '\']').addClass('active');
-                jQuery('.hiddenNodeFilter').val(filterString);
-                jQuery('.hiddenNodeFilterName').val(filterName);
-            } else {
-                jQuery('.hiddenNodeFilter').val(filterString);
-                jQuery('.hiddenNodeFilterName').val('');
-            }
-            nodeFilter.filterAll(filterAll);
-            nodeFilter.filterName(filterName);
-            nodeFilter.filter(filterString);
-            nodeFilter.loading(true);
-            _updateMatchedNodes(data, elem, '${enc(js:params.project?:request.project)}', false, {view: view, expanddetail: true,
-                inlinepaging: false, maxShown: 20, requireRunAuth:true}, function (xht) {
-                nodeFilter.loading(false);
-            },
-            function (response, status, xhr) {
-                nodeFilter.loading(false);
-                if(xhr.getResponseHeader("X-Rundeck-Error-Message")){
-                    nodeFilter.error(xhr.getResponseHeader("X-Rundeck-Error-Message"));
-                }else{
-                    nodeFilter.error(xhr.statusText);
-                }
-
-            });
-        }
 
         /**
          * START page init
          */
         function init() {
-            jQuery('.act_setinlinenodefilter').click(function (e) {
-                //apply new filter
-                _matchNodes();
-            });
-
             jQuery('body').on('click', '.nodefilterlink', function (evt) {
                 evt.preventDefault();
-                selectNodeFilterLink(this);
+                nodeFilter.selectNodeFilterLink(this);
             });
             jQuery('#nodesContent').on('click', '.closeoutput', function (evt) {
                 evt.preventDefault();
@@ -307,12 +228,28 @@
                     appLinks.scheduledExecutionCreate,
                     appLinks.frameworkNodes,
                     Object.extend(filterParams, {
+                        elem: '${ukey}nodeForm',
+                        view: 'embed',
+                        maxShown:20,
+                        emptyMode:'blank',
+                        project: '${enc(js:params.project?:request.project)}',
                         nodesTitleSingular: "${enc(js:g.message(code:'Node',default:'Node'))}",
                         nodesTitlePlural: "${enc(js:g.message(code:'Node.plural',default:'Nodes'))}"
                     }));
             ko.applyBindings(nodeFilter,document.getElementById('tabsarea'));
-            jQuery('#searchForm').submit(_matchNodes);
-            _matchNodes();
+
+            //update hidden node filter fields used by "run" command action
+            nodeFilter.filter.subscribe(function(val){
+                    jQuery('.hiddenNodeFilter').val(val);
+            });
+            nodeFilter.filterName.subscribe(function(val){
+                jQuery('.hiddenNodeFilterName').val(val);
+                if(val){
+                    jQuery('a[data-node-filter-nam]').removeClass('active');
+                    jQuery('a[data-node-filter-name=\'' + val + '\']').addClass('active');
+                }
+            });
+            nodeFilter.updateMatchedNodes();
         }
         jQuery(document).ready(init);
 
