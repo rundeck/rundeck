@@ -29,7 +29,7 @@ function appendText(elem,text){
  * @returns unescaped text
  */
 function html_unescape(text){
-    return jQuery('<div/>').html(text).text();
+    return jQuery('<div/>').html(text.split('<').join('&lt;').split('>').join('&gt;')).text();
 }
 /**
  * Load json data which is html encoded in a script element

@@ -122,6 +122,9 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         var oldfilter = self.filter();
         var filterName = jQuery(link).data('node-filter-name');
         var filterString = jQuery(link).data('node-filter');
+        if(filterString.indexOf("&")>=0){
+            filterString = html_unescape(filterString);
+        }
         var filterAll = jQuery(link).data('node-filter-all');
         if (filterString && !filterName && oldfilter && !filterAll && oldfilter != '.*') {
             filterString = oldfilter + ' ' + filterString;
