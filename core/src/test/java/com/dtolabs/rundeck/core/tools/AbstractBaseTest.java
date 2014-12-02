@@ -17,6 +17,8 @@
 package com.dtolabs.rundeck.core.tools;
 
 
+import com.dtolabs.rundeck.core.common.FrameworkProject;
+import com.dtolabs.rundeck.core.utils.FileUtils;
 import junit.framework.TestCase;
 import com.dtolabs.launcher.Setup;
 import com.dtolabs.rundeck.core.common.Framework;
@@ -102,6 +104,9 @@ public abstract class AbstractBaseTest extends TestCase {
 
         baseDir = RDECK_BASE;
         projectsBase = PROJECTS_BASE;
+        File projectsDir = new File(projectsBase);
+        FileUtils.deleteDir(projectsDir);
+        projectsDir.mkdirs();
         new File(baseDir,"etc").mkdirs();
         File dummykey = new File(baseDir, "etc/dummy_ssh_key.pub");
         try {
