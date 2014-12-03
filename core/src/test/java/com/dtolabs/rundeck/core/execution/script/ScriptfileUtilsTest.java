@@ -17,10 +17,13 @@
 package com.dtolabs.rundeck.core.execution.script;
 
 import com.dtolabs.rundeck.core.common.NodeEntryImpl;
+import com.dtolabs.utils.Streams;
 import junit.framework.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.io.*;
 
 /**
  * ScriptfileUtilsTest is ...
@@ -57,6 +60,68 @@ public class ScriptfileUtilsTest {
         NodeEntryImpl test = new NodeEntryImpl("test");
         test.setOsFamily("windows");
         testStyleForNode(test, ScriptfileUtils.LineEndingStyle.WINDOWS);
+    }
+
+    @Test
+    public void writeScriptFile_unix2unix() throws IOException {
+        assertWriteScriptFileContents(
+                "scriptString\nscriptString\n",
+                ScriptfileUtils.LineEndingStyle.UNIX,
+                "scriptString\nscriptString\n"
+        );
+    }
+    @Test
+    public void writeScriptFile_win2win() throws IOException {
+        assertWriteScriptFileContents(
+                "scriptString\r\nscriptString\r\n",
+                ScriptfileUtils.LineEndingStyle.WINDOWS,
+                "scriptString\r\nscriptString\r\n"
+        );
+    }
+    @Test
+    public void writeScriptFile_unix2win() throws IOException {
+        assertWriteScriptFileContents(
+                "scriptString\nscriptString\n",
+                ScriptfileUtils.LineEndingStyle.WINDOWS,
+                "scriptString\r\nscriptString\r\n"
+        );
+    }
+    @Test
+    public void writeScriptFile_win2unix() throws IOException {
+        assertWriteScriptFileContents(
+                "scriptString\r\nscriptString\r\n",
+                ScriptfileUtils.LineEndingStyle.UNIX,
+                "scriptString\nscriptString\n"
+        );
+    }
+
+    private void assertWriteScriptFileContents(
+            final String inputString,
+            final ScriptfileUtils.LineEndingStyle style,
+            final String expectedString
+    ) throws IOException {
+        File temp = File.createTempFile("writeScriptFileTest", "tmp");
+        temp.deleteOnExit();
+        ScriptfileUtils.writeScriptFile(
+                null,
+                inputString,
+                null,
+                style,
+                temp
+        );
+        Assert.assertEquals(expectedString, readFileString(temp));
+        temp.delete();
+    }
+
+    private String readFileString(final File temp) throws IOException {
+        FileInputStream fileInputStream = new FileInputStream(temp);
+        try{
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            Streams.copyStream(fileInputStream, output);
+            return new String(output.toByteArray());
+        }finally {
+            fileInputStream.close();
+        }
     }
 
     private void testStyleForNode(NodeEntryImpl test, ScriptfileUtils.LineEndingStyle expected) {
