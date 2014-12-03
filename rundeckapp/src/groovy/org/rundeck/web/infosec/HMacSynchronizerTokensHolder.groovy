@@ -45,12 +45,15 @@ class HMacSynchronizerTokensHolder extends SynchronizerTokensHolder implements S
     HMacSynchronizerTokensManager manager
     long tokenDuration=DEFAULT_DURATION
     protected Map<String,Long> currentTokens = [:]
+    protected Map<String,String> tokenNonce = [:]
     protected Map<String,Set<String>> urlTokens = [:]
 
     String generateToken(Long timestamp, String url) {
-        def token = manager.generateToken(timestamp, sessionID, sessionData+[url])
-        logger.debug("Generate token for ${url}: ${sessionData}: ${token.substring(0,5)}...")
+        String nonce = UUID.randomUUID().toString()
+        def token = manager.generateToken(nonce,sessionID, (sessionData+[url]) as List)
+        logger.debug("Generate token for ${url}: ${nonce}:${sessionData}: ${token.substring(0,5)}...")
         currentTokens.put(token,timestamp)
+        tokenNonce.put(token,nonce)
         if(!urlTokens.containsKey(url)){
             urlTokens.put(url,new HashSet<String>([token]))
         }else{
@@ -66,11 +69,24 @@ class HMacSynchronizerTokensHolder extends SynchronizerTokensHolder implements S
 
     @Override
     boolean isValid(String url, String token) {
-        logger.debug("isValid token ${url}:${token.substring(0, 5)}...: ${urlTokens.containsKey(url)} ${urlTokens.get(url)?.contains(token)} ${currentTokens.containsKey(token)} ${manager.validToken(token, currentTokens.get(token), sessionID, sessionData + [url])}")
-        return urlTokens.containsKey(url) &&
-                urlTokens.get(url).contains(token) &&
-                currentTokens.containsKey(token) &&
-                manager.validToken(token, currentTokens.get(token), sessionID, sessionData+[url])
+        def t1 = urlTokens.containsKey(url)
+        def t2 = t1 && urlTokens.get(url).contains(token)
+        def t3 = currentTokens.containsKey(token)
+        def t4 = tokenNonce.containsKey(token)
+        def validate = t1 && t2 && t3 && t4 ?
+                       manager.validToken(token,
+                                          tokenNonce.get(token),
+                                          currentTokens.get(token),
+                                          sessionID,
+                                          (sessionData + [url]) as List
+                       ) :
+                       false
+        logger.debug("isValid token ${url}:${token.substring(0, 5)}...: ${t1} ${t2} ${t3} ${t4} ${validate}")
+        return t1 &&
+                t2 &&
+                t3 &&
+                t4 &&
+                validate
     }
 
     HMacSynchronizerTokensHolder(HMacSynchronizerTokensManager manager,String sessionID, List<String> sessionData) {
@@ -80,6 +96,7 @@ class HMacSynchronizerTokensHolder extends SynchronizerTokensHolder implements S
     }
     void resetToken(String token) {
         currentTokens.remove(token)
+        tokenNonce.remove(token)
     }
 
     @Override
