@@ -113,6 +113,7 @@ log4j={
         development {
             info 'org.rundeck.api.requests'
 //            info 'org.rundeck.web.requests'
+//            debug 'org.rundeck.web.infosec'
         }
     }
 }
@@ -144,7 +145,7 @@ rundeck.gui.execution.tail.lines.default = 20
 rundeck.gui.execution.tail.lines.max = 500
 
 rundeck.mail.template.subject='${notification.eventStatus} [${execution.project}] ${job.group}/${job.name} ${execution.argstring}'
-rundeck.security.useHMacRequestTokens=false
+rundeck.security.useHMacRequestTokens=true
 rundeck.security.apiCookieAccess.enabled=true
 
 rundeck.web.metrics.servlets.metrics.enabled = true
