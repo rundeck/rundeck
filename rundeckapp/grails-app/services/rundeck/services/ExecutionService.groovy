@@ -2101,6 +2101,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     StepExecutionContext overrideJobReferenceNodeFilter(
+            Map<String,Map<String,String>> origData,
             StepExecutionContext origContext,
             String nodeFilter,
             Integer nodeThreadcount,
@@ -2113,7 +2114,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def nodeselector
         if (nodeFilter) {
             //set nodeset for the context if doNodedispatch parameter is true
-            def filter = DataContextUtils.replaceDataReferences(nodeFilter, origContext.dataContext)
+            def filter = DataContextUtils.replaceDataReferences(nodeFilter, origData)
             NodeSet nodeset = filtersAsNodeSet([
                     filter               : filter,
                     nodeExcludePrecedence: true, //XXX: fix
@@ -2245,6 +2246,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         if (null != newContext && nodeFilter) {
             newContext = overrideJobReferenceNodeFilter(
+                    executionContext.dataContext,
                     newContext,
                     nodeFilter,
                     nodeThreadcount,
