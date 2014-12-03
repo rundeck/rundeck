@@ -175,7 +175,7 @@ loglevel, datasource configuration, and
 
 #### Security
 
-* `rundeck.security.useHMacRequestTokens` : `true/false`.  Default: `true`.  
+* `rundeck.security.useHMacRequestTokens` : `true/false`.  Default: `false`.
    Switches between HMac based request tokens, and the default grails UUID 
    tokens.  HMac tokens have a timeout, which may cause submitted forms or 
    actions to fail with a message like "Token has expired".  
