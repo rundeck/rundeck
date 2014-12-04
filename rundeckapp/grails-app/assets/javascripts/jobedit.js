@@ -142,39 +142,43 @@ function _addAceTextarea(textarea){
     if (_isIe(8)||_isIe(7)||_isIe(6)) {
         return;
     }
-    textarea.hide();
-    var _shadow = new Element('div');
-    _shadow.setStyle({
-        width: "100%",
-        height: "560px"
-    });
-    _shadow.addClassName('ace_text');
-    setText(_shadow,$F(textarea));
-    textarea.insert({ after: _shadow });
-    var editor = ace.edit(_shadow.identify());
+    jQuery(textarea).hide();
+    var _shadow = jQuery('<div></div>');
+    var data = jQuery(textarea).data();
+    var width = data.aceWidth ? data.aceWidth :"100%";
+    var height = data.aceHeight ? data.aceHeight :"560px";
+    _shadow.css({ width: width, height: height })
+        .addClass('ace_text')
+        .text(jQuery(textarea).val())
+        .insertBefore(textarea)
+        ;
+
+    //create editor
+    var editor = ace.edit(generateId(_shadow));
     editor.setTheme("ace/theme/chrome");
-    editor.getSession().setMode("ace/mode/sh");
+    editor.getSession().setMode("ace/mode/"+(data.aceSessionMode?data.aceSessionMode: 'sh'));
     editor.getSession().on('change', function (e) {
-        textarea.setValue(editor.getValue());
+        jQuery(textarea).val(editor.getValue());
     });
     editor.focus();
 
     //add controls
-    var _ctrls = new Element('div');
-    _ctrls.addClassName('ace_text_controls');
-
-    var _soft = new Element('input');
-    _soft.setAttribute('type', 'checkbox');
-    _soft.observe('change', function (e) {
-        editor.getSession().setUseWrapMode(_soft.checked);
-    });
-    var _soft_label = new Element('label');
-    _soft_label.appendChild(_soft);
-    _soft_label.appendChild(document.createTextNode('Soft Wrap'));
-
-    _ctrls.appendChild(_soft_label);
-
-    textarea.insert({before:_ctrls});
+    var addSoftWrapCheckbox=data.aceControlSoftWrap?data.aceControlSoftWrap:false
+    if(addSoftWrapCheckbox){
+        var _soft = jQuery('<input/>')
+            .attr('type', 'checkbox')
+            .on('change', function (e) {
+                editor.getSession().setUseWrapMode(this.checked);
+            });
+        var _soft_label = jQuery('<label></label>')
+            .addClass('checkbox')
+            .append(_soft)
+            .append('Soft Wrap');
+        var _ctrls = jQuery('<div></div>')
+            .addClass('ace_text_controls')
+            .append(_soft_label)
+            .insertBefore(_shadow);
+    }
 }
 function _wfisavenew(formelem) {
     var data = jQuery("#" + formelem + " :input").serialize();
