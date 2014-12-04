@@ -163,19 +163,22 @@ function _addAceTextarea(textarea){
     editor.focus();
 
     //add controls
-    var _soft = jQuery('<input/>')
-        .attr('type', 'checkbox')
-        .on('change', function (e) {
-            editor.getSession().setUseWrapMode(this.checked);
-        });
-    var _soft_label = jQuery('<label></label>')
-        .addClass('checkbox')
-        .append(_soft)
-        .append('Soft Wrap');
-    var _ctrls = jQuery('<div></div>')
-        .addClass('ace_text_controls')
-        .append(_soft_label)
-        .insertBefore(_shadow);
+    var addSoftWrapCheckbox=data.aceControlSoftWrap?data.aceControlSoftWrap:false
+    if(addSoftWrapCheckbox){
+        var _soft = jQuery('<input/>')
+            .attr('type', 'checkbox')
+            .on('change', function (e) {
+                editor.getSession().setUseWrapMode(this.checked);
+            });
+        var _soft_label = jQuery('<label></label>')
+            .addClass('checkbox')
+            .append(_soft)
+            .append('Soft Wrap');
+        var _ctrls = jQuery('<div></div>')
+            .addClass('ace_text_controls')
+            .append(_soft_label)
+            .insertBefore(_shadow);
+    }
 }
 function _wfisavenew(formelem) {
     var data = jQuery("#" + formelem + " :input").serialize();
