@@ -25,8 +25,8 @@
 
                 <g:actionSubmit id="editFormCancelButton" value="Cancel"
                                 onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"
-                                class="btn btn-default"/>
-                <g:actionSubmit value="Save" action="Update" class="btn btn-primary "/>
+                                class="btn btn-default reset_page_confirm"/>
+                <g:actionSubmit value="Save" action="Update" class="btn btn-primary reset_page_confirm "/>
 
             </div>
             </div>

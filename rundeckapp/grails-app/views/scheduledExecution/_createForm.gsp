@@ -39,10 +39,10 @@
             <div id="schedCreateButtons">
                 <g:actionSubmit id="createFormCancelButton" value="Cancel"
                                 onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"
-                                class="btn btn-default"/>
+                                class="btn btn-default reset_page_confirm"/>
                 <g:if test="${auth.resourceAllowedTest( kind:'job',action:[AuthConstants.ACTION_CREATE],project: params.project ?: request.project)}">
                     <g:submitButton name="Create" value="Create"
-                                    class="cformAllowSave cformAllowSaveOnly btn btn-primary" />
+                                    class="cformAllowSave cformAllowSaveOnly btn btn-primary reset_page_confirm" />
                 </g:if>
 
                 <g:if test="${auth.resourceAllowedTest( has:false, kind:'job', action:[AuthConstants.ACTION_CREATE],project: params.project ?: request.project)}">
