@@ -787,7 +787,28 @@ class UtilityTagLib{
         out << enc(json: obj)
         out << '</script>'
     }
-    def refreshFormTokensHeader={attrs,body->
+    /**
+     * Embed i18n messages available to javascript in the Messages object
+     * @attr code a i18n message code, or comma separated list
+     * @attr id element id to use (optional)
+     */
+    def jsMessages = { attrs, body ->
+        def id = attrs.id ?: 'i18nmessages'
+        def msgs = [:]
+        if (attrs.code) {
+            attrs.code.split(',').each {
+                msgs[it] = g.message(code: it, default: it)
+            }
+        }
+        embedJSON.call([id: id, data: msgs],null)
+        out << '<script>'
+        out << 'if(typeof(window.Messages)!=\'object\'){'
+        out << 'window.Messages={};'
+        out << '}'
+        out << 'jQuery.extend(window.Messages,loadJsonData(\'' + enc(js: id) + '\'));'
+        out << '</script>'
+    }
+    def refreshFormTokensHeader = { attrs, body ->
         SynchronizerTokensHolder tokensHolder = tokensHolder()
         def uri = attrs.uri ?: params[SynchronizerTokensHolder.TOKEN_URI]
         response.addHeader(FormTokenFilters.TOKEN_KEY_HEADER, tokensHolder.generateToken(uri))
