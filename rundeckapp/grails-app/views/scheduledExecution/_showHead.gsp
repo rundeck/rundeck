@@ -39,7 +39,7 @@
                 <span class="caret"></span>
             </button>
             <ul class="dropdown-menu" role="menu">
-                <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_UPDATE)}">
+                <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_UPDATE])}">
                     <li>
                         <g:link controller="scheduledExecution" title="Edit or Delete this Job"
                                 action="edit"
@@ -49,56 +49,59 @@
                             <g:message code="scheduledExecution.action.edit.button.label"/>
                         </g:link>
                     </li>
-                    <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_READ])}">
-                        <g:if test="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_CREATE, project: scheduledExecution.project)}">
-                            <li>
-                                <g:link controller="scheduledExecution" title="Duplicate Job"
-                                        action="copy"
-                                        params="[project: scheduledExecution.project]"
-                                        id="${scheduledExecution.extid}" class="">
-                                    <i class="glyphicon glyphicon-plus"></i>
-                                    <g:message
-                                            code="scheduledExecution.action.duplicate.button.label"/>
-                                </g:link>
-                            </li>
-                        </g:if>
-                        <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}" project="${scheduledExecution.project}">
-                            <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_DELETE)}">
-                                <li class="divider"></li>
-                                <li>
-                                    <a data-toggle="modal"
-                                       href="#jobdelete"
-                                       title="${g.message(code: 'delete.this.job')}">
-                                        <b class="glyphicon glyphicon-remove-circle"></b>
-                                        <g:message code="delete.action.label" />
-                                    </a>
-                                </li>
-                            </g:if>
-                        </auth:resourceAllowed>
-                        <li class="divider"></li>
-                        <li><g:link controller="scheduledExecution"
-                                    title="${g.message(code: 'scheduledExecution.action.downloadformat.button.label', args: ['XML'])}"
-                                    params="[project: scheduledExecution.project]"
-                                    action="show"
-                                    id="${scheduledExecution.extid}.xml">
-                            <b class="glyphicon glyphicon-file"></b>
-                            <g:message code="scheduledExecution.action.downloadformat.button.label"
-                                       args="['XML']"/>
+                </g:if>
+                <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_READ]) &&
+                        auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_CREATE, project: scheduledExecution.project)}">
+                    <li>
+                        <g:link controller="scheduledExecution" title="Duplicate Job"
+                                action="copy"
+                                params="[project: scheduledExecution.project]"
+                                id="${scheduledExecution.extid}" class="">
+                            <i class="glyphicon glyphicon-plus"></i>
+                            <g:message
+                                    code="scheduledExecution.action.duplicate.button.label"/>
                         </g:link>
-                        </li>
+                    </li>
+                </g:if>
+                <g:unless test="${hideJobDelete}">
+                <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}" project="${scheduledExecution.project}">
+                    <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_DELETE)}">
+                        <li class="divider"></li>
                         <li>
-                            <g:link controller="scheduledExecution"
-                                    title="${g.message(code: 'scheduledExecution.action.downloadformat.button.label', args: ['YAML'])}"
-                                    params="[project: scheduledExecution.project]"
-                                    action="show"
-                                    id="${scheduledExecution.extid}.yaml">
-                                <b class="glyphicon glyphicon-file"></b>
-                                <g:message
-                                        code="scheduledExecution.action.downloadformat.button.label"
-                                        args="['YAML']"/>
-                            </g:link>
+                            <a data-toggle="modal"
+                               href="#jobdelete"
+                               title="${g.message(code: 'delete.this.job')}">
+                                <b class="glyphicon glyphicon-remove-circle"></b>
+                                <g:message code="scheduledExecution.action.delete.button.label" />
+                            </a>
                         </li>
                     </g:if>
+                </auth:resourceAllowed>
+                </g:unless>
+                <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_READ])}">
+                    <li class="divider"></li>
+                    <li><g:link controller="scheduledExecution"
+                                title="${g.message(code: 'scheduledExecution.action.downloadformat.button.label', args: ['XML'])}"
+                                params="[project: scheduledExecution.project]"
+                                action="show"
+                                id="${scheduledExecution.extid}.xml">
+                        <b class="glyphicon glyphicon-file"></b>
+                        <g:message code="scheduledExecution.action.downloadformat.button.label"
+                                   args="['XML']"/>
+                    </g:link>
+                    </li>
+                    <li>
+                        <g:link controller="scheduledExecution"
+                                title="${g.message(code: 'scheduledExecution.action.downloadformat.button.label', args: ['YAML'])}"
+                                params="[project: scheduledExecution.project]"
+                                action="show"
+                                id="${scheduledExecution.extid}.yaml">
+                            <b class="glyphicon glyphicon-file"></b>
+                            <g:message
+                                    code="scheduledExecution.action.downloadformat.button.label"
+                                    args="['YAML']"/>
+                        </g:link>
+                    </li>
                 </g:if>
             </ul>
         </div>

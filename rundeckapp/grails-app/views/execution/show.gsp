@@ -277,7 +277,7 @@
                                 <g:if test="${scheduledExecution}">
                                     <div class="row">
                                         <g:render template="/scheduledExecution/showHead"
-                                              model="${[scheduledExecution: scheduledExecution, jobDescriptionMode:'hidden' ]}"/>
+                                              model="${[scheduledExecution: scheduledExecution, jobDescriptionMode:'hidden', jobActionButtons: true, hideJobDelete:true]}"/>
                                     </div>
                                 </g:if>
                                 <g:if test="${execution.argString}">
@@ -422,15 +422,6 @@
                                 %{--job--}%
                                 <div class="pull-right">
 
-                                    <g:if test="${!groupOnly && auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_UPDATE)}">
-                                        <g:link controller="scheduledExecution" title="Edit Job" action="edit"
-                                                       id="${scheduledExecution.extid}"
-                                                       params="[project:scheduledExecution.project]"
-                                                       class="btn btn-info btn-sm">
-                                            <i class="glyphicon glyphicon-edit"></i>
-                                            <g:message code="edit.job" />
-                                        </g:link>
-                                    </g:if>
                                     <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
                                         %{--Run again link--}%
                                         <g:link controller="scheduledExecution"
