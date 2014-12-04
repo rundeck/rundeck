@@ -15,13 +15,13 @@
             %{
                 newparams['groupPath']=uplevel
             }%
-            <g:link controller="menu" action="jobs" class="groupname" title="Previous level" params="${newparams}">
+            <g:link controller="menu" action="jobs" class="groupname" title="Previous level" params="${newparams+[project:params.project]}">
                 <i class="glyphicon glyphicon-arrow-up"></i>
                 Up
             </g:link>
         </g:if>
         <g:else>
-            <g:link controller="menu" action="jobs" class="groupname" title="Top level">
+            <g:link controller="menu" action="jobs" class="groupname" title="Top level" params="[project: params.project]">
                 <i class="glyphicon glyphicon-arrow-up"></i>
                 Top
             </g:link>

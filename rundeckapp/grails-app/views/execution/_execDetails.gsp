@@ -1,55 +1,7 @@
 <%@ page import="com.dtolabs.rundeck.app.support.ExecutionContext; com.dtolabs.rundeck.server.authorization.AuthConstants; com.dtolabs.rundeck.core.plugins.configuration.Description; rundeck.ScheduledExecution" %>
 <g:set var="rkey" value="${g.rkey()}"/>
 <div class="row" >
-<div class="col-sm-4 pull-right">
-<div class=" pull-right btn-group-vertical">
-<g:if test="${showEdit && execdata != null && execdata.id && execdata instanceof ScheduledExecution && auth.jobAllowedTest(job: execdata, action: AuthConstants.ACTION_UPDATE)}">
-    <g:link controller="scheduledExecution" title="Edit or Delete this Job" action="edit"
-        params="[project:execdata.project]"
-            id="${execdata.extid}" class="btn btn-info ">
-        <g:message code="scheduledExecution.action.edit.button.label" />
-        <i class="glyphicon glyphicon-edit"></i>
-    </g:link>
-
-<g:if test="${scheduledExecution && auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_READ])}">
-    <g:if test="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_CREATE,project:scheduledExecution.project)}">
-        <g:link controller="scheduledExecution" title="Duplicate Job" action="copy"
-                params="[project: execdata.project]"
-                id="${scheduledExecution.extid}" class="btn btn-success ">
-            <g:message code="scheduledExecution.action.duplicate.button.label" />
-            <i class="glyphicon glyphicon-plus"></i>
-        </g:link>
-    </g:if>
-    <div class="btn-group">
-        <button type="button" class="btn btn-default  dropdown-toggle" data-toggle="dropdown">
-            <g:message code="scheduledExecution.action.download.button.label" />
-            <span class="caret"></span>
-        </button>
-        <ul class="dropdown-menu" role="menu">
-            <li><g:link controller="scheduledExecution" title="Download Job definition in  XML"
-                        params="[project: execdata.project]"
-                        action="show"
-                        id="${scheduledExecution.extid}.xml">
-                <b class="glyphicon glyphicon-file"></b>
-                xml format
-            </g:link>
-            </li>
-            <li>
-                <g:link controller="scheduledExecution" title="Download Job definition in YAML"
-                        params="[project: execdata.project]"
-                        action="show"
-                        id="${scheduledExecution.extid}.yaml">
-                    <b class="glyphicon glyphicon-file"></b>
-                    yaml format
-                </g:link>
-            </li>
-        </ul>
-    </div>
-    </g:if>
-</g:if>
-</div>
-</div>
-<div class="col-sm-8">
+<div class="col-sm-12">
 <table class="simpleForm execdetails">
     <g:if test="${execdata!=null && execdata.id && execdata instanceof ScheduledExecution && execdata.scheduled}">
         <tr>
