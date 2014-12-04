@@ -142,26 +142,32 @@ function _addAceTextarea(textarea){
     if (_isIe(8)||_isIe(7)||_isIe(6)) {
         return;
     }
-    textarea.hide();
-    var _shadow = jQuery('<div></div>')
-        .css({ width: "100%", height: "560px" })
+    jQuery(textarea).hide();
+    var _shadow = jQuery('<div></div>');
+    var data = jQuery(textarea).data();
+    var width = data.aceWidth ? data.aceWidth :"100%";
+    var height = data.aceHeight ? data.aceHeight :"560px";
+    _shadow.css({ width: width, height: height })
         .addClass('ace_text')
         .text(jQuery(textarea).val())
         .insertBefore(textarea)
         ;
-    var editor = ace.edit(_shadow[0].identify());
+
+    //create editor
+    var editor = ace.edit(generateId(_shadow));
     editor.setTheme("ace/theme/chrome");
-    editor.getSession().setMode("ace/mode/"+(jQuery(textarea).data('aceSessionMode')?jQuery(textarea).data('aceSessionMode'): 'sh'));
+    editor.getSession().setMode("ace/mode/"+(data.aceSessionMode?data.aceSessionMode: 'sh'));
     editor.getSession().on('change', function (e) {
         jQuery(textarea).val(editor.getValue());
     });
     editor.focus();
 
     //add controls
-
-    var _soft = jQuery('<input/>').attr('type', 'checkbox').on('change', function (e) {
-        editor.getSession().setUseWrapMode(this.checked);
-    });
+    var _soft = jQuery('<input/>')
+        .attr('type', 'checkbox')
+        .on('change', function (e) {
+            editor.getSession().setUseWrapMode(this.checked);
+        });
     var _soft_label = jQuery('<label></label>')
         .addClass('checkbox')
         .append(_soft)

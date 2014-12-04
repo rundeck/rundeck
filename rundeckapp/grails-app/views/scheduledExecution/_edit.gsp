@@ -470,8 +470,13 @@ function getCurSEID(){
     <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'description', 'has-error')}">
         <label for="description" class="${labelColClass}">Description</label>
         <div class="${fieldColSize}">
-            <g:textArea name="description" value="${scheduledExecution?.description}" cols="80" rows="3"
-                class="form-control"
+            <g:textArea name="description"
+                        value="${scheduledExecution?.description}"
+                        cols="80"
+                        rows="3"
+                        class="form-control ace_editor"
+                        data-ace-session-mode="markdown"
+                        data-ace-height="120px"
             />
             <g:hasErrors bean="${scheduledExecution}" field="description">
                 <i class="glyphicon glyphicon-warning-sign text-warning"></i>
@@ -489,6 +494,13 @@ function getCurSEID(){
                     <g:message code="ScheduledExecution.property.description.plain.description"/>
                 </g:else>
             </div>
+            <g:javascript>
+            jQuery(function(){
+                jQuery('textarea.ace_editor').each(function(){
+                    _addAceTextarea(this);
+                });
+            });
+            </g:javascript>
         </div>
     </div>
 </div><!--/.nput-group-item -->
