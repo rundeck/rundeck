@@ -43,6 +43,62 @@
                 </g:link>
             </g:if>
         </span>
+    <g:if test="${jobActionButtons}">
+        <div class="btn-group">
+            <button type="button" class="btn btn-sm btn-link btn-default dropdown-toggle" data-toggle="dropdown"
+                    aria-expanded="false">
+                <i class="glyphicon glyphicon-list"></i>
+                Action
+                <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" role="menu">
+            <g:if test="${ auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_UPDATE)}">
+                <li>
+                <g:link controller="scheduledExecution" title="Edit or Delete this Job"
+                        action="edit"
+                        params="[project: scheduledExecution.project]"
+                        id="${scheduledExecution.extid}" class="">
+                    <i class="glyphicon glyphicon-edit"></i>
+                    <g:message code="scheduledExecution.action.edit.button.label"/>
+                </g:link>
+                </li>
+                <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_READ])}">
+                    <g:if test="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_CREATE, project: scheduledExecution.project)}">
+                        <li>
+                        <g:link controller="scheduledExecution" title="Duplicate Job" action="copy"
+                                params="[project: scheduledExecution.project]"
+                                id="${scheduledExecution.extid}" class="">
+                            <i class="glyphicon glyphicon-plus"></i>
+                            <g:message code="scheduledExecution.action.duplicate.button.label"/>
+                        </g:link>
+                        </li>
+                    </g:if>
+                    <li class="divider"></li>
+                    <li><g:link controller="scheduledExecution"
+                                title="${g.message(code:'scheduledExecution.action.downloadformat.button.label',args:['XML'])}"
+                                params="[project: scheduledExecution.project]"
+                                action="show"
+                                id="${scheduledExecution.extid}.xml">
+                        <b class="glyphicon glyphicon-file"></b>
+                        <g:message code="scheduledExecution.action.downloadformat.button.label" args="['XML']"/>
+                    </g:link>
+                    </li>
+                    <li>
+                        <g:link controller="scheduledExecution"
+                                title="${g.message(code: 'scheduledExecution.action.downloadformat.button.label', args: ['YAML'])}"
+                                params="[project: scheduledExecution.project]"
+                                action="show"
+                                id="${scheduledExecution.extid}.yaml">
+                            <b class="glyphicon glyphicon-file"></b>
+                            <g:message code="scheduledExecution.action.downloadformat.button.label"
+                                       args="['YAML']"/>
+                        </g:link>
+                    </li>
+                </g:if>
+            </g:if>
+            </ul>
+        </div>
+    </g:if>
     <div class="jobInfoSection">
         <g:render template="/scheduledExecution/description" model="[description:scheduledExecution.description,textCss:'h4 text-muted', mode: jobDescriptionMode?:'expanded', rkey: g.rkey()]"/>
     </div>

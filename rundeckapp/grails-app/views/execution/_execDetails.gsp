@@ -26,21 +26,23 @@
             <span class="caret"></span>
         </button>
         <ul class="dropdown-menu" role="menu">
-            <li><g:link controller="scheduledExecution" title="Download Job definition in  XML"
+            <li><g:link controller="scheduledExecution" title="${g.message(code: 'scheduledExecution.action.downloadformat.button.label', args: ['XML'])}"
                         params="[project: execdata.project]"
                         action="show"
                         id="${scheduledExecution.extid}.xml">
                 <b class="glyphicon glyphicon-file"></b>
-                xml format
+                <g:message code="scheduledExecution.action.downloadformat.button.label.short"
+                           args="['XML']"/>
             </g:link>
             </li>
             <li>
-                <g:link controller="scheduledExecution" title="Download Job definition in YAML"
+                <g:link controller="scheduledExecution" title="${g.message(code: 'scheduledExecution.action.downloadformat.button.label', args: ['YAML'])}"
                         params="[project: execdata.project]"
                         action="show"
                         id="${scheduledExecution.extid}.yaml">
                     <b class="glyphicon glyphicon-file"></b>
-                    yaml format
+                    <g:message code="scheduledExecution.action.downloadformat.button.label.short"
+                               args="['YAML']"/>
                 </g:link>
             </li>
         </ul>
