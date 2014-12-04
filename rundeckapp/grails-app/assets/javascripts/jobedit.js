@@ -44,9 +44,18 @@ function prepJobType(data) {
 }
 
 /** begin wf edit code */
-
+var jobEdittedHandler;
+function _onJobEdit(func){
+    jobEdittedHandler=func;
+}
+function jobWasEdited(){
+    if(typeof(jobEdittedHandler)=='function'){
+        jobEdittedHandler();
+    }
+}
 
 function _wfiedit(key,num,isErrorHandler) {
+    jobWasEdited();
     var params = {num:num, isErrorHandler:isErrorHandler?true:false,key:key};
     if (getCurSEID()) {
         params.scheduledExecutionId = getCurSEID();
@@ -72,6 +81,7 @@ function _wfiview(key,num,isErrorHandler) {
     jQuery('#wfli_' + key).load(_genUrl(appLinks.workflowRender,params),_showWFItemControls);
 }
 function _wfisave(key,num, formelem,iseh) {
+    jobWasEdited();
     var data= jQuery("#"+formelem+" :input").serialize();
     jQuery.ajax({
         type: 'POST',
@@ -93,6 +103,7 @@ function _wfisave(key,num, formelem,iseh) {
 }
 var newitemElem;
 function _wfiaddnew(type,nodestep) {
+    jobWasEdited();
     var params = {newitemtype:type,newitemnodestep:nodestep?true:false};
     if (getCurSEID()) {
         params.scheduledExecutionId = getCurSEID();
@@ -159,6 +170,7 @@ function _addAceTextarea(textarea){
     editor.getSession().setMode("ace/mode/"+(data.aceSessionMode?data.aceSessionMode: 'sh'));
     editor.getSession().on('change', function (e) {
         jQuery(textarea).val(editor.getValue());
+        jobWasEdited();
     });
     editor.focus();
 
@@ -181,6 +193,7 @@ function _addAceTextarea(textarea){
     }
 }
 function _wfisavenew(formelem) {
+    jobWasEdited();
     var data = jQuery("#" + formelem + " :input").serialize();
     jQuery.ajax({
         type:'POST',
@@ -360,6 +373,7 @@ function _doResetWFAction() {
     _ajaxWFAction(appLinks.workflowRevert, {edit: true});
 }
 function _ajaxWFAction(url, params){
+    jobWasEdited();
     var tokendataid = 'reqtoken_undo_workflow';
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
@@ -517,6 +531,7 @@ function _configureInputRestrictions(target) {
 }
 
 function _optedit(name, elem) {
+    jobWasEdited();
     var params = {name:name};
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
@@ -544,6 +559,7 @@ function _optview(name, target) {
     jQuery(target).load(_genUrl(appLinks.editOptsRender,params), _showOptControls);
 }
 function _optsave(formelem, tokendataid, target) {
+    jobWasEdited();
     $('optsload').loading();
     jQuery.ajax({
         type: "POST",
@@ -570,6 +586,7 @@ function _optaddnewIfNone() {
     }
 }
 function _optaddnew() {
+    jobWasEdited();
     var params = {newoption:true};
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
@@ -628,6 +645,7 @@ function _summarizeOpts() {
 }
 
 function _optsavenew(formelem,tokendataid) {
+    jobWasEdited();
     var params = jQuery('#'+formelem+' :input').serialize();
     $('optsload').loading();
     jQuery.ajax({
@@ -652,6 +670,7 @@ function _optsavenew(formelem,tokendataid) {
 }
 
 function _doRemoveOption(name, elem,tokendataid) {
+    jobWasEdited();
     var params = {name:name,edit:true};
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
@@ -725,3 +744,70 @@ function _doRevertOptsAction() {
     });
 }
 
+//job chooser
+var jobNameFieldId;
+var jobGroupFieldId;
+function jobChosen(name, group) {
+    jobWasEdited();
+    if (jobNameFieldId && jobGroupFieldId) {
+        jQuery('#' + jobNameFieldId).val(name);
+        jQuery('#' + jobGroupFieldId).val(group);
+    }
+    hideJobChooser();
+}
+function loadJobChooser(elem, target, nameid, groupid) {
+    if (jQuery(elem).hasClass('active')) {
+        hideJobChooser();
+        return;
+    }
+    jobNameFieldId = nameid;
+    jobGroupFieldId = groupid;
+    var project = selFrameworkProject;
+    jQuery(elem).button('loading').addClass('active');
+    jQuery.ajax({
+        url:_genUrl(appLinks.menuJobsPicker, {jobsjscallback: 'true', runAuthRequired: true}),
+        success: function (resp, status, jqxhr){
+            jQuery(elem).popover({html: true, container: 'body', placement: 'left', content: resp, trigger: 'manual'}).popover('show');
+            jQuery(elem).button('reset');
+        },
+        error: function (resp, status, jqxhr){
+            showError("Error performing request: menuJobsPicker: " + transport);
+            jQuery(elem).button('reset');
+        }
+    });
+}
+function hideJobChooser() {
+    jQuery('.btn.act_choose_job').removeClass('active').button('reset').popover('hide');
+}
+
+//group chooser
+function groupChosen(path) {
+    jobWasEdited();
+    $('schedJobGroup').setValue(path);
+    $('schedJobGroup').highlight();
+    jQuery('#groupChooseBtn').popover('hide');
+}
+function loadGroupChooser() {
+    var btn = jQuery('#groupChooseBtn');
+    btn.button('loading');
+    var project = jQuery('#schedEditFrameworkProject').val();
+    if (btn.data('grouptreeshown') == 'true') {
+        btn.popover('hide');
+        btn.button('reset');
+    } else {
+        jQuery.get(appLinks.scheduledExecutionGroupTreeFragment + '?jscallback=true', function (d) {
+            var btn = jQuery('#groupChooseBtn');
+            btn.popover({html: true, container: 'body', placement: 'left', content: d, trigger: 'manual'}).popover('show');
+            btn.button('reset');
+        });
+    }
+}
+jQuery(window).load(function () {
+    jQuery('#groupChooseBtn').click(loadGroupChooser);
+    jQuery('#groupChooseBtn').on('shown.bs.popover', function (e) {
+        jQuery('#groupChooseBtn').data('grouptreeshown', 'true');
+    });
+    jQuery('#groupChooseBtn').on('hide.bs.popover', function (e) {
+        jQuery('#groupChooseBtn').data('grouptreeshown', 'false');
+    });
+});

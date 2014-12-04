@@ -33,43 +33,7 @@ var curSEID ='${enc(js:editSchedExecId?:"")}';
 function getCurSEID(){
     return curSEID;
 }
-        var jobNameFieldId;
-        var jobGroupFieldId;
-        function jobChosen(name,group){
-            if(jobNameFieldId && jobGroupFieldId){
-                jQuery('#'+jobNameFieldId).val(name);
-                jQuery('#' + jobGroupFieldId).val(group);
-            }
-            hideJobChooser();
-        }
-        function loadJobChooser(elem,target,nameid,groupid){
-            if(jQuery('.jobChooser:visible').length>0){
-                hideJobChooser();
-                return;
-            }
-            jobNameFieldId=nameid;
-            jobGroupFieldId= groupid;
-            var project=selFrameworkProject;
-            jQuery(elem).button('loading').addClass('active');
-            new Ajax.Updater(
-                'jobChooserContent',
-                    appLinks.menuJobsPicker,
-                {
-                parameters: {jobsjscallback:'true',runAuthRequired:true},
-                 onSuccess: function(transport) {
-                    new MenuController().showRelativeTo(elem,target);
-                     jQuery('.btn.act_choose_job').button('reset');
-                 },
-                 onFailure: function(transport) {
-                     showError("Error performing request: menuJobsPicker: "+ transport);
-                     jQuery('.btn.act_choose_job').button('reset');
-                 }
-                });
-        }
-        function hideJobChooser(){
-            jQuery('.jobChooser').hide();
-            jQuery('.btn.act_choose_job').removeClass('active').button('reset');
-        }
+
 
 
 
@@ -432,37 +396,6 @@ function getCurSEID(){
             </div>
 
             <script type="text/javascript" src="${resource(dir:'js',file:'yellowfade.js')}"></script>
-            <script type="text/javascript">
-                function groupChosen(path){
-                    $('schedJobGroup').setValue(path);
-                    $('schedJobGroup').highlight();
-                    jQuery('#groupChooseBtn').popover('hide');
-                }
-                function loadGroupChooser(){
-                    jQuery('#groupChooseBtn').button('loading');
-                    var project = jQuery('#schedEditFrameworkProject').val();
-                    if(jQuery('#groupChooseBtn').data('grouptreeshown')=='true'){
-                        jQuery('#groupChooseBtn').popover('hide');
-                        jQuery('#groupChooseBtn').button('reset');
-                    }else{
-                        jQuery.get(appLinks.scheduledExecutionGroupTreeFragment+'?jscallback=true', function (d) {
-                            jQuery('#groupChooseBtn').popover({html:true, container:'body', placement: 'left',content: d,trigger:'manual'}).popover('show');
-                            jQuery('#groupChooseBtn').button('reset');
-                        });
-                    }
-                }
-                jQuery(window).load(function(){
-                    jQuery('#groupChooseBtn').click(loadGroupChooser);
-                    jQuery('#groupChooseBtn').on('shown.bs.popover',function(e){
-                        jQuery('#groupChooseBtn').data('grouptreeshown', 'true');
-                    });
-                    jQuery('#groupChooseBtn').on('hide.bs.popover',function(e){
-                        jQuery('#groupChooseBtn').data('grouptreeshown', 'false');
-                    });
-                });
-
-            </script>
-
         </div>
     </div>
 
