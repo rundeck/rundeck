@@ -277,7 +277,7 @@
                                 <g:if test="${scheduledExecution}">
                                     <div class="row">
                                         <g:render template="/scheduledExecution/showHead"
-                                              model="${[scheduledExecution: scheduledExecution, ]}"/>
+                                              model="${[scheduledExecution: scheduledExecution, jobDescriptionMode:'hidden' ]}"/>
                                     </div>
                                 </g:if>
                                 <g:if test="${execution.argString}">

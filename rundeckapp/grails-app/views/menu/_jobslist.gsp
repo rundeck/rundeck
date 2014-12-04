@@ -25,6 +25,7 @@
                         <g:set var="clusterUUID"
                                value="${ (clusterMap)? clusterMap[scheduledExecution.id] : null}"/>
                         <g:set var="currentTime" value="${new Date()}"/>
+                        %{-- select job view --}%
                         <g:if test="${jobsjscallback}">
                             <tr class=" expandComponentHolder expanded" id="jobrow_${scheduledExecution.id}">
                                <td class="jobname" style="overflow:hidden; text-overflow: ellipsis; white-space: nowrap; overflow-x: hidden">
@@ -40,6 +41,7 @@
                             </tr>
                         </g:if>
                         <g:else>
+                            %{--normal view--}%
                         <tr class="sectionhead expandComponentHolder ${paginateParams?.idlist==scheduledExecution.id.toString()?'expanded':''}" id="jobrow_${scheduledExecution.id}">
                             <td class="jobname">
                                     <span class="jobbulkeditfield" style="display: none">
@@ -86,7 +88,7 @@
                                 </g:if>
 
                                     <g:render template="/scheduledExecution/description"
-                                              model="[description: scheduledExecution?.description,textCss:'text-muted']"/>
+                                              model="[description: scheduledExecution?.description,textCss:'text-muted',mode:'collapsed',rkey:g.rkey()]"/>
 
                             </td>
                             <td class="scheduletime">

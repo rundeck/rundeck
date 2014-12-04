@@ -16,7 +16,7 @@
                     <g:form controller="scheduledExecution" useToken="true" action="delete" method="post" class="form form-horizontal">
                     <div class="modal-body">
                         <g:render template="/scheduledExecution/showHead"
-                                  model="${[scheduledExecution: scheduledExecution, runPage: true]}"/>
+                                  model="${[scheduledExecution: scheduledExecution, runPage: true, jobDescriptionMode:'collapsed']}"/>
                         <p class=" ">Really delete this <g:message
                                 code="domain.ScheduledExecution.title"/>?</p>
                         <auth:resourceAllowed type="project" name="${scheduledExecution.project}"

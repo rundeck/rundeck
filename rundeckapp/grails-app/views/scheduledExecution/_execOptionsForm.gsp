@@ -8,7 +8,7 @@
     <div class="panel-heading">
         <div class="row">
             <tmpl:showHead scheduledExecution="${scheduledExecution}" iconName="icon-job"
-                           subtitle="Choose Execution Options" runPage="true"/>
+                           subtitle="Choose Execution Options" runPage="true" jobDescriptionMode="collapsed"/>
         </div>
     </div>
 </g:if>
