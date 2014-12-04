@@ -1051,3 +1051,17 @@ function setFilter(name, value, callback) {
         }
     }).success(_ajaxReceiveTokens.curry('filter_select_tokens'));
 }
+var generateId=(function(){
+    var counter=0;
+    return function(elem) {
+        var j=elem?jQuery(elem):null;
+        if(j && j.attr('id')){
+            return j.attr('id');
+        }
+        var id= '_id' + (counter++);
+        if(j){
+            j.attr('id',id);
+        }
+        return id;
+    }
+})();
