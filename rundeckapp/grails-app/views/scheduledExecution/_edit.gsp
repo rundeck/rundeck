@@ -392,7 +392,7 @@ function getCurSEID(){
         <label for="schedJobName"
                class="required ${enc(attr:labelColClass)}"
                >
-            <g:message code="domain.ScheduledExecution.title"/> Name
+            <g:message code="scheduledExecution.jobName.label" />
         </label>
         <div class="${fieldColHalfSize}">
             <g:textField name="jobName"
@@ -426,7 +426,7 @@ function getCurSEID(){
                 <span class="input-group-btn">
                     <span class="btn btn-default" data-loading-text="Loading..."
                           id="groupChooseBtn" title="Click on the name of the group to use">
-                        Choose &hellip; <i class="caret"></i>
+                        <g:message code="choose.action.label" /> <i class="caret"></i>
                     </span>
                 </span>
             </div>
@@ -468,7 +468,7 @@ function getCurSEID(){
 
         %{--description--}%
     <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'description', 'has-error')}">
-        <label for="description" class="${labelColClass}">Description</label>
+        <label for="description" class="${labelColClass}"><g:message code="scheduledExecution.property.description.label" /></label>
         <div class="${fieldColSize}">
             <g:textArea name="description"
                         value="${scheduledExecution?.description}"
@@ -511,7 +511,7 @@ function getCurSEID(){
     %{--Options--}%
     <div id="optionsContent" class=" list-group-item" >
         <div class="form-group">
-            <div class="${labelColSize} control-label text-form-label"><span id="optsload"></span>Options:</div>
+            <div class="${labelColSize} control-label text-form-label"><span id="optsload"></span><g:message code="options.prompt" /></div>
             <div class="${fieldColSize}">
 
                 <div  id="editoptssect" class="rounded">
@@ -529,7 +529,7 @@ function getCurSEID(){
     %{--Workflow--}%
     <div id="workflowContent" class="list-group-item" >
         <div class="form-group">
-            <div class="${labelColSize}  control-label text-form-label">Workflow:</div>
+            <div class="${labelColSize}  control-label text-form-label"><g:message code="workflow.prompt" /></div>
             <div class="${fieldColSize}">
                 <g:set var="editwf" value="${session.editWF && session.editWF[scheduledExecution.id.toString()]?session.editWF[scheduledExecution.id.toString()]:scheduledExecution.workflow}"/>
                 <g:render template="/execution/execDetailsWorkflow" model="${[workflow:editwf,context:scheduledExecution,edit:true,error:scheduledExecution?.errors?.hasFieldErrors('workflow'),project:scheduledExecution?.project?:(params.project ?: request.project)?: projects?.size() == 1 ? projects[0].name :'']}"/>
@@ -550,7 +550,7 @@ function getCurSEID(){
 <div class="list-group-item node_filter_link_holder" id="nodegroupitem">
 <div class="form-group">
     <label class="${labelColSize} control-label">
-        Nodes
+        <g:message code="Node.plural" />
     </label>
 
     <div class="${fieldColSize} ">
@@ -562,7 +562,7 @@ function getCurSEID(){
                     class="node_dispatch_radio"
                 ${scheduledExecution?.doNodedispatch ? 'checked' : ''}
                    id="doNodedispatchTrue"/>
-            Dispatch to Nodes
+            <g:message code="dispatch.to.nodes" />
         </label>
         <label id="doNodedispatchLabelFalse" class="radio-inline">
 
@@ -572,7 +572,7 @@ function getCurSEID(){
                    class="node_dispatch_radio"
                 ${!scheduledExecution?.doNodedispatch ? 'checked' : ''}
                    id="doNodedispatchFalse"/>
-            Execute locally
+            <g:message code="execute.locally" />
         </label>
     </div>
 </div>
@@ -639,7 +639,7 @@ function getCurSEID(){
 
 <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'nodeInclude', 'has-error')}">
 
-    <label class="col-sm-2  control-label">Precedence to:</label>
+    <label class="col-sm-2  control-label"><g:message code="precedence.to.prompt" /></label>
 
     <div class="col-sm-10">
         <label title="Include more nodes" class="radio-inline">
@@ -647,14 +647,14 @@ function getCurSEID(){
                 data-bind="checked: nodeExcludePrecedence"
                      checked="${!scheduledExecution?.nodeExcludePrecedence}"
                      id="nodeExcludePrecedenceFalse"/>
-            Included</label>
+            <g:message code="included" /></label>
 
         <label title="Exclude more nodes" class="radio-inline">
             <g:radio name="nodeExcludePrecedence" value="true"
                     data-bind="checked: nodeExcludePrecedence"
                      checked="${scheduledExecution?.nodeExcludePrecedence}"
                      id="nodeExcludePrecedenceTrue"/>
-            Excluded</label>
+            <g:message code="excluded" /></label>
     </div>
 </div>%{--//extended filters--}%
 
@@ -669,9 +669,9 @@ function getCurSEID(){
 
             <div class="well well-sm embed matchednodes">
                 <button type="button" class="pull-right btn btn-info btn-sm refresh_nodes"
-                        data-loading-text="Loading..."
+                        data-loading-text="${g.message(code:'loading')}"
                     data-bind="click: $data.updateMatchedNodes"
-                        title="click to refresh">
+                        title="${g.message(code:'click.to.refresh')}">
                     <g:message code="refresh" />
                     <i class="glyphicon glyphicon-refresh"></i>
                 </button>
@@ -810,7 +810,7 @@ function getCurSEID(){
 
     <div class="form-group">
         <div class="${labelColSize}  control-label text-form-label">
-            Schedule to run repeatedly?
+            <g:message code="schedule.to.run.repeatedly" />
         </div>
         <div class="${fieldColSize}">
 
@@ -818,14 +818,14 @@ function getCurSEID(){
             <g:radio value="false" name="scheduled"
                 checked="${scheduledExecution?.scheduled?false:true}"
                 id="scheduledFalse"/>
-                No
+                <g:message code="no" />
             </label>
 
             <label class="radio-inline">
                 <g:radio name="scheduled" value="true"
                     checked="${scheduledExecution?.scheduled}"
                     id="scheduledTrue"/>
-                Yes
+                <g:message code="yes" />
             </label>
         </div>
         <div class="${offsetColSize}" style="${wdgt.styleVisible(if:scheduledExecution?.scheduled)}" id="scheduledExecutionEditCrontab">
@@ -846,18 +846,18 @@ function getCurSEID(){
 %{--Log level--}%
 <div class="list-group-item">
     <div class="form-group">
-        <label class="${labelColClass}" for="loglevel">Log level</label>
+        <label class="${labelColClass}" for="loglevel"><g:message code="scheduledExecution.property.loglevel.label" /></label>
         <div class="${fieldColSize}">
             <label class="radio-inline">
                 <g:radio name="loglevel" value="INFO" checked="${scheduledExecution?.loglevel != 'DEBUG'}"/>
-                Normal
+                <g:message code="loglevel.normal" />
             </label>
             <label class="radio-inline">
                 <g:radio name="loglevel" value="DEBUG" checked="${scheduledExecution?.loglevel == 'DEBUG'}"/>
-                Debug
+                <g:message code="loglevel.debug" />
             </label>
             <div class="help-block">
-                Debug level produces more output
+                <g:message code="scheduledExecution.property.loglevel.help" />
             </div>
         </div>
     </div>
@@ -924,12 +924,12 @@ function getCurSEID(){
     %{--uuid--}%
     <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'uuid', 'has-error')}" id="schedJobUuidLabel">
         <label for="schedJobUuid" class=" ${enc(attr:labelColClass)} text-muted">
-            UUID
+            <g:message code="uuid" />
         </label>
 
         <div class="${fieldColSize}">
             <g:if test="${editSchedExecId && scheduledExecution?.uuid}">
-                <p class="form-control-static text-muted" title="UUID for this Job">
+                <p class="form-control-static text-muted" title="${g.message(code:'uuid.for.this.job')}">
                     <g:enc>${scheduledExecution?.uuid}</g:enc>
                 </p>
             </g:if>
