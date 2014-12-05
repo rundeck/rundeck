@@ -1789,6 +1789,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         def model = _prepareExecute(scheduledExecution, framework,authContext)
+        model.nextExecution = scheduledExecutionService.nextExecutionTime(scheduledExecution)
         if(params.dovalidate){
             model.jobexecOptionErrors=session.jobexecOptionErrors
             model.selectedoptsmap=session.selectedoptsmap
