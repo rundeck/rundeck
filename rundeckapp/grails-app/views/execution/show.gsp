@@ -408,7 +408,7 @@
                                 </div>
 
                                     <g:if test="${deleteExecAuth}">
-                                        <div class="spacing">
+                                        <div class="spacing" data-bind="visible: completed()">
                                             <a href="#execdelete" class="btn-link btn-xs btn btn-danger "
                                                data-toggle="modal">
                                                 <b class="glyphicon glyphicon-remove-circle"></b>
@@ -478,7 +478,7 @@
                                     </g:if>
 
                                     <g:if test="${deleteExecAuth}">
-                                        <div class="spacing">
+                                        <div class="spacing" data-bind="visible: completed()">
                                             <a href="#execdelete" class="btn-link btn-xs btn btn-danger "
                                                data-toggle="modal">
                                                 <b class="glyphicon glyphicon-remove-circle"></b>
