@@ -172,7 +172,9 @@ function _addAceTextarea(textarea){
         jQuery(textarea).val(editor.getValue());
         jobWasEdited();
     });
-    editor.focus();
+    if(data.aceAutofocus){
+        editor.focus();
+    }
 
     //add controls
     var addSoftWrapCheckbox=data.aceControlSoftWrap?data.aceControlSoftWrap:false

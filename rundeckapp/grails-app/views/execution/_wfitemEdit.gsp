@@ -317,7 +317,7 @@
                 <g:message code="Workflow.Step.adhocLocalString.description" />
             </label>
             <div class="col-sm-12">
-                <textarea rows="10" cols="60" name="adhocLocalString" id="adhocLocalStringField${rkey}" class="form-control code apply_ace" autofocus><g:enc>${item?.adhocLocalString}</g:enc></textarea>
+                <textarea rows="10" cols="60" name="adhocLocalString" id="adhocLocalStringField${rkey}" class="form-control code apply_ace" data-ace-autofocus='true' ><g:enc>${item?.adhocLocalString}</g:enc></textarea>
             </div>
         </div>
     </g:if>
