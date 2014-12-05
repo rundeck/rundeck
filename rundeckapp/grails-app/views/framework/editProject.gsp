@@ -60,9 +60,6 @@
 
 <body>
 
-<g:set var="adminauth"
-       value="${auth.resourceAllowedTest(type:'resource',kind:'project',action:['create'],context:'application')}"/>
-<g:if test="${adminauth}">
 
     <div class="row">
         <g:form action="saveProject" method="post"
@@ -87,16 +84,5 @@
     </div>
 
     <g:render template="storageBrowseModalKO"/>
-
-</g:if>
-<g:else>
-    <div class="row">
-    <div class="col-sm-12">
-        <div class="alert alert-warning">
-            <g:message code="unauthorized.project.create"/>
-        </div>
-    </div>
-    </div>
-</g:else>
 </body>
 </html>
