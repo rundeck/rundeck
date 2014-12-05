@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.dtolabs.rundeck.core.storage.StorageTree;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
+import org.rundeck.storage.api.PathUtil;
 import org.rundeck.storage.api.Resource;
 import org.rundeck.storage.api.StorageException;
 
@@ -378,7 +379,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                                 .STORAGE_FILE_META_FILTER_KEY).toString();
                     }
 
-                    if (null != root && !propValue.startsWith(root + "/")) {
+                    if (null != root && !PathUtil.hasRoot(propValue,root)) {
                         continue;
                     }
                     try {
