@@ -12,9 +12,26 @@
 
 <div class="panel panel-primary obs_delete_hide" id="editForm">
     <div class="panel-heading">
+        <div class="row">
+            <div class="col-sm-10">
         <span class="h4">
             Edit <g:message code="domain.ScheduledExecution.title"/>
         </span>
+            </div>
+
+            <auth:resourceAllowed action="${AuthConstants.ACTION_CREATE}"
+                                  project="${params.project}" kind="${AuthConstants.TYPE_JOB}">
+
+                <div class="col-sm-2 ">
+                    <g:link controller="scheduledExecution" action="upload"
+                            params="[project: params.project ?: request.project]"
+                            class="btn btn-default btn-sm pull-right">
+                        <i class="glyphicon glyphicon-upload"></i>
+                        <g:message code="upload.definition.button.label" />
+                    </g:link>
+                </div>
+            </auth:resourceAllowed>
+        </div>
     </div>
 
         <g:render template="edit" model="[scheduledExecution:scheduledExecution, crontab:crontab, command:command,authorized:authorized]"/>
