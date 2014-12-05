@@ -341,7 +341,7 @@ function _applyAce(e,height){
     $(e).addClassName('ace_editor');
     var editor = ace.edit(e.identify());
     editor.setTheme("ace/theme/chrome");
-    editor.getSession().setMode("ace/mode/" + (jQuery(textarea).data('aceSessionMode') ? jQuery(textarea).data('aceSessionMode') : 'sh'));
+    editor.getSession().setMode("ace/mode/" + (jQuery(e).data('aceSessionMode') ? jQuery(e).data('aceSessionMode') : 'sh'));
     editor.setReadOnly(true);
 }
 /**
