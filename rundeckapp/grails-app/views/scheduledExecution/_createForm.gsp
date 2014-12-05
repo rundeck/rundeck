@@ -12,7 +12,7 @@
             <div class="row">
                 <div class="col-sm-10">
                     <span class="h4">
-                        Create New <g:message code="domain.ScheduledExecution.title"/>
+                        <g:message code="ScheduledExecution.page.create.title" />
                     </span>
                 </div>
 
@@ -21,7 +21,7 @@
                             params="[project: params.project?:request.project]"
                             class="btn btn-default btn-sm pull-right">
                         <i class="glyphicon glyphicon-upload"></i>
-                        Upload Definition&hellip;
+                        <g:message code="upload.definition.button.label"/>
                     </g:link>
                 </div>
             </div>
@@ -37,21 +37,16 @@
                 </wdgt:eventHandlerJS>
             </g:javascript>
             <div id="schedCreateButtons">
-                <g:actionSubmit id="createFormCancelButton" value="Cancel"
+                <g:actionSubmit id="createFormCancelButton" value="${g.message(code:'cancel')}"
                                 onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"
                                 class="btn btn-default reset_page_confirm"/>
-                <g:if test="${auth.resourceAllowedTest( kind:'job',action:[AuthConstants.ACTION_CREATE],project: params.project ?: request.project)}">
-                    <g:submitButton name="Create" value="Create"
+                <g:submitButton name="Create" value="${g.message(code: 'button.action.Create')}"
                                     class="cformAllowSave cformAllowSaveOnly btn btn-primary reset_page_confirm" />
-                </g:if>
 
-                <g:if test="${auth.resourceAllowedTest( has:false, kind:'job', action:[AuthConstants.ACTION_CREATE],project: params.project ?: request.project)}">
-                    <span class="error message cformAllowRunAndForget cformAllowRun">Not authorized to Save Jobs</span>
-                </g:if>
             </div>
             <div id="schedCreateSpinner" class="spinner block" style="display:none;">
                 <img src="${resource(dir:'images',file:'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/>
-                Creating Job...
+                <g:message code="creating.job.loading.text" />
             </div>
         </div>
 

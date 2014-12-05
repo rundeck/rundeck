@@ -15,7 +15,7 @@
         <div class="row">
             <div class="col-sm-10">
         <span class="h4">
-            Edit <g:message code="domain.ScheduledExecution.title"/>
+            <g:message code="ScheduledExecution.page.edit.title" />
         </span>
             </div>
 
@@ -40,10 +40,10 @@
             <div class="row">
             <div class="buttons col-sm-10">
 
-                <g:actionSubmit id="editFormCancelButton" value="Cancel"
+                <g:actionSubmit id="editFormCancelButton" value="${g.message(code: 'cancel')}"
                                 onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"
                                 class="btn btn-default reset_page_confirm"/>
-                <g:actionSubmit value="Save" action="Update" class="btn btn-primary reset_page_confirm "/>
+                <g:actionSubmit value="${g.message(code: 'button.action.Save')}" action="Update" class="btn btn-primary reset_page_confirm "/>
 
             </div>
             </div>
