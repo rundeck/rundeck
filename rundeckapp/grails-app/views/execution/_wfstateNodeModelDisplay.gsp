@@ -53,12 +53,6 @@
 
     <div class="row row-space" data-bind="if: completed()">
         <div class="col-sm-12">
-            <tmpl:wfstateSummaryLine/>
-        </div>
-    </div>
-
-    <div class="row row-space" data-bind="if: completed()">
-        <div class="col-sm-12">
             <tmpl:wfstateSummaryScore/>
         </div>
     </div>

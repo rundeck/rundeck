@@ -19,27 +19,27 @@
 
             <tr>
                 <th colspan="4" class="text-muted table-footer text-small">
-                    Node Summary
+                    <g:message code="node.summary" />
                 </th>
             </tr>
             <tr>
                 <th style="width: 25%" class="text-muted text-center h5 text-header">
-                    Complete
+                    <g:message code="complete" />
                     <g:render template="/common/helpTooltipIconKO"
                               model="[messageCode: 'workflowState.summary.nodes.complete.description']"/>
                 </th>
                 <th style="width: 25%" class="text-muted text-center h5 text-header">
-                    Failed
+                    <g:message code="status.label.failed" />
                     <g:render template="/common/helpTooltipIconKO"
                               model="[messageCode: 'workflowState.summary.nodes.failed.description']"/>
                 </th>
                 <th style="width: 25%" class="text-muted text-center h5 text-header">
-                    Incomplete
+                    <g:message code="incomplete" />
                     <g:render template="/common/helpTooltipIconKO"
                               model="[messageCode: 'workflowState.summary.nodes.incomplete.description']"/>
                 </th>
                 <th style="width: 25%" class="text-muted text-center h5 text-header">
-                    Not Started
+                    <g:message code="not.started" />
                     <g:render template="/common/helpTooltipIconKO"
                               model="[messageCode: 'workflowState.summary.nodes.notstarted.description']"/>
                 </th>

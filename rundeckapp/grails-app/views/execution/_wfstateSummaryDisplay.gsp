@@ -14,11 +14,6 @@
   limitations under the License.
   --}%
 <div class="container">
-    <div class="row row-space">
-        <div class="col-sm-12">
-            <tmpl:wfstateSummaryLine />
-        </div>
-    </div>
 
 <div data-bind="if: !stateLoaded()">
         <div class="row-space-lg row">
@@ -29,7 +24,7 @@
                         <span class="text-warning" data-bind="text: errorMessage()">
                         </span>
                         <div>
-                            <a class="btn btn-default btn-sm" href="#output" data-bind="click: showTab.curry('tab_link_output') ">View Log Output &raquo;</a>
+                            <a class="btn btn-default btn-sm" href="#output" data-bind="click: showTab.curry('tab_link_output') "><g:message code="button.action.view.log.output" /></a>
                         </div>
                     </div>
                 </div>
@@ -64,22 +59,22 @@
 
                     <tr>
                         <th colspan="3" class="text-muted table-footer text-small">
-                            Node Summary
+                            <g:message code="node.summary" />
                         </th>
                     </tr>
                     <tr>
                        <th style="width: 33%" class="text-muted text-center h5 text-header">
-                           Waiting
+                           <g:message code="waiting" />
                            <g:render template="/common/helpTooltipIconKO"
                                    model="[messageCode:'workflowState.summary.nodes.waiting.description']"/>
                        </th>
                        <th style="width: 33%" class="text-muted text-center h5 text-header">
-                           Running
+                           <g:message code="running" />
                            <g:render template="/common/helpTooltipIconKO"
                                      model="[messageCode: 'workflowState.summary.nodes.running.description']"/>
                        </th>
                        <th style="width: 33%" class="text-muted text-center h5 text-header">
-                           Done
+                           <g:message code="done" />
                            <g:render template="/common/helpTooltipIconKO"
                                      model="[messageCode: 'workflowState.summary.nodes.complete.description']"/>
                        </th>
