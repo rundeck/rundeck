@@ -2225,9 +2225,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         newargs = stringList.toArray(new String[stringList.size()]);
 
         //construct job data context
-        def jobcontext = new HashMap<String, String>()
+        def jobcontext = new HashMap<String, String>(executionContext.dataContext.job?:[:])
         jobcontext.id = se.extid
-        jobcontext.execid = executionContext.dataContext.job?.execid ?: null;
         jobcontext.loglevel = mappedLogLevels[executionContext.loglevel]
         jobcontext.name = se.jobName
         jobcontext.group = se.groupPath
