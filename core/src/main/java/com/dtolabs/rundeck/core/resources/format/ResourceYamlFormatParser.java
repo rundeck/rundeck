@@ -49,7 +49,7 @@ public class ResourceYamlFormatParser implements ResourceFormatParser,Describabl
 
     public static final Set<String> EXTENSIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("yaml","yml")));
     public static final Set<String> MIME_TYPES = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-        "text/plain")));
+        "*/yaml", "*/x-yaml", "text/plain")));
 
     public Set<String> getFileExtensions() {
         return EXTENSIONS;
