@@ -177,7 +177,7 @@
             if(popvis && lastHref===elem.href){
                 return;
             }
-            var delay=0;
+            var delay=1500;
             if(popvis){
                 delay=0;
             }
