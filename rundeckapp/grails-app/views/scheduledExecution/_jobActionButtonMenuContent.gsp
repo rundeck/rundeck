@@ -14,8 +14,12 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
-
-<g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_UPDATE])}">
+<g:set var="authUpdate" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_UPDATE])}"/>
+<g:set var="authRead" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_READ])}"/>
+<g:set var="authDelete" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_DELETE])}"/>
+<g:set var="authJobCreate" value="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_CREATE, project: scheduledExecution.project)}"/>
+<g:set var="authJobDelete" value="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_DELETE, project: scheduledExecution.project)}"/>
+<g:if test="${authUpdate}">
     <li>
         <g:link controller="scheduledExecution"
                 title="${g.message(code:'scheduledExecution.action.edit.button.tooltip')}"
@@ -27,8 +31,7 @@
         </g:link>
     </li>
 </g:if>
-<g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_READ]) &&
-        auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_CREATE, project: scheduledExecution.project)}">
+<g:if test="${authRead && authJobCreate}">
     <li>
         <g:link controller="scheduledExecution"
                 title="${g.message(code:'scheduledExecution.action.duplicate.button.tooltip')}"
@@ -42,23 +45,26 @@
     </li>
 </g:if>
 <g:unless test="${hideJobDelete}">
-    <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}"
-                          project="${scheduledExecution.project}">
-        <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_DELETE)}">
+    <g:if test="${authJobDelete && authDelete}">
+        <g:if test="${authUpdate || authRead&&authJobCreate}">
             <li class="divider"></li>
-            <li>
-                <a data-toggle="modal"
-                   href="#jobdelete"
-                   title="${g.message(code: 'delete.this.job')}">
-                    <b class="glyphicon glyphicon-remove-circle"></b>
-                    <g:message code="scheduledExecution.action.delete.button.label"/>
-                </a>
-            </li>
         </g:if>
-    </auth:resourceAllowed>
+        <li>
+            <a data-toggle="modal"
+                class="act_job_delete_single"
+                data-job-id="${enc(attr: scheduledExecution.extid)}"
+               href="#jobdelete"
+               title="${g.message(code: 'delete.this.job')}">
+                <b class="glyphicon glyphicon-remove-circle"></b>
+                <g:message code="scheduledExecution.action.delete.button.label"/>
+            </a>
+        </li>
+    </g:if>
 </g:unless>
-<g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_READ])}">
-    <li class="divider"></li>
+<g:if test="${authRead}">
+    <g:if test="${authJobDelete && authDelete || authUpdate || authJobCreate}">
+        <li class="divider"></li>
+    </g:if>
     <li><g:link controller="scheduledExecution"
                 title="${g.message(code: 'scheduledExecution.action.downloadformat.button.label', args: ['XML'])}"
                 params="[project: scheduledExecution.project]"
