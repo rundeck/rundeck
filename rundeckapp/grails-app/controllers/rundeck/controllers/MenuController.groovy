@@ -646,6 +646,10 @@ class MenuController extends ControllerBase{
             memtotal: memtotal,
             schedulerRunningCount: schedulerRunningCount
         ]
+        def serverUUID=frameworkService.getServerUUID()
+        if(serverUUID){
+            info['serverUUID']=serverUUID
+        }
         return [systemInfo: [
 
             [
@@ -694,6 +698,7 @@ class MenuController extends ControllerBase{
                 build: info.build,
                 node: info.nodeName,
                 base: info.base,
+                serverUUID: info.serverUUID,
             ]],
             [os:
             [arch: info.osArch,

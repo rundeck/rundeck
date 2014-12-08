@@ -235,6 +235,7 @@ class ApiController extends ControllerBase{
         Date nowDate=new Date();
         String nodeName= servletContext.getAttribute("FRAMEWORK_NODE")
         String appVersion= grailsApplication.metadata['app.version']
+        String sUUID= frameworkService.getServerUUID()
         double load= ManagementFactory.getOperatingSystemMXBean().systemLoadAverage
         int processorsCount= ManagementFactory.getOperatingSystemMXBean().availableProcessors
         String osName= ManagementFactory.getOperatingSystemMXBean().name
@@ -266,6 +267,7 @@ class ApiController extends ControllerBase{
                     node(nodeName)
                     base(servletContext.getAttribute("RDECK_BASE"))
                     apiversion(ApiRequestFilters.API_CURRENT_VERSION)
+                    serverUUID(sUUID)
                 }
                 os {
                     arch(osArch)

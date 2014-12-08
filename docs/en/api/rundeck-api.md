@@ -493,6 +493,7 @@ Result: Success response, with included system info and stats in this format:
         <build>1.2.1-0-beta</build>
         <node>Venkman.local</node>
         <base>/Users/greg/rundeck121</base>
+        <serverUUID>3E43E30D-F3D7-45AA-942A-04D5BAFED8CA</serverUUID>
     </rundeck>
     <os>
         <arch>x86_64</arch>
@@ -526,6 +527,8 @@ Result: Success response, with included system info and stats in this format:
             <active>24</active>
         </threads>
     </stats>
+    <metrics href='http://dignan:4440/metrics/metrics?pretty=true' contentType='text/json' />
+    <threadDump href='http://dignan:4440/metrics/threads' contentType='text/plain' />
 </system>
 ~~~~~~~~~~~~~~~
 
@@ -559,6 +562,10 @@ attribute includes the milliseconds since the unix epoch.
 `rundeck/base`
 
 :   Server base directory
+
+`rundeck/serverUUID`
+
+:   Server UUID (present if cluster mode is enabled)
 
 `os/arch`
 
