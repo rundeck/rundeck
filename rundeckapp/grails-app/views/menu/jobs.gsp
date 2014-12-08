@@ -246,17 +246,34 @@
                     popJobDetails(elem);
                     $('jobIdDetailContent').select('.apply_ace').each(function (t) {
                         _applyAce(t);
-                    })
+                    });
                 }else{
                     clearHtml(bcontent);
                     viewdom.hide();
                 }
             });
         }
+
         function initJobIdLinks(){
-            $$('.jobIdLink').each(function(e){
+            $$('.hover_show_job_info').each(function(e){
                 Event.observe(e,'mouseover',jobLinkMouseover.curry(e));
                 Event.observe(e,'mouseout',jobLinkMouseout.curry(e));
+            });
+
+            jQuery('.act_job_action_dropdown').click(function(){
+                var id=jQuery(this).data('jobId');
+                var el=jQuery(this).parent().find('.dropdown-menu');
+                el.load(
+                    _genUrl(appLinks.scheduledExecutionActionMenuFragment,{id:id})
+                );
+            });
+            jQuery(document.body).on('click','.act_job_delete_single',function(){
+                var el=jQuery(this);
+                var id=el.data('jobId');
+                jQuery('.job_bulk_edit').click();//show bulk edit mode
+                //check only the checkbox with this job id by passing an array
+                jQuery(':input[name=ids]').val([id]);
+               jQuery('#bulk_del_confirm').modal('toggle');
             });
         }
          function filterToggle(evt) {
@@ -297,6 +314,10 @@
                 ko.applyBindings(pageActivity, document.getElementById('activity_section'));
                 setupActivityLinks('activity_section', pageActivity);
             }
+            jQuery('.act_execute_job').on('click',function(evt){
+                evt.preventDefault();
+               loadExec(jQuery(this).data('jobId'));
+            });
         });
     </script>
     <g:javascript library="yellowfade"/>

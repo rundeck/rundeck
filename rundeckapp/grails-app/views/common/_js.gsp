@@ -25,6 +25,7 @@
         scheduledExecutionRunAdhocInline: "${createLink(controller:'scheduledExecution',action:'runAdhocInline',params:projParams)}",
         scheduledExecutionCreate: "${createLink(controller:'scheduledExecution',action:'create',params:projParams)}",
         scheduledExecutionExecuteFragment: '${createLink(controller:"scheduledExecution",action:"executeFragment",params:projParams)}',
+        scheduledExecutionActionMenuFragment: '${createLink(controller:"scheduledExecution",action:"actionMenuFragment",params:projParams)}',
         scheduledExecutionRunJobInline: '${createLink(controller:"scheduledExecution",action:"runJobInline",params:projParams)}',
         scheduledExecutionDetailFragment: '${createLink(controller:'scheduledExecution',action:'detailFragment',params: projParams)}',
         executionFollowFragment: "${createLink(controller:'execution',action:'followFragment',params:projParams)}",

@@ -44,51 +44,58 @@
                             %{--normal view--}%
                         <tr class="sectionhead expandComponentHolder ${paginateParams?.idlist==scheduledExecution.id.toString()?'expanded':''}" id="jobrow_${scheduledExecution.id}">
                             <td class="jobname">
-                                    <span class="jobbulkeditfield" style="display: none">
+                                <span class="jobbulkeditfield" style="display: none">
                                     <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_DELETE]?.contains(scheduledExecution.id.toString())}">
-                                        <input type="checkbox" name="ids" value="${enc(attr:scheduledExecution.extid)}"/>
+                                        <input type="checkbox" name="ids" value="${enc(attr:scheduledExecution.extid)}" class=" checkbox-inline"/>
                                     </g:if>
                                     <g:else>
-                                        <span class="info note" style="width:12px;margin: 3px;"
-                                              title="${message(code: 'unauthorized.job.delete',default: 'Not authorized to delete this job')}"><img
-                                                src="${resource(dir: 'images', file: 'icon-tiny-warn.png')}" alt=""
-                                                width="12px" height="12px"/></span>
+                                        <span class="text-muted"
+                                              title="${message(code: 'unauthorized.job.delete',default: 'Not authorized to delete this job')}">
+                                            <i class="glyphicon glyphicon-exclamation-sign"></i>
+                                        </span>
                                     </g:else>
                                 </span>
                                     <span class="inlinebuttons jobbuttons">
                                         <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_RUN]?.contains(scheduledExecution.id.toString())}">
-                                            <g:link controller="scheduledExecution" action="execute"
-                                                    id="${scheduledExecution.extid}" class=" btn btn-default btn-xs has_tooltip"
+                                            <g:link controller="scheduledExecution"
+                                                    action="execute"
+                                                    id="${scheduledExecution.extid}"
+                                                    class=" btn btn-default btn-xs has_tooltip act_execute_job"
                                                     params="[project: scheduledExecution.project]"
                                                     data-toggle="tooltip"
                                                     title="Choose options and Run Job…"
                                                     data-job-id="${scheduledExecution.extid}"
-                                                    onclick="if(typeof(loadExec)=='function'){loadExec(${scheduledExecution.id});return false;}">
+                                            >
                                                 <b class="glyphicon glyphicon-play"></b>
                                             </g:link>
                                         </g:if>
                                     </span>
 
-                                    <g:link action="show" controller="scheduledExecution" id="${scheduledExecution.extid}"
+                                    <g:link action="show"
+                                            controller="scheduledExecution"
+                                            id="${scheduledExecution.extid}"
+                                            class="hover_show_job_info"
                                             params="[project: scheduledExecution.project]">
                                         <g:if test="${showIcon}">
                                             <i class="glyphicon glyphicon-book"></i>
                                         </g:if>
-                                        <g:enc>${scheduledExecution.jobName}</g:enc>
-                                    </g:link>
+                                        <g:enc>${scheduledExecution.jobName}</g:enc></g:link>
+                                <div class="btn-group">
+                                    <button type="button"
+                                            class="btn btn-default btn-sm btn-link dropdown-toggle act_job_action_dropdown"
+                                            title="${g.message(code: 'click.for.job.actions')}"
+                                            data-job-id="${enc(attr:scheduledExecution.extid)}"
+                                            data-toggle="dropdown"
+                                            aria-expanded="false">
+                                        <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu" role="menu">
+                                        <li role="presentation" class="dropdown-header"><g:message code="loading.text" /></li>
+                                    </ul>
+                                </div>
 
-                                <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_UPDATE]?.contains(scheduledExecution.id.toString())}">
-                                    <g:link action="edit" controller="scheduledExecution"
-                                            params="[project: scheduledExecution.project]"
-                                            id="${scheduledExecution.extid}"
-                                            class="jobIdLink textbtn textbtn-info textbtn-on-hover"
-                                            data-job-id="${scheduledExecution.extid}">
-                                        <i class="glyphicon glyphicon-edit"></i>
-                                        edit</g:link>
-                                </g:if>
-
-                                    <g:render template="/scheduledExecution/description"
-                                              model="[description: scheduledExecution?.description,textCss:'text-muted',mode:'collapsed',rkey:g.rkey()]"/>
+                                <g:render template="/scheduledExecution/description"
+                                          model="[description: scheduledExecution?.description,textCss:'text-muted',mode:'collapsed',rkey:g.rkey()]"/>
 
                             </td>
                             <td class="scheduletime">

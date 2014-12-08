@@ -180,6 +180,35 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
     }
+
+    /**
+     * used by jobs page, displays actions for the job as li's
+     */
+    def actionMenuFragment = {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
+        if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
+            return
+        }
+        if (
+                unauthorizedResponse(
+                    frameworkService.authorizeProjectJobAll(
+                            authContext,
+                            scheduledExecution,
+                            [AuthConstants.ACTION_READ],
+                            scheduledExecution.project
+                    ),
+                    AuthConstants.ACTION_READ,
+                    'Job',
+                    params.id
+                )
+        ) {
+            return
+        }
+        return render(template: '/scheduledExecution/jobActionButtonMenuContent',
+                      model: [scheduledExecution: scheduledExecution])
+    }
+
     def detailFragment = {
         log.debug("ScheduledExecutionController: show : params: " + params)
         def crontab = [:]
@@ -321,7 +350,7 @@ class ScheduledExecutionController  extends ControllerBase{
             log.error("option missing")
             return renderErrorFragment("option missing")
         }
-        
+
         //see if option specified, and has url
         if (scheduledExecution.options && scheduledExecution.options.find {it.name == params.option}) {
             def Option opt = scheduledExecution.options.find {it.name == params.option}
