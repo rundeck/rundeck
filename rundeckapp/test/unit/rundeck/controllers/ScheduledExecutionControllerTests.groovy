@@ -28,6 +28,7 @@ import grails.test.mixin.TestFor
 import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.mock.web.MockMultipartHttpServletRequest
+import rundeck.codecs.URIComponentCodec
 import rundeck.services.ApiService
 import rundeck.services.NotificationService
 
@@ -63,7 +64,7 @@ class ScheduledExecutionControllerTests  {
     }
     public void setUp(){
 
-//        loadCodec(org.codehaus.groovy.grails.plugins.codecs.URLCodec)
+        mockCodec(URIComponentCodec)
     }
     void testEmpty(){
 
@@ -79,6 +80,18 @@ class ScheduledExecutionControllerTests  {
         }
     }
 
+    public void testExpandUrlOptionValueSimple() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals 'monkey', controller.expandUrl(option, '${option.test1.value}', se,[test1:'monkey'])
+    }
+    public void testExpandUrlOptionValueUrl() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals 'http://some.host/path/a%20monkey', controller.expandUrl(option, 'http://some.host/path/${option.test1.value}', se,[test1:'a monkey'])
+    }
+    public void testExpandUrlOptionValueParam() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals 'http://some.host/path/?a+monkey', controller.expandUrl(option, 'http://some.host/path/?${option.test1.value}', se,[test1:'a monkey'])
+    }
     public void testExpandUrlOptionName() {
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         assertEquals 'test1', controller.expandUrl(option, '${option.name}', se)
@@ -96,7 +109,12 @@ class ScheduledExecutionControllerTests  {
 
     public void testExpandUrlJobDesc() {
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
-        assertEquals 'a+job', controller.expandUrl(option, '${job.description}', se)
+        assertEquals 'a%20job', controller.expandUrl(option, '${job.description}', se)
+    }
+
+    public void testExpandUrlJobDescParam() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals '?a+job', controller.expandUrl(option, '?${job.description}', se)
     }
 
     public void testExpandUrlJobProject() {
