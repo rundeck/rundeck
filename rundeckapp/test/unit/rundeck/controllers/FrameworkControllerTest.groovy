@@ -17,12 +17,16 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
+import com.dtolabs.rundeck.app.support.PluginConfigParams
+import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import org.codehaus.groovy.grails.web.json.JSONElement
+import org.codehaus.groovy.grails.web.json.JSONObject
 import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.CommandExec
 import rundeck.Execution
@@ -43,6 +47,15 @@ import rundeck.services.UserService
 @TestFor(FrameworkController)
 @Mock([ScheduledExecution, Workflow, WorkflowStep, CommandExec, Execution])
 class FrameworkControllerTest {
+    /**
+     * utility method to mock a class
+     */
+    private <T> T mockWith(Class<T> clazz, Closure clos) {
+        def mock = mockFor(clazz)
+        mock.demand.with(clos)
+        return mock.createMock()
+    }
+
     public void testextractApiNodeFilterParamsEmpty(){
         def params = FrameworkController.extractApiNodeFilterParams([:])
         assertEquals(0,params.size())
@@ -446,5 +459,110 @@ class FrameworkControllerTest {
         params["nodexec.1.config.specialvalue1"] = "foobar"
 
         controller.saveProject()
+    }
+    void testCheckResourceModelConfig_noType(){
+        controller.frameworkService = mockWith(FrameworkService){
+            getRundeckFramework {-> [getResourceModelSourceService:{->null}] }
+        }
+
+        def params = new PluginConfigParams()
+        controller.checkResourceModelConfig(params)
+        assertEquals(false,response.json.valid)
+        assertEquals('Plugin provider type must be specified',response.json.error)
+    }
+    void testCheckResourceModelConfig_okType(){
+        controller.frameworkService = mockWith(FrameworkService){
+            getRundeckFramework {-> [getResourceModelSourceService:{->null}] }
+            validateServiceConfig{String type,String prefix,Map params,service->
+                assertEquals('abc',type)
+                assertEquals('config.',prefix)
+                [valid:true]
+            }
+        }
+
+        def config = new PluginConfigParams()
+        controller.params.type='abc'
+        controller.checkResourceModelConfig(config)
+        assertEquals(true,response.json.valid)
+        assertTrue(response.json.error in [null, JSONObject.NULL])
+    }
+    void testCheckResourceModelConfig_revertUsesOrigPrefix(){
+        controller.frameworkService = mockWith(FrameworkService){
+            getRundeckFramework {-> [getResourceModelSourceService:{->null}] }
+            validateServiceConfig{String type,String prefix,Map params,service->
+                assertEquals('abc',type)
+                assertEquals('orig.config.',prefix)
+                [valid:true]
+            }
+        }
+
+        def config = new PluginConfigParams()
+        controller.params.type='abc'
+        controller.params.revert='true'
+        controller.checkResourceModelConfig(config)
+        assertEquals(true,response.json.valid)
+        assertTrue(response.json.error in [null, JSONObject.NULL])
+    }
+
+    void testViewResourceModelConfig_noType() {
+        controller.frameworkService = mockWith(FrameworkService) {
+            getRundeckFramework {-> [getResourceModelSourceService: {-> null }] }
+        }
+
+        def params = new PluginConfigParams()
+        def model = controller.viewResourceModelConfig(params)
+        assertEquals('Plugin provider type must be specified',model.error)
+        assertEquals('',model.prefix)
+        assertEquals(null,model.values)
+        assertEquals(null,model.description)
+        assertEquals(null,model.report)
+        assertEquals(null,model.type)
+        assertEquals(true,model.saved)
+        assertEquals(true,model.includeFormFields)
+    }
+    void testViewResourceModelConfig_okType() {
+        controller.frameworkService = mockWith(FrameworkService) {
+            getRundeckFramework {-> [getResourceModelSourceService: {-> null }] }
+            validateServiceConfig { String type, String prefix, Map params, service ->
+                assertEquals('abc', type)
+                assertEquals('config.', prefix)
+                [props: new Properties(),desc:'desc1',report:'report']
+            }
+        }
+
+        def params = new PluginConfigParams()
+        controller.params.type = 'abc'
+        def model = controller.viewResourceModelConfig(params)
+        assertEquals('', model.prefix)
+        assertNotNull(model.values)
+        assertEquals('desc1', model.description)
+        assertEquals('report', model.report)
+        assertEquals(null, model.error)
+        assertEquals('abc', model.type)
+        assertEquals(true, model.saved)
+        assertEquals(true, model.includeFormFields)
+    }
+    void testViewResourceModelConfig_revertUsesOrigPrefix() {
+        controller.frameworkService = mockWith(FrameworkService) {
+            getRundeckFramework {-> [getResourceModelSourceService: {-> null }] }
+            validateServiceConfig { String type, String prefix, Map params, service ->
+                assertEquals('abc', type)
+                assertEquals('orig.config.', prefix)
+                [props: new Properties(),desc:'desc1',report:'report']
+            }
+        }
+
+        def params = new PluginConfigParams()
+        controller.params.type = 'abc'
+        controller.params.revert = 'true'
+        def model = controller.viewResourceModelConfig(params)
+        assertEquals('', model.prefix)
+        assertNotNull(model.values)
+        assertEquals('desc1', model.description)
+        assertEquals('report', model.report)
+        assertEquals(null, model.error)
+        assertEquals('abc', model.type)
+        assertEquals(true, model.saved)
+        assertEquals(true, model.includeFormFields)
     }
 }
