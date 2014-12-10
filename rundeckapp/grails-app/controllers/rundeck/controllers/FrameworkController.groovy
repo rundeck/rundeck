@@ -1170,7 +1170,7 @@ class FrameworkController extends ControllerBase {
         if (!type) {
             error = "Plugin provider type must be specified"
         } else {
-            def validate = frameworkService.validateServiceConfig(type, prefix + 'config.', params, framework.getResourceModelSourceService())
+            def validate = frameworkService.validateServiceConfig(type, useprefix + 'config.', params, framework.getResourceModelSourceService())
             error = validate.error
             desc = validate.desc
             props = validate.props
