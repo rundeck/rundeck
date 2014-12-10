@@ -1095,7 +1095,7 @@ class FrameworkController extends ControllerBase {
             def errorMsgs = pluginConfig.errors.allErrors.collect { g.message(error: it) }
             return render([valid:false,errors: errorMsgs, error: errorMsgs.join(', ')] as JSON)
         }
-        Framework framework = frameworkService.getRundeckFramework()
+        def framework = frameworkService.getRundeckFramework()
         def error
         def prefix = params.prefix ?: ''
         def String type=params[prefix+'type']
@@ -1109,9 +1109,6 @@ class FrameworkController extends ControllerBase {
         if('true'==params.revert){
             prefix='orig.'+prefix
         }
-        Properties props
-        def report
-        def desc
         def result=[valid:false]
         if (!type) {
             result.error = "Plugin provider type must be specified"
@@ -1154,8 +1151,12 @@ class FrameworkController extends ControllerBase {
 
         render(view: 'createResourceModelConfig', model: [ prefix: prefix, values: props, description: desc, report: report, error: error, isEdit: "true"!=params.iscreate,type:type, isCreate:params.isCreate])
     }
-    def viewResourceModelConfig = {
-        Framework framework = frameworkService.getRundeckFramework()
+    def viewResourceModelConfig (PluginConfigParams pluginConfig) {
+        if (pluginConfig.hasErrors()) {
+            request.errors = pluginConfig.errors
+            return render(template: '/common/messages')
+        }
+        def framework = frameworkService.getRundeckFramework()
         def error
         def prefix = params.prefix ?: ''
         def String type = params[prefix + 'type']
@@ -1176,7 +1177,16 @@ class FrameworkController extends ControllerBase {
             report = validate.report
         }
 
-        return render(template: 'viewResourceModelConfig',model:[ prefix: prefix, values: props, includeFormFields: true, description: desc, report: report, error: error, saved:true, type: type])
+        return [
+                prefix: prefix,
+                values: props,
+                includeFormFields: true,
+                description: desc,
+                report: report,
+                error: error,
+                saved:true,
+                type: type
+        ]
     }
     def projectDescFragment(){
         Framework framework = frameworkService.getRundeckFramework()
