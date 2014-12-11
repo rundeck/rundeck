@@ -1,7 +1,7 @@
-  /*
-  *= require_self
-  *= require rundeck1
-  */
+/*
+*= require_self
+*= require rundeck1
+*/
   @import "bootswatch";
   @import "nav-links";
 
@@ -449,7 +449,7 @@
   &:hover,
   &:focus,
   &:active,
-  &.active,
+  &.active
   {
     cursor: pointer;
     text-decoration: underline;
@@ -480,7 +480,7 @@
   &.textbtn-on-hover:hover,
   &.textbtn-on-hover:focus,
   &.textbtn-on-hover:active,
-  &.textbtn-on-hover.active,
+  &.textbtn-on-hover.active
    {
     color: darken(@color, 8%);
     background-color: @background-higlight;
@@ -813,12 +813,13 @@ section{
   .tab-content{
     .panel.panel-tab-content,
     .panel.panel-tab-content > .panel-heading,
+    .panel.panel-tab-content > .table + .panel-body,
     .list-group.list-group-tab-content .list-group-item:first-child {
       border-top: 0;
       .border-top-radius(0);
     }
   }
-  .nav.nav-tabs + .panel.panel-tab-content{
+  .nav.nav-tabs + .panel.panel-tab-content, .nav.nav-tabs + .panel.panel-tab-content > .table + .panel-body , .nav.nav-tabs + .panel.panel-tab-content > .table  {
       border-top: 0;
       .border-top-radius(0);
   }
@@ -826,7 +827,7 @@ section{
 
   //padding between sequential buttons in a form group
   .form-group .panel-footer, .panel-footer .buttons, .panel-footer.buttons{
-    .btn + .btn,  {
+    .btn + .btn  {
       margin-left: 5px;
     }
     .btn.pull-right{

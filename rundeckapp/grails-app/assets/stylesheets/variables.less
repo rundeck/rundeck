@@ -42,6 +42,8 @@
 
 @link-color:            @brand-primary;
 @link-hover-color:      @brand-tint;
+//** Link hover decoration.
+@link-hover-decoration: underline;
 
 // Typography
 // -------------------------
@@ -161,7 +163,14 @@
 
 @input-color:                    @text-color;
 @input-border:                   #dce4ec;
+// TODO: Rename `@input-border-radius` to `@input-border-radius-base` in v4
+//** Default `.form-control` border radius
 @input-border-radius:            @border-radius-base;
+//** Large `.form-control` border radius
+@input-border-radius-large:      @border-radius-large;
+//** Small `.form-control` border radius
+@input-border-radius-small:      @border-radius-small;
+
 @input-border-focus:             #3498DB;
 
 @input-color-placeholder:        #acb6c0;
@@ -175,6 +184,9 @@
 
 @input-group-addon-bg:           @gray-lighter;
 @input-group-addon-border-color: @input-border;
+
+//** Disabled cursor for form controls and buttons.
+@cursor-disabled: not-allowed;
 
 
 // Dropdowns
@@ -272,6 +284,7 @@
 @navbar-border-radius:             @border-radius-base;
 @navbar-padding-horizontal:        floor(@grid-gutter-width / 2);  // ~15px
 @navbar-padding-vertical:          ((@navbar-height - @line-height-computed) / 2);
+@navbar-collapse-max-height: 340px;
 
 @navbar-default-color:             #777;
 @navbar-default-bg:                @brand-primary;
@@ -356,23 +369,35 @@
 // Pagination
 // -------------------------
 
+@pagination-color:                     #fff;
 @pagination-bg:                        @btn-default-bg;
 @pagination-border:                    transparent;
 
+@pagination-hover-color:               @link-hover-color;
 @pagination-hover-bg:                  @gray-lighter;
+@pagination-hover-border:              #ddd;
 
-@pagination-active-bg:                 lighten(@brand-primary, 15%);
+@pagination-active-bg:                 lighten(@brand-primary, 25%);
 @pagination-active-color:              #fff;
+@pagination-active-border: transparent;
 
-@pagination-disabled-color:            @gray-lighter;
-
+@pagination-disabled-color:            @gray;
+@pagination-disabled-bg:               @gray-lighter;
+@pagination-disabled-border: transparent;
 
 // Pager
 // -------------------------
 
-@pager-border-radius:                  15px;
-@pager-disabled-color:                 @gray-light;
+@pager-bg: @pagination-bg;
+@pager-border: @pagination-border;
+@pager-border-radius: 15px;
 
+@pager-hover-bg: @pagination-hover-bg;
+
+@pager-active-bg: @pagination-active-bg;
+@pager-active-color: @pagination-active-color;
+
+@pager-disabled-color: @pagination-disabled-color;
 
 // Jumbotron
 // -------------------------
@@ -409,6 +434,7 @@
 @tooltip-max-width:           200px;
 @tooltip-color:               #fff;
 @tooltip-bg:                  rgba(0,0,0,.9);
+@tooltip-opacity: .9;
 
 @tooltip-arrow-width:         5px;
 @tooltip-arrow-color:         @tooltip-bg;
@@ -457,9 +483,14 @@
 @modal-content-fallback-border-color:          #999;
 
 @modal-backdrop-bg:           #000;
+//** Modal backdrop opacity
+@modal-backdrop-opacity: .5;
 @modal-header-border-color:   #e5e5e5;
 @modal-footer-border-color:   @modal-header-border-color;
 
+@modal-lg: 900px;
+@modal-md: 600px;
+@modal-sm: 300px;
 
 // Alerts
 // -------------------------
@@ -488,6 +519,8 @@
 // -------------------------
 @progress-bg:                 @gray-light;
 @progress-bar-color:          #fff;
+//** Variable for setting rounded corners on progress bar.
+@progress-border-radius: @border-radius-base;
 
 @progress-bar-bg:             @brand-primary;
 @progress-bar-success-bg:     @brand-success;
@@ -506,14 +539,27 @@
 @list-group-active-color:     @component-active-color;
 @list-group-active-bg:        @component-active-bg;
 @list-group-active-border:    @list-group-active-bg;
+//** Text color for content within active list items
+@list-group-active-text-color: lighten(@list-group-active-bg, 40%);
+
+//** Text color of disabled list items
+@list-group-disabled-color: @gray-light;
+//** Background color of disabled list items
+@list-group-disabled-bg: @gray-lighter;
+//** Text color for content within disabled list items
+@list-group-disabled-text-color: @list-group-disabled-color;
 
 @list-group-link-color:          #555;
+@list-group-link-hover-color: @list-group-link-color;
 @list-group-link-heading-color:  #333;
 
 
 // Panels
 // -------------------------
 @panel-bg:                    #fff;
+@panel-body-padding: 15px;
+@panel-heading-padding: 10px 15px;
+@panel-footer-padding: @panel-heading-padding;
 @panel-inner-border:          @gray-lighter;
 @panel-border-radius:         @border-radius-base;
 @panel-footer-bg:             @gray-lighter;
@@ -557,6 +603,7 @@
 // Wells
 // -------------------------
 @well-bg:                     @gray-lighter;
+@well-border:                 darken(@well-bg, 7%);
 
 
 // Badges
@@ -575,6 +622,8 @@
 
 // Breadcrumbs
 // -------------------------
+@breadcrumb-padding-vertical: 8px;
+@breadcrumb-padding-horizontal: 15px;
 @breadcrumb-bg:               @gray-lighter;
 @breadcrumb-color:            #ccc;
 @breadcrumb-active-color:     @gray;
@@ -609,6 +658,9 @@
 @code-color:                  @gray-darker;
 @code-bg:                     @gray-lighter;
 
+@kbd-color: #fff;
+@kbd-bg: #333;
+
 @pre-bg:                      @gray-lighter;
 @pre-color:                   @gray-dark;
 @pre-border-color:            #ccc;
@@ -621,6 +673,8 @@
 @headings-small-color:        @gray-light;
 @blockquote-small-color:      @gray-light;
 @blockquote-border-color:     @gray-lighter;
+//** Blockquote font size
+@blockquote-font-size: (@font-size-base * 1.25);
 @page-header-border-color:    @gray-lighter;
 
 // Miscellaneous
@@ -647,3 +701,6 @@
 // Large screen / wide desktop
 @container-large-desktop:      ((1140px + @grid-gutter-width));
 @container-lg:                 @container-large-desktop;
+
+//** Width of horizontal description list titles
+@dl-horizontal-offset: @component-offset-horizontal;
