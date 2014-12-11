@@ -19,13 +19,15 @@
  */
 package com.dtolabs.rundeck.core.authentication;
 
+import java.io.Serializable;
 import java.security.Principal;
 
 /**
  * @author noahcampbell
  *
  */
-public class Group implements Principal {
+public class Group implements Principal,Serializable {
+    private static final long serialVersionUID = 1L;
 
     public Group(String group) {
         super();
