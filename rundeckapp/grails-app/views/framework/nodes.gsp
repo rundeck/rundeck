@@ -179,7 +179,7 @@
     <g:set var="filtersOpen" value="${summaryOnly || showFilter||params.createFilters||params.editFilters||params.saveFilter || filterErrors?true:false}"/>
 
     <div id="${enc(attr:ukey)}filter">
-        <g:form action="nodes" controller="framework" class="form form-inline" name="searchForm">
+        <g:form action="nodes" controller="framework" class="form " name="searchForm">
             <g:hiddenField name="max" value="${max}"/>
             <g:hiddenField name="offset" value="${offset}"/>
             <g:hiddenField name="formInput" value="true"/>
