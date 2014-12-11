@@ -29,7 +29,8 @@ import javax.crypto.SecretKey
  * @author Greg Schueler <greg@simplifyops.com>
  * @since 2014-08-20
  */
-class HMacSynchronizerTokensManager implements InitializingBean {
+class HMacSynchronizerTokensManager implements InitializingBean, Serializable {
+    private static final long serialVersionUID = 1L;
     static final Logger logger = Logger.getLogger(HMacSynchronizerTokensManager.class)
     String algorithm = "HmacSHA256"
     private SecretKey secretKey

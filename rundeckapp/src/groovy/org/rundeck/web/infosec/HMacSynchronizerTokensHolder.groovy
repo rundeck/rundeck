@@ -34,6 +34,7 @@ import javax.servlet.http.HttpSession
  * @since 2014-08-20
  */
 class HMacSynchronizerTokensHolder extends SynchronizerTokensHolder implements Serializable{
+    private static final long serialVersionUID = 1L;
     static Logger logger = Logger.getLogger(HMacSynchronizerTokensHolder.class.name)
     public static final String HOLDER = "TOKENS_HOLDER"
     public static final String TOKEN_KEY = "TOKEN_KEY"

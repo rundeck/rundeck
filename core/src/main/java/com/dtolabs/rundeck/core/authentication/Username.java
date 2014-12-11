@@ -19,14 +19,15 @@
  */
 package com.dtolabs.rundeck.core.authentication;
 
+import java.io.Serializable;
 import java.security.Principal;
 
 /**
  * @author noahcampbell
  *
  */
-public class Username implements Principal {
-
+public class Username implements Principal,Serializable {
+    private static final long serialVersionUID = 1L;
     public Username(String username) {
         super();
         this.username = username;

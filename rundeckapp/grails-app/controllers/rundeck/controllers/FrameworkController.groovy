@@ -740,7 +740,6 @@ class FrameworkController extends ControllerBase {
             def proj
             (proj, errors)=frameworkService.createFrameworkProject(project,projProps)
             if (!errors && proj) {
-                session.frameworkProjects = frameworkService.projects(authContext)
                 def result = userService.storeFilterPref(session.user, [project: proj.name])
                 return redirect(controller: 'menu', action: 'index',params: [project:proj.name])
             }
@@ -1283,7 +1282,7 @@ class FrameworkController extends ControllerBase {
         if(session.frameworkProjects){
             projects=session.frameworkProjects
         }else{
-            projects = frameworkService.projects(authContext)
+            projects = frameworkService.projects(authContext)*.name
             session.frameworkProjects=projects
         }
         [projects:projects,project:params.project] + (params.page?[selectParams:[page:params.page]]:[:])
