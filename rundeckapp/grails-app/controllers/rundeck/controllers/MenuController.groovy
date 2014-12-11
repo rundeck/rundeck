@@ -797,7 +797,7 @@ class MenuController extends ControllerBase{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         Framework framework = frameworkService.rundeckFramework
         def fprojects = frameworkService.projects(authContext)
-        session.frameworkProjects = fprojects
+        session.frameworkProjects = fprojects*.name
 
         Calendar n = GregorianCalendar.getInstance()
         n.add(Calendar.DAY_OF_YEAR, -1)

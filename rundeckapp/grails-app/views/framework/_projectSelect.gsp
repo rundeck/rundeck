@@ -1,4 +1,4 @@
-<g:set var="projectSet" value="${projects*.name.sort()}"/>
+<g:set var="projectSet" value="${projects.sort()}"/>
 <g:set var="selectParams" value="${selectParams?:[:]}"/>
     <a data-toggle="dropdown" href="#">
         <i class="glyphicon glyphicon-tasks"></i>
