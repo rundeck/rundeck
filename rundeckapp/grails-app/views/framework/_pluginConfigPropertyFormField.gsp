@@ -49,10 +49,11 @@
         <g:hiddenField name="${origfieldname}" value="${values && values[prop.name] ? values[prop.name] : ''}"/>
         <div class="checkbox">
             <label
-                   for="${enc(attr:fieldid)}"><g:enc>${prop.title ?: prop.name}</g:enc>
+                   for="${enc(attr:fieldid)}">
                 <g:checkBox name="${fieldname}" value="true"
                             checked="${values&&values[prop.name]?values[prop.name]=='true':prop.defaultValue=='true'}"
                             id="${fieldid}"/>
+                <g:enc>${prop.title ?: prop.name}</g:enc>
             </label>
         </div>
     </div>
