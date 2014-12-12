@@ -43,8 +43,7 @@ to the appearance in the web pages.
 
 ### Job execution view
 
-1. Job executions show the name of a job and group and display an icon that looks like a book.
-2. Job executions also provide a button to edit the job definition.
+Job executions show the Job name and group and display an icon that looks like a book. An Action menu provides actions to modify the job.
 
 ![Job execution](../figures/fig0805.png)
 
