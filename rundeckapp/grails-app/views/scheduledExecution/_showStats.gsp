@@ -23,9 +23,13 @@
                 </span>
             </td>
         <g:if test="${lastrun}">
-
+            <g:set var="successrate" value="${params.float('success')?:successrate}"/>
+            <g:set var="ratecolors" value="${['text-success','text-muted','text-warning','text-danger']}"/>
+            <g:set var="ratelevels" value="${[0.9f,0.75f,0.5f]}"/>
+            <g:set var="successindex" value="${ratelevels.findIndexOf{it<=(successrate)}}"/>
+            <g:set var="successcolor" value="${successindex>=0?ratecolors[successindex]:ratecolors[-1]}"/>
             <td class="text-center">
-                <span class="h3 text-success">
+                <span class="h3 ${successcolor}">
                     <g:formatNumber number="${successrate}" type="percent"/>
                 </span>
             </td>
