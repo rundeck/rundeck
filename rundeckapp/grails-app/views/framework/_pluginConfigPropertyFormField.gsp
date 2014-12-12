@@ -118,13 +118,13 @@
         %{-- selector for accessible storage --}%
         <g:set var="storageRoot" value="${prop.renderingOptions?.(StringRenderingConstants.STORAGE_PATH_ROOT_KEY)?:'/'}"/>
         <g:set var="storageFilter" value="${prop.renderingOptions?.(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY)?:''}"/>
-        <button class="btn btn-sm btn-default obs-select-storage-path"
+        <a class="btn btn-sm btn-default obs-select-storage-path"
                 data-toggle="modal"
                 href="#storagebrowse"
                 data-storage-root="${enc(attr:storageRoot)}"
                 data-storage-filter="${enc(attr:storageFilter)}"
                 data-field="#${enc(attr:fieldid)}"
-        >Select... <i class="glyphicon glyphicon-folder-open"></i></button>
+        >Select... <i class="glyphicon glyphicon-folder-open"></i></a>
         </div>
     </g:if>
 </g:else>

@@ -57,20 +57,20 @@
                     <b class="glyphicon glyphicon-chevron-down"></b>
                 </span>
                 <g:if test="${!filterName}">
-                    <button class="btn btn-xs pull-right btn-success"
+                    <a class="btn btn-xs pull-right btn-success"
                           data-toggle="modal"
-                          data-target="#saveFilterModal" title="Click to save this filter with a name">
+                          href="#saveFilterModal" title="Click to save this filter with a name">
                         <i class="glyphicon glyphicon-plus"></i> save this filter&hellip;
-                    </button>
+                    </a>
                 </g:if>
                 <g:else >
                     <div class="filterdef saved clear">
                                     <span class="prompt"><g:enc>${filterName}</g:enc></span>
-                    <button class="btn btn-xs btn-link btn-danger pull-right" data-toggle="modal"
-                          data-target="#deleteFilterModal" title="Click to delete this saved filter">
+                    <a class="btn btn-xs btn-link btn-danger pull-right" data-toggle="modal"
+                          href="#deleteFilterModal" title="Click to delete this saved filter">
                         <b class="glyphicon glyphicon-remove"></b>
                         delete&hellip;
-                    </button>
+                    </a>
                     </div>
                 </g:else>
                 <g:render template="/common/queryFilterManagerModal" model="${[rkey:rkey,filterName:filterName,
@@ -269,10 +269,10 @@
                             </div>
 
                             <div class="panel-footer">
-                                <button id="bulk_del_prompt"
+                                <a id="bulk_del_prompt"
                                       data-toggle="modal"
-                                      data-target="#bulk_del_confirm"
-                                      class="btn btn-warning btn-sm" ><g:message code="delete.selected.jobs" /></button>
+                                      href="#bulk_del_confirm"
+                                      class="btn btn-warning btn-sm" ><g:message code="delete.selected.jobs" /></a>
                             </div>
 
                         </div>

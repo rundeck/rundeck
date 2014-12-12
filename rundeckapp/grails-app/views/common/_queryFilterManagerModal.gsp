@@ -25,19 +25,19 @@
 </g:if>
 <g:if test="${includeSaveButton}">
     <div class=" panel-body saved ">
-        <button class="btn btn-default btn-sm pull-right" data-toggle="modal" data-target="#saveFilterModal">
+        <a class="btn btn-default btn-sm pull-right" data-toggle="modal" href="#saveFilterModal">
             Save this filter&hellip;
-        </button>
+        </a>
     </div>
 </g:if>
 <g:if test="${includeDeleteButton}">
     <div class=" panel-body saved ">
         <div class="well-sm well clearfix">
             <span class="h4">Saved filter: <strong><g:enc>${filterName}</g:enc></strong></span>
-            <button class="btn btn-danger btn-sm pull-right" data-toggle="modal" data-target="#deleteFilterModal">
+            <a class="btn btn-danger btn-sm pull-right" data-toggle="modal" href="#deleteFilterModal">
                 Delete this filter&hellip;
                 <i class="glyphicon glyphicon-remove"></i>
-            </button>
+            </a>
 
         </div>
     </div>

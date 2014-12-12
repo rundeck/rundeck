@@ -228,10 +228,10 @@
         <div class="panel-body">
 
 
-                <button class="btn btn-danger btn-lg" data-toggle="modal" data-target="#deleteProjectModal">
+                <a class="btn btn-danger btn-lg" data-toggle="modal" href="#deleteProjectModal">
                     Delete this Project&hellip;
                     <i class="glyphicon glyphicon-remove"></i>
-                </button>
+                </a>
                 <g:form style="display: inline;" controller="project" action="delete" params="[project: (params.project ?: request.project)]"
                         useToken="true"
                 >
