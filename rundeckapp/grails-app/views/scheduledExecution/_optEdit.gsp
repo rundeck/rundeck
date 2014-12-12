@@ -115,8 +115,14 @@
 
 
                     <div class="radio">
-                        <g:radio name="inputType" value="secureExposed" checked="${option?.secureInput && option?.secureExposed}" id="sectrue_${rkey}"/>
-                        <label for="sectrue_${rkey}">
+                        <label>
+                            <g:radio
+                                    name="inputType"
+                                    value="secureExposed"
+                                    checked="${option?.secureInput && option?.secureExposed}"
+                                    id="sectrue_${rkey}"
+                            />
+
                             <g:message code="form.option.secureExposed.true.label"/> <span class="text-danger small">&dagger;</span>
                         </label>
                         <span class="text-muted">
