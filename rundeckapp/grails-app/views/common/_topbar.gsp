@@ -28,6 +28,13 @@
     </a>
     </div>
 
+    <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
+        <g:ifPageProperty name='meta.tabpage'>
+            <g:ifPageProperty name='meta.tabpage' equals='configure'>
+                <g:set var="cfgselected" value="active"/>
+            </g:ifPageProperty>
+        </g:ifPageProperty>
+    </g:if>
     <div class="container">
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
     <ul class="nav navbar-nav">
@@ -133,13 +140,6 @@
                     action: [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
                             AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE],any:true,context:'application')}"/>
 
-            <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
-            <g:ifPageProperty name='meta.tabpage'>
-                <g:ifPageProperty name='meta.tabpage' equals='configure'>
-                    <g:set var="cfgselected" value="active"/>
-                </g:ifPageProperty>
-            </g:ifPageProperty>
-            </g:if>
             <g:if test="${projConfigAuth}">
             <li class="${cfgselected ?: ''}">
                 <g:link controller="menu" action="admin" title="${g.message(code:'gui.menu.Admin')}"
