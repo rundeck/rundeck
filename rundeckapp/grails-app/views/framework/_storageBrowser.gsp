@@ -2,7 +2,7 @@
     <div class="alert alert-warning" data-bind="visible: errorMsg()">
         <span data-bind="text: errorMsg"></span>
     </div>
-    <div class="row text-info form-inline">
+    <div class="row text-info ">
         <div class="form-group col-sm-12" data-bind="css: invalid()?'has-error':'' ">
             <div class="input-group">
                 <div class="input-group-addon" data-bind="if: staticRoot()">
