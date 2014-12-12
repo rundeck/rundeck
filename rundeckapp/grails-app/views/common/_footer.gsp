@@ -8,7 +8,7 @@
     All rights reserved.
 
     <g:link controller="menu" action="licenses">Licenses</g:link>
-    <g:set var="buildIdent" value="${params.test?:grailsApplication.metadata['build.ident']}"/>
+    <g:set var="buildIdent" value="${grailsApplication.metadata['build.ident']}"/>
     <g:set var="appId" value="${g.message(code: 'main.app.name')}"/>
     <g:set var="versionDisplay" value="inline"/>
     <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
