@@ -113,8 +113,8 @@ To reset the filter and go back to the full job page, click the
 
 ## Viewing Job detail
 
-If you have edit privilege, a Job's detail  can be previewed by hovering 
-the mouse pointer over the Job's edit button. 
+A Job's detail  can be previewed by hovering 
+the mouse pointer over the Job's name link.
 Click outside the popup to close it.
 
 ![Job detail popup](../figures/fig0320.png)
@@ -523,7 +523,7 @@ See also: [rd-queue](../man1/rd-queue.html).
 
 ## Deleting Jobs
 
-In the Job edit page, click the red "X" icon for to delete the Job.
+In the Job view page, click the Action button for a menu of actions, and select "Delete this Job..." to delete the Job.
 
 ![Job delete button](../figures/fig0311.png)
 
@@ -1292,16 +1292,16 @@ The URL can contain [Context Variables](#context-variables) that will be expande
 
 ### Advanced Script options
 
-For [Script steps](#script-step), [Script file steps](#script-file-step), and [Script URL steps](#script-url-step), you can specify an optional *Interpreter* string to declare how the script should be executed.
+For [Script steps](#script-step), [Script file steps](#script-file-step), and [Script URL steps](#script-url-step), you can specify an optional *Invocation* string to declare how the script should be executed.
 
 Click on the "Advanced" link to reveal the input.
 
-![Script interpreter input](../figures/job_workflow_script_interpreter.png)
+![Advanced Script Settings](../figures/job_workflow_script_interpreter.png)
 
-Enter a command that will be used as the *interpreter* to run the script.  For example, you can execute the script using `sudo` by entering:
+Enter a command that will be used as the *invocation* to run the script, by including `${scriptfile}` to define where the resulting file will appear in the invocation command.  For example, you can execute the script using `sudo` by entering:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-sudo -u username
+sudo -u username ${scriptfile}
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This will then allow your script to make use of [Sudo authentication](plugins.html#configuring-secondary-sudo-password-authentication).
@@ -1312,9 +1312,15 @@ The effecitve commandline for your script will become:
 sudo -u username [scriptfile] arguments ...
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If necessary, you can check the "Quote arguments to interpreter?" checkbox, which will then quote both the scriptfile and arguments before passing to the interpreter command:
+If necessary, you can check the "Quote arguments to script invocation string?" checkbox, which will then quote both the scriptfile and arguments before passing to the invocation command:
 
-    interpreter "[scriptfile] arguments ..."
+    [invocation string] "[scriptfile] arguments ..."
+
+#### Changing the File extension
+
+You can also change the file extension set on the temporary file when it is invoked.  This might be necessary if your command expects a file with a certain extension.
+
+Set the "File Extension" field to the desired extension. The `.` is optional, e.g. `.ps` or `sh`.  The default is determined by the type of target node.  Unix uses `.sh` and Windows uses `.bat`.
 
 ### Job reference step
 
@@ -1355,6 +1361,21 @@ because the option is not specified.
 
 Job References can be run as either *Node Steps* or  *Workflow Steps* (see [Workflow Steps : Types of Steps](#workflow-steps)).
  When you choose to use a Job Reference as a *Node Step*, you can use the Node context variables within the arguments string to the Job.
+
+#### Overriding Node Filters
+
+You can override the Node Filters used in the referenced Job. Click the "Override Node Filters?" button to expand the Node Filter area.
+
+![Job Reference Node Filter Override](../figures/job-ref-node-filter-override.png)
+
+Enter a new filter in the "Node Filter" input field to preview the matched nodes.  
+
+Once you enter a new filter, you can modify the other aspects for the Node Dispatching used by the Job Reference:
+
+* Thread Count
+* Node failure behavior
+* Node Rank attribute
+* Node Rank order
 
 ## Quoting arguments to steps
 
