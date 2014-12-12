@@ -238,14 +238,10 @@
                     }));
             ko.applyBindings(nodeFilter,document.getElementById('tabsarea'));
 
-            //update hidden node filter fields used by "run" command action
-            nodeFilter.filter.subscribe(function(val){
-                    jQuery('.hiddenNodeFilter').val(val);
-            });
+            //show selected named filter
             nodeFilter.filterName.subscribe(function(val){
-                jQuery('.hiddenNodeFilterName').val(val);
                 if(val){
-                    jQuery('a[data-node-filter-nam]').removeClass('active');
+                    jQuery('a[data-node-filter-name]').removeClass('active');
                     jQuery('a[data-node-filter-name=\'' + val + '\']').addClass('active');
                 }
             });

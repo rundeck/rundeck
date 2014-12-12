@@ -150,6 +150,13 @@
                         nodesTitlePlural:"${g.message(code:'Node.plural',default:'Nodes')}"
                     }));
             ko.applyBindings(nodeFilter);
+            //show selected named filter
+            nodeFilter.filterName.subscribe(function (val) {
+                if (val) {
+                    jQuery('a[data-node-filter-name]').removeClass('active');
+                    jQuery('a[data-node-filter-name=\'' + val + '\']').addClass('active');
+                }
+            });
             jQuery('body').on('click', '.nodefilterlink', function (evt) {
                 evt.preventDefault();
                 nodeFilter.selectNodeFilterLink(this);

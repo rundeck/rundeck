@@ -132,8 +132,8 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             filterString = '.*'
         }
         self.filterAll(filterAll);
-        self.filterName(filterName);
         self.filter(filterString);
+        self.filterName(filterName);
         self.clear();
         self.updateMatchedNodes();
     };
