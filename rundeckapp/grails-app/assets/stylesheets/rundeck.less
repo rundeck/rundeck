@@ -1516,10 +1516,18 @@ pre.filtererror{
     background-color: #eee;
     font-weight: normal;
   }
-  .version-name:before{
+}
+.rundeck-version-block{
+  display: inline-block;
+  padding: @padding-base-horizontal @padding-base-vertical;
+  .border-bottom-radius(@border-radius-base);
+  .border-top-radius(@border-radius-base);
+}
+.rundeck-version-name{
+  &:before{
     content:' "';
   }
-  .version-name:after{
+  &:after{
     content:'" ';
   }
 }

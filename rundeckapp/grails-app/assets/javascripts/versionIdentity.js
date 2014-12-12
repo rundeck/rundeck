@@ -178,7 +178,7 @@ var VersionIdentity=function(data){
         var ispan = jQuery('<span></span>').addClass('version-icon').css({ 'color': color});
         ispan.append(jQuery('<i></i>').addClass('glyphicon glyphicon-' + icon));
         span2.append(ispan);
-        var span3 = jQuery('<span></span>').addClass('version-name').text(text);
+        var span3 = jQuery('<span></span>').addClass('rundeck-version-name').text(text);
         if(data.tag && data.tag!='GA'){
             ispan.append(span3);
         }else{
@@ -190,12 +190,46 @@ var VersionIdentity=function(data){
         }
         jQuery(dom).append(span);
     };
+    self.stripeBg=function(color,px1,colorb,px2){
+        return "repeating-linear-gradient(" +
+            "-45deg, "+
+            color+", "+
+            color+" "+px1+"px, "+
+            colorb+" "+px1+"px, "+
+            colorb+" "+px2+"px "+
+            ")"
+            ;
+    }
+    self.showVersionBlock=function(dom){
+        var color=self.color();
+        var name=self.name();
+        var icon=self.icon();
+        var text=self.text();
+        var data=self.data();
+        var span2= jQuery('<span></span>');
+        var ispan = jQuery('<span></span>').addClass('version-icon');
+        ispan.append(jQuery('<i></i>').addClass('glyphicon glyphicon-' + icon));
+        span2.append(ispan);
+        var span3 = jQuery('<span></span>').addClass('rundeck-version-name').text(text);
+        span2.append(span3)
+        var span=jQuery('<div></div>')
+            .text(self.appId+' '+self.versionString+' ' )
+            .append(span2);
+        if (data.tag && data.tag != 'GA') {
+            jQuery(dom).css({ 'background': self.stripeBg(color,15,'#5c5c5c',20), 'color': 'white'}).append(span);
+        }else{
+            jQuery(dom).css({ 'background': color, 'color': 'white'}).append(span);
+        }
+    };
     self.versionData=splitVersion(self.versionString);
 };
 (function(){
     jQuery(function(){
         jQuery('.rundeck-version-identity').each(function () {
             new VersionIdentity(jQuery(this).data()).showVersionIdentity(this);
+        });
+        jQuery('.rundeck-version-block').each(function () {
+            new VersionIdentity(jQuery(this).data()).showVersionBlock(this);
         });
     });
 })();
