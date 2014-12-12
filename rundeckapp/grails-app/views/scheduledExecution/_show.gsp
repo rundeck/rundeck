@@ -50,7 +50,7 @@
 
 <div class="row">
     <div class="col-sm-12 ">
-        <h4 class="text-muted">Statistics</h4>
+        <h4 class="text-muted"><g:message code="statistics" /></h4>
 
         <g:render template="/scheduledExecution/renderJobStats" model="${[scheduledExecution: scheduledExecution]}"/>
     </div>

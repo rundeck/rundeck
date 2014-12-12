@@ -3,17 +3,16 @@
 
         <tr>
             <th style="width: 20%" class="text-muted text-center  text-header">
-                Executions
+                <g:message code="Execution.plural" />
             </th>
         <g:if test="${lastrun}">
             <th style="width: 20%" class="text-muted text-center  text-header">
-                Success rate
+                <g:message code="success.rate" />
             </th>
         </g:if>
         <g:if test="${scheduledExecution.execCount > 0}">
             <th style="width: 20%" class="text-muted text-center  text-header">
-                Average duration
-
+                <g:message code="average.duration" />
             </th>
         </g:if>
         </tr>
