@@ -288,45 +288,6 @@
     </g:javascript>
     <g:embedJSON id="eventsparamsJSON" data="${eventsparams}"/>
     <g:embedJSON id="pageparamsJSON" data="${pageparams}"/>
-    <style type="text/css">
-    table.dashboxes td.dashbox {
-        width: auto;
-    }
-
-    table.dashboxes td.dashbox.small {
-        width: auto;
-    }
-
-    td.dashbox div.wbox {
-        max-height: none;
-        width: auto;
-        height: auto;
-    }
-
-    td.dashbox.small div.wbox {
-        width: auto;
-    }
-    span.action.large{
-        font-size:12pt;
-        clear:both;
-    }
-    span.action.large.closed{
-        %{--background: #ddd url(<g:resource dir='images' file='bggrad-rev.png'/>) repeat-x 0px 0px;--}%
-        background: #ddd ;
-        -moz-border-radius: 3px;
-        -webkit-border-radius: 3px;
-        border:1px solid #aaa;
-        margin:10px 5px 10px 0;
-
-    }
-    span.action.large.closed:hover{
-        background: #eee;
-    }
-    div.expanderwrap {
-        line-height:12pt;
-        margin-top:10px;
-    }
-    </style>
 </head>
 <body>
 <div>
