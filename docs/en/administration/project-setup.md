@@ -16,7 +16,12 @@ you with a dialog to create one.
 
 ## Configuration file
 
-The configuration for each project is defined in a file called [project.properties](configuration-file-reference.html#project.properties).
+Each Project has a configuration file called 
+[project.properties](configuration-file-reference.html#project.properties),
+located at this path:
+
+* rpm/deb: /var/rundeck/projects/_project_/etc/project.properties
+* launcher: $RDECK_BASE/projects/_project_/etc/project.properties
 
 ## Project Setup 
 
@@ -39,93 +44,105 @@ you to the "Jobs" page.
 Projects can be created at any time by going back to the Project menu 
 and selecting the "Create a new project..." item.
 
-![Create project menu](../figures/fig0203.png)
 
 
 The project setup process generates Project configuration in the server, and
 a bootstrap resource model containing information about the rundeck server node.
 
-![Run page after new project](../figures/fig0204.png)
 
-The server host is  distinguished with the word "server" in red text.
+### Project readme.md
 
-### Resource model setup
+You can create a readme file that welcomes your users and provides an overview about the project.
+This readme file can contain markdown text letting you format or embed images.
+
+
+![Project readme](../figures/fig0203.png)
+
+Create the file in the project base directory:
+
+* launcher: $RDECK_BASE/projects/{project}/readme.md
+* rpm/deb: /var/rundeck/projects/{project}/readme.md
+
+
+### Project Nodes
 
 The Resource Model is the set of available Nodes that
 Rundeck can dispatch commands to, and their associated metadata. 
 Each Rundeck Project has its own Resource Model.
 
-The initial resource model will contain
+After project creation, an initial resource model will contain
 information just about the Rundeck server host and is useful just for
 running local commands on the Rundeck server. 
-You can browse the project resource model by going to the "Jobs" page.
+You can browse the project resource model by going to the "Nodes" page.
 
-
-Node resources have standard properties, such as "hostname" but these
-can be extended via attributes. One of the more useful attributes
+Node resources have common attributes, such as "hostname". 
+One of the more useful attributes
 is "tags". A *tag* is a text label that you give to the
 Node, perhaps denoting a classification, a role the node plays in the
 environment, or group membership. A list of tags can be defined for
-a given node. 
+a given node. You can also invent your own attributes as a way
+to know other details about your nodes. 
 
-The output above shows the "strongbad" node currently has an empty
-tags property: `tags: ''`. 
 
 It is important to start thinking about node tagging for the nodes you manage
 because you will use them later when specifying node filtering
 options.
 
-Each Project has a configuration file called 
-[project.properties](../administration/configuration-file-reference.html#project.properties),
-located at this path:
-
-* rpm/deb: /var/rundeck/projects/_project_/etc/project.properties
-* launcher: $RDECK_BASE/projects/_project_/etc/project.properties
-
-This configuration file contains two basic properties for accessing and
-storing resource model data:
+#### Default resources
+After initial project setup, the project will have a file resource model source.
+The project.properties file will contain a setting specifying this file:
 
 * `project.resources.file`: A local file path to read a resource model document
 
-In addition, multiple pluggable "Resource Model Sources" can be configured for a project
+Typically the path to this default resources file is:
+
+* launcher: $RDECK_BASE/projects/{project}/etc/resources.xml
+* deb/rpm: /var/rundeck/projects/{project}/etc/resources.xml
+
+It's possible to configure multiple  "Resource Model Sources" for a project
 to retrieve additional Resource Model content from other sources. 
-See [Resource Model Sources](managing-node-sources.html#resource-model-source).
 
 You can configure Rundeck to retrieve and store resource model data
 from any source, so long as it can produce one of the Rundeck resource model
 document formats. (See 
 [Resource Model Document formats](../plugins-user-guide/resource-model-source-plugins.html#resource-model-document-formats).) 
 
-Here's the XML document stored for the "examples" project that corresponds
-to the output printed by the `dispatch -v` shown earlier:
+See [Resource Model Sources](managing-node-sources.html#resource-model-source).
+
+##### Defining a node
+
+Here's a sample XML document that defines a node called "orion":
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.xml}
 <project>
-  <node name="strongbad" 
-    description="the Rundeck server host" tags="" 
-    osArch="x86_64" osFamily="unix" osName="Mac OS X" osVersion="10.6.2"
-    hostname="strongbad"  username="alexh" />
+  <node name="orion" 
+    description="a foodazzler service host" tags="staging,us-east" 
+    osFamily="unix" osName="Linux"
+    hostname="orion"  username="alexh" 
+    />
 </project>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
-You'll notice a single node entry for "strongbad". 
 The `node` element has a few
 required such as `name`, `osFamily` and `tags`. 
 
-Additional node descriptors can be
-added by defining new `node` elements inside the `project` root element. 
-
-The strongbad host does not have any tags defined for it. One or
-more tags can be defined. Use comma for the delimiter (e.g, `tags="tag1,tag2"`).
-
-Here's an example of a node called "homestar" with tags defined: 
+You can add any number of nodes in this document. Here's a second node
+called homestar:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.xml}
-<node name="homestar" 
-  tags="tag1,tag2"
-  osFamily="unix"
-  hostname="192.168.1.02" 
-  username="alexh" />
+<project>
+  <node name="orion" 
+    description="a foodazzler service host" tags="staging,us-east" 
+    osFamily="unix" osName="Linux"
+    hostname="orion"  username="alexh" 
+    />
+  <node name="homestar" 
+    description="a humdinger" tags="integration,us-west"
+    osFamily="unix" hostname="192.168.1.02"  username="alexh">
+    <attribute name="flavor" value="medium"/>
+    <attribute name="package:version" value="2.0"/>
+  </node>
+</project>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 The `hostname` and `username` values are used for the SSH connection
@@ -133,13 +150,24 @@ while the `name` and `type` are used to define Node identity in the
 resource model. It is possible to overload the hostname value to include
 port information (eg, hostname="somehost:2022"). 
 This is useful if your run SSH on a different port. 
-	  
+
+
+You can also tell there are two different ways to declare an attribute
+using the XML format.
+The "flavor" attribute is defined as a separate XML element:
+
+    <attribute name="flavor" value="medium"/>
+
+
+### External Resource Model Sources
+
 Chances are you maintain information about your hosts within
 another tool, perhaps Chef, Puppet, Nagios, Amazon EC2, RightScale or
 even an in-house database. One of these tools might be
 considered the authority of knowledge about the nodes
-deployed in your network. Therefore, it is best to create an interface
-to the authoritative tool and expose it as Rundeck URL resource model source. This
+deployed in your network. 
+Therefore, it is best to create an interface
+to the authoritative tool and expose it as Rundeck a resource model source. This
 can be done as a simple CGI script that does a transformation from
 the tool's format to the one Rundeck understands. You can also
 develop a plugin to interface with the external source.
@@ -184,31 +212,23 @@ rd-project -a create -p examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 You can also add configuration properties when you create the project.
-Here the `project.ssh-keypath` property is specified:
+Here the default SSH key setting is declared via the `project.ssh-keypath`:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-rd-project -a create -p examples --project.ssh-keypath=/private/ssh.key
+rd-project -a create -p examples --project.ssh-keypath=/home/rundeck/.ssh/id_rsa
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
-In the shell, you can list the Node resources in a resource
-model using the shell tool, `dispatch`. 
-Specify project name using the `-p project` option.
-
-Here the `dispatch` command lists the registered server for
-the "examples" project after the project setup. The `-v` gives
-a verbose listing that includes more detail:
+You can specify a resource model source using command options, too.
+Here a "directory" model source is declared.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-$ dispatch -p examples -v 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+rd-project -a create -p examples \
+  --resources.source.2.type=directory \
+  --resources.source.2.config.directory=/path/to/my/resources.d
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-     strongbad:
-        hostname: strongbad
-        osArch: x86_64
-        osFamily: unix
-        osName: Mac OS X
-        osVersion: 10.6.2
-        tags: ''
+Administrators can place multiple resource model files in this directory.
+
 
 [dispatch]: ../man1/dispatch.html
 [rd-project]: ../man1/rd-project.html
