@@ -201,6 +201,10 @@ If you want to specify your own UUID you can enter it in the field.
 Otherwise a unique value will be set for you.
 Providing a description will be come helpful to other users to understand the intent and purpose for the Job.
 
+Give the job a description. It's best practice to give a short description on the first line.
+Create one blank line and all subsequent lines can use markdown format.
+You can see line 3, has text that show a URL link in markdown format. When Rundeck shows the job, this extra information can be displayed to the user. Rich text is useful to link to external tools or even charts and graphs. Anything useful to support the job user.
+
 Check the box for "Dispatch to Nodes".
 Choose the "Node Exclude Filters" and enter the name of your Rundeck server. 
 This will cause the job to run on just the remote Nodes (eg., centos54 and ubuntu).
@@ -214,8 +218,9 @@ Press the "Create" button at the bottom of the page.
 ![Simple saved job form](../figures/fig0303.png)
 
 After the the job is created, the browser is directed to the Jobs page. 
-The folder structure reflecting the group naming will show one Job.
-Navigate through the folders buttons to the new job 
+You will see folder icons reflecting the Job's group.
+Navigate through to the adm/resources folder. Notice the extra information is displayed, markdown now rendered as HTML.
+
 Notice the play button before the job name.
 
 Press the play button to run the Job.
