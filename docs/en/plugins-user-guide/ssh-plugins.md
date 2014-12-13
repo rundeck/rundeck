@@ -388,7 +388,46 @@ However this regular expression is tested against the **entire command string**
 to make it possible to determine whether it should be enabled. The default value is 
 `^sudo .+? sudo .*$`. If necessary you should customize the value.
 
+### SSH Agent support
 
+Note: **Incubator feature**
+
+This will start /usr/bin/ssh-agent on each command step execution 
+(if enabled), 
+inject the private key the job would normally use in the agent,
+make the agent available on the newly created jsch connection
+and enable agent forwarding on the connection.
+Once the job is done the ssh-agent is killed.
+Optionally ssh-agent can be started with "-t <ttl>"
+which will guarantee the private key will be flushed at that time
+if by some chance it's not killed.
+
+Obviously with this enabled you cannot rely on Rundeck to limit
+what hosts are accessible to your users,
+proper key management is required on all hosts.
+
+New variables are:
+
+**framework.properties:**
+
+~~~~
+framework.local.ssh-agent=<true|false>
+framework.local.ttl-ssh-agent=<time in sec>
+~~~~
+
+**project.properties:**
+
+~~~~
+project.local.ssh-agent=<true|false>
+project.local.ttl-ssh-agent=<time in sec>
+~~~~
+
+**Node attributes:**
+
+~~~~
+local-ssh-agent=<true|false>
+local-ttl-ssh-agent=<time in sec>
+~~~~
 
 ## SSH System Configuration
 
