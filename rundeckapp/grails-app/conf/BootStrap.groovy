@@ -29,7 +29,7 @@ class BootStrap {
     MetricRegistry metricRegistry
 
      def init = { ServletContext servletContext ->
-         log.info("Starting Rundeck ${VersionConstants.VERSION_IDENT}...")
+         log.info("Starting ${grailsApplication.metadata['main.app.name']?:'Rundeck'} ${grailsApplication.metadata['build.ident']}...")
          filterInterceptor.handlers.sort { FilterToHandlerAdapter handler1,
                                            FilterToHandlerAdapter handler2 ->
              FilterConfig filter1 = handler1.filterConfig
