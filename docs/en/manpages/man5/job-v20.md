@@ -669,8 +669,7 @@ The [job](#job) logging level. The lower the more profuse the messages.
 
 ## nodefilters
      
-The [job](#job) nodefilters options. See  [Include/exclude patterns](#includeexclude-patterns) for a
-general description.
+The [job](#job) nodefilters options.
 
 *Attributes*
 
@@ -701,22 +700,6 @@ excludeprecedence
 </nodefilters>
 ~~~~~~~~ 
 
-*Example* (deprecated filter `include` element)
-
-~~~~~~~~ {.xml}
-<nodefilters excludeprecedence="true">
-  <include>
-    <hostname/>
-    <type/>
-    <tags>tomcats</tags>
-    <os-name/>
-    <os-family/>
-    <os-arch/>
-    <os-version/>
-    <name/>
-  </include>
-</nodefilters>
-~~~~~~~~ 
 
 ### filter
 
@@ -1017,6 +1000,38 @@ Example passing arguments to the job:
 If `nodeStep` is set to "true", then the Job Reference step will operate as a *Node Step* instead of the
 default.  As a *Node Step* it will execute once for each matched node in the containing Job workflow, and
 can use node attribute variable expansion in the arguments to the job reference.
+
+#### nodefilters (jobref)
+
+The node filters to override for the [jobref](#jobref).
+
+*Nested elements*
+
+[filter](#filter)
+
+:    node filter string. See [User Guide - Node Filters](../manual/node-filters.html).
+
+Example:
+
+~~~ {.xml}
+<jobref group="My group" name="My Job">
+  <dispatch>
+    <threadcount>1</threadcount>
+    <keepgoing>false</keepgoing>
+    <rankAttribute>nodename</rankAttribute>
+    <rankOrder>descending</rankOrder>
+  </dispatch>
+  <nodefilters>
+    <filter>tags: production+appserver</filter>
+  </nodefilters>
+</jobref>
+~~~
+
+#### dispatch (jobref)
+
+The dispatch options to override for the [jobref](#jobref).
+
+The content is the same as for the [job dispatch](#dispatch) section.
 
 ### Plugin step
 

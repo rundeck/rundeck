@@ -369,6 +369,10 @@ This [Command](#command) executes another Rundeck Job.
 
     :    Execute as a Node Step (optional). `true/false`.
 
+    [nodefilters](#job-reference-nodefilters)
+ 
+    :    Overriding node filters and dispatch options.
+
 Example:
 
 ~~~~~~~~ {.yaml}
@@ -382,6 +386,52 @@ Example:
 If `nodeStep` is set to "true", then the Job Reference step will operate as a *Node Step* instead of the
 default.  As a *Node Step* it will execute once for each matched node in the containing Job workflow, and
 can use node attribute variable expansion in the arguments to the job reference.
+
+#### Job Reference Nodefilters
+
+A `nodefilters` map entry specifies the Nodes to use for the referenced job,  and the node-dispatch options.  Contains the following entries:
+
+`dispatch`
+
+:    a Map containing:
+
+    `keepgoing`
+
+    :    "true/false" - whether to keepgoing on remaining nodes if a node fails
+
+    `threadcount`
+
+    :    Number of threads to use for parallel dispatch (default "1")
+    
+    `rankAttribute`
+
+    :    Name of the Node attribute to use for ordering the sequence of nodes (default is the node name)
+
+    `rankOrder`
+
+    :    Order direction for node ranking. Either "ascending" or "descending" (default "ascending")
+    
+The `nodefilters` should contain a `filter` entry.  The value is a string defining a node filter. See [User Guide - Node Filters](../manual/node-filters.html).
+
+`filter`
+
+:    A node filter string
+
+Example:
+
+~~~ {.yaml}
+- jobref:
+   name: jobname
+   group: group
+   args: args
+   nodefilters:
+      dispatch:
+        threadcount: 1
+        keepgoing: false
+        rankAttribute: rank
+        rankOrder: descending
+      filter: 'tags: web name: web-.* !os-family: windows'
+~~~
 
 ### Plugin Step Entry
 
