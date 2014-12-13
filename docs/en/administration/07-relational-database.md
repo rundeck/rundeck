@@ -32,18 +32,17 @@ dataSource.password = dbpass
 
 NB: for Mysql, the `autoReconnect=true` will fix a common problem where the Rundeck server's connection to Mysql is dropped after a period of inactivity, resulting in an error message: "Message: Can not read response from server. Expected to read 4 bytes, read 0 bytes before connection was unexpectedly lost."
 
+See the [Mysql-setup-guide](https://github.com/rundeck/rundeck/wiki/Mysql-setup-guide) for 
+instructions on creating the rundeck database and granting access.
+
 See more about [configuring the Mysql JDBC Connector/J URL](http://dev.mysql.com/doc/refman/5.1/en/connector-j-reference-configuration-properties.html).
 
 ## Add the JDBC Driver
 
-Copy the appropriate JDBC driver, such as "ojdbc14.jar" for Oracle into the server `lib` dir:
+Rundeck includes a JDBC driver for Mysql and H2. If you are using another database
+copy the appropriate JDBC driver, such as "ojdbc14.jar" for Oracle into the server `lib` dir:
 
 ~~~~~~ {.bash}
 cp ojdbc14.jar $RDECK_BASE/server/lib
 ~~~~~~
 
-Or:
-
-~~~~~~ {.bash}
-cp mysql-connector-java-5.1.17-bin.jar $RDECK_BASE/server/lib
-~~~~~~ 
