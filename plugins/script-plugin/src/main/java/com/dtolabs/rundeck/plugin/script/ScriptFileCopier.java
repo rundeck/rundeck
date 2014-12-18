@@ -272,9 +272,15 @@ public class ScriptFileCopier implements DestinationFileCopier, Describable {
         final HashMap<String, String> scptexec = new HashMap<String, String>(){{
             //set filename of source file
             put("filename", srcFile.getName());
+            put("destfilename", srcFile.getName());
             put("file", srcFile.getAbsolutePath());
             //add file, dir, destination to the file-copy data
         }};
+	
+	if(null != remotePath && !remotePath.endsWith("/")) {
+	    scptexec.put("destfilename", new File(remotePath).getName());
+	}
+
         if (null != workingdir) {
             //set up the data context to include the working dir
             scptexec.put("dir", workingdir.getAbsolutePath());
