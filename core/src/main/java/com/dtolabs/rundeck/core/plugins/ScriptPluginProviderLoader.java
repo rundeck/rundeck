@@ -31,7 +31,6 @@ import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.ZipUtil;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
 import org.apache.log4j.Logger;
-import org.yaml.snakeyaml.JavaBeanLoader;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;

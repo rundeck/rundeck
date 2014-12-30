@@ -87,12 +87,17 @@ public class TestDataContextUtils extends AbstractBaseTest {
 
 
     public void testReplaceDataReferences() throws Exception {
+        //null input, null data
+        assertEquals(null, DataContextUtils.replaceDataReferences((String)null, null));
 
         //null data
         assertEquals("test ${test.key1}", DataContextUtils.replaceDataReferences("test ${test.key1}", null));
         assertEquals("${test2.key2}", DataContextUtils.replaceDataReferences("${test2.key2}", null));
         
         Map<String, Map<String, String>> dataContext = new HashMap<String, Map<String, String>>();
+
+        //null input, data
+        assertEquals(null, DataContextUtils.replaceDataReferences((String)null, dataContext));
 
         //empty data
         assertEquals("test ${test.key1}", DataContextUtils.replaceDataReferences("test ${test.key1}", dataContext));

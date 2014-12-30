@@ -265,7 +265,7 @@ public class DataContextUtils {
      */
     public static String replaceDataReferences(final String input, final Map<String, Map<String, String>> data,
                                                final Converter<String, String> converter, boolean failOnUnexpanded, boolean blankIfUnexpanded) {
-        if(null==data){
+        if(null==data || null==input){
             return input;
         }
         final Pattern p = Pattern.compile(PROPERTY_REF_REGEX);

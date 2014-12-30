@@ -135,8 +135,9 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
 
         final ScriptPluginProvider plugin = getProvider();
         final File scriptfile = plugin.getScriptFile();
-        final String scriptargs =
-                DataContextUtils.replaceDataReferences(plugin.getScriptArgs(), dataContext);
+        final String scriptargs = null!=plugin.getScriptArgs()?
+                DataContextUtils.replaceDataReferences(plugin.getScriptArgs(), dataContext) :
+                    null;
         final String scriptinterpreter = plugin.getScriptInterpreter();
         final boolean interpreterargsquoted = plugin.getInterpreterArgsQuoted();
 
