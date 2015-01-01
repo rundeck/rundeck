@@ -30,12 +30,12 @@ class BootStrap {
 
      def init = { ServletContext servletContext ->
          log.info("Starting ${grailsApplication.metadata['main.app.name']?:'Rundeck'} ${grailsApplication.metadata['build.ident']}...")
-         filterInterceptor.handlers.sort { FilterToHandlerAdapter handler1,
+         /*filterInterceptor.handlers.sort { FilterToHandlerAdapter handler1,
                                            FilterToHandlerAdapter handler2 ->
              FilterConfig filter1 = handler1.filterConfig
              FilterConfig filter2 = handler2.filterConfig
              filter1.name <=> filter2.name
-         }
+         }*/
 
          def String rdeckBase
          if(!grailsApplication.config.rdeck.base){

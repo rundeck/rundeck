@@ -8,6 +8,8 @@ if (System.properties['maven.central.url']) {
 }
 println "Maven Central: ${mavenCentralUrl}"
 
+grails.project.dependency.resolver = "ivy"
+
 Boolean mavenCredsDefined = false
 def mavenRealm
 def mavenHost
@@ -74,8 +76,8 @@ grails.project.dependency.resolution = {
 
     plugins {
         test    ':code-coverage:1.2.6'
-        compile ':less-asset-pipeline:1.2.1', ':twitter-bootstrap:3.3.1', ':asset-pipeline:1.3.3'
-        runtime ":hibernate:$grailsVersion", ':mail:0.9', ':codenarc:0.16.1', ':quartz:0.4.2', ':executor:0.3'
+        compile ':less-asset-pipeline:2.0.8', ':twitter-bootstrap:3.3.1', ':asset-pipeline:2.0.8'
+        runtime ":hibernate:3.6.10.2", ':mail:0.9', ':codenarc:0.16.1', ':quartz:0.4.2', ':executor:0.3'
         build   ':jetty:2.0.3'
     }
 
@@ -99,10 +101,10 @@ grails.project.dependency.resolution = {
         // grails plugins, it appears that the dependencies of the plugins are *not* evaluated.
         compile 'org.mozilla:rhino:1.7R4', 'net.sourceforge.cobertura:cobertura:1.9.4.1',
                 'org.eclipse.jetty.aggregate:jetty-all:7.6.0.v20120127', 'org.eclipse.jdt.core.compiler:ecj:3.7.2',
-                'org.grails.plugins:asset-pipeline:1.2.1'
+                'org.grails.plugins:asset-pipeline:2.0.8'
         compile("org.rundeck:rundeck-core:${rundeckVersion}") {
             changing = true
-            excludes("xalan")
+            excludes("xalan","xercesImpl")
         }
         compile("org.rundeck:rundeck-storage-filesys:${rundeckVersion}")
 
@@ -115,6 +117,7 @@ grails.project.dependency.resolution = {
                 'com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:r239'
         runtime("org.rundeck:rundeck-core:${rundeckVersion}") {
             changing = true
+            excludes("xalan","xercesImpl")
         }
         runtime("org.rundeck:rundeck-jetty-server:${rundeckVersion}") {
             changing = true

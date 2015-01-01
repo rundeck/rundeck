@@ -155,9 +155,6 @@ rundeck.web.metrics.servlets.healthcheck.enabled = true
 
 rundeck.gui.job.description.disableHTML=false
 
-// Uncomment and edit the following lines to start using Grails encoding & escaping improvements
-
-/* remove this line 
 // GSP settings
 grails {
     views {
@@ -166,7 +163,7 @@ grails {
             htmlcodec = 'xml' // use xml escaping instead of HTML4 escaping
             codecs {
                 expression = 'html' // escapes values inside null
-                scriptlet = 'none' // escapes output from scriptlets in GSPs
+                scriptlet = 'html' // escapes output from scriptlets in GSPs
                 taglib = 'none' // escapes output from taglibs
                 staticparts = 'none' // escapes output from static template parts
             }
@@ -177,4 +174,4 @@ grails {
         }
     }
 }
-remove this line */
+
