@@ -125,7 +125,7 @@ class ProjectServiceTests  {
   </execution>
 </executions>'''
 
-    def testExportExecution(){
+    public void testExportExecution(){
         ProjectService svc = new ProjectService()
 
         def outfilename = "blahfile.xml"
@@ -171,7 +171,7 @@ class ProjectServiceTests  {
 //        println str
         assertEquals EXEC_XML_TEST1, str
     }
-    def testExportExecutionOutputFile(){
+    public void  testExportExecutionOutputFile(){
         ProjectService svc = new ProjectService()
 
         def outfilename = "blahfile.xml"
@@ -226,7 +226,7 @@ class ProjectServiceTests  {
 //        println str
         assertEquals EXEC_XML_TEST2, str
     }
-    def testExportExecutionStateFile(){
+    public void  testExportExecutionStateFile(){
         ProjectService svc = new ProjectService()
 
         def outfilename = "blahfile.xml"
@@ -289,7 +289,7 @@ class ProjectServiceTests  {
         assertEquals(2, filecalled)
         assertEquals EXEC_XML_TEST2, str
     }
-    def testImportExecution(){
+    public void  testImportExecution(){
         ProjectService svc = new ProjectService()
         def result = svc.loadExecutions(EXEC_XML_TEST1)
         assertNotNull result
@@ -320,7 +320,7 @@ class ProjectServiceTests  {
         assertEquals 1,e.workflow.commands.size()
         assertPropertiesEquals( [adhocRemoteString: 'exec command'],e.workflow.commands[0])
     }
-    def testImportExecutionWorkflow(){
+    public void  testImportExecutionWorkflow(){
         ProjectService svc = new ProjectService()
         def result = svc.loadExecutions(EXEC_XML_TEST4)
         assertNotNull result
@@ -338,7 +338,7 @@ class ProjectServiceTests  {
     /**
      * Imported execution where jobId should be skipped, should not be loaded
      */
-    def testImportExecutionSkipJob(){
+    public void  testImportExecutionSkipJob(){
         ProjectService svc = new ProjectService()
         def result = svc.loadExecutions(EXEC_XML_TEST3,null,['jobid1'])
         assertNotNull result
@@ -347,7 +347,7 @@ class ProjectServiceTests  {
         assertEquals 0,result.executions.size()
         assertEquals 0,result.execidmap.size()
     }
-    def testImportExecutionRemappedJob(){
+    public void  testImportExecutionRemappedJob(){
         def testJobId='test-id1'
 
         def newJobId = 'test-id2'
@@ -398,7 +398,7 @@ class ProjectServiceTests  {
         assertEquals 1,e.workflow.commands.size()
         assertPropertiesEquals( [adhocRemoteString: 'exec command'],e.workflow.commands[0])
     }
-    def testloadExecutionsRetryExecId(){
+    public void  testloadExecutionsRetryExecId(){
         def remapExecId='12'
         def idMap=[:]
 
@@ -435,7 +435,7 @@ class ProjectServiceTests  {
         assertEquals 2,result.executions.size()
 
     }
-    def assertPropertiesEquals(Map data, Object obj){
+    public void  assertPropertiesEquals(Map data, Object obj){
         data.each{k,v->
             def test=obj[k]
             if(null==test){
@@ -466,7 +466,7 @@ class ProjectServiceTests  {
   <adhocScript />
   <abortedByUser />
 </report>'''
-    def testExportReport() {
+    public void  testExportReport() {
 
         def newJobId = 'test-job-uuid'
         ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
@@ -511,7 +511,7 @@ class ProjectServiceTests  {
         assertEquals REPORT_XML_TEST1, str
     }
 
-    def testLoadReport() {
+    public void  testLoadReport() {
 
         ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
                                                        uuid: 'new-job-uuid',
@@ -542,7 +542,7 @@ class ProjectServiceTests  {
         ]
         assertPropertiesEquals expected, result
     }
-    def testLoadReportSkippedExecution() {
+    public void  testLoadReportSkippedExecution() {
 
         ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
                                                        uuid: 'new-job-uuid',
@@ -557,7 +557,7 @@ class ProjectServiceTests  {
         def ExecReport result = svc.loadHistoryReport(REPORT_XML_TEST1,[:],[(oldUuid):se],'test')
         assertNull result
     }
-    def testReportRoundtrip() {
+    public void  testReportRoundtrip() {
         ProjectService svc = new ProjectService()
 
         def outfilename = "reportout.xml"

@@ -1,5 +1,10 @@
+
+
+import grails.test.mixin.support.GrailsUnitTestMixin;
 import groovy.xml.MarkupBuilder
+
 import com.dtolabs.rundeck.app.support.BuilderUtil
+
 import rundeck.CommandExec
 
 /*
@@ -27,7 +32,8 @@ import rundeck.CommandExec
  * 
  */
 
-public class BuilderUtilTests extends GroovyTestCase{
+@TestMixin(GrailsUnitTestMixin)
+public class BuilderUtilTests{
 
     void testBasic(){
         def map = [a:'b',c:'d']

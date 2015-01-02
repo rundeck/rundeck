@@ -1,5 +1,7 @@
 package com.dtolabs.rundeck.app.logging
 
+import grails.test.mixin.support.GrailsUnitTestMixin;
+
 import com.dtolabs.rundeck.core.logging.LogLevel
 
 /*
@@ -26,7 +28,9 @@ import com.dtolabs.rundeck.core.logging.LogLevel
  * Created: 1/23/13 12:26 AM
  * 
  */
-class LogLevelTest extends GroovyTestCase {
+
+@TestMixin(GrailsUnitTestMixin)
+class LogLevelTest {
     void testBelowThreshold() {
         assertTrue(LogLevel.DEBUG.belowThreshold(LogLevel.DEBUG))
         assertFalse(LogLevel.DEBUG.belowThreshold(LogLevel.VERBOSE))

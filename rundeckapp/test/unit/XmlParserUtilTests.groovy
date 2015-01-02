@@ -1,3 +1,5 @@
+import grails.test.mixin.support.GrailsUnitTestMixin;
+
 import com.dtolabs.rundeck.util.XmlParserUtil
 
 /*
@@ -25,7 +27,9 @@ import com.dtolabs.rundeck.util.XmlParserUtil
 *
 */
 
-public class XmlParserUtilTests extends GroovyTestCase {
+
+@TestMixin(GrailsUnitTestMixin)
+public class XmlParserUtilTests  {
 
     void testShouldProduceEmptyString() {
         def map = [test: '']

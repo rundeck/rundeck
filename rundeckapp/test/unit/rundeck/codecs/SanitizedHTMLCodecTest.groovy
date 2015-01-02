@@ -17,13 +17,15 @@
 package rundeck.codecs
 
 import grails.test.mixin.TestFor
-import junit.framework.Assert
+import grails.test.mixin.TestMixin
+import grails.test.mixin.support.GrailsUnitTestMixin
 
 /**
  * SanitizedHTMLCodecTest is ...
  * @author Greg Schueler <greg@simplifyops.com>
  * @since 2014-11-19
  */
+@TestMixin(GrailsUnitTestMixin)
 class SanitizedHTMLCodecTest {
     void testAHref(){
         Assert.assertEquals('<a href="http://test.com" rel="nofollow">a</a>', SanitizedHTMLCodec.encode('<a href="http://test.com">a</a>'))

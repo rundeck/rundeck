@@ -16,12 +16,16 @@
 
 package org.rundeck.web.infosec
 
+import grails.test.mixin.support.GrailsUnitTestMixin;
+
 /**
  * HMacSynchronizerTokensManagerTest is ...
  * @author Greg Schueler <greg@simplifyops.com>
  * @since 2014-12-03
  */
-class HMacSynchronizerTokensManagerTest extends GroovyTestCase {
+
+@TestMixin(GrailsUnitTestMixin)
+class HMacSynchronizerTokensManagerTest {
     void testInit() {
         def manager = new HMacSynchronizerTokensManager()
         manager.init()

@@ -2,6 +2,8 @@ package com.dtolabs.rundeck.app.internal.logging
 
 import com.dtolabs.rundeck.core.logging.LogLevel
 
+import grails.test.mixin.support.GrailsUnitTestMixin;
+
 import java.text.SimpleDateFormat
 
 /**
@@ -10,15 +12,16 @@ import java.text.SimpleDateFormat
  * Date: 5/23/13
  * Time: 6:26 PM
  */
-class RundeckLogFormatTest extends GroovyTestCase {
+
+@TestMixin(GrailsUnitTestMixin)
+class RundeckLogFormatTest  {
     SimpleDateFormat dateFormat
     DefaultLogEvent event
     String expectPrefix1
     String expectLineEnd
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp()
+    
+    public void setUp() throws Exception {
         dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         event = new DefaultLogEvent()

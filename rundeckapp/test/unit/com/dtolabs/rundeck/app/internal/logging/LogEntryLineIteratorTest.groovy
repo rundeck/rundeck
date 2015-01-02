@@ -1,5 +1,7 @@
 package com.dtolabs.rundeck.app.internal.logging
 
+import grails.test.mixin.support.GrailsUnitTestMixin;
+
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 
@@ -9,12 +11,10 @@ import com.dtolabs.rundeck.core.logging.LogLevel
  * Date: 5/23/13
  * Time: 5:36 PM
  */
-class LogEntryLineIteratorTest extends GroovyTestCase {
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp()
-    }
+@TestMixin(GrailsUnitTestMixin)
+class LogEntryLineIteratorTest  {
+
     static class testItem implements LineLogFormat.FormatItem{
         boolean fileEnd
 

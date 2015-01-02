@@ -1,4 +1,7 @@
+import grails.test.mixin.support.GrailsUnitTestMixin;
+
 import org.yaml.snakeyaml.Yaml
+
 import rundeck.Notification
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
@@ -33,7 +36,8 @@ import rundeck.codecs.JobsYAMLCodec
 *
 */
 
-public class JobsYAMLCodecTests extends GroovyTestCase {
+@TestMixin(GrailsUnitTestMixin)
+public class JobsYAMLCodecTests  {
 
     void testEncodeBasic() {
         def Yaml yaml = new Yaml()
@@ -87,7 +91,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
                 assertEquals "wrong desc at ${i}", "test${i+1}", cmd.description
             }
             assertEquals "missing command exec", "test script", doc[0].sequence.commands[0].exec
-            assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", doc[0].sequence.commands[1].script
+            assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'", doc[0].sequence.commands[1].script
             assertEquals "missing command scriptfile", "some file path", doc[0].sequence.commands[2].scriptfile
             assertNotNull "missing command jobref", doc[0].sequence.commands[3].jobref
             assertEquals "missing command jobref.name", "another job", doc[0].sequence.commands[3].jobref.name
@@ -328,7 +332,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertNotNull "missing commands", doc[0].sequence.commands
         assertEquals "missing commands", 4, doc[0].sequence.commands.size()
         assertEquals "missing command exec", "test script", doc[0].sequence.commands[0].exec
-        assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", doc[0].sequence.commands[1].script
+        assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'", doc[0].sequence.commands[1].script
         assertEquals "missing command scriptfile", "some file path", doc[0].sequence.commands[2].scriptfile
         assertNotNull "missing command jobref", doc[0].sequence.commands[3].jobref
         assertEquals "missing command jobref.name", "another job", doc[0].sequence.commands[3].jobref.name
