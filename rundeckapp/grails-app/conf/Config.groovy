@@ -155,6 +155,9 @@ rundeck.web.metrics.servlets.healthcheck.enabled = true
 
 rundeck.gui.job.description.disableHTML=false
 
+//turn off whitespace conversion to blank/null for data binding
+grails.databinding.trimStrings=false
+
 // GSP settings
 grails {
     views {
