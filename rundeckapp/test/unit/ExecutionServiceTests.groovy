@@ -9,9 +9,15 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandEx
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandExecutionItem
 import com.dtolabs.rundeck.core.utils.NodeSet
+
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.test.mixin.web.ControllerUnitTestMixin;
+
+import org.codehaus.groovy.grails.plugins.databinding.DataBindingGrailsPlugin;
 import org.grails.plugins.metricsweb.MetricService
+import org.junit.Before;
+
 import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.Workflow
@@ -28,7 +34,15 @@ import rundeck.services.StorageService
 
 @TestFor(ExecutionService)
 @Mock([ScheduledExecution,Workflow,WorkflowStep,Execution,CommandExec,Option,User])
+@TestMixin(ControllerUnitTestMixin)
 class ExecutionServiceTests  {
+    
+    @Before
+    public void setup(){
+        // hack for 2.3.9:  https://jira.grails.org/browse/GRAILS-11136
+        defineBeans(new DataBindingGrailsPlugin().doWithSpring)
+    }
+
     /**
      * utility method to mock a class
      */
