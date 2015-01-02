@@ -1,3 +1,13 @@
+
+
+
+
+import org.codehaus.groovy.grails.plugins.databinding.DataBindingGrailsPlugin;
+import org.junit.Before;
+
+import grails.test.mixin.TestFor;
+import grails.test.mixin.support.GrailsUnitTestMixin;
+import grails.test.mixin.web.ControllerUnitTestMixin;
 import rundeck.ScheduledExecution
 import rundeck.JobExec
 import rundeck.Workflow
@@ -30,7 +40,16 @@ import rundeck.codecs.JobsXMLCodec
  * Created: Jun 10, 2009 11:27:54 AM
  * $Id$
  */
-class JobsXMLCodecTests extends GroovyTestCase {
+
+@TestFor(Option)
+@TestMixin(ControllerUnitTestMixin)
+class JobsXMLCodecTests {
+    
+    @Before
+    public void setup(){
+        // hack for 2.3.9:  https://jira.grails.org/browse/GRAILS-11136
+        defineBeans(new DataBindingGrailsPlugin().doWithSpring)
+    }
 
     /** no joblist */
     def badxml1 = """<wrong>
