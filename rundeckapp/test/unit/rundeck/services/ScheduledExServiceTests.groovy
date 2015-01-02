@@ -1,11 +1,19 @@
+
+
 package rundeck.services
+import org.codehaus.groovy.grails.plugins.databinding.DataBindingGrailsPlugin;
+
 
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.test.mixin.web.ControllerUnitTestMixin;
+
 import org.junit.Assert
+import org.junit.Before;
 import org.quartz.*
 import org.quartz.spi.JobFactory
 import org.springframework.context.MessageSource
+
 import rundeck.*
 import rundeck.controllers.ScheduledExecutionController
 
@@ -34,7 +42,11 @@ import rundeck.controllers.ScheduledExecutionController
  */
 @TestFor(ScheduledExecutionService)
 @Mock([Execution, FrameworkService, WorkflowStep, CommandExec, JobExec, PluginStep, Workflow, ScheduledExecution, Option, Notification])
+@TestMixin(ControllerUnitTestMixin)
 class ScheduledExServiceTests {
+    
+    
+
 
     static void assertLength(int length, Object[] array){
         Assert.assertEquals(length,array.length)
@@ -1659,7 +1671,7 @@ class ScheduledExServiceTests {
     public void testDoValidateOptionsMultivalued() {
 
         def sec = new ScheduledExecutionService()
-        if (true) {//valid multi option
+      
             def fwkControl = mockFor(FrameworkService, true)
             fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
             fwkControl.demand.existsFrameworkProject { project, framework ->
@@ -1703,7 +1715,7 @@ class ScheduledExServiceTests {
             assertFalse("wrong option name", next.enforced)
             assertTrue("wrong option name", next.multivalued)
             assertEquals("wrong option name", ' ', next.delimiter)
-        }
+        
 
     }
 
