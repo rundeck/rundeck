@@ -77,7 +77,7 @@ grails.project.dependency.resolution = {
     plugins {
         test    ':code-coverage:1.2.6'
         compile ':less-asset-pipeline:2.0.8', ':twitter-bootstrap:3.3.1', ':asset-pipeline:2.0.8'
-        runtime ":hibernate:3.6.10.2", ':mail:0.9', ':codenarc:0.16.1', ':quartz:0.4.2', ':executor:0.3'
+        runtime ":hibernate:3.6.10.18", ':mail:0.9', ':codenarc:0.16.1', ':quartz:0.4.2', ':executor:0.3'
         build   ':jetty:2.0.3'
     }
 
