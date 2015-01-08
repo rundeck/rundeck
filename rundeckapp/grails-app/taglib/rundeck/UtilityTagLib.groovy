@@ -730,10 +730,10 @@ class UtilityTagLib{
             out << g.message(code:attrs.code,encodeAs:attrs.codec?:'HTML')
         }else if(attrs.rawtext) {
             //explicitly not encoded
-            out << attrs.rawtext
+            out << raw(attrs.rawtext)
         }else if(attrs.raw=='true') {
             //explicitly not encoded
-            out << body()
+            out << raw(body())
         }else {
             out << body().encodeAsHTML()
         }
