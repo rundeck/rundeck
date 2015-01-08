@@ -97,11 +97,11 @@
             totalDuration : '${enc(js:scheduledExecution?.totalTime ?: -1)}',
             totalCount: '${enc(js:scheduledExecution?.execCount ?: -1)}'
           });
-          nodeflowvm=new NodeFlowViewModel(workflow,"${enc(js:g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id))}.json");
+          nodeflowvm=new NodeFlowViewModel(workflow,"${enc(js:g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id,params:[format:'json']))}");
           flowState = new FlowState('${enc(js:execution?.id)}','flowstate',{
             workflow:workflow,
             loadUrl: "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id))}",
-            outputUrl:"${g.enc(js:createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id))}.json",
+            outputUrl:"${g.enc(js:createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id,params:[format:'json']))}",
             selectedOutputStatusId:'selectedoutputview',
             reloadInterval:1500
          });
