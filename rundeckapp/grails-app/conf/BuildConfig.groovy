@@ -37,8 +37,10 @@ if(System.properties['disable.grails.central']) {
 }
 
 def grailsLocalRepo = 'grails-app/plugins'
+def useFlatDir=false
 if (System.properties['grails.local.repo']) {
         grailsLocalRepo = System.properties['grails.local.repo']
+    useFlatDir=true
 }
 println "Grails Local Repo: ${grailsLocalRepo}"
 
@@ -52,7 +54,9 @@ grails.project.dependency.resolution = {
         inherits false
         useOrigin true
         mavenLocal()
-        flatDir name:'grailsLocalRepo', dirs:"${grailsLocalRepo}"
+        if(useFlatDir) {
+            flatDir name: 'grailsLocalRepo', dirs: "${grailsLocalRepo}"
+        }
         grailsHome()
         grailsPlugins()
         mavenRepo mavenCentralUrl
@@ -76,8 +80,17 @@ grails.project.dependency.resolution = {
 
     plugins {
         test    ':code-coverage:2.0.3-3'
-        compile ':less-asset-pipeline:2.0.8', ':twitter-bootstrap:3.3.1', ':asset-pipeline:2.0.8'
-        runtime ":hibernate:3.6.10.18", ':mail:0.9', ':quartz:0.4.2', ':executor:0.3'
+        compile (':less-asset-pipeline:2.0.8'){
+            excludes 'groovy','groovy-templates','groovy-xml'
+        }
+        compile ':twitter-bootstrap:3.3.1'
+        compile (':asset-pipeline:2.0.8'){
+            excludes 'groovy','groovy-templates','groovy-xml'
+        }
+        runtime (":hibernate:3.6.10.18"){
+            excludes ([ group: 'asm', name: 'asm'])
+        }
+        runtime ':mail:0.9', ':quartz:0.4.2', ':executor:0.3'
         provided ':codenarc:0.22'
         build   ':jetty:2.0.3'
     }
@@ -98,11 +111,24 @@ grails.project.dependency.resolution = {
                 'org.owasp.encoder:encoder:1.1.1', 'org.quartz-scheduler:quartz:1.7.3',
                 'org.markdownj:markdownj-core:0.4',
                 'com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:r239'
-        // These are the dependencies of the grails plugins specified above.  When a flatDir repo is used to provide
-        // grails plugins, it appears that the dependencies of the plugins are *not* evaluated.
-        compile 'org.mozilla:rhino:1.7R4', 'net.sourceforge.cobertura:cobertura:2.0.3',
-                'org.eclipse.jetty.aggregate:jetty-all:7.6.0.v20120127', 'org.eclipse.jdt.core.compiler:ecj:3.7.2',
-                'org.grails.plugins:asset-pipeline:2.0.8'
+
+        if(useFlatDir) {
+            // These are the dependencies of the grails plugins specified above.  When a flatDir repo is used to provide
+            // grails plugins, it appears that the dependencies of the plugins are *not* evaluated.
+            compile 'org.mozilla:rhino:1.7R4'
+            compile('net.sourceforge.cobertura:cobertura:2.0.3') {
+                excludes 'jetty', 'jetty-util'
+            }
+            //compile 'org.eclipse.jetty.aggregate:jetty-all:7.6.0.v20120127',
+            compile 'org.eclipse.jdt.core.compiler:ecj:3.7.2'
+        }
+
+//        runtime 'org.codehaus.groovy:groovy:2.1.9', 'org.codehaus.groovy:groovy-xml:2.1.9', 'org.codehaus.groovy:groovy-templates:2.1.9'
+
+//        compile('org.grails.plugins:asset-pipeline:2.0.8'){
+//            excludes 'groovy-templates'
+//        }
+
         compile("org.rundeck:rundeck-core:${rundeckVersion}") {
             changing = true
             excludes("xalan","xercesImpl")
@@ -120,9 +146,9 @@ grails.project.dependency.resolution = {
             changing = true
             excludes("xalan","xercesImpl")
         }
-        runtime("org.rundeck:rundeck-jetty-server:${rundeckVersion}") {
-            changing = true
-        }
+        //runtime("org.rundeck:rundeck-jetty-server:${rundeckVersion}") {
+        //    changing = true
+        //}
     }
 }
 grails.war.resources = { stagingDir, args ->
