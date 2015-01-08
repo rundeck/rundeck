@@ -721,7 +721,7 @@ class UtilityTagLib{
         }else if(attrs.xml){
             out << attrs.xml.toString().encodeAsXMLContent()
         }else if(null !=attrs.js){
-            out << attrs.js.toString().encodeAsJavaScript2()
+            out << raw(attrs.js.toString().encodeAsJavaScript2())
         }else if(attrs.json!=null){
             out << attrs.json.encodeAsJSON().replaceAll('<', '\\\\u003c') //nb: replace < to allow embedding in page
         }else if(attrs.url){
