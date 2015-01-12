@@ -529,12 +529,13 @@ class JobsXMLCodecTests {
 """
         def jobs = JobsXMLCodec.decode(xml)
         assertNotNull jobs
-        assertEquals  'dig it potato\n' +
+        assertEquals  '         dig it potato\n' +
                               '\n' +
                               '* list item\n' +
                               '* list item2\n' +
                               '\n' +
-                              '<b>inline html</b>', jobs[0].description
+                              '<b>inline html</b>' +
+                '\n    ', jobs[0].description
         assertEquals  8, jobs[0].workflow.commands.size()
         assertEquals 'true', jobs[0].workflow.commands[0].adhocRemoteString
         assertEquals 'false', jobs[0].workflow.commands[1].adhocRemoteString

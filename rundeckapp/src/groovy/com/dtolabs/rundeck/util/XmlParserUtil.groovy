@@ -66,9 +66,11 @@ public class XmlParserUtil {
                 map.put(it,analyze?analyzeText(attrs[it]):attrs[it])
             }
         }
+        def sawElems=false
         if (null != childs && childs instanceof Collection) {
             childs.each {gp ->
                 if (gp instanceof Node) {
+                    sawElems=true
                     if (null != map[gp.name()] && !(map[gp.name()] instanceof Collection)) {
                         def v = map[gp.name()]
                         map[gp.name()] = [v, toObject(gp,analyze)]
@@ -84,6 +86,10 @@ public class XmlParserUtil {
             return map['<text>']
         }else if(0==map.size()){
             return ''
+        }
+        if(sawElems && null!=map['<text>']){
+            //remove text if other sub elements
+            map.remove('<text>')
         }
         return map
     }
