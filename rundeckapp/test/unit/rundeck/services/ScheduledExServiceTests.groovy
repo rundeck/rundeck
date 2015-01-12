@@ -3,6 +3,7 @@
 package rundeck.services
 
 import grails.test.mixin.TestMixin
+import grails.test.runtime.DirtiesRuntime
 import org.codehaus.groovy.grails.plugins.databinding.DataBindingGrailsPlugin;
 
 
@@ -57,10 +58,12 @@ class ScheduledExServiceTests {
     /**
      * Test getByIDorUUID method.
      */
+    @DirtiesRuntime
     public void testGetByIDorUUID() {
         def testService = new ScheduledExecutionService()
+        def myuuid='testUUID'//'89F375E0-7096-4490-8265-4F94793BEC2F'
         ScheduledExecution se = new ScheduledExecution(
-                uuid: 'testUUID',
+                uuid: myuuid,
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -68,12 +71,17 @@ class ScheduledExServiceTests {
                 argString: '-a b -c d',
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
         )
-        se.save()
-        long id = se.id
+        if (!se.validate()) {
+            se.errors.allErrors.each {
+                println it.toString()
+            }
+        }
+        assertNotNull(se.save())
+        Long id = se.id
 
-        ScheduledExecution.metaClass.static.findByUuid = { uuid -> uuid == 'testUUID' ? se : null }
+        ScheduledExecution.metaClass.static.findByUuid = { uuid -> uuid == myuuid ? se : null }
 
-        def result = testService.getByIDorUUID('testUUID')
+        def result = testService.getByIDorUUID(myuuid)
         assertNotNull(result)
         assertEquals(se, result)
 
@@ -92,6 +100,7 @@ class ScheduledExServiceTests {
     /**
      * test overlap between internal ID and UUID values, the ID should take precedence (return first)
      */
+    @DirtiesRuntime
     public void testGetByIDorUUIDWithOverlap() {
 
         def testService = new ScheduledExecutionService()
@@ -2725,7 +2734,7 @@ class ScheduledExServiceTests {
         fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
         fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
         fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getRundeckBase { 'test-base' }
+        fwkControl.demand.getRundeckBase {-> 'test-base' }
         sec.frameworkService = fwkControl.createMock()
         sec.frameworkService.metaClass.isClusterModeEnabled = {
             return false
@@ -2826,7 +2835,7 @@ class ScheduledExServiceTests {
         fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
         fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
         fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getRundeckBase { 'test-base' }
+        fwkControl.demand.getRundeckBase {-> 'test-base' }
         def uuid = UUID.randomUUID().toString()
         fwkControl.demand.getServerUUID { uuid }
         sec.frameworkService = fwkControl.createMock()
@@ -2880,7 +2889,7 @@ class ScheduledExServiceTests {
         fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
         fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
         fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getRundeckBase { 'test-base' }
+        fwkControl.demand.getRundeckBase {-> 'test-base' }
         def uuid = UUID.randomUUID().toString()
         sec.frameworkService = fwkControl.createMock()
         sec.frameworkService.metaClass.isClusterModeEnabled = {
@@ -2940,7 +2949,7 @@ class ScheduledExServiceTests {
             assertEquals 'aCommand', command
             return null
         }
-        fwkControl.demand.getRundeckBase { 'test-base' }
+        fwkControl.demand.getRundeckBase {-> 'test-base' }
         sec.frameworkService = fwkControl.createMock()
         sec.frameworkService.metaClass.isClusterModeEnabled = {
             return false
@@ -3009,7 +3018,7 @@ class ScheduledExServiceTests {
             assertEquals 'testProject', project
             return true
         }
-        fwkControl.demand.getRundeckBase { 'test-base' }
+        fwkControl.demand.getRundeckBase {-> 'test-base' }
         sec.frameworkService = fwkControl.createMock()
         sec.frameworkService.metaClass.isClusterModeEnabled = {
             return false
@@ -3060,7 +3069,7 @@ class ScheduledExServiceTests {
             assertEquals 'testProject', project
             return true
         }
-        fwkControl.demand.getRundeckBase { 'test-base' }
+        fwkControl.demand.getRundeckBase {-> 'test-base' }
         sec.frameworkService = fwkControl.createMock()
         sec.frameworkService.metaClass.isClusterModeEnabled = {
             return true
