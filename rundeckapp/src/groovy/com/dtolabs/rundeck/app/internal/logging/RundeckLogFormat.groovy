@@ -129,7 +129,6 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
             }
         }
 
-        @Override
         public java.lang.String genToString() {
             return "RDFormatItem{" +
                     "fileEnd=" + fileEnd +

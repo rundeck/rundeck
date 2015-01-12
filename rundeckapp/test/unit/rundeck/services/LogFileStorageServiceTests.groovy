@@ -222,7 +222,6 @@ class LogFileStorageServiceTests  {
             return isAvailable()
         }
 
-        @Override
         boolean isAvailable() throws ExecutionFileStorageException {
             if(availableException){
                 throw new ExecutionFileStorageException("testStoragePlugin.available")
@@ -236,7 +235,6 @@ class LogFileStorageServiceTests  {
             return store(stream,length,lastModified)
         }
 
-        @Override
         boolean store(InputStream stream, long length, Date lastModified) throws IOException {
             storeLogFileCalled = true
             storeLength=length
@@ -250,7 +248,6 @@ class LogFileStorageServiceTests  {
             return retrieve(stream)
         }
 
-        @Override
         boolean retrieve(OutputStream stream) throws IOException {
             retrieveLogFileCalled=true
             return retrieveLogFileSuccess

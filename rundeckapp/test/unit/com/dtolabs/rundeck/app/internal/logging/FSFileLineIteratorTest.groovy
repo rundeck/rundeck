@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.app.internal.logging
 
+import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin;
 
 /*
@@ -30,7 +31,6 @@ import grails.test.mixin.support.GrailsUnitTestMixin;
 class FSFileLineIteratorTest{
 
     File testfile1
-    @Override
     public void setUp() throws Exception {
         
         testfile1 = File.createTempFile("FSFileLineIteratorTest1",".txt")

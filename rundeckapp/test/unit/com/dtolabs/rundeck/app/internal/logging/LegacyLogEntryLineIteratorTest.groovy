@@ -39,7 +39,6 @@ class LegacyLogEntryLineIteratorTest  {
     List<Date> dates
     List<Long> lengths
     SimpleDateFormat w3cDateFormat
-    @Override
     public void setUp() throws Exception {
         testfile1 = File.createTempFile("LogEntryLineIteratorTest1", ".log")
         testfile1.deleteOnExit()
