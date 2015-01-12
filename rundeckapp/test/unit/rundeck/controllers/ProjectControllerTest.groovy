@@ -1364,6 +1364,7 @@ class ProjectControllerTest {
         request.api_version = 11
         params.project = 'test1'
         request.json='{"prop1" :"value1","prop2":"value2"}'
+        request.method='PUT'
         controller.apiProjectConfigPut()
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals 'value1', response.json['prop1']
@@ -1380,6 +1381,7 @@ class ProjectControllerTest {
         params.project = 'test1'
         request.content='prop1=value1\nprop2=value2'.bytes
         request.contentType='text/plain'
+        request.method='PUT'
         controller.apiProjectConfigPut()
         assertEquals HttpServletResponse.SC_OK, response.status
         assertTrue response.contentType.contains('text/plain')
@@ -1495,6 +1497,7 @@ class ProjectControllerTest {
         request.api_version = 11
         params.project = 'test1'
         params.keypath = 'prop1'
+        request.method='DELETE'
         controller.apiProjectConfigKeyDelete()
         assertEquals HttpServletResponse.SC_NO_CONTENT, response.status
     }
@@ -1573,6 +1576,7 @@ class ProjectControllerTest {
         request.api_version = 11
         params.project = 'test1'
         request.format='blah'
+        request.method='PUT'
         controller.apiProjectImport()
         assertXmlError(response, HttpServletResponse.SC_NOT_FOUND, "api.error.item.doesnotexist")
     }
@@ -1584,6 +1588,7 @@ class ProjectControllerTest {
         request.api_version = 11
         params.project = 'test1'
         request.format='blah'
+        request.method='PUT'
         controller.apiProjectImport()
         assertXmlError(response, HttpServletResponse.SC_FORBIDDEN, "api.error.item.unauthorized")
     }
@@ -1595,6 +1600,7 @@ class ProjectControllerTest {
         request.api_version = 11
         params.project = 'test1'
         request.format='blah'
+        request.method='PUT'
         controller.apiProjectImport()
         assertXmlError(response, HttpServletResponse.SC_BAD_REQUEST, "api.error.invalid.request")
     }
@@ -1618,6 +1624,7 @@ class ProjectControllerTest {
         request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
                 [] as Set, [] as Set)
         session.user='user1'
+        request.method='PUT'
         controller.apiProjectImport()
         assertEquals HttpServletResponse.SC_OK,response.status
         assertEquals 'failed',response.xml.'@status'.text()
@@ -1646,6 +1653,7 @@ class ProjectControllerTest {
         request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
                 [] as Set, [] as Set)
         session.user='user1'
+        request.method='PUT'
         controller.apiProjectImport()
         assertEquals HttpServletResponse.SC_OK,response.status
         assertEquals 'failed',response.json.import_status
@@ -1674,6 +1682,7 @@ class ProjectControllerTest {
         request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
                 [] as Set, [] as Set)
         session.user='user1'
+        request.method='PUT'
         controller.apiProjectImport()
         assertEquals HttpServletResponse.SC_OK,response.status
         assertEquals 'successful',response.xml.'@status'.text()
@@ -1700,6 +1709,7 @@ class ProjectControllerTest {
         request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
                 [] as Set, [] as Set)
         session.user='user1'
+        request.method='PUT'
         controller.apiProjectImport()
         assertEquals HttpServletResponse.SC_OK,response.status
     }
@@ -1724,6 +1734,7 @@ class ProjectControllerTest {
         request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
                 [] as Set, [] as Set)
         session.user='user1'
+        request.method='PUT'
         controller.apiProjectImport()
         assertEquals HttpServletResponse.SC_OK,response.status
     }
@@ -1748,6 +1759,7 @@ class ProjectControllerTest {
         request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
                 [] as Set, [] as Set)
         session.user='user1'
+        request.method='PUT'
         controller.apiProjectImport()
         assertEquals HttpServletResponse.SC_OK,response.status
     }
@@ -1772,6 +1784,7 @@ class ProjectControllerTest {
         request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
                 [] as Set, [] as Set)
         session.user='user1'
+        request.method='PUT'
         controller.apiProjectImport()
         assertEquals HttpServletResponse.SC_OK,response.status
     }
@@ -1795,6 +1808,7 @@ class ProjectControllerTest {
         request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
                 [] as Set, [] as Set)
         session.user='user1'
+        request.method='PUT'
         controller.apiProjectImport()
         assertEquals HttpServletResponse.SC_OK,response.status
         assertEquals 'successful',response.json.import_status

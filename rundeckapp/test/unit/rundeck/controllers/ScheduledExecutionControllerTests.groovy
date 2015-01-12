@@ -220,6 +220,7 @@ class ScheduledExecutionControllerTests  {
 
             setupFormTokens(sec)
 
+        request.method='POST'
             sec.save()
 
             assertNotNull sec.flash.savedJob
@@ -273,6 +274,7 @@ class ScheduledExecutionControllerTests  {
 
             //don't include request token
 
+        request.method='POST'
             sec.save()
 
             assertNull sec.flash.savedJob
@@ -384,6 +386,7 @@ class ScheduledExecutionControllerTests  {
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
             sec.request.setAttribute("subject", subject)
             setupFormTokens(sec)
+            request.method='POST'
             sec.update()
 
             assertNotNull sec.flash.savedJob
@@ -448,6 +451,7 @@ class ScheduledExecutionControllerTests  {
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
             sec.request.setAttribute("subject", subject)
             //don't include token
+        request.method='POST'
             sec.update()
 
 
@@ -513,6 +517,7 @@ class ScheduledExecutionControllerTests  {
             sec.request.setAttribute("subject", subject)
 
         setupFormTokens(sec)
+        request.method='POST'
             sec.update()
 
             assertNotNull sec.flash.savedJob
@@ -571,6 +576,7 @@ class ScheduledExecutionControllerTests  {
             sec.metaClass.message={parms -> parms?.code ?: 'messageCodeMissing'}
 
         setupFormTokens(sec)
+        request.method='POST'
             sec.save()
 
             assertNull sec.response.redirectedUrl
@@ -629,6 +635,7 @@ class ScheduledExecutionControllerTests  {
             sec.metaClass.message={parms -> parms?.code ?: 'messageCodeMissing'}
 
         setupFormTokens(sec)
+        request.method='POST'
             sec.save()
 
             assertNull sec.response.redirectedUrl
@@ -795,6 +802,7 @@ class ScheduledExecutionControllerTests  {
 
         setupFormTokens(controller)
 
+        request.method='POST'
         controller.runJobNow(command,extra)
 
         assertEquals('/scheduledExecution/show',response.redirectedUrl)
@@ -849,6 +857,7 @@ class ScheduledExecutionControllerTests  {
 
         //setupFormTokens(controller)//XXX: don't set up tokens
 
+        request.method='POST'
         controller.runJobNow(command,extra)
 
         assertEquals(400,response.status)
