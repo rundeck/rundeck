@@ -26,6 +26,9 @@ import javax.servlet.http.HttpSession
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
 
+import org.quartz.JobBuilder
+import org.quartz.TriggerBuilder
+
 /**
  *  ScheduledExecutionService manages scheduling jobs with the Quartz scheduler
  */
@@ -630,18 +633,28 @@ class ScheduledExecutionService implements ApplicationContextAware{
      */
     def long scheduleTempJob(AuthContext authContext, Execution e) {
         def ident = getJobIdent(null, e);
-        def jobDetail = new JobDetail(ident.jobname, ident.groupname, ExecutionJob)
-        jobDetail.setDescription("Execute command: " + e)
-        jobDetail.getJobDataMap().put("isTempExecution", "true")
-        jobDetail.getJobDataMap().put("executionId", e.id.toString())
-        jobDetail.getJobDataMap().put("authContext", authContext)
-        jobDetail.addJobListener("defaultGrailsServiceInjectorJobListener")
+        def jobDetail = JobBuilder.newJob(ExecutionJob)
+                .withIdentity(ident.jobname, ident.groupname)
+                .withDescription("Execute command: " + e)
+                .usingJobData(
+                    new JobDataMap(
+                        [
+                            'isTempExecution': 'true',
+                            'executionId': e.id.toString(),
+                            'authContext': authContext
+                        ]
+                    )
+                )
+                .build()
 
-        def Trigger trigger = TriggerUtils.makeImmediateTrigger(0, 0)
-        trigger.setName(jobDetail.getName() + "Trigger")
+        //nb: listener registered to all jobs by default
+//        jobDetail.addJobListener("defaultGrailsServiceInjectorJobListener")
+
+        def Trigger trigger = TriggerBuilder.newTrigger().withIdentity(ident.jobname + "Trigger").startNow().build()
+//        trigger.setName(jobDetail.getName() + "Trigger")
         def nextTime
         try {
-            log.info("scheduling temp job: " + jobDetail.getName())
+            log.info("scheduling temp job: " + ident.jobname)
             nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
         } catch (Exception exc) {
             throw new RuntimeException("caught exception while adding job: " + exc.getMessage(), exc)
@@ -653,29 +666,29 @@ class ScheduledExecutionService implements ApplicationContextAware{
         return createJobDetail(se,se.generateJobScheduledName(), se.generateJobGroupName())
     }
     def JobDetail createJobDetail(ScheduledExecution se, String jobname, String jobgroup){
-        def jobDetail = new JobDetail(jobname,jobgroup, ExecutionJob)
-        jobDetail.setDescription(se.description)
-        jobDetail.getJobDataMap().put("scheduledExecutionId",se.id.toString())
-        jobDetail.getJobDataMap().put("rdeck.base",frameworkService.getRundeckBase())
+        def jobDetailBuilder = JobBuilder.newJob(ExecutionJob).withIdentity(jobname,jobgroup)
+                        .withDescription(se.description)
+                .usingJobData("scheduledExecutionId",se.id.toString())
+                .usingJobData("rdeck.base",frameworkService.getRundeckBase())
+
         if(se.scheduled){
-            jobDetail.getJobDataMap().put("userRoles",se.userRoleList)
+            jobDetailBuilder.usingJobData("userRoles",se.userRoleList)
             if(frameworkService.isClusterModeEnabled()){
-                jobDetail.getJobDataMap().put("serverUUID",frameworkService.getServerUUID())
+                jobDetailBuilder.usingJobData("serverUUID",frameworkService.getServerUUID())
             }
         }
-//            jobDetail.addJobListener("sessionBinderListener")
-        jobDetail.addJobListener("defaultGrailsServiceInjectorJobListener")
-        return jobDetail
+//        jobDetail.addJobListener("defaultGrailsServiceInjectorJobListener")
+        return jobDetailBuilder.build()
     }
 
     def Trigger createTrigger(ScheduledExecution se) {
-        def CronTrigger trigger
+        def Trigger trigger
         def cronExpression = se.generateCrontabExression()
         try {
             log.info("creating trigger with crontab expression: " + cronExpression)
-            trigger = new CronTrigger(se.generateJobScheduledName(), se.generateJobGroupName(),
-                                      se.generateJobScheduledName(), se.generateJobGroupName(),
-                                      cronExpression)
+            trigger = TriggerBuilder.newTrigger().withIdentity(se.generateJobScheduledName(), se.generateJobGroupName())
+                    .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
+                    .build()
         } catch (java.text.ParseException ex) {
             throw new RuntimeException("Failed creating trigger. Invalid cron expression: " + cronExpression )
         }

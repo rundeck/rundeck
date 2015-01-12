@@ -1,6 +1,8 @@
 
 
 package rundeck.services
+
+import grails.test.mixin.TestMixin
 import org.codehaus.groovy.grails.plugins.databinding.DataBindingGrailsPlugin;
 
 
@@ -11,6 +13,7 @@ import grails.test.mixin.web.ControllerUnitTestMixin;
 import org.junit.Assert
 import org.junit.Before;
 import org.quartz.*
+import org.quartz.impl.matchers.GroupMatcher
 import org.quartz.spi.JobFactory
 import org.springframework.context.MessageSource
 
@@ -6633,67 +6636,14 @@ class FakeScheduler implements Scheduler{
         return null
     }
 
-    boolean unscheduleJob(String s, String s1) {
+    @Override
+    boolean unscheduleJobs(List<TriggerKey> list) throws SchedulerException {
         return false
     }
 
-    Date rescheduleJob(String s, String s1, Trigger trigger) {
-        return null
-    }
+
 
     void addJob(JobDetail detail, boolean b) {
-
-    }
-
-    boolean deleteJob(String s, String s1) {
-        return false
-    }
-
-    void triggerJob(String s, String s1) {
-
-    }
-
-    void triggerJobWithVolatileTrigger(String s, String s1) {
-
-    }
-
-    void triggerJob(String s, String s1, JobDataMap map) {
-
-    }
-
-    void triggerJobWithVolatileTrigger(String s, String s1, JobDataMap map) {
-
-    }
-
-    void pauseJob(String s, String s1) {
-
-    }
-
-    void pauseJobGroup(String s) {
-
-    }
-
-    void pauseTrigger(String s, String s1) {
-
-    }
-
-    void pauseTriggerGroup(String s) {
-
-    }
-
-    void resumeJob(String s, String s1) {
-
-    }
-
-    void resumeJobGroup(String s) {
-
-    }
-
-    void resumeTrigger(String s, String s1) {
-
-    }
-
-    void resumeTriggerGroup(String s) {
 
     }
 
@@ -6705,40 +6655,17 @@ class FakeScheduler implements Scheduler{
 
     }
 
-    String[] getJobGroupNames() {
-        return new String[0]
+    List getJobGroupNames() {
+        return new String[0] as List
     }
 
-    String[] getJobNames(String s) {
-        return new String[0]
+    List getTriggerGroupNames() {
+        return new String[0] as List
     }
 
-    Trigger[] getTriggersOfJob(String s, String s1) {
-        return new Trigger[0]
-    }
-
-    String[] getTriggerGroupNames() {
-        return new String[0]
-    }
-
-    String[] getTriggerNames(String s) {
-        return new String[0]
-    }
 
     Set getPausedTriggerGroups() {
         return null
-    }
-
-    JobDetail getJobDetail(String s, String s1) {
-        return null
-    }
-
-    Trigger getTrigger(String s, String s1) {
-        return null
-    }
-
-    int getTriggerState(String s, String s1) {
-        return 0
     }
 
     void addCalendar(String s, Calendar calendar, boolean b, boolean b1) {
@@ -6753,87 +6680,152 @@ class FakeScheduler implements Scheduler{
         return null
     }
 
-    String[] getCalendarNames() {
-        return new String[0]
+    List getCalendarNames() {
+        return new String[0] as List
     }
 
-    boolean interrupt(String s, String s1) {
+    @Override
+    ListenerManager getListenerManager() throws SchedulerException {
+        return null
+    }
+
+    @Override
+    void scheduleJobs(Map<JobDetail, Set<? extends Trigger>> map, boolean b) throws SchedulerException {
+
+    }
+
+    @Override
+    void scheduleJob(JobDetail jobDetail, Set<? extends Trigger> set, boolean b) throws SchedulerException {
+
+    }
+
+    @Override
+    boolean unscheduleJob(TriggerKey triggerKey) throws SchedulerException {
         return false
     }
 
-    void addGlobalJobListener(JobListener listener) {
+    @Override
+    Date rescheduleJob(TriggerKey triggerKey, Trigger trigger) throws SchedulerException {
+        return null
+    }
+
+    @Override
+    void addJob(JobDetail jobDetail, boolean b, boolean b1) throws SchedulerException {
 
     }
 
-    void addJobListener(JobListener listener) {
-
-    }
-
-    boolean removeGlobalJobListener(String s) {
+    @Override
+    boolean deleteJob(JobKey jobKey) throws SchedulerException {
         return false
     }
 
-    boolean removeJobListener(String s) {
+    @Override
+    boolean deleteJobs(List<JobKey> list) throws SchedulerException {
         return false
     }
 
-    List getGlobalJobListeners() {
+    @Override
+    void triggerJob(JobKey jobKey) throws SchedulerException {
+
+    }
+
+    @Override
+    void triggerJob(JobKey jobKey, JobDataMap jobDataMap) throws SchedulerException {
+
+    }
+
+    @Override
+    void pauseJob(JobKey jobKey) throws SchedulerException {
+
+    }
+
+    @Override
+    void pauseJobs(GroupMatcher<JobKey> groupMatcher) throws SchedulerException {
+
+    }
+
+    @Override
+    void pauseTrigger(TriggerKey triggerKey) throws SchedulerException {
+
+    }
+
+    @Override
+    void pauseTriggers(GroupMatcher<TriggerKey> groupMatcher) throws SchedulerException {
+
+    }
+
+    @Override
+    void resumeJob(JobKey jobKey) throws SchedulerException {
+
+    }
+
+    @Override
+    void resumeJobs(GroupMatcher<JobKey> groupMatcher) throws SchedulerException {
+
+    }
+
+    @Override
+    void resumeTrigger(TriggerKey triggerKey) throws SchedulerException {
+
+    }
+
+    @Override
+    void resumeTriggers(GroupMatcher<TriggerKey> groupMatcher) throws SchedulerException {
+
+    }
+
+    @Override
+    Set<JobKey> getJobKeys(GroupMatcher<JobKey> groupMatcher) throws SchedulerException {
         return null
     }
 
-    Set getJobListenerNames() {
+    @Override
+    List<? extends Trigger> getTriggersOfJob(JobKey jobKey) throws SchedulerException {
         return null
     }
 
-    JobListener getGlobalJobListener(String s) {
+    @Override
+    Set<TriggerKey> getTriggerKeys(GroupMatcher<TriggerKey> groupMatcher) throws SchedulerException {
         return null
     }
 
-    JobListener getJobListener(String s) {
+    @Override
+    JobDetail getJobDetail(JobKey jobKey) throws SchedulerException {
         return null
     }
 
-    void addGlobalTriggerListener(TriggerListener listener) {
-
+    @Override
+    Trigger getTrigger(TriggerKey triggerKey) throws SchedulerException {
+        return null
     }
 
-    void addTriggerListener(TriggerListener listener) {
-
+    @Override
+    Trigger.TriggerState getTriggerState(TriggerKey triggerKey) throws SchedulerException {
+        return null
     }
 
-    boolean removeGlobalTriggerListener(String s) {
+    @Override
+    boolean interrupt(JobKey jobKey) throws UnableToInterruptJobException {
         return false
     }
 
-    boolean removeTriggerListener(String s) {
+    @Override
+    boolean interrupt(String s) throws UnableToInterruptJobException {
         return false
     }
 
-    List getGlobalTriggerListeners() {
-        return null
-    }
-
-    Set getTriggerListenerNames() {
-        return null
-    }
-
-    TriggerListener getGlobalTriggerListener(String s) {
-        return null
-    }
-
-    TriggerListener getTriggerListener(String s) {
-        return null
-    }
-
-    void addSchedulerListener(SchedulerListener listener) {
-
-    }
-
-    boolean removeSchedulerListener(SchedulerListener listener) {
+    @Override
+    boolean checkExists(JobKey jobKey) throws SchedulerException {
         return false
     }
 
-    List getSchedulerListeners() {
-        return null
+    @Override
+    boolean checkExists(TriggerKey triggerKey) throws SchedulerException {
+        return false
+    }
+
+    @Override
+    void clear() throws SchedulerException {
+
     }
 }

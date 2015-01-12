@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.util.quartz
 
 import com.codahale.metrics.Counter
 import org.quartz.Trigger
+import org.quartz.TriggerKey
 import org.quartz.listeners.SchedulerListenerSupport
 
 /**
@@ -25,7 +26,7 @@ class MetricsSchedulerListener extends SchedulerListenerSupport{
     }
 
     @Override
-    void jobUnscheduled(String s, String s1) {
+    void jobUnscheduled(TriggerKey triggerKey) {
         counter.dec()
     }
 
