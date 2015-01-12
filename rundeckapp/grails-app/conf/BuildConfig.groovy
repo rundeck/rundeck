@@ -90,7 +90,7 @@ grails.project.dependency.resolution = {
         runtime (":hibernate:3.6.10.18"){
             excludes ([ group: 'asm', name: 'asm'])
         }
-        runtime ':mail:0.9', ':quartz:0.4.2', ':executor:0.3'
+        runtime ':mail:1.0.7', ':quartz:1.0.2', ':executor:0.3'
         provided ':codenarc:0.22'
         build   ':jetty:2.0.3'
     }
@@ -108,7 +108,7 @@ grails.project.dependency.resolution = {
                 'com.jcraft:jsch:0.1.50', 'log4j:log4j:1.2.16', 'commons-collections:commons-collections:3.2.1',
                 'commons-codec:commons-codec:1.5', 'com.fasterxml.jackson.core:jackson-databind:2.0.2',
                 'com.codahale.metrics:metrics-core:3.0.1', 'com.google.guava:guava:15.0',
-                'org.owasp.encoder:encoder:1.1.1', 'org.quartz-scheduler:quartz:1.7.3',
+                'org.owasp.encoder:encoder:1.1.1', 'org.quartz-scheduler:quartz:2.2.1',
                 'org.markdownj:markdownj-core:0.4',
                 'com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:r239'
 
