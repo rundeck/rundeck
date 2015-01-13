@@ -233,7 +233,7 @@ class BootStrap {
              quartzScheduler.getCurrentlyExecutingJobs().size()
          }))
          def counter = metricRegistry.counter(MetricRegistry.name("rundeck.scheduler.quartz", "scheduledJobs"))
-         quartzScheduler.addSchedulerListener(new MetricsSchedulerListener(counter))
+         quartzScheduler.getListenerManager().addSchedulerListener(new MetricsSchedulerListener(counter))
 
          //configure System.out and System.err so that remote command execution will write to a specific print stream
          if(Environment.getCurrent() != Environment.TEST){
