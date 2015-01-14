@@ -517,7 +517,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
      */
     def deleteJob(String jobname, String groupname){
         log.info("deleting job from scheduler")
-        quartzScheduler.deleteJob(jobname,groupname)
+        quartzScheduler.deleteJob(new JobKey(jobname,groupname))
     }
 
     def userAuthorizedForJob(request,ScheduledExecution se, AuthContext authContext){
@@ -535,14 +535,14 @@ class ScheduledExecutionService implements ApplicationContextAware{
         jobDetail.getJobDataMap().put("bySchedule", true)
         def Date nextTime
         if(oldJobName && oldGroupName){
-            def oldjob = quartzScheduler.getJobDetail(oldJobName,oldGroupName)
+            def oldjob = quartzScheduler.getJobDetail(new JobKey(oldJobName,oldGroupName))
             log.info("job renamed, removing old job and scheduling new one")
-            quartzScheduler.deleteJob(oldJobName,oldGroupName)
+            deleteJob(oldJobName,oldGroupName)
         }
         if ( hasJobScheduled(se) ) {
             log.info("rescheduling existing job: " + se.generateJobScheduledName())
             
-            nextTime = quartzScheduler.rescheduleJob(se.generateJobScheduledName(), se.generateJobGroupName(), trigger)
+            nextTime = quartzScheduler.rescheduleJob(TriggerKey.triggerKey(se.generateJobScheduledName(), se.generateJobGroupName()), trigger)
         } else {
             log.info("scheduling new job: " + se.generateJobScheduledName())
             nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
@@ -696,9 +696,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
     }
 
     def boolean hasJobScheduled(ScheduledExecution se) {
-        def boolean scheduled = false
-        def names = Arrays.asList(quartzScheduler.getJobNames(se.generateJobGroupName()))
-        return names.contains(se.generateJobScheduledName())
+        return quartzScheduler.checkExists(JobKey.jobKey(se.generateJobScheduledName(),se.generateJobGroupName()))
     }
 
     /**
@@ -745,7 +743,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         if(!se.scheduled){
             return new Date(TWO_HUNDRED_YEARS)
         }
-        def trigger = quartzScheduler.getTrigger(se.generateJobScheduledName(), se.generateJobGroupName())
+        def trigger = quartzScheduler.getTrigger(TriggerKey.triggerKey(se.generateJobScheduledName(), se.generateJobGroupName()))
         if(trigger){
             return trigger.getNextFireTime()
         }else if (frameworkService.isClusterModeEnabled() && se.serverNodeUUID != frameworkService.getServerUUID()) {
@@ -764,9 +762,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
      */
     def Date tempNextExecutionTime(ScheduledExecution se){
         def trigger = createTrigger(se)
-        List<Date> times = TriggerUtils.computeFireTimes(trigger,
-                quartzScheduler.getCalendar(trigger.getCalendarName()), 1)
-        return times?times.first():null
+        return trigger.nextFireTime
     }
 
     /**
