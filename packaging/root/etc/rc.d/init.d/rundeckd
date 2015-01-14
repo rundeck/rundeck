@@ -74,7 +74,7 @@ case "$1" in
 		fi
 		;;
 	status)
-		status -p $PID_FILE $rundeckd
+		status -p $PID_FILE $prog
 		RETVAL=$?
 		;;
 	*)
