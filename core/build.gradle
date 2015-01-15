@@ -11,7 +11,7 @@ ext.rundeckToolsDependencies=''
 dependencies {
     compile project(":rundeck-storage:rundeck-storage-api")
     compile project(":rundeck-storage:rundeck-storage-conf")
-    compile 'org.apache.ant:ant:1.7.1',
+    compile 'org.apache.ant:ant:1.8.3',
         'log4j:log4j:1.2.17',
         'commons-codec:commons-codec:1.5',
         'commons-beanutils:commons-beanutils:1.8.3',
@@ -20,7 +20,7 @@ dependencies {
         'commons-lang:commons-lang:2.6',
         'dom4j:dom4j:1.6.1',
         'commons-cli:commons-cli:1.0',
-        'org.apache.ant:ant-jsch:1.7.1',
+        'org.apache.ant:ant-jsch:1.8.3',
         'com.jcraft:jsch:0.1.50',
         'com.jcraft:jsch.agentproxy.jsch:0.0.9',
         'com.jcraft:jsch.agentproxy.sshagent:0.0.9',
@@ -29,7 +29,8 @@ dependencies {
         'com.jcraft:jsch.agentproxy.connector-factory:0.0.9',
         'com.jcraft:jsch.agentproxy.core:0.0.9',
         'org.yaml:snakeyaml:1.9',
-        'xerces:xercesImpl:2.6.2'
+        'xerces:xercesImpl:2.11.0',
+        'xml-apis:xml-apis:1.4.01',
 
     compile ('jaxen:jaxen:1.1') {
         // Remove xerces apis as that should be provided by jdk
