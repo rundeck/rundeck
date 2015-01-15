@@ -33,6 +33,30 @@ class ExecQuery extends ReportQuery{
     String groupPathExactFilter
 
     static constraints = {
+        abortedByFilter(nullable: true)
+        controllerFilter(nullable: true)
+        typeFilter(nullable: true)
+        recentFilter(nullable: true)
+        tagsFilter(nullable: true)
+        jobListFilter(nullable: true)
+        startafterFilter(nullable: true)
+        jobFilter(nullable: true)
+        reportIdFilter(nullable: true)
+        objFilter(nullable: true)
+        projFilter(nullable: true)
+        messageFilter(nullable: true)
+        userFilter(nullable: true)
+        maprefUriFilter(nullable: true)
+        titleFilter(nullable: true)
+        groupPathFilter(nullable: true)
+        jobIdFilter(nullable: true)
+        cmdFilter(nullable: true)
+        groupPathExactFilter(nullable: true)
+        endbeforeFilter(nullable: true)
+        endafterFilter(nullable: true)
+        nodeFilter(nullable: true)
+        startbeforeFilter(nullable: true)
+        excludeJobListFilter(nullable: true)
         statFilter(nullable:true,inList:["succeed","fail",'cancel'])
         sortBy(nullable:true,inList:[
             "jobFilter",
