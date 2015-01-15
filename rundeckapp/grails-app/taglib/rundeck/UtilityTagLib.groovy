@@ -723,7 +723,7 @@ class UtilityTagLib{
         }else if(null !=attrs.js){
             out << raw(attrs.js.toString().encodeAsJavaScript2())
         }else if(attrs.json!=null){
-            out << attrs.json.encodeAsJSON().replaceAll('<', '\\\\u003c') //nb: replace < to allow embedding in page
+            out << attrs.json.encodeAsJSON().toString().replaceAll('<', '\\\\u003c') //nb: replace < to allow embedding in page
         }else if(attrs.url){
             out << attrs.url.toString().encodeAsURL()
         }else if(attrs.code){
