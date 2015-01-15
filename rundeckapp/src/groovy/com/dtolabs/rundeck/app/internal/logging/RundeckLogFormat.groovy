@@ -54,7 +54,7 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
     }
 
     static boolean detectFormat(String firstLine){
-        return firstLine.startsWith(FILE_START)
+        return firstLine?.startsWith(FILE_START)
     }
     /**
      * @param context data
