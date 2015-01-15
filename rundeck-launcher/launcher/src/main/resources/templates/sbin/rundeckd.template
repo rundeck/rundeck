@@ -67,7 +67,7 @@ start() {
 	echo_success; #already running
 	return $RETVAL
     }
-    nohup $rundeckd 2>&1 >>$RDECK_BASE/var/log/service.log &
+    nohup $rundeckd >>$RDECK_BASE/var/log/service.log 2>&1 &
     RETVAL=$?	
     PID=$!
     echo $PID > $PID_FILE
