@@ -1763,86 +1763,90 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     def saveExecutionState( schedId, exId, Map props, Map execmap, Map retryContext){
         def ScheduledExecution scheduledExecution
-        def Execution execution = Execution.get(exId)
-        execution.properties=props
-        if (props.failedNodes) {
-            execution.failedNodeList = props.failedNodes.join(",")
-        }
-        if (props.succeededNodes) {
-            execution.succeededNodeList = props.succeededNodes.join(",")
-        }
+        def boolean execSaved = false
+        def Execution execution
+        Execution.withNewSession {
+            execution = Execution.get(exId)
+            execution.properties = props
+            if (props.failedNodes) {
+                execution.failedNodeList = props.failedNodes.join(",")
+            }
+            if (props.succeededNodes) {
+                execution.succeededNodeList = props.succeededNodes.join(",")
+            }
 
-        if (schedId) {
-            scheduledExecution = ScheduledExecution.get(schedId)
-        }
+            if (schedId) {
+                scheduledExecution = ScheduledExecution.get(schedId)
+            }
 
-        if (!props.cancelled && props.status!='true' && scheduledExecution && retryContext) {
-            //determine retry necessity
-            int count = retryContext?.retryAttempt ?: 0
-            def retryStr = execution.retry
-            int maxRetries = 0
-            if(retryStr){
-                try{
-                    maxRetries=Integer.parseInt(retryStr)
-                }catch (NumberFormatException e){
-                    log.error("Retry string for job was not resolvable: ${retryStr}")
+            if (!props.cancelled && props.status != 'true' && scheduledExecution && retryContext) {
+                //determine retry necessity
+                int count = retryContext?.retryAttempt ?: 0
+                def retryStr = execution.retry
+                int maxRetries = 0
+                if (retryStr) {
+                    try {
+                        maxRetries = Integer.parseInt(retryStr)
+                    } catch (NumberFormatException e) {
+                        log.error("Retry string for job was not resolvable: ${retryStr}")
+                    }
+                }
+                if (maxRetries > count) {
+                    execution.willRetry = true
+                    def input = [
+                            argString: execution.argString,
+                            loglevel : execution.loglevel,
+                            filter   : execution.filter //TODO: failed nodes?
+                    ]
+                    def result = retryExecuteJob(scheduledExecution, retryContext.authContext,
+                            retryContext.user, input, retryContext.secureOpts,
+                            retryContext.secureOptsExposed, count + 1)
+                    if (result.success) {
+                        execution.retryExecution = result.execution
+                    }
                 }
             }
-            if (maxRetries > count) {
-                execution.willRetry=true
-                def input = [
-                        argString: execution.argString,
-                        loglevel: execution.loglevel,
-                        filter: execution.filter //TODO: failed nodes?
-                ]
-                def result = retryExecuteJob(scheduledExecution, retryContext.authContext,
-                        retryContext.user, input, retryContext.secureOpts,
-                        retryContext.secureOptsExposed, count + 1)
-                if(result.success){
-                    execution.retryExecution=result.execution
+
+            if (execution.save(flush: true)) {
+                log.debug("saved execution status. id: ${execution.id}")
+                execSaved = true
+            } else {
+
+                execution.errors.allErrors.each { log.warn(it.defaultMessage) }
+                log.error("failed to save execution status")
+            }
+            def jobname="adhoc"
+            def jobid=null
+            def summary= summarizeJob(scheduledExecution, execution)
+            if (scheduledExecution) {
+                jobname = scheduledExecution.groupPath ? scheduledExecution.generateFullName() : scheduledExecution.jobName
+                jobid = scheduledExecution.id
+            }
+            if(execSaved) {
+                //summarize node success
+                String node=null
+                int sucCount=-1;
+                int failedCount=-1;
+                int totalCount=0;
+                if (execmap && execmap.noderecorder && execmap.noderecorder instanceof NodeRecorder) {
+                    NodeRecorder rec = (NodeRecorder) execmap.noderecorder
+                    final HashSet<String> success = rec.getSuccessfulNodes()
+                    final Map<String,Object> failedMap = rec.getFailedNodes()
+                    final HashSet<String> failed = new HashSet<String>(failedMap.keySet())
+                    final HashSet<String> matched = rec.getMatchedNodes()
+                    node = [success.size(),failed.size(),matched.size()].join("/")
+                    sucCount=success.size()
+                    failedCount=failed.size()
+                    totalCount=matched.size()
                 }
-            }
-        }
-        def boolean execSaved=false
-        if (execution.save(flush:true)) {
-            log.debug("saved execution status. id: ${execution.id}")
-            execSaved=true
-        } else {
+                logExecution(null, execution.project, execution.user, "true" == execution.status, exId,
+                    execution.dateStarted, jobid, jobname, summary, props.cancelled, props.timedOut, execution.willRetry,
+                    node, execution.abortedby)
+                logExecutionLog4j(execution, "finish", execution.user)
 
-            execution.errors.allErrors.each { log.warn(it.defaultMessage) }
-            log.error("failed to save execution status")
-        }
-        def jobname="adhoc"
-        def jobid=null
-        def summary= summarizeJob(scheduledExecution, execution)
-        if (scheduledExecution) {
-            jobname = scheduledExecution.groupPath ? scheduledExecution.generateFullName() : scheduledExecution.jobName
-            jobid = scheduledExecution.id
-        }
-        if(execSaved) {
-            //summarize node success
-            String node=null
-            int sucCount=-1;
-            int failedCount=-1;
-            int totalCount=0;
-            if (execmap && execmap.noderecorder && execmap.noderecorder instanceof NodeRecorder) {
-                NodeRecorder rec = (NodeRecorder) execmap.noderecorder
-                final HashSet<String> success = rec.getSuccessfulNodes()
-                final Map<String,Object> failedMap = rec.getFailedNodes()
-                final HashSet<String> failed = new HashSet<String>(failedMap.keySet())
-                final HashSet<String> matched = rec.getMatchedNodes()
-                node = [success.size(),failed.size(),matched.size()].join("/")
-                sucCount=success.size()
-                failedCount=failed.size()
-                totalCount=matched.size()
+                def context = execmap?.thread?.context
+                notificationService.triggerJobNotification(props.status == 'true' ? 'success' : 'failure', schedId, [execution: execution,nodestatus:[succeeded:sucCount,failed:failedCount,total:totalCount],context:context])
             }
-            logExecution(null, execution.project, execution.user, "true" == execution.status, exId,
-                execution.dateStarted, jobid, jobname, summary, props.cancelled, props.timedOut, execution.willRetry,
-                node, execution.abortedby)
-            logExecutionLog4j(execution, "finish", execution.user)
-
-            def context = execmap?.thread?.context
-            notificationService.triggerJobNotification(props.status == 'true' ? 'success' : 'failure', schedId, [execution: execution,nodestatus:[succeeded:sucCount,failed:failedCount,total:totalCount],context:context])
         }
     }
     public String summarizeJob(ScheduledExecution job=null,Execution exec){
