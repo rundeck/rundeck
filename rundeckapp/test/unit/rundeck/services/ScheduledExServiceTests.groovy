@@ -2741,7 +2741,8 @@ class ScheduledExServiceTests {
         }
 
         def qtzControl = mockFor(FakeScheduler, true)
-        qtzControl.demand.getJobNames { name -> [] }
+        qtzControl.demand.checkExists { key -> false }
+        qtzControl.demand.getListenerManager { -> [addJobListener:{a,b->}] }
         qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
         sec.quartzScheduler = qtzControl.createMock()
         def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -2844,7 +2845,8 @@ class ScheduledExServiceTests {
         }
 
         def qtzControl = mockFor(FakeScheduler, true)
-        qtzControl.demand.getJobNames { name -> [] }
+        qtzControl.demand.checkExists { key -> false }
+        qtzControl.demand.getListenerManager { -> [addJobListener:{a,b->}] }
         qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
         sec.quartzScheduler = qtzControl.createMock()
 
@@ -2900,7 +2902,8 @@ class ScheduledExServiceTests {
         }
 
         def qtzControl = mockFor(FakeScheduler, true)
-        qtzControl.demand.getJobNames { name -> [] }
+        qtzControl.demand.checkExists { key -> false }
+        qtzControl.demand.getListenerManager { -> [addJobListener:{a,b->}] }
         qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
         sec.quartzScheduler = qtzControl.createMock()
 
@@ -2968,7 +2971,8 @@ class ScheduledExServiceTests {
 //        sec.request.setAttribute("subject", subject)
 
         def qtzControl = mockFor(FakeScheduler, true)
-        qtzControl.demand.getJobNames { name -> [] }
+        qtzControl.demand.checkExists { key -> false }
+        qtzControl.demand.getListenerManager { -> [addJobListener:{a,b->}] }
         qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
         sec.quartzScheduler = qtzControl.createMock()
         def params = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -3025,7 +3029,8 @@ class ScheduledExServiceTests {
         }
 
         def qtzControl = mockFor(FakeScheduler, true)
-        qtzControl.demand.getJobNames { name -> [] }
+        qtzControl.demand.checkExists { key -> false }
+        qtzControl.demand.getListenerManager { -> [addJobListener:{a,b->}] }
         qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
         sec.quartzScheduler = qtzControl.createMock()
         def params = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -3080,7 +3085,8 @@ class ScheduledExServiceTests {
         }
 
         def qtzControl = mockFor(FakeScheduler, true)
-        qtzControl.demand.getJobNames { name -> [] }
+        qtzControl.demand.checkExists { key -> false }
+        qtzControl.demand.getListenerManager { -> [addJobListener:{a,b->}] }
         qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
         sec.quartzScheduler = qtzControl.createMock()
         def params = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',

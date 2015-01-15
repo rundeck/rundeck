@@ -4,11 +4,13 @@ import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import grails.plugins.quartz.listeners.SessionBinderJobListener
 import org.apache.commons.validator.EmailValidator
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
 import org.quartz.*
+import org.quartz.impl.matchers.KeyMatcher
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
@@ -41,9 +43,12 @@ class ScheduledExecutionService implements ApplicationContextAware{
     private ExecutionService executionServiceBean
 
     def Scheduler quartzScheduler
+    /**
+     * defined in quartz plugin
+     */
+    def SessionBinderJobListener sessionBinderListener
     ApplicationContext applicationContext
 
-//    def ApplicationContext applicationContext
     def MessageSource messageSource
 
     /**
@@ -599,7 +604,8 @@ class ScheduledExecutionService implements ApplicationContextAware{
                              Execution e, long timeout, Map secureOpts =null,
                              Map secureOptsExposed =null, int retryAttempt = 0) {
 
-        def jobDetail = createJobDetail(se, "TEMP:" + user + ":" + se.id + ":" + e.id, user + ":run:" + se.id)
+        def quartzjobname="TEMP:" + user + ":" + se.id + ":" + e.id
+        def jobDetail = createJobDetail(se, quartzjobname,user + ":run:" + se.id)
         jobDetail.getJobDataMap().put("user", user)
         jobDetail.getJobDataMap().put("authContext", authContext)
         jobDetail.getJobDataMap().put("executionId", e.id.toString())
@@ -616,11 +622,11 @@ class ScheduledExecutionService implements ApplicationContextAware{
             jobDetail.getJobDataMap().put("retryAttempt", 0)
         }
 
-        def Trigger trigger = TriggerUtils.makeImmediateTrigger(0, 0)
-        trigger.setName(jobDetail.getName() + "Trigger")
+        def Trigger trigger = TriggerBuilder.newTrigger().startNow().withIdentity(quartzjobname + "Trigger").build()
+
         def nextTime
         try {
-            log.info("scheduling immediate job run: " + jobDetail.getName())
+            log.info("scheduling immediate job run: " + quartzjobname)
             nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
         } catch (Exception exc) {
             throw new RuntimeException("caught exception while adding job: " + exc.getMessage(), exc)
@@ -647,11 +653,10 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 )
                 .build()
 
-        //nb: listener registered to all jobs by default
-//        jobDetail.addJobListener("defaultGrailsServiceInjectorJobListener")
+
+        addJobSessionListener(ident.jobname,ident.groupname)
 
         def Trigger trigger = TriggerBuilder.newTrigger().withIdentity(ident.jobname + "Trigger").startNow().build()
-//        trigger.setName(jobDetail.getName() + "Trigger")
         def nextTime
         try {
             log.info("scheduling temp job: " + ident.jobname)
@@ -665,6 +670,20 @@ class ScheduledExecutionService implements ApplicationContextAware{
     def JobDetail createJobDetail(ScheduledExecution se) {
         return createJobDetail(se,se.generateJobScheduledName(), se.generateJobGroupName())
     }
+
+    /**
+     * Add the session binder listener from quartz plugin for manually created jobs
+     * @param jobname
+     * @param jobgroup
+     */
+    private void addJobSessionListener(String jobname, String jobgroup){
+        //manually add session binder listener
+        quartzScheduler.getListenerManager().addJobListener(
+                sessionBinderListener,
+                KeyMatcher.keyEquals(JobKey.jobKey(jobname,jobgroup))
+        );
+    }
+
     def JobDetail createJobDetail(ScheduledExecution se, String jobname, String jobgroup){
         def jobDetailBuilder = JobBuilder.newJob(ExecutionJob).withIdentity(jobname,jobgroup)
                         .withDescription(se.description)
@@ -677,7 +696,8 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 jobDetailBuilder.usingJobData("serverUUID",frameworkService.getServerUUID())
             }
         }
-//        jobDetail.addJobListener("defaultGrailsServiceInjectorJobListener")
+        addJobSessionListener(jobname,jobgroup)
+
         return jobDetailBuilder.build()
     }
 
