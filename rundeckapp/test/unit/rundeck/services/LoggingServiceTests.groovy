@@ -13,6 +13,8 @@ import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
 import grails.test.*
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.test.runtime.DirtiesRuntime
+import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import rundeck.Execution
 import rundeck.services.logging.DisablingLogWriter
 import rundeck.services.logging.ExecutionLogReader
@@ -91,6 +93,7 @@ class LoggingServiceTests  {
         }
     }
 
+    @DirtiesRuntime
     void testOpenLogWriterWithPlugins(){
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
         assertNotNull(e.save())
@@ -135,6 +138,12 @@ class LoggingServiceTests  {
 
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
+        }
+        ExecutionService.metaClass.static.generateServerURL = { LinkGenerator grailsLinkGenerator ->
+            ''
+        }
+        ExecutionService.metaClass.static.generateExecutionURL= { Execution execution, LinkGenerator grailsLinkGenerator ->
+            ''
         }
 //        pluginService.configurePlugin(name, streamingLogWriterPluginProviderService,
 //                frameworkService.getFrameworkPropertyResolver(execution.project), PropertyScope.Instance)
@@ -273,6 +282,7 @@ class LoggingServiceTests  {
         assertNotNull(reader)
         assertEquals(test,reader)
     }
+    @DirtiesRuntime
     void testGetLogReaderWithPluginInitializesTrue(){
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
         assertNotNull(e.save())
@@ -302,6 +312,12 @@ class LoggingServiceTests  {
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
+        ExecutionService.metaClass.static.generateServerURL = { LinkGenerator grailsLinkGenerator ->
+            ''
+        }
+        ExecutionService.metaClass.static.generateExecutionURL= { Execution execution, LinkGenerator grailsLinkGenerator ->
+            ''
+        }
 
         service.logFileStorageService=lfsvcmock.createMock()
         service.pluginService=pmock.createMock()
@@ -312,6 +328,7 @@ class LoggingServiceTests  {
         assertEquals(ExecutionLogState.AVAILABLE, reader.state)
         assertEquals(test,reader.reader)
     }
+    @DirtiesRuntime
     void testGetLogReaderWithPluginInitializesFalse(){
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
         assertNotNull(e.save())
@@ -340,6 +357,12 @@ class LoggingServiceTests  {
         }
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
+        }
+        ExecutionService.metaClass.static.generateServerURL = { LinkGenerator grailsLinkGenerator ->
+            ''
+        }
+        ExecutionService.metaClass.static.generateExecutionURL= { Execution execution, LinkGenerator grailsLinkGenerator ->
+            ''
         }
 
         service.logFileStorageService=lfsvcmock.createMock()

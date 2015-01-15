@@ -37,6 +37,7 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
+import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import org.hibernate.StaleObjectStateException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -668,7 +669,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
-    def static HashMap<String, String> exportContextForExecution(Execution execution) {
+    def static HashMap<String, String> exportContextForExecution(Execution execution, LinkGenerator grailsLinkGenerator) {
         def jobcontext = new HashMap<String, String>()
         if (execution.scheduledExecution) {
             jobcontext.name = execution.scheduledExecution.jobName
@@ -676,8 +677,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             jobcontext.id = execution.scheduledExecution.extid
         }
         jobcontext.execid = execution.id.toString()
-        jobcontext.serverUrl = generateServerURL()
-        jobcontext.url = generateExecutionURL(execution)
+        jobcontext.serverUrl = generateServerURL(grailsLinkGenerator)
+        jobcontext.url = generateExecutionURL(execution,grailsLinkGenerator)
         jobcontext.serverUUID = execution.serverNodeUUID
         jobcontext.username = execution.user
         jobcontext['user.name'] = execution.user
@@ -688,15 +689,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         jobcontext
     }
 
-    static String generateExecutionURL(Execution execution) {
-        RequestHelper.doWithMockRequest {
-            new ExecutionController().createExecutionUrl(execution.id,execution.project)
-        }
+    static String generateExecutionURL(Execution execution,LinkGenerator grailsLinkGenerator) {
+        grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: execution.id, absolute: true,
+                params: [project: execution.project])
     }
-    static String generateServerURL() {
-        RequestHelper.doWithMockRequest {
-            new ExecutionController().createServerUrl()
-        }
+    static String generateServerURL(LinkGenerator grailsLinkGenerator) {
+        grailsLinkGenerator.link(controller: 'menu', action: 'index', absolute: true)
     }
 
     /**
@@ -721,7 +719,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             metricService.markMeter(this.class.name,'executionAdhocStartMeter')
         }
         try{
-            def jobcontext=exportContextForExecution(execution)
+            def jobcontext=exportContextForExecution(execution,grailsLinkGenerator)
             loghandler.openStream()
 
             WorkflowExecutionItem item = createExecutionItemForExecutionContext(execution, framework, execution.user)
@@ -2274,82 +2272,80 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Closure createSuccess
     )
     {
-        RequestHelper.doWithMockRequest {
-            def id
-            def result
+        def id
+        def result
 
-            def group = null
-            def name = null
-            def m = jitem.jobIdentifier =~ '^/?(.+)/([^/]+)$'
-            if (m.matches()) {
-                group = m.group(1)
-                name = m.group(2)
-            } else {
-                name = jitem.jobIdentifier
+        def group = null
+        def name = null
+        def m = jitem.jobIdentifier =~ '^/?(.+)/([^/]+)$'
+        if (m.matches()) {
+            group = m.group(1)
+            name = m.group(2)
+        } else {
+            name = jitem.jobIdentifier
+        }
+        def schedlist = ScheduledExecution.findAllScheduledExecutions(group, name, executionContext.getFrameworkProject())
+        if (!schedlist || 1 != schedlist.size()) {
+            def msg = "Job [${jitem.jobIdentifier}] not found, project: ${executionContext.getFrameworkProject()}"
+            executionContext.getExecutionListener().log(0, msg)
+            throw new StepException(msg, JobReferenceFailureReason.NotFound)
+        }
+        id = schedlist[0].id
+        def StepExecutionContext newContext
+        def WorkflowExecutionItem newExecItem
+
+        ScheduledExecution.withTransaction { status ->
+            ScheduledExecution se = ScheduledExecution.get(id)
+
+            if (!frameworkService.authorizeProjectJobAll(executionContext.getAuthContext(), se, [AuthConstants.ACTION_RUN], se.project)) {
+                def msg = "Unauthorized to execute job [${jitem.jobIdentifier}}: ${se.extid}"
+                executionContext.getExecutionListener().log(0, msg);
+                result = createFailure(JobReferenceFailureReason.Unauthorized, msg)
+                return
             }
-            def schedlist = ScheduledExecution.findAllScheduledExecutions(group, name, executionContext.getFrameworkProject())
-            if (!schedlist || 1 != schedlist.size()) {
-                def msg = "Job [${jitem.jobIdentifier}] not found, project: ${executionContext.getFrameworkProject()}"
-                executionContext.getExecutionListener().log(0, msg)
-                throw new StepException(msg, JobReferenceFailureReason.NotFound)
+            newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
+
+            try {
+                newContext = createJobReferenceContext(
+                        se,
+                        executionContext,
+                        jitem.args,
+                        jitem.nodeFilter,
+                        jitem.nodeKeepgoing,
+                        jitem.nodeThreadcount,
+                        jitem.nodeRankAttribute,
+                        jitem.nodeRankOrderAscending
+                )
+            } catch (ExecutionServiceValidationException e) {
+                executionContext.getExecutionListener().log(0, "Option input was not valid for [${jitem.jobIdentifier}]: ${e.message}");
+                def msg = "Invalid options: ${e.errors.keySet()}"
+                result = createFailure(JobReferenceFailureReason.InvalidOptions, msg.toString())
             }
-            id = schedlist[0].id
-            def StepExecutionContext newContext
-            def WorkflowExecutionItem newExecItem
-
-            ScheduledExecution.withTransaction { status ->
-                ScheduledExecution se = ScheduledExecution.get(id)
-
-                if (!frameworkService.authorizeProjectJobAll(executionContext.getAuthContext(), se, [AuthConstants.ACTION_RUN], se.project)) {
-                    def msg = "Unauthorized to execute job [${jitem.jobIdentifier}}: ${se.extid}"
-                    executionContext.getExecutionListener().log(0, msg);
-                    result = createFailure(JobReferenceFailureReason.Unauthorized, msg)
-                    return
-                }
-                newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
-
-                try {
-                    newContext = createJobReferenceContext(
-                            se,
-                            executionContext,
-                            jitem.args,
-                            jitem.nodeFilter,
-                            jitem.nodeKeepgoing,
-                            jitem.nodeThreadcount,
-                            jitem.nodeRankAttribute,
-                            jitem.nodeRankOrderAscending
-                    )
-                } catch (ExecutionServiceValidationException e) {
-                    executionContext.getExecutionListener().log(0, "Option input was not valid for [${jitem.jobIdentifier}]: ${e.message}");
-                    def msg = "Invalid options: ${e.errors.keySet()}"
-                    result = createFailure(JobReferenceFailureReason.InvalidOptions, msg.toString())
-                }
-            }
-            if (null != result) {
-                return result
-            }
-
-            if (newContext.getNodes().getNodeNames().size() < 1) {
-                String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
-                executionContext.getExecutionListener().log(0, msg)
-                throw new StepException(msg, JobReferenceFailureReason.NoMatchedNodes)
-            }
-
-            def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
-
-            def wresult = metricService.withTimer(this.class.name,'runJobReference'){
-                service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
-            }
-
-            if (!wresult || !wresult.success) {
-                result = createFailure(JobReferenceFailureReason.JobFailed, "Job [${jitem.jobIdentifier}] failed")
-            } else {
-                result = createSuccess()
-            }
-            result.sourceResult = wresult
-
+        }
+        if (null != result) {
             return result
         }
+
+        if (newContext.getNodes().getNodeNames().size() < 1) {
+            String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
+            executionContext.getExecutionListener().log(0, msg)
+            throw new StepException(msg, JobReferenceFailureReason.NoMatchedNodes)
+        }
+
+        def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
+
+        def wresult = metricService.withTimer(this.class.name,'runJobReference'){
+            service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
+        }
+
+        if (!wresult || !wresult.success) {
+            result = createFailure(JobReferenceFailureReason.JobFailed, "Job [${jitem.jobIdentifier}] failed")
+        } else {
+            result = createSuccess()
+        }
+        result.sourceResult = wresult
+
+        return result
     }
 
     def queryExecutions(ExecutionQuery query, int offset=0, int max=-1) {
