@@ -21,8 +21,6 @@
 		<property name="pluginManager" ref="pluginManager" />
 	</bean>
 
-	<bean id="grailsResourceLoader" class="org.codehaus.groovy.grails.commons.GrailsResourceLoaderFactoryBean" />
-
 	<bean id="characterEncodingFilter" class="org.springframework.web.filter.CharacterEncodingFilter">
 		<property name="encoding">
 			<value>utf-8</value>
