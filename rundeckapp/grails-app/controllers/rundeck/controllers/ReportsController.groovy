@@ -253,8 +253,14 @@ class ReportsController extends ControllerBase{
                 params.project), AuthConstants.ACTION_READ, 'Events for project', params.project)) {
             return
         }
+
+        if (query.hasErrors()) {
+            response.status=400
+            log.error("query errors: "+(query.errors.allErrors.collect{it.toString()}.join(", ")))
+            return render(contentType: 'application/json', text:  [errors: query.errors] as JSON)
+        }
         def results = index(query)
-        results.reports=results.reports.collect{
+        results.reports=results?.reports.collect{
             def map=it.toMap()
             map.duration= (it.dateCompleted ?: new Date()).time - it.dateStarted.time
             if(map.jcExecId){
