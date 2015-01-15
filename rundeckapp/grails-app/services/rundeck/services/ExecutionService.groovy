@@ -418,7 +418,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             total: total]
     }
 
-    def public  finishQueueQuery = { query,params,model->
+    def public finishQueueQuery(query,params,model){
 
        if(!params.max){
            params.max=20
