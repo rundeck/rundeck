@@ -12,7 +12,7 @@ dependencies {
     compile project(":rundeck-storage:rundeck-storage-api")
     compile project(":rundeck-storage:rundeck-storage-conf")
     compile 'org.apache.ant:ant:1.7.1',
-        'log4j:log4j:1.2.16',
+        'log4j:log4j:1.2.17',
         'commons-codec:commons-codec:1.5',
         'commons-beanutils:commons-beanutils:1.8.3',
         'commons-collections:commons-collections:3.2.1',
@@ -29,13 +29,12 @@ dependencies {
         'com.jcraft:jsch.agentproxy.connector-factory:0.0.9',
         'com.jcraft:jsch.agentproxy.core:0.0.9',
         'org.yaml:snakeyaml:1.9',
-        'xerces:xercesImpl:2.6.2',
-        'xml-apis:xml-apis:2.0.2'
+        'xerces:xercesImpl:2.6.2'
 
     compile ('jaxen:jaxen:1.1') {
-        // Remove xerces apis as that should be provided by jdk 
+        // Remove xerces apis as that should be provided by jdk
         exclude group: 'xerces', module: 'xmlParserAPIs'
-        exclude group: 'xml-apis', module: 'xml-apis'
+//        exclude group: 'xml-apis', module: 'xml-apis'
         exclude group: 'xalan', module: 'xalan'
     }
     compile ('commons-httpclient:commons-httpclient:3.0.1') {
