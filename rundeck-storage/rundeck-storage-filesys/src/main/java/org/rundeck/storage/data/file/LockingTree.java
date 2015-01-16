@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * LockingTree provides lock objects which can be synchronized for resource access to a particular path.
  *
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-03-28
  */
 public abstract class LockingTree<T extends ContentMeta> extends StringToPathTree<T> implements Tree<T> {
@@ -24,9 +24,9 @@ public abstract class LockingTree<T extends ContentMeta> extends StringToPathTre
     /**
      * Return an object that can be synchronized on for the given path.
      *
-     * @param path
+     * @param path path
      *
-     * @return
+     * @return synch object
      */
     protected Object pathSynch(Path path) {
         Object newref = new Object();
@@ -37,10 +37,10 @@ public abstract class LockingTree<T extends ContentMeta> extends StringToPathTre
     /**
      * Return a {@link HasInputStream} where all read access to the underlying data is synchronized around the path
      *
-     * @param path
-     * @param stream
+     * @param path path
+     * @param stream stream
      *
-     * @return
+     * @return synchronized stream access
      */
     protected HasInputStream synchStream(final Path path, final HasInputStream stream) {
         return new HasInputStream() {

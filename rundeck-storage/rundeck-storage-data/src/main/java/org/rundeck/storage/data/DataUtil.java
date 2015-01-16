@@ -29,8 +29,10 @@ public class DataUtil {
      *
      * @param text text data
      * @param meta meta data
+     * @param factory factory
+     * @param <T> resource type
      *
-     * @return
+     * @return content
      */
     public static <T extends ContentMeta> T withText(String text, Map<String, String> meta, ContentFactory<T> factory) {
         return factory.create(lazyStream(new ByteArrayInputStream(text.getBytes())), meta);
@@ -49,8 +51,10 @@ public class DataUtil {
      *
      * @param data byte[] data
      * @param meta meta data
+     * @param factory factory
+     * @param <T> resource type
      *
-     * @return
+     * @return content
      */
     public static <T extends ContentMeta> T withBytes(byte[] data, Map<String, String> meta,
             ContentFactory<T> factory) {
@@ -66,8 +70,10 @@ public class DataUtil {
      *
      * @param source data
      * @param meta   meta data
+     * @param factory factory
+     * @param <T> resource type
      *
-     * @return
+     * @return content
      */
     public static <T extends ContentMeta> T withStream(InputStream source, Map<String, String> meta,
             ContentFactory<T> factory) {
@@ -86,7 +92,7 @@ public class DataUtil {
      *
      * @param data file
      *
-     * @return
+     * @return lazy stream
      */
     public static HasInputStream lazyStream(final InputStream data) {
         return new HasInputStream() {
@@ -106,7 +112,7 @@ public class DataUtil {
     /**
      * Base factory for DataContent implementation
      *
-     * @return
+     * @return base factory
      */
     public static ContentFactory<DataContent> contentFactory() {
         return new Factory();
@@ -136,7 +142,7 @@ public class DataUtil {
      *
      * @param data file
      *
-     * @return
+     * @return lazy stream
      */
     public static HasInputStream lazyFileStream(final File data) {
         return new HasInputStream() {

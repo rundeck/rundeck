@@ -21,7 +21,7 @@ import spock.lang.Specification
 
 /**
  * FileTreeUtilSpecification is ...
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-10-10
  */
 class FileTreeUtilSpecification extends Specification {
