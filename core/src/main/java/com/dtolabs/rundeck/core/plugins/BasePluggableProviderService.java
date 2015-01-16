@@ -34,12 +34,11 @@ public abstract class BasePluggableProviderService<T> implements PluggableProvid
     public boolean isValidProviderClass(final Class clazz) {
         return implementationClass.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
     }
-
-    /*
-         * default implementation of createProviderInstance
-         */
-    public T createProviderInstance(final Class<T> clazz, final String name)
-            throws PluginException, ProviderCreationException {
+    /**
+     * default implementation of createProviderInstance
+     */
+    @Override
+    public <X extends T> T createProviderInstance(Class<X> clazz, String name) throws PluginException, ProviderCreationException {
         return createProviderInstanceFromType(clazz, name);
     }
 

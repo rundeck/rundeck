@@ -206,8 +206,9 @@ public class ResourceFormatParserService extends PluggableProviderRegistryServic
         return ResourceFormatParser.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
     }
 
-    public ResourceFormatParser createProviderInstance(Class<ResourceFormatParser> clazz, String name) throws
-        PluginException, ProviderCreationException {
+    @Override
+    public <X extends ResourceFormatParser> ResourceFormatParser createProviderInstance(Class<X> clazz, String name)
+            throws PluginException, ProviderCreationException {
         return createProviderInstanceFromType(clazz, name);
     }
 

@@ -442,7 +442,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         service1.createInstance = new testProvider2();
 
         final JarTestType1 object = JarPluginProviderLoader.createProviderForClass(service1,
-            testProvider2.class);
+                testProvider2.class);
         assertNotNull(object);
         assertTrue(object instanceof testProvider2);
 
@@ -681,7 +681,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
 
         JarTestType1 createInstance;
 
-        public JarTestType1 createProviderInstance(Class<JarTestType1> clazz, String name) throws PluginException,
+        public <X extends JarTestType1> JarTestType1 createProviderInstance(Class<X> clazz, String name) throws PluginException,
             ProviderCreationException {
             return createInstance;
         }

@@ -200,7 +200,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
      * @param cls class
      * @return created instance
      */
-    static <T> T createProviderForClass(final PluggableService<T> service, final Class<T> cls) throws PluginException,
+    static <T,X extends T> T createProviderForClass(final PluggableService<T> service, final Class<X> cls) throws PluginException,
             ProviderCreationException {
         debug("Try loading provider " + cls.getName());
 

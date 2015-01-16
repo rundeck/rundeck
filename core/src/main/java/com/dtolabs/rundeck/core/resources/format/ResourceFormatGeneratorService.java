@@ -180,8 +180,13 @@ public class ResourceFormatGeneratorService extends PluggableProviderRegistrySer
         return ResourceFormatGenerator.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
     }
 
-    public ResourceFormatGenerator createProviderInstance(Class<ResourceFormatGenerator> clazz, String name) throws
-        PluginException, ProviderCreationException {
+    @Override
+    public <X extends ResourceFormatGenerator> ResourceFormatGenerator createProviderInstance(
+            Class<X> clazz,
+            String name
+    )
+            throws PluginException, ProviderCreationException {
+
         return createProviderInstanceFromType(clazz, name);
     }
 

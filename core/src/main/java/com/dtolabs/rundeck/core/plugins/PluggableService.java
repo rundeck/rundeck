@@ -44,10 +44,11 @@ public interface PluggableService<T> extends FrameworkSupportService {
      *
      * @param clazz the class
      * @param name  the provider name
+     * @param <X> subtype of T
      *              @throws PluginException if the plugin has an error
      *              @throws ProviderCreationException if creating the instance has an error
      */
-    public T createProviderInstance(Class<T> clazz, final String name) throws PluginException,
+    public <X extends T> T createProviderInstance(Class<X> clazz, final String name) throws PluginException,
         ProviderCreationException;
 
     /**

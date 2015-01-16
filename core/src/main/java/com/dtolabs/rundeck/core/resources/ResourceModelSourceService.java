@@ -98,9 +98,9 @@ public class ResourceModelSourceService extends PluggableProviderRegistryService
         return ResourceModelSourceFactory.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
     }
 
-    public ResourceModelSourceFactory createProviderInstance(Class<ResourceModelSourceFactory> clazz,
-                                                             String name) throws PluginException,
-        ProviderCreationException {
+    @Override
+    public <X extends ResourceModelSourceFactory> ResourceModelSourceFactory
+    createProviderInstance(Class<X> clazz, String name) throws PluginException, ProviderCreationException {
         return createProviderInstanceFromType(clazz, name);
     }
 
