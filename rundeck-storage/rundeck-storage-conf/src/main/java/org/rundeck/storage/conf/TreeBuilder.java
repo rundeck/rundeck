@@ -216,7 +216,7 @@ public class TreeBuilder<T extends ContentMeta> {
     /**
      * Build the tree
      *
-     * @return
+     * @return the tree
      */
     public Tree<T> build() {
         Tree<T> result = base;

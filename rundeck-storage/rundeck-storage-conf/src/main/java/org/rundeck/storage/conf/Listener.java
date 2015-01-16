@@ -19,8 +19,7 @@ public interface Listener<T extends ContentMeta> {
      * Return the resource or directory at the path
      *
      * @param path path
-     *
-     * @return Resource or directory
+     * @param resource resource
      */
 
     void didGetPath(Path path, Resource<T> resource);
@@ -30,10 +29,9 @@ public interface Listener<T extends ContentMeta> {
      * Return the resource at the path
      *
      * @param path path
+     * @param resource resource
      *
-     * @return Resource
      *
-     * @throws IllegalArgumentException if the path is a directory or does not exist
      */
 
     void didGetResource(Path path, Resource<T> resource);
@@ -43,8 +41,8 @@ public interface Listener<T extends ContentMeta> {
      * Return the set of non-directory resources at the directory path
      *
      * @param path path
+     * @param contents set of contents
      *
-     * @return set of resources
      */
 
     void didListDirectoryResources(Path path, Set<Resource<T>> contents);
@@ -54,8 +52,8 @@ public interface Listener<T extends ContentMeta> {
      * Return the set of resources at the directory path
      *
      * @param path path
+     * @param contents set of contents
      *
-     * @return set of resources
      */
 
     void didListDirectory(Path path, Set<Resource<T>> contents);
@@ -65,8 +63,8 @@ public interface Listener<T extends ContentMeta> {
      * Return the set of sub directory resources within the directory path
      *
      * @param path directory path
+     * @param contents set of contents
      *
-     * @return set of subdirectories
      */
 
     void didListDirectorySubdirs(Path path, Set<Resource<T>> contents);
@@ -76,36 +74,34 @@ public interface Listener<T extends ContentMeta> {
      * Delete a resource at a path
      *
      * @param path path
+     * @param success true if successful
      *
-     * @return true if the resource was deleted
      *
-     * @throws IllegalArgumentException if the path is a directory or does not exist
      */
 
     void didDeleteResource(Path path, boolean success);
 
 
     /**
-     * Create a resource
+     * Created a resource
      *
      * @param path path
      *
-     * @return the resource
-     *
-     * @throws IllegalArgumentException if the path is a directory
+     * @param content new content
+     * @param contents new resource
      */
 
     void didCreateResource(Path path, T content, Resource<T> contents);
 
 
     /**
-     * Update an existing resource
+     * Updated an existing resource
      *
      * @param path path
+     * @param content  new content
+     * @param contents new resource
      *
-     * @return the resource
      *
-     * @throws IllegalArgumentException if the path is a directory or does not exist
      */
 
     void didUpdateResource(Path path, T content, Resource<T> contents);

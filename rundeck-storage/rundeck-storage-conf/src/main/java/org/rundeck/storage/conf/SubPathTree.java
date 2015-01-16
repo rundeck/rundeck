@@ -18,9 +18,9 @@ public class SubPathTree<T extends ContentMeta> extends DelegateTree<T> implemen
 
     /**
 
-     * @param delegate
-     * @param rootPath
-     * @param fullPath
+     * @param delegate delegate tree
+     * @param rootPath root path for the subtree
+     * @param fullPath true if the root path should not be removed when accessing the delegate
      */
     public SubPathTree(Tree<T> delegate, String rootPath, boolean fullPath) {
         this(delegate, PathUtil.asPath(rootPath), fullPath);
