@@ -19,7 +19,7 @@ package com.dtolabs.rundeck.core.authorization;
 /**
  * An auth context which can provide a name
  *
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-10-07
  */
 public interface NamedAuthContext extends AuthContext {

@@ -383,7 +383,7 @@ public class RunTool extends BaseTool {
     /**
      * Call the action
      *
-     * @throws com.dtolabs.rundeck.core.cli.jobs.JobsToolException
+     * @throws com.dtolabs.rundeck.core.cli.run.RunToolException
      *          if an error occurs
      */
     protected void go() throws RunToolException, CLIToolOptionsException {

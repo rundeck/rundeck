@@ -143,7 +143,7 @@ public class ResourceFormatParserService extends PluggableProviderRegistryServic
      *
      * @return the parser found for the format
      *
-     * @throws ExecutionServiceException if no provider for the format exists
+     * @throws com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
      */
     public ResourceFormatParser getParserForFormat(final String format) throws UnsupportedFormatException {
         try {

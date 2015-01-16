@@ -31,7 +31,7 @@ import java.net.URL;
 
 
 /**
- * ColonyHttpAuthenticator is the interface for an authentication module for use by a {@link CommanderHttpClient} instance.
+ * ColonyHttpAuthenticator is the interface for an authentication module for use by a client instance.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision: 8473 $

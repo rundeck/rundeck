@@ -38,7 +38,7 @@ public interface FailedNodesListener {
     /**
      * Called with a map of node names to failures.  The nodes will be the failed nodes.
      *
-     * @param names node names
+     * @param failures failures map
      */
     public void nodesFailed(Map<String, NodeStepResult> failures);
 

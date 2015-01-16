@@ -34,9 +34,6 @@ public class RemoveAction extends BaseAction {
     /**
      * Create a new RemoveAction and parse the arguments from a {@link org.apache.commons.cli.CommandLine}
      *
-     * @param main
-     * @param framework
-     * @param cli
      */
     public RemoveAction(final CLIToolLogger main, final Framework framework, final CommandLine cli) {
         this(main, framework, BaseAction.parseBaseActionArgs(cli));
@@ -45,10 +42,8 @@ public class RemoveAction extends BaseAction {
     /**
      * Create a new RemoveAction with argument specifiers
      *
-     * @param main
      * @param framework framework object
      * @param baseArgs  base args
-     * @param args      RemoveAction args
      */
     public RemoveAction(final CLIToolLogger main,
                         final Framework framework,

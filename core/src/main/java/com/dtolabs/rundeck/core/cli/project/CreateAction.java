@@ -28,9 +28,7 @@ import java.util.Properties;
 
 
 /**
- * Creates and initializes the project structure. This involves creating the project repository and running an Ant build
- * script to populate/initialize the project. The build file is run via {@link AntProject} so can include access to tasks
- * and properties provided by it.
+ * Creates and initializes the project structure. This involves creating the project repository
  */
 public class CreateAction extends BaseAction {
     static Category logger = Category.getInstance(CreateAction.class.getName());
@@ -41,9 +39,6 @@ public class CreateAction extends BaseAction {
     /**
      * Create a new CreateAction, and parse the args from the CommandLine, using {@link BaseAction#parseBaseActionArgs(org.apache.commons.cli.CommandLine)} and
      * {@link #parseCreateActionArgs(org.apache.commons.cli.CommandLine)} to create the argument specifiers.
-     * @param main
-     * @param framework
-     * @param cli
      */
     public CreateAction(final CLIToolLogger main, final Framework framework, final CommandLine cli) {
         this(main, framework, parseBaseActionArgs(cli), parseCreateActionArgs(cli));
@@ -51,10 +46,6 @@ public class CreateAction extends BaseAction {
     /**
      * Create a new CreateAction, and parse the args from the CommandLine, using {@link BaseAction#parseBaseActionArgs(org.apache.commons.cli.CommandLine)} and
      * {@link #parseCreateActionArgs(org.apache.commons.cli.CommandLine)} to create the argument specifiers.
-     * @param main
-     * @param framework
-     * @param cli
-     * @param properties
      */
     public CreateAction(final CLIToolLogger main, final Framework framework, final CommandLine cli,
                         final Properties properties) {
@@ -63,10 +54,8 @@ public class CreateAction extends BaseAction {
 
     /**
      * Create a new CreateAction
-     * @param main
      * @param framework framework object
      * @param baseArgs base args
-     * @param createArgs
      */
     public CreateAction(final CLIToolLogger main,
                         final Framework framework,
@@ -80,10 +69,8 @@ public class CreateAction extends BaseAction {
     }
     /**
      * Create a new CreateAction
-     * @param main
      * @param framework framework object
      * @param baseArgs base args
-     * @param createArgs
      */
     public CreateAction(final CLIToolLogger main,
                         final Framework framework,
@@ -114,7 +101,6 @@ public class CreateAction extends BaseAction {
     public static interface CreateActionArgs {
         /**
          * Return true if the node is using cygwin
-         * @return
          */
          public boolean isCygwin();
     }
@@ -132,7 +118,6 @@ public class CreateAction extends BaseAction {
     /**
      * Create args instance
      * @param cygwin cygwin
-     * @return
      */
     public static CreateActionArgs createArgs(final boolean cygwin){
         return new CreateActionArgs(){

@@ -19,7 +19,7 @@ package com.dtolabs.rundeck.core.execution.workflow.state;
 /**
  * HasExecutionState is ...
  *
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-09-12
  */
 public interface HasExecutionState {

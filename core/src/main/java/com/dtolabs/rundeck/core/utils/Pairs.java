@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * Utility methods for using {@link Pair} instances
  *
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-06-26
  */
 public class Pairs {

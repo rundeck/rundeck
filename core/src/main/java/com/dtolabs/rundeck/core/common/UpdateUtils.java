@@ -48,8 +48,6 @@ public class UpdateUtils {
     /**
      * Get the source URL and store it to a destination file path
      *
-     * @param sourceUrl
-     * @param destinationFilePath
      *
      * @throws UpdateException
      */
@@ -61,8 +59,6 @@ public class UpdateUtils {
     /**
      * Get the source URL and store it to a destination file path
      *
-     * @param sourceUrl
-     * @param destinationFilePath
      *
      * @throws UpdateException
      */
@@ -88,8 +84,6 @@ public class UpdateUtils {
     /**
      * Get the source URL and store it to a destination file path
      *
-     * @param sourceUrl
-     * @param destinationFilePath
      *
      * @throws UpdateException
      */
@@ -125,10 +119,6 @@ public class UpdateUtils {
     /**
      * Get the source URL and store it to a destination file path
      *
-     * @param sourceUrl
-     * @param destinationFilePath
-     * @param username
-     * @param password
      *
      * @throws UpdateException
      */
@@ -141,10 +131,6 @@ public class UpdateUtils {
     /**
      * Get the source URL and store it to a destination file path
      *
-     * @param sourceUrl
-     * @param destinationFilePath
-     * @param username
-     * @param password
      *
      * @throws UpdateException
      */

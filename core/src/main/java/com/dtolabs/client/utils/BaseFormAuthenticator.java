@@ -46,7 +46,7 @@ import java.util.regex.Pattern;
  * response is a valid redirect after login form is submitted</li> <li>{@link #isLoginError(org.apache.commons.httpclient.HttpMethod)}
  * - return true if the HttpMethod response indicates an error occurred</li> <li>{@link #isFollowLoginRedirect()} -
  * return true if authenticator should follow any redirect returned after login form is submitted</li>
- * <p/>
+ *
  * </ul>
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>

@@ -56,7 +56,7 @@ import java.util.*;
  * Manages the elements of the Ctl framework. Provides access to the various
  * kinds of framework resource managers like
  * {@link FrameworkProjectMgr}, {@link Authorization}.
- * <p/>
+ * <br>
  * User: alexh
  * Date: Jun 4, 2004
  * Time: 8:16:42 PM

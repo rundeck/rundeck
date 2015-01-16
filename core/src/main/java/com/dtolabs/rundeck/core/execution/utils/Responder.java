@@ -25,16 +25,16 @@ package com.dtolabs.rundeck.core.execution.utils;
 
 /**
  * Responder defines a pattern of response to some input from a stream.
- * <p/>
+ * <br>
  * A Responder defines up to four different regular expressions:
- * <p/>
+ * <br>
  * <ul> <li> input success pattern: pattern to look for before responding that indicates response should proceed</li>
  * <li> input failure pattern: pattern to look for before responding that indicates failure</li> <li> response success
  * pattern: pattern to look for after responding that indicates success</li> <li> response failure pattern: pattern to
  * look for after responding that indicates failure</li> </ul>
- * <p/>
+ * <br>
  * It also defines some other heuristics:
- * <p/>
+ * <br>
  * <ul> <li>inputMaxLines: maximum number of input lines to use to match for input pattern.  If exceeded, then "input
  * threshhold" breached.</li> <li>inputMaxTimeout: maximum time to wait while detecting new input.  If exceeded, then
  * "input threshhold" breached.</li> <li>failOnInputThreshold: if true, fail if "input threshold" breached, otherwise,

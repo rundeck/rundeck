@@ -11,7 +11,7 @@ import java.util.Set;
  * ResolvedExtTree provides a preset parameter to a {@link com.dtolabs.rundeck.core.storage.ExtTree} to provide {@link
  * StorageTree}.
  *
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-04-02
  */
 class ResolvedExtTree<S> extends StringToPathTree<ResourceMeta> implements StorageTree {

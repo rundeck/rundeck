@@ -9,11 +9,11 @@ import javax.xml.xpath.XPathExpressionException;
 import com.dtolabs.rundeck.core.authorization.Attribute;
 
 public interface PolicyCollection {
-    
+
     /**
      * For a given policy collection, return all the group names associated with it.
      * @return collection of group names.
-     * @throws XPathExpressionException
+     * @throws com.dtolabs.rundeck.core.authorization.providers.InvalidCollection
      */
     public Collection<String> groupNames() throws InvalidCollection;
 

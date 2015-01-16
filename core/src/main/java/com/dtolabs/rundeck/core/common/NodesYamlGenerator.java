@@ -44,7 +44,6 @@ public class NodesYamlGenerator implements NodesFileGenerator {
     /**
      * Serialize nodes data as yaml to a file.
      *
-     * @param destfile
      */
     public NodesYamlGenerator(final File destfile) {
         this();
@@ -54,7 +53,6 @@ public class NodesYamlGenerator implements NodesFileGenerator {
     /**
      * Serialize nodes data as yaml to an outputstream.
      *
-     * @param destfile
      */
     public NodesYamlGenerator(final OutputStream outputStream) {
         this();
@@ -64,7 +62,6 @@ public class NodesYamlGenerator implements NodesFileGenerator {
     /**
      * Serialize nodes data as yaml to a writer.
      *
-     * @param destfile
      */
     public NodesYamlGenerator(final Writer writer) {
         this();

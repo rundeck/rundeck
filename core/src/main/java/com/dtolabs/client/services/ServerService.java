@@ -102,8 +102,7 @@ public class ServerService {
      *
      * @param urlPath     the path for the request
      * @param queryParams any query parameters
-     * @param uploadFile  a file to upload with the request.
-     * @param method      HTTP connection method, e.g. "get","post","put","delete".
+     * @param formData form data
      *
      * @return parsed XML document, or null
      *

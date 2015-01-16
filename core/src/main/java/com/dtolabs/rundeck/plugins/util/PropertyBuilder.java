@@ -50,7 +50,7 @@ public class PropertyBuilder {
     }
 
     /**
-     * Return a new PropertyBuilder of type {@link Property.Type.String}
+     * Return a new PropertyBuilder of type {@link Property.Type#String}
      */
     public PropertyBuilder string(final String name) {
         name(name);
@@ -59,7 +59,7 @@ public class PropertyBuilder {
     }
 
     /**
-     * Return a new PropertyBuilder of type {@link Property.Type.Boolean}
+     * Return a new PropertyBuilder of type {@link Property.Type#Boolean}
      */
     public PropertyBuilder booleanType(final String name) {
         name(name);
@@ -68,7 +68,7 @@ public class PropertyBuilder {
     }
 
     /**
-     * Return a new PropertyBuilder of type {@link Property.Type.Integer}
+     * Return a new PropertyBuilder of type {@link Property.Type#Integer}
      */
     public PropertyBuilder integer(final String name) {
         name(name);
@@ -77,7 +77,7 @@ public class PropertyBuilder {
     }
 
     /**
-     * Return a new PropertyBuilder of type {@link Property.Type.Long}
+     * Return a new PropertyBuilder of type {@link Property.Type#Long}
      */
     public PropertyBuilder longType(final String name) {
         name(name);
@@ -86,7 +86,7 @@ public class PropertyBuilder {
     }
 
     /**
-     * Return a new PropertyBuilder of type {@link Property.Type.Select}
+     * Return a new PropertyBuilder of type {@link Property.Type#Select}
      */
     public PropertyBuilder select(final String name) {
         name(name);
@@ -95,7 +95,7 @@ public class PropertyBuilder {
     }
 
     /**
-     * Return a new PropertyBuilder of type {@link Property.Type.FreeSelect}
+     * Return a new PropertyBuilder of type {@link Property.Type#FreeSelect}
      */
     public PropertyBuilder freeSelect(final String name) {
         name(name);
@@ -202,7 +202,7 @@ public class PropertyBuilder {
     }
     /**
      * Set the string property to display as a Multi-line Text area.
-     * @throws IllegalStateException if the property type is not {@link Property.Type.String}
+     * @throws IllegalStateException if the property type is not {@link Property.Type#String}
      */
     public PropertyBuilder renderingAsTextarea() {
         if (this.type != Property.Type.String) {
@@ -213,7 +213,7 @@ public class PropertyBuilder {
     }
     /**
      * Set the string property to display as a Password.
-     * @throws IllegalStateException if the property type is not {@link Property.Type.String}
+     * @throws IllegalStateException if the property type is not {@link Property.Type#String}
      */
     public PropertyBuilder renderingAsPassword() {
         if (this.type != Property.Type.String) {
@@ -239,7 +239,6 @@ public class PropertyBuilder {
 
     /**
      * Return the type already defined for the builder
-     * @return
      */
     public Property.Type getType() {
         return type;

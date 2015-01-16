@@ -49,7 +49,6 @@ public interface IDispatchedScript extends IDispatchedExecution {
     /**
      * Get an InputStream that can provide the full script
      * @return the inputstream
-     * @throws IOException if an error occurs reading or getting the input stream
      */
     public InputStream getScriptAsStream();
 

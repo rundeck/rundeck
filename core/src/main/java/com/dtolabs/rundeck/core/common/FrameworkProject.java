@@ -41,7 +41,7 @@ import java.util.regex.Pattern;
 /**
  * Represents a project in the framework. A project is a repository of installed managed entities
  * organized by their type.
- * <p/>
+ * <br>
  */
 public class FrameworkProject extends FrameworkResourceParent {
     public static final String PROP_FILENAME = "project.properties";
@@ -124,8 +124,6 @@ public class FrameworkProject extends FrameworkResourceParent {
 
     /**
      * Get the etc dir from the basedir
-     * @param baseDir
-     * @return
      */
     private static File getProjectEtcDir(File baseDir) {
         return new File(baseDir, ETC_DIR_NAME);
@@ -133,8 +131,6 @@ public class FrameworkProject extends FrameworkResourceParent {
 
     /**
      * Get the project property file from the basedir
-     * @param baseDir
-     * @return
      */
     private static File getProjectPropertyFile(File baseDir) {
         return new File(getProjectEtcDir(baseDir), PROP_FILENAME);
@@ -181,9 +177,6 @@ public class FrameworkProject extends FrameworkResourceParent {
      * Create PropertyLookup for a project from the framework basedir
      *
      * @param baseDir the framework basedir
-     * @param projectsBaseDir
-     * @param projectName
-     * @return
      */
     private static PropertyLookup createProjectPropertyLookup(File baseDir, File projectsBaseDir, String projectName) {
         PropertyLookup lookup;
@@ -212,9 +205,6 @@ public class FrameworkProject extends FrameworkResourceParent {
      * Create a property retriever for a project given the framework basedir
      *
      * @param baseDir the framework basedir
-     * @param projectsBaseDir
-     * @param projectName
-     * @return
      */
     public static PropertyRetriever createProjectPropertyRetriever(File baseDir, File projectsBaseDir, String projectName) {
         return createProjectPropertyLookup(baseDir, projectsBaseDir, projectName).safe();
@@ -277,8 +267,10 @@ public class FrameworkProject extends FrameworkResourceParent {
 
     /**
      * list the configurations of resource model providers.  Returns a list of maps containing:
+     * <ul>
      * <li>type - provider type name</li>
      * <li>props - configuration properties</li>
+     * </ul>
      */
     public synchronized List<Map> listResourceModelConfigurations(){
         final ArrayList<Map> list = new ArrayList<Map>();
@@ -412,20 +404,12 @@ public class FrameworkProject extends FrameworkResourceParent {
 
     /**
      * Create a new Depot object at the specified projects.directory
-     * @param name
-     * @param projectsDir
-     * @param resourceMgr
-     * @return
      */
     public static FrameworkProject create(final String name, final File projectsDir, final IFrameworkProjectMgr resourceMgr) {
         return new FrameworkProject(name, new File(projectsDir, name), resourceMgr);
     }
     /**
      * Create a new Depot object at the specified projects.directory
-     * @param name
-     * @param projectsDir
-     * @param resourceMgr
-     * @return
      */
     public static FrameworkProject create(final String name, final File projectsDir, final IFrameworkProjectMgr resourceMgr, final Properties properties) {
         return new FrameworkProject(name, new File(projectsDir, name), resourceMgr, properties);
@@ -461,8 +445,6 @@ public class FrameworkProject extends FrameworkResourceParent {
     /**
      * Create a new type and store it
      *
-     * @param resourceType
-     * @return
      */
     public IFrameworkResource createChild(final String resourceType) {
         throw new UnsupportedOperationException("createChild");
@@ -497,7 +479,6 @@ public class FrameworkProject extends FrameworkResourceParent {
 
     /**
      * Return specific nodes resources file path for the project, based on the framework.nodes.file.name property
-     * @return
      */
     public String getNodesResourceFilePath() {
         if(hasProperty(PROJECT_RESOURCES_FILE_PROPERTY)) {
@@ -742,7 +723,6 @@ public class FrameworkProject extends FrameworkResourceParent {
      * Return true if the resources file should be pulled from the server If he node is the server and workbench
      * integration is enabled then the file should not be updated.
      *
-     * @return
      */
     private boolean shouldUpdateNodesResourceFile() {
         return hasProperty(PROJECT_RESOURCES_URL_PROPERTY);
@@ -752,8 +732,6 @@ public class FrameworkProject extends FrameworkResourceParent {
     /**
      * Return the property value by name
      *
-     * @param name
-     * @return
      */
     public synchronized String getProperty(final String name) {
         checkReloadProperties();
@@ -813,7 +791,6 @@ public class FrameworkProject extends FrameworkResourceParent {
     /**
      * Create project.properties file based on $RDECK_BASE/etc/project.properties
      *
-     * @param addDefaultProps
      * @param overwrite Overwrite existing properties file
      */
     protected void generateProjectPropertiesFile(final boolean overwrite, final Properties properties, boolean
@@ -828,7 +805,6 @@ public class FrameworkProject extends FrameworkResourceParent {
      * @param properties properties to use
      * @param merge if true, merge existing properties that are not replaced
      * @param removePrefixes set of property prefixes to remove from original
-     * @param addDefaultProps
      */
     protected void generateProjectPropertiesFile(final boolean overwrite, final Properties properties,
             final boolean merge, final Set<String> removePrefixes, boolean addDefaultProps) {

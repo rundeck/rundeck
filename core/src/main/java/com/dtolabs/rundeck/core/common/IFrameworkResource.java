@@ -22,7 +22,7 @@ import java.io.File;
  * Implementations of this interface provide a resource in a composition hierarchy of resources.
  * Conceptually, one can imagine a framework resource as a node in a acyclic directed graph. The word
  * "Node" was not chosen to avoid confusion with "machine nodes".
- * <p/>
+ * <br>
  */
 public interface IFrameworkResource {
     /**

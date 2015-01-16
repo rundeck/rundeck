@@ -105,11 +105,11 @@ public interface INodeEntry extends INodeBase, INodeDesc {
 
     /**
      * Get the map of attributes for the node, which includes all of the attributes for these accessors as well:
-     * <p/>
+     * <br>
      * osFamily, osArch, osVersion, osName, name*, username, description, tags*.
-     * <p/>
+     * <br>
      * The Node name is returned as under the key "name".
-     * <p/>
+     * <br>
      * The tags are returned as a String under the key "tags".
      *
      * @return attributes

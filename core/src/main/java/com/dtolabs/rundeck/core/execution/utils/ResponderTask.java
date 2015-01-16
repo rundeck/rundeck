@@ -36,20 +36,20 @@ import java.util.regex.Pattern;
  * It looks for lines on the input stream that match the "inputSuccess" regular expression (e.g. password prompt). If it
  * detects the "inputFailure" regular expression, it fails. If successful, it writes the "inputString" to the output
  * stream.
- * <p/>
+ * <br>
  * After writing to the output stream, It then looks for a certain "responseSuccess" regular expression. If successful
  * it completes successfully. If it detects a "responseFailure" regular expression in the output, it fails.
- * <p/>
+ * <br>
  * If a {@link ResultHandler} is set, it will call the handleResult method after the response logic.
- * <p/>
+ * <br>
  * If it the thread running the ResponderTask is interrupted, then the process will stop as soon as it is detected.
- * <p/>
+ * <br>
  * Implements {@link Callable} so it can be submitted to a {@link java.util.concurrent.ExecutorService}.
- * <p/>
- * <p/>
- * <p/>
+ * <br>
+ * <br>
+ * <br>
  * Example: wait for "[sudo] password for user: ", write a password, and fail on "try again" response:
- * <p/>
+ * <br>
  * <ul> <li>inputSuccessPattern: '^\[sudo\] password for .+: '</li> <li>responseFailurePattern: '^.*try again.*'</li>
  * <li>failOnResponseThreshold: false</li> <li>InputMaxLines: 12</li> <li>inputString: 'password'</li> </ul>
  *

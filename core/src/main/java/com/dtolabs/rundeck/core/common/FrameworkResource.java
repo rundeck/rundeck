@@ -26,7 +26,7 @@ import java.util.Properties;
 /**
  * Represents a generic framework resource. Each resoure has a name, a
  * base directory and a set of properties.
- * <p/>
+ * <br>
  */
 public class FrameworkResource implements IFrameworkResource {
     public static final String VALID_RESOURCE_NAME_CHARSET_REGEX = "[-_a-zA-Z0-9+][-\\._a-zA-Z0-9+]*";

@@ -123,7 +123,7 @@ public class ResourceFormatGeneratorService extends PluggableProviderRegistrySer
      *
      * @return the parser found for the format
      *
-     * @throws com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
+     * @throws com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
      *          if no provider for the format exists
      */
     public ResourceFormatGenerator getGeneratorForFormat(final String format) throws UnsupportedFormatException {

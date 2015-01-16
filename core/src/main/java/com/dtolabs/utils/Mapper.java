@@ -38,7 +38,7 @@ import java.util.*;
  * has a boolean parameter indicating whether nulls should be discarded or not. <br> The other use for this utility
  * class is to perform the same action on all items of a collection, where no result is necessarily returned or
  * important.
- * <p/>
+ * <br>
  * Example usage:<br>
  * <pre>
  * //create a collection of Strings from some objects
@@ -46,8 +46,8 @@ import java.util.*;
  *      public Object map(Object o){
  *          return o.toString();
  *      }, someIterator);
- * <p/>
- * <p/>
+ * <br>
+ * <br>
  * //simply perform some action and discard the results
  * Mapper.map(new Mapper(){
  *      public Object map(Object o){
@@ -65,8 +65,6 @@ public abstract class Mapper {
      * Note: The Mapper instance <b>must</b> map every object into one
      * that implements the {@link Comparable} interface, otherwise the two
      * objects cannot be compared. (All of the java.lang.* wrapper types will work.)
-     * @param mapper
-     * @return
      */
     public static Comparator comparator(final Mapper mapper){
         return comparator(mapper, false);
@@ -74,7 +72,6 @@ public abstract class Mapper {
     /**
      * see {@link #comparator(Mapper)}
      * @param reverse if true, reverse the order of comparison
-     * @return
      */
     public static Comparator comparator(final Mapper mapper, final boolean reverse){
         return new Comparator(){
@@ -86,8 +83,6 @@ public abstract class Mapper {
 
     /**
      * Concatenate another mapper onto this one.
-     * @param mapper
-     * @return
      */
     public Mapper concat(Mapper mapper){
         return Mapper.concat(this, mapper);
@@ -149,7 +144,6 @@ public abstract class Mapper {
      * Concatenate two Mappers.
      * @param first first mapper to apply
      * @param second second mapper to apply
-     * @return
      */
     public static Mapper concat(final Mapper first, final Mapper second){
         return new ConcatMapper(new Mapper[]{first,second});
@@ -640,7 +634,6 @@ public abstract class Mapper {
      * @param property the name of a bean property
      * @param objs     an array of objects
      *
-     * @return
      *
      * @throws ClassCastException if there is an error invoking the method on any object.
      */
@@ -654,7 +647,6 @@ public abstract class Mapper {
      * @param property the name of a bean property
      * @param i        an iterator of objects
      *
-     * @return
      *
      * @throws ClassCastException if there is an error invoking the method on any object.
      */
@@ -669,7 +661,6 @@ public abstract class Mapper {
      * @param c           an Collection of objects
      * @param includeNull true to include null results in the response
      *
-     * @return
      *
      * @throws ClassCastException if there is an error invoking the method on any object.
      */
@@ -683,7 +674,6 @@ public abstract class Mapper {
      * @param property    the name of a bean property
      * @param c a collection of objects
      *
-     * @return
      *
      * @throws ClassCastException if there is an error invoking the method on any object.
      */
@@ -694,7 +684,6 @@ public abstract class Mapper {
     /**
      * Create a mapper for bean properties
      * @param property name of the bean property
-     * @return
      */
     public static Mapper beanMapper(final String property){
         return  new Mapper() {
@@ -714,7 +703,6 @@ public abstract class Mapper {
      * @param i           an iterator of objects
      * @param includeNull true to include null results in the response
      *
-     * @return
      *
      * @throws ClassCastException if there is an error invoking the method on any object.
      */
@@ -725,8 +713,6 @@ public abstract class Mapper {
     /**
      * Return a mapper than maps an object to itself if the predicate evaluates to true,
      * and to null otherwise.
-     * @param pred
-     * @return
      */
     public static Mapper filterMapper(final Predicate pred){
         return new Mapper(){
@@ -738,7 +724,6 @@ public abstract class Mapper {
 
     /**
      * Return a mapper that maps unique objects to themselves, and duplicates to null.
-     * @return
      */
     public static Mapper uniqueMapper(){
         return new Mapper() {

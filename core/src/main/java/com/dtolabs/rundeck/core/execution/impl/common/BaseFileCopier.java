@@ -59,7 +59,7 @@ public class BaseFileCopier {
      *
      * @return file where the script was stored
      *
-     * @throws com.dtolabs.rundeck.core.execution.ExecutionException
+     * @throws com.dtolabs.rundeck.core.execution.service.FileCopierException
      *          if an IO problem occurs
      */
     public static File writeScriptTempFile(
@@ -87,7 +87,7 @@ public class BaseFileCopier {
      *
      * @return file where the script was stored
      *
-     * @throws com.dtolabs.rundeck.core.execution.ExecutionException
+     * @throws com.dtolabs.rundeck.core.execution.service.FileCopierException
      *          if an IO problem occurs
      */
     public static File writeScriptTempFile(
@@ -170,8 +170,6 @@ public class BaseFileCopier {
 
     /**
      * Return the default file extension for a temp file based on the type of node
-     * @param node
-     * @return
      */
     public static String defaultRemoteFileExtensionForNode(final INodeEntry node){
         if (null != node.getOsFamily() && "windows".equalsIgnoreCase(node.getOsFamily().trim())) {
@@ -295,11 +293,6 @@ public class BaseFileCopier {
 
     /**
      *
-     * @param original
-     * @param input
-     * @param script
-     * @param destinationFile
-     * @return
      * @throws FileCopierException
      */
     protected static File writeLocalFile(

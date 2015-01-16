@@ -53,7 +53,7 @@ import java.util.concurrent.TimeUnit;
  * TODO: parallel execution can be extended into and_parallel, or_parallel, xor_parallel, .. based on how failures are handled
  * TODO: Discuss and implement 'aborting' ongoing parallel steps if any of parallel steps fail beforehand and keep_going == false
  *
- * <p/>
+ * <br>
  * The WorkflowExecutionResult will contain as the resultSet a map of Node name to list of step execution results on that node
  *
  * @author Murat Ezbiderli <a href="mailto:mezbiderli@salesforce.com">mezbiderli@salesforce.com</a>

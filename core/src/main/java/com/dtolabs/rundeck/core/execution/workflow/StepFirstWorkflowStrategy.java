@@ -40,7 +40,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
  * StepFirstWorkflowStrategy iterates over the workflow steps and dispatches each one to all nodes matching the filter.
  * This strategy is used either for an entire workflow and set of multiple nodes OR by the NodeFirstWorkflowStrategy as
  * the inner loop over a single node.
- * <p/>
+ * <br>
  * The WorkflowExecutionResult will contain as the resultSet a map of Node name to
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>

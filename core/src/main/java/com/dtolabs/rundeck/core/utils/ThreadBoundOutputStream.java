@@ -30,10 +30,10 @@ import java.io.PrintStream;
  * ThreadBoundOutputStream allows a different OutputStream to be used for the current Thread and any child threads when
  * necessary, otherwise the default OutputStream is used.  This is useful for replacing System.err or System.out to
  * capture output in a multi-threaded system, allowing using different sink OutputStreams for each Thread (and their
- * sub-threads). <br/> Convenience methods {@link #bindSystemOut()} and {@link #bindSystemErr()} allow easy replacement
+ * sub-threads). <br> Convenience methods {@link #bindSystemOut()} and {@link #bindSystemErr()} allow easy replacement
  * of the System.out and System.err printstreams, and access to the ThreadBoundOutputStream at any time after doing so.
- * <br/> Setting the correct OutputStream should be done with {@link #installThreadStream(java.io.OutputStream)}, and
- * removed with {@link #removeThreadStream()}. <br/> Example code which replaces System.out and sets a two different
+ * <br> Setting the correct OutputStream should be done with {@link #installThreadStream(java.io.OutputStream)}, and
+ * removed with {@link #removeThreadStream()}. <br> Example code which replaces System.out and sets a two different
  * FileOutputStreams as the sinks for System.out for multpile threads:
  * <pre>
  * public static void main(String[] args) throws FileNotFoundException {

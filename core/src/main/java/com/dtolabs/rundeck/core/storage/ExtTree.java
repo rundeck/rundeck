@@ -9,7 +9,7 @@ import java.util.Set;
 /**
  * ExtTree extends each tree method with additional parameter
  *
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-04-03
  */
 public interface ExtTree<S, T extends ContentMeta> {
