@@ -53,7 +53,7 @@ public abstract class BaseTool implements CLITool {
     /**
      * Add a new CLIToolOptions object to the options used by this tool.
      *
-     * @param option
+     * @param option options
      */
     protected void addToolOptions(final CLIToolOptions option) {
         toolOptions.add(option);
@@ -71,8 +71,7 @@ public abstract class BaseTool implements CLITool {
     }
 
     /**
-     * Return true if the -h/--help option should be added to the options automatically.
-     * @return
+     * @return true if the -h/--help option should be added to the options automatically.
      */
     protected abstract boolean isUseHelpOption();
 
@@ -99,7 +98,7 @@ public abstract class BaseTool implements CLITool {
      *
      * @param args the cli arg vector
      *
-     * @throws CLIToolException
+     * @throws CLIToolException if an error occurs
      */
     public void run(final String[] args) throws CLIToolException {
         PropertyConfigurator.configure(Constants.getLog4jProperties(Constants.getSystemBaseDir()));
@@ -132,6 +131,9 @@ public abstract class BaseTool implements CLITool {
     /**
      * Validate the values parsed by the options, will apply this for each CLIToolOptions added to the tool. subclasses
      * may override this but should call super
+     * @param cli cli
+     * @param args args
+     * @throws CLIToolOptionsException if an error occurs
      */
     public void validateOptions(final CommandLine cli, final String[] args) throws CLIToolOptionsException {
         if (null != toolOptions) {
@@ -143,6 +145,7 @@ public abstract class BaseTool implements CLITool {
 
     /**
      * Perform the actions for the tool
+     * @throws CLIToolException on error
      */
     protected abstract void go() throws CLIToolException;
 
@@ -151,9 +154,7 @@ public abstract class BaseTool implements CLITool {
     }
 
     /**
-     * Return the help string used when -h option is specified.
-     *
-     * @return
+     * @return the help string used when -h option is specified.
      */
     public abstract String getHelpString();
 
@@ -188,7 +189,7 @@ public abstract class BaseTool implements CLITool {
 
     /**
      * Set whether the {@link #exit(int)} method should call System.exit.
-     * @param shouldExit
+     * @param shouldExit true to exit
      */
     protected void setShouldExit(final boolean shouldExit) {
         this.shouldExit = shouldExit;

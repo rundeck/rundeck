@@ -63,7 +63,8 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
     }
 
     /**
-     * Method should be overridden to return appropriate logging context data
+     * Method should be overridden
+     * @return appropriate logging context data
      */
     public Map<String, String> getLoggingContext() {
         if (null != delegate) {

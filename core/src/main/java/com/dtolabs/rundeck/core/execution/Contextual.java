@@ -7,7 +7,7 @@ import java.util.Map;
  */
 public interface Contextual {
     /**
-     * Return the current  context, or null.
+     * @return the current  context, or null.
      */
     public Map<String, String> getContext();
 }

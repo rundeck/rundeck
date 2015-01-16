@@ -159,29 +159,27 @@ public class QuotedStringTokenizer implements Iterator<String>, Iterable<String>
     }
 
     /**
-     * Return true if two sequences of chars match within the array.
+     * @return true if two sequences of chars match within the array.
      *
-     * @param chars
+     * @param chars char set
      * @param pos1  position 1
      * @param pos2  position 2
      * @param len2  length to compare
      *
-     * @return
      */
     private boolean charsMatch(char[] chars, int pos1, int pos2, int len2) {
         return charsMatch(chars, pos1, len2, pos2, len2);
     }
 
     /**
-     * Return true if two sequences of chars match within the array.
+     * @return true if two sequences of chars match within the array.
      *
-     * @param chars
-     * @param pos1
-     * @param len1
-     * @param pos2
-     * @param len2
+     * @param chars char set
+     * @param pos1 pos 1
+     * @param len1 length 1
+     * @param pos2 pos 2
+     * @param len2 length 2
      *
-     * @return
      */
     private boolean charsMatch(char[] chars, int pos1, int len1, int pos2, int len2) {
         if (len1 != len2) {

@@ -33,7 +33,7 @@ public interface Action {
     /**
      * Execute the action.
      *
-     * @throws Throwable
+     * @throws Throwable any throwable
      */
     public void exec() throws Throwable;
 

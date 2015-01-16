@@ -28,7 +28,7 @@ public interface ExecutionFileStoragePlugin extends ExecutionFileStorage {
     /**
      * Initializes the plugin with contextual data
      *
-     * @param context
+     * @param context context data
      */
     public void initialize(Map<String, ? extends Object> context);
 

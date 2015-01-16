@@ -80,18 +80,18 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
 
     /**
      * Execute a script on a remote node
-     * @param context
-     * @param node
-     * @param scriptString
-     * @param serverScriptFilePath
-     * @param scriptAsStream
-     * @param fileExtension
-     * @param args
-     * @param scriptInterpreter
-     * @param quoted
-     * @param executionService
-     * @return result
-     * @throws NodeStepException
+     * @param context context
+     * @param node node
+     * @param scriptString string
+     * @param serverScriptFilePath file
+     * @param scriptAsStream stream
+     * @param fileExtension file extension
+     * @param args script args
+     * @param scriptInterpreter invoker string
+     * @param quoted true if args are quoted
+     * @param executionService service
+     * @return execution result
+     * @throws NodeStepException on error
      */
     public static NodeStepResult executeScriptFile(
             StepExecutionContext context,
@@ -159,13 +159,14 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
      * if it is a string or inputstream.  If it is a local file,
      * use the original without modification
      *
-     * @param context
-     * @param node
-     * @param scriptString
-     * @param serverScriptFilePath
-     * @param scriptAsStream
-     * @return
-     * @throws FileCopierException
+
+     * @param context context
+     * @param node node
+     * @param scriptString string
+     * @param serverScriptFilePath file
+     * @param scriptAsStream stream
+     * @return temp file
+     * @throws FileCopierException on error
      */
     public static File writeScriptToTempFile(
             StepExecutionContext context,
@@ -210,6 +211,8 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
      * @param node      the node
      * @param args      arguments to script
      * @param filepath  the remote path for the script
+     * @return the result
+     * @throws NodeStepException on error
      */
     public static NodeStepResult executeRemoteScript(final ExecutionContext context,
                                                      final Framework framework,
@@ -229,6 +232,8 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
      * @param filepath              the remote path for the script
      * @param scriptInterpreter     interpreter used to invoke the script
      * @param interpreterargsquoted if true, pass the file and script args as a single argument to the interpreter
+     * @return result
+     * @throws NodeStepException on error
      */
     public static NodeStepResult executeRemoteScript(final ExecutionContext context,
                                                      final Framework framework,
@@ -255,6 +260,8 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
      * @param scriptInterpreter     interpreter used to invoke the script
      * @param interpreterargsquoted if true, pass the file and script args as a single argument to the interpreter
      * @param removeFile            if true, remove the file after execution
+     * @return result
+     * @throws NodeStepException on error
      */
     public static NodeStepResult executeRemoteScript(final ExecutionContext context,
                                                      final Framework framework,
@@ -304,9 +311,9 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
 
     /**
      * Return ExecArgList for removing a file for the given OS family
-     * @param filepath
-     * @param osFamily
-     * @return
+     * @param filepath path
+     * @param osFamily family
+     * @return arg list
      */
     public static ExecArgList removeArgsForOsFamily(String filepath, String osFamily) {
         if("windows".equalsIgnoreCase(osFamily)){

@@ -32,7 +32,10 @@ import java.net.URL;
  */
 public interface URLFileUpdaterFactory {
     /**
-     * Return a FileUpdater that can update a destination file from the given URL and username/password
+     * @return a FileUpdater that can update a destination file from the given URL and username/password
+     * @param url url
+     * @param username username
+     * @param password password
      */
     public FileUpdater fileUpdaterFromURL(URL url, String username, String password);
 }

@@ -75,9 +75,12 @@ public class YamlPolicyCollection implements PolicyCollection {
     }
 
     /**
-     * @param subject
+     * @param file source file
+     * @param environment environment
+     * @param policyLister collection
+     * @param subject subject
      *
-     * @return
+     * @return contexts
      *
      *
      */

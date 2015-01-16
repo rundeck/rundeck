@@ -105,8 +105,8 @@ public class NodesXMLParser implements NodeFileParser, ResourceXMLReceiver {
     /**
      * Fill the NodeEntryImpl based on the Entity's parsed attributes
      *
-     * @param entity
-     * @param node
+     * @param entity entity
+     * @param node node
      */
     private void fillNode(final ResourceXMLParser.Entity entity, final NodeEntryImpl node) {
         node.setUsername(entity.getProperty(NODE_USERNAME));

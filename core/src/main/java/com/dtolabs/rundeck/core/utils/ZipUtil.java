@@ -40,7 +40,7 @@ public class ZipUtil {
      * @param path zip file path
      * @param dest destination directory
      *
-     * @throws IOException
+     * @throws IOException on io error
      */
     public static void extractZip(final String path, final File dest) throws IOException {
         extractZip(path, dest, null);
@@ -53,7 +53,7 @@ public class ZipUtil {
      * @param dest   destination directory
      * @param prefix prefix of contents to extract
      *
-     * @throws IOException
+     * @throws IOException on io error
      */
     public static void extractZip(final String path, final File dest, final String prefix) throws IOException {
         extractZip(path, dest, prefix, null);
@@ -65,7 +65,7 @@ public class ZipUtil {
      * @param dest   destination directory
      * @param fileName specific filepath to extract
      *
-     * @throws IOException
+     * @throws IOException on io error
      */
     public static void extractZipFile(final String path, final File dest, final String fileName) throws IOException {
         FilenameFilter filter = null;
@@ -87,7 +87,7 @@ public class ZipUtil {
      * @param prefix      match files within the zip if they have this prefix path, or null selects all files
      * @param stripPrefix rename files by removing this prefix if they have it, or null doesn't rename files
      *
-     * @throws IOException
+     * @throws IOException on io error
      */
     public static void extractZip(final String path, final File dest, final String prefix,
                                   final String stripPrefix) throws IOException {
@@ -101,8 +101,9 @@ public class ZipUtil {
      * @param dest        destination directory to contain files
      * @param prefix      match files within the zip if they have this prefix path, or null selects all files
      * @param stripPrefix rename files by removing this prefix if they have it, or null doesn't rename files
+     * @param copier  copier
      *
-     * @throws IOException
+     * @throws IOException on io error
      */
     public static void extractZip(final String path, final File dest, final String prefix, final String stripPrefix,
                                   final streamCopier copier) throws IOException {
@@ -118,7 +119,7 @@ public class ZipUtil {
      * @param rename renamer instance
      * @param copier streamCopier instance
      *
-     * @throws IOException
+     * @throws IOException on io error
      */
     public static void extractZip(final String path, final File dest, final String prefix, final renamer rename,
                                   final streamCopier copier) throws IOException {
@@ -143,7 +144,7 @@ public class ZipUtil {
      * @param rename renamer to use
      * @param copier streamCopier to use
      *
-     * @throws IOException
+     * @throws IOException on io error
      */
     public static void extractZip(final String path, final File dest, final FilenameFilter filter, final renamer rename,
                                   final streamCopier copier) throws IOException {

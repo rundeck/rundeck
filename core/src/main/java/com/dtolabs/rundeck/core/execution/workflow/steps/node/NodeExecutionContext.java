@@ -36,7 +36,7 @@ import java.util.Map;
  */
 public interface NodeExecutionContext extends ExecutionContext {
     /**
-     * Return the node specific context data keyed by node name
+     * @return the node specific context data keyed by node name
      */
     public Map<String, Map<String, Map<String, String>>> getNodeDataContext();
 }

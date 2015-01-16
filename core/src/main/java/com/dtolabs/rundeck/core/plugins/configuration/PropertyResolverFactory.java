@@ -60,6 +60,8 @@ public class PropertyResolverFactory {
     /**
      * Return All property values for the input property set mapped by name to value.
      *
+     * @param list property list
+     * @param resolver property resolver
      * @return All mapped properties by name and value.
      */
     public static Map<String, Object> mapPropertyValues(final List<Property> list, final PropertyResolver resolver) {
@@ -75,7 +77,11 @@ public class PropertyResolverFactory {
     }
 
     /**
-     * Create a PropertyResolver for a plugin for resolving Framework, Project and instance scoped properties.
+     * @param context step context
+     * @param instanceProperties instance property values
+     * @param pluginType service type name
+     * @param providerName provider name
+     * @return Create a PropertyResolver for a plugin for resolving Framework, Project and instance scoped properties.
      */
     public static PropertyResolver createStepPluginRuntimeResolver(final StepExecutionContext context,
                                                                    final Map<String, Object> instanceProperties,
@@ -93,7 +99,12 @@ public class PropertyResolverFactory {
         );
     }
     /**
-     * Create a PropertyResolver for a plugin for resolving Framework, Project and instance scoped properties.
+     *
+     * @param context step context
+     * @param instanceProperties instance property values
+     * @param pluginType service type name
+     * @param providerName provider name
+     * @return Create a PropertyResolver for a plugin for resolving Framework, Project and instance scoped properties.
      */
     public static PropertyResolver createPluginRuntimeResolver(final ExecutionContext context,
                                                                    final Map<String, Object> instanceProperties,
@@ -112,9 +123,11 @@ public class PropertyResolverFactory {
     }
 
     /**
-     * Create a PropertyResolver for a plugin for resolving Framework, Project and instance scoped properties.
+     * @return Create a PropertyResolver for a plugin for resolving Framework, Project and instance scoped properties.
      * @param framework the framework
      * @param projectName name of the project, or null to disable project property resolution
+     * @param pluginType service type name
+     * @param providerName provider name
      * @param instanceProperties instance properties, or null
      */
     public static PropertyResolver createFrameworkProjectRuntimeResolver(final Framework framework,
@@ -133,13 +146,11 @@ public class PropertyResolverFactory {
     }
 
     /**
-     * Create a resolver from a set of retrievers, possibly null
+     * @return Create a resolver from a set of retrievers, possibly null
      *
-     * @param instanceRetriever
-     * @param projectRetriever
-     * @param frameworkRetriever
-     *
-     * @return
+     * @param instanceRetriever retriever for instance properties
+     * @param projectRetriever retriever for project properties
+     * @param frameworkRetriever retriever for framework properties
      */
     public static PropertyResolver createResolver(PropertyRetriever instanceRetriever,
             PropertyRetriever projectRetriever, PropertyRetriever frameworkRetriever) {
@@ -147,9 +158,11 @@ public class PropertyResolverFactory {
     }
 
     /**
-     * Create a resolver from a set of retrievers, possibly null
+     * @return Create a resolver from a set of retrievers, possibly null
      *
-     * @return
+     * @param resolver resolver
+     * @param pluginType service type name
+     * @param providerName provider name
      */
     public static PropertyResolver createPrefixedResolver(final PropertyResolver resolver, String providerName, String pluginType) {
         final String projectPrefix = projectPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
@@ -179,7 +192,8 @@ public class PropertyResolverFactory {
     }
 
     /**
-     * Create a PropertyResolver for a plugin for resolving only instance scoped properties.
+     * @return Create a PropertyResolver for a plugin for resolving only instance scoped properties.
+     * @param instanceProperties properties
      */
     public static PropertyResolver createInstanceResolver(final Map<String, Object> instanceProperties) {
 
@@ -200,9 +214,8 @@ public class PropertyResolverFactory {
     }
 
     /**
-     * Create a basic retriever from a Map of values
-     * @param configuration
-     * @return
+     * @return Create a basic retriever
+     * @param configuration from a Map of values
      */
     public static PropertyRetriever instanceRetriever(final Map<String, ?> configuration) {
         return new MapPropertyRetriever(configuration);
@@ -244,7 +257,9 @@ public class PropertyResolverFactory {
     }
 
     /**
-     * Return a new PropertyResolver using the given scope by default if the requested property scope is unspecified
+     * @return a new PropertyResolver using the given scope by default if the requested property scope is unspecified
+     * @param scope default scope
+     *              @param resolver resolver
      */
     public static PropertyResolver withDefaultScope(final PropertyScope scope, final PropertyResolver resolver) {
         return new DefaultScopeRetriever(scope, resolver);
@@ -268,8 +283,10 @@ public class PropertyResolverFactory {
     }
 
     /**
-     * Return a new PropertyResolver which will return values taken from the defaults if the given resolver returns
+     * @return a new PropertyResolver which will return values taken from the defaults if the given resolver returns
      * null
+     * @param resolver resolver
+     * @param defaults retriever for default values
      */
     public static PropertyResolver withDefaultValues(final PropertyResolver resolver,
                                                      final PropertyRetriever defaults) {

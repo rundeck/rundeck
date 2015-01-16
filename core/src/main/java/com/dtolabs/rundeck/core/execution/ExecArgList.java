@@ -38,43 +38,35 @@ public class ExecArgList {
     }
 
     /**
-     * Create an ExecArgList from a list of strings, and a predicate to determine whether the argument needs to be
+     * @return an ExecArgList from a list of strings, and a predicate to determine whether the argument needs to be
      * quoted
      *
-     * @param quoteDetect
-     * @param args
-     *
-     * @return
+     * @param quoteDetect predicate
+     * @param args args
      */
     public static ExecArgList fromStrings(Predicate quoteDetect, String... args) {
         return builder().args(args, quoteDetect).build();
     }
 
     /**
-     * Create an ExecArgList from a list of strings
+     * @return Create an ExecArgList from a list of strings
      *
      * @param strings the strings
      * @param quoted  whether they are each quoted
-     *
-     * @return
      */
     public static ExecArgList fromStrings(List<String> strings, boolean quoted) {
         return builder().args(strings, quoted).build();
     }
 
     /**
-     * Return the list of ExecArg objects
-     *
-     * @return
+     * @return the list of ExecArg objects
      */
     public List<ExecArg> getList() {
         return args;
     }
 
     /**
-     * Flatten the list of arguments into an array
-     *
-     * @return
+     * @return Flatten the list of arguments into an array
      */
     public String[] asFlatStringArray() {
         ArrayList<String> strings = asFlatStringList();
@@ -82,9 +74,7 @@ public class ExecArgList {
     }
 
     /**
-     * Flatten the list of arguments into a list
-     *
-     * @return
+     * @return Flatten the list of arguments into a list
      */
     public ArrayList<String> asFlatStringList() {
         final ArrayList<String> strings = new ArrayList<String>();
@@ -106,12 +96,10 @@ public class ExecArgList {
     }
 
     /**
-     * Join a list of strings and then quote the entire string, if specified
+     * @return Join a list of strings and then quote the entire string, if specified
      *
-     * @param commandList1
-     * @param quote
-     *
-     * @return
+     * @param commandList1 list of commands
+     * @param quote quote converter
      */
     public static String joinAndQuote(List<String> commandList1, Converter<String, String> quote) {
         String join = DataContextUtils.join(commandList1, " ");
@@ -203,9 +191,7 @@ public class ExecArgList {
     }
 
     /**
-     * Create a Builder
-     *
-     * @return
+     * @return a Builder
      */
     public static Builder builder() {
         return new Builder();
@@ -214,7 +200,7 @@ public class ExecArgList {
     /**
      * Visit with a visitor
      *
-     * @param visitor
+     * @param visitor visitor
      */
     public void visitWith(ExecArg.Visitor visitor) {
         for (ExecArg arg : getList()) {
@@ -264,7 +250,7 @@ public class ExecArgList {
          * @param arg    argument
          * @param quoted true if it needs to be quoted
          *
-         * @return
+         * @return builder
          */
         public Builder arg(String arg, boolean quoted) {
             argList.addArg(arg, quoted);
@@ -277,7 +263,7 @@ public class ExecArgList {
          * @param args   args
          * @param quoted true if all should be quoted
          *
-         * @return
+         * @return builder
          */
         public Builder args(List<String> args, boolean quoted) {
             argList.addArgs(args, quoted);
@@ -289,7 +275,7 @@ public class ExecArgList {
          * @param args   args
          * @param quoted true if all should be quoted
          *
-         * @return
+         * @return builder
          */
         public Builder args(List<String> args, Predicate quoted) {
             for (String arg : args) {
@@ -304,7 +290,7 @@ public class ExecArgList {
          * @param args   args
          * @param quoted true if all should be quoted
          *
-         * @return
+         * @return builder
          */
         public Builder args(String[] args, Predicate quoted) {
             return args(Arrays.asList(args), quoted);
@@ -316,7 +302,7 @@ public class ExecArgList {
          * @param args   args
          * @param quoted true if all should be quoted
          *
-         * @return
+         * @return builder
          */
         public Builder args(String[] args, boolean quoted) {
             argList.addArgs(Arrays.asList(args), quoted);
@@ -352,9 +338,7 @@ public class ExecArgList {
         }
 
         /**
-         * Build the ExecArgList
-         *
-         * @return
+         * @return Build the ExecArgList
          */
         public ExecArgList build() {
             return argList;

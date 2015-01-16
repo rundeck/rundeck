@@ -28,13 +28,13 @@ import java.util.Map;
 public interface LogFileStoragePlugin extends LogFileStorage {
     /**
      * Initializes the plugin with contextual data
-     * @param context
+     * @param context context data
      */
     public void initialize(Map<String, ? extends Object> context);
 
     /**
      * Returns true if the file is available, false otherwise
-     * @return
+     * @return true if available
      * @throws LogFileStorageException if there is an error determining the availability
      */
     public boolean isAvailable() throws LogFileStorageException;

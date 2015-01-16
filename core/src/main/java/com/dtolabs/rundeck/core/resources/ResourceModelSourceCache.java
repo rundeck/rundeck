@@ -25,14 +25,15 @@ public interface ResourceModelSourceCache {
     /**
      * Store the nodes in a cache
      *
-     * @param nodes
+     * @param nodes nodes
+     * @throws ResourceModelSourceException on error
      */
      public void storeNodesInCache(INodeSet nodes) throws ResourceModelSourceException;
 
     /**
-     * Load nodes from the cache
+     * @return Load nodes from the cache
+     * @throws ResourceModelSourceException on error
      *
-     * @return
      */
      public INodeSet loadCachedNodes() throws ResourceModelSourceException;
 }

@@ -47,67 +47,67 @@ package com.dtolabs.rundeck.core.execution.utils;
  */
 public interface Responder {
     /**
-     * Return a regex to detect input prompt
+     * @return a regex to detect input prompt
      */
     public String getInputSuccessPattern();
 
     /**
-     * Return a regex to detect input prompt failure
+     * @return a regex to detect input prompt failure
      */
     public String getInputFailurePattern();
 
     /**
-     * Return threshold max lines to read detecting input pattern
+     * @return threshold max lines to read detecting input pattern
      */
     public int getInputMaxLines();
 
     /**
-     * Return threshold max timeout detecting input pattern
+     * @return threshold max timeout detecting input pattern
      */
     public long getInputMaxTimeout();
 
     /**
-     * Return true if input max lines threshold indicates failure
+     * @return true if input max lines threshold indicates failure
      */
     public boolean isFailOnInputLinesThreshold();
     
     /**
-     * Return true if input max timeout threshold indicates failure
+     * @return true if input max timeout threshold indicates failure
      */
     public boolean isFailOnInputTimeoutThreshold();
 
     /**
-     * Return a regex to detect response to input was successful
+     * @return a regex to detect response to input was successful
      */
     public String getResponseSuccessPattern();
 
     /**
-     * Return a regex to detect response to input was failure
+     * @return a regex to detect response to input was failure
      */
     public String getResponseFailurePattern();
 
     /**
-     * Return threshold max lines to read detecting response pattern
+     * @return threshold max lines to read detecting response pattern
      */
     public int getResponseMaxLines();
 
     /**
-     * Return threshold max timeout detecting response pattern
+     * @return threshold max timeout detecting response pattern
      */
     public long getResponseMaxTimeout();
 
     /**
-     * Return true if response threshold indicates failure
+     * @return true if response threshold indicates failure
      */
     public boolean isFailOnResponseThreshold();
 
     /**
-     * Return input string to send after successful input pattern (including any newline characters as necessary)
+     * @return input string to send after successful input pattern (including any newline characters as necessary)
      */
     public String getInputString();
 
     /**
-     * Return true if input threshold indicates success
+     * @return true if input threshold indicates success
      */
     public boolean isSuccessOnInputThreshold();
 }

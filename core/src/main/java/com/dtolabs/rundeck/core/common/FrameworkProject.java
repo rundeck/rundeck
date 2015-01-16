@@ -89,6 +89,7 @@ public class FrameworkProject extends FrameworkResourceParent {
      *
      * @param name    Name of the project
      * @param basedir the base directory for the Depot
+     * @param resourceMgr manager
      */
     public FrameworkProject(final String name, final File basedir, final IFrameworkProjectMgr resourceMgr) {
         this(name, basedir, resourceMgr, null);
@@ -98,6 +99,8 @@ public class FrameworkProject extends FrameworkResourceParent {
      *
      * @param name    Name of the project
      * @param basedir the base directory for the Depot
+     * @param resourceMgr manager
+     * @param properties properties
      */
     public FrameworkProject(final String name, final File basedir, final IFrameworkProjectMgr resourceMgr, final Properties properties) {
         super(name, basedir, resourceMgr);
@@ -202,9 +205,11 @@ public class FrameworkProject extends FrameworkResourceParent {
     }
 
     /**
-     * Create a property retriever for a project given the framework basedir
+     * @return Create a property retriever for a project given the framework basedir
      *
      * @param baseDir the framework basedir
+     * @param projectsBaseDir the project basedir
+     * @param projectName name of project
      */
     public static PropertyRetriever createProjectPropertyRetriever(File baseDir, File projectsBaseDir, String projectName) {
         return createProjectPropertyLookup(baseDir, projectsBaseDir, projectName).safe();
@@ -266,7 +271,8 @@ public class FrameworkProject extends FrameworkResourceParent {
     }
 
     /**
-     * list the configurations of resource model providers.  Returns a list of maps containing:
+     * list the configurations of resource model providers.
+     * @return a list of maps containing:
      * <ul>
      * <li>type - provider type name</li>
      * <li>props - configuration properties</li>
@@ -403,13 +409,20 @@ public class FrameworkProject extends FrameworkResourceParent {
 
 
     /**
-     * Create a new Depot object at the specified projects.directory
+     * @return Create a new Project object at the specified projects.directory
+     * @param name project name
+     * @param projectsDir projects dir
+     * @param resourceMgr resourcemanager
      */
     public static FrameworkProject create(final String name, final File projectsDir, final IFrameworkProjectMgr resourceMgr) {
         return new FrameworkProject(name, new File(projectsDir, name), resourceMgr);
     }
     /**
-     * Create a new Depot object at the specified projects.directory
+     * @return Create a new Project object at the specified projects.directory
+     * @param name project name
+     * @param projectsDir projects dir
+     * @param resourceMgr resourcemanager
+     * @param properties project properties
      */
     public static FrameworkProject create(final String name, final File projectsDir, final IFrameworkProjectMgr resourceMgr, final Properties properties) {
         return new FrameworkProject(name, new File(projectsDir, name), resourceMgr, properties);
@@ -478,7 +491,7 @@ public class FrameworkProject extends FrameworkResourceParent {
 
 
     /**
-     * Return specific nodes resources file path for the project, based on the framework.nodes.file.name property
+     * @return specific nodes resources file path for the project, based on the framework.nodes.file.name property
      */
     public String getNodesResourceFilePath() {
         if(hasProperty(PROJECT_RESOURCES_FILE_PROPERTY)) {
@@ -496,6 +509,7 @@ public class FrameworkProject extends FrameworkResourceParent {
      * Returns the set of nodes for the project
      *
      * @return an instance of {@link INodeSet}
+     * @throws NodeFileParserException on parse error
      */
     public INodeSet getNodeSet() throws NodeFileParserException {
         //iterate through sources, and add nodes
@@ -674,6 +688,7 @@ public class FrameworkProject extends FrameworkResourceParent {
     /**
      * Update the resources file given an input Nodes set
      *
+     * @param nodeset nodes
      * @throws UpdateUtils.UpdateException if an error occurs while trying to update the resources file or generate
      * nodes
      *
@@ -730,8 +745,8 @@ public class FrameworkProject extends FrameworkResourceParent {
 
 
     /**
-     * Return the property value by name
-     *
+     * @return the property value by name
+     * @param name property name
      */
     public synchronized String getProperty(final String name) {
         checkReloadProperties();
@@ -749,7 +764,7 @@ public class FrameworkProject extends FrameworkResourceParent {
 
 
     /**
-     * Return a PropertyRetriever interface for project-scoped properties
+     * @return a PropertyRetriever interface for project-scoped properties
      */
     public synchronized PropertyRetriever getPropertyRetriever() {
         checkReloadProperties();
@@ -761,7 +776,7 @@ public class FrameworkProject extends FrameworkResourceParent {
      * Creates the file structure for a project
      *
      * @param projectDir     The project base directory
-     * @throws IOException
+     * @throws IOException on io error
      */
     public static void createFileStructure(final File projectDir) throws IOException {
        /*
@@ -792,6 +807,8 @@ public class FrameworkProject extends FrameworkResourceParent {
      * Create project.properties file based on $RDECK_BASE/etc/project.properties
      *
      * @param overwrite Overwrite existing properties file
+     * @param properties properties
+     * @param addDefaultProps true to add default properties
      */
     protected void generateProjectPropertiesFile(final boolean overwrite, final Properties properties, boolean
             addDefaultProps) {
@@ -805,6 +822,7 @@ public class FrameworkProject extends FrameworkResourceParent {
      * @param properties properties to use
      * @param merge if true, merge existing properties that are not replaced
      * @param removePrefixes set of property prefixes to remove from original
+     * @param addDefaultProps true to add default properties
      */
     protected void generateProjectPropertiesFile(final boolean overwrite, final Properties properties,
             final boolean merge, final Set<String> removePrefixes, boolean addDefaultProps) {
@@ -915,7 +933,7 @@ public class FrameworkProject extends FrameworkResourceParent {
     }
 
     /**
-     * Return the set of exceptions produced by the last attempt to invoke all node providers
+     * @return the set of exceptions produced by the last attempt to invoke all node providers
      */
     public ArrayList<Exception> getResourceModelSourceExceptions() {
         return nodesSourceExceptions;

@@ -58,7 +58,7 @@ public interface ScriptFileCommandExecutionItem extends HandlerExecutionItem,Nod
     public abstract String getServerScriptFilePath();
     
     /**
-     * Return arguments to the script
+     * @return arguments to the script
      */
     public abstract String[] getArgs();
 

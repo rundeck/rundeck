@@ -8,37 +8,31 @@ import java.util.Map;
  */
 public interface StepState extends HasExecutionState {
     /**
-     * The execution state
-     * @return
+     * @return the execution state
      */
     public ExecutionState getExecutionState();
 
     /**
-     * Any metadata
-     * @return
+     * @return Any metadata
      */
     public Map getMetadata();
 
     /**
-     * Potential error message if state is failed
-     * @return
+     * @return Potential error message if state is failed
      */
     public String getErrorMessage();
 
     /**
-     * Timestamp that the executionState left WAITING
-     * @return
+     * @return Timestamp that the executionState left WAITING
      */
     public Date getStartTime();
     /**
-     * Last timestamp that the executionState changed
-     * @return
+     * @return Last timestamp that the executionState changed
      */
     public Date getUpdateTime();
 
     /**
-     * Timestamp that the executionState was completed
-     * @return
+     * @return Timestamp that the executionState was completed
      */
     public Date getEndTime();
 }

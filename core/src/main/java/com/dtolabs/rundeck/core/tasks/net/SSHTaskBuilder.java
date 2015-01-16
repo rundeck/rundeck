@@ -77,9 +77,9 @@ public class SSHTaskBuilder {
 
     /**
      * Open Jsch session, applies private key configuration, timeout and custom ssh configuration
-     * @param base
-     * @return
-     * @throws JSchException
+     * @param base base
+     * @return session
+     * @throws JSchException on jsch error
      */
     public static Session openSession(SSHBaseInterface base) throws JSchException {
         JSch jsch = new JSch();
@@ -436,13 +436,16 @@ public class SSHTaskBuilder {
     /**
      * Build a Task that performs SSH command
      *
-     * @param loglevel
+     * @param loglevel  level
      * @param nodeentry   target node
      * @param args        arguments
      * @param project     ant project
-     * @param dataContext
+     * @param dataContext data
+     * @param logger logger
+     * @param sshConnectionInfo connection info
      *
      * @return task
+     * @throws BuilderException on error
      */
     public static ExtSSHExec build(final INodeEntry nodeentry, final String[] args,
             final Project project,
@@ -672,7 +675,7 @@ public class SSHTaskBuilder {
 
         public byte[] getPasswordStorageData() throws IOException;
         /**
-         * Return the private key passphrase if set, or null.
+         * @return the private key passphrase if set, or null.
          */
         public String getPrivateKeyPassphrase();
 

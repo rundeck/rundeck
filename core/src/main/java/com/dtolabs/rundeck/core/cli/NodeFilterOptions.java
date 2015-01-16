@@ -132,10 +132,10 @@ public class NodeFilterOptions implements CLIToolOptions {
     /**
      * Parse the value of the -X option
      *
-     * @param keys
-     * @param cli
+     * @param keys keys
+     * @param cli cli
      *
-     * @return
+     * @return map
      */
 
     protected Map<String, String> parseExcludeArgs(String[] keys, final CommandLine cli) {
@@ -145,10 +145,10 @@ public class NodeFilterOptions implements CLIToolOptions {
     /**
      * Parse the value of the -X option.
      *
-     * @param keys
-     * @param cli
+     * @param keys keys
+     * @param cli cli
      *
-     * @return
+     * @return map
      */
     protected Map<String, String> parseIncludeArgs(String[] keys, final CommandLine cli) {
         return parseFilterArgs(keys, cli, FILTER_INCLUDE);

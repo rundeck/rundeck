@@ -93,19 +93,17 @@ public class PropertyLookup implements IPropertyLookup {
     }
 
     /**
-     * Factory method to create a property lookup object
+     * @return Factory method to create a property lookup object
      *
      * @param propFile File where proeprty data is contained
-     * @return
      */
     public static PropertyLookup create(final File propFile) {
         return new PropertyLookup(fetchProperties(propFile));
     }
     /**
-     * Factory method to create a property lookup object
+     * @return Factory method to create a property lookup object
      *
      * @param propFile File where proeprty data is contained
-     * @return
      */
     public static PropertyLookup createDeferred(final File propFile) {
         return new PropertyLookup(propFile, true);
@@ -117,6 +115,7 @@ public class PropertyLookup implements IPropertyLookup {
      *
      * @param propfile       File containing property data
      * @param defaultsLookup IPropertyLookup of default properties
+     *                       @return lookup
      */
     public static PropertyLookup create(final File propfile, final IPropertyLookup defaultsLookup) {
         return new PropertyLookup(fetchProperties(propfile), defaultsLookup);
@@ -128,6 +127,7 @@ public class PropertyLookup implements IPropertyLookup {
      * @param propfile       File containing property data
      * @param defaults       Map of default properties
      * @param defaultsLookup IPropertyLookup of default properties
+     *                       @return lookup
      */
     public static PropertyLookup create(final File propfile, final Map defaults, final IPropertyLookup defaultsLookup) {
         return new PropertyLookup(propfile, defaults, defaultsLookup);
@@ -152,9 +152,8 @@ public class PropertyLookup implements IPropertyLookup {
         return safePropertyRetriever(this);
     }
     /**
-     * Create a PropertyRetriever from a PropertyLookup that will not throw exception
-     * @param lookup
-     * @return
+     * @return Create a PropertyRetriever from a PropertyLookup that will not throw exception
+     * @param lookup lookup
      */
     public static PropertyRetriever safePropertyRetriever(final IPropertyLookup lookup){
         return new PropertyRetriever() {
@@ -232,6 +231,7 @@ public class PropertyLookup implements IPropertyLookup {
 
     /**
      * Calls {@link PropertyUtil#expand(Map)} to expand all properties.
+     * @return expanded lookup
      */
     public PropertyLookup expand() {
         try {

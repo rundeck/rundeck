@@ -143,9 +143,9 @@ public class URLFileUpdater implements FileUpdater {
      * @param timeout           in seconds, -1 means use the default timeout, and 0 means no timeout
      * @param cacheMetadataFile file to store cache metadata
      * @param cachedContent     file containing previously cached content
-     * @param useCaching
-     * @param username
-     * @param password
+     * @param useCaching true to use caching
+     * @param username username
+     * @param password password
      */
     public URLFileUpdater(final URL url, final String acceptHeader, final int timeout, final File cacheMetadataFile,
                           final File cachedContent, final boolean useCaching, final String username,
@@ -161,7 +161,7 @@ public class URLFileUpdater implements FileUpdater {
     }
 
     /**
-     * Return a URLFileUpdaterFactory for constructing the FileUpdater
+     * @return a URLFileUpdaterFactory for constructing the FileUpdater
      */
     public static URLFileUpdaterFactory factory() {
         return FACTORY;
@@ -351,7 +351,7 @@ public class URLFileUpdater implements FileUpdater {
     /**
      * Load properties file with some cache data
      *
-     * @param cacheFile
+     * @param cacheFile file
      */
     private Properties loadCacheData(final File cacheFile) {
         final Properties cacheProperties = new Properties();

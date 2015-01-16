@@ -39,7 +39,10 @@ public abstract class NodeSpecifiedService<T> extends PluggableProviderRegistryS
     }
 
     /**
-     * Return a specific service provider that can be used for the node
+     * @return a specific service provider that can be used for the node
+     * @param node node
+     * @param project project
+     *                @throws ExecutionServiceException on error
      */
     public T getProviderForNodeAndProject(final INodeEntry node, final String project) throws
         ExecutionServiceException {
@@ -54,12 +57,15 @@ public abstract class NodeSpecifiedService<T> extends PluggableProviderRegistryS
     }
 
     /**
-     * Return name of Node attribute that specifies the service provider name for this service.
+     * @return name of Node attribute that specifies the service provider name for this service.
+     * @param node node
      */
     protected abstract String getServiceProviderNodeAttributeForNode(INodeEntry node);
 
     /**
-     * Return name of default provider for this service
+     * @return name of default provider for this service
+     * @param node node
+     * @param project project
      */
     protected abstract String getDefaultProviderNameForNodeAndProject(INodeEntry node, String project);
 

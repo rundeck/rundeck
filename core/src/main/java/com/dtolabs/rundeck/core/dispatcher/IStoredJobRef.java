@@ -52,7 +52,7 @@ public interface IStoredJobRef {
     String getGroup();
 
     /**
-     * Get the project
+     * @return the project
      */
     String getProject();
 }

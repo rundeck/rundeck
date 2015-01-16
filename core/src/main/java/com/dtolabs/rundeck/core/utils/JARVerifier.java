@@ -55,23 +55,23 @@ public final class JARVerifier {
     /**
      * Create a JAR verifier with an array of trusted certificate authority certificates.
      *
-     * @param trustedCaCerts
+     * @param trustedCaCerts certs
      */
     public JARVerifier(X509Certificate[] trustedCaCerts) {
         this.trustedCaCerts = null != trustedCaCerts ? trustedCaCerts.clone() : null;
     }
 
     /**
-     * Construct a JARVerifier with a keystore and alias and password.
+     * @return Construct a JARVerifier with a keystore and alias and password.
      *
      * @param keystore filepath to the keystore
      * @param alias    alias name of the cert chain to verify with
      * @param passwd   password to use to verify the keystore, or null
-     * @return
-     * @throws IOException
-     * @throws KeyStoreException
-     * @throws NoSuchAlgorithmException
-     * @throws CertificateException
+
+     * @throws IOException on io error
+     * @throws KeyStoreException key store error
+     * @throws NoSuchAlgorithmException algorithm missing
+     * @throws CertificateException cert error
      */
     public static JARVerifier create(String keystore, String alias, char[] passwd) throws IOException, KeyStoreException,
             NoSuchAlgorithmException,
@@ -133,9 +133,9 @@ public final class JARVerifier {
     /**
      * Verify the JAR file signatures with the trusted CA certificates.
      *
-     * @param jf
-     * @throws IOException
-     * @throws CertificateException
+     * @param jf jar file
+     * @throws IOException on io error
+     * @throws CertificateException on cert error
      * @throws VerifierException    If the jar file cannot be verified.
      */
     public final void verifySingleJarFile(JarFile jf)

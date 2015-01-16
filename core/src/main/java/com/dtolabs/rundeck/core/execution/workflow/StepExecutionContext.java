@@ -36,12 +36,12 @@ import java.util.List;
  */
 public interface StepExecutionContext extends ExecutionContext {
     /**
-     * Returns the step being executed.
+     * @return the step being executed.
      */
     public int getStepNumber();
 
     /**
-     * Return the stack of step numbers within the larger workflow context.
+     * @return the stack of step numbers within the larger workflow context.
      */
     public List<Integer> getStepContext();
 }

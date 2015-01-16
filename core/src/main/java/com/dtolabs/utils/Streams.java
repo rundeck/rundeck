@@ -41,6 +41,7 @@ public class Streams {
      * @param in  inputstream
      * @param out outpustream
      *
+     * @return bytes copied
      * @throws java.io.IOException if thrown by underlying io operations
      */
     public static long copyStream(final InputStream in, final OutputStream out) throws IOException {

@@ -38,16 +38,18 @@ public final class Base64 {
     }
 
     /**
-     * return true if the string is base64 encoded data.  return false if it
+     * @return true if the string is base64 encoded data.  return false if it
      * is not.
+     * @param t string
      */
     public static final boolean isBase64(String t) {
         return isBase64(t.getBytes());
     }
 
     /**
-     * return true if the string is base64 encoded data.  return false if it
+     * @return  true if the string is base64 encoded data.  return false if it
      * is not.
+     * @param b bytes
      */
     public static final boolean isBase64(byte[] b) {
         if (b.length < 4)
@@ -86,7 +88,8 @@ public final class Base64 {
 //    }
     
     /**
-     * return encoded string
+     * @return  encoded string
+     * @param in string
      */
     public static final String encode(String in) {
         return new String(encode(in.getBytes()));
@@ -97,7 +100,8 @@ public final class Base64 {
     }
 
     /**
-     * return encoded byte[]
+     * @return  encoded byte[]
+     * @param in bytes
      */
     public static final byte[] encode(byte[] in) {
         int pad = 0 == in.length % 3 ? 0 : (3 - (in.length % 3));
@@ -162,14 +166,16 @@ public final class Base64 {
     }
 
     /**
-     * return decoded data
+     * @return  decoded data
+     * @param in string
      */
     public static final byte[] decode(String in) {
         return decode(in.getBytes());
     }
 
     /**
-     * return decoded byte[] data.
+     * @return decoded byte[] data.
+     * @param in bytes
      */
     public static final byte[] decode(byte[] in) {
         if (in.length == 0)

@@ -52,8 +52,8 @@ public class SAREAuthorization implements Authorization {
      * 
      * @param directory The directory to ready *.aclpolicy from.
      * 
-     * @throws IOException
-     * @throws PoliciesParseException
+     * @throws IOException on io error
+     * @throws PoliciesParseException on parse error
      */
     public SAREAuthorization(File directory) throws IOException, PoliciesParseException {
         policies = Policies.load(directory);
@@ -63,8 +63,8 @@ public class SAREAuthorization implements Authorization {
     /**
      * Convenience constructor that looks in a predefine spot for policy files.
      * 
-     * @throws IOException
-     * @throws PoliciesParseException
+     * @throws IOException on io error
+     * @throws PoliciesParseException on parse error
      */
     public SAREAuthorization() throws IOException, PoliciesParseException {
         this(new File("/etc/rundeck/security.d/"));
@@ -72,11 +72,11 @@ public class SAREAuthorization implements Authorization {
     
     /**
      * 
-     * @param resource
-     * @param subject
-     * @param action
-     * @param environment
-     * @param contexts
+     * @param resource resource
+     * @param subject subject
+     * @param action action
+     * @param environment environment
+     * @param contexts contexts
      * @return decision
      */
     private Decision internalEvaluate(Map<String, String> resource, Subject subject, String action,
@@ -276,7 +276,7 @@ public class SAREAuthorization implements Authorization {
 
     /**
      * This WILL be refactored.
-     * @return
+     * @return role list
      */
     @Deprecated
     public List<String> hackMeSomeRoles() {

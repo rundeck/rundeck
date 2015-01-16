@@ -36,6 +36,8 @@ public class PropertyUtil {
      * and expand it.  Each value may contain references to other keys within this
      * given Properties object, and if so, all keys and their expanded keyValues will be resolved
      * into a new Properties object that will be returned.
+     * @return properties
+     * @param properties input
      */
     public static Properties expand(final Map properties) {
         final Properties expandedProperties = new Properties();
@@ -53,6 +55,9 @@ public class PropertyUtil {
     /**
      * expand a keyString that may contain references to properties
      * located in provided Properties object
+     * @return expanded
+     * @param keyString string
+     *                  @param properties properties
      */
     public static String expand(String keyString, Properties properties) {
         return PropertyUtil.expand(keyString, (Map) properties);
@@ -63,6 +68,9 @@ public class PropertyUtil {
      * located in provided Map object
      * NOTE:  this is a recursive method in case references to properties are
      * nested within another reference
+     * @return expanded
+     * @param keyString string
+     *                  @param properties properties
      */
     public static String expand(String keyString, Map properties) {
         String expandedLine = lineExpand(keyString, properties);

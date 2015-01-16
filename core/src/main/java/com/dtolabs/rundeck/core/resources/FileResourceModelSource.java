@@ -246,6 +246,8 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
 
     /**
      * Configure the Source
+     * @param configuration configuration
+     * @throws com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException on config error
      */
     public void configure(final Configuration configuration) throws ConfigurationException {
         this.configuration = new Configuration(configuration);
@@ -260,9 +262,10 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
      * Returns a {@link INodeSet} object conatining the nodes config data.
      *
      * @param nodesFile the source file
-     * @param format
+     * @param format nodes format
      *
      * @return an instance of {@link INodeSet}
+     * @throws ResourceModelSourceException on error
      */
     public synchronized INodeSet getNodes(final File nodesFile, final String format) throws
         ResourceModelSourceException {
@@ -337,8 +340,10 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
      * Create a NodeFileParser given the project and the source file, using the predetermined format
      *
      * @param file the nodes resource file
+     * @param format the file format
      *
      * @return a new parser based on the determined format
+     * @throws ResourceModelSourceException if the format is not supported
      */
     protected ResourceFormatParser createParser(final File file, final String format) throws
         ResourceModelSourceException {
@@ -354,7 +359,14 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
     }
 
     /**
+     *
      * Utility method to directly parse the nodes from a file
+     * @param file file
+     * @param framework fwk
+     * @param project project name
+     * @return nodes
+     * @throws ResourceModelSourceException if an error occurs
+     * @throws ConfigurationException if a configuration error occurs
      */
     public static INodeSet parseFile(final String file, final Framework framework, final String project) throws
         ResourceModelSourceException, ConfigurationException {
@@ -363,6 +375,12 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
 
     /**
      * Utility method to directly parse the nodes from a file
+     * @param file file
+     * @param framework fwk
+     * @param project project name
+     * @return nodes
+     * @throws ResourceModelSourceException if an error occurs
+     * @throws ConfigurationException if a configuration error occurs
      */
     public static INodeSet parseFile(final File file, final Framework framework, final String project) throws
         ResourceModelSourceException,
@@ -381,6 +399,13 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
 
     /**
      * Utility method to directly parse the nodes from a file
+     * @param file file
+     * @param format specified format
+     * @param framework fwk
+     * @param project project name
+     * @return nodes
+     * @throws ResourceModelSourceException if an error occurs
+     * @throws ConfigurationException if a configuration error occurs
      */
     public static INodeSet parseFile(final File file, final String format, final Framework framework,
                                      final String project) throws

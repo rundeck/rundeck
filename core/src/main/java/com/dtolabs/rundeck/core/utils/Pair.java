@@ -31,12 +31,12 @@ package com.dtolabs.rundeck.core.utils;
 public interface Pair<T, W> {
 
     /**
-     * Return the first item
+     * @return the first item
      */
     public T getFirst();
 
     /**
-     * Return the second item
+     * @return the second item
      */
     public W getSecond();
 }

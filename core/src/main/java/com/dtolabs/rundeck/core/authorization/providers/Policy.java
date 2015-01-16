@@ -52,8 +52,7 @@ public interface Policy {
     public Set<String> getUsernames();
 
     /**
-     * Return regexes for username matching
-     * @return
+     * @return regexes for username matching
      */
     public Set<Pattern> getUsernamePatterns();
 
@@ -66,13 +65,12 @@ public interface Policy {
     public Set<String> getGroups();
 
     /**
-     * Return regexes  for group matching
-     * @return
+     * @return regexes  for group matching
      */
     public Set<Pattern> getGroupPatterns();
 
     /**
-     * Return the environmental context to test the Policy against an input environment
+     * @return the environmental context to test the Policy against an input environment
      *
      */
     public EnvironmentalContext getEnvironment();

@@ -105,8 +105,15 @@ public class ParallelWorkflowStrategy extends BaseWorkflowStrategy {
     }
 
     /**
+     *
      * Execute the sequence of ExecutionItems within the context, and with the given keepgoing value, return true if
      * successful
+     * @param executionContext context
+     * @param failedMap failures
+     * @param resultList results
+     * @param iWorkflowCmdItems steps
+     * @param keepgoing true to keepgoing if a step fails
+     * @return true if successful
      */
     protected boolean executeWorkflowItemsInParallel(final StepExecutionContext executionContext,
                                                      final Map<Integer, StepExecutionResult> failedMap,
@@ -181,12 +188,12 @@ public class ParallelWorkflowStrategy extends BaseWorkflowStrategy {
     /**
      * Executes a step
      *
-     * @param wlistener
-     * @param cmd
-     * @param executionContext
-     * @param stepFailedMap
-     * @param stepNum
-     * @return
+     * @param wlistener listener
+     * @param cmd step
+     * @param executionContext context
+     * @param stepFailedMap failures
+     * @param stepNum index
+     * @return result
      */
     private StepExecutionResult executeWorkflowStep(
         WorkflowExecutionListener wlistener,

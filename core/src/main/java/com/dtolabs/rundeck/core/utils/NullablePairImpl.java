@@ -35,9 +35,6 @@ public class NullablePairImpl<T, W> implements Pair<T, W> {
         return first;
     }
 
-    /**
-     * Set first item
-     */
     public void setFirst(final T first) {
         if (null == first) {
             throw new NullPointerException("first");
@@ -49,9 +46,6 @@ public class NullablePairImpl<T, W> implements Pair<T, W> {
         return second;
     }
 
-    /**
-     * Set second item
-     */
     public void setSecond(final W second) {
         if (null == second) {
             throw new NullPointerException("second");

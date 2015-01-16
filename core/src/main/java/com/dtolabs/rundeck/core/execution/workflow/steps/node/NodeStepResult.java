@@ -34,7 +34,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
  */
 public interface NodeStepResult extends StepExecutionResult {
     /**
-     * Return the node
+     * @return the node
      */
     public INodeEntry getNode();
 }

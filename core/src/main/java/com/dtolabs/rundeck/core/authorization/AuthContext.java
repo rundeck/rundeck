@@ -45,9 +45,9 @@ public interface AuthContext {
     /**
      * Make a multiple resource determination.
      *
-     * @param resources
-     * @param actions
-     * @param environment
+     * @param resources resource set
+     * @param actions action set
+     * @param environment environment
      *
      * @return decisions
      */

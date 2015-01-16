@@ -32,16 +32,19 @@ package com.dtolabs.rundeck.plugins.step;
 public interface GeneratedScript {
     /**
      * Return the script to execute
+     * @return the script
      */
     public String getScript();
 
     /**
      * Return arguments to the script
+     * @return the args
      */
     public String[] getArgs();
 
     /**
      * Return the command to execute
+     * @return the command
      */
     public String[] getCommand();
 }

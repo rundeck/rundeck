@@ -182,10 +182,11 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
 
     private int exitStatus =-1;
     /**
-     * Return exitStatus of the remote execution, after it has finished or failed.
+     * @return exitStatus of the remote execution, after it has finished or failed.
      * The return value prior to retrieving the result will be -1. If that value is returned
      * after the task has executed, it indicates that an exception was thrown prior to retrieval
      * of the value.
+     *
      */
     public int getExitStatus(){
         return exitStatus;
@@ -202,7 +203,7 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
     }
 
     /**
-     * Return the disconnectHolder
+     * @return the disconnectHolder
      */
     public DisconnectHolder getDisconnectHolder() {
         return disconnectHolder;
@@ -210,6 +211,7 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
 
     /**
      * Set a disconnectHolder
+     * @param disconnectHolder holder
      */
     public void setDisconnectHolder(final DisconnectHolder disconnectHolder) {
         this.disconnectHolder = disconnectHolder;
@@ -263,6 +265,7 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
     public static interface DisconnectHolder{
         /**
          * Set disconnectable
+         * @param disconnectable disconnectable
          */
         public void setDisconnectable(Disconnectable disconnectable);
     }
@@ -515,7 +518,7 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
      * @param from           string to write
      * @param to             file to write to
      * @param append         if true, append to existing file, else overwrite
-     * @exception Exception  most likely an IOException
+     * @exception IOException on io error
      */
     private void writeToFile(String from, boolean append, File to)
         throws IOException {
@@ -588,6 +591,7 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
 
     /**
      * Set an inputstream for pty input to the session
+     * @param inputStream  stream
      */
     public void setInputStream(final InputStream inputStream) {
         this.inputStream = inputStream;
@@ -599,6 +603,7 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
 
     /**
      * Set a secondary outputstream to read from the connection
+     * @param secondaryStream secondary stream
      */
     public void setSecondaryStream(final OutputStream secondaryStream) {
         this.secondaryStream = secondaryStream;

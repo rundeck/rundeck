@@ -7,8 +7,7 @@ import java.util.List;
  */
 public interface StepIdentifier extends Comparable<StepIdentifier>{
     /**
-     * Return the stack of step contexts
-     * @return
+     * @return the stack of step contexts
      */
     public List<StepContextId> getContext();
 }

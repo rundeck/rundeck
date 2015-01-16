@@ -21,8 +21,8 @@ import org.apache.log4j.Logger;
 
 /**
  * Wraps a ResourceModelSource and provides resilience in case the underlying source throws checked or unchecked
- * exceptions. Any exceptions thrown will be caught, and {@link #returnResultNodes(com.dtolabs.rundeck.core.common
- * .INodeSet)}
+ * exceptions. Any exceptions thrown will be caught, and
+ * {@link #returnResultNodes(com.dtolabs.rundeck.core.common.INodeSet)}
  * called with either null (exception thrown), or the result of the underlying call to getNodes
  */
 public abstract class ExceptionCatchingResourceModelSource extends DelegateResourceModelSource {
@@ -63,11 +63,10 @@ public abstract class ExceptionCatchingResourceModelSource extends DelegateResou
     }
 
     /**
-     * Return the result nodes given the nodes returned by the underlying call
+     * @return the result nodes given the nodes returned by the underlying call
      *
-     * @param nodes
-     *
-     * @return
+     * @param nodes nodes
+     * @throws ResourceModelSourceException on error
      */
     abstract INodeSet returnResultNodes(INodeSet nodes) throws ResourceModelSourceException;
 }

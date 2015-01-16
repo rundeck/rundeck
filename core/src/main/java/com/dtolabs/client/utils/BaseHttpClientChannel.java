@@ -100,7 +100,8 @@ class BaseHttpClientChannel extends HttpClientChannel {
 
     /**
      *
-     * @return
+     * @param method method
+     * @return request entity
      */
     protected RequestEntity getRequestEntity(PostMethod method) {
         return null;

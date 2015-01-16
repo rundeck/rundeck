@@ -66,7 +66,7 @@ public class ResourceFormatGeneratorService extends PluggableProviderRegistrySer
     }
 
     /**
-     * List the available format identifiers provided by all parsers
+     * @return the available format identifiers provided by all parsers
      */
     public List<String> listFormats() {
         final ArrayList<String> list = new ArrayList<String>();

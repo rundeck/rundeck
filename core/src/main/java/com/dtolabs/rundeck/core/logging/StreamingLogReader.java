@@ -42,6 +42,7 @@ public interface StreamingLogReader extends LogEventIterator, Closeable {
      *
      * @param offset offset value
      *
+     * @throws java.io.IOException if an io error occurs
      */
     void openStream(Long offset) throws IOException;
 

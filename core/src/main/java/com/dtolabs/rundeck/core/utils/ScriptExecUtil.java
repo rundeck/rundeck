@@ -59,6 +59,8 @@ public class ScriptExecUtil {
      * @param workingdir   optional working dir location (or null)
      * @param outputStream stream for stdout
      * @param errorStream  stream for stderr
+     * @param dataContext data
+     *
      *
      * @return the exit code of the command
      *
@@ -148,6 +150,7 @@ public class ScriptExecUtil {
      * @param scriptinterpreter     interpreter invocation for the file, or null to invoke it directly
      * @param interpreterargsquoted if true, pass the script file and args as a single argument to the interpreter
      * @param filepath              remote filepath for the script
+     *                              @return args
      */
     public static String[] createScriptArgs(final Map<String, Map<String, String>> localDataContext,
             final String scriptargs,
@@ -166,6 +169,7 @@ public class ScriptExecUtil {
      * @param scriptargsarr         arguments to the script file as an array
      * @param scriptinterpreter     interpreter invocation for the file, or null to invoke it directly, can include ${scriptfile}
      * @param interpreterargsquoted if true, pass the script file and args as a single argument to the interpreter
+     *                              @return arg list
      */
     public static ExecArgList createScriptArgList(final String filepath, final String scriptargs,
             final String[] scriptargsarr,
@@ -231,6 +235,7 @@ public class ScriptExecUtil {
      * @param scriptinterpreter     interpreter invocation for the file, or null to invoke it directly
      * @param interpreterargsquoted if true, pass the script file and args as a single argument to the interpreter
      * @param filepath              remote filepath for the script
+     *                              @return args
      */
     public static String[] createScriptArgs(final Map<String, Map<String, String>> localDataContext,
             final INodeEntry node,

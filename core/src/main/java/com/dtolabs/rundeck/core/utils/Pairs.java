@@ -28,10 +28,10 @@ import java.util.List;
 public class Pairs {
     /**
      * Return a List of the first items from a list of pairs
-     * @param list
-     * @param <T>
-     * @param <W>
-     * @return
+     * @param list list
+     * @param <T> first type
+     * @param <W> second type
+     * @return list of firsts
      */
     public static <T,W> List<T> listFirst(List<Pair<T, W>> list) {
         ArrayList<T> ts = new ArrayList<T>();
@@ -43,10 +43,10 @@ public class Pairs {
 
     /**
      * Return a List of the second items from a list of pairs
-     * @param list
-     * @param <T>
-     * @param <W>
-     * @return
+     * @param list list
+     * @param <T> first type
+     * @param <W> second type
+     * @return list of seconds
      */
     public static <T,W> List<W> listSecond(List<Pair<T, W>> list) {
         ArrayList<W> ts = new ArrayList<W>();

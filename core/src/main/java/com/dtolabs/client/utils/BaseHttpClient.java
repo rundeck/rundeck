@@ -39,13 +39,15 @@ import java.io.IOException;
 public interface BaseHttpClient extends ServerResponse{
     /**
      * Set a Header field for the request.  Must be made before makeRequest is called.
+     * @param name header name
+     * @param value header value
      */
     void setRequestHeader(String name, String value);
 
     /**
      * Makes the HTTP request to workbench.
-     * @throws java.io.IOException
-     * @throws HttpClientException
+     * @throws java.io.IOException on io error
+     * @throws HttpClientException on request error
      */
     void makeRequest() throws IOException, HttpClientException;
 

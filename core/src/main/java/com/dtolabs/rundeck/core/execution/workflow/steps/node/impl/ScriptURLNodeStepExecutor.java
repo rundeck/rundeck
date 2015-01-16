@@ -209,6 +209,9 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
 
     /**
      * Expand data references in a URL string, using proper encoding for path and query parts.
+     * @param urlString url
+     * @param dataContext data
+     * @return expanded string
      */
     public static String expandUrlString(final String urlString, final Map<String, Map<String, String>> dataContext) {
         final String origUrl = urlString;

@@ -33,7 +33,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
  */
 public interface NodeExecutorResult extends NodeStepResult {
     /**
-     * Return the exit/result code of the execution
+     * @return the exit/result code of the execution
      */
     public int getResultCode();
 

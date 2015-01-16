@@ -31,7 +31,7 @@ public interface OffsetIterator<T> extends Iterator<T> , Closeable{
     /**
      * Returns the current opaque offset within the underlying data stream
      *
-     * @return
+     * @return offset in bytes
      */
     long getOffset();
 }

@@ -65,13 +65,17 @@ public abstract class Mapper {
      * Note: The Mapper instance <b>must</b> map every object into one
      * that implements the {@link Comparable} interface, otherwise the two
      * objects cannot be compared. (All of the java.lang.* wrapper types will work.)
+     * @param mapper mapper
+     * @return comparator
      */
     public static Comparator comparator(final Mapper mapper){
         return comparator(mapper, false);
     }
     /**
      * see {@link #comparator(Mapper)}
+     * @param mapper mapper
      * @param reverse if true, reverse the order of comparison
+     * @return comparator
      */
     public static Comparator comparator(final Mapper mapper, final boolean reverse){
         return new Comparator(){
@@ -83,6 +87,8 @@ public abstract class Mapper {
 
     /**
      * Concatenate another mapper onto this one.
+     * @param mapper mapper
+     * @return mapper
      */
     public Mapper concat(Mapper mapper){
         return Mapper.concat(this, mapper);
@@ -144,6 +150,7 @@ public abstract class Mapper {
      * Concatenate two Mappers.
      * @param first first mapper to apply
      * @param second second mapper to apply
+     * @return mapper
      */
     public static Mapper concat(final Mapper first, final Mapper second){
         return new ConcatMapper(new Mapper[]{first,second});
@@ -154,6 +161,7 @@ public abstract class Mapper {
      *
      * @param keys   List of keys
      * @param values List of values
+     * @return map
      */
     public static Map zip(List keys, List values) {
         return zip(keys, values, false);
@@ -168,6 +176,7 @@ public abstract class Mapper {
      * @param keys        List of keys
      * @param values      List of values
      * @param includeNull allow null values and keys
+     * @return map
      */
     public static Map zip(List keys, List values, boolean includeNull) {
         Iterator k = keys.iterator();
@@ -190,6 +199,7 @@ public abstract class Mapper {
      *
      * @param keys   array of keys
      * @param values array of values
+     * @return map
      */
     public static Map zip(Object[] keys, Object[] values) {
         return zip(java.util.Arrays.asList(keys), java.util.Arrays.asList(values), false);
@@ -204,6 +214,7 @@ public abstract class Mapper {
      * @param keys        array of keys
      * @param values      array of values
      * @param includeNull allow null values and keys
+     * @return map
      */
     public static Map zip(Object[] keys, Object[] values, boolean includeNull) {
         return zip(java.util.Arrays.asList(keys), java.util.Arrays.asList(values), includeNull);
@@ -215,6 +226,7 @@ public abstract class Mapper {
      *
      * @param keys   Iterator of keys
      * @param values Iterator of values
+     * @return map
      */
     public static Map zip(Iterator keys, Iterator values) {
         return zip(keys, values, false);
@@ -229,6 +241,7 @@ public abstract class Mapper {
      * @param keys        Iterator of keys
      * @param values      Iterator of values
      * @param includeNull allow null values and keys
+     * @return map
      */
     public static Map zip(Iterator keys, Iterator values, boolean includeNull) {
         HashMap hm = new HashMap();
@@ -407,6 +420,7 @@ public abstract class Mapper {
      *
      * @param mapper a Mapper to map the values
      * @param map an     Map
+     * @param includeNull true to include null
      *
      * @return a new Map with values mapped
      */
@@ -485,6 +499,7 @@ public abstract class Mapper {
      *
      * @param mapper a Mapper to map the values
      * @param a      array of items
+     * @param includeNull true to include null
      *
      * @return a new Map with values mapped
      */
@@ -513,6 +528,7 @@ public abstract class Mapper {
      *
      * @param mapper a Mapper to map the values
      * @param c      Collection of items
+     * @param includeNull true to include null
      *
      * @return a new Map with values mapped
      */
@@ -541,6 +557,7 @@ public abstract class Mapper {
      *
      * @param mapper a Mapper to map the values
      * @param i      Iterator
+     * @param includeNull true to include null
      *
      * @return a new Map with values mapped
      */
@@ -577,6 +594,7 @@ public abstract class Mapper {
      *
      * @param mapper a Mapper to map the values
      * @param en     Enumeration
+     * @param includeNull true to include null
      *
      * @return a new Map with values mapped
      */
@@ -634,7 +652,7 @@ public abstract class Mapper {
      * @param property the name of a bean property
      * @param objs     an array of objects
      *
-     *
+     * @return collection
      * @throws ClassCastException if there is an error invoking the method on any object.
      */
     public static Collection beanMap(String property, Object[] objs) {
@@ -647,6 +665,7 @@ public abstract class Mapper {
      * @param property the name of a bean property
      * @param i        an iterator of objects
      *
+     * @return collection
      *
      * @throws ClassCastException if there is an error invoking the method on any object.
      */
@@ -661,6 +680,7 @@ public abstract class Mapper {
      * @param c           an Collection of objects
      * @param includeNull true to include null results in the response
      *
+     * @return collection
      *
      * @throws ClassCastException if there is an error invoking the method on any object.
      */
@@ -674,6 +694,7 @@ public abstract class Mapper {
      * @param property    the name of a bean property
      * @param c a collection of objects
      *
+     * @return collection
      *
      * @throws ClassCastException if there is an error invoking the method on any object.
      */
@@ -684,6 +705,7 @@ public abstract class Mapper {
     /**
      * Create a mapper for bean properties
      * @param property name of the bean property
+     * @return mapper
      */
     public static Mapper beanMapper(final String property){
         return  new Mapper() {
@@ -703,6 +725,7 @@ public abstract class Mapper {
      * @param i           an iterator of objects
      * @param includeNull true to include null results in the response
      *
+     * @return collection
      *
      * @throws ClassCastException if there is an error invoking the method on any object.
      */
@@ -713,6 +736,8 @@ public abstract class Mapper {
     /**
      * Return a mapper than maps an object to itself if the predicate evaluates to true,
      * and to null otherwise.
+     * @param pred predicate
+     * @return mapper
      */
     public static Mapper filterMapper(final Predicate pred){
         return new Mapper(){
@@ -723,7 +748,7 @@ public abstract class Mapper {
     }
 
     /**
-     * Return a mapper that maps unique objects to themselves, and duplicates to null.
+     * @return a mapper that maps unique objects to themselves, and duplicates to null.
      */
     public static Mapper uniqueMapper(){
         return new Mapper() {
@@ -773,6 +798,7 @@ public abstract class Mapper {
     /**
      * Map one object to another.
      *
+     * @param a object
      * @return the new object.
      */
     public abstract Object map(Object a);

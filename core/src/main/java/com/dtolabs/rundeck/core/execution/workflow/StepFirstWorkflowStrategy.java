@@ -98,6 +98,8 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
      * "secureOption" map values will always be obfuscated. "option" entries that are also in "secureOption"
      * will have their values obfuscated. All other maps within the data context will be added
      * directly to the copy.
+     * @param dataContext data
+     * @return printable data
      */
     protected Map<String, Map<String, String>> createPrintableDataContext(Map<String, Map<String, String>> dataContext) {
         Map<String, Map<String, String>> printableContext = new HashMap<String, Map<String, String>>();

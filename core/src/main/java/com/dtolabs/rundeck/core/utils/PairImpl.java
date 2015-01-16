@@ -49,6 +49,7 @@ public class PairImpl<T, W> implements Pair<T, W> {
 
     /**
      * Set first item
+     * @param first first item
      */
     public void setFirst(final T first) {
         if (null == first) {
@@ -63,6 +64,7 @@ public class PairImpl<T, W> implements Pair<T, W> {
 
     /**
      * Set second item
+     * @param second second item
      */
     public void setSecond(final W second) {
         if (null == second) {

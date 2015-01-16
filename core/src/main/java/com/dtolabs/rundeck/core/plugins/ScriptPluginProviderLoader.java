@@ -472,7 +472,7 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
     /**
      * Return the version string metadata value for the plugin file, or null if it is not available or could not
      * loaded
-     * @param file
+     * @param file file
      * @return version string
      */
     static String getVersionForFile(final File file)  {

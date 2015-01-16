@@ -27,6 +27,7 @@ public interface CLITool extends CLIToolLogger {
      *
      * @param args the cli arg vector
      * @return a new instance of CommandLine
+     * @throws com.dtolabs.rundeck.core.cli.CLIToolOptionsException parse error
      */
     CommandLine parseArgs(String[] args) throws CLIToolOptionsException;
 
@@ -35,6 +36,7 @@ public interface CLITool extends CLIToolLogger {
      * and exiting with a suitable exit code.
      *
      * @param args the cli arg vector
+     * @throws CLIToolException error
      */
     void run(String[] args) throws CLIToolException;
 

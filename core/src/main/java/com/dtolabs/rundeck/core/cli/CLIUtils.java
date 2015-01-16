@@ -109,17 +109,15 @@ public class CLIUtils {
     }
 
     /**
-     * Return true if the string contains any whitespace
-     * @param arg
-     * @return
+     * @return true if the string contains any whitespace
+     * @param arg string
      */
     public static boolean containsSpace(String arg) {
         return StringUtils.containsAny(arg, " ");
     }
     /**
-     * Return true if the string contains any whitespace
-     * @param arg
-     * @return
+     * @return true if the string contains any whitespace
+     * @param arg string
      */
     public static boolean containsQuote(String arg) {
         return StringUtils.containsAny(arg, "'");

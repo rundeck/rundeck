@@ -14,6 +14,7 @@ public interface NotificationPlugin {
      * @param trigger event type causing notification
      * @param executionData execution data
      * @param config notification configuration
+     *               @return true if successul
      */
     public boolean postNotification(String trigger,Map executionData,Map config);
 }

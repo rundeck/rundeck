@@ -29,10 +29,10 @@ public class FileUtils {
 
     /**
      * Copies file src to dest using nio.
-     * @param src
-     * @param dest
-     * @param overwrite
-     * @throws IOException
+     * @param src source file
+     * @param dest destination file
+     * @param overwrite true to overwrite if it already exists
+     * @throws IOException on io error
      */
     public static void fileCopy(final File src, final File dest, final boolean overwrite) throws IOException {
         if (!dest.exists() || (dest.exists() && overwrite)) {
@@ -59,10 +59,10 @@ public class FileUtils {
     /**
      * Copy a file from one location to another, and set the modification time to match. (Uses java Streams).
      *
-     * @param fromFile
-     * @param toFile
+     * @param fromFile source file
+     * @param toFile dest file
      *
-     * @throws IOException
+     * @throws IOException on io error
      */
     public static void copyFileStreams(final File fromFile, final File toFile) throws IOException {
         if (!fromFile.exists()) {

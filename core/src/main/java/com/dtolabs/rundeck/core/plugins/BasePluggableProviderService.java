@@ -53,8 +53,7 @@ public abstract class BasePluggableProviderService<T> implements PluggableProvid
     }
 
     /**
-     * Return the plugin manager to use
-     * @return
+     * @return the plugin manager to use
      */
     public abstract ServiceProviderLoader getPluginManager();
 
@@ -130,7 +129,9 @@ public abstract class BasePluggableProviderService<T> implements PluggableProvid
     }
 
     /**
-     * Create an adapted form of this service given a converter.
+     * @return Create an adapted form of this service given a converter.
+     * @param <X> provider type
+     * @param converter converter
      */
     public <X> ProviderService<X> adapter(final Converter<T, X> converter) {
         return AdapterService.adaptFor(this, converter);

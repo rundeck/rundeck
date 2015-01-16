@@ -10,42 +10,33 @@ import java.util.Set;
  */
 public interface WorkflowState extends HasExecutionState {
     /**
-     * The set of nodes the workflow is running on
+     * @return The set of nodes the workflow is running on
      *
-     * @return
      */
     public List<String> getNodeSet();
 
     /**
-     * Return the set of all nodes this and and all sub workflows are operating on
-     * @return
+     * @return the set of all nodes this and and all sub workflows are operating on
      */
     public List<String> getAllNodes();
 
     /**
-     * Return the name of the server node
-     * @return
+     * @return the name of the server node
      */
     public String getServerNode();
 
     /**
-     * The number of steps the workflow will run
-     *
-     * @return
+     * @return The number of steps the workflow will run
      */
     public long getStepCount();
 
     /**
-     * The execution state of the workflow
-     *
-     * @return
+     * @return The execution state of the workflow
      */
     public ExecutionState getExecutionState();
 
     /**
-     * The latest timestamp for the workflow state
-     *
-     * @return
+     * @return The latest timestamp for the workflow state
      */
     public Date getUpdateTime();
 
@@ -54,16 +45,12 @@ public interface WorkflowState extends HasExecutionState {
     public Date getEndTime();
 
     /**
-     * The list of states for the steps
-     *
-     * @return
+     * @return The list of states for the steps
      */
     public List<WorkflowStepState> getStepStates();
 
     /**
-     * The list of states for all nodes
-     *
-     * @return
+     * @return The list of states for all nodes
      */
     public Map<String,? extends WorkflowNodeState> getNodeStates();
 }

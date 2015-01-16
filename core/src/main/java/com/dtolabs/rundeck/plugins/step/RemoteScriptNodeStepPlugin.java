@@ -43,6 +43,7 @@ public interface RemoteScriptNodeStepPlugin {
      * @param configuration Any configuration property values not otherwise applied to the plugin
      * @param entry         the Node
      *
+     * @return the generated script
      * @throws NodeStepException if an error occurs
      */
     public GeneratedScript generateScript(final PluginStepContext context,

@@ -43,7 +43,15 @@ import java.util.Map;
  */
 public class PropertyUtil {
     /**
-     * Return a property instance for a particular simple type
+     *
+     * @param type type
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param values optional values list
+     * @return a property instance for a particular simple type
      */
     public static Property forType(final Property.Type type, final String name, final String title,
                                    final String description, final boolean required,
@@ -52,7 +60,15 @@ public class PropertyUtil {
     }
 
     /**
-     * Return a property instance for a particular simple type
+     * @param type type
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param values optional values list
+     * @param validator validator
+     * @return a property instance for a particular simple type
      */
     public static Property forType(final Property.Type type,
                                    final String name,
@@ -66,7 +82,16 @@ public class PropertyUtil {
     }
 
     /**
-     * Return a property instance for a particular simple type
+     * @param type type
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param values optional values list
+     * @param validator validator
+     * @param scope resolution scope
+     * @return a property instance for a particular simple type
      */
     public static Property forType(final Property.Type type,
                                    final String name,
@@ -81,7 +106,17 @@ public class PropertyUtil {
     }
     
     /**
-     * Return a property instance for a particular simple type
+     * @param type type
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param values optional values list
+     * @param validator validator
+     * @param scope resolution scope
+     * @param renderingOptions options
+     * @return a property instance for a particular simple type
      */
     public static Property forType(final Property.Type type,
                                    final String name,
@@ -113,7 +148,13 @@ public class PropertyUtil {
 
 
     /**
-     * Return a string property
+     *
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @return a string property
      */
     public static Property string(final String name, final String title, final String description,
                                   final boolean required,
@@ -122,7 +163,14 @@ public class PropertyUtil {
     }
 
     /**
-     * Return a string property
+     *
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param validator validator
+     * @return  a string property
      */
     public static Property string(final String name, final String title, final String description,
                                   final boolean required,
@@ -131,7 +179,15 @@ public class PropertyUtil {
     }
     
     /**
-     * Return a string property
+     *
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param validator validator
+     * @param scope resolution scope
+     * @return Return a string property
      */
     public static Property string(final String name, final String title, final String description,
                                   final boolean required,
@@ -141,7 +197,16 @@ public class PropertyUtil {
     }
 
     /**
-     * Return a string property
+     *
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param validator validator
+     * @param scope resolution scope
+     * @param renderingOptions options
+     * @return Return a string property
      */
     public static Property string(final String name, final String title, final String description,
                                   final boolean required,
@@ -151,7 +216,13 @@ public class PropertyUtil {
     }
 
     /**
-     * Return a boolean property
+     *
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @return Return a boolean property
      */
     public static Property bool(final String name, final String title, final String description, final boolean required,
                                 final String defaultValue) {
@@ -159,7 +230,14 @@ public class PropertyUtil {
     }
     
     /**
-     * Return a boolean property
+     *
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param scope resolution scope
+     * @return Return a boolean property
      */
     public static BooleanProperty bool(String name,
                                        String title,
@@ -170,7 +248,15 @@ public class PropertyUtil {
     }
 
     /**
-     * Return a boolean property
+     *
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param scope resolution scope
+     * @param renderingOptions options
+     * @return  a boolean property
      */
     public static BooleanProperty bool(String name,
                                        String title,
@@ -182,7 +268,13 @@ public class PropertyUtil {
     }
 
     /**
-     * Return an integer property
+     *
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @return  an integer property
      */
     public static Property integer(final String name, final String title, final String description,
                                    final boolean required,
@@ -192,7 +284,14 @@ public class PropertyUtil {
     }
 
     /**
-     * Return an integer property with additional validator
+     *
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param validator validator
+     * @return  an integer property with additional validator
      */
     public static Property integer(final String name, final String title, final String description,
                                    final boolean required,
@@ -202,7 +301,15 @@ public class PropertyUtil {
     }
     
     /**
-     * Return an integer property with additional validator
+     *
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param validator validator
+     * @param scope resolution scope
+     * @return  an integer property with additional validator
      */
     public static Property integer(final String name,
                                    final String title,
@@ -215,7 +322,16 @@ public class PropertyUtil {
     }
 
     /**
-     * Return an integer property with additional validator
+     *
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param validator validator
+     * @param scope resolution scope
+     * @param renderingOptions options
+     * @return  an integer property with additional validator
      */
     public static Property integer(final String name,
                                    final String title,
@@ -230,7 +346,13 @@ public class PropertyUtil {
     }
 
     /**
-     * Return a long property
+     *
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @return  a long property
      */
     public static Property longProp(final String name, final String title, final String description,
                                     final boolean required, final String defaultValue) {
@@ -238,7 +360,14 @@ public class PropertyUtil {
     }
 
     /**
-     * Return a long property
+     *
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param validator validator
+     * @return  a long property
      */
     public static Property longProp(final String name,
                                     final String title,
@@ -250,7 +379,15 @@ public class PropertyUtil {
     }
     
     /**
-     * Return a long property
+     *
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param validator validator
+     * @param scope resolution scope
+     * @return  a long property
      */
     public static Property longProp(final String name,
                                     final String title,
@@ -263,7 +400,16 @@ public class PropertyUtil {
     }
 
     /**
-     * Return a long property
+     *
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param validator validator
+     * @param scope resolution scope
+     * @param renderingOptions options
+     * @return  a long property
      */
     public static Property longProp(final String name,
                                     final String title,
@@ -278,7 +424,14 @@ public class PropertyUtil {
 
 
     /**
-     * Create a Select property with a list of values
+     *
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param selectValues optional values list
+     * @return  a Select property with a list of values
      */
     public static Property select(final String name, final String title, final String description,
                                   final boolean required, final String defaultValue, final List<String> selectValues) {
@@ -286,7 +439,14 @@ public class PropertyUtil {
     }
 
     /**
-     * Create a Select property with a list of values
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param selectValues optional values list
+     * @param scope resolution scope
+     * @return a Select property with a list of values
      */
     public static Property select(final String name, final String title, final String description,
                                   final boolean required, final String defaultValue, final List<String> selectValues,
@@ -296,7 +456,15 @@ public class PropertyUtil {
     }
     
     /**
-     * Create a Select property with a list of values
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param selectValues optional values list
+     * @param scope resolution scope
+     * @param renderingOptions options
+     * @return a Select property with a list of values
      */
     public static Property select(final String name, final String title, final String description,
                                   final boolean required, final String defaultValue, final List<String> selectValues,
@@ -305,7 +473,15 @@ public class PropertyUtil {
         return new SelectProperty(name, title, description, required, defaultValue, selectValues, scope, renderingOptions);
     }
     /**
-     * Create a Select property with a list of values
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param selectValues optional values list
+     * @param scope resolution scope
+     * @param renderingOptions options
+     * @return a Select property with a list of values
      */
     public static Property select(final String name, final String title, final String description,
                                   final boolean required, final String defaultValue, final Collection<? extends Enum<?>> selectValues,
@@ -320,7 +496,13 @@ public class PropertyUtil {
     }
 
     /**
-     * Create a Free Select property with a list of values
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param selectValues optional values list
+     * @return a Free Select property with a list of values
      */
     public static Property freeSelect(final String name, final String title, final String description,
                                       final boolean required, final String defaultValue,
@@ -329,7 +511,14 @@ public class PropertyUtil {
     }
 
     /**
-     * Create a Free Select property with a list of values
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param selectValues optional values list
+     * @param validator validator
+     * @return a Free Select property with a list of values
      */
     public static Property freeSelect(final String name, final String title, final String description,
                                       final boolean required, final String defaultValue,
@@ -339,7 +528,15 @@ public class PropertyUtil {
     }
     
     /**
-     * Create a Free Select property with a list of values
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param selectValues optional values list
+     * @param validator validator
+     * @param scope resolution scope
+     * @return a Free Select property with a list of values
      */
     public static Property freeSelect(final String name, final String title, final String description,
                                       final boolean required, final String defaultValue,
@@ -350,7 +547,16 @@ public class PropertyUtil {
     }
 
     /**
-     * Create a Free Select property with a list of values
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param selectValues optional values list
+     * @param validator validator
+     * @param scope resolution scope
+     * @param renderingOptions options
+     * @return a Free Select property with a list of values
      */
     public static Property freeSelect(final String name, final String title, final String description,
                                       final boolean required, final String defaultValue,

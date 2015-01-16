@@ -32,8 +32,8 @@ public interface INodeDesc extends INodeBase{
     /**
      * Checks equality with another node description
      *
-     * @param n
-     * @return
+     * @param n descriptor
+     * @return true if equal
      */
     boolean equals(INodeDesc n);
 }

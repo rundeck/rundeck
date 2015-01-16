@@ -10,58 +10,48 @@ import java.util.Set;
  */
 public interface WorkflowStepState {
     /**
-     * The identifier
-     *
-     * @return
+     * @return The identifier
      */
     public StepIdentifier getStepIdentifier();
 
     /**
-     * The step's state
+     * @return The step's state
      *
-     * @return
      */
     public StepState getStepState();
 
 
     /**
-     * Return a map of node name to step states for the step
+     * @return  a map of node name to step states for the step
      *
-     * @return
      */
     public Map<String, ? extends StepState> getNodeStateMap();
 
     /**
-     * Return a map of parameter strings to representative WorkflowStepStates
+     * @return  a map of parameter strings to representative WorkflowStepStates
      *
-     * @return
      */
     Map<String, ? extends WorkflowStepState> getParameterizedStateMap();
 
 
     /**
-     * Return true if the step contains a sub workflow
-     *
-     * @return
+     * @return  true if the step contains a sub workflow
      */
     public boolean hasSubWorkflow();
 
     /**
-     * Return the sub workflow state
+     * @return  the sub workflow state
      *
-     * @return
      */
     public WorkflowState getSubWorkflowState();
 
     /**
-     * Return the set of node targets if this is a node step, or null
-     * @return
+     * @return  the set of node targets if this is a node step, or null
      */
     public List<String> getNodeStepTargets();
 
     /**
-     * Return true if this is a node step
-     * @return
+     * @return  true if this is a node step
      */
     public boolean isNodeStep();
 }

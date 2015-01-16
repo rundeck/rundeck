@@ -51,8 +51,8 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
 
     /**
      * Create a PluginManagerService for the given directory and cache directory
-     * @param extdir
-     * @param cachedir
+     * @param extdir plugin dir
+     * @param cachedir cache dir
      */
     public PluginManagerService(final File extdir, final File cachedir) {
         this.extdir = extdir;

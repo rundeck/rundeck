@@ -33,7 +33,7 @@ import java.util.*;
 public interface ContextLoggerExecutionListener extends ExecutionListener,Contextual{
 
     /**
-     * Return the current logging context, or null.
+     * @return the current logging context, or null.
      */
     public Map<String, String> getLoggingContext();
 }

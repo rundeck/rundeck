@@ -68,6 +68,10 @@ public class ResponderTask implements Callable<ResponderTask.ResponderResult> {
 
     /**
      * Create a ResponderTask with a responder, io streams, and result handler which can be null.
+     * @param responder responder
+     * @param inputStream input
+     * @param outputStream output
+     * @param resultHandler handler
      */
     public ResponderTask(final Responder responder, final InputStream inputStream, final OutputStream outputStream,
                          final ResultHandler resultHandler) {
@@ -215,7 +219,8 @@ public class ResponderTask implements Callable<ResponderTask.ResponderResult> {
     /**
      * Create a Callable that will execute another responder if this one is successful, with the same resultHandler for the
      * second one.
-     *
+     * @param responder  responder
+     * @return sequence
      */
     public Callable<ResponderResult> createSequence(final Responder responder) {
         return createSequence(responder, resultHandler);
@@ -224,6 +229,9 @@ public class ResponderTask implements Callable<ResponderTask.ResponderResult> {
      * Create a Callable that will execute another responder if this one is successful, with a specified resultHandler for the
      * second one.
      *
+     * @param responder  responder
+     * @param resultHandler handler
+     * @return sequence
      */
     public Callable<ResponderResult> createSequence(final Responder responder, final ResultHandler resultHandler) {
         return new Sequence<ResponderResult>(this, this.chainResponder(responder, resultHandler));

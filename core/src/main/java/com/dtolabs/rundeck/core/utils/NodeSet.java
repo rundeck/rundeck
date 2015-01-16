@@ -50,6 +50,7 @@ public class NodeSet  implements NodesSelector {
 
     /**
      * Create a nodeset with a single node name
+     * @param singleNodeName node name
      */
     public NodeSet(final String singleNodeName) {
         this.singleNodeName = singleNodeName;
@@ -57,6 +58,7 @@ public class NodeSet  implements NodesSelector {
 
     /**
      * Create a nodeset for a single node
+     * @param singleNode the node
      */
     public NodeSet(final INodeEntry singleNode) {
         this(singleNode.getNodename());
@@ -92,8 +94,9 @@ public class NodeSet  implements NodesSelector {
         return !shouldExclude(entry);
     }
     /**
-     * Return a new Node Selector that will apply the include/exclude filters if they are set, otherwise
+     * @return a new Node Selector that will apply the include/exclude filters if they are set, otherwise
      * it only includes the node with the given nodename
+     * @param nodename name
      */
     public NodesSelector nodeSelectorWithDefault(final String nodename) {
         final NodesSelector nodesSelector = SelectorUtils.singleNode(nodename);
@@ -104,7 +107,7 @@ public class NodeSet  implements NodesSelector {
         };
     }
     /**
-     * Return a new Node Selector that will apply the include/exclude filters if they are set, otherwise
+     * @return a new Node Selector that will apply the include/exclude filters if they are set, otherwise
      * it will accept all nodes
      */
     public NodesSelector nodeSelectorWithDefaultAll() {
@@ -239,10 +242,9 @@ public class NodeSet  implements NodesSelector {
         }
     }
     /**
-     * Return true if the input selector matches the specified property value
-     * @param inputSelector
-     * @param propValue
-     * @return
+     * @return true if the input selector matches the specified property value
+     * @param inputSelector input
+     * @param propValue value
      */
     protected static boolean matchesInput(String inputSelector, String propValue) {
         if (null == propValue || "".equals(propValue.trim())) {
@@ -258,9 +260,10 @@ public class NodeSet  implements NodesSelector {
 
 
     /**
-     * Return true if any attribute selector matches the corresponding attribute value
+     * @return true if any attribute selector matches the corresponding attribute value
      * @param matchAll if true, require all selectors match a value, otherwise return true if any selector matches
-     * @return
+     * @param attrSelectors map of attribute key to selector
+     * @param values map of key to value
      */
     protected static boolean matchesInput(Map<String,String> attrSelectors, Map<String,String> values, boolean matchAll) {
         if (null == attrSelectors || null == values) {
@@ -280,14 +283,13 @@ public class NodeSet  implements NodesSelector {
     }
 
     /**
-     * Return true if the input string is found in the set of values.
+     * @return true if the input string is found in the set of values.
      * The inputSelector can contain boolean and using the "+" symbol, and boolean or using the "," symbol.
      * E.g.:  "a + b" - matches if both "a" and "b" are in the value set
      * E.g.:  "a , b" - matches if either "a" or "b" are in the value set
      *
-     * @param inputSelector
-     *
-     * @return
+     * @param inputSelector input
+     * @param propSet values
      */
     static boolean matchesInputSet(String inputSelector, Collection propSet) {
         if (null == propSet || propSet.size()<1) {
@@ -372,8 +374,8 @@ public class NodeSet  implements NodesSelector {
 
     /**
      * Create a NodeSet from a filter
-     * @param filter
-     * @return
+     * @param filter filter string
+     * @return node set
      */
     public static NodeSet fromFilter(String filter) {
         Map<String, Map<String, String>> stringMapMap = parseFilter(filter);
@@ -385,9 +387,9 @@ public class NodeSet  implements NodesSelector {
     /**
      * Parse textual filter and return a map of maps: [include: [key:value,...], exclude: [key:value,...]]
      *
-     * @param filter
+     * @param filter filter string
      *
-     * @return
+     * @return parsed filter
      */
     public static Map<String,Map<String, String>> parseFilter(String filter) {
         return parseFilter(filter, true, DEFAULT_FILTER_KEY);
@@ -779,7 +781,7 @@ public class NodeSet  implements NodesSelector {
 
         /**
          * Generate a Map of attribute names to values
-         * @return
+         * @return attributes
          */
         Map<String,String> getAttributesMap(){
             return attributesMap;

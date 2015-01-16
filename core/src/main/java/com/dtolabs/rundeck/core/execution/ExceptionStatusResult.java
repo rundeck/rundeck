@@ -31,7 +31,7 @@ package com.dtolabs.rundeck.core.execution;
  */
 public interface ExceptionStatusResult extends StatusResult {
     /**
-     * Return any exception that was caught
+     * @return any exception that was caught
      */
     public Throwable getException();
 }

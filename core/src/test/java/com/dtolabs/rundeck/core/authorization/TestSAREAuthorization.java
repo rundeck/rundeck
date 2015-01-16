@@ -288,10 +288,10 @@ public class TestSAREAuthorization extends TestCase {
     
 
     /**
-     * Create a RunDeck equivalent Job.
+     * @return Create a RunDeck equivalent Job.
      * 
-     * @param scriptName
-     * @param scriptGroup
+     * @param scriptName script
+     * @param scriptGroup group
      */
     private Map<String, String> createJobResource(String scriptName, String scriptGroup) {
         Map<String, String> resource = new HashMap<String, String>();
@@ -302,8 +302,9 @@ public class TestSAREAuthorization extends TestCase {
     }
 
     /**
-     * @param module
-     * @param moduleName
+     * @return resource map
+     * @param module module
+     * @param moduleName name
      */
     private Map<String,String> declareModule(String module, String moduleName) {
         Map<String, String> resource = new HashMap<String, String>();
@@ -315,7 +316,7 @@ public class TestSAREAuthorization extends TestCase {
     /**
      * Create a subject for a username and a series of groups.
      * 
-     * @param username
+     * @param username user
      * @param groups (optional)
      * @return subject
      */

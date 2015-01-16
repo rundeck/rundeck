@@ -9,39 +9,32 @@ import java.util.List;
 public abstract class ExecArg {
 
     /**
-     * Return true if this arg contains a list of other args
+     * @return true if this arg contains a list of other args
      *
-     * @return
      */
     public abstract boolean isList();
 
     private boolean quoted = true;
 
     /**
-     * Return the sublist of args, if {@link #isList()} returns true, null otherwise
-     *
-     * @return
+     * @return the sublist of args, if {@link #isList()} returns true, null otherwise
      */
     public abstract List<ExecArg> getList();
 
     /**
-     * Return the string value of this argument if {@link #isList()} returns false, null otherwise
-     *
-     * @return
+     * @return the string value of this argument if {@link #isList()} returns false, null otherwise
      */
     public abstract String getString();
 
     /**
      * Accept a visitor
      *
-     * @param converter
+     * @param converter visitor
      */
     public abstract void accept(Visitor converter);
 
     /**
-     * Return true if this arg should be quoted
-     *
-     * @return
+     * @return true if this arg should be quoted
      */
     public boolean isQuoted() {
         return quoted;
@@ -50,7 +43,7 @@ public abstract class ExecArg {
     /**
      * Set whether this arg should be quoted
      *
-     * @param quoted
+     * @param quoted quoted
      */
     void setQuoted(boolean quoted) {
         this.quoted = quoted;

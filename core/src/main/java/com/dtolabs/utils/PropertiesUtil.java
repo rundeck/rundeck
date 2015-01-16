@@ -45,11 +45,11 @@ public class PropertiesUtil {
     /**
      * Returns the Properties formatted as a String
      *
-     * @param props
+     * @param props properties
      *
      * @return String format from the Properties
      *
-     * @throws java.io.IOException
+     * @throws java.io.IOException if an error occurs
      */
     public static String stringFromProperties(Properties props) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream(2048);
@@ -64,11 +64,11 @@ public class PropertiesUtil {
     /**
      * Convert a String into a Properties object
      *
-     * @param propString
+     * @param propString properties string
      *
-     * @return
+     * @return properties
      *
-     * @throws IOException
+     * @throws IOException if an error occurs
      */
     public static Properties propertiesFromString(String propString) throws IOException {
         Properties props = new Properties();
@@ -90,14 +90,14 @@ public class PropertiesUtil {
     public static interface Adder {
         /**
          * Add a property.
-         * @param name
-         * @param value
+         * @param name name
+         * @param value value
          */
         public void addProperty(String name, String value);
 
         /**
          * Add all the input Properties.
-         * @param properties
+         * @param properties properties
          */
         public void addProperties(Properties properties);
     }
@@ -111,8 +111,7 @@ public class PropertiesUtil {
      */
     public static interface Producer {
         /**
-         * Produce the properties.
-         * @return
+         * @return the properties.
          */
         public Properties readProperties();
     }

@@ -487,6 +487,8 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
 
     /**
      * Create workflowExecutionItem suitable for inner loop of node-first strategy
+     * @param item workflow item
+     *             @return inner loop
      */
     public static WorkflowExecutionItem createInnerLoopItem(WorkflowExecutionItem item) {
         return createInnerLoopItem(item.getWorkflow());
@@ -495,6 +497,8 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
 
     /**
      * Create workflowExecutionItem suitable for inner loop of node-first strategy
+     * @param item workflow item
+     *             @return inner loop
      */
     public static WorkflowExecutionItem createInnerLoopItem(IWorkflow item) {
         final WorkflowExecutionItemImpl workflowExecutionItem = new WorkflowExecutionItemImpl(

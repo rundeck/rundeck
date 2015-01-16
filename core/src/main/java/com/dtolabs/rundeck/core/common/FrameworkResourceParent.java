@@ -37,6 +37,7 @@ public abstract class FrameworkResourceParent extends FrameworkResource implemen
      *
      * @param name Name of resource
      * @param dir  Base directory of resource
+     * @param parent parent
      */
     public FrameworkResourceParent(final String name, final File dir, final IFrameworkResourceParent parent) {
         super(name, dir, parent);

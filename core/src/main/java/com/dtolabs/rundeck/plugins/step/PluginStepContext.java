@@ -41,42 +41,42 @@ import java.util.Map;
  */
 public interface PluginStepContext {
     /**
-     * Return the logger
+     * @return the logger
      */
     public PluginLogger getLogger();
 
     /**
-     * Return the project name
+     * @return the project name
      */
     public String getFrameworkProject();
 
     /**
-     * Return the data context
+     * @return the data context
      */
     public Map<String, Map<String, String>> getDataContext();
 
     /**
-     * Return the nodes used for this execution
+     * @return the nodes used for this execution
      */
     public INodeSet getNodes();
 
     /**
-     * Return the step number within the current workflow
+     * @return the step number within the current workflow
      */
     public int getStepNumber();
 
     /**
-     * Return the context path of step numbers within the larger workflow context.
+     * @return the context path of step numbers within the larger workflow context.
      */
     public List<Integer> getStepContext();
 
     /**
-     * Return the Framework object
+     * @return the Framework object
      */
     public Framework getFramework();
 
     /**
-     * Return the the current execution context
+     * @return the the current execution context
      */
     public ExecutionContext getExecutionContext();
 }

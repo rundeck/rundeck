@@ -24,9 +24,7 @@ package com.dtolabs.rundeck.core.execution.workflow.state;
  */
 public interface HasExecutionState {
     /**
-     * An execution state
-     *
-     * @return
+     * @return An execution state
      */
     public ExecutionState getExecutionState();
 }

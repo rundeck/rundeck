@@ -37,7 +37,10 @@ import java.util.Properties;
 public interface ConfigurableService<T> extends FrameworkSupportService {
 
     /**
-     * Return a ResourceModelSource of a give type with a given configuration
+     * @param type provider name
+     * @param configuration configuration properties
+     * @return a ResourceModelSource of a give type with a given configuration
+     * @throws ExecutionServiceException on error
      */
     public T getProviderForConfiguration(final String type, final Properties configuration) throws
         ExecutionServiceException;

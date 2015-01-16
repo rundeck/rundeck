@@ -48,7 +48,7 @@ public interface FailedNodesListener {
     public void nodesSucceeded();
 
     /**
-     * Called with full list of matched nodes prior to execution.
+     * @param names full list of matched nodes prior to execution.
      */
     public void matchedNodes(Collection<String> names);
 }

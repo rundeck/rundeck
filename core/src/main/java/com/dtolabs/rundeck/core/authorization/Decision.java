@@ -32,7 +32,7 @@ public interface Decision {
     boolean isAuthorized();
     
     /**
-     * Reason why the Decision was granted or not granted.
+     * @return Reason why the Decision was granted or not granted.
      */
     Explanation explain();
     

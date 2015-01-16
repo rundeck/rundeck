@@ -49,19 +49,16 @@ public interface IFrameworkResourceParent extends IFrameworkResource {
     boolean existsChild(String name);
 
     /**
-     * Return true if the child resource could be loaded from a file resource
-     * @param name
-     * @return
+     * @return true if the child resource could be loaded from a file resource
+     * @param name child name
      */
     boolean childCouldBeLoaded(String name);
 
 
     /**
-     * Load a specified child by name, returning null if it does not exist
+     * @return Load a specified child by name, returning null if it does not exist
      *
-     * @param name
-     *
-     * @return
+     * @param name child name
      */
     IFrameworkResource loadChild(String name);
 

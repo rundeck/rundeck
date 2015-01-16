@@ -16,7 +16,7 @@ public interface StepNodeContextListener<NODE, STEP> {
 
     /**
      * Enter a step context
-     * @param step
+     * @param step step
      */
     void beginStepContext(STEP step);
 
@@ -27,7 +27,7 @@ public interface StepNodeContextListener<NODE, STEP> {
 
     /**
      * Enter a node context
-     * @param node
+     * @param node node
      */
     void beginNodeContext(NODE node);
 

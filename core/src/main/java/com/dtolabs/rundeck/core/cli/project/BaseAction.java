@@ -102,14 +102,13 @@ public class BaseAction implements Action {
      */
     public static interface BaseActionArgs{
         /**
-         * Name of project to use, required.
-         * @return
+         * @return Name of project to use
+         *
          */
         public String getProject();
 
         /**
-         * Return true to turn verbose logging on.
-         * @return
+         * @return true to turn verbose logging on.
          */
         public boolean isVerbose();
     }
@@ -146,7 +145,7 @@ public class BaseAction implements Action {
     /**
      * Execute the action.  Currently checks if installation is valid.
      *
-     * @throws Throwable
+     * @throws Throwable any throwable
      */
     public void exec() throws Throwable {
         validateInstall();

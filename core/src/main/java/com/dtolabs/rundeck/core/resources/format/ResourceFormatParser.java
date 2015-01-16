@@ -36,23 +36,29 @@ import java.util.*;
  */
 public interface ResourceFormatParser {
     /**
-     * Return the list of file extensions that this format parser can parse.
+     * @return  the list of file extensions that this format parser can parse.
      */
     public Set<String> getFileExtensions();
 
     /**
-     * Return the list of MIME types that this format parser can parse. This may include wildcards such as
+     * @return  the list of MIME types that this format parser can parse. This may include wildcards such as
      * "*&#47;xml".
      */
     public Set<String> getMIMETypes();
 
     /**
      * Parse a file
+     * @return nodes
+     * @param file input file
+     * @throws ResourceFormatParserException on parse error
      */
     public INodeSet parseDocument(File file) throws ResourceFormatParserException;
 
     /**
      * Parse an input stream
+     * @return nodes
+     * @param input input stream
+     * @throws ResourceFormatParserException on parse error
      */
     public INodeSet parseDocument(InputStream input) throws ResourceFormatParserException;
 }

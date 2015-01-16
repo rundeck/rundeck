@@ -36,6 +36,7 @@ public interface ServiceProviderLoader {
     /**
      * Create a provider instance for the service
      *
+     * @param <T> service class
      * @param service      the service
      * @param providerName the name of the provider to load
      *
@@ -47,7 +48,7 @@ public interface ServiceProviderLoader {
         ProviderLoaderException;
 
     /**
-     * List the available providers
+     * @return the available providers
      */
     public List<ProviderIdent> listProviders();
 }

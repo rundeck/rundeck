@@ -32,14 +32,12 @@ package com.dtolabs.rundeck.core.execution.script;
 public interface ExecTaskParameters {
 
     /**
-     * command to run
-     * @return
+     * @return command to run
      */
     public String getCommandexecutable() ;
 
     /**
-     * Array of arguments for a command
-     * @return
+     * @return Array of arguments for a command
      */
     public String[] getCommandArgs() ;
 }

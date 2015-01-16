@@ -43,11 +43,11 @@ public class INodeEntryComparator implements Comparator<INodeEntry> {
     /**
      * Utility method to return nodes ordered by rank property
      *
-     * @param nodes
-     * @param rankProperty
-     * @param rankAscending
+     * @param nodes node set
+     * @param rankProperty rank property
+     * @param rankAscending true if ascending
      *
-     * @return
+     * @return ordered node list
      */
     public static List<INodeEntry> rankOrderedNodes(INodeSet nodes, String rankProperty,
             boolean rankAscending) {
@@ -57,11 +57,11 @@ public class INodeEntryComparator implements Comparator<INodeEntry> {
     /**
      * Utility method to return nodes ordered by rank property
      *
-     * @param nodes
-     * @param rankProperty
-     * @param rankAscending
+     * @param nodes node collection
+     * @param rankProperty rank property
+     * @param rankAscending true if ascending
      *
-     * @return
+     * @return ordered node list
      */
     public static List<INodeEntry> rankOrderedNodes(Collection<INodeEntry> nodes, String rankProperty,
             boolean rankAscending) {

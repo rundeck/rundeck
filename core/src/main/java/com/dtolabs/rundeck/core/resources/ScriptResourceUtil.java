@@ -137,13 +137,15 @@ class ScriptResourceUtil {
      *
      * @param logger         logger
      * @param workingdir     working dir
-     * @param scriptfile
+     * @param scriptfile     file
      * @param scriptargs     arguments to the shell
      * @param envContext     Environment variable context
      * @param newDataContext context data to replace in the scriptargs
      * @param interpreter    the remote shell script, which will be split on whitespace
      * @param logName        name of plugin to use in logging
      * @param interpreterArgsQuoted if true, quote the file+args as a single argument to the interpreter
+     * @return process
+     * @throws IOException on io error
      */
     static Process execShellScript(final Logger logger, final File workingdir,
                                    final File scriptfile, final String scriptargs,
@@ -161,12 +163,13 @@ class ScriptResourceUtil {
      * Build a ProcessBuilder to invoke a specified shell command and passing the arguments to the shell.
      *
      * @param workingdir     working dir
-     * @param scriptfile
+     * @param scriptfile     file
      * @param scriptargs     arguments to the shell
      * @param envContext     Environment variable context
      * @param newDataContext context data to replace in the scriptargs
      * @param interpreter    the remote shell script, which will be split on whitespace
      * @param interpreterArgsQuoted if true, quote the file+args as a single argument to the interpreter
+     * @return process builder
      */
     static ProcessBuilder buildProcess(final File workingdir, final File scriptfile, final String scriptargs,
                                        final Map<String, Map<String, String>> envContext,
@@ -206,11 +209,12 @@ class ScriptResourceUtil {
      *
      * @param logger         logger
      * @param workingdir     working dir
-     * @param scriptfile
+     * @param scriptfile     file
      * @param scriptargs     arguments to the shell
      * @param envContext     Environment variable context
      * @param newDataContext context data to replace in the scriptargs
      * @param logName        name of plugin to use in logging
+     * @return process
      */
     static Process execScript(final Logger logger, final File workingdir, final File scriptfile,
                               final String scriptargs,

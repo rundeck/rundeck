@@ -63,9 +63,8 @@ public class FrameworkResource implements IFrameworkResource {
 
 
     /**
-     * getter to name property
+     * @return name property
      *
-     * @return
      */
     public String getName() {
         return name;
@@ -77,9 +76,7 @@ public class FrameworkResource implements IFrameworkResource {
     private final File baseDir;
 
     /**
-     * getter to baseDir
-     *
-     * @return
+     * @return baseDir
      */
     public File getBaseDir() {
         return baseDir;
@@ -97,11 +94,6 @@ public class FrameworkResource implements IFrameworkResource {
     }
 
 
-    /**
-     * basic to string
-     *
-     * @return
-     */
     public String toString() {
         return name;
     }

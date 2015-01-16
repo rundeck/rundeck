@@ -44,7 +44,7 @@ public class ClientState {
     private static HashMap httpStates = new HashMap();
 
     /**
-     * Get the HTTP State object for the current thread
+     * @return the HTTP State object for the current thread
      */
     public synchronized static HttpState getHttpState() {
         return getState(Thread.currentThread());
@@ -52,6 +52,7 @@ public class ClientState {
 
     /**
      * Reset the HTTP State object for the current thread
+     * @return current state
      */
     public synchronized static HttpState resetHttpState() {
         httpStates.remove(Thread.currentThread());

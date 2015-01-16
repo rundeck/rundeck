@@ -80,8 +80,8 @@ public class ResourceXMLParser {
     /**
      * Parse the document, applying the configured Receiver to the parsed entities
      *
-     * @throws ResourceXMLParserException
-     * @throws FileNotFoundException
+     * @throws ResourceXMLParserException parse error
+     * @throws java.io.IOException io error
      */
     public void parse() throws ResourceXMLParserException, IOException {
         final EntityResolver resolver = createEntityResolver();

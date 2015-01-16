@@ -35,6 +35,7 @@ import java.util.List;
 public interface PluginCache {
     /**
      * Add a new scanner
+     * @param  scanner scanner
      */
     void addScanner(PluginScanner scanner);
 
@@ -44,6 +45,7 @@ public interface PluginCache {
      * @param ident provider ident
      *
      * @return loader for the provider
+     * @throws ProviderLoaderException on loading error
      */
     ProviderLoader getLoaderForIdent(ProviderIdent ident) throws ProviderLoaderException;
     List<ProviderIdent> listProviders() ;

@@ -30,7 +30,8 @@ package com.dtolabs.rundeck.core.dispatcher;
  */
 public interface ExecutionFollowReceiver {
     /**
-     * Receive updated log output status, and return true to continue receiving output.
+     * Receive updated log output status
+     * @return true to continue receiving output.
      *
      * @param offset     offset location
      * @param totalSize  total log file size
@@ -39,7 +40,8 @@ public interface ExecutionFollowReceiver {
     public boolean receiveFollowStatus(long offset, long totalSize, long duration);
 
     /**
-     * Receive a log entry, and return true to continue receiving output.
+     * Receive a log entry
+     * @return true to continue receiving output.
      *
      * @param timeStr  time string
      * @param loglevel log level string

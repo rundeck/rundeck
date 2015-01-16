@@ -26,12 +26,13 @@ import java.util.Map;
 public interface StreamingLogWriter {
     /**
      * Open a stream, called before addEvent is called
+     * @throws java.io.IOException if an io error occurs
      */
     void openStream() throws IOException;
 
     /**
      * Add a new event
-     * @param event
+     * @param event log event
      */
     void addEvent(LogEvent event);
 

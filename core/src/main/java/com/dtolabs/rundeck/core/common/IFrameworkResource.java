@@ -26,22 +26,18 @@ import java.io.File;
  */
 public interface IFrameworkResource {
     /**
-     * Getter to resource name
-     *
-     * @return
+     * @return resource name
      */
 
     String getName();
 
     /**
-     * Getter to resource base dir
-     *
-     * @return
+     * @return resource base dir
      */
     File getBaseDir();
 
     /**
-     * Get the parent of this resource
+     * @return the parent of this resource
      */
     IFrameworkResourceParent getParent();
 

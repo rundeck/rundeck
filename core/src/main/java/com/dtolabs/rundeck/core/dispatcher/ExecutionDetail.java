@@ -34,43 +34,43 @@ import java.util.Date;
  */
 public interface ExecutionDetail {
     /**
-     * Get Execution ID
+     * @return Execution ID
      */
     public String getId();
     /**
-     * Get Execution view URL
+     * @return Execution view URL
      */
     public String getUrl();
     /**
-     * Get Execution state
+     * @return Execution state
      */
     public ExecutionState getStatus();
     /**
-     * Get user
+     * @return user
      */
     public String getUser();
     /**
-     * Get date started
+     * @return date started
      */
     public Date getDateStarted();
     /**
-     * Get date completed, or null
+     * @return date completed, or null
      */
     public Date getDateCompleted();
     /**
-     * Get user who aborted the job if aborted
+     * @return user who aborted the job if aborted
      */
     public String getAbortedBy();
     /**
-     * Get execution description
+     * @return execution description
      */
     public String getDescription();
     /**
-     * Get execution arguments
+     * @return execution arguments
      */
     public String getArgString();
     /**
-     * Get associated job information, or null
+     * @return associated job information, or null
      */
     public IStoredJobExecution getExecutionJob();
 }

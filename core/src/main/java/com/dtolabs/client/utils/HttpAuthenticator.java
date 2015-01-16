@@ -45,7 +45,7 @@ public interface HttpAuthenticator {
      *
      * @return true if authentication succeeded.
      *
-     * @throws HttpClientException
+     * @throws HttpClientException on error
      */
     boolean authenticate(URL reqUrl, HttpClient client) throws HttpClientException;
 

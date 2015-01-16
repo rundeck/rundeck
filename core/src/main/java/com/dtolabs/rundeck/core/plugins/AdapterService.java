@@ -70,7 +70,11 @@ public class AdapterService<S,T> implements ProviderService<T> {
     }
 
     /**
-     * Create an AdapterService given a source service and a Converter.
+     * @return Create an AdapterService given a source service and a Converter.
+     * @param converter converter
+     * @param sourceService source
+     * @param <X> provider type
+     * @param <Y> destination type
      */
     public static <X,Y> AdapterService<X,Y> adaptFor(final ProviderService<X> sourceService,
                                                      final Converter<X, Y> converter) {

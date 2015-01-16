@@ -124,6 +124,7 @@ public class ServerService {
      * @param queryParams any query parameters
      * @param uploadFile  a file to upload with the request.
      * @param method      HTTP connection method, e.g. "get","post","put","delete".
+     * @param expectedContentType content type
      *
      * @return parsed XML document, or null
      *
@@ -148,6 +149,8 @@ public class ServerService {
      * @param queryParams any query parameters
      * @param uploadFile  a file to upload with the request.
      * @param method      HTTP connection method, e.g. "get","post","put","delete".
+     * @param expectedContentType expected content type
+     * @param formData data
      *
      * @return parsed XML document, or null
      *

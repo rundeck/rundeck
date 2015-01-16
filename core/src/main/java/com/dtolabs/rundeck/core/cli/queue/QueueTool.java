@@ -458,8 +458,10 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
      * @param out output for progress marks
      * @param logger logger for output of log lines
      * @param execid the execution id
+     * @param restart true to restart the output
      *
      * @throws CentralDispatcherException if any error occurs
+     * @return true if execution was successful
      */
     public static boolean followAction(final String execid,
                               final boolean restart,

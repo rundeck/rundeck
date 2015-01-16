@@ -33,44 +33,44 @@ import java.util.Map;
  */
 public interface ScriptPluginProvider {
     /**
-     * Return provider name
+     * @return provider name
      */
     public String getName();
 
     /**
-     * Return service name
+     * @return service name
      */
     public String getService();
 
     /**
-     * Return jar file containing the plugin
+     * @return jar file containing the plugin
      */
     public File getArchiveFile();
 
     /**
-     * Return directory containing the expanded contents
+     * @return directory containing the expanded contents
      */
     public File getContentsBasedir();
 
     /**
-     * Return script args to pass to the file
+     * @return script args to pass to the file
      */
     public String getScriptArgs();
 
     /**
-     * Return script file to execute
+     * @return script file to execute
      */
     public File getScriptFile();
     /**
-     * Return any interpreter specification to run the script
+     * @return any interpreter specification to run the script
      */
     public String getScriptInterpreter();
     /**
-     * Return true if the script file and args should be passed as a single argument to the interpreter, default false.
+     * @return true if the script file and args should be passed as a single argument to the interpreter, default false.
      */
     public boolean getInterpreterArgsQuoted();
     /**
-     * Return any interpreter specification to run the script
+     * @return any interpreter specification to run the script
      */
     public Map<String,Object> getMetadata();
 }

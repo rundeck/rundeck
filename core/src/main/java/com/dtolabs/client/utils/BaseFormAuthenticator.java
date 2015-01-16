@@ -143,7 +143,7 @@ public abstract class BaseFormAuthenticator implements HttpAuthenticator {
      *
      * @return true if authentication succeeded.
      *
-     * @throws com.dtolabs.client.utils.HttpClientException
+     * @throws com.dtolabs.client.utils.HttpClientException on error
      *
      */
     public boolean authenticate(final URL baseURL, final HttpClient client) throws HttpClientException {

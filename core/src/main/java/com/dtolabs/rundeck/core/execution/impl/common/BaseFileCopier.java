@@ -169,7 +169,8 @@ public class BaseFileCopier {
     }
 
     /**
-     * Return the default file extension for a temp file based on the type of node
+     * @return the default file extension for a temp file based on the type of node
+     * @param node node
      */
     public static String defaultRemoteFileExtensionForNode(final INodeEntry node){
         if (null != node.getOsFamily() && "windows".equalsIgnoreCase(node.getOsFamily().trim())) {
@@ -180,7 +181,7 @@ public class BaseFileCopier {
     }
 
     /**
-     * Return a string with a file extension appended if it is not already on the file path
+     * @return a string with a file extension appended if it is not already on the file path
      * provided.
      *
      * @param filepath the file path string
@@ -293,7 +294,12 @@ public class BaseFileCopier {
 
     /**
      *
-     * @throws FileCopierException
+     * @param original source file
+     * @param input source stream
+     * @param script source string
+     * @param destinationFile destination
+     * @return local file
+     * @throws FileCopierException on error
      */
     protected static File writeLocalFile(
             File original,

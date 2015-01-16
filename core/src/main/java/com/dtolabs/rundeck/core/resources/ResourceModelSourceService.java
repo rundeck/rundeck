@@ -74,7 +74,10 @@ public class ResourceModelSourceService extends PluggableProviderRegistryService
 
 
     /**
-     * Return a ResourceModelSource of a give type with a given configuration
+     * @return a ResourceModelSource of a give type with a given configuration
+     * @param configuration configuration
+     * @param type provider name
+     * @throws ExecutionServiceException on error
      */
     public ResourceModelSource getSourceForConfiguration(final String type, final Properties configuration) throws
         ExecutionServiceException {

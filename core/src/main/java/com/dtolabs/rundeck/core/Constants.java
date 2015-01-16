@@ -49,7 +49,7 @@ public final class Constants {
     public static final String JAVA_HOME = System.getProperty("java.home");
 
     /**
-     * RDECK_BASE, base directory patch for instance of client, equivalent to ${rdeck.base}
+     * @return RDECK_BASE, base directory patch for instance of client, equivalent to ${rdeck.base}
      */
     public static String getSystemBaseDir() {
         return System.getProperty("rdeck.base");
@@ -60,7 +60,7 @@ public final class Constants {
     /* ******* The rest of these Constants mostly depend on the bootstrapping constants above */
 
     /**
-     * the framework configuration directory
+     * @return the framework configuration directory
      *
      * @param rdeck_base Ctl Base directory
      */
@@ -69,8 +69,6 @@ public final class Constants {
     }
 
     /**
-     * Helper method to {@link #getFrameworkConfigDir()}
-     *
      * @return configDirectory.
      */
     public static String getFrameworkConfigDir() {
@@ -82,7 +80,7 @@ public final class Constants {
     }
 
     /**
-     * path to framework.properties file
+     * @return path to framework.properties file
      *
      * @param rdeck_base Ctl Base directory
      */
@@ -91,7 +89,7 @@ public final class Constants {
     }
 
     /**
-     * get path to log4j.properties file
+     * @return get path to log4j.properties file
      *
      * @param rdeck_base Ctl Base directory
      */
@@ -108,7 +106,7 @@ public final class Constants {
     }
 
     /**
-     * path to the rdeck framework defaults file for template filterization
+     * @return path to the rdeck framework defaults file for template filterization
      */
     public static String getDefaultsPropertiesName() {
         return "run-defaults.properties";
@@ -116,7 +114,7 @@ public final class Constants {
 
 
     /**
-     * path to the framework preferences file for setup
+     * @return path to the framework preferences file for setup
      *
      * @param rdeck_base Ctl Base directory
      */
@@ -126,7 +124,7 @@ public final class Constants {
 
 
     /**
-     * the var subdir for RDECK_BASE, containing framework logs, etc
+     * @return the var subdir for RDECK_BASE, containing framework logs, etc
      *
      * @param rdeck_base Ctl Base directory
      */
@@ -153,22 +151,20 @@ public final class Constants {
     }
 
     /**
-     * Return framework projects dir
+     * @return framework projects dir
      *
      * @param rdeck_base Ctl Base directory
      *
-     * @return
      */
     public static String getFrameworkProjectsDir(final String rdeck_base) {
         return System.getProperty("rdeck.projects", rdeck_base + FILE_SEP + "projects");
     }
 
     /**
-     * Return framework logs dir
+     * @return framework logs dir
      *
      * @param rdeck_base Ctl Base directory
      *
-     * @return
      */
     public static String getFrameworkLogsDir(final String rdeck_base) {
         return System.getProperty("rdeck.runlogs", getBaseVar(rdeck_base) + FILE_SEP + "logs");

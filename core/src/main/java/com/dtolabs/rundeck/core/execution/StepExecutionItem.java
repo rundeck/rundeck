@@ -31,7 +31,7 @@ package com.dtolabs.rundeck.core.execution;
  */
 public interface StepExecutionItem {
     /**
-     * Return type of the execution item
+     * @return type of the execution item
      */
     public String getType();
 }

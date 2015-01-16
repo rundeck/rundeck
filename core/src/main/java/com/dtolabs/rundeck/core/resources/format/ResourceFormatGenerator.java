@@ -40,18 +40,22 @@ import java.util.Set;
 public interface ResourceFormatGenerator {
 
     /**
-     * Return the list of file extensions that this format generator can generate
+     * @return the list of file extensions that this format generator can generate
      */
     public Set<String> getFileExtensions();
 
     /**
-     * Return the list of MIME types that this format generator can generate. If more than one
+     * @return the list of MIME types that this format generator can generate. If more than one
      * are returned, then the first value will be used by default if necessary.
      */
     public List<String> getMIMETypes();
 
     /**
      * generate formatted output
+     * @param nodeset nodes
+     * @param stream output stream
+     * @throws IOException on io error
+     * @throws ResourceFormatGeneratorException on format error
      */
     public void generateDocument(INodeSet nodeset, OutputStream stream) throws ResourceFormatGeneratorException,
         IOException;

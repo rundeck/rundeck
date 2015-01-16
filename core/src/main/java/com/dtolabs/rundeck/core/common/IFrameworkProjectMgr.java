@@ -74,7 +74,7 @@ public interface IFrameworkProjectMgr extends IFrameworkResourceParent, IPropert
     FrameworkProject createFrameworkProject(String projectName);
 
     /**
-     * Create a new project if it doesn't exist, otherwise returns existing project
+     * @return Create a new project if it doesn't exist, otherwise returns existing project
      *
      * @param projectName Name of the project
      * @param properties additional properties to include in the project's properties file

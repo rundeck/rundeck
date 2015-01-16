@@ -33,7 +33,7 @@ public class PoliciesParseException extends Exception {
     }
 
     /**
-     * @param message
+     * @param message message
      */
     public PoliciesParseException(String message) {
         super(message);
@@ -41,7 +41,7 @@ public class PoliciesParseException extends Exception {
     }
 
     /**
-     * @param cause
+     * @param cause cause
      */
     public PoliciesParseException(Throwable cause) {
         super(cause);
@@ -49,8 +49,8 @@ public class PoliciesParseException extends Exception {
     }
 
     /**
-     * @param message
-     * @param cause
+     * @param message message
+     * @param cause cause
      */
     public PoliciesParseException(String message, Throwable cause) {
         super(message, cause);

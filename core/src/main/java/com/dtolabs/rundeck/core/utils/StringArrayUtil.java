@@ -89,8 +89,8 @@ public class StringArrayUtil {
     /**
      * The difference set operation
      *
-     * @param list1
-     * @param list2
+     * @param list1 list1
+     * @param list2 list2
      * @return the set of all items not in both lists
      */
     public static String[] difference(final String[] list1, final String[] list2) {
@@ -111,10 +111,9 @@ public class StringArrayUtil {
     }
 
     /**
-     * Returns true if the value is in the list.
-     * @param list
-     * @param value
-     * @return
+     * @return true if the value is in the list.
+     * @param list list
+     * @param value value
      */
     public static boolean contains(final String[] list, final String value){
         HashSet<String> set = new HashSet<String>(Arrays.asList(list));

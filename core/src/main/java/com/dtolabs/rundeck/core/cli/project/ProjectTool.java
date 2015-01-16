@@ -99,8 +99,8 @@ public class ProjectTool implements ActionMaker, CLITool {
     /**
      * Creates an instance and executes {@link #run(String[])}.
      *
-     * @param args
-     * @throws Exception
+     * @param args args
+     * @throws Exception if an error occurs
      */
     public static void main(final String[] args) throws Exception {
         final ProjectTool c = new ProjectTool();

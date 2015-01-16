@@ -48,8 +48,9 @@ public class UpdateUtils {
     /**
      * Get the source URL and store it to a destination file path
      *
-     *
-     * @throws UpdateException
+     * @param sourceUrl url
+     * @param destinationFilePath destination
+     * @throws UpdateException on error
      */
     public static void updateFileFromUrl(final String sourceUrl, final String destinationFilePath) throws
         UpdateException {
@@ -57,10 +58,12 @@ public class UpdateUtils {
     }
 
     /**
-     * Get the source URL and store it to a destination file path
+     * Get the source File and store it to a destination file path
      *
      *
-     * @throws UpdateException
+     * @param sourceFile source
+     * @param destinationFilePath destination
+     * @throws UpdateException on error
      */
     public static void updateFileFromFile(final File sourceFile, final String destinationFilePath) throws
         UpdateException {
@@ -84,8 +87,9 @@ public class UpdateUtils {
     /**
      * Get the source URL and store it to a destination file path
      *
-     *
-     * @throws UpdateException
+     * @param input input stream
+     * @param destinationFilePath destination
+     * @throws UpdateException on error
      */
     public static void updateFileFromInputStream(final InputStream input, final String destinationFilePath) throws
         UpdateException {
@@ -120,7 +124,11 @@ public class UpdateUtils {
      * Get the source URL and store it to a destination file path
      *
      *
-     * @throws UpdateException
+     * @throws UpdateException on error
+     * @param sourceUrl url
+     * @param destinationFilePath destination
+     * @param username username
+     * @param password password
      */
     public static void updateFileFromUrl(final String sourceUrl, final String destinationFilePath,
                                          final String username, final String password) throws
@@ -131,8 +139,12 @@ public class UpdateUtils {
     /**
      * Get the source URL and store it to a destination file path
      *
-     *
-     * @throws UpdateException
+     * @param sourceUrl url
+     * @param destinationFilePath destination
+     * @param username username
+     * @param password password
+     * @param factory updater factory
+     * @throws UpdateException on error
      */
     public static void updateFileFromUrl(final String sourceUrl, final String destinationFilePath,
                                          final String username, final String password,
@@ -171,6 +183,9 @@ public class UpdateUtils {
     /**
      * Update a destination file with an updater implementation, while maintaining appropriate
      * locks around the action and file
+     * @param updater updater
+     * @param destFile destination
+     * @throws UpdateException on error
      */
     public static void update(final FileUpdater updater, final File destFile) throws UpdateException {
 

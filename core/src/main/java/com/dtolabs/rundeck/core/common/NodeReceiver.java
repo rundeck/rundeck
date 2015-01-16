@@ -32,7 +32,7 @@ package com.dtolabs.rundeck.core.common;
 public interface NodeReceiver {
     /**
      * Put a filled node entry into the dataset
-     * @param iNodeEntry
+     * @param iNodeEntry node entry
      */
     void putNode(INodeEntry iNodeEntry);
 }

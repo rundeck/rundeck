@@ -34,72 +34,72 @@ import java.util.Map;
  */
 public interface INodeEntry extends INodeBase, INodeDesc {
     /**
-     * Return the OS family
+     * @return the OS family
      */
     public String getOsFamily();
 
     /**
-     * Return the OS architecture
+     * @return the OS architecture
      */
     public String getOsArch();
 
     /**
-     * Return the OS version
+     * @return the OS version
      */
     public String getOsVersion();
 
     /**
-     * Return the OS name
+     * @return the OS name
      */
     public String getOsName();
 
     /**
-     * Return the name of the node
+     * @return the name of the node
      */
     public String getNodename();
 
     /**
-     * Return the username
+     * @return the username
      */
     public String getUsername();
 
     /**
-     * Return true if the hostname string includes embedded username in the "username@hostname" pattern
+     * @return true if the hostname string includes embedded username in the "username@hostname" pattern
      */
     public boolean containsUserName();
 
     /**
-     * Return true if the hostname string includes embedded port in the "hostname:port" pattern
+     * @return true if the hostname string includes embedded port in the "hostname:port" pattern
      */
     public boolean containsPort();
 
     /**
-     * Return the username extracted from the hostname
+     * @return the username extracted from the hostname
      */
     public String extractUserName();
 
     /**
-     * Return the standalone hostname value extracted from the hostname string
+     * @return the standalone hostname value extracted from the hostname string
      */
     public String extractHostname();
 
     /**
-     * Return the port string extracted from the hostname
+     * @return the port string extracted from the hostname
      */
     public String extractPort();
 
     /**
-     * Return the project name if it is set
+     * @return the project name if it is set
      */
     public String getFrameworkProject();
 
     /**
-     * Return the description
+     * @return the description
      */
     public String getDescription();
 
     /**
-     * Return the set of tag strings
+     * @return the set of tag strings
      */
     public Set getTags();
 

@@ -135,9 +135,9 @@ public class JobDefinitionSerializer {
      * Add nodefilter and dispatch element to job element for the nodeset, if not null
      *
      * @param job     job element
-     * @param threadCount
-     * @param excludePrecedence
-     * @param nodeFilter
+     * @param threadCount thread count
+     * @param excludePrecedence exclude precedence set
+     * @param nodeFilter node filter string
      */
     private static void addNodefilters(final Element job, int threadCount, boolean keepgoing,
             boolean excludePrecedence, String nodeFilter) {

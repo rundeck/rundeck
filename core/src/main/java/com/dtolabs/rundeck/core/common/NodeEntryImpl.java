@@ -97,7 +97,8 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
     }
 
     /**
-     * Factory method to create an instance with a hostname and node name.
+     * Factory method
+     * @return create an instance with a hostname and node name.
      *
      * @param hostname hostname value
      * @param nodename node name
@@ -334,14 +335,15 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
     }
 
     /**
-     * Return the attributes for the node without any of the predefined attributes.
+     * @return the attributes for the node without any of the predefined attributes.
      */
     public Map<String, String> getExtendedAttributes() {
         return nodeExtendedAttributes(this);
     }
 
     /**
-     * Return the attributes for the node without any of the predefined attributes.
+     * @return the attributes for the node without any of the predefined attributes.
+     * @param node node
      */
     public static Map<String, String> nodeExtendedAttributes(final INodeEntry node) {
         final HashMap<String, String> attrs = new HashMap<String, String>();
@@ -355,8 +357,9 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
     }
 
     /**
-     * Return the node attributes broken into namespaces, the result map will be contructed as:
+     * @return the node attributes broken into namespaces, the result map will be contructed as:
      * "namespace" : { "key": ["attr","value"] }  where "attr" is the source full attribute name
+     * @param node node
      */
     public static Map<String, Map<String, List<String>>> nodeNamespacedAttributes(final INodeEntry node) {
         final Map<String, String> attrs = nodeExtendedAttributes(node);
@@ -403,6 +406,7 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
      *
      * @param name  attribute name
      * @param value attribute value
+     *  @return value
      */
     public String setAttribute(final String name, final String value) {
         if(null!=value){

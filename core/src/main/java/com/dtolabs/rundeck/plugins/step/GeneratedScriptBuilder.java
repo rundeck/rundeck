@@ -62,6 +62,7 @@ public class GeneratedScriptBuilder implements GeneratedScript {
      *
      * @param script the script text
      * @param args   the arguments for the script
+     *               @return the generated script
      */
     public static GeneratedScript script(final String script, final String[] args) {
         return new GeneratedScriptBuilder(script, args);
@@ -70,6 +71,7 @@ public class GeneratedScriptBuilder implements GeneratedScript {
     /**
      * Create a command
      *
+     * @return the generated script
      * @param command the command and arguments
      */
     public static GeneratedScript command(final String... command) {

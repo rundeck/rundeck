@@ -116,7 +116,7 @@ public class StateUtils {
 
     /**
      * Generate string for a context id's parameter section, if present
-     * @param contextId
+     * @param contextId context id
      * @return parameter string, or blank string
      */
     public static String parameterString(StepContextId contextId) {
@@ -124,9 +124,8 @@ public class StateUtils {
     }
 
     /**
-     * Generate the parameter string for a map of parameters
-     * @param params
-     * @return
+     * @return Generate the parameter string for a map of parameters
+     * @param params params
      */
     public static String parameterString(Map<String, String> params) {
         TreeSet<String> stringStringTreeSet = new TreeSet<String>(params.keySet());
@@ -141,9 +140,8 @@ public class StateUtils {
     }
 
     /**
-     * Generate a string representing the step identifier
-     * @param ident
-     * @return
+     * @return Generate a string representing the step identifier
+     * @param ident ident
      */
     public static String stepIdentifierToString(StepIdentifier ident) {
         StringBuilder sb = new StringBuilder();
@@ -157,9 +155,8 @@ public class StateUtils {
     }
 
     /**
-     * Parse a step identifier from a string
-     * @param input
-     * @return
+     * @return Parse a step identifier from a string
+     * @param input identifier string
      */
     public static StepIdentifier stepIdentifierFromString(String input) {
         if(null==input){
@@ -173,9 +170,8 @@ public class StateUtils {
     }
 
     /**
-     * Generate a step context id from a string
-     * @param s
-     * @return
+     * @return Generate a step context id from a string
+     * @param s context id
      */
     public static StepContextId stepContextIdFromString(String s) {
         String[] split = s.split("@");
@@ -203,9 +199,8 @@ public class StateUtils {
     }
 
     /**
-     * Parse a paramter string to a parameter map
-     * @param t
-     * @return
+     * @return Parse a paramter string to a parameter map
+     * @param t parameter
      */
     public static Map<String, String> parseParameterString(String t) {
         Map<String, String> params;
@@ -220,25 +215,23 @@ public class StateUtils {
     }
 
     /**
-     * Return true if the identifier represents a subcontext context of the parent identifier,
+     * @return true if the identifier represents a subcontext context of the parent identifier,
      * optionally allowing sub steps
      * @param parent parent identifier
      * @param child child identifier
      * @param substep if true, allow the child identifier to be longer than the parent,
      *                otherwise require exact same length
-     * @return
      */
     public static boolean isMatchedIdentifier(String parent, String child, boolean substep) {
         return isMatchedIdentifier(stepIdentifierFromString(parent), stepIdentifierFromString(child), substep);
     }
 
     /**
-     * Return true if the identifier is a subcontext of the parent identifier, optionally allowing sub steps
+     * @return true if the identifier is a subcontext of the parent identifier, optionally allowing sub steps
      * @param parent parent identifier
      * @param child child identifier
      * @param substep if true, allow the child identifier to be longer than the parent,
      *                otherwise require exact same length
-     * @return
      */
     public static boolean isMatchedIdentifier(StepIdentifier parent, StepIdentifier child, boolean substep) {
         if (parent.getContext().size() > child.getContext().size()) {

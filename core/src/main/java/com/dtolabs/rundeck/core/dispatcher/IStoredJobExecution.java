@@ -31,7 +31,7 @@ package com.dtolabs.rundeck.core.dispatcher;
  */
 public interface IStoredJobExecution  extends IStoredJob{
     /**
-     * Return average duration in milliseconds, if available, otherwise return a value less than 0.
+     * @return average duration in milliseconds, if available, otherwise return a value less than 0.
      */
     public long getAverageDuration();
 }

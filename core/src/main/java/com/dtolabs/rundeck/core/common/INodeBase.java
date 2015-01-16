@@ -31,8 +31,7 @@ package com.dtolabs.rundeck.core.common;
  */
 public interface INodeBase {
     /**
-     * Return the name of the node
-     * @return
+     * @return the name of the node
      */
     public String getNodename();
 }

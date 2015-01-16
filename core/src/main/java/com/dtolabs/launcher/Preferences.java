@@ -48,6 +48,10 @@ public class Preferences {
 
     /**
      * generate preferences file represented by preferences String
+     * @param args arg strings
+     * @param preferences prefs
+     * @param inputProps input
+     * @throws Exception on error
      */
     public static void generate(String args[], String preferences, Properties inputProps) throws Exception {
         String base;
