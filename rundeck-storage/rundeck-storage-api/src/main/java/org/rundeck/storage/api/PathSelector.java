@@ -5,11 +5,10 @@ package org.rundeck.storage.api;
  */
 public interface PathSelector {
     /**
-     * returns true if the given path should be managed by this handler
+     * @return true if the given path matches
      *
-     * @param path
+     * @param path path
      *
-     * @return
      */
     boolean matchesPath(Path path);
 }

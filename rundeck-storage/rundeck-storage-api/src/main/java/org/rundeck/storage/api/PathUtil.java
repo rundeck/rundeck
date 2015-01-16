@@ -64,8 +64,8 @@ public class PathUtil {
 
     /**
      * create a path from an array of components
-     * @param components
-     * @return
+     * @param components path components strings
+     * @return a path
      */
     public static Path pathFromComponents(String[] components) {
         if (null == components || components.length == 0) {
@@ -76,8 +76,8 @@ public class PathUtil {
 
     /**
      * create a path from an array of components
-     * @param components
-     * @return
+     * @param components path components strings
+     * @return a path string
      */
     public static String pathStringFromComponents(String[] components) {
         if (null == components || components.length == 0) {
@@ -98,24 +98,21 @@ public class PathUtil {
     }
 
     /**
-     * Return true if the given path starts with the given root
+     * @return true if the given path starts with the given root
      *
-     * @param path
-     * @param root
+     * @param path test path
+     * @param root root
      *
-     * @return
      */
     public static boolean hasRoot(Path path, Path root) {
         return hasRoot(path.getPath(), root.getPath());
     }
 
     /**
-     * Return true if the given path starts with the given root
+     * @return true if the given path starts with the given root
      *
-     * @param path
-     * @param root
-     *
-     * @return
+     * @param path test path
+     * @param root root
      */
     public static boolean hasRoot(String path, String root) {
         String p = cleanPath(path);
@@ -128,19 +125,16 @@ public class PathUtil {
     }
 
     /**
-     * Return true if the path is the root
+     * @return true if the path is the root
      *
-     * @param path
-     *
-     * @return
+     * @param path path string
      */
     public static boolean isRoot(String path) {
         return isRoot(asPath(path));
     }
     /**
-     * Return true if the path is the root
-     * @param path
-     * @return
+     * @return true if the path is the root
+     * @param path path
      */
     public static boolean isRoot(Path path) {
         return path.equals(ROOT);
@@ -221,11 +215,10 @@ public class PathUtil {
     }
 
     /**
-     * A Path selector that matches the given root path and any resource below it.
+     * @return A Path selector that matches the given root path and any resource below it.
      *
-     * @param rootPath
+     * @param rootPath path to match
      *
-     * @return
      */
     public static PathSelector subpathSelector(final Path rootPath) {
         return new PathSelector() {
@@ -323,10 +316,10 @@ public class PathUtil {
     /**
      * compose two selectors
      *
-     * @param a
-     * @param b
+     * @param a selector 1
+     * @param b selector 2
      * @param and true indicates AND, otherwise OR
-     * @param <T>
+     * @param <T> resource type
      *
      * @return new selector appyling the operator to the selector
      */
@@ -363,17 +356,18 @@ public class PathUtil {
 
 
     /**
-     * Return a {@link ResourceSelector} constructed using this selector syntax:<br/>
+     * Return a {@link ResourceSelector} constructed using this selector syntax:<br>
      * <pre>
      * key OP value [; key OP value]*
      * </pre>
      * OP can be "=" (exact match) or "=~" (regular expression match).
-     * <br/>
+     * <br>
      * The returned selector effectively "AND"s the match requirements.
-     * <br/>
+     * <br>
      * The special string "*" equates to {@link #allResourceSelector()}
      *
      * @param selector the selector syntax string to parse, not null
+     * @param <T> resource type
      *
      * @return a resource selector corresponding to the parsed selector string
      */
