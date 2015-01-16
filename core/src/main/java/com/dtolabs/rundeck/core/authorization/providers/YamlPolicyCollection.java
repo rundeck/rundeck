@@ -54,7 +54,7 @@ public class YamlPolicyCollection implements PolicyCollection {
         }
     }
 
-    public Collection<String> groupNames() throws InvalidCollection {
+    public Collection<String> groupNames()  {
         List<String> groups = new ArrayList<String>();
         for (YamlPolicy policy : all) {
             for (String policyGroup : policy.getGroups()) {
@@ -64,12 +64,12 @@ public class YamlPolicyCollection implements PolicyCollection {
         return groups;
     }
 
-    public long countPolicies() throws InvalidCollection {
+    public long countPolicies()  {
         return all.size();
     }
 
     public Collection<AclContext> matchedContexts(final Subject subject, final Set<Attribute> environment)
-        throws InvalidCollection {
+         {
         return policyMatcher(subject, all, environment, file);
 
     }
@@ -79,12 +79,11 @@ public class YamlPolicyCollection implements PolicyCollection {
      *
      * @return
      *
-     * @throws javax.xml.xpath.XPathExpressionException
      *
      */
     static Collection<AclContext> policyMatcher(final Subject subject, final Collection<? extends Policy> policyLister,
                                                 final Set<Attribute> environment, final File file)
-        throws InvalidCollection {
+         {
         final ArrayList<AclContext> matchedContexts = new ArrayList<AclContext>();
         int i = 0;
         Set<Username> userPrincipals = subject.getPrincipals(Username.class);
