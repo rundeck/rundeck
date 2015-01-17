@@ -48,6 +48,7 @@ class ProjectServiceTests  {
     <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
     <status>true</status>'''
     static String EXEC_XML_TEST1_DEF_END= '''
+    <matchedNodeList />
     <failedNodeList />
     <succeededNodeList />
     <abortedby />

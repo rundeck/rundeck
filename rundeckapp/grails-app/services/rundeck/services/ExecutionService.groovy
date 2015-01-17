@@ -35,6 +35,7 @@ import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import org.apache.commons.io.FileUtils
+import org.apache.commons.lang.StringUtils
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
@@ -742,6 +743,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             StepExecutionContext executioncontext = createContext(execution, null,framework, authContext,
                     execution.user, jobcontext, multiListener, null,extraParams, extraParamsExposed)
+
+            execution.matchedNodeList = StringUtils.join(executioncontext.getNodes().getNodeNames(), ",")
+            execution.save(flush:true)
 
             //ExecutionService handles Job reference steps
             final cis = StepExecutionService.getInstanceForFramework(framework);
@@ -1767,6 +1771,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def ScheduledExecution scheduledExecution
         def Execution execution = Execution.get(exId)
         execution.properties=props
+        if (props.matchedNodes) {
+            execution.matchedNodeList = props.matchedNodes.join(",")
+        }
         if (props.failedNodes) {
             execution.failedNodeList = props.failedNodes.join(",")
         }

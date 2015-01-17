@@ -405,11 +405,15 @@ public class NotificationService implements ApplicationContextAware{
             description: e.scheduledExecution.description?:'',
             argstring: e.argString,
             project: e.project,
+            matchedNodeListString: e.matchedNodeList,
+            matchedNodeList: e.matchedNodeList?.split(",") as List,
             failedNodeListString: e.failedNodeList,
             failedNodeList: e.failedNodeList?.split(",") as List,
             succeededNodeListString: e.succeededNodeList,
             succeededNodeList: e.succeededNodeList?.split(",") as List,
-            loglevel: ExecutionService.textLogLevels[e.loglevel] ?: e.loglevel
+            loglevel: ExecutionService.textLogLevels[e.loglevel] ?: e.loglevel,
+            includeNodeFilters: e.asIncludeMap(),
+            excludeNodeFilters: e.asExcludeMap()
         ]
         if (null != e.dateCompleted) {
             emap.dateEnded = e.dateCompleted

@@ -13,6 +13,7 @@ class Execution extends ExecutionContext {
     Date dateCompleted 
     String status
     String outputfilepath
+    String matchedNodeList
     String failedNodeList
     String succeededNodeList
     String abortedby
@@ -57,6 +58,7 @@ class Execution extends ExecutionContext {
         nodeThreadcount(nullable:true)
         nodeRankOrderAscending(nullable: true)
         nodeRankAttribute(nullable: true)
+        matchedNodeList(nullable:true, blank:true)
         failedNodeList(nullable:true, blank:true)
         succeededNodeList(nullable:true, blank:true)
         abortedby(nullable:true, blank:true)
@@ -80,6 +82,7 @@ class Execution extends ExecutionContext {
         user column: "rduser"
         argString type: 'text'
 
+        matchedNodeList type: 'text'
         failedNodeList type: 'text'
         succeededNodeList type: 'text'
         outputfilepath type: 'text'
@@ -144,6 +147,7 @@ class Execution extends ExecutionContext {
         map.dateCompleted=dateCompleted
         map.status=status
         map.outputfilepath=outputfilepath
+        map.matchedNodeList = matchedNodeList
         map.failedNodeList = failedNodeList
         map.succeededNodeList = succeededNodeList
         map.abortedby=abortedby
@@ -196,6 +200,7 @@ class Execution extends ExecutionContext {
         exec.dateCompleted=data.dateCompleted
         exec.status=data.status
         exec.outputfilepath = data.outputfilepath
+        exec.matchedNodeList = data.matchedNodeList
         exec.failedNodeList = data.failedNodeList
         exec.succeededNodeList = data.succeededNodeList
         exec.abortedby = data.abortedby
