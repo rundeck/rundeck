@@ -20,7 +20,7 @@ import org.springframework.context.ApplicationContext
 
 /**
  * ApplicationContextPluginFileSource reads a list of plugin files embedded in the application resources
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-07-18
  */
 class ApplicationContextPluginFileSource implements PluginFileSource{

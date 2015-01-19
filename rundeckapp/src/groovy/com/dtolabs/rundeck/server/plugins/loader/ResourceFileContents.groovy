@@ -20,7 +20,7 @@ import org.springframework.core.io.Resource
 
 /**
  * ResourceFileContents loads a plugin from a resource
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-07-18
  */
 class ResourceFileContents implements PluginFileContents {

@@ -20,7 +20,7 @@ import org.owasp.encoder.Encode
 
 /**
  * HTMLContentCodec is ...
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-11-19
  */
 class HTMLContentCodec {

@@ -45,7 +45,7 @@ import javax.servlet.http.HttpServletResponse
  *             <p>
  *                 Default configuration is that all servlets are enabled.
  *                 </p>
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-08-25
  */
 class DisablingAdminServlet extends AdminServlet {
