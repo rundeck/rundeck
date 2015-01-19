@@ -60,24 +60,25 @@ import java.util.Map;
  * special data references: </p> <ul>
  * <li><pre>${exec.command}</pre>: This is the user-entered command to execute</li>
  * <li><pre>${exec.dir}</pre>: This is the value of the script-exec-dir attribute</li>
- * </ul> <p> So for example, if you wanted to change the way the script is invoked, you could specify the
+ * </ul>
+ * So for example, if you wanted to change the way the script is invoked, you could specify the
  * script-exec-args like:
  * <pre>
  *         &lt;node name="mynode" ...
  *         myscript-file="/some/script.sh"
- *         script-exec="/bin/zsh ${node.myscript-file} ${script-exec.command} -- ${node.username}@${node.name}"/>
+ *         script-exec="/bin/zsh ${node.myscript-file} ${script-exec.command} -- ${node.username}@${node.name}"/&gt;
  * </pre>
  * This would execute /bin/zsh and pass the value of the script-exec-file attribute followed by the command, followed by
- * -- and the node "username@hostname". </p>
+ * -- and the node "username@hostname".
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 @Plugin(name = "script-exec", service = ServiceNameConstants.NodeExecutor)
 public class ScriptNodeExecutor implements NodeExecutor, Describable {
-    public static String SERVICE_PROVIDER_NAME = "script-exec";
-    public static String SCRIPT_ATTRIBUTE = "script-exec";
-    public static String DIR_ATTRIBUTE = "script-exec-dir";
-    public static String SHELL_ATTRIBUTE = "script-exec-shell";
+    public static final String SERVICE_PROVIDER_NAME = "script-exec";
+    public static final String SCRIPT_ATTRIBUTE = "script-exec";
+    public static final String DIR_ATTRIBUTE = "script-exec-dir";
+    public static final String SHELL_ATTRIBUTE = "script-exec-shell";
     private static final String SCRIPT_EXEC_DEFAULT_COMMAND_PROPERTY = "plugin.script-exec.default.command";
     private static final String SCRIPT_EXEC_DEFAULT_DIR_PROPERTY = "plugin.script-exec.default.dir";
     private static final String SCRIPT_EXEC_DEFAULT_REMOTE_SHELL =
