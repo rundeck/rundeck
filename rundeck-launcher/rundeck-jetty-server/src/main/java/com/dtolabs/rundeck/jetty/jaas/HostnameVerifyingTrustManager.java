@@ -29,7 +29,7 @@ import org.apache.commons.ssl.HostnameVerifier;
  * A wrapper around an existing X509TrustManager that verifies the server
  * certificate against the remote host.
  * 
- * @author Kim Ho <kim.ho@salesforce.com>
+ * @author Kim Ho <a href="mailto:kim.ho@salesforce.com">kim.ho@salesforce.com</a>
  */
 public class HostnameVerifyingTrustManager implements X509TrustManager {
 
