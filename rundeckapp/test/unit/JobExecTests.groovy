@@ -1,6 +1,11 @@
 import grails.test.GrailsUnitTestCase
+import grails.test.mixin.Mock
+import grails.test.mixin.TestMixin
+import grails.test.mixin.support.GrailsUnitTestMixin
 import rundeck.JobExec
 import rundeck.CommandExec
+import rundeck.Workflow
+
 /*
  * Copyright 2012 DTO Solutions, Inc. (http://dtosolutions.com)
  *
@@ -24,7 +29,9 @@ import rundeck.CommandExec
  * Created: 5/14/12 11:41 AM
  * 
  */
-class JobExecTests extends GrailsUnitTestCase{
+@TestMixin(GrailsUnitTestMixin)
+@Mock([Workflow,JobExec,CommandExec])
+class JobExecTests{
 
     void testBasicToMap() {
         JobExec t = new JobExec(jobGroup: 'group',jobName: 'name')
@@ -360,7 +367,6 @@ class JobExecTests extends GrailsUnitTestCase{
     //test create clone
 
     void testCreateClone() {
-        mockDomain(JobExec)
         JobExec t = new JobExec(jobGroup: 'group1', jobName: 'name1', argString: 'job args1')
         JobExec j1 = t.createClone()
         assertEquals('group1', j1.jobGroup)
@@ -371,7 +377,6 @@ class JobExecTests extends GrailsUnitTestCase{
     //test create clone
 
     void testCreateCloneDesc() {
-        mockDomain(JobExec)
         JobExec t = new JobExec(jobGroup: 'group1', jobName: 'name1', argString: 'job args1',description: 'elf monkey')
         JobExec j1 = t.createClone()
         assertEquals('group1', j1.jobGroup)
@@ -382,8 +387,6 @@ class JobExecTests extends GrailsUnitTestCase{
     }
 
     void testCreateCloneNoHandler() {
-        mockDomain(JobExec)
-        mockDomain(CommandExec)
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr')
         JobExec t = new JobExec(jobGroup: 'group1', jobName: 'name1', argString: 'job args1',errorHandler: h)
         JobExec j1 = t.createClone()
@@ -393,8 +396,6 @@ class JobExecTests extends GrailsUnitTestCase{
         assertNull(j1.errorHandler)
     }
     void testCreateCloneNodeFilter() {
-        mockDomain(JobExec)
-        mockDomain(CommandExec)
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr')
         JobExec t = new JobExec(jobGroup: 'group1', jobName: 'name1', argString: 'job args1',errorHandler: h, nodeFilter: 'abc')
         JobExec j1 = t.createClone()
@@ -405,8 +406,6 @@ class JobExecTests extends GrailsUnitTestCase{
         assertNull(j1.errorHandler)
     }
     void testCreateCloneNodeThreadcount() {
-        mockDomain(JobExec)
-        mockDomain(CommandExec)
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr')
         JobExec t = new JobExec(jobGroup: 'group1', jobName: 'name1', argString: 'job args1',errorHandler: h, nodeThreadcount: 2)
         JobExec j1 = t.createClone()
@@ -417,8 +416,6 @@ class JobExecTests extends GrailsUnitTestCase{
         assertNull(j1.errorHandler)
     }
     void testCreateCloneNodeKeepgoing() {
-        mockDomain(JobExec)
-        mockDomain(CommandExec)
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr')
         JobExec t = new JobExec(jobGroup: 'group1', jobName: 'name1', argString: 'job args1',errorHandler: h, nodeKeepgoing: true)
         JobExec j1 = t.createClone()
@@ -430,8 +427,6 @@ class JobExecTests extends GrailsUnitTestCase{
     }
 
     void testCreateCloneKeepgoing() {
-        mockDomain(JobExec)
-        mockDomain(CommandExec)
         JobExec t = new JobExec(jobGroup: 'group1', jobName: 'name1', argString: 'job args1',keepgoingOnSuccess: true)
         JobExec j1 = t.createClone()
         assertEquals('group1', j1.jobGroup)

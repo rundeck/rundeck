@@ -1,4 +1,7 @@
 import grails.test.GrailsUnitTestCase
+import grails.test.mixin.Mock
+import grails.test.mixin.TestMixin
+import grails.test.mixin.support.GrailsUnitTestMixin
 import rundeck.CommandExec
 import rundeck.Workflow
 /*
@@ -24,7 +27,9 @@ import rundeck.Workflow
  * Created: 5/14/12 11:29 AM
  * 
  */
-class WorkflowTests extends GrailsUnitTestCase{
+@TestMixin(GrailsUnitTestMixin)
+@Mock([Workflow,CommandExec])
+class WorkflowTests {
 
 
     void testBasicToMap() {
@@ -64,8 +69,6 @@ class WorkflowTests extends GrailsUnitTestCase{
     //test cloning
 
     void testCloneConstructor(){
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
         Workflow wf = new Workflow(keepgoing: true, strategy: 'node-first', commands: [new CommandExec(adhocRemoteString: 'test1'), new CommandExec(adhocLocalString: 'test2')])
         Workflow wf2 = new Workflow(wf)
 
@@ -77,8 +80,6 @@ class WorkflowTests extends GrailsUnitTestCase{
         assertNotSame(wf.commands[1],wf2.commands[1])
     }
     void testCloneConstructorHandlers(){
-        mockDomain(Workflow)
-        mockDomain(CommandExec)
         final h1 = new CommandExec(adhocRemoteString: 'handle1')
         Workflow wf = new Workflow(keepgoing: true, strategy: 'node-first', commands: [new CommandExec(adhocRemoteString: 'test1',errorHandler: h1), new CommandExec(adhocLocalString: 'test2')])
         Workflow wf2 = new Workflow(wf)

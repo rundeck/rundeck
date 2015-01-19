@@ -1562,7 +1562,6 @@ class ScheduledExecutionControllerTests  {
     }
 
     public void testCopy() {
-        mockDomain(ScheduledExecution)
         def sec = new ScheduledExecutionController()
         if (true) {//test basic copy action
 
