@@ -74,8 +74,8 @@ public class StoragePluginProviderService extends ChainedProviderService<Storage
     }
 
     @Override
-    public StoragePlugin createProviderInstance(Class<StoragePlugin> resourceStoragePluginClass, String s) throws PluginException, ProviderCreationException {
-        return getPluggableStoragePluginProviderService().createProviderInstance(resourceStoragePluginClass, s);
+    public <X extends StoragePlugin> StoragePlugin createProviderInstance(Class<X> clazz, String name) throws PluginException, ProviderCreationException {
+        return getPluggableStoragePluginProviderService().createProviderInstance(clazz, name);
     }
 
     @Override
