@@ -1995,10 +1995,16 @@ class ExecutionServiceTests  {
         def parseOptsCount=0
         service.frameworkService=mockWith(FrameworkService){
             parseOptsFromArray(1..2){String[] args->
+                def argsl=args as List
                 if(parseOptsCount<1){
-                    assertEquals(['test1','wakeful'],args as List)
+                    assertEquals(['test1','wakeful'],argsl)
                 }else{
-                    assertEquals(['-test1','wakeful','-test2','val2a','-test3','val3'],args as List)
+                    assertTrue(argsl.indexOf('-test1')>=0 && argsl.indexOf('-test1')<=argsl.size()-2)
+                    assertTrue(argsl.indexOf('-test2')>=0 && argsl.indexOf('-test2')<=argsl.size()-2)
+                    assertTrue(argsl.indexOf('-test3')>=0 && argsl.indexOf('-test3')<=argsl.size()-2)
+                    assertEquals('wakeful',argsl[argsl.indexOf('-test1')+1])
+                    assertEquals('val2a',argsl[argsl.indexOf('-test2')+1])
+                    assertEquals('val3',argsl[argsl.indexOf('-test3')+1])
                 }
                 parseOptsCount++
                 ['test1':'wakeful']

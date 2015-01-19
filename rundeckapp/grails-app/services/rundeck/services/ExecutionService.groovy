@@ -2181,7 +2181,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             newargs = DataContextUtils.replaceDataReferences(newargs, executionContext.dataContext)
         }
 
-        final jobOptsMap = frameworkService.parseOptsFromArray(newargs)
+        def jobOptsMap = frameworkService.parseOptsFromArray(newargs)
         jobOptsMap = addOptionDefaults(se, jobOptsMap)
 
         //select secureAuth and secure options from the args to pass
