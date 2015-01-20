@@ -20,7 +20,7 @@
                value="${grailsApplication.config.rundeck?.gui?.brand?.html ?: g.message(code: 'main.app.brand.html',default:'')}"/>
         <i class="rdicon app-logo"></i>
         <g:if test="${brandHtml}">
-            <g:enc raw="true">${brandHtml}</g:enc>
+            ${raw(brandHtml)}
         </g:if>
         <g:else>
             <g:enc>${appTitle}</g:enc>

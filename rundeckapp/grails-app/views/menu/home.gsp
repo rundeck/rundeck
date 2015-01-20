@@ -218,7 +218,7 @@
                             <g:if test="${data.readme.motd && data.readme.readme}">
                             </g:if>
                             <g:if test="${data.readme.motdHTML}">
-                                <g:enc raw="true">${data.readme.motdHTML}</g:enc>
+                                ${raw(data.readme.motdHTML)}
                             </g:if>
                             <g:elseif test="${data.readme.motd}">
                                 <g:enc>${data.readme.motd}</g:enc>
@@ -227,7 +227,7 @@
                     </g:if>
                     <g:if test="${data.readme?.readme}">
                         <g:if test="${data.readme.readmeHTML}">
-                            <g:enc raw="true">${data.readme.readmeHTML}</g:enc>
+                            ${raw(data.readme.readmeHTML)}
                         </g:if>
                         <g:elseif test="${data.readme.readme}">
                             <g:enc>${data.readme.readme}</g:enc>
