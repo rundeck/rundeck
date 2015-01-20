@@ -376,7 +376,7 @@ function fireWhenReady(elem,func){
     if(jQuery('#'+elem).size()>0){
         func();
     }else{
-        jQuery.ready(func);
+        jQuery(document).ready(func);
     }
 }
 
