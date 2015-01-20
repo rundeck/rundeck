@@ -25,13 +25,13 @@
             <span class="expandComponentHolder">
             <g:expander key="desc_${rkey}" open="${mode=='expanded'?'true':'false'}">More</g:expander>
             <span class="${enc(attr: markdownCss ?: '')}" style="${wdgt.styleVisible(if:mode=='expanded')}" id="desc_${enc(attr: rkey)}">
-                <g:markdown>${remainingLine}</g:markdown>
+                <g:markdown>${raw(remainingLine)}</g:markdown>
             </span>
             </span>
         </g:if>
         <g:elseif test="${mode!='hidden'}">
             <span class="${enc(attr: markdownCss ?: '')}">
-                <g:markdown>${remainingLine}</g:markdown>
+                <g:markdown>${raw(remainingLine)}</g:markdown>
             </span>
         </g:elseif>
     </g:if>
