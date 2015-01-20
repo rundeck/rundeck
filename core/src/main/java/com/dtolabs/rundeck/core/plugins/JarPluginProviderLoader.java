@@ -197,9 +197,10 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
     /**
      * Attempt to create an instance of thea provider for the given service
      *
-     * @param cls
+     * @param cls class
+     * @return created instance
      */
-    static <T> T createProviderForClass(final PluggableService<T> service, final Class cls) throws PluginException,
+    static <T,X extends T> T createProviderForClass(final PluggableService<T> service, final Class<X> cls) throws PluginException,
             ProviderCreationException {
         debug("Try loading provider " + cls.getName());
 
@@ -576,7 +577,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
      * Return the version string metadata value for the plugin file, or null if it is not available or could not
      * loaded
      *
-     * @param file
+     * @param file plugin file
      * @return version string
      */
     static String getVersionForFile(final File file) {
@@ -586,9 +587,9 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
     /**
      * Return true if the jar attributes declare it should load local dependency classes first.
      *
-     * @param file
+     * @param file plugin file
      *
-     * @return version string
+     * @return true if plugin libs load first is set
      */
     static boolean getLoadLocalLibsFirstForFile(final File file) {
         Attributes attributes = loadMainAttributes(file);

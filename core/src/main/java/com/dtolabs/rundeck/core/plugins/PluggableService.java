@@ -33,30 +33,35 @@ import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
  */
 public interface PluggableService<T> extends FrameworkSupportService {
     /**
-     * Return true if the class is a valid provider class for the service
+     * @return true if the class is a valid provider class for the service
      *
      * @param clazz the class
      */
     public boolean isValidProviderClass(Class clazz);
 
     /**
-     * Create provider instance from a class
+     * @return Create provider instance from a class
      *
      * @param clazz the class
      * @param name  the provider name
+     * @param <X> subtype of T
+     *              @throws PluginException if the plugin has an error
+     *              @throws ProviderCreationException if creating the instance has an error
      */
-    public T createProviderInstance(Class<T> clazz, final String name) throws PluginException,
+    public <X extends T> T createProviderInstance(Class<X> clazz, final String name) throws PluginException,
         ProviderCreationException;
 
     /**
-     * Return true if the service supports script plugins
+     * @return true if the service supports script plugins
      */
     public boolean isScriptPluggable();
 
     /**
-     * Return the instance for a ScriptPluginProvider definition
+     * @return the instance for a ScriptPluginProvider definition
      *
      * @param provider the script plugin provider
+     *
+     *              @throws PluginException if the plugin has an error
      */
     public T createScriptProviderInstance(final ScriptPluginProvider provider) throws PluginException;
 

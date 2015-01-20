@@ -13,7 +13,7 @@ import org.rundeck.storage.impl.DelegateTree
 
 /**
  * DbStoragePlugin uses a namespace and
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-04-03
  */
 @Plugin(name = 'db', service = ServiceNameConstants.Storage)

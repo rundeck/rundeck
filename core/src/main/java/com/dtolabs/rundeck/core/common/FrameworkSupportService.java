@@ -31,7 +31,7 @@ package com.dtolabs.rundeck.core.common;
  */
 public interface FrameworkSupportService {
     /**
-     * Return the name used to identify the service
+     * @return the name used to identify the service
      */
     public String getName();
 }

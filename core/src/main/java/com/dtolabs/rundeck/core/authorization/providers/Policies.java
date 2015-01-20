@@ -43,24 +43,19 @@ public class Policies {
     public int count() {
         int count = 0;
         for (PolicyCollection f : cache) {
-
-            try {
-                count += f.countPolicies();
-            } catch (InvalidCollection e) {
-                // TODO squash
-            }
+            count += f.countPolicies();
         }
         return count;
     }
 
     /**
-     * Load the policies contained in the root path.
+     * @return Load the policies contained in the root path.
      *
-     * @param rootPath
+     * @param rootPath file root path
      *
-     * @return
      *
      * @throws PoliciesParseException Thrown when there is a problem parsing a file.
+     * @throws IOException  on io error
      */
     public static Policies load(File rootPath) throws IOException, PoliciesParseException {
 
@@ -78,12 +73,7 @@ public class Policies {
 
         List<AclContext> matchedContexts = new ArrayList<AclContext>();
         for (final PolicyCollection f : cache) {
-            try {
-                matchedContexts.addAll(f.matchedContexts(subject, environment));
-            } catch (InvalidCollection e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+            matchedContexts.addAll(f.matchedContexts(subject, environment));
         }
         return matchedContexts;
     }
@@ -107,19 +97,14 @@ public class Policies {
     }
 
     /**
-     * @return
+     * @return all roles list
      */
     @Deprecated
     public List<String> listAllRoles() {
         List<String> results = new ArrayList<String>();
         for (PolicyCollection f : cache) {
-            try {
-                results.addAll(f.groupNames());
+            results.addAll(f.groupNames());
 
-            } catch (InvalidCollection e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
         }
 
         return results;

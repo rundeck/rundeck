@@ -116,9 +116,8 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
 
 
     /**
-     * Convert stack of context data into a StepIdentifier
-     * @param stack
-     * @return
+     * @return Convert stack of context data into a StepIdentifier
+     * @param stack stack
      */
     private StepIdentifier generateIdentifier(List<Pair<StepContextId, INodeEntry>> stack) {
         List<StepContextId> ctxs = new ArrayList<StepContextId>();

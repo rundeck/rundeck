@@ -278,16 +278,14 @@ public class NotificationService implements ApplicationContextAware{
                     def Execution exec = content.execution
                     //iterate through the URLs, and submit a POST to the destination with the XML Execution result
                     final state = ExecutionService.getExecutionState(exec)
-                    String xmlStr = RequestHelper.doWithMockRequest {
-                        def writer = new StringWriter()
-                        def xml = new MarkupBuilder(writer)
+                    def writer = new StringWriter()
+                    def xml = new MarkupBuilder(writer)
 
-                        xml.'notification'(trigger:trigger,status:state,executionId:exec.id){
-                            new ExecutionController().renderApiExecutions([exec], [:], delegate)
-                        }
-                        writer.flush()
-                        writer.toString()
+                    xml.'notification'(trigger:trigger,status:state,executionId:exec.id){
+                        new ExecutionController().renderApiExecutions(grailsLinkGenerator,[exec], [:], delegate)
                     }
+                    writer.flush()
+                    String xmlStr=  writer.toString()
                     if (log.traceEnabled){
                         log.trace("Posting webhook notification[${n.eventTrigger},${state},${exec.id}]; to URLs: ${n.content}")
                     }

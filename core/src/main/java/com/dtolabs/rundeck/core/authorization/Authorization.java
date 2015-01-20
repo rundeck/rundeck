@@ -52,10 +52,10 @@ public interface Authorization {
     /**
      * Make a multiple resource determination.
      * 
-     * @param resources
-     * @param subject
-     * @param actions
-     * @param environment
+     * @param resources resource set
+     * @param subject subject
+     * @param actions action set
+     * @param environment environment
      * @return decisions
      */
     Set<Decision> evaluate(Set<Map<String, String>> resources, Subject subject, Set<String> actions, 

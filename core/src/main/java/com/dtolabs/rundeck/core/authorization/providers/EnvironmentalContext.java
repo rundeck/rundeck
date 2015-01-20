@@ -39,11 +39,12 @@ public interface EnvironmentalContext {
     static final String URI_BASE = "http://dtolabs.com/rundeck/env/";
 
     /**
-     * Return true if the context matches the input environment
+     * @return true if the context matches the input environment
+     * @param environment environment
      */
     public boolean matches(Set<Attribute> environment);
     /**
-     * Return true if the context definition is valid
+     * @return true if the context definition is valid
      */
     public boolean isValid();
 }

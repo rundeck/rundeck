@@ -19,7 +19,7 @@ package com.dtolabs.rundeck.core.utils;
 /**
  * Pair implementation allowing null values
  *
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-06-26
  */
 public class NullablePairImpl<T, W> implements Pair<T, W> {
@@ -35,9 +35,6 @@ public class NullablePairImpl<T, W> implements Pair<T, W> {
         return first;
     }
 
-    /**
-     * Set first item
-     */
     public void setFirst(final T first) {
         if (null == first) {
             throw new NullPointerException("first");
@@ -49,9 +46,6 @@ public class NullablePairImpl<T, W> implements Pair<T, W> {
         return second;
     }
 
-    /**
-     * Set second item
-     */
     public void setSecond(final W second) {
         if (null == second) {
             throw new NullPointerException("second");

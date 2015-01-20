@@ -223,8 +223,7 @@ abstract class HttpClientChannel implements BaseHttpClient {
     protected abstract NameValuePair[] getRequestBody(PostMethod method);
 
     /**
-     * Return true if the request method is POST.
-     * @return
+     * @return true if the request method is POST.
      */
     protected abstract boolean isPostMethod();
 
@@ -251,19 +250,16 @@ abstract class HttpClientChannel implements BaseHttpClient {
     }
 
     /**
-     * Return true if initial result of request indicates that authentication needs to be performed again.
-     * @param resultCode
-     * @param method
-     * @return
+     * @return true if initial result of request indicates that authentication needs to be performed again.
+     * @param resultCode status code
+     * @param method method
      */
     protected boolean needsReAuthentication(int resultCode, HttpMethod method){
         return false;
     }
 
     /**
-     * Gets the HttpClient used in the request making.
-     *
-     * @return
+     * @return Gets the HttpClient used in the request making.
      */
     HttpClient getHttpClient() {
         return httpc;
@@ -273,11 +269,9 @@ abstract class HttpClientChannel implements BaseHttpClient {
         return reqMadeMethod;
     }
     /**
-     * Gets headers from the response.
+     * @return Gets headers from the response.
      *
-     * @param name
-     *
-     * @return
+     * @param name header name
      */
     public Header getResponseHeader(String name) {
         return reqMadeMethod.getResponseHeader(name);
@@ -434,16 +428,14 @@ abstract class HttpClientChannel implements BaseHttpClient {
     }
 
     /**
-     * Get the HTTP response code.
-     * @return
+     * @return Get the HTTP response code.
      */
     int getResultCode() {
         return resultCode;
     }
 
     /**
-     * Get the URL used for the request.
-     * @return
+     * @return Get the URL used for the request.
      */
     URL getRequestURL() {
         return requestURL;

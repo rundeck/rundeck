@@ -53,10 +53,13 @@ public interface ExecutionService extends FrameworkSupportService {
      * Execute the item for the given context and return the result.
      *
      *
+     * @param context context
      * @param item item
      *
      * @return result
      * @deprecated use {@link #executeStep(com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext, StepExecutionItem)}
+     * @throws com.dtolabs.rundeck.core.execution.service.ExecutionServiceException on error
+     * @throws ExecutionException on execution error
      */
     public ExecutionResult executeItem(StepExecutionContext context, StepExecutionItem item)
         throws ExecutionException, ExecutionServiceException;
@@ -65,15 +68,21 @@ public interface ExecutionService extends FrameworkSupportService {
      * Execute a workflow step item for the given context and return the result.
      *
      *
-     *
+     * @param context context
      * @param item item
      *
      * @return not-null result
+     * @throws StepException on error
      */
     public StepExecutionResult executeStep(StepExecutionContext context, StepExecutionItem item) throws StepException;
 
     /**
      * Interpret the execution item within the context for the given node.
+     * @param context context
+     * @param item step item
+     * @param node node
+     * @return result
+     * @throws NodeStepException on error
      */
     public NodeStepResult executeNodeStep(StepExecutionContext context, NodeStepExecutionItem item, INodeEntry node) throws
                                                                                                           NodeStepException;
@@ -81,11 +90,21 @@ public interface ExecutionService extends FrameworkSupportService {
 
     /**
      * Dispatch the command (execution item) to all the nodes within the context.
+     * @param context context
+     * @param item step item
+     * @return result
+     * @throws DispatcherException on dispatch error
+     * @throws ExecutionServiceException on service error
      */
     public DispatcherResult dispatchToNodes(StepExecutionContext context, NodeStepExecutionItem item)
         throws DispatcherException, ExecutionServiceException;
     /**
      * Dispatch the command (execution item) to all the nodes within the context.
+     * @param context context
+     * @param item step item
+     * @return result
+     * @throws DispatcherException on dispatch error
+     * @throws ExecutionServiceException on service error
      */
     public DispatcherResult dispatchToNodes(StepExecutionContext context, Dispatchable item)
         throws DispatcherException, ExecutionServiceException;
@@ -93,7 +112,10 @@ public interface ExecutionService extends FrameworkSupportService {
 
     /**
      * Copy inputstream as a file to the node.
-     *
+     * @param context context
+     * @param input input stream
+     * @param node node
+     * @throws FileCopierException on error
      * @return filepath on the node for the destination file.
      */
     public String fileCopyFileStream(final ExecutionContext context, InputStream input, INodeEntry node) throws
@@ -101,7 +123,12 @@ public interface ExecutionService extends FrameworkSupportService {
 
     /**
      * Copy inputstream as a file to the node to a specific path
-     *
+
+     * @param context context
+     * @param input input stream
+     * @param node node
+     * @param destinationPath destination path
+     * @throws FileCopierException on error
      * @return filepath on the node for the destination file.
      */
     public String fileCopyFileStream(final ExecutionContext context, InputStream input, INodeEntry node,
@@ -111,18 +138,23 @@ public interface ExecutionService extends FrameworkSupportService {
     /**
      * Copy file to the node as a script file to the temp file location.
      *
+     * @param context context
+     * @param file input file
+     * @param node node
+     * @throws FileCopierException on error
      * @return filepath for the copied file on the node.
      */
     public String fileCopyFile(final ExecutionContext context, File file, INodeEntry node) throws FileCopierException;
 
     /**
      * Copy file to the node to a specific path
-     * @param context
-     * @param file
-     * @param node
-     * @param destinationPath
-     * @return
-     * @throws FileCopierException
+
+     * @param context context
+     * @param file input file
+     * @param node node
+     * @param destinationPath destination path
+     * @throws FileCopierException on error
+     * @return filepath
      */
     public String fileCopyFile(final ExecutionContext context, File file, INodeEntry node,
             String destinationPath) throws FileCopierException;
@@ -130,6 +162,10 @@ public interface ExecutionService extends FrameworkSupportService {
     /**
      * Copy string as a file to the node,
      *
+     * @param context context
+     * @param script script string
+     * @param node node
+     * @throws FileCopierException on error
      * @return filepath for the copied file on the node
      */
     public String fileCopyScriptContent(final ExecutionContext context, String script,
@@ -138,6 +174,11 @@ public interface ExecutionService extends FrameworkSupportService {
     /**
      * Copy string as a file to the node to a specific path
      *
+     * @param context context
+     * @param script script string
+     * @param node node
+     * @param destinationPath destination path
+     * @throws FileCopierException on error
      * @return filepath for the copied file on the node
      */
     public String fileCopyScriptContent(final ExecutionContext context, String script,
@@ -146,6 +187,10 @@ public interface ExecutionService extends FrameworkSupportService {
 
     /**
      * Execute a command within the context on the node.
+     * @param context context
+     * @param command command strings
+     * @param node node
+     * @return result
      * @deprecated use {@link #executeCommand(ExecutionContext, ExecArgList, com.dtolabs.rundeck.core.common.INodeEntry)}
      *
      */
@@ -153,6 +198,10 @@ public interface ExecutionService extends FrameworkSupportService {
 
     /**
      * Execute a command within the context on the node.
+     * @param context context
+     * @param command command
+     * @param node node
+     * @return result
      */
     public NodeExecutorResult executeCommand(ExecutionContext context, ExecArgList command, INodeEntry node) ;
 }

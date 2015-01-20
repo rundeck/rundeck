@@ -51,21 +51,35 @@ public interface WorkflowExecutionListener  {
 
     /**
      * Called when execution begins for a step
+     * @param executor executor
+     * @param context context
+     * @param item step
      */
     public void beginStepExecution(StepExecutor executor,StepExecutionContext context, StepExecutionItem item);
 
     /**
      * Called when execution finishes for a step
+     * @param executor executor
+     * @param result result
+     * @param context context
+     * @param item step
      */
     public void finishStepExecution(StepExecutor executor, StatusResult result, StepExecutionContext context, StepExecutionItem item);
 
     /**
      * Begin execution of a node step
+     * @param context context
+     * @param item step
+     * @param node node
      */
     public void beginExecuteNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node);
 
     /**
      * Finish execution of a node step
+     * @param result result
+     * @param context context
+     * @param item step
+     * @param node node
      */
     public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item,
             INodeEntry node);

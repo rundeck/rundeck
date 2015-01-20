@@ -7,22 +7,19 @@ import java.util.Date;
  */
 public interface StepStateChange  {
     /**
-     * The new state
-     * @return
+     * @return The new state
      */
     public StepState getStepState();
 
     /**
-     * The node name
+     * @return The node name
      *
-     * @return
      */
     public String getNodeName();
 
     /**
-     * True if this state represents a node, false if it represents an overall step state
+     * @return True if this state represents a node, false if it represents an overall step state
      *
-     * @return
      */
     public boolean isNodeState();
 }

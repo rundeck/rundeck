@@ -35,8 +35,13 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionI
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface NodeDispatcher {
+    // XXX: perhaps remove this in lieu of other interface
     /**
-     * XXX: perhaps remove this in lieu of other interface
+
+     * @param context context
+     * @param item step item
+     * @return result
+     * @throws DispatcherException on error
      */
     public DispatcherResult dispatch(StepExecutionContext context, NodeStepExecutionItem item) throws DispatcherException;
     public DispatcherResult dispatch(StepExecutionContext context, Dispatchable item) throws DispatcherException;

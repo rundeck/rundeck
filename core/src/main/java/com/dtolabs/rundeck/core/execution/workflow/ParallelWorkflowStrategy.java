@@ -53,7 +53,7 @@ import java.util.concurrent.TimeUnit;
  * TODO: parallel execution can be extended into and_parallel, or_parallel, xor_parallel, .. based on how failures are handled
  * TODO: Discuss and implement 'aborting' ongoing parallel steps if any of parallel steps fail beforehand and keep_going == false
  *
- * <p/>
+ * <br>
  * The WorkflowExecutionResult will contain as the resultSet a map of Node name to list of step execution results on that node
  *
  * @author Murat Ezbiderli <a href="mailto:mezbiderli@salesforce.com">mezbiderli@salesforce.com</a>
@@ -105,8 +105,15 @@ public class ParallelWorkflowStrategy extends BaseWorkflowStrategy {
     }
 
     /**
+     *
      * Execute the sequence of ExecutionItems within the context, and with the given keepgoing value, return true if
      * successful
+     * @param executionContext context
+     * @param failedMap failures
+     * @param resultList results
+     * @param iWorkflowCmdItems steps
+     * @param keepgoing true to keepgoing if a step fails
+     * @return true if successful
      */
     protected boolean executeWorkflowItemsInParallel(final StepExecutionContext executionContext,
                                                      final Map<Integer, StepExecutionResult> failedMap,
@@ -181,12 +188,12 @@ public class ParallelWorkflowStrategy extends BaseWorkflowStrategy {
     /**
      * Executes a step
      *
-     * @param wlistener
-     * @param cmd
-     * @param executionContext
-     * @param stepFailedMap
-     * @param stepNum
-     * @return
+     * @param wlistener listener
+     * @param cmd step
+     * @param executionContext context
+     * @param stepFailedMap failures
+     * @param stepNum index
+     * @return result
      */
     private StepExecutionResult executeWorkflowStep(
         WorkflowExecutionListener wlistener,

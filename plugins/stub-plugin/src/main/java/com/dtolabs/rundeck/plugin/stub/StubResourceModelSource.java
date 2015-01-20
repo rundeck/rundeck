@@ -29,7 +29,7 @@ import java.util.Properties;
 /**
  * StubResourceModelSource is ...
  *
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-09-03
  */
 public class StubResourceModelSource implements ResourceModelSource {

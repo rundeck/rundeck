@@ -40,23 +40,23 @@ public interface StreamingLogReader extends LogEventIterator, Closeable {
     /**
      * Read log entries starting at the specified offset
      *
-     * @param offset
+     * @param offset offset value
      *
-     * @return
+     * @throws java.io.IOException if an io error occurs
      */
     void openStream(Long offset) throws IOException;
 
     /**
      * Return the total size
      *
-     * @return
+     * @return total size
      */
     long getTotalSize();
 
     /**
      * Return the last modification time of the log (e.g. last log entry time, or null if not modified)
      *
-     * @return
+     * @return last modified date
      */
     Date getLastModified();
 }

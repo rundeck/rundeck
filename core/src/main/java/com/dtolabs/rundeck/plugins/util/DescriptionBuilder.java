@@ -60,21 +60,23 @@ public class DescriptionBuilder {
     }
 
     /**
-     * Start a builder
+     * @return a builder
      */
     public static DescriptionBuilder builder() {
         return new DescriptionBuilder();
     }
 
     /**
-     * Start a builder with a given description
+     * @return a builder with a given description
+     * @param original source
      */
     public static DescriptionBuilder builder(final Description original) {
         return new DescriptionBuilder(original);
     }
 
     /**
-     * Set the name
+     * @param name the name
+     * @return this builder
      */
     public DescriptionBuilder name(final String name) {
         this.name = name;
@@ -82,7 +84,8 @@ public class DescriptionBuilder {
     }
 
     /**
-     * Set a title string
+     * @param title a title string
+     * @return this builder
      */
     public DescriptionBuilder title(final String title) {
         this.title = title;
@@ -90,7 +93,8 @@ public class DescriptionBuilder {
     }
 
     /**
-     * Set a description string
+     * @param description a description string
+     * @return this builder
      */
     public DescriptionBuilder description(final String description) {
         this.description = description;
@@ -98,7 +102,10 @@ public class DescriptionBuilder {
     }
 
     /**
-     * Add a property mapping
+     * @param key property key
+     * @param name a property name mapping
+     *
+     * @return this builder
      */
     public DescriptionBuilder mapping(final String key, final String name) {
         mapping.put(key, name);
@@ -106,6 +113,10 @@ public class DescriptionBuilder {
     }
     /**
      * Add a property mapping for framework properties
+     * @param key property key
+     * @param name a property name mapping
+     *
+     * @return this builder
      */
     public DescriptionBuilder frameworkMapping(final String key, final String name) {
         fwkmapping.put(key, name);
@@ -113,6 +124,9 @@ public class DescriptionBuilder {
     }
     /**
      * Add all entries to the mapping
+     * @param mapping property key to properties name mapping
+     *
+     * @return this builder
      */
     public DescriptionBuilder mapping(final Map<String,String> mapping) {
         this.mapping.putAll(mapping);
@@ -120,6 +134,9 @@ public class DescriptionBuilder {
     }
     /**
      * Add all entries to the frameworkMapping
+     * @param mapping property key to properties name mapping
+     *
+     * @return this builder
      */
     public DescriptionBuilder frameworkMapping(final Map<String,String> mapping) {
         this.fwkmapping.putAll(mapping);
@@ -128,6 +145,13 @@ public class DescriptionBuilder {
 
     /**
      * Add a String property
+     * @param name name
+     * @param defaultValue default
+     * @param required true if required
+     * @param propTitle optional title
+     * @param propDescription optional description
+     *
+     * @return this builder
      */
     public DescriptionBuilder stringProperty(final String name,
                                              final String defaultValue,
@@ -139,6 +163,13 @@ public class DescriptionBuilder {
 
     /**
      * Add a Boolean property
+     * @param name name
+     * @param defaultValue default
+     * @param required true if required
+     * @param propTitle optional title
+     * @param propDescription optional description
+     *
+     * @return this builder
      */
     public DescriptionBuilder booleanProperty(final String name,
                                               final String defaultValue,
@@ -150,6 +181,13 @@ public class DescriptionBuilder {
 
     /**
      * Add an Integer property
+     * @param name name
+     * @param defaultValue default
+     * @param required true if required
+     * @param propTitle optional title
+     * @param propDescription optional description
+     *
+     * @return this builder
      */
     public DescriptionBuilder integerProperty(final String name,
                                               final String defaultValue,
@@ -161,6 +199,14 @@ public class DescriptionBuilder {
 
     /**
      * Add a Select property
+     * @param name name
+     * @param defaultValue default
+     * @param required true if required
+     * @param propTitle optional title
+     * @param propDescription optional description
+     * @param selectValues select values
+     *
+     * @return this builder
      */
     public DescriptionBuilder selectProperty(final String name,
                                              final String defaultValue,
@@ -173,6 +219,14 @@ public class DescriptionBuilder {
 
     /**
      * Add a FreeSelect property
+     * @param name name
+     * @param defaultValue default
+     * @param required true if required
+     * @param propTitle optional title
+     * @param propDescription optional description
+     * @param selectValues select values
+     *
+     * @return this builder
      */
     public DescriptionBuilder freeSelectProperty(final String name,
                                                  final String defaultValue,
@@ -185,6 +239,8 @@ public class DescriptionBuilder {
 
     /**
      * Add a new property, or replace an existing property with the same name by passing in a builder.
+     * @param property builder
+     * @return this builder
      */
     public DescriptionBuilder property(final PropertyBuilder property) {
         replaceOrAddProperty(property.build());
@@ -193,6 +249,8 @@ public class DescriptionBuilder {
 
     /**
      * Add a new property, or replace an existing property with the same name.
+     * @param property property
+     * @return this builder
      */
     public DescriptionBuilder property(final Property property) {
         replaceOrAddProperty(property);
@@ -201,6 +259,8 @@ public class DescriptionBuilder {
 
     /**
      * Remove a previously defined property by name
+     * @param name property name
+     * @return this builder
      */
     public DescriptionBuilder removeProperty(final String name) {
         final Property found = findProperty(name);
@@ -234,6 +294,10 @@ public class DescriptionBuilder {
      * Returns a new {@link PropertyBuilder} preconfigured with an existing property or a new one to add a new property.
      * Be sure to call {@link #property(com.dtolabs.rundeck.core.plugins.configuration.Property)} to add the result of
      * the final call to {@link com.dtolabs.rundeck.plugins.util.PropertyBuilder#build()}.
+     *
+     * @param name name
+     *
+     * @return this builder
      */
     public PropertyBuilder property(final String name) {
         final Property found = findProperty(name);
@@ -245,7 +309,8 @@ public class DescriptionBuilder {
     }
 
     /**
-     * Build the description
+     * @return the built description
+     *
      */
     public Description build() {
         if (null == name) {
@@ -302,6 +367,10 @@ public class DescriptionBuilder {
 
     /**
      * Allows the Collaborator to assist using this DescriptionBuilder.
+     *
+     * @param colab collaborator
+     *
+     * @return this builder
      */
     public DescriptionBuilder collaborate(final Collaborator colab) {
         colab.buildWith(this);
@@ -311,6 +380,10 @@ public class DescriptionBuilder {
     /**
      * Allows any object to collaborate on this DescriptionBuilder if it implements {@link Collaborator}, otherwise
      * simply returns this builder.
+     *
+     * @param colab collaborator
+     *
+     * @return this builder
      */
     public DescriptionBuilder collaborate(final Object colab) {
         if (colab instanceof Collaborator) {
@@ -325,6 +398,7 @@ public class DescriptionBuilder {
     public static interface Collaborator {
         /**
          * visit the builder and do some work
+         * @param builder the builder
          */
         public void buildWith(DescriptionBuilder builder);
     }

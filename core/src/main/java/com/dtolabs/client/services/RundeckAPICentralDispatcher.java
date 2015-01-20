@@ -179,13 +179,13 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      * @param status           result status, either 'succeed','cancel','fail'
      * @param failedNodeCount  total node count
      * @param successNodeCount count of successful nodes
-     * @param tags
+     * @param tags tags
      * @param script           script content (can be null if summary specified)
      * @param summary          summary of execution (can be null if script specified)
      * @param start            start date (can be null)
      * @param end              end date (can be null)
      *
-     * @throws com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException
+     * @throws com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException on error
      *
      */
     public void reportExecutionStatus(final String project, final String title, final String status,
@@ -305,7 +305,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      *
      * @param tempxml     xml temp file (or null)
      * @param otherparams parameters for the request
-     * @param requestPath
+     * @param requestPath path
      *
      * @return a single QueuedItemResult
      *
@@ -350,7 +350,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      * @param uploadFileParam name of file upload parameter
      * @param tempxml     xml temp file (or null)
      * @param otherparams parameters for the request
-     * @param requestPath
+     * @param requestPath path
      *
      * @return a single QueuedItemResult
      *
@@ -559,8 +559,6 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      * Validate the response is in expected envlope form with &lt;result&gt; content.
      *
      * @param response response
-     *
-     * @return Envelope if format is correct and there is no error
      *
      * @throws com.dtolabs.client.services.CentralDispatcherServerRequestException
      *          if the format is incorrect, or the Envelope indicates an error response.
@@ -773,7 +771,11 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
 
     /**
      * Follow execution output for an Execution by synchronously emitting output to a receiver
-     * @param execId
+     * @param execId execution ID
+     * @param request request
+     * @param receiver output receiver
+     * @return result
+     * @throws CentralDispatcherException on error
      */
     public ExecutionFollowResult followDispatcherExecution(final String execId, final ExecutionFollowRequest request,
                                                            final ExecutionFollowReceiver receiver) throws
@@ -973,10 +975,11 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
     }
 
     /**
-     * Replace a "$var" within a path string with a value, properly encoding it.
+     * @return Replace a "$var" within a path string with a value, properly encoding it.
      * @param path the URL path to substitute the var within
      * @param var the name of the var in the string
      * @param value the value to substitute
+     * @throws com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException  on URIException
      */
     public static String substitutePathVariable(final String path, final String var, final String value) throws
         CentralDispatcherException {
@@ -1277,7 +1280,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      *
      * @param response response
      *
-     * @param resultStream
+     * @param resultStream input stream
      * @return Collection of job data maps if format is correct and there is no error
      *
      * @throws com.dtolabs.client.services.CentralDispatcherServerRequestException
@@ -1408,6 +1411,11 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
 
     /**
      * Add entries to the Map for node filter parameters from the nodeset
+     * @param params request params
+     * @param isKeepgoing true keepgoing
+     * @param nodeFilter node filter string
+     * @param threadcount thread count
+     * @param excludePrecedence precedence
      */
     public static void addAPINodeSetParams(final HashMap<String, String> params,
             final Boolean isKeepgoing, String nodeFilter, int threadcount, Boolean excludePrecedence) {

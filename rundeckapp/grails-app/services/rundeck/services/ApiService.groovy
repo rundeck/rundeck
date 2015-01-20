@@ -483,7 +483,7 @@ class ApiService {
         }else if (messages instanceof Map && messages.message) {
             result.message=messages.message
         }
-        return result.encodeAsJSON()
+        return result.encodeAsJSON().toString()
     }
     def renderErrorXml(messages, String code=null, builder=null){
         def writer = new StringWriter()

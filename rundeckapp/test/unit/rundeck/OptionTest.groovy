@@ -1,13 +1,25 @@
-package rundeck;
 
-import grails.test.GrailsUnitTestCase;
+
+package rundeck;
+import org.codehaus.groovy.grails.plugins.databinding.DataBindingGrailsPlugin;
+
+import grails.test.mixin.support.GrailsUnitTestMixin;
+import grails.test.mixin.web.ControllerUnitTestMixin;
+
 
 /**
  */
-public class OptionTest extends GrailsUnitTestCase {
-
+@TestFor(Option)
+@TestMixin(ControllerUnitTestMixin)
+public class OptionTest {
+    
+    @Before
+    public void setup(){
+        // hack for 2.3.9:  https://jira.grails.org/browse/GRAILS-11136
+        defineBeans(new DataBindingGrailsPlugin().doWithSpring)
+    }
     void testSortIndexShouldDetermineOrder() {
-        mockDomain(Option)
+        
         def options = [
                 new Option(name: 'abc-4', defaultValue: '12', sortIndex: 4),
                 new Option(name: 'bcd-2', defaultValue: '12', sortIndex: 2),
@@ -18,7 +30,7 @@ public class OptionTest extends GrailsUnitTestCase {
     }
 
     void testNullSortIndexShouldUseNameToDetermineOrder() {
-        mockDomain(Option)
+        
         def options = [
                 new Option(name: 'def-4', defaultValue: '12',),
                 new Option(name: 'abc-1', defaultValue: '12', ),
@@ -29,7 +41,7 @@ public class OptionTest extends GrailsUnitTestCase {
     }
 
     void testMixedSortShouldUseSortIndexFirstThenName() {
-        mockDomain(Option)
+        
         def options = [
                 new Option(name: 'def-4', defaultValue: '12',),
                 new Option(name: 'abc-2', defaultValue: '12', sortIndex: 1),
@@ -50,7 +62,7 @@ public class OptionTest extends GrailsUnitTestCase {
         assertEquals null, Option.fromMap('test', [sortIndex: null]).sortIndex
     }
     void testConstraints() {
-        mockDomain(Option)
+        
         def option = new Option(name: 'ABCdef-4._12390', defaultValue: '12',enforced: true)
         def validate = option.validate()
         if(!validate){
@@ -61,11 +73,17 @@ public class OptionTest extends GrailsUnitTestCase {
         assertEquals(false, option.errors.hasFieldErrors('name'))
     }
     void testInvalidName() {
-        mockDomain(Option)
+        
         assertInvalidName(new Option(name: 'abc def', defaultValue: '12',enforced: true))
         assertInvalidName(new Option(name: 'abc+def', defaultValue: '12',enforced: true))
         assertInvalidName(new Option(name: 'abc/def', defaultValue: '12',enforced: true))
         assertInvalidName(new Option(name: 'abc!@#$%^&*()def', defaultValue: '12',enforced: true))
+    }
+    void testDelimiter() {
+        def opt1=new Option(name:'abc',multivalued:true,delimiter:',')
+        assertEquals(',',opt1.delimiter)
+        def opt2=new Option(name:'abc',multivalued:true,delimiter:" ")
+        assertEquals(' ',opt2.delimiter)
     }
 
     private void assertInvalidName(Option option) {

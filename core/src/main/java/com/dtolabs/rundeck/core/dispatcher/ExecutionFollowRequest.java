@@ -30,7 +30,7 @@ package com.dtolabs.rundeck.core.dispatcher;
  */
 public interface ExecutionFollowRequest {
     /**
-     * Return true if the execution should resume from the end, and false to start at the beginning.
+     * @return true if the execution should resume from the end, and false to start at the beginning.
      */
     public boolean isResume();
 }

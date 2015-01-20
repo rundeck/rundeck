@@ -34,7 +34,9 @@ import java.util.Properties;
  */
 public interface ResourceModelSourceFactory {
     /**
-     * Return a resource model source for the given configuration
+     * @return a resource model source for the given configuration
+     * @param configuration configuration data
+     * @throws ConfigurationException on configuration error
      */
     public ResourceModelSource createResourceModelSource(Properties configuration) throws ConfigurationException;
 }

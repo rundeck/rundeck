@@ -9,9 +9,15 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandEx
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandExecutionItem
 import com.dtolabs.rundeck.core.utils.NodeSet
+
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.test.mixin.web.ControllerUnitTestMixin;
+
+import org.codehaus.groovy.grails.plugins.databinding.DataBindingGrailsPlugin;
 import org.grails.plugins.metricsweb.MetricService
+import org.junit.Before;
+
 import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.Workflow
@@ -28,7 +34,15 @@ import rundeck.services.StorageService
 
 @TestFor(ExecutionService)
 @Mock([ScheduledExecution,Workflow,WorkflowStep,Execution,CommandExec,Option,User])
+@TestMixin(ControllerUnitTestMixin)
 class ExecutionServiceTests  {
+    
+    @Before
+    public void setup(){
+        // hack for 2.3.9:  https://jira.grails.org/browse/GRAILS-11136
+        defineBeans(new DataBindingGrailsPlugin().doWithSpring)
+    }
+
     /**
      * utility method to mock a class
      */
@@ -1570,17 +1584,24 @@ class ExecutionServiceTests  {
     }
     void testCleanupRunningJobsNull(){
         def testService = setupCleanupService()
-
+        def wf1=new Workflow(commands: [new CommandExec(adhocRemoteString: "test")]).save()
+        assertNotNull(wf1)
+        assertNotNull(wf1.commands)
+        assertEquals(1,wf1.commands.size())
         Execution exec1 = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false,
                 dateStarted: new Date(),
                 dateCompleted: null,
-                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test")])
+                workflow: wf1
         )
         assertNotNull(exec1.save())
+        def wf2=new Workflow(commands: [new CommandExec(adhocRemoteString: "test")]).save()
+        assertNotNull(wf2)
+        assertNotNull(wf2.commands)
+        assertEquals(1,wf2.commands.size())
         Execution exec2 = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false,
                 dateStarted: new Date(),
                 dateCompleted: null,
-                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test")]),
+                workflow: wf2,
                 serverNodeUUID: UUID.randomUUID().toString()
         )
         assertNotNull(exec2.save())
@@ -1590,12 +1611,13 @@ class ExecutionServiceTests  {
 
         assertNull(exec2.dateCompleted)
         assertNull(exec2.status)
-
+        assertEquals(2,Execution.findAll().size())
+        assertEquals(1,Execution.findAllByDateCompletedAndServerNodeUUID(null, null).size())
         testService.cleanupRunningJobs(null)
-
+        exec1.refresh()
         assertNotNull(exec1.dateCompleted)
         assertEquals("false", exec1.status)
-
+        exec2.refresh()
         assertNull(exec2.dateCompleted)
         assertEquals(null, exec2.status)
 
@@ -1605,16 +1627,20 @@ class ExecutionServiceTests  {
         def testService = setupCleanupService()
         def uuid = UUID.randomUUID().toString()
 
+
+        def wf1 = new Workflow(commands: [new CommandExec(adhocRemoteString: "test")]).save()
         Execution exec1 = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false,
                 dateStarted: new Date(),
                 dateCompleted: null,
-                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test")])
+                workflow: wf1
         )
         assertNotNull(exec1.save())
+
+        def wf2 = new Workflow(commands: [new CommandExec(adhocRemoteString: "test")]).save()
         Execution exec2 = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false,
                 dateStarted: new Date(),
                 dateCompleted: null,
-                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test")]),
+                workflow: wf2,
                 serverNodeUUID: uuid
         )
         assertNotNull(exec2.save())
@@ -1626,10 +1652,10 @@ class ExecutionServiceTests  {
         assertNull(exec2.status)
 
         testService.cleanupRunningJobs(uuid)
-
+        exec1.refresh()
         assertNull(exec1.dateCompleted)
         assertNull(exec1.status)
-
+        exec2.refresh()
         assertNotNull(exec2.dateCompleted)
         assertEquals("false", exec2.status)
 
@@ -1969,10 +1995,16 @@ class ExecutionServiceTests  {
         def parseOptsCount=0
         service.frameworkService=mockWith(FrameworkService){
             parseOptsFromArray(1..2){String[] args->
+                def argsl=args as List
                 if(parseOptsCount<1){
-                    assertEquals(['test1','wakeful'],args as List)
+                    assertEquals(['test1','wakeful'],argsl)
                 }else{
-                    assertEquals(['-test1','wakeful','-test2','val2a','-test3','val3'],args as List)
+                    assertTrue(argsl.indexOf('-test1')>=0 && argsl.indexOf('-test1')<=argsl.size()-2)
+                    assertTrue(argsl.indexOf('-test2')>=0 && argsl.indexOf('-test2')<=argsl.size()-2)
+                    assertTrue(argsl.indexOf('-test3')>=0 && argsl.indexOf('-test3')<=argsl.size()-2)
+                    assertEquals('wakeful',argsl[argsl.indexOf('-test1')+1])
+                    assertEquals('val2a',argsl[argsl.indexOf('-test2')+1])
+                    assertEquals('val3',argsl[argsl.indexOf('-test3')+1])
                 }
                 parseOptsCount++
                 ['test1':'wakeful']

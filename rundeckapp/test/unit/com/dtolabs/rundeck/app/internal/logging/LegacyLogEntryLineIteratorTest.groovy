@@ -3,6 +3,9 @@ package com.dtolabs.rundeck.app.internal.logging
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 
+import grails.test.mixin.TestMixin;
+import grails.test.mixin.support.GrailsUnitTestMixin;
+
 import java.text.SimpleDateFormat
 
 /*
@@ -29,15 +32,14 @@ import java.text.SimpleDateFormat
  * Created: 1/25/13 5:11 PM
  * 
  */
-class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
+@TestMixin(GrailsUnitTestMixin)
+class LegacyLogEntryLineIteratorTest  {
     File testfile1
     Date startDate
     List<Date> dates
     List<Long> lengths
     SimpleDateFormat w3cDateFormat
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp()
+    public void setUp() throws Exception {
         testfile1 = File.createTempFile("LogEntryLineIteratorTest1", ".log")
         testfile1.deleteOnExit()
 
@@ -67,7 +69,7 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
         //running sum of line lengths == list of offsets from start
     }
 
-    public testFromStart() {
+    public void testFromStart() {
         def iterator = new LegacyLogEventLineIterator(new FSFileLineIterator(new FileInputStream(testfile1), "UTF-8"))
         assertTrue(iterator.hasNext())
         assertEquals(lengths[0], iterator.offset)
@@ -90,7 +92,7 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
         assertFalse(iterator.hasNext())
     }
 
-    public testFromMiddle() {
+    public void testFromMiddle() {
         def fis = new FileInputStream(testfile1)
         fis.channel.position(lengths[1])
         def iterator = new LegacyLogEventLineIterator(new FSFileLineIterator(fis, "UTF-8"))
@@ -114,7 +116,7 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
 
         assertFalse(iterator.hasNext())
     }
-    public testFromMiddle2() {
+    public void testFromMiddle2() {
         def fis = new FileInputStream(testfile1)
         fis.channel.position(lengths[2])
         def iterator = new LegacyLogEventLineIterator(new FSFileLineIterator(fis, "UTF-8"))
@@ -135,7 +137,7 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
 
         assertFalse(iterator.hasNext())
     }
-    public testFromEnd() {
+    public void testFromEnd() {
         def fis = new FileInputStream(testfile1)
         fis.channel.position(lengths[4])
         def iterator = new LegacyLogEventLineIterator(new FSFileLineIterator(fis, "UTF-8"))
@@ -145,7 +147,7 @@ class LegacyLogEntryLineIteratorTest extends GroovyTestCase {
         assertFalse(iterator.hasNext())
     }
 
-    public testSeekBackwards(){
+    public void testSeekBackwards(){
         assertEquals(lengths[3],LegacyLogEventLineIterator.seekBackwards(testfile1,1))
         assertEquals(lengths[2],LegacyLogEventLineIterator.seekBackwards(testfile1,2))
         assertEquals(lengths[1],LegacyLogEventLineIterator.seekBackwards(testfile1,3))

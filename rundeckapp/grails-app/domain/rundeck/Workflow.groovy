@@ -31,7 +31,7 @@ public class Workflow {
 //    Boolean nodeKeepgoing=false
     Integer threadcount=1
     Boolean keepgoing=false
-    List commands
+    List<WorkflowStep> commands
     String strategy="node-first"
     static hasMany=[commands:WorkflowStep]
     static constraints = {

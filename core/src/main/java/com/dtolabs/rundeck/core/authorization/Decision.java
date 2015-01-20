@@ -24,7 +24,7 @@ import javax.security.auth.Subject;
 public interface Decision {
 
     /**
-     * Was the result from {@link Authorization#evaluate(java.util.Map, java.util.Map, java.util.Set, java.util.Map)}
+     * Was the result from {@link Authorization#evaluate(java.util.Map, javax.security.auth.Subject, String, java.util.Set)}
      * successful or not.
      * 
      * @return the authorization decision is authorized if this method returns true.
@@ -32,7 +32,7 @@ public interface Decision {
     boolean isAuthorized();
     
     /**
-     * Reason why the Decision was granted or not granted.
+     * @return Reason why the Decision was granted or not granted.
      */
     Explanation explain();
     

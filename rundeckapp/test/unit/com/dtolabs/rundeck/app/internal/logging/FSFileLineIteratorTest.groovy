@@ -1,5 +1,8 @@
 package com.dtolabs.rundeck.app.internal.logging
 
+import grails.test.mixin.TestMixin
+import grails.test.mixin.support.GrailsUnitTestMixin;
+
 /*
  * Copyright 2013 DTO Labs, Inc. (http://dtolabs.com)
  * 
@@ -24,12 +27,12 @@ package com.dtolabs.rundeck.app.internal.logging
  * Created: 1/23/13 11:42 PM
  * 
  */
-class FSFileLineIteratorTest extends GroovyTestCase{
+@TestMixin(GrailsUnitTestMixin)
+class FSFileLineIteratorTest{
 
     File testfile1
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp()
+    public void setUp() throws Exception {
+        
         testfile1 = File.createTempFile("FSFileLineIteratorTest1",".txt")
         testfile1.deleteOnExit()
         testfile1.withWriter {

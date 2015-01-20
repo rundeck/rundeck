@@ -44,7 +44,7 @@ public class ExecToolCommandLogger extends DefaultLogger{
 
     /**
      * Logs a message, if the priority is suitable. 
-     * <p/>
+     * <br>
      * Overridden to add a prefix string.
      *
      * @param event A BuildEvent containing message information. Must not be <code>null</code>.

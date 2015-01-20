@@ -41,21 +41,19 @@ public interface IDispatchedExecution {
     Boolean getNodeExcludePrecedence();
 
     /**
-     * Return the node dispatch threadcount
-     * @return
+     * @return the node dispatch threadcount
      */
     int getNodeThreadcount();
 
     /**
-     * Return true or false for node dispatch keepgoing option, or null if unspecified.
+     * @return true or false for node dispatch keepgoing option, or null if unspecified.
      *
-     * @return
      */
     public Boolean isKeepgoing();
 
     /**
      *
-     * @return
+     * @return node filter string
      */
     String getNodeFilter();
 

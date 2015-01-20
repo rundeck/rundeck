@@ -56,7 +56,7 @@ import java.util.*;
  * Manages the elements of the Ctl framework. Provides access to the various
  * kinds of framework resource managers like
  * {@link FrameworkProjectMgr}, {@link Authorization}.
- * <p/>
+ * <br>
  * User: alexh
  * Date: Jun 4, 2004
  * Time: 8:16:42 PM
@@ -220,59 +220,57 @@ public class Framework extends FrameworkResourceParent {
     }
 
     /**
-     * Get the path for the projects directory from the basedir
-     * @param baseDir
-     * @return
+     * @return the path for the projects directory from the basedir
+     * @param baseDir base dir
      */
     public static String getProjectsBaseDir(File baseDir) {
         return baseDir + Constants.FILE_SEP + "projects";
     }
 
     /**
-     * Get the framework property file from the config dir
-     * @param configDir
-     * @return
+     * @return the framework property file from the config dir
+     * @param configDir config dir
      */
     public static File getPropertyFile(File configDir) {
         return new File(configDir, "framework.properties");
     }
 
     /**
-     * Create a safe framework property retriever given a basedir
-     * @param baseDir
-     * @return
+     * @return Create a safe framework property retriever given a basedir
+     * @param baseDir base dir
      */
     public static PropertyRetriever createPropertyRetriever(File baseDir) {
         return createPropertyLookupFromBasedir(baseDir).expand().safe();
     }
     /**
-     * Create a safe framework property retriever given a basedir
-     * @param baseDir
-     * @return
+     * @return Create a safe framework property retriever given a basedir
+     * @param baseDir base dir
      */
     public static PropertyLookup createPropertyLookupFromBasedir(File baseDir) {
         return PropertyLookup.create(getPropertyFile(getConfigDir(baseDir)));
     }
     /**
-     * Create a safe project property retriever given a basedir and project name
+     * @return Create a safe project property retriever given a basedir and project name
      *
      * @param baseDir framework base directory
      * @param projectsBaseDir projects base directory
      * @param projectName name of the project
-     * @return
      */
     public static PropertyRetriever createProjectPropertyRetriever(File baseDir, File projectsBaseDir, String projectName) {
         return FrameworkProject.createProjectPropertyRetriever(baseDir, projectsBaseDir, projectName);
     }
 
     /**
-     * Return a service by name
+     * @return a service by name
+     * @param name service name
      */
     public FrameworkSupportService getService(String name) {
         return services.get(name);
     }
     /**
      * Set a service by name
+     * @param name name
+     * @param service service
      */
     public void setService(final String name, final FrameworkSupportService service){
         synchronized (services){
@@ -386,29 +384,34 @@ public class Framework extends FrameworkResourceParent {
     }
 
     /**
-     * Return a PropertyRetriever interface for framework-scoped properties
+     * @return a PropertyRetriever interface for framework-scoped properties
      */
     public PropertyRetriever getPropertyRetriever() {
         return PropertyLookup.safePropertyRetriever(lookup);
     }
 
     /**
-     * Return true if the property exists
+     * @return true if the property exists
+     * @param key property key
      */
     public boolean hasProperty(final String key) {
         return lookup.hasProperty(key);
     }
 
     /**
-     * Return true if the property is set for the project or the framework
+     * @return true if the property is set for the project or the framework
+     * @param project project
+     * @param key property name
      */
     public boolean hasProjectProperty(final String key, final String project) {
         final FrameworkProject frameworkProject = getFrameworkProjectMgr().getFrameworkProject(project);
         return frameworkProject.hasProperty(key) || hasProperty(key);
     }
     /**
-     * Return the property value for the key from the project or framework properties if it exists, otherwise
+     * @return the property value for the key from the project or framework properties if it exists, otherwise
      * return null.
+     * @param project project
+     * @param key property name
      */
     public String getProjectProperty(final String project, final String key) {
         final FrameworkProject frameworkProject = getFrameworkProjectMgr().getFrameworkProject(project);
@@ -466,8 +469,7 @@ public class Framework extends FrameworkResourceParent {
     }
 
     /**
-     * Generate a node entry for the framework with default values
-     * @return
+     * @return Generate a node entry for the framework with default values
      */
     public NodeEntryImpl createFrameworkNode() {
         NodeEntryImpl node = new NodeEntryImpl(getFrameworkNodeHostname(), getFrameworkNodeName());
@@ -488,10 +490,11 @@ public class Framework extends FrameworkResourceParent {
      *
      * @param nodeset node filter set
      * @param project project name
+     * @param nodesFile optional file to read nodes from
      *
      * @return filtered set  of nodes
      *
-     * @throws NodeFileParserException
+     * @throws NodeFileParserException on error
      */
     public Collection<INodeEntry> filterNodes(final NodesSelector nodeset, final String project, final File nodesFile) throws
         NodeFileParserException {
@@ -502,10 +505,11 @@ public class Framework extends FrameworkResourceParent {
      *
      * @param nodeset node filter set
      * @param project project name
+     * @param nodesFile optional file to read nodes from
      *
      * @return filtered set  of nodes
      *
-     * @throws NodeFileParserException
+     * @throws NodeFileParserException on error
      */
     public INodeSet filterNodeSet(final NodesSelector nodeset, final String project, final File nodesFile) throws
         NodeFileParserException {
@@ -530,7 +534,11 @@ public class Framework extends FrameworkResourceParent {
     }
 
     /**
-     * Return the nodeset consisting only of the input nodes where the specified actions are all authorized
+     * @return the nodeset consisting only of the input nodes where the specified actions are all authorized
+     * @param project project name
+     * @param actions action set
+     * @param unfiltered nodes
+     * @param authContext authoriziation
      */
     public INodeSet filterAuthorizedNodes(final String project, final Set<String> actions, final INodeSet unfiltered,
             AuthContext authContext) {
@@ -568,23 +576,21 @@ public class Framework extends FrameworkResourceParent {
     }
 
     /**
-     * Get the config dir
-     * @return
+     * @return the config dir
      */
     public File getConfigDir() {
         return new File(Constants.getFrameworkConfigDir(getBaseDir().getAbsolutePath()));
     }
 
     /**
-     * Return the config dir for the framework given a basedir
-     * @param baseDir
-     * @return
+     * @return the config dir for the framework given a basedir
+     * @param baseDir base dir
      */
     public static File getConfigDir(File baseDir) {
         return new File(Constants.getFrameworkConfigDir(baseDir.getAbsolutePath()));
     }
     /**
-     * Return the directory containing plugins/extensions for the framework.
+     * @return the directory containing plugins/extensions for the framework.
      */
     public File getLibextDir(){
         if(null!=System.getProperty(SYSTEM_PROP_LIBEXT)) {
@@ -596,7 +602,7 @@ public class Framework extends FrameworkResourceParent {
         }
     }
     /**
-     * Return the cache directory used by the plugin system
+     * @return the cache directory used by the plugin system
      */
     public File getLibextCacheDir(){
         if (null != System.getProperty(SYSTEM_PROP_LIBEXT_CACHE)) {

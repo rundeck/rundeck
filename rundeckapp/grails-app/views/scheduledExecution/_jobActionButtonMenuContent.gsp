@@ -67,9 +67,9 @@
     </g:if>
     <li><g:link controller="scheduledExecution"
                 title="${g.message(code: 'scheduledExecution.action.downloadformat.button.label', args: ['XML'])}"
-                params="[project: scheduledExecution.project]"
+                params="[project: scheduledExecution.project,format:'xml']"
                 action="show"
-                id="${scheduledExecution.extid}.xml">
+                id="${scheduledExecution.extid}">
         <b class="glyphicon glyphicon-file"></b>
         <g:message code="scheduledExecution.action.downloadformat.button.label"
                    args="['XML']"/>
@@ -78,9 +78,9 @@
     <li>
         <g:link controller="scheduledExecution"
                 title="${g.message(code: 'scheduledExecution.action.downloadformat.button.label', args: ['YAML'])}"
-                params="[project: scheduledExecution.project]"
+                params="[project: scheduledExecution.project,format:'yaml']"
                 action="show"
-                id="${scheduledExecution.extid}.yaml">
+                id="${scheduledExecution.extid}">
             <b class="glyphicon glyphicon-file"></b>
             <g:message
                     code="scheduledExecution.action.downloadformat.button.label"

@@ -29,7 +29,7 @@ import java.util.Map;
 
 /**
  * Provides capability of managing child {@link FrameworkResource} instances.
- * <p/>
+ * <br>
  */
 public abstract class FrameworkResourceParent extends FrameworkResource implements IFrameworkResourceParent {
     /**
@@ -37,6 +37,7 @@ public abstract class FrameworkResourceParent extends FrameworkResource implemen
      *
      * @param name Name of resource
      * @param dir  Base directory of resource
+     * @param parent parent
      */
     public FrameworkResourceParent(final String name, final File dir, final IFrameworkResourceParent parent) {
         super(name, dir, parent);
@@ -61,8 +62,6 @@ public abstract class FrameworkResourceParent extends FrameworkResource implemen
     /**
      * Gets requested child FrameworkResource. Throws a {@link FrameworkResourceException} if not found.
      *
-     * @param name
-     * @return
      */
     public IFrameworkResource getChild(final String name) {
         if(childCouldBeLoaded(name)) {
@@ -102,8 +101,6 @@ public abstract class FrameworkResourceParent extends FrameworkResource implemen
     /**
      * Checks if there is a child FrameworkResource with specified name.
      *
-     * @param name
-     * @return
      */
     public boolean existsChild(final String name) {
         if (null == name) {
@@ -115,14 +112,13 @@ public abstract class FrameworkResourceParent extends FrameworkResource implemen
     /**
      * Returns a collection of {@link FrameworkResource} child resources.
      *
-     * @return
      */
     public Collection listChildren() {
         return getChildren().values();
     }
 
     /**
-     * Remove the {@link FrameworkResourceInstance} by its name.
+     * Remove the resource by its name.
      *
      * @param name          Name of object
      */
@@ -144,7 +140,6 @@ public abstract class FrameworkResourceParent extends FrameworkResource implemen
 
     /**
      * Default implementation lists the subdirectory names and adds any existing child names
-     * @return
      */
     public Collection listChildNames() {
         HashSet childnames = new HashSet();
@@ -173,8 +168,6 @@ public abstract class FrameworkResourceParent extends FrameworkResource implemen
      * Default implementation checks whether a subdir under the basedir exists with the specified name.
      * (Calls {@link #existsChildResourceDirectory(String)})
      * Should be overridden by subtypes if this is not the desired behavior.
-     * @param name
-     * @return
      */
     public boolean childCouldBeLoaded(String name) {
         return existsChildResourceDirectory(name);

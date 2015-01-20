@@ -29,8 +29,8 @@ import java.util.regex.Pattern;
 
 /**
  * give us ability to set all framework/modules.* properties at the cmd line
- * such as --framework.property.name=<value>, which implies:
- * framework.property.name=<value>
+ * such as --framework.property.name=&lt;value&gt;, which implies:
+ * framework.property.name=&lt;value&gt;
  * by generating a preferences.properties file that contains overridden values otherwise default values
  * from new defaults file apply.
  */
@@ -48,6 +48,10 @@ public class Preferences {
 
     /**
      * generate preferences file represented by preferences String
+     * @param args arg strings
+     * @param preferences prefs
+     * @param inputProps input
+     * @throws Exception on error
      */
     public static void generate(String args[], String preferences, Properties inputProps) throws Exception {
         String base;
@@ -130,8 +134,8 @@ public class Preferences {
         // and return new expandedDefaultProperties
         Properties expandedDefaultProperties = PropertyUtil.expand(defaultProperties);
 
-        // parse any --<framework|modules>-<property>-<name>=<value> as
-        // <framework|modules>.<property>.<name>=<value> and ensure it is a valid property
+        // parse any --<framework|modules>-<property>-<name>=&lt;value&gt; as
+        // <framework|modules>.<property>.<name>=&lt;value&gt; and ensure it is a valid property
 
         // ensure ${rdeck_base}/etc exists
         File rdeck_base_etc = new File(configDir);

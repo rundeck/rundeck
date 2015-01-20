@@ -47,21 +47,21 @@ public interface ExecutionContext {
     public String getFrameworkProject();
 
     /**
-     * Get the framework
+     * @return the framework
      */
     public Framework getFramework();
 
     /**
-     * Get the authorization context
+     * @return the authorization context
      */
     public AuthContext getAuthContext();
     /**
-     * Get the storage service
+     * @return the storage service
      */
     public StorageTree getStorageTree();
 
     /**
-     * username
+     * @return username
      */
     public String getUser();
 
@@ -78,22 +78,22 @@ public interface ExecutionContext {
      */
     INodeSet getNodes();
     /**
-     * Return node dispatch threadcount
+     * @return node dispatch threadcount
      */
     int getThreadCount();
 
     /**
-     * Return the node rank attribute to use for ranking
+     * @return the node rank attribute to use for ranking
      */
     public String getNodeRankAttribute();
 
     /**
-     * Return true if the node rank order is ascending
+     * @return true if the node rank order is ascending
      */
     public boolean isNodeRankOrderAscending();
 
     /**
-     * return node dispatch keepgoing
+     * @return node dispatch keepgoing
      */
     boolean isKeepgoing();
 
@@ -112,14 +112,14 @@ public interface ExecutionContext {
     public Map<String, Map<String, String>> getDataContext();
 
     /**
-     * Return the data context in the private scope
+     * @return the data context in the private scope
      */
     public Map<String, Map<String, String>> getPrivateDataContext();
 
     public ExecutionListener getExecutionListener();
 
     /**
-     * Specific file to use for nodes source instead of project nodes
+     * @return Specific file to use for nodes source instead of project nodes
      */
     public File getNodesFile();
 }

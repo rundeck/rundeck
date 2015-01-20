@@ -43,7 +43,8 @@ import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 public class PluginAdapterUtility {
 
     /**
-     * Return true if the object has a valid Plugin annotation
+     * @param object potential plugin object annotated with {@link com.dtolabs.rundeck.core.plugins.Plugin}
+     * @return true if the object has a valid Plugin annotation
      */
     public static boolean canBuildDescription(final Object object) {
         final Plugin annotation1 = object.getClass().getAnnotation(Plugin.class);
@@ -51,7 +52,7 @@ public class PluginAdapterUtility {
     }
 
     /**
-     * Create a Description using a builder by analyzing the annotations on a plugin object, and including
+     * @return Create a Description using a builder by analyzing the annotations on a plugin object, and including
      * annotations on fields as DescriptionProperties.
      *
      * @param object  the object
@@ -62,7 +63,7 @@ public class PluginAdapterUtility {
     }
 
     /**
-     * Create a Description using a builder by analyzing the annotations on a plugin object.
+     * @return Create a Description using a builder by analyzing the annotations on a plugin object.
      *
      * @param object  the object
      * @param builder builder
@@ -208,6 +209,8 @@ public class PluginAdapterUtility {
      * values to resolved property values. Any resolved properties that are not mapped to a field will  be included in
      * the return result.
      *
+     * @param resolver property resolver
+     * @param object plugin object
      * @return Map of resolved properties that were not configured in the object's fields
      */
     public static Map<String, Object> configureProperties(final PropertyResolver resolver,
@@ -274,7 +277,8 @@ public class PluginAdapterUtility {
 
     /**
      * Retrieve the Description's Properties mapped to resolved values given the resolver, using InsanceOnly default scope.
-     *
+     * @param resolver property resolver
+     * @param description plugin description
      * @return All mapped properties by name and value.
      */
     public static Map<String, Object> mapDescribedProperties(final PropertyResolver resolver,
@@ -287,6 +291,9 @@ public class PluginAdapterUtility {
     /**
      * Retrieve the Description's Properties mapped to resolved values given the resolver, with a default property
      * scope
+     * @param resolver property resolver
+     * @param description plugin description
+     * @param defaultPropertyScope default scope for unspecified property scopes
      *
      * @return All mapped properties by name and value.
      */

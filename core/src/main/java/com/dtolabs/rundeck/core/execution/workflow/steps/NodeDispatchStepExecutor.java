@@ -80,6 +80,8 @@ public class NodeDispatchStepExecutor implements StepExecutor {
     }
     /**
      * Return a StepExecutionResult based on the DispatcherResult, that can later be extracted.
+     * @param dispatcherResult exception result
+     * @return step result
      */
     public static StepExecutionResult wrapDispatcherException(final DispatcherException dispatcherResult) {
         final StepExecutionResultImpl result = new NodeDispatchStepExecutorExceptionResult(dispatcherResult,
@@ -91,6 +93,8 @@ public class NodeDispatchStepExecutor implements StepExecutor {
 
     /**
      * Return a StepExecutionResult based on the DispatcherResult, that can later be extracted.
+     * @param dispatcherResult result
+     * @return step result
      */
     public static StepExecutionResult wrapDispatcherResult(final DispatcherResult dispatcherResult) {
         final StepExecutionResultImpl result;
@@ -172,6 +176,8 @@ public class NodeDispatchStepExecutor implements StepExecutor {
     }
     /**
      * Return the DispatcherResult from a StepExecutionResult created by this class.
+     * @param result step result
+     * @return dispatcher result
      */
     public static DispatcherResult extractDispatcherResult(final StepExecutionResult result) {
         if(!isWrappedDispatcherResult(result)) {
@@ -182,6 +188,8 @@ public class NodeDispatchStepExecutor implements StepExecutor {
     }
     /**
      * Return the DispatcherResult from a StepExecutionResult created by this class.
+     * @param result step exception
+     * @return dispatcher exception
      */
     public static DispatcherException extractDispatcherException(final StepExecutionResult result) {
         if(!isWrappedDispatcherException(result)) {

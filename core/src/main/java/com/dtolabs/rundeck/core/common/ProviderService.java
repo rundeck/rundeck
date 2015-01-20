@@ -38,7 +38,9 @@ import java.util.List;
 public interface ProviderService<T> extends FrameworkSupportService {
 
     /**
-     * Return the provider instance of the given name.
+     * @param providerName name of the service provider
+     * @return the provider instance of the given name.
+     * @throws ExecutionServiceException on error
      */
     public T providerOfType(final String providerName) throws ExecutionServiceException;
     public List<ProviderIdent> listProviders();

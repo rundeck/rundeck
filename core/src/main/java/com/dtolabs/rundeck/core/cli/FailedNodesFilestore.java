@@ -129,9 +129,8 @@ public class FailedNodesFilestore {
     /**
      * Parse the properties file specified and extract the failed node names, returning a filter map.
      *
-     * @param failedNodesFile
-     *
-     * @return map of include filter key -> nodename list.  Returns empty map if no results.
+     *@param failedNodesFile file
+     * @return map of include filter key -&gt; nodename list.  Returns empty map if no results.
      */
     public static Map<String, String> parseFailedNodes(final File failedNodesFile) {
         Properties failedprops = new Properties();

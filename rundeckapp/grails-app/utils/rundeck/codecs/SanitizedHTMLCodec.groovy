@@ -23,7 +23,7 @@ import org.owasp.html.Sanitizers
 
 /**
  * Sanitize HTML using owasp sanitizer and allow basic HTML elements.
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-11-19
  */
 class SanitizedHTMLCodec {

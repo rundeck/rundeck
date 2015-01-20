@@ -24,9 +24,9 @@ public class ThreadBoundJschLogger implements Logger {
     }
 
     /**
-     * Get the shared instance
-     *
-     * @return
+     *  @return the shared instance
+     * @param logger logger
+     * @param loggingLevel level
      */
     public static ThreadBoundJschLogger getInstance(final BaseLogger logger, final int loggingLevel) {
         getInstance();
@@ -34,9 +34,9 @@ public class ThreadBoundJschLogger implements Logger {
         return instance;
     }
     /**
-     * Get the shared instance
-     *
-     * @return
+     * @return the shared instance
+     * @param logger logger
+     * @param loggingLevel level
      */
     public static ThreadBoundJschLogger getInstance(final PluginLogger logger, final int loggingLevel) {
         getInstance();
@@ -55,8 +55,8 @@ public class ThreadBoundJschLogger implements Logger {
     /**
      * Set the thread-inherited logger with a loglevel on Jsch
      *
-     * @param logger
-     * @param loggingLevel
+     * @param logger logger
+     * @param loggingLevel level
      */
     private void setThreadLogger(BaseLogger logger, int loggingLevel) {
         baseLogger.set(logger);
@@ -66,8 +66,8 @@ public class ThreadBoundJschLogger implements Logger {
     /**
      * Set the thread-inherited logger with a loglevel on Jsch
      *
-     * @param logger
-     * @param loggingLevel
+     * @param logger logger
+     * @param loggingLevel level
      */
     private void setThreadLogger(PluginLogger logger, int loggingLevel) {
         pluginLogger.set(logger);

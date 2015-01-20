@@ -52,7 +52,12 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
 
     /**
      * Runs the script configured for the script plugin and channels the output to two streams.
-
+     * @param executionContext context
+     * @param outputStream output stream
+     * @param errorStream error stream
+     * @param framework fwlk
+     * @param configuration configuration
+     * @return exit code
      * @throws IOException          if any IO exception occurs
      * @throws InterruptedException if interrupted while waiting for the command to finish
      */
@@ -81,6 +86,11 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
 
     /**
      * Create a data context containing the plugin values "file","scriptfile" and "base", as well as all config values.
+     * @param framework fwk
+     * @param project project name
+     * @param context data context
+     * @param configuration configuration
+     * @return data context
      */
     protected Map<String, Map<String, String>> createStepItemDataContext(final Framework framework,
                                                                          final String project,
@@ -99,7 +109,11 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
     }
 
     /**
-     *
+     * create script data context
+     * @param framework fwk
+     * @param project project name
+     * @param context orig context
+     * @return new data context
      */
     protected Map<String, Map<String, String>> createScriptDataContext(final Framework framework,
                                                                        final String project,
@@ -113,6 +127,8 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
 
     /**
      * Create the command array for the data context.
+     * @param localDataContext data
+     * @return command array
      */
     protected String[] createScriptArgs(final Map<String, Map<String, String>> localDataContext) {
 
@@ -129,6 +145,8 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
     }
     /**
      * Create the command array for the data context.
+     * @param dataContext  data
+     * @return arglist
      */
     protected ExecArgList createScriptArgsList(final Map<String, Map<String,
             String>> dataContext) {

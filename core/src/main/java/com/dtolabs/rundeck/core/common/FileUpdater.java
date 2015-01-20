@@ -33,6 +33,8 @@ import java.io.File;
 public interface FileUpdater {
     /**
      * Update the destination file.
+     * @param destinationFile the file
+     * @throws FileUpdaterException on error
      */
     public void updateFile(File destinationFile) throws FileUpdaterException;
 }

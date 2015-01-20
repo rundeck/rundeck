@@ -39,15 +39,15 @@ import java.util.Map;
  */
 public interface WorkflowExecutionResult extends ExceptionStatusResult {
     /**
-     * Return list of step results
+     * @return list of step results
      */
     public List<StepExecutionResult> getResultSet();
     /**
-     * Return map of workflow item failures, keyed by node name
+     * @return map of workflow item failures, keyed by node name
      */
     public Map<String, Collection<StepExecutionResult>> getNodeFailures();
     /**
-     * Return map of workflow item failures, keyed by node name
+     * @return map of workflow item failures, keyed by node name
      */
     public Map<Integer, StepExecutionResult> getStepFailures();
 }

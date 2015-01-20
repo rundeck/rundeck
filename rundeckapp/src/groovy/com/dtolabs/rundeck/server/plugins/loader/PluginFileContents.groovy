@@ -18,7 +18,7 @@ package com.dtolabs.rundeck.server.plugins.loader
 
 /**
  * PluginFileContents provides an input stream to get the file contents
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-07-18
  */
 public interface PluginFileContents {

@@ -50,6 +50,7 @@ public class CLIExecutionListener extends ExecutionListenerOverrideBase  {
      *
      * @param failedNodesListener a listener for failed nodes list result
      * @param logger a logger
+     *               @param loglevel level
      */
     public CLIExecutionListener(final FailedNodesListener failedNodesListener,
                                 final CLIToolLogger logger, final int loglevel) {

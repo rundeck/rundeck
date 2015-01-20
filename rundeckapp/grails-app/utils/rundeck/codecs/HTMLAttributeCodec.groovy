@@ -19,7 +19,7 @@ package rundeck.codecs
 import org.owasp.encoder.Encode
 /**
  * HTMLAttributeValueCodec encodes all non-alphanumeric characters ASCII value less than 256 using HTML hexadecimal '&#xHH'
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-08-07
  */
 class HTMLAttributeCodec {

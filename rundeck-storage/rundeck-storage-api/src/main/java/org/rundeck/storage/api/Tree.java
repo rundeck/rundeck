@@ -112,6 +112,7 @@ public interface Tree<T extends ContentMeta> {
      * Create a resource
      *
      * @param path path
+     * @param content resource content
      *
      * @return the resource
      * @throws IllegalArgumentException if the path is a directory
@@ -125,6 +126,7 @@ public interface Tree<T extends ContentMeta> {
      * Update an existing resource
      *
      * @param path path
+     * @param content resource content
      *
      * @return the resource
      * @throws IllegalArgumentException if the path is a directory or does not exist

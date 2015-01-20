@@ -44,7 +44,7 @@ public class Option implements Comparable{
     String defaultValue
     Boolean enforced
     Boolean required
-    SortedSet values
+    SortedSet<String> values
     static hasMany = [values:String]
     URL valuesUrl
     /**

@@ -173,7 +173,6 @@ class ExecutionControllerTests  {
     }
 
     void testDownloadOutputFormatted(){
-        mockDomain(Execution)
 
         def ec = new ExecutionController()
         assert ec != null

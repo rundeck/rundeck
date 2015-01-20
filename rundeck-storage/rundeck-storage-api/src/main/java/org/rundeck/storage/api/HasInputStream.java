@@ -16,9 +16,10 @@ public interface HasInputStream {
     /**
      * Write the content stream to the output stream
      *
+     * @param outputStream output stream
      * @return the content stream
      *
-     * @throws IOException
+     * @throws IOException on io error
      */
     long writeContent(OutputStream outputStream) throws IOException;
 }

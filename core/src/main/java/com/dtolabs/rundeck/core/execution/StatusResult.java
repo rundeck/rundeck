@@ -31,7 +31,7 @@ package com.dtolabs.rundeck.core.execution;
  */
 public interface StatusResult {
     /**
-     * Return true if the result was successful
+     * @return true if the result was successful
      */
     boolean isSuccess();
 }

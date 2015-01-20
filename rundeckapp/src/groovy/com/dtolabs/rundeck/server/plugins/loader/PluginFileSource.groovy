@@ -18,7 +18,7 @@ package com.dtolabs.rundeck.server.plugins.loader
 
 /**
  * PluginFileSource provides plugin file manifests and can retrieve the plugin file contents
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-07-18
  */
 public interface PluginFileSource {

@@ -38,12 +38,12 @@ import java.lang.annotation.Target;
 */
 public @interface SelectValues {
     /**
-     * True if the property allows free text entry in addition to selection from a list
+     * @return True if the property allows free text entry in addition to selection from a list
      */
     boolean freeSelect() default false;
 
     /**
-     * The set of values that can be selected
+     * @return The set of values that can be selected
      */
     String[] values();
 }

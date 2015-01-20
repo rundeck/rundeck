@@ -33,12 +33,12 @@ import java.util.*;
 public interface SingleProjectResolver {
 
     /**
-     * return true if only one project exists
+     * @return true if only one project exists
      */
     public boolean hasSingleProject();
 
     /**
-     * return the name of the single project
+     * @return the name of the single project
      */
     public String getSingleProjectName();
 }

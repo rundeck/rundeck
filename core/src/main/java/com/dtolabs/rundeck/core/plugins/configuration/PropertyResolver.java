@@ -32,7 +32,9 @@ package com.dtolabs.rundeck.core.plugins.configuration;
  */
 public interface PropertyResolver {
     /**
-     * Return a value for a named property found in the given scope, or null if not found.
+     * @param name property name
+     * @param scope property search scope
+     * @return a value for a named property found in the given scope, or null if not found.
      */
     public Object resolvePropertyValue(String name, PropertyScope scope);
 }

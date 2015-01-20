@@ -1,3 +1,4 @@
+
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authentication.Group
@@ -5,11 +6,14 @@ import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+
 import grails.test.mixin.TestFor
-import org.codehaus.groovy.grails.plugins.converters.codecs.JSONCodec
+
+import org.codehaus.groovy.grails.plugins.codecs.JSONCodec;
 import org.codehaus.groovy.grails.plugins.testing.GrailsMockHttpServletResponse
 import org.junit.Test
 import org.springframework.context.MessageSource
+
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
@@ -26,6 +30,11 @@ import javax.servlet.http.HttpServletResponse
 @TestFor(ProjectController)
 class ProjectControllerTest {
 
+    @Before
+    public void setup(){
+        
+        controller.apiService = new ApiService()
+    }
     /**
      * utility method to mock a class
      */
@@ -505,9 +514,8 @@ class ProjectControllerTest {
      */
     @Test
     void apiProjectCreate_json_invalid() {
-        defineBeans {
-            apiService(ApiService)
-        }
+        
+        controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource= mockWith(MessageSource) {
             getMessage{code,args,locale->
@@ -536,9 +544,7 @@ class ProjectControllerTest {
      */
     @Test
     void apiProjectCreate_xml_projectExists() {
-        defineBeans {
-            apiService(ApiService)
-        }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource= mockWith(MessageSource){
             getMessage{code,args,locale->
                 code
@@ -566,9 +572,8 @@ class ProjectControllerTest {
      */
     @Test
     void apiProjectCreate_json_projectExists() {
-        defineBeans {
-            apiService(ApiService)
-        }
+        
+        controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource= mockWith(MessageSource){
             getMessage{code,args,locale->
@@ -597,9 +602,7 @@ class ProjectControllerTest {
      */
     @Test
     void apiProjectCreate_xml_withErrors() {
-        defineBeans {
-            apiService(ApiService)
-        }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource= mockWith(MessageSource){
             getMessage{code,args,locale->
                 code
@@ -626,9 +629,7 @@ class ProjectControllerTest {
      */
     @Test
     void apiProjectCreate_json_withErrors() {
-        defineBeans {
-            apiService(ApiService)
-        }
+        controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource= mockWith(MessageSource){
             getMessage{code,args,locale->
@@ -656,9 +657,7 @@ class ProjectControllerTest {
      */
     @Test
     void apiProjectCreate_xml_success() {
-        defineBeans {
-            apiService(ApiService)
-        }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource= mockWith(MessageSource){
             getMessage{code,args,locale->
                 code
@@ -692,9 +691,7 @@ class ProjectControllerTest {
      */
     @Test
     void apiProjectCreate_json_success() {
-        defineBeans {
-            apiService(ApiService)
-        }
+        controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource= mockWith(MessageSource){
             getMessage{code,args,locale->
@@ -726,9 +723,7 @@ class ProjectControllerTest {
      */
     @Test
     void apiProjectCreate_xml_withconfig() {
-        defineBeans {
-            apiService(ApiService)
-        }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource= mockWith(MessageSource){
             getMessage{code,args,locale->
                 code
@@ -763,9 +758,7 @@ class ProjectControllerTest {
      */
     @Test
     void apiProjectCreate_json_withconfig() {
-        defineBeans {
-            apiService(ApiService)
-        }
+        controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource= mockWith(MessageSource){ getMessage {code,args,locale-> code } }
         controller.frameworkService= mockFrameworkServiceForProjectCreate(true, false, [],
@@ -826,7 +819,7 @@ class ProjectControllerTest {
 
     @Test
     void deleteProject_apiversion(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         request.method = 'DELETE'
         request.setAttribute('api_version', 10) // require version 11
@@ -837,7 +830,7 @@ class ProjectControllerTest {
     }
     @Test
     void deleteProject_xml_missingparam(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         request.method = 'DELETE'
         request.setAttribute('api_version', 11) // require version 11
@@ -848,7 +841,7 @@ class ProjectControllerTest {
     }
     @Test
     void deleteProject_json_missingparam(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         mockCodec(JSONCodec)
         request.method = 'DELETE'
@@ -861,7 +854,7 @@ class ProjectControllerTest {
     }
     @Test
     void deleteProject_xml_notfound(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         mockCodec(JSONCodec)
         controller.frameworkService=mockFrameworkServiceForProjectDelete(false, false)
@@ -876,7 +869,7 @@ class ProjectControllerTest {
     }
     @Test
     void deleteProject_json_notfound(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         mockCodec(JSONCodec)
         controller.frameworkService=mockFrameworkServiceForProjectDelete(false, false)
@@ -891,7 +884,7 @@ class ProjectControllerTest {
     }
     @Test
     void deleteProject_xml_unauthorized(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         mockCodec(JSONCodec)
         controller.frameworkService=mockFrameworkServiceForProjectDelete(true, false)
@@ -906,7 +899,7 @@ class ProjectControllerTest {
     }
     @Test
     void deleteProject_json_unauthorized(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         mockCodec(JSONCodec)
         controller.frameworkService=mockFrameworkServiceForProjectDelete(true, false)
@@ -921,7 +914,7 @@ class ProjectControllerTest {
     }
     @Test
     void deleteProject_xml_haserrors(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         mockCodec(JSONCodec)
         controller.frameworkService=mockFrameworkServiceForProjectDelete(true, true)
@@ -939,7 +932,7 @@ class ProjectControllerTest {
 
     @Test
     void deleteProject_json_haserrors(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         mockCodec(JSONCodec)
         controller.frameworkService=mockFrameworkServiceForProjectDelete(true, true)
@@ -955,7 +948,7 @@ class ProjectControllerTest {
     }
     @Test
     void deleteProject_xml_success(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         mockCodec(JSONCodec)
         controller.frameworkService=mockFrameworkServiceForProjectDelete(true, true)
@@ -971,7 +964,7 @@ class ProjectControllerTest {
 
     @Test
     void deleteProject_json_success(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         mockCodec(JSONCodec)
         controller.frameworkService=mockFrameworkServiceForProjectDelete(true, true)
@@ -1207,7 +1200,7 @@ class ProjectControllerTest {
 
     @Test
     void apiProjectConfigGet_apiversion(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(false, false, 'read', [:])
         request.api_version=10
@@ -1218,7 +1211,7 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectConfigGet_xml_missingparam(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(false, false, 'read', [:])
         request.api_version = 11
@@ -1234,7 +1227,7 @@ class ProjectControllerTest {
 
     @Test
     void apiProjectConfigGet_json_missingparam(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(false, false, 'read', [:])
@@ -1247,7 +1240,7 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectConfigGet_xml_notfound(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(false, false, 'read', [:])
         request.api_version = 11
@@ -1259,7 +1252,7 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectConfigGet_json_notfound(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(false, false, 'read', [:])
@@ -1273,7 +1266,7 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectConfigGet_xml_unauthorized(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, false, 'configure', [:])
         request.api_version = 11
@@ -1285,7 +1278,7 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectConfigGet_json_unauthorized(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, false, 'configure', [:])
@@ -1299,7 +1292,7 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectConfigGet_xml_success(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
         request.api_version = 11
@@ -1315,7 +1308,7 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectConfigGet_json_success(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
@@ -1329,7 +1322,7 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectConfigGet_text_success(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, true, 'configure', [:],
@@ -1344,12 +1337,13 @@ class ProjectControllerTest {
 
     @Test
     void apiProjectConfigPut_xml_success(){
-        defineBeans { apiService(ApiService) }
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        //controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.apiService = new ApiService()
         controller.frameworkService= mockFrameworkServiceForProjectConfigPut(true, true, 'configure', ['prop1': 'value1',
                 prop2: 'value2'], true, null, 'text')
         request.api_version = 11
         params.project = 'test1'
+        request.method='PUT'
         request.xml='<config><property key="prop1" value="value1"/><property key="prop2" value="value2"/></config>'
         controller.apiProjectConfigPut()
         assertEquals HttpServletResponse.SC_OK, response.status
@@ -1362,7 +1356,7 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectConfigPut_json_success(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigPut(true, true, 'configure', ['prop1': 'value1',
@@ -1370,6 +1364,7 @@ class ProjectControllerTest {
         request.api_version = 11
         params.project = 'test1'
         request.json='{"prop1" :"value1","prop2":"value2"}'
+        request.method='PUT'
         controller.apiProjectConfigPut()
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals 'value1', response.json['prop1']
@@ -1377,7 +1372,7 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectConfigPut_text_success(){
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigPut(true, true, 'configure', ['prop1': 'value1',
@@ -1386,6 +1381,7 @@ class ProjectControllerTest {
         params.project = 'test1'
         request.content='prop1=value1\nprop2=value2'.bytes
         request.contentType='text/plain'
+        request.method='PUT'
         controller.apiProjectConfigPut()
         assertEquals HttpServletResponse.SC_OK, response.status
         assertTrue response.contentType.contains('text/plain')
@@ -1395,7 +1391,7 @@ class ProjectControllerTest {
 
     @Test
     void apiProjectConfigKeyGet_xml_success() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
         request.api_version = 11
@@ -1411,7 +1407,7 @@ class ProjectControllerTest {
 
     @Test
     void apiProjectConfigKeyGet_json_success() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
@@ -1426,7 +1422,7 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectConfigKeyGet_text_success() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
         request.api_version = 11
@@ -1441,7 +1437,7 @@ class ProjectControllerTest {
 
     @Test
     void apiProjectConfigKeyPut_xml_success() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectConfigKeyPut(true, true, 'configure',
                 ["prop1": "value1"],true,null,null)
@@ -1449,6 +1445,7 @@ class ProjectControllerTest {
         params.project = 'test1'
         params.keypath = 'prop1'
         request.xml='<property key="prop1" value="value1"/>'
+        request.method='PUT'
         controller.apiProjectConfigKeyPut()
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals "property", response.xml.name()
@@ -1458,7 +1455,7 @@ class ProjectControllerTest {
 
     @Test
     void apiProjectConfigKeyPut_json_success() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectConfigKeyPut(true, true, 'configure',
@@ -1467,6 +1464,7 @@ class ProjectControllerTest {
         params.project = 'test1'
         params.keypath = 'prop1'
         request.json='{"key":"prop1","value":"value1"}'
+        request.method='PUT'
         controller.apiProjectConfigKeyPut()
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals 'prop1', response.json.key
@@ -1474,7 +1472,7 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectConfigKeyPut_text_success() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         mockCodec(JSONCodec)
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectConfigKeyPut(true, true, 'configure',
@@ -1484,6 +1482,7 @@ class ProjectControllerTest {
         params.keypath = 'prop1'
         request.content='value1'
         request.contentType='text/plain'
+        request.method='PUT'
         controller.apiProjectConfigKeyPut()
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals 'value1', response.text
@@ -1491,19 +1490,20 @@ class ProjectControllerTest {
 
     @Test
     void apiProjectConfigKeyDelete_success() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectConfigKeyDelete(true, true, 'configure',
                 'prop1', true, null, null)
         request.api_version = 11
         params.project = 'test1'
         params.keypath = 'prop1'
+        request.method='DELETE'
         controller.apiProjectConfigKeyDelete()
         assertEquals HttpServletResponse.SC_NO_CONTENT, response.status
     }
     @Test
     void apiProjectExport_success() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export')
         controller.projectService=mockWith(ProjectService){
@@ -1522,7 +1522,7 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectExport_apiversion() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export')
         controller.projectService=mockWith(ProjectService){
@@ -1538,7 +1538,7 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectExport_notfound() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(false, true, 'export')
         controller.projectService=mockWith(ProjectService){
@@ -1554,7 +1554,7 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectExport_unauthorized() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, false, 'export')
         controller.projectService=mockWith(ProjectService){
@@ -1570,40 +1570,43 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectImport_notfound() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(false, true, 'import')
         request.api_version = 11
         params.project = 'test1'
         request.format='blah'
+        request.method='PUT'
         controller.apiProjectImport()
         assertXmlError(response, HttpServletResponse.SC_NOT_FOUND, "api.error.item.doesnotexist")
     }
     @Test
     void apiProjectImport_unauthorized() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, false, 'import')
         request.api_version = 11
         params.project = 'test1'
         request.format='blah'
+        request.method='PUT'
         controller.apiProjectImport()
         assertXmlError(response, HttpServletResponse.SC_FORBIDDEN, "api.error.item.unauthorized")
     }
     @Test
     void apiProjectImport_invalidFormat() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
         request.api_version = 11
         params.project = 'test1'
         request.format='blah'
+        request.method='PUT'
         controller.apiProjectImport()
         assertXmlError(response, HttpServletResponse.SC_BAD_REQUEST, "api.error.invalid.request")
     }
     @Test
     void apiProjectImport_xml_failure() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
@@ -1621,6 +1624,7 @@ class ProjectControllerTest {
         request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
                 [] as Set, [] as Set)
         session.user='user1'
+        request.method='PUT'
         controller.apiProjectImport()
         assertEquals HttpServletResponse.SC_OK,response.status
         assertEquals 'failed',response.xml.'@status'.text()
@@ -1631,7 +1635,7 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectImport_json_failure() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
@@ -1649,6 +1653,7 @@ class ProjectControllerTest {
         request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
                 [] as Set, [] as Set)
         session.user='user1'
+        request.method='PUT'
         controller.apiProjectImport()
         assertEquals HttpServletResponse.SC_OK,response.status
         assertEquals 'failed',response.json.import_status
@@ -1658,7 +1663,7 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectImport_xml_success() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
@@ -1677,6 +1682,7 @@ class ProjectControllerTest {
         request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
                 [] as Set, [] as Set)
         session.user='user1'
+        request.method='PUT'
         controller.apiProjectImport()
         assertEquals HttpServletResponse.SC_OK,response.status
         assertEquals 'successful',response.xml.'@status'.text()
@@ -1684,7 +1690,7 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectImport_importExecutionsFalse() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
@@ -1703,12 +1709,13 @@ class ProjectControllerTest {
         request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
                 [] as Set, [] as Set)
         session.user='user1'
+        request.method='PUT'
         controller.apiProjectImport()
         assertEquals HttpServletResponse.SC_OK,response.status
     }
     @Test
     void apiProjectImport_importExecutionsTrue() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
@@ -1727,12 +1734,13 @@ class ProjectControllerTest {
         request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
                 [] as Set, [] as Set)
         session.user='user1'
+        request.method='PUT'
         controller.apiProjectImport()
         assertEquals HttpServletResponse.SC_OK,response.status
     }
     @Test
     void apiProjectImport_jobUUIDBehaviorPreserve() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
@@ -1751,12 +1759,13 @@ class ProjectControllerTest {
         request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
                 [] as Set, [] as Set)
         session.user='user1'
+        request.method='PUT'
         controller.apiProjectImport()
         assertEquals HttpServletResponse.SC_OK,response.status
     }
     @Test
     void apiProjectImport_jobUUIDBehaviorReplace() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
@@ -1775,12 +1784,13 @@ class ProjectControllerTest {
         request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
                 [] as Set, [] as Set)
         session.user='user1'
+        request.method='PUT'
         controller.apiProjectImport()
         assertEquals HttpServletResponse.SC_OK,response.status
     }
     @Test
     void apiProjectImport_json_success() {
-        defineBeans { apiService(ApiService) }
+        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
@@ -1798,6 +1808,7 @@ class ProjectControllerTest {
         request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
                 [] as Set, [] as Set)
         session.user='user1'
+        request.method='PUT'
         controller.apiProjectImport()
         assertEquals HttpServletResponse.SC_OK,response.status
         assertEquals 'successful',response.json.import_status

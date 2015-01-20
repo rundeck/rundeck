@@ -30,7 +30,7 @@ package com.dtolabs.rundeck.core.plugins.configuration;
  */
 public interface Describable {
     /**
-     * Return the configuration description
+     * @return the configuration description
      */
     public Description getDescription();
 }

@@ -47,7 +47,6 @@ public interface ScriptFileCommandExecutionItem extends HandlerExecutionItem,Nod
      *
      * @return the inputstream
      *
-     * @throws java.io.IOException if an error occurs reading or getting the input stream
      */
     public abstract InputStream getScriptAsStream();
 
@@ -59,7 +58,7 @@ public interface ScriptFileCommandExecutionItem extends HandlerExecutionItem,Nod
     public abstract String getServerScriptFilePath();
     
     /**
-     * Return arguments to the script
+     * @return arguments to the script
      */
     public abstract String[] getArgs();
 

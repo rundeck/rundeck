@@ -14,8 +14,6 @@
   ~  limitations under the License.
   -->
 
-<!DOCTYPE project PUBLIC
-    "-//DTO Labs Inc.//DTD Resources Document 1.0//EN" "project.dtd">
 <project>
   <node name="test1" type="Node" description="this is the test1 node"
         hostname="test1"

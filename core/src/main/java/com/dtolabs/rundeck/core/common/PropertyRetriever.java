@@ -31,7 +31,8 @@ package com.dtolabs.rundeck.core.common;
  */
 public interface PropertyRetriever {
     /**
-     * Return a property value by name, or null if it is not found
+     * @return a property value by name, or null if it is not found
+     * @param name property name
      */
     public String getProperty(String name);
 }

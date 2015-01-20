@@ -36,7 +36,7 @@ public interface NodesFileGenerator {
     /**
      * Add Node object
      *
-     * @param node
+     * @param node node
      */
     public void addNode(final INodeEntry node) ;
 
@@ -49,8 +49,8 @@ public interface NodesFileGenerator {
 
     /**
      * Generate output from the provided ndoes.
-     * @throws IOException
-     * @throws NodesGeneratorException
+     * @throws IOException on io error
+     * @throws NodesGeneratorException on other error
      */
     public void generate() throws IOException, NodesGeneratorException ;
 }

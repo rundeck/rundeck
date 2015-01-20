@@ -19,7 +19,9 @@ public interface LogFileStorage {
      *
      * @return true if successful
      *
-     * @throws IOException
+     * @throws IOException if an io error occurs
+     *
+     * @throws com.dtolabs.rundeck.core.logging.LogFileStorageException if other errors occur
      */
     boolean store(InputStream stream, long length, Date lastModified) throws IOException, LogFileStorageException;
 
@@ -30,7 +32,8 @@ public interface LogFileStorage {
      *
      * @return true if successful
      *
-     * @throws IOException
+     * @throws IOException if an io error occurs
+     * @throws com.dtolabs.rundeck.core.logging.LogFileStorageException if other errors occur
      */
     boolean retrieve(OutputStream stream) throws IOException, LogFileStorageException;
 }

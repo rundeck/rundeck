@@ -244,9 +244,7 @@ public abstract class WebserviceHttpClientFactory {
      * @param username            username to user
      * @param password            password to use
      * @param query               query parameters to add to the request
-     * @param destination         an OutputStream to which to write the result data
-     * @param expectedContentType the content type expected.  if the type does not match, no data is written to the
-     *                            outputstream.  if null, any type is allowed.
+     * @param formData            form data
      *
      * @return WebserviceHttpClient instance
      */

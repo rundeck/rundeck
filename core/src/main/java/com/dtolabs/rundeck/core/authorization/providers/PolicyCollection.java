@@ -9,17 +9,16 @@ import javax.xml.xpath.XPathExpressionException;
 import com.dtolabs.rundeck.core.authorization.Attribute;
 
 public interface PolicyCollection {
-    
+
     /**
      * For a given policy collection, return all the group names associated with it.
      * @return collection of group names.
-     * @throws XPathExpressionException
      */
-    public Collection<String> groupNames() throws InvalidCollection;
+    public Collection<String> groupNames() ;
 
-    public long countPolicies() throws InvalidCollection;
+    public long countPolicies() ;
 
     public Collection<AclContext> matchedContexts(Subject subject,
-            Set<Attribute> environment) throws InvalidCollection;
+            Set<Attribute> environment) ;
 
 }

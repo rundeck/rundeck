@@ -47,6 +47,7 @@ public class FileCache<T extends FileCache.Cacheable> {
 
     /**
      * Use a specific expiration policy
+     * @param expiration policy
      */
     public FileCache(final Expiration<T> expiration) {
         this.expiration = expiration;
@@ -54,6 +55,7 @@ public class FileCache<T extends FileCache.Cacheable> {
 
     /**
      * Remove entry for a file.
+     * @param file file
      */
     public synchronized void remove(final File file) {
         final T t = cache.get(file);
@@ -112,7 +114,8 @@ public class FileCache<T extends FileCache.Cacheable> {
      */
     public static interface ItemCreator<T> {
         /**
-         * Return item to store for the file, or null to remove the association.
+         * @return item to store for the file, or null to remove the association.
+         * @param file file
          */
         public T createCacheItemForFile(File file);
     }

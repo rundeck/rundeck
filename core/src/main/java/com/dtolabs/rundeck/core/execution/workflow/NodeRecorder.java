@@ -57,8 +57,7 @@ public class NodeRecorder implements FailedNodesListener {
     }
 
     /**
-     * Returns the matched nodes less the failed nodes.
-     * @return
+     * @return the matched nodes less the failed nodes.
      */
     public HashSet<String> getSuccessfulNodes() {
         final HashSet<String> successfulNodes = new HashSet<String>(matchedNodes);
@@ -67,24 +66,21 @@ public class NodeRecorder implements FailedNodesListener {
     }
 
     /**
-     * Return the set of failed nodes
-     * @return
+     * @return the set of failed nodes
      */
     public HashMap<String, NodeStepResult> getFailedNodes() {
         return failedNodes;
     }
 
     /**
-     * Return true if successful
-     * @return
+     * @return true if successful
      */
     public boolean isSuccess() {
         return success;
     }
 
     /**
-     * Return the set of matched nodes
-     * @return
+     * @return the set of matched nodes
      */
     public HashSet<String> getMatchedNodes() {
         return matchedNodes;

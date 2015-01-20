@@ -30,7 +30,7 @@ package com.dtolabs.rundeck.core.execution;
  */
 public interface HasFailureHandler {
     /**
-     * Return the {@link StepExecutionItem} to handle failure
+     * @return the {@link StepExecutionItem} to handle failure
      */
     public StepExecutionItem getFailureHandler();
 }

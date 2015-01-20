@@ -28,7 +28,7 @@ import java.io.*;
 /**
  * ScriptfileUtilsTest is ...
  *
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-10-30
  */
 @RunWith(JUnit4.class)

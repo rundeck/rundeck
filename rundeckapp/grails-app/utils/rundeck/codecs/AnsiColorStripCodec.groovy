@@ -2,7 +2,7 @@ package rundeck.codecs
 
 /**
  * AnsiColorStripCodec strips ansi escape codes
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-05-15
  */
 class AnsiColorStripCodec {

@@ -7,14 +7,12 @@ import java.util.List;
  */
 public interface StepNodeContext<NODE, STEP> {
     /**
-     * Return the current node
-     * @return
+     * @return the current node
      */
     NODE getCurrentNode();
 
     /**
-     * Return the stack for the step context
-     * @return
+     * @return the stack for the step context
      */
     List<STEP> getCurrentContext();
 }

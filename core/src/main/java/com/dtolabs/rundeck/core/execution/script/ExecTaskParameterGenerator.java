@@ -36,13 +36,15 @@ import java.io.File;
  */
 public interface ExecTaskParameterGenerator {
     /**
-     * Generate the {@link #commandexecutable} and {@link #commandargline} values.
+     *
+     * @param nodeentry node
+     * @param command command
+     * @param scriptfile scriptfile
+     * @param args args
+     *
+     * @return Generate the {@link com.dtolabs.rundeck.core.execution.script.ExecTaskParameters}
      *
      * @throws com.dtolabs.rundeck.core.execution.ExecutionException if an error occurs
-     * @param nodeentry
-     * @param command
-     * @param scriptfile
-     * @param args
      */
     ExecTaskParameters generate(final INodeEntry nodeentry, final boolean command, final File scriptfile,
                                 final String[] args) throws ExecutionException;

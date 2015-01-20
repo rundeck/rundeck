@@ -1,3 +1,13 @@
+
+
+
+
+import org.codehaus.groovy.grails.plugins.databinding.DataBindingGrailsPlugin;
+import org.junit.Before;
+
+import grails.test.mixin.TestFor;
+import grails.test.mixin.support.GrailsUnitTestMixin;
+import grails.test.mixin.web.ControllerUnitTestMixin;
 import rundeck.ScheduledExecution
 import rundeck.JobExec
 import rundeck.Workflow
@@ -30,7 +40,16 @@ import rundeck.codecs.JobsXMLCodec
  * Created: Jun 10, 2009 11:27:54 AM
  * $Id$
  */
-class JobsXMLCodecTests extends GroovyTestCase {
+
+@TestFor(Option)
+@TestMixin(ControllerUnitTestMixin)
+class JobsXMLCodecTests {
+    
+    @Before
+    public void setup(){
+        // hack for 2.3.9:  https://jira.grails.org/browse/GRAILS-11136
+        defineBeans(new DataBindingGrailsPlugin().doWithSpring)
+    }
 
     /** no joblist */
     def badxml1 = """<wrong>
@@ -510,12 +529,13 @@ class JobsXMLCodecTests extends GroovyTestCase {
 """
         def jobs = JobsXMLCodec.decode(xml)
         assertNotNull jobs
-        assertEquals  'dig it potato\n' +
+        assertEquals  '         dig it potato\n' +
                               '\n' +
                               '* list item\n' +
                               '* list item2\n' +
                               '\n' +
-                              '<b>inline html</b>', jobs[0].description
+                              '<b>inline html</b>' +
+                '\n    ', jobs[0].description
         assertEquals  8, jobs[0].workflow.commands.size()
         assertEquals 'true', jobs[0].workflow.commands[0].adhocRemoteString
         assertEquals 'false', jobs[0].workflow.commands[1].adhocRemoteString

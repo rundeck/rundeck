@@ -85,7 +85,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     }
 
     /**
-     * Return data with exported plugin details
+     * @return data with exported plugin details
      */
     public Map<String,String> createPluginDataContext() {
         final Map<String,String> pluginDataContext = new HashMap<String, String>();
@@ -294,11 +294,13 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
      *
      * @param context          execution context
      * @param localDataContext current context data
-     * @param description
+     * @param description plugin description
+     * @param instanceData instance data
      *
-     * @param serviceName
+     * @param serviceName service name
      * @return context data with a new "config" entry containing the loaded plugin config
      *         properties.
+     * @throws ConfigurationException configuration error
      */
     protected Map<String, Map<String, String>> loadConfigData(
             final ExecutionContext context,
@@ -438,11 +440,11 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     }
 
     /**
-     * Subclasses return true if the script-plugin allows custom configuration properties defined in plugin metadata.
+     * @return true if the script-plugin allows custom configuration properties defined in plugin metadata.
      */
     public abstract boolean isAllowCustomProperties();
     /**
-     * Return true to provide conventional mapping from config properties to framework/project properties.
+     * @return true to provide conventional mapping from config properties to framework/project properties.
      */
     public boolean isUseConventionalPropertiesMapping(){
         return false;

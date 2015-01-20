@@ -83,7 +83,6 @@ class DbStorageService implements NamespacedStorage{
         } > 0
     }
 
-    @Override
     boolean hasPath(String ns,String path) {
         return hasPath(ns,PathUtil.asPath(path))
     }
@@ -93,7 +92,6 @@ class DbStorageService implements NamespacedStorage{
         findResource(ns,path) !=null
     }
 
-    @Override
     boolean hasResource(String ns,String path) {
         return hasResource(ns,PathUtil.asPath(path))
     }
@@ -122,7 +120,6 @@ class DbStorageService implements NamespacedStorage{
         } > 0
     }
 
-    @Override
     boolean hasDirectory(String ns,String path) {
         return hasDirectory(ns,PathUtil.asPath(path))
     }
@@ -141,7 +138,6 @@ class DbStorageService implements NamespacedStorage{
         throw StorageException.readException(path,"Not found")
     }
 
-    @Override
     Resource<ResourceMeta> getPath(String ns,String path) {
         return getPath(ns,PathUtil.asPath(path))
     }
@@ -162,7 +158,6 @@ class DbStorageService implements NamespacedStorage{
         found
     }
 
-    @Override
     Resource<ResourceMeta> getResource(String ns,String path) {
         return getResource(ns,PathUtil.asPath(path))
     }
@@ -172,7 +167,6 @@ class DbStorageService implements NamespacedStorage{
         Storage.findAllByNamespaceAndDir(ns ?: null,path.path,[sort:'name',order:'desc']).collect{ loadResource(it) }
     }
 
-    @Override
     Set<Resource<ResourceMeta>> listDirectoryResources(String ns,String path) {
         return listDirectoryResources(ns,PathUtil.asPath(path))
     }
@@ -205,7 +199,6 @@ class DbStorageService implements NamespacedStorage{
         }.findAll{it}
     }
 
-    @Override
     Set<Resource<ResourceMeta>> listDirectory(String ns,String path) {
         return listDirectory(ns,PathUtil.asPath(path))
     }
@@ -233,7 +226,6 @@ class DbStorageService implements NamespacedStorage{
         }.findAll { it }
     }
 
-    @Override
     Set<Resource<ResourceMeta>> listDirectorySubdirs(String ns,String path) {
         return listDirectorySubdirs(ns,PathUtil.asPath(path))
     }
@@ -248,7 +240,6 @@ class DbStorageService implements NamespacedStorage{
         return true
     }
 
-    @Override
     boolean deleteResource(String ns,String path) {
         return deleteResource(ns,PathUtil.asPath(path))
     }
@@ -317,7 +308,6 @@ class DbStorageService implements NamespacedStorage{
         return saved
     }
 
-    @Override
     Resource<ResourceMeta> createResource(String ns,String path, ResourceMeta content) {
         return createResource(ns,PathUtil.asPath(path), content)
     }
@@ -333,7 +323,6 @@ class DbStorageService implements NamespacedStorage{
         return loadResource(storage)
     }
 
-    @Override
     Resource<ResourceMeta> updateResource(String ns,String path, ResourceMeta content) {
         return updateResource(ns,PathUtil.asPath(path), content)
     }

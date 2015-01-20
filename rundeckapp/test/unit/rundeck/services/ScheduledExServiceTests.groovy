@@ -1,11 +1,23 @@
+
+
 package rundeck.services
+
+import grails.test.mixin.TestMixin
+import grails.test.runtime.DirtiesRuntime
+import org.codehaus.groovy.grails.plugins.databinding.DataBindingGrailsPlugin;
+
 
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.test.mixin.web.ControllerUnitTestMixin;
+
 import org.junit.Assert
+import org.junit.Before;
 import org.quartz.*
+import org.quartz.impl.matchers.GroupMatcher
 import org.quartz.spi.JobFactory
 import org.springframework.context.MessageSource
+
 import rundeck.*
 import rundeck.controllers.ScheduledExecutionController
 
@@ -34,7 +46,11 @@ import rundeck.controllers.ScheduledExecutionController
  */
 @TestFor(ScheduledExecutionService)
 @Mock([Execution, FrameworkService, WorkflowStep, CommandExec, JobExec, PluginStep, Workflow, ScheduledExecution, Option, Notification])
+@TestMixin(ControllerUnitTestMixin)
 class ScheduledExServiceTests {
+    
+    
+
 
     static void assertLength(int length, Object[] array){
         Assert.assertEquals(length,array.length)
@@ -42,10 +58,12 @@ class ScheduledExServiceTests {
     /**
      * Test getByIDorUUID method.
      */
+    @DirtiesRuntime
     public void testGetByIDorUUID() {
         def testService = new ScheduledExecutionService()
+        def myuuid='testUUID'//'89F375E0-7096-4490-8265-4F94793BEC2F'
         ScheduledExecution se = new ScheduledExecution(
-                uuid: 'testUUID',
+                uuid: myuuid,
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -53,12 +71,17 @@ class ScheduledExServiceTests {
                 argString: '-a b -c d',
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
         )
-        se.save()
-        long id = se.id
+        if (!se.validate()) {
+            se.errors.allErrors.each {
+                println it.toString()
+            }
+        }
+        assertNotNull(se.save())
+        Long id = se.id
 
-        ScheduledExecution.metaClass.static.findByUuid = { uuid -> uuid == 'testUUID' ? se : null }
+        ScheduledExecution.metaClass.static.findByUuid = { uuid -> uuid == myuuid ? se : null }
 
-        def result = testService.getByIDorUUID('testUUID')
+        def result = testService.getByIDorUUID(myuuid)
         assertNotNull(result)
         assertEquals(se, result)
 
@@ -77,6 +100,7 @@ class ScheduledExServiceTests {
     /**
      * test overlap between internal ID and UUID values, the ID should take precedence (return first)
      */
+    @DirtiesRuntime
     public void testGetByIDorUUIDWithOverlap() {
 
         def testService = new ScheduledExecutionService()
@@ -1659,7 +1683,7 @@ class ScheduledExServiceTests {
     public void testDoValidateOptionsMultivalued() {
 
         def sec = new ScheduledExecutionService()
-        if (true) {//valid multi option
+      
             def fwkControl = mockFor(FrameworkService, true)
             fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
             fwkControl.demand.existsFrameworkProject { project, framework ->
@@ -1703,7 +1727,7 @@ class ScheduledExServiceTests {
             assertFalse("wrong option name", next.enforced)
             assertTrue("wrong option name", next.multivalued)
             assertEquals("wrong option name", ' ', next.delimiter)
-        }
+        
 
     }
 
@@ -2710,14 +2734,15 @@ class ScheduledExServiceTests {
         fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
         fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
         fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getRundeckBase { 'test-base' }
+        fwkControl.demand.getRundeckBase {-> 'test-base' }
         sec.frameworkService = fwkControl.createMock()
         sec.frameworkService.metaClass.isClusterModeEnabled = {
             return false
         }
 
         def qtzControl = mockFor(FakeScheduler, true)
-        qtzControl.demand.getJobNames { name -> [] }
+        qtzControl.demand.checkExists { key -> false }
+        qtzControl.demand.getListenerManager { -> [addJobListener:{a,b->}] }
         qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
         sec.quartzScheduler = qtzControl.createMock()
         def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -2811,7 +2836,7 @@ class ScheduledExServiceTests {
         fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
         fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
         fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getRundeckBase { 'test-base' }
+        fwkControl.demand.getRundeckBase {-> 'test-base' }
         def uuid = UUID.randomUUID().toString()
         fwkControl.demand.getServerUUID { uuid }
         sec.frameworkService = fwkControl.createMock()
@@ -2820,7 +2845,8 @@ class ScheduledExServiceTests {
         }
 
         def qtzControl = mockFor(FakeScheduler, true)
-        qtzControl.demand.getJobNames { name -> [] }
+        qtzControl.demand.checkExists { key -> false }
+        qtzControl.demand.getListenerManager { -> [addJobListener:{a,b->}] }
         qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
         sec.quartzScheduler = qtzControl.createMock()
 
@@ -2865,7 +2891,7 @@ class ScheduledExServiceTests {
         fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
         fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
         fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getRundeckBase { 'test-base' }
+        fwkControl.demand.getRundeckBase {-> 'test-base' }
         def uuid = UUID.randomUUID().toString()
         sec.frameworkService = fwkControl.createMock()
         sec.frameworkService.metaClass.isClusterModeEnabled = {
@@ -2876,7 +2902,8 @@ class ScheduledExServiceTests {
         }
 
         def qtzControl = mockFor(FakeScheduler, true)
-        qtzControl.demand.getJobNames { name -> [] }
+        qtzControl.demand.checkExists { key -> false }
+        qtzControl.demand.getListenerManager { -> [addJobListener:{a,b->}] }
         qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
         sec.quartzScheduler = qtzControl.createMock()
 
@@ -2925,7 +2952,7 @@ class ScheduledExServiceTests {
             assertEquals 'aCommand', command
             return null
         }
-        fwkControl.demand.getRundeckBase { 'test-base' }
+        fwkControl.demand.getRundeckBase {-> 'test-base' }
         sec.frameworkService = fwkControl.createMock()
         sec.frameworkService.metaClass.isClusterModeEnabled = {
             return false
@@ -2944,7 +2971,8 @@ class ScheduledExServiceTests {
 //        sec.request.setAttribute("subject", subject)
 
         def qtzControl = mockFor(FakeScheduler, true)
-        qtzControl.demand.getJobNames { name -> [] }
+        qtzControl.demand.checkExists { key -> false }
+        qtzControl.demand.getListenerManager { -> [addJobListener:{a,b->}] }
         qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
         sec.quartzScheduler = qtzControl.createMock()
         def params = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -2994,14 +3022,15 @@ class ScheduledExServiceTests {
             assertEquals 'testProject', project
             return true
         }
-        fwkControl.demand.getRundeckBase { 'test-base' }
+        fwkControl.demand.getRundeckBase {-> 'test-base' }
         sec.frameworkService = fwkControl.createMock()
         sec.frameworkService.metaClass.isClusterModeEnabled = {
             return false
         }
 
         def qtzControl = mockFor(FakeScheduler, true)
-        qtzControl.demand.getJobNames { name -> [] }
+        qtzControl.demand.checkExists { key -> false }
+        qtzControl.demand.getListenerManager { -> [addJobListener:{a,b->}] }
         qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
         sec.quartzScheduler = qtzControl.createMock()
         def params = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -3045,7 +3074,7 @@ class ScheduledExServiceTests {
             assertEquals 'testProject', project
             return true
         }
-        fwkControl.demand.getRundeckBase { 'test-base' }
+        fwkControl.demand.getRundeckBase {-> 'test-base' }
         sec.frameworkService = fwkControl.createMock()
         sec.frameworkService.metaClass.isClusterModeEnabled = {
             return true
@@ -3056,7 +3085,8 @@ class ScheduledExServiceTests {
         }
 
         def qtzControl = mockFor(FakeScheduler, true)
-        qtzControl.demand.getJobNames { name -> [] }
+        qtzControl.demand.checkExists { key -> false }
+        qtzControl.demand.getListenerManager { -> [addJobListener:{a,b->}] }
         qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
         sec.quartzScheduler = qtzControl.createMock()
         def params = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -6621,67 +6651,14 @@ class FakeScheduler implements Scheduler{
         return null
     }
 
-    boolean unscheduleJob(String s, String s1) {
+    @Override
+    boolean unscheduleJobs(List<TriggerKey> list) throws SchedulerException {
         return false
     }
 
-    Date rescheduleJob(String s, String s1, Trigger trigger) {
-        return null
-    }
+
 
     void addJob(JobDetail detail, boolean b) {
-
-    }
-
-    boolean deleteJob(String s, String s1) {
-        return false
-    }
-
-    void triggerJob(String s, String s1) {
-
-    }
-
-    void triggerJobWithVolatileTrigger(String s, String s1) {
-
-    }
-
-    void triggerJob(String s, String s1, JobDataMap map) {
-
-    }
-
-    void triggerJobWithVolatileTrigger(String s, String s1, JobDataMap map) {
-
-    }
-
-    void pauseJob(String s, String s1) {
-
-    }
-
-    void pauseJobGroup(String s) {
-
-    }
-
-    void pauseTrigger(String s, String s1) {
-
-    }
-
-    void pauseTriggerGroup(String s) {
-
-    }
-
-    void resumeJob(String s, String s1) {
-
-    }
-
-    void resumeJobGroup(String s) {
-
-    }
-
-    void resumeTrigger(String s, String s1) {
-
-    }
-
-    void resumeTriggerGroup(String s) {
 
     }
 
@@ -6693,40 +6670,17 @@ class FakeScheduler implements Scheduler{
 
     }
 
-    String[] getJobGroupNames() {
-        return new String[0]
+    List getJobGroupNames() {
+        return new String[0] as List
     }
 
-    String[] getJobNames(String s) {
-        return new String[0]
+    List getTriggerGroupNames() {
+        return new String[0] as List
     }
 
-    Trigger[] getTriggersOfJob(String s, String s1) {
-        return new Trigger[0]
-    }
-
-    String[] getTriggerGroupNames() {
-        return new String[0]
-    }
-
-    String[] getTriggerNames(String s) {
-        return new String[0]
-    }
 
     Set getPausedTriggerGroups() {
         return null
-    }
-
-    JobDetail getJobDetail(String s, String s1) {
-        return null
-    }
-
-    Trigger getTrigger(String s, String s1) {
-        return null
-    }
-
-    int getTriggerState(String s, String s1) {
-        return 0
     }
 
     void addCalendar(String s, Calendar calendar, boolean b, boolean b1) {
@@ -6741,87 +6695,152 @@ class FakeScheduler implements Scheduler{
         return null
     }
 
-    String[] getCalendarNames() {
-        return new String[0]
+    List getCalendarNames() {
+        return new String[0] as List
     }
 
-    boolean interrupt(String s, String s1) {
+    @Override
+    ListenerManager getListenerManager() throws SchedulerException {
+        return null
+    }
+
+    @Override
+    void scheduleJobs(Map<JobDetail, Set<? extends Trigger>> map, boolean b) throws SchedulerException {
+
+    }
+
+    @Override
+    void scheduleJob(JobDetail jobDetail, Set<? extends Trigger> set, boolean b) throws SchedulerException {
+
+    }
+
+    @Override
+    boolean unscheduleJob(TriggerKey triggerKey) throws SchedulerException {
         return false
     }
 
-    void addGlobalJobListener(JobListener listener) {
+    @Override
+    Date rescheduleJob(TriggerKey triggerKey, Trigger trigger) throws SchedulerException {
+        return null
+    }
+
+    @Override
+    void addJob(JobDetail jobDetail, boolean b, boolean b1) throws SchedulerException {
 
     }
 
-    void addJobListener(JobListener listener) {
-
-    }
-
-    boolean removeGlobalJobListener(String s) {
+    @Override
+    boolean deleteJob(JobKey jobKey) throws SchedulerException {
         return false
     }
 
-    boolean removeJobListener(String s) {
+    @Override
+    boolean deleteJobs(List<JobKey> list) throws SchedulerException {
         return false
     }
 
-    List getGlobalJobListeners() {
+    @Override
+    void triggerJob(JobKey jobKey) throws SchedulerException {
+
+    }
+
+    @Override
+    void triggerJob(JobKey jobKey, JobDataMap jobDataMap) throws SchedulerException {
+
+    }
+
+    @Override
+    void pauseJob(JobKey jobKey) throws SchedulerException {
+
+    }
+
+    @Override
+    void pauseJobs(GroupMatcher<JobKey> groupMatcher) throws SchedulerException {
+
+    }
+
+    @Override
+    void pauseTrigger(TriggerKey triggerKey) throws SchedulerException {
+
+    }
+
+    @Override
+    void pauseTriggers(GroupMatcher<TriggerKey> groupMatcher) throws SchedulerException {
+
+    }
+
+    @Override
+    void resumeJob(JobKey jobKey) throws SchedulerException {
+
+    }
+
+    @Override
+    void resumeJobs(GroupMatcher<JobKey> groupMatcher) throws SchedulerException {
+
+    }
+
+    @Override
+    void resumeTrigger(TriggerKey triggerKey) throws SchedulerException {
+
+    }
+
+    @Override
+    void resumeTriggers(GroupMatcher<TriggerKey> groupMatcher) throws SchedulerException {
+
+    }
+
+    @Override
+    Set<JobKey> getJobKeys(GroupMatcher<JobKey> groupMatcher) throws SchedulerException {
         return null
     }
 
-    Set getJobListenerNames() {
+    @Override
+    List<? extends Trigger> getTriggersOfJob(JobKey jobKey) throws SchedulerException {
         return null
     }
 
-    JobListener getGlobalJobListener(String s) {
+    @Override
+    Set<TriggerKey> getTriggerKeys(GroupMatcher<TriggerKey> groupMatcher) throws SchedulerException {
         return null
     }
 
-    JobListener getJobListener(String s) {
+    @Override
+    JobDetail getJobDetail(JobKey jobKey) throws SchedulerException {
         return null
     }
 
-    void addGlobalTriggerListener(TriggerListener listener) {
-
+    @Override
+    Trigger getTrigger(TriggerKey triggerKey) throws SchedulerException {
+        return null
     }
 
-    void addTriggerListener(TriggerListener listener) {
-
+    @Override
+    Trigger.TriggerState getTriggerState(TriggerKey triggerKey) throws SchedulerException {
+        return null
     }
 
-    boolean removeGlobalTriggerListener(String s) {
+    @Override
+    boolean interrupt(JobKey jobKey) throws UnableToInterruptJobException {
         return false
     }
 
-    boolean removeTriggerListener(String s) {
+    @Override
+    boolean interrupt(String s) throws UnableToInterruptJobException {
         return false
     }
 
-    List getGlobalTriggerListeners() {
-        return null
-    }
-
-    Set getTriggerListenerNames() {
-        return null
-    }
-
-    TriggerListener getGlobalTriggerListener(String s) {
-        return null
-    }
-
-    TriggerListener getTriggerListener(String s) {
-        return null
-    }
-
-    void addSchedulerListener(SchedulerListener listener) {
-
-    }
-
-    boolean removeSchedulerListener(SchedulerListener listener) {
+    @Override
+    boolean checkExists(JobKey jobKey) throws SchedulerException {
         return false
     }
 
-    List getSchedulerListeners() {
-        return null
+    @Override
+    boolean checkExists(TriggerKey triggerKey) throws SchedulerException {
+        return false
+    }
+
+    @Override
+    void clear() throws SchedulerException {
+
     }
 }

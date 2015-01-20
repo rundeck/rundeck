@@ -94,6 +94,8 @@ public class DataContextUtils {
      *
      * @param args argument string array
      * @param data data context
+     * @param converter converter
+     * @param failIfUnexpanded true to fail if property is not found
      * @return string array with replaced embedded properties
      */
     public static String[] replaceDataReferences(final String[] args, final Map<String, Map<String, String>> data, Converter<String, String> converter, boolean failIfUnexpanded) {
@@ -105,6 +107,9 @@ public class DataContextUtils {
      *
      * @param args argument string array
      * @param data data context
+     * @param converter converter
+     * @param failIfUnexpanded true to fail if property is not found
+     * @param blankIfUnexpanded true to use blank if property is not found
      * @return string array with replaced embedded properties
      */
     public static String[] replaceDataReferences(final String[] args, final Map<String, Map<String, String>> data,
@@ -190,6 +195,7 @@ public class DataContextUtils {
      * Merge one context onto another by adding or replacing values.
      * @param targetContext the target of the merge
      *                @param newContext context to merge
+     * @return merged data
      */
     public static Map<String, Map<String, String>> merge(final Map<String, Map<String, String>> targetContext,
                                                          final Map<String, Map<String, String>> newContext) {
@@ -244,7 +250,7 @@ public class DataContextUtils {
      * @param data  data context map
      *              @param converter converter to encode/convert the expanded values
      *
-     * @param failOnUnexpanded
+     * @param failOnUnexpanded true to fail if a reference is not found
      * @return string with values substituted, or original string
      */
     public static String replaceDataReferences(final String input, final Map<String, Map<String, String>> data,
@@ -260,7 +266,9 @@ public class DataContextUtils {
      * @param data  data context map
      *              @param converter converter to encode/convert the expanded values
      *
-     * @param failOnUnexpanded
+     * @param failOnUnexpanded true to fail if a reference is not found
+     * @param blankIfUnexpanded true to use blank if a reference is not found
+     *
      * @return string with values substituted, or original string
      */
     public static String replaceDataReferences(final String input, final Map<String, Map<String, String>> data,
@@ -346,6 +354,7 @@ public class DataContextUtils {
      *
      * @return the token replaced temp file, or null if an error occurs.
      * @deprecated
+     * @throws java.io.IOException on io error
      */
     public static File replaceTokensInFile(final String sourceFile, final Map<String, Map<String, String>> dataContext,
                                            final Framework framework) throws IOException {
@@ -365,6 +374,8 @@ public class DataContextUtils {
      * @deprecated use {@link #replaceTokensInFile(java.io.File, java.util.Map,
      *             com.dtolabs.rundeck.core.common.Framework,
      *             com.dtolabs.rundeck.core.execution.script.ScriptfileUtils.LineEndingStyle)}
+     *
+     * @throws java.io.IOException on io error
      */
     public static File replaceTokensInFile(
             final File sourceFile,
@@ -386,6 +397,7 @@ public class DataContextUtils {
      * @param style       line ending style
      *
      * @return the token replaced temp file, or null if an error occurs.
+     * @throws java.io.IOException on io error
      */
     public static File replaceTokensInFile(
             final File sourceFile,
@@ -408,6 +420,7 @@ public class DataContextUtils {
      * @param destination destination file, or null to create a new temp file
      *
      * @return the token replaced file, or null if an error occurs.
+     * @throws java.io.IOException on io error
      */
     public static File replaceTokensInFile(
             final File sourceFile,
@@ -447,6 +460,7 @@ public class DataContextUtils {
      * @deprecated use {@link #replaceTokensInScript(String, java.util.Map,
      * com.dtolabs.rundeck.core.common.Framework,
      * com.dtolabs.rundeck.core.execution.script.ScriptfileUtils.LineEndingStyle)}
+     * @throws java.io.IOException on io error
      */
     public static File replaceTokensInScript(final String script, final Map<String, Map<String, String>> dataContext,
                                            final Framework framework) throws IOException {
@@ -463,6 +477,7 @@ public class DataContextUtils {
      * @param style       line ending style
      *
      * @return the token replaced temp file, or null if an error occurs.
+     * @throws java.io.IOException on io error
      */
     public static File replaceTokensInScript(
             final String script,
@@ -486,6 +501,7 @@ public class DataContextUtils {
      * @param destination destination file, or null to create a temp file
      *
      * @return the token replaced temp file, or null if an error occurs.
+     * @throws java.io.IOException on io error
      */
     public static File replaceTokensInScript(
             final String script,
@@ -528,6 +544,7 @@ public class DataContextUtils {
      * java.util.Map,
      * com.dtolabs.rundeck.core.common.Framework,
      * com.dtolabs.rundeck.core.execution.script.ScriptfileUtils.LineEndingStyle)}
+     * @throws java.io.IOException on io error
      *
      */
     public static File replaceTokensInStream(final InputStream stream, final Map<String, Map<String, String>> dataContext,
@@ -544,6 +561,7 @@ public class DataContextUtils {
      * @param style script file line ending style to use
      *
      * @return the token replaced temp file, or null if an error occurs.
+     * @throws java.io.IOException on io error
      */
     public static File replaceTokensInStream(
             final InputStream stream,
@@ -567,6 +585,7 @@ public class DataContextUtils {
      * @param destination destination file
      *
      * @return the token replaced temp file, or null if an error occurs.
+     * @throws java.io.IOException on io error
      */
     public static File replaceTokensInStream(
             final InputStream stream,
@@ -599,11 +618,9 @@ public class DataContextUtils {
     }
 
     /**
-     * Flattens the data context into a simple key/value pair, using a "." separator for keys.
+     * @return Flattens the data context into a simple key/value pair, using a "." separator for keys.
      *
-     * @param dataContext
-     *
-     * @return
+     * @param dataContext data
      */
     public static Map<String, String> flattenDataContext(final Map<String, Map<String, String>> dataContext) {
         final Map<String, String> res = new HashMap<String, String>();
@@ -630,7 +647,7 @@ public class DataContextUtils {
      * Convert option keys into environment variable names. Convert to uppercase and prepend "RD_"
      *
      * @param options the input options
-     * @param prefix
+     * @param prefix prefix
      *
      * @return map of environment variable names to values, or null if options was null
      */
@@ -650,6 +667,7 @@ public class DataContextUtils {
     /**
      * Add embedded env elements for any included context data for the script
      *
+     * @param dataContext data
      * @param execTask execTask
      */
     public static void addEnvVarsFromContextForExec(final ExecTask execTask,
@@ -676,6 +694,7 @@ public class DataContextUtils {
 
         /**
          * Add an environment variable
+         * @param env env variable
          */
         void addEnv(Environment.Variable env);
     }
@@ -683,6 +702,7 @@ public class DataContextUtils {
      * add Env elements to pass environment variables to the ExtSSHExec
      *
      * @param sshexecTask task
+     * @param dataContext data
      */
     public static void addEnvVars( final EnvironmentConfigurable sshexecTask, final Map<String, Map<String, String>> dataContext) {
         final Map<String, String> environment = generateEnvVarsFromContext(dataContext);
@@ -700,7 +720,8 @@ public class DataContextUtils {
     }
 
     /**
-     * Generate a set of key value pairs to use for environment variables, from the context data set
+     * @return Generate a set of key value pairs to use for environment variables, from the context data set
+     * @param dataContext data
      */
     public static Map<String, String> generateEnvVarsFromContext(final Map<String, Map<String, String>> dataContext) {
         final Map<String, String> context = new HashMap<String, String>();

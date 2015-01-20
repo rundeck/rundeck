@@ -31,7 +31,7 @@ import javax.net.ssl.TrustManagerFactory;
 /**
  * Socket factory that generates wrapped X509TrustManagers that perform hostname cn verification.
  * 
- * @author Kim Ho <kim.ho@salesforce.com>
+ * @author Kim Ho <a href="mailto:kim.ho@salesforce.com">kim.ho@salesforce.com</a>
  */ 
 public class HostnameVerifyingSSLSocketFactory extends SSLSocketFactory {
 

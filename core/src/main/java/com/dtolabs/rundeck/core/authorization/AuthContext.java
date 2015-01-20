@@ -27,11 +27,11 @@ public interface AuthContext {
 
     /**
      * Evaluate the authorization request and return if this request is valid. Make a single resource determination.
-     * <p/>
+     * <br>
      * The method is loosely based on the XACML model for structuring requests and response.
-     * <p/>
+     * <br>
      * These can be prefixed with a fully qualified namespace and ':'.
-     * <p/>
+     * <br>
      * If anything goes wrong in evaluating the request, the result will be false.  No exception will be thrown.
      *
      * @param resource    The properties that identify the resource.
@@ -45,9 +45,9 @@ public interface AuthContext {
     /**
      * Make a multiple resource determination.
      *
-     * @param resources
-     * @param actions
-     * @param environment
+     * @param resources resource set
+     * @param actions action set
+     * @param environment environment
      *
      * @return decisions
      */

@@ -59,6 +59,7 @@ public class Setup implements CLIToolLogger {
 
     /**
      * called from setup shell/bat script. Calls the {@link #execute} method.
+     * @param args args
      */
     public static void main(final String args[]) {
         int exitCode = 1;
@@ -207,8 +208,9 @@ public class Setup implements CLIToolLogger {
 
     /**
      * Look for template in the jar resources, otherwise look for it on filepath
-     * @param filename
-     * @return
+     * @param filename template name
+     * @return file
+     * @throws java.io.IOException on io error
      */
     private File getTemplateFile(String filename) throws IOException {
         File templateFile=null;

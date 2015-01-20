@@ -34,7 +34,7 @@ import com.dtolabs.rundeck.core.execution.StepExecutionItem;
  */
 public interface NodeStepExecutionItem extends StepExecutionItem {
     /**
-     * Return the type name of the StepExecution provider to use.
+     * @return the type name of the StepExecution provider to use.
      */
     public String getNodeStepType();
 }

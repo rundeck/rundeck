@@ -24,31 +24,27 @@ import java.util.Map;
  */
 public interface WorkflowNodeState {
     /**
-     * The node name
+     * @return The node name
      *
-     * @return
      */
     public String getNodeName();
 
     /**
-     * The node's current step
+     * @return The node's current step
      *
-     * @return
      */
     public StepIdentifier getLastIdentifier();
 
     /**
-     * The node's current state
+     * @return The node's current state
      *
-     * @return
      */
     public StepState getNodeState();
 
 
     /**
-     * Return a map of step ident to step states for the node
+     * @return a map of step ident to step states for the node
      *
-     * @return
      */
     public Map<StepIdentifier, ? extends StepState> getStepStateMap();
 

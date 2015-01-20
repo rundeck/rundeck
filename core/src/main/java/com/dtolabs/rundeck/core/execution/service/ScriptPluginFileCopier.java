@@ -140,14 +140,14 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
 
     /**
      * Internal copy method accepting file, inputstream or string
-     * @param executionContext
-     * @param file
-     * @param input
-     * @param content
-     * @param node
-     * @param destination
+     * @param executionContext context
+     * @param file file
+     * @param input stream
+     * @param content string
+     * @param node node
+     * @param destination path
      * @return file path
-     * @throws FileCopierException
+     * @throws FileCopierException on error
      */
     String copyFile(
             final ExecutionContext executionContext,

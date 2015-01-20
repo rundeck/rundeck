@@ -37,6 +37,11 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 public interface NodeStepExecutor {
     /**
      * Execute the step
+     * @param context context
+     * @param item step item
+     * @param node node
+     * @return result
+     * @throws NodeStepException on step error
      */
     public NodeStepResult executeNodeStep(StepExecutionContext context, NodeStepExecutionItem item, INodeEntry node)
         throws

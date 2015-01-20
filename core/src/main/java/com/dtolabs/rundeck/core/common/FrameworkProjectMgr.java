@@ -35,7 +35,7 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
     private final IPropertyLookup lookup;
 
     /**
-     * Factory method.
+     * @return new manager
      *
      * @param name      Name of manager. informational purposes
      * @param baseDir   Basedir where child resources live
@@ -98,18 +98,19 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
 
     final HashMap<String,FrameworkProject> projectCache= new HashMap<String, FrameworkProject>();
     /**
-     * Create a project object without adding to child map
+     * @return Create a project object without adding to child map
      * @param projectName name of project
-     * @return
      */
     private FrameworkProject createFrameworkProjectInt(final String projectName) {
         return createFrameworkProjectInt(projectName, null,false);
     }
 
     /**
-     * Create a project object without adding to child map
-     * @param projectName
-     * @return
+     * @return Create a project object without adding to child map
+     * @param projectName name
+     * @param properties properties
+     * @param strict true for strict exists check
+     * @throws java.lang.IllegalArgumentException if strict is true and the project already exists
      */
     private FrameworkProject createFrameworkProjectInt(final String projectName,final Properties properties,
             boolean strict) {
@@ -141,19 +142,16 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
     }
 
     /**
-     * returns a collection of Depot objects
-     *
-     * @return
+     * @return a collection of Project objects
      */
     public Collection listFrameworkProjects() {
         return listChildren();
     }
 
     /**
-     * Looks for name as an existing Depot object and returns it
+     * @return an existing Project object and returns it
      *
      * @param name The name of the project
-     * @return
      */
     public FrameworkProject getFrameworkProject(final String name) {
         try {
@@ -164,10 +162,9 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
     }
 
     /**
-     * Determines if Depot exists in framework.
+     * @return true if project exists in framework.
      *
      * @param project The name of the project
-     * @return
      */
     public boolean existsFrameworkProject(final String project) {
         if (null == project) throw new IllegalArgumentException("project paramater was null");
@@ -175,11 +172,6 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
     }
 
 
-    /**
-     * Prints internal state info for debugging purposes
-     *
-     * @return
-     */
     public String toString() {
         return "DepotMgr{" +
                 "name=" + getName() +

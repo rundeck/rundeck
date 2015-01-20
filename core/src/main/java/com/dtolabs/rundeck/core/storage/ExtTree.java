@@ -9,7 +9,7 @@ import java.util.Set;
 /**
  * ExtTree extends each tree method with additional parameter
  *
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-04-03
  */
 public interface ExtTree<S, T extends ContentMeta> {
@@ -18,6 +18,7 @@ public interface ExtTree<S, T extends ContentMeta> {
      * Return true if the path exists
      *
      * @param path path
+     * @param extra extra component
      *
      * @return true if it exists
      */
@@ -28,6 +29,7 @@ public interface ExtTree<S, T extends ContentMeta> {
      * Return true if a resource at the path exists
      *
      * @param path path
+     * @param extra extra component
      *
      * @return true if a resource exists
      */
@@ -38,6 +40,7 @@ public interface ExtTree<S, T extends ContentMeta> {
      * Return true if a directory at the path exists
      *
      * @param path path
+     * @param extra extra component
      *
      * @return true if the path is a directory
      */
@@ -48,6 +51,7 @@ public interface ExtTree<S, T extends ContentMeta> {
      * Return the resource or directory at the path
      *
      * @param path path
+     * @param extra extra component
      *
      * @return Resource or directory
      */
@@ -58,6 +62,7 @@ public interface ExtTree<S, T extends ContentMeta> {
      * Return the resource at the path
      *
      * @param path path
+     * @param extra extra component
      *
      * @return Resource
      *
@@ -70,6 +75,7 @@ public interface ExtTree<S, T extends ContentMeta> {
      * Return the set of non-directory resources at the directory path
      *
      * @param path path
+     * @param extra extra component
      *
      * @return set of resources
      */
@@ -80,6 +86,7 @@ public interface ExtTree<S, T extends ContentMeta> {
      * Return the set of resources at the directory path
      *
      * @param path path
+     * @param extra extra component
      *
      * @return set of resources
      */
@@ -90,6 +97,7 @@ public interface ExtTree<S, T extends ContentMeta> {
      * Return the set of sub directory resources within the directory path
      *
      * @param path directory path
+     * @param extra extra component
      *
      * @return set of subdirectories
      */
@@ -100,6 +108,7 @@ public interface ExtTree<S, T extends ContentMeta> {
      * Delete a resource at a path
      *
      * @param path path
+     * @param extra extra component
      *
      * @return true if the resource was deleted
      *
@@ -112,6 +121,8 @@ public interface ExtTree<S, T extends ContentMeta> {
      * Create a resource
      *
      * @param path path
+     * @param extra extra component
+     * @param content content
      *
      * @return the resource
      *
@@ -124,6 +135,8 @@ public interface ExtTree<S, T extends ContentMeta> {
      * Update an existing resource
      *
      * @param path path
+     * @param extra extra component
+     * @param content content
      *
      * @return the resource
      *

@@ -23,7 +23,7 @@ import org.junit.runners.JUnit4
 
 /**
  * PropertiesManifestTest is ...
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-07-18
  */
 @RunWith(JUnit4)

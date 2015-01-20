@@ -72,6 +72,7 @@ public class NodeSetImpl implements INodeSet, NodeReceiver {
 
     /**
      * Add all nodes from a node set to this node set
+     * @param set node set
      */
     public void putNodes(final INodeSet set) {
         putNodes(set.getNodes());
@@ -79,6 +80,7 @@ public class NodeSetImpl implements INodeSet, NodeReceiver {
 
     /**
      * Add all nodes from a collection to this node set
+     * @param set node set
      */
     public void putNodes(final Collection<INodeEntry> set) {
         for (final INodeEntry iNodeEntry : set) {

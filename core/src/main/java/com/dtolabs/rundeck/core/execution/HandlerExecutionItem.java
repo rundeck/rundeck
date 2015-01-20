@@ -32,7 +32,7 @@ package com.dtolabs.rundeck.core.execution;
  */
 public interface HandlerExecutionItem extends StepExecutionItem {
     /**
-     * Return true if the handler result of success should indicate that the workflow should keep going
+     * @return true if the handler result of success should indicate that the workflow should keep going
      */
     public boolean isKeepgoingOnSuccess();
 }

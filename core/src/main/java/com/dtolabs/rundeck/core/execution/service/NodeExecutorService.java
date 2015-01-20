@@ -100,8 +100,8 @@ public class NodeExecutorService extends NodeSpecifiedService<NodeExecutor> impl
         return NodeExecutor.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
     }
 
-    public NodeExecutor createProviderInstance(final Class<NodeExecutor> clazz, final String name) throws PluginException,
-        ProviderCreationException {
+    @Override
+    public <X extends NodeExecutor> NodeExecutor createProviderInstance(Class<X> clazz, String name) throws PluginException, ProviderCreationException {
         return createProviderInstanceFromType(clazz, name);
     }
 

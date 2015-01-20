@@ -39,32 +39,32 @@ import java.lang.annotation.Target;
 */
 public @interface PluginProperty {
     /**
-     * The property identifier name
+     * @return The property identifier name
      */
     String name() default "";
 
     /**
-     * The property display name
+     * @return The property display name
      */
     String title() default "";
 
     /**
-     * The property description
+     * @return The property description
      */
     String description() default "";
 
     /**
-     * The default value as a string
+     * @return The default value as a string
      */
     String defaultValue() default "";
 
     /**
-     * True if the property value is required
+     * @return True if the property value is required
      */
     boolean required() default false;
 
     /**
-     * The scope for resolving the property value at runtime
+     * @return The scope for resolving the property value at runtime
      */
     PropertyScope scope() default PropertyScope.Unspecified;
 }

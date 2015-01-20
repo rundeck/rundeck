@@ -25,7 +25,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 /**
- * A base interface for enum failure reasons, implementations should provide a {@link #toString()} implementation
+ * A base interface for enum failure reasons, implementations should provide a toString implementation
  * returning a single word reason.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>

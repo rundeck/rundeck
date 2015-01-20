@@ -37,6 +37,7 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
+import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import org.hibernate.StaleObjectStateException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -417,7 +418,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             total: total]
     }
 
-    def public  finishQueueQuery = { query,params,model->
+    def public finishQueueQuery(query,params,model){
 
        if(!params.max){
            params.max=20
@@ -668,7 +669,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
-    def static HashMap<String, String> exportContextForExecution(Execution execution) {
+    def static HashMap<String, String> exportContextForExecution(Execution execution, LinkGenerator grailsLinkGenerator) {
         def jobcontext = new HashMap<String, String>()
         if (execution.scheduledExecution) {
             jobcontext.name = execution.scheduledExecution.jobName
@@ -676,8 +677,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             jobcontext.id = execution.scheduledExecution.extid
         }
         jobcontext.execid = execution.id.toString()
-        jobcontext.serverUrl = generateServerURL()
-        jobcontext.url = generateExecutionURL(execution)
+        jobcontext.serverUrl = generateServerURL(grailsLinkGenerator)
+        jobcontext.url = generateExecutionURL(execution,grailsLinkGenerator)
         jobcontext.serverUUID = execution.serverNodeUUID
         jobcontext.username = execution.user
         jobcontext['user.name'] = execution.user
@@ -688,15 +689,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         jobcontext
     }
 
-    static String generateExecutionURL(Execution execution) {
-        RequestHelper.doWithMockRequest {
-            new ExecutionController().createExecutionUrl(execution.id,execution.project)
-        }
+    static String generateExecutionURL(Execution execution,LinkGenerator grailsLinkGenerator) {
+        grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: execution.id, absolute: true,
+                params: [project: execution.project])
     }
-    static String generateServerURL() {
-        RequestHelper.doWithMockRequest {
-            new ExecutionController().createServerUrl()
-        }
+    static String generateServerURL(LinkGenerator grailsLinkGenerator) {
+        grailsLinkGenerator.link(controller: 'menu', action: 'index', absolute: true)
     }
 
     /**
@@ -721,7 +719,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             metricService.markMeter(this.class.name,'executionAdhocStartMeter')
         }
         try{
-            def jobcontext=exportContextForExecution(execution)
+            def jobcontext=exportContextForExecution(execution,grailsLinkGenerator)
             loghandler.openStream()
 
             WorkflowExecutionItem item = createExecutionItemForExecutionContext(execution, framework, execution.user)
@@ -1016,7 +1014,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         //create execution context
-        def builder = ExecutionContextImpl.builder(origContext)
+        def builder = ExecutionContextImpl.builder((StepExecutionContext)origContext)
             .frameworkProject(execMap.project)
             .storageTree(storageService.storageTreeWithContext(authContext))
             .user(userName)
@@ -1765,86 +1763,90 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     def saveExecutionState( schedId, exId, Map props, Map execmap, Map retryContext){
         def ScheduledExecution scheduledExecution
-        def Execution execution = Execution.get(exId)
-        execution.properties=props
-        if (props.failedNodes) {
-            execution.failedNodeList = props.failedNodes.join(",")
-        }
-        if (props.succeededNodes) {
-            execution.succeededNodeList = props.succeededNodes.join(",")
-        }
+        def boolean execSaved = false
+        def Execution execution
+        Execution.withNewSession {
+            execution = Execution.get(exId)
+            execution.properties = props
+            if (props.failedNodes) {
+                execution.failedNodeList = props.failedNodes.join(",")
+            }
+            if (props.succeededNodes) {
+                execution.succeededNodeList = props.succeededNodes.join(",")
+            }
 
-        if (schedId) {
-            scheduledExecution = ScheduledExecution.get(schedId)
-        }
+            if (schedId) {
+                scheduledExecution = ScheduledExecution.get(schedId)
+            }
 
-        if (!props.cancelled && props.status!='true' && scheduledExecution && retryContext) {
-            //determine retry necessity
-            int count = retryContext?.retryAttempt ?: 0
-            def retryStr = execution.retry
-            int maxRetries = 0
-            if(retryStr){
-                try{
-                    maxRetries=Integer.parseInt(retryStr)
-                }catch (NumberFormatException e){
-                    log.error("Retry string for job was not resolvable: ${retryStr}")
+            if (!props.cancelled && props.status != 'true' && scheduledExecution && retryContext) {
+                //determine retry necessity
+                int count = retryContext?.retryAttempt ?: 0
+                def retryStr = execution.retry
+                int maxRetries = 0
+                if (retryStr) {
+                    try {
+                        maxRetries = Integer.parseInt(retryStr)
+                    } catch (NumberFormatException e) {
+                        log.error("Retry string for job was not resolvable: ${retryStr}")
+                    }
+                }
+                if (maxRetries > count) {
+                    execution.willRetry = true
+                    def input = [
+                            argString: execution.argString,
+                            loglevel : execution.loglevel,
+                            filter   : execution.filter //TODO: failed nodes?
+                    ]
+                    def result = retryExecuteJob(scheduledExecution, retryContext.authContext,
+                            retryContext.user, input, retryContext.secureOpts,
+                            retryContext.secureOptsExposed, count + 1)
+                    if (result.success) {
+                        execution.retryExecution = result.execution
+                    }
                 }
             }
-            if (maxRetries > count) {
-                execution.willRetry=true
-                def input = [
-                        argString: execution.argString,
-                        loglevel: execution.loglevel,
-                        filter: execution.filter //TODO: failed nodes?
-                ]
-                def result = retryExecuteJob(scheduledExecution, retryContext.authContext,
-                        retryContext.user, input, retryContext.secureOpts,
-                        retryContext.secureOptsExposed, count + 1)
-                if(result.success){
-                    execution.retryExecution=result.execution
+
+            if (execution.save(flush: true)) {
+                log.debug("saved execution status. id: ${execution.id}")
+                execSaved = true
+            } else {
+
+                execution.errors.allErrors.each { log.warn(it.defaultMessage) }
+                log.error("failed to save execution status")
+            }
+            def jobname="adhoc"
+            def jobid=null
+            def summary= summarizeJob(scheduledExecution, execution)
+            if (scheduledExecution) {
+                jobname = scheduledExecution.groupPath ? scheduledExecution.generateFullName() : scheduledExecution.jobName
+                jobid = scheduledExecution.id
+            }
+            if(execSaved) {
+                //summarize node success
+                String node=null
+                int sucCount=-1;
+                int failedCount=-1;
+                int totalCount=0;
+                if (execmap && execmap.noderecorder && execmap.noderecorder instanceof NodeRecorder) {
+                    NodeRecorder rec = (NodeRecorder) execmap.noderecorder
+                    final HashSet<String> success = rec.getSuccessfulNodes()
+                    final Map<String,Object> failedMap = rec.getFailedNodes()
+                    final HashSet<String> failed = new HashSet<String>(failedMap.keySet())
+                    final HashSet<String> matched = rec.getMatchedNodes()
+                    node = [success.size(),failed.size(),matched.size()].join("/")
+                    sucCount=success.size()
+                    failedCount=failed.size()
+                    totalCount=matched.size()
                 }
-            }
-        }
-        def boolean execSaved=false
-        if (execution.save(flush:true)) {
-            log.debug("saved execution status. id: ${execution.id}")
-            execSaved=true
-        } else {
+                logExecution(null, execution.project, execution.user, "true" == execution.status, exId,
+                    execution.dateStarted, jobid, jobname, summary, props.cancelled, props.timedOut, execution.willRetry,
+                    node, execution.abortedby)
+                logExecutionLog4j(execution, "finish", execution.user)
 
-            execution.errors.allErrors.each { log.warn(it.defaultMessage) }
-            log.error("failed to save execution status")
-        }
-        def jobname="adhoc"
-        def jobid=null
-        def summary= summarizeJob(scheduledExecution, execution)
-        if (scheduledExecution) {
-            jobname = scheduledExecution.groupPath ? scheduledExecution.generateFullName() : scheduledExecution.jobName
-            jobid = scheduledExecution.id
-        }
-        if(execSaved) {
-            //summarize node success
-            String node=null
-            int sucCount=-1;
-            int failedCount=-1;
-            int totalCount=0;
-            if (execmap && execmap.noderecorder && execmap.noderecorder instanceof NodeRecorder) {
-                NodeRecorder rec = (NodeRecorder) execmap.noderecorder
-                final HashSet<String> success = rec.getSuccessfulNodes()
-                final Map<String,Object> failedMap = rec.getFailedNodes()
-                final HashSet<String> failed = new HashSet<String>(failedMap.keySet())
-                final HashSet<String> matched = rec.getMatchedNodes()
-                node = [success.size(),failed.size(),matched.size()].join("/")
-                sucCount=success.size()
-                failedCount=failed.size()
-                totalCount=matched.size()
+                def context = execmap?.thread?.context
+                notificationService.triggerJobNotification(props.status == 'true' ? 'success' : 'failure', schedId, [execution: execution,nodestatus:[succeeded:sucCount,failed:failedCount,total:totalCount],context:context])
             }
-            logExecution(null, execution.project, execution.user, "true" == execution.status, exId,
-                execution.dateStarted, jobid, jobname, summary, props.cancelled, props.timedOut, execution.willRetry,
-                node, execution.abortedby)
-            logExecutionLog4j(execution, "finish", execution.user)
-
-            def context = execmap?.thread?.context
-            notificationService.triggerJobNotification(props.status == 'true' ? 'success' : 'failure', schedId, [execution: execution,nodestatus:[succeeded:sucCount,failed:failedCount,total:totalCount],context:context])
         }
     }
     public String summarizeJob(ScheduledExecution job=null,Execution exec){
@@ -2179,7 +2181,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             newargs = DataContextUtils.replaceDataReferences(newargs, executionContext.dataContext)
         }
 
-        final jobOptsMap = frameworkService.parseOptsFromArray(newargs)
+        def jobOptsMap = frameworkService.parseOptsFromArray(newargs)
         jobOptsMap = addOptionDefaults(se, jobOptsMap)
 
         //select secureAuth and secure options from the args to pass
@@ -2274,82 +2276,80 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Closure createSuccess
     )
     {
-        RequestHelper.doWithMockRequest {
-            def id
-            def result
+        def id
+        def result
 
-            def group = null
-            def name = null
-            def m = jitem.jobIdentifier =~ '^/?(.+)/([^/]+)$'
-            if (m.matches()) {
-                group = m.group(1)
-                name = m.group(2)
-            } else {
-                name = jitem.jobIdentifier
+        def group = null
+        def name = null
+        def m = jitem.jobIdentifier =~ '^/?(.+)/([^/]+)$'
+        if (m.matches()) {
+            group = m.group(1)
+            name = m.group(2)
+        } else {
+            name = jitem.jobIdentifier
+        }
+        def schedlist = ScheduledExecution.findAllScheduledExecutions(group, name, executionContext.getFrameworkProject())
+        if (!schedlist || 1 != schedlist.size()) {
+            def msg = "Job [${jitem.jobIdentifier}] not found, project: ${executionContext.getFrameworkProject()}"
+            executionContext.getExecutionListener().log(0, msg)
+            throw new StepException(msg, JobReferenceFailureReason.NotFound)
+        }
+        id = schedlist[0].id
+        def StepExecutionContext newContext
+        def WorkflowExecutionItem newExecItem
+
+        ScheduledExecution.withTransaction { status ->
+            ScheduledExecution se = ScheduledExecution.get(id)
+
+            if (!frameworkService.authorizeProjectJobAll(executionContext.getAuthContext(), se, [AuthConstants.ACTION_RUN], se.project)) {
+                def msg = "Unauthorized to execute job [${jitem.jobIdentifier}}: ${se.extid}"
+                executionContext.getExecutionListener().log(0, msg);
+                result = createFailure(JobReferenceFailureReason.Unauthorized, msg)
+                return
             }
-            def schedlist = ScheduledExecution.findAllScheduledExecutions(group, name, executionContext.getFrameworkProject())
-            if (!schedlist || 1 != schedlist.size()) {
-                def msg = "Job [${jitem.jobIdentifier}] not found, project: ${executionContext.getFrameworkProject()}"
-                executionContext.getExecutionListener().log(0, msg)
-                throw new StepException(msg, JobReferenceFailureReason.NotFound)
+            newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
+
+            try {
+                newContext = createJobReferenceContext(
+                        se,
+                        executionContext,
+                        jitem.args,
+                        jitem.nodeFilter,
+                        jitem.nodeKeepgoing,
+                        jitem.nodeThreadcount,
+                        jitem.nodeRankAttribute,
+                        jitem.nodeRankOrderAscending
+                )
+            } catch (ExecutionServiceValidationException e) {
+                executionContext.getExecutionListener().log(0, "Option input was not valid for [${jitem.jobIdentifier}]: ${e.message}");
+                def msg = "Invalid options: ${e.errors.keySet()}"
+                result = createFailure(JobReferenceFailureReason.InvalidOptions, msg.toString())
             }
-            id = schedlist[0].id
-            def StepExecutionContext newContext
-            def WorkflowExecutionItem newExecItem
-
-            ScheduledExecution.withTransaction { status ->
-                ScheduledExecution se = ScheduledExecution.get(id)
-
-                if (!frameworkService.authorizeProjectJobAll(executionContext.getAuthContext(), se, [AuthConstants.ACTION_RUN], se.project)) {
-                    def msg = "Unauthorized to execute job [${jitem.jobIdentifier}}: ${se.extid}"
-                    executionContext.getExecutionListener().log(0, msg);
-                    result = createFailure(JobReferenceFailureReason.Unauthorized, msg)
-                    return
-                }
-                newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
-
-                try {
-                    newContext = createJobReferenceContext(
-                            se,
-                            executionContext,
-                            jitem.args,
-                            jitem.nodeFilter,
-                            jitem.nodeKeepgoing,
-                            jitem.nodeThreadcount,
-                            jitem.nodeRankAttribute,
-                            jitem.nodeRankOrderAscending
-                    )
-                } catch (ExecutionServiceValidationException e) {
-                    executionContext.getExecutionListener().log(0, "Option input was not valid for [${jitem.jobIdentifier}]: ${e.message}");
-                    def msg = "Invalid options: ${e.errors.keySet()}"
-                    result = createFailure(JobReferenceFailureReason.InvalidOptions, msg.toString())
-                }
-            }
-            if (null != result) {
-                return result
-            }
-
-            if (newContext.getNodes().getNodeNames().size() < 1) {
-                String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
-                executionContext.getExecutionListener().log(0, msg)
-                throw new StepException(msg, JobReferenceFailureReason.NoMatchedNodes)
-            }
-
-            def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
-
-            def wresult = metricService.withTimer(this.class.name,'runJobReference'){
-                service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
-            }
-
-            if (!wresult || !wresult.success) {
-                result = createFailure(JobReferenceFailureReason.JobFailed, "Job [${jitem.jobIdentifier}] failed")
-            } else {
-                result = createSuccess()
-            }
-            result.sourceResult = wresult
-
+        }
+        if (null != result) {
             return result
         }
+
+        if (newContext.getNodes().getNodeNames().size() < 1) {
+            String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
+            executionContext.getExecutionListener().log(0, msg)
+            throw new StepException(msg, JobReferenceFailureReason.NoMatchedNodes)
+        }
+
+        def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
+
+        def wresult = metricService.withTimer(this.class.name,'runJobReference'){
+            service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
+        }
+
+        if (!wresult || !wresult.success) {
+            result = createFailure(JobReferenceFailureReason.JobFailed, "Job [${jitem.jobIdentifier}] failed")
+        } else {
+            result = createSuccess()
+        }
+        result.sourceResult = wresult
+
+        return result
     }
 
     def queryExecutions(ExecutionQuery query, int offset=0, int max=-1) {

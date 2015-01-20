@@ -30,7 +30,7 @@ import javax.servlet.http.HttpSession
  * &lt;g:form useToken="true"...&gt; tag is invoked, so that this tokens holder is used instead of the default implementation.
  * </p>
  *
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-08-20
  */
 class HMacSynchronizerTokensHolder extends SynchronizerTokensHolder implements Serializable{

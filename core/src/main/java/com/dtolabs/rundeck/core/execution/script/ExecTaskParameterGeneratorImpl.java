@@ -44,10 +44,11 @@ public class ExecTaskParameterGeneratorImpl implements ExecTaskParameterGenerato
     /**
      *
      * @throws ExecutionException if an error occurs
-     * @param nodeentry
-     * @param command
-     * @param scriptfile
-     * @param args
+     * @param nodeentry node
+     * @param command true if the args are a command
+     * @param scriptfile file to execute
+     * @param args command or scriptfile args
+     * @return parameters
      */
     public ExecTaskParameters generate(final INodeEntry nodeentry, final boolean command, final File scriptfile,
                                        final String[] args) throws ExecutionException {

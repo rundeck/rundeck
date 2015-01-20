@@ -548,6 +548,8 @@ class ExecutionJobTest  {
                 argString: '-a b -c d',
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
         )
+        se.dateCreated=new Date()
+        se.lastUpdated=new Date()
         se.workflow.save()
         se.save()
     }

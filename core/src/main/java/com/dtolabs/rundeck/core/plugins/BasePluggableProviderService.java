@@ -34,12 +34,11 @@ public abstract class BasePluggableProviderService<T> implements PluggableProvid
     public boolean isValidProviderClass(final Class clazz) {
         return implementationClass.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
     }
-
-    /*
-         * default implementation of createProviderInstance
-         */
-    public T createProviderInstance(final Class<T> clazz, final String name)
-            throws PluginException, ProviderCreationException {
+    /**
+     * default implementation of createProviderInstance
+     */
+    @Override
+    public <X extends T> T createProviderInstance(Class<X> clazz, String name) throws PluginException, ProviderCreationException {
         return createProviderInstanceFromType(clazz, name);
     }
 
@@ -53,8 +52,7 @@ public abstract class BasePluggableProviderService<T> implements PluggableProvid
     }
 
     /**
-     * Return the plugin manager to use
-     * @return
+     * @return the plugin manager to use
      */
     public abstract ServiceProviderLoader getPluginManager();
 
@@ -130,7 +128,9 @@ public abstract class BasePluggableProviderService<T> implements PluggableProvid
     }
 
     /**
-     * Create an adapted form of this service given a converter.
+     * @return Create an adapted form of this service given a converter.
+     * @param <X> provider type
+     * @param converter converter
      */
     public <X> ProviderService<X> adapter(final Converter<T, X> converter) {
         return AdapterService.adaptFor(this, converter);

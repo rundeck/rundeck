@@ -146,6 +146,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
      * Execute a workflow item, returns true if the item succeeds.  This method will throw an exception if the workflow
      * item fails and the Workflow is has keepgoing==false.
      *
+     * @param executionContext  context
      * @param failedMap  List to add any messages if the item fails
      * @param c          index of the WF item
      * @param cmd        WF item descriptor
@@ -182,8 +183,14 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
 
 
     /**
-     * Execute the sequence of ExecutionItems within the context, and with the given keepgoing value, return true if
-     * successful
+     *
+     * Execute the sequence of ExecutionItems within the context, and with the given keepgoing value
+     * @param executionContext context
+     * @param failedMap failures
+     * @param resultList results
+     * @param iWorkflowCmdItems list of steps
+     * @param keepgoing true to keepgoing on step failure
+     * @return true if successful
      */
     protected boolean executeWorkflowItemsForNodeSet(final StepExecutionContext executionContext,
                                                      final Map<Integer, StepExecutionResult> failedMap,
@@ -194,8 +201,14 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                                               executionContext.getStepNumber());
     }
     /**
-     * Execute the sequence of ExecutionItems within the context, and with the given keepgoing value, return true if
-     * successful
+     * Execute the sequence of ExecutionItems within the context, and with the given keepgoing value
+     * @return true if successful
+     * @param executionContext context
+     * @param failedMap failures
+     * @param resultList results
+     * @param iWorkflowCmdItems list of steps
+     * @param keepgoing true to keepgoing on step failure
+     * @param beginStepIndex beginning step index
      */
     protected boolean executeWorkflowItemsForNodeSet(final StepExecutionContext executionContext,
                                                      final Map<Integer, StepExecutionResult> failedMap,
@@ -329,6 +342,9 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
 
     /**
      * Add step result failure information to the data context
+     * @param stepResult result
+     * @param handlerExecContext context
+     * @return new context
      */
     protected StepExecutionContext addStepFailureContextData(StepExecutionResult stepResult,
                                                            StepExecutionContext handlerExecContext) {
@@ -360,6 +376,9 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
 
     /**
      * Add any node-specific step failure information to the node-specific data contexts
+     * @param dispatcherStepResult result
+     * @param handlerExecContext context
+     * @return new context
      */
     protected StepExecutionContext addNodeStepFailureContextData(StepExecutionResult dispatcherStepResult,
                                                                StepExecutionContext handlerExecContext) {
@@ -434,6 +453,8 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
     /**
      * Convert map of step execution results keyed by step number, to a collection of step execution results
      * keyed by node name
+     * @param failedMap  failures
+     * @return converted
      */
     protected Map<String, Collection<StepExecutionResult>> convertFailures(
         final Map<Integer, StepExecutionResult> failedMap) {
@@ -476,10 +497,9 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
     }
 
     /**
-     * Return a failure result with components from an exception
-     * @param node
-     * @param nodeStepException
-     * @return
+     * @return a failure result with components from an exception
+     * @param node node
+     * @param nodeStepException exception
      */
     static protected NodeStepResult nodeStepResultFromNodeStepException(
             final INodeEntry node,
@@ -493,13 +513,20 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
             node
         );
     }
+
     /**
+     *
      * Creates a copy of the given data context with the secure option values obfuscated.
      * This does not modify the original data context.
      *
      * "secureOption" map values will always be obfuscated. "option" entries that are also in "secureOption"
      * will have their values obfuscated. All other maps within the data context will be added
      * directly to the copy.
+     * @param optionKey key
+     * @param secureOptionKey secure key
+     * @param secureOptionValue secure value
+     * @param dataContext data
+     * @return printable data
      */
     protected Map<String, Map<String, String>> createPrintableDataContext(String optionKey,
                                                                           String secureOptionKey,

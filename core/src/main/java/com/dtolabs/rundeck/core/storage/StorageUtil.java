@@ -51,8 +51,7 @@ public class StorageUtil {
     };
 
     /**
-     * Return a factory for ResourceMeta
-     * @return
+     * @return a factory for ResourceMeta
      */
     public static ContentFactory<ResourceMeta> factory(){
         return new ContentFactory<ResourceMeta>() {
@@ -87,12 +86,10 @@ public class StorageUtil {
 
 
     /**
-     * Construct a resource
+     * @return Construct a resource
      *
-     * @param stream
-     * @param meta
-     *
-     * @return
+     * @param stream stream
+     * @param meta metadata
      */
     public static ResourceMeta withStream(final HasInputStream stream, final Map<String, String> meta) {
         return new BaseStreamResource(meta,stream);
@@ -145,6 +142,7 @@ public class StorageUtil {
      * Create a StorageTree using authorization context and authorizing tree
      * @param context auth context
      * @param authStorage authorizing storage tree
+     * @param <S> context type
      * @return StorageTree for the authorization context
      */
     public static <S> StorageTree resolvedTree(S context, ExtTree<S, ResourceMeta> authStorage) {

@@ -39,14 +39,14 @@ public class Validator {
         private HashMap<String, String> errors = new HashMap<String, String>();
 
         /**
-         * Return a map of errors, keyed by property name.
+         * @return a map of errors, keyed by property name.
          */
         public HashMap<String, String> getErrors() {
             return errors;
         }
 
         /**
-         * Return true if all property values were valid
+         * @return true if all property values were valid
          */
         public boolean isValid() {
             return 0 == errors.size();
@@ -81,10 +81,10 @@ public class Validator {
 
     /**
      * Validate, ignoring properties below a scope, if set
-     * @param props
-     * @param report
-     * @param properties
-     * @param ignoredScope
+     * @param props input properties
+     * @param report report
+     * @param properties property definitions
+     * @param ignoredScope ignore scope
      */
     private static void validate(Properties props, Report report, List<Property> properties, PropertyScope ignoredScope) {
         if(null!=properties){
@@ -160,6 +160,9 @@ public class Validator {
     /**
      * Converts a set of input configuration keys using the description's configuration to property mapping, or the same
      * input if the description has no mapping
+     * @param input input map
+     * @param desc plugin description
+     * @return mapped values
      */
     public static Map<String, String> mapProperties(final Map<String, String> input, final Description desc) {
         final Map<String, String> mapping = desc.getPropertiesMapping();
@@ -194,6 +197,9 @@ public class Validator {
     /**
      * Reverses a set of properties mapped using the description's configuration to property mapping, or the same input
      * if the description has no mapping
+     * @param input input map
+     * @param desc plugin description
+     * @return mapped values
      */
     public static Map<String, String> demapProperties(final Map<String, String> input, final Description desc) {
         final Map<String, String> mapping = desc.getPropertiesMapping();

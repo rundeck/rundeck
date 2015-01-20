@@ -39,6 +39,7 @@ public class NodeStepResultImpl extends StepExecutionResultImpl implements NodeS
 
     /**
      * Create a success result
+     * @param node  node
      */
     public NodeStepResultImpl(INodeEntry node) {
         super();
@@ -47,6 +48,10 @@ public class NodeStepResultImpl extends StepExecutionResultImpl implements NodeS
 
     /**
      * Create a failure result
+     * @param exception exception
+     * @param failureReason reason
+     * @param failureMessage message
+     * @param node node
      */
     public NodeStepResultImpl(
                               Throwable exception,

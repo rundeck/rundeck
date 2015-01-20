@@ -37,7 +37,8 @@ public interface ExecutionFileStorage {
      *
      * @return true if successful
      *
-     * @throws java.io.IOException
+     * @throws java.io.IOException if an IO error occurs
+     * @throws com.dtolabs.rundeck.core.logging.ExecutionFileStorageException if other errors occur
      */
     boolean store(String filetype, InputStream stream, long length, Date lastModified) throws IOException,
             ExecutionFileStorageException;
@@ -50,7 +51,8 @@ public interface ExecutionFileStorage {
      *
      * @return true if successful
      *
-     * @throws IOException
+     * @throws IOException if an IO error occurs
+     * @throws com.dtolabs.rundeck.core.logging.ExecutionFileStorageException if other errors occur
      */
     boolean retrieve(String filetype, OutputStream stream) throws IOException, ExecutionFileStorageException;
 }

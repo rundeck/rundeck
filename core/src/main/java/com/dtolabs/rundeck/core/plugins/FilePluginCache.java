@@ -34,7 +34,7 @@ import java.util.*;
 /**
  * FilePluginCache uses a filecache and a set of {@link PluginScanner}s to cache and create {@link ProviderLoader}
  * instances associated with files.
- * <p/>
+ * <br>
  * The instances are returned for {@link ProviderIdent} instances.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>

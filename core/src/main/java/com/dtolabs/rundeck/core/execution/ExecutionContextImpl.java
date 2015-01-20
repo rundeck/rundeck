@@ -170,6 +170,9 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
         /**
          * Set node set/selector to single node context, and optionally merge node-specific context data
+         * @param node node
+         * @param setContextData context
+         * @return builder
          */
         public Builder singleNodeContext(INodeEntry node, boolean setContextData) {
             nodeSelector(SelectorUtils.singleNode(node.getNodename()));
@@ -193,12 +196,19 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
         /**
          * Add/replace a context data set
+         * @param key key
+         * @param data data
+         * @return builder
          */
         public Builder setContext(final String key, final Map<String,String> data) {
             return dataContext(DataContextUtils.addContext(key, data, ctx.dataContext));
         }
+
         /**
          * merge a context data set
+         * @param key key
+         * @param data data
+         * @return builder
          */
         public Builder mergeContext(final String key, final Map<String,String> data) {
             HashMap<String, Map<String, String>> tomerge = new HashMap<String, Map<String, String>>();

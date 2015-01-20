@@ -8,7 +8,9 @@ import com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier
 import com.dtolabs.rundeck.core.execution.workflow.state.StepState
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowState
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowStepState
+
 import grails.converters.JSON
+import grails.test.mixin.support.GrailsUnitTestMixin;
 
 import java.text.SimpleDateFormat
 
@@ -20,7 +22,9 @@ import static com.dtolabs.rundeck.core.execution.workflow.state.StateUtils.*
  * Date: 10/17/13
  * Time: 12:09 PM
  */
-class MutableWorkflowStateImplTest extends GroovyTestCase {
+
+@TestMixin(GrailsUnitTestMixin)
+class MutableWorkflowStateImplTest  {
     class TestMutableExecutionState implements MutableExecutionState{
         ExecutionState executionState
     }

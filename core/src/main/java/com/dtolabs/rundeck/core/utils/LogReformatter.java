@@ -30,10 +30,10 @@ import java.util.Map;
 /**
  * LogReformatter can produce a formatted log message using a set of context data.  The available formatting strings
  * are:
- * <p/>
+ * <br>
  * %user,%node,%command,%level,%message. Each string maps to the same string in the input context, e.g. %user to "user".
  * The special "%message" context item will be replaced with the input message.
- * <p/>
+ * <br>
  * Example format string:  <code>[%user@%node %command][%level] %message</code>
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>

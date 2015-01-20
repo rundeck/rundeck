@@ -4,11 +4,13 @@ import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import grails.plugins.quartz.listeners.SessionBinderJobListener
 import org.apache.commons.validator.EmailValidator
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
 import org.quartz.*
+import org.quartz.impl.matchers.KeyMatcher
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
@@ -26,6 +28,9 @@ import javax.servlet.http.HttpSession
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
 
+import org.quartz.JobBuilder
+import org.quartz.TriggerBuilder
+
 /**
  *  ScheduledExecutionService manages scheduling jobs with the Quartz scheduler
  */
@@ -38,9 +43,12 @@ class ScheduledExecutionService implements ApplicationContextAware{
     private ExecutionService executionServiceBean
 
     def Scheduler quartzScheduler
+    /**
+     * defined in quartz plugin
+     */
+    def SessionBinderJobListener sessionBinderListener
     ApplicationContext applicationContext
 
-//    def ApplicationContext applicationContext
     def MessageSource messageSource
 
     /**
@@ -514,7 +522,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
      */
     def deleteJob(String jobname, String groupname){
         log.info("deleting job from scheduler")
-        quartzScheduler.deleteJob(jobname,groupname)
+        quartzScheduler.deleteJob(new JobKey(jobname,groupname))
     }
 
     def userAuthorizedForJob(request,ScheduledExecution se, AuthContext authContext){
@@ -532,14 +540,14 @@ class ScheduledExecutionService implements ApplicationContextAware{
         jobDetail.getJobDataMap().put("bySchedule", true)
         def Date nextTime
         if(oldJobName && oldGroupName){
-            def oldjob = quartzScheduler.getJobDetail(oldJobName,oldGroupName)
+            def oldjob = quartzScheduler.getJobDetail(new JobKey(oldJobName,oldGroupName))
             log.info("job renamed, removing old job and scheduling new one")
-            quartzScheduler.deleteJob(oldJobName,oldGroupName)
+            deleteJob(oldJobName,oldGroupName)
         }
         if ( hasJobScheduled(se) ) {
             log.info("rescheduling existing job: " + se.generateJobScheduledName())
             
-            nextTime = quartzScheduler.rescheduleJob(se.generateJobScheduledName(), se.generateJobGroupName(), trigger)
+            nextTime = quartzScheduler.rescheduleJob(TriggerKey.triggerKey(se.generateJobScheduledName(), se.generateJobGroupName()), trigger)
         } else {
             log.info("scheduling new job: " + se.generateJobScheduledName())
             nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
@@ -596,7 +604,8 @@ class ScheduledExecutionService implements ApplicationContextAware{
                              Execution e, long timeout, Map secureOpts =null,
                              Map secureOptsExposed =null, int retryAttempt = 0) {
 
-        def jobDetail = createJobDetail(se, "TEMP:" + user + ":" + se.id + ":" + e.id, user + ":run:" + se.id)
+        def quartzjobname="TEMP:" + user + ":" + se.id + ":" + e.id
+        def jobDetail = createJobDetail(se, quartzjobname,user + ":run:" + se.id)
         jobDetail.getJobDataMap().put("user", user)
         jobDetail.getJobDataMap().put("authContext", authContext)
         jobDetail.getJobDataMap().put("executionId", e.id.toString())
@@ -613,11 +622,11 @@ class ScheduledExecutionService implements ApplicationContextAware{
             jobDetail.getJobDataMap().put("retryAttempt", 0)
         }
 
-        def Trigger trigger = TriggerUtils.makeImmediateTrigger(0, 0)
-        trigger.setName(jobDetail.getName() + "Trigger")
+        def Trigger trigger = TriggerBuilder.newTrigger().startNow().withIdentity(quartzjobname + "Trigger").build()
+
         def nextTime
         try {
-            log.info("scheduling immediate job run: " + jobDetail.getName())
+            log.info("scheduling immediate job run: " + quartzjobname)
             nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
         } catch (Exception exc) {
             throw new RuntimeException("caught exception while adding job: " + exc.getMessage(), exc)
@@ -630,18 +639,27 @@ class ScheduledExecutionService implements ApplicationContextAware{
      */
     def long scheduleTempJob(AuthContext authContext, Execution e) {
         def ident = getJobIdent(null, e);
-        def jobDetail = new JobDetail(ident.jobname, ident.groupname, ExecutionJob)
-        jobDetail.setDescription("Execute command: " + e)
-        jobDetail.getJobDataMap().put("isTempExecution", "true")
-        jobDetail.getJobDataMap().put("executionId", e.id.toString())
-        jobDetail.getJobDataMap().put("authContext", authContext)
-        jobDetail.addJobListener("defaultGrailsServiceInjectorJobListener")
+        def jobDetail = JobBuilder.newJob(ExecutionJob)
+                .withIdentity(ident.jobname, ident.groupname)
+                .withDescription("Execute command: " + e)
+                .usingJobData(
+                    new JobDataMap(
+                        [
+                            'isTempExecution': 'true',
+                            'executionId': e.id.toString(),
+                            'authContext': authContext
+                        ]
+                    )
+                )
+                .build()
 
-        def Trigger trigger = TriggerUtils.makeImmediateTrigger(0, 0)
-        trigger.setName(jobDetail.getName() + "Trigger")
+
+        addJobSessionListener(ident.jobname,ident.groupname)
+
+        def Trigger trigger = TriggerBuilder.newTrigger().withIdentity(ident.jobname + "Trigger").startNow().build()
         def nextTime
         try {
-            log.info("scheduling temp job: " + jobDetail.getName())
+            log.info("scheduling temp job: " + ident.jobname)
             nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
         } catch (Exception exc) {
             throw new RuntimeException("caught exception while adding job: " + exc.getMessage(), exc)
@@ -652,30 +670,45 @@ class ScheduledExecutionService implements ApplicationContextAware{
     def JobDetail createJobDetail(ScheduledExecution se) {
         return createJobDetail(se,se.generateJobScheduledName(), se.generateJobGroupName())
     }
+
+    /**
+     * Add the session binder listener from quartz plugin for manually created jobs
+     * @param jobname
+     * @param jobgroup
+     */
+    private void addJobSessionListener(String jobname, String jobgroup){
+        //manually add session binder listener
+        quartzScheduler.getListenerManager().addJobListener(
+                sessionBinderListener,
+                KeyMatcher.keyEquals(JobKey.jobKey(jobname,jobgroup))
+        );
+    }
+
     def JobDetail createJobDetail(ScheduledExecution se, String jobname, String jobgroup){
-        def jobDetail = new JobDetail(jobname,jobgroup, ExecutionJob)
-        jobDetail.setDescription(se.description)
-        jobDetail.getJobDataMap().put("scheduledExecutionId",se.id.toString())
-        jobDetail.getJobDataMap().put("rdeck.base",frameworkService.getRundeckBase())
+        def jobDetailBuilder = JobBuilder.newJob(ExecutionJob).withIdentity(jobname,jobgroup)
+                        .withDescription(se.description)
+                .usingJobData("scheduledExecutionId",se.id.toString())
+                .usingJobData("rdeck.base",frameworkService.getRundeckBase())
+
         if(se.scheduled){
-            jobDetail.getJobDataMap().put("userRoles",se.userRoleList)
+            jobDetailBuilder.usingJobData("userRoles",se.userRoleList)
             if(frameworkService.isClusterModeEnabled()){
-                jobDetail.getJobDataMap().put("serverUUID",frameworkService.getServerUUID())
+                jobDetailBuilder.usingJobData("serverUUID",frameworkService.getServerUUID())
             }
         }
-//            jobDetail.addJobListener("sessionBinderListener")
-        jobDetail.addJobListener("defaultGrailsServiceInjectorJobListener")
-        return jobDetail
+        addJobSessionListener(jobname,jobgroup)
+
+        return jobDetailBuilder.build()
     }
 
     def Trigger createTrigger(ScheduledExecution se) {
-        def CronTrigger trigger
+        def Trigger trigger
         def cronExpression = se.generateCrontabExression()
         try {
             log.info("creating trigger with crontab expression: " + cronExpression)
-            trigger = new CronTrigger(se.generateJobScheduledName(), se.generateJobGroupName(),
-                                      se.generateJobScheduledName(), se.generateJobGroupName(),
-                                      cronExpression)
+            trigger = TriggerBuilder.newTrigger().withIdentity(se.generateJobScheduledName(), se.generateJobGroupName())
+                    .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
+                    .build()
         } catch (java.text.ParseException ex) {
             throw new RuntimeException("Failed creating trigger. Invalid cron expression: " + cronExpression )
         }
@@ -683,9 +716,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
     }
 
     def boolean hasJobScheduled(ScheduledExecution se) {
-        def boolean scheduled = false
-        def names = Arrays.asList(quartzScheduler.getJobNames(se.generateJobGroupName()))
-        return names.contains(se.generateJobScheduledName())
+        return quartzScheduler.checkExists(JobKey.jobKey(se.generateJobScheduledName(),se.generateJobGroupName()))
     }
 
     /**
@@ -732,7 +763,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         if(!se.scheduled){
             return new Date(TWO_HUNDRED_YEARS)
         }
-        def trigger = quartzScheduler.getTrigger(se.generateJobScheduledName(), se.generateJobGroupName())
+        def trigger = quartzScheduler.getTrigger(TriggerKey.triggerKey(se.generateJobScheduledName(), se.generateJobGroupName()))
         if(trigger){
             return trigger.getNextFireTime()
         }else if (frameworkService.isClusterModeEnabled() && se.serverNodeUUID != frameworkService.getServerUUID()) {
@@ -751,9 +782,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
      */
     def Date tempNextExecutionTime(ScheduledExecution se){
         def trigger = createTrigger(se)
-        List<Date> times = TriggerUtils.computeFireTimes(trigger,
-                quartzScheduler.getCalendar(trigger.getCalendarName()), 1)
-        return times?times.first():null
+        return trigger.nextFireTime
     }
 
     /**

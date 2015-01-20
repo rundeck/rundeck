@@ -76,6 +76,7 @@ public interface CentralDispatcher {
     /**
      * List the items on the dispatcher queue
      *
+     * @param project project
      * @return Collection of Strings listing the active dispatcher queue items
      *
      * @throws CentralDispatcherException if an error occurs
@@ -99,6 +100,8 @@ public interface CentralDispatcher {
      *
      *
      * @param id the ID string of the item
+     * @param request request
+     * @param receiver receiver
      *
      * @return result, success if the item was running and was successfully killed, false if the item could not be
      *         killed or the item was not running
@@ -113,6 +116,7 @@ public interface CentralDispatcher {
      *
      * @param query  jobs query
      * @param output optional outputstream to store the XML content
+     * @param format format
      *
      * @return collection of IStoredJob objects matching the query.
      *
@@ -136,6 +140,7 @@ public interface CentralDispatcher {
      *
      * @param request load request parameters
      * @param input   XML file
+     * @param format format
      *
      * @return collection of IStoredJobLoadResult objects, indicating the status of each job in the input file.
      *
@@ -152,12 +157,12 @@ public interface CentralDispatcher {
      * @param status result status, either 'succeed','cancel','fail'
      * @param failedNodeCount count of failed nodes
      * @param successNodeCount count of successful nodes
-     * @param tags
+     * @param tags tags
      * @param script script content (can be null if summary specified)
      * @param summary summary of execution (can be null if script specified)
      * @param start start date (can be null)
      * @param end end date (can be null)
-     * @throws com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException
+     * @throws com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException on error
      */
     void reportExecutionStatus(String project, String title, String status, int failedNodeCount, int successNodeCount,
                                    String tags, String script, String summary, Date start, Date end) throws
@@ -169,6 +174,7 @@ public interface CentralDispatcher {
      * @param execId ID of the execution
      *
      * @return Execution detail
+     * @throws com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException on error
      */
     ExecutionDetail getExecution(String execId) throws CentralDispatcherException;
 }

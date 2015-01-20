@@ -45,8 +45,8 @@ public class NodesYamlParser implements NodeFileParser {
     /**
      * Create parser for a file, and send parsed nodes to the nodes receiver
      *
-     * @param file
-     * @param nodes
+     * @param file file
+     * @param nodes nodes receiver
      */
     public NodesYamlParser(final File file, final NodeReceiver nodes) {
         this.file = file;
@@ -57,7 +57,7 @@ public class NodesYamlParser implements NodeFileParser {
      * Create parser for an inputstream, and send parsed nodes to the nodes receiver
      *
      * @param inputStream input stream
-     * @param nodes
+     * @param nodes nodes receiver
      */
     public NodesYamlParser(final InputStream inputStream, final NodeReceiver nodes) {
         this.inputStream = inputStream;

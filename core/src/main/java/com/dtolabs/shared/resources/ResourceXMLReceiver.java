@@ -34,14 +34,14 @@ package com.dtolabs.shared.resources;
 public interface ResourceXMLReceiver {
     /**
      * Called after an individual resource is parsed, returns false if parsing should stop, or true to continue.
-     * @param entity
+     * @param entity entity
      * @return true if parsing should continue
      */
     public boolean resourceParsed(ResourceXMLParser.Entity entity);
 
     /**
      * Called after all resources are parsed with the set of parsed entities
-     * @param entities
+     * @param entities entity set
      */
     public void resourcesParsed(ResourceXMLParser.EntitySet entities);
 }

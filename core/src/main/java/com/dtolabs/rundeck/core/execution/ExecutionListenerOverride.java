@@ -31,9 +31,8 @@ package com.dtolabs.rundeck.core.execution;
 public interface ExecutionListenerOverride extends ExecutionListener{
 
     /**
-     * Return a listener for failed node list
+     * @param listener a listener for failed node list
      *
-     * @return listener
      */
     public void setFailedNodesListener(FailedNodesListener listener);
 

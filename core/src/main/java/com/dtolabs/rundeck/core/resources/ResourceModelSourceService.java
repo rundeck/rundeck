@@ -74,7 +74,10 @@ public class ResourceModelSourceService extends PluggableProviderRegistryService
 
 
     /**
-     * Return a ResourceModelSource of a give type with a given configuration
+     * @return a ResourceModelSource of a give type with a given configuration
+     * @param configuration configuration
+     * @param type provider name
+     * @throws ExecutionServiceException on error
      */
     public ResourceModelSource getSourceForConfiguration(final String type, final Properties configuration) throws
         ExecutionServiceException {
@@ -95,9 +98,9 @@ public class ResourceModelSourceService extends PluggableProviderRegistryService
         return ResourceModelSourceFactory.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
     }
 
-    public ResourceModelSourceFactory createProviderInstance(Class<ResourceModelSourceFactory> clazz,
-                                                             String name) throws PluginException,
-        ProviderCreationException {
+    @Override
+    public <X extends ResourceModelSourceFactory> ResourceModelSourceFactory
+    createProviderInstance(Class<X> clazz, String name) throws PluginException, ProviderCreationException {
         return createProviderInstanceFromType(clazz, name);
     }
 

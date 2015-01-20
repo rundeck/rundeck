@@ -32,6 +32,7 @@ package com.dtolabs.rundeck.core.common;
 public interface NodeFileParser {
     /**
      * Parse the nodes resource file
+     * @throws NodeFileParserException on parser error
      */
     void parse() throws NodeFileParserException;
 }

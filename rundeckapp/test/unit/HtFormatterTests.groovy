@@ -1,5 +1,7 @@
 import com.dtolabs.rundeck.app.internal.logging.LegacyLogOutFormatter
 
+import grails.test.mixin.support.GrailsUnitTestMixin;
+
 import java.text.SimpleDateFormat
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -24,7 +26,9 @@ import java.text.SimpleDateFormat
  * $Id$
  */
 
-public class HtFormatterTests extends GroovyTestCase{
+
+@TestMixin(GrailsUnitTestMixin)
+public class HtFormatterTests {
     def SimpleDateFormat fmt = new SimpleDateFormat("hh:mm:ss");
     static String lSep = System.getProperty("line.separator")
     /**

@@ -104,8 +104,8 @@ public class FileCopierService extends NodeSpecifiedService<FileCopier> implemen
         return FileCopier.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
     }
 
-    public FileCopier createProviderInstance(Class<FileCopier> clazz, String name) throws PluginException,
-        ProviderCreationException {
+    @Override
+    public <X extends FileCopier> FileCopier createProviderInstance(Class<X> clazz, String name) throws PluginException, ProviderCreationException {
         return createProviderInstanceFromType(clazz, name);
     }
 

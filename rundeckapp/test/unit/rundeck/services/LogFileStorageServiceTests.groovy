@@ -12,6 +12,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.test.runtime.DirtiesRuntime
+import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
 import rundeck.ScheduledExecution
@@ -175,6 +177,7 @@ class LogFileStorageServiceTests  {
         Map result1 = service.getRetrievalCacheResult("1")
         assertNotNull(result1)
     }
+    @DirtiesRuntime
     void testgetLogFileWriterWithoutPlugin(){
         grailsApplication.config.clear()
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
@@ -188,6 +191,14 @@ class LogFileStorageServiceTests  {
         }
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
+        }
+
+        ExecutionService.metaClass.static.generateServerURL = { LinkGenerator grailsLinkGenerator ->
+            ''
+        }
+
+        ExecutionService.metaClass.static.generateExecutionURL= { Execution execution, LinkGenerator grailsLinkGenerator ->
+            ''
         }
         service.frameworkService=fmock.createMock()
 
@@ -222,7 +233,6 @@ class LogFileStorageServiceTests  {
             return isAvailable()
         }
 
-        @Override
         boolean isAvailable() throws ExecutionFileStorageException {
             if(availableException){
                 throw new ExecutionFileStorageException("testStoragePlugin.available")
@@ -236,7 +246,6 @@ class LogFileStorageServiceTests  {
             return store(stream,length,lastModified)
         }
 
-        @Override
         boolean store(InputStream stream, long length, Date lastModified) throws IOException {
             storeLogFileCalled = true
             storeLength=length
@@ -250,7 +259,6 @@ class LogFileStorageServiceTests  {
             return retrieve(stream)
         }
 
-        @Override
         boolean retrieve(OutputStream stream) throws IOException {
             retrieveLogFileCalled=true
             return retrieveLogFileSuccess
@@ -263,6 +271,7 @@ class LogFileStorageServiceTests  {
             assert retrieveLogFileCalled
         }
     }
+    @DirtiesRuntime
     void testgetLogFileWriterWithPlugin(){
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
@@ -291,6 +300,7 @@ class LogFileStorageServiceTests  {
         assertEquals("rdlog", req.filetype)
     }
 
+    @DirtiesRuntime
     void testPluginLogFileWriterOnCloseShouldStartStorageRequest(){
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
@@ -322,6 +332,12 @@ class LogFileStorageServiceTests  {
         }
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
+        }
+        ExecutionService.metaClass.static.generateServerURL = { LinkGenerator grailsLinkGenerator ->
+            ''
+        }
+        ExecutionService.metaClass.static.generateExecutionURL= { Execution execution, LinkGenerator grailsLinkGenerator ->
+            ''
         }
         service.frameworkService = fmock.createMock()
         service.pluginService = pmock.createMock()
@@ -442,6 +458,7 @@ class LogFileStorageServiceTests  {
         return task
     }
 
+    @DirtiesRuntime
     void testRequestLogFileReaderFileDNE(){
 
         grailsApplication.config.clear()
@@ -456,6 +473,7 @@ class LogFileStorageServiceTests  {
         assertNull(reader.reader)
     }
 
+    @DirtiesRuntime
     void testRequestLogFileReaderFileDNEWaiting() {
 
         grailsApplication.config.clear()
@@ -472,6 +490,7 @@ class LogFileStorageServiceTests  {
         assertEquals(ExecutionLogState.WAITING, reader.state)
         assertNull(reader.reader)
     }
+    @DirtiesRuntime
     void testRequestLogFileReaderFileDNEClusterModePendingRemote() {
 
         grailsApplication.config.clear()
@@ -490,6 +509,7 @@ class LogFileStorageServiceTests  {
         assertEquals(ExecutionLogState.PENDING_REMOTE, reader.state)
         assertNull(reader.reader)
     }
+    @DirtiesRuntime
     void testRequestLogFileReaderFileExists(){
 
         grailsApplication.config.clear()
@@ -508,7 +528,7 @@ class LogFileStorageServiceTests  {
         assertTrue(reader.reader instanceof FSStreamingLogReader)
     }
 
-
+    @DirtiesRuntime
     void testRequestLogFileReaderFileDNEPluginAvailableFalseShouldResultInPendingRemote() {
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
@@ -526,7 +546,7 @@ class LogFileStorageServiceTests  {
         assertEquals(ExecutionLogState.PENDING_REMOTE, reader.state)
         assertNull(reader.reader)
     }
-
+    @DirtiesRuntime
     void testRequestLogFileReaderFileDNEPluginAvailableTrueShouldResultInAvailableRemote() {
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
@@ -544,7 +564,7 @@ class LogFileStorageServiceTests  {
         assertEquals(ExecutionLogState.AVAILABLE_REMOTE, reader.state)
         assertNull(reader.reader)
     }
-
+    @DirtiesRuntime
     void testRequestLogFileReaderFileDNEPluginAvailableErrorShouldResultInError() {
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
@@ -565,6 +585,7 @@ class LogFileStorageServiceTests  {
         assertEquals(['test1','testStoragePlugin.available'], reader.errorData)
         assertNull(reader.reader)
     }
+    @DirtiesRuntime
     void testRequestLogFileReaderFileDNEPluginRequestAlreadyPending() {
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
@@ -586,6 +607,7 @@ class LogFileStorageServiceTests  {
         assertEquals(ExecutionLogState.PENDING_LOCAL, reader.state)
         assertNull(reader.reader)
     }
+    @DirtiesRuntime
     void testRequestLogFileReaderFileDNEStartsANewRequest() {
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
@@ -608,7 +630,7 @@ class LogFileStorageServiceTests  {
         assertEquals(ExecutionLogState.PENDING_LOCAL, reader.state)
         assertNull(reader.reader)
     }
-
+    @DirtiesRuntime
     void testGetFileForExecutionFiletypeLegacyLogFile() {
 
         grailsApplication.config.clear()
@@ -779,6 +801,13 @@ class LogFileStorageServiceTests  {
         }
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
+        }
+        ExecutionService.metaClass.static.generateServerURL = { LinkGenerator grailsLinkGenerator ->
+            ''
+        }
+
+        ExecutionService.metaClass.static.generateExecutionURL= { Execution execution, LinkGenerator grailsLinkGenerator ->
+            ''
         }
         service.frameworkService = fmock.createMock()
         service.frameworkService.serverUUID = null

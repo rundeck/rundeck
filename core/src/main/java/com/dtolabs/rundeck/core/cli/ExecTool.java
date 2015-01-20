@@ -323,9 +323,9 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
     /**
      * Parse the value of the -X option
      *
-     * @param keys
+     * @param keys keys
      *
-     * @return
+     * @return parsed args
      */
 
     protected Map parseExcludeArgs(String[] keys) {
@@ -335,9 +335,9 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
     /**
      * Parse the value of the -X option.
      *
-     * @param keys
+     * @param keys keys
      *
-     * @return
+     * @return parsed args
      */
     protected Map parseIncludeArgs(String[] keys) {
         return parseFilterArgs(keys, cli, "I");
@@ -527,9 +527,9 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
     /**
      * Creates an instance and executes {@link #run(String[])}.
      *
-     * @param args
+     * @param args args
      *
-     * @throws Exception
+     * @throws Exception on error
      */
     public static void main(final String[] args) throws Exception {
 

@@ -5,7 +5,7 @@ import com.dtolabs.rundeck.core.common.FrameworkResource
 
 class ScheduledExecution extends ExecutionContext {
     Long id
-    SortedSet options
+    SortedSet<Option> options
     static hasMany = [executions:Execution,options:Option,notifications:Notification]
 
     String groupPath
@@ -38,7 +38,9 @@ class ScheduledExecution extends ExecutionContext {
     String notifyFailureUrl
     String notifyStartUrl
     Boolean multipleExecutions = false
-    static transients = ['adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients','notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl','crontabString']
+    static transients = ['userRoles','adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients',
+                         'notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl',
+                         'crontabString']
 
     static constraints = {
         project(nullable:false, blank: false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
@@ -485,7 +487,7 @@ class ScheduledExecution extends ExecutionContext {
         if(params.crontabString && 'true'==params.useCrontabString){
             //parse the crontabString
             if(parseCrontabString(params.crontabString)){
-                return 
+                return
             }
         }
         def everyDay = params['everyDayOfWeek']
@@ -551,7 +553,7 @@ class ScheduledExecution extends ExecutionContext {
                     if(val instanceof List){
                         result[crontabname] = val[0] // val seems to be a one element list
                     }else if(val instanceof String){
-                        result[crontabname] = val 
+                        result[crontabname] = val
                     }
                 }
             }
@@ -616,7 +618,7 @@ class ScheduledExecution extends ExecutionContext {
             }
             return aprop
         }
-    
+
   def Map timeAndDateAsBooleanMap() {
       def result = [ : ]
       if (!this.month.equals("*") && !crontabSpecialValue(this.month.replaceAll(/-/,''))) {

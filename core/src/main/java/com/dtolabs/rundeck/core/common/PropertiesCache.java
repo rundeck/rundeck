@@ -45,7 +45,7 @@ public class PropertiesCache {
      * Returns true if the file does not exist, or has been modified since the last time it was loaded.
      * @param file File to check
      * @return true if the file needs to be reloaded.
-     * @throws IOException
+     * @throws IOException on io error
      */
     public synchronized boolean needsReload(final File file) throws IOException {
         final long lastMod = file.lastModified();

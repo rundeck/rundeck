@@ -31,15 +31,15 @@ package com.dtolabs.rundeck.core.dispatcher;
 public interface ExecutionFollowResult {
 
     /**
-     * Return true if the log output was loaded completely
+     * @return true if the log output was loaded completely
      */
     public boolean isLogComplete();
     /**
-     * Return the execution state
+     * @return the execution state
      */
     public ExecutionState getState();
     /**
-     * Return true if the {@link ExecutionFollowReceiver} halted the follow request by
+     * @return true if the {@link ExecutionFollowReceiver} halted the follow request by
      * returning false.
      */
     public boolean isReceiverFinished();

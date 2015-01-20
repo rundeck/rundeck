@@ -20,7 +20,7 @@ import java.util.regex.Pattern
 
 /**
  * AnsiColorCodec replaces ansi escapes with html spans
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-05-15
  */
 class AnsiColorCodec {

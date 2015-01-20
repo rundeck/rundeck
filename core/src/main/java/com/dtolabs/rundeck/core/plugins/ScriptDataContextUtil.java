@@ -44,10 +44,12 @@ public class ScriptDataContextUtil {
     }
 
     /**
-     * Returns a data context for executing a script plugin or provider, which contains two datasets:
+     * @return a data context for executing a script plugin or provider, which contains two datasets:
      * plugin: {vardir: [dir], tmpdir: [dir]}
      * and
      * rundeck: {base: [basedir]}
+     * @param framework framework
+     *
      */
     public static Map<String, Map<String, String>> createScriptDataContext(final Framework framework) {
         final Map<String, String> rundeckDataContext = new HashMap<String, String>();
@@ -69,9 +71,11 @@ public class ScriptDataContextUtil {
     }
 
     /**
-     * Create a data context for executing a script plugin or provider, for a project context. Extends the context
+     * @return Create a data context for executing a script plugin or provider, for a project context. Extends the context
      * provided by {@link #createScriptDataContext(com.dtolabs.rundeck.core.common.Framework)} by setting the plugin.vardir to be
      * a dir specific to the project's basedir.
+     * @param framework fwk
+     * @param projectName project
      */
     public static Map<String, Map<String, String>> createScriptDataContextForProject(final Framework framework,
                                                                                      final String projectName) {

@@ -26,12 +26,11 @@ import java.io.*;
  */
 public class ScriptfileUtils {
     /**
-     * Return the line ending style for the node, based on the osFamily, or use LOCAL if
+     * @return the line ending style for the node, based on the osFamily, or use LOCAL if
      * undetermined
      *
-     * @param node
+     * @param node node
      *
-     * @return
      */
     public static LineEndingStyle lineEndingStyleForNode(final INodeEntry node) {
         return LineEndingStyle.forOsFamily(node.getOsFamily());
@@ -55,12 +54,11 @@ public class ScriptfileUtils {
         LOCAL;
 
         /**
-         * Return line ending style given an OS Family string, or returns the Local line ending
+         * @return line ending style given an OS Family string, or returns the Local line ending
          * style if the string does not map to a known style
          *
-         * @param family
+         * @param family family
          *
-         * @return
          */
         public static LineEndingStyle forOsFamily(final String family) {
             if (null != family) {
@@ -73,9 +71,8 @@ public class ScriptfileUtils {
         }
 
         /**
-         * Return the line separator string for this style
+         * @return the line separator string for this style
          *
-         * @return
          */
         public String getLineSeparator() {
             switch (this) {
@@ -223,6 +220,7 @@ public class ScriptfileUtils {
      *
      * @param framework framework
      * @param source    string content
+     * @param style  style
      *
      * @return tempfile
      *
@@ -244,7 +242,7 @@ public class ScriptfileUtils {
      * @param framework framework
      * @param stream    source stream
      * @param source    content
-     * @param reader
+     * @param reader input reader
      *
      * @return tempfile
      *
@@ -292,7 +290,7 @@ public class ScriptfileUtils {
      * @param stream    source stream
      * @param source    content
      * @param style     file line ending style to use
-     * @param reader
+     * @param reader reader
      *
      * @return tempfile
      *
@@ -326,7 +324,7 @@ public class ScriptfileUtils {
      * @param style        line ending style
      * @param scriptfile   destination file
      *
-     * @throws IOException
+     * @throws IOException on io error
      */
     public static void writeScriptFile(
             InputStream stream,
@@ -354,7 +352,10 @@ public class ScriptfileUtils {
     }
 
     /**
-     * Create a temp file in the framework 
+     * @return Create a temp file in the framework
+     * @param framework  fwk
+     * @throws IOException on io error
+     *
      */
     public static File createTempFile(final Framework framework) throws IOException {
         String fileExt = ".tmp";

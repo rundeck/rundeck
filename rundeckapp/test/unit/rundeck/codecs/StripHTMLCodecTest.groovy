@@ -16,13 +16,17 @@
 
 package rundeck.codecs
 
-import junit.framework.Assert
+import grails.test.mixin.TestFor
+import grails.test.mixin.TestMixin
+import grails.test.mixin.support.GrailsUnitTestMixin
+import org.junit.Assert
 
 /**
  * StripHTMLCodecTest is ...
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-11-20
  */
+@TestMixin(GrailsUnitTestMixin)
 class StripHTMLCodecTest {
     void testStrip(){
         Assert.assertEquals('monkey',StripHTMLCodec.encode('<a href="bogart">monkey</a>'))

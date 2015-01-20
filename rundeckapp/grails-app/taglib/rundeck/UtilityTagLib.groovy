@@ -721,19 +721,19 @@ class UtilityTagLib{
         }else if(attrs.xml){
             out << attrs.xml.toString().encodeAsXMLContent()
         }else if(null !=attrs.js){
-            out << attrs.js.toString().encodeAsJavaScript2()
+            out << raw(attrs.js.toString().encodeAsJavaScript2())
         }else if(attrs.json!=null){
-            out << attrs.json.encodeAsJSON().replaceAll('<', '\\\\u003c') //nb: replace < to allow embedding in page
+            out << attrs.json.encodeAsJSON().toString().replaceAll('<', '\\\\u003c') //nb: replace < to allow embedding in page
         }else if(attrs.url){
             out << attrs.url.toString().encodeAsURL()
         }else if(attrs.code){
             out << g.message(code:attrs.code,encodeAs:attrs.codec?:'HTML')
         }else if(attrs.rawtext) {
             //explicitly not encoded
-            out << attrs.rawtext
+            out << raw(attrs.rawtext)
         }else if(attrs.raw=='true') {
             //explicitly not encoded
-            out << body()
+            out << raw(body())
         }else {
             out << body().encodeAsHTML()
         }

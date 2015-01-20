@@ -45,6 +45,7 @@ public class BaseExecutionResult implements ExecutionResult{
     /**
      * Create a Success result with an object
      *
+     * @param success true if successful
      * @param object result object
      *
      * @return success result containing the object

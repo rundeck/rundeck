@@ -19,13 +19,14 @@ package com.dtolabs.rundeck.core.execution.workflow.state;
 /**
  * MutableExecutionState is ...
  *
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-09-12
  */
 public interface MutableExecutionState extends HasExecutionState {
 
     /**
      * Set the execution state
+     * @param state state
      */
     public void setExecutionState(ExecutionState state);
 }

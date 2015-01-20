@@ -26,6 +26,7 @@ class LoggingService {
     def StreamingLogWriterPluginProviderService streamingLogWriterPluginProviderService
     def StreamingLogReaderPluginProviderService streamingLogReaderPluginProviderService
     def grailsApplication
+    def grailsLinkGenerator
 
     public boolean isLocalFileStorageEnabled(){
         boolean fileDisabled = grailsApplication.config?.rundeck?.execution?.logs?.localFileStorageEnabled in ['false', false]
@@ -37,7 +38,7 @@ class LoggingService {
         List<StreamingLogWriter> plugins=[]
         def names = listConfiguredStreamingWriterPluginNames()
         if (names) {
-            HashMap<String, String> jobcontext = ExecutionService.exportContextForExecution(execution)
+            HashMap<String, String> jobcontext = ExecutionService.exportContextForExecution(execution,grailsLinkGenerator)
             log.debug("Configured log writer plugins: ${names}")
             names.each { name ->
                 def result = pluginService.configurePlugin(name, streamingLogWriterPluginProviderService,
@@ -106,7 +107,7 @@ class LoggingService {
     public ExecutionLogReader getLogReader(Execution execution) {
         def pluginName = getConfiguredStreamingReaderPluginName()
         if(pluginName){
-            HashMap<String, String> jobcontext = ExecutionService.exportContextForExecution(execution)
+            HashMap<String, String> jobcontext = ExecutionService.exportContextForExecution(execution,grailsLinkGenerator)
             log.debug("Using log reader plugin ${pluginName}")
             def result = pluginService.configurePlugin(pluginName, streamingLogReaderPluginProviderService,
                     frameworkService.getFrameworkPropertyResolver(execution.project), PropertyScope.Instance)

@@ -89,6 +89,6 @@ public class GrailsServiceInjectorJobListener extends JobListenerSupport {
     public void setQuartzScheduler(Scheduler quartzScheduler) throws SchedulerException {
         this.quartzScheduler = quartzScheduler;
 
-        quartzScheduler.addJobListener(this);
+        quartzScheduler.getListenerManager().addJobListener(this);
     }
 }

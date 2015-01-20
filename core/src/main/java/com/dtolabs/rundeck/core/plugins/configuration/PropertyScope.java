@@ -54,28 +54,28 @@ public enum PropertyScope {
     Unspecified;
 
     /**
-     * Return true if this scope is {@link #Unspecified}
+     * @return true if this scope is {@link #Unspecified}
      */
     public boolean isUnspecified() {
         return this == Unspecified;
     }
 
     /**
-     * Return true if this scope encompasses Instance level properties
+     * @return true if this scope encompasses Instance level properties
      */
     public boolean isInstanceLevel() {
         return this == Instance || this == InstanceOnly;
     }
 
     /**
-     * Return true if this scope encompasses Project level properties
+     * @return true if this scope encompasses Project level properties
      */
     public boolean isProjectLevel() {
         return this == ProjectOnly || this == Project || this == Instance;
     }
 
     /**
-     * Return true if this scope encompasses Framework level properties
+     * @return true if this scope encompasses Framework level properties
      */
     public boolean isFrameworkLevel() {
         return this == Framework || this == Project || this == Instance;

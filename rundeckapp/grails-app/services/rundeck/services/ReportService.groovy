@@ -57,7 +57,7 @@ class ReportService  {
         }
     }
 
-     def public  finishquery = { query,params,model->
+     def public finishquery(ExecQuery query,def params, Map model){
 
         if(!params.max){
             params.max=grailsApplication.config.reportservice.pagination.default?grailsApplication.config.reportservice.pagination.default.toInteger():20

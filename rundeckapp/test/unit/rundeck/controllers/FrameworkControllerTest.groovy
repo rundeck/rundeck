@@ -346,6 +346,7 @@ class FrameworkControllerTest {
         sec.params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
     }
     public void testSaveProjectInvalidRequestToken() {
+        request.method='POST'
         controller.saveProject()
         assertEquals('/common/error', view)
         assertEquals("request.error.invalidtoken.message", request.getAttribute('errorCode'))
@@ -353,6 +354,7 @@ class FrameworkControllerTest {
 
     public void testSaveProjectMissingProject() {
         setupFormTokens(controller)
+        request.method='POST'
         controller.saveProject()
         assertEquals(view, "/common/error")
         assertNotNull(request.errorMessage)

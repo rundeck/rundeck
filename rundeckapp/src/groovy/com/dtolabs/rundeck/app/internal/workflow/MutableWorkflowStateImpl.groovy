@@ -111,7 +111,6 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         }
     }
 
-        @Override
     void updateStateForStep(StepIdentifier identifier,StepStateChange stepStateChange, Date timestamp) {
         updateStateForStep(identifier,0,stepStateChange,timestamp)
     }

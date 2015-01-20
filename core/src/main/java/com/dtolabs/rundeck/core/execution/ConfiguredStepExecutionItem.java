@@ -34,7 +34,7 @@ import java.util.Map;
  */
 public interface ConfiguredStepExecutionItem extends StepExecutionItem {
     /**
-     * Returns the configuration properties
+     * @return the configuration properties
      */
     public Map<String,Object> getStepConfiguration();
 }

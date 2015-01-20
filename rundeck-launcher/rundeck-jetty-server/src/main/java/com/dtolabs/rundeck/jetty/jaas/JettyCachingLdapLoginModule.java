@@ -90,10 +90,10 @@ import org.eclipse.jetty.util.security.Credential;
  *    };
  * </pre>
  *
- * @author Jesse McConnell <jesse@codehaus.org>
- * @author Frederic Nizery <frederic.nizery@alcatel-lucent.fr>
- * @author Trygve Laugstol <trygvis@codehaus.org>
- * @author Noah Campbell <noahcampbell@gmail.com>
+ * @author Jesse McConnell <a href="mailto:jesse@codehaus.org">jesse@codehaus.org</a>
+ * @author Frederic Nizery <a href="mailto:frederic.nizery@alcatel-lucent.fr">frederic.nizery@alcatel-lucent.fr</a>
+ * @author Trygve Laugstol <a href="mailto:trygvis@codehaus.org">trygvis@codehaus.org</a>
+ * @author Noah Campbell <a href="mailto:noahcampbell@gmail.com">noahcampbell@gmail.com</a>
  */
 public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
@@ -164,7 +164,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
     /**
      * name of the attribute that a users password is stored under
-     * <p/>
+     * <br>
      * NOTE: not always accessible, see force binding login
      */
     protected String _userPasswordAttribute = "userPassword";
@@ -243,10 +243,10 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
     /**
      * get the available information about the user
-     * <p/>
+     * <br>
      * for this LoginModule, the credential can be null which will result in a
      * binding ldap authentication scenario
-     * <p/>
+     * <br>
      * roles are also an optional concept if required
      *
      * @param username
@@ -553,7 +553,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     /**
      * since ldap uses a context bind for valid authentication checking, we
      * override login()
-     * <p/>
+     * <br>
      * if credentials are not available from the users context or if we are
      * forcing the binding check then we try a binding authentication check,
      * otherwise if we have the users encoded password then we can try

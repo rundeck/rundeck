@@ -62,7 +62,12 @@ public class ChainedProviderServiceImpl<T> extends ChainedProviderService<T> {
     }
 
     /**
-     * Factory method to create a {@link ChainedProviderService}
+     * Factory method
+     * @return create a {@link ChainedProviderService}
+     * @param <X> provider class
+     * @param name name
+     * @param primary first service
+     * @param secondary secondary service
      */
     public static <X> ChainedProviderService<X> chain(final String name,
                                                       final ProviderService<X> primary,
@@ -72,7 +77,11 @@ public class ChainedProviderServiceImpl<T> extends ChainedProviderService<T> {
     }
 
     /**
-     * Factory method to create a {@link ChainedProviderService}
+     * Factory method
+     * @return create a {@link ChainedProviderService}
+     * @param <X> provider class
+     * @param name name
+     * @param services list of services
      */
     public static <X> ChainedProviderService<X> chain(final String name,
                                                       final List<ProviderService<X>> services) {

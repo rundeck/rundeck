@@ -32,16 +32,27 @@ done
 rm $DIR/cookies
 sh $SRC_DIR/rundecklogin.sh $URL $USER $PASS >/dev/null && echo "Login: OK" || die "Login: FAILED"
 
+COLOR=${NO_COLOR:-yes}
+TEST_OK="OK"
+TEST_FAIL="FAILED"
+if [ "$COLOR" == "yes" ] ; then
+    GREEN="\033[0;32m"
+    RED="\033[0;31m"
+    COLOR_NONE="\033[0m"
+    TEST_OK="${GREEN}OK${COLOR_NONE}"
+    TEST_FAIL="${RED}FAILED${COLOR_NONE}"
+fi
+        
 for i in $(ls ./test-*.sh) ; do
     tname=$(basename $i)
     sh ${i} ${URL} &>$DIR/${tname}.output
     if [ $? != 0 ] ; then
         let myexit=2
-        echo "${i}: FAILED"
+        echo "${i}: ${TEST_FAIL}"
         echo "${i}: FAILED" >> $DIR/testall.output
         cat $DIR/${tname}.output >> $DIR/testall.output
     else
-        echo "${i}: OK"
+        echo "${i}: ${TEST_OK}"
         rm $DIR/${tname}.output
     fi
 done

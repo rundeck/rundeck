@@ -19,7 +19,7 @@ class StreamingLogWriterPluginBuilder extends ScriptPluginBuilder implements Plu
     }
 
     @Override
-    Object buildPlugin() {
+    StreamingLogWriterPlugin buildPlugin() {
         return new ScriptStreamingLogWriterPlugin(handlers, descriptionBuilder.build())
     }
 

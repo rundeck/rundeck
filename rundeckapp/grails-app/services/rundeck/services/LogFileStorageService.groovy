@@ -39,6 +39,7 @@ class LogFileStorageService implements InitializingBean{
     def AsyncTaskExecutor logFileTaskExecutor
     def executorService
     def grailsApplication
+    def grailsLinkGenerator
 
     /**
      * Scheduled executor for retries
@@ -496,7 +497,7 @@ class LogFileStorageService implements InitializingBean{
      * @param resolver @return
      */
     private ExecutionFileStoragePlugin getConfiguredPluginForExecution(Execution execution, PropertyResolver resolver) {
-        def jobcontext = ExecutionService.exportContextForExecution(execution)
+        def jobcontext = ExecutionService.exportContextForExecution(execution,grailsLinkGenerator)
         def plugin = getConfiguredPlugin(jobcontext, resolver)
         plugin
     }

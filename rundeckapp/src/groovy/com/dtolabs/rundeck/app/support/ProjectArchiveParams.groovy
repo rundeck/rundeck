@@ -21,7 +21,7 @@ import grails.validation.Validateable
 
 /**
  * ProjectArchiveParams is ...
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-08-14
  */
 @Validateable

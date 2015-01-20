@@ -52,9 +52,9 @@ public class NodeEntryFactory {
      *
      * @param map input map data
      *
-     * @return
+     * @return new entry
      *
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException if name is not set
      */
     @SuppressWarnings ("unchecked")
     public static NodeEntryImpl createFromMap(final Map<String, Object> map) throws IllegalArgumentException {

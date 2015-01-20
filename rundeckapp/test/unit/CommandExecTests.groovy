@@ -1,4 +1,5 @@
 import grails.test.GrailsUnitTestCase
+import grails.test.mixin.TestFor
 import rundeck.CommandExec
 /*
  * Copyright 2012 DTO Solutions, Inc. (http://dtosolutions.com)
@@ -23,7 +24,8 @@ import rundeck.CommandExec
  * Created: 5/14/12 11:31 AM
  * 
  */
-class CommandExecTests extends GrailsUnitTestCase{
+@TestFor(CommandExec)
+class CommandExecTests {
     void testAdhocRemoteStringToMap(){
         CommandExec t=new CommandExec(adhocRemoteString:'test1')
         assertEquals([exec:'test1'],t.toMap())
@@ -110,14 +112,12 @@ class CommandExecTests extends GrailsUnitTestCase{
     //test createClone
 
     void testCreateCloneExec(){
-        mockDomain(CommandExec)
         CommandExec t = new CommandExec(adhocRemoteString: 'test1')
         CommandExec t1=t.createClone()
         assertEquals('test1',t1.adhocRemoteString)
         assertNull(t1.argString)
     }
     void testCreateCloneExecArgs(){
-        mockDomain(CommandExec)
         CommandExec t = new CommandExec(adhocRemoteString: 'test1',argString: 'arg string')
         CommandExec t1=t.createClone()
         assertEquals('test1',t1.adhocRemoteString)
@@ -125,14 +125,12 @@ class CommandExecTests extends GrailsUnitTestCase{
     }
 
     void testCreateCloneScript() {
-        mockDomain(CommandExec)
         CommandExec t = new CommandExec(adhocLocalString: 'test1')
         CommandExec t1 = t.createClone()
         assertEquals('test1', t1.adhocLocalString)
         assertNull(t1.argString)
     }
     void testCreateCloneScriptFileExtension() {
-        mockDomain(CommandExec)
         CommandExec t = new CommandExec(adhocLocalString: 'test1',fileExtension: 'ext')
         CommandExec t1 = t.createClone()
         assertEquals('test1', t1.adhocLocalString)
@@ -140,14 +138,12 @@ class CommandExecTests extends GrailsUnitTestCase{
         assertNull(t1.argString)
     }
     void testCreateCloneFile() {
-        mockDomain(CommandExec)
         CommandExec t = new CommandExec(adhocFilepath: 'test1')
         CommandExec t1 = t.createClone()
         assertEquals('test1', t1.adhocFilepath)
         assertNull(t1.argString)
     }
     void testCreateCloneNoHandler() {
-        mockDomain(CommandExec)
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr')
         CommandExec t = new CommandExec(adhocFilepath: 'test1',errorHandler: h)
         CommandExec t1 = t.createClone()
@@ -155,7 +151,6 @@ class CommandExecTests extends GrailsUnitTestCase{
         assertNull(t1.errorHandler)
     }
     void testCreateCloneKeepgoing() {
-        mockDomain(CommandExec)
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr',keepgoingOnSuccess: true)
         CommandExec t1 = h.createClone()
         assertEquals('testerr', t1.adhocRemoteString)
@@ -163,7 +158,6 @@ class CommandExecTests extends GrailsUnitTestCase{
         assertNull(t1.errorHandler)
     }
     void testCreateCloneKeepgoingFalse() {
-        mockDomain(CommandExec)
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr',keepgoingOnSuccess: false)
         CommandExec t1 = h.createClone()
         assertEquals('testerr', t1.adhocRemoteString)

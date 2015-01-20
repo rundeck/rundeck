@@ -34,11 +34,11 @@ import com.dtolabs.rundeck.core.execution.HandlerExecutionItem;
  */
 public interface ScriptURLCommandExecutionItem extends HandlerExecutionItem {
     /**
-     * Return the URL to get the script from, which may include data context references
+     * @return the URL to get the script from, which may include data context references
      */
     public String getURLString();
     /**
-     * Return arguments to the script
+     * @return arguments to the script
      */
     public String[] getArgs();
 

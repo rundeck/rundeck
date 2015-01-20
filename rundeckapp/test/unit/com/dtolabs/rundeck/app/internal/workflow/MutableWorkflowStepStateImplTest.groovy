@@ -16,14 +16,18 @@
 
 package com.dtolabs.rundeck.app.internal.workflow
 
+import grails.test.mixin.support.GrailsUnitTestMixin;
+
 import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
 
 /**
  * MutableWorkflowStepStateImplTest is ...
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-10-24
  */
-class MutableWorkflowStepStateImplTest extends GroovyTestCase {
+
+@TestMixin(GrailsUnitTestMixin)
+class MutableWorkflowStepStateImplTest {
     public void testGetParameterizedStepState_withSubworkflow() {
         def mutableWorkflow = new MutableWorkflowStateImpl(['a'], 2)
 

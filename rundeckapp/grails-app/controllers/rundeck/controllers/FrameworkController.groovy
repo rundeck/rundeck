@@ -1545,7 +1545,7 @@ class FrameworkController extends ControllerBase {
                     code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
 
         }
-        if (params.format && !(params.format in ['xml','yaml']) || request.format && !(request.format in ['html','xml','yaml'])) {
+        if (params.format && !(params.format in ['all','xml','yaml']) || request.format && !(request.format in ['all','html','xml','yaml'])) {
             //expected another content type
             def reqformat = params.format ?: request.format
             if (!apiService.requireVersion(request, response,ApiRequestFilters.V3)) {

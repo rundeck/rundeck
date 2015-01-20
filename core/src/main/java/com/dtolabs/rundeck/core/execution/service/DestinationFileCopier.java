@@ -16,7 +16,7 @@ public interface DestinationFileCopier extends FileCopier {
      *
      * @param context context
      * @param input   the input stream
-     * @param node
+     * @param node node
      * @param destination the full path destination for the file
      *
      * @return File path of the file after copying to the node
@@ -31,7 +31,7 @@ public interface DestinationFileCopier extends FileCopier {
      *
      * @param context context
      * @param file    local file tocopy
-     * @param node
+     * @param node node
      * @param destination the full path destination for the file
      *
      * @return File path of the file after copying to the node
@@ -45,7 +45,7 @@ public interface DestinationFileCopier extends FileCopier {
      *
      * @param context context
      * @param script  file content string
-     * @param node
+     * @param node node
      * @param destination the full path destination for the file
      *
      * @return File path of the file after copying to the node

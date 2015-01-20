@@ -59,7 +59,7 @@ public class BaseFileCopier {
      *
      * @return file where the script was stored
      *
-     * @throws com.dtolabs.rundeck.core.execution.ExecutionException
+     * @throws com.dtolabs.rundeck.core.execution.service.FileCopierException
      *          if an IO problem occurs
      */
     public static File writeScriptTempFile(
@@ -87,7 +87,7 @@ public class BaseFileCopier {
      *
      * @return file where the script was stored
      *
-     * @throws com.dtolabs.rundeck.core.execution.ExecutionException
+     * @throws com.dtolabs.rundeck.core.execution.service.FileCopierException
      *          if an IO problem occurs
      */
     public static File writeScriptTempFile(
@@ -169,9 +169,8 @@ public class BaseFileCopier {
     }
 
     /**
-     * Return the default file extension for a temp file based on the type of node
-     * @param node
-     * @return
+     * @return the default file extension for a temp file based on the type of node
+     * @param node node
      */
     public static String defaultRemoteFileExtensionForNode(final INodeEntry node){
         if (null != node.getOsFamily() && "windows".equalsIgnoreCase(node.getOsFamily().trim())) {
@@ -182,7 +181,7 @@ public class BaseFileCopier {
     }
 
     /**
-     * Return a string with a file extension appended if it is not already on the file path
+     * @return a string with a file extension appended if it is not already on the file path
      * provided.
      *
      * @param filepath the file path string
@@ -295,12 +294,12 @@ public class BaseFileCopier {
 
     /**
      *
-     * @param original
-     * @param input
-     * @param script
-     * @param destinationFile
-     * @return
-     * @throws FileCopierException
+     * @param original source file
+     * @param input source stream
+     * @param script source string
+     * @param destinationFile destination
+     * @return local file
+     * @throws FileCopierException on error
      */
     protected static File writeLocalFile(
             File original,

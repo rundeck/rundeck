@@ -43,7 +43,8 @@ import java.util.*;
 /**
  * JobsTool commandline tool (rd-jobs), which provides actions for listing stored jobs from the server, and loading XML
  * definitions to the server. Server communication happens through the {@link com.dtolabs.rundeck.core.dispatcher.CentralDispatcher}
- * server layer. </p> <p> 'list' action: list stored
+ * server layer.
+ * <p> 'list' action: list stored
  * jobs matching query input, or all jobs if no query options are provided.  Optionally write the XML content to a file
  * indicated with the -f/--file option. </p> <p> 'load' action: load XML content from a file indicated with -f/--file
  * option to the server, listing the server's response about success/failure/skipped status for each Job defined.

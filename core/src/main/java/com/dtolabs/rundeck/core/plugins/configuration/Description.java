@@ -33,28 +33,28 @@ import java.util.Map;
  */
 public interface Description {
     /**
-     * Return the provider name
+     * @return the provider name
      */
     public String getName();
     /**
-     * Return the textual title of the provider
+     * @return the textual title of the provider
      */
     public String getTitle();
     /**
-     * Return the textual description of this provider.
+     * @return the textual description of this provider.
      */
     public String getDescription();
     /**
-     * Return the properties
+     * @return the properties
      */
     public List<Property> getProperties();
 
     /**
-     * Return a map of config prop keys to external project property names, allowing input values to be in properties files
+     * @return a map of config prop keys to external project property names, allowing input values to be in properties files
      */
     public Map<String, String> getPropertiesMapping();
     /**
-     * Return a map of config prop keys to external framework property names, allowing input values to be in properties files
+     * @return a map of config prop keys to external framework property names, allowing input values to be in properties files
      */
     public Map<String, String> getFwkPropertiesMapping();
 }
