@@ -234,12 +234,14 @@ var FlowState = Class.create({
     callUpdate: function(){
         var state=this;
         this.updateRunning=true;
-        new Ajax.Request(this.loadUrl,{
-            evalScripts: true,
-            evalJSON: true,
-            onSuccess: function (transport) {
-                var data = transport.responseJSON;
+        jQuery.ajax({
+           url:this.loadUrl,
+            dataType:'json',
+            success: function (data,status,jqxhr) {
                 state.update(data);
+            },
+            error: function (jqxhr,status,err) {
+                state.updateError( "Failed to load state: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err),jqxhr.responseJSON);
             }
         });
     },
