@@ -295,7 +295,8 @@ function loadHistoryLink(history, ajaxBaseUrl, href,reload) {
 }
 
 function setupActivityLinks(id, history) {
-    jQuery('#' + id + ' a.activity_link').click(function (e) {
+    var activitysection=jQuery('#' + id);
+    activitysection.on('click','a.activity_link',function (e) {
         e.preventDefault();
         var me = jQuery(this)[0];
         jQuery('#' + id + ' .activity_links > li').removeClass('active');
@@ -303,7 +304,7 @@ function setupActivityLinks(id, history) {
         history.showReports(true);
         loadHistoryLink(history, history.ajaxHistoryLink, me.getAttribute('href'),jQuery(this).data('auto-refresh'));
     });
-    jQuery('#' + id + ' a.running_link').click(function (e) {
+    activitysection.on('click','a.running_link',function (e) {
         e.preventDefault();
         var me = jQuery(this)[0];
         if(history.nowRunningEnabled()){
@@ -316,7 +317,7 @@ function setupActivityLinks(id, history) {
     });
 
     //click handler for rows, and prevent shift-click selection in bulk edit mode
-    jQuery('#'+id).on('click', '.autoclick .autoclickable',function (e) {
+    activitysection.on('click', '.autoclick .autoclickable',function (e) {
         e.preventDefault();
         history.rowClicked(ko.dataFor(this), e.shiftKey);
         return false;
