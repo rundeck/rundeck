@@ -14,9 +14,11 @@ RunDeck, is no ordinary wooden deck. You can build a bon fire on this deck.
 Rundeck provides a single console for dispatching commands across many resources.
 
 %changelog
+* Tue Jan 20 2015 Greg Schueler <greg@simplifyops.com> 2.5-0
+	- Fix cli jar file versions, fix changelog date
 * Sat Apr 19 2014 Diomidis Spinellis <dds@aueb.gr> 2.0-4
 	- Correct .ssh permissions #743
-* Sun Dec 2 2013 Alex Honor <alexhonor@yahoo.com> 2.0-0
+* Mon Dec 2 2013 Alex Honor <alexhonor@yahoo.com> 2.0-0
 	- Remove java dependency. #601
 * Sun Jan 6 2013 Jordi Llonch <llonchj@gmail.com> 1.4-0
 	- Soft-coded version numbers
@@ -79,9 +81,9 @@ fi
 
 # CLI Lib Support
 %dir /var/lib/rundeck/cli
-/var/lib/rundeck/cli/ant-1.7.1.jar
-/var/lib/rundeck/cli/ant-jsch-1.7.1.jar
-/var/lib/rundeck/cli/ant-launcher-1.7.1.jar
+/var/lib/rundeck/cli/ant-1.8.3.jar
+/var/lib/rundeck/cli/ant-jsch-1.8.3.jar
+/var/lib/rundeck/cli/ant-launcher-1.8.3.jar
 /var/lib/rundeck/cli/commons-beanutils-1.8.3.jar
 /var/lib/rundeck/cli/commons-cli-1.0.jar
 /var/lib/rundeck/cli/commons-codec-1.5.jar
@@ -103,13 +105,14 @@ fi
 /var/lib/rundeck/cli/jsch.agentproxy.usocket-jna-0.0.9.jar
 /var/lib/rundeck/cli/jsch.agentproxy.usocket-nc-0.0.9.jar
 /var/lib/rundeck/cli/jsch-0.1.50.jar
-/var/lib/rundeck/cli/log4j-1.2.16.jar
+/var/lib/rundeck/cli/log4j-1.2.17.jar
 /var/lib/rundeck/cli/rundeck-core-%{_vname}.jar
 /var/lib/rundeck/cli/rundeck-storage-api-%{_vname}.jar
 /var/lib/rundeck/cli/rundeck-storage-conf-%{_vname}.jar
 /var/lib/rundeck/cli/rundeck-storage-data-%{_vname}.jar
 /var/lib/rundeck/cli/snakeyaml-1.9.jar
-/var/lib/rundeck/cli/xercesImpl-2.6.2.jar
+/var/lib/rundeck/cli/xercesImpl-2.11.0.jar
+/var/lib/rundeck/cli/xml-apis-1.4.01.jar
 /var/lib/rundeck/cli/xom-1.0.jar
 
 # CLI Tools
