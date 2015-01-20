@@ -801,27 +801,6 @@ var FollowControl = Class.create({
                 this.appendCmdOutputError("finishDataOutput"+e);
             }
         }
-        try {
-            var ctxid = this.ctxBodySet.length - 1;
-            if (null != $('ctxIcon' + (ctxid))) {
-                var status = this.contextStatus[(ctxid) + ""];
-                if (typeof(status) != "undefined") {
-                    var iconname = "-ok.png";
-                    iconname = "-" + status + ".png";
-                    var img = new Element('img');
-                    img.setAttribute('alt', '');
-                    //                 img.setAttribute('title',status);
-                    img.setAttribute('width', '16');
-                    img.setAttribute('height', '16');
-                    img.setAttribute('src', this.smallIconUrl + iconname);
-                    img.setAttribute('style', 'vertical-align:center');
-                    $('ctxIcon' + (ctxid)).appendChild(img);
-                }
-            }
-
-        } catch(e) {
-            this.appendCmdOutputError("finishDataOutput2"+e);
-        }
     },
     toggleDataBody: function(ctxid) {
         if (Element.visible('databody' + ctxid)) {
@@ -1106,21 +1085,7 @@ var FollowControl = Class.create({
             this.appendCmdOutputError("createFinalContextTbody "+e);
         }
 
-        if (null != $('ctxIcon' + (ctxid))) {
-            var status = this.contextStatus[(ctxid) + ""];
-            var iconname = "-ok.png";
-            if (typeof(status) != "undefined") {
-                iconname = "-" + status + ".png";
-                var img = new Element('img');
-                img.setAttribute('alt', '');
-                //                 img.setAttribute('title',status);
-                img.setAttribute('width', '16');
-                img.setAttribute('height', '16');
-                img.setAttribute('src', this.smallIconUrl + iconname);
-                img.setAttribute('style', 'vertical-align:center');
-                $('ctxIcon' + (ctxid)).appendChild(img);
-            }
-        }
+
         this.contextIdCounter++;
     },
     createNewContextTbody: function(data, tbl, ctxid) {
@@ -1379,11 +1344,6 @@ var FollowControl = Class.create({
                         $(icon).removeClassName(s);
                     });
                     $(icon).addClassName(status);
-                }
-                var img = $('jobInfo_' + this.executionId).down('img');
-                if (img) {
-                    var status = result == 'succeeded' ? '-ok' : result == 'aborted' ? '-warn' : '-error';
-                    img.src = this.iconUrl + '-job' + status + ".png";
                 }
             }
             if (this.updatepagetitle && !/^\[/.test(document.title)) {
