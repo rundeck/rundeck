@@ -57,6 +57,8 @@
         function showTab(id){
             jQuery('#'+id+' a').tab('show');
         }
+
+        var activity;
         function init() {
             var workflowData=loadJsonData('workflowDataJSON');
             workflow = new RDWorkflow(workflowData,{
@@ -74,8 +76,6 @@
             outfileSizeId:'outfilesize',
             workflow:workflow,
             appLinks:appLinks,
-            iconUrl: "${resource(dir: 'images', file: 'icon-small')}",
-            smallIconUrl: "${resource(dir: 'images', file: 'icon-small')}",
 
             extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${enc(js:enc(url: params.markdown))}&ansicolor=${enc(js:enc(url: params.ansicolor))}",
             lastlines: '${enc(js:params.int('lastlines') ?: defaultLastLines)}',
@@ -163,10 +163,6 @@
             jQuery('#tab_link_output').on('show.bs.tab',function(e){
                 followOutput();
             });
-        }
-        var activity;
-        jQuery(document).ready(function(){
-            init();
             if(document.getElementById('activity_section')){
                 activity = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
                 activity.nowRunningEnabled(${null != execution?.dateCompleted});
@@ -180,7 +176,8 @@
                 _applyAce(this);
             });
             followControl.bindActions('outputappendform');
-        });
+        }
+        jQuery(init);
       </g:javascript>
       <style type="text/css">
 
