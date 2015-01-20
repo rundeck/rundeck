@@ -715,9 +715,9 @@ class UtilityTagLib{
         if(attrs.html){
             out << attrs.html.toString().encodeAsHTML()
         }else if(attrs.stripHtml){
-            out << attrs.stripHtml.toString().encodeAsStripHTML()
+            out << raw(attrs.stripHtml.toString().encodeAsStripHTML())
         }else if(null!=attrs.attr){
-            out << attrs.attr.toString().encodeAsHTMLAttribute()
+            out << raw(attrs.attr.toString().encodeAsHTMLAttribute())
         }else if(attrs.xml){
             out << attrs.xml.toString().encodeAsXMLContent()
         }else if(null !=attrs.js){
