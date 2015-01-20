@@ -23,7 +23,6 @@
     <g:set var="runningParams" value="${[jobIdFilter: scheduledExecution.extid]+projParams}"/>
 </g:if>
 <ul class="nav nav-tabs activity_links">
-    %{--<g:unless test="${hideNowRunning}">--}%
     <li data-bind="css: { disabled: !nowRunningEnabled() }">
         <g:link controller="reports" action="index" class="running_link"
                 title="All activity for this job"
@@ -33,7 +32,6 @@
             running
         </g:link>
     </li>
-    %{--</g:unless>--}%
     <li>
         <g:link controller="reports" action="index" class="activity_link"
                 title="All activity for this job"
