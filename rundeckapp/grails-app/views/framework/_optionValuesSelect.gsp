@@ -26,7 +26,6 @@
 <g:set var="rkey" value="${rkey?:g.rkey()}"/>
 <g:set var="fkey" value="${rkey}"/>
 <g:set var="realFieldName" value="${(fieldPrefix?fieldPrefix:'')+(fieldName?fieldName:'option.'+optionSelect.name)}"/>
-
 <g:if test="${optionSelect}">
     <div class="row">
     <g:set var="optName" value="${optionSelect.name}"/>
@@ -170,7 +169,7 @@
             <g:else>
                 <g:set var="usesTextField" value="${!optionSelect.enforced || err}"/>
                 <select class="optionvalues  form-control" id="${!usesTextField? enc(attr:fieldwatchid): enc(attr:rkey + '_sel')}"
-                    ${!usesTextField ? 'name="' + enc(attr:realFieldName) + '"' : ''}>
+                    name="${raw(!usesTextField ?  enc(attr:realFieldName)  : '')}">
                     <g:if test="${!optionSelect.enforced && !optionSelect.multivalued}">
                         <option value="">-choose-</option>
                     </g:if>
