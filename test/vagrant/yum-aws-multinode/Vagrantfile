@@ -29,12 +29,16 @@ Vagrant.configure("2") do |config|
   RDECK_PROJECTS="/var/rundeck/projects"
   PROJECT_NAME="test"
 
+  api_key="ABC123"
+
 
   config.vm.define :rundeck do |rundeck|
     rundeck.vm.hostname = "#{RUNDECK_NODENAME}"
-    rundeck.vm.provision :shell, :path => "provisioning/rundeck/install.sh", :args=> "#{repo_url}"
+    rundeck.vm.provision :shell, :path => "provisioning/rundeck/install.sh", :args=> "#{repo_url} #{api_key}"
     rundeck.vm.provision :shell, :path => "provisioning/rundeck/copy-sshkey.sh", 
       :args => "#{RUNDECK_USER} #{RDECK_BASE}/.ssh /keys id_rsa"
+    rundeck.vm.provision :shell, :path => "provisioning/rundeck/upload-sshkey-storage.sh",
+      :args => "/keys/id_rsa #{api_key} id_rsa.pem"
     rundeck.vm.provision :shell, :path => "provisioning/rundeck/create-project.sh", 
       :args => "#{RDECK_BASE} #{RDECK_PROJECTS} #{PROJECT_NAME} #{RUNDECK_USER} #{RDECK_PROJECTS}/#{PROJECT_NAME}/etc/resources"
     rundeck.vm.provision :shell, :path => "provisioning/rundeck/add-nodes.sh", 

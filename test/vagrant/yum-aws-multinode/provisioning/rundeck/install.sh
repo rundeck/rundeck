@@ -25,7 +25,8 @@ die() {
 set -o nounset -o pipefail
 
 REPO_URL=$1
-shift
+API_KEY=$2
+
 
 #get the ci repo
 curl -# --fail -L -o /etc/yum.repos.d/bintray.repo "$REPO_URL" || die "failed downloading bintray.repo"
@@ -60,6 +61,11 @@ usermod -g rundeck vagrant
 service iptables stop
 #iptables -A INPUT -p tcp --dport 4440 -j ACCEPT
 #service iptables save
+
+#configure static api key
+echo "admin=${API_KEY}" >> /etc/rundeck/keys.properties
+echo "rundeck.tokens.file=/etc/rundeck/keys.properties" >> /etc/rundeck/framework.properties
+chown rundeck:rundeck /etc/rundeck/keys.properties
 
 # Start up rundeck
 mkdir -p /var/log/vagrant
