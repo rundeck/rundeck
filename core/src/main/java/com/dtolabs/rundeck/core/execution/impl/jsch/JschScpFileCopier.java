@@ -119,8 +119,6 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
     ) throws FileCopierException {
 
         Project project = new Project();
-        final Sequential seq = new Sequential();
-        seq.setProject(project);
 
         final String remotefile;
         if(null==destinationPath) {
@@ -161,13 +159,12 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
         /**
          * Copy the file over
          */
-        seq.addTask(createEchoVerbose("copying scriptfile: '" + localTempfile.getAbsolutePath()
-                + "' to: '" + node.getNodename() + ":" + remotefile + "'", project));
-        seq.addTask(scp);
+        context.getExecutionListener().log(3,"copying file: '" + localTempfile.getAbsolutePath()
+                + "' to: '" + node.getNodename() + ":" + remotefile + "'");
 
         String errormsg = null;
         try {
-            seq.execute();
+            scp.execute();
         } catch (BuildException e) {
             JschNodeExecutor.ExtractFailure failure = JschNodeExecutor.extractFailure(e,
                     node,
@@ -175,7 +172,6 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
                     framework);
             errormsg = failure.getErrormsg();
             FailureReason failureReason = failure.getReason();
-            context.getExecutionListener().log(0, errormsg);
             context.getExecutionListener().log(0, errormsg);
             throw new FileCopierException("[jsch-scp] Failed copying the file: " + errormsg, failureReason, e);
         }
