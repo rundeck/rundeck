@@ -1459,7 +1459,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         def failed=false
         def pluginDesc = notificationService.getNotificationPluginDescriptor(notif.type)
         if (!pluginDesc) {
-            return //closure
+            return [failed:true]
         }
         def validation = notificationService.validatePluginConfig(scheduledExecution.project, notif.type, notif.configuration)
         if (!validation.valid) {
