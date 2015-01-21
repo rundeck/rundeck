@@ -22,6 +22,9 @@
    $Id$
 --%>
 <%@ page import="rundeck.Execution" contentType="text/html" %>
+<%
+    request.setAttribute("IS_MAIL_RENDERING_REQUEST",Boolean.TRUE)
+%>
 <html>
 <head><title>Execution <g:message code="status.label.${execstate}"/></title>
     <style type="text/css">

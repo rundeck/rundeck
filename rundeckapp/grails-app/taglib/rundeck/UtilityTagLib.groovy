@@ -658,7 +658,9 @@ class UtilityTagLib{
      * is "you", with attribute "youclass"
      */
     def username={attrs,body->
-        if(attrs.user==session.user){
+        //mail rendering uses a fake request and getSession() will throw exception, so bypass if needed
+        //attribute IS_MAIL_RENDERING_REQUEST is set in the /execution/mailNotification/status.gsp file
+        if(request.getAttribute('IS_MAIL_RENDERING_REQUEST')!=Boolean.TRUE && attrs.user==session.user){
             if(attrs.youclass){
                 out<<"<span class=\"${enc(attr:attrs.youclass)}\">"
             }
