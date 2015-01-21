@@ -112,16 +112,18 @@ public class SSHTaskBuilder {
             }
         }
         
-        if (null != base.getUserInfo().getKeyfile()) {
-            jsch.addIdentity(base.getUserInfo().getKeyfile());
-        }
-
         if (null != base.getSshKeyData()) {
+            base.getPluginLogger().log(Project.MSG_DEBUG, "Using stored private key data.");
+            //XXX: reset password to null, which was non-null to bypass Ant's behavior
+            base.setPassword(null);
             try {
                 jsch.addIdentity("sshkey", SSHTaskBuilder.streamBytes(base.getSshKeyData()), null, null);
             } catch (IOException e) {
                 throw new JSchException("Failed to ready private ssh key data");
             }
+        }else  if (null != base.getUserInfo().getKeyfile()) {
+            base.getPluginLogger().log(Project.MSG_DEBUG, "Using private key file: "+base.getUserInfo().getKeyfile());
+            jsch.addIdentity(base.getUserInfo().getKeyfile());
         }
 
         if (!base.getUserInfo().getTrust() && base.getKnownhosts() != null) {
@@ -537,6 +539,8 @@ public class SSHTaskBuilder {
                         throw new BuilderException("Failed to read SSH Private key stored at path: " +
                                 sshKeyResource,e);
                     }
+                    //XXX: bypass password & keyfile null check in Ant 1.8.3's Scp.java:370, is restored to null in {@link #openSession}.
+                    sshbase.setPassword("");
                 } else if (null != sshKeypath && !"".equals(sshKeypath)) {
                     if (!new File(sshKeypath).exists()) {
                         throw new BuilderException("SSH Keyfile does not exist: " + sshKeypath);

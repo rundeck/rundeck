@@ -540,7 +540,7 @@ public class TestSSHTaskBuilder extends TestCase {
         assertNotNull(test.getSshKeyData());
         assertEquals(null, test.getKeyfile());
         assertEquals("", test.passphrase);
-        assertEquals(null, test.password);
+        assertEquals("", test.password);
         assertEquals(0, test.timeout);
         assertEquals("usernameValue", test.username);
         assertEquals(false, test.getVerbose());
