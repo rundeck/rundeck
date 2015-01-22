@@ -647,9 +647,13 @@ class UtilityTagLib{
 
     def markdown={ attrs, body ->
         if(attrs.safe){
-            out<<body().toString().encodeAsHTMLContent().decodeMarkdown()
+            withCodec('raw'){
+                out << body().toString().encodeAsHTMLContent().decodeMarkdown()
+            }
         }else{
-            out<<body().toString().decodeMarkdown()
+            withCodec('raw') {
+                out << body().toString().decodeMarkdown()
+            }
         }
     }
 
@@ -734,8 +738,10 @@ class UtilityTagLib{
             //explicitly not encoded
             out << raw(attrs.rawtext)
         }else if(attrs.raw=='true') {
-            //explicitly not encoded
-            out << raw(body())
+            withCodec('raw'){
+                //explicitly not encoded
+                out << body()
+            }
         }else {
             out << body().encodeAsHTML()
         }

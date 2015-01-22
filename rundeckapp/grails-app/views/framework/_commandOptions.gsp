@@ -76,7 +76,7 @@ used by _editOptions.gsp template
                 </div>
 
                 <div class="col-sm-10 col-sm-offset-2">
-                    <span class="help-block"><g:markdown>${raw(optDescription)}</g:markdown></span>
+                    <span class="help-block"><g:markdown>${optDescription}</g:markdown></span>
                 </div>
                 <g:if test="${hasError}">
                     <div class="col-sm-10 col-sm-offset-2">
