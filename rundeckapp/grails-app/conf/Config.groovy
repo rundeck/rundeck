@@ -157,6 +157,10 @@ rundeck.web.metrics.servlets.healthcheck.enabled = true
 
 rundeck.gui.job.description.disableHTML=false
 
+grails.assets.less.compile = 'less4j'
+grails.assets.plugin."twitter-bootstrap".excludes = ["**/*.less"]
+grails.assets.plugin."twitter-bootstrap".includes = ["bootstrap.less"]
+
 //turn off whitespace conversion to blank/null for data binding
 grails.databinding.trimStrings=false
 
