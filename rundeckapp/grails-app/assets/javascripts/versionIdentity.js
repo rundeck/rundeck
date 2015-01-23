@@ -72,7 +72,14 @@ var VersionIdentity=function(data){
         'plane',
         'pushpin',
         'tower',
-        'glass'
+        'glass',
+        'knight',
+        'tent',
+        'apple',
+        'lamp',
+        'piggy-bank',
+        'grain',
+        'sunglasses'
     ];
 
     self.names=[
