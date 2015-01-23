@@ -180,7 +180,7 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
         final File srcFile =
                 null != file ?
                         file :
-                        BaseFileCopier.writeTempFile(executionContext, file, input, content);
+                        BaseFileCopier.writeTempFile(executionContext, null, input, content);
 
         String destFilePath = destination;
         if (null == destFilePath) {
