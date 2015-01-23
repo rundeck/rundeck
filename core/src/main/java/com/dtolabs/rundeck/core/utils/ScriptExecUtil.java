@@ -51,14 +51,109 @@ import java.util.regex.Pattern;
 public class ScriptExecUtil {
 
     /**
+     * @return instance of the helper interface
+     */
+    public static ScriptExecHelper helper() {
+        return new ScriptExecHelper() {
+
+            @Override
+            public int runLocalCommand(
+                    final String osFamily,
+                    final ExecArgList execArgList,
+                    final Map<String, Map<String, String>> dataContext,
+                    final File workingdir,
+                    final OutputStream outputStream,
+                    final OutputStream errorStream
+            )
+                    throws IOException, InterruptedException {
+                return ScriptExecUtil.runLocalCommand(
+                        osFamily,
+                        execArgList,
+                        dataContext,
+                        workingdir,
+                        outputStream,
+                        errorStream
+                );
+            }
+
+            @Override
+            public int runLocalCommand(
+                    final String[] command,
+                    final Map<String, String> envMap,
+                    final File workingdir,
+                    final OutputStream outputStream,
+                    final OutputStream errorStream
+            )
+                    throws IOException, InterruptedException {
+                return ScriptExecUtil.runLocalCommand(command, envMap, workingdir, outputStream, errorStream);
+            }
+
+            @Override
+            public String[] createScriptArgs(
+                    final Map<String, Map<String, String>> localDataContext,
+                    final String scriptargs,
+                    final String[] scriptargsarr,
+                    final String scriptinterpreter,
+                    final boolean interpreterargsquoted,
+                    final String filepath
+            ) {
+                return ScriptExecUtil.createScriptArgs(
+                        localDataContext, null, scriptargs, scriptargsarr, scriptinterpreter,
+                        interpreterargsquoted, filepath
+                );
+            }
+
+            @Override
+            public String[] createScriptArgs(
+                    final Map<String, Map<String, String>> localDataContext,
+                    final INodeEntry node,
+                    final String scriptargs,
+                    final String[] scriptargsarr,
+                    final String scriptinterpreter,
+                    final boolean interpreterargsquoted,
+                    final String filepath
+            ) {
+                return ScriptExecUtil.createScriptArgs(
+                        localDataContext,
+                        node,
+                        scriptargs,
+                        scriptargsarr,
+                        scriptinterpreter,
+                        interpreterargsquoted,
+                        filepath
+                );
+            }
+
+
+            @Override
+            public ExecArgList createScriptArgList(
+                    final String filepath,
+                    final String scriptargs,
+                    final String[] scriptargsarr,
+                    final String scriptinterpreter,
+                    final boolean interpreterargsquoted
+            ) {
+                return ScriptExecUtil.createScriptArgList(
+                        filepath,
+                        scriptargs,
+                        scriptargsarr,
+                        scriptinterpreter,
+                        interpreterargsquoted
+                );
+            }
+
+        };
+    }
+
+    /**
      * Run a command with environment variables in a working dir, and copy the streams
      *
-     *
-     * @param osFamily local node os family
-     * @param execArgList      the ExecArgList to run
+     * @param osFamily     local node os family
+     * @param execArgList  the ExecArgList to run
      * @param workingdir   optional working dir location (or null)
      * @param outputStream stream for stdout
      * @param errorStream  stream for stderr
+     * @param dataContext  data
      *
      * @return the exit code of the command
      *
@@ -73,8 +168,7 @@ public class ScriptExecUtil {
             final OutputStream outputStream,
             final OutputStream errorStream
     )
-            throws IOException, InterruptedException
-    {
+            throws IOException, InterruptedException {
         final Map<String, String> envVars =
                 DataContextUtils.generateEnvVarsFromContext(dataContext);
 
@@ -89,6 +183,7 @@ public class ScriptExecUtil {
                 errorStream
         );
     }
+
     /**
      * Run a command with environment variables in a working dir, and copy the streams
      *
@@ -103,9 +198,11 @@ public class ScriptExecUtil {
      * @throws IOException          if any IO exception occurs
      * @throws InterruptedException if interrupted while waiting for the command to finish
      */
-    public static int runLocalCommand(final String[] command,
+    public static int runLocalCommand(
+            final String[] command,
             final Map<String, String> envMap, final File workingdir,
-            final OutputStream outputStream, final OutputStream errorStream)
+            final OutputStream outputStream, final OutputStream errorStream
+    )
             throws IOException, InterruptedException {
         final String[] envarr = createEnvironmentArray(envMap);
 
@@ -148,14 +245,20 @@ public class ScriptExecUtil {
      * @param scriptinterpreter     interpreter invocation for the file, or null to invoke it directly
      * @param interpreterargsquoted if true, pass the script file and args as a single argument to the interpreter
      * @param filepath              remote filepath for the script
+     *
+     * @return args
      */
-    public static String[] createScriptArgs(final Map<String, Map<String, String>> localDataContext,
+    public static String[] createScriptArgs(
+            final Map<String, Map<String, String>> localDataContext,
             final String scriptargs,
             final String[] scriptargsarr,
             final String scriptinterpreter,
-            final boolean interpreterargsquoted, final String filepath) {
-        return createScriptArgs(localDataContext, null, scriptargs, scriptargsarr, scriptinterpreter,
-                interpreterargsquoted, filepath);
+            final boolean interpreterargsquoted, final String filepath
+    ) {
+        return createScriptArgs(
+                localDataContext, null, scriptargs, scriptargsarr, scriptinterpreter,
+                interpreterargsquoted, filepath
+        );
     }
 
     /**
@@ -164,25 +267,34 @@ public class ScriptExecUtil {
      * @param filepath              remote filepath for the script
      * @param scriptargs            arguments to the script file
      * @param scriptargsarr         arguments to the script file as an array
-     * @param scriptinterpreter     interpreter invocation for the file, or null to invoke it directly, can include ${scriptfile}
+     * @param scriptinterpreter     interpreter invocation for the file, or null to invoke it directly, can include
+     *                              ${scriptfile}
      * @param interpreterargsquoted if true, pass the script file and args as a single argument to the interpreter
+     *
+     * @return arg list
      */
-    public static ExecArgList createScriptArgList(final String filepath, final String scriptargs,
+    public static ExecArgList createScriptArgList(
+            final String filepath, final String scriptargs,
             final String[] scriptargsarr,
             final String scriptinterpreter,
-            final boolean interpreterargsquoted) {
+            final boolean interpreterargsquoted
+    ) {
 
         ExecArgList.Builder builder = ExecArgList.builder();
-        boolean seenFilepath=false;
+        boolean seenFilepath = false;
         if (null != scriptinterpreter) {
             String[] burst = OptsUtil.burst(scriptinterpreter);
             List<String> args = new ArrayList<String>();
             for (String arg : burst) {
                 if (arg.contains("${scriptfile}")) {
-                    args.add(arg.replaceAll(Pattern.quote("${scriptfile}"),
-                            Matcher.quoteReplacement(filepath)));
+                    args.add(
+                            arg.replaceAll(
+                                    Pattern.quote("${scriptfile}"),
+                                    Matcher.quoteReplacement(filepath)
+                            )
+                    );
                     seenFilepath = true;
-                }else{
+                } else {
                     args.add(arg);
                 }
             }
@@ -190,7 +302,7 @@ public class ScriptExecUtil {
         }
         if (null != scriptinterpreter && interpreterargsquoted) {
             ExecArgList.Builder sub = builder.subList(true);
-            addScriptFileArgList(seenFilepath?null:filepath, scriptargs, scriptargsarr, sub, needsQuoting);
+            addScriptFileArgList(seenFilepath ? null : filepath, scriptargs, scriptargsarr, sub, needsQuoting);
             sub.parent();
         } else {
             addScriptFileArgList(seenFilepath ? null : filepath, scriptargs, scriptargsarr, builder, needsQuoting);
@@ -209,9 +321,11 @@ public class ScriptExecUtil {
     );
 
 
-    private static void addScriptFileArgList(String filepath, String scriptargs, String[] scriptargsarr,
-            ExecArgList.Builder builder, Predicate quoted) {
-        if(null!=filepath){
+    private static void addScriptFileArgList(
+            String filepath, String scriptargs, String[] scriptargsarr,
+            ExecArgList.Builder builder, Predicate quoted
+    ) {
+        if (null != filepath) {
             builder.arg(filepath, false);
         }
         if (null != scriptargs) {
@@ -231,13 +345,17 @@ public class ScriptExecUtil {
      * @param scriptinterpreter     interpreter invocation for the file, or null to invoke it directly
      * @param interpreterargsquoted if true, pass the script file and args as a single argument to the interpreter
      * @param filepath              remote filepath for the script
+     *
+     * @return args
      */
-    public static String[] createScriptArgs(final Map<String, Map<String, String>> localDataContext,
+    public static String[] createScriptArgs(
+            final Map<String, Map<String, String>> localDataContext,
             final INodeEntry node,
             final String scriptargs,
             final String[] scriptargsarr,
             final String scriptinterpreter,
-            final boolean interpreterargsquoted, final String filepath) {
+            final boolean interpreterargsquoted, final String filepath
+    ) {
         final ArrayList<String> arglist = new ArrayList<String>();
         if (null != scriptinterpreter) {
             arglist.addAll(Arrays.asList(OptsUtil.burst(scriptinterpreter)));
@@ -254,11 +372,19 @@ public class ScriptExecUtil {
         return arglist.toArray(new String[arglist.size()]);
     }
 
-    private static void addQuotedArgs(Map<String, Map<String, String>> localDataContext, INodeEntry node, String
-            scriptargs, String[] scriptargsarr, ArrayList<String> arglist, boolean quoted) {
+    private static void addQuotedArgs(
+            Map<String, Map<String, String>> localDataContext, INodeEntry node, String
+            scriptargs, String[] scriptargsarr, ArrayList<String> arglist, boolean quoted
+    ) {
         if (null != scriptargs) {
-            arglist.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargs.split(" "),
-                    localDataContext)));
+            arglist.addAll(
+                    Arrays.asList(
+                            DataContextUtils.replaceDataReferences(
+                                    scriptargs.split(" "),
+                                    localDataContext
+                            )
+                    )
+            );
         } else if (null != scriptargsarr) {
             if (!quoted) {
                 arglist.addAll(Arrays.asList(scriptargsarr));
