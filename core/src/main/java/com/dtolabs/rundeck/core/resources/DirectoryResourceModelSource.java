@@ -26,7 +26,6 @@ package com.dtolabs.rundeck.core.resources;
 import com.dtolabs.rundeck.core.common.AdditiveListNodeSet;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
-import com.dtolabs.rundeck.core.common.MergedAttributesNodeSet;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
@@ -52,17 +51,9 @@ public class DirectoryResourceModelSource implements ResourceModelSource, Config
     }
 
     private Configuration configuration;
-    long lastModTime = 0;
-    private AdditiveListNodeSet listNodeSet = new AdditiveListNodeSet();
-    private ArrayList<ResourceModelSource> fileSources = new ArrayList<ResourceModelSource>();
-    private HashMap<File, ResourceModelSource> sourceCache = new HashMap<File, ResourceModelSource>();
 
-    static ArrayList<Property> properties = new ArrayList<Property>();
-
-    static {
-        properties.add(PropertyUtil.string(Configuration.DIRECTORY, "Directory Path", "Directory path to scan", true,
-            null));
-    }
+    private final Map<File, ResourceModelSource> sourceCache =
+            Collections.synchronizedMap(new HashMap<File, ResourceModelSource>());
 
     public static final Description DESCRIPTION = DescriptionBuilder.builder()
         .name("directory")
@@ -127,19 +118,33 @@ public class DirectoryResourceModelSource implements ResourceModelSource, Config
 
     public INodeSet getNodes() throws ResourceModelSourceException {
         loadFileSources(configuration.directory, configuration.project);
-        listNodeSet = new MergedAttributesNodeSet();
-        loadNodeSets();
-        return listNodeSet;
+        return loadNodeSets();
     }
 
-    private void loadNodeSets() throws ResourceModelSourceException {
-        for (final ResourceModelSource fileSource: fileSources) {
-            try {
-                listNodeSet.addNodeSet(fileSource.getNodes());
-            } catch (ResourceModelSourceException e) {
-                e.printStackTrace();
+    private INodeSet loadNodeSets() throws ResourceModelSourceException {
+        synchronized (sourceCache) {
+            AdditiveListNodeSet listNodeSet = new AdditiveListNodeSet();
+            for (final File file : sortFiles(sourceCache.keySet())) {
+                try {
+                    listNodeSet.addNodeSet(sourceCache.get(file).getNodes());
+                } catch (ResourceModelSourceException e) {
+                    e.printStackTrace();
+                }
             }
+            return listNodeSet;
         }
+    }
+    private File[] sortFiles(Collection<File> files){
+        //sort on filename
+        File[] arr = files.toArray(new File[files.size()]);
+        Arrays.sort(
+                arr, new Comparator<File>() {
+                    public int compare(final File file, final File file1) {
+                        return file.getName().compareTo(file1.getName());
+                    }
+                }
+        );
+        return arr;
     }
 
     /**
@@ -147,7 +152,7 @@ public class DirectoryResourceModelSource implements ResourceModelSource, Config
      */
     private void loadFileSources(final File directory, final String project) {
         //clear source sequence
-        fileSources.clear();
+
         if (!directory.isDirectory()) {
             logger.warn("Not a directory: " + directory);
         }
@@ -162,42 +167,50 @@ public class DirectoryResourceModelSource implements ResourceModelSource, Config
         });
 
         //set of previously cached file sources by file
-        final HashSet<File> trackedFiles = new HashSet<File>(sourceCache.keySet());
         if (null != files) {
             //sort on filename
-            Arrays.sort(files, new Comparator<File>() {
-                public int compare(final File file, final File file1) {
-                    return file.getName().compareTo(file1.getName());
-                }
-            });
-            for (final File file : files) {
-                //remove file that we want to keep
-                trackedFiles.remove(file);
-                if (!sourceCache.containsKey(file)) {
-                    try {
-                        final ResourceModelSource source = framework.getResourceModelSourceService().getSourceForConfiguration(
-                            "file",
-                            FileResourceModelSource.Configuration.build()
-                                .project(project)
-                                .file(file)
-                                .generateFileAutomatically(false)
-                                .includeServerNode(false).getProperties()
-                        );
-                        fileSources.add(source);
-                        sourceCache.put(file, source);
+            Arrays.sort(files, null);
+            synchronized (sourceCache) {
+                final HashSet<File> trackedFiles = new HashSet<File>(sourceCache.keySet());
+                for (final File file : files) {
+                    //remove file that we want to keep
+                    trackedFiles.remove(file);
+                    if (!sourceCache.containsKey(file)) {
+                        logger.debug("Adding new resources file to cache: " + file.getAbsolutePath());
+                        try {
+                            final ResourceModelSource source = createFileSource(project, file);
+                            sourceCache.put(file, source);
 
-                    } catch (ExecutionServiceException e) {
-                        e.printStackTrace();
+                        } catch (ExecutionServiceException e) {
+                            e.printStackTrace();
+                            logger.debug("Failed adding file " + file.getAbsolutePath() + ": " + e.getMessage(), e);
+                        }
                     }
-                } else {
-                    fileSources.add(sourceCache.get(file));
+                }
+                //remaining trackedFiles are files that have been removed from the dir
+                for (final File oldFile : trackedFiles) {
+                    logger.debug("Removing from cache: " + oldFile.getAbsolutePath());
+                    sourceCache.remove(oldFile);
                 }
             }
         }
-        //remaining trackedFiles are files that have been removed from the dir
-        for (final File oldFile : trackedFiles) {
-            sourceCache.remove(oldFile);
-        }
+    }
+
+    private ResourceModelSource createFileSource(String project, File file) throws ExecutionServiceException {
+        Properties properties1 = FileResourceModelSource.Configuration.build()
+                                                                      .project(project)
+                                                                      .file(file)
+                                                                      .generateFileAutomatically(
+                                                                              false
+                                                                      )
+                                                                      .includeServerNode(
+                                                                              false
+                                                                      )
+                                                                      .getProperties();
+        return framework.getResourceModelSourceService().getSourceForConfiguration(
+                "file",
+                properties1
+        );
     }
 
     @Override
