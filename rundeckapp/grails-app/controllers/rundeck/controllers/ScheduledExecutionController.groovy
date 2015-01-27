@@ -1756,7 +1756,7 @@ class ScheduledExecutionController  extends ControllerBase{
                         'scheduledExecutionId': scheduledExecution.extid,
                         'selectedOptsMap': model.selectedoptsmap ? model.selectedoptsmap[optName] : '',
                         'loadonstart': !model.optiondependencies[optName] || model.optionsDependenciesCyclic,
-                        'optionAutoReload': !(!model.optiondependencies[optName] || model.optionsDependenciesCyclic)
+                        'optionAutoReload': (model.dependentoptions[optName] || model.selectedoptsmap && model.selectedoptsmap[optName]) && !model.optionsDependenciesCyclic
                 ]
             } else {
                 optData['localOption'] = true;
