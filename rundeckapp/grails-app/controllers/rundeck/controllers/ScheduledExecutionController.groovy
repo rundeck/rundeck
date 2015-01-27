@@ -206,7 +206,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         return render(template: '/scheduledExecution/jobActionButtonMenuContent',
-                      model: [scheduledExecution: scheduledExecution])
+                      model: [scheduledExecution: scheduledExecution,hideJobDelete:params.hideJobDelete])
     }
 
     def detailFragment = {
