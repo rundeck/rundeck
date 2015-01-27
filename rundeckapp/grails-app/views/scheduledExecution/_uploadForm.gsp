@@ -166,18 +166,24 @@
 
 
                 <div class="radio">
-                    <g:radio name="dupeOption" value="update" id="dupeOption1" checked="${params.dupeOption?params.dupeOption=='update':true}"/>
-                    <label for="dupeOption1"><em>Update</em> the existing <g:message code="domain.ScheduledExecution.title"/></label>
+                    <label>
+                        <g:radio name="dupeOption" value="update" checked="${params.dupeOption?params.dupeOption=='update':true}"/>
+                        <em>Update</em> the existing <g:message code="domain.ScheduledExecution.title"/>
+                    </label>
                 </div>
 
                 <div class="radio">
-                    <g:radio name="dupeOption" value="skip" id="dupeOption2" checked="${params.dupeOption=='skip'}"/>
-                    <label for="dupeOption2"><em>Skip</em> the uploaded <g:message code="domain.ScheduledExecution.title"/></label>
+                    <label>
+                        <g:radio name="dupeOption" value="skip"  checked="${params.dupeOption=='skip'}"/>
+                        <em>Skip</em> the uploaded <g:message code="domain.ScheduledExecution.title"/>
+                    </label>
                 </div>
 
                 <div class="radio">
-                    <g:radio name="dupeOption" value="create" id="dupeOption3"  checked="${params.dupeOption=='create'}"/>
-                    <label for="dupeOption3">Always <em>Create</em> a new <g:message code="domain.ScheduledExecution.title"/></label>
+                    <label>
+                        <g:radio name="dupeOption" value="create" checked="${params.dupeOption=='create'}"/>
+                        Always <em>Create</em> a new <g:message code="domain.ScheduledExecution.title"/>
+                    </label>
                 </div>
             </div>
 
