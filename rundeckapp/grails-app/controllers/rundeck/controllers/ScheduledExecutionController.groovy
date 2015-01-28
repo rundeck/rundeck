@@ -247,7 +247,7 @@ class ScheduledExecutionController  extends ControllerBase{
     def show = {
         log.debug("ScheduledExecutionController: show : params: " + params)
         def crontab = [:]
-        Framework framework = frameworkService.getRundeckFramework()
+        def framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
 
