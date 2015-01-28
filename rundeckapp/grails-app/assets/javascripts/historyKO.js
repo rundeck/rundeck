@@ -27,6 +27,7 @@ function Report(data) {
     self.execution = ko.observable();
     self.executionHref = ko.observable();
     self.jobId = ko.observable();
+    self.jobDeleted = ko.observable(false);
     self.executionId = ko.observable();
     self.reportId = ko.observable();
     self.title = ko.observable();
@@ -46,6 +47,15 @@ function Report(data) {
     };
     self.endTimeSimple = ko.computed(function () {
         return MomentUtil.formatTimeSimple(self.dateCompleted());
+    });
+
+    self.isJob = ko.computed(function () {
+        var id = self.jobId();
+        var deleted=self.jobDeleted();
+        return id || deleted;
+    });
+    self.isAdhoc = ko.computed(function () {
+        return !self.isJob();
     });
 
     self.jobPercentage = ko.computed(function () {
