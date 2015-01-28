@@ -328,6 +328,18 @@ class WorkflowController extends ControllerBase {
     }
 
     /**
+     * For each value in the map, replace \r\n line endings with \n
+     * @param input
+     * @return
+     */
+    private Map cleanLineEndings(Map input){
+        def result = [:]
+        input.each {k,v->
+            result[k]=v.replaceAll(/\r?\n/,'\n')
+        }
+        result
+    }
+    /**
      *
      * handles ALL modifications to the workflow via named actions, input in a map:
      * input map:
@@ -350,7 +362,7 @@ class WorkflowController extends ControllerBase {
                 item.keepgoingOnSuccess=params.keepgoingOnSuccess
                 item.type = params.newitemtype
                 item.nodeStep = params.newitemnodestep == 'true'
-                item.configuration = params.pluginConfig
+                item.configuration = cleanLineEndings(params.pluginConfig)
                 item.description = params.description
             } else if (params.jobName || 'job' == params.newitemtype) {
                 item = new JobExec(params)
@@ -371,7 +383,7 @@ class WorkflowController extends ControllerBase {
         def modifyItemFromParams={moditem,params->
             if (params.pluginItem) {
                 moditem.properties=params.subMap(['keepgoingOnSuccess','description'])
-                moditem.configuration = params.pluginConfig
+                moditem.configuration = cleanLineEndings(params.pluginConfig)
             } else {
                 if(params.nodeStep instanceof String) {
                     params.nodeStep = params.nodeStep == 'true'
