@@ -247,7 +247,7 @@ class ScheduledExecutionController  extends ControllerBase{
     def show = {
         log.debug("ScheduledExecutionController: show : params: " + params)
         def crontab = [:]
-        Framework framework = frameworkService.getRundeckFramework()
+        def framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
 
@@ -1683,7 +1683,17 @@ class ScheduledExecutionController  extends ControllerBase{
             if(e && e.scheduledExecution?.id == scheduledExecution.id){
                 model.selectedoptsmap=FrameworkService.parseOptsFromString(e.argString)
                 if (e.filter != scheduledExecution.filter) {
-                    model.selectedNodes = (e.failedNodeList ? (e.failedNodeList + ',' + '') : '') + e.succeededNodeList
+
+                    def retryNodes = frameworkService.filterAuthorizedNodes(
+                            scheduledExecution.project,
+                            new HashSet<String>([AuthConstants.ACTION_READ, AuthConstants.ACTION_RUN]),
+                            frameworkService.filterNodeSet(
+                                    ExecutionService.filtersAsNodeSet([filter:e.filter]),
+                                    scheduledExecution.project
+                            ),
+                            authContext).nodes;
+
+                    model.selectedNodes = retryNodes*.nodename.join(',')
                 }
             }
         }else if(params.argString){
