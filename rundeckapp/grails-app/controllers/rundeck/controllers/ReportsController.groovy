@@ -269,9 +269,10 @@ class ReportsController extends ControllerBase{
             if(map.jcJobId){
                 map.jobId= map.remove('jcJobId')
                 try {
-                    map.jobId=ScheduledExecution.get(Long.parseLong(map.jobId))?.extid
+                    def job = ScheduledExecution.get(Long.parseLong(map.jobId))
+                    map.jobId=job?.extid
+                    map.jobDeleted = job==null
                 }catch(Exception e){
-
                 }
                 if(map.execution.argString){
                     map.execution.jobArguments=FrameworkService.parseOptsFromString(map.execution.argString)
