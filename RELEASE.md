@@ -32,13 +32,13 @@ This release has bug fixes and new features, including some GUI improvements.
     - this can be enabled per node, project, or server
         framework.properties:
 
-            framework.local.ssh-agent=<true|false>
-            framework.local.ttl-ssh-agent=<time in sec>
+            framework.local-ssh-agent=<true|false>
+            framework.local-ttl-ssh-agent=<time in sec>
 
         project.properties:
 
-            project.local.ssh-agent=<true|false>
-            project.local.ttl-ssh-agent=<time in sec>
+            project.local-ssh-agent=<true|false>
+            project.local-ttl-ssh-agent=<time in sec>
 
         Node properties:
 
