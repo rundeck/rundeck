@@ -45,11 +45,13 @@
             <div class="container">
             <div class="row">
                 <div class="col-sm-12 checkbox">
-                <input name="extra._replaceNodeFilters" value="true" type="checkbox"
-                        data-toggle="collapse"
-                        data-target="#nodeSelect"
-                    ${selectedNodes?'checked':''}
-                              id="doReplaceFilters"/> <label for="doReplaceFilters">Change the Target Nodes
+                    <label >
+                    <input name="extra._replaceNodeFilters" value="true" type="checkbox"
+                           data-toggle="collapse"
+                           data-target="#nodeSelect"
+                        ${selectedNodes?'checked':''}
+                           id="doReplaceFilters"/>
+                    Change the Target Nodes
                 (<span class="nodeselectcount"><g:enc>${selectedNodes?selectedNodes.size():nodes.size()}</g:enc></span>)</label>
                 </div>
 

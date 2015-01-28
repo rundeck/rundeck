@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.utils.ScriptExecHelper;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 
@@ -46,6 +47,11 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
+    /**
+     * can be replaced with test mock
+     */
+    private ScriptExecHelper scriptExecHelper = ScriptExecUtil.helper();
+
     protected BaseScriptPlugin(final ScriptPluginProvider provider, final Framework framework) {
         super(provider, framework);
     }
@@ -76,11 +82,12 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
         executionContext.getLogger().log(3, "[" + getProvider().getName() + "] executing: " + Arrays.asList(
             finalargs));
 
-        return ScriptExecUtil.runLocalCommand(finalargs,
-                                              DataContextUtils.generateEnvVarsFromContext(localDataContext),
-                                              null,
-                                              outputStream,
-                                              errorStream
+        return getScriptExecHelper().runLocalCommand(
+                finalargs,
+                DataContextUtils.generateEnvVarsFromContext(localDataContext),
+                null,
+                outputStream,
+                errorStream
         );
     }
 
@@ -139,9 +146,11 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
         final boolean interpreterargsquoted = plugin.getInterpreterArgsQuoted();
 
 
-        return ScriptExecUtil.createScriptArgs(localDataContext,
-                                               scriptargs, null, scriptinterpreter, interpreterargsquoted,
-                                               scriptfile.getAbsolutePath());
+        return getScriptExecHelper().createScriptArgs(
+                localDataContext,
+                scriptargs, null, scriptinterpreter, interpreterargsquoted,
+                scriptfile.getAbsolutePath()
+        );
     }
     /**
      * Create the command array for the data context.
@@ -160,8 +169,15 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
         final boolean interpreterargsquoted = plugin.getInterpreterArgsQuoted();
 
 
-        return ScriptExecUtil.createScriptArgList(scriptfile.getAbsolutePath(),
+        return getScriptExecHelper().createScriptArgList(scriptfile.getAbsolutePath(),
                 scriptargs, null, scriptinterpreter, interpreterargsquoted);
     }
 
+    public ScriptExecHelper getScriptExecHelper() {
+        return scriptExecHelper;
+    }
+
+    public void setScriptExecHelper(ScriptExecHelper scriptExecHelper) {
+        this.scriptExecHelper = scriptExecHelper;
+    }
 }

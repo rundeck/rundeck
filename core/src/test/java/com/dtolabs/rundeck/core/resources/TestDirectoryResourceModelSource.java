@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
+import org.junit.Assert;
 
 import java.io.*;
 import java.util.Properties;

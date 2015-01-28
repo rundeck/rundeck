@@ -45,9 +45,9 @@ public class MergedAttributesNodeSet extends AdditiveListNodeSet {
     public void addNodeSet(INodeSet nodeSet) {
         NodeSetImpl iNodeEntries = new NodeSetImpl();
         for (INodeEntry iNodeEntry : nodeSet) {
-            if (nodeIndex.containsKey(iNodeEntry.getNodename())) {
+            INodeEntry node = getNode(iNodeEntry.getNodename());
+            if (null!=node) {
                 //merge attributes
-                INodeEntry node = nodeIndex.get(iNodeEntry.getNodename()).getNode(iNodeEntry.getNodename());
                 HashMap<String, String> newAttributes = new HashMap<String, String>(node.getAttributes());
                 //merge tags
                 HashSet tags = new HashSet();
