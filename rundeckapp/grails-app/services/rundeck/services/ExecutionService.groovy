@@ -1451,7 +1451,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (props.retry?.contains('${')) {
             //replace data references
             if (optparams) {
-                props.retry = DataContextUtils.replaceDataReferences(props.retry, DataContextUtils.addContext("option", optparams, null))
+                props.retry = DataContextUtils.replaceDataReferences(props.retry, DataContextUtils.addContext("option", optparams, null)).trim()
+            }
+        }
+        if(props.retry){
+            //validate retry is a valid integer
+            try{
+                Integer.parseInt(props.retry)
+            }catch(NumberFormatException e){
+                throw new ExecutionServiceException("Unable to create execution: the value for 'retry' was not a valid integer: "+e.message,e)
             }
         }
         if (props.timeout?.contains('${')) {

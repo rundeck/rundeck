@@ -132,6 +132,136 @@ class ExecutionServiceTests  {
         assertNotNull(execs)
         assertTrue(execs.contains(e2))
     }
+    void testCreateExecutionRetryBasic(){
+
+        ScheduledExecution se = new ScheduledExecution(
+            jobName: 'blue',
+            project: 'AProject',
+            groupPath: 'some/where',
+            description: 'a job',
+            argString: '-a b -c d',
+            workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+            retry:'1'
+        )
+        se.save()
+
+
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService=fsvc
+
+        Execution e2=svc.createExecution(se,"user1",['extra.option.test':'12'])
+
+        assertNotNull(e2)
+        assertEquals('-a b -c d', e2.argString)
+        assertEquals(se, e2.scheduledExecution)
+        assertNotNull(e2.dateStarted)
+        assertNull(e2.dateCompleted)
+        assertEquals('1',e2.retry)
+        assertEquals(0,e2.retryAttempt)
+        assertEquals('user1', e2.user)
+        def execs = se.executions
+        assertNotNull(execs)
+        assertTrue(execs.contains(e2))
+    }
+    void testCreateExecutionRetryOptionValue(){
+
+        def jobRetryValue = '${option.test}'
+        def testOptionValue = '12'
+
+        assertRetryOptionValueValid(jobRetryValue, testOptionValue,'-test 12')
+    }
+    void testCreateExecutionRetryOptionValueTrimmed(){
+
+        def jobRetryValue = '${option.test}  '//extra spaces
+        def testOptionValue = '12'
+
+        assertRetryOptionValueValid(jobRetryValue, testOptionValue,'-test 12')
+    }
+    void testCreateExecutionRetryOptionValueTrimmed2(){
+
+        def jobRetryValue = '${option.test}  '//extra spaces
+        def testOptionValue = '12  ' //extra spaces
+
+        assertRetryOptionValueValid(jobRetryValue, testOptionValue,'-test "12  "')
+    }
+    void testCreateExecutionRetryOptionValueInvalid(){
+
+        def jobRetryValue = '${option.test}'
+        def testOptionValue = '12x' //invalid
+
+        assertRetryOptionValueException(jobRetryValue, testOptionValue,'Unable to create execution: the value for \'retry\' was not a valid integer: For input string: "12x"')
+    }
+
+    private void assertRetryOptionValueValid(String jobRetryValue, String testOptionValue, String argString) {
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                uuid: 'abc',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                retry: jobRetryValue
+        )
+        def opt1 = new Option(name: 'test', enforced: false,)
+        se.addToOptions(opt1)
+        if (!se.validate()) {
+            System.out.println(se.errors.allErrors*.toString().join("; "))
+        }
+        assertNotNull se.save()
+
+
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService = fsvc
+
+
+        Execution e2 = svc.createExecution(se, "user1", [('option.test'): testOptionValue])
+
+        assertNotNull(e2)
+        assertEquals(argString, e2.argString)
+        assertEquals(se, e2.scheduledExecution)
+        assertNotNull(e2.dateStarted)
+        assertNull(e2.dateCompleted)
+        assertEquals('12', e2.retry)
+        assertEquals(0, e2.retryAttempt)
+        assertEquals('user1', e2.user)
+        def execs = se.executions
+        assertNotNull(execs)
+        assertTrue(execs.contains(e2))
+    }
+    private void assertRetryOptionValueException(String jobRetryValue, String testOptionValue, String exceptionMessage) {
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                uuid: 'abc',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                retry: jobRetryValue
+        )
+        def opt1 = new Option(name: 'test', enforced: false,)
+        se.addToOptions(opt1)
+        if (!se.validate()) {
+            System.out.println(se.errors.allErrors*.toString().join("; "))
+        }
+        assertNotNull se.save()
+
+
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService = fsvc
+
+
+        try{
+            Execution e2 = svc.createExecution(se, "user1", [('option.test'): testOptionValue])
+            fail("expected exception")
+        }catch (ExecutionServiceException e){
+            assertEquals(exceptionMessage,e.message)
+        }
+
+    }
+
     void testCreateExecutionOverrideNodefilter(){
 
         ScheduledExecution se = new ScheduledExecution(

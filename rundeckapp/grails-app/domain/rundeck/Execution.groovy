@@ -67,7 +67,7 @@ class Execution extends ExecutionContext {
             }
         })
         timeout(maxSize: 256, blank: true, nullable: true,)
-        retry(maxSize: 256, blank: true, nullable: true,)
+        retry(maxSize: 256, blank: true, nullable: true,matches: /^\d+$/)
         timedOut(nullable: true)
         retryAttempt(nullable: true)
         retryExecution(nullable: true)

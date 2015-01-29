@@ -91,7 +91,13 @@ class ScheduledExecution extends ExecutionContext {
             }
         })
         timeout(maxSize: 256, blank: true, nullable: true,)
-        retry(maxSize: 256, blank: true, nullable: true,)
+        retry(maxSize: 256, blank: true, nullable: true,validator: { val, obj ->
+            if (null == val) return true;
+            if (val.indexOf('${')>=0) return true;
+            try { return Integer.parseInt(val)>=0 } catch (NumberFormatException e) {
+                return false
+            }
+        })
         crontabString(bindable: true,nullable: true)
     }
 

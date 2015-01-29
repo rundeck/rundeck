@@ -265,7 +265,26 @@ class ScheduledExecutionTest  {
                 options: [],
         )
     }
-
+    void testConstraintsRetry(){
+        def ScheduledExecution se = new ScheduledExecution(
+                jobName: "TestName",
+                project: "TestFrameworkProject",
+                argString: "-test",
+                description: "whatever",
+                retry:'123'
+        )
+        assertTrue se.validate()
+        se.retry='${option.retry}'
+        assertTrue se.validate()
+        se.retry='123 '
+        assertFalse se.validate()
+        se.retry='1'
+        assertTrue se.validate()
+        se.retry='0'
+        assertTrue se.validate()
+        se.retry='-2'
+        assertFalse se.validate()
+    }
     void testConstraints() {
         def ScheduledExecution se = new ScheduledExecution()
         def props = [jobName: "TestName", project: "TestFrameworkProject", type: "AType", command: "doCommand", argString: "-test", description: "whatever"]
