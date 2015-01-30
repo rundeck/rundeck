@@ -31,37 +31,34 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class AdditiveListNodeSet implements INodeSet, NodeSetMerge {
-    List<INodeSet> nodeSetList;
-    TreeSet<String> nodeNames;
-    HashMap<String,INodeSet> nodeIndex;
+    final Set<String> nodeNames;
+    final Map<String,INodeSet> nodeIndex;
 
     public AdditiveListNodeSet() {
-        nodeSetList = new ArrayList<INodeSet>();
         nodeNames = new TreeSet<String>();
         nodeIndex=new HashMap<String, INodeSet>();
     }
 
     @Override
-    public void addNodeSet(final INodeSet nodeSet) {
+    public synchronized void addNodeSet(final INodeSet nodeSet) {
         if(null==nodeSet){
             return;
         }
-        nodeSetList.add(nodeSet);
         nodeNames.addAll(nodeSet.getNodeNames());
         for (final String name : nodeSet.getNodeNames()) {
             nodeIndex.put(name, nodeSet);
         }
     }
 
-    public Collection<INodeEntry> getNodes() {
-        final ArrayList<INodeEntry> nodes = new ArrayList<INodeEntry>();
+    public synchronized Collection<INodeEntry> getNodes() {
+        final List<INodeEntry> nodes = new ArrayList<INodeEntry>();
         for (final String nodeName : nodeNames) {
             nodes.add(nodeIndex.get(nodeName).getNode(nodeName));
         }
         return nodes;
     }
 
-    public INodeEntry getNode(final String name) {
+    public synchronized INodeEntry getNode(final String name) {
         INodeEntry result = null;
         INodeSet iNodeEntries = nodeIndex.get(name);
         if(null!=iNodeEntries) {
@@ -70,8 +67,8 @@ public class AdditiveListNodeSet implements INodeSet, NodeSetMerge {
         return result;
     }
 
-    public Collection<String> getNodeNames() {
-        return nodeNames;
+    public synchronized Collection<String> getNodeNames() {
+        return new TreeSet<String>(nodeNames);
     }
 
     @Override

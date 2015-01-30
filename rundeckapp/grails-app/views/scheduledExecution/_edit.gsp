@@ -837,16 +837,21 @@ function getCurSEID(){
         </div>
     </div>
     %{--Job retry--}%
-    <div class="form-group">
-        <div class="${labelColSize} control-label text-form-label">
-            <g:message code="scheduledExecution.property.retry.label" default="Retry"/>
+    <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'retry', 'has-error')}">
+        <div class="${labelColSize} control-label">
+            <label for="schedJobRetry"><g:message code="scheduledExecution.property.retry.label" default="Retry"/></label>
         </div>
 
         <div class="${fieldColHalfSize}">
 
             <input type='text' name="retry" value="${enc(attr:scheduledExecution?.retry)}"
                    id="schedJobRetry" class="form-control"/>
+            <g:hasErrors bean="${scheduledExecution}" field="retry">
 
+                <div class="text-danger">
+                    <g:renderErrors bean="${scheduledExecution}" as="list" field="retry"/>
+                </div>
+            </g:hasErrors>
             <span class="help-block">
                 <g:message code="scheduledExecution.property.retry.description"/>
             </span>

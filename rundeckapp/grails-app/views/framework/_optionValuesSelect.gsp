@@ -93,6 +93,11 @@
                 <!-- use checkboxes -->
                 <g:set var="defaultMultiValues" value="${optionSelect.listDefaultMultiValues()}"/>
                 <div class="optionmultiarea " id="${enc(attr:fieldwatchid)}">
+                    <g:if test="${selectedoptsmap && selectedoptsmap[optName] && selectedoptsmap[optName] instanceof String}">
+                        %{
+                            selectedoptsmap[optName]= selectedoptsmap[optName].split(Pattern.quote(optionSelect.delimiter)) as List
+                        }%
+                    </g:if>
                     <g:if test="${!optionSelect.enforced}">
                         <%-- variable input text fields --%>
                         <div class="container">
@@ -109,11 +114,6 @@
 
                         </div>
                         </div>
-                        <g:if test="${selectedoptsmap && selectedoptsmap[optName] && selectedoptsmap[optName] instanceof String}">
-                            %{
-                                selectedoptsmap[optName]= selectedoptsmap[optName].split(Pattern.quote(optionSelect.delimiter)) as List
-                                }%
-                        </g:if>
                         %{--
                         Determine any new values (via selectedoptsmap) that should be added
                         to the multivalue list, and preselected

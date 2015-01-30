@@ -82,7 +82,7 @@
         <tbody ></tbody>
         <tbody data-bind=" foreach: results ">
         <tr class="link activity_row autoclick"
-            data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail', 'highlight': $root.highlightExecutionId()==executionId(), job: jobId(), adhoc: !jobId() } ">
+            data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail', 'highlight': $root.highlightExecutionId()==executionId(), job: isJob(), adhoc: isAdhoc() } ">
             <td class="eventicon" data-bind="visible: $root.bulkEditMode()">
                 <input type="checkbox" name="bulk_edit" data-bind="value: executionId(), checked: bulkEditSelected"
                        class="_defaultInput"/>
@@ -93,10 +93,17 @@
                    }"
                 ></i>
             </td>
-            <td class="eventtitle autoclickable" data-bind="css: { job: jobId(), adhoc: !jobId() }">
+            <td class="eventtitle autoclickable" data-bind="css: { job: isJob(), adhoc: isAdhoc() }">
                 <a href="#" data-bind="text: '#'+executionId(), attr: { href: executionHref() }" class="_defaultAction"></a>
                 <g:if test="${showTitle}">
-                    <span data-bind="text: jobId()?jobName():executionString()"></span>
+                    <span data-bind="if: !jobDeleted()">
+                        <span data-bind="text: isJob()?jobName():executionString()"></span>
+                    </span>
+                    <span data-bind="if: jobDeleted()" class="text-muted">
+                        (<g:message code="domain.ScheduledExecution.title"/>
+                        <span data-bind="text: jobName()"></span>
+                        has been deleted)
+                    </span>
                 </g:if>
             </td>
             <td class="eventargs autoclickable" >
@@ -123,14 +130,14 @@
                     </span>
                 </span>
                 <span data-bind="if: !dateCompleted()">
-                    <div data-bind="if: !jobId() || jobAverageDuration()==0">
+                    <div data-bind="if: isAdhoc() || jobAverageDuration()==0">
                     <g:render template="/common/progressBar" model="${[
                             indefinite: true, title: 'Running', innerContent: 'Running', width: 120,
                             progressClass: 'rd-progress-exec progress-striped active indefinite progress-embed',
                             progressBarClass: 'progress-bar-info',
                     ]}"/>
                     </div>
-                    <div data-bind="if: jobId() && jobAverageDuration()>0">
+                    <div data-bind="if: isJob() && jobAverageDuration()>0">
                         <g:set var="progressBind" value="${', css: { \'progress-bar-info\': jobPercentageFixed() < 105 ,  \'progress-bar-warning\': jobPercentageFixed() > 104  }'}"/>
                         <g:render template="/common/progressBar"
                                   model="[completePercent: 0,

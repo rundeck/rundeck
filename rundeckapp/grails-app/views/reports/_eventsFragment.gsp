@@ -32,7 +32,6 @@
                             src="${resource(dir: 'images', file: 'feed.png')}" width="14px" height="14px"
                             alt=""/> RSS</a>
                 </g:ifServletContextAttribute>
-                <g:render template="/common/queryFilterManagerModal" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'evtsForm',deleteActionSubmit:'deleteFilter', storeActionSubmit:'storeFilter']}"/>
                 <g:hiddenField name="max" value="${max}"/>
                 <g:render template="baseFiltersPlain" model="${[params: params, query: query]}"/>
                 <g:render template="recentDateFiltersPlain" model="${[params:params,query:query]}"/>
@@ -55,6 +54,8 @@
                             </a>
                         </div>
                     </span>
+                <g:render template="/common/queryFilterManagerModal" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'evtsForm',deleteActionSubmit:'deleteFilter', storeActionSubmit:'storeFilter']}"/>
+
             </g:form>
         </div>
         </g:if>

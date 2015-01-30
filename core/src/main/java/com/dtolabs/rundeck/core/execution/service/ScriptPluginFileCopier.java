@@ -36,7 +36,6 @@ import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
@@ -181,7 +180,7 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
         final File srcFile =
                 null != file ?
                         file :
-                        BaseFileCopier.writeTempFile(executionContext, file, input, content);
+                        BaseFileCopier.writeTempFile(executionContext, null, input, content);
 
         String destFilePath = destination;
         if (null == destFilePath) {
@@ -210,12 +209,16 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
         final ExecArgList execArgList = createScriptArgsList(fileCopyContext);
         final String localNodeOsFamily=getFramework().createFrameworkNode().getOsFamily();
 
-        executionContext.getExecutionListener().log(3, "[" + getProvider().getName() + "] executing: " + Arrays.asList(
-                execArgList));
+        executionContext.getExecutionListener().log(3,
+                                                    "[" +
+                                                    getProvider().getName() +
+                                                    "] executing: " +
+                                                    execArgList.asFlatStringList()
+        );
 
         final ByteArrayOutputStream captureSysOut = new ByteArrayOutputStream();
         try {
-            final int result = ScriptExecUtil.runLocalCommand(
+            final int result = getScriptExecHelper().runLocalCommand(
                     localNodeOsFamily,
                     execArgList,
                     finalDataContext,
@@ -235,13 +238,13 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
             throw new FileCopierException(e.getMessage(), StepFailureReason.Interrupted);
         }
 
-        if (null != destFilePath) {
-            return destFilePath;
-        }
 
         //load string of output from outputstream
         final String output = captureSysOut.toString();
         if (null == output || output.length() < 1) {
+            if (null != destFilePath) {
+                return destFilePath;
+            }
             throw new FileCopierException("[" + pluginname + "]: No output from external script",
                                           ScriptPluginFailureReason.ScriptPluginFileCopierOutputMissing
             );
@@ -250,6 +253,9 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
         //look for first line of output
         final String[] split1 = output.split("(\\r?\\n)");
         if (split1.length < 1) {
+            if (null != destFilePath) {
+                return destFilePath;
+            }
             throw new FileCopierException("[" + pluginname + "]: No output from external script",
                                           ScriptPluginFailureReason.ScriptPluginFileCopierOutputMissing);
         }

@@ -1,3 +1,7 @@
+% Version 2.4.1
+% greg
+% 01/30/2015
+
 Release 2.4.1
 =============
 
@@ -42,7 +46,7 @@ See the [release notes for v2.4.0](http://rundeck.org/2.4.0/history/version-2.4.
 * [User domain login field has too restrictive regex](https://github.com/rundeck/rundeck/issues/1078)
 * [2.4.0: upload jobs page: after uploading, action menus for new jobs are empty](https://github.com/rundeck/rundeck/issues/1066)
 * [2.4.0: job upload form radio buttons in wrong location](https://github.com/rundeck/rundeck/issues/1065)
-* [ERROR FrameworkProject - Cannot get nodes from \[DirectoryResourceModelSource](https://github.com/rundeck/rundeck/issues/1064)
+* [ERROR FrameworkProject - Cannot get nodes from \[DirectoryResourceModelSource\]](https://github.com/rundeck/rundeck/issues/1064)
 * [2.4.0 script plugin support ignoring the output of the file copier provider script](https://github.com/rundeck/rundeck/issues/1060)
 * [Script plugin no longer works after upgrading from 2.2.3 to 2.4.0](https://github.com/rundeck/rundeck/issues/1059)
 * [As an end user, I would like specific error messages when job imports fail](https://github.com/rundeck/rundeck/issues/1058)

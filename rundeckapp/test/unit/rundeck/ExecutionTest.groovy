@@ -30,6 +30,24 @@ class ExecutionTest {
         assertFalse("Invalid: "+se.errors.allErrors*.toString().join(","), validate)
         assertTrue(se.errors.hasFieldErrors('serverNodeUUID'))
     }
+    void testValidRetry() {
+        Execution se = createBasicExecution()
+        se.retry='1'
+        def validate = se.validate()
+        assertTrue("Invalid: "+se.errors.allErrors*.toString().join(","), validate)
+        se.retry='0'
+        validate = se.validate()
+        assertTrue("Invalid: "+se.errors.allErrors*.toString().join(","), validate)
+        se.retry='-1'
+        validate = se.validate()
+        assertFalse("Invalid: "+se.errors.allErrors*.toString().join(","), validate)
+    }
+    void testInvalidRetry() {
+        Execution se = createBasicExecution()
+        se.retry='1 '
+        def validate = se.validate()
+        assertFalse("Invalid: "+se.errors.allErrors*.toString().join(","), validate)
+    }
 
     Execution createBasicExecution() {
         new Execution(

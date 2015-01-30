@@ -65,6 +65,55 @@ class WorkflowControllerTests {
         assertEquals 'remove', result.undo.action
         assertEquals 0, result.undo.num
     }
+    /**
+     * Multi line config values with \r\n should be converted to \n
+     */
+    public void testWFEditActionsInsertPluginMultiline() {
+        WorkflowController ctrl = new WorkflowController()
+        //test insert
+        Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
+        wf.commands = new ArrayList()
+
+        def fwmock = mockFor(FrameworkService)
+        fwmock.demand.getRundeckFramework {-> }
+        fwmock.demand.getStepPluginDescription { type -> null }
+        fwmock.demand.validateDescription { desc, p, params ->
+            [valid: true, props: params]
+        }
+        ctrl.frameworkService = fwmock.createMock()
+
+
+        def inputValue = 'abcdef\r\nmonkey\r\ntoenail'
+        def expectedValue = 'abcdef\nmonkey\ntoenail'
+
+        def inputValue2 = 'abc\ndef\n\nrbc\n'
+        def expectedValue2 = 'abc\ndef\n\nrbc\n'
+
+        def result = ctrl._applyWFEditAction(wf, [action: 'insert', num: 0,
+                params: [pluginItem: true, type: 'blah',
+                         pluginConfig: [monkey: 'tree',
+                                        multilineconfig: inputValue,
+                                        unixlines: inputValue2],
+                         description: 'elf',
+                         newitemtype: 'blah']])
+
+        assertNull result.error
+        assertEquals 1, wf.commands.size()
+        final Object item = wf.commands.get(0)
+        assertTrue item instanceof PluginStep
+        PluginStep pitem=(PluginStep)item
+        assertEquals 'blah', pitem.type
+
+
+        assertEquals( [monkey:'tree',
+                       multilineconfig: expectedValue,
+                       unixlines: expectedValue2], pitem.configuration)
+        assertEquals( 'elf', pitem.description)
+        //test undo
+        assertNotNull result.undo
+        assertEquals 'remove', result.undo.action
+        assertEquals 0, result.undo.num
+    }
     public void testWFEditActionsInsertCommand() {
         WorkflowController ctrl = new WorkflowController()
         //test insert
@@ -164,6 +213,56 @@ class WorkflowControllerTests {
         PluginStep pitem=(PluginStep)item
         assertEquals 'blah', pitem.type
         assertEquals( [monkey:'tree'], pitem.configuration)
+        assertEquals 'elf', pitem.description
+        //test undo
+        assertNotNull result.undo
+        assertEquals 'modify', result.undo.action
+        assertEquals 0, result.undo.num
+        assertNotNull result.undo.params
+        assertEquals 'blah', result.undo.params.type
+        assertEquals ([monkey:'pizza'], result.undo.params.configuration)
+        assertEquals ('abc', result.undo.params.description)
+    }
+    /**
+     * Multi line config values with \r\n should be converted to \n
+     */
+    public void testWFEditActionsModifyPluginMultiline() {
+        WorkflowController ctrl = new WorkflowController()
+        Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
+        PluginStep je = new PluginStep(type:'blah',configuration: [monkey:'pizza'],description: 'abc')
+        wf.addToCommands(je)
+
+        assertEquals 1, wf.commands.size()
+
+
+        def fwmock = mockFor(FrameworkService)
+        fwmock.demand.getRundeckFramework {-> }
+        fwmock.demand.getStepPluginDescription { type -> null }
+        fwmock.demand.validateDescription { desc, p, params ->
+            [valid: true, props: params]
+        }
+        ctrl.frameworkService = fwmock.createMock()
+
+
+        def inputValue = 'abcdef\r\nmonkey\r\ntoenail'
+        def expectedValue = 'abcdef\nmonkey\ntoenail'
+
+        def inputValue2 = 'abc\ndef\n\nrbc\n'
+        def expectedValue2 = 'abc\ndef\n\nrbc\n'
+
+        def result = ctrl._applyWFEditAction(wf, [action: 'modify', num: 0,
+                params: [pluginItem: true, type: 'blah', pluginConfig: [monkey: 'tree',
+                                                                        multilineconfig:inputValue,
+                                                                        unixlines:inputValue2], description: 'elf']])
+        assertNull result.error
+        assertEquals 1, wf.commands.size()
+        final Object item = wf.commands.get(0)
+        assertTrue item instanceof PluginStep
+        PluginStep pitem=(PluginStep)item
+        assertEquals 'blah', pitem.type
+        assertEquals( [monkey: 'tree',
+                       multilineconfig:expectedValue,
+                       unixlines:expectedValue2], pitem.configuration)
         assertEquals 'elf', pitem.description
         //test undo
         assertNotNull result.undo

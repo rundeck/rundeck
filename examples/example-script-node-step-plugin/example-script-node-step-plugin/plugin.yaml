@@ -18,6 +18,13 @@ providers:
         title: Example
         description: An example string
         default: whatever
+      - type: String
+        name: examplemulti
+        title: Example Multiline
+        description: An example string
+        default: whatever
+        renderingOptions:
+          displayType: MULTI_LINE
       - type: Boolean
         name: asif
         title: As if
