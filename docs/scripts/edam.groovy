@@ -203,10 +203,12 @@ def getToc(File dir, File routputdir){
         }
     }else{
         //compare read to mdfiles
-        def common=readtoc.collect{it.file}.intersect(mdfiles)
+        def tocfiles=readtoc.collect{it.file}
+        def common=tocfiles.intersect(mdfiles)
         if(common.size()!=mdfiles.size() || common.size() !=readtoc.size()){
-            println "Warning: some files changed compared to the TOC, please update toc.conf or remove it to regenerate: ${common}"
-            return null
+            tocfiles.removeAll(common)
+            mdfiles.removeAll(common)
+            throw new RuntimeException( "Warning: some files changed compared to the TOC, please update toc.conf or remove it to regenerate: Missing ${tocfiles.size()} files declared in TOC: ${tocfiles}, Found ${mdfiles.size()} extra files in directory: ${mdfiles}")    
         }
         
         toc=readtoc
