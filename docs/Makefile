@@ -50,8 +50,20 @@ en/history/version-$(RVERSION).md: ../RELEASE.md
 	perl  -i -p -e "s#http://rundeck.org/docs/#../#" $@
 	perl  -i -p -e "s#http://rundeck.org/$(RVERSION)/#../#" $@
 
-en/history/toc.conf: en/history/version-$(RVERSION).md
-	$(ECHO) "1:version-$(RVERSION).md:Version $(RVERSION) ($(shell date "+%Y-%m-%d"))" > $@.new
+../CHANGELOG.md: ../RELEASE.md
+	( cat $< ; echo ; echo "---" ; echo; cat $@ ) > $@.tmp
+	mv $@.tmp $@
+
+en/history/changelog.md: ../CHANGELOG.md
+	( $(ECHO) "% Changelog" ; \
+        $(ECHO) "%" $(shell whoami) ; \
+        $(ECHO) "%" $(shell date "+%m/%d/%Y") ; \
+        $(ECHO) ; ) >$@
+	cat $< >> $@
+
+en/history/toc.conf: en/history/version-$(RVERSION).md en/history/changelog.md
+	$(ECHO) "1:changelog.md:Changelog ($(shell date "+%Y-%m-%d"))" > $@.new
+	$(ECHO) "1:version-$(RVERSION).md:Version $(RVERSION) ($(shell date "+%Y-%m-%d"))" >> $@.new
 	test -f $@ && ( grep -v -q "$(RVERSION)" $@ && \
-		cat $@ >> $@.new && \
+		grep -v "Changelog" $@ >> $@.new && \
 		mv $@.new $@ ) || (  mv $@.new $@ )
