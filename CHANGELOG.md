@@ -1158,3 +1158,362 @@ Issues:
 * [Rundeck execution follow UI splits single steps into multiple sections](https://github.com/dtolabs/rundeck/issues/347)
 * [Allow scripts to be run as sudo](https://github.com/dtolabs/rundeck/issues/343)
 * [changing project via dropdown does not update job pane.](https://github.com/dtolabs/rundeck/issues/306)
+
+---
+
+
+Release 1.5.3
+===========
+
+Date: 2013-05-30
+
+Notable Changes:
+
+* bug fixes
+* plugins can define input properties that get displayed as textareas in the gui
+
+Incubator changes:
+
+* cluster mode, which allows scheduled (cron) jobs to only run on a single node when multiple Rundeck servers share a single DB. (Note: "incubator" features are experimental and likely to change)
+
+Contributors:
+
+* Alex Honor
+* Greg Schueler
+* Kim Ho
+
+Issues:
+
+* [Unable to create scheduled jobs if user has too many authorization roles](https://github.com/dtolabs/rundeck/issues/407)
+* [Add customizable text in the login box.](https://github.com/dtolabs/rundeck/issues/405)
+* [Authentication Page in manual lists wrong port for LDAPS](https://github.com/dtolabs/rundeck/issues/404)
+* [deb packaging: rd-queue script has wrong perms](https://github.com/dtolabs/rundeck/issues/403)
+* [JarPluginProviderLoader NPE if the pluginJar cache dir is not readable or does not exist](https://github.com/dtolabs/rundeck/issues/402)
+* [deb/rpm packaging, cli tools use wrong rdeck.base value](https://github.com/dtolabs/rundeck/issues/401)
+* [Secure option default values are not used by scheduled jobs](https://github.com/dtolabs/rundeck/issues/399)
+* [Feature/cluster mode unique server for job schedules](https://github.com/dtolabs/rundeck/issues/396)
+* [JSch authentication retries until server maxes out allowed attempts](https://github.com/dtolabs/rundeck/issues/393)
+* [Add support for textarea rendering option for String property type](https://github.com/dtolabs/rundeck/issues/390)
+* [deb/rpm packaging rundeck-config doesn't set grails.serverURL](https://github.com/dtolabs/rundeck/issues/387)
+
+---
+
+
+Release 1.5.2
+===========
+
+Date: 2013-05-06
+
+**Note: the 1.5.2 release fixes a packaging issue with rpm/debian installations.  1.5.1 release notes follow.**
+
+Notable Changes:
+
+* Bug fixes
+* Job Notification Plugins
+    * Jobs can now trigger notification plugins in addition to the built-in email and webhook
+    * plugins can be developed in Java or with a new Groovy DSL
+    * See the [Notification Plugin Development](../developer/notification-plugin-development.html) Chapter.
+    * Example code at [dtolabs/rundeck/examples](https://github.com/dtolabs/rundeck/tree/development/examples)
+* Notification 'onstart' trigger
+    * Jobs can now cause a notification trigger when started via the 'onstart' trigger
+* Notifications can now use the email address of the user who executed a job, as `${job.user.email}`. (You can set an email for your account in the Profile page.)
+
+Contributors:
+
+* Alex Honor
+* Charles Duffy
+* Greg Schueler
+* John Burbridge
+* Jonathan Li
+* Kim Ho
+
+Issues:
+
+* [Add static ordering to job options instead of always sorted by name](https://github.com/dtolabs/rundeck/issues/361)
+* [Add job notification plugins](https://github.com/dtolabs/rundeck/issues/360)
+* [Big number as option default causes exception on load job from xml](https://github.com/dtolabs/rundeck/issues/356)
+* [Job XML parse fails if "false" value in an command step](https://github.com/dtolabs/rundeck/issues/353)
+* [Local error handling command lost on export / import](https://github.com/dtolabs/rundeck/issues/351)
+* [error handler has exception when attempting to handle No Matched Nodes failure for a job reference](https://github.com/dtolabs/rundeck/issues/350)
+* [Multi-value options not pre-populated when doing a "run again"](https://github.com/dtolabs/rundeck/issues/346)
+* [API: add "asUser" feature for running/killing jobs and executions](https://github.com/dtolabs/rundeck/issues/341)
+* [init script doesn't work on CentOS (one-line fix provided)](https://github.com/dtolabs/rundeck/issues/338)
+* [job group changes before authorization check in 1.5](https://github.com/dtolabs/rundeck/issues/330)
+* [Many ACL policy files can slow down the Project drop down menu](https://github.com/dtolabs/rundeck/issues/328)
+* [Unable to generate an api-token on rundeck 1.5](https://github.com/dtolabs/rundeck/issues/327)
+* [Cannot send notification email using 1.5](https://github.com/dtolabs/rundeck/issues/325)
+* [Long description for Option causes Job import failure in 1.5 for jobs exported from 1.4](https://github.com/dtolabs/rundeck/issues/320)
+* [1.5: GUI regression: Success rate % in job popup always shows 0%](https://github.com/dtolabs/rundeck/issues/316)
+* [1.5: GUI regression: Job execution follow page: progress meter stuck](https://github.com/dtolabs/rundeck/issues/315)
+* [Invalid XML char in log output breaks CLI output follow mode.](https://github.com/dtolabs/rundeck/issues/313)
+* [1.5: html and ajax errors about "Timeout trying to lock table"](https://github.com/dtolabs/rundeck/issues/312)
+* [sudo responder hangs](https://github.com/dtolabs/rundeck/issues/311)
+* [CLIUtils.generateArgline does not quote IFS characters other than space](https://github.com/dtolabs/rundeck/issues/298)
+* [documentation: upgrade guide "admin" aclpolicy doesn't allow all permissions](https://github.com/dtolabs/rundeck/issues/280)
+* [Add Job Notification/webhook on job start](https://github.com/dtolabs/rundeck/issues/250)
+* [projects folder under version control - .svn folder treated as project](https://github.com/dtolabs/rundeck/issues/209)
+* [incorrect aclpolicy yaml structure can cause NPE](https://github.com/dtolabs/rundeck/issues/206)
+* [Options are not passed correctly to programs](https://github.com/dtolabs/rundeck/issues/201)
+* [Allow Email Address substitution in notification recipients list](https://github.com/dtolabs/rundeck/issues/165)
+
+---
+
+
+Release 1.5.1
+===========
+
+Date: 2013-04-30
+
+Notable Changes:
+
+* Bug fixes
+* Job Notification Plugins
+    * Jobs can now trigger notification plugins in addition to the built-in email and webhook
+    * plugins can be developed in Java or with a new Groovy DSL
+    * See the [Notification Plugin Development](../developer/notification-plugin-development.html) Chapter.
+    * Example code at [dtolabs/rundeck/examples](https://github.com/dtolabs/rundeck/tree/development/examples)
+* Notification 'onstart' trigger
+    * Jobs can now cause a notification trigger when started via the 'onstart' trigger
+* Notifications can now use the email address of the user who executed a job, as `${job.user.email}`. (You can set an email for your account in the Profile page.)
+
+Contributors:
+
+* Alex Honor
+* Charles Duffy
+* Greg Schueler
+* John Burbridge
+* Jonathan Li
+* Kim Ho
+
+Issues:
+
+* [Add static ordering to job options instead of always sorted by name](https://github.com/dtolabs/rundeck/issues/361)
+* [Add job notification plugins](https://github.com/dtolabs/rundeck/issues/360)
+* [Big number as option default causes exception on load job from xml](https://github.com/dtolabs/rundeck/issues/356)
+* [Job XML parse fails if "false" value in an command step](https://github.com/dtolabs/rundeck/issues/353)
+* [Local error handling command lost on export / import](https://github.com/dtolabs/rundeck/issues/351)
+* [error handler has exception when attempting to handle No Matched Nodes failure for a job reference](https://github.com/dtolabs/rundeck/issues/350)
+* [Multi-value options not pre-populated when doing a "run again"](https://github.com/dtolabs/rundeck/issues/346)
+* [API: add "asUser" feature for running/killing jobs and executions](https://github.com/dtolabs/rundeck/issues/341)
+* [init script doesn't work on CentOS (one-line fix provided)](https://github.com/dtolabs/rundeck/issues/338)
+* [job group changes before authorization check in 1.5](https://github.com/dtolabs/rundeck/issues/330)
+* [Many ACL policy files can slow down the Project drop down menu](https://github.com/dtolabs/rundeck/issues/328)
+* [Unable to generate an api-token on rundeck 1.5](https://github.com/dtolabs/rundeck/issues/327)
+* [Cannot send notification email using 1.5](https://github.com/dtolabs/rundeck/issues/325)
+* [Long description for Option causes Job import failure in 1.5 for jobs exported from 1.4](https://github.com/dtolabs/rundeck/issues/320)
+* [1.5: GUI regression: Success rate % in job popup always shows 0%](https://github.com/dtolabs/rundeck/issues/316)
+* [1.5: GUI regression: Job execution follow page: progress meter stuck](https://github.com/dtolabs/rundeck/issues/315)
+* [Invalid XML char in log output breaks CLI output follow mode.](https://github.com/dtolabs/rundeck/issues/313)
+* [1.5: html and ajax errors about "Timeout trying to lock table"](https://github.com/dtolabs/rundeck/issues/312)
+* [sudo responder hangs](https://github.com/dtolabs/rundeck/issues/311)
+* [CLIUtils.generateArgline does not quote IFS characters other than space](https://github.com/dtolabs/rundeck/issues/298)
+* [documentation: upgrade guide "admin" aclpolicy doesn't allow all permissions](https://github.com/dtolabs/rundeck/issues/280)
+* [Add Job Notification/webhook on job start](https://github.com/dtolabs/rundeck/issues/250)
+* [projects folder under version control - .svn folder treated as project](https://github.com/dtolabs/rundeck/issues/209)
+* [incorrect aclpolicy yaml structure can cause NPE](https://github.com/dtolabs/rundeck/issues/206)
+* [Options are not passed correctly to programs](https://github.com/dtolabs/rundeck/issues/201)
+* [Allow Email Address substitution in notification recipients list](https://github.com/dtolabs/rundeck/issues/165)
+
+---
+
+
+Release 1.5
+===========
+
+Date: 2/21/2013
+
+This release introduces a few new features and some bug fixes. The new features
+required  some schema changes to the database, so direct upgrading from 1.4 to
+1.5 is not possible.   Please read the Upgrading document for upgrade
+information.
+
+There is now a new type of plugin, the Workflow Step Plugin, which should allow
+rundeck  workflows to integrate with more systems in a more direct fashion.
+These plugins can be  either "Workflow Steps" (run once per workflow) or "Node
+Steps" (run once per node in a workflow.)
+
+Steps can now have Error Handlers which run if the step fails. They will be
+provided with context data about the reason the step failed.
+
+Notable Changes:
+
+* Step Plugins - Plugins can now be created and used for workflow or node steps.
+* Error Handlers - Each step in a workflow can now have an error handler that
+* will be run if the step fails.  bug fix: Job references in a workflow will now
+* only run once, and not operate as a node-step.
+
+Plugin developers:
+
+You will need to update your plugins to work in Rundeck 1.5. Refer to the
+Developer Guide for more information.
+
+Issues:
+
+* [User profile page broken](https://github.com/dtolabs/rundeck/issues/308)
+* [Update docs for 1.5 release](https://github.com/dtolabs/rundeck/issues/307)
+* [Update sample scripts in plugin docs for best practices conformance](https://github.com/dtolabs/rundeck/issues/297)
+* [allow optional build parameter to rundeckapp to specify use of a local copy of the grails zip](https://github.com/dtolabs/rundeck/issues/296)
+* [expose loglevel for executions](https://github.com/dtolabs/rundeck/issues/293)
+* [script based plugin caching issue](https://github.com/dtolabs/rundeck/issues/290)
+* [rpm/deb rundeck-config needs to be udpated](https://github.com/dtolabs/rundeck/issues/289)
+* [Node dispatch threadcount can be set to blank](https://github.com/dtolabs/rundeck/issues/282)
+* [job import: threadcount does not get set](https://github.com/dtolabs/rundeck/issues/281)
+* [Now running and History views don't use Job view filter](https://github.com/dtolabs/rundeck/issues/273)
+* [History views default to recentFilter=1d, should be all events](https://github.com/dtolabs/rundeck/issues/272)
+* [History project filter is not exact](https://github.com/dtolabs/rundeck/issues/271)
+* [Allow group path in URL of jobs page to filter groups](https://github.com/dtolabs/rundeck/issues/270)
+* [Node dispatch threadcount can be set to blank. export+import fails.](https://github.com/dtolabs/rundeck/issues/269)
+* [Bulk delete of jobs via GUI](https://github.com/dtolabs/rundeck/issues/268)
+* [add release notes to generated docs](https://github.com/dtolabs/rundeck/issues/264)
+* [more compatible rpm dependency for java](https://github.com/dtolabs/rundeck/issues/263)
+* [remove unneeded "rdbsupport" config property for 1.5](https://github.com/dtolabs/rundeck/issues/262)
+* [API: Now running execution project filter is not exact](https://github.com/dtolabs/rundeck/issues/261)
+* [execution output api: xml content problems](https://github.com/dtolabs/rundeck/issues/259)
+* [don't combine spaces for scripts output](https://github.com/dtolabs/rundeck/issues/258)
+* [Job reference picker has incorrect behavior when clicking a group name](https://github.com/dtolabs/rundeck/issues/255)
+* [Error handler failure reason as context data](https://github.com/dtolabs/rundeck/issues/248)
+* [Workflow step plugins](https://github.com/dtolabs/rundeck/issues/246)
+* [Job folder/group display still buggy](https://github.com/dtolabs/rundeck/issues/241)
+* [dispatch -s scriptfile is broken](https://github.com/dtolabs/rundeck/issues/228)
+* [can't delete job option](https://github.com/dtolabs/rundeck/issues/227)
+* [dispatch with url option don't work](https://github.com/dtolabs/rundeck/issues/225)
+* [Job references should run only once within a workflow](https://github.com/dtolabs/rundeck/issues/224)
+* [divide by zero error on system info page](https://github.com/dtolabs/rundeck/issues/221)
+* [workflow step failure handlers](https://github.com/dtolabs/rundeck/issues/218)
+* [make H2 the default rundeck database backend](https://github.com/dtolabs/rundeck/issues/183)
+* [UUID permits spaces](https://github.com/dtolabs/rundeck/issues/171)
+
+---
+
+Release 1.4.5
+===========
+
+Date: 1/10/2013
+
+This release is a minor bugfix update, with some bonus features.
+
+Notable Changes:
+
+* bug fixes 
+    * dispatch -s, some API project filtering was wrong, node dispatch threadcount can be set blank
+* Bulk delete jobs via GUI
+* Job page group filters now apply to Now Running and History areas
+* History views don't use 1 day as a filter by default anymore
+
+Issues: 
+
+* [maint-1.4.5: dispatch -s scriptfile is broken](https://github.com/dtolabs/rundeck/issues/266)
+* [maint-1.4.5: API: Now running execution project filter is not exact](https://github.com/dtolabs/rundeck/issues/265)
+* [Bulk delete of jobs via GUI](https://github.com/dtolabs/rundeck/issues/245)
+* [Node dispatch threadcount can be set to blank. export+import fails.](https://github.com/dtolabs/rundeck/issues/244)
+* [Allow group path in URL of jobs page to filter groups](https://github.com/dtolabs/rundeck/issues/243)
+* [History project filter is not exact](https://github.com/dtolabs/rundeck/issues/242)
+* [History views default to recentFilter=1d, should be all events](https://github.com/dtolabs/rundeck/issues/240)
+* [Now running and History views don't use Job view filter](https://github.com/dtolabs/rundeck/issues/239)
+
+---
+
+Release 1.4.4
+===========
+
+Date: 10/26/2012
+
+This release marks the end of the 1.4 development cycle, and includes bug fixes and a few new features.
+
+We are planning to make some changes in the DB schema for the next release (1.5.x) that may not be backwards 
+compatible so have included a feature to export a Rundeck project into an archive file.  This will allow us
+to change the schema yet still allow users to migrate their projects.
+
+Notable Changes:
+
+* bug fixes (scheduled jobs, mail notifications, rd-jobs yaml output, jenkins plugin + parallel jobs)
+* Project archive/import - download an archive of Jobs, Executions and History that can be imported into a different project
+* Added a second level of sudo password support
+* Add a 'purge' action to rd-jobs tool to delete jobs
+* Better support for Tomcat war deployment
+* View all nodes button in Run page
+* Cascading option values from remote URLs
+* CLI tools can follow execution output from the server (rd-queue, run, dispatch)
+* API enhancements:
+    * query for executions and history reports
+    * retrieve execution output
+
+Issues: 
+
+* [remote options URL failure allows text field input even if option is restricted](https://github.com/dtolabs/rundeck/issues/215) (bug)
+* [project archive/import](https://github.com/dtolabs/rundeck/issues/212) (enhancement)
+* [multiple sudo authentication support](https://github.com/dtolabs/rundeck/issues/211) (enhancement)
+* [Document syntax of arguments passed to the run command](https://github.com/dtolabs/rundeck/issues/208) (enhancement, documentation)
+* [add purge option to rd-jobs tool](https://github.com/dtolabs/rundeck/issues/207) (enhancement, cli)
+* [Add query API for executions](https://github.com/dtolabs/rundeck/issues/205) (enhancement, api)
+* [CLI tools can't authenticate to a tomcat war deployment of rundeck](https://github.com/dtolabs/rundeck/issues/204) (bug)
+* [Allow history API to query for list of job names](https://github.com/dtolabs/rundeck/issues/203) (enhancement, api)
+* [javascript problem: Can't change nodes when trying to run a saved job](https://github.com/dtolabs/rundeck/issues/194) (bug, ux)
+* [Rundeck jobs fail to execute sometimes ](https://github.com/dtolabs/rundeck/issues/193) (bug)
+* [Rundeck war should not contain servlet api libraries](https://github.com/dtolabs/rundeck/issues/192) (enhancement)
+* [deb dependency requires GUI libraries](https://github.com/dtolabs/rundeck/issues/191) (enhancement, packaging)
+* [Enable property expansion in framework level default ssh user ](https://github.com/dtolabs/rundeck/issues/189) (enhancement, configuration, ssh)
+* [Mail notifications are broken in 1.4.3](https://github.com/dtolabs/rundeck/issues/186) (bug)
+* [resource model source URL basic auth support is broken](https://github.com/dtolabs/rundeck/issues/184) (bug)
+* [Update wiki/documentation for remote option provider](https://github.com/dtolabs/rundeck/issues/182) (documentation)
+* [Parallel/Concurrent jobs fail](https://github.com/dtolabs/rundeck/issues/180) (bug)
+* [cli tool rd-jobs format yaml does not generate any content in file for 1.4.3](https://github.com/dtolabs/rundeck/issues/179) (bug, cli)
+* [Scheduled RunDeck jobs no longer work with RunDeck 1.4.3](https://github.com/dtolabs/rundeck/issues/178) (bug, scheduler, jobs)
+* [Allow disabling of hover popups](https://github.com/dtolabs/rundeck/issues/174) (enhancement)
+* [Add a button to view all nodes in nodes filter view](https://github.com/dtolabs/rundeck/issues/172) (enhancement, ux, filters)
+* [need REST interface to retrieve execution ouput](https://github.com/dtolabs/rundeck/issues/145) (enhancement, api)
+* [dispatcher needs option to queue job but also observe log](https://github.com/dtolabs/rundeck/issues/142) (enhancement)
+* [Ability to change the default number of lines to display for the TAIL output in the rundeck job execution history](https://github.com/dtolabs/rundeck/issues/109) (enhancement)
+* [feature for cascading select list from options provider](https://github.com/dtolabs/rundeck/issues/80) (enhancement)
+
+---
+
+Release 1.4.3
+===========
+
+Date: 6/21/2012
+
+Notable Changes:
+
+* Security fix for issue [#555 - vulnerability with ldap authentication](http://rundeck.lighthouseapp.com/projects/59277/tickets/555)
+* Scripts can be executed from URLs
+* Secure options now have two types (authentication or normal)
+* Easily run a job with the same arguments as a previous execution
+* Bugfixes
+
+See the [Upgrading Guide](http://rundeck.org/1.4.3/upgrading/) if you are upgrading from Rundeck 1.3.
+
+Tickets: 
+
+* [#538 - Can't change nodes when trying to run a saved job](http://rundeck.lighthouseapp.com/projects/59277/tickets/538)
+* [#555 - vulnerability with ldap authentication](http://rundeck.lighthouseapp.com/projects/59277/tickets/555)
+* [#554 - in-place upgrade using the launcher leaves old jars in place](http://rundeck.lighthouseapp.com/projects/59277/tickets/554)
+* [#563 - multipleExecutions Error](http://rundeck.lighthouseapp.com/projects/59277/tickets/563)
+* [#287 - Force the home directory to be /home/rundeck (or perhaps /var/lib/rundeck/)](http://rundeck.lighthouseapp.com/projects/59277/tickets/287)
+* [#517 - default ssh key for projects doesn't match rpm install's rundeck user ssh key](http://rundeck.lighthouseapp.com/projects/59277/tickets/517)
+* [#552 - allow sudo auth configuration at project/framework level](http://rundeck.lighthouseapp.com/projects/59277/tickets/552)
+* [#526 - adhoc execution page shows kill button when it is not authorized](http://rundeck.lighthouseapp.com/projects/59277/tickets/526)
+* [#572 - export more vars for script plugins (contents basedir, var dir, etc)](http://rundeck.lighthouseapp.com/projects/59277/tickets/572)
+* [#571 - ScriptResourceModel plugin can't use script-args and script-interpreter](http://rundeck.lighthouseapp.com/projects/59277/tickets/571)
+* [#551 - Secure option values cannot be used in scripts/commands](http://rundeck.lighthouseapp.com/projects/59277/tickets/551)
+* [#537 - Temp files not being removed from /tmp when using a script as a resource model source](http://rundeck.lighthouseapp.com/projects/59277/tickets/537)
+* [#523 - passwordless sudo shouldn't fail after the timeout value](http://rundeck.lighthouseapp.com/projects/59277/tickets/523)
+* [#518 - undocumented gui default startpage configuration](http://rundeck.lighthouseapp.com/projects/59277/tickets/518)
+* [#524 - Secure option values for sudo/ssh do not get passed to sub-jobs](http://rundeck.lighthouseapp.com/projects/59277/tickets/524)
+* [#230 - Allow URL values for scriptfiles](http://rundeck.lighthouseapp.com/projects/59277/tickets/230)
+* [#528 - authorization for api call to system/info is not checked](http://rundeck.lighthouseapp.com/projects/59277/tickets/528)
+* [#550 - warning message after upgrade to 1.4.2](http://rundeck.lighthouseapp.com/projects/59277/tickets/550)
+* [#558 - Prevent job names containing slashes (/)](http://rundeck.lighthouseapp.com/projects/59277/tickets/558)
+* [#553 - dispatch yields NullPointerException and fails](http://rundeck.lighthouseapp.com/projects/59277/tickets/553)
+* [#560 - Re-run a job with the same arguments](http://rundeck.lighthouseapp.com/projects/59277/tickets/560)
+* [#567 - Execution page: Collapse view checkbox is set incorrectly](http://rundeck.lighthouseapp.com/projects/59277/tickets/567)
+* [#570 - Add "execution id" to job-context data in running jobs](http://rundeck.lighthouseapp.com/projects/59277/tickets/570)
+* [#527 - NPE on node view if a node has no description defined](http://rundeck.lighthouseapp.com/projects/59277/tickets/527)
+* [#529 - default apitoken aclpolicy differs for rpm/deb and launcher install](http://rundeck.lighthouseapp.com/projects/59277/tickets/529)
+* [#545 - rundeck option cannot take integer value](http://rundeck.lighthouseapp.com/projects/59277/tickets/545)
+* [#519 - Dispatch to one node only shows "1 node ok" even if job fails](http://rundeck.lighthouseapp.com/projects/59277/tickets/519)
+* [#564 - upgrade commons-codec dependency](http://rundeck.lighthouseapp.com/projects/59277/tickets/564)
+* [#530 - add faq/documentation about mysql autoreconnect flag](http://rundeck.lighthouseapp.com/projects/59277/tickets/530)
+* [#544 - The CronExpression link in docs and Web GUI to http://www.quartz-scheduler.org returns 404](http://rundeck.lighthouseapp.com/projects/59277/tickets/544)
+* [#522 - documentation typo/truncation on plugin dev guide](http://rundeck.lighthouseapp.com/projects/59277/tickets/522)
+
