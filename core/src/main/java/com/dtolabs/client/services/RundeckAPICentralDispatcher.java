@@ -456,7 +456,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
                 url = makeAbsoluteURL(url);
                 detail.setId(stringNodeValue(node1, "@id", null));
                 try {
-                    detail.setStatus(ExecutionState.valueOf(stringNodeValue(node1, "@status", null)));
+                    detail.setStatus(ExecutionState.valueOf(stringNodeValue(node1, "@status", "").replaceAll("-","_")));
                 } catch (IllegalArgumentException e) {
                 }
                 detail.setUrl(url);
