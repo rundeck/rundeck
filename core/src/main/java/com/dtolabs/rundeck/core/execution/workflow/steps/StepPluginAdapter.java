@@ -96,6 +96,20 @@ class StepPluginAdapter implements StepExecutor, Describable {
                 plugin, PropertyScope.InstanceOnly);
         try {
             plugin.executeStep(stepContext, config);
+        } catch (StepException e) {
+            executionContext.getExecutionListener().log(
+                    Constants.ERR_LEVEL,
+                    e.getMessage()
+            );
+            final StringWriter stringWriter = new StringWriter();
+            e.printStackTrace(new PrintWriter(stringWriter));
+            executionContext.getExecutionListener().log(
+                    Constants.DEBUG_LEVEL,
+                    "Failed executing step plugin [" + providerName + "]: "
+                    + stringWriter.toString()
+            );
+
+            return new StepExecutionResultImpl(e, e.getFailureReason(), e.getMessage());
         } catch (Throwable e) {
             final StringWriter stringWriter = new StringWriter();
             e.printStackTrace(new PrintWriter(stringWriter));
