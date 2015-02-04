@@ -80,6 +80,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def grailsLinkGenerator
     def logFileStorageService
     MessageSource messageSource
+    def jobStateService
 
     /**
      * Render execution document for api response
@@ -1018,6 +1019,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def builder = ExecutionContextImpl.builder((StepExecutionContext)origContext)
             .frameworkProject(execMap.project)
             .storageTree(storageService.storageTreeWithContext(authContext))
+            .jobService(jobStateService) //TODO: use authorized context for job state
             .user(userName)
             .nodeSelector(nodeselector)
             .nodes(nodeSet)
