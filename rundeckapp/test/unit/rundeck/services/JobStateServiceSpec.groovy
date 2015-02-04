@@ -1,7 +1,9 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.jobs.JobNotFound
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.CommandExec
@@ -18,6 +20,11 @@ import spock.lang.Specification
 class JobStateServiceSpec extends Specification {
 
     def setup() {
+
+        service.frameworkService=Stub(FrameworkService){
+            authorizeProjectJobAll(null,!null,!null,!null) >>> [true,true]
+        }
+
     }
 
     def cleanup() {
@@ -40,7 +47,7 @@ class JobStateServiceSpec extends Specification {
         ).save()
 
         when:
-        def ref = service.jobForID(dnejobUuid, projectName)
+        def ref = service.jobForID(null,dnejobUuid, projectName)
 
         then:
         JobNotFound e = thrown()
@@ -65,7 +72,7 @@ class JobStateServiceSpec extends Specification {
             ).save()
 
         when:
-        def ref = service.jobForID(jobUuid, projectName)
+        def ref = service.jobForID(null,jobUuid, projectName)
 
         then:
         ref!=null
@@ -91,7 +98,7 @@ class JobStateServiceSpec extends Specification {
             ).save()
 
         when:
-        def ref = service.jobForName(groupPath,jobName, projectName)
+        def ref = service.jobForName(null,groupPath,jobName, projectName)
 
         then:
         ref!=null
@@ -117,7 +124,7 @@ class JobStateServiceSpec extends Specification {
             ).save()
 
         when:
-        def ref = service.jobForName('bogus',jobName, projectName)
+        def ref = service.jobForName(null,'bogus',jobName, projectName)
 
         then:
         JobNotFound e = thrown()
@@ -142,7 +149,7 @@ class JobStateServiceSpec extends Specification {
             ).save()
 
         when:
-        def ref = service.jobForName(groupPath+'/'+jobName, projectName)
+        def ref = service.jobForName(null,groupPath+'/'+jobName, projectName)
 
         then:
         ref!=null
@@ -168,7 +175,7 @@ class JobStateServiceSpec extends Specification {
             ).save()
 
         when:
-        def ref = service.jobForName('wrong/'+jobName, projectName)
+        def ref = service.jobForName(null,'wrong/'+jobName, projectName)
 
         then:
         JobNotFound e = thrown()
@@ -193,7 +200,7 @@ class JobStateServiceSpec extends Specification {
             ).save()
 
         when:
-        def ref = service.jobForName(jobName, projectName)
+        def ref = service.jobForName(null,jobName, projectName)
 
         then:
         ref!=null
@@ -217,10 +224,10 @@ class JobStateServiceSpec extends Specification {
                     uuid: jobUuid,
                     workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
             ).save()
-            def reference=service.jobForID(jobUuid,projectName)
+            def reference=service.jobForID(null,jobUuid,projectName)
 
         when:
-        def state = service.getJobState(reference)
+        def state = service.getJobState(null,reference)
 
         then:
         !state.running
@@ -249,10 +256,10 @@ class JobStateServiceSpec extends Specification {
                     user:'user',
                     project: projectName
             ).save()
-            def reference=service.jobForID(jobUuid,projectName)
+            def reference=service.jobForID(null,jobUuid,projectName)
 
         when:
-        def state = service.getJobState(reference)
+        def state = service.getJobState(null,reference)
 
         then:
         job!=null
@@ -291,10 +298,10 @@ class JobStateServiceSpec extends Specification {
                     user:'user2',
                     project: projectName
             ).save()
-            def reference=service.jobForID(jobUuid,projectName)
+            def reference=service.jobForID(null,jobUuid,projectName)
 
         when:
-        def state = service.getJobState(reference)
+        def state = service.getJobState(null,reference)
 
         then:
         job!=null
@@ -303,6 +310,79 @@ class JobStateServiceSpec extends Specification {
         state.runningExecutionIds.size()==2
         state.runningExecutionIds==new HashSet<String>([exec.id.toString(),exec2.id.toString()])
         state.previousExecutionState==null
+    }
+    void "job ref not authorized"() {
+        def jobName = 'abc'
+        def groupPath = 'elf'
+
+        def projectName = 'testProj'
+
+        def jobUuid = '123'
+        given:
+
+
+            def job = new ScheduledExecution(
+                    jobName: jobName,
+                    groupPath: groupPath,
+                    project: projectName,
+                    uuid: jobUuid,
+                    workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
+            ).save()
+            def exec = new Execution(
+                    scheduledExecution: job,
+                    dateStarted: new Date(),
+                    dateCompleted: null,
+                    user:'user',
+                    project: projectName
+            ).save()
+
+        service.frameworkService=Stub(FrameworkService){
+            authorizeProjectJobAll(null,job,[AuthConstants.ACTION_READ],projectName) >> false
+        }
+
+        when:
+        def reference=service.jobForID(null,jobUuid,projectName)
+
+        then:
+        JobNotFound e = thrown()
+        e.jobId==jobUuid
+    }
+    void "job state not authorized"() {
+        def jobName = 'abc'
+        def groupPath = 'elf'
+
+        def projectName = 'testProj'
+
+        def jobUuid = '123'
+        given:
+
+
+            def job = new ScheduledExecution(
+                    jobName: jobName,
+                    groupPath: groupPath,
+                    project: projectName,
+                    uuid: jobUuid,
+                    workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
+            ).save()
+            def exec = new Execution(
+                    scheduledExecution: job,
+                    dateStarted: new Date(),
+                    dateCompleted: null,
+                    user:'user',
+                    project: projectName
+            ).save()
+
+        service.frameworkService=Stub(FrameworkService){
+            authorizeProjectJobAll(null,job,[AuthConstants.ACTION_READ],projectName) >>> [true,false]
+        }
+
+        when:
+        def reference=service.jobForID(null,jobUuid,projectName)
+        def state = service.getJobState(null,reference)
+
+        then:
+        JobNotFound e = thrown()
+        e.jobId==jobUuid
     }
     void "job state completed state"(String status, boolean cancelled, boolean timedOut, boolean retried, ExecutionState result) {
         def jobName = 'abc'
@@ -331,9 +411,9 @@ class JobStateServiceSpec extends Specification {
                     timedOut: timedOut,
                     willRetry: retried,
             ).save()
-            def reference=service.jobForID(jobUuid,projectName)
+            def reference=service.jobForID(null,jobUuid,projectName)
 
-        def state = service.getJobState(reference)
+        def state = service.getJobState(null,reference)
 
         expect:
         job!=null

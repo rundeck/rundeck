@@ -28,6 +28,7 @@ import rundeck.WorkflowStep
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionServiceException
 import rundeck.services.FrameworkService
+import rundeck.services.JobStateService
 import rundeck.services.NotificationService
 import rundeck.services.ReportService
 import rundeck.services.StorageService
@@ -1061,6 +1062,11 @@ class ExecutionServiceTests  {
                 null
             }
         }
+        service.jobStateService = mockWith(JobStateService) {
+            jobServiceWithAuthContext { ctx ->
+                null
+            }
+        }
         //create mock user
         User u1 = new User(login: 'testuser')
         u1.save()
@@ -1098,6 +1104,11 @@ class ExecutionServiceTests  {
                 null
             }
         }
+        service.jobStateService = mockWith(JobStateService) {
+            jobServiceWithAuthContext { ctx ->
+                null
+            }
+        }
         //create mock user
         User u1 = new User(login: 'testuser')
         u1.save()
@@ -1131,6 +1142,11 @@ class ExecutionServiceTests  {
         service.frameworkService = fcontrol.createMock()
         service.storageService = mockWith(StorageService) {
             storageTreeWithContext { ctx ->
+                null
+            }
+        }
+        service.jobStateService = mockWith(JobStateService) {
+            jobServiceWithAuthContext { ctx ->
                 null
             }
         }
@@ -1172,6 +1188,11 @@ class ExecutionServiceTests  {
                 null
             }
         }
+        service.jobStateService = mockWith(JobStateService) {
+            jobServiceWithAuthContext { ctx ->
+                null
+            }
+        }
         //create mock user
         User u1 = new User(login: 'testuser')
         u1.save()
@@ -1208,6 +1229,11 @@ class ExecutionServiceTests  {
                 null
             }
         }
+        service.jobStateService = mockWith(JobStateService) {
+            jobServiceWithAuthContext { ctx ->
+                null
+            }
+        }
         //create mock user
         User u1 = new User(login: 'testuser')
         u1.save()
@@ -1237,6 +1263,11 @@ class ExecutionServiceTests  {
         service.frameworkService = fcontrol.createMock()
         service.storageService = mockWith(StorageService) {
             storageTreeWithContext { ctx ->
+                null
+            }
+        }
+        service.jobStateService = mockWith(JobStateService) {
+            jobServiceWithAuthContext { ctx ->
                 null
             }
         }
@@ -1276,6 +1307,11 @@ class ExecutionServiceTests  {
                 null
             }
         }
+        service.jobStateService = mockWith(JobStateService) {
+            jobServiceWithAuthContext { ctx ->
+                null
+            }
+        }
         //create mock user
         User u1 = new User(login: 'testuser')
         u1.save()
@@ -1308,6 +1344,11 @@ class ExecutionServiceTests  {
         service.frameworkService = fcontrol.createMock()
         service.storageService = mockWith(StorageService) {
             storageTreeWithContext { ctx ->
+                null
+            }
+        }
+        service.jobStateService = mockWith(JobStateService) {
+            jobServiceWithAuthContext { ctx ->
                 null
             }
         }
@@ -1346,6 +1387,11 @@ class ExecutionServiceTests  {
         service.frameworkService = fcontrol.createMock()
         service.storageService = mockWith(StorageService) {
             storageTreeWithContext { ctx ->
+                null
+            }
+        }
+        service.jobStateService = mockWith(JobStateService) {
+            jobServiceWithAuthContext { ctx ->
                 null
             }
         }
@@ -1399,6 +1445,11 @@ class ExecutionServiceTests  {
         service.frameworkService = fcontrol.createMock()
         service.storageService = mockWith(StorageService) {
             storageTreeWithContext { ctx ->
+                null
+            }
+        }
+        service.jobStateService = mockWith(JobStateService) {
+            jobServiceWithAuthContext { ctx ->
                 null
             }
         }
@@ -1467,6 +1518,11 @@ class ExecutionServiceTests  {
                 null
             }
         }
+        service.jobStateService = mockWith(JobStateService) {
+            jobServiceWithAuthContext { ctx ->
+                null
+            }
+        }
         //create mock user
         User u1 = new User(login: 'testuser')
         u1.save()
@@ -1501,6 +1557,11 @@ class ExecutionServiceTests  {
         }
         service.storageService = mockWith(StorageService) {
             storageTreeWithContext { ctx ->
+                null
+            }
+        }
+        service.jobStateService = mockWith(JobStateService) {
+            jobServiceWithAuthContext { ctx ->
                 null
             }
         }
@@ -2015,6 +2076,11 @@ class ExecutionServiceTests  {
                 null
             }
         }
+        service.jobStateService = mockWith(JobStateService) {
+            jobServiceWithAuthContext { ctx ->
+                null
+            }
+        }
         def newCtxt=service.createJobReferenceContext(job,context,['-test1','value'] as String[],null,null,null,null,null,false);
 
         //verify nodeset
@@ -2078,6 +2144,11 @@ class ExecutionServiceTests  {
         }
         service.storageService=mockWith(StorageService){
             storageTreeWithContext(1..1){AuthContext->
+                null
+            }
+        }
+        service.jobStateService = mockWith(JobStateService) {
+            jobServiceWithAuthContext { ctx ->
                 null
             }
         }
@@ -2153,6 +2224,12 @@ class ExecutionServiceTests  {
         }
         service.storageService=mockWith(StorageService){
             storageTreeWithContext(1..1){AuthContext->
+                null
+            }
+        }
+
+        service.jobStateService = mockWith(JobStateService) {
+            jobServiceWithAuthContext { ctx ->
                 null
             }
         }

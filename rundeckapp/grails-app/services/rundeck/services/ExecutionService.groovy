@@ -1019,7 +1019,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def builder = ExecutionContextImpl.builder((StepExecutionContext)origContext)
             .frameworkProject(execMap.project)
             .storageTree(storageService.storageTreeWithContext(authContext))
-            .jobService(jobStateService) //TODO: use authorized context for job state
+            .jobService(jobStateService.jobServiceWithAuthContext(authContext))
             .user(userName)
             .nodeSelector(nodeselector)
             .nodes(nodeSet)
