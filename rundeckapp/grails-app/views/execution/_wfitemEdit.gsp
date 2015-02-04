@@ -495,8 +495,15 @@
 <g:elseif test="${( newitemtype || item && item.instanceOf(PluginStep) ) && newitemDescription}">
     <div>
         <div>
-            <span class="prompt"><g:enc>${newitemDescription.title}</g:enc></span>
-            <span class="text-muted"><g:enc>${newitemDescription.description}</g:enc></span>
+            <span class="h4"><g:enc>${newitemDescription.title}</g:enc></span>
+            <span class="help-block">
+                <g:render template="/scheduledExecution/description"
+                          model="[description: newitemDescription.description,
+                                  textCss: '',
+                                  mode: 'collapsed',
+                                  moreText:'More Information',
+                                  rkey: g.rkey()]"/>
+            </span>
         </div>
         <g:hiddenField name="pluginItem" value="true"/>
         <g:hiddenField name="newitemnodestep" value="${item?!!item.nodeStep:newitemnodestep=='true'}"/>

@@ -23,7 +23,7 @@
     <g:if test="${remainingLine}">
         <g:if test="${mode=='collapsed' || mode=='expanded'}">
             <span class="expandComponentHolder">
-            <g:expander key="desc_${rkey}" open="${mode=='expanded'?'true':'false'}">More</g:expander>
+            <g:expander key="desc_${rkey}" open="${mode=='expanded'?'true':'false'}">${moreText?:'More'}</g:expander>
             <span class="${enc(attr: markdownCss ?: '')}" style="${wdgt.styleVisible(if:mode=='expanded')}" id="desc_${enc(attr: rkey)}">
                 <g:markdown>${remainingLine}</g:markdown>
             </span>

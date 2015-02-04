@@ -34,7 +34,16 @@
             <g:if test="${!hideTitle}"><g:enc>${description.title}</g:enc></g:if>
         </span>
             <g:if test="${!hideDescription}">
-                <small class="text-muted"><g:enc>${description.description}</g:enc></small>
+            <g:if test="${!fullDescription}">
+
+                <g:render template="/scheduledExecution/description"
+                          model="[description: description.description, textCss: 'small text-muted',
+                                  mode: 'hidden', rkey: g.rkey()]"/>
+            </g:if>
+                <g:else>
+                    <small class="text-muted"><g:enc>${description.description}</g:enc></small>
+
+                </g:else>
             </g:if>
 
     </div>

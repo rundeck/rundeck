@@ -58,7 +58,11 @@
                             href="#">
                             <i class="rdicon icon-small plugin"></i>
                             <g:enc>${typedesc.title}</g:enc>
-                            <span class="text-info">- <g:enc>${typedesc.description}</g:enc></span>
+                            <span class="text-info">-
+                            <g:render template="/scheduledExecution/description"
+                                      model="[description: typedesc.description, textCss: '',
+                                              mode: 'hidden', rkey: g.rkey()]"/>
+                            </span>
                         </a>
                     </g:each>
                 </g:if>
@@ -84,7 +88,11 @@
                         <a class="list-group-item textbtn  add_step_type" data-step-type="${enc(attr:typedesc.name)}" href="#">
                             <i class="rdicon icon-small plugin"></i>
                             <g:enc>${typedesc.title}</g:enc>
-                            <span class="text-info">- <g:enc>${typedesc.description}</g:enc></span>
+                            <span class="text-info">-
+                                <g:render template="/scheduledExecution/description"
+                                          model="[description: typedesc.description, textCss: '',
+                                                  mode: 'hidden', rkey: g.rkey()]"/>
+                            </span>
                         </a>
                     </g:each>
 
