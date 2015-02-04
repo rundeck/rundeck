@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.core.common.SelectorUtils;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeExecutionContext;
+import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.storage.StorageTree;
 
 import java.io.File;
@@ -67,6 +68,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private int stepNumber = 1;
     private List<Integer> stepContext;
     private StorageTree storageTree;
+    private JobService jobService;
 
     private ExecutionContextImpl() {
         stepContext = new ArrayList<Integer>();
@@ -128,6 +130,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.nodeRankAttribute = original.getNodeRankAttribute();
                 ctx.nodeRankOrderAscending = original.isNodeRankOrderAscending();
                 ctx.storageTree = original.getStorageTree();
+                ctx.jobService = original.getJobService();
                 if(original instanceof NodeExecutionContext){
                     NodeExecutionContext original1 = (NodeExecutionContext) original;
                     ctx.nodeDataContext.putAll(original1.getNodeDataContext());
@@ -137,6 +140,11 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
         public Builder storageTree(StorageTree storageTree) {
             ctx.storageTree=storageTree;
+            return this;
+        }
+
+        public Builder jobService(JobService jobService) {
+            ctx.jobService=jobService;
             return this;
         }
 
@@ -361,4 +369,10 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     public List<Integer> getStepContext() {
         return stepContext;
     }
+
+    @Override
+    public JobService getJobService() {
+        return jobService;
+    }
+
 }
