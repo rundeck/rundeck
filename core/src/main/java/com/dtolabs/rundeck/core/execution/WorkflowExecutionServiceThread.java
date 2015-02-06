@@ -38,7 +38,7 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase {
     WorkflowExecutionService weservice;
     WorkflowExecutionItem weitem;
     private StepExecutionContext context;
-    WorkflowExecutionResult result;
+    private WorkflowExecutionResult result;
 
     public WorkflowExecutionServiceThread(WorkflowExecutionService eservice, WorkflowExecutionItem eitem, StepExecutionContext econtext) {
         this.weservice = eservice;
@@ -66,5 +66,9 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase {
 
     public StepExecutionContext getContext() {
         return context;
+    }
+
+    public WorkflowExecutionResult getResult() {
+        return result;
     }
 }
