@@ -3,9 +3,9 @@ package com.dtolabs.rundeck.core.execution.workflow;
 import com.dtolabs.rundeck.core.execution.StatusResult;
 
 /**
- * Allow a custom status string
+ * Allow a custom status string and control behavior
  */
-public interface WorkflowExecutionStatusResult extends StatusResult {
+public interface WorkflowStatusResult extends StatusResult {
     /**
      * @return status string
      */

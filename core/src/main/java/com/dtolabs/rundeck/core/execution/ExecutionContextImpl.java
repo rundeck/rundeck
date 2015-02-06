@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl;
 import com.dtolabs.rundeck.core.common.NodesSelector;
 import com.dtolabs.rundeck.core.common.SelectorUtils;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.execution.workflow.FlowControl;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeExecutionContext;
 import com.dtolabs.rundeck.core.jobs.JobService;
@@ -69,6 +70,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private List<Integer> stepContext;
     private StorageTree storageTree;
     private JobService jobService;
+    private FlowControl flowControl;
 
     private ExecutionContextImpl() {
         stepContext = new ArrayList<Integer>();
@@ -101,6 +103,11 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
     public StorageTree getStorageTree() {
         return storageTree;
+    }
+
+    @Override
+    public FlowControl getFlowControl() {
+        return flowControl;
     }
 
     public static class Builder {
@@ -153,7 +160,13 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             if (null != original) {
                 ctx.stepNumber = original.getStepNumber();
                 ctx.stepContext = original.getStepContext();
+                ctx.flowControl = original.getFlowControl();
             }
+        }
+
+        public Builder flowControl(FlowControl flowControl) {
+            ctx.flowControl = flowControl;
+            return this;
         }
 
         public Builder frameworkProject(String frameworkProject) {

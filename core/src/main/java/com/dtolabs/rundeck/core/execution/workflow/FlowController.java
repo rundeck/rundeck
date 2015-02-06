@@ -3,7 +3,7 @@ package com.dtolabs.rundeck.core.execution.workflow;
 /**
  * record flow control
  */
-public class FlowController implements FlowControl, WorkflowExecutionStatusResult {
+public class FlowController implements FlowControl, WorkflowStatusResult {
     private ControlBehavior controlBehavior=ControlBehavior.Continue;
     private String statusString=null;
     private boolean success=false;

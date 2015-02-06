@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
+import com.dtolabs.rundeck.core.execution.workflow.FlowControl;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 
 import java.util.List;
@@ -79,4 +80,9 @@ public interface PluginStepContext {
      * @return the the current execution context
      */
     public ExecutionContext getExecutionContext();
+
+    /**
+     * @return object to control workflow
+     */
+    public FlowControl getFlowControl();
 }
