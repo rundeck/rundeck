@@ -2,6 +2,7 @@ package rundeck
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.util.XmlParserUtil
+import rundeck.services.ExecutionService
 
 /**
 * Execution
@@ -23,6 +24,7 @@ class Execution extends ExecutionContext {
     Boolean willRetry=false
     Execution retryExecution
 
+    static transients=['executionState']
     static constraints = {
         project(matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX, validator:{val,Execution obj->
             if(obj.scheduledExecution && obj.scheduledExecution.project!=val){
@@ -107,6 +109,15 @@ class Execution extends ExecutionContext {
         return "Workflow execution: ${workflow}"
     }
 
+    public String getExecutionState() {
+        return null == dateCompleted ? ExecutionService.EXECUTION_RUNNING :
+                (status in ['true', 'succeeded']) ? ExecutionService.EXECUTION_SUCCEEDED :
+                        cancelled ? ExecutionService.EXECUTION_ABORTED :
+                                willRetry ? ExecutionService.EXECUTION_FAILED_WITH_RETRY :
+                                        timedOut ? ExecutionService.EXECUTION_TIMEDOUT :
+                                                (status in ['false', 'failed']) ? ExecutionService.EXECUTION_FAILED :
+                                                        ExecutionService.EXECUTION_STATE_OTHER
+    }
  
     // various utility methods helpful to the presentation layer
     def String durationAsString() {

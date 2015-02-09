@@ -622,7 +622,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         [mdcprops, "id: " + e.id +" state: " + state +  " project: " + e.project + " user: " + e.user + jobstring]
     }
 
-    public logExecution(uri,project,user,issuccess,execId,Date startDate=null, jobExecId=null, jobName=null,
+    public logExecution(uri,project,user,issuccess,statusString,execId,Date startDate=null, jobExecId=null, jobName=null,
                         jobSummary=null,iscancelled=false,istimedout=false,willretry=false, nodesummary=null,
                         abortedby=null){
 
@@ -659,10 +659,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         reportMap.author=user
         reportMap.title= jobSummary?jobSummary:"RunDeck Job Execution"
-        reportMap.status= issuccess ? "succeed":iscancelled?"cancel": willretry?'retry':istimedout?"timeout":"fail"
+        reportMap.status= statusString?: issuccess ? "succeed":iscancelled?"cancel": willretry?'retry':istimedout?"timeout":"fail"
         reportMap.node= null!=nodesummary?nodesummary: frameworkService.getFrameworkNodeName()
 
-        reportMap.message=(issuccess?'Job completed successfully':iscancelled?('Job killed by: '+(abortedby?:user)):
+        reportMap.message=(statusString? "Job status ${statusString}" : issuccess?'Job completed successfully':iscancelled?('Job killed by: '+(abortedby?:user)):
             willretry?'Job Failed (will retry)':istimedout?'Job timed out':'Job failed')
         reportMap.dateCompleted=new Date()
         def result=reportService.reportExecutionResult(reportMap)
@@ -845,14 +845,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public static String EXECUTION_ABORTED = "aborted"
     public static String EXECUTION_TIMEDOUT = "timedout"
     public static String EXECUTION_FAILED_WITH_RETRY = "failed-with-retry"
+    public static String EXECUTION_STATE_OTHER = "other"
 
     public static String ABORT_PENDING = "pending"
     public static String ABORT_ABORTED = "aborted"
     public static String ABORT_FAILED = "failed"
 
     public static String getExecutionState(Execution e) {
-        return null == e.dateCompleted ? EXECUTION_RUNNING : "true" == e.status ? EXECUTION_SUCCEEDED : e.cancelled ?
-            EXECUTION_ABORTED : e.willRetry ? EXECUTION_FAILED_WITH_RETRY:  e.timedOut ? EXECUTION_TIMEDOUT  : EXECUTION_FAILED
+        e.executionState
     }
 
     public StepExecutionItem itemForWFCmdItem(final WorkflowStep step,final StepExecutionItem handler=null) throws FileNotFoundException {
@@ -1789,7 +1789,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 scheduledExecution = ScheduledExecution.get(schedId)
             }
 
-            if (!props.cancelled && props.status != 'true' && scheduledExecution && retryContext) {
+            if (!execution.cancelled && execution.status != 'true' && scheduledExecution && retryContext) {
                 //determine retry necessity
                 int count = retryContext?.retryAttempt ?: 0
                 def retryStr = execution.retry
@@ -1849,13 +1849,35 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     failedCount=failed.size()
                     totalCount=matched.size()
                 }
-                logExecution(null, execution.project, execution.user, "true" == execution.status, exId,
-                    execution.dateStarted, jobid, jobname, summary, props.cancelled, props.timedOut, execution.willRetry,
-                    node, execution.abortedby)
+                logExecution(
+                        null,
+                        execution.project,
+                        execution.user,
+                        execution.status.toLowerCase() in ['true','succeeded'],
+                        execution.status,
+                        exId,
+                        execution.dateStarted,
+                        jobid,
+                        jobname,
+                        summary,
+                        props.cancelled,
+                        props.timedOut,
+                        execution.willRetry,
+                        node,
+                        execution.abortedby
+                )
                 logExecutionLog4j(execution, "finish", execution.user)
 
                 def context = execmap?.thread?.context
-                notificationService.triggerJobNotification(props.status == 'true' ? 'success' : 'failure', schedId, [execution: execution,nodestatus:[succeeded:sucCount,failed:failedCount,total:totalCount],context:context])
+                notificationService.triggerJobNotification(
+                        props.status.toLowerCase() in ['true','succeeded'] ? 'success' : 'failure',
+                        schedId,
+                        [
+                                execution: execution,
+                                nodestatus: [succeeded: sucCount,failed:failedCount,total:totalCount],
+                                context: context
+                        ]
+                )
             }
         }
     }
