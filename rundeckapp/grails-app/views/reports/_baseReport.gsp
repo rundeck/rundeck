@@ -39,9 +39,11 @@
                 <input type="checkbox" value="${enc(attr:rpt.jcExecId)}" name="bulk_edit" class="_defaultInput bulk_edit"/>
             </td>
             </g:if>
+            <g:set var="statusIcon" value="${!execution.dateCompleted ? 'running' : execution.status in ['true','succeeded'] ?
+                    'succeed' : execution.cancelled ? 'aborted' :execution.willRetry ? 'failedretry' :execution.timedOut ? 'timedout' :
+                    execution.status in ['false','failed']?'fail':'other'}"/>
             <td class="eventicon autoclickable">
-                <i class="exec-status icon ${!execution.dateCompleted ? 'running' : execution.status == 'true' ?
-                    'succeed' : execution.cancelled ? 'aborted' :execution.willRetry ? 'failedretry' :execution.timedOut ? 'timedout' : 'fail'}"></i>
+                <i class="exec-status icon ${statusIcon}"></i>
             </td>
             <g:set var="vals" value="${['?','?','?']}"/>
             <g:if test="${it instanceof ExecReport}">
@@ -82,6 +84,9 @@
                     by <g:enc>${it.abortedByUser}</g:enc>
                 </g:if>
             </g:else>
+            <g:if test="${statusIcon=='other'}">
+                <span class="exec-status-text custom-status">${execution.status}</span>
+            </g:if>
         </td>
             <g:if test="${rpt?.jcJobId}">
         <td class="eventargs autoclickable">

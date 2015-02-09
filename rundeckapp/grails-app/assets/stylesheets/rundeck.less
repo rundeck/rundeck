@@ -735,6 +735,14 @@ section{
   //execution status text
 
   .exec-status{
+    &.other, &[data-execstate=OTHER] {
+      color: @brand-warning;
+
+      &.icon {
+        .glyphicon();
+        .glyphicon-asterisk();
+      }
+    }
     &.fail, &[data-execstate=FAILED] {
       color: @brand-danger;
 
@@ -786,6 +794,15 @@ section{
       }
     }
   }
+  .exec-status-text.custom-status{
+    font-style: italic;
+  }
+.exec-status-text.custom-status:before{
+  content: '“';
+}
+.exec-status-text.custom-status:after{
+  content: '”';
+}
 
   //link color variants
   a {
