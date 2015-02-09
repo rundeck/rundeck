@@ -131,7 +131,7 @@ class ScheduledExecutionController  extends ControllerBase{
             session.removeAttribute('redoOPTS');
         }
         if(params.id && params.id!=''){
-            redirect(action:show,params:[id:params.id])
+            redirect(action:'show',params:[id:params.id])
         }else{
             redirect(action:'index',params: [project:params.project])
         }
