@@ -107,7 +107,7 @@ class UrlMappings {
             action = [GET: 'createProject', POST: 'createProjectPost']
         }
         "/resources/$action?/$id?"(controller: 'framework')
-        "/project/$project/events/$action?/$id?"(controller: 'reports')
+        "/project/$project/events/$action?/$id?(.$format)?"(controller: 'reports')
         "/project/$project/configure"(controller: 'menu', action: 'admin')
         "/project/$project/execution/show/$id"(controller: 'execution',action: 'show')
         "/project/$project/execution/$action/$id"(controller: 'execution')
