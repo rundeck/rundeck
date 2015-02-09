@@ -25,7 +25,7 @@
  --%><div id="wfivis_${enc(attr:i)}" style="${wdgt.styleVisible(unless:i==highlight)}">
     <div class="pflowitem wfctrlholder"><span class="pflow item " id="wfitem_${enc(attr:i)}" >
         <g:if test="${isErrorHandler}">
-            <span class="info note"><g:message code="Workflow.stepErrorHandler.label.on.error" /></span>
+            <span class="text-muted"><g:message code="Workflow.stepErrorHandler.label.on.error" /></span>
         </g:if>
         <g:render template="/execution/wfItemView" model="${[item:item,edit:edit,noimgs:noimgs, workflow: workflow, project: project]}"/>
         <g:if test="${edit}">

@@ -13,7 +13,7 @@ class PluginTagLib {
             def Framework framework = frameworkService.rundeckFramework
             def description = frameworkService.getPluginDescriptionForItem(step)
             if(description){
-                out << render(template: "/framework/renderPluginConfig", model: [type: step.type, values: step?.configuration, description: description] + attrs.subMap(['prefix', 'includeFormFields']))
+                out << render(template: "/framework/renderPluginConfig", model: [type: step.type, values: step?.configuration, description: description] + attrs.subMap(['showPluginIcon','showNodeIcon','prefix', 'includeFormFields']))
                 return
             }
         }

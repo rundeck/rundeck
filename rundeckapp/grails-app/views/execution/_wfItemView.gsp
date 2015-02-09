@@ -66,17 +66,19 @@
                 </g:if>
             </g:if>
             <g:elseif test="${pluginitem}">
-                <g:if test="${!noimgs}"><i class="rdicon icon-small plugin"></i></g:if>
-                <g:if test="${item && item.nodeStep}">
-                    <g:if test="${!noimgs}">
-                    <i class="rdicon icon-small node"></i>
+                <g:if test="${!noimgs && item.description}">
+                    <i class="rdicon icon-small plugin"></i>
+                    <g:if test="${item && item.nodeStep}">
+                        <i class="rdicon icon-small node"></i>
                     </g:if>
                 </g:if>
                 <g:if test="${item.description}">
                     <g:enc>${item.description}</g:enc>
                 </g:if>
-                <stepplugin:display step="${item}" prefix="" includeFormFields="false"/>
-
+                <stepplugin:display step="${item}" prefix="" includeFormFields="false"
+                                    showPluginIcon="${!noimgs && !item.description}"
+                    showNodeIcon="${item && item.nodeStep && !noimgs && !item.description}"
+                />
             </g:elseif>
             <g:else>
                 <g:if test="${!noimgs}">

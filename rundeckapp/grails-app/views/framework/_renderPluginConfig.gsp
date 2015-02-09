@@ -21,16 +21,22 @@
  --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
-<div class="container">
 <g:if test="${description}">
     <div class="row">
     <div class="col-sm-12">
-        <div class=" text-info">
+        <g:if test="${showPluginIcon}">
+            <i class="rdicon icon-small plugin"></i>
+        </g:if>
+        <g:if test="${showNodeIcon}">
+            <i class="rdicon icon-small node"></i>
+        </g:if>
+        <span class=" text-info">
             <g:if test="${!hideTitle}"><g:enc>${description.title}</g:enc></g:if>
+        </span>
             <g:if test="${!hideDescription}">
                 <small class="text-muted"><g:enc>${description.description}</g:enc></small>
             </g:if>
-        </div>
+
     </div>
     </div>
 </g:if>
@@ -73,5 +79,4 @@
     </g:if>
 </div>
 
-</div>
 </div>
