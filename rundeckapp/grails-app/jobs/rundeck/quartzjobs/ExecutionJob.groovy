@@ -126,7 +126,7 @@ class ExecutionJob implements InterruptableJob {
                 )
 
                 success=result.success
-                statusString=result.result.isCustomStatusString()?result.result.statusString:null
+                statusString=Execution.isCustomStatusString(result.result.statusString)?result.result.statusString:null
             }
         }catch(Throwable t){
             log.error("Failed execution ${initMap.execution.id} : ${t.message?t.message:'no message'}",t)

@@ -67,14 +67,18 @@ class JobStateService implements AuthorizingJobService {
                 [order: 'desc', sort: 'dateCompleted', max: 1]
         )
         def previousState = null
+        def previousCustom = null
         if (lastExec.size() == 1) {
-            previousState = ExecutionState.valueOf(ExecutionService.getExecutionState(lastExec[0]).replaceAll('[-]', '_'))
+            previousState = ExecutionState.valueOf(lastExec[0].executionState.replaceAll('[-]', '_'))
+            previousCustom=lastExec[0].customStatusString
         }
+
         def runningIds = new HashSet<String>(running.collect { it.id.toString() })
         new JobStateImpl(
                 running: running.size() > 0,
                 runningExecutionIds: runningIds,
-                previousExecutionState: previousState
+                previousExecutionState: previousState,
+                previousExecutionStatusString: previousCustom
         )
     }
     /**

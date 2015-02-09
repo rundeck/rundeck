@@ -10,4 +10,5 @@ class JobStateImpl implements JobState {
     boolean running
     Set<String> runningExecutionIds
     ExecutionState previousExecutionState
+    String previousExecutionStatusString
 }

@@ -22,4 +22,9 @@ public interface JobState {
      * @return the execution state of the last execution, or null if not execution has completed.
      */
     public ExecutionState getPreviousExecutionState();
+
+    /**
+     * @return the custom status string of the last execution, or null if not set
+     */
+    public String getPreviousExecutionStatusString();
 }
