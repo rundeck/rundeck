@@ -20,9 +20,9 @@ import java.util.Map;
 
 /**
  */
-@Plugin(name = "job-state-conditional", service = ServiceNameConstants.WorkflowStep)
+@Plugin(name = JobStateWorkflowStep.PROVIDER_NAME, service = ServiceNameConstants.WorkflowStep)
 @PluginDescription(title = "Job State Conditional",
-                   description = "Test if a Job is running or the state of its most recent execution.\n" +
+                   description = "Assert that another Job is or is not running or the state of its most recent execution.\n" +
                                  "\n" +
                                  "Select a value for *Running* and/or *Execution State*, " +
                                  "and the matched Job will be compared to the chosen values.\n" +
@@ -46,6 +46,7 @@ public class JobStateWorkflowStep implements StepPlugin {
     //    public static final String CON_REGEX = "Regular Expression Match";
     public static final String EXEC_STATE_SUCCEEDED = "Succeeded";
     public static final String EXEC_STATE_FAILED_WITH_RETRY = "Failed-with-retry";
+    public static final String PROVIDER_NAME = "job-state-conditional";
 
     @PluginProperty(title = "Job Name",
                     description = "Group and Name for the Job in the form \"group/name\".")
@@ -79,14 +80,17 @@ public class JobStateWorkflowStep implements StepPlugin {
                     defaultValue = "Equals")
     @SelectValues(values = {CON_EQUALS, CON_NOTEQUALS/*, CON_REGEX*/})
     String condition;
-    /*
-    @PluginProperty(title = "Outcome",
-                    description = "Choose the outcome if the condition is met. If not set, then only a message " +
-                                  "indicating the condition will be echoed. If set, then the behavior of the Job " +
-                                  "depends on the selected outcome.")
-    @SelectValues(values = {"CONTINUE", "FAIL", "HALT"})
-    String result;
-*/
+
+    //flow control properties:
+    @PluginProperty(title = "Halt",
+                    description = "Halt if the condition is not met. If not halted, the workflow execution will continue.")
+    boolean halt;
+    @PluginProperty(title = "Success",
+                    description = "Halt with success if the condition is not met, otherwise failure.")
+    boolean success;
+    @PluginProperty(title = "Status", description = "Use a custom status message for the Job instead of success/failure.")
+    String status;
+
     static enum Failures implements FailureReason {
         ConditionNotMet
     }
@@ -147,9 +151,32 @@ public class JobStateWorkflowStep implements StepPlugin {
         if(result!=equality) {
             //for now fail
 //            String message = "Condition not met: " + stringBuilder;
-            throw new StepException(message, Failures.ConditionNotMet);
+//            throw new StepException(message, Failures.ConditionNotMet);
+            context.getLogger().log(0, message);
+            haltConditionally(context);
         }else{
             context.getLogger().log(2, message);
+        }
+    }
+
+    private void haltConditionally(PluginStepContext context) {
+        if (halt) {
+            if (null == context.getFlowControl()) {
+                context.getLogger().log(
+                        0,
+                        "[" +
+                        PROVIDER_NAME +
+                        "] HALT requested, but no FlowControl available in this context"
+                );
+                return;
+            }
+            if (null != status) {
+                context.getFlowControl().Halt(status);
+            } else {
+                context.getFlowControl().Halt(success);
+            }
+        } else if (context.getFlowControl() != null) {
+            context.getFlowControl().Continue();
         }
     }
 
