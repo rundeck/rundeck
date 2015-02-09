@@ -61,10 +61,10 @@ public class JobStateWorkflowStep implements StepPlugin {
     @PluginProperty(title = "Execution State",
                     description =
                             "Assert the State of the Job's last execution. \"Never\" indicates the Job has never " +
-                            "run. "
-//                            "If a Custom state is entered, it is not case-sensitive. " +
+                            "run. "+
+                            "If a Custom state is entered, it is not case-sensitive. "
     )
-    @SelectValues(freeSelect = false, values = {
+    @SelectValues(freeSelect = true, values = {
             EXEC_STATE_SUCCEEDED,
             EXEC_STATE_FAILED,
             EXEC_STATE_ABORTED,
@@ -139,7 +139,7 @@ public class JobStateWorkflowStep implements StepPlugin {
             finishConditional(context, result, equality, message);
         }
         if (null != executionState) {
-            result = checkExecutionState(jobState.getPreviousExecutionState());
+            result = checkExecutionState(jobState.getPreviousExecutionState(),jobState.getPreviousExecutionStatusString());
             finishConditional(context, result, equality, message);
         }
 
@@ -200,10 +200,22 @@ public class JobStateWorkflowStep implements StepPlugin {
         }
         if(null!=executionState){
             stringBuilder.append("previously ");
-            stringBuilder.append(
-                    null != jobState.getPreviousExecutionState() ? jobState.getPreviousExecutionState()
-                                                                           .toString().toUpperCase() : "NEVER"
-            );
+            if(jobState.getPreviousExecutionState()==ExecutionState.other){
+
+                stringBuilder
+                        .append("'")
+                        .append(
+                                null != jobState.getPreviousExecutionStatusString()
+                                ? jobState.getPreviousExecutionStatusString()
+                                : "[empty]"
+                        )
+                        .append("'");
+            } else {
+                stringBuilder.append(
+                        null != jobState.getPreviousExecutionState() ? jobState.getPreviousExecutionState()
+                                                                               .toString().toUpperCase() : "NEVER"
+                );
+            }
         }
         stringBuilder.append(". Expected ");
 
@@ -217,7 +229,9 @@ public class JobStateWorkflowStep implements StepPlugin {
             if(!equality) {
                 stringBuilder.append("NOT ");
             }
-            stringBuilder.append(executionState.toUpperCase());
+            stringBuilder.append("'");
+            stringBuilder.append(executionState);
+            stringBuilder.append("'");
         }
         return stringBuilder;
     }
@@ -229,20 +243,25 @@ public class JobStateWorkflowStep implements StepPlugin {
         return null!=running && "false".equalsIgnoreCase(running);
     }
 
-    public boolean checkExecutionState(ExecutionState previousExecutionState) {
+    public boolean checkExecutionState(ExecutionState previousExecutionState, String customStatusString) {
         if (executionState.equalsIgnoreCase(EXEC_STATE_NEVER)) {
             return null == previousExecutionState;
         }
-        try {
-            ExecutionState testState = ExecutionState.valueOf(
-                    executionState.trim().replace('-', '_').replaceAll(
-                            "\\s",
-                            ""
-                    ).toLowerCase()
-            );
-            return previousExecutionState == testState;
-        } catch (IllegalArgumentException e) {
-            //TODO: custom state
+        if(customStatusString!=null) {
+            //compare custom string
+            return executionState.equalsIgnoreCase(customStatusString);
+        }else {
+            try {
+                ExecutionState testState = ExecutionState.valueOf(
+                        executionState.trim().replace('-', '_').replaceAll(
+                                "\\s",
+                                ""
+                        ).toLowerCase()
+                );
+                return previousExecutionState == testState;
+            } catch (IllegalArgumentException e) {
+                //TODO: custom state
+            }
         }
         return false;
     }
