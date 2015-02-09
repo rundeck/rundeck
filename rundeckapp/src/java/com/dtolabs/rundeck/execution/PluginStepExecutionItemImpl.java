@@ -86,4 +86,13 @@ public class PluginStepExecutionItemImpl implements StepExecutionItem, Configure
     public void setFailureHandler(StepExecutionItem failureHandler) {
         this.failureHandler = failureHandler;
     }
+
+    @Override
+    public String toString() {
+        return "StepExecutionItem{" +
+               "type='" + type + '\'' +
+               ", keepgoingOnSuccess=" + keepgoingOnSuccess +
+               ", hasFailureHandler=" + (null!=failureHandler) +
+               '}';
+    }
 }
