@@ -3,7 +3,7 @@
       data-execstate="${enc(attr:execState)}"
       data-bind="attr: { 'data-execstate': executionState() } ">
 </span>
-<span data-bind="if: executionState() != executionStatusString().toUpperCase()">
+<span data-bind="if: executionStatusString()!=null && executionState() != executionStatusString().toUpperCase()">
 <span class="  h4 exec-status-text custom-status"
       data-bind="text: executionStatusString() ">
 </span>
