@@ -85,10 +85,10 @@ public class JobStateWorkflowStep implements StepPlugin {
     @PluginProperty(title = "Halt",
                     description = "Halt if the condition is not met. If not halted, the workflow execution will continue.")
     boolean halt;
-    @PluginProperty(title = "Success",
-                    description = "Halt with success if the condition is not met, otherwise failure.")
-    boolean success;
-    @PluginProperty(title = "Status", description = "Use a custom status message for the Job instead of success/failure.")
+    @PluginProperty(title = "Fail",
+                    description = "Halt with fail if the condition is not met, otherwise success.")
+    boolean fail;
+    @PluginProperty(title = "Status", description = "Halt the Job with a custom status message.")
     String status;
 
     static enum Failures implements FailureReason {
@@ -173,7 +173,7 @@ public class JobStateWorkflowStep implements StepPlugin {
             if (null != status) {
                 context.getFlowControl().Halt(status);
             } else {
-                context.getFlowControl().Halt(success);
+                context.getFlowControl().Halt(!fail);
             }
         } else if (context.getFlowControl() != null) {
             context.getFlowControl().Continue();
