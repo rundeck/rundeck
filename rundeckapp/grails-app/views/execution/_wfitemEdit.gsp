@@ -507,7 +507,7 @@
                     <g:if test="${!prop.scope || prop.scope.isInstanceLevel() || prop.scope.isUnspecified()}">
                     <tr>
                         <g:render
-                                template="/framework/pluginConfigPropertyField"
+                                template="/framework/pluginConfigPropertyFormField"
                                 model="${[prop: prop, prefix: pluginprefix, values: item?.configuration,
                                         fieldname: pluginprefix + prop.name, origfieldname: 'orig.' + pluginprefix + prop.name, error: report?.errors ? report?.errors[prop.name] : null]}"/>
                     </tr>
