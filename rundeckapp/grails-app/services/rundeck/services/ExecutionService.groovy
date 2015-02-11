@@ -2383,6 +2383,29 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return result
     }
 
+    /**
+     * Query for executions for the specified job
+     * @param scheduledExecution the job
+     * @param state status string
+     * @param offset paging offset
+     * @param max paging max
+     * @return result map from {@link #queryExecutions(com.dtolabs.rundeck.app.support.ExecutionQuery, int, int)}
+     */
+    def queryJobExecutions(ScheduledExecution scheduledExecution,String state,int offset=0,int max=-1){
+        def query=new ExecutionQuery()
+        query.jobIdListFilter=[scheduledExecution.id.toString()]
+        query.statusFilter=state
+        query.projFilter=scheduledExecution.project
+        return queryExecutions(query,offset,max)
+    }
+
+    /**
+     * Query executions
+     * @param query query
+     * @param offset paging offset
+     * @param max paging max
+     * @return result map [total: int, result: List<Execution>]
+     */
     def queryExecutions(ExecutionQuery query, int offset=0, int max=-1) {
         def state = query.statusFilter
         def txtfilters = ScheduledExecutionQuery.TEXT_FILTERS
@@ -2595,10 +2618,30 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             } else if (state == EXECUTION_ABORTED) {
                 isNotNull('dateCompleted')
                 eq('cancelled', true)
-            } else if (state) {
+            } else if (state == EXECUTION_TIMEDOUT) {
+                isNotNull('dateCompleted')
+                eq('timedOut', true)
+            }else if (state == EXECUTION_FAILED_WITH_RETRY) {
+                isNotNull('dateCompleted')
+                eq('willRetry', true)
+            } else if(state == EXECUTION_FAILED){
                 isNotNull('dateCompleted')
                 eq('cancelled', false)
-                eq('status', state == EXECUTION_FAILED ? 'false' : 'true')
+                or{
+                    eq('status',  'failed')
+                    eq('status',  'false')
+                }
+            }else if(state == EXECUTION_SUCCEEDED){
+                isNotNull('dateCompleted')
+                eq('cancelled', false)
+                or{
+                    eq('status',  'true')
+                    eq('status',  'succeeded')
+                }
+            }else if(state){
+                isNotNull('dateCompleted')
+                eq('cancelled', false)
+                eq('status',  state)
             }
             if (query.abortedbyFilter) {
                 eq('abortedby', query.abortedbyFilter)

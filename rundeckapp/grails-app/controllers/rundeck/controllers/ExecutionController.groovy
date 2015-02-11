@@ -1355,7 +1355,7 @@ class ExecutionController extends ControllerBase{
     /**
      * API: /api/executions query interface, version 5
      */
-    def apiExecutionsQuery = {ExecutionQuery query->
+    def apiExecutionsQuery(ExecutionQuery query){
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V5)) {
             return
         }
