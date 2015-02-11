@@ -272,17 +272,24 @@ echo "OK"
 
 
 ###
-# Test result of /job/ID/executions bad status param
+# Test result of /job/ID/executions arbitrary status param
 ###
 
-echo "TEST: job/id/executions invalid status param"
+echo "TEST: job/id/executions arbitrary status param"
 
 # now submit req
 runurl="${APIURL}/job/${jobid}/executions"
-params="status=DNEstatus"
+params="status=some_status"
 
 
-sh $SRC_DIR/api-expect-error.sh ${runurl} ${params} "the value \"DNEstatus\" for parameter \"status\" was invalid. It must be in the list: [running, aborted, failed, succeeded]" || exit 2
+docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+
+sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+
+
+
+assert "0" $(xmlsel "/result/executions/@count" $DIR/curl.out) "Wrong number of executions"
+
 echo "OK"
 
 ###
