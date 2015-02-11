@@ -37,6 +37,8 @@ def warFile= "rundeckapp/target/rundeck-${version}.war"
 def coreJarFile = "core/${target}/rundeck-core-${version}.jar"
 def launcherJarFile = "rundeck-launcher/launcher/${target}/rundeck-launcher-${version}.jar"
 
+//the list of bundled plugins to verify in the war and jar
+def plugins=['script','stub','localexec','copyfile','job-state','flow-control']
 
 //manifest describing expected build results
 def manifest=[
@@ -71,20 +73,7 @@ def manifest=[
         "pkgs/webapp/WEB-INF/lib/rundeck-storage-conf-${version}.jar##rundeck-storage/rundeck-storage-conf/${target}/rundeck-storage-conf-${version}.jar",
         "pkgs/webapp/WEB-INF/lib/rundeck-storage-data-${version}.jar##rundeck-storage/rundeck-storage-data/${target}/rundeck-storage-data-${version}.jar",
         "pkgs/webapp/WEB-INF/lib/rundeck-storage-filesys-${version}.jar##rundeck-storage/rundeck-storage-filesys/${target}/rundeck-storage-filesys-${version}.jar",
-        "pkgs/webapp/WEB-INF/rundeck/plugins/rundeck-script-plugin-${version}.jar",
-        "pkgs/webapp/WEB-INF/rundeck/plugins/rundeck-script-plugin-${version}.jar.properties",
-        "pkgs/webapp/WEB-INF/rundeck/plugins/rundeck-script-plugin-${version}.jar##plugins/script-plugin/${target}/rundeck-script-plugin-${version}.jar",
-        "pkgs/webapp/WEB-INF/rundeck/plugins/rundeck-stub-plugin-${version}.jar",
-        "pkgs/webapp/WEB-INF/rundeck/plugins/rundeck-stub-plugin-${version}.jar.properties",
-        "pkgs/webapp/WEB-INF/rundeck/plugins/rundeck-stub-plugin-${version}.jar##plugins/stub-plugin/${target}/rundeck-stub-plugin-${version}.jar",
-        "pkgs/webapp/WEB-INF/rundeck/plugins/rundeck-localexec-plugin-${version}.jar",
-        "pkgs/webapp/WEB-INF/rundeck/plugins/rundeck-localexec-plugin-${version}.jar.properties",
-        "pkgs/webapp/WEB-INF/rundeck/plugins/rundeck-localexec-plugin-${version}.jar##plugins/localexec-plugin/${target}/rundeck-localexec-plugin-${version}.jar",
-        "pkgs/webapp/WEB-INF/rundeck/plugins/rundeck-copyfile-plugin-${version}.jar",
-        "pkgs/webapp/WEB-INF/rundeck/plugins/rundeck-copyfile-plugin-${version}.jar.properties",
-        "pkgs/webapp/WEB-INF/rundeck/plugins/rundeck-copyfile-plugin-${version}.jar##plugins/copyfile-plugin/${target}/rundeck-copyfile-plugin-${version}.jar",
         "pkgs/webapp/WEB-INF/rundeck/plugins/manifest.properties",
-        "pkgs/webapp/WEB-INF/rundeck/plugins/#9",//require 9 files in dir
         "templates/config/#4",
         "templates/config/jaas-loginmodule.conf.template",
         "templates/config/realm.properties.template",
@@ -104,7 +93,22 @@ def manifest=[
     "plugins/stub-plugin/${target}/rundeck-stub-plugin-${version}.jar":[:],
     "plugins/localexec-plugin/${target}/rundeck-localexec-plugin-${version}.jar":[:],
     "plugins/copyfile-plugin/${target}/rundeck-copyfile-plugin-${version}.jar":[:],
+    "plugins/job-state-plugin/${target}/rundeck-job-state-plugin-${version}.jar":[:],
+    "plugins/flow-control-plugin/${target}/rundeck-flow-control-plugin-${version}.jar":[:],
 ]
+def pluginsum=1
+//generate list of plugin files in the jar to validate
+plugins.each{plugin->
+    manifest["plugins/${plugin}-plugin/${target}/rundeck-${plugin}-plugin-${version}.jar"]=[:]
+    manifest.get(launcherJarFile).addAll([
+        "pkgs/webapp/WEB-INF/rundeck/plugins/rundeck-${plugin}-plugin-${version}.jar",
+        "pkgs/webapp/WEB-INF/rundeck/plugins/rundeck-${plugin}-plugin-${version}.jar.properties",
+        "pkgs/webapp/WEB-INF/rundeck/plugins/rundeck-${plugin}-plugin-${version}.jar##plugins/${plugin}-plugin/${target}/rundeck-${plugin}-plugin-${version}.jar",
+      ])
+    pluginsum+=2
+}
+//require correct plugin files count in dir
+manifest.get(launcherJarFile).add("pkgs/webapp/WEB-INF/rundeck/plugins/#${pluginsum}")
 
 def isValid=true
 

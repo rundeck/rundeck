@@ -59,7 +59,9 @@ dependencies {
     pluginFiles project(':plugins:script-plugin'),
             project(':plugins:stub-plugin'),
             project(':plugins:localexec-plugin'),
-            project(':plugins:copyfile-plugin')
+            project(':plugins:copyfile-plugin'),
+            project(':plugins:job-state-plugin'),
+            project(':plugins:flow-control-plugin')
 }
 
 task copyPluginLibs(dependsOn: configurations.pluginFiles)<< {
