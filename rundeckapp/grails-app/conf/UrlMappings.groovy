@@ -111,6 +111,8 @@ class UrlMappings {
         "/project/$project/configure"(controller: 'menu', action: 'admin')
         "/project/$project/execution/show/$id"(controller: 'execution',action: 'show')
         "/project/$project/execution/$action/$id"(controller: 'execution')
+        "/project/$project/exportPrepare"(controller: 'project',action: 'exportPrepare')
+        "/project/$project/exportWait"(controller: 'project',action: 'exportWait')
         "/project/$project/export"(controller: 'project',action: 'export')
         "/project/$project/importArchive"(controller: 'project',action: 'importArchive')
         "/project/$project"(controller: 'menu',action: 'index')

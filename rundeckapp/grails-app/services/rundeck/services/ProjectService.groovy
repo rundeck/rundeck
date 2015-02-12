@@ -7,8 +7,13 @@ import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.util.XmlParserUtil
 import com.dtolabs.rundeck.util.ZipBuilder
 import com.dtolabs.rundeck.util.ZipReader
+import com.google.common.cache.Cache
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.RemovalNotification
+import grails.async.Promises
 import groovy.xml.MarkupBuilder
 import org.apache.commons.io.FileUtils
+import org.springframework.beans.factory.InitializingBean
 import rundeck.BaseReport
 import rundeck.ExecReport
 import rundeck.Execution
@@ -25,7 +30,7 @@ import java.util.zip.ZipOutputStream
 import java.util.jar.Attributes
 import org.springframework.transaction.TransactionStatus
 
-class ProjectService {
+class ProjectService implements InitializingBean{
     def grailsApplication
     def scheduledExecutionService
     def executionService
@@ -251,13 +256,143 @@ class ProjectService {
     }
 
     /**
+     * Cache of async project export promises
+     */
+    def Cache<String, ArchiveRequest> asyncExportResults
+    /**
+     * retains the requests until they can be left to expire in the cache
+     */
+    def Map<String, ArchiveRequest> asyncExportRequests
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+
+        asyncExportRequests= Collections.synchronizedMap(new HashMap<String,ArchiveRequest>())
+
+        def spec=grailsApplication.config.rundeck?.projectService?.projectExportCache?.spec?: "expireAfterAccess=30m"
+
+        asyncExportResults=
+                CacheBuilder.
+                        from(spec).
+                        removalListener({ RemovalNotification<String,ArchiveRequest> notification->
+                        //when cached item is removed, delete the file if the requests map is not retaining it
+                            if(!asyncExportRequests.containsKey(notification.key)){
+                                log.debug("Cache expired for project archive request ${notification.key}, deleting file: ${notification.value.file}")
+                                notification.value.file?.delete()
+                            }
+                        } ).
+                        build({
+                         //load the request via the requests map, otherwise it does not exist
+                            def request = asyncExportRequests.get(it);
+                            if (null == request) {
+                                throw new Exception("Invalid key: ${it}")
+                            }
+                            request
+                        } )
+    }
+
+    /**
+     * Begin asynchronous export request, return a token String to identify
+     * @param project project
+     * @param framework framework
+     * @param ident username or identify of requestor
+     * @return token string to identify the new request
+     */
+    def exportProjectToFileAsync(FrameworkProject project, Framework framework, String ident){
+        final def summary=new ArchiveRequestProgress()
+        final String token = UUID.randomUUID().toString()
+        final def request=new ArchiveRequest(summary:summary,token:token)
+
+        Promises.<File>task {
+            ScheduledExecution.withNewSession {
+                exportProjectToFile(project,framework,summary)
+            }
+        }.onComplete { File file->
+            log.debug("Async archive request with token ${token} finished successfully")
+            request.file=file
+        }.onError {Throwable t->
+            log.error("Async archive request with token ${token} failed: ${t}",t)
+            request.exception=t
+        }
+        //store in map
+        asyncExportRequests.put(ident+'/'+token,request)
+        token
+    }
+    /**
+     * Attempt to get the request from the cache, or return null if it is not available
+     * @param key key
+     * @return request
+     */
+    private def ArchiveRequest getRequest(String key){
+        try{
+            return asyncExportResults.get(key)
+        }catch (Exception e){
+            return null
+        }
+    }
+    /**
+     * Return true if the request is still available
+     * @param ident
+     * @param token
+     * @return
+     */
+    def boolean hasPromise(String ident,String token){
+        return getRequest(ident+'/'+token)!=null
+    }
+    /**
+     * Return summary of progress for the request, or null
+     * @param ident
+     * @param token
+     * @return
+     */
+    def ProgressSummary promiseSummary(String ident,String token){
+        getRequest(ident+'/'+token)?.summary
+    }
+    /**
+     *
+     * @param ident
+     * @param token
+     * @return result file, or null
+     */
+    def File promiseReady(String ident,String token){
+        getRequest(ident+'/'+token)?.file
+    }
+    /**
+     *
+     * @param ident
+     * @param token
+     * @return date of request, or null
+     */
+    def Date promiseRequestStarted(String ident,String token){
+        getRequest(ident+'/'+token)?.dateStarted
+    }
+    /**
+     *
+     * @param ident
+     * @param token
+     * @return exception thrown, or null
+     */
+    def Throwable promiseError(String ident,String token){
+        return getRequest(ident+'/'+token)?.exception
+    }
+    /**
+     * marks the request to be expired
+     * @param ident
+     * @param token
+     * @return
+     */
+    def void releasePromise(String ident,String token){
+        //remove from map, allow to expire via the cache
+        asyncExportRequests.remove(ident+'/'+token)
+    }
+    /**
      * Export the project to a temp file jar
      * @param project
      * @param framework
      * @return
      * @throws ProjectServiceException
      */
-    def exportProjectToFile(FrameworkProject project, Framework framework) throws ProjectServiceException{
+    def exportProjectToFile(FrameworkProject project, Framework framework, ProgressListener listener=null) throws ProjectServiceException{
         def outfile
         try {
             outfile = File.createTempFile("export-${project.name}", ".jar")
@@ -265,7 +400,7 @@ class ProjectService {
             throw new ProjectServiceException("Could not create temp file for archive: " + exc.message, exc)
         }
         outfile.withOutputStream { output ->
-            exportProjectToOutputStream(project, framework, output)
+            exportProjectToOutputStream(project, framework, output, listener)
         }
         outfile.deleteOnExit()
         outfile
@@ -278,7 +413,7 @@ class ProjectService {
      * @throws ProjectServiceException
      */
     def exportProjectToOutputStream(FrameworkProject project, Framework framework,
-                                    OutputStream stream) throws ProjectServiceException{
+                                    OutputStream stream, ProgressListener listener=null) throws ProjectServiceException{
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
 
@@ -290,31 +425,47 @@ class ProjectService {
         manifest.mainAttributes.putValue('Rundeck-Archive-Export-Date', sdf.format(new Date()))
 
         def zip = new JarOutputStream(stream,manifest)
-        exportProjectToStream(project, framework, zip)
+        exportProjectToStream(project, framework, zip, listener)
         zip.close()
     }
-    def exportProjectToStream(FrameworkProject project, Framework framework, ZipOutputStream output) throws ProjectServiceException {
+
+    def exportProjectToStream(
+            FrameworkProject project,
+            Framework framework,
+            ZipOutputStream output,
+            ProgressListener listener = null
+    ) throws ProjectServiceException
+    {
         ZipBuilder zip = new ZipBuilder(output)
 //        zip.debug = true
         String projectName = project.name
+
+        listener?.total(
+                'export',
+                ScheduledExecution.countByProject(projectName)+
+                        3 * Execution.countByProject(projectName)+
+                        BaseReport.countByCtxProject(projectName)
+        )
 
         zip.dir("rundeck-${projectName}/") {
             //export jobs
             def jobs = ScheduledExecution.findAllByProject(projectName)
             dir('jobs/') {
-                jobs.each{ScheduledExecution job->
+                jobs.each { ScheduledExecution job ->
                     zip.file("job-${job.extid.encodeAsURL()}.xml") { Writer writer ->
                         exportJob job, writer
+                        listener?.inc('export',1)
                     }
                 }
             }
 
             def execs = Execution.findAllByProject(projectName)
-            dir('executions/'){
+            dir('executions/') {
                 //export executions
                 //export execution logs
                 execs.each { Execution exec ->
                     exportExecution zip, exec, "execution-${exec.id}.xml"
+                    listener?.inc('export',3)
                 }
             }
             //export history
@@ -322,9 +473,11 @@ class ProjectService {
             dir('reports/') {
                 reports.each { BaseReport report ->
                     exportHistoryReport zip, report, "report-${report.id}.xml"
+                    listener?.inc('export',1)
                 }
             }
         }
+        listener?.done()
 
     }
 
@@ -629,6 +782,52 @@ class ProjectService {
             framework.getFrameworkProjectMgr().removeFrameworkProject(project.name)
         }
         return result
+    }
+}
+class ArchiveRequest {
+    String token
+    Date dateStarted=new Date()
+    Throwable exception
+    ProgressSummary summary
+    File file
+}
+interface ProgressListener {
+    void total(String key,long total)
+    void inc(String key,long count)
+    void done()
+}
+interface ProgressSummary {
+    int percent()
+}
+class ArchiveRequestProgress implements ProgressSummary,ProgressListener{
+    Map<String,Long> totals=new HashMap<String,Long>()
+    Map<String,Long> counts=new HashMap<String,Long>()
+
+
+    @Override
+    void total(final String key, final long total) {
+        this.totals[key]=total
+        if(counts[key]==null){
+            counts[key]=0
+        }
+    }
+
+    @Override
+    void inc(final String key, final long count) {
+        this.counts[key]=this.counts[key]?this.counts[key]+count:count
+    }
+
+    @Override
+    void done() {
+        counts.putAll(totals)
+    }
+
+    @Override
+    int percent() {
+        Double sum=totals.keySet().inject(0){a,k->
+            a + ( counts[k]!=null  ? ( (counts[k]/totals[k]) / totals.size() ) : 0d)
+        }
+        return Math.floor(100*sum)
     }
 }
 

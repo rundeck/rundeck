@@ -158,6 +158,8 @@ rundeck.web.metrics.servlets.healthcheck.enabled = true
 
 rundeck.gui.job.description.disableHTML=false
 
+rundeck.projectService.projectExportCache.spec= "expireAfterAccess=30m"
+
 grails.assets.less.compile = 'less4j'
 grails.assets.plugin."twitter-bootstrap".excludes = ["**/*.less"]
 grails.assets.plugin."twitter-bootstrap".includes = ["bootstrap.less"]
