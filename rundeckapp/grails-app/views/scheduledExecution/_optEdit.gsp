@@ -215,10 +215,10 @@
                     <g:textField type="url"
                            class=" form-control"
                            name="valuesUrl"
-                           value="${enc(attr:option?.realValuesUrl) }"
+                           value="${option?.realValuesUrl?.toString()}"
                            size="60"
                            placeholder="Remote URL"
-                           id="vurl_${enc(attr:rkey)}"
+                           id="vurl_${rkey}"
                     />
 
                     <div class="help-block">
@@ -282,7 +282,7 @@
                 <g:textField
                         name="regex"
                         class="form-control"
-                        value="${enc(attr: option?.regex)}"
+                        value="${option?.regex}"
                         style="${wdgt.styleVisible(if: option?.regex)}"
                         size="40"
                         placeholder="Enter a Regular Expression"
