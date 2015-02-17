@@ -365,11 +365,13 @@ class ExecutionJobTest extends GroovyTestCase{
     @Test
     void testSaveStateNoJob(){
         def job = new ExecutionJob()
+        job.finalizeRetryMax=1
+        job.finalizeRetryDelay=0
         def execution = setupExecution(null, new Date(), new Date())
         def mockes = new GrailsMock(ExecutionService)
 
         def expectresult= [
-                status: 'true',
+                status: 'succeeded',
                 cancelled: false,
                 failedNodes: null,
                 failedNodesMap: null,
@@ -379,6 +381,7 @@ class ExecutionJobTest extends GroovyTestCase{
         ]
 
         boolean saveStateCalled=false
+        boolean testPass=false
         mockes.demand.saveExecutionState(1..1){ schedId, exId, Map props, Map execmap, Map retryContext->
             saveStateCalled=true
             Assert.assertNull(schedId)
@@ -386,22 +389,26 @@ class ExecutionJobTest extends GroovyTestCase{
             expectresult.each {k,v->
                 Assert.assertEquals("result property ${k} expected: ${v} was ${props[k]}",v,props[k])
             }
+            testPass=true
         }
 
         def es = mockes.createMock()
         job.saveState(null,es,execution,true,false,false,true,null,-1,null,execMap)
         Assert.assertEquals(true,saveStateCalled)
+        Assert.assertEquals(true,testPass)
     }
 
     @Test
     void testSaveStateWithJob(){
         def job = new ExecutionJob()
+        job.finalizeRetryMax=1
+        job.finalizeRetryDelay=0
         def scheduledExecution = setupJob()
         def execution = setupExecution(scheduledExecution, new Date(), null)
         def mockes = new GrailsMock(ExecutionService)
 
         def expectresult= [
-                status: 'true',
+                status: 'succeeded',
                 cancelled: false,
                 failedNodes: null,
                 failedNodesMap: null,
@@ -436,12 +443,14 @@ class ExecutionJobTest extends GroovyTestCase{
     @Test
     void testSaveStateWithJobStatsFailureRetryFail(){
         def job = new ExecutionJob()
+        job.finalizeRetryMax=1
+        job.finalizeRetryDelay=0
         def scheduledExecution = setupJob()
         def execution = setupExecution(scheduledExecution, new Date(), null)
         def mockes = new GrailsMock(ExecutionService)
 
         def expectresult= [
-                status: 'true',
+                status: 'succeeded',
                 cancelled: false,
                 failedNodes: null,
                 failedNodesMap: null,
@@ -478,12 +487,14 @@ class ExecutionJobTest extends GroovyTestCase{
     @Test
     void testSaveStateWithJobStatsFailureRetrySucceed(){
         def job = new ExecutionJob()
+        job.finalizeRetryMax=1
+        job.finalizeRetryDelay=0
         def scheduledExecution = setupJob()
         def execution = setupExecution(scheduledExecution, new Date(), null)
         def mockes = new GrailsMock(ExecutionService)
 
         def expectresult= [
-                status: 'true',
+                status: 'succeeded',
                 cancelled: false,
                 failedNodes: null,
                 failedNodesMap: null,
@@ -525,7 +536,7 @@ class ExecutionJobTest extends GroovyTestCase{
         def mockes = new GrailsMock(ExecutionService)
 
         def expectresult= [
-                status: 'true',
+                status: 'succeeded',
                 cancelled: false,
                 failedNodes: null,
                 failedNodesMap: null,

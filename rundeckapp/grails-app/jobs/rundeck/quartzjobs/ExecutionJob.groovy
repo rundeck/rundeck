@@ -445,9 +445,7 @@ class ExecutionJob implements InterruptableJob {
                 retryAttempt     : jobDataMap?.get("retryAttempt"),
                 timeout          : jobDataMap?.get("timeout"),
         ]
-        //attempt to save execution state, with retry, in case DB connection fails
-        (saveStateComplete, saveStateException) = withRetry(finalizeRetryMax, finalizeRetryDelay,
-                "Execution ${execution.id} save result status:") {
+        Closure action={
             executionService.saveExecutionState(
                     scheduledExecutionId > 0 ? scheduledExecutionId : null,
                     execution.id,
@@ -456,8 +454,16 @@ class ExecutionJob implements InterruptableJob {
                     retryContext
             )
         }
-        if (!saveStateComplete) {
-            log.error("ExecutionJob: Failed to save execution state for ${execution.id}, after retrying ${finalizeRetryMax} times: ${saveStateException}")
+        //attempt to save execution state, with retry, in case DB connection fails
+        if(finalizeRetryMax>1) {
+            (saveStateComplete, saveStateException) = withRetry(finalizeRetryMax, finalizeRetryDelay,
+                                                                "Execution ${execution.id} save result status:", action
+            )
+            if (!saveStateComplete) {
+                log.error("ExecutionJob: Failed to save execution state for ${execution.id}, after retrying ${finalizeRetryMax} times: ${saveStateException}")
+            }
+        }else{
+            action.call()
         }
         if (!isTemp && scheduledExecutionId && success) {
             //update ScheduledExecution statistics for successful execution
