@@ -112,11 +112,11 @@ assert_xml_value(){
 assert_xml_notblank(){
     value=$($XMLSTARLET sel -T -t -v "$1" $2)
     if [ $? != 0 ] ; then
-        errorMsg "xmlstarlet failed: $!"
+        errorMsg "Expected value for XPath $1, but select failed: $! (in file $2)"
         exit 2
     fi
     if [ "" == "$value" ] ; then
-        errorMsg "XPath $1 wrong value, expected (blank) was $value (in file $2)"
+        errorMsg "XPath $1 wrong value, expected (not blank) was $value (in file $2)"
         exit 2
     fi
 }
