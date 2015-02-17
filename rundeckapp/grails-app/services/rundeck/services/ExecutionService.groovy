@@ -79,6 +79,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def apiService
     def grailsLinkGenerator
     def logFileStorageService
+    MessageSource messageSource
 
     /**
      * Render execution document for api response
@@ -1369,7 +1370,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public Map executeJob(ScheduledExecution scheduledExecution, AuthContext authContext, String user, Map input) {
         def secureOpts = selectSecureOptionInput(scheduledExecution, input)
         def secureOptsExposed = selectSecureOptionInput(scheduledExecution, input, true)
-        return retryExecuteJob(scheduledExecution, authContext, user, input, secureOpts, secureOptsExposed, 0)
+        return retryExecuteJob(scheduledExecution, authContext, user, input, secureOpts, secureOptsExposed, 0,-1)
     }
     /**
      * retry a job execution
@@ -1385,7 +1386,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     public Map retryExecuteJob(ScheduledExecution scheduledExecution, AuthContext authContext,
-                               String user, Map input, Map secureOpts=[:], Map secureOptsExposed = [:], int attempt) {
+                               String user, Map input, Map secureOpts=[:], Map secureOptsExposed = [:], int attempt,
+                               long prevId) {
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
                 scheduledExecution.project)) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
@@ -1395,7 +1397,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             Map allowedOptions = input.subMap(['loglevel', 'argString', 'option','_replaceNodeFilters', 'filter', 'retryAttempt']).findAll { it.value != null }
             allowedOptions.putAll(input.findAll { it.key.startsWith('option.') || it.key.startsWith('nodeInclude') || it.key.startsWith('nodeExclude') }.findAll { it.value != null })
-            def Execution e = createExecution(scheduledExecution, user, allowedOptions)
+            def Execution e = createExecution(scheduledExecution, user, allowedOptions,attempt>0,prevId)
             def timeout = 0
             if (e.timeout) {
                 timeout = evaluateTimeoutDuration(e.timeout)
@@ -1511,8 +1513,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      * @throws ExecutionServiceException
      */
-    def Execution createExecution(ScheduledExecution se, String user, Map input = [:]) throws ExecutionServiceException {
-        if (!se.multipleExecutions) {
+    def Execution createExecution(ScheduledExecution se, String user, Map input = [:], boolean retry=false, long prevId=-1) throws ExecutionServiceException {
+        if (!se.multipleExecutions ) {
             synchronized (this) {
                 //find any currently running executions for this job, and if so, throw exception
                 def found = Execution.withCriteria {
@@ -1520,9 +1522,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     eq('scheduledExecution',se)
                     isNotNull('dateStarted')
                 }
-                //('from Execution where dateCompleted is null and scheduledExecution=:se and dateStarted is not null', [se: se])
-//                    System.err.println("multiexec check ${se.version}: ${found}")
-                if (found) {
+                if (found && !(retry && prevId && found.size()==1 && found[0].id==prevId)) {
                     throw new ExecutionServiceException('Job "' + se.jobName + '" [' + se.extid + '] is currently being executed (execution [' + found.id + '])','conflict')
                 }
                 return int_createExecution(se,user,input)
@@ -1808,7 +1808,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     ]
                     def result = retryExecuteJob(scheduledExecution, retryContext.authContext,
                             retryContext.user, input, retryContext.secureOpts,
-                            retryContext.secureOptsExposed, count + 1)
+                            retryContext.secureOptsExposed, count + 1,execution.id)
                     if (result.success) {
                         execution.retryExecution = result.execution
                     }
@@ -2061,7 +2061,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
       def lookupMessage(String[] theKeys, Object[] data, String defaultMessage=null) {
           def locale = getLocale()
           def theValue = null
-          MessageSource messageSource = applicationContext.getBean("messageSource")
           theKeys.any{key->
               try {
                   theValue =  messageSource.getMessage(key,data,locale )
