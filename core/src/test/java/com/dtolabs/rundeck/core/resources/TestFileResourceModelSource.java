@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.resources;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
@@ -49,16 +50,14 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
     public void setUp() {
 
         final Framework frameworkInstance = getFrameworkInstance();
-        frameworkProject = frameworkInstance.getFrameworkProjectMgr().createFrameworkProject(
-            PROJ_NAME);
-        File resourcesfile = new File(frameworkProject.getNodesResourceFilePath());
-        //copy test nodes to resources file
-        try {
-            FileUtils.copyFileStreams(new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
-                resourcesfile);
-        } catch (IOException e) {
-            throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
-        }
+
+        frameworkProject = frameworkInstance.getFilesystemFrameworkProjectManager().createFSFrameworkProject(
+                PROJ_NAME);
+        generateProjectResourcesFile(
+                new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
+                frameworkProject
+        );
+
     }
 
     public void tearDown() throws Exception {
@@ -336,8 +335,7 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
 
         //explicit format resourceyaml
         {
-            File testfile = new File(frameworkProject.getEtcDir(), "testresources2.blah");
-            assertFalse(testfile.exists());
+            File testfile = File.createTempFile("testresources2", ".blah");
 
             Properties props = new Properties();
 

@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.execution.service;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
+import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.common.NodeEntryImpl;
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschScpFileCopier;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalFileCopier;
@@ -50,16 +51,12 @@ public class TestFileCopierService extends AbstractBaseTest {
     public void setUp() {
         super.setUp();
         final Framework frameworkInstance = getFrameworkInstance();
-        final FrameworkProject frameworkProject = frameworkInstance.getFrameworkProjectMgr().createFrameworkProject(
+        final IRundeckProject frameworkProject = frameworkInstance.getFilesystemFrameworkProjectManager().createFrameworkProject(
             PROJ_NAME);
-        File resourcesfile = new File(frameworkProject.getNodesResourceFilePath());
-        //copy test nodes to resources file
-        try {
-            FileUtils.copyFileStreams(new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
-                resourcesfile);
-        } catch (IOException e) {
-            throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
-        }
+        generateProjectResourcesFile(
+                new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
+                frameworkProject
+        );
     }
 
     public void tearDown() throws Exception {

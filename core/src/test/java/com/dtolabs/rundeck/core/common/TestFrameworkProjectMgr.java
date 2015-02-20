@@ -145,11 +145,10 @@ public class TestFrameworkProjectMgr extends AbstractBaseTest {
         final IFrameworkProjectMgr mgr = FrameworkProjectMgr.create("projectMgr",
                                                       new File(getFrameworkProjectsBase()),
                                                       getFrameworkInstance());
-        final FrameworkProject d1 = mgr.createFrameworkProject("Depot1");
+        final IRundeckProject d1 = mgr.createFrameworkProject("Depot1");
         assertEquals("exected two listed FrameworkProject after the addDepot call", 2, mgr.listFrameworkProjects().size());
         assertTrue("expected existsFrameworkProject to be true after it was added", mgr.existsFrameworkProject("Depot1"));
         assertEquals("getFrameworkProject did not return the expected project instance", d1.getName(), mgr.getFrameworkProject("Depot1").getName() );
-        assertEquals("getFrameworkProject did not return the expected project instance", d1.getParent(), mgr.getFrameworkProject("Depot1").getParent() );
         try {
             mgr.getFrameworkProject("NotThere");
             fail("Should have failed getting a non existent project");
@@ -162,7 +161,7 @@ public class TestFrameworkProjectMgr extends AbstractBaseTest {
         final FrameworkProjectMgr mgr = FrameworkProjectMgr.create("projectMgr",
                                                              new File(getFrameworkProjectsBase()),
                                                              getFrameworkInstance());
-        final FrameworkProject d1 = mgr.createFrameworkProject("Depot1");
+        final FrameworkProject d1 = mgr.createFSFrameworkProject("Depot1");
         assertTrue("existsFrameworkProject did not return true for a type that should exist",
                    mgr.existsFrameworkProject("Depot1"));
         mgr.remove(d1.getName());

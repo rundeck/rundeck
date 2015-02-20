@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.cli;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
+import com.dtolabs.rundeck.core.common.IFramework;
 
 import java.util.*;
 
@@ -34,9 +35,9 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class FrameworkSingleProjectResolver implements SingleProjectResolver {
-    private Framework framework;
+    private IFramework framework;
 
-    public FrameworkSingleProjectResolver(final Framework framework) {
+    public FrameworkSingleProjectResolver(final IFramework framework) {
         this.framework = framework;
     }
 

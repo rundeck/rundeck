@@ -23,10 +23,7 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow;
 
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
-import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.common.SelectorUtils;
+import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionListenerOverride;
@@ -55,6 +52,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * TestNodeFirstWorkflowStrategy is ...
@@ -80,16 +78,12 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
         super.setUp();
         testFramework = getFrameworkInstance();
         testnode = testFramework.getFrameworkNodeName();
-        final FrameworkProject frameworkProject = testFramework.getFrameworkProjectMgr().createFrameworkProject(
-            TEST_PROJECT);
-        File resourcesfile = new File(frameworkProject.getNodesResourceFilePath());
-        //copy test nodes to resources file
-        try {
-            FileUtils.copyFileStreams(new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
-                resourcesfile);
-        } catch (IOException e) {
-            throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
-        }
+        final IRundeckProject frameworkProject = testFramework.getFrameworkProjectMgr().createFrameworkProject(
+                TEST_PROJECT,
+                generateProjectResourcesFile(
+                        new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml")
+                )
+        );
         extResourcesfile = new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes2.xml");
         extResourcesfile2 = new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes4.xml");
     }

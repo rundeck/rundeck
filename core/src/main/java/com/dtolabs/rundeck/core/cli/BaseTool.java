@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.cli;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.VersionConstants;
+import com.dtolabs.rundeck.core.dispatcher.CentralDispatcher;
 import org.apache.commons.cli.*;
 import org.apache.log4j.PropertyConfigurator;
 
@@ -49,6 +50,7 @@ public abstract class BaseTool implements CLITool {
     private CommandLine commandLine;
     private final List<CLIToolOptions> toolOptions;
     private boolean shouldExit = false;
+    private CentralDispatcher centralDispatcher;
 
     /**
      * Add a new CLIToolOptions object to the options used by this tool.
@@ -193,5 +195,13 @@ public abstract class BaseTool implements CLITool {
      */
     protected void setShouldExit(final boolean shouldExit) {
         this.shouldExit = shouldExit;
+    }
+
+    public CentralDispatcher getCentralDispatcher() {
+        return centralDispatcher;
+    }
+
+    public void setCentralDispatcher(final CentralDispatcher centralDispatcher) {
+        this.centralDispatcher = centralDispatcher;
     }
 }

@@ -21,6 +21,8 @@ import com.dtolabs.rundeck.core.cli.Action;
 import com.dtolabs.rundeck.core.cli.ActionMaker;
 import com.dtolabs.rundeck.core.cli.CLITool;
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.FrameworkFactory;
+import com.dtolabs.rundeck.core.common.IFramework;
 import org.apache.commons.cli.*;
 import org.apache.log4j.PropertyConfigurator;
 
@@ -78,7 +80,7 @@ public class ProjectTool implements ActionMaker, CLITool {
          * Initialize the log4j logger
          */
         PropertyConfigurator.configure(Constants.getLog4jPropertiesFile().getAbsolutePath());
-        framework = Framework.getInstanceWithoutProjectsDir(Constants.getSystemBaseDir());
+        framework = FrameworkFactory.createForFilesystem(Constants.getSystemBaseDir());
         extraProperties=new Properties();
     }
 
@@ -88,13 +90,13 @@ public class ProjectTool implements ActionMaker, CLITool {
          */
         PropertyConfigurator.configure(new File(Constants.getLog4jProperties(baseDir.getAbsolutePath()))
             .getAbsolutePath());
-        framework = Framework.getInstanceWithoutProjectsDir(baseDir.getAbsolutePath());
+        framework = FrameworkFactory.createForFilesystem(baseDir.getAbsolutePath());
         extraProperties = new Properties();
     }
     /**
      * Reference to the framework instance
      */
-    private final Framework framework ;
+    private final IFramework framework ;
 
     /**
      * Creates an instance and executes {@link #run(String[])}.
@@ -263,9 +265,11 @@ public class ProjectTool implements ActionMaker, CLITool {
     public Action createAction(final String actionName) {
         try {
             if (ACTION_CREATE.equals(actionName)) {
-                return new CreateAction(this, framework, cli, extraProperties);
+                throw new RuntimeException("unimplemented: create");
+//                return new CreateAction(this, framework, cli, extraProperties);
             } else if (ACTION_REMOVE.equals(actionName)) {
-                return new RemoveAction(this, framework, cli);
+                throw new RuntimeException("unimplemented: remove");
+//                return new RemoveAction(this, framework, cli);
             } else {
                 throw new IllegalArgumentException("unknown action name: " + actionName);
             }

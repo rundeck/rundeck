@@ -168,7 +168,23 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      * @param framework the framework
      */
     public RundeckAPICentralDispatcher(final Framework framework) {
-        serverService = new ServerService(framework);
+        this(
+                framework.getProperty("framework.server.url"),
+                framework.getProperty("framework.server.username"),
+                framework.getProperty("framework.server.password")
+        );
+    }
+
+    /**
+     * Create a RundeckCentralDispatcher
+     *
+     *
+     * @param url connection url
+     * @param username connection username
+     * @param password connection password
+     */
+    public RundeckAPICentralDispatcher(final String url, final String username, final String password) {
+        serverService = new ServerService( url, username, password);
     }
 
     /**

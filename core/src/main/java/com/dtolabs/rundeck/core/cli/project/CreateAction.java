@@ -19,6 +19,8 @@ package com.dtolabs.rundeck.core.cli.project;
 import com.dtolabs.rundeck.core.cli.CLIToolLogger;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
+import com.dtolabs.rundeck.core.common.IFramework;
+import com.dtolabs.rundeck.core.common.IRundeckProject;
 import org.apache.commons.cli.CommandLine;
 import org.apache.log4j.Category;
 
@@ -43,7 +45,7 @@ public class CreateAction extends BaseAction {
      * @param framework framework
      * @param cli cli
      */
-    public CreateAction(final CLIToolLogger main, final Framework framework, final CommandLine cli) {
+    public CreateAction(final CLIToolLogger main, final IFramework framework, final CommandLine cli) {
         this(main, framework, parseBaseActionArgs(cli), parseCreateActionArgs(cli));
     }
     /**
@@ -54,7 +56,7 @@ public class CreateAction extends BaseAction {
      * @param cli cli
      * @param properties properties
      */
-    public CreateAction(final CLIToolLogger main, final Framework framework, final CommandLine cli,
+    public CreateAction(final CLIToolLogger main, final IFramework framework, final CommandLine cli,
                         final Properties properties) {
         this(main, framework, parseBaseActionArgs(cli), parseCreateActionArgs(cli), properties);
     }
@@ -68,7 +70,7 @@ public class CreateAction extends BaseAction {
      * @param projectProperties properties
      */
     public CreateAction(final CLIToolLogger main,
-                        final Framework framework,
+                        final IFramework framework,
                         final BaseActionArgs baseArgs,
                         final CreateActionArgs createArgs,
                         final Properties projectProperties) {
@@ -85,7 +87,7 @@ public class CreateAction extends BaseAction {
      *                 @param createArgs create args
      */
     public CreateAction(final CLIToolLogger main,
-                        final Framework framework,
+                        final IFramework framework,
                         final BaseActionArgs baseArgs,
                         final CreateActionArgs createArgs) {
         this(main, framework, baseArgs, createArgs, null);
@@ -158,22 +160,7 @@ public class CreateAction extends BaseAction {
             throw new IllegalStateException("project was null");
 
         }
-        final File projectDir = new File(framework.getFrameworkProjectsBaseDir(), project);
-        main.verbose("project directory exists: " + projectDir.exists());
-        try {
-            main.verbose("creating project structure in: " + projectDir.getAbsolutePath() + "...");
-            FrameworkProject.createFileStructure(projectDir);
-            main.log("Project structure created: "+projectDir.getAbsolutePath());
-        } catch (IOException e) {
-            main.error(e.getMessage());
-            throw new ProjectToolException("failed creating project structure", e);
-        }
-        main.verbose("initializing project: " + project);
-        final FrameworkProject d = framework.getFrameworkProjectMgr().createFrameworkProject(
-            project, properties);
-        if (!d.getBaseDir().exists() && !d.getBaseDir().mkdir()) {
-            throw new ProjectToolException("Failed to create project dir: " + d.getBaseDir());
-        }
+        throw new RuntimeException("unimplemented: CreateAction.exec");
     }
 
 

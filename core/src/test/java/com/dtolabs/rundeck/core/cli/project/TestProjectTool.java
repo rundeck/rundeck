@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.core.cli.project;
 
 import com.dtolabs.rundeck.core.cli.Action;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
+import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import junit.framework.Test;
@@ -185,7 +186,7 @@ public class TestProjectTool extends AbstractBaseTest {
         assertTrue("project did not exist", getFrameworkInstance().getFrameworkProjectMgr().existsFrameworkProject(
             PROJECT));
 
-        final FrameworkProject d = getFrameworkInstance().getFrameworkProjectMgr().createFrameworkProject(PROJECT);
+        final IRundeckProject d = getFrameworkInstance().getFrameworkProjectMgr().createFrameworkProject(PROJECT);
         assertEquals("project name did not match", d.getName(), PROJECT);
     }
 

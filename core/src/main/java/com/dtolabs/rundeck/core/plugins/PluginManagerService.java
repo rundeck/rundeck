@@ -73,8 +73,8 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
     public static PluginManagerService getInstanceForFramework(final Framework framework) {
         if (null == framework.getService(SERVICE_NAME)) {
 
-            final PluginManagerService instanceForExtDir = getInstanceForExtDir(framework.getLibextDir(),
-                framework.getLibextCacheDir());
+            final PluginManagerService instanceForExtDir = getInstanceForExtDir(framework.getFilesystemFramework().getLibextDir(framework),
+                                                                                framework.getFilesystemFramework().getLibextCacheDir(framework));
             framework.setService(SERVICE_NAME, instanceForExtDir);
             return instanceForExtDir;
         }

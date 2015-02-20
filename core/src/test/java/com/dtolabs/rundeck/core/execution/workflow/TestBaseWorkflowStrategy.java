@@ -63,16 +63,13 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         super.setUp();
         testFramework = getFrameworkInstance();
         testnode = testFramework.getFrameworkNodeName();
-        final FrameworkProject frameworkProject = testFramework.getFrameworkProjectMgr().createFrameworkProject(
+        final IRundeckProject frameworkProject = testFramework.getFrameworkProjectMgr().createFrameworkProject(
             TEST_PROJECT);
-        File resourcesfile = new File(frameworkProject.getNodesResourceFilePath());
-        //copy test nodes to resources file
-        try {
-            FileUtils.copyFileStreams(new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
-                                      resourcesfile);
-        } catch (IOException e) {
-            throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
-        }
+        generateProjectResourcesFile(
+                new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
+                frameworkProject
+        );
+
     }
 
     protected void tearDown() throws Exception {

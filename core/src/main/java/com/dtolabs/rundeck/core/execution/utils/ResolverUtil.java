@@ -1,8 +1,8 @@
 package com.dtolabs.rundeck.core.execution.utils;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor;
 
 /**
@@ -18,7 +18,7 @@ public class ResolverUtil {
             final String nodeAttribute,
             final String defaultValue,
             final INodeEntry node,
-            final FrameworkProject frameworkProject,
+            final IRundeckProject frameworkProject,
             final Framework framework
     )
     {
@@ -38,7 +38,7 @@ public class ResolverUtil {
             final String attribute,
             final int defaultValue,
             final INodeEntry iNodeEntry,
-            final FrameworkProject frameworkProject,
+            final IRundeckProject frameworkProject,
             final Framework framework
     )
     {
@@ -58,7 +58,7 @@ public class ResolverUtil {
             final String attribute,
             final long defaultValue,
             final INodeEntry iNodeEntry,
-            final FrameworkProject frameworkProject,
+            final IRundeckProject frameworkProject,
             final Framework framework
     )
     {
@@ -78,7 +78,7 @@ public class ResolverUtil {
             final String attribute,
             final boolean defaultValue,
             final INodeEntry iNodeEntry,
-            final FrameworkProject frameworkProject,
+            final IRundeckProject frameworkProject,
             final Framework framework
     )
     {

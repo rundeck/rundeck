@@ -26,6 +26,8 @@ package com.dtolabs.rundeck.core.cli.queue;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.*;
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.FrameworkFactory;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.BaseLogger;
 import org.apache.commons.cli.CommandLine;
@@ -157,7 +159,7 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
     /**
      * Reference to the Framework instance
      */
-    private final Framework framework;
+    private final IFramework framework;
     SingleProjectResolver internalResolver;
 
     /**
@@ -194,7 +196,7 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
      * Create QueueTool with default Framework instances located by the system rdeck.base property.
      */
     public QueueTool() {
-        this(Framework.getInstanceWithoutProjectsDir(Constants.getSystemBaseDir()), new Log4JCLIToolLogger(log4j));
+        this(FrameworkFactory.createForFilesystem(Constants.getSystemBaseDir()), new Log4JCLIToolLogger(log4j));
     }
 
     protected boolean isUseHelpOption() {
@@ -214,7 +216,7 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
      * @param logger the logger
      */
     public QueueTool(final CLIToolLogger logger) {
-        this(Framework.getInstanceWithoutProjectsDir(Constants.getSystemBaseDir()), logger);
+        this(FrameworkFactory.createForFilesystem(Constants.getSystemBaseDir()), logger);
     }
     
     /**
@@ -232,8 +234,9 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
      * @param framework the framework
      * @param logger    the logger
      */
-    public QueueTool(final Framework framework, final CLIToolLogger logger) {
+    public QueueTool(final IFramework framework, final CLIToolLogger logger) {
         this.framework = framework;
+        setCentralDispatcher(FrameworkFactory.createDispatcher(framework.getPropertyLookup()));
         internalResolver=new FrameworkSingleProjectResolver(framework);
         this.clilogger = logger;
         if (null == clilogger) {
@@ -397,7 +400,7 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
     private void killAction(final String execid) throws QueueToolException {
         final DispatcherResult result;
         try {
-            result = framework.getCentralDispatcherMgr().killDispatcherExecution(execid);
+            result = getDispatcher().killDispatcherExecution(execid);
         } catch (CentralDispatcherException e) {
             final String msg = "Failed request to kill the execution: " + e.getMessage();
             throw new QueueToolException(msg, e);
@@ -409,6 +412,10 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
         }
     }
 
+    private CentralDispatcher getDispatcher() {
+        return getCentralDispatcher();
+    }
+
     /**
      * Perform the list action and print the results.
      *
@@ -417,7 +424,7 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
     private void listAction() throws QueueToolException {
         final Collection<QueuedItem> result;
         try {
-            result = framework.getCentralDispatcherMgr().listDispatcherQueue(argProject);
+            result = getDispatcher().listDispatcherQueue(argProject);
         } catch (CentralDispatcherException e) {
             final String msg = "Failed request to list the queue: " + e.getMessage();
             throw new QueueToolException(msg, e);
@@ -443,7 +450,10 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
             mode= ConsoleExecutionFollowReceiver.Mode.progress;
         }
         try {
-            followAction(execid, argRestart, mode, framework, System.out, this);
+            followAction(execid, argRestart, mode,
+                         System.out, this,
+                         getCentralDispatcher()
+            );
         } catch (CentralDispatcherException e) {
             final String msg = "Failed request to follow the execution: " + e.getMessage();
             throw new QueueToolException(msg, e);
@@ -454,24 +464,26 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
      * Perform the Follow action for an Execution
      *
      * @param mode follow mode
-     * @param framework framework
      * @param out output for progress marks
      * @param logger logger for output of log lines
+     * @param dispatcher
      * @param execid the execution id
      * @param restart true to restart the output
      *
      * @throws CentralDispatcherException if any error occurs
      * @return true if execution was successful
      */
-    public static boolean followAction(final String execid,
-                              final boolean restart,
-                              final ConsoleExecutionFollowReceiver.Mode mode,
-                              final Framework framework,
-                              final PrintStream out, final BaseLogger logger)
+    public static boolean followAction(
+            final String execid,
+            final boolean restart,
+            final ConsoleExecutionFollowReceiver.Mode mode,
+            final PrintStream out, final BaseLogger logger, final CentralDispatcher dispatcher
+    )
         throws CentralDispatcherException {
 
         final ExecutionFollowResult result;
-        ExecutionDetail execution = framework.getCentralDispatcherMgr().getExecution(execid);
+        ExecutionDetail execution = dispatcher
+                                                    .getExecution(execid);
         final long averageDuration;
         if(null!=execution.getExecutionJob()){
             averageDuration=execution.getExecutionJob().getAverageDuration();
@@ -485,7 +497,7 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
                                                                                            mode,
                                                                                            out,
                                                                                            logger);
-        result = framework.getCentralDispatcherMgr().followDispatcherExecution(execid,
+        result = dispatcher.followDispatcherExecution(execid,
                                                                                 request,
                                                                                 receiver);
         if (mode != ConsoleExecutionFollowReceiver.Mode.output) {
@@ -494,7 +506,10 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
         ExecutionState state = result.getState();
         if (null != state) {
             if (state == ExecutionState.running) {
-                state = awaitExecutionCompletion(framework, execid);
+                state = awaitExecutionCompletion(
+                        execid,
+                        dispatcher
+                );
             }
             if (mode != ConsoleExecutionFollowReceiver.Mode.quiet) {
                 logger.warn("[" + execid + "] execution status: " + state);
@@ -508,8 +523,10 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
         return true;
     }
 
-    private static ExecutionState awaitExecutionCompletion(Framework framework,String execid) throws CentralDispatcherException {
-        ExecutionState state = executionStatus(framework, execid);
+    private static ExecutionState awaitExecutionCompletion(
+            String execid, final CentralDispatcher dispatcher
+    ) throws CentralDispatcherException {
+        ExecutionState state = executionStatus(execid, dispatcher);
         long delay= WAIT_BASE_DELAY;
         while (state == ExecutionState.running) {
             try {
@@ -520,13 +537,15 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
             if (delay < WAIT_MAX_DELAY) {
                 delay += WAIT_BASE_DELAY;
             }
-            state = executionStatus(framework, execid);
+            state = executionStatus(execid, dispatcher);
         }
         return state;
     }
 
-    private static ExecutionState executionStatus(Framework framework, String execid) throws CentralDispatcherException {
-        ExecutionDetail execution = framework.getCentralDispatcherMgr().getExecution(execid);
+    private static ExecutionState executionStatus(
+            String execid, final CentralDispatcher dispatcher
+    ) throws CentralDispatcherException {
+        ExecutionDetail execution = dispatcher.getExecution(execid);
         return execution.getStatus();
     }
 

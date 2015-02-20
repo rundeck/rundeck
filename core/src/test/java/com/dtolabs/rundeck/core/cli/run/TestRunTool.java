@@ -288,12 +288,12 @@ public class TestRunTool extends AbstractBaseTest {
             //-j option but no -p option, defaulted project name
             final Framework framework = getFrameworkInstance();
             final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-            framework.setCentralDispatcherMgr(centralDispatcher1);
+
             centralDispatcher1.queueDispatcherJobResult = QueuedItemResultImpl.successful("test", "123", "blah",
                 "blah");
 
             final RunTool tool = new RunTool(framework);
-
+            tool.setCentralDispatcher(centralDispatcher1);
             //no group in -j
             tool.run(new String[]{"run", "-j", "testjob", "-p", "testProject"});
             assertNotNull(centralDispatcher1.queuedJob);
@@ -343,11 +343,11 @@ public class TestRunTool extends AbstractBaseTest {
             //-j option but no -p option, defaulted project name
             final Framework framework = getFrameworkInstance();
             final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-            framework.setCentralDispatcherMgr(centralDispatcher1);
             centralDispatcher1.queueDispatcherJobResult = QueuedItemResultImpl.successful("test", "123", "blah",
                 "blah");
 
             final RunTool tool = new RunTool(framework);
+            tool.setCentralDispatcher(centralDispatcher1);
 
             //no group in -j
             tool.run(new String[]{"run", "-i", "testjob"});
@@ -366,11 +366,11 @@ public class TestRunTool extends AbstractBaseTest {
             //-j option but no -p option, defaulted project name
             final Framework framework = getFrameworkInstance();
             final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-            framework.setCentralDispatcherMgr(centralDispatcher1);
             centralDispatcher1.queueDispatcherJobResult = QueuedItemResultImpl.successful("test", "123", "blah",
                 "blah");
 
             final RunTool tool = new RunTool(framework);
+            tool.setCentralDispatcher(centralDispatcher1);
 
             //no group in -j
             tool.run(new String[]{"run", "-i", "testjob","--","-test1","arg","-test2","arg2"});

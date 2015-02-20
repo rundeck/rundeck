@@ -16,8 +16,6 @@
 
 package com.dtolabs.rundeck.core.common;
 
-import com.dtolabs.rundeck.core.utils.IPropertyLookup;
-import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -30,20 +28,8 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
 
     public static final Logger log = Logger.getLogger(FrameworkProjectMgr.class);
 
-    private final Framework framework;
+    private final FilesystemFramework filesystemFramework;
 
-    private final IPropertyLookup lookup;
-
-    /**
-     * @return new manager
-     *
-     * @param name      Name of manager. informational purposes
-     * @param baseDir   Basedir where child resources live
-     * @param framework Framework instance
-     */
-    public static FrameworkProjectMgr create(final String name, final File baseDir, final Framework framework) {
-        return new FrameworkProjectMgr(name, baseDir, framework);
-    }
 
 
     /**
@@ -51,35 +37,42 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
      *
      * @param name       Name of manager. informational purposes
      * @param baseDir    Basedir where child resources live
-     * @param framework  Framework instance
+     * @param filesystemFramework  Framework instance
      */
-    private FrameworkProjectMgr(final String name, final File baseDir, final Framework framework) {
-        super(name, baseDir, framework);
-        this.framework = framework;
-        lookup = PropertyLookup.create(framework.getPropertyLookup());
+    FrameworkProjectMgr(final String name, final File baseDir, final FilesystemFramework filesystemFramework) {
+        super(name, baseDir, null);
+        this.filesystemFramework = filesystemFramework;
     }
-
-
-
-
+    static FrameworkProjectMgr create(final String name, final File baseDir, final Framework framework) {
+        return FrameworkFactory.createProjectManager(name, baseDir, framework.getFilesystemFramework());
+    }
 
 
     /**
-     * Add a new project to the map. Checks if project has its own module library and creates
-     * a ModuleLookup object accordingly.
      *
      * @param projectName Name of the project
      */
-    public FrameworkProject createFrameworkProject(final String projectName) {
-        final FrameworkProject project = createFrameworkProjectInt(projectName);
+    public IRundeckProject createFrameworkProject(final String projectName) {
 
-        return project;
+        return createFrameworkProjectInt(projectName);
+    }
+    /**
+     *
+     * @param projectName Name of the project
+     */
+    public FrameworkProject createFSFrameworkProject(final String projectName) {
+
+        return createFrameworkProjectInt(projectName);
     }
 
-    public FrameworkProject createFrameworkProject(final String projectName, final Properties properties) {
-        final FrameworkProject project = createFrameworkProjectInt(projectName,properties,false);
+    @Override
+    public FilesystemFramework getFilesystemFramework() {
+        return filesystemFramework;
+    }
 
-        return project;
+    public IRundeckProject createFrameworkProject(final String projectName, final Properties properties) {
+
+        return createFrameworkProjectInt(projectName,properties,false);
     }
 
     /**
@@ -90,10 +83,9 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
      * @throws IllegalArgumentException if the project already exists
      */
     @Override
-    public FrameworkProject createFrameworkProjectStrict(final String projectName, final Properties properties) {
-        final FrameworkProject project = createFrameworkProjectInt(projectName,properties,true);
+    public IRundeckProject createFrameworkProjectStrict(final String projectName, final Properties properties) {
 
-        return project;
+        return createFrameworkProjectInt(projectName,properties,true);
     }
 
     final HashMap<String,FrameworkProject> projectCache= new HashMap<String, FrameworkProject>();
@@ -123,7 +115,14 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
                 return projectCache.get(projectName);
             }
             // check if the FrameworkProject has its own module library
-            project = FrameworkProject.create(projectName, getBaseDir(), this, properties);
+            project = FrameworkFactory.createFrameworkProject(
+                    projectName,
+                    new File(getBaseDir(), projectName),
+                    filesystemFramework,
+                    this,
+                    properties
+            );
+
             projectCache.put(projectName, project);
         }
         return project;
@@ -136,7 +135,6 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
     @Override
     public void removeFrameworkProject(final String projectName){
         synchronized (projectCache) {
-            super.remove(projectName);
             projectCache.remove(projectName);
         }
     }
@@ -144,7 +142,7 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
     /**
      * @return a collection of Project objects
      */
-    public Collection listFrameworkProjects() {
+    public Collection<IRundeckProject> listFrameworkProjects() {
         return listChildren();
     }
 
@@ -173,7 +171,7 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
 
 
     public String toString() {
-        return "DepotMgr{" +
+        return "FrameworkProjectMgr{" +
                 "name=" + getName() +
                 ", baseDir=" + getBaseDir() +
                 "}";
@@ -184,13 +182,8 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
         return new Properties();
     }
 
-    public File getPropertyFile() {
-        throw new UnsupportedOperationException("FrameworkProjectMgr should not have its own property file");
-    }
-
-
     public IFrameworkResource createChild(final String projectName) {
-        return createFrameworkProject(projectName);
+        return createFSFrameworkProject(projectName);
     }
 
     public IFrameworkResource loadChild(String name) {
@@ -202,56 +195,4 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
     }
 
 
-    public Framework getFramework() {
-        return framework;
-    }
-
-    /**
-     * Checks if objects must be registered in the resources.properties file
-     *
-     * @param projectName Name of project to check
-     * @return true if registration is required
-     */
-    public boolean isConfiguredObjectDeploymentsCheck(final String projectName) {
-        if (existsFrameworkProject(projectName)) {
-            final FrameworkProject d = getFrameworkProject(projectName);
-            return d.hasProperty("project.resources.check");
-        } else {
-            throw new FrameworkResourceException("project not found: " + projectName, this);
-        }
-    }
-
-
-
-
-    /**
-     * get property value
-     *
-     * @param key the name of the property
-     * @return property value
-     */
-    public String getProperty(final String key) {
-        return lookup.getProperty(key);
-    }
-
-    /**
-     * checks if property value exists
-     *
-     * @param key name of the property
-     * @return true if it exists; false otherwise
-     */
-    public boolean hasProperty(final String key) {
-        return lookup.hasProperty(key);
-    }
-
-    /**
-     * Retrieves map of property data
-     *
-     * @return {@link java.util.Map} containing property key/value pair
-     * @throws com.dtolabs.rundeck.core.utils.PropertyLookupException
-     *          thrown if loaderror
-     */
-    public Map getPropertiesMap() {
-        return lookup.getPropertiesMap();
-    }
 }

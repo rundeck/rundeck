@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.execution.dispatch;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
+import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
@@ -53,23 +54,20 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
     public void setUp() {
         super.setUp();
         final Framework frameworkInstance = getFrameworkInstance();
-        final FrameworkProject frameworkProject = frameworkInstance.getFrameworkProjectMgr().createFrameworkProject(
-            PROJ_NAME);
-        resourcesfile = new File(frameworkProject.getNodesResourceFilePath());
-        //copy test nodes to resources file
-        try {
-            FileUtils.copyFileStreams(new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"), resourcesfile);
-        } catch (IOException e) {
-            throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
-        }
+        final IRundeckProject frameworkProject = frameworkInstance.getFrameworkProjectMgr().createFrameworkProject(
+                PROJ_NAME,
+                generateProjectResourcesFile(
+                        new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml")
+                )
+        );
         extResourcesfile = new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes2.xml");
 
     }
 
     public void tearDown() throws Exception {
         super.tearDown();
-        File projectdir = new File(getFrameworkProjectsBase(), PROJ_NAME);
-        FileUtils.deleteDir(projectdir);
+//        File projectdir = new File(getFrameworkProjectsBase(), PROJ_NAME);
+//        FileUtils.deleteDir(projectdir);
 
     }
 

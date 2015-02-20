@@ -273,14 +273,18 @@ public class TestQueueTool extends AbstractBaseTest {
         {
             final QueueTool tool = new QueueTool(framework);
             final boolean[] actionCalled = new boolean[]{false};
-            framework.setCentralDispatcherMgr(new FailDispatcher(){
-                public Collection<QueuedItem> listDispatcherQueue(final String project) throws CentralDispatcherException {
-                    //
-                    actionCalled[0] = true;
-                    return new ArrayList<QueuedItem>();
-                }
+            tool.setCentralDispatcher(
+                    new FailDispatcher() {
+                        public Collection<QueuedItem> listDispatcherQueue(final String project)
+                                throws CentralDispatcherException
+                        {
+                            //
+                            actionCalled[0] = true;
+                            return new ArrayList<QueuedItem>();
+                        }
 
-            });
+                    }
+            );
 
             //test list action without required -p
 
@@ -307,7 +311,7 @@ public class TestQueueTool extends AbstractBaseTest {
             final QueueTool tool = new QueueTool(framework);
             final boolean[] actionCalled = new boolean[]{false};
             final String[] idCalled = new String[]{"wrong"};
-            framework.setCentralDispatcherMgr(new FailDispatcher() {
+            tool.setCentralDispatcher(new FailDispatcher() {
                 public DispatcherResult killDispatcherExecution(final String id) throws CentralDispatcherException {
                     actionCalled[0] = true;
                     idCalled[0] = id;

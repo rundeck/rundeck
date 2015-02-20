@@ -16,13 +16,12 @@
 
 package com.dtolabs.rundeck.core.common;
 
+import com.dtolabs.client.services.RundeckAPICentralDispatcher;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.CoreException;
 import com.dtolabs.rundeck.core.authorization.*;
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcher;
-import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException;
-import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherMgrFactory;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.ExecutionServiceFactory;
@@ -42,7 +41,6 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
-import com.dtolabs.rundeck.core.storage.AuthStorageTree;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import org.apache.log4j.Logger;
@@ -61,13 +59,11 @@ import java.util.*;
  * Date: Jun 4, 2004
  * Time: 8:16:42 PM
  */
-public class Framework extends FrameworkResourceParent {
+public class Framework implements IFramework, IFilesystemFramework{
     public static final Logger logger = Logger.getLogger(Framework.class);
 
     public static final String CENTRALDISPATCHER_CLS_PROP = "framework.centraldispatcher.classname";
     public static final String NODES_RESOURCES_FILE_PROP = "framework.nodes.file.name";
-    public static final String NODES_FILE_AUTOGEN_PROP = "framework.nodes.file.autogenerate";
-    public static final String CENTRALDISPATCHER_CLS_DEFAULT = "com.dtolabs.client.services.RundeckAPICentralDispatcher";
 
     /**
      * Environmental attribute for the rundeck app
@@ -79,62 +75,19 @@ public class Framework extends FrameworkResourceParent {
      */
     public static final Set<Attribute> RUNDECK_APP_ENV = Collections.singleton(RUNDECK_APP_CONTEXT);
 
-    static final String PROJECTMGR_NAME = "projectResourceMgr";
-    public static final String FRAMEWORK_LIBEXT_DIR = "framework.libext.dir";
-    public static final String FRAMEWORK_LIBEXT_CACHE_DIR = "framework.libext.cache.dir";
-    public static final String DEFAULT_LIBEXT_DIR_NAME = "libext";
-    public static final String DEFAULT_LIBEXT_CACHE_DIR_NAME = "cache";
-    public static final String SYSTEM_PROP_LIBEXT = "rdeck.libext";
-    public static final String SYSTEM_PROP_LIBEXT_CACHE = "rdeck.libext.cache";
+    static final String PROJECTMGR_NAME = "frameworkProjectMgr";
     public static final String FRAMEWORK_PLUGINS_ENABLED = "framework.plugins.enabled";
 
+    private final FilesystemFramework filesystemFramework;
     private final IPropertyLookup lookup;
-    private final File projectsBase;
-    private FrameworkProjectMgr projectResourceMgr;
+    private IFrameworkProjectMgr frameworkProjectMgr;
 
     final HashMap<String,FrameworkSupportService> services = new HashMap<String, FrameworkSupportService>();
-    /**
-     * This is the root. Does not return a parent.
-     *
-     * @throws FrameworkResourceException Throws an exception if this is called
-     */
-    public IFrameworkResourceParent getParent() {
-        throw new FrameworkResourceException("Framework has no parent resource.", this);
-    }
-
-    public boolean childCouldBeLoaded(String name) {
-        return false;
-    }
-
-    public IFrameworkResource loadChild(String name) {
-        return null;
-    }
-
-    @SuppressWarnings("rawtypes")
-    public Collection listChildNames() {
-        return new ArrayList();
-    }
 
     /**
      * Initialize children, the various resource management objects
      */
     public void initialize() {
-        projectResourceMgr = FrameworkProjectMgr.create(PROJECTMGR_NAME, projectsBase, this);
-
-        if(null==centralDispatcherMgr){
-            try {
-
-                String propValue = CENTRALDISPATCHER_CLS_DEFAULT;
-                if(lookup.hasProperty(CENTRALDISPATCHER_CLS_PROP)){
-                    propValue=lookup.getProperty(CENTRALDISPATCHER_CLS_PROP);
-                }
-                centralDispatcherMgr = CentralDispatcherMgrFactory.create(propValue, this).getCentralDispatcher();
-            } catch (CentralDispatcherException e) {
-                System.err.println("unable to load central dispatcher class: "+e.getMessage());
-                throw new CoreException(e);
-            }
-        }
-
         //plugin manager service inited first.  any pluggable services will then be
         //able to try to load providers via the plugin manager
         if(!hasProperty(FRAMEWORK_PLUGINS_ENABLED) || "true".equals(getProperty(FRAMEWORK_PLUGINS_ENABLED))){
@@ -153,111 +106,44 @@ public class Framework extends FrameworkResourceParent {
         ResourceFormatGeneratorService.getInstanceForFramework(this);
     }
 
-    private CentralDispatcher centralDispatcherMgr;
-
-    /**
-     * Return CentralDispatcher implementation.
-     * @return in implementation
-     */
-    public CentralDispatcher getCentralDispatcherMgr() {
-        return centralDispatcherMgr;
-    }
-
-
     /**
      * Gets DepotMgr for this framework instance
      * @return returns instance of IFrameworkProjectMgr
      */
-    public IFrameworkProjectMgr getFrameworkProjectMgr() {
-        return projectResourceMgr;
+    @Override
+    public ProjectManager getFrameworkProjectMgr() {
+        return frameworkProjectMgr;
     }
+
 
     /**
      * Standard constructor
-     *
-     * @param rdeck_base_dir path name to the rdeck_base
-     * @param projects_base_dir  path name to the projects base
      */
-    private Framework(final String rdeck_base_dir,
-                      final String projects_base_dir) {
-        super("framework", new File(null == rdeck_base_dir ? Constants.getSystemBaseDir() : rdeck_base_dir), null);
-        if(null==getBaseDir()) {
-            throw new NullPointerException(
-                "rdeck_base_dir was not set in constructor and system property rdeck.base was not defined");
-        }
+    Framework(
+            final FilesystemFramework filesystemFramework,
+            final IFrameworkProjectMgr frameworkProjectMgr,
+            final PropertyLookup lookup
+    )
+    {
+        this.filesystemFramework=filesystemFramework;
+        filesystemFramework.setFramework(this);
 
-        final String projectsBaseDir = null == projects_base_dir ? getProjectsBaseDir(getBaseDir())
-                                     : projects_base_dir;
-        if (null == projectsBaseDir) {
-            throw new CoreException("projects base dir could not be determined.");
-        }
-        logger.debug("creating new Framework instance."
-                     + "  rdeck_base_dir=" + getBaseDir()
-                     + ", projects_base_dir=" + projectsBaseDir
-        );
-        if (!getBaseDir().exists()){
-            throw new IllegalArgumentException("rdeck_base directory does not exist. "
-                    + rdeck_base_dir);
-        }
+        setFrameworkProjectMgr(frameworkProjectMgr);
 
-        projectsBase = new File(projectsBaseDir);
-        if (!projectsBase.exists() && !projectsBase.mkdirs()){
-            throw new IllegalArgumentException("project base directory could not be created. " + projectsBaseDir);
-        }
-        File propertyFile = getPropertyFile(getConfigDir());
+        this.lookup = lookup;
 
-        PropertyLookup lookup1 = PropertyLookup.createDeferred(propertyFile);
-        lookup1.expand();
-
-        lookup = lookup1;
-
-        long start = System.currentTimeMillis();
         initialize();
-        long end = System.currentTimeMillis();
-        if(logger.isDebugEnabled()) {
-            logger.debug("Framework.initialize() time: " + (end - start) + "ms");
-        }
     }
 
-    /**
-     * @return the path for the projects directory from the basedir
-     * @param baseDir base dir
-     */
-    public static String getProjectsBaseDir(File baseDir) {
-        return baseDir + Constants.FILE_SEP + "projects";
+    public static PropertyRetriever createPropertyRetriever(File basedir) {
+        return FilesystemFramework.createPropertyRetriever(basedir);
+    }
+    public static Framework getInstance(String basedir, String projectsdir) {
+        return FrameworkFactory.createForFilesystem(basedir);
     }
 
-    /**
-     * @return the framework property file from the config dir
-     * @param configDir config dir
-     */
-    public static File getPropertyFile(File configDir) {
-        return new File(configDir, "framework.properties");
-    }
-
-    /**
-     * @return Create a safe framework property retriever given a basedir
-     * @param baseDir base dir
-     */
-    public static PropertyRetriever createPropertyRetriever(File baseDir) {
-        return createPropertyLookupFromBasedir(baseDir).expand().safe();
-    }
-    /**
-     * @return Create a safe framework property retriever given a basedir
-     * @param baseDir base dir
-     */
-    public static PropertyLookup createPropertyLookupFromBasedir(File baseDir) {
-        return PropertyLookup.create(getPropertyFile(getConfigDir(baseDir)));
-    }
-    /**
-     * @return Create a safe project property retriever given a basedir and project name
-     *
-     * @param baseDir framework base directory
-     * @param projectsBaseDir projects base directory
-     * @param projectName name of the project
-     */
-    public static PropertyRetriever createProjectPropertyRetriever(File baseDir, File projectsBaseDir, String projectName) {
-        return FrameworkProject.createProjectPropertyRetriever(baseDir, projectsBaseDir, projectName);
+    public IFrameworkProjectMgr getFilesystemFrameworkProjectManager() {
+        return frameworkProjectMgr;
     }
 
     /**
@@ -281,96 +167,72 @@ public class Framework extends FrameworkResourceParent {
             }
         }
     }
+    @Override
     public ExecutionService getExecutionService() {
         return ExecutionServiceFactory.getInstanceForFramework(this);
     }
+    @Override
     public WorkflowExecutionService getWorkflowExecutionService() {
         return WorkflowExecutionService.getInstanceForFramework(this);
     }
+    @Override
     public StepExecutionService getStepExecutionService() {
         return StepExecutionService.getInstanceForFramework(this);
     }
 
+    @Override
     public FileCopier getFileCopierForNodeAndProject(INodeEntry node, final String project) throws ExecutionServiceException {
         return getFileCopierService().getProviderForNodeAndProject(node, project);
     }
 
+    @Override
     public FileCopierService getFileCopierService() {
         return FileCopierService.getInstanceForFramework(this);
     }
 
+    @Override
     public NodeExecutor getNodeExecutorForNodeAndProject(INodeEntry node, final String project) throws ExecutionServiceException {
         return getNodeExecutorService().getProviderForNodeAndProject(node, project);
     }
+    @Override
     public NodeExecutorService getNodeExecutorService() throws ExecutionServiceException {
         return NodeExecutorService.getInstanceForFramework(this);
     }
+    @Override
     public NodeStepExecutionService getNodeStepExecutorService() throws ExecutionServiceException {
         return NodeStepExecutionService.getInstanceForFramework(this);
     }
+    @Override
     public NodeStepExecutor getNodeStepExecutorForItem(NodeStepExecutionItem item) throws ExecutionServiceException {
         return NodeStepExecutionService.getInstanceForFramework(this).getExecutorForExecutionItem(item);
     }
+    @Override
     public NodeDispatcher getNodeDispatcherForContext(ExecutionContext context) throws ExecutionServiceException {
         return NodeDispatcherService.getInstanceForFramework(this).getNodeDispatcher(context);
     }
+    @Override
     public ResourceModelSourceService getResourceModelSourceService() {
         return ResourceModelSourceService.getInstanceForFramework(this);
     }
+    @Override
     public ResourceFormatParserService getResourceFormatParserService() {
         return ResourceFormatParserService.getInstanceForFramework(this);
     }
 
+    @Override
     public ResourceFormatGeneratorService getResourceFormatGeneratorService() {
         return ResourceFormatGeneratorService.getInstanceForFramework(this);
     }
 
+    @Override
     public ServiceProviderLoader getPluginManager(){
         if(null!=getService(PluginManagerService.SERVICE_NAME)) {
             return PluginManagerService.getInstanceForFramework(this);
         }
         return null;
     }
-    /**
-     * Returns an instance of Framework object.  Loads the framework.projects.dir property value, or defaults to basedir/projects
-     *
-     * @param rdeck_base_dir     path name to the rdeck_base
-     * @return a Framework instance
-     */
-    public static Framework getInstanceWithoutProjectsDir(final String rdeck_base_dir) {
-        File baseDir = new File(rdeck_base_dir);
-        File propertyFile = getPropertyFile(getConfigDir(baseDir));
-        String projectsDir=null;
-        if(propertyFile.exists()){
-            PropertyRetriever propertyRetriever = Framework.createPropertyRetriever(baseDir);
-            projectsDir = propertyRetriever.getProperty("framework.projects.dir");
-        }
-        return new Framework(rdeck_base_dir, projectsDir);
-    }
-    /**
-     * Returns the singleton instance of Framework object.  If any of the
-     * supplied directory paths are null, then the value from {@link Constants} is used.
-     *
-     * @param rdeck_base_dir     path name to the rdeck_base
-     * @param projects_base_dir path name to the projects base
-     * @return a Framework instance
-     */
-    public static Framework getInstance(final String rdeck_base_dir,
-                                        final String projects_base_dir) {
-
-        return new Framework(rdeck_base_dir, projects_base_dir);
-    }
 
 
-
-
-    /**
-     * Set the CentralDispatcherMgr instance
-     * @param centralDispatcherMgr the instance
-     */
-    public void setCentralDispatcherMgr(final CentralDispatcher centralDispatcherMgr) {
-        this.centralDispatcherMgr = centralDispatcherMgr;
-    }
 
 
     /**
@@ -404,7 +266,7 @@ public class Framework extends FrameworkResourceParent {
      * @param key property name
      */
     public boolean hasProjectProperty(final String key, final String project) {
-        final FrameworkProject frameworkProject = getFrameworkProjectMgr().getFrameworkProject(project);
+        final IRundeckProject frameworkProject = getFrameworkProjectMgr().getFrameworkProject(project);
         return frameworkProject.hasProperty(key) || hasProperty(key);
     }
     /**
@@ -414,7 +276,7 @@ public class Framework extends FrameworkResourceParent {
      * @param key property name
      */
     public String getProjectProperty(final String project, final String key) {
-        final FrameworkProject frameworkProject = getFrameworkProjectMgr().getFrameworkProject(project);
+        final IRundeckProject frameworkProject = getFrameworkProjectMgr().getFrameworkProject(project);
         if(frameworkProject.hasProperty(key)) {
             return frameworkProject.getProperty(key);
         }else if(hasProperty(key)) {
@@ -424,6 +286,7 @@ public class Framework extends FrameworkResourceParent {
     }
 
 
+    @Override
     public IPropertyLookup getPropertyLookup() {
         return lookup;
     }
@@ -435,8 +298,6 @@ public class Framework extends FrameworkResourceParent {
      */
     public String toString() {
         return "Framework{" +
-                "baseDir=" + getBaseDir() +
-                ", projectsBaseDir=" + projectsBase +
                 "}";
     }
 
@@ -445,6 +306,7 @@ public class Framework extends FrameworkResourceParent {
      *
      * @return Returns value of framework.server.hostname property
      */
+    @Override
     public String getFrameworkNodeHostname() {
         String hostname = getProperty("framework.server.hostname");
         if (null!=hostname) {
@@ -459,6 +321,7 @@ public class Framework extends FrameworkResourceParent {
      *
      * @return Returns value of framework.server.name property
      */
+    @Override
     public String getFrameworkNodeName() {
         String name = getProperty("framework.server.name");
        if (null!=name) {
@@ -471,6 +334,7 @@ public class Framework extends FrameworkResourceParent {
     /**
      * @return Generate a node entry for the framework with default values
      */
+    @Override
     public NodeEntryImpl createFrameworkNode() {
         NodeEntryImpl node = new NodeEntryImpl(getFrameworkNodeHostname(), getFrameworkNodeName());
         node.setUsername(getProperty("framework.ssh.user"));
@@ -496,21 +360,7 @@ public class Framework extends FrameworkResourceParent {
      *
      * @throws NodeFileParserException on error
      */
-    public Collection<INodeEntry> filterNodes(final NodesSelector nodeset, final String project, final File nodesFile) throws
-        NodeFileParserException {
-        return filterNodeSet(nodeset, project, nodesFile).getNodes();
-    }
-    /**
-     * Read the nodes file for a project and return a filtered set of nodes
-     *
-     * @param nodeset node filter set
-     * @param project project name
-     * @param nodesFile optional file to read nodes from
-     *
-     * @return filtered set  of nodes
-     *
-     * @throws NodeFileParserException on error
-     */
+    @Override
     public INodeSet filterNodeSet(final NodesSelector nodeset, final String project, final File nodesFile) throws
         NodeFileParserException {
         INodeSet unfiltered=null;
@@ -540,8 +390,11 @@ public class Framework extends FrameworkResourceParent {
      * @param unfiltered nodes
      * @param authContext authoriziation
      */
-    public INodeSet filterAuthorizedNodes(final String project, final Set<String> actions, final INodeSet unfiltered,
-            AuthContext authContext) {
+    @Override
+    public INodeSet filterAuthorizedNodes(
+            final String project, final Set<String> actions, final INodeSet unfiltered,
+            AuthContext authContext
+    ) {
         if (null == actions || actions.size() <= 0) {
             return unfiltered;
         }
@@ -575,50 +428,7 @@ public class Framework extends FrameworkResourceParent {
         return authorized;
     }
 
-    /**
-     * @return the config dir
-     */
-    public File getConfigDir() {
-        return new File(Constants.getFrameworkConfigDir(getBaseDir().getAbsolutePath()));
-    }
 
-    /**
-     * @return the config dir for the framework given a basedir
-     * @param baseDir base dir
-     */
-    public static File getConfigDir(File baseDir) {
-        return new File(Constants.getFrameworkConfigDir(baseDir.getAbsolutePath()));
-    }
-    /**
-     * @return the directory containing plugins/extensions for the framework.
-     */
-    public File getLibextDir(){
-        if(null!=System.getProperty(SYSTEM_PROP_LIBEXT)) {
-            return new File(System.getProperty(SYSTEM_PROP_LIBEXT));
-        }else if (hasProperty(FRAMEWORK_LIBEXT_DIR)) {
-            return new File(getProperty(FRAMEWORK_LIBEXT_DIR));
-        }else {
-            return new File(getBaseDir(), DEFAULT_LIBEXT_DIR_NAME);
-        }
-    }
-    /**
-     * @return the cache directory used by the plugin system
-     */
-    public File getLibextCacheDir(){
-        if (null != System.getProperty(SYSTEM_PROP_LIBEXT_CACHE)) {
-            return new File(System.getProperty(SYSTEM_PROP_LIBEXT_CACHE));
-        }else if (hasProperty(FRAMEWORK_LIBEXT_CACHE_DIR)) {
-            return new File(getProperty(FRAMEWORK_LIBEXT_CACHE_DIR));
-        }else {
-            return new File(getLibextDir(), DEFAULT_LIBEXT_CACHE_DIR_NAME);
-        }
-    }
-
-
-
-    public File getFrameworkProjectsBaseDir() {
-        return projectsBase;
-    }
 
 
     /**
@@ -629,6 +439,7 @@ public class Framework extends FrameworkResourceParent {
      * Gets the {@link INodeDesc} value describing the framework node
      * @return the singleton {@link INodeDesc} object for this framework instance
      */
+    @Override
     public INodeDesc getNodeDesc() {
         if (null==nodedesc) {
             nodedesc = NodeEntryImpl.create(getFrameworkNodeHostname(), getFrameworkNodeName());
@@ -643,9 +454,42 @@ public class Framework extends FrameworkResourceParent {
      * @param node the node
      * @return true if the node's name is the same as the framework's node name
      */
+    @Override
     public boolean isLocalNode(INodeDesc node) {
         final String fwkNodeName = getFrameworkNodeName();
         return fwkNodeName.equals(node.getNodename());
     }
 
+    public void setFrameworkProjectMgr(final IFrameworkProjectMgr frameworkProjectMgr) {
+        this.frameworkProjectMgr = frameworkProjectMgr;
+    }
+
+    public FilesystemFramework getFilesystemFramework() {
+        return filesystemFramework;
+    }
+
+    @Override
+    public File getConfigDir() {
+        return getFilesystemFramework().getConfigDir();
+    }
+
+    @Override
+    public File getFrameworkProjectsBaseDir() {
+        return getFilesystemFramework().getFrameworkProjectsBaseDir();
+    }
+
+    @Override
+    public File getLibextDir() {
+        return getFilesystemFramework().getLibextDir(this);
+    }
+
+    @Override
+    public File getLibextCacheDir() {
+        return getFilesystemFramework().getLibextCacheDir(this);
+    }
+
+    @Override
+    public File getBaseDir() {
+        return getFilesystemFramework().getBaseDir();
+    }
 }

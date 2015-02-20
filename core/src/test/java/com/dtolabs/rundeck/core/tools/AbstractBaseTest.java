@@ -17,7 +17,8 @@
 package com.dtolabs.rundeck.core.tools;
 
 
-import com.dtolabs.rundeck.core.common.FrameworkProject;
+import com.dtolabs.rundeck.core.common.FrameworkFactory;
+import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import junit.framework.TestCase;
 import com.dtolabs.launcher.Setup;
@@ -26,8 +27,7 @@ import org.apache.tools.ant.BuildException;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
 
 /**
@@ -71,6 +71,47 @@ public abstract class AbstractBaseTest extends TestCase {
         super(name);
     }
 
+    public static void generateProjectResourcesFile(final File source, final IRundeckProject frameworkProject){
+        //copy test nodes to resources file
+        File resourcesfile=null;
+        try {
+            resourcesfile = File.createTempFile("resources", ".xml");
+            FileUtils.copyFileStreams(
+                    source,
+                                      resourcesfile);
+        } catch (IOException e) {
+            throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
+        }
+        Properties properties = new Properties();
+//        properties.put("resources.source.1.type", "file");
+//        properties.put("resources.source.1.config.file", resourcesfile.getAbsolutePath());
+        properties.put("project.resources.file", resourcesfile.getAbsolutePath());
+//        properties.put("resources.source.1.config.generateFileAutomatically", "false");
+//        properties.put("resources.source.1.config.includeServerNode", "true");
+
+        Set<String> prefixes=new HashSet<String>();
+        prefixes.add("resources.source");
+        frameworkProject.mergeProjectProperties(properties,prefixes);
+    }
+    public static Properties generateProjectResourcesFile(final File source){
+        //copy test nodes to resources file
+        File resourcesfile=null;
+        try {
+            resourcesfile = File.createTempFile("resources", ".xml");
+            FileUtils.copyFileStreams(
+                    source,
+                                      resourcesfile);
+        } catch (IOException e) {
+            throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
+        }
+        Properties properties = new Properties();
+//        properties.put("resources.source.1.type", "file");
+//        properties.put("resources.source.1.config.file", resourcesfile.getAbsolutePath());
+        properties.put("project.resources.file", resourcesfile.getAbsolutePath());
+//        properties.put("resources.source.1.config.generateFileAutomatically", "false");
+//        properties.put("resources.source.1.config.includeServerNode", "true");
+        return properties;
+    }
     protected String getExistingFilePath(String filename, String type)
             throws BuildException {
 
@@ -94,7 +135,7 @@ public abstract class AbstractBaseTest extends TestCase {
 
     protected Framework getFrameworkInstance() {
         if(null==instance){
-            instance = Framework.getInstance(RDECK_BASE, PROJECTS_BASE);
+            instance = FrameworkFactory.createForFilesystem(RDECK_BASE);
         }
         return instance;
     }

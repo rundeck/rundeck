@@ -112,7 +112,7 @@ public class TestFramework extends AbstractBaseTest {
 
 
     public void testIsLocal() {
-        final Framework framework = Framework.getInstanceWithoutProjectsDir(getBaseDir());
+        final Framework framework = Framework.getInstance(getBaseDir(),null);
         assertTrue("framework node self-comparison should be true",
                 framework.isLocalNode(framework.getNodeDesc()));
 
