@@ -82,9 +82,9 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
      * reference to PropertyLookup object providing access to project.properties
      */
     private PropertyLookup lookup;
-    private List<ResourceModelSource> nodesSourceList;
     private FilesystemFramework filesystemFramework;
     private Framework framework;
+    private IProjectNodes projectNodes;
 
     /**
      * Constructor
@@ -141,7 +141,6 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
         }
         loadProperties();
 
-        nodesSourceList = new ArrayList<ResourceModelSource>();
 
         initialize();
     }
@@ -243,60 +242,7 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
         return createProjectPropertyLookup(filesystemFramework, projectName).safe();
     }
 
-    private ArrayList<Exception> nodesSourceExceptions;
-    private long nodesSourcesLastReload = 0L;
-    private void loadResourceModelSources() {
-        nodesSourceExceptions = new ArrayList<Exception>();
-        //generate Configuration for file source
-        if (hasProperty(PROJECT_RESOURCES_FILE_PROPERTY)) {
-            try {
-                final Properties config = createFileSourceConfiguration();
-                logger.info("Source (project.resources.file): loading with properties: " + config);
-                nodesSourceList.add(loadResourceModelSource("file", config, shouldCacheForType("file"),"file.file"));
-            } catch (ExecutionServiceException e) {
-                logger.error("Failed to load file resource model source: " + e.getMessage(), e);
-                nodesSourceExceptions.add(e);
-            }
-        }
-        if(hasProperty(PROJECT_RESOURCES_URL_PROPERTY)) {
-            try{
-                final Properties config = createURLSourceConfiguration();
-                logger.info("Source (project.resources.url): loading with properties: " + config);
-                nodesSourceList.add(loadResourceModelSource("url", config, shouldCacheForType("url"), "file.url"));
-            } catch (ExecutionServiceException e) {
-                logger.error("Failed to load file resource model source: " + e.getMessage(), e);
-                nodesSourceExceptions.add(e);
-            }
-        }
 
-        final List<Map> list = listResourceModelConfigurations();
-        int i=1;
-        for (final Map map : list) {
-            final String providerType = (String) map.get("type");
-            final Properties props = (Properties) map.get("props");
-
-            logger.info("Source #" + i + " (" + providerType + "): loading with properties: " + props);
-            try {
-                nodesSourceList.add(loadResourceModelSource(providerType, props, shouldCacheForType(providerType),
-                        i + "." + providerType));
-            } catch (ExecutionServiceException e) {
-                logger.error("Failed loading resource model source #" + i + ", skipping: " + e.getMessage(), e);
-                nodesSourceExceptions.add(e);
-            }
-            i++;
-        }
-
-        nodesSourcesLastReload = getPropertyFile().lastModified();
-    }
-
-    static Set<String> uncachedResourceTypes = new HashSet<String>();
-    static {
-        uncachedResourceTypes.add("file");
-        uncachedResourceTypes.add("directory");
-    }
-    private boolean shouldCacheForType(String type) {
-        return !uncachedResourceTypes.contains(type);
-    }
 
     /**
      * list the configurations of resource model providers.
@@ -308,141 +254,8 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
      */
     @Override
     public synchronized List<Map> listResourceModelConfigurations(){
-        Map propertiesMap = lookup.getPropertiesMap();
-        Properties properties = new Properties();
-        properties.putAll(propertiesMap);
-        return listResourceModelConfigurations(getName(), properties);
+        return projectNodes.listResourceModelConfigurations();
     }
-
-    public static List<Map> listResourceModelConfigurations(final String projectName, final Properties props) {
-        final ArrayList<Map> list = new ArrayList<Map>();
-        int i = 1;
-        boolean done = false;
-        while (!done) {
-            final String prefix = RESOURCES_SOURCE_PROP_PREFIX + "." + i;
-            if (props.containsKey(prefix + ".type")) {
-                final String providerType = props.getProperty(prefix + ".type");
-                final Properties configProps = new Properties();
-                configProps.setProperty("project", projectName);
-                final int len = (prefix + ".config.").length();
-                for (final Object o : props.keySet()) {
-                    final String key = (String) o;
-                    if (key.startsWith(prefix + ".config.")) {
-                        configProps.setProperty(key.substring(len), props.getProperty(key));
-                    }
-                }
-//                logger.info("Source #" + i + " (" + providerType + "): loading with properties: " + configProps);
-                final HashMap<String, Object> map = new HashMap<String, Object>();
-                map.put("type", providerType);
-                map.put("props", configProps);
-                list.add(map);
-            } else {
-                done = true;
-            }
-            i++;
-        }
-        return list;
-    }
-
-    private Properties createURLSourceConfiguration() {
-        final URLResourceModelSource.Configuration build = URLResourceModelSource.Configuration.build();
-        build.url(getProperty(PROJECT_RESOURCES_URL_PROPERTY));
-        build.project(getName());
-
-        return build.getProperties();
-    }
-
-    private synchronized Collection<ResourceModelSource> getResourceModelSources() {
-        //determine if sources need to be reloaded
-        final long lastMod = getPropertyFile().lastModified();
-        if(lastMod> nodesSourcesLastReload){
-            nodesSourceList = new ArrayList<ResourceModelSource>();
-            loadResourceModelSources();
-        }
-        return nodesSourceList;
-    }
-
-    private ResourceModelSource loadResourceModelSource(String type, Properties configuration, boolean useCache,
-            String ident) throws ExecutionServiceException {
-
-        final ResourceModelSourceService nodesSourceService =
-                getFramework().getResourceModelSourceService();
-        ResourceModelSource sourceForConfiguration = nodesSourceService.getSourceForConfiguration(type, configuration);
-
-        if (useCache) {
-            ResourceModelSourceFactory provider = nodesSourceService.providerOfType(type);
-            String name=ident;
-            if(provider instanceof Describable){
-                Describable desc=(Describable) provider;
-                Description description = desc.getDescription();
-                name = ident + " (" + description.getTitle() + ")";
-            }
-            return createCachingSource(sourceForConfiguration, ident,name);
-        } else {
-            return sourceForConfiguration;
-        }
-    }
-
-    private ResourceModelSource createCachingSource(ResourceModelSource sourceForConfiguration, String ident, String descr) {
-        final File file = getResourceModelSourceFileCacheForType(ident);
-        final ResourceModelSourceService nodesSourceService = getFramework().getResourceModelSourceService();
-        final ResourceFormatGeneratorService resourceFormatGeneratorService = getFramework().getResourceFormatGeneratorService();
-        final Properties fileSourceConfig = generateFileSourceConfigurationProperties(file.getAbsolutePath(),
-                ResourceXMLFormatGenerator.SERVICE_PROVIDER_TYPE, true, false);
-        try {
-            ResourceModelSource fileSource = nodesSourceService.getSourceForConfiguration("file", fileSourceConfig);
-
-            ResourceFormatGenerator generatorForFormat = resourceFormatGeneratorService.getGeneratorForFormat
-                    (ResourceXMLFormatGenerator.SERVICE_PROVIDER_TYPE);
-
-            String ident1 = "[ResourceModelSource: " + descr + ", project: " + getName() + "]";
-            return new CachingResourceModelSource(
-                    sourceForConfiguration,
-                    ident1,
-                    new LoggingResourceModelSourceCache(
-                            new FileResourceModelSourceCache(file, generatorForFormat, fileSource),
-                            ident1));
-        } catch (UnsupportedFormatException e) {
-            e.printStackTrace();
-        } catch (ExecutionServiceException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    private File getResourceModelSourceFileCacheForType(String ident) {
-        String varDir = getProperty("framework.var.dir");
-        File file = new File(varDir, "resourceModelSourceCache/" + getName() + "/" + ident + ".xml");
-        if(!file.getParentFile().exists() && !file.getParentFile().mkdirs()){
-            logger.warn("Failed to create cache dirs for source file cache");
-        }
-        return file;
-    }
-
-    private Properties createFileSourceConfiguration() {
-        String format=null;
-        if(hasProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY)) {
-            format = getProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY);
-        }
-        return generateFileSourceConfigurationProperties(
-                getProperty(PROJECT_RESOURCES_FILE_PROPERTY), format, true,
-                true);
-    }
-
-    private Properties generateFileSourceConfigurationProperties(String filepath, String format, boolean generate,
-            boolean includeServerNode) {
-        final FileResourceModelSource.Configuration build = FileResourceModelSource.Configuration.build();
-        build.file(filepath);
-        if(null!=format){
-            build.format(format);
-        }
-        build.project(getName());
-        build.generateFileAutomatically(generate);
-        build.includeServerNode(includeServerNode);
-
-        return build.getProperties();
-    }
-
 
     /**
      * @return Create a new Project object at the specified projects.directory
@@ -513,10 +326,6 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
         return projectResourceMgr.existsFrameworkProject(project);
     }
 
-    public boolean existsFrameworkType(final String name) {
-        return existsChild(name);
-    }
-
     /**
      * Gets the config dir for this project
      *
@@ -553,47 +362,7 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
      */
     @Override
     public INodeSet getNodeSet() throws NodeFileParserException {
-        //iterate through sources, and add nodes
-        final NodeSetMerge list = getNodeSetMerge();
-        nodesSourceExceptions = new ArrayList<Exception>();
-        for (final ResourceModelSource nodesSource : getResourceModelSources()) {
-            try {
-                INodeSet nodes = nodesSource.getNodes();
-                if (null == nodes) {
-                    logger.warn("Empty nodes result from [" + nodesSource.toString() + "]");
-                } else {
-                    list.addNodeSet(nodes);
-                }
-            } catch (ResourceModelSourceException e) {
-                logger.error("Cannot get nodes from ["+nodesSource.toString()+"]: "+e.getMessage(), e);
-                nodesSourceExceptions.add(new ResourceModelSourceException(
-                    "Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e));
-            } catch (RuntimeException e) {
-                logger.error("Cannot get nodes from ["+nodesSource.toString()+"]: "+e.getMessage(), e);
-                nodesSourceExceptions.add(new ResourceModelSourceException(
-                    "Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e));
-            }catch (Throwable e) {
-                logger.error("Cannot get nodes from ["+nodesSource.toString()+"]: "+e.getMessage(), e);
-                nodesSourceExceptions.add(new ResourceModelSourceException(
-                    "Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage()));
-            }
-        }
-        return list;
-
-    }
-
-    /**
-     * Create a {@link NodeSetMerge} based on project configuration, it defaults to merge all node attributes unless "project.resources.mergeNodeAttributes" is false
-     *
-     * @return a NodeSetMerge
-     */
-    private NodeSetMerge getNodeSetMerge() {
-        if (hasProperty(PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES) && "false".equals(
-                getProperty
-                        (PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES))) {
-            return new AdditiveListNodeSet();
-        }
-        return new MergedAttributesNodeSet();
+        return projectNodes.getNodeSet();
     }
 
     /**
@@ -973,6 +742,11 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
         generateProjectPropertiesFile(true, properties, false, null, false);
     }
 
+    @Override
+    public long getConfigLastModifiedTime() {
+        return getPropertyFile().lastModified();
+    }
+
     /**
      * Checks if project is installed by checking if it's basedir directory exists.
      * @param d Depot object to check.
@@ -986,7 +760,7 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
      * @return the set of exceptions produced by the last attempt to invoke all node providers
      */
     public ArrayList<Exception> getResourceModelSourceExceptions() {
-        return nodesSourceExceptions;
+        return projectNodes.getResourceModelSourceExceptions();
     }
 
     public Framework getFramework() {
@@ -995,5 +769,13 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
 
     public void setFramework(final Framework framework) {
         this.framework = framework;
+    }
+
+    public IProjectNodes getProjectNodes() {
+        return projectNodes;
+    }
+
+    public void setProjectNodes(final IProjectNodes projectNodes) {
+        this.projectNodes = projectNodes;
     }
 }

@@ -170,6 +170,13 @@ public class FrameworkFactory {
                 properties
         );
         frameworkProject.setFramework(filesystemFramework.getFramework());
+        ProjectNodeSupport projectNodeSupport = new ProjectNodeSupport(frameworkProject,
+                                                                       filesystemFramework.getFramework()
+                                                                                          .getResourceFormatGeneratorService(),
+                                                                       filesystemFramework.getFramework()
+                                                                                          .getResourceModelSourceService()
+        );
+        frameworkProject.setProjectNodes(projectNodeSupport);
         return frameworkProject;
     }
 

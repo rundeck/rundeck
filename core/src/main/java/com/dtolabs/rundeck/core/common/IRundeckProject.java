@@ -82,4 +82,9 @@ public interface IRundeckProject {
      * @param properties new properties to use in the file
      */
     void setProjectProperties(Properties properties);
+
+    /**
+     * @return last modified time for configuration in epoch time
+     */
+    long getConfigLastModifiedTime();
 }
