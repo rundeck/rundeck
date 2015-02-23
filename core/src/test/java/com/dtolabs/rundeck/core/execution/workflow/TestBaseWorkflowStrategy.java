@@ -203,7 +203,10 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
-                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
+                    .nodes(NodeFilter.filterNodes(
+                                   nodeset,
+                                   testFramework.getFrameworkProjectMgr().getFrameworkProject(TEST_PROJECT).getNodeSet()
+                           ))
                     .stepNumber(1)
                     .build();
             itemsSuccess = strategy.executeWorkflowItemsForNodeSet(context, map, resultList, items, keepgoing);

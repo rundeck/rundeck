@@ -33,5 +33,4 @@ public interface IFrameworkProjectMgr extends ProjectManager {
      * @return newly created {@link FrameworkProject}
      */
     FrameworkProject createFSFrameworkProject(String projectName);
-    FilesystemFramework getFilesystemFramework();
 }

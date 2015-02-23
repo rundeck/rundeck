@@ -424,7 +424,8 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
         if(hasProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY)) {
             format = getProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY);
         }
-        return generateFileSourceConfigurationProperties(getProperty(PROJECT_RESOURCES_FILE_PROPERTY), format, true,
+        return generateFileSourceConfigurationProperties(
+                getProperty(PROJECT_RESOURCES_FILE_PROPERTY), format, true,
                 true);
     }
 
@@ -587,8 +588,9 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
      * @return a NodeSetMerge
      */
     private NodeSetMerge getNodeSetMerge() {
-        if (hasProperty(PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES) && "false".equals(getProperty
-                (PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES))) {
+        if (hasProperty(PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES) && "false".equals(
+                getProperty
+                        (PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES))) {
             return new AdditiveListNodeSet();
         }
         return new MergedAttributesNodeSet();

@@ -26,9 +26,11 @@ package com.dtolabs.rundeck.core.execution.dispatch;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
+import com.dtolabs.rundeck.core.common.NodeFilter;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
+import com.dtolabs.rundeck.core.resources.FileResourceModelSource;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.NodeSet;
@@ -85,7 +87,11 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                 .framework(frameworkInstance)
                 .user("blah")
                 .nodeSelector(nodeSet)
-                .nodes(frameworkInstance.filterNodeSet(nodeSet,PROJ_NAME,null))
+                .nodes(
+                        NodeFilter.filterNodes(
+                                nodeSet,
+                                frameworkInstance.getFrameworkProjectMgr().getFrameworkProject(PROJ_NAME).getNodeSet()
+                        ))
                 .threadCount(nodeSet.getThreadCount())
                 .keepgoing(nodeSet.isKeepgoing())
                 .build();
@@ -149,7 +155,10 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                 .framework(frameworkInstance)
                 .user("blah")
                 .nodeSelector(nodeSet)
-                .nodes(frameworkInstance.filterNodeSet(nodeSet,PROJ_NAME,null))
+                .nodes(NodeFilter.filterNodes(
+                               nodeSet,
+                               frameworkInstance.getFrameworkProjectMgr().getFrameworkProject(PROJ_NAME).getNodeSet()
+                       ))
                 .threadCount(nodeSet.getThreadCount())
                 .keepgoing(nodeSet.isKeepgoing())
                 .build();
@@ -182,7 +191,10 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                 .threadCount(nodeSet.getThreadCount())
                 .keepgoing(nodeSet.isKeepgoing())
                 .nodesFile(resourcesfile)
-                .nodes(frameworkInstance.filterNodeSet(nodeSet, PROJ_NAME, resourcesfile))
+                .nodes(NodeFilter.filterNodes(
+                               nodeSet,
+                               frameworkInstance.getFrameworkProjectMgr().getFrameworkProject(PROJ_NAME).getNodeSet()
+                       ))
                 .build();
 
 
@@ -203,7 +215,7 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                 .threadCount(nodeSet.getThreadCount())
                 .keepgoing(nodeSet.isKeepgoing())
                 .nodesFile(extResourcesfile)
-                .nodes(frameworkInstance.filterNodeSet(nodeSet, PROJ_NAME, extResourcesfile))
+                .nodes(NodeFilter.filterNodes(nodeSet,FileResourceModelSource.parseFile(extResourcesfile, frameworkInstance, PROJ_NAME)))
                 .build();
             assertEquals(2,context.getNodes().getNodeNames().size());
 

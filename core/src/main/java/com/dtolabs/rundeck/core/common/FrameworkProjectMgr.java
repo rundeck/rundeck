@@ -25,6 +25,7 @@ import java.util.*;
  * DepotMgr is a framework resource that provides interfaces for looking up other resources such
  */
 public class FrameworkProjectMgr extends FrameworkResourceParent implements IFrameworkProjectMgr {
+    static final String PROJECTMGR_NAME = "frameworkProjectMgr";
 
     public static final Logger log = Logger.getLogger(FrameworkProjectMgr.class);
 
@@ -44,7 +45,7 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
         this.filesystemFramework = filesystemFramework;
     }
     static FrameworkProjectMgr create(final String name, final File baseDir, final Framework framework) {
-        return FrameworkFactory.createProjectManager(name, baseDir, framework.getFilesystemFramework());
+        return FrameworkFactory.createProjectManager(baseDir, framework.getFilesystemFramework());
     }
 
 
@@ -65,7 +66,6 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
         return createFrameworkProjectInt(projectName);
     }
 
-    @Override
     public FilesystemFramework getFilesystemFramework() {
         return filesystemFramework;
     }

@@ -23,40 +23,12 @@ import java.util.Set;
 /**
  * Interface for framework instance
  */
-public interface IFramework {
+public interface IFramework extends IFrameworkServices, IFrameworkNodes{
     /**
      * Gets DepotMgr for this framework instance
      * @return returns instance of IFrameworkProjectMgr
      */
     ProjectManager getFrameworkProjectMgr();
-
-    ExecutionService getExecutionService();
-
-    WorkflowExecutionService getWorkflowExecutionService();
-
-    StepExecutionService getStepExecutionService();
-
-    FileCopier getFileCopierForNodeAndProject(INodeEntry node, String project) throws ExecutionServiceException;
-
-    FileCopierService getFileCopierService();
-
-    NodeExecutor getNodeExecutorForNodeAndProject(INodeEntry node, String project) throws ExecutionServiceException;
-
-    NodeExecutorService getNodeExecutorService() throws ExecutionServiceException;
-
-    NodeStepExecutionService getNodeStepExecutorService() throws ExecutionServiceException;
-
-    NodeStepExecutor getNodeStepExecutorForItem(NodeStepExecutionItem item) throws ExecutionServiceException;
-
-    NodeDispatcher getNodeDispatcherForContext(ExecutionContext context) throws ExecutionServiceException;
-
-    ResourceModelSourceService getResourceModelSourceService();
-
-    ResourceFormatParserService getResourceFormatParserService();
-
-    ResourceFormatGeneratorService getResourceFormatGeneratorService();
-
-    ServiceProviderLoader getPluginManager();
 
     /**
      * @return property lookup
@@ -82,20 +54,6 @@ public interface IFramework {
      */
     NodeEntryImpl createFrameworkNode();
 
-
-    /**
-     * Read the nodes file for a project and return a filtered set of nodes
-     *
-     * @param nodeset node filter set
-     * @param project project name
-     * @param nodesFile optional file to read nodes from
-     *
-     * @return filtered set  of nodes
-     *
-     * @throws com.dtolabs.rundeck.core.common.NodeFileParserException on error
-     */
-    INodeSet filterNodeSet(NodesSelector nodeset, String project, File nodesFile) throws
-        NodeFileParserException;
 
     /**
      * @return the nodeset consisting only of the input nodes where the specified actions are all authorized
