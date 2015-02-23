@@ -14,6 +14,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
 import org.apache.log4j.Logger
@@ -65,6 +66,30 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
 
         final PropertyResolver resolver = PropertyResolverFactory.createFrameworkProjectRuntimeResolver(framework,
                 project, instanceConfiguration, name, service.getName());
+        return configurePluginByName(name, service, resolver, PropertyScope.Instance)
+    }
+
+    /**
+     * Create and configure a plugin instance with the given bean or provider name, resolving properties via
+     * the framework and specified project properties as well as instance configuration.
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param framework framework
+     * @param project project name or null
+     * @param instanceConfiguration configuration or null
+     * @return
+     */
+    @Override
+    public <T> ConfiguredPlugin<T> configurePluginByName(
+            String name,
+            PluggableProviderService<T> service,
+            IPropertyLookup frameworkLookup,
+            IPropertyLookup projectLookup,
+            Map instanceConfiguration
+    ) {
+
+        final PropertyResolver resolver = PropertyResolverFactory.createFrameworkProjectRuntimeResolver(frameworkLookup,
+                projectLookup, instanceConfiguration, name, service.getName());
         return configurePluginByName(name, service, resolver, PropertyScope.Instance)
     }
     /**

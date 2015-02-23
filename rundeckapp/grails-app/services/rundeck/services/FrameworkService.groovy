@@ -230,18 +230,20 @@ class FrameworkService implements ApplicationContextAware {
      */
     def getFrameworkProjectReadmeContents(String project){
         def project1 = getFrameworkProject(project)
-        def readme = new File(project1.baseDir, "readme.md")
-        def motd = new File(project1.baseDir, "motd.md")
-        def result=[:]
-        if (motd.exists() && motd.isFile()) {
-            //load file and apply markdown
-            result.motd= motd.text
-            result.motdHTML= result.motd?.decodeMarkdown()
-        }
-        if (readme.exists() && readme.isFile()) {
-            //load file and apply markdown
-            result.readme= readme.text
-            result.readmeHTML= result.readme?.decodeMarkdown()
+        def result = [:]
+        if(project1 instanceof FrameworkProject) {
+            def readme = new File(project1.baseDir, "readme.md")
+            def motd = new File(project1.baseDir, "motd.md")
+            if (motd.exists() && motd.isFile()) {
+                //load file and apply markdown
+                result.motd = motd.text
+                result.motdHTML = result.motd?.decodeMarkdown()
+            }
+            if (readme.exists() && readme.isFile()) {
+                //load file and apply markdown
+                result.readme = readme.text
+                result.readmeHTML = result.readme?.decodeMarkdown()
+            }
         }
         return result
     }
@@ -273,7 +275,11 @@ class FrameworkService implements ApplicationContextAware {
      */
     def INodeSet filterNodeSet( NodesSelector selector, String project) {
         metricService.withTimer(this.class.name,'filterNodeSet') {
-            rundeckFramework.filterNodeSet(selector, project, null)
+            def unfiltered = rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project).getNodeSet();
+            if(0==unfiltered.getNodeNames().size()) {
+                log.warn("Empty node list");
+            }
+            NodeFilter.filterNodes(selector, unfiltered);
         }
     }
 

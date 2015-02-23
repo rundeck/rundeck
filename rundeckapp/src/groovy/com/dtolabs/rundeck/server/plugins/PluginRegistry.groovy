@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.utils.IPropertyLookup
 
 import static com.dtolabs.rundeck.core.plugins.configuration.Validator.*
 
@@ -34,14 +35,23 @@ public interface PluginRegistry {
                                                      Framework framework,
                                         String project, Map instanceConfiguration) ;
     /**
-     * Create and configure a plugin instance with the given bean or provider name using a property resolver and a
-     * default property scope
+     * Create and configure a plugin instance with the given bean or provider name, resolving properties via
+     * the framework and specified project properties as well as instance configuration.
      * @param name name of bean or provider
      * @param service provider service
-     * @param resolver a property resolver
-     * @param defaultScope default scope to search for property values when undeclared
-     * @return Map of [instance: plugin instance, configuration: resolved configuration properties]
+     * @param framework framework
+     * @param project project name or null
+     * @param instanceConfiguration configuration or null
+     * @return
      */
+    public <T> ConfiguredPlugin<T> configurePluginByName(
+            String name,
+            PluggableProviderService<T> service,
+            IPropertyLookup frameworkLookup,
+            IPropertyLookup projectLookup,
+            Map instanceConfiguration
+    )
+
     public <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
                                                          PropertyResolver resolver, PropertyScope defaultScope);
     /**

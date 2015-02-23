@@ -1,6 +1,11 @@
+import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
+import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization
-import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.FilesystemFramework
+import com.dtolabs.rundeck.core.common.FrameworkFactory
+import com.dtolabs.rundeck.core.common.NodeSupport
+import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
@@ -55,11 +60,33 @@ beans={
     File cacheDir= new File(serverLibextCacheDir)
     File varDir= new File(Constants.getBaseVar(rdeckBase))
 
-    /*
-     * Define the single Framework instance to use
-     */
-    rundeckFramework(Framework, rdeckBase){bean->
-        bean.factoryMethod='getInstanceWithoutProjectsDir'
+
+    rundeckNodeSupport(NodeSupport){
+
+    }
+
+    frameworkPropertyLookupFactory(FrameworkPropertyLookupFactory){
+        baseDir=rdeckBase
+    }
+
+    frameworkPropertyLookup(frameworkPropertyLookupFactory:'create'){
+
+    }
+    frameworkFilesystem(FrameworkFactory,rdeckBase){ bean->
+        bean.factoryMethod='createFilesystemFramework'
+    }
+    filesystemProjectManager(FrameworkFactory,rdeckBase,frameworkFilesystem){ bean->
+        bean.factoryMethod='createProjectManager'
+    }
+
+    frameworkFactory(RundeckFrameworkFactory){
+        frameworkFilesystem=frameworkFilesystem
+        propertyLookup=ref('frameworkPropertyLookup')
+        type='db'
+        dbProjectManager=ref('projectManagerService')
+        filesystemProjectManager=ref('projectManagerService')
+    }
+    rundeckFramework(frameworkFactory:'createFramework'){
     }
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
     rundeckPolicyAuthorization(SAREAuthorization, configDir){
@@ -131,9 +158,25 @@ beans={
         converterConfigPrefix='converter'
         baseStorageType='file'
         baseStorageConfig=['baseDir':storageDir.getAbsolutePath()]
+        defaultConverters=['StorageTimestamperConverter','KeyStorageLayer']
         loggerName='org.rundeck.storage.events'
     }
     authRundeckStorageTree(AuthRundeckStorageTree, rundeckStorageTree)
+
+    rundeckConfigStorageTree(StorageTreeFactory){
+        frameworkPropertyLookup=ref('frameworkPropertyLookup')
+        pluginRegistry=ref("rundeckPluginRegistry")
+        storagePluginProviderService=ref('storagePluginProviderService')
+        storageConverterPluginProviderService=ref('storageConverterPluginProviderService')
+        configuration = application.config.rundeck?.config?.storage?.flatten()
+        storageConfigPrefix='provider'
+        converterConfigPrefix='converter'
+        baseStorageType='db'
+        baseStorageConfig=[namespace:'config']
+        defaultConverters=['StorageTimestamperConverter']
+        //TODO: encryption plugin
+        loggerName='org.rundeck.config.storage.events'
+    }
     /**
      * Define groovy-based plugins as Spring beans, registered in a hash map
      */

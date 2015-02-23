@@ -1,5 +1,4 @@
 package rundeck.services
-
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
@@ -14,6 +13,7 @@ import grails.async.Promises
 import groovy.xml.MarkupBuilder
 import org.apache.commons.io.FileUtils
 import org.springframework.beans.factory.InitializingBean
+import org.springframework.transaction.TransactionStatus
 import rundeck.BaseReport
 import rundeck.ExecReport
 import rundeck.Execution
@@ -23,12 +23,11 @@ import rundeck.controllers.JobXMLException
 
 import java.text.ParseException
 import java.text.SimpleDateFormat
+import java.util.jar.Attributes
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
-import java.util.jar.Attributes
-import org.springframework.transaction.TransactionStatus
 
 class ProjectService implements InitializingBean{
     def grailsApplication
