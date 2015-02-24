@@ -331,33 +331,61 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
         assertNotNull(nodes.getNode(getFrameworkInstance().getFrameworkNodeName()));
         assertFalse(testfile.exists());
     }
-    public void testGetNodesGenerateFileAutomatically() throws Exception {
+    public void testGetNodesGenerateFileAutomaticallyWithFormatYaml() throws Exception {
 
         //explicit format resourceyaml
-        {
-            File testfile = File.createTempFile("testresources2", ".blah");
+        File testfile = File.createTempFile("testresources2", ".blah");
+        testfile.delete();
+        assertFalse(testfile.exists());
 
-            Properties props = new Properties();
+        Properties props = new Properties();
 
-            props.setProperty("format", "resourceyaml");
+        props.setProperty("format", "resourceyaml");
 
-            props.setProperty("project", PROJ_NAME);
-            props.setProperty("file", testfile.getAbsolutePath());
-            props.setProperty("generateFileAutomatically", "true");
-            props.setProperty("includeServerNode", "true");
-            final FileResourceModelSource fileNodesProvider = new FileResourceModelSource(getFrameworkInstance());
-            fileNodesProvider.configure(props);
+        props.setProperty("project", PROJ_NAME);
+        props.setProperty("file", testfile.getAbsolutePath());
+        props.setProperty("generateFileAutomatically", "true");
+        props.setProperty("includeServerNode", "true");
+        final FileResourceModelSource fileNodesProvider = new FileResourceModelSource(getFrameworkInstance());
+        fileNodesProvider.configure(props);
 
-            final INodeSet nodes = fileNodesProvider.getNodes();
-            assertNotNull(nodes);
-            assertEquals(1, nodes.getNodes().size());
-            assertNotNull(nodes.getNode(getFrameworkInstance().getFrameworkNodeName()));
-            assertTrue(testfile.exists());
-            testfile.delete();
-        }
+        final INodeSet nodes = fileNodesProvider.getNodes();
+        assertNotNull(nodes);
+        assertEquals(1, nodes.getNodes().size());
+        assertNotNull(nodes.getNode(getFrameworkInstance().getFrameworkNodeName()));
+        assertTrue(testfile.exists());
+        testfile.delete();
+    }
+    public void testGetNodesGenerateFileAutomaticallyParentDirs() throws Exception {
+
+        //explicit format resourceyaml
+        File testfile2 = File.createTempFile("test", "blah");
+        testfile2.delete();
+        assertFalse(testfile2.exists());
+        File testfile = new File(testfile2, "sub/dir/temp.blah");
+        assertFalse(testfile.exists());
+
+        Properties props = new Properties();
+
+        props.setProperty("format", "resourceyaml");
+
+        props.setProperty("project", PROJ_NAME);
+        props.setProperty("file", testfile.getAbsolutePath());
+        props.setProperty("generateFileAutomatically", "true");
+        props.setProperty("includeServerNode", "true");
+        final FileResourceModelSource fileNodesProvider = new FileResourceModelSource(getFrameworkInstance());
+        fileNodesProvider.configure(props);
+
+        final INodeSet nodes = fileNodesProvider.getNodes();
+        assertNotNull(nodes);
+        assertEquals(1, nodes.getNodes().size());
+        assertNotNull(nodes.getNode(getFrameworkInstance().getFrameworkNodeName()));
+        assertTrue(testfile.exists());
+        testfile.delete();
+    }
+    public void testGetNodesGenerateFileAutomaticallyWithFormatXml() throws Exception {
 
         //explicit format resourcexml
-        {
             File testfile2 = new File(frameworkProject.getEtcDir(), "testresources2.blah");
             assertFalse(testfile2.exists());
 
@@ -378,10 +406,10 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
             assertNotNull(nodes2.getNode(getFrameworkInstance().getFrameworkNodeName()));
             assertTrue(testfile2.exists());
             testfile2.delete();
-        }
-
+    }
         //implicit from filename
-        {
+
+    public void testGetNodesGenerateFileAutomaticallyWithFilenameYaml() throws Exception {
             File testfile2 = new File(frameworkProject.getEtcDir(), "testresources2.yaml");
             assertFalse(testfile2.exists());
 
@@ -398,9 +426,9 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
             assertEquals(1, nodes2.getNodes().size());
             assertNotNull(nodes2.getNode(getFrameworkInstance().getFrameworkNodeName()));
             assertTrue(testfile2.exists());
-        }
-        //implicit from filename
-        {
+    }
+    //implicit from filename
+    public void testGetNodesGenerateFileAutomaticallyWithFilenameXml() throws Exception {
             File testfile2 = new File(frameworkProject.getEtcDir(), "testresources2.xml");
             assertFalse(testfile2.exists());
 
@@ -417,7 +445,6 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
             assertEquals(1, nodes2.getNodes().size());
             assertNotNull(nodes2.getNode(getFrameworkInstance().getFrameworkNodeName()));
             assertTrue(testfile2.exists());
-        }
     }
 
     public void testParseFile() throws Exception {
