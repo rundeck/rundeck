@@ -36,35 +36,39 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     def grailsApplication
     def metricService
 
-    private StorageTree getStorage(){
-        if(null==rundeckConfigStorageTree){
-            rundeckConfigStorageTree=applicationContext.getBean("rundeckConfigStorageTree",StorageTree)
+    /**
+     * Load on demand due to cyclical spring dependency
+     * @return
+     */
+    private StorageTree getStorage() {
+        if (null == rundeckConfigStorageTree) {
+            rundeckConfigStorageTree = applicationContext.getBean("rundeckConfigStorageTree", StorageTree)
         }
         return rundeckConfigStorageTree
     }
 
     @Override
     Collection<IRundeckProject> listFrameworkProjects() {
-        return Project.findAll().collect{
+        return Project.findAll().collect {
             getFrameworkProject(it.name)
         }
     }
 
     @Override
     IRundeckProject getFrameworkProject(final String name) {
-        if(!existsFrameworkProject(name)){
-            throw new IllegalArgumentException("Project does not exist: "+name)
+        if (!existsFrameworkProject(name)) {
+            throw new IllegalArgumentException("Project does not exist: " + name)
         }
         def result = projectCache.get(name)
-        if(!result){
-            throw new IllegalArgumentException("Project does not exist: "+name)
+        if (!result) {
+            throw new IllegalArgumentException("Project does not exist: " + name)
         }
         return result
     }
 
     @Override
     boolean existsFrameworkProject(final String project) {
-        return Project.findByName(project)?true:false
+        return Project.findByName(project) ? true : false
     }
 
     @Override
@@ -94,6 +98,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def spec = grailsApplication.config.rundeck?.projectManagerService?.projectCache?.spec ?:
                 "expireAfterAccess=10m,refreshAfterWrite=1m"
 
+        log.debug("projectCache: creating from spec: ${spec}")
 
         projectCache = CacheBuilder.from(spec)
                                    .recordStats()
@@ -123,56 +128,58 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                     }
                 }
         )
-        MetricRegistry registry=metricService.getMetricRegistry()
-        registry.register(MetricRegistry.name(this.class.name+".projectCache", "hitCount"),new Gauge<Long>(){
+        MetricRegistry registry = metricService.getMetricRegistry()
+        registry.register(
+                MetricRegistry.name(this.class.name + ".projectCache", "hitCount"),
+                new Gauge<Long>() {
+                    @Override
+                    Long getValue() {
+                        projectCache.stats().hitCount()
+                    }
+                }
+        )
 
-            @Override
-            Long getValue() {
-                projectCache.stats().hitCount()
-            }
-        })
-        registry.register(MetricRegistry.name(this.class.name+".projectCache", "evictionCount"),new Gauge<Long>(){
-
-            @Override
-            Long getValue() {
-                projectCache.stats().evictionCount()
-            }
-        })
-        registry.register(MetricRegistry.name(this.class.name+".projectCache", "missCount"),new Gauge<Long>(){
-
-            @Override
-            Long getValue() {
-                projectCache.stats().missCount()
-            }
-        })
-        registry.register(MetricRegistry.name(this.class.name+".projectCache", "loadExceptionCount"),new Gauge<Long>(){
-
-            @Override
-            Long getValue() {
-                projectCache.stats().loadExceptionCount()
-            }
-        })
-        registry.register(MetricRegistry.name(this.class.name+".projectCache", "hitRate"),new Gauge<Double>(){
-
-            @Override
-            Double getValue() {
-                projectCache.stats().hitRate()
-            }
-        })
-    }
-
-    /**
-     * Loads or returns cached properties
-     * @param projectName
-     * @return
-     */
-    public Properties getProjectConfig(String projectName) {
-        projectCache.get(projectName).getProperties()
+        registry.register(
+                MetricRegistry.name(this.class.name + ".projectCache", "evictionCount"),
+                new Gauge<Long>() {
+                    @Override
+                    Long getValue() {
+                        projectCache.stats().evictionCount()
+                    }
+                }
+        )
+        registry.register(
+                MetricRegistry.name(this.class.name + ".projectCache", "missCount"),
+                new Gauge<Long>() {
+                    @Override
+                    Long getValue() {
+                        projectCache.stats().missCount()
+                    }
+                }
+        )
+        registry.register(
+                MetricRegistry.name(this.class.name + ".projectCache", "loadExceptionCount"),
+                new Gauge<Long>() {
+                    @Override
+                    Long getValue() {
+                        projectCache.stats().loadExceptionCount()
+                    }
+                }
+        )
+        registry.register(
+                MetricRegistry.name(this.class.name + ".projectCache", "hitRate"),
+                new Gauge<Double>() {
+                    @Override
+                    Double getValue() {
+                        projectCache.stats().hitRate()
+                    }
+                }
+        )
     }
 
     Date getProjectConfigLastModified(String projectName) {
         def storagePath = "projects/" + projectName + "/etc/project.properties"
-        if(!getStorage().hasResource(storagePath)){
+        if (!getStorage().hasResource(storagePath)) {
             return null
         }
         def resource = getStorage().getResource(storagePath)
@@ -182,52 +189,62 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
     private Map loadProjectConfigResource(String projectName) {
         def storagePath = "projects/" + projectName + "/etc/project.properties"
-        if(!getStorage().hasResource(storagePath)){
+        if (!getStorage().hasResource(storagePath)) {
             return [:]
         }
         def resource = getStorage().getResource(storagePath)
         //load as properties file
         def properties = new Properties()
-        try{
+        try {
             properties.load(resource.contents.inputStream)
-        }catch(IOException e){
-            log.error("Failed loading project properties from storage: ${storagePath}: "+e.message,e)
+        } catch (IOException e) {
+            log.error("Failed loading project properties from storage: ${storagePath}: " + e.message, e)
         }
 
-
-        return [config: properties, lastModified: resource.contents.modificationTime, creationTime: resource.contents.creationTime]
-
+        return [
+                config      : properties,
+                lastModified: resource.contents.modificationTime,
+                creationTime: resource.contents.creationTime
+        ]
     }
 
     private Map storeProjectConfig(String projectName, Properties properties) {
         def storagePath = "projects/" + projectName + "/etc/project.properties"
-        def baos=new ByteArrayOutputStream()
-        properties.store(baos,"project config "+projectName)
+        def baos = new ByteArrayOutputStream()
+        properties.store(baos, "project config " + projectName)
         def bais = new ByteArrayInputStream(baos.toByteArray())
 
         def metadata = [:]
         def resource
-        if(getStorage().hasResource(storagePath)){
-            resource=getStorage().updateResource(storagePath,DataUtil.withStream(bais,
-                                                                                    metadata, StorageUtil.factory()))
+        if (getStorage().hasResource(storagePath)) {
+            resource = getStorage().
+                    updateResource(storagePath, DataUtil.withStream(bais, metadata, StorageUtil.factory()))
+
         } else {
-            resource=getStorage().createResource(storagePath,DataUtil.withStream(bais,
-                                                                                    metadata, StorageUtil.factory()))
+            resource = getStorage().
+                    createResource(storagePath, DataUtil.withStream(bais, metadata, StorageUtil.factory()))
+
         }
+
         projectCache.invalidate(projectName)
-        return [config: properties, lastModified: resource.contents.modificationTime, creationTime: resource.contents.creationTime]
+        return [
+                config      : properties,
+                lastModified: resource.contents.modificationTime,
+                creationTime: resource.contents.creationTime
+        ]
     }
-    private void deleteProjectConfig(String projectName){
+
+    private void deleteProjectConfig(String projectName) {
         def storagePath = "projects/" + projectName + "/etc/project.properties"
-        if(!getStorage().hasResource(storagePath)){
-            throw new IllegalArgumentException("Project config does not exist: "+projectName)
+        if (!getStorage().hasResource(storagePath)) {
+            throw new IllegalArgumentException("Project config does not exist: " + projectName)
         }
         //TODO: recursively delete storage path
         getStorage().deleteResource(storagePath)
         projectCache.invalidate(projectName)
     }
 
-    private IPropertyLookup createProjectPropertyLookup(String projectName, Properties config){
+    private IPropertyLookup createProjectPropertyLookup(String projectName, Properties config) {
         final Properties ownProps = new Properties();
         ownProps.setProperty("project.name", projectName);
         def create = PropertyLookup.create(
@@ -238,11 +255,12 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         create.expand()
         return create
     }
+
     @Override
     IRundeckProject createFrameworkProject(final String projectName, final Properties properties) {
         Project found = Project.findByName(projectName)
-        if(!found) {
-            def project=new Project(name: projectName)
+        if (!found) {
+            def project = new Project(name: projectName)
             project.save()
         }
         def res = storeProjectConfig(projectName, properties)
@@ -257,26 +275,31 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     @Override
     void removeFrameworkProject(final String projectName) {
         Project found = Project.findByName(projectName)
-        if(!found) {
+        if (!found) {
             throw new IllegalArgumentException("project does not exist: " + projectName)
         }
-        found.delete(flush:true)
+        found.delete(flush: true)
         deleteProjectConfig(projectName)
     }
 
     @Override
     IRundeckProject createFrameworkProjectStrict(final String projectName, final Properties properties) {
         Project found = Project.findByName(projectName)
-        if(found) {
+        if (found) {
             throw new IllegalArgumentException("project exists: " + projectName)
         }
         return createFrameworkProject(projectName, properties)
     }
 
 
-    IPropertyLookup mergeProjectProperties(final String projectName, final Properties properties, final Set<String> removePrefixes) {
+    IPropertyLookup mergeProjectProperties(
+            final String projectName,
+            final Properties properties,
+            final Set<String> removePrefixes
+    )
+    {
         Project found = Project.findByName(projectName)
-        if(!found) {
+        if (!found) {
             throw new IllegalArgumentException("project does not exist: " + projectName)
         }
         def newprops = new Properties()
@@ -284,23 +307,23 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def oldprops = res.config
         if (removePrefixes) {
             oldprops.propertyNames().each { String k ->
-                if(!removePrefixes.find{k.startsWith(it)}){
-                    newprops.put(k,oldprops.getProperty(k))
+                if (!removePrefixes.find { k.startsWith(it) }) {
+                    newprops.put(k, oldprops.getProperty(k))
                 }
             }
         }
         newprops.putAll(properties)
-        storeProjectConfig(projectName,newprops)
-        createProjectPropertyLookup(projectName,newprops)
+        storeProjectConfig(projectName, newprops)
+        createProjectPropertyLookup(projectName, newprops)
     }
 
     IPropertyLookup setProjectProperties(final String projectName, final Properties properties) {
         Project found = Project.findByName(projectName)
-        if(!found) {
+        if (!found) {
             throw new IllegalArgumentException("project does not exist: " + projectName)
         }
-        storeProjectConfig(projectName,properties)
-        createProjectPropertyLookup(projectName,properties)
+        storeProjectConfig(projectName, properties)
+        createProjectPropertyLookup(projectName, properties)
     }
 
     /**
@@ -309,30 +332,30 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      * @return
      */
     IRundeckProject loadProject(final String project) {
-        if(!existsFrameworkProject(project)){
-            throw new IllegalArgumentException("Project does not exist: "+project)
+        if (!existsFrameworkProject(project)) {
+            throw new IllegalArgumentException("Project does not exist: " + project)
         }
         def resource = loadProjectConfigResource(project)
         def rdproject = new RundeckProject(
                 project,
-                createProjectPropertyLookup(project, resource.config?:new Properties()),
+                createProjectPropertyLookup(project, resource.config ?: new Properties()),
                 this,
                 resource.lastModified
         )
 
         def framework = frameworkService.getRundeckFramework()
-        def nodes=new ProjectNodeSupport(
+        def nodes = new ProjectNodeSupport(
                 rdproject,
                 framework.getResourceFormatGeneratorService(),
                 framework.getResourceModelSourceService()
         )
-        rdproject.projectNodes=nodes
+        rdproject.projectNodes = nodes
         return rdproject
     }
 
     boolean needsReload(IRundeckProject project) {
         Project rdproject = Project.findByName(project.name)
-        boolean needsReload= rdproject == null ||
+        boolean needsReload = rdproject == null ||
                 project.configLastModifiedTime == null ||
                 getProjectConfigLastModified(project.name) > project.configLastModifiedTime
         needsReload
