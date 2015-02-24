@@ -1,32 +1,29 @@
 package rundeck
-
-import com.dtolabs.rundeck.core.common.FrameworkProject
-import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.core.common.NodeFileParserException
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.StorageUtil
+import com.dtolabs.rundeck.core.utils.IPropertyLookup
+import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.dtolabs.rundeck.server.projects.RundeckProject
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import grails.transaction.Transactional
 import org.rundeck.storage.data.DataUtil
-import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import rundeck.services.FrameworkService
 
 import java.util.concurrent.TimeUnit
 
 @Transactional
-class ProjectManagerService implements ProjectManager, InitializingBean, ApplicationContextAware{
+class ProjectManagerService implements ProjectManager, ApplicationContextAware{
+    def FrameworkService frameworkService
     private StorageTree rundeckConfigStorageTree
     ApplicationContext applicationContext
 
-    @Override
-    void afterPropertiesSet() throws Exception {
-    }
     private StorageTree getStorage(){
         if(null==rundeckConfigStorageTree){
             rundeckConfigStorageTree=applicationContext.getBean("rundeckConfigStorageTree",StorageTree)
@@ -37,7 +34,7 @@ class ProjectManagerService implements ProjectManager, InitializingBean, Applica
     @Override
     Collection<IRundeckProject> listFrameworkProjects() {
         return Project.findAll().collect{
-            new RundeckProject(it.name,null,this)
+            getFrameworkProject(it.name)
         }
     }
 
@@ -46,7 +43,11 @@ class ProjectManagerService implements ProjectManager, InitializingBean, Applica
         if(!existsFrameworkProject(name)){
             throw new IllegalArgumentException("Project does not exist: "+name)
         }
-        new RundeckProject(name,getProjectConfig(name), this)
+        def result = projectCache.get(name)
+        if(!result){
+            throw new IllegalArgumentException("Project does not exist: "+name)
+        }
+        return result
     }
 
     @Override
@@ -60,16 +61,17 @@ class ProjectManagerService implements ProjectManager, InitializingBean, Applica
     }
 
     //TODO: use spec for cache
-    private LoadingCache<String, Properties> projectPropertiesCache = CacheBuilder.newBuilder()
+    private LoadingCache<String, IRundeckProject> projectCache = CacheBuilder.newBuilder()
 //                                                  .maximumSize(1000)
                                                                                   .expireAfterAccess(10, TimeUnit.MINUTES)
                                                                                   .refreshAfterWrite(10, TimeUnit.MINUTES)
 //                                                  .removalListener(MY_LISTENER)
                                                                                   .build(
-            new CacheLoader<String, Properties>() {
-                public Properties load(String key)  {
-                    return loadProjectConfig(key);
+            new CacheLoader<String, IRundeckProject>() {
+                public IRundeckProject load(String key)  {
+                    return loadProject(key);
                 }
+
             });
     /**
      * Loads or returns cached properties
@@ -77,9 +79,26 @@ class ProjectManagerService implements ProjectManager, InitializingBean, Applica
      * @return
      */
     public Properties getProjectConfig(String projectName) {
-        projectPropertiesCache.get(projectName)
+        projectCache.get(projectName).getProperties()
     }
-    private Properties loadProjectConfig(String projectName) {
+
+    Date getProjectConfigLastModified(String projectName) {
+
+        def storagePath = "projects/" + projectName + "/etc/project.properties"
+        if(!getStorage().hasResource(storagePath)){
+            return null
+        }
+        def resource = getStorage().getResource(storagePath)
+        //load as properties file
+        def properties = new Properties()
+        try{
+            properties.load(resource.contents.inputStream)
+        }catch(IOException e){
+            log.error("Failed loading project properties from storage: ${storagePath}: "+e.message,e)
+        }
+        resource.getContents().modificationTime
+    }
+    private Map loadProjectConfigResource(String projectName) {
         def storagePath = "projects/" + projectName + "/etc/project.properties"
         if(!getStorage().hasResource(storagePath)){
             return [:]
@@ -92,34 +111,50 @@ class ProjectManagerService implements ProjectManager, InitializingBean, Applica
         }catch(IOException e){
             log.error("Failed loading project properties from storage: ${storagePath}: "+e.message,e)
         }
-        return properties
+
+
+        return [config: properties, lastModified: resource.contents.modificationTime, creationTime: resource.contents.creationTime]
+
     }
-    private void storeProjectConfig(String projectName, Properties properties){
+    private Date storeProjectConfig(String projectName, Properties properties){
         def storagePath = "projects/" + projectName + "/etc/project.properties"
         def baos=new ByteArrayOutputStream()
         properties.store(baos,"project config "+projectName)
         def bais = new ByteArrayInputStream(baos.toByteArray())
 
         def metadata = [:]
+        def resource
         if(getStorage().hasResource(storagePath)){
-            getStorage().updateResource(storagePath,DataUtil.withStream(bais,
+            resource=getStorage().updateResource(storagePath,DataUtil.withStream(bais,
                                                                                     metadata, StorageUtil.factory()))
         } else {
-            getStorage().createResource(storagePath,DataUtil.withStream(bais,
+            resource=getStorage().createResource(storagePath,DataUtil.withStream(bais,
                                                                                     metadata, StorageUtil.factory()))
         }
-        projectPropertiesCache.put(projectName, properties)
-
+        projectCache.invalidate(projectName)
+        resource.contents.modificationTime
     }
     private void deleteProjectConfig(String projectName){
         def storagePath = "projects/" + projectName + "/etc/project.properties"
         if(!getStorage().hasResource(storagePath)){
             throw new IllegalArgumentException("Project config does not exist: "+projectName)
         }
+        //TODO: recursively delete storage path
         getStorage().deleteResource(storagePath)
-        projectPropertiesCache.invalidate(projectName)
+        projectCache.invalidate(projectName)
     }
 
+    private IPropertyLookup createProjectPropertyLookup(String projectName, Properties config){
+        final Properties ownProps = new Properties();
+        ownProps.setProperty("project.name", projectName);
+        def create = PropertyLookup.create(
+                config,
+                PropertyLookup.create(ownProps, frameworkService.getRundeckFramework().propertyLookup)
+        )
+
+        create.expand()
+        return create
+    }
     @Override
     IRundeckProject createFrameworkProject(final String projectName, final Properties properties) {
         Project found = Project.findByName(projectName)
@@ -127,9 +162,9 @@ class ProjectManagerService implements ProjectManager, InitializingBean, Applica
             def project=new Project(name: projectName)
             project.save()
         }
-        storeProjectConfig(projectName,properties)
+        Date lastmod=storeProjectConfig(projectName,properties)
 
-        return new RundeckProject(projectName, getProjectConfig(projectName),this)
+        return new RundeckProject(projectName, createProjectPropertyLookup(projectName,getProjectConfig(projectName)),this,lastmod)
     }
 
     @Override
@@ -151,15 +186,8 @@ class ProjectManagerService implements ProjectManager, InitializingBean, Applica
         return createFrameworkProject(projectName, properties)
     }
 
-    List<Map> listResourceModelConfigurations(final String project) {
-        return FrameworkProject.listResourceModelConfigurations(project,getProjectConfig(project))
-    }
 
-    INodeSet getNodeSet(final String project) throws NodeFileParserException {
-        throw new RuntimeException("not implemented")
-    }
-
-    void mergeProjectProperties(final String projectName, final Properties properties, final Set<String> removePrefixes) {
+    IPropertyLookup mergeProjectProperties(final String projectName, final Properties properties, final Set<String> removePrefixes) {
         Project found = Project.findByName(projectName)
         if(!found) {
             throw new IllegalArgumentException("project does not exist: " + projectName)
@@ -175,13 +203,38 @@ class ProjectManagerService implements ProjectManager, InitializingBean, Applica
         }
         newprops.putAll(properties)
         storeProjectConfig(projectName,newprops)
+        createProjectPropertyLookup(projectName,newprops)
     }
 
-    void setProjectProperties(final String projectName, final Properties properties) {
+    IPropertyLookup setProjectProperties(final String projectName, final Properties properties) {
         Project found = Project.findByName(projectName)
         if(!found) {
             throw new IllegalArgumentException("project does not exist: " + projectName)
         }
         storeProjectConfig(projectName,properties)
+        createProjectPropertyLookup(projectName,properties)
     }
+
+    /**
+     * Load the project config and node support
+     * @param project
+     * @return
+     */
+    IRundeckProject loadProject(final String project) {
+        if(!existsFrameworkProject(project)){
+            throw new IllegalArgumentException("Project does not exist: "+project)
+        }
+        def resource = loadProjectConfigResource(project)
+        def rdproject=new RundeckProject(project,createProjectPropertyLookup(project,resource.config), this,resource.lastModified)
+
+        def framework = frameworkService.getRundeckFramework()
+        def nodes=new ProjectNodeSupport(
+                rdproject,
+                framework.getResourceFormatGeneratorService(),
+                framework.getResourceModelSourceService()
+        )
+        rdproject.projectNodes=nodes
+        return rdproject
+    }
+
 }

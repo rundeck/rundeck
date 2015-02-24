@@ -1,9 +1,7 @@
 package com.dtolabs.rundeck.server.projects;
 
-import com.dtolabs.rundeck.core.common.INodeSet;
-import com.dtolabs.rundeck.core.common.IRundeckProject;
-import com.dtolabs.rundeck.core.common.NodeFileParserException;
-import com.dtolabs.rundeck.core.common.UpdateUtils;
+import com.dtolabs.rundeck.core.common.*;
+import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import rundeck.ProjectManagerService;
 
 import java.util.*;
@@ -13,30 +11,40 @@ import java.util.*;
  */
 public class RundeckProject implements IRundeckProject{
     private String name;
-    private Properties properties;
     private ProjectManagerService projectService;
+    private IProjectNodes projectNodes;
+    private Date lastModifiedTime;
+    private IPropertyLookup lookup;
 
-    public RundeckProject(final String name, final Properties properties, final ProjectManagerService projectService) {
+    public RundeckProject(
+            final String name,
+            final IPropertyLookup lookup,
+            final ProjectManagerService projectService,
+            final Date lastModifiedTime
+    )
+    {
         this.name = name;
-        this.properties = properties;
+        this.lookup = lookup;
         this.projectService = projectService;
+        this.lastModifiedTime = lastModifiedTime;
+
     }
 
     public String getName(){
         return name;
     }
     public String getProperty(final String property) {
-        return properties.getProperty(property);
+        return lookup.getProperty(property);
     }
 
     @Override
     public List<Map> listResourceModelConfigurations() {
-        return projectService.listResourceModelConfigurations(name);
+        return projectNodes.listResourceModelConfigurations();
     }
 
     @Override
     public INodeSet getNodeSet() throws NodeFileParserException {
-        return projectService.getNodeSet(name);
+        return projectNodes.getNodeSet();
     }
 
     @Override
@@ -47,9 +55,9 @@ public class RundeckProject implements IRundeckProject{
     @Override
     public Map<String, ?> getProperties() {
         HashMap<String, Object> result = new HashMap<>();
-        if(null!=properties){
-            for(Object key:properties.keySet()) {
-                result.put(key.toString(), properties.getProperty(key.toString()));
+        if(null!=lookup){
+            for(Object key:lookup.getPropertiesMap().keySet()) {
+                result.put(key.toString(), lookup.getProperty(key.toString()));
             }
         }
         return result;
@@ -57,12 +65,19 @@ public class RundeckProject implements IRundeckProject{
 
     @Override
     public void mergeProjectProperties(final Properties properties, final Set<String> removePrefixes) {
-        projectService.mergeProjectProperties(name, properties, removePrefixes);
+        this.lookup=projectService.mergeProjectProperties(name, properties, removePrefixes);
+        this.lastModifiedTime=projectService.getProjectConfigLastModified(name);
     }
 
     @Override
     public void setProjectProperties(final Properties properties) {
-        projectService.setProjectProperties(name, properties);
+        this.lookup=projectService.setProjectProperties(name, properties);
+        this.lastModifiedTime=projectService.getProjectConfigLastModified(name);
+    }
+
+    @Override
+    public Date getConfigLastModifiedTime() {
+        return lastModifiedTime;
     }
 
     @Override
@@ -75,5 +90,13 @@ public class RundeckProject implements IRundeckProject{
             throws UpdateUtils.UpdateException
     {
         throw new RuntimeException("not implemented");
+    }
+
+    public IProjectNodes getProjectNodes() {
+        return projectNodes;
+    }
+
+    public void setProjectNodes(final IProjectNodes projectNodes) {
+        this.projectNodes = projectNodes;
     }
 }
