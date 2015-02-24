@@ -10,19 +10,27 @@ import com.dtolabs.rundeck.server.projects.RundeckProject
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.ListenableFutureTask
 import grails.transaction.Transactional
 import org.rundeck.storage.data.DataUtil
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.services.FrameworkService
 
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 @Transactional
-class ProjectManagerService implements ProjectManager, ApplicationContextAware{
+class ProjectManagerService implements ProjectManager, ApplicationContextAware, InitializingBean {
     def FrameworkService frameworkService
     private StorageTree rundeckConfigStorageTree
     ApplicationContext applicationContext
+    def grailsApplication
 
     private StorageTree getStorage(){
         if(null==rundeckConfigStorageTree){
@@ -59,20 +67,60 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware{
     IRundeckProject createFrameworkProject(final String projectName) {
         return createFrameworkProject(projectName, new Properties())
     }
+    /**
+     * Scheduled executor for retries
+     */
+    private ExecutorService executor = Executors.newFixedThreadPool(2)
 
-    //TODO: use spec for cache
-    private LoadingCache<String, IRundeckProject> projectCache = CacheBuilder.newBuilder()
-//                                                  .maximumSize(1000)
-                                                                                  .expireAfterAccess(10, TimeUnit.MINUTES)
-                                                                                  .refreshAfterWrite(10, TimeUnit.MINUTES)
-//                                                  .removalListener(MY_LISTENER)
-                                                                                  .build(
-            new CacheLoader<String, IRundeckProject>() {
-                public IRundeckProject load(String key)  {
-                    return loadProject(key);
+    //basic creation, created via spec string in afterPropertiesSet()
+    private LoadingCache<String, IRundeckProject> projectCache =
+            CacheBuilder.newBuilder()
+                        .expireAfterAccess(10, TimeUnit.MINUTES)
+                        .refreshAfterWrite(1, TimeUnit.MINUTES)
+                        .build(
+                    new CacheLoader<String, IRundeckProject>() {
+                        public IRundeckProject load(String key) {
+                            return loadProject(key);
+                        }
+                    }
+            );
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        def spec = grailsApplication.config.rundeck?.projectManagerService?.projectCache?.spec ?:
+                "expireAfterAccess=10m,refreshAfterWrite=1m"
+
+
+        projectCache = CacheBuilder.from(spec)
+                                   .recordStats()
+                                   .build(
+                new CacheLoader<String, IRundeckProject>() {
+                    public IRundeckProject load(String key) {
+                        return loadProject(key);
+                    }
+
+                    @Override
+                    ListenableFuture<IRundeckProject> reload(final String key, final IRundeckProject oldValue)
+                            throws Exception
+                    {
+                        if (needsReload(oldValue)) {
+                            ListenableFutureTask<IRundeckProject> task = ListenableFutureTask.create(
+                                    new Callable<IRundeckProject>() {
+                                        public IRundeckProject call() {
+                                            return loadProject(key);
+                                        }
+                                    }
+                            );
+                            executor.execute(task);
+                            return task;
+                        } else {
+                            return Futures.immediateFuture(oldValue)
+                        }
+                    }
                 }
+        )
+    }
 
-            });
     /**
      * Loads or returns cached properties
      * @param projectName
@@ -235,6 +283,14 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware{
         )
         rdproject.projectNodes=nodes
         return rdproject
+    }
+
+    boolean needsReload(IRundeckProject project) {
+        Project rdproject = Project.findByName(project.name)
+        boolean needsReload= rdproject == null ||
+                project.configLastModifiedTime == null ||
+                getProjectConfigLastModified(project.name) > project.configLastModifiedTime
+        needsReload
     }
 
 }
