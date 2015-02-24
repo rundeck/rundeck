@@ -75,7 +75,7 @@ beans={
     frameworkFilesystem(FrameworkFactory,rdeckBase){ bean->
         bean.factoryMethod='createFilesystemFramework'
     }
-    filesystemProjectManager(FrameworkFactory,rdeckBase,frameworkFilesystem){ bean->
+    filesystemProjectManager(FrameworkFactory,frameworkFilesystem){ bean->
         bean.factoryMethod='createProjectManager'
     }
 
@@ -84,7 +84,7 @@ beans={
         propertyLookup=ref('frameworkPropertyLookup')
         type='db'
         dbProjectManager=ref('projectManagerService')
-        filesystemProjectManager=ref('projectManagerService')
+        filesystemProjectManager=ref('filesystemProjectManager')
     }
     rundeckFramework(frameworkFactory:'createFramework'){
     }
