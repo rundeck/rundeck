@@ -144,7 +144,7 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
         logger.debug("Configuring base converter: StorageTimestamperConverter" );
         logger.debug("Configuring base converter: KeyStorageLayer" );
         if(null!=defaultConverters && defaultConverters.contains("StorageTimestamperConverter")) {
-            builder.convert(
+            builder=builder.convert(
                     new StorageConverterPluginAdapter(
                             "builtin:timestamp",
                             new StorageTimestamperConverter()
@@ -152,7 +152,7 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
             );
         }
         if(null!=defaultConverters && defaultConverters.contains("KeyStorageLayer")){
-            builder.convert(
+            builder=builder.convert(
                     new StorageConverterPluginAdapter(
                             "builtin:ssh-storage",
                             new KeyStorageLayer()
