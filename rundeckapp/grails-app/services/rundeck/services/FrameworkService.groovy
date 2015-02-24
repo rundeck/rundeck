@@ -833,7 +833,7 @@ class FrameworkService implements ApplicationContextAware {
 
     public def listResourceModelConfigurations(String project) {
         def fproject = getFrameworkProject(project)
-        fproject.listResourceModelConfigurations()
+        fproject.projectNodes.listResourceModelConfigurations()
     }
 
     /**

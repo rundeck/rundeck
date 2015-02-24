@@ -406,7 +406,7 @@ class FrameworkController extends ControllerBase {
 */
         def resources=[:]
 
-        def parseExceptions= project.getResourceModelSourceExceptions()
+        def parseExceptions= project.projectNodes.getResourceModelSourceExceptions()
 
         if(!query.filter){
             query.filter=NodeSet.generateFilter(nset)

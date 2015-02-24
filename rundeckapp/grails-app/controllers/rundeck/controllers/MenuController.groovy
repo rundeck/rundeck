@@ -520,7 +520,7 @@ class MenuController extends ControllerBase{
 
             def project= params.project
             def fproject = frameworkService.getFrameworkProject(project)
-            def configs = fproject.listResourceModelConfigurations()
+            def configs = fproject.projectNodes.listResourceModelConfigurations()
 
             final service = framework.getResourceModelSourceService()
             final descriptions = service.listDescriptions()
