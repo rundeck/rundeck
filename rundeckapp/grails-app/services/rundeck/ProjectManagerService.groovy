@@ -171,21 +171,15 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
 
     Date getProjectConfigLastModified(String projectName) {
-
         def storagePath = "projects/" + projectName + "/etc/project.properties"
         if(!getStorage().hasResource(storagePath)){
             return null
         }
         def resource = getStorage().getResource(storagePath)
-        //load as properties file
-        def properties = new Properties()
-        try{
-            properties.load(resource.contents.inputStream)
-        }catch(IOException e){
-            log.error("Failed loading project properties from storage: ${storagePath}: "+e.message,e)
-        }
+
         resource.getContents().modificationTime
     }
+
     private Map loadProjectConfigResource(String projectName) {
         def storagePath = "projects/" + projectName + "/etc/project.properties"
         if(!getStorage().hasResource(storagePath)){
@@ -204,7 +198,8 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         return [config: properties, lastModified: resource.contents.modificationTime, creationTime: resource.contents.creationTime]
 
     }
-    private Date storeProjectConfig(String projectName, Properties properties){
+
+    private Map storeProjectConfig(String projectName, Properties properties) {
         def storagePath = "projects/" + projectName + "/etc/project.properties"
         def baos=new ByteArrayOutputStream()
         properties.store(baos,"project config "+projectName)
@@ -220,7 +215,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                                                                                     metadata, StorageUtil.factory()))
         }
         projectCache.invalidate(projectName)
-        resource.contents.modificationTime
+        return [config: properties, lastModified: resource.contents.modificationTime, creationTime: resource.contents.creationTime]
     }
     private void deleteProjectConfig(String projectName){
         def storagePath = "projects/" + projectName + "/etc/project.properties"
@@ -250,9 +245,13 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             def project=new Project(name: projectName)
             project.save()
         }
-        Date lastmod=storeProjectConfig(projectName,properties)
-
-        return new RundeckProject(projectName, createProjectPropertyLookup(projectName,getProjectConfig(projectName)),this,lastmod)
+        def res = storeProjectConfig(projectName, properties)
+        return new RundeckProject(
+                projectName,
+                createProjectPropertyLookup(projectName, res.config),
+                this,
+                res.lastModified
+        )
     }
 
     @Override
@@ -281,8 +280,9 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             throw new IllegalArgumentException("project does not exist: " + projectName)
         }
         def newprops = new Properties()
-        def oldprops=getProjectConfig(projectName)
-        if(removePrefixes) {
+        def res = loadProjectConfigResource(projectName)
+        def oldprops = res.config
+        if (removePrefixes) {
             oldprops.propertyNames().each { String k ->
                 if(!removePrefixes.find{k.startsWith(it)}){
                     newprops.put(k,oldprops.getProperty(k))
@@ -313,7 +313,12 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             throw new IllegalArgumentException("Project does not exist: "+project)
         }
         def resource = loadProjectConfigResource(project)
-        def rdproject=new RundeckProject(project,createProjectPropertyLookup(project,resource.config), this,resource.lastModified)
+        def rdproject = new RundeckProject(
+                project,
+                createProjectPropertyLookup(project, resource.config?:new Properties()),
+                this,
+                resource.lastModified
+        )
 
         def framework = frameworkService.getRundeckFramework()
         def nodes=new ProjectNodeSupport(
