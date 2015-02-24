@@ -213,7 +213,7 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
         ownProps.setProperty("project.name", projectName);
 
         File baseDir=filesystemFramework.getBaseDir();
-                File projectsBaseDir=filesystemFramework.getFrameworkProjectsBaseDir();
+        File projectsBaseDir=filesystemFramework.getFrameworkProjectsBaseDir();
         //generic framework properties for a project
         final File fwkProjectPropertyFile = FilesystemFramework.getPropertyFile(filesystemFramework.getConfigDir());
         final Properties nodeWideDepotProps = PropertyLookup.fetchProperties(fwkProjectPropertyFile);
@@ -743,8 +743,8 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
     }
 
     @Override
-    public long getConfigLastModifiedTime() {
-        return getPropertyFile().lastModified();
+    public Date getConfigLastModifiedTime() {
+        return new Date(getPropertyFile().lastModified());
     }
 
     /**
@@ -771,6 +771,7 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
         this.framework = framework;
     }
 
+    @Override
     public IProjectNodes getProjectNodes() {
         return projectNodes;
     }

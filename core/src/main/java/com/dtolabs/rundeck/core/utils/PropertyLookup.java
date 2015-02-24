@@ -120,6 +120,15 @@ public class PropertyLookup implements IPropertyLookup {
     public static PropertyLookup create(final File propfile, final IPropertyLookup defaultsLookup) {
         return new PropertyLookup(fetchProperties(propfile), defaultsLookup);
     }
+    /**
+     *
+     * @param data       Properties data
+     * @param defaultsLookup IPropertyLookup of default properties
+     *                       @return lookup
+     */
+    public static PropertyLookup create(final Properties data, final IPropertyLookup defaultsLookup) {
+        return new PropertyLookup(data, defaultsLookup);
+    }
 
     /**
      * Calls base constructor feeding defaults from Map and IPropertyLookup params

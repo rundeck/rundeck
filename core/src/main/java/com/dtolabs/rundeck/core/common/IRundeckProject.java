@@ -1,9 +1,6 @@
 package com.dtolabs.rundeck.core.common;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Interface for a project
@@ -86,5 +83,10 @@ public interface IRundeckProject {
     /**
      * @return last modified time for configuration in epoch time
      */
-    long getConfigLastModifiedTime();
+    Date getConfigLastModifiedTime();
+
+    /**
+     * @return the project nodes interface
+     */
+    IProjectNodes getProjectNodes();
 }

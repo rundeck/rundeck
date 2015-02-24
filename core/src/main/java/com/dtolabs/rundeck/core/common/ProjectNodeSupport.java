@@ -26,7 +26,7 @@ public class ProjectNodeSupport implements IProjectNodes {
 
     private IRundeckProject project;
     private ArrayList<Exception> nodesSourceExceptions;
-    private long nodesSourcesLastReload = 0L;
+    private long nodesSourcesLastReload = -1L;
     private List<ResourceModelSource> nodesSourceList;
     private ResourceFormatGeneratorService resourceFormatGeneratorService;
     private ResourceModelSourceService resourceModelSourceService;
@@ -121,7 +121,7 @@ public class ProjectNodeSupport implements IProjectNodes {
 
     private synchronized Collection<ResourceModelSource> getResourceModelSources() {
         //determine if sources need to be reloaded
-        final long lastMod = project.getConfigLastModifiedTime();
+        final long lastMod = project.getConfigLastModifiedTime()!=null?project.getConfigLastModifiedTime().getTime():0;
         if (lastMod > nodesSourcesLastReload) {
             nodesSourceList = new ArrayList<ResourceModelSource>();
             loadResourceModelSources();
@@ -153,7 +153,7 @@ public class ProjectNodeSupport implements IProjectNodes {
             }
         }
 
-        final List<Map> list = project.listResourceModelConfigurations();
+        final List<Map> list = listResourceModelConfigurations();
         int i = 1;
         for (final Map map : list) {
             final String providerType = (String) map.get("type");
@@ -174,7 +174,8 @@ public class ProjectNodeSupport implements IProjectNodes {
             i++;
         }
 
-        nodesSourcesLastReload = project.getConfigLastModifiedTime();
+        Date configLastModifiedTime = project.getConfigLastModifiedTime();
+        nodesSourcesLastReload = configLastModifiedTime!=null?configLastModifiedTime.getTime():-1;
     }
 
     private Properties createURLSourceConfiguration() {
