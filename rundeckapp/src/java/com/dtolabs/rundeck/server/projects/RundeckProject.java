@@ -99,4 +99,12 @@ public class RundeckProject implements IRundeckProject{
     public void setProjectNodes(final IProjectNodes projectNodes) {
         this.projectNodes = projectNodes;
     }
+
+    @Override
+    public String toString() {
+        return "RundeckProject{" +
+               "name='" + name + '\'' +
+               ", lastModifiedTime=" + lastModifiedTime +
+               '}';
+    }
 }
