@@ -34,7 +34,6 @@ public class FrameworkFactory {
         PropertyLookup lookup1 = PropertyLookup.createDeferred(propertyFile2);
         lookup1.expand();
         FrameworkProjectMgr projectManager = createProjectManager(
-                filesystemFramework.getFrameworkProjectsBaseDir(),
                 filesystemFramework
         );
         return createFramework(lookup1, filesystemFramework, projectManager);
@@ -62,7 +61,6 @@ public class FrameworkFactory {
 
 
         FrameworkProjectMgr projectManager = createProjectManager(
-                filesystemFramework.getFrameworkProjectsBaseDir(),
                 filesystemFramework
         );
 
@@ -143,6 +141,11 @@ public class FrameworkFactory {
             FilesystemFramework filesystemFramework
     ) {
         return new FrameworkProjectMgr("name", baseDir, filesystemFramework);
+    }
+    public static FrameworkProjectMgr createProjectManager(
+            FilesystemFramework filesystemFramework
+    ) {
+        return new FrameworkProjectMgr("name", filesystemFramework.getFrameworkProjectsBaseDir(), filesystemFramework);
     }
 
     /**
