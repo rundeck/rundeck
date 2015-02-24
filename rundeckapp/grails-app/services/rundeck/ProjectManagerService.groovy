@@ -1,4 +1,7 @@
 package rundeck
+
+import com.codahale.metrics.Gauge
+import com.codahale.metrics.MetricRegistry
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.common.ProjectNodeSupport
@@ -31,6 +34,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     private StorageTree rundeckConfigStorageTree
     ApplicationContext applicationContext
     def grailsApplication
+    def metricService
 
     private StorageTree getStorage(){
         if(null==rundeckConfigStorageTree){
@@ -119,6 +123,42 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                     }
                 }
         )
+        MetricRegistry registry=metricService.getMetricRegistry()
+        registry.register(MetricRegistry.name(this.class.name+".projectCache", "hitCount"),new Gauge<Long>(){
+
+            @Override
+            Long getValue() {
+                projectCache.stats().hitCount()
+            }
+        })
+        registry.register(MetricRegistry.name(this.class.name+".projectCache", "evictionCount"),new Gauge<Long>(){
+
+            @Override
+            Long getValue() {
+                projectCache.stats().evictionCount()
+            }
+        })
+        registry.register(MetricRegistry.name(this.class.name+".projectCache", "missCount"),new Gauge<Long>(){
+
+            @Override
+            Long getValue() {
+                projectCache.stats().missCount()
+            }
+        })
+        registry.register(MetricRegistry.name(this.class.name+".projectCache", "loadExceptionCount"),new Gauge<Long>(){
+
+            @Override
+            Long getValue() {
+                projectCache.stats().loadExceptionCount()
+            }
+        })
+        registry.register(MetricRegistry.name(this.class.name+".projectCache", "hitRate"),new Gauge<Double>(){
+
+            @Override
+            Double getValue() {
+                projectCache.stats().hitRate()
+            }
+        })
     }
 
     /**
