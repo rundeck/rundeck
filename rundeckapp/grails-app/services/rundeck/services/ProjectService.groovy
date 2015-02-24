@@ -13,6 +13,7 @@ import grails.async.Promises
 import groovy.xml.MarkupBuilder
 import org.apache.commons.io.FileUtils
 import org.springframework.beans.factory.InitializingBean
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import org.springframework.transaction.TransactionStatus
 import rundeck.BaseReport
 import rundeck.ExecReport
@@ -391,7 +392,7 @@ class ProjectService implements InitializingBean{
      * @return
      * @throws ProjectServiceException
      */
-    def exportProjectToFile(FrameworkProject project, Framework framework, ProgressListener listener=null) throws ProjectServiceException{
+    def exportProjectToFile(IRundeckProject project, Framework framework, ProgressListener listener=null) throws ProjectServiceException{
         def outfile
         try {
             outfile = File.createTempFile("export-${project.name}", ".jar")
@@ -411,7 +412,7 @@ class ProjectService implements InitializingBean{
      * @return
      * @throws ProjectServiceException
      */
-    def exportProjectToOutputStream(FrameworkProject project, Framework framework,
+    def exportProjectToOutputStream(IRundeckProject project, Framework framework,
                                     OutputStream stream, ProgressListener listener=null) throws ProjectServiceException{
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
@@ -429,7 +430,7 @@ class ProjectService implements InitializingBean{
     }
 
     def exportProjectToStream(
-            FrameworkProject project,
+            IRundeckProject project,
             Framework framework,
             ZipOutputStream output,
             ProgressListener listener = null
@@ -490,7 +491,7 @@ class ProjectService implements InitializingBean{
      * @param input input stream of zip data
      * @param options import options, [jobUUIDBehavior: (replace/preserve), executionImportBehavior: (import/skip)]
      */
-    def importToProject(FrameworkProject project, String user, String roleList, Framework framework,
+    def importToProject(IRundeckProject project, String user, String roleList, Framework framework,
                         AuthContext authContext, InputStream input, Map options) throws ProjectServiceException {
         ZipReader zip = new ZipReader(new ZipInputStream(input))
 //        zip.debug=true
@@ -733,7 +734,7 @@ class ProjectService implements InitializingBean{
      * @param framework frameowkr
      * @return map [success:true/false, error: (String errorMessage)]
      */
-    def deleteProject(FrameworkProject project, Framework framework, AuthContext authContext, String username){
+    def deleteProject(IRundeckProject project, Framework framework, AuthContext authContext, String username){
         def result = [success: false]
         BaseReport.withTransaction { TransactionStatus status ->
 
