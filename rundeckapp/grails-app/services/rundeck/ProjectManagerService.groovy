@@ -50,6 +50,9 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         }
         return rundeckConfigStorageTree
     }
+    public void setStorage(StorageTree tree){
+        rundeckConfigStorageTree=tree
+    }
 
     @Override
     Collection<IRundeckProject> listFrameworkProjects() {
