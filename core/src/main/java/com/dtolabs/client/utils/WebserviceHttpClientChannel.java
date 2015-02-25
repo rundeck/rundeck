@@ -26,6 +26,7 @@ package com.dtolabs.client.utils;
 
 import com.dtolabs.rundeck.core.CoreException;
 import org.apache.commons.httpclient.NameValuePair;
+import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.commons.httpclient.methods.multipart.FilePart;
@@ -35,10 +36,7 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.io.SAXReader;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.OutputStream;
-import java.io.StringReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -56,6 +54,7 @@ class WebserviceHttpClientChannel extends BaseHttpClientChannel implements Webse
     public static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(WebserviceHttpClientChannel.class);
 
     public static final String XML_CONTENT_TYPE = "text/xml";
+    public static final String APPLICATION_XML_CONTENT_TYPE = "application/xml";
     public static final String HTTP_SECURE_PROTOCOL = "https";
 
     boolean errorResponse = false;
@@ -182,16 +181,30 @@ class WebserviceHttpClientChannel extends BaseHttpClientChannel implements Webse
     protected RequestEntity getRequestEntity(final PostMethod method) {
         if (uploadFile != null) {
             logger.debug("attempting to upload file with colony request");
-            try {
-                final Part[] parts = new Part[]{
-                    new FilePart(null != getFileparam() ? getFileparam() : "uploadFile",
-                                 uploadFile.getName(),
-                                 uploadFile)
-                };
-                return new MultipartRequestEntity(parts, method.getParams());
-            } catch (FileNotFoundException e) {
-                throw new CoreException(
-                    "Could not upload file in request to server: " + uploadFile.getAbsolutePath(), e);
+            if(null!=getFileparam() && getFileparam().contains("/")) {
+                //upload directly as specified mime type
+                try {
+                    return new InputStreamRequestEntity(new FileInputStream(uploadFile), getFileparam());
+                } catch (FileNotFoundException e) {
+                    throw new CoreException(
+                            "Could not upload file in request to server: " + uploadFile.getAbsolutePath(), e
+                    );
+                }
+            }else {
+                try {
+                    final Part[] parts = new Part[]{
+                            new FilePart(
+                                    null != getFileparam() ? getFileparam() : "uploadFile",
+                                    uploadFile.getName(),
+                                    uploadFile
+                            )
+                    };
+                    return new MultipartRequestEntity(parts, method.getParams());
+                } catch (FileNotFoundException e) {
+                    throw new CoreException(
+                            "Could not upload file in request to server: " + uploadFile.getAbsolutePath(), e
+                    );
+                }
             }
         } else {
             return null;
@@ -276,7 +289,7 @@ class WebserviceHttpClientChannel extends BaseHttpClientChannel implements Webse
         if (type!=null && type.indexOf(";") > 0) {
             type = type.substring(0, type.indexOf(";")).trim();
         }
-        if (XML_CONTENT_TYPE.equals(type)) {
+        if (XML_CONTENT_TYPE.equals(type) || APPLICATION_XML_CONTENT_TYPE.equals(type)) {
             final SAXReader reader = new SAXReader();
             final Document document;
             try {

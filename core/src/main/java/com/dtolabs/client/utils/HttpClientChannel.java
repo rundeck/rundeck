@@ -430,7 +430,7 @@ abstract class HttpClientChannel implements BaseHttpClient {
     /**
      * @return Get the HTTP response code.
      */
-    int getResultCode() {
+    public int getResultCode() {
         return resultCode;
     }
 
