@@ -193,6 +193,7 @@ public class ServerService {
                 queryParams,
                 formData);
         }
+        hc.setRequestHeader("X-Rundeck-API-XML-Response-Wrapper","true");
         if (null != method) {
             hc.setMethodType(method);
         }
