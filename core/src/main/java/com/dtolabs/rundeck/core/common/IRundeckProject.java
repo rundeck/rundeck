@@ -1,5 +1,8 @@
 package com.dtolabs.rundeck.core.common;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.*;
 
 /**
@@ -97,4 +100,33 @@ public interface IRundeckProject {
      * @return the project nodes interface
      */
     IProjectNodes getProjectNodes();
+
+    /**
+     * @param path path relative to the project
+     * @return true if it exists
+     */
+    boolean existsFileResource(String path);
+
+    /**
+     * @param path path relative to the project
+     * @return true if it is deleted, false if it was not deleted
+     */
+    boolean deleteFileResource(String path);
+
+    /**
+     * Store a file at a path for the project
+     * @param path path relative to the project
+     * @param input input
+     * @throws IOException if an IO error occurs
+     */
+    long storeFileResource(String path, InputStream input) throws IOException;
+
+    /**
+     * Read a file at a path for the project
+     * @param path path relative to the project
+     * @param output output
+     * @return length of data loaded
+     * @throws IOException if an IO error occurs
+     */
+    long loadFileResource(String path, OutputStream output) throws IOException;
 }

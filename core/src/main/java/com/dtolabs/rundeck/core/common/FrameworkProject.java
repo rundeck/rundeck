@@ -25,11 +25,9 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.resources.*;
 import com.dtolabs.rundeck.core.resources.format.*;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
+import com.dtolabs.utils.Streams;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -643,6 +641,37 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
             throw new IOException("failed creating project etc dir: " + etcDir.getAbsolutePath());
         }
 
+    }
+
+    @Override
+    public boolean existsFileResource(final String path) {
+        File result = new File(getBaseDir(), path);
+        return result.exists()&& result.isFile();
+    }
+
+    @Override
+    public boolean deleteFileResource(final String path) {
+        File result = new File(getBaseDir(), path);
+        return !result.exists() || result.delete();
+    }
+
+    @Override
+    public long storeFileResource(final String path, final InputStream input) throws IOException {
+        File result = new File(getBaseDir(), path);
+        if(!result.getParentFile().exists()){
+            result.getParentFile().mkdirs();
+        }
+        try(FileOutputStream fos = new FileOutputStream(result)) {
+           return Streams.copyStream(input, fos);
+        }
+    }
+
+    @Override
+    public long loadFileResource(final String path, final OutputStream output) throws IOException {
+        File result = new File(getBaseDir(), path);
+        try(FileInputStream fis = new FileInputStream(result)) {
+            return Streams.copyStream(fis, output);
+        }
     }
 
     /**

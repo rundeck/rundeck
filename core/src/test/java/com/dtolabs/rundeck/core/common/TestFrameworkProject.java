@@ -159,6 +159,116 @@ public class TestFrameworkProject extends AbstractBaseTest {
         assertEquals(project.getProperty("project.dir"), projectDir.getAbsolutePath());*/
     }
 
+    /**
+     * Test exists file resource
+     * @throws Exception
+     */
+    public void testExistsFileResource() throws Exception {
+        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
+                                                           new File(getFrameworkProjectsBase()),
+                                                           getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        //attempt to update nodes resource file without url prop
+        assertFalse(project.existsFileResource("test.file"));
+        File testFile = new File(projectBasedir, "test.file");
+        testFile.deleteOnExit();
+        FileUtils.copyFileStreams(new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"), testFile);
+        assertTrue(project.existsFileResource("test.file"));
+        testFile.delete();
+    }
+    /**
+     * Test load file resource
+     * @throws Exception
+     */
+    public void testLoadFileResource() throws Exception {
+        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
+                                                           new File(getFrameworkProjectsBase()),
+                                                           getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        //attempt to update nodes resource file without url prop
+        File testFile = new File(projectBasedir, "test.file");
+
+        FileUtils.copyFileStreams(new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"), testFile);
+        testFile.deleteOnExit();
+        assertTrue(project.existsFileResource("test.file"));
+
+        File testFile2 = new File(projectBasedir, "test.file.copy");
+
+        testFile2.deleteOnExit();
+        assertFalse(testFile2.exists());
+
+        long copied=project.loadFileResource("test.file", new FileOutputStream(testFile2));
+
+        assertTrue(testFile2.exists());
+        assertEquals(testFile.length(), copied);
+        assertEquals(testFile.length(), testFile2.length());
+        testFile.delete();
+        testFile2.delete();
+    }
+    /**
+     * Test store file resource
+     * @throws Exception
+     */
+    public void testStoreFileResource() throws Exception {
+        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
+                                                           new File(getFrameworkProjectsBase()),
+                                                           getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        //attempt to update nodes resource file without url prop
+        File testFile = new File(projectBasedir, "test.file");
+
+        testFile.deleteOnExit();
+        assertFalse(project.existsFileResource("test.file"));
+
+        File sourceFile = new File(
+                "src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"
+        );
+        long copied = project.storeFileResource("test.file", new FileInputStream(sourceFile));
+
+        assertTrue(testFile.exists());
+        assertTrue(project.existsFileResource("test.file"));
+        assertEquals(testFile.length(), copied);
+        assertEquals(testFile.length(), sourceFile.length());
+        testFile.delete();
+    }
+    /**
+     * Test delete file resource
+     * @throws Exception
+     */
+    public void testDeleteFileResource() throws Exception {
+        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
+                                                           new File(getFrameworkProjectsBase()),
+                                                           getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        File testFile = new File(projectBasedir, "test.file");
+
+        FileUtils.copyFileStreams(new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"), testFile);
+
+        testFile.deleteOnExit();
+        assertTrue(project.existsFileResource("test.file"));
+
+        boolean deleted = project.deleteFileResource("test.file");
+
+        assertTrue(deleted);
+        assertFalse(testFile.exists());
+        assertFalse(project.existsFileResource("test.file"));
+
+    }
+    /**
+     * Test delete file resource already gone
+     * @throws Exception
+     */
+    public void testDeleteFileResource_notExists() throws Exception {
+        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
+                                                           new File(getFrameworkProjectsBase()),
+                                                           getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        File testFile = new File(projectBasedir, "test.file");
+
+        assertFalse(project.existsFileResource("test.file"));
+
+        boolean deleted = project.deleteFileResource("test.file");
+
+        assertTrue(deleted);
+        assertFalse(testFile.exists());
+        assertFalse(project.existsFileResource("test.file"));
+
+    }
 
 
 
