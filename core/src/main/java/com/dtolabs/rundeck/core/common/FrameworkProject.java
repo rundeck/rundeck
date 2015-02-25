@@ -82,6 +82,10 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
      * reference to PropertyLookup object providing access to project.properties
      */
     private PropertyLookup lookup;
+    /**
+     * Direct projec properties
+     */
+    private PropertyLookup projectLookup;
     private FilesystemFramework filesystemFramework;
     private Framework framework;
     private IProjectNodes projectNodes;
@@ -183,6 +187,10 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
                 filesystemFramework,
                 getName()
         );
+        projectLookup = createDirectProjectPropertyLookup(
+                filesystemFramework,
+                getName()
+        );
 
         if (propertyFile.exists()) {
             getLogger().debug("loading existing project.properties: " + propertyFile.getAbsolutePath());
@@ -228,6 +236,26 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
             lookup = PropertyLookup.create(fwkProjectPropertyFile,
                     ownProps, FilesystemFramework.createPropertyLookupFromBasedir(baseDir));
         }
+        lookup.expand();
+        return lookup;
+    }
+    /**
+     * Create PropertyLookup for a project from the framework basedir
+     *
+     * @param filesystemFramework the filesystem
+     */
+    private static PropertyLookup createDirectProjectPropertyLookup(FilesystemFramework filesystemFramework, String projectName) {
+        PropertyLookup lookup;
+        final Properties ownProps = new Properties();
+        ownProps.setProperty("project.name", projectName);
+
+        File baseDir=filesystemFramework.getBaseDir();
+        File projectsBaseDir=filesystemFramework.getFrameworkProjectsBaseDir();
+        //generic framework properties for a project
+
+        final File propertyFile = getProjectPropertyFile(new File(projectsBaseDir, projectName));
+
+        lookup = PropertyLookup.create(propertyFile,ownProps,FilesystemFramework.createPropertyLookupFromBasedir(baseDir));
         lookup.expand();
         return lookup;
     }
@@ -575,8 +603,13 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
         return lookup.hasProperty(key);
     }
     @Override
-    public Map getProperties() {
+    public Map<String,String> getProperties() {
         return lookup.getPropertiesMap();
+    }
+
+    @Override
+    public Map<String,String> getProjectProperties() {
+        return projectLookup.getPropertiesMap();
     }
 
 

@@ -62,7 +62,15 @@ public interface IRundeckProject {
 
     boolean hasProperty(String key);
 
-    Map<String,?> getProperties();
+    /**
+     * @return the merged properties available for the project
+     */
+    Map<String,String> getProperties();
+
+    /**
+     * @return the direct properties set for the project
+     */
+    Map<String,String> getProjectProperties();
 
     /**
      * Update the project properties file by setting updating the given properties, and removing
