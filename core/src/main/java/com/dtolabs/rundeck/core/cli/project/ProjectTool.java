@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.cli.CLITool;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkFactory;
 import com.dtolabs.rundeck.core.common.IFramework;
+import com.dtolabs.rundeck.core.dispatcher.CentralDispatcher;
 import org.apache.commons.cli.*;
 import org.apache.log4j.PropertyConfigurator;
 
@@ -73,6 +74,7 @@ public class ProjectTool implements ActionMaker, CLITool {
         //options.addOption("N", "nodeslist", true, "Path to arbitrary nodes.properties file");
     }
 
+    CentralDispatcher dispatcher;
 
 
     public ProjectTool() {
@@ -81,6 +83,7 @@ public class ProjectTool implements ActionMaker, CLITool {
          */
         PropertyConfigurator.configure(Constants.getLog4jPropertiesFile().getAbsolutePath());
         framework = FrameworkFactory.createForFilesystem(Constants.getSystemBaseDir());
+        dispatcher=FrameworkFactory.createDispatcher(framework.getPropertyLookup());
         extraProperties=new Properties();
     }
 
@@ -91,6 +94,7 @@ public class ProjectTool implements ActionMaker, CLITool {
         PropertyConfigurator.configure(new File(Constants.getLog4jProperties(baseDir.getAbsolutePath()))
             .getAbsolutePath());
         framework = FrameworkFactory.createForFilesystem(baseDir.getAbsolutePath());
+        dispatcher=FrameworkFactory.createDispatcher(framework.getPropertyLookup());
         extraProperties = new Properties();
     }
     /**
@@ -265,11 +269,13 @@ public class ProjectTool implements ActionMaker, CLITool {
     public Action createAction(final String actionName) {
         try {
             if (ACTION_CREATE.equals(actionName)) {
-                throw new RuntimeException("unimplemented: create");
-//                return new CreateAction(this, framework, cli, extraProperties);
+                CreateAction createAction = new CreateAction(this, framework, cli, extraProperties);
+                createAction.setCentralDispatcher(dispatcher);
+                return createAction;
             } else if (ACTION_REMOVE.equals(actionName)) {
-                throw new RuntimeException("unimplemented: remove");
-//                return new RemoveAction(this, framework, cli);
+                RemoveAction removeAction = new RemoveAction(this, framework, cli);
+                removeAction.setCentralDispatcher(dispatcher);
+                return removeAction;
             } else {
                 throw new IllegalArgumentException("unknown action name: " + actionName);
             }

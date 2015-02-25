@@ -38,10 +38,7 @@ import org.apache.commons.cli.CommandLine;
 
 import java.io.File;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
+import java.util.*;
 
 
 public class TestJobsTool extends AbstractBaseTest {
@@ -153,6 +150,14 @@ public class TestJobsTool extends AbstractBaseTest {
             this.purgeStoredJobsCalled=true;
             this.purgeJobsRequest=jobIds;
             return purgeJobsResult;
+        }
+
+        @Override
+        public void createProject(final String project, final Properties projectProperties)
+                throws CentralDispatcherException
+        {
+
+            fail("unexpected call to createProject");
         }
     }
 

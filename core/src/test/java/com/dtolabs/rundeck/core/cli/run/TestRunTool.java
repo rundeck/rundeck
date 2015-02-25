@@ -37,6 +37,7 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Properties;
 
 
 public class TestRunTool extends AbstractBaseTest {
@@ -270,6 +271,13 @@ public class TestRunTool extends AbstractBaseTest {
         public ExecutionDetail getExecution(String execId) throws CentralDispatcherException {
             fail("unexpected call to getExecution");
             return null;
+        }
+        @Override
+        public void createProject(final String project, final Properties projectProperties)
+                throws CentralDispatcherException
+        {
+
+            fail("unexpected call to createProject");
         }
     }
 

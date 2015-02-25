@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.FrameworkResource;
 import com.dtolabs.rundeck.core.common.IFramework;
+import com.dtolabs.rundeck.core.dispatcher.CentralDispatcher;
 import org.apache.commons.cli.CommandLine;
 
 import java.io.File;
@@ -37,6 +38,7 @@ public class BaseAction implements Action {
     private boolean verbose=false;
 
     protected String project;
+    private CentralDispatcher centralDispatcher;
 
     public BaseAction(final CLIToolLogger main, final IFramework framework, final CommandLine cli) {
         this(main, framework, parseBaseActionArgs(cli));
@@ -94,6 +96,14 @@ public class BaseAction implements Action {
 
     }
 
+    public CentralDispatcher getCentralDispatcher() {
+        return centralDispatcher;
+    }
+
+    public void setCentralDispatcher(final CentralDispatcher centralDispatcher) {
+        this.centralDispatcher = centralDispatcher;
+    }
+
 
     /**
      * Arguments for the BaseAction.
@@ -133,7 +143,6 @@ public class BaseAction implements Action {
      * @throws Throwable any throwable
      */
     public void exec() throws Throwable {
-        throw new RuntimeException("unimplemented");
     }
 
 

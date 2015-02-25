@@ -51,11 +51,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class TestExecTool extends AbstractBaseTest {
     ExecTool main;
@@ -526,6 +522,12 @@ public class TestExecTool extends AbstractBaseTest {
         public ExecutionDetail getExecution(String execId) throws CentralDispatcherException {
             return null;
         }
+        @Override
+        public void createProject(final String project, final Properties projectProperties)
+                throws CentralDispatcherException
+        {
+
+        }
     }
     static class testDispatcher extends noopDispatcher{
         boolean wascalled;
@@ -818,6 +820,13 @@ public class TestExecTool extends AbstractBaseTest {
 
         public ExecutionDetail getExecution(String execId) throws CentralDispatcherException {
             return null;
+        }
+        @Override
+        public void createProject(final String project, final Properties projectProperties)
+                throws CentralDispatcherException
+        {
+
+            fail("unexpected call to createProject");
         }
 
         @Override
