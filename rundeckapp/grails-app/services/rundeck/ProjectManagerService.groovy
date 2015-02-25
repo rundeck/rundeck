@@ -5,6 +5,7 @@ import com.codahale.metrics.MetricRegistry
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.common.ProjectNodeSupport
+import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
@@ -17,6 +18,8 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
 import grails.transaction.Transactional
+import org.apache.commons.fileupload.util.Streams
+import org.rundeck.storage.api.Resource
 import org.rundeck.storage.data.DataUtil
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
@@ -30,6 +33,7 @@ import java.util.concurrent.TimeUnit
 
 @Transactional
 class ProjectManagerService implements ProjectManager, ApplicationContextAware, InitializingBean {
+    public static final String ETC_PROJECT_PROPERTIES_PATH = "/etc/project.properties"
     def FrameworkService frameworkService
     private StorageTree rundeckConfigStorageTree
     ApplicationContext applicationContext
@@ -177,22 +181,94 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         )
     }
 
-    Date getProjectConfigLastModified(String projectName) {
-        def storagePath = "projects/" + projectName + "/etc/project.properties"
+    boolean existsProjectFileResource(String projectName, String path) {
+        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        return getStorage().hasResource(storagePath)
+    }
+    Resource<ResourceMeta> getProjectFileResource(String projectName, String path) {
+        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
         if (!getStorage().hasResource(storagePath)) {
             return null
         }
+        getStorage().getResource(storagePath)
+    }
+    long readProjectFileResource(String projectName, String path, OutputStream output) {
+        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
         def resource = getStorage().getResource(storagePath)
+        Streams.copy(resource.contents.inputStream,output,true)
+    }
+    /**
+     * Update existing resource, fails if it does not exist
+     * @param projectName project
+     * @param path path
+     * @param input stream
+     * @param meta metadata
+     * @return resource
+     */
+    Resource<ResourceMeta> updateProjectFileResource(String projectName, String path, InputStream input, Map<String,String> meta) {
+        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        getStorage().
+                updateResource(storagePath, DataUtil.withStream(input, meta, StorageUtil.factory()))
+    }
+    /**
+     * Create new resource, fails if it exists
+     * @param projectName project
+     * @param path path
+     * @param input stream
+     * @param meta metadata
+     * @return resource
+     */
+    Resource<ResourceMeta> createProjectFileResource(String projectName, String path, InputStream input, Map<String,String> meta) {
+        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        getStorage().
+                createResource(storagePath, DataUtil.withStream(input, meta, StorageUtil.factory()))
+    }
+    /**
+     * Write to a resource, create if it does not exist
+     * @param projectName project
+     * @param path path
+     * @param input stream
+     * @param meta metadata
+     * @return resource
+     */
+    Resource<ResourceMeta> writeProjectFileResource(String projectName, String path, InputStream input, Map<String,String> meta) {
+        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        if (!getStorage().hasResource(storagePath)) {
+            createProjectFileResource(projectName, path, input, meta)
+        }else{
+            updateProjectFileResource(projectName, path, input, meta)
+        }
+    }
+    /**
+     * delete a resource
+     * @param projectName project
+     * @param path path
+     * @return true if file was deleted or does not exist
+     */
+    boolean deleteProjectFileResource(String projectName, String path) {
+        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        if (!getStorage().hasResource(storagePath)) {
+            return true
+        }else{
+            getStorage().deleteResource(storagePath)
+        }
+        true
+    }
+
+    Date getProjectConfigLastModified(String projectName) {
+        def resource = getProjectFileResource(projectName, ETC_PROJECT_PROPERTIES_PATH)
+        if(null==resource){
+            return null
+        }
 
         resource.getContents().modificationTime
     }
 
     private Map loadProjectConfigResource(String projectName) {
-        def storagePath = "projects/" + projectName + "/etc/project.properties"
-        if (!getStorage().hasResource(storagePath)) {
+        def resource = getProjectFileResource(projectName,ETC_PROJECT_PROPERTIES_PATH)
+        if (null==resource) {
             return [:]
         }
-        def resource = getStorage().getResource(storagePath)
         //load as properties file
         def properties = new Properties()
         try {
@@ -209,22 +285,13 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
 
     private Map storeProjectConfig(String projectName, Properties properties) {
-        def storagePath = "projects/" + projectName + "/etc/project.properties"
+        def storagePath = ETC_PROJECT_PROPERTIES_PATH
         def baos = new ByteArrayOutputStream()
         properties.store(baos, "project config " + projectName)
         def bais = new ByteArrayInputStream(baos.toByteArray())
 
         def metadata = [:]
-        def resource
-        if (getStorage().hasResource(storagePath)) {
-            resource = getStorage().
-                    updateResource(storagePath, DataUtil.withStream(bais, metadata, StorageUtil.factory()))
-
-        } else {
-            resource = getStorage().
-                    createResource(storagePath, DataUtil.withStream(bais, metadata, StorageUtil.factory()))
-
-        }
+        def resource = writeProjectFileResource(projectName, storagePath, bais, metadata)
 
         projectCache.invalidate(projectName)
         return [
@@ -235,12 +302,10 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
 
     private void deleteProjectConfig(String projectName) {
-        def storagePath = "projects/" + projectName + "/etc/project.properties"
-        if (!getStorage().hasResource(storagePath)) {
+        if (!deleteProjectFileResource(projectName,ETC_PROJECT_PROPERTIES_PATH)) {
             throw new IllegalArgumentException("Project config does not exist: " + projectName)
         }
         //TODO: recursively delete storage path
-        getStorage().deleteResource(storagePath)
         projectCache.invalidate(projectName)
     }
 

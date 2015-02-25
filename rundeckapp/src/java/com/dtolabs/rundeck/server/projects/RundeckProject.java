@@ -4,6 +4,9 @@ import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import rundeck.ProjectManagerService;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.*;
 
 /**
@@ -84,6 +87,28 @@ public class RundeckProject implements IRundeckProject{
     @Override
     public void setProjectProperties(final Properties properties) {
         projectService.setProjectProperties(this, properties);
+    }
+
+    @Override
+    public boolean existsFileResource(final String path) {
+        return projectService.existsProjectFileResource(name, path);
+    }
+
+    @Override
+    public boolean deleteFileResource(final String path) {
+        return projectService.deleteProjectFileResource(name, path);
+    }
+
+    @Override
+    public long storeFileResource(final String path, final InputStream input) throws IOException {
+        return projectService.writeProjectFileResource(name, path, input, new HashMap<String, String>())
+                             .getContents()
+                             .getContentLength();
+    }
+
+    @Override
+    public long loadFileResource(final String path, final OutputStream output) throws IOException {
+        return projectService.readProjectFileResource(name,path,output);
     }
 
     @Override
