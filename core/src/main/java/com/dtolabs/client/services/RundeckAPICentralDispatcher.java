@@ -33,6 +33,8 @@ import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.util.URIUtil;
 import org.apache.log4j.Logger;
 import org.dom4j.Document;
+import org.dom4j.DocumentFactory;
+import org.dom4j.Element;
 import org.dom4j.Node;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
@@ -77,6 +79,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
     public static final String RUNDECK_API_VERSION_5 = "5";
     public static final String RUNDECK_API_VERSION_8 = "8";
     public static final String RUNDECK_API_VERSION_9 = "9";
+    public static final String RUNDECK_API_VERSION_11 = "11";
     /**
      * RUNDECK API base path
      */
@@ -98,12 +101,16 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      * RUNDECK API Base for v8
      */
     public static final String RUNDECK_API_BASE_v9 = "/api/" + RUNDECK_API_VERSION_9;
+    public static final String RUNDECK_API_BASE_v11 = "/api/" + RUNDECK_API_VERSION_11;
 
     /**
      * API endpoint for execution report
      */
     public static final String RUNDECK_API_EXECUTION_REPORT = RUNDECK_API_BASE + "/report/create";
-
+    /**
+     * API endpoint for projects
+     */
+    public static final String RUNDECK_API_PROJECTS = RUNDECK_API_BASE_v11 + "/projects";
 
     /**
      * Webservice endpoint for running scripts
@@ -184,7 +191,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      * @param password connection password
      */
     public RundeckAPICentralDispatcher(final String url, final String username, final String password) {
-        serverService = new ServerService( url, username, password);
+        setServerService(new ServerService( url, username, password));
     }
 
     /**
@@ -231,7 +238,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
 
         final WebserviceResponse response;
         try {
-            response = serverService.makeRundeckRequest(RUNDECK_API_EXECUTION_REPORT, null, params);
+            response = getServerService().makeRundeckRequest(RUNDECK_API_EXECUTION_REPORT, null, params);
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
@@ -638,7 +645,10 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         }
 
         if (!"result".equals(resultDoc.getRootElement().getName())) {
-            throw new CentralDispatcherServerRequestException("Response had unexpected content: " + resultDoc);
+            throw new CentralDispatcherServerRequestException(
+                    "Response had unexpected content: "+
+                    resultDoc.getRootElement().getName() + ": " + resultDoc
+            );
         }
         final Envelope envelope = new Envelope(response.getResultDoc());
         if (envelope.isErrorResult()) {
@@ -1574,6 +1584,68 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
             skippedJob, message);
     }
 
+    @Override
+    public void createProject(final String project, final Properties projectProperties)
+            throws CentralDispatcherException
+    {
+        final HashMap<String,String> params = new HashMap<String, String>();
+
+        Document document = DocumentFactory.getInstance().createDocument();
+        Element project1 = DocumentFactory.getInstance().createElement("project");
+        document.setRootElement(project1);
+        project1.addElement("name").addText(project);
+        Element config = project1.addElement("config");
+
+        for (Object o : projectProperties.keySet()) {
+            config.addElement("property").addAttribute("key", o.toString()).addAttribute(
+                    "value",
+                    projectProperties.getProperty(o.toString())
+            );
+        }
+        //serialize to temp file
+        File temp = null;
+        try {
+            temp = File.createTempFile("rundeck-api", ".xml");
+            temp.deleteOnExit();
+            try (FileOutputStream fos = new FileOutputStream(temp)) {
+                serialize(document, fos);
+            } catch (IOException e) {
+                throw new CentralDispatcherServerRequestException("Failed to serialize request document", e);
+            }
+        } catch (IOException e) {
+            throw new CentralDispatcherServerRequestException("Failed to serialize request document", e);
+        }
+
+        /*
+         * Send the request bean and the file as a multipart request.
+         */
+
+        //2. send request via ServerService
+        final WebserviceResponse response;
+        try {
+            response = getServerService().makeRundeckRequest(
+                    RUNDECK_API_PROJECTS,
+                    params,
+                    temp,
+                    "POST",
+                    "text/xml",
+                    "text/xml"
+            );
+        } catch (MalformedURLException e) {
+            throw new CentralDispatcherServerRequestException("Failed to make request", e);
+        }finally {
+            temp.delete();
+        }
+        if(response.getResultCode()!=201) {
+            throw new CentralDispatcherServerRequestException(
+                    "Failed to create the project, result code: " +
+                    response.getResultCode()+" "+response.getResponseMessage()
+            );
+        }
+
+        validateResponse(response);
+    }
+
     /**
      * Utility to serialize Document as a String for debugging
      *
@@ -1591,6 +1663,29 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         writer.flush();
         sw.flush();
         return sw.toString();
+    }
+    /**
+     * Utility to serialize Document to a stream
+     *
+     * @param document document
+     *
+     *
+     * @throws java.io.IOException if error occurs
+     */
+    private static void serialize(final Document document, final OutputStream stream) throws IOException {
+        final OutputFormat format = OutputFormat.createPrettyPrint();
+        final XMLWriter writer = new XMLWriter(stream, format);
+        writer.write(document);
+        writer.flush();
+
+    }
+
+    public ServerService getServerService() {
+        return serverService;
+    }
+
+    public void setServerService(final ServerService serverService) {
+        this.serverService = serverService;
     }
 
     /**

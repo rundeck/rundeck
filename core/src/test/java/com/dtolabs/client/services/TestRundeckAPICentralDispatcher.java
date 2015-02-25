@@ -23,12 +23,23 @@ package com.dtolabs.client.services;
 * $Id$
 */
 
+import com.dtolabs.client.utils.WebserviceResponse;
+import com.dtolabs.rundeck.core.CoreException;
+import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.dom4j.Document;
+import org.dom4j.DocumentFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 
 public class TestRundeckAPICentralDispatcher extends TestCase {
@@ -156,5 +167,271 @@ public class TestRundeckAPICentralDispatcher extends TestCase {
         assertEquals("incorrect size: " + params, 2, params.size());
         assertEquals("blah", params.get("filter"));
         assertEquals("false", params.get("exclude-precedence"));
+    }
+    static class TestServerService extends ServerService{
+        public TestServerService(final String url, final String username, final String password) {
+            super(url, username, password);
+        }
+
+        public TestServerService(final WebConnectionParameters connParams) {
+            super(connParams);
+        }
+
+        @Override
+        public WebserviceResponse makeRundeckRequest(
+                final String urlPath,
+                final Map queryParams,
+                final File uploadFile,
+                final String method,
+                final String uploadFileParam
+        ) throws CoreException, MalformedURLException
+        {
+            fail("Unexpected request");
+            return super.makeRundeckRequest(urlPath, queryParams, uploadFile, method, uploadFileParam);
+        }
+
+        @Override
+        public WebserviceResponse makeRundeckRequest(
+                final String urlPath, final Map queryParams, final Map<String, ? extends Object> formData
+        ) throws CoreException, MalformedURLException
+        {
+            fail("Unexpected request");
+            return super.makeRundeckRequest(urlPath, queryParams, formData);
+        }
+
+        @Override
+        public WebserviceResponse makeRundeckRequest(
+                final String urlPath,
+                final Map queryParams,
+                final File uploadFile,
+                final String method,
+                final String expectedContentType,
+                final String uploadFileParam
+        ) throws CoreException, MalformedURLException
+        {
+            fail("Unexpected request");
+            return super.makeRundeckRequest(
+                    urlPath,
+                    queryParams,
+                    uploadFile,
+                    method,
+                    expectedContentType,
+                    uploadFileParam
+            );
+        }
+
+        @Override
+        public WebserviceResponse makeRundeckRequest(
+                final String urlPath,
+                final Map queryParams,
+                final File uploadFile,
+                final String method,
+                final String expectedContentType,
+                final Map<String, ? extends Object> formData,
+                final String uploadFileParam
+        ) throws CoreException, MalformedURLException
+        {
+            fail("Unexpected request");
+            return super.makeRundeckRequest(
+                    urlPath,
+                    queryParams,
+                    uploadFile,
+                    method,
+                    expectedContentType,
+                    formData,
+                    uploadFileParam
+            );
+        }
+    }
+    static class TestResponse implements WebserviceResponse{
+        private boolean errorResponse;
+        private boolean hasResultDoc;
+        private boolean validResponse;
+        private Document resultDoc;
+        private String responseMessage;
+        private InputStream resultStream;
+        private String resultContentType;
+        private byte[] responseBody;
+        private int resultCode;
+
+        @Override
+        public boolean isErrorResponse() {
+            return errorResponse;
+        }
+
+        public boolean hasResultDoc() {
+            return hasResultDoc;
+        }
+
+        @Override
+        public boolean isValidResponse() {
+            return validResponse;
+        }
+
+        @Override
+        public Document getResultDoc() {
+            return resultDoc;
+        }
+
+        @Override
+        public String getResponseMessage() {
+            return responseMessage;
+        }
+
+        @Override
+        public InputStream getResultStream() {
+            return resultStream;
+        }
+
+        @Override
+        public String getResultContentType() {
+            return resultContentType;
+        }
+
+        @Override
+        public byte[] getResponseBody() {
+            return responseBody;
+        }
+
+        @Override
+        public int getResultCode() {
+            return resultCode;
+        }
+    }
+
+    public void testCreateProjectEmptyResponse() throws Exception {
+        final String testUrl = "http://localhost:4440/test";
+        final RundeckAPICentralDispatcher rundeckAPICentralDispatcher = new RundeckAPICentralDispatcher(
+                testUrl,
+                "test",
+                "test"
+        );
+        final TestResponse testResponse = new TestResponse();
+        testResponse.resultCode=201;
+        TestServerService testService = new TestServerService(
+                testUrl,
+                "test",
+                "test"
+        )
+        {
+
+            @Override
+            public WebserviceResponse makeRundeckRequest(
+                    final String urlPath,
+                    final Map queryParams,
+                    final File uploadFile,
+                    final String method,
+                    final String expectedContentType,
+                    final String uploadFileParam
+            ) throws CoreException, MalformedURLException
+            {
+                assertEquals("/api/11/projects", urlPath);
+                assertEquals(0, queryParams.size());
+                assertNotNull(uploadFile);
+                assertTrue(uploadFile.exists());
+                assertEquals("POST", method);
+                assertEquals("text/xml", expectedContentType);
+                assertEquals("text/xml", uploadFileParam);
+
+
+                return testResponse;
+            }
+        };
+        rundeckAPICentralDispatcher.setServerService(testService);
+        try {
+            rundeckAPICentralDispatcher.createProject("test1", new Properties());
+            fail("expected failure");
+        } catch (CentralDispatcherException e) {
+            assertTrue(e.getMessage().contains("unexpectedly empty"));
+        }
+    }
+    public void testCreateProjectWrongResponseCode() throws Exception {
+        final String testUrl = "http://localhost:4440/test";
+        final RundeckAPICentralDispatcher rundeckAPICentralDispatcher = new RundeckAPICentralDispatcher(
+                testUrl,
+                "test",
+                "test"
+        );
+        final TestResponse testResponse = new TestResponse();
+        testResponse.resultDoc= DocumentFactory.getInstance().createDocument();
+        testResponse.resultDoc.addElement("result").addElement("project").addElement("name").addText("test1");
+        testResponse.resultCode=200;
+        TestServerService testService = new TestServerService(
+                testUrl,
+                "test",
+                "test"
+        )
+        {
+            @Override
+            public WebserviceResponse makeRundeckRequest(
+                    final String urlPath,
+                    final Map queryParams,
+                    final File uploadFile,
+                    final String method,
+                    final String expectedContentType,
+                    final String uploadFileParam
+            ) throws CoreException, MalformedURLException
+            {
+                assertEquals("/api/11/projects", urlPath);
+                assertEquals(0, queryParams.size());
+                assertNotNull(uploadFile);
+                assertTrue(uploadFile.exists());
+                assertEquals("POST", method);
+                assertEquals("text/xml", expectedContentType);
+                assertEquals("text/xml", uploadFileParam);
+
+
+                return testResponse;
+            }
+        };
+        rundeckAPICentralDispatcher.setServerService(testService);
+        try {
+            rundeckAPICentralDispatcher.createProject("test1", new Properties());
+            fail("expected failure");
+        } catch (CentralDispatcherException e) {
+            assertTrue(e.getMessage().contains("Failed to create the project, result code: 200"));
+        }
+    }
+    public void testCreateProjectResultDoc() throws Exception {
+        final String testUrl = "http://localhost:4440/test";
+        final RundeckAPICentralDispatcher rundeckAPICentralDispatcher = new RundeckAPICentralDispatcher(
+                testUrl,
+                "test",
+                "test"
+        );
+        final TestResponse testResponse = new TestResponse();
+        testResponse.resultDoc= DocumentFactory.getInstance().createDocument();
+        testResponse.resultDoc.addElement("result").addElement("project").addElement("name").addText("test1");
+        testResponse.resultCode=201;
+        TestServerService testService = new TestServerService(
+                testUrl,
+                "test",
+                "test"
+        )
+        {
+            @Override
+            public WebserviceResponse makeRundeckRequest(
+                    final String urlPath,
+                    final Map queryParams,
+                    final File uploadFile,
+                    final String method,
+                    final String expectedContentType,
+                    final String uploadFileParam
+            ) throws CoreException, MalformedURLException
+            {
+                assertEquals("/api/11/projects", urlPath);
+                assertEquals(0, queryParams.size());
+                assertNotNull(uploadFile);
+                assertTrue(uploadFile.exists());
+                assertEquals("POST", method);
+                assertEquals("text/xml", expectedContentType);
+                assertEquals("text/xml", uploadFileParam);
+
+
+                return testResponse;
+            }
+        };
+        rundeckAPICentralDispatcher.setServerService(testService);
+        rundeckAPICentralDispatcher.createProject("test1", new Properties());
     }
 }
