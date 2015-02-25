@@ -46,6 +46,12 @@ public class PropertyLookup implements IPropertyLookup {
         this.propsFile=null;
         this.deferred=false;
     }
+    private PropertyLookup(final Map props) {
+        properties = new Properties();
+        properties.putAll(props);
+        this.propsFile=null;
+        this.deferred=false;
+    }
 
     public static PropertyLookup create(final Properties props) {
         return new PropertyLookup(props);
@@ -68,6 +74,17 @@ public class PropertyLookup implements IPropertyLookup {
         this(props);
         properties.putAll(difference(defaults));
     }
+    /**
+     * Calls base constructor then reads defaults map. Properties which are NOT contained
+     * in the internal store, will be accepted and added.
+     *
+     * @param props    Property set
+     * @param defaults Map of default properties
+     */
+    private PropertyLookup(final Map props, final Map defaults) {
+        this(props);
+        properties.putAll(difference(defaults));
+    }
 
     /**
      * Calls base constructor with data from IPropertyLookup paramater as defaults. Defaults
@@ -78,6 +95,17 @@ public class PropertyLookup implements IPropertyLookup {
      */
     private PropertyLookup(final Properties props, final IPropertyLookup defaultsLookup) {
         this(props, defaultsLookup.getPropertiesMap());
+    }
+
+    /**
+     * Calls base constructor with data from IPropertyLookup paramater as defaults. Defaults
+     * data is read via the {@link IPropertyLookup#getPropertiesMap()} method.
+     *
+     * @param props          Property set
+     * @param defaultsLookup IPropertyLookup of default properties
+     */
+    private PropertyLookup(final IPropertyLookup props, final IPropertyLookup defaultsLookup) {
+        this(props.getPropertiesMap(), defaultsLookup.getPropertiesMap());
     }
 
     /**
@@ -127,6 +155,16 @@ public class PropertyLookup implements IPropertyLookup {
      *                       @return lookup
      */
     public static PropertyLookup create(final Properties data, final IPropertyLookup defaultsLookup) {
+        return new PropertyLookup(data, defaultsLookup);
+    }
+
+    /**
+     *
+     * @param data       Properties data
+     * @param defaultsLookup IPropertyLookup of default properties
+     *                       @return lookup
+     */
+    public static PropertyLookup create(final IPropertyLookup data, final IPropertyLookup defaultsLookup) {
         return new PropertyLookup(data, defaultsLookup);
     }
 
