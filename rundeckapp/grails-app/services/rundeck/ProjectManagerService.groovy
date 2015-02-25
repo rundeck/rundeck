@@ -128,8 +128,8 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                     }
                 }
         )
-        MetricRegistry registry = metricService.getMetricRegistry()
-        registry.register(
+        MetricRegistry registry = metricService?.getMetricRegistry()
+        registry?.register(
                 MetricRegistry.name(this.class.name + ".projectCache", "hitCount"),
                 new Gauge<Long>() {
                     @Override
@@ -139,7 +139,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                 }
         )
 
-        registry.register(
+        registry?.register(
                 MetricRegistry.name(this.class.name + ".projectCache", "evictionCount"),
                 new Gauge<Long>() {
                     @Override
@@ -148,7 +148,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                     }
                 }
         )
-        registry.register(
+        registry?.register(
                 MetricRegistry.name(this.class.name + ".projectCache", "missCount"),
                 new Gauge<Long>() {
                     @Override
@@ -157,7 +157,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                     }
                 }
         )
-        registry.register(
+        registry?.register(
                 MetricRegistry.name(this.class.name + ".projectCache", "loadExceptionCount"),
                 new Gauge<Long>() {
                     @Override
@@ -166,7 +166,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                     }
                 }
         )
-        registry.register(
+        registry?.register(
                 MetricRegistry.name(this.class.name + ".projectCache", "hitRate"),
                 new Gauge<Double>() {
                     @Override
@@ -323,20 +323,34 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         if (!found) {
             throw new IllegalArgumentException("project does not exist: " + projectName)
         }
-        def newprops = new Properties()
         def res = loadProjectConfigResource(projectName)
         def oldprops = res.config
+        Properties newprops = mergeProperties(removePrefixes, oldprops, properties)
+        Map newres=storeProjectConfig(projectName, newprops)
+        projectCache.invalidate(projectName)
+        newres
+    }
+
+    /**
+     * Merge input properties with old properties, and remove any old properties with any of the given prefixes
+     * @param removePrefixes prefix set
+     * @param oldprops old properties
+     * @param inProps input properties
+     * @return merged properties
+     */
+    static Properties mergeProperties(Set<String> removePrefixes, Properties oldprops, Properties inProps) {
+        def newprops = new Properties()
         if (removePrefixes) {
             oldprops.propertyNames().each { String k ->
                 if (!removePrefixes.find { k.startsWith(it) }) {
                     newprops.put(k, oldprops.getProperty(k))
                 }
             }
+        }else{
+            newprops.putAll(oldprops)
         }
-        newprops.putAll(properties)
-        Map newres=storeProjectConfig(projectName, newprops)
-        projectCache.invalidate(projectName)
-        newres
+        newprops.putAll(inProps)
+        newprops
     }
 
     void setProjectProperties(final RundeckProject project, final Properties properties) {
