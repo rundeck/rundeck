@@ -15,18 +15,21 @@ public class RundeckProject implements IRundeckProject{
     private IProjectNodes projectNodes;
     private Date lastModifiedTime;
     private IPropertyLookup lookup;
+    private IPropertyLookup projectLookup;
 
     public RundeckProject(
             final String name,
             final IPropertyLookup lookup,
+            final IPropertyLookup projectLookup,
             final ProjectManagerService projectService,
             final Date lastModifiedTime
     )
     {
         this.name = name;
-        this.lookup = lookup;
+        this.setLookup(lookup);
+        this.setProjectLookup(projectLookup);
         this.projectService = projectService;
-        this.lastModifiedTime = lastModifiedTime;
+        this.setLastModifiedTime(lastModifiedTime);
 
     }
 
@@ -34,7 +37,7 @@ public class RundeckProject implements IRundeckProject{
         return name;
     }
     public String getProperty(final String property) {
-        return lookup.getProperty(property);
+        return getLookup().getProperty(property);
     }
 
     @Override
@@ -53,11 +56,21 @@ public class RundeckProject implements IRundeckProject{
     }
 
     @Override
-    public Map<String, ?> getProperties() {
-        HashMap<String, Object> result = new HashMap<>();
-        if(null!=lookup){
-            for(Object key:lookup.getPropertiesMap().keySet()) {
-                result.put(key.toString(), lookup.getProperty(key.toString()));
+    public Map<String, String> getProperties() {
+        HashMap<String, String> result = new HashMap<>();
+        if(null!= getLookup()){
+            for(Object key: getLookup().getPropertiesMap().keySet()) {
+                result.put(key.toString(), getLookup().getProperty(key.toString()));
+            }
+        }
+        return result;
+    }
+    @Override
+    public Map<String, String> getProjectProperties() {
+        HashMap<String, String> result = new HashMap<>();
+        if(null!= getProjectLookup()){
+            for(Object key: getProjectLookup().getPropertiesMap().keySet()) {
+                result.put(key.toString(), getProjectLookup().getProperty(key.toString()));
             }
         }
         return result;
@@ -65,19 +78,17 @@ public class RundeckProject implements IRundeckProject{
 
     @Override
     public void mergeProjectProperties(final Properties properties, final Set<String> removePrefixes) {
-        this.lookup=projectService.mergeProjectProperties(name, properties, removePrefixes);
-        this.lastModifiedTime=projectService.getProjectConfigLastModified(name);
+        projectService.mergeProjectProperties(this, properties, removePrefixes);
     }
 
     @Override
     public void setProjectProperties(final Properties properties) {
-        this.lookup=projectService.setProjectProperties(name, properties);
-        this.lastModifiedTime=projectService.getProjectConfigLastModified(name);
+        projectService.setProjectProperties(this, properties);
     }
 
     @Override
     public Date getConfigLastModifiedTime() {
-        return lastModifiedTime;
+        return getLastModifiedTime();
     }
 
     @Override
@@ -104,7 +115,31 @@ public class RundeckProject implements IRundeckProject{
     public String toString() {
         return "RundeckProject{" +
                "name='" + name + '\'' +
-               ", lastModifiedTime=" + lastModifiedTime +
+               ", lastModifiedTime=" + getLastModifiedTime() +
                '}';
+    }
+
+    public IPropertyLookup getLookup() {
+        return lookup;
+    }
+
+    public void setLookup(final IPropertyLookup lookup) {
+        this.lookup = lookup;
+    }
+
+    public IPropertyLookup getProjectLookup() {
+        return projectLookup;
+    }
+
+    public void setProjectLookup(final IPropertyLookup projectLookup) {
+        this.projectLookup = projectLookup;
+    }
+
+    public Date getLastModifiedTime() {
+        return lastModifiedTime;
+    }
+
+    public void setLastModifiedTime(final Date lastModifiedTime) {
+        this.lastModifiedTime = lastModifiedTime;
     }
 }

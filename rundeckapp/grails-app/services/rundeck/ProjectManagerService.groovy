@@ -248,10 +248,18 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         final Properties ownProps = new Properties();
         ownProps.setProperty("project.name", projectName);
         def create = PropertyLookup.create(
-                config,
-                PropertyLookup.create(ownProps, frameworkService.getRundeckFramework().propertyLookup)
+                createDirectProjectPropertyLookup(projectName,config),
+                frameworkService.getRundeckFramework().propertyLookup
         )
 
+        create.expand()
+        return create
+    }
+    private IPropertyLookup createDirectProjectPropertyLookup(String projectName, Properties config) {
+        final Properties ownProps = new Properties();
+        ownProps.setProperty("project.name", projectName);
+        ownProps.putAll(config)
+        def create = PropertyLookup.create(ownProps)
         create.expand()
         return create
     }
@@ -267,6 +275,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         return new RundeckProject(
                 projectName,
                 createProjectPropertyLookup(projectName, res.config),
+                createDirectProjectPropertyLookup(projectName, res.config),
                 this,
                 res.lastModified
         )
@@ -292,7 +301,19 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
 
 
-    IPropertyLookup mergeProjectProperties(
+    void mergeProjectProperties(
+            final RundeckProject project,
+            final Properties properties,
+            final Set<String> removePrefixes
+    )
+    {
+        def resource=mergeProjectProperties(project.name,properties,removePrefixes)
+        project.lookup = createProjectPropertyLookup(project.name, resource.config ?: new Properties())
+        project.projectLookup = createDirectProjectPropertyLookup(project.name, resource.config ?: new Properties())
+        project.lastModifiedTime = resource.lastModified
+    }
+
+    Map mergeProjectProperties(
             final String projectName,
             final Properties properties,
             final Set<String> removePrefixes
@@ -313,17 +334,25 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             }
         }
         newprops.putAll(properties)
-        storeProjectConfig(projectName, newprops)
-        createProjectPropertyLookup(projectName, newprops)
+        Map newres=storeProjectConfig(projectName, newprops)
+        projectCache.invalidate(projectName)
+        newres
     }
 
-    IPropertyLookup setProjectProperties(final String projectName, final Properties properties) {
+    void setProjectProperties(final RundeckProject project, final Properties properties) {
+        def resource=setProjectProperties(project.name,properties)
+        project.lookup = createProjectPropertyLookup(project.name, resource.config ?: new Properties())
+        project.projectLookup = createDirectProjectPropertyLookup(project.name, resource.config ?: new Properties())
+        project.lastModifiedTime = resource.lastModified
+    }
+    Map setProjectProperties(final String projectName, final Properties properties) {
         Project found = Project.findByName(projectName)
         if (!found) {
             throw new IllegalArgumentException("project does not exist: " + projectName)
         }
-        storeProjectConfig(projectName, properties)
-        createProjectPropertyLookup(projectName, properties)
+        Map resource=storeProjectConfig(projectName, properties)
+        projectCache.invalidate(projectName)
+        resource
     }
 
     /**
@@ -339,6 +368,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def rdproject = new RundeckProject(
                 project,
                 createProjectPropertyLookup(project, resource.config ?: new Properties()),
+                createDirectProjectPropertyLookup(project, resource.config ?: new Properties()),
                 this,
                 resource.lastModified
         )
