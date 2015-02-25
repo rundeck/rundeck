@@ -1,23 +1,319 @@
 package rundeck
 
+import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageTree
+import com.dtolabs.rundeck.core.utils.PropertyLookup
+import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
+import rundeck.services.FrameworkService
 import spock.lang.Specification
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
 @TestFor(ProjectManagerService)
+@Mock([Project])
 class ProjectManagerServiceSpec extends Specification {
 
     def setup() {
     }
 
     def cleanup() {
+    }
+
+    void "exists project does not exist"(){
+        when:
+        def result=service.existsFrameworkProject('test1')
+
+        then:
+        !result
+    }
+    void "exists project does exist"(){
+        setup:
+        def p = new Project(name:'test1')
+        p.save()
+
+        when:
+        def result=service.existsFrameworkProject('test1')
+
+        then:
+        result
+    }
+    void "get project does not exist"(){
+        when:
+        def result=service.getFrameworkProject('test1')
+
+        then:
+        IllegalArgumentException e=thrown()
+        e.message.contains('Project does not exist')
+    }
+    void "get project exists no props"(){
+        setup:
+        def p = new Project(name:'test1')
+        p.save()
+        service.storage=Stub(StorageTree){
+
+        }
+
+        def properties = new Properties()
+        properties.setProperty("fwkprop","fwkvalue")
+
+        service.frameworkService=Stub(FrameworkService){
+            getRundeckFramework() >> Stub(Framework){
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+        }
+        when:
+        def result=service.getFrameworkProject('test1')
+
+        then:
+        result!=null
+        'test1'==result.name
+        'fwkvalue'==result.getProperty('fwkprop')
+        'test1'==result.getProperty('project.name')
+        1==result.getProjectProperties().size()
+        'test1'==result.getProjectProperties().get('project.name')
+    }
+    void "get project exists with props"(){
+        setup:
+        def p = new Project(name:'test1')
+        p.save()
+        def modDate= new Date(123)
+
+        service.storage=Stub(StorageTree){
+            hasResource("projects/test1/etc/project.properties") >> true
+            getResource("projects/test1/etc/project.properties") >> Stub(Resource){
+                getContents() >> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('projkey=projval'.bytes)
+                    getModificationTime() >> modDate
+                }
+            }
+        }
+
+        def properties = new Properties()
+        properties.setProperty("fwkprop","fwkvalue")
+
+        service.frameworkService=Stub(FrameworkService){
+            getRundeckFramework() >> Stub(Framework){
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+        }
+        when:
+        def result=service.getFrameworkProject('test1')
+
+        then:
+        result!=null
+        'test1'==result.name
+        'fwkvalue'==result.getProperty('fwkprop')
+        'test1'==result.getProperty('project.name')
+        'projval'==result.getProperty('projkey')
+        2==result.getProjectProperties().size()
+        'test1'==result.getProjectProperties().get('project.name')
+        'projval'==result.getProjectProperties().get('projkey')
+        modDate==result.getConfigLastModifiedTime()
+    }
+
+    void "create project with props"(){
+        setup:
+
+        def props = new Properties()
+        props['abc']='def'
+
+        service.storage=Stub(StorageTree){
+            hasResource("projects/test1/etc/project.properties") >> false
+            createResource("projects/test1/etc/project.properties",{ResourceMeta rm->
+                def tprops=new Properties()
+                tprops.load(rm.inputStream)
+                rm.meta.size()==0 && tprops['abc']=='def'
+            }) >> Stub(Resource){
+                getContents()>> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('abc=def'.bytes)
+                }
+            }
+        }
+
+        def properties = new Properties()
+        properties.setProperty("fwkprop","fwkvalue")
+
+        service.frameworkService=Stub(FrameworkService){
+            getRundeckFramework() >> Stub(Framework){
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+        }
+
+        when:
+
+        def result = service.createFrameworkProject('test1',props)
+
+        then:
+
+        result.name=='test1'
+        2==result.getProjectProperties().size()
+        'test1'==result.getProjectProperties().get('project.name')
+        'def'==result.getProjectProperties().get('abc')
+
+        null!=Project.findByName('test1')
+    }
+
+    void "create project strict already exists"(){
+        setup:
+        Project p = new Project(name:'test1').save()
+        def props = new Properties()
+        props['abc']='def'
+
+
+        when:
+
+        service.createFrameworkProjectStrict('test1',props)
+
+        then:
+
+        IllegalArgumentException e = thrown()
+        e.message.contains("project exists")
+    }
+
+    void "create project strict with props"(){
+        setup:
+
+        def props = new Properties()
+        props['abc']='def'
+
+        service.storage=Stub(StorageTree){
+            hasResource("projects/test1/etc/project.properties") >> false
+            createResource("projects/test1/etc/project.properties",{ResourceMeta rm->
+                def tprops=new Properties()
+                tprops.load(rm.inputStream)
+                rm.meta.size()==0 && tprops['abc']=='def'
+            }) >> Stub(Resource){
+                getContents()>> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('abc=def'.bytes)
+                }
+            }
+        }
+
+        def properties = new Properties()
+        properties.setProperty("fwkprop","fwkvalue")
+
+        service.frameworkService=Stub(FrameworkService){
+            getRundeckFramework() >> Stub(Framework){
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+        }
+
+        when:
+
+        def result = service.createFrameworkProjectStrict('test1',props)
+
+        then:
+
+        result.name=='test1'
+        2==result.getProjectProperties().size()
+        'test1'==result.getProjectProperties().get('project.name')
+        'def'==result.getProjectProperties().get('abc')
+
+        null!=Project.findByName('test1')
+    }
+
+    void "remove project does not exist"(){
+
+        when:
+
+        service.removeFrameworkProject('test1')
+
+        then:
+        IllegalArgumentException e = thrown()
+        e.message.contains('does not exist')
+    }
+
+    void "remove project does exist"(){
+        setup:
+        def p = new Project(name:'test1')
+        p.save()
+
+        service.storage=Stub(StorageTree){
+            hasResource("projects/test1/etc/project.properties") >> true
+            deleteResource("projects/test1/etc/project.properties") >> true
+        }
+        when:
+
+        service.removeFrameworkProject('test1')
+
+        then:
+        null==Project.findByName('test1')
+
+    }
+
+    void "merge project properties internal"(){
+        setup:
+        Properties props1 = new Properties()
+        props1['def']='ghi'
+        new Project(name:'test1').save()
+        service.storage=Stub(StorageTree){
+            hasResource("projects/test1/etc/project.properties") >> true
+            getResource("projects/test1/etc/project.properties") >> Stub(Resource){
+                getContents() >> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('abc=def'.bytes)
+                }
+            }
+            updateResource("projects/test1/etc/project.properties",{ResourceMeta rm->
+                def tprops=new Properties()
+                tprops.load(rm.inputStream)
+                rm.meta.size()==0 && tprops['abc']=='def' && tprops['def']=='ghi'
+            }) >> Stub(Resource){
+                getContents()>> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('abc=def\ndef=ghi'.bytes)
+                }
+            }
+        }
+
+
+        when:
+        def res=service.mergeProjectProperties('test1',props1,[] as Set)
+
+        then:
+
+        res!=null
+        res.config.size()==2
+        'def'==res.config['abc']
+        'ghi'==res.config['def']
+    }
+    void "set project properties internal"(){
+        setup:
+        Properties props1 = new Properties()
+        props1['def']='ghi'
+        new Project(name:'test1').save()
+        service.storage=Stub(StorageTree){
+            hasResource("projects/test1/etc/project.properties") >> true
+            getResource("projects/test1/etc/project.properties") >> Stub(Resource){
+                getContents() >> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('abc=def'.bytes)
+                }
+            }
+            updateResource("projects/test1/etc/project.properties",{ResourceMeta rm->
+                def tprops=new Properties()
+                tprops.load(rm.inputStream)
+                rm.meta.size()==0 && tprops['abc']==null && tprops['def']=='ghi'
+            }) >> Stub(Resource){
+                getContents()>> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('def=ghi'.bytes)
+                }
+            }
+        }
+
+
+        when:
+        def res=service.setProjectProperties('test1',props1)
+
+        then:
+
+        res!=null
+        res.config.size()==1
+        null==res.config['abc']
+        'ghi'==res.config['def']
     }
 
     void "merge properties no conflict"() {

@@ -253,9 +253,8 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         if (!getStorage().hasResource(storagePath)) {
             return true
         }else{
-            getStorage().deleteResource(storagePath)
+            return getStorage().deleteResource(storagePath)
         }
-        true
     }
 
     Date getProjectConfigLastModified(String projectName) {
@@ -277,7 +276,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         try {
             properties.load(resource.contents.inputStream)
         } catch (IOException e) {
-            log.error("Failed loading project properties from storage: ${storagePath}: " + e.message, e)
+            log.error("Failed loading project properties from storage: ${resource.path}: " + e.message, e)
         }
 
         return [
