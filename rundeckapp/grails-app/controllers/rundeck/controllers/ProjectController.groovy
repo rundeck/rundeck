@@ -9,6 +9,7 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ProjectServiceException
 
+import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 import org.apache.commons.fileupload.util.Streams
@@ -24,6 +25,8 @@ class ProjectController extends ControllerBase{
             apiProjectConfigKeyDelete:['DELETE'],
             apiProjectConfigKeyPut:['PUT'],
             apiProjectConfigPut:['PUT'],
+            apiProjectFilePut:['PUT'],
+            apiProjectFileDelete:['DELETE'],
             apiProjectCreate:['POST'],
             apiProjectDelete:['DELETE'],
             apiProjectImport: ['PUT'],
@@ -656,7 +659,166 @@ class ProjectController extends ControllerBase{
                 break
         }
     }
+    def apiProjectFilePut() {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V13)) {
+            return
+        }
+        def project = validateProjectConfigApiRequest(AuthConstants.ACTION_CONFIGURE)
+        if (!project) {
+            return
+        }
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','text'],'text')
+        if(!(params.filename in ['readme.md','motd.md'])){
 
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist',
+                    args:['resource',params.filename],
+                    format:respFormat
+            ])
+        }
+
+        def error = null
+        String text = null
+        if (request.format in ['text']) {
+            try {
+                text = request.inputStream.text
+            } catch (Throwable e) {
+                error = e.message
+            }
+        }else{
+            def succeeded = apiService.parseJsonXmlWith(request,response,[
+                    xml:{xml->
+                        if(xml?.name()=='contents'){
+                            text=xml?.text()
+                        }else{
+                            text = xml?.contents[0]?.text()
+                        }
+                    },
+                    json:{json->
+                        text = json?.contents
+                    }
+            ])
+            if(!succeeded){
+                error= "unexpected format: ${request.format}"
+            }
+        }
+        if(error){
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    message: error,
+                    format: respFormat
+            ])
+        }
+
+        if(!text){
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    message: "No content",
+                    format: respFormat
+            ])
+        }
+
+        project.storeFileResource(params.filename,new ByteArrayInputStream(text.bytes))
+
+        if(respFormat in ['text']){
+            //write directly
+            response.setContentType("text/plain")
+            project.loadFileResource(params.filename,response.outputStream)
+        }else{
+
+            def baos=new ByteArrayOutputStream()
+            project.loadFileResource(params.filename,baos)
+            renderProjectFile(baos.toString(),request,response, respFormat)
+        }
+    }
+
+    private def renderProjectFile(
+            String contentString,
+            HttpServletRequest request,
+            HttpServletResponse response,
+            String respFormat
+    )
+    {
+        if (respFormat=='json') {
+            render(contentType: 'application/json') {
+                contents = contentString
+            }
+        }else{
+            apiService.renderSuccessXml(request, response) {
+                delegate.'contents' {
+                    mkp.yieldUnescaped("<![CDATA[" + contentString.replaceAll(']]>', ']]]]><![CDATA[>') + "]]>")
+                }
+            }
+        }
+    }
+    def apiProjectFileGet() {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V13)) {
+            return
+        }
+        def project = validateProjectConfigApiRequest(AuthConstants.ACTION_CONFIGURE)
+        if (!project) {
+            return
+        }
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','text'],'text')
+        if(!(params.filename in ['readme.md','motd.md'])){
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist',
+                    args:['resource',params.filename],
+                    format:respFormat
+            ])
+        }
+        if(!project.existsFileResource(params.filename)){
+
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist',
+                    args:['resource',params.filename],
+                    format: respFormat
+            ])
+        }
+
+        if(respFormat in ['text']){
+            //write directly
+            response.setContentType("text/plain")
+            project.loadFileResource(params.filename,response.outputStream)
+        }else{
+
+            def baos=new ByteArrayOutputStream()
+            project.loadFileResource(params.filename,baos)
+            renderProjectFile(baos.toString(),request,response, respFormat)
+        }
+    }
+    def apiProjectFileDelete() {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V13)) {
+            return
+        }
+        def project = validateProjectConfigApiRequest(AuthConstants.ACTION_CONFIGURE)
+        if (!project) {
+            return
+        }
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','text'])
+        if(!(params.filename in ['readme.md','motd.md'])){
+
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist',
+                    args:['resource',params.filename],
+                    format:respFormat
+            ])
+        }
+
+        boolean done=project.deleteFileResource(params.filename)
+        if(!done){
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_CONFLICT,
+                    message: "error",
+                    format: respFormat
+            ])
+        }
+        render(status: HttpServletResponse.SC_NO_CONTENT)
+    }
     def apiProjectConfigPut() {
         def project = validateProjectConfigApiRequest(AuthConstants.ACTION_CONFIGURE)
         if (!project) {
