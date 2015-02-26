@@ -842,7 +842,6 @@ class ProjectController extends ControllerBase{
                         format: respFormat
                 ])
             }
-            log.error("parsed: ${configProps}")
         }else{
             def succeed = apiService.parseJsonXmlWith(request, response, [
                     xml: { xml ->
