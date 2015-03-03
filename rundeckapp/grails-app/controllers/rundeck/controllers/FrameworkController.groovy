@@ -3,6 +3,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProviderService
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
@@ -1373,7 +1374,7 @@ class FrameworkController extends ControllerBase {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Update Nodes', 'Project', params.project]])
         }
-        final FrameworkProject project = frameworkService.getFrameworkProject(params.project)
+        final IRundeckProject project = frameworkService.getFrameworkProject(params.project)
 
         def didsucceed=false
         def errormsg=null
@@ -1578,7 +1579,6 @@ class FrameworkController extends ControllerBase {
             }
             def reqformat=params.format?:request.format
             //render specified format
-            final FrameworkProject frameworkProject = framework.getFrameworkProjectMgr().getFrameworkProject(project)
             final service = framework.getResourceFormatGeneratorService()
             ByteArrayOutputStream baos = new ByteArrayOutputStream()
             final generator
