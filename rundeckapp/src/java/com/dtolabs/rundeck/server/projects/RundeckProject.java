@@ -118,14 +118,19 @@ public class RundeckProject implements IRundeckProject{
 
     @Override
     public boolean updateNodesResourceFile() throws UpdateUtils.UpdateException {
-        throw new RuntimeException("not implemented");
+        return projectNodes.updateNodesResourceFile(projectService.getNodesResourceFilePath(this));
     }
 
     @Override
     public void updateNodesResourceFileFromUrl(final String providerURL, final String username, final String password)
             throws UpdateUtils.UpdateException
     {
-        throw new RuntimeException("not implemented");
+        projectNodes.updateNodesResourceFileFromUrl(providerURL, username, password,projectService.getNodesResourceFilePath(this));
+    }
+
+    @Override
+    public void updateNodesResourceFile(final INodeSet nodeset) throws UpdateUtils.UpdateException {
+        projectNodes.updateNodesResourceFile(nodeset,projectService.getNodesResourceFilePath(this));
     }
 
     public IProjectNodes getProjectNodes() {

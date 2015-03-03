@@ -2,6 +2,7 @@ package rundeck
 
 import com.codahale.metrics.Gauge
 import com.codahale.metrics.MetricRegistry
+import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.common.ProjectNodeSupport
@@ -470,6 +471,13 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                 project.configLastModifiedTime == null ||
                 getProjectConfigLastModified(project.name) > project.configLastModifiedTime
         needsReload
+    }
+
+    /**
+     * @return specific nodes resources file path for the project, based on the framework.nodes.file.name property
+     */
+    public String getNodesResourceFilePath(IRundeckProject project) {
+        ProjectNodeSupport.getNodesResourceFilePath(project, frameworkService.getRundeckFramework())
     }
 
 }
