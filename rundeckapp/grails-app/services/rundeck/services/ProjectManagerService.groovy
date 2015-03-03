@@ -1,4 +1,4 @@
-package rundeck
+package rundeck.services
 
 import com.codahale.metrics.Gauge
 import com.codahale.metrics.MetricRegistry
@@ -25,6 +25,7 @@ import org.rundeck.storage.data.DataUtil
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import rundeck.Project
 import rundeck.services.FrameworkService
 
 import java.util.concurrent.Callable

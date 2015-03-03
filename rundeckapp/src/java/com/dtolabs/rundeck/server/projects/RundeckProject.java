@@ -2,7 +2,7 @@ package com.dtolabs.rundeck.server.projects;
 
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
-import rundeck.ProjectManagerService;
+import rundeck.services.ProjectManagerService;
 
 import java.io.IOException;
 import java.io.InputStream;

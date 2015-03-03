@@ -1,4 +1,4 @@
-package rundeck
+package rundeck.services
 
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.storage.ResourceMeta
@@ -9,7 +9,9 @@ import grails.test.mixin.TestFor
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
+import rundeck.Project
 import rundeck.services.FrameworkService
+import rundeck.services.ProjectManagerService
 import spock.lang.Specification
 
 /**
