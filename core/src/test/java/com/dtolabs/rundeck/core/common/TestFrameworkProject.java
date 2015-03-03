@@ -26,6 +26,7 @@ import junit.framework.TestSuite;
 import java.io.*;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Properties;
 
 
@@ -141,22 +142,42 @@ public class TestFrameworkProject extends AbstractBaseTest {
 
 
     public void testProperties() throws IOException {
-     /*   final File projectDir = new File(getFrameworkProjectsBase(), PROJECT_NAME);
+        final File projectDir = new File(getFrameworkProjectsBase(), PROJECT_NAME);
         FrameworkProject.createFileStructure(projectDir);
         final File etcDir = new File(projectDir, "etc");
         final File projectPropertyFile = new File(etcDir, "project.properties");
         final Properties p = new Properties();
-        p.put("project.dir", "${framework.projects.dir}/${project.name}");
-        p.put("project.resources.dir", "${project.dir}/resources");
-        p.put("project.etc.dir", "${project.dir}/etc");
-        p.put("project.resources.file", "${project.etc.dir}/resources.xml");
+        p.put("a.b", "monkey");
+        p.put("b.c", "helmann");
         p.store(new FileOutputStream(projectPropertyFile), "test properties");
 
-        final FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
-                                         new File(getFrameworkProjectsBase()),
-                                         getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
+                                                           new File(getFrameworkProjectsBase()),
+                                                           getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
 
-        assertEquals(project.getProperty("project.dir"), projectDir.getAbsolutePath());*/
+        assertEquals("monkey", project.getProperty("a.b"));
+        assertEquals("helmann", project.getProperty("b.c"));
+        Map<String, String> projectProperties = project.getProperties();
+        assertEquals(3+16, projectProperties.size());
+    }
+    public void testProjectProperties() throws IOException {
+        final File projectDir = new File(getFrameworkProjectsBase(), PROJECT_NAME);
+        FrameworkProject.createFileStructure(projectDir);
+        final File etcDir = new File(projectDir, "etc");
+        final File projectPropertyFile = new File(etcDir, "project.properties");
+        final Properties p = new Properties();
+        p.put("a.b", "monkey");
+        p.put("b.c", "helmann");
+        p.store(new FileOutputStream(projectPropertyFile), "test properties");
+
+        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
+                                                           new File(getFrameworkProjectsBase()),
+                                                           getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        Map<String, String> projectProperties = project.getProjectProperties();
+        assertEquals(3, projectProperties.size());
+        assertEquals(PROJECT_NAME, projectProperties.get("project.name"));
+        assertEquals("monkey", projectProperties.get("a.b"));
+        assertEquals("helmann", projectProperties.get("b.c"));
     }
 
     /**

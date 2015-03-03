@@ -247,13 +247,13 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
         final Properties ownProps = new Properties();
         ownProps.setProperty("project.name", projectName);
 
-        File baseDir=filesystemFramework.getBaseDir();
         File projectsBaseDir=filesystemFramework.getFrameworkProjectsBaseDir();
         //generic framework properties for a project
 
         final File propertyFile = getProjectPropertyFile(new File(projectsBaseDir, projectName));
+        final Properties projectProps = PropertyLookup.fetchProperties(propertyFile);
 
-        lookup = PropertyLookup.create(propertyFile,ownProps,FilesystemFramework.createPropertyLookupFromBasedir(baseDir));
+        lookup = PropertyLookup.create(projectProps,PropertyLookup.create(ownProps));
         lookup.expand();
         return lookup;
     }
