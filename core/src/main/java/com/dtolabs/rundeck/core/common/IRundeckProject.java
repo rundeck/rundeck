@@ -57,6 +57,17 @@ public interface IRundeckProject {
     ) throws UpdateUtils.UpdateException;
 
     /**
+     * Update the resources file given an input Nodes set
+     *
+     * @param nodeset nodes
+     *
+     * @throws com.dtolabs.rundeck.core.common.UpdateUtils.UpdateException if an error occurs while trying to update the
+     *                                                                     resources file or generate
+     *                                                                     nodes
+     */
+    void updateNodesResourceFile(INodeSet nodeset) throws UpdateUtils.UpdateException;
+
+    /**
      * @param name property name
      *
      * @return the property value by name
