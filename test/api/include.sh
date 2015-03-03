@@ -136,7 +136,8 @@ assert_json_value(){
         errorMsg "Json query invalid: $2: $!"
         exit 2
     fi
-    if [ "$1" != "$propval" ] ; then
+    expval=$(echo "$1")
+    if [ "$expval" != "$propval" ] ; then
         errorMsg "Json query $2 wrong value, expected '$1' was $propval (in file $3)"
         exit 2
     fi
