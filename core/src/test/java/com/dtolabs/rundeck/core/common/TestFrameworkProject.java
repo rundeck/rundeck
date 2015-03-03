@@ -594,9 +594,29 @@ public class TestFrameworkProject extends AbstractBaseTest {
         assertTrue("project.properties file was not generated",
                 propFile.exists());
 
-        final Properties p = new Properties();
+         Properties p = new Properties();
         loadProps(p,propFile);
         assertEquals("file", p.get("resources.source.1.type"));
+        assertEquals(null, p.get("a.b"));
+
+        assertTrue(project.hasProperty("resources.source.1.type"));
+        assertFalse(project.hasProperty("a.b"));
+        assertEquals("file", project.getProperty("resources.source.1.type"));
+
+        boolean overwrite = true;
+        Properties newprops = new Properties();
+        newprops.put("a.b", "value");
+        project.generateProjectPropertiesFile(overwrite, newprops, true);
+
+        p = new Properties();
+        loadProps(p,propFile);
+        assertEquals("file", p.get("resources.source.1.type"));
+        assertEquals("value", p.get("a.b"));
+
+        assertTrue(project.hasProperty("resources.source.1.type"));
+        assertTrue(project.hasProperty("a.b"));
+        assertEquals("value",project.getProperty("a.b"));
+        assertEquals("file", project.getProperty("resources.source.1.type"));
 
 
     }
@@ -661,6 +681,14 @@ public class TestFrameworkProject extends AbstractBaseTest {
         assertEquals("xvalue2", p.getProperty("test2"));
         assertFalse(p.containsKey("test3.something"));
         assertFalse(p.containsKey("test3.somethingelse"));
+
+        assertFalse(project.hasProperty("project.resources.file"));
+        assertTrue(project.hasProperty("test1"));
+        assertEquals("xvalue1", project.getProperty("test1"));
+        assertTrue(project.hasProperty("test2"));
+        assertEquals("xvalue2", project.getProperty("test2"));
+        assertFalse(project.hasProperty("test3.something"));
+        assertFalse(project.hasProperty("test3.somethingelse"));
     }
     public void testMergeProjectPropertiesFileNullPrefixes() throws IOException {
         final FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
@@ -696,7 +724,17 @@ public class TestFrameworkProject extends AbstractBaseTest {
         assertTrue(p.containsKey("test3.something"));
         assertTrue(p.containsKey("test3.somethingelse"));
         assertEquals("value3",p.get("test3.something"));
-        assertEquals("value3.else",p.get("test3.somethingelse"));
+        assertEquals("value3.else", p.get("test3.somethingelse"));
+
+        assertFalse(project.hasProperty("project.resources.file"));
+        assertTrue(project.hasProperty("test1"));
+        assertEquals("xvalue1", project.getProperty("test1"));
+        assertTrue(project.hasProperty("test2"));
+        assertEquals("xvalue2", project.getProperty("test2"));
+        assertTrue(project.hasProperty("test3.something"));
+        assertTrue(project.hasProperty("test3.somethingelse"));
+        assertEquals("value3",project.getProperty("test3.something"));
+        assertEquals("value3.else",project.getProperty("test3.somethingelse"));
     }
 
     public void testCreateProjectPropertyRetriever() throws IOException {

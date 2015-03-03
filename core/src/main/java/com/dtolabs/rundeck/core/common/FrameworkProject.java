@@ -783,6 +783,7 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
             e.printStackTrace();
         }
 
+        loadProperties();
         getLogger().debug("generated project.properties: " + destfile.getAbsolutePath());
     }
     /**
