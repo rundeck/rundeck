@@ -667,7 +667,7 @@ class ProjectController extends ControllerBase{
         if (!project) {
             return
         }
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','text'],'text')
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','text'],request.format)
         if(!(params.filename in ['readme.md','motd.md'])){
 
             return apiService.renderErrorFormat(response, [
@@ -725,6 +725,7 @@ class ProjectController extends ControllerBase{
             //write directly
             response.setContentType("text/plain")
             project.loadFileResource(params.filename,response.outputStream)
+            response.outputStream.close()
         }else{
 
             def baos=new ByteArrayOutputStream()
@@ -783,6 +784,7 @@ class ProjectController extends ControllerBase{
             //write directly
             response.setContentType("text/plain")
             project.loadFileResource(params.filename,response.outputStream)
+            response.outputStream.close()
         }else{
 
             def baos=new ByteArrayOutputStream()
