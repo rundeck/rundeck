@@ -135,6 +135,7 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
     @Override
     public void removeFrameworkProject(final String projectName){
         synchronized (projectCache) {
+            super.remove(projectName);
             projectCache.remove(projectName);
         }
     }

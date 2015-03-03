@@ -164,7 +164,11 @@ public class TestFrameworkProjectMgr extends AbstractBaseTest {
         final FrameworkProject d1 = mgr.createFSFrameworkProject("Depot1");
         assertTrue("existsFrameworkProject did not return true for a type that should exist",
                    mgr.existsFrameworkProject("Depot1"));
-        mgr.remove(d1.getName());
+        File projectBaseDir = d1.getBaseDir();
+        assertTrue(projectBaseDir.exists());
+        assertTrue(projectBaseDir.isDirectory());
+        mgr.removeFrameworkProject(d1.getName());
+        assertFalse(projectBaseDir.exists());
         assertFalse(mgr.existsFrameworkProject(d1.getName()));
     }
 }
