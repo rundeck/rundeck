@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
 import grails.transaction.Transactional
 import org.apache.commons.fileupload.util.Streams
+import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.data.DataUtil
 import org.springframework.beans.factory.InitializingBean
@@ -258,6 +259,15 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             return getStorage().deleteResource(storagePath)
         }
     }
+    /**
+     * delete all project file resources
+     * @param projectName project
+     * @return true if all files were deleted, false otherwise
+     */
+    boolean deleteAllProjectFileResources(String projectName) {
+        def storagePath = "projects/" + projectName
+        return StorageUtil.deletePathRecursive(getStorage(), PathUtil.asPath(storagePath))
+    }
 
     Date getProjectConfigLastModified(String projectName) {
         def resource = getProjectFileResource(projectName, ETC_PROJECT_PROPERTIES_PATH)
@@ -305,11 +315,10 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         ]
     }
 
-    private void deleteProjectConfig(String projectName) {
-        if (!deleteProjectFileResource(projectName,ETC_PROJECT_PROPERTIES_PATH)) {
-            throw new IllegalArgumentException("Project config does not exist: " + projectName)
+    private void deleteProjectResources(String projectName) {
+        if (!deleteAllProjectFileResources(projectName)) {
+            log.error("Failed to delete all associated resources for project ${projectName}")
         }
-        //TODO: recursively delete storage path
         projectCache.invalidate(projectName)
     }
 
@@ -357,7 +366,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             throw new IllegalArgumentException("project does not exist: " + projectName)
         }
         found.delete(flush: true)
-        deleteProjectConfig(projectName)
+        deleteProjectResources(projectName)
     }
 
     @Override

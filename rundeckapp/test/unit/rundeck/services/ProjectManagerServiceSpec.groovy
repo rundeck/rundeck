@@ -236,9 +236,10 @@ class ProjectManagerServiceSpec extends Specification {
         def p = new Project(name:'test1')
         p.save()
 
-        service.storage=Stub(StorageTree){
-            hasResource("projects/test1/etc/project.properties") >> true
-            deleteResource("projects/test1/etc/project.properties") >> true
+        service.storage=Mock(StorageTree){
+            1*hasResource({it.path=="projects/test1"}) >> false
+            1*hasDirectory({it.path=="projects/test1"}) >> true
+            1*listDirectory({it.path=="projects/test1"}) >> []
         }
         when:
 
@@ -549,6 +550,46 @@ class ProjectManagerServiceSpec extends Specification {
 
         then:
         resStub==result
+    }
+    void "storage delete resources recursively"(){
+        setup:
+
+        service.storage=Mock(StorageTree){
+            1*hasResource({it.path=="projects/test1"}) >> false
+            1*hasResource({it.path=="projects/test1/etc"}) >> false
+            1*hasDirectory({it.path=="projects/test1"}) >> true
+            1*hasDirectory({it.path=="projects/test1/etc"}) >> true
+            1*deleteResource({it.path=="projects/test1/file1"}) >> true
+            1*deleteResource({it.path=="projects/test1/file2"}) >> true
+            1*deleteResource({it.path=="projects/test1/etc/project.properties"}) >> true
+            1*listDirectory({it.path=="projects/test1"}) >> [
+                    Stub(Resource){
+                        isDirectory()>>false
+                        getPath()>>PathUtil.asPath("projects/test1/file1")
+                    },
+                    Stub(Resource){
+                        isDirectory()>>false
+                        getPath()>>PathUtil.asPath("projects/test1/file2")
+                    },
+                    Stub(Resource){
+                        isDirectory()>>true
+                        getPath()>>PathUtil.asPath("projects/test1/etc")
+                    }
+            ]
+            1*listDirectory({it.path=="projects/test1/etc"}) >> [
+                    Stub(Resource){
+                        isDirectory()>>false
+                        getPath()>>PathUtil.asPath("projects/test1/etc/project.properties")
+                    }
+            ]
+        }
+        when:
+
+        def result=service.deleteAllProjectFileResources('test1')
+
+        then:
+        result
+
     }
     void "storage delete test existing resource"(){
         given:
