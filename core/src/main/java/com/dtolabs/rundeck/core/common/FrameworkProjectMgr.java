@@ -170,6 +170,10 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
         return existsChild(project);
     }
 
+    @Override
+    public boolean childCouldBeLoaded(final String name) {
+        return super.childCouldBeLoaded(name) && new File(getBaseDir(), name + "/etc/project.properties").exists();
+    }
 
     public String toString() {
         return "FrameworkProjectMgr{" +
