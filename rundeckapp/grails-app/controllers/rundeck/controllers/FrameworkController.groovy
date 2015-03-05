@@ -636,6 +636,9 @@ class FrameworkController extends ControllerBase {
         def resourcesUrl
         def projectNameError
         def Properties projProps = new Properties()
+        if(params.description) {
+            projProps['project.description'] = params.description
+        }
         def errors = []
         def configs
         final defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
@@ -871,6 +874,9 @@ class FrameworkController extends ControllerBase {
         if(request.method=='POST'){
             //only attempt project create if form POST is used
             def Properties projProps = new Properties()
+            if(params.description){
+                projProps['project.description']=params.description
+            }
             def Set<String> removePrefixes=[]
             removePrefixes<< FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY
             if (params.defaultNodeExec) {
@@ -1025,6 +1031,7 @@ class FrameworkController extends ControllerBase {
             return
         }
 
+        final def fwkProject = frameworkService.getFrameworkProject(project)
         final def (resourceDescs, execDesc, filecopyDesc) = frameworkService.listDescriptions()
 
         //get list of node executor, and file copier services
@@ -1050,6 +1057,7 @@ class FrameworkController extends ControllerBase {
 
         [
             project: project,
+            projectDescription:fwkProject.getProjectProperties().get("project.description"),
             resourceModelConfigDescriptions: resourceDescs,
             configs: resourceConfig,
             nodeexecconfig:nodeConfig,

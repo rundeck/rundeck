@@ -41,6 +41,14 @@
     </g:if>
     <g:render template="/common/messages" model="[notDismissable:true]"/>
 </div>
+    <div class="list-group-item">
+        <div class="form-group ">
+            <label for="description">
+                <g:message code="domain.Project.description.label" default="Description"/>
+            </label>
+            <g:textField name="description" size="50"  value="${projectDescription}" class="form-control"/>
+        </div>
+    </div>
 <g:if test="${resourceModelConfigDescriptions}">
     <div class="list-group-item">
     <span class="h4 ">

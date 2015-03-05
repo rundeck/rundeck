@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
@@ -273,6 +274,11 @@ class FrameworkControllerTest {
         fwk.demand.getDefaultFileCopyService { -> null }
         fwk.demand.getNodeExecConfigurationForType { -> null }
         fwk.demand.getFileCopyConfigurationForType { -> null }
+
+        def proj = mockFor(IRundeckProject,true)
+        proj.demand.getProjectProperties{-> [:]}
+
+        fwk.demand.getFrameworkProject { name-> proj.createMock() }
 
         controller.frameworkService = fwk.createMock()
 
