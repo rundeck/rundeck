@@ -1,11 +1,14 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.utils.PropertyLookup
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import org.apache.commons.fileupload.util.Streams
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
@@ -628,5 +631,200 @@ class ProjectManagerServiceSpec extends Specification {
 
         then:
         !result
+    }
+
+    void "mark existing other project as imported"(){
+        given:
+        def pm1 = Mock(ProjectManager){
+            1*existsFrameworkProject('abc')>>true
+            1*getFrameworkProject('abc')>>Mock(IRundeckProject){
+                1* loadFileResource('etc/project.properties',_) >> {args->
+                    args[1].write('test'.bytes)
+                    4
+                }
+                1*storeFileResource('etc/project.properties.imported',{
+                    def baos=new ByteArrayOutputStream()
+                    Streams.copy(it,baos,true)
+                    new String(baos.toByteArray())=='test'
+                }) >> 4
+                1*deleteFileResource('etc/project.properties') >> true
+            }
+        }
+        when:
+        service.markProjectAsImported(pm1, 'abc')
+
+        then:
+        true
+    }
+
+    void "mark non-existing other project as imported"(){
+        given:
+        def pm1 = Mock(ProjectManager){
+            1*existsFrameworkProject('abc')>>false
+        }
+        when:
+        service.markProjectAsImported(pm1, "abc")
+
+        then:
+        true
+    }
+    void "Test project was imported, dne"(){
+        given:
+        def pm1 = Mock(ProjectManager){
+            1*existsFrameworkProject('abc')>>false
+        }
+        when:
+        def result=service.testProjectWasImported(pm1,'abc')
+
+        then:
+        !result
+    }
+    void "Test project was imported, exists, not imported"(){
+        given:
+        def pm1 = Mock(ProjectManager){
+            1*existsFrameworkProject('abc')>>true
+            1*getFrameworkProject('abc') >> Mock(IRundeckProject){
+                1* existsFileResource('etc/project.properties.imported') >> false
+            }
+        }
+        when:
+        def result=service.testProjectWasImported(pm1,'abc')
+
+        then:
+        !result
+    }
+    void "Test project was imported, exists, was imported"(){
+        given:
+        def pm1 = Mock(ProjectManager){
+            1*existsFrameworkProject('abc')>>true
+            1*getFrameworkProject('abc') >> Mock(IRundeckProject){
+                1* existsFileResource('etc/project.properties.imported') >> true
+            }
+        }
+        when:
+        def result=service.testProjectWasImported(pm1,'abc')
+
+        then:
+        result
+    }
+
+    void "import project from fs, no projects"(){
+        given:
+        def pm1 = Mock(ProjectManager){
+            1*listFrameworkProjects()>>[]
+        }
+        when:
+        service.importProjectsFromProjectManager(pm1)
+
+        then:
+        true
+    }
+    void "import project from fs, already present"(){
+        given:
+        def proj1 = new Project(name:'abc').save()
+        def pm1 = Mock(ProjectManager){
+            1*listFrameworkProjects()>>[
+                    Stub(IRundeckProject){
+                        getName()>>'abc'
+                    }
+            ]
+            2*existsFrameworkProject('abc')>>true
+            2*getFrameworkProject('abc') >> Mock(IRundeckProject){
+                //mark as imported
+                1* loadFileResource('etc/project.properties',_) >> {args->
+                    args[1].write('test'.bytes)
+                    4
+                }
+                1*storeFileResource('etc/project.properties.imported',{
+                    def baos=new ByteArrayOutputStream()
+                    Streams.copy(it,baos,true)
+                    new String(baos.toByteArray())=='test'
+                }) >> 4
+                1*deleteFileResource('etc/project.properties') >> true
+            }
+        }
+        when:
+        service.importProjectsFromProjectManager(pm1)
+
+        then:
+        true
+    }
+    void "import project from fs, already imported"(){
+        given:
+        def pm1 = Mock(ProjectManager){
+            1*listFrameworkProjects()>>[
+                    Stub(IRundeckProject){
+                        getName()>>'abc'
+                    }
+            ]
+            1*existsFrameworkProject('abc')>>true
+            1*getFrameworkProject('abc') >> Mock(IRundeckProject){
+                1* existsFileResource('etc/project.properties.imported') >> true
+
+            }
+        }
+        when:
+        service.importProjectsFromProjectManager(pm1)
+
+        then:
+        true
+    }
+    void "import project from fs, not yet imported"(){
+        given:
+        def projectProps = new Properties()
+        projectProps['test']='abc'
+        def pm1 = Mock(ProjectManager){
+            1*listFrameworkProjects()>>[
+                    Stub(IRundeckProject){
+                        getName()>>'abc'
+                        getProjectProperties()>>projectProps
+                    }
+            ]
+            2*existsFrameworkProject('abc')>>true
+            2*getFrameworkProject('abc') >> Mock(IRundeckProject){
+                1* existsFileResource('etc/project.properties.imported') >> false
+
+                //mark as imported
+                1* loadFileResource('etc/project.properties',_) >> {args->
+                    args[1].write('test=abc'.bytes)
+                    4
+                }
+                1*storeFileResource('etc/project.properties.imported',{
+                    def props=new Properties()
+                    props.load(it)
+                    System.err.println(props.toString())
+                    props['test']=='abc'
+                }) >> 4
+                1*deleteFileResource('etc/project.properties') >> true
+
+            }
+        }
+        def modDate=new Date(123)
+        service.storage=Stub(StorageTree){
+            hasResource("projects/abc/etc/project.properties") >> false
+            createResource("projects/abc/etc/project.properties",{res->
+                def props=new Properties()
+                props.load(res.inputStream)
+                System.err.println(props.toString())
+                props['test']=='abc'
+            }) >> Stub(Resource){
+                getContents()>> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('abc=def'.bytes)
+                    getModificationTime() >> modDate
+                    getCreationTime() >> modDate
+                }
+            }
+        }
+        def properties=new Properties()
+        service.frameworkService=Stub(FrameworkService){
+            getRundeckFramework() >> Stub(Framework){
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+        }
+        when:
+        service.importProjectsFromProjectManager(pm1)
+
+        then:
+        Project.findByName('abc')!=null
     }
 }

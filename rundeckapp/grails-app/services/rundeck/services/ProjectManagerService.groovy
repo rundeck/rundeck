@@ -2,7 +2,6 @@ package rundeck.services
 
 import com.codahale.metrics.Gauge
 import com.codahale.metrics.MetricRegistry
-import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.common.ProjectNodeSupport
@@ -27,7 +26,6 @@ import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Project
-import rundeck.services.FrameworkService
 
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
@@ -490,4 +488,75 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         ProjectNodeSupport.getNodesResourceFilePath(project, frameworkService.getRundeckFramework())
     }
 
+    /**
+     * Import any projects that do not exist from the source
+     * @param source
+     */
+    boolean testProjectWasImported(ProjectManager source, String projectName) {
+        return source.existsFrameworkProject(projectName) &&
+                source.getFrameworkProject(projectName).existsFileResource("etc/project.properties.imported")
+    }
+
+    /**
+     * Import any projects that do not exist from the source
+     * @param source
+     */
+    void markProjectAsImported(ProjectManager source, String projectName){
+        //mark as imported
+        if(source.existsFrameworkProject(projectName)) {
+            IRundeckProject other = source.getFrameworkProject(projectName)
+            try {
+                def baos = new ByteArrayOutputStream()
+                other.loadFileResource("etc/project.properties", baos)
+                other.storeFileResource(
+                        "etc/project.properties.imported",
+                        new ByteArrayInputStream(baos.toByteArray())
+                )
+                other.deleteFileResource("etc/project.properties")
+                log.warn("Filesystem project ${other.name}, marked as imported. Rename etc/project.properties to etc/project.properties.imported")
+            } catch (IOException e) {
+                log.error(
+                        "Failed marking ${other.name} as imported (rename etc/project.properties to etc/project.properties.imported): ${e.message}",
+                        e
+                )
+            }
+        }
+    }
+    /**
+     * Import any projects that do not exist from the source
+     * @param source
+     */
+    public void importProjectsFromProjectManager(ProjectManager source){
+        source.listFrameworkProjects().each{IRundeckProject other->
+            if(testProjectWasImported(source,other.name)){
+                //marked as imported, so skip re-import.
+                log.warn("Discovered filesystem project ${other.name}, was previously imported, skipping.")
+                return
+            }
+            if(!existsFrameworkProject(other.name)){
+                log.warn("Discovered filesystem project ${other.name}, importing...")
+                def projectProps=new Properties()
+                projectProps.putAll(other.getProjectProperties())
+                def newProj=createFrameworkProject(other.name,projectProps)
+                //import resources
+                ["readme.md","motd.md"].each{ fpath ->
+                    if(other.existsFileResource(fpath)){
+                        log.warn("Importing ${fpath} for project ${other.name}...")
+                        def baos=new ByteArrayOutputStream()
+                        try {
+                            other.loadFileResource(fpath, baos)
+                            newProj.storeFileResource(fpath, new ByteArrayInputStream(baos.toByteArray()))
+                        }catch (IOException e){
+                            log.error("Failed importing ${fpath} for project ${other.name}: ${e.message}",e)
+                        }
+                    }
+                }
+                //mark as imported
+                markProjectAsImported(source,other.name)
+            }else{
+                log.warn("Skipping import for filesystem project ${other.name}, it already exists...")
+                markProjectAsImported(source,other.name)
+            }
+        }
+    }
 }
