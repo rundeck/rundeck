@@ -117,7 +117,9 @@ public class PathUtil {
     public static boolean hasRoot(String path, String root) {
         String p = cleanPath(path);
         String r = cleanPath(root);
-        return p.equals(r) || p.startsWith(r + SEPARATOR);
+        return p.equals(r)
+               || r.equals(cleanPath(ROOT.getPath()))
+               || p.startsWith(r + SEPARATOR);
     }
 
     public static Path parentPath(Path path) {

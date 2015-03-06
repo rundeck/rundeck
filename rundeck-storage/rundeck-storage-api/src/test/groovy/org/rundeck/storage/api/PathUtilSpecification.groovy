@@ -67,6 +67,8 @@ class PathUtilSpecification extends Specification {
 
     def "hasRoot"() {
         expect:
+        PathUtil.hasRoot("a/b", "")
+        PathUtil.hasRoot("a/b", "/")
         PathUtil.hasRoot("a/b", "a")
         !PathUtil.hasRoot("a/b", "b")
 
