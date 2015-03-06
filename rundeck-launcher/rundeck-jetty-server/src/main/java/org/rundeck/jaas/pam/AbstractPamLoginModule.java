@@ -63,7 +63,7 @@ public abstract class AbstractPamLoginModule extends AbstractSharedLoginModule {
         Object supplementalRoles1 = options.get("supplementalRoles");
         if (null != supplementalRoles1) {
             this.supplementalRoles = new ArrayList<String>();
-            this.supplementalRoles.addAll(Arrays.asList(supplementalRoles1.toString().split(", +")));
+            this.supplementalRoles.addAll(Arrays.asList(supplementalRoles1.toString().split(", *")));
         }
     }
 
