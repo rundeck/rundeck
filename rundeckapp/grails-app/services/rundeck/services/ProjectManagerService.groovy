@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit
 @Transactional
 class ProjectManagerService implements ProjectManager, ApplicationContextAware, InitializingBean {
     public static final String ETC_PROJECT_PROPERTIES_PATH = "/etc/project.properties"
+    public static final String MIME_TYPE_PROJECT_PROPERTIES = 'text/x-java-properties'
     def FrameworkService frameworkService
     private StorageTree rundeckConfigStorageTree
     ApplicationContext applicationContext
@@ -275,18 +276,34 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
         resource.getContents().modificationTime
     }
+    boolean isValidConfigFile(byte[] bytes){
+        def test = '#' + MIME_TYPE_PROJECT_PROPERTIES
+        //validate header
+        def validate=bytes.length>=test.length()?new String(bytes,0,test.length(),'ISO-8859-1'):null
+        return test==validate
+    }
 
     private Map loadProjectConfigResource(String projectName) {
         def resource = getProjectFileResource(projectName,ETC_PROJECT_PROPERTIES_PATH)
         if (null==resource) {
             return [:]
         }
-        //load as properties file
         def properties = new Properties()
-        try {
-            properties.load(resource.contents.inputStream)
-        } catch (IOException e) {
-            log.error("Failed loading project properties from storage: ${resource.path}: " + e.message, e)
+        def bytestream = new ByteArrayOutputStream()
+        Streams.copy(resource.contents.inputStream,bytestream,true)
+        def bytes=bytestream.toByteArray()
+        //validate header
+        if(isValidConfigFile(bytes)){
+            //load as properties file
+            try {
+                properties.load(new ByteArrayInputStream(bytes))
+            } catch (IOException e) {
+                //TODO: throw exception?
+    //            throw new RuntimeException("Failed loading project properties from storage: ${resource.path}: " + e.message)
+                log.error("Failed loading project properties from storage: ${resource.path}: " + e.message,e)
+            }
+        }else{
+            log.error("Failed loading project properties from storage: ${resource.path}: could not validate contents")
         }
 
         return [
@@ -299,10 +316,10 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     private Map storeProjectConfig(String projectName, Properties properties) {
         def storagePath = ETC_PROJECT_PROPERTIES_PATH
         def baos = new ByteArrayOutputStream()
-        properties.store(baos, "project config " + projectName)
+        properties.store(baos, MIME_TYPE_PROJECT_PROPERTIES+";name=" + projectName)
         def bais = new ByteArrayInputStream(baos.toByteArray())
 
-        def metadata = [:]
+        def metadata = [(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE):MIME_TYPE_PROJECT_PROPERTIES]
         def resource = writeProjectFileResource(projectName, storagePath, bais, metadata)
 
         projectCache.invalidate(projectName)

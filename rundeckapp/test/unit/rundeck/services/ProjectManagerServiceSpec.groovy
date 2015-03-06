@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageTree
+import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.utils.PropertyLookup
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
@@ -93,7 +94,7 @@ class ProjectManagerServiceSpec extends Specification {
             hasResource("projects/test1/etc/project.properties") >> true
             getResource("projects/test1/etc/project.properties") >> Stub(Resource){
                 getContents() >> Stub(ResourceMeta){
-                    getInputStream() >> new ByteArrayInputStream('projkey=projval'.bytes)
+                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nprojkey=projval').bytes)
                     getModificationTime() >> modDate
                 }
             }
@@ -121,6 +122,44 @@ class ProjectManagerServiceSpec extends Specification {
         'projval'==result.getProjectProperties().get('projkey')
         modDate==result.getConfigLastModifiedTime()
     }
+    void "get project exists invalid props content"(){
+        setup:
+        def p = new Project(name:'test1')
+        p.save()
+        def modDate= new Date(123)
+
+        service.storage=Stub(StorageTree){
+            hasResource("projects/test1/etc/project.properties") >> true
+            getResource("projects/test1/etc/project.properties") >> Stub(Resource){
+                getContents() >> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('#invalidcontent\nprojkey=projval'.bytes)
+                    getModificationTime() >> modDate
+                }
+            }
+        }
+
+        def properties = new Properties()
+        properties.setProperty("fwkprop","fwkvalue")
+
+        service.frameworkService=Stub(FrameworkService){
+            getRundeckFramework() >> Stub(Framework){
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+        }
+        when:
+        def result=service.getFrameworkProject('test1')
+
+        then:
+        result!=null
+        'test1'==result.name
+        'fwkvalue'==result.getProperty('fwkprop')
+        'test1'==result.getProperty('project.name')
+        !result.hasProperty('projkey')
+        1==result.getProjectProperties().size()
+        'test1'==result.getProjectProperties().get('project.name')
+        null==result.getProjectProperties().get('projkey')
+        modDate==result.getConfigLastModifiedTime()
+    }
 
     void "create project with props"(){
         setup:
@@ -133,10 +172,10 @@ class ProjectManagerServiceSpec extends Specification {
             createResource("projects/test1/etc/project.properties",{ResourceMeta rm->
                 def tprops=new Properties()
                 tprops.load(rm.inputStream)
-                rm.meta.size()==0 && tprops['abc']=='def'
+                rm.meta.size()==1 && rm.meta[StorageUtil.RES_META_RUNDECK_CONTENT_TYPE]==ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES && tprops['abc']=='def'
             }) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){
-                    getInputStream() >> new ByteArrayInputStream('abc=def'.bytes)
+                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nabc=def').bytes)
                 }
             }
         }
@@ -192,10 +231,10 @@ class ProjectManagerServiceSpec extends Specification {
             createResource("projects/test1/etc/project.properties",{ResourceMeta rm->
                 def tprops=new Properties()
                 tprops.load(rm.inputStream)
-                rm.meta.size()==0 && tprops['abc']=='def'
+                rm.meta.size()==1 && rm.meta[StorageUtil.RES_META_RUNDECK_CONTENT_TYPE]==ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES && tprops['abc']=='def'
             }) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){
-                    getInputStream() >> new ByteArrayInputStream('abc=def'.bytes)
+                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nabc=def').bytes)
                 }
             }
         }
@@ -253,6 +292,19 @@ class ProjectManagerServiceSpec extends Specification {
 
     }
 
+    void "valid config file"(String data, boolean valid){
+        expect:
+        valid==service.isValidConfigFile(data.bytes)
+
+        where:
+        data                                                                                 | valid
+        'abc=123'                                                                            | false
+        '#somethingelse\nabc=123'                                                            | false
+        '#' + ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES + '\nabc=123'               | true
+        '#' + ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES + ';project=test1\nabc=123' | true
+        '#text/x-java-propertie'                                                             | false
+    }
+
     void "merge project properties internal"(){
         setup:
         Properties props1 = new Properties()
@@ -262,16 +314,16 @@ class ProjectManagerServiceSpec extends Specification {
             hasResource("projects/test1/etc/project.properties") >> true
             getResource("projects/test1/etc/project.properties") >> Stub(Resource){
                 getContents() >> Stub(ResourceMeta){
-                    getInputStream() >> new ByteArrayInputStream('abc=def'.bytes)
+                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nabc=def').bytes)
                 }
             }
             updateResource("projects/test1/etc/project.properties",{ResourceMeta rm->
                 def tprops=new Properties()
                 tprops.load(rm.inputStream)
-                rm.meta.size()==0 && tprops['abc']=='def' && tprops['def']=='ghi'
+                rm.meta.size()==1 && rm.meta[StorageUtil.RES_META_RUNDECK_CONTENT_TYPE]==ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES && tprops['abc']=='def' && tprops['def']=='ghi'
             }) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){
-                    getInputStream() >> new ByteArrayInputStream('abc=def\ndef=ghi'.bytes)
+                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nabc=def\ndef=ghi').bytes)
                 }
             }
         }
@@ -296,16 +348,16 @@ class ProjectManagerServiceSpec extends Specification {
             hasResource("projects/test1/etc/project.properties") >> true
             getResource("projects/test1/etc/project.properties") >> Stub(Resource){
                 getContents() >> Stub(ResourceMeta){
-                    getInputStream() >> new ByteArrayInputStream('abc=def'.bytes)
+                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nabc=def').bytes)
                 }
             }
             updateResource("projects/test1/etc/project.properties",{ResourceMeta rm->
                 def tprops=new Properties()
                 tprops.load(rm.inputStream)
-                rm.meta.size()==0 && tprops['abc']==null && tprops['def']=='ghi'
+                rm.meta.size()==1 && rm.meta[StorageUtil.RES_META_RUNDECK_CONTENT_TYPE]==ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES && tprops['abc']==null && tprops['def']=='ghi'
             }) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){
-                    getInputStream() >> new ByteArrayInputStream('def=ghi'.bytes)
+                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\ndef=ghi').bytes)
                 }
             }
         }
