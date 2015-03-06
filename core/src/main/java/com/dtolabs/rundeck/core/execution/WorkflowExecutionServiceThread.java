@@ -38,7 +38,7 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase {
     WorkflowExecutionService weservice;
     WorkflowExecutionItem weitem;
     private StepExecutionContext context;
-    WorkflowExecutionResult result;
+    private WorkflowExecutionResult result;
 
     public WorkflowExecutionServiceThread(WorkflowExecutionService eservice, WorkflowExecutionItem eitem, StepExecutionContext econtext) {
         this.weservice = eservice;
@@ -52,12 +52,12 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase {
         }
         try {
             final WorkflowExecutor executorForItem = weservice.getExecutorForItem(weitem);
-            result = executorForItem.executeWorkflow(context,weitem);
-            success = result.isSuccess();
-            if (null != result.getException()) {
-                thrown = result.getException();
+            setResult(executorForItem.executeWorkflow(context,weitem));
+            success = getResult().isSuccess();
+            if (null != getResult().getException()) {
+                thrown = getResult().getException();
             }
-            resultObject = result;
+            resultObject = getResult();
         } catch (Throwable e) {
             e.printStackTrace(System.err);
             thrown = e;
@@ -66,5 +66,13 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase {
 
     public StepExecutionContext getContext() {
         return context;
+    }
+
+    public WorkflowExecutionResult getResult() {
+        return result;
+    }
+
+    public void setResult(final WorkflowExecutionResult result) {
+        this.result = result;
     }
 }

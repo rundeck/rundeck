@@ -44,4 +44,9 @@ public interface StepExecutionContext extends ExecutionContext {
      * @return the stack of step numbers within the larger workflow context.
      */
     public List<Integer> getStepContext();
+
+    /**
+     * @return object to control workflow
+     */
+    public FlowControl getFlowControl();
 }

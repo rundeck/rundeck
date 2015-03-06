@@ -91,6 +91,108 @@ class ExecutionServiceTests {
     }
 
     /**
+     * Test jobExecutions empty
+     */
+    public void testApiJobExecutions_empty() {
+        def svc = new ExecutionService()
+
+        def execs = createTestExecs()
+
+        ScheduledExecution se4 = new ScheduledExecution(
+                uuid: 'test4',
+                jobName: 'blah',
+                project: 'Test',
+                groupPath: 'some',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]).save(),
+                )
+        assert null != se4.save()
+        def result = svc.queryJobExecutions(se4, null)
+
+        assert 0 == result.total
+    }
+    /**
+     * Test jobExecutions simple
+     */
+    public void testApiJobExecutions_simple() {
+        def svc = new ExecutionService()
+
+        def execs = createTestExecs()
+
+        ScheduledExecution se=execs[0].scheduledExecution
+        assert null != se
+        def result = svc.queryJobExecutions(se, null)
+
+        assert 1 == result.total
+    }
+    /**
+     * Test jobExecutions succeeded
+     */
+    public void testApiJobExecutions_success() {
+        def svc = new ExecutionService()
+
+        def execs = createTestExecs()
+
+        ScheduledExecution se=execs[0].scheduledExecution
+        assert null != se
+        def result = svc.queryJobExecutions(se, 'succeeded')
+
+        assert 1 == result.total
+    }
+    /**
+     * Test jobExecutions failed
+     */
+    public void testApiJobExecutions_failed() {
+        def svc = new ExecutionService()
+
+        def execs = createTestExecs()
+        Execution e1 = new Execution(
+                scheduledExecution: execs[0].scheduledExecution,
+                project: "Test",
+                status: "false",
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'adam',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test1 buddy', argString: '-delay 12 -monkey cheese -particle'])]).save()
+
+        )
+        assert null != e1.save()
+        execs[0].delete()
+
+        ScheduledExecution se=execs[0].scheduledExecution
+        assert null != se
+        def result = svc.queryJobExecutions(se, 'failed',0,20)
+
+        assert 1 == result.total
+    }
+    /**
+     * Test jobExecutions failed
+     */
+    public void testApiJobExecutions_custom() {
+        def svc = new ExecutionService()
+
+        def execs = createTestExecs()
+        Execution e1 = new Execution(
+                scheduledExecution: execs[0].scheduledExecution,
+                project: "Test",
+                status: "custom status",
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'adam',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test1 buddy', argString: '-delay 12 -monkey cheese -particle'])]).save()
+
+        )
+        assert null != e1.save()
+        execs[0].delete()
+
+        ScheduledExecution se=execs[0].scheduledExecution
+        assert null != se
+        def result = svc.queryJobExecutions(se, 'custom status',0,20)
+
+        assert 1 == result.total
+    }
+    /**
      * Test groupPath
      */
     public void testExecutionsQueryGroupPath() {

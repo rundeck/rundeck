@@ -226,6 +226,7 @@ function NodeFlowViewModel(workflow,outputUrl){
     self.followOutputUrl= outputUrl;
     self.completed=ko.observable();
     self.executionState=ko.observable();
+    self.executionStatusString=ko.observable();
     self.retryExecutionId=ko.observable();
     self.retryExecutionState=ko.observable();
     self.retryExecutionUrl=ko.observable();

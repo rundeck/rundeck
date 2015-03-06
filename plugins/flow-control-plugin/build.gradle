@@ -1,0 +1,60 @@
+/**
+ * The flow control plugin
+ */
+
+ext.pluginClassNames = 'org.rundeck.plugin.flowcontrol.FlowControlWorkflowStep'
+ext.pluginName = 'Flow Control'
+ext.pluginDescription = 'Control execution flow'
+
+jar {
+    manifest {
+        attributes 'Rundeck-Plugin-Classnames': pluginClassNames
+        attributes 'Rundeck-Plugin-Name': pluginName
+        attributes 'Rundeck-Plugin-Description': pluginDescription
+    }
+}
+
+task createPom << {
+    pom {
+        project {
+            artifactId 'rundeck-flow-control-plugin'
+            groupId project.group
+            inceptionYear '2015'
+            packaging 'jar'
+            version version
+            name "Rundeck Flow COntrol Plugin"
+            url 'http://rundeck.org'
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+            parent{
+                groupId project.group
+                artifactId "rundeck-bundled-plugins"
+                version(version)
+            }
+            build{
+                plugins{
+                    plugin{
+                        groupId 'org.apache.maven.plugins'
+                        artifactId 'maven-jar-plugin'
+                        version '2.3.2'
+                        configuration{
+                            archive{
+                              manifestEntries{
+                                'Rundeck-Plugin-Classnames'(pluginClassNames)
+                                  'Rundeck-Plugin-Version'(rundeckPluginVersion)
+                                  'Rundeck-Plugin-Archive'('true')
+                                  'Rundeck-Plugin-File-Version'(version)
+                              }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }.writeTo("pom.xml")
+}

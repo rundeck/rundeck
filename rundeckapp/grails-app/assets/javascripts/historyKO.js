@@ -22,6 +22,7 @@
 
 function Report(data) {
     var self = this;
+    self.status = ko.observable();
     self.dateCompleted = ko.observable();
     self.dateStarted = ko.observable();
     self.execution = ko.observable();
@@ -48,7 +49,11 @@ function Report(data) {
     self.endTimeSimple = ko.computed(function () {
         return MomentUtil.formatTimeSimple(self.dateCompleted());
     });
+    self.statusList=['running','succeeded','failed','cancel','retry','timeout','fail'];
 
+    self.isCustomStatus = ko.computed(function () {
+        return self.statusList.indexOf(self.status()) < 0 ;
+    });
     self.isJob = ko.computed(function () {
         var id = self.jobId();
         var deleted=self.jobDeleted();

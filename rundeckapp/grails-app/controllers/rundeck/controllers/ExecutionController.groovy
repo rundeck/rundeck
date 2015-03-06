@@ -221,6 +221,7 @@ class ExecutionController extends ControllerBase{
             completed:jobcomplete,
             execDuration: execDuration,
             executionState:execState.toUpperCase(),
+            executionStatusString:e.status,
             jobAverageDuration: jobAverage,
             startTime:StateMapping.encodeDate(e.dateStarted),
             endTime: StateMapping.encodeDate(e.dateCompleted),
@@ -636,7 +637,8 @@ class ExecutionController extends ControllerBase{
 
         def jobcomplete = e.dateCompleted != null
         def hasFailedNodes = e.failedNodeList ? true : false
-        def execState = executionService.getExecutionState(e)
+        def execState = e.executionState
+        def statusString = e.status
         def execDuration = 0L
         execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
 
@@ -658,6 +660,7 @@ class ExecutionController extends ControllerBase{
                     execCompleted: jobcomplete,
                     hasFailedNodes: hasFailedNodes,
                     execState: execState,
+                    statusString: statusString,
                     execDuration: execDuration
             ]
             if (e.dateCompleted) {
@@ -689,6 +692,7 @@ class ExecutionController extends ControllerBase{
                     response.addHeader('X-Rundeck-ExecOutput-Completed', dataMap.execCompleted.toString())
                     response.addHeader('X-Rundeck-Exec-Completed', dataMap.completed.toString())
                     response.addHeader('X-Rundeck-Exec-State', dataMap.execState.toString())
+                    response.addHeader('X-Rundeck-Exec-Status-String', dataMap.statusString.toString())
                     response.addHeader('X-Rundeck-Exec-Duration', dataMap.execDuration.toString())
                     render(contentType: "text/plain") {
                         ''
@@ -708,6 +712,7 @@ class ExecutionController extends ControllerBase{
                     execCompleted:jobcomplete,
                     hasFailedNodes:hasFailedNodes,
                     execState:execState,
+                    statusString: statusString,
                     execDuration:execDuration
             ]
             withFormat {
@@ -730,6 +735,7 @@ class ExecutionController extends ControllerBase{
                     response.addHeader('X-Rundeck-ExecOutput-Completed', dataMap.execCompleted.toString())
                     response.addHeader('X-Rundeck-Exec-Completed', dataMap.completed.toString())
                     response.addHeader('X-Rundeck-Exec-State', dataMap.execState.toString())
+                    response.addHeader('X-Rundeck-Exec-Status-String', dataMap.statusString.toString())
                     response.addHeader('X-Rundeck-Exec-Duration', dataMap.execDuration.toString())
                     render(contentType: "text/plain") {
                         ''
@@ -791,6 +797,7 @@ class ExecutionController extends ControllerBase{
                         execCompleted:jobcomplete,
                         hasFailedNodes:hasFailedNodes,
                         execState:execState,
+                        statusString: statusString,
                         lastModified:lastmodl.toString(),
                         execDuration:execDuration,
                         totalSize:totsize
@@ -816,6 +823,7 @@ class ExecutionController extends ControllerBase{
                         response.addHeader('X-Rundeck-ExecOutput-Completed', dataMap.execCompleted.toString())
                         response.addHeader('X-Rundeck-Exec-Completed', dataMap.completed.toString())
                         response.addHeader('X-Rundeck-Exec-State', dataMap.execState.toString())
+                        response.addHeader('X-Rundeck-Exec-Status-String', dataMap.statusString.toString())
                         response.addHeader('X-Rundeck-Exec-Duration', dataMap.execDuration.toString())
                         response.addHeader('X-Rundeck-ExecOutput-LastModifed', dataMap.lastModified.toString())
                         response.addHeader('X-Rundeck-ExecOutput-TotalSize', dataMap.totalSize.toString())
@@ -946,6 +954,7 @@ class ExecutionController extends ControllerBase{
                 execCompleted: jobcomplete,
                 hasFailedNodes: hasFailedNodes,
                 execState: execState,
+                statusString: statusString,
                 lastModified: lastmodl.toString(),
                 execDuration: execDuration,
                 percentLoaded: percent,
@@ -972,6 +981,7 @@ class ExecutionController extends ControllerBase{
                 response.addHeader('X-Rundeck-ExecOutput-Completed', completed.toString())
                 response.addHeader('X-Rundeck-Exec-Completed', jobcomplete.toString())
                 response.addHeader('X-Rundeck-Exec-State', execState.toString())
+                response.addHeader('X-Rundeck-Exec-Status-String', statusString.toString())
                 response.addHeader('X-Rundeck-Exec-Duration', execDuration.toString())
                 response.addHeader('X-Rundeck-ExecOutput-LastModifed', lastmodl.toString())
                 response.addHeader('X-Rundeck-ExecOutput-TotalSize', totsize.toString())
@@ -1345,7 +1355,7 @@ class ExecutionController extends ControllerBase{
     /**
      * API: /api/executions query interface, version 5
      */
-    def apiExecutionsQuery = {ExecutionQuery query->
+    def apiExecutionsQuery(ExecutionQuery query){
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V5)) {
             return
         }

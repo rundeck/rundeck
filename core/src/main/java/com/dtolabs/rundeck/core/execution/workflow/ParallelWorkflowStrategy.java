@@ -69,7 +69,7 @@ public class ParallelWorkflowStrategy extends BaseWorkflowStrategy {
 
     public WorkflowExecutionResult executeWorkflowImpl(final StepExecutionContext executionContext,
                                                        final WorkflowExecutionItem item) {
-        boolean workflowsuccess = false;
+        WorkflowStatusResult workflowResult = WorkflowResultFailed;
         Exception exception = null;
         final IWorkflow workflow = item.getWorkflow();
         final Map<Integer, StepExecutionResult> stepFailures = new HashMap<Integer, StepExecutionResult>();
@@ -90,7 +90,7 @@ public class ParallelWorkflowStrategy extends BaseWorkflowStrategy {
                 executionContext.getExecutionListener().log(Constants.WARN_LEVEL, "Workflow has 0 items");
             }
 
-            workflowsuccess = executeWorkflowItemsInParallel(executionContext, stepFailures, stepResults,
+            workflowResult = executeWorkflowItemsInParallel(executionContext, stepFailures, stepResults,
                     iWorkflowCmdItems, workflow.isKeepgoing());
         } catch (RuntimeException e) {
             exception = e;
@@ -98,10 +98,15 @@ public class ParallelWorkflowStrategy extends BaseWorkflowStrategy {
             executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Exception: " + e.getClass() + ": " + e
                     .getMessage());
         }
-        final boolean success = workflowsuccess;
         final Exception orig = exception;
         final Map<String, Collection<StepExecutionResult>> nodeFailures = convertFailures(stepFailures);
-        return new BaseWorkflowExecutionResult(stepResults, nodeFailures, stepFailures, success, orig);
+        return new BaseWorkflowExecutionResult(
+                stepResults,
+                nodeFailures,
+                stepFailures,
+                orig,
+                workflowResult
+        );
     }
 
     /**
@@ -115,7 +120,7 @@ public class ParallelWorkflowStrategy extends BaseWorkflowStrategy {
      * @param keepgoing true to keepgoing if a step fails
      * @return true if successful
      */
-    protected boolean executeWorkflowItemsInParallel(final StepExecutionContext executionContext,
+    protected WorkflowStatusResult executeWorkflowItemsInParallel(final StepExecutionContext executionContext,
                                                      final Map<Integer, StepExecutionResult> failedMap,
                                                      final List<StepExecutionResult> resultList,
                                                      final List<StepExecutionItem> iWorkflowCmdItems,
@@ -166,6 +171,7 @@ public class ParallelWorkflowStrategy extends BaseWorkflowStrategy {
 
         // Wait for them to complete.
         // TODO: Write runnable consumer that polls workflow results and fails upon first failure if keepGoing == false
+        // TODO: handle condition where step uses FlowControl to call Halt()
         es.shutdown();
         try {
             if (!es.awaitTermination(Long.MAX_VALUE, TimeUnit.MINUTES)) {
@@ -179,10 +185,10 @@ public class ParallelWorkflowStrategy extends BaseWorkflowStrategy {
             int stepNum = i + executionContext.getStepNumber();
             if (null == stepExecutionResults.get(stepNum) ||
                 !stepExecutionResults.get(stepNum).isSuccess()) {
-                return false;
+                return WorkflowResultFailed;
             }
         }
-        return true;
+        return workflowResult(true, null, ControlBehavior.Continue);
     }
 
     /**
@@ -216,6 +222,7 @@ public class ParallelWorkflowStrategy extends BaseWorkflowStrategy {
 
         //execute the step item, and store the results
         StepExecutionResult stepResult = null;
+        //TODO: add FlowControl to context, handle HALT request
         stepResult = executeWFItem(stepContext, stepFailedMap, stepNum, cmd);
         stepSuccess = stepResult.isSuccess();
         nodeFailures = stepCaptureFailedNodesListener.getFailedNodes();
@@ -248,13 +255,11 @@ public class ParallelWorkflowStrategy extends BaseWorkflowStrategy {
 
                     }
 
-                    if(null!=stepResult) {
-                        //add step failure data to data context
-                        handlerExecContext = addStepFailureContextData(stepResult, handlerExecContext);
+                    //add step failure data to data context
+                    handlerExecContext = addStepFailureContextData(stepResult, handlerExecContext);
 
-                        //extract node-specific failure and set as node-context data
-                        handlerExecContext = addNodeStepFailureContextData(stepResult, handlerExecContext);
-                    }
+                    //extract node-specific failure and set as node-context data
+                    handlerExecContext = addNodeStepFailureContextData(stepResult, handlerExecContext);
 
                     Map<Integer, StepExecutionResult> handlerFailedMap = new HashMap<Integer, StepExecutionResult>();
                     StepExecutionResult handlerResult = executeWFItem(handlerExecContext,

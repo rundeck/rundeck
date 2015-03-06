@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.common.NodesSelector;
+import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.storage.StorageTree;
 
 import java.io.File;
@@ -59,6 +60,10 @@ public interface ExecutionContext {
      * @return the storage service
      */
     public StorageTree getStorageTree();
+    /**
+     * @return the job service
+     */
+    public JobService getJobService();
 
     /**
      * @return username

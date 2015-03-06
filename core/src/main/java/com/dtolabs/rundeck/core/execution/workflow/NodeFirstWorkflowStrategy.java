@@ -27,7 +27,6 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.NodesetEmptyException;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.common.NodesSelector;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
@@ -69,7 +68,7 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
                                                        final WorkflowExecutionItem item) {
         Exception exception = null;
         final IWorkflow workflow = item.getWorkflow();
-        boolean wfsuccess = true;
+        WorkflowStatusResult wfresult= null;
 
         final ArrayList<StepExecutionResult> results = new ArrayList<StepExecutionResult>();
         final Map<String, Collection<StepExecutionResult>> failures
@@ -98,7 +97,7 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
                 throw new IllegalStateException();
             }
             for (final IWorkflow flowsection : sections) {
-                boolean sectionSuccess = true;
+                WorkflowStatusResult sectionSuccess;
 
                 StepExecutor stepExecutor = framework.getStepExecutionService()
                     .getExecutorForItem(flowsection.getCommands().get(0));
@@ -122,12 +121,10 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
                                                       flowsection.isKeepgoing());
 
                 }
-                if (!sectionSuccess && !item.getWorkflow().isKeepgoing()) {
-                    wfsuccess = false;
+                wfresult = sectionSuccess;
+                if (!sectionSuccess.isSuccess() && !item.getWorkflow().isKeepgoing()||
+                    sectionSuccess.getControlBehavior() == ControlBehavior.Halt) {
                     break;
-                }
-                if (!sectionSuccess) {
-                    wfsuccess = false;
                 }
                 stepCount += flowsection.getCommands().size();
             }
@@ -136,22 +133,27 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
             e.printStackTrace();
             executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Exception: " + e.getClass() + ": " + e
                     .getMessage());
-            wfsuccess = false;
+            wfresult = WorkflowResultFailed;
         } catch (DispatcherException e) {
             exception = e;
             executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Exception: " + e.getClass() + ": " + e
                     .getMessage());
-            wfsuccess = false;
+            wfresult = WorkflowResultFailed;
         } catch (ExecutionServiceException e) {
             exception = e;
             executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Exception: " + e.getClass() + ": " + e
                     .getMessage());
-            wfsuccess = false;
+            wfresult = WorkflowResultFailed;
         }
-        final boolean success = wfsuccess;
         final Exception fexception = exception;
 
-        return new BaseWorkflowExecutionResult(results, failures,stepFailures, success, fexception);
+        return new BaseWorkflowExecutionResult(
+                results,
+                failures,
+                stepFailures,
+                fexception,
+                wfresult
+        );
     }
 
     /**
@@ -159,7 +161,7 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
      *
      * @return true if the section was succesful
      */
-    private boolean executeWFSectionNodeDispatch(StepExecutionContext executionContext,
+    private WorkflowStatusResult executeWFSectionNodeDispatch(StepExecutionContext executionContext,
                                                  int stepCount,
                                                  List<StepExecutionResult> results,
                                                  Map<String, Collection<StepExecutionResult>> failures,
@@ -183,7 +185,7 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
 
         logger.debug("Node dispatch result: " + dispatch);
         extractWFDispatcherResult(dispatch, results, failures, stepFailures,flowsection.getCommands().size(),stepCount);
-        return dispatch.isSuccess();
+        return workflowResult(dispatch.isSuccess(), null, ControlBehavior.Continue);
     }
 
     /**
@@ -289,18 +291,24 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
      *
      * @return success if all steps were successful
      */
-    private boolean executeWFSection(StepExecutionContext executionContext,
-                                     List<StepExecutionResult> results,
-                                     Map<String, Collection<StepExecutionResult>> failures,
-                                     final Map<Integer, StepExecutionResult> stepFailures,
-                                     int stepCount,
-                                     final List<StepExecutionItem> commands, final boolean keepgoing) {
-
-        boolean workflowsuccess = executeWorkflowItemsForNodeSet(executionContext,
-                                                                 stepFailures,
-                                                                 results,
-                                                                 commands,
-                                                                 keepgoing, stepCount);
+    private WorkflowStatusResult executeWFSection(
+            final StepExecutionContext executionContext,
+            final List<StepExecutionResult> results,
+            final Map<String, Collection<StepExecutionResult>> failures,
+            final Map<Integer, StepExecutionResult> stepFailures,
+            final int stepCount,
+            final List<StepExecutionItem> commands,
+            final boolean keepgoing
+    )
+    {
+        WorkflowStatusResult workflowsuccess = executeWorkflowItemsForNodeSet(
+                executionContext,
+                stepFailures,
+                results,
+                commands,
+                keepgoing,
+                stepCount
+        );
 
         logger.debug("Aggregate results: " + workflowsuccess + " " + results + ", " + stepFailures);
         Map<String, Collection<StepExecutionResult>> localFailure = convertFailures(stepFailures);

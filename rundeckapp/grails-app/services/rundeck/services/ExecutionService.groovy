@@ -80,6 +80,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def grailsLinkGenerator
     def logFileStorageService
     MessageSource messageSource
+    def jobStateService
 
     /**
      * Render execution document for api response
@@ -621,7 +622,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         [mdcprops, "id: " + e.id +" state: " + state +  " project: " + e.project + " user: " + e.user + jobstring]
     }
 
-    public logExecution(uri,project,user,issuccess,execId,Date startDate=null, jobExecId=null, jobName=null,
+    public logExecution(uri,project,user,issuccess,statusString,execId,Date startDate=null, jobExecId=null, jobName=null,
                         jobSummary=null,iscancelled=false,istimedout=false,willretry=false, nodesummary=null,
                         abortedby=null){
 
@@ -658,10 +659,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         reportMap.author=user
         reportMap.title= jobSummary?jobSummary:"RunDeck Job Execution"
-        reportMap.status= issuccess ? "succeed":iscancelled?"cancel": willretry?'retry':istimedout?"timeout":"fail"
+        reportMap.status= statusString?: issuccess ? "succeed":iscancelled?"cancel": willretry?'retry':istimedout?"timeout":"fail"
         reportMap.node= null!=nodesummary?nodesummary: frameworkService.getFrameworkNodeName()
 
-        reportMap.message=(issuccess?'Job completed successfully':iscancelled?('Job killed by: '+(abortedby?:user)):
+        reportMap.message=(statusString? "Job status ${statusString}" : issuccess?'Job completed successfully':iscancelled?('Job killed by: '+(abortedby?:user)):
             willretry?'Job Failed (will retry)':istimedout?'Job timed out':'Job failed')
         reportMap.dateCompleted=new Date()
         def result=reportService.reportExecutionResult(reportMap)
@@ -844,14 +845,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public static String EXECUTION_ABORTED = "aborted"
     public static String EXECUTION_TIMEDOUT = "timedout"
     public static String EXECUTION_FAILED_WITH_RETRY = "failed-with-retry"
+    public static String EXECUTION_STATE_OTHER = "other"
 
     public static String ABORT_PENDING = "pending"
     public static String ABORT_ABORTED = "aborted"
     public static String ABORT_FAILED = "failed"
 
     public static String getExecutionState(Execution e) {
-        return null == e.dateCompleted ? EXECUTION_RUNNING : "true" == e.status ? EXECUTION_SUCCEEDED : e.cancelled ?
-            EXECUTION_ABORTED : e.willRetry ? EXECUTION_FAILED_WITH_RETRY:  e.timedOut ? EXECUTION_TIMEDOUT  : EXECUTION_FAILED
+        e.executionState
     }
 
     public StepExecutionItem itemForWFCmdItem(final WorkflowStep step,final StepExecutionItem handler=null) throws FileNotFoundException {
@@ -1018,6 +1019,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def builder = ExecutionContextImpl.builder((StepExecutionContext)origContext)
             .frameworkProject(execMap.project)
             .storageTree(storageService.storageTreeWithContext(authContext))
+            .jobService(jobStateService.jobServiceWithAuthContext(authContext))
             .user(userName)
             .nodeSelector(nodeselector)
             .nodes(nodeSet)
@@ -1787,7 +1789,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 scheduledExecution = ScheduledExecution.get(schedId)
             }
 
-            if (!props.cancelled && props.status != 'true' && scheduledExecution && retryContext) {
+            if (!execution.cancelled && execution.status != 'true' && scheduledExecution && retryContext) {
                 //determine retry necessity
                 int count = retryContext?.retryAttempt ?: 0
                 def retryStr = execution.retry
@@ -1847,13 +1849,35 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     failedCount=failed.size()
                     totalCount=matched.size()
                 }
-                logExecution(null, execution.project, execution.user, "true" == execution.status, exId,
-                    execution.dateStarted, jobid, jobname, summary, props.cancelled, props.timedOut, execution.willRetry,
-                    node, execution.abortedby)
+                logExecution(
+                        null,
+                        execution.project,
+                        execution.user,
+                        execution.status.toLowerCase() in ['true','succeeded'],
+                        execution.status,
+                        exId,
+                        execution.dateStarted,
+                        jobid,
+                        jobname,
+                        summary,
+                        props.cancelled,
+                        props.timedOut,
+                        execution.willRetry,
+                        node,
+                        execution.abortedby
+                )
                 logExecutionLog4j(execution, "finish", execution.user)
 
                 def context = execmap?.thread?.context
-                notificationService.triggerJobNotification(props.status == 'true' ? 'success' : 'failure', schedId, [execution: execution,nodestatus:[succeeded:sucCount,failed:failedCount,total:totalCount],context:context])
+                notificationService.triggerJobNotification(
+                        props.status.toLowerCase() in ['true','succeeded'] ? 'success' : 'failure',
+                        schedId,
+                        [
+                                execution: execution,
+                                nodestatus: [succeeded: sucCount,failed:failedCount,total:totalCount],
+                                context: context
+                        ]
+                )
             }
         }
     }
@@ -2359,6 +2383,29 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return result
     }
 
+    /**
+     * Query for executions for the specified job
+     * @param scheduledExecution the job
+     * @param state status string
+     * @param offset paging offset
+     * @param max paging max
+     * @return result map from {@link #queryExecutions(com.dtolabs.rundeck.app.support.ExecutionQuery, int, int)}
+     */
+    def queryJobExecutions(ScheduledExecution scheduledExecution,String state,int offset=0,int max=-1){
+        def query=new ExecutionQuery()
+        query.jobIdListFilter=[scheduledExecution.id.toString()]
+        query.statusFilter=state
+        query.projFilter=scheduledExecution.project
+        return queryExecutions(query,offset,max)
+    }
+
+    /**
+     * Query executions
+     * @param query query
+     * @param offset paging offset
+     * @param max paging max
+     * @return result map [total: int, result: List<Execution>]
+     */
     def queryExecutions(ExecutionQuery query, int offset=0, int max=-1) {
         def state = query.statusFilter
         def txtfilters = ScheduledExecutionQuery.TEXT_FILTERS
@@ -2571,10 +2618,30 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             } else if (state == EXECUTION_ABORTED) {
                 isNotNull('dateCompleted')
                 eq('cancelled', true)
-            } else if (state) {
+            } else if (state == EXECUTION_TIMEDOUT) {
+                isNotNull('dateCompleted')
+                eq('timedOut', true)
+            }else if (state == EXECUTION_FAILED_WITH_RETRY) {
+                isNotNull('dateCompleted')
+                eq('willRetry', true)
+            } else if(state == EXECUTION_FAILED){
                 isNotNull('dateCompleted')
                 eq('cancelled', false)
-                eq('status', state == EXECUTION_FAILED ? 'false' : 'true')
+                or{
+                    eq('status',  'failed')
+                    eq('status',  'false')
+                }
+            }else if(state == EXECUTION_SUCCEEDED){
+                isNotNull('dateCompleted')
+                eq('cancelled', false)
+                or{
+                    eq('status',  'true')
+                    eq('status',  'succeeded')
+                }
+            }else if(state){
+                isNotNull('dateCompleted')
+                eq('cancelled', false)
+                eq('status',  state)
             }
             if (query.abortedbyFilter) {
                 eq('abortedby', query.abortedbyFilter)

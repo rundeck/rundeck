@@ -53,7 +53,7 @@ class ExecutionQuery extends ScheduledExecutionQuery{
     String userFilter
 
     static constraints={
-        statusFilter(nullable:true,inList: [ExecutionService.EXECUTION_RUNNING, ExecutionService.EXECUTION_ABORTED, ExecutionService.EXECUTION_FAILED, ExecutionService.EXECUTION_SUCCEEDED])
+        statusFilter(nullable:true)
         sortOrder(nullable: true)
         loglevelFilter(nullable:true)
         excludeJobIdListFilter(nullable:true)

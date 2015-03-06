@@ -48,6 +48,9 @@ import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.ScheduledExecutionService
 
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
+
 /*
 * ScheduledExecutionControllerTests.java
 *
@@ -62,7 +65,7 @@ class ScheduledExecutionControllerTests  {
      * utility method to mock a class
      */
     private <T> T mockWith(Class<T> clazz, Closure clos) {
-        def mock = mockFor(clazz)
+        def mock = mockFor(clazz,false)
         mock.demand.with(clos)
         return mock.createMock()
     }
@@ -1084,7 +1087,153 @@ class ScheduledExecutionControllerTests  {
             assertEquals 'Job configuration was incorrect.', model.message
         }
     }
+    private ScheduledExecution createTestJob(){
+        def se=new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+        )
+        se.save()
+        assertNotNull se.id
+        return se
+    }
+    public void testApiJobExecutions_basic() {
+        def sec = controller
 
+        def se = createTestJob()
+
+
+        def testStatus=null
+        def testOffset=0
+        def testMax=-1
+        def testResultSize=0
+
+
+        assertApiJobExecutions(se, sec, testStatus, testOffset, testMax, testResultSize,[])
+
+        def params = [id: se.id.toString()]
+        sec.params.putAll(params)
+        def result=sec.apiJobExecutions()
+        assertEquals(200,response.status)
+    }
+    public void testApiJobExecutions_single() {
+        def sec = controller
+
+        def se = createTestJob()
+        def exec = new Execution(
+                scheduledExecution: se,
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                status: 'true',
+                user: "testuser",
+                project: "testProject",
+                loglevel: 'WARN',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+        )
+        if(!exec.validate()){
+            exec.errors.allErrors.each{println(it.toString())}
+        }
+        assertNotNull exec.save()
+
+        def testStatus=null
+        def testOffset=0
+        def testMax=-1
+        def testResultSize=1
+
+
+        assertApiJobExecutions(se, sec, testStatus, testOffset, testMax, testResultSize,[exec])
+
+        def params = [id: se.id.toString()]
+        sec.params.putAll(params)
+        def result=sec.apiJobExecutions()
+        assertEquals(200,response.status)
+    }
+    public void testApiJobExecutions_statusParam() {
+        def sec = controller
+
+        def se = createTestJob()
+        def exec = new Execution(
+                scheduledExecution: se,
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                status: 'true',
+                user: "testuser",
+                project: "testProject",
+                loglevel: 'WARN',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+        )
+        if(!exec.validate()){
+            exec.errors.allErrors.each{println(it.toString())}
+        }
+        assertNotNull exec.save()
+
+
+        def testStatus='succeeded'
+        def testOffset=0
+        def testMax=-1
+        def testResultSize=1
+
+
+        assertApiJobExecutions(se, sec, testStatus, testOffset, testMax, testResultSize,[exec])
+
+        def params = [id: se.id.toString(),status:'succeeded']
+        sec.params.putAll(params)
+        def result=sec.apiJobExecutions()
+        assertEquals(200,response.status)
+    }
+
+    private void assertApiJobExecutions(
+            se,
+            ScheduledExecutionController sec,
+            testStatus,
+            testOffset,
+            testMax,
+            testResultSize,
+            testResultList
+    )
+    {
+        sec.apiService = mockWith(ApiService) {
+            requireApi(1) { req, resp -> true }
+            requireParameters(1) { params, resp, keys ->
+                assertTrue( 'id' in keys)
+                true
+            }
+            requireExists(1) { response, exists, args ->
+                assertTrue( se == exists)
+                true
+            }
+        }
+        sec.scheduledExecutionService = mockWith(ScheduledExecutionService) {
+            getByIDorUUID(1) { id ->
+                assertTrue( id == se.id.toString())
+                se
+            }
+        }
+        sec.frameworkService = mockWith(FrameworkService) {
+            getAuthContextForSubject(1) { subj -> null }
+            authorizeProjectJobAll(1) { ctx, job, actions, proj ->
+                assert job == se
+                assert proj == se.project
+                assert 'read' in actions
+                true
+            }
+        }
+
+        sec.executionService = mockWith(ExecutionService) {
+            queryJobExecutions(1) { job, stat, offset, max ->
+                assert job == se
+                assert stat == testStatus
+                assert offset == testOffset
+                assert max == testMax
+                [total: 0, result: testResultList]
+            }
+            respondExecutionsXml(1) { HttpServletRequest request,HttpServletResponse response, List<Execution> executions ->
+                assertEquals(executions.size() ,testResultSize)
+                [result:true]
+            }
+        }
+
+        sec.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
+    }
 
     public void testApiRunJob() {
         def sec = new ScheduledExecutionController()

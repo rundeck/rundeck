@@ -59,7 +59,7 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
 
     public WorkflowExecutionResult executeWorkflowImpl(final StepExecutionContext executionContext,
                                                        final WorkflowExecutionItem item) {
-        boolean workflowsuccess = false;
+        WorkflowStatusResult workflowResult= WorkflowResultFailed;
         Exception exception = null;
         final IWorkflow workflow = item.getWorkflow();
         final Map<Integer, StepExecutionResult> stepFailures = new HashMap<Integer, StepExecutionResult>();
@@ -76,7 +76,7 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
             if (iWorkflowCmdItems.size() < 1) {
                 executionContext.getExecutionListener().log(Constants.WARN_LEVEL, "Workflow has 0 items");
             }
-            workflowsuccess = executeWorkflowItemsForNodeSet(executionContext, stepFailures, stepResults,
+            workflowResult = executeWorkflowItemsForNodeSet(executionContext, stepFailures, stepResults,
                                                              iWorkflowCmdItems, workflow.isKeepgoing());
         } catch (RuntimeException e) {
             exception = e;
@@ -84,10 +84,15 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
             executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Exception: " + e.getClass() + ": " + e
                     .getMessage());
         }
-        final boolean success = workflowsuccess;
         final Exception orig = exception;
         final Map<String, Collection<StepExecutionResult>> nodeFailures = convertFailures(stepFailures);
-        return new BaseWorkflowExecutionResult(stepResults, nodeFailures, stepFailures, success, orig);
+        return new BaseWorkflowExecutionResult(
+                stepResults,
+                nodeFailures,
+                stepFailures,
+                orig,
+                workflowResult
+        );
 
     }
     

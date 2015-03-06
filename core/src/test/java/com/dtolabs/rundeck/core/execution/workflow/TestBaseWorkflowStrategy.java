@@ -124,8 +124,25 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             } else if (o instanceof String) {
                 return new StepExecutionResultImpl(null, null, (String) o);
             } else {
-                fail("Unexpected result at index " + ndx + ": " + o);
-                return new StepExecutionResultImpl(null, null, "Unexpected result at index " + ndx + ": " + o);
+                if (o instanceof WorkflowStatusResult) {
+                    WorkflowStatusResult result = (WorkflowStatusResult) o;
+                    if (null != executionContext.getFlowControl()) {
+                        if (result.getControlBehavior() == ControlBehavior.Halt) {
+                            if (null != result.getStatusString()) {
+                                executionContext.getFlowControl().Halt(result.getStatusString());
+                            } else {
+                                executionContext.getFlowControl().Halt(result.isSuccess());
+                            }
+                        } else if (result.getControlBehavior() == ControlBehavior.Continue) {
+                            executionContext.getFlowControl().Continue();
+                        }
+                    }
+                    return result.isSuccess() ? new StepExecutionResultImpl() :
+                           new StepExecutionResultImpl(null, null, result.getStatusString());
+                } else {
+                    fail("Unexpected result at index " + ndx + ": " + o);
+                    return new StepExecutionResultImpl(null, null, "Unexpected result at index " + ndx + ": " + o);
+                }
             }
 
         }
@@ -156,11 +173,16 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         }
     }
 
-    void assertExecWFItems(final List<StepExecutionItem> items,
-                           final boolean wfKeepgoing,
-                           final List<Map<String, Object>> expected,
-                           final boolean expectedSuccess,
-                           final List<Object> returnResults, final boolean expectStepException) {
+    void assertExecWFItems(
+            final List<StepExecutionItem> items,
+            final boolean wfKeepgoing,
+            final List<Map<String, Object>> expected,
+            final boolean expectedSuccess,
+            final List<Object> returnResults,
+            final boolean expectStepException,
+            final String expectedStatus,
+            final ControlBehavior expectedControl
+    ) {
 
         //test success 1 item
         final NodeSet nodeset = new NodeSet();
@@ -174,7 +196,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         final List<StepExecutionResult> resultList = new ArrayList<StepExecutionResult>();
         final boolean keepgoing = wfKeepgoing;
 
-        boolean itemsSuccess = false;
+        WorkflowStatusResult itemsSuccess=null;
         boolean sawException = false;
         try {
             final StepExecutionContext context =
@@ -195,7 +217,9 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         }
         assertEquals(expected.size(), strategy.executeWfItemCalled);
         assertEquals(expectStepException, sawException);
-        assertEquals(expectedSuccess, itemsSuccess);
+        assertEquals(expectedSuccess, null != itemsSuccess && itemsSuccess.isSuccess());
+        assertEquals(expectedStatus, itemsSuccess.getStatusString());
+        assertEquals(expectedControl, itemsSuccess.getControlBehavior());
 
         assert expected.size() == strategy.getInputs().size();
         int i = 0;
@@ -241,9 +265,108 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             false,
             Arrays.asList(expectResult1),
             true,
-            Arrays.asList((Object) true), false
+            Arrays.asList((Object) true), false, (String) null, ControlBehavior.Continue
         );
 
+    }
+    public void testExecuteWorkflowItemsForNodeSet_ControlHaltFail() throws Exception {
+
+
+        //test failure 1 item no keepgoing
+
+        final testWorkflowCmdItem testCmd1 = new testWorkflowCmdItem();
+
+        final Map<String, Object> expectResult1 = new HashMap<String, Object>();
+        expectResult1.put("c", 1);
+        expectResult1.put("cmd", testCmd1);
+        expectResult1.put("keepgoing", true);
+        FlowController result = new FlowController();
+        result.Halt(false);
+        assertExecWFItems(
+                mkTestItems(testCmd1),
+                false,
+                Arrays.asList(expectResult1),
+                false,
+                Arrays.asList((Object) result),
+                false,
+                null,
+                ControlBehavior.Halt
+        );
+
+    }
+    public void testExecuteWorkflowItemsForNodeSet_ControlHaltSucceed() throws Exception {
+
+
+        //test failure 1 item no keepgoing
+
+        final testWorkflowCmdItem testCmd1 = new testWorkflowCmdItem();
+
+        final Map<String, Object> expectResult1 = new HashMap<String, Object>();
+        expectResult1.put("c", 1);
+        expectResult1.put("cmd", testCmd1);
+        expectResult1.put("keepgoing", true);
+        FlowController result = new FlowController();
+        result.Halt(true);
+        assertExecWFItems(
+                mkTestItems(testCmd1),
+                false,
+                Arrays.asList(expectResult1),
+                true,
+                Arrays.asList((Object) result),
+                false,
+                null,
+                ControlBehavior.Halt
+        );
+
+    }
+    public void testExecuteWorkflowItemsForNodeSet_ControlHaltCustom() throws Exception {
+
+
+        //test failure 1 item no keepgoing
+
+        final testWorkflowCmdItem testCmd1 = new testWorkflowCmdItem();
+
+        final Map<String, Object> expectResult1 = new HashMap<String, Object>();
+        expectResult1.put("c", 1);
+        expectResult1.put("cmd", testCmd1);
+        expectResult1.put("keepgoing", true);
+        FlowController result = new FlowController();
+        result.Halt("test1");
+        assertExecWFItems(
+                mkTestItems(testCmd1),
+                false,
+                Arrays.asList(expectResult1),
+                false,
+                Arrays.asList((Object) result),
+                false,
+                "test1",
+                ControlBehavior.Halt
+        );
+
+    }
+    public void testExecuteWorkflowItemsForNodeSet_ControlContinue() throws Exception {
+
+
+        //test failure 1 item no keepgoing
+
+        final testWorkflowCmdItem testCmd1 = new testWorkflowCmdItem();
+
+        final Map<String, Object> expectResult1 = new HashMap<String, Object>();
+        expectResult1.put("c", 1);
+        expectResult1.put("cmd", testCmd1);
+        expectResult1.put("keepgoing", true);
+        FlowController result = new FlowController();
+        result.Continue();
+        assertExecWFItems(
+                mkTestItems(testCmd1),
+                false,
+                Arrays.asList(expectResult1),
+                false,
+                Arrays.asList((Object) result),
+                false,
+                null,
+                ControlBehavior.Continue
+        );
 
     }
 
@@ -264,7 +387,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             false,
             Arrays.asList(expectResult1),
             false,
-            Arrays.asList((Object) false), false
+            Arrays.asList((Object) false), false, (String) null, ControlBehavior.Continue
         );
     }
 
@@ -286,7 +409,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             Arrays.asList(expectResult1),
             false,
             Arrays.asList((Object) "Failure"),
-            false
+            false, (String) null, ControlBehavior.Continue
         );
 
     }
@@ -308,7 +431,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             true,
             Arrays.asList(expectResult1),
             false,
-            Arrays.asList((Object) "Failure"), false
+            Arrays.asList((Object) "Failure"), false, (String) null, ControlBehavior.Continue
         );
 
 
@@ -331,7 +454,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             false,
             Arrays.asList(expectResult1),
             true,
-            Arrays.asList((Object) true), false
+            Arrays.asList((Object) true), false, (String) null, ControlBehavior.Continue
         );
 
     }
@@ -363,7 +486,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             Arrays.asList(expectResult1, expectResult2),
             false,
             Arrays.asList((Object) false, true),//item1 fails, handler succeeds
-            false
+            false, (String) null, ControlBehavior.Continue
         );
 
 
@@ -442,7 +565,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             Arrays.asList(expectResult1, expectResult2),
             false,
             Arrays.asList((Object) "Failure", true),//item1 fails, handler succeeds
-            false
+            false, (String) null, ControlBehavior.Continue
         );
 
     }
@@ -472,7 +595,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             Arrays.asList(expectResult1, expectResult2),
             true,
             Arrays.asList((Object) false, true),//item1 fails, handler succeeds
-            false
+            false, (String) null, ControlBehavior.Continue
         );
 
     }
@@ -502,7 +625,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             Arrays.asList(expectResult1, expectResult2),
             true,
             Arrays.asList((Object) "Failure", true),//item1 fails, handler succeeds
-            false
+            false, (String) null, ControlBehavior.Continue
         );
 
     }
@@ -535,7 +658,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             Arrays.asList(expectResult1, expectResult2, expectResult3),
             true,
             Arrays.asList((Object) "Failure", true, true),//item1 fails, handler succeeds, item2 succeeds
-            false
+            false, (String) null, ControlBehavior.Continue
         );
 
     }
@@ -569,7 +692,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             Arrays.asList(expectResult1, expectResult2, expectResult3),
             false,
             Arrays.asList((Object) "Failure", true, false),//item1 fails, handler succeeds, item2 fails
-            false
+            false, (String) null, ControlBehavior.Continue
         );
 
     }
@@ -603,7 +726,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             Arrays.asList(expectResult1, expectResult2, expectResult3),
             true,
             Arrays.asList((Object) false, true, true),//item1 fails, handler succeeds, item2 succeeds
-            false
+            false, (String) null, ControlBehavior.Continue
         );
 
     }
@@ -632,7 +755,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             Arrays.asList(expectResult1, expectResult2),
             false,
             Arrays.asList((Object) false, false, "should not be executed"),//item1 fails, handler fails, item2 succeeds
-            false
+            false, (String) null, ControlBehavior.Continue
         );
 
 

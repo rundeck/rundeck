@@ -30,7 +30,6 @@ import com.dtolabs.rundeck.core.common.SelectorUtils;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
@@ -62,21 +61,72 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         this.framework = framework;
     }
 
-    static class BaseWorkflowExecutionResult implements WorkflowExecutionResult {
+    /**
+     * @param status success/failure
+     * @param statusString status string
+     * @param behavior control behavior
+     * @return result with the given input
+     */
+    static WorkflowStatusResult workflowResult(boolean status, String statusString, ControlBehavior behavior) {
+        return new BaseWorkflowStatusResult(status, statusString, behavior);
+    }
+
+    /**
+     * Failure result
+     */
+    static final WorkflowStatusResult WorkflowResultFailed = new BaseWorkflowStatusResult(
+            false,
+            null,
+            ControlBehavior.Continue
+    );
+
+    static class BaseWorkflowStatusResult implements WorkflowStatusResult {
+        private boolean status;
+        private String statusString;
+        private ControlBehavior controlBehavior;
+
+        public BaseWorkflowStatusResult(boolean status, String statusString,ControlBehavior controlBehavior) {
+            this.status = status;
+            this.statusString = statusString;
+            this.controlBehavior=controlBehavior;
+        }
+
+        public BaseWorkflowStatusResult(WorkflowStatusResult result) {
+            this.status = result.isSuccess();
+            this.statusString = result.getStatusString();
+            this.controlBehavior=result.getControlBehavior();
+        }
+
+        public boolean isSuccess() {
+            return status;
+        }
+
+        public String getStatusString() {
+            return statusString;
+        }
+
+        public ControlBehavior getControlBehavior() {
+            return controlBehavior;
+        }
+    }
+    static class BaseWorkflowExecutionResult extends BaseWorkflowStatusResult implements WorkflowExecutionResult {
         private final List<StepExecutionResult> results;
         private final Map<String, Collection<StepExecutionResult>> failures;
         private final Map<Integer, StepExecutionResult> stepFailures;
-        private final boolean success;
         private final Exception orig;
 
-        public BaseWorkflowExecutionResult(List<StepExecutionResult> results,
-                                       Map<String, Collection<StepExecutionResult>> failures,
-                                       final Map<Integer, StepExecutionResult> stepFailures,
-                                       boolean success, Exception orig) {
+        public BaseWorkflowExecutionResult(
+                List<StepExecutionResult> results,
+                Map<String, Collection<StepExecutionResult>> failures,
+                final Map<Integer, StepExecutionResult> stepFailures,
+                Exception orig,
+                final WorkflowStatusResult status
+        )
+        {
+            super(status);
             this.results = results;
             this.failures = failures;
-            this.stepFailures=stepFailures;
-            this.success = success;
+            this.stepFailures = stepFailures;
             this.orig = orig;
         }
 
@@ -88,9 +138,6 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
             return failures;
         }
 
-        public boolean isSuccess() {
-            return success;
-        }
 
         public Exception getException() {
             return orig;
@@ -98,13 +145,24 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
 
         @Override
         public String toString() {
-            return "[Workflow "
+            return "[Workflow result: "
 //                   + (null != getResultSet() && getResultSet().size() > 0 ? "results: " + getResultSet() : "")
-                   + (null != getStepFailures() && getStepFailures().size() > 0 ? "step failures: " + getStepFailures() : "")
-                   + (null != getNodeFailures() && getNodeFailures().size() > 0 ? ", Node failures: "
-                                                                                        + getNodeFailures() : "")
-                   + (null != getException() ? ": exception: " + getException() : "")
-                   + "]";
+                   +
+                   (null != getStepFailures() && getStepFailures().size() > 0
+                    ? ", step failures: " + getStepFailures()
+                    : "")
+                   +
+                   (null != getNodeFailures() && getNodeFailures().size() > 0 ? ", Node failures: "
+                                                                                + getNodeFailures() : "")
+                   +
+                   (null != getException() ? ", exception: " + getException() : "")
+                   + (null != getControlBehavior() ? ", flow control: " + getControlBehavior() : "")
+                   +
+                   (null != getStatusString()
+                    ? ", status: " + getStatusString()
+                    : ", status: " + (isSuccess() ? "succeeded" : "failed"))
+                   +
+                   "]";
         }
 
         public Map<Integer, StepExecutionResult> getStepFailures() {
@@ -192,7 +250,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
      * @param keepgoing true to keepgoing on step failure
      * @return true if successful
      */
-    protected boolean executeWorkflowItemsForNodeSet(final StepExecutionContext executionContext,
+    protected WorkflowStatusResult executeWorkflowItemsForNodeSet(final StepExecutionContext executionContext,
                                                      final Map<Integer, StepExecutionResult> failedMap,
                                                      final List<StepExecutionResult> resultList,
                                                      final List<StepExecutionItem> iWorkflowCmdItems,
@@ -210,7 +268,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
      * @param keepgoing true to keepgoing on step failure
      * @param beginStepIndex beginning step index
      */
-    protected boolean executeWorkflowItemsForNodeSet(final StepExecutionContext executionContext,
+    protected WorkflowStatusResult executeWorkflowItemsForNodeSet(final StepExecutionContext executionContext,
                                                      final Map<Integer, StepExecutionResult> failedMap,
                                                      final List<StepExecutionResult> resultList,
                                                      final List<StepExecutionItem> iWorkflowCmdItems,
@@ -218,10 +276,11 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                                                      final int beginStepIndex) {
 
         boolean workflowsuccess = true;
+        String statusString=null;
+        ControlBehavior controlBehavior = null;
         final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
         int c = beginStepIndex;
         for (final StepExecutionItem cmd : iWorkflowCmdItems) {
-            boolean stepSuccess=false;
             if (null != wlistener) {
                 wlistener.beginWorkflowItem(c, cmd);
             }
@@ -231,13 +290,18 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
             NodeRecorder stepCaptureFailedNodesListener = new NodeRecorder();
             StepExecutionContext stepContext = replaceFailedNodesListenerInContext(executionContext,
                 stepCaptureFailedNodesListener);
+
+            final FlowController stepController=new FlowController();
+
+            StepExecutionContext controllableContext = withFlowControl(stepContext, stepController);
+
             Map<String,NodeStepResult> nodeFailures;
 
             //execute the step item, and store the results
             StepExecutionResult stepResult=null;
             Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<Integer, StepExecutionResult>();
-            stepResult = executeWFItem(stepContext, stepFailedMap, c, cmd);
-            stepSuccess = stepResult.isSuccess();
+            stepResult = executeWFItem(controllableContext, stepFailedMap, c, cmd);
+            boolean stepSuccess = stepResult.isSuccess();
             nodeFailures = stepCaptureFailedNodesListener.getFailedNodes();
 
             if(null!=executionContext.getExecutionListener() && null!=executionContext.getExecutionListener().getFailedNodesListener()) {
@@ -245,7 +309,21 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                     stepCaptureFailedNodesListener.getMatchedNodes());
 
             }
+            if (stepController.isControlled()) {
 
+                //TODO: halt execution without running the error-handler?
+                stepSuccess = stepController.isSuccess();
+                statusString=stepController.getStatusString();
+                controlBehavior=stepController.getControlBehavior();
+                executionContext.getExecutionListener().log(
+                        3,
+                        controlBehavior +
+                        " requested" +
+                        (controlBehavior == ControlBehavior.Halt ?
+                         " with result: " +
+                         (null != statusString ? statusString : stepSuccess) : "")
+                );
+            }
             try {
                 if(!stepSuccess && hasHandler) {
                     final HasFailureHandler handles = (HasFailureHandler) cmd;
@@ -279,9 +357,14 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                         if (null != wlistener) {
                             wlistener.beginWorkflowItemErrorHandler(c, cmd);
                         }
+                        final FlowController handlerController=new FlowController();
+                        StepExecutionContext handlerControlContext = withFlowControl(
+                                handlerExecContext,
+                                handlerController
+                        );
 
                         Map<Integer, StepExecutionResult> handlerFailedMap = new HashMap<Integer, StepExecutionResult>();
-                        StepExecutionResult handlerResult = executeWFItem(handlerExecContext,
+                        StepExecutionResult handlerResult = executeWFItem(handlerControlContext,
                                                                           handlerFailedMap,
                                                                           c,
                                                                           handler);
@@ -290,19 +373,34 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                         if (null != wlistener) {
                             wlistener.finishWorkflowItemErrorHandler(c, cmd, handlerResult);
                         }
-                        //handle success conditions:
-                        //1. if keepgoing=true, then status from handler overrides original step
-                        //2. keepgoing=false, then status is the same as the original step, unless
-                        //   the keepgoingOnSuccess is set to true and the handler succeeded
-                        boolean useHandlerResults=keepgoing;
-                        if(!keepgoing && handlerSuccess && handler instanceof HandlerExecutionItem) {
-                            useHandlerResults= ((HandlerExecutionItem) handler).isKeepgoingOnSuccess();
-                        }
-                        if(useHandlerResults){
-                            stepSuccess = handlerSuccess;
-                            stepResult=handlerResult;
-                            stepFailedMap = handlerFailedMap;
-                            nodeFailures = handlerCaptureFailedNodesListener.getFailedNodes();
+
+                        if (handlerController.isControlled() &&
+                            handlerController.getControlBehavior() == ControlBehavior.Halt) {
+                            //handler called Halt()
+                            stepSuccess = handlerController.isSuccess();
+                            statusString = handlerController.getStatusString();
+                            controlBehavior = handlerController.getControlBehavior();
+                            executionContext.getExecutionListener().log(3,
+                                                                        controlBehavior +
+                                                                        " requested with result: " +
+                                                                        (null != statusString ? statusString : stepSuccess)
+                            );
+                        } else {
+
+                            //handle success conditions:
+                            //1. if keepgoing=true, then status from handler overrides original step
+                            //2. keepgoing=false, then status is the same as the original step, unless
+                            //   the keepgoingOnSuccess is set to true and the handler succeeded
+                            boolean useHandlerResults = keepgoing;
+                            if (!keepgoing && handlerSuccess && handler instanceof HandlerExecutionItem) {
+                                useHandlerResults = ((HandlerExecutionItem) handler).isKeepgoingOnSuccess();
+                            }
+                            if (useHandlerResults) {
+                                stepSuccess = handlerSuccess;
+                                stepResult = handlerResult;
+                                stepFailedMap = handlerFailedMap;
+                                nodeFailures = handlerCaptureFailedNodesListener.getFailedNodes();
+                            }
                         }
                     }
                 }
@@ -332,12 +430,29 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
 
             }
 
-            if(!stepSuccess && !keepgoing) {
+            if (controlBehavior == ControlBehavior.Halt || !stepSuccess && !keepgoing ) {
                 break;
             }
             c++;
         }
-        return workflowsuccess;
+        return workflowResult(
+                workflowsuccess,
+                statusString,
+                null != controlBehavior ? controlBehavior : ControlBehavior.Continue
+        );
+    }
+
+    /**
+     * @param stepContext the context
+     * @param stepController a flow control object
+     * @return new context using the flow controller
+     */
+    private StepExecutionContext withFlowControl(
+            final StepExecutionContext stepContext,
+            final FlowController stepController
+    )
+    {
+        return new ExecutionContextImpl.Builder(stepContext).flowControl(stepController).build();
     }
 
     /**

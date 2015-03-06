@@ -7,8 +7,6 @@
     <title><g:message code="main.app.name"/> - <g:if test="${null==execution?.dateCompleted}"><g:message
             code="now.running" /> - </g:if><g:if test="${scheduledExecution}"><g:enc>${scheduledExecution?.jobName}</g:enc> :  </g:if><g:else><g:message code="execution.type.adhoc.title" /></g:else> <g:message code="execution.at.time.by.user" args="[g.relativeDateString(atDate:execution.dateStarted),execution.user]"/></title>
     <g:set var="followmode" value="${params.mode in ['browse','tail','node']?params.mode:'tail'}"/>
-    <g:set var="execState" value="${execution.dateCompleted == null ? 'RUNNING' : execution.status == 'true' ?
-        'SUCCEEDED' : execution.cancelled ? 'ABORTED' : execution.timedOut ? 'TIMEDOUT' : 'FAILED'}"/>
       <g:set var="authKeys" value="${[AuthConstants.ACTION_KILL,
               AuthConstants.ACTION_READ,AuthConstants.ACTION_CREATE,AuthConstants.ACTION_RUN]}"/>
       <g:set var="authChecks" value="${[:]}"/>
@@ -115,6 +113,7 @@
                 }
                 ko.mapping.fromJS({
                     executionState:data.executionState,
+                    executionStatusString:data.executionStatusString,
                     retryExecutionId:data.retryExecutionId,
                     retryExecutionUrl:data.retryExecutionUrl,
                     retryExecutionState:data.retryExecutionState,
@@ -130,6 +129,7 @@
             updateState:function(data){
                 ko.mapping.fromJS({
                     executionState:data.executionState,
+                    executionStatusString:data.executionStatusString,
                     retryExecutionId:data.retryExecutionId,
                     retryExecutionUrl:data.retryExecutionUrl,
                     retryExecutionState:data.retryExecutionState,
@@ -147,7 +147,8 @@
                 completed:'${execution.dateCompleted!=null}',
                 startTime:'${enc(js:execution.dateStarted)}',
                 endTime:'${enc(js:execution.dateCompleted)}',
-                executionState:'${enc(js:execState)}'
+                executionState:'${enc(js:execution.executionState)}',
+                executionStatusString:'${enc(js:execution.status)}'
             },{},nodeflowvm);
             ko.applyBindings(nodeflowvm,jQuery('#execution_main')[0]);
 

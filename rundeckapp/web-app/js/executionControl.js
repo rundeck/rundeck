@@ -671,6 +671,7 @@ var FollowControl = Class.create({
         this.runningcmd.completed = data.completed;
         this.runningcmd.jobcompleted = data.execCompleted;
         this.runningcmd.jobstatus = data.execState;
+        this.runningcmd.statusString = data.statusString;
         this.runningcmd.failednodes = data.hasFailedNodes;
         this.runningcmd.percent = data.percentLoaded;
         this.runningcmd.pending = data.pending;
@@ -711,7 +712,7 @@ var FollowControl = Class.create({
                 $(this.viewoptionsCompleteId).show();
             }
             this.finishDataOutput();
-            this.finishedExecution(this.runningcmd.jobstatus);
+            this.finishedExecution(this.runningcmd.jobstatus,this.runningcmd.statusString);
             return;
         } else {
             var obj=this;
@@ -724,7 +725,7 @@ var FollowControl = Class.create({
             }, time);
         }
         if (this.runningcmd.jobcompleted && !this.runningcmd.completed) {
-            this.jobFinishStatus(this.runningcmd.jobstatus);
+            this.jobFinishStatus(this.runningcmd.jobstatus,this.runningcmd.statusString);
             var message=null
             var percent=null;
             if(this.runningcmd.percent!=null){
@@ -1308,7 +1309,7 @@ var FollowControl = Class.create({
         this.isrunning = true;
     },
 
-    finishedExecution: function(result) {
+    finishedExecution: function(result,statusString) {
         if(!this.finishedExecutionAction){
             return;
         }
@@ -1321,26 +1322,33 @@ var FollowControl = Class.create({
             $(this.fileloadId).hide();
         }
 
-        this.jobFinishStatus(result);
+        this.jobFinishStatus(result,statusString);
         if (typeof(this.onComplete) == 'function') {
             this.onComplete();
         }
     },
-    jobFinishStatus: function(result) {
+    jobFinishStatus: function(result,statusString) {
         if (null != result) {
             if($('runstatus')){
                 setHtml($('runstatus'), result == 'succeeded' ? '<span class="exec-status succeed">Succeeded</span>'
-                    : (result == 'aborted' ? '<span class="exec-status warn">Killed</span>' : '<span class="exec-status fail">Failed</span>'));
+                    : (result == 'aborted' ? '<span class="exec-status warn">Killed</span>'
+                    : '<span class="exec-status fail">Failed</span>'));
             }
             $$('.execstatus').each(function(e){
                 setHtml(e, result == 'succeeded' ? '<span class="exec-status succeed">Succeeded</span>'
-                : (result == 'aborted' ? '<span class="exec-status warn">Killed</span>' : '<span class="exec-status fail">Failed</span>'));
+                : (result == 'aborted' ? '<span class="exec-status warn">Killed</span>'
+                    : '<span class="exec-status fail">Failed</span>'));
             });
             if ($('jobInfo_' + this.executionId)) {
                 var icon = $('jobInfo_' + this.executionId).down('.exec-status.icon');
                 if (icon) {
-                    var status = result == 'succeeded' ? 'succeed' : result == 'aborted' ? 'warn' : 'fail';
-                    ['succeed', 'fail', 'warn', 'running'].each(function (s) {
+                    var status = result == 'succeeded' ? 'succeed' :
+                        result == 'aborted' ? 'warn' :
+                        result == 'timedout' ? 'timedout' :
+                        result == 'failed-with-retry' ? 'retry' :
+                        result == 'failed' ? 'fail' :
+                            'other';
+                    ['succeed', 'fail', 'warn', 'running','retry','timedout','other'].each(function (s) {
                         $(icon).removeClassName(s);
                     });
                     $(icon).addClassName(status);

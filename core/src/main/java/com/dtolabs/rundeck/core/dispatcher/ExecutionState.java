@@ -33,5 +33,6 @@ public enum ExecutionState {
     aborted,
     failed,
     failed_with_retry,
-    timedout
+    timedout,
+    other,
 }

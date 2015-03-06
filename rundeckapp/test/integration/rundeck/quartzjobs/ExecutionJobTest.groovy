@@ -18,7 +18,7 @@ package rundeck.quartzjobs
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.execution.ServiceThreadBase
+import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import grails.test.GrailsMock
 import org.junit.Assert
 import org.junit.Test
@@ -40,7 +40,7 @@ import rundeck.services.FrameworkService
  */
 
 @RunWith(JUnit4.class)
-class ExecutionJobTest  {
+class ExecutionJobTest extends GroovyTestCase{
 
     @Test(expected = RuntimeException)
     void testInitializeEmpty(){
@@ -160,8 +160,9 @@ class ExecutionJobTest  {
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
-        ServiceThreadBase stb=new ServiceThreadBase()
-        stb.success=true
+        WorkflowExecutionServiceThread stb=new TestWEServiceThread(null,null,null)
+        stb.successful=true
+        stb.result=wfeForSuccess(true)
         def testExecmap = [thread: stb, testExecuteAsyncBegin: true]
         mockes.demand.executeAsyncBegin(1..1) { Framework framework, AuthContext authContext, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
             Assert.assertEquals(execution,execution1)
@@ -172,6 +173,8 @@ class ExecutionJobTest  {
         }
         ExecutionService es = mockes.createMock()
         ExecutionUtilService eus = mockeus.createMock()
+        job.finalizeRetryMax=1
+        job.finalizeRetryDelay=0
 
         def result=job.executeCommand(es,eus,execution,null, null, null, 0, [:], [:])
         Assert.assertEquals(true,result.success)
@@ -184,6 +187,14 @@ class ExecutionJobTest  {
                 dateCompleted: finishDate,
                 scheduledExecution: se, workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]))
         e.save()
+    }
+
+
+
+    TestWFEResult wfeForSuccess(boolean success) {
+        def result = new TestWFEResult()
+        result.success=success
+        result
     }
     /**
      * executeAsyncBegin succeeds,finish succeeds, thread fails
@@ -198,8 +209,9 @@ class ExecutionJobTest  {
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
-        ServiceThreadBase stb = new ServiceThreadBase()
-        stb.success = false
+        WorkflowExecutionServiceThread stb = new WorkflowExecutionServiceThread(null,null,null)
+        stb.result = wfeForSuccess(false)
+
         def testExecmap = [thread: stb, testExecuteAsyncBegin: true]
         mockes.demand.executeAsyncBegin(1..1) { Framework framework, AuthContext authContext, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
             Assert.assertEquals(execution, execution1)
@@ -210,6 +222,8 @@ class ExecutionJobTest  {
         }
         ExecutionService es = mockes.createMock()
         ExecutionUtilService eus = mockeus.createMock()
+        job.finalizeRetryMax=1
+        job.finalizeRetryDelay=0
 
         def result = job.executeCommand(es, eus, execution, null, null, null, 0, [:], [:])
         Assert.assertEquals(false, result.success)
@@ -229,7 +243,7 @@ class ExecutionJobTest  {
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
-        ServiceThreadBase stb = new ServiceThreadBase()
+        WorkflowExecutionServiceThread stb = new WorkflowExecutionServiceThread()
         stb.success = false
         def testExecmap = [thread: stb, testExecuteAsyncBegin: true]
         mockes.demand.executeAsyncBegin(1..1) { Framework framework, AuthContext authContext, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
@@ -265,8 +279,8 @@ class ExecutionJobTest  {
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
-        ServiceThreadBase stb = new ServiceThreadBase()
-        stb.success = false
+        WorkflowExecutionServiceThread stb = new WorkflowExecutionServiceThread(null,null,null)
+        stb.result=wfeForSuccess(false)
         def testExecmap = [thread: stb, testExecuteAsyncBegin: true]
         mockes.demand.executeAsyncBegin(1..1) { Framework framework, AuthContext authContext, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
             Assert.assertEquals(execution, execution1)
@@ -351,11 +365,13 @@ class ExecutionJobTest  {
     @Test
     void testSaveStateNoJob(){
         def job = new ExecutionJob()
+        job.finalizeRetryMax=1
+        job.finalizeRetryDelay=0
         def execution = setupExecution(null, new Date(), new Date())
         def mockes = new GrailsMock(ExecutionService)
 
         def expectresult= [
-                status: 'true',
+                status: 'succeeded',
                 cancelled: false,
                 failedNodes: null,
                 failedNodesMap: null,
@@ -365,6 +381,7 @@ class ExecutionJobTest  {
         ]
 
         boolean saveStateCalled=false
+        boolean testPass=false
         mockes.demand.saveExecutionState(1..1){ schedId, exId, Map props, Map execmap, Map retryContext->
             saveStateCalled=true
             Assert.assertNull(schedId)
@@ -372,22 +389,26 @@ class ExecutionJobTest  {
             expectresult.each {k,v->
                 Assert.assertEquals("result property ${k} expected: ${v} was ${props[k]}",v,props[k])
             }
+            testPass=true
         }
 
         def es = mockes.createMock()
-        job.saveState(null,es,execution,true,false,false,true,-1,null,execMap)
+        job.saveState(null,es,execution,true,false,false,true,null,-1,null,execMap)
         Assert.assertEquals(true,saveStateCalled)
+        Assert.assertEquals(true,testPass)
     }
 
     @Test
     void testSaveStateWithJob(){
         def job = new ExecutionJob()
+        job.finalizeRetryMax=1
+        job.finalizeRetryDelay=0
         def scheduledExecution = setupJob()
         def execution = setupExecution(scheduledExecution, new Date(), null)
         def mockes = new GrailsMock(ExecutionService)
 
         def expectresult= [
-                status: 'true',
+                status: 'succeeded',
                 cancelled: false,
                 failedNodes: null,
                 failedNodesMap: null,
@@ -414,7 +435,7 @@ class ExecutionJobTest  {
         }
 
         def es = mockes.createMock()
-        def result=job.saveState(null,es,execution,true,false, false, false, scheduledExecution.id,null,execMap)
+        def result=job.saveState(null,es,execution,true,false, false, false,null, scheduledExecution.id,null,execMap)
         Assert.assertTrue(x)
         Assert.assertEquals(true, saveStateCalled)
     }
@@ -422,12 +443,14 @@ class ExecutionJobTest  {
     @Test
     void testSaveStateWithJobStatsFailureRetryFail(){
         def job = new ExecutionJob()
+        job.finalizeRetryMax=1
+        job.finalizeRetryDelay=0
         def scheduledExecution = setupJob()
         def execution = setupExecution(scheduledExecution, new Date(), null)
         def mockes = new GrailsMock(ExecutionService)
 
         def expectresult= [
-                status: 'true',
+                status: 'succeeded',
                 cancelled: false,
                 failedNodes: null,
                 failedNodesMap: null,
@@ -457,19 +480,21 @@ class ExecutionJobTest  {
 
         def es = mockes.createMock()
         job.statsRetryMax=2
-        def result=job.saveState(null,es,execution,true,false, false,false, scheduledExecution.id,null,execMap)
+        def result=job.saveState(null,es,execution,true,false, false,false,null, scheduledExecution.id,null,execMap)
         Assert.assertFalse(saveStatsComplete)
         Assert.assertEquals(true, saveStateCalled)
     }
     @Test
     void testSaveStateWithJobStatsFailureRetrySucceed(){
         def job = new ExecutionJob()
+        job.finalizeRetryMax=1
+        job.finalizeRetryDelay=0
         def scheduledExecution = setupJob()
         def execution = setupExecution(scheduledExecution, new Date(), null)
         def mockes = new GrailsMock(ExecutionService)
 
         def expectresult= [
-                status: 'true',
+                status: 'succeeded',
                 cancelled: false,
                 failedNodes: null,
                 failedNodesMap: null,
@@ -499,7 +524,7 @@ class ExecutionJobTest  {
 
         def es = mockes.createMock()
         job.statsRetryMax=4
-        def result=job.saveState(null,es,execution,true,false, false,false, scheduledExecution.id,null,execMap)
+        def result=job.saveState(null,es,execution,true,false, false,false,null, scheduledExecution.id,null,execMap)
         Assert.assertTrue(saveStatsComplete)
         Assert.assertEquals(true, saveStateCalled)
     }
@@ -511,7 +536,7 @@ class ExecutionJobTest  {
         def mockes = new GrailsMock(ExecutionService)
 
         def expectresult= [
-                status: 'true',
+                status: 'succeeded',
                 cancelled: false,
                 failedNodes: null,
                 failedNodesMap: null,
@@ -535,7 +560,7 @@ class ExecutionJobTest  {
         def es = mockes.createMock()
 
         job.finalizeRetryMax=2
-        def result=job.saveState(null,es,execution,true,false, false,true,-1,null,execMap)
+        def result=job.saveState(null,es,execution,true,false, false,true,null,-1,null,execMap)
         Assert.assertEquals(false,result)
     }
 

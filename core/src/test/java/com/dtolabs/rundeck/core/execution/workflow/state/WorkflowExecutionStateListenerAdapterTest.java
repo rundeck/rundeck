@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.common.NodeEntryImpl;
 import com.dtolabs.rundeck.core.common.NodeSetImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
@@ -51,6 +52,8 @@ public class WorkflowExecutionStateListenerAdapterTest extends TestCase {
         Map<Integer, StepExecutionResult> stepFailures;
         Exception exception;
         boolean success;
+        private String statusString;
+        private ControlBehavior controlBehavior;
 
         static WorkflowExecutionResult forSuccess(boolean success) {
             wfresult wfresult = new WorkflowExecutionStateListenerAdapterTest.wfresult();
@@ -81,6 +84,16 @@ public class WorkflowExecutionStateListenerAdapterTest extends TestCase {
         @Override
         public boolean isSuccess() {
             return success;
+        }
+
+        @Override
+        public String getStatusString() {
+            return statusString;
+        }
+
+        @Override
+        public ControlBehavior getControlBehavior() {
+            return controlBehavior;
         }
     }
 

@@ -452,9 +452,17 @@ class ReportsController extends ControllerBase{
         def model=reportService.getExecutionReports(query,true)
         model = reportService.finishquery(query,params,model)
 
-        def statusMap=[succeed:ExecutionService.EXECUTION_SUCCEEDED,
+        def statusMap=[
+                succeed:ExecutionService.EXECUTION_SUCCEEDED,
+                (ExecutionService.EXECUTION_SUCCEEDED):ExecutionService.EXECUTION_SUCCEEDED,
             cancel: ExecutionService.EXECUTION_ABORTED,
-            fail: ExecutionService.EXECUTION_FAILED]
+            (ExecutionService.EXECUTION_ABORTED): ExecutionService.EXECUTION_ABORTED,
+            fail: ExecutionService.EXECUTION_FAILED,
+            (ExecutionService.EXECUTION_FAILED): ExecutionService.EXECUTION_FAILED,
+            retry: ExecutionService.EXECUTION_FAILED_WITH_RETRY,
+            (ExecutionService.EXECUTION_FAILED_WITH_RETRY): ExecutionService.EXECUTION_FAILED_WITH_RETRY,
+            timeout: ExecutionService.EXECUTION_TIMEDOUT,
+            (ExecutionService.EXECUTION_TIMEDOUT): ExecutionService.EXECUTION_TIMEDOUT]
         return apiService.renderSuccessXml(request,response){
             delegate.'events'(count:model.reports.size(),total:model.total, max: model.max, offset: model.offset){
                 model.reports.each{  rpt->
@@ -468,7 +476,8 @@ class ReportsController extends ControllerBase{
                     }
                     event(starttime:rpt.dateStarted.time,endtime:rpt.dateCompleted.time){
                         title(rpt.reportId?:'adhoc')
-                        status(statusMap[rpt.status]?:rpt.status)
+                        status(statusMap[rpt.status]?:ExecutionService.EXECUTION_STATE_OTHER)
+                        statusString(rpt.status)
                         summary(rpt.adhocScript?:rpt.title)
                         delegate.'node-summary'(succeeded:nodesum[0],failed:nodesum[1],total:nodesum[2])
                         user(rpt.author)

@@ -2472,7 +2472,7 @@ class ScheduledExecutionController  extends ControllerBase{
     /**
      * API: /api/job/{id}/executions , version 1
      */
-    def apiJobExecutions = {
+    def apiJobExecutions (){
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -2483,44 +2483,36 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        def state=params['status']
-        final statusList = [ExecutionService.EXECUTION_RUNNING, ExecutionService.EXECUTION_ABORTED, ExecutionService.EXECUTION_FAILED, ExecutionService.EXECUTION_SUCCEEDED]
-        final domainStatus=[(ExecutionService.EXECUTION_FAILED):'false',
-            (ExecutionService.EXECUTION_SUCCEEDED):'true']
-        if(state && !(state in statusList)){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.parameter.not.inList', args: [params.status, 'status', statusList]])
-        }
-        def c = Execution.createCriteria()
-        def result=c.list{
-            delegate.'scheduledExecution'{
-                eq('id', scheduledExecution.id)
-            }
-            if(state== ExecutionService.EXECUTION_RUNNING){
-                isNull('dateCompleted')
-            }else if(state== ExecutionService.EXECUTION_ABORTED){
-                isNotNull('dateCompleted')
-                eq('cancelled',true)
-            }else if(state){
-                isNotNull('dateCompleted')
-                eq('cancelled', false)
-                eq('status',domainStatus[state])
-            }
+        if (!frameworkService.authorizeProjectJobAll(
+                authContext,
+                scheduledExecution,
+                [AuthConstants.ACTION_READ],
+                scheduledExecution.project
+        )
+        ) {
 
-            if(params.offset){
-                firstResult(params.int('offset'))
-            }
-            if(params.max){
-                maxResults(params.int('max'))
-            }
-            and {
-                order('dateCompleted', 'desc')
-                order('dateStarted', 'desc')
-            }
+            return apiService.renderErrorXml(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_FORBIDDEN,
+                            code: 'api.error.item.unauthorized',
+                            args: ['Read', 'Job ID', params.id]
+                    ]
+            )
         }
 
-        return executionService.respondExecutionsXml(request,response,result)
+
+        def result = executionService.queryJobExecutions(
+                scheduledExecution,
+                params['status'],
+                params.offset ? params.int('offset') : 0,
+                params.max  ? params.int('max') : -1
+
+        )
+
+        return executionService.respondExecutionsXml(request,response,result.result)
     }
     /**
      * API: /api/incubator/jobs/takeoverSchedule , version 7
