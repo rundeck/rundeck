@@ -38,7 +38,7 @@ def coreJarFile = "core/${target}/rundeck-core-${version}.jar"
 def launcherJarFile = "rundeck-launcher/launcher/${target}/rundeck-launcher-${version}.jar"
 
 //the list of bundled plugins to verify in the war and jar
-def plugins=['script','stub','localexec','copyfile','job-state','flow-control']
+def plugins=['script','stub','localexec','copyfile','job-state','flow-control','storage-encryption']
 
 //manifest describing expected build results
 def manifest=[
