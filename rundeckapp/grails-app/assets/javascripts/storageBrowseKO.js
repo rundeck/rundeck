@@ -8,6 +8,7 @@ function StorageResource() {
     var self = this;
     self.meta = ko.observable({});
     self.wasDownloaded=ko.observable(false);
+    self.downloadError=ko.observable(null);
     self.metaValue=function(key){
         return self.meta()&& self.meta()[key]?self.meta()[key]():null;
     };
@@ -326,9 +327,14 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
             jQuery.ajax({
                 url: _genUrl(appLinks.storageKeysDownload, {relativePath: self.relativePath(self.selectedPath())}),
                 success:function(data,jqxhr){
+                    jQuery(btn).button('reset');
                     var found = jQuery('#' + destid);
                     setText(found[0],data);
                     self.selectedResource().wasDownloaded(true);
+                },
+                error:function (jqXHR, textStatus, errorThrown) {
+                    jQuery(btn).button('reset');
+                    self.selectedResource().downloadError(errorThrown+" : "+jqXHR.responseText);
                 }
             });
         }

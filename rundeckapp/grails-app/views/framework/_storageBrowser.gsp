@@ -171,13 +171,16 @@
 
             <div data-bind="if: selectedResource() && selectedResource().isPublicKey()">
                     <button
-                            data-bind="click: function(){$root.actionLoadContents('publicKeyContents');}, visible: !selectedResource().wasDownloaded()"
+                            data-bind="click: function(){$root.actionLoadContents('publicKeyContents',$element);}, visible: !selectedResource().wasDownloaded()"
                             class="btn btn-sm btn-default"
                             data-loading-text="${g.enc(code:"loading")}"
                     >
                         <g:message code="button.view.public.key.contents" /> (<span data-bind="text: selectedResource().contentSize()"></span> <g:message code="bytes" />)
                     </button>
 
+                <div class="pre-scrollable" data-bind="visible: selectedResource().downloadError()">
+                    <span data-bind="text:selectedResource().downloadError()" class="text-danger"></span>
+                </div>
                 <pre id="publicKeyContents"  class="pre-scrollable" data-bind="visible: selectedResource().wasDownloaded()">
 
                 </pre>
