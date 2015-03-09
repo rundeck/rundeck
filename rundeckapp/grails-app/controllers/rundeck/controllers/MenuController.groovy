@@ -775,18 +775,12 @@ class MenuController extends ControllerBase{
         ]
         def specialConfiguration=[
                 (storagePluginProviderService.name):[
-                        description: "Configure this plugin within the rundeck-config.properties " +
-                                "file. \nDeclare the provider with 'rundeck.storage.provider.[index].type=\${pluginName}', " +
-                                "and declare the path you want this plugin to apply to with " +
-                                "'rundeck.storage.provider.[index].path=<storagepath>'",
-                        prefix:"rundeck.storage.provider.[index]."
+                        description: message(code:"plugin.storage.provider.special.description"),
+                        prefix:"rundeck.storage.provider.[index].config."
                 ],
                 (storageConverterPluginProviderService.name):[
-                        description: "Configure this plugin within the rundeck-config.properties " +
-                                "file. \nDeclare the provider with 'rundeck.storage.converter.[index].type=\${pluginName}', " +
-                                "and declare the path you want this plugin to apply to with " +
-                                "'rundeck.storage.converter.[index].path=<storagepath>'",
-                        prefix:"rundeck.storage.converter.[index]."
+                        description: message(code:"plugin.storage.converter.special.description"),
+                        prefix:"rundeck.storage.converter.[index].config."
                 ]
         ]
 
