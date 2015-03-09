@@ -128,8 +128,10 @@
         </div>
     </g:if>
 </g:else>
-<div class="${offsetColType}">
-    <div class="help-block"><g:enc>${prop.description}</g:enc></div>
+<div class="${valueColType}">
+    <div class="help-block"> <g:render template="/scheduledExecution/description"
+                                       model="[description: prop.description, textCss: '',
+                                               mode: 'collapsed', rkey: g.rkey()]"/></div>
     <g:if test="${error}">
         <div class="text-warning"><g:enc>${error}</g:enc></div>
     </g:if>

@@ -90,7 +90,9 @@
                     <g:enc>${pluginTitle?:pluginName}</g:enc></a>
 
                     <g:if test="${pluginDesc}">
-                        <span class="text-muted"><g:enc>${pluginDesc}</g:enc></span>
+                        <g:render template="/scheduledExecution/description"
+                                  model="[description: pluginDesc, textCss: 'text-muted',
+                                          mode: 'hidden', rkey: g.rkey()]"/>
                     </g:if>
                     <g:if test="${bundledPlugins&& bundledPlugins[serviceName] && bundledPlugins[serviceName].contains(pluginName)}">
                         <span class="label label-default pull-right">bundled</span>
@@ -103,9 +105,13 @@
 
             <div id="${enc(attr:ukeyx)}" class="panel-collapse collapse">
                 <div class="panel-body">
+
+                    <g:render template="/scheduledExecution/description"
+                              model="[description: pluginDesc, textCss: 'text-muted',
+                                      mode: 'shown', rkey: g.rkey()]"/>
                     <g:if test="${specialConfiguration[serviceName]}">
                         <div class="text-info">
-                        <g:enc>${specialConfiguration[serviceName].description.replaceAll(Pattern.quote('${pluginName}'), pluginName)}</g:enc>
+                        <g:markdown>${specialConfiguration[serviceName].description.replaceAll(Pattern.quote('${pluginName}'), pluginName)}</g:markdown>
                         </div>
                     </g:if>
                     <g:each in="${pluginDescription?.properties}" var="prop">
