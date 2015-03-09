@@ -162,8 +162,20 @@ class StorageController extends ControllerBase{
                 def filename= resource.path.name
                 response.setHeader("Content-Disposition", "attachment; filename=\"${filename}\"")
             }
-            def len=contents.writeContent(response.outputStream)
-            response.outputStream.close()
+
+            def baos = new ByteArrayOutputStream()
+            try{
+                def len=contents.writeContent(baos)
+                baos.writeTo(response.outputStream)
+                response.outputStream.close()
+            }catch (IOException e){
+                //problem reading storage contents
+                log.error("Failed reading storage content: "+e.message,e)
+                response.status=HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+                response.outputStream<<"Failed reading storage content: "+e.message
+                response.outputStream.close()
+            }
+
             return
         }
 
