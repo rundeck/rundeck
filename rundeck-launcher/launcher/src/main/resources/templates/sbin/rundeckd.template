@@ -47,9 +47,9 @@ proto=$(awk '/framework.server.url = / {split($3, a, ":"); print a[1]}' $RDECK_B
 prog="rundeckd"
 rundeckd="${JAVA_HOME}/bin/java ${RDECK_JVM} -Dserver.http.port=${RDECK_PORT:=4440} $SSL_OPTS -jar ${RDECK_LAUNCHER}"
 RETVAL=0
-PID_FILE=$RDECK_BASE/var/run/rundeckd.pid
+PID_FILE=$RDECK_BASE/var/run/${prog}.pid
 LOK_FILE=$RDECK_BASE/var/lock/subsys/$prog
-
+servicelog=$RDECK_BASE/var/log/service.log
 
 [ -w $RDECK_BASE/var ] || {
     echo "RDECK_BASE dir not writable: $RDECK_BASE" 
@@ -67,8 +67,8 @@ start() {
 	echo_success; #already running
 	return $RETVAL
     }
-    nohup $rundeckd 2>&1 >>$RDECK_BASE/var/log/service.log &
-    RETVAL=$?	
+    nohup $rundeckd >>$servicelog 2>&1 &
+    RETVAL=$?
     PID=$!
     echo $PID > $PID_FILE
     if [ $RETVAL -eq 0 ]; then 
