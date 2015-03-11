@@ -28,7 +28,11 @@ import java.util.Map;
  * Created: 1/23/13 12:07 AM
  * 
  */
-class ContextLogWriter implements ContextLogger {
+
+/**
+ * Logs events to a writer using the context
+ */
+public class ContextLogWriter implements ContextLogger {
     StreamingLogWriter writer;
 
     public ContextLogWriter(StreamingLogWriter writer) {
