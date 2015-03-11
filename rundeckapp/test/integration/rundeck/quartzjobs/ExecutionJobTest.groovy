@@ -88,9 +88,10 @@ class ExecutionJobTest extends GroovyTestCase{
      */
     @Test()
     void testInitializeJobExecution(){
-        ScheduledExecution se = setupJob()
-        se.user='test'
-        se.userRoleList='a,b'
+        ScheduledExecution se = setupJob{se->
+            se.user='test'
+            se.userRoleList='a,b'
+        }
         ExecutionJob job = new ExecutionJob()
         def mockes=new GrailsMock(ExecutionService)
         def mockeus=new GrailsMock(ExecutionUtilService)
@@ -99,7 +100,7 @@ class ExecutionJobTest extends GroovyTestCase{
             [test:'input']
         }
         mockes.demand.createExecution(1..1){ ScheduledExecution se1, String user->
-            Assert.assertEquals(se,se1)
+            Assert.assertEquals(se.id,se1.id)
             Assert.assertEquals(se.user,user)
             'fakeExecution'
         }
@@ -117,7 +118,7 @@ class ExecutionJobTest extends GroovyTestCase{
         def result=job.initialize(null, contextMock)
 
         Assert.assertEquals(se.id,result.scheduledExecutionId)
-        Assert.assertEquals(se,result.scheduledExecution)
+        Assert.assertEquals(se.id,result.scheduledExecution.id)
         Assert.assertEquals(es,result.executionService)
         Assert.assertEquals(eus,result.executionUtilService)
         Assert.assertEquals([test:'input'],result.secureOptsExposed)
@@ -564,7 +565,7 @@ class ExecutionJobTest extends GroovyTestCase{
         Assert.assertEquals(false,result)
     }
 
-    private ScheduledExecution setupJob() {
+    private ScheduledExecution setupJob(Closure extra=null) {
         ScheduledExecution se = new ScheduledExecution(
                 jobName: 'blue',
                 project: 'AProject',
@@ -575,6 +576,9 @@ class ExecutionJobTest extends GroovyTestCase{
         )
         se.dateCreated=new Date()
         se.lastUpdated=new Date()
+        if(extra!=null){
+            extra.call(se)
+        }
         se.workflow.save()
         se.save()
     }

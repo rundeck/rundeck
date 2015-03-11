@@ -191,7 +191,6 @@ class ExecutionJob implements InterruptableJob {
             }
         }else{
             initMap.scheduledExecution = fetchScheduledExecution(jobDataMap)
-            initMap.scheduledExecution.refresh()
             if(!initMap.scheduledExecution){
                 throw new RuntimeException("scheduledExecution data was not found in job data map")
             }
@@ -482,7 +481,11 @@ class ExecutionJob implements InterruptableJob {
 
     def ScheduledExecution fetchScheduledExecution(def jobDataMap) {
         def seid = jobDataMap.get("scheduledExecutionId")
-        def ScheduledExecution se = ScheduledExecution.get(seid)
+        def ScheduledExecution se=null
+        ScheduledExecution.withNewSession {
+            se = ScheduledExecution.get(seid)
+        }
+
         if (!se) {
             throw new RuntimeException("failed to lookup scheduledException object from job data map: id: ${seid}")
         }
