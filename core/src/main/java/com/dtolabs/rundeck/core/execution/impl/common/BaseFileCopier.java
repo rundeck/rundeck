@@ -31,9 +31,11 @@ import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.utils.Streams;
+import org.apache.commons.lang.RandomStringUtils;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * BaseFileCopier provides utility methods for a FileCopier class.
@@ -45,6 +47,10 @@ public class BaseFileCopier {
     public static final String DEFAULT_WINDOWS_FILE_EXT = ".bat";
     public static final String DEFAULT_UNIX_FILE_EXT = ".sh";
 
+    /**
+     * create unique strings
+     */
+    private static AtomicLong counter = new AtomicLong(0);
     /**
      * Copy a script file, script source stream, or script string into a temp file, and replace \
      * embedded tokens with values from the dataContext for the latter two. Marks the file as
@@ -238,21 +244,57 @@ public class BaseFileCopier {
     public static String generateRemoteFilepathForNode(final INodeEntry node, final String scriptfileName) {
         return generateRemoteFilepathForNode(node, scriptfileName, null);
     }
+
     /**
      * Return a temporary filepath for a file to be copied to the node, given the input filename (without directory
      * path)
      *
      * @param node           the destination node
      * @param scriptfileName the name of the file to copy
-     * @param fileExtension optional extension to use for the temp file, or null for default
+     * @param fileExtension  optional extension to use for the temp file, or null for default
      *
-     * @return a filepath specifying destination of the file to copy that should be unique for the node and current
-     *         date.
+     * @return a filepath specifying destination of the file to copy that should be unique
      */
-    public static String generateRemoteFilepathForNode(final INodeEntry node, final String scriptfileName, final String fileExtension) {
-        String tempfilename = System.currentTimeMillis()
-                + "-" + node.getNodename()
-                + "-" + scriptfileName;
+    public static String generateRemoteFilepathForNode(
+            final INodeEntry node,
+            final String scriptfileName,
+            final String fileExtension
+    )
+    {
+        return generateRemoteFilepathForNode(
+                node,
+                scriptfileName,
+                fileExtension,
+                null
+        );
+    }
+
+    /**
+     * Return a temporary filepath for a file to be copied to the node, given the input filename (without directory
+     * path)
+     *
+     * @param node           the destination node
+     * @param scriptfileName the name of the file to copy
+     * @param fileExtension  optional extension to use for the temp file, or null for default
+     * @param identity       unique identifier, or null to include a random string
+     *
+     * @return a filepath specifying destination of the file to copy that should be unique
+     */
+    public static String generateRemoteFilepathForNode(
+            final INodeEntry node,
+            final String scriptfileName,
+            final String fileExtension,
+            final String identity
+    )
+    {
+        String tempfilename = String.format(
+                "%d-%s-%s-%s",
+                counter.getAndIncrement(),
+                identity != null ? identity : RandomStringUtils.randomAlphanumeric(10),
+                node.getNodename(),
+                scriptfileName
+        );
+
         String extension = fileExtension;
         if (null == extension) {
             //determine based on node

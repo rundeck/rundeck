@@ -40,6 +40,7 @@ import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -115,10 +116,14 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
         } else {
             filename = "dispatch-script.tmp";
         }
+        String ident = null != context.getDataContext() && null != context.getDataContext().get("job")
+                       ? context.getDataContext().get("job").get("execid")
+                       : null;
         String filepath = BaseFileCopier.generateRemoteFilepathForNode(
                 node,
                 filename,
-                fileExtension
+                fileExtension,
+                ident
         );
         try {
             File temp = writeScriptToTempFile(

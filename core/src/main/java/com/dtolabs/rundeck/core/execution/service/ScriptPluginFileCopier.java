@@ -184,9 +184,14 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
 
         String destFilePath = destination;
         if (null == destFilePath) {
+
+            String identity = null!=executionContext.getDataContext() && null!=executionContext.getDataContext().get("job")?
+                              executionContext.getDataContext().get("job").get("execid"):null;
             destFilePath = BaseFileCopier.generateRemoteFilepathForNode(
                     node,
-                    (null != file ? file.getName() : "dispatch-script")
+                    (null != file ? file.getName() : "dispatch-script"),
+                    null,
+                    identity
             );
         }
         //put file in a directory
