@@ -62,7 +62,7 @@ dependencies {
             project(':plugins:copyfile-plugin'),
             project(':plugins:job-state-plugin'),
             project(':plugins:flow-control-plugin'),
-            project(':plugins:storage-encryption-plugin')
+            project(':plugins:jasypt-encryption-plugin')
 }
 
 task copyPluginLibs(dependsOn: configurations.pluginFiles)<< {
