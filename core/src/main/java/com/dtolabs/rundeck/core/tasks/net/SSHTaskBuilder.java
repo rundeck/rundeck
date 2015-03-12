@@ -65,6 +65,9 @@ import java.util.Properties;
  * @version $Revision$
  */
 public class SSHTaskBuilder {
+    public static final String SSH_CONFIG_SERVER_ALIVE_COUNT_MAX = "ServerAliveCountMax";
+    public static final String SSH_CONFIG_SERVER_ALIVE_INTERVAL = "ServerAliveInterval";
+
     private static Map<String, String> DEFAULT_SSH_CONFIG = Collections.unmodifiableMap(new HashMap<String, String>() {{
         //use keyboard-interactive last
         put("PreferredAuthentications", "publickey,password,keyboard-interactive");
@@ -151,6 +154,34 @@ public class SSHTaskBuilder {
         Properties newconf = new Properties();
         newconf.putAll(config);
         session.setConfig(newconf);
+        try {
+            configureSessionServerAliveInterval(config, session);
+            configureSessionServerAliveCountMax(config, session);
+        } catch (JSchException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void configureSessionServerAliveInterval(Map<String, String> config, Session session) throws JSchException {
+        String serverAliveInterval = config.get(SSH_CONFIG_SERVER_ALIVE_INTERVAL);
+        if (serverAliveInterval != null) {
+            try {
+                session.setServerAliveInterval(Integer.parseInt(serverAliveInterval) * 1000);
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static void configureSessionServerAliveCountMax(Map<String, String> config, Session session) {
+        String serverAliveCountMax = config.get(SSH_CONFIG_SERVER_ALIVE_COUNT_MAX);
+        if (serverAliveCountMax != null) {
+            try {
+                session.setServerAliveCountMax(Integer.parseInt(serverAliveCountMax));
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public static byte[] streamBytes(InputStream sshKeyData) throws IOException {
