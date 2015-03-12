@@ -21,9 +21,9 @@ import org.rundeck.storage.data.DataUtil;
 import java.io.*;
 
 /**
- * EncryptionConverterPlugin is ...
+ * JasyptEncryptionConverterPlugin is ...
  *
- * @author Greg Schueler <greg@simplifyops.com>
+ * @author Greg Schueler &lt;greg@simplifyops.com&gt;
  * @since 2014-03-26
  */
 @Plugin(name = JasyptEncryptionConverterPlugin.PROVIDER_NAME, service = ServiceNameConstants.StorageConverter)
@@ -119,7 +119,7 @@ public class JasyptEncryptionConverterPlugin implements StorageConverterPlugin {
         if (null == standardPBEByteEncryptor) {
             synchronized (this) {
                 if (null == standardPBEByteEncryptor) {
-                    logger.debug("PBEByteEncryptor begin setup...");
+                    logger.debug("JasyptEncryptionConverterPlugin begin setup...");
                     EnvironmentPBEConfig config = new EnvironmentPBEConfig();
 
                     addPasswordValue(config, password, passwordEnvVarName, passwordSysPropName, true, "password");
@@ -130,13 +130,13 @@ public class JasyptEncryptionConverterPlugin implements StorageConverterPlugin {
 
                     StandardPBEByteEncryptor encryptor = new StandardPBEByteEncryptor();
                     if ("strong".equals(encryptorType)) {
-                        logger.debug("EncryptionConverterPlugin use STRONG type");
+                        logger.debug("JasyptEncryptionConverterPlugin use STRONG type");
                         config.setAlgorithm("PBEWithMD5AndTripleDES");
                     } else if ("basic".equals(encryptorType)) {
-                        logger.debug("EncryptionConverterPlugin use BASIC type");
+                        logger.debug("JasyptEncryptionConverterPlugin use BASIC type");
                         config.setAlgorithm("PBEWithMD5AndDES");
                     } else if ("custom".equals(encryptorType)) {
-                        logger.debug("EncryptionConverterPlugin use CUSTOM type");
+                        logger.debug("JasyptEncryptionConverterPlugin use CUSTOM type");
 
                         addAlgorithmValue(
                                 config,
@@ -182,7 +182,7 @@ public class JasyptEncryptionConverterPlugin implements StorageConverterPlugin {
                             "keyObtentionIterations"
                     );
                     encryptor.setConfig(config);
-                    logger.debug("PBEByteEncryptor configured");
+                    logger.debug("JasyptEncryptionConverterPlugin configured");
 
                     standardPBEByteEncryptor = encryptor;
                 }
@@ -201,14 +201,14 @@ public class JasyptEncryptionConverterPlugin implements StorageConverterPlugin {
     )
     {
         if (notBlank(directValue)) {
-            logger.debug("EncryptionConverterPlugin use value for " + description);
+            logger.debug("JasyptEncryptionConverterPlugin use value for " + description);
             config.setPassword(directValue);
         } else if (notBlank(envVarValue)) {
-            logger.debug("EncryptionConverterPlugin use env var for " + description);
+            logger.debug("JasyptEncryptionConverterPlugin use env var for " + description);
             config.setPasswordEnvName(envVarValue);
         } else if (notBlank(sysPropValue)) {
             config.setPasswordSysPropertyName(sysPropValue);
-            logger.debug("EncryptionConverterPlugin use sys prop for " + description);
+            logger.debug("JasyptEncryptionConverterPlugin use sys prop for " + description);
             System.clearProperty(sysPropValue);
         } else if (required) {
             throw new IllegalStateException(
@@ -230,14 +230,14 @@ public class JasyptEncryptionConverterPlugin implements StorageConverterPlugin {
     )
     {
         if (notBlank(directValue)) {
-            logger.debug("EncryptionConverterPlugin use value for " + description);
+            logger.debug("JasyptEncryptionConverterPlugin use value for " + description);
             config.setAlgorithm(directValue);
         } else if (notBlank(envVarValue)) {
-            logger.debug("EncryptionConverterPlugin use env var for " + description);
+            logger.debug("JasyptEncryptionConverterPlugin use env var for " + description);
             config.setAlgorithmEnvName(envVarValue);
         } else if (notBlank(sysPropValue)) {
             config.setAlgorithmSysPropertyName(sysPropValue);
-            logger.debug("EncryptionConverterPlugin use sys prop for " + description);
+            logger.debug("JasyptEncryptionConverterPlugin use sys prop for " + description);
             System.clearProperty(sysPropValue);
         } else if (required) {
             throw new IllegalStateException(
@@ -259,14 +259,14 @@ public class JasyptEncryptionConverterPlugin implements StorageConverterPlugin {
     )
     {
         if (notBlank(directValue)) {
-            logger.debug("EncryptionConverterPlugin use value for " + description);
+            logger.debug("JasyptEncryptionConverterPlugin use value for " + description);
             config.setProviderName(directValue);
         } else if (notBlank(envVarValue)) {
-            logger.debug("EncryptionConverterPlugin use env var for " + description);
+            logger.debug("JasyptEncryptionConverterPlugin use env var for " + description);
             config.setProviderNameEnvName(envVarValue);
         } else if (notBlank(sysPropValue)) {
             config.setProviderNameSysPropertyName(sysPropValue);
-            logger.debug("EncryptionConverterPlugin use sys prop for " + description);
+            logger.debug("JasyptEncryptionConverterPlugin use sys prop for " + description);
             System.clearProperty(sysPropValue);
         } else if (required) {
             throw new IllegalStateException(
@@ -288,14 +288,14 @@ public class JasyptEncryptionConverterPlugin implements StorageConverterPlugin {
     )
     {
         if (notBlank(directValue)) {
-            logger.debug("EncryptionConverterPlugin use value for " + description);
+            logger.debug("JasyptEncryptionConverterPlugin use value for " + description);
             config.setProviderClassName(directValue);
         } else if (notBlank(envVarValue)) {
-            logger.debug("EncryptionConverterPlugin use env var for " + description);
+            logger.debug("JasyptEncryptionConverterPlugin use env var for " + description);
             config.setProviderClassNameEnvName(envVarValue);
         } else if (notBlank(sysPropValue)) {
             config.setProviderClassNameSysPropertyName(sysPropValue);
-            logger.debug("EncryptionConverterPlugin use sys prop for " + description);
+            logger.debug("JasyptEncryptionConverterPlugin use sys prop for " + description);
             System.clearProperty(sysPropValue);
         } else if (required) {
             throw new IllegalStateException(
@@ -317,14 +317,14 @@ public class JasyptEncryptionConverterPlugin implements StorageConverterPlugin {
     )
     {
         if (notBlank(directValue)) {
-            logger.debug("EncryptionConverterPlugin use value for " + description);
+            logger.debug("JasyptEncryptionConverterPlugin use value for " + description);
             config.setKeyObtentionIterations(directValue);
         } else if (notBlank(envVarValue)) {
-            logger.debug("EncryptionConverterPlugin use env var for " + description);
+            logger.debug("JasyptEncryptionConverterPlugin use env var for " + description);
             config.setKeyObtentionIterationsEnvName(envVarValue);
         } else if (notBlank(sysPropValue)) {
             config.setKeyObtentionIterationsSysPropertyName(sysPropValue);
-            logger.debug("EncryptionConverterPlugin use sys prop for " + description);
+            logger.debug("JasyptEncryptionConverterPlugin use sys prop for " + description);
             System.clearProperty(sysPropValue);
         } else if (required) {
             throw new IllegalStateException(
