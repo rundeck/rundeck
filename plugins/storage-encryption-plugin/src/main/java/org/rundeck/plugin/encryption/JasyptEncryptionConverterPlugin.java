@@ -111,7 +111,7 @@ public class JasyptEncryptionConverterPlugin implements StorageConverterPlugin {
     String keyObtentionIterationsEnvVarName;
     @PluginProperty(title = "Key Obtention Iterations System Property",
                     description = "(optional)" )
-    String keyObtentionIterationsEnvVarNameSysPropName;
+    String keyObtentionIterationsSysPropName;
 
     private volatile StandardPBEByteEncryptor standardPBEByteEncryptor = null;
 
@@ -177,7 +177,7 @@ public class JasyptEncryptionConverterPlugin implements StorageConverterPlugin {
                             config,
                             keyObtentionIterations,
                             keyObtentionIterationsEnvVarName,
-                            keyObtentionIterationsEnvVarNameSysPropName,
+                            keyObtentionIterationsSysPropName,
                             false,
                             "keyObtentionIterations"
                     );
