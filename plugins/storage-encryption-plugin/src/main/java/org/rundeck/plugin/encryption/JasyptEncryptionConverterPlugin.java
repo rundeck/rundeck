@@ -26,7 +26,7 @@ import java.io.*;
  * @author Greg Schueler <greg@simplifyops.com>
  * @since 2014-03-26
  */
-@Plugin(name = EncryptionConverterPlugin.PROVIDER_NAME, service = ServiceNameConstants.StorageConverter)
+@Plugin(name = JasyptEncryptionConverterPlugin.PROVIDER_NAME, service = ServiceNameConstants.StorageConverter)
 @PluginDescription(title = "Jasypt Encryption", description = "Encrypts data in the Rundeck Storage layer\n\n" +
                                                               "This plugin uses Jasypt to perform encryption. The " +
                                                               "built in java JCE is used unless another provider is " +
@@ -38,9 +38,9 @@ import java.io.*;
                                                               "or Java System properties (the `*SysPropName` properties)." )
 
 
-public class EncryptionConverterPlugin implements StorageConverterPlugin {
+public class JasyptEncryptionConverterPlugin implements StorageConverterPlugin {
     public static final String PROVIDER_NAME = "jasypt-encryption";
-    public static final Logger logger = Logger.getLogger(EncryptionConverterPlugin.class);
+    public static final Logger logger = Logger.getLogger(JasyptEncryptionConverterPlugin.class);
 
     @PluginProperty(title = "Encryptor Type",
                     description =

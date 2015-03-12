@@ -2,7 +2,7 @@
  * The Rundeck Storage Encryption plugin build file
  */
 
-ext.pluginClassNames='org.rundeck.plugin.encryption.EncryptionConverterPlugin'
+ext.pluginClassNames='org.rundeck.plugin.encryption.JasyptEncryptionConverterPlugin'
 ext.pluginName = 'Storage Encyrption Plugin'
 ext.pluginDescription = 'Encrypt contents of Storage resources'
 
