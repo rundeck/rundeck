@@ -282,24 +282,35 @@ The `TYPE` is one of:
 
 ### Storage Plugins
 
-Storage plugins are configured in the `rundeck-config.properties` file.
+Storage plugins for the [Storage Facility](../administration/storage-facility.html) 
+are configured in the `rundeck-config.properties` file.
 
-By default, the `file` implementation is used, and files are stored at the `${framework.var.dir}/storage` path.
+Two separate "containers" are used, one for Key Storage, and one for Project Definition Storage.
 
-To configure a different Storage Plugin, modify your `rundeck-config.properties` file:
+* Key Storage 
+    * uses a configuration prefix of `rundeck.storage.provider`
+    * uses `file` provider by default, stored at the `${framework.var.dir}/storage` path
+    * stores all content under the `/keys` top-level path
+* Project Definition Storage 
+    * uses a configuration prefix of `rundeck.config.storage.provider`
+    * uses `db` provider by default
+    * stores all content under the `/projects` top-level path
+
+To configure a different Storage Plugin Provider for either **Key Storage** or **Project Definition Storage**, 
+modify your `rundeck-config.properties` file:
 
 To use the `db` storage:
 
-    rundeck.storage.provider.1.type=db
-    rundeck.storage.provider.1.path=/
+    [prefix].1.type=db
+    [prefix].1.path=/
 
 To use the `file` storage:
 
-    rundeck.storage.provider.1.type=file
-    rundeck.storage.provider.1.path=/
-    rundeck.storage.provider.1.config.baseDir=${framework.var.dir}/storage
+    [prefix].1.type=file
+    [prefix].1.path=/
+    [prefix].1.config.baseDir=${framework.var.dir}/storage
 
-Each Storage Plugin defines its own configuration properties, so if you are using a third-party plugin refer to its documentation. You can set the configuration properties via `rundeck.storage.provider.#.config.PROPERTY`.
+Each Storage Plugin defines its own configuration properties, so if you are using a third-party plugin refer to its documentation. You can set the configuration properties via `[prefix].#.config.PROPERTY`.
 
 For the builtin `file` implementation, these are the configuration properties:
 
@@ -311,12 +322,20 @@ The `db` implementation has no configuration properties.
 
 Storage Converter plugins are configured in the `rundeck-config.properties` file.
 
-Add an entry in your `rundeck-config.properties` file declaring the converter plugin which will handle content in the `/keys` subpath of the storage container.
+Two separate "containers" are used, one for Key Storage, and one for Project Definition Storage.
+
+* Key Storage 
+    * uses a configuration prefix of `rundeck.storage.converter`
+* Project Definition Storage 
+    * uses a configuration prefix of `rundeck.config.storage.converter`
+
+Add an entry in your `rundeck-config.properties` file declaring the converter plugin 
+which will handle content in subpath of the storage container.
 
 ~~~~
-rundeck.storage.converter.1.type=my-encryption-plugin
-rundeck.storage.converter.1.path=/keys
-rundeck.storage.converter.1.config.foo=my config value
+[prefix].1.type=my-encryption-plugin
+[prefix].1.path=/keys
+[prefix].1.config.foo=my config value
 ~~~~
 
 * `type` - specifies the plugin provider name

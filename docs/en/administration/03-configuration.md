@@ -106,7 +106,9 @@ tools like umask, Java home and classpath, and SSL options.
 
 ### project.properties
 
-Rundeck project configuration file. One of these is
+Rundeck project configuration file when using Filsystem based project defintions (see [Project Setup - Project Definitions](project-setup.html#project-definitions)). 
+
+One of these is
 generated at project setup time. Each project has a directory within the Rundeck projects directory, and the config file is within the `etc` subdirectory:
 
     $RDECK_BASE/projects/[PROJECT-NAME]/etc/project.properties
@@ -190,6 +192,16 @@ loglevel, datasource configuration, and
     set to `false`, the current CLI tools and API libraries will not operate
     correctly if they use username and password login.
 
+
+#### Project Configuration Storage settings
+
+The [Project Setup - Project Definitions](project-setup.html#project-definitions) mechanism is configured within this file, see:
+
+* [Configuring Storage Plugins][] 
+* [Configuring Storage Converter Plugins][]
+
+[Configuring Storage Plugins]: ssh-key-storage.html#configuring-storage-plugins
+[Configuring Storage Converter Plugins]: ssh-key-storage.html#configuring-storage-converter-plugins
 
 #### SSH Key Storage settings
 

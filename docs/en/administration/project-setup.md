@@ -14,9 +14,31 @@ promote changes between environments.
 A new installation will not contain any projects so Rundeck will present
 you with a dialog to create one. 
 
-## Configuration file
+## Project Definitions
 
-Each Project has a configuration file called 
+In Rundeck 2.4 and earlier, all project definitions and configuration files were stored
+on the filesystem.
+
+Starting in Rundeck 2.5, the default behavior is to store project definitions and
+configuration files in the database.
+
+The storage type can be changed by a configuration flag in the `rundeck-config.properties` file:
+
+    rundeck.projectsStorageType=db/filesystem
+
+If you wish to use filesystem storage you must add this configuration entry.  
+
+If you have existing filesystem-based projects, and you start Rundeck 
+with the `db` storage type, those projects will be automatically imported to the Database.  
+The import process copies the contents of `etc/project.properties`, `readme.md` and `motd.md` (if they exist).
+Finally, the `etc/project.properties` file will be renamed on disk to `etc/project.properties.imported`.
+
+The DB storage type also uses the Rundeck **Storage Facility** to store the file contents, which can be
+configured to use an Encryption plugin.  See [Storage Facility - Using Encryption](storage-facility.html#using-encryption).
+
+### Configuration file
+
+When using *filesystem* storage type, each Project has a configuration file called 
 [project.properties](configuration-file-reference.html#project.properties),
 located at this path:
 
@@ -58,11 +80,15 @@ This readme file can contain markdown text letting you format or embed images.
 
 ![Project readme](../figures/fig0203.png)
 
-Create the file in the project base directory:
+
+#### Filesystem based readme
+
+If using the *filesystem* storage type only, you can create the file in the project base directory:
 
 * launcher: $RDECK_BASE/projects/{project}/readme.md
 * rpm/deb: /var/rundeck/projects/{project}/readme.md
 
+If using the *db* storage type, you must use the [API](#api-usage).
 
 ### Project Nodes
 
@@ -233,3 +259,34 @@ Administrators can place multiple resource model files in this directory.
 [dispatch]: ../man1/dispatch.html
 [rd-project]: ../man1/rd-project.html
 
+## API Usage
+
+All Project creation, configuration, deletion, etc can be achieved via the [API](../api/index.html).
+
+[Create projects](../api/index.html#project-creation):
+
+    POST /api/13/projects
+    Content-Type: application/json
+
+    { "name": "myproject", "config": { "propname":"propvalue" } }
+
+[Delete projects](../api/index.html#project-deletion):
+
+    DELETE /api/13/project/myproject
+
+[Project configuration](../api/index.html#project-configuration)
+
+    PUT /api/13/project/myproject/config
+    Content-Type: application/json
+
+    {
+        "key":"value",
+        "key2":"value2..."
+    }
+
+[Project readme/motd modification](../api/index.html#project-readme-file)
+
+    PUT /api/13/project/myproject/readme.md
+    Content-Type: text/plain
+
+    This project manages [acme-guitars.com](http://acme-guitars.com).

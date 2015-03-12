@@ -2,10 +2,6 @@
 
 This document describes the Rundeck Key Storage mechanism for a developer to implement a secure data flow of sensitive private key data that can be used for sessions via a Rundeck Node Executor.
 
-## Storage Facility
-
-All Keys are stored within the Rundeck Storage facility. The Storage facility provides a filesystem-like structure for storing files.  Each file is located with a "/"-separated "path" and a name, similar to a file system path.
-
 The structure or hierarchy used for organizing Keys is up to you.
 
 A typical way to store shared keys might be under a "common" or "shared" root. Specific user or project keys might be stored under "user/[username]/" or "project/[name]" paths:
