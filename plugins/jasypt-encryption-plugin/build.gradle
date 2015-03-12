@@ -23,7 +23,7 @@ repositories {
 }
 
 dependencies {
-    compile( [group: 'org.rundeck', name: 'rundeck-core', version: version])
+    compile project(":core")
     pluginLibs( [group: 'org.jasypt', name: 'jasypt', version: '1.9.2'],
                 [group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.51'])
     testCompile(
