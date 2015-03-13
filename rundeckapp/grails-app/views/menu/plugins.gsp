@@ -43,7 +43,7 @@
     </div>
     <div class="row row-space">
     <div class="col-sm-12">
-    <div class="panel-group" id="accordion">
+    <div class="panel-group form-horizontal" id="accordion">
 
 <g:each in="${descriptions}" var="plugin">
     <g:set var="serviceName" value="${plugin.key}"/>

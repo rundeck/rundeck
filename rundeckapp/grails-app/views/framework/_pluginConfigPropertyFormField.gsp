@@ -39,9 +39,9 @@
 <div class="form-group ${enc(attr:hasError)}">
 
 <g:if test="${outofscope}">
-    <div class="${labelColType} form-control-static ${error?'has-error':''}  ${prop.required ? 'required' : ''}">
+    <label class="${labelColType} form-control-static ${error?'has-error':''}  ${prop.required ? 'required' : ''}">
         <g:enc>${prop.title?:prop.name}</g:enc>:
-    </div>
+    </label>
 </g:if>
 <g:elseif test="${prop.type.toString()=='Boolean'}">
     <g:set var="fieldid" value="${g.rkey()}"/>
@@ -128,7 +128,7 @@
         </div>
     </g:if>
 </g:else>
-<div class="${valueColType}">
+<div class="${offsetColType}">
     <div class="help-block"> <g:render template="/scheduledExecution/description"
                                        model="[description: prop.description, textCss: '',
                                                mode: 'collapsed', rkey: g.rkey()]"/></div>
