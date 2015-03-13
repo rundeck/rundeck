@@ -242,6 +242,40 @@ All of the servlets are enabled by default.
 
 [Resource Model Sources]: ../administration/managing-node-sources.html
 
+#### Job Remote Option URL connection parameters
+
+Change the defaults for for [Job Remote Option Value URLs](../manual/jobs.html#remote-option-values) loading.
+
+**Socket read timeout**
+
+Max wait time reading from socket.
+
+Default value: `10` (seconds)
+
+Change this by setting:
+
+    rundeck.jobs.options.remoteUrlTimeout=[seconds]
+
+**Connection timeout**
+
+Max wait time attempting to make the connection.
+
+Default value: (no timeout)
+
+Change this by setting:
+
+    rundeck.jobs.options.remoteUrlConnectionTimeout=[seconds]
+
+**No response retry**
+
+If the request is sent, but the server disconnects without a response (e.g. server is overloaded), retry the request this many times.
+
+Default value: 3
+
+Change this by setting:
+
+    rundeck.jobs.options.remoteUrlRetry=[total]
+
 #### Groovy config format
 You can change you rundeck-config.properties to a rundeck-config.groovy, but you will need to modify the syntax to be groovy, and you will need to point rundeck at the new filename when you start up rundeck:
 

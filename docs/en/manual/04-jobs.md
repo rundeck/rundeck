@@ -1004,6 +1004,27 @@ Name Value List:
 ] 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
+### URL connection parameters
+
+You can configure timeouts globally as described in [Configuration - Job Remote Option URL connection parameters](../administration/configuration-file-reference.html#rundeck-config.properties).
+
+You can also specify these connection parameters on a per-URL basis:
+
+`timeout`
+:   socket timeout in seconds
+
+`contimeout`
+:   connection timeout in seconds
+
+`retry`
+:   retry count if no response from server
+
+To set this in an Option's remote URL, add them as the "fragment" portion of the URL, after the `#` character like so:
+
+	http://host/mypath#timeout=60;contimeout=5;retry=1
+
+Use `key=value` for a parameter, and separate multiple parameters with the `;` character.
+
 ### Cascading Remote Options
 
 Cascading options allow an option's Remote values URL to embed the values

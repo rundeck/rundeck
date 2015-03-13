@@ -116,6 +116,7 @@ log4j={
             info 'org.rundeck.api.requests'
 //            info 'org.rundeck.web.requests'
 //            debug 'org.rundeck.web.infosec'
+            debug 'org.apache.commons.httpclient'
         }
     }
 }

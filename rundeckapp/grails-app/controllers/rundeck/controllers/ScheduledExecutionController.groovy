@@ -14,12 +14,14 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
 import org.apache.commons.collections.list.TreeList
+import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler
 import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.HttpMethod
 import org.apache.commons.httpclient.UsernamePasswordCredentials
 import org.apache.commons.httpclient.auth.AuthScope
 import org.apache.commons.httpclient.methods.GetMethod
 import org.apache.commons.httpclient.params.HttpClientParams
+import org.apache.commons.httpclient.params.HttpMethodParams
 import org.apache.commons.httpclient.util.DateParseException
 import org.apache.commons.httpclient.util.DateUtil
 import org.apache.log4j.Logger
@@ -363,8 +365,88 @@ class ScheduledExecutionController  extends ControllerBase{
                 def result=null
                 def remoteStats=[startTime: System.currentTimeMillis(), httpStatusCode: "", httpStatusText: "", contentLength: "", url: srcUrl,durationTime:"",finishTime:"", lastModifiedDateTime:""]
                 def err = [:]
+                int timeout=10
+                int contimeout=0
+                int retryCount=5
+                if(grailsApplication.config.rundeck?.jobs?.options?.remoteUrlTimeout){
+                    try {
+                        timeout = Integer.parseInt(
+                                grailsApplication?.config?.rundeck?.jobs?.options?.remoteUrlTimeout?.toString()
+                        )
+                    }catch(NumberFormatException e) {
+                        log.warn(
+                                "Configuration value rundeck.jobs.options.remoteUrlTimeout is not a valid integer: "
+                                        + e.message
+                        )
+                    }
+                }
+                if(grailsApplication.config.rundeck?.jobs?.options?.remoteUrlConnectionTimeout){
+                    try {
+                        contimeout = Integer.parseInt(
+                                grailsApplication?.config?.rundeck?.jobs?.options?.remoteUrlConnectionTimeout?.toString()
+                        )
+                    }catch(NumberFormatException e) {
+                        log.warn(
+                                "Configuration value rundeck.jobs.options.remoteUrlConnectionTimeout is not a valid integer: "
+                                        + e.message
+                        )
+                    }
+                }
+                if(grailsApplication.config.rundeck?.jobs?.options?.remoteUrlRetry){
+                    try {
+                        retryCount = Integer.parseInt(
+                                grailsApplication?.config?.rundeck?.jobs?.options?.remoteUrlRetry?.toString()
+                        )
+                    }catch(NumberFormatException e) {
+                        log.warn(
+                                "Configuration value rundeck.jobs.options.remoteUrlRetry is not a valid integer: "
+                                        + e.message
+                        )
+                    }
+                }
+                if(srcUrl.indexOf('#')>=0 &&srcUrl.indexOf('#')<srcUrl.size()-1){
+                    def urlanchor=new HashMap<String,String>()
+                    def anchor=srcUrl.substring(srcUrl.indexOf('#')+1)
+                    def parts=anchor.split(";")
+                    parts.each{s->
+                        def subpart=s.split("=",2)
+                        if(subpart && subpart.length==2 && subpart[0] && subpart[1]){
+                            urlanchor[subpart[0]]=subpart[1]
+                        }
+                    }
+                    if(urlanchor['timeout']){
+                        try {
+                            timeout = Integer.parseInt(urlanchor['timeout'])
+                        }catch(NumberFormatException e) {
+                            log.warn(
+                                    "URL timeout ${urlanchor['timeout']} is not a valid integer: "
+                                            + e.message
+                            )
+                        }
+                    }
+                    if(urlanchor['contimeout']){
+                        try {
+                            contimeout = Integer.parseInt(urlanchor['contimeout'])
+                        }catch(NumberFormatException e) {
+                            log.warn(
+                                    "URL contimeout ${urlanchor['contimeout']} is not a valid integer: "
+                                            + e.message
+                            )
+                        }
+                    }
+                    if(urlanchor['retry']){
+                        try {
+                            retryCount = Integer.parseInt(urlanchor['retry'])
+                        }catch(NumberFormatException e) {
+                            log.warn(
+                                    "URL retry ${urlanchor['retry']} is not a valid integer: "
+                                            + e.message
+                            )
+                        }
+                    }
+                }
                 try {
-                    remoteResult = getRemoteJSON(srcUrl, 10)
+                    remoteResult = getRemoteJSON(srcUrl, timeout, contimeout, retryCount)
                     result=remoteResult.json
                     if(remoteResult.stats){
                         remoteStats.putAll(remoteResult.stats)
@@ -561,13 +643,21 @@ class ScheduledExecutionController  extends ControllerBase{
      * @return Map of data, [json: parsed json or null, stats: stats data, error: error message]
      *
      */
-    private Object getRemoteJSON(String url, int timeout){
+    private Object getRemoteJSON(String url, int timeout, int contimeout, int retry=5){
+        log.warn("getRemoteJSON: "+url+", timeout: "+timeout+", retry: "+retry)
         //attempt to get the URL JSON data
         def stats=[:]
         if(url.startsWith("http:") || url.startsWith("https:")){
             final HttpClientParams params = new HttpClientParams()
-            params.setConnectionManagerTimeout(timeout*1000)
+            p   arams.setConnectionManagerTimeout(timeout*1000L)
             params.setSoTimeout(timeout*1000)
+            if(contimeout>0){
+                params.setIntParameter('http.connection.timeout',contimeout*1000)
+            }
+            if(retry>0) {
+                def myretryhandler = new DefaultHttpMethodRetryHandler(retry, false)
+                params.setParameter(HttpMethodParams.RETRY_HANDLER, myretryhandler);
+            }
             def HttpClient client= new HttpClient(params)
             def URL urlo
             def AuthScope authscope=null
