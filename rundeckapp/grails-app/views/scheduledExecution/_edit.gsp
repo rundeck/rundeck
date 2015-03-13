@@ -569,27 +569,33 @@ function getCurSEID(){
 </div>
 
 <div style="${wdgt.styleVisible(if: scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields ">
+<g:if test="${grailsApplication.config.rundeck?.nodefilters?.showPrecedenceOption || scheduledExecution?.nodeExcludePrecedence!=null && !scheduledExecution?.nodeExcludePrecedence }">
 
-<div class="form-group ${hasErrors(bean: scheduledExecution, field: 'nodeInclude', 'has-error')}">
+    <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'nodeInclude', 'has-error')}">
 
-    <label class="col-sm-2  control-label"><g:message code="precedence.to.prompt" /></label>
+        <label class="col-sm-2  control-label"><g:message code="precedence.to.prompt" /></label>
 
-    <div class="col-sm-10">
-        <label title="Include more nodes" class="radio-inline">
-            <g:radio name="nodeExcludePrecedence" value="false"
-                data-bind="checked: nodeExcludePrecedence"
-                     checked="${!scheduledExecution?.nodeExcludePrecedence}"
-                     id="nodeExcludePrecedenceFalse"/>
-            <g:message code="included" /></label>
+        <div class="col-sm-10">
+            <label title="Include more nodes" class="radio-inline">
+                <g:radio name="nodeExcludePrecedence" value="false"
+                         data-bind="checked: nodeExcludePrecedence"
+                         checked="${!scheduledExecution?.nodeExcludePrecedence}"
+                         id="nodeExcludePrecedenceFalse"/>
+                <g:message code="included" /></label>
 
-        <label title="Exclude more nodes" class="radio-inline">
-            <g:radio name="nodeExcludePrecedence" value="true"
-                    data-bind="checked: nodeExcludePrecedence"
-                     checked="${scheduledExecution?.nodeExcludePrecedence}"
-                     id="nodeExcludePrecedenceTrue"/>
-            <g:message code="excluded" /></label>
-    </div>
-</div>%{--//extended filters--}%
+            <label title="Exclude more nodes" class="radio-inline">
+                <g:radio name="nodeExcludePrecedence" value="true"
+                         data-bind="checked: nodeExcludePrecedence"
+                         checked="${scheduledExecution?.nodeExcludePrecedence}"
+                         id="nodeExcludePrecedenceTrue"/>
+                <g:message code="excluded" /></label>
+        </div>
+    </div>%{--//extended filters--}%
+
+</g:if>
+<g:else>
+    <g:hiddenField name="nodeExcludePrecedence" value="true"/>
+</g:else>
 
 <div class="subfields nodeFilterFields">
 
