@@ -735,7 +735,7 @@ class MenuController extends ControllerBase{
             framework.getFileCopierService(),
             framework.getNodeStepExecutorService(),
             framework.getStepExecutionService(),
-//                framework.getResourceModelSourceService(),
+            framework.getResourceModelSourceService(),
             framework.getResourceFormatParserService(),
             framework.getResourceFormatGeneratorService(),
         ].collectEntries{
@@ -771,6 +771,7 @@ class MenuController extends ControllerBase{
                 (framework.getFileCopierService().name): framework.getFileCopierService().getBundledProviderNames(),
                 (framework.getResourceFormatParserService().name): framework.getResourceFormatParserService().getBundledProviderNames(),
                 (framework.getResourceFormatGeneratorService().name): framework.getResourceFormatGeneratorService().getBundledProviderNames(),
+                (framework.getResourceModelSourceService().name): framework.getResourceModelSourceService().getBundledProviderNames(),
                 (storagePluginProviderService.name): storagePluginProviderService.getBundledProviderNames()+['db'],
         ]
         def specialConfiguration=[
@@ -781,6 +782,10 @@ class MenuController extends ControllerBase{
                 (storageConverterPluginProviderService.name):[
                         description: message(code:"plugin.storage.converter.special.description"),
                         prefix:"rundeck.storage.converter.[index].config."
+                ],
+                (framework.getResourceModelSourceService().name):[
+                        description: message(code:"plugin.resourceModelSource.special.description"),
+                        prefix:"resources.source.[index].config."
                 ]
         ]
 

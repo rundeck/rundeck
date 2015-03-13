@@ -34,6 +34,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
@@ -47,7 +48,9 @@ public class ResourceModelSourceService extends PluggableProviderRegistryService
 
     public static final String SERVICE_NAME = ServiceNameConstants.ResourceModelSource;
 
-
+    public List<String> getBundledProviderNames() {
+        return Collections.unmodifiableList(new ArrayList<String>(registry.keySet()));
+    }
     public ResourceModelSourceService(final Framework framework) {
         super(framework);
 
