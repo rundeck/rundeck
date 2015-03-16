@@ -280,9 +280,9 @@ public class ScriptFileCopier implements DestinationFileCopier, Describable {
             //add file, dir, destination to the file-copy data
         }};
 	
-	if(null != remotePath && !remotePath.endsWith("/")) {
-	    scptexec.put("destfilename", new File(remotePath).getName());
-	}
+        if(null != remotePath && !remotePath.endsWith("/")) {
+            scptexec.put("destfilename", new File(remotePath).getName());
+        }
 
         if (null != workingdir) {
             //set up the data context to include the working dir
