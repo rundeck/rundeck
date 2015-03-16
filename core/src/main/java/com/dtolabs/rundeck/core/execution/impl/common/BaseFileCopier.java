@@ -63,7 +63,9 @@ public class BaseFileCopier {
      * @param script   file content string, or null
      * @param node     destination node entry, to provide node data context
      *
-     * @return file where the script was stored
+     * @return file where the script was stored, this file should later be cleaned up by calling
+     * {@link com.dtolabs.rundeck.core.execution.script.ScriptfileUtils#releaseTempFile(java.io.File)}
+     *
      *
      * @throws com.dtolabs.rundeck.core.execution.service.FileCopierException
      *          if an IO problem occurs
@@ -127,16 +129,10 @@ public class BaseFileCopier {
             }
             if (null != original) {
                 //don't replace tokens
-                final FileInputStream in = new FileInputStream(original);
-                try {
-                    final FileOutputStream out = new FileOutputStream(tempfile);
-                    try {
+                try (FileInputStream in = new FileInputStream(original)) {
+                    try (FileOutputStream out = new FileOutputStream(tempfile)) {
                         Streams.copyStream(in, out);
-                    } finally {
-                        out.close();
                     }
-                } finally {
-                    in.close();
                 }
             } else if (null != script) {
                 DataContextUtils.replaceTokensInScript(
@@ -319,7 +315,8 @@ public class BaseFileCopier {
      * @param original source file, or null
      * @param input source inputstream or null
      * @param script source text, or null
-     * @return temp file
+     * @return temp file, this file should later be cleaned up by calling
+     * {@link com.dtolabs.rundeck.core.execution.script.ScriptfileUtils#releaseTempFile(java.io.File)}
      * @throws FileCopierException if IOException occurs
      */
     public static File writeTempFile(ExecutionContext context, File original, InputStream input,

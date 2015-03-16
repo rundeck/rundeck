@@ -104,11 +104,17 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         }
 
         File testFile;
+        String testFileContents;
 
         public String copyFile(ExecutionContext context, File file, INodeEntry node) throws FileCopierException {
             testContext = context;
             testNode = node;
             testFile = file;
+            try {
+                testFileContents=getContentString(testFile);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             if (throwException) {
                 throw new FileCopierException("copyFile test", TestReason.Test);
             }
@@ -194,7 +200,8 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
 
             assertEquals(context, testcopier.testContext);
             assertNotNull(testScript, testcopier.testFile);
-            assertEquals(testScript, getContentString(testcopier.testFile));
+            assertEquals(testScript, testcopier.testFileContents);
+            assertFalse(testcopier.testFile.exists());
             assertEquals(test1, testcopier.testNode);
 
             //test nodeexecutor was called twice
@@ -278,7 +285,8 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
 
             assertEquals(context, testcopier.testContext);
             assertNotNull(testScript, testcopier.testFile);
-            assertEquals(expectScript, getContentString(testcopier.testFile));
+            assertEquals(expectScript, testcopier.testFileContents);
+            assertFalse(testcopier.testFile.exists());
             assertEquals(test1, testcopier.testNode);
 
             //test nodeexecutor was called twice
@@ -359,7 +367,8 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
 
             assertEquals(context, testcopier.testContext);
             assertNotNull(testcopier.testFile);
-            assertEquals(expectScript, getContentString(testcopier.testFile));
+            assertEquals(expectScript, testcopier.testFileContents);
+            assertFalse(testcopier.testFile.exists());
             assertEquals(test1, testcopier.testNode);
 
             //test nodeexecutor was called twice
@@ -392,7 +401,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         }
     }
 
-    private String getContentString(File file) throws IOException {
+    private static String getContentString(File file) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         FileInputStream fileInputStream = new FileInputStream(file);
         Streams.copyStream(fileInputStream, baos);
@@ -449,7 +458,8 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
 
             assertEquals(context, testcopier.testContext);
             assertNotNull(testScript, testcopier.testFile);
-            assertEquals(testScript, getContentString(testcopier.testFile));
+            assertEquals(testScript, testcopier.testFileContents);
+            assertFalse(testcopier.testFile.exists());
             assertEquals(test1, testcopier.testNode);
 
             //test nodeexecutor was called twice
@@ -535,7 +545,8 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
 
             assertEquals(context, testcopier.testContext);
             assertNotNull(testScript, testcopier.testFile);
-            assertEquals(testScript, getContentString(testcopier.testFile));
+            assertEquals(testScript, testcopier.testFileContents);
+            assertFalse(testcopier.testFile.exists());
             assertEquals(test1, testcopier.testNode);
 
             //test nodeexecutor was called once
@@ -601,7 +612,8 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
 
             assertEquals(context, testcopier.testContext);
             assertNotNull(testcopier.testFile);
-            assertEquals(expectScript, getContentString(testcopier.testFile));
+        assertEquals(expectScript, testcopier.testFileContents);
+        assertFalse(testcopier.testFile.exists());
             assertEquals(test1, testcopier.testNode);
 
             //test nodeexecutor was called twice
@@ -777,7 +789,8 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertNull(testcopier.testScript);
             assertNull(testcopier.testInput);
             assertEquals(testScriptFile.getAbsolutePath(), testcopier.testFile.getAbsolutePath());
-            assertEquals(expectScript, getContentString(testcopier.testFile));
+            assertEquals(expectScript, testcopier.testFileContents);
+            assertTrue(testcopier.testFile.exists());
             assertEquals(test1, testcopier.testNode);
 
             //test nodeexecutor was called twice
@@ -1075,7 +1088,8 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(context, testcopier.testContext);
             assertNull(testcopier.testScript);
             assertNotNull(testcopier.testFile);
-            assertEquals("a test script\n", getContentString(testcopier.testFile));
+            assertEquals("a test script\n", testcopier.testFileContents);
+            assertFalse(testcopier.testFile.exists());
             assertEquals(test1, testcopier.testNode);
 
             //test nodeexecutor was called twice
@@ -1171,7 +1185,8 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(context, testcopier.testContext);
             assertNull(testcopier.testScript);
             assertNotNull(testcopier.testFile);
-            assertEquals(expectScript, getContentString(testcopier.testFile));
+            assertEquals(expectScript, testcopier.testFileContents);
+            assertFalse(testcopier.testFile.exists());
             assertEquals(test1, testcopier.testNode);
 
             //test nodeexecutor was called twice
@@ -1251,7 +1266,8 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(context, testcopier.testContext);
             assertNull(testcopier.testScript);
             assertNotNull(testcopier.testFile);
-            assertEquals("a test script\n", getContentString(testcopier.testFile));
+            assertEquals("a test script\n",testcopier.testFileContents);
+            assertFalse( testcopier.testFile.exists());
             assertEquals(test1, testcopier.testNode);
 
             //test nodeexecutor was called twice

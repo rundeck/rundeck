@@ -20,6 +20,9 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 
 import java.io.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Utility methods for writing temp files for scripts and setting file permissions.
@@ -202,8 +205,7 @@ public class ScriptfileUtils {
         /**
          * Prepare a file to save the content
          */
-        final File scriptfile;
-        scriptfile = createTempFile(framework);
+        final File scriptfile = createTempFile(framework);
 
         writeScriptFile(stream, source, reader, style, scriptfile);
 
@@ -247,6 +249,8 @@ public class ScriptfileUtils {
     }
 
     /**
+     * Creates a temp file and marks it for deleteOnExit, to clean up proactively call {@link #releaseTempFile(java.io.File)} with the result when complete
+     *
      * @return Create a temp file in the framework
      * @param framework  fwk
      * @throws IOException on io error
@@ -259,8 +263,24 @@ public class ScriptfileUtils {
         }
         final File dispatch = File.createTempFile("dispatch", fileExt, new File(framework.getProperty(
                 "framework.tmp.dir")));
-        dispatch.deleteOnExit();
+        registerTempFile(dispatch);
         return dispatch;
+    }
+
+    private static Set<File> tempFilesToDelete = Collections.synchronizedSet(new HashSet<File>());
+    private static void registerTempFile(File file){
+        file.deleteOnExit();
+        tempFilesToDelete.add(file);
+    }
+
+    /**
+     * Remove a file that may have been created by {@link #createTempFile(com.dtolabs.rundeck.core.common.Framework)}.
+     * If the file was not created that way, it will not be deleted.
+     * @param file a temp file created with {@link #createTempFile(com.dtolabs.rundeck.core.common.Framework)}
+     * @return true if the temp file was known and was deleted
+     */
+    public static boolean releaseTempFile(File file) {
+        return tempFilesToDelete.remove(file) && file.delete();
     }
 
     /**

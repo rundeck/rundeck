@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
+import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.DestinationFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
@@ -144,8 +145,6 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
                                 script
                         );
 
-        final boolean removeFile = null == scriptfile;
-
 //        logger.debug("temp file for node " + node.getNodename() + ": " + temp.getAbsolutePath() + ",
 // datacontext: " + dataContext);
         final Task scp;
@@ -180,11 +179,14 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
             FailureReason failureReason = failure.getReason();
             context.getExecutionListener().log(0, errormsg);
             throw new FileCopierException("[jsch-scp] Failed copying the file: " + errormsg, failureReason, e);
-        }
-        if (removeFile){
-            if(!localTempfile.delete()){
-                context.getExecutionListener().log(Constants.WARN_LEVEL,
-                        "Unable to remove local temp file: " + localTempfile.getAbsolutePath());
+        }finally {
+            if(null == scriptfile) {
+                if (!ScriptfileUtils.releaseTempFile(localTempfile)) {
+                    context.getExecutionListener().log(
+                            Constants.WARN_LEVEL,
+                            "Unable to remove local temp file: " + localTempfile.getAbsolutePath()
+                    );
+                }
             }
         }
         return remotefile;

@@ -23,11 +23,13 @@
 */
 package com.dtolabs.rundeck.core.execution.service;
 
+import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
+import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
@@ -241,6 +243,15 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new FileCopierException(e.getMessage(), StepFailureReason.Interrupted);
+        }finally {
+            if(null == file) {
+                if (!ScriptfileUtils.releaseTempFile(srcFile)) {
+                    executionContext.getExecutionListener().log(
+                            Constants.WARN_LEVEL,
+                            "Unable to remove local temp file: " + srcFile.getAbsolutePath()
+                    );
+                }
+            }
         }
 
 

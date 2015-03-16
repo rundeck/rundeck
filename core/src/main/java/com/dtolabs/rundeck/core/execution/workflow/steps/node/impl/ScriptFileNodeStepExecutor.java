@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
+import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
@@ -133,12 +134,17 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
                     serverScriptFilePath,
                     scriptAsStream
             );
-            filepath = executionService.fileCopyFile(
-                    context,
-                    temp,
-                    node,
-                    filepath
-            );
+            try {
+                filepath = executionService.fileCopyFile(
+                        context,
+                        temp,
+                        node,
+                        filepath
+                );
+            } finally {
+                //clean up
+                ScriptfileUtils.releaseTempFile(temp);
+            }
         } catch (FileCopierException e) {
             throw new NodeStepException(
                     e.getMessage(),
