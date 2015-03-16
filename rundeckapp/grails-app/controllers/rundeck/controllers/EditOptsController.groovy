@@ -40,7 +40,12 @@ class EditOptsController {
             flash.error = "no option with name ${params.name} found"
             return error.call()
         }
-        return render(template: "/scheduledExecution/optEdit", model: [option: null != params.name ? editopts[params.name] : null, name: params.name, scheduledExecutionId: params.scheduledExecutionId, newoption: params['newoption'], edit: true])
+        def outparams=[:]
+        if(null != params.name && editopts[params.name]){
+
+            outparams = _validateOption(editopts[params.name], null,params.jobWasScheduled=='true')
+        }
+        return render(template: "/scheduledExecution/optEdit", model: [option: null != params.name ? editopts[params.name] : null, name: params.name, scheduledExecutionId: params.scheduledExecutionId, newoption: params['newoption'], edit: true] + outparams)
     }
 
     /**
@@ -266,7 +271,7 @@ class EditOptsController {
         } else if ('insert' == input.action) {
             def name = input.name
             def option = _setOptionFromParams(new Option(), input.params)
-            def vres = _validateOption(option, input.params)
+            def vres = _validateOption(option, input.params,input.params.jobWasScheduled=='true')
             if (null != editopts[name]) {
                 option.errors.rejectValue('name', 'option.name.duplicate.message', [name] as Object[], "Option already exists: {0}")
             }
@@ -288,7 +293,7 @@ class EditOptsController {
             def clone = option.createClone()
             def moditem = option.createClone()
             _setOptionFromParams(moditem, input.params)
-            def vres = _validateOption(moditem, input.params)
+            def vres = _validateOption(moditem, input.params,input.params.jobWasScheduled=='true')
             if (moditem.name != name && null != editopts[moditem.name]) {
                 moditem.errors.rejectValue('name', 'option.name.duplicate.message', [moditem.name] as Object[], "Option already exists: {0}")
             }
@@ -313,7 +318,7 @@ class EditOptsController {
      * @param opt the option
      * @param params input params if any
      */
-    public static _validateOption(Option opt, Map params = null) {
+    public static _validateOption(Option opt, Map params = null, boolean jobWasScheduled=false) {
         opt.validate()
         def result = [:]
         if (opt.enforced && (opt.values || opt.valuesList) && opt.defaultValue) {
@@ -363,6 +368,9 @@ class EditOptsController {
         }
         if(opt.multivalued && opt.secureInput){
             opt.errors.rejectValue('multivalued', 'option.multivalued.secure-conflict.message')
+        }
+        if(jobWasScheduled && opt.required && !opt.defaultValue){
+            opt.errors.rejectValue('defaultValue', 'option.defaultValue.required.message')
         }
         return result
     }

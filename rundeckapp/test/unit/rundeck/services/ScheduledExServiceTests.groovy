@@ -677,6 +677,60 @@ class ScheduledExServiceTests {
         assertEquals('*/2', execution.year)
 
     }
+    /**
+     * A scheduled job with a required option without a default should not validate
+     */
+    public void testDoValidateScheduledRequiredOptionWithoutDefault() {
+        def testService = new ScheduledExecutionService()
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework ->
+            assertEquals 'testProject', project
+            return true
+        }
+        fwkControl.demand.isClusterModeEnabled {->
+            return false
+        }
+
+        def ms = mockFor(MessageSource)
+//        ms.demand.getMessage { key, data, locale -> key + ":" + data.toString() + ":" + locale.toString() }
+        ms.demand.getMessage { error, locale -> error.toString() + ":" + locale.toString() }
+        testService.messageSource = ms.createMock()
+        testService.frameworkService = fwkControl.createMock()
+
+        def job = new ScheduledExecution(
+                jobName: 'monkey1',
+                project: 'testProject',
+                description: 'blah',
+                scheduled: true,
+                seconds: '13',
+                minute: '23',
+                hour: '5',
+                dayOfMonth: '9',
+                month: '3',
+                dayOfWeek: '?',
+                year: '*/2',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'asdf')]),
+        )
+        def params = new HashMap(job.properties)
+        params.crontabString=job.generateCrontabExression()
+        params.useCrontabString='true'
+        params.options=[
+                new Option(name: 'test2', required: true, enforced: false),
+        ]
+        def results = testService._dovalidate(params, 'test', 'test', null)
+
+        assertTrue(results.scheduledExecution.errors.allErrors.collect{it.toString()}.join('; '),results.failed)
+        assertNotNull(results.scheduledExecution)
+        assertTrue(results.scheduledExecution instanceof ScheduledExecution)
+        final ScheduledExecution jobresult = results.scheduledExecution
+        assertNotNull(jobresult)
+        assertNotNull(jobresult.errors)
+        assertTrue("expected error: "+jobresult.errors.getFieldError('options').toString(),jobresult.errors.hasFieldErrors
+                ('options'))
+        assertTrue(jobresult.errors.hasErrors())
+
+    }
 
     public void testDoValidateAdhoc() {
         def testService = new ScheduledExecutionService()
@@ -2599,6 +2653,201 @@ class ScheduledExServiceTests {
             assertEquals "nodename", execution.nodeIncludeName
             assertNull "Filters should have been replaced, but hostname was: ${execution.nodeInclude}", execution.nodeInclude
         }
+    }
+
+
+    public void testDoUpdateScheduled_NewRequiredOptionWithoutDefault() {
+        def sec = new ScheduledExecutionService()
+        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
+                doNodedispatch: true, nodeInclude: "hostname",
+                nodeThreadcount: 1,
+                scheduled:true,
+                seconds:'0',
+                minute: '21',
+                hour: '*/4',
+                dayOfMonth: '*/4',
+                month: '*/6',
+                dayOfWeek: '?',
+                year: '2010-2040',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]),
+                options:[new Option(name: 'test', required:false, enforced: false)]
+        )
+        se.save()
+
+        assertNotNull se.id
+        assertNotNull se.nodeThreadcount
+
+        //try to do update of the ScheduledExecution
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework ->
+            assertEquals 'testProject2', project
+            return true
+        }
+        fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
+        fwkControl.demand.isClusterModeEnabled {  -> return false }
+        sec.frameworkService = fwkControl.createMock()
+        def qtzControl = mockFor(FakeScheduler, true)
+        qtzControl.demand.checkExists { key -> false }
+        qtzControl.demand.getListenerManager { -> [addJobListener:{a,b->}] }
+        qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
+        sec.quartzScheduler = qtzControl.createMock()
+
+        def ms = mockFor(MessageSource)
+        ms.demand.getMessage { key, data, locale -> 'message' }
+        ms.demand.getMessage { error, locale -> 'message' }
+        sec.messageSource = ms.createMock()
+
+        def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
+                      workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
+                      _workflow_data: true,
+                      scheduled: true,
+                      options: ["options[0]": [name: 'test', required:true, enforced: false, ]],
+                      crontabString: '0 21 */4 */4 */6 ? 2010-2040', useCrontabString: 'true'
+        ]
+        def results = sec._doupdate(params, 'test', 'userrole,test', null, null)
+
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
+        if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+            scheduledExecution.errors.allErrors.each {
+                System.err.println(it);
+            }
+        }
+        assertFalse succeeded
+        assertNotNull(scheduledExecution)
+        assertTrue(scheduledExecution instanceof ScheduledExecution)
+        final ScheduledExecution execution = scheduledExecution
+        assertNotNull(execution)
+        assertNotNull(execution.errors)
+        assertTrue(execution.errors.hasErrors())
+        assertTrue(execution.errors.hasFieldErrors('options'))
+    }
+    public void testDoUpdateScheduled_NewRequiredOptionWithDefault() {
+        def sec = new ScheduledExecutionService()
+        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
+                doNodedispatch: true, nodeInclude: "hostname",
+                nodeThreadcount: 1,
+                scheduled:true,
+                seconds:'0',
+                minute: '21',
+                hour: '*/4',
+                dayOfMonth: '*/4',
+                month: '*/6',
+                dayOfWeek: '?',
+                year: '2010-2040',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]),
+                options:[new Option(name: 'test', required:false, enforced: false)]
+        )
+        se.save()
+
+        assertNotNull se.id
+        assertNotNull se.nodeThreadcount
+
+        //try to do update of the ScheduledExecution
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework ->
+            assertEquals 'testProject2', project
+            return true
+        }
+        fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
+        fwkControl.demand.isClusterModeEnabled(2..2) {  -> return false }
+        fwkControl.demand.getRundeckBase {  -> return '' }
+        sec.frameworkService = fwkControl.createMock()
+        def qtzControl = mockFor(FakeScheduler, true)
+        qtzControl.demand.checkExists { key -> false }
+        qtzControl.demand.getListenerManager { -> [addJobListener:{a,b->}] }
+        qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
+        sec.quartzScheduler = qtzControl.createMock()
+
+        def ms = mockFor(MessageSource)
+        ms.demand.getMessage { key, data, locale -> 'message' }
+        ms.demand.getMessage { error, locale -> 'message' }
+        sec.messageSource = ms.createMock()
+
+        def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
+                      workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
+                      _workflow_data: true,
+                      scheduled: true,
+                      options: ["options[0]": [name: 'test', required:true, enforced: false,defaultValue:'abc' ]],
+                      crontabString: '0 21 */4 */4 */6 ? 2010-2040', useCrontabString: 'true'
+        ]
+        def results = sec._doupdate(params, 'test', 'userrole,test', null, null)
+
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
+        if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+            scheduledExecution.errors.allErrors.each {
+                System.err.println(it);
+            }
+        }
+        assertTrue succeeded
+        assertNotNull(scheduledExecution)
+        assertTrue(scheduledExecution instanceof ScheduledExecution)
+        final ScheduledExecution execution = scheduledExecution
+        assertNotNull(execution)
+        assertNotNull(execution.errors)
+        assertFalse(execution.errors.hasErrors())
+        assertFalse(execution.errors.hasFieldErrors('options'))
+    }
+
+    public void testDoUpdateScheduled_ExistingRequiredOptionWithoutDefault() {
+        def sec = new ScheduledExecutionService()
+        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
+                doNodedispatch: true, nodeInclude: "hostname",
+                nodeThreadcount: 1,
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]),
+                options:[new Option(name: 'test', required:true, enforced: false)]
+        )
+        se.save()
+
+        assertNotNull se.id
+        assertNotNull se.nodeThreadcount
+
+        //try to do update of the ScheduledExecution
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework ->
+            assertEquals 'testProject2', project
+            return true
+        }
+        fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
+        fwkControl.demand.isClusterModeEnabled {  -> return false }
+        sec.frameworkService = fwkControl.createMock()
+        def qtzControl = mockFor(FakeScheduler, true)
+        qtzControl.demand.checkExists { key -> false }
+        qtzControl.demand.getListenerManager { -> [addJobListener:{a,b->}] }
+        qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
+        sec.quartzScheduler = qtzControl.createMock()
+
+        def ms = mockFor(MessageSource)
+        ms.demand.getMessage { key, data, locale -> 'message' }
+        ms.demand.getMessage { error, locale -> 'message' }
+        sec.messageSource = ms.createMock()
+
+        def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
+                      workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
+                      _workflow_data: true,
+                      scheduled: true,
+                      crontabString: '0 21 */4 */4 */6 ? 2010-2040', useCrontabString: 'true']
+        def results = sec._doupdate(params, 'test', 'userrole,test', null, null)
+
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
+        if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+            scheduledExecution.errors.allErrors.each {
+                System.err.println(it);
+            }
+        }
+        assertFalse succeeded
+        assertNotNull(scheduledExecution)
+        assertTrue(scheduledExecution instanceof ScheduledExecution)
+        final ScheduledExecution execution = scheduledExecution
+        assertNotNull(execution)
+        assertNotNull(execution.errors)
+        assertTrue(execution.errors.hasErrors())
+        assertTrue(execution.errors.hasFieldErrors('options'))
     }
 
 

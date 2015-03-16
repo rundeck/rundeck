@@ -531,13 +531,16 @@ function _configureInputRestrictions(target) {
         }
     });
 }
-
+function _isjobScheduled() {
+    return jQuery('#scheduledTrue:checked').val() == 'true';
+}
 function _optedit(name, elem) {
     jobWasEdited();
     var params = {name:name};
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
     }
+    params['jobWasScheduled']=_isjobScheduled();
     $('optsload').loading();
     jQuery.ajax({
         type:'GET',
@@ -558,6 +561,7 @@ function _optview(name, target) {
     if (getCurSEID()) {
         params['scheduledExecutionId'] = getCurSEID();
     }
+    params['jobWasScheduled']=_isjobScheduled();
     jQuery(target).load(_genUrl(appLinks.editOptsRender,params), _showOptControls);
 }
 function _optsave(formelem, tokendataid, target) {
@@ -565,7 +569,7 @@ function _optsave(formelem, tokendataid, target) {
     $('optsload').loading();
     jQuery.ajax({
         type: "POST",
-        url:_genUrl(appLinks.editOptsSave),
+        url:_genUrl(appLinks.editOptsSave,{jobWasScheduled:_isjobScheduled()}),
         data: jQuery('#'+formelem+" :input").serialize(),
         beforeSend: _ajaxSendTokens.curry(tokendataid),
         success:function(data,status,xhr){
@@ -652,7 +656,7 @@ function _optsavenew(formelem,tokendataid) {
     $('optsload').loading();
     jQuery.ajax({
         type: "POST",
-        url: _genUrl(appLinks.editOptsSave),
+        url: _genUrl(appLinks.editOptsSave,{jobWasScheduled:_isjobScheduled()}),
         data: params,
         beforeSend: _ajaxSendTokens.curry(tokendataid),
         success: function (data, status, xhr) {

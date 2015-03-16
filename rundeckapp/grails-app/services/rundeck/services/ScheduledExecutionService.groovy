@@ -1329,9 +1329,16 @@ class ScheduledExecutionService implements ApplicationContextAware{
 
             def optfailed = false
             optsmap.values().each {Option opt ->
-                EditOptsController._validateOption(opt)
+                EditOptsController._validateOption(opt,null,scheduledExecution.scheduled)
                 if (opt.errors.hasErrors()) {
                     optfailed = true
+                    def errmsg = opt.name + ": " + opt.errors.allErrors.collect {lookupMessageError(it)}.join(";")
+                    scheduledExecution.errors.rejectValue(
+                            'options',
+                            'scheduledExecution.options.invalid.message',
+                            [errmsg] as Object[],
+                            'Invalid Option definition: {0}'
+                    )
                 }
             }
             if (!optfailed) {
@@ -1350,7 +1357,6 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 }
             } else {
                 failed = true
-                scheduledExecution.errors.rejectValue('options', 'scheduledExecution.options.invalid.message')
             }
         } else if (params.options) {
 
@@ -1360,7 +1366,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 def Map optdefparams = params.options["options[${i}]"]
                 def Option theopt = new Option(optdefparams)
                 scheduledExecution.addToOptions(theopt)
-                EditOptsController._validateOption(theopt)
+                EditOptsController._validateOption(theopt,null,scheduledExecution.scheduled)
                 if (theopt.errors.hasErrors() || !theopt.validate()) {
                     failed = true
                     theopt.discard()
@@ -1374,6 +1380,24 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 }
                 theopt.scheduledExecution = scheduledExecution
                 i++
+            }
+
+        }else if(scheduledExecution.options && scheduledExecution.scheduled){
+            //evaluate required option defaults
+            scheduledExecution.options.each{Option theopt->
+                EditOptsController._validateOption(theopt,null,scheduledExecution.scheduled)
+                if(theopt.errors.hasErrors()) {
+                    failed=true
+                    def errmsg = theopt.name + ": " +
+                            theopt.errors.allErrors.collect { lookupMessageError(it) }.join(";")
+
+                    scheduledExecution.errors.rejectValue(
+                            'options',
+                            'scheduledExecution.options.invalid.message',
+                            [errmsg] as Object[],
+                            'Invalid Option definition: {0}'
+                    )
+                }
             }
 
         }
@@ -1810,7 +1834,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
             def i = 0;
             params.options.each {Option theopt ->
                 scheduledExecution.addToOptions(theopt)
-                EditOptsController._validateOption(theopt)
+                EditOptsController._validateOption(theopt,null,scheduledExecution.scheduled)
                 if (theopt.errors.hasErrors() || !theopt.validate()) {
                     failed = true
                     theopt.discard()
@@ -2221,9 +2245,16 @@ class ScheduledExecutionService implements ApplicationContextAware{
 
             def optfailed = false
             optsmap.values().each {Option opt ->
-                EditOptsController._validateOption(opt)
+                EditOptsController._validateOption(opt,null,scheduledExecution.scheduled)
                 if (opt.errors.hasErrors()) {
                     optfailed = true
+                    def errmsg = opt.name + ": " + opt.errors.allErrors.collect {lookupMessageError(it)}.join(";")
+                    scheduledExecution.errors.rejectValue(
+                            'options',
+                            'scheduledExecution.options.invalid.message',
+                            ['Option '+opt.name+': '+errmsg] as Object[],
+                            'Invalid Option definition: {0}'
+                    )
                 }
             }
             if (!optfailed) {
@@ -2234,7 +2265,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 }
             } else {
                 failed = true
-                scheduledExecution.errors.rejectValue('options', 'scheduledExecution.options.invalid.message')
+//                scheduledExecution.errors.rejectValue('options', 'scheduledExecution.options.invalid.message')
             }
         } else if (params.options) {
             //set user options:
@@ -2243,7 +2274,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 params.options.each { origopt ->
                     def Option theopt = origopt.createClone()
                     scheduledExecution.addToOptions(theopt)
-                    EditOptsController._validateOption(theopt)
+                    EditOptsController._validateOption(theopt,null,scheduledExecution.scheduled)
 
                     if (theopt.errors.hasErrors() || !theopt.validate()) {
                         failed = true
@@ -2263,7 +2294,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
                     def Map optdefparams = params.options["options[${i}]"]
                     def Option theopt = new Option(optdefparams)
                     scheduledExecution.addToOptions(theopt)
-                    EditOptsController._validateOption(theopt)
+                    EditOptsController._validateOption(theopt,null,scheduledExecution.scheduled)
                     if (theopt.errors.hasErrors() || !theopt.validate()) {
                         failed = true
                         theopt.discard()
