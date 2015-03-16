@@ -157,65 +157,6 @@ public class ScriptfileUtils {
     }
 
     /**
-     * Copy a source file to a tempfile for script execution
-     *
-     * @param framework  framework
-     * @param sourcefile source file
-     *
-     * @return tempfile
-     *
-     * @throws IOException if an error occurs
-     * @deprecated
-     */
-    public static File writeScriptTempfile(final Framework framework, final File sourcefile) throws IOException {
-        return writeScriptTempfile(framework, new FileInputStream(sourcefile), null, null);
-    }
-
-    /**
-     * Copy a source stream to a tempfile for script execution
-     *
-     * @param framework framework
-     * @param stream    source
-     *
-     * @return tempfile
-     *
-     * @throws IOException if an error occurs
-     * @deprecated
-     */
-    public static File writeScriptTempfile(final Framework framework, final InputStream stream) throws IOException {
-        return writeScriptTempfile(framework, stream, null, null);
-    }
-
-    /**
-     * Copy string content to a tempfile for script execution
-     *
-     * @param framework framework
-     * @param source    string content
-     *
-     * @return tempfile
-     *
-     * @throws IOException if an error occurs
-     * @deprecated
-     */
-    public static File writeScriptTempfile(final Framework framework, final String source) throws IOException {
-        return writeScriptTempfile(framework, null, source, null);
-
-    }
-    /**
-     * Copy reader content to a tempfile for script execution
-     *
-     * @param framework framework
-     * @param source    string content
-     *
-     * @return tempfile
-     *
-     * @throws IOException if an error occurs
-     * @deprecated
-     */
-    public static File writeScriptTempfile(final Framework framework, final Reader source) throws IOException {
-        return writeScriptTempfile(framework, null, null, source);
-    }
-    /**
      * Copy reader content to a tempfile for script execution
      *
      * @param framework framework
@@ -236,52 +177,6 @@ public class ScriptfileUtils {
         return writeScriptTempfile(framework, null, null, source, style);
     }
 
-    /**
-     * Copy a source stream or string content to a tempfile for script execution
-     *
-     * @param framework framework
-     * @param stream    source stream
-     * @param source    content
-     * @param reader input reader
-     *
-     * @return tempfile
-     *
-     * @throws IOException if an error occurs
-     * @deprecated use {@link #writeScriptTempfile(com.dtolabs.rundeck.core.common.Framework,
-     *             java.io.InputStream, String, java.io.Reader,
-     *             com.dtolabs.rundeck.core.execution.script.ScriptfileUtils.LineEndingStyle)}
-     */
-    private static File writeScriptTempfile(
-            final Framework framework,
-            final InputStream stream,
-            final String source,
-            final Reader reader
-    )
-            throws IOException
-    {
-        /**
-         * Prepare a file to save the content
-         */
-        final File scriptfile;
-        scriptfile = createTempFile(framework);
-
-        final FileWriter writer = new FileWriter(scriptfile);
-
-        try {
-            if (null != source) {
-                //write script content to temp file
-                writer.write(source);
-            } else if (null != reader) {
-                ScriptfileUtils.writeReader(reader, writer);
-            } else if (null != stream) {
-                ScriptfileUtils.writeStream(stream, writer);
-            }
-        } finally {
-            writer.close();
-        }
-
-        return scriptfile;
-    }
 
     /**
      * Copy a source stream or string content to a tempfile for script execution

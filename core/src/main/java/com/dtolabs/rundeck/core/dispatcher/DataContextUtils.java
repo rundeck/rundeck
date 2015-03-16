@@ -345,47 +345,6 @@ public class DataContextUtils {
     }
 
 
-    /**
-     * Copies the source file to a temp file, replacing the @key.X@ tokens with the values from the data context
-     *
-     * @param sourceFile  source file path
-     * @param dataContext input data context
-     * @param framework   the framework
-     *
-     * @return the token replaced temp file, or null if an error occurs.
-     * @deprecated
-     * @throws java.io.IOException on io error
-     */
-    public static File replaceTokensInFile(final String sourceFile, final Map<String, Map<String, String>> dataContext,
-                                           final Framework framework) throws IOException {
-        return replaceTokensInFile(new File(sourceFile), dataContext, framework);
-    }
-
-    /**
-     * Copies the source file to a temp file, replacing the @key.X@ tokens with the values from the
-     * data context
-     *
-     * @param sourceFile  source file
-     * @param dataContext input data context
-     * @param framework   the framework
-     *
-     * @return the token replaced temp file, or null if an error occurs.
-     *
-     * @deprecated use {@link #replaceTokensInFile(java.io.File, java.util.Map,
-     *             com.dtolabs.rundeck.core.common.Framework,
-     *             com.dtolabs.rundeck.core.execution.script.ScriptfileUtils.LineEndingStyle)}
-     *
-     * @throws java.io.IOException on io error
-     */
-    public static File replaceTokensInFile(
-            final File sourceFile,
-            final Map<String, Map<String, String>> dataContext,
-            final Framework framework
-    )
-            throws IOException
-    {
-        return replaceTokensInFile(sourceFile, dataContext, framework, null);
-    }
 
     /**
      * Copies the source file to a temp file, replacing the @key.X@ tokens with the values from the
@@ -447,24 +406,6 @@ public class DataContextUtils {
         }
         ScriptfileUtils.setExecutePermissions(temp);
         return temp;
-    }
-
-    /**
-     * Copies the source file to a temp file, replacing the @key.X@ tokens with the values from the data context
-     *
-     * @param script  source file path
-     * @param dataContext input data context
-     * @param framework   the framework
-     *
-     * @return the token replaced temp file, or null if an error occurs.
-     * @deprecated use {@link #replaceTokensInScript(String, java.util.Map,
-     * com.dtolabs.rundeck.core.common.Framework,
-     * com.dtolabs.rundeck.core.execution.script.ScriptfileUtils.LineEndingStyle)}
-     * @throws java.io.IOException on io error
-     */
-    public static File replaceTokensInScript(final String script, final Map<String, Map<String, String>> dataContext,
-                                           final Framework framework) throws IOException {
-        return replaceTokensInScript(script, dataContext, framework, null);
     }
 
     /**
@@ -532,26 +473,6 @@ public class DataContextUtils {
         ScriptfileUtils.setExecutePermissions(temp);
         return temp;
     }
-    /**
-     * Copies the source stream to a temp file, replacing the @key.X@ tokens with the values from the data context
-     *
-     * @param stream  source stream
-     * @param dataContext input data context
-     * @param framework   the framework
-     *
-     * @return the token replaced temp file, or null if an error occurs.
-     * @deprecated use {@link #replaceTokensInStream(java.io.InputStream,
-     * java.util.Map,
-     * com.dtolabs.rundeck.core.common.Framework,
-     * com.dtolabs.rundeck.core.execution.script.ScriptfileUtils.LineEndingStyle)}
-     * @throws java.io.IOException on io error
-     *
-     */
-    public static File replaceTokensInStream(final InputStream stream, final Map<String, Map<String, String>> dataContext,
-                                           final Framework framework) throws IOException {
-        return replaceTokensInStream(stream, dataContext, framework, null);
-    }
-
     /**
      * Copies the source stream to a temp file, replacing the @key.X@ tokens with the values from the data context
      *
