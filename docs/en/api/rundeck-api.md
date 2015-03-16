@@ -2147,6 +2147,7 @@ Get information about a project.
 Result:  An Item List of `projects` with one `project`.  XML or JSON is determined by the `Accept` request header. The `project` is of the form:
 
 `Content-Type: application/xml`
+
 ~~~~~~~~~~ {.xml}
 <project>
     <name>Project Name</name>
@@ -2158,9 +2159,9 @@ Result:  An Item List of `projects` with one `project`.  XML or JSON is determin
 If the project defines a Resource Model Provider URL, then the additional items are:
 
 ~~~~~~~~~~ {.xml}
-    <resources>
-        <providerURL>URL</providerURL>
-    </resources>
+<resources>
+    <providerURL>URL</providerURL>
+</resources>
 ~~~~~~~~~~
 
 Updated in version 11:
@@ -2169,6 +2170,7 @@ Updated in version 11:
 
 
 `Content-Type: application/xml`
+
 ~~~~~~~~~~ {.xml}
 <project url="http://server:4440/api/11/project/NAME">
     <name>Project Name</name>
@@ -2178,6 +2180,7 @@ Updated in version 11:
 ~~~~~~~~~~
 
 `Content-Type: application/json` *since version 11*
+
 ~~~~~~~~~~ {.json}
 {
   "description": "",
@@ -2191,10 +2194,10 @@ Updated in version 11:
 **API version 11 and later**: If the user has `configure` authorization for the project, then the project configuration properties are included in the response.
 
 ~~~~~~~~~~ {.xml}
-    <config>
-        <property key="[name]" value="[value]"/>
-        <!-- ... -->
-    </config>
+<config>
+    <property key="[name]" value="[value]"/>
+    <!-- ... -->
+</config>
 ~~~~~~~~~~
 
 ### Project Deletion ###

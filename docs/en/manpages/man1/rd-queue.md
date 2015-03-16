@@ -86,6 +86,7 @@ If `-q`,`--quiet`  is used, then no output is echoed, and the tool will wait unt
 exit with a non-zero exit status if the execution was not successful.
 
 *Example*
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
 rd-queue follow -e 160
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
