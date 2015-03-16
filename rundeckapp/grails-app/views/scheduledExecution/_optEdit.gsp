@@ -25,7 +25,7 @@
 <g:set var="rkey" value="${g.rkey()}"/>
 <div class="container optEditForm" >
     <g:hasErrors bean="${option}">
-        <div class="error message">
+        <div class="alert alert-danger">
             <g:renderErrors bean="${option}" as="list"/>
         </div>
     </g:hasErrors>

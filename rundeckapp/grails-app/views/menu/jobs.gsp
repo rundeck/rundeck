@@ -356,7 +356,7 @@
     </div>
 </g:if>
 <div class="runbox primary jobs" id="indexMain">
-    <div id="error" class="error message" style="display:none;"></div>
+    <div id="error" class="alert alert-danger" style="display:none;"></div>
     <g:render template="workflowsFull" model="${[jobgroups:jobgroups,wasfiltered:wasfiltered?true:false,nowrunning:nowrunning, clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,rkey:rkey]}"/>
 </div>
 <div id="execDiv" style="display:none">

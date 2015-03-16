@@ -25,7 +25,7 @@
 <g:set var="rkey" value="${g.rkey()}"/>
 <div class=" wfitemEditForm container">
 <g:hasErrors bean="${item}">
-    <div class="error message">
+    <div class="alert alert-danger">
     <g:renderErrors bean="${item}" as="list"/>
     </div>
 </g:hasErrors>
