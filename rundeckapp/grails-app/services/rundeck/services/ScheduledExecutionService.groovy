@@ -690,6 +690,10 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 .usingJobData("scheduledExecutionId",se.id.toString())
                 .usingJobData("rdeck.base",frameworkService.getRundeckBase())
 
+        if(se.timeout){
+            jobDetailBuilder.usingJobData("timeout",executionService.evaluateTimeoutDuration(se.timeout))
+        }
+
         if(se.scheduled){
             jobDetailBuilder.usingJobData("userRoles",se.userRoleList)
             if(frameworkService.isClusterModeEnabled()){
