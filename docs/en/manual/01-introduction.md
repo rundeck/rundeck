@@ -56,7 +56,7 @@ Rundeck is free software and is public under the [Apache Software License].
 
 ## Rundeck in context
 
-Rundeck is meant to compliment the tools you already use 
+Rundeck is meant to complement the tools you already use 
 (including frameworks like Puppet, Chef, and Jenkins, Cloud, VM) and is geared
 towards helping you automate actions across them. If you currently
 manage your servers by running commands from the terminal or through
