@@ -25,12 +25,12 @@ grails.project.dependency.resolution = {
         // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
 
         // runtime 'mysql:mysql-connector-java:5.1.21'
-        compile "com.codahale.metrics:metrics-core:3.0.1",
-                "com.codahale.metrics:metrics-servlets:3.0.1",
-                "com.codahale.metrics:metrics-servlet:3.0.1"
-        runtime "com.codahale.metrics:metrics-core:3.0.1",
-                "com.codahale.metrics:metrics-servlets:3.0.1",
-                "com.codahale.metrics:metrics-servlet:3.0.1"
+        compile "com.codahale.metrics:metrics-core:3.0.2",
+                "com.codahale.metrics:metrics-servlets:3.0.2",
+                "com.codahale.metrics:metrics-servlet:3.0.2"
+        runtime "com.codahale.metrics:metrics-core:3.0.2",
+                "com.codahale.metrics:metrics-servlets:3.0.2",
+                "com.codahale.metrics:metrics-servlet:3.0.2"
     }
 
     plugins {
