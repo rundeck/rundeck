@@ -23,7 +23,7 @@ The script is located here: `/etc/init.d/rundeckd`
 *Shutdown*
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-/etc/initd./rundeckd stop
+/etc/init.d/rundeckd stop
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
     
 #### Setting JAVA_HOME
