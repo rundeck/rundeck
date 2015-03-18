@@ -18,6 +18,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
@@ -714,7 +715,6 @@ class FrameworkService implements ApplicationContextAware {
         }
         return result
     }
-
     /**
      * Perform validation of a configuration description for input parameters
      * @param description
@@ -722,6 +722,7 @@ class FrameworkService implements ApplicationContextAware {
      * @param params
      * @return result map "desc" ({@link Description} object),
      *   "props" (parsed property values map), "report" (Validation report {@link Validator.Report))
+     * @deprecated use {@link #validateDescription(Description,String,Map,String,PropertyScope,PropertyScope)}
      */
     public Map validateDescription(Description description, String prefix, Map params) {
         def result=[:]
@@ -731,6 +732,41 @@ class FrameworkService implements ApplicationContextAware {
 
         if (result.desc) {
             def report = Validator.validate(result.props as Properties, result.desc)
+            if (report.valid) {
+                result.valid = true
+            }
+            result.report = report
+        }
+        return result
+    }
+
+    /**
+     * Perform validation of a configuration description for input parameters
+     * @param description
+     * @param prefix
+     * @param params
+     * @param project optional project name for resolving project properties
+     * @param defaultScope default for unmarked properties
+     * @param ignored ignore properties at or below this scope
+     * @return result map "desc" ({@link Description} object),
+     *   "props" (parsed property values map), "report" (Validation report {@link Validator.Report))
+     */
+    public Map validateDescription(
+            Description description,
+            String prefix,
+            Map params,
+            String project,
+            PropertyScope defaultScope,
+            PropertyScope ignored
+    )
+    {
+        def result = [:]
+        result.valid = false
+        result.desc = description
+        result.props = parseResourceModelConfigInput(result.desc, prefix, params)
+        def resolver = getFrameworkPropertyResolver(project, result.props)
+        if (result.desc) {
+            def report = Validator.validate(resolver, description, defaultScope, ignored)
             if (report.valid) {
                 result.valid = true
             }

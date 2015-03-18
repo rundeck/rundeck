@@ -1,5 +1,6 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import rundeck.WorkflowStep
 import rundeck.Workflow
 import rundeck.JobExec
@@ -435,7 +436,7 @@ class WorkflowController extends ControllerBase {
             }
             def validation=_validatePluginStep(item, params.newitemtype)
             if(!validation.valid){
-                return [error: "Plugin configuration was not valid", item: item,report: validation.report]
+                return [error: "Plugin configuration was not valid: ${validation.report}", item: item,report: validation.report]
             }
             _sanitizePluginStep(item,validation)
             if (null != editwf.commands) {
@@ -694,9 +695,15 @@ class WorkflowController extends ControllerBase {
      protected Map _validatePluginStep(WorkflowStep exec, String type = null) {
         if(exec instanceof PluginStep){
             PluginStep item = exec as PluginStep
-            def framework = frameworkService.getRundeckFramework()
             def description=getPluginStepDescription(item.nodeStep, item.type)
-            return frameworkService.validateDescription(description,'',item.configuration)
+            return frameworkService.validateDescription(
+                    description,
+                    '',
+                    item.configuration,
+                    null,
+                    PropertyScope.Instance,
+                    PropertyScope.Project
+            )
         }else{
             return [valid:true]
         }

@@ -1,5 +1,7 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.CommandExec
@@ -39,18 +41,11 @@ class WorkflowControllerTests {
         //test insert
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
         wf.commands = new ArrayList()
-
-        def fwmock = mockFor(FrameworkService)
-        fwmock.demand.getRundeckFramework {-> }
-        fwmock.demand.getStepPluginDescription { type -> null }
-        fwmock.demand.validateDescription { desc, p, params ->
-            assertEquals([monkey:'tree'],params)
-            [valid: true, props: ['monkey': 'tree']]
-        }
-        ctrl.frameworkService = fwmock.createMock()
+        def pluginConfig=[monkey: 'tree']
+        ctrl.frameworkService = createMockFrameworkService(false,pluginConfig)
 
         def result = ctrl._applyWFEditAction(wf, [action: 'insert', num: 0,
-                params: [pluginItem: true, type: 'blah', pluginConfig: [monkey: 'tree'], description: 'elf',newitemtype: 'blah']])
+                params: [pluginItem: true, type: 'blah', pluginConfig: pluginConfig, description: 'elf',newitemtype: 'blah']])
 
         assertNull result.error
         assertEquals 1, wf.commands.size()
@@ -65,6 +60,29 @@ class WorkflowControllerTests {
         assertEquals 'remove', result.undo.action
         assertEquals 0, result.undo.num
     }
+
+    private FrameworkService createMockFrameworkService(boolean nodestep,Map expectedParams=null) {
+        def fwmock = mockFor(FrameworkService)
+        if(nodestep){
+            fwmock.demand.getNodeStepPluginDescription { type -> null }
+        }else{
+            fwmock.demand.getStepPluginDescription { type -> null }
+        }
+        fwmock.demand.validateDescription { Description description,
+                                            String prefix,
+                                            Map params,
+                                            String project,
+                                            PropertyScope defaultScope,
+                                            PropertyScope ignored ->
+            if(null!=expectedParams){
+                assertEquals(expectedParams, params)
+            }
+            assertEquals(PropertyScope.Instance,defaultScope)
+            assertEquals(PropertyScope.Project,ignored)
+            [valid: true, props: params]
+        }
+        fwmock.createMock()
+    }
     /**
      * Multi line config values with \r\n should be converted to \n
      */
@@ -74,13 +92,7 @@ class WorkflowControllerTests {
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
         wf.commands = new ArrayList()
 
-        def fwmock = mockFor(FrameworkService)
-        fwmock.demand.getRundeckFramework {-> }
-        fwmock.demand.getStepPluginDescription { type -> null }
-        fwmock.demand.validateDescription { desc, p, params ->
-            [valid: true, props: params]
-        }
-        ctrl.frameworkService = fwmock.createMock()
+
 
 
         def inputValue = 'abcdef\r\nmonkey\r\ntoenail'
@@ -88,12 +100,17 @@ class WorkflowControllerTests {
 
         def inputValue2 = 'abc\ndef\n\nrbc\n'
         def expectedValue2 = 'abc\ndef\n\nrbc\n'
+        def pluginConfig=[monkey: 'tree',
+                          multilineconfig: inputValue,
+                          unixlines: inputValue2]
+        def expectedConfig=[monkey:'tree',
+                            multilineconfig: expectedValue,
+                            unixlines: expectedValue2]
 
+        ctrl.frameworkService = createMockFrameworkService(false,expectedConfig)
         def result = ctrl._applyWFEditAction(wf, [action: 'insert', num: 0,
                 params: [pluginItem: true, type: 'blah',
-                         pluginConfig: [monkey: 'tree',
-                                        multilineconfig: inputValue,
-                                        unixlines: inputValue2],
+                         pluginConfig: pluginConfig,
                          description: 'elf',
                          newitemtype: 'blah']])
 
@@ -105,9 +122,7 @@ class WorkflowControllerTests {
         assertEquals 'blah', pitem.type
 
 
-        assertEquals( [monkey:'tree',
-                       multilineconfig: expectedValue,
-                       unixlines: expectedValue2], pitem.configuration)
+        assertEquals( expectedConfig, pitem.configuration)
         assertEquals( 'elf', pitem.description)
         //test undo
         assertNotNull result.undo
@@ -195,14 +210,8 @@ class WorkflowControllerTests {
         assertEquals 1, wf.commands.size()
 
 
-        def fwmock = mockFor(FrameworkService)
-        fwmock.demand.getRundeckFramework {-> }
-        fwmock.demand.getStepPluginDescription { type -> null }
-        fwmock.demand.validateDescription { desc, p, params ->
-            assertEquals([monkey: 'tree'], params)
-            [valid: true, props: ['monkey': 'tree']]
-        }
-        ctrl.frameworkService = fwmock.createMock()
+
+        ctrl.frameworkService = createMockFrameworkService(false,[monkey: 'tree'])
 
         def result = ctrl._applyWFEditAction(wf, [action: 'modify', num: 0,
                 params: [pluginItem: true, type: 'blah', pluginConfig: [monkey: 'tree'], description: 'elf']])
@@ -235,13 +244,7 @@ class WorkflowControllerTests {
         assertEquals 1, wf.commands.size()
 
 
-        def fwmock = mockFor(FrameworkService)
-        fwmock.demand.getRundeckFramework {-> }
-        fwmock.demand.getStepPluginDescription { type -> null }
-        fwmock.demand.validateDescription { desc, p, params ->
-            [valid: true, props: params]
-        }
-        ctrl.frameworkService = fwmock.createMock()
+
 
 
         def inputValue = 'abcdef\r\nmonkey\r\ntoenail'
@@ -249,20 +252,23 @@ class WorkflowControllerTests {
 
         def inputValue2 = 'abc\ndef\n\nrbc\n'
         def expectedValue2 = 'abc\ndef\n\nrbc\n'
+        def pluginConfig=[monkey: 'tree',
+                          multilineconfig:inputValue,
+                          unixlines:inputValue2]
+        def expectedConfig=[monkey: 'tree',
+                            multilineconfig:expectedValue,
+                            unixlines:expectedValue2]
+        ctrl.frameworkService = createMockFrameworkService(false,expectedConfig)
 
         def result = ctrl._applyWFEditAction(wf, [action: 'modify', num: 0,
-                params: [pluginItem: true, type: 'blah', pluginConfig: [monkey: 'tree',
-                                                                        multilineconfig:inputValue,
-                                                                        unixlines:inputValue2], description: 'elf']])
+                params: [pluginItem: true, type: 'blah', pluginConfig: pluginConfig, description: 'elf']])
         assertNull result.error
         assertEquals 1, wf.commands.size()
         final Object item = wf.commands.get(0)
         assertTrue item instanceof PluginStep
         PluginStep pitem=(PluginStep)item
         assertEquals 'blah', pitem.type
-        assertEquals( [monkey: 'tree',
-                       multilineconfig:expectedValue,
-                       unixlines:expectedValue2], pitem.configuration)
+        assertEquals( expectedConfig, pitem.configuration)
         assertEquals 'elf', pitem.description
         //test undo
         assertNotNull result.undo
@@ -312,13 +318,18 @@ class WorkflowControllerTests {
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
         wf.commands = new ArrayList()
 
-        def fwmock = mockFor(FrameworkService)
-        fwmock.demand.getRundeckFramework {-> }
-        fwmock.demand.getStepPluginDescription { type -> null }
-        fwmock.demand.validateDescription { desc, p, params -> [valid: true, props: ['blah': 'value']] }
-        ctrl.frameworkService = fwmock.createMock()
 
-        def result = ctrl._applyWFEditAction(wf, [action: 'insert', num: 0, params: [pluginItem: true, newitemtype: 'test', newitemnodestep: 'false', pluginConfig: ['blah': 'value']]])
+        def pluginConfig=['blah': 'value']
+        ctrl.frameworkService = createMockFrameworkService(false,pluginConfig)
+
+        def result = ctrl._applyWFEditAction(
+                wf,
+                [action: 'insert', num: 0, params: [pluginItem: true,
+                                                    newitemtype: 'test',
+                                                    newitemnodestep: 'false',
+                                                    pluginConfig: pluginConfig]]
+
+        )
         assertNull result.error
         assertEquals 1, wf.commands.size()
         final Object item = wf.commands.get(0)
@@ -358,11 +369,9 @@ class WorkflowControllerTests {
     public void testWFEditActionsModifyPluginStep() {
         WorkflowController ctrl = new WorkflowController()
 
-        def fwmock = mockFor(FrameworkService)
-        fwmock.demand.getRundeckFramework {-> }
-        fwmock.demand.getNodeStepPluginDescription { type -> null }
-        fwmock.demand.validateDescription { desc, p, params -> [valid: true, props: ['blah': 'value']] }
-        ctrl.frameworkService = fwmock.createMock()
+
+        def pluginConfig=['blah': 'value']
+        ctrl.frameworkService = createMockFrameworkService(true,pluginConfig)
 
         //test modify
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
@@ -372,7 +381,10 @@ class WorkflowControllerTests {
         assertEquals 1, wf.commands.size()
 
 
-        def result = ctrl._applyWFEditAction(wf, [action: 'modify', num: 0, params: [pluginItem: true, newitemtype: 'test', newitemnodestep: 'false', pluginConfig: ['blah': 'value']]])
+        def result = ctrl._applyWFEditAction(wf, [action: 'modify', num: 0, params: [pluginItem: true,
+                                                                                     newitemtype: 'test',
+                                                                                     newitemnodestep: 'false',
+                                                                                     pluginConfig: pluginConfig]])
         assertNull result.error
         assertEquals 1, wf.commands.size()
         final Object item = wf.commands.get(0)
@@ -469,16 +481,17 @@ class WorkflowControllerTests {
     public void testWFErrorHandlerActionsInsertPluginStep() {
         WorkflowController ctrl = new WorkflowController()
 
-        def fwmock = mockFor(FrameworkService)
-        fwmock.demand.getRundeckFramework {-> }
-        fwmock.demand.getNodeStepPluginDescription { type -> null }
-        fwmock.demand.validateDescription { desc, p, params -> [valid: true, props: ['blah': 'value']] }
-        ctrl.frameworkService = fwmock.createMock()
+        def pluginConfig=['blah': 'value']
+
+        ctrl.frameworkService = createMockFrameworkService(true,pluginConfig)
         //test insert
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands: [new CommandExec(adhocRemoteString: 'test')])
 
 
-        def result = ctrl._applyWFEditAction(wf, [action: 'addHandler', num: 0, params: [pluginItem: true, newitemtype: 'test', newitemnodestep: 'true', pluginConfig: ['blah': 'value']]])
+        def result = ctrl._applyWFEditAction(wf, [action: 'addHandler', num: 0, params: [pluginItem: true,
+                                                                                         newitemtype: 'test',
+                                                                                         newitemnodestep: 'true',
+                                                                                         pluginConfig: pluginConfig]])
         assertNull result.error
         assertEquals 1, wf.commands.size()
         final Object item = wf.commands.get(0)
@@ -502,18 +515,16 @@ class WorkflowControllerTests {
     public void testWFErrorHandlerActionsInsertPluginStepKeepgoingOnSuccess() {
         WorkflowController ctrl = new WorkflowController()
 
-        def fwmock = mockFor(FrameworkService)
-        fwmock.demand.getRundeckFramework {-> }
-        fwmock.demand.getNodeStepPluginDescription { type -> null }
-        fwmock.demand.validateDescription { desc, p, params -> [valid: true, props: ['blah': 'value']] }
-        ctrl.frameworkService = fwmock.createMock()
+
+        def pluginConfig=['blah': 'value']
+        ctrl.frameworkService = createMockFrameworkService(true,pluginConfig)
         //test insert
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands: [new CommandExec(adhocRemoteString: 'test')])
 
 
         def result = ctrl._applyWFEditAction(wf, [action: 'addHandler', num: 0, params: [
                 keepgoingOnSuccess: 'true',
-                pluginItem: true, newitemtype: 'test', newitemnodestep: 'true', pluginConfig: ['blah': 'value']]])
+                pluginItem: true, newitemtype: 'test', newitemnodestep: 'true', pluginConfig: pluginConfig]])
         assertNull result.error
         assertEquals 1, wf.commands.size()
         final Object item = wf.commands.get(0)
@@ -563,18 +574,19 @@ class WorkflowControllerTests {
     public void testWFErrorHandlerActionsModifyPluginStep() {
         WorkflowController ctrl = new WorkflowController()
 
-        def fwmock = mockFor(FrameworkService)
-        fwmock.demand.getRundeckFramework {-> }
-        fwmock.demand.getNodeStepPluginDescription { type -> null }
-        fwmock.demand.validateDescription { desc, p, params -> [valid: true, props: ['blah': 'value']] }
-        ctrl.frameworkService = fwmock.createMock()
+
+        def pluginConfig=['blah': 'value']
+        ctrl.frameworkService = createMockFrameworkService(true,pluginConfig)
 
         //test modify
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands:
                 [new CommandExec(adhocRemoteString: 'test', errorHandler: new PluginStep(type: 'test1', nodeStep: true, configuration: ['elf': 'monkey']))])
         assertNotNull(wf.commands[0].errorHandler)
 
-        def result = ctrl._applyWFEditAction(wf, [action: 'modifyHandler', num: 0, params: [pluginItem: true, newitemtype: 'test', newitemnodestep: 'false', pluginConfig: ['blah': 'value']]])
+        def result = ctrl._applyWFEditAction(wf, [action: 'modifyHandler', num: 0, params: [pluginItem: true,
+                                                                                            newitemtype: 'test',
+                                                                                            newitemnodestep: 'false',
+                                                                                            pluginConfig: pluginConfig]])
         assertNull result.error
         assertEquals 1, wf.commands.size()
         final Object item = wf.commands.get(0)
@@ -601,11 +613,9 @@ class WorkflowControllerTests {
     public void testWFErrorHandlerActionsModifyPluginStepKeepgoingOnSuccess() {
         WorkflowController ctrl = new WorkflowController()
 
-        def fwmock = mockFor(FrameworkService)
-        fwmock.demand.getRundeckFramework {-> }
-        fwmock.demand.getNodeStepPluginDescription { type -> null }
-        fwmock.demand.validateDescription { desc, p, params -> [valid: true, props: ['blah': 'value']] }
-        ctrl.frameworkService = fwmock.createMock()
+
+        def pluginConfig=['blah': 'value']
+        ctrl.frameworkService = createMockFrameworkService(true,pluginConfig)
 
         //test modify
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands:
@@ -615,7 +625,7 @@ class WorkflowControllerTests {
 
         def result = ctrl._applyWFEditAction(wf, [action: 'modifyHandler', num: 0, params: [
                 keepgoingOnSuccess: 'true',
-                pluginItem: true, newitemtype: 'test', newitemnodestep: 'false', pluginConfig: ['blah': 'value']]])
+                pluginItem: true, newitemtype: 'test', newitemnodestep: 'false', pluginConfig: pluginConfig]])
         assertNull result.error
         assertEquals 1, wf.commands.size()
         final Object item = wf.commands.get(0)
