@@ -71,7 +71,23 @@ public class JettyCachingLdapLoginModuleTest {
 
     @Test
     public void testShouldGetNestedGroups() {
-        JettyCachingLdapLoginModule module = getJettyCachingLdapLoginModule();
+        JettyCachingLdapLoginModule module = getJettyCachingLdapLoginModule(false);
+        module._nestedGroups = true;
+        try {
+            UserInfo userInfo = module.getUserInfo(user1);
+            assertThat(userInfo.getUserName(), is(user1));
+
+            List<String> actualRoles = userInfo.getRoleNames();
+            List<String> expectedRoles = Arrays.asList(role1, role2, nestedRole1);
+            assertThat(actualRoles, is(expectedRoles));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testShouldGetNestedGroupsWithAD() {
+        JettyCachingLdapLoginModule module = getJettyCachingLdapLoginModule(true);
         module._nestedGroups = true;
         try {
             UserInfo userInfo = module.getUserInfo(user1);
@@ -87,7 +103,7 @@ public class JettyCachingLdapLoginModuleTest {
 
     @Test
     public void testShouldNotGetNestedGroups() {
-        JettyCachingLdapLoginModule module = getJettyCachingLdapLoginModule();
+        JettyCachingLdapLoginModule module = getJettyCachingLdapLoginModule(false);
 
         try {
             UserInfo userInfo = module.getUserInfo(user1);
@@ -101,7 +117,7 @@ public class JettyCachingLdapLoginModuleTest {
         }
     }
 
-    private JettyCachingLdapLoginModule getJettyCachingLdapLoginModule() {
+    private JettyCachingLdapLoginModule getJettyCachingLdapLoginModule(boolean activeDirectory) {
         JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule();
 
         module._userBaseDn = "ou=users,dc=example,dc=com";
@@ -187,7 +203,12 @@ public class JettyCachingLdapLoginModuleTest {
             when(nestedRole1Roles.next()).thenReturn(nestedRole1);
             when(nestedRole1MemberAttribute.getAll()).thenReturn(nestedRole1Members);
             when(nestedRole1Members.hasMore()).thenReturn(true, true, true, false);
-            when(nestedRole1Members.next()).thenReturn("cn=" + role1 + "," + module._roleBaseDn, "uid=" + user2 + "," + module._roleBaseDn);
+            if(activeDirectory) {
+                when(nestedRole1Members.next()).thenReturn("CN=" + role1 + "," + module._roleBaseDn, "uid=" + user2 + "," + module._roleBaseDn);
+            } else {
+                when(nestedRole1Members.next()).thenReturn("cn=" + role1 + "," + module._roleBaseDn, "uid=" + user2 + "," + module._roleBaseDn);
+            }
+
 
         } catch (NamingException e) {
             e.printStackTrace();
@@ -196,6 +217,5 @@ public class JettyCachingLdapLoginModuleTest {
         module._rootContext = rootContext;
         return module;
     }
-
 
 }
