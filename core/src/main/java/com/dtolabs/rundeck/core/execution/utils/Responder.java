@@ -102,9 +102,9 @@ public interface Responder {
     public boolean isFailOnResponseThreshold();
 
     /**
-     * @return input string to send after successful input pattern (including any newline characters as necessary)
+     * @return input string bytes to send after successful input pattern (including any newline characters as necessary)
      */
-    public String getInputString();
+    public byte[] getInputBytes();
 
     /**
      * @return true if input threshold indicates success

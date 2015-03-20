@@ -42,7 +42,6 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Echo;
-import org.apache.tools.ant.taskdefs.Sequential;
 
 import java.io.File;
 import java.io.InputStream;
@@ -148,7 +147,7 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
 //        logger.debug("temp file for node " + node.getNodename() + ": " + temp.getAbsolutePath() + ",
 // datacontext: " + dataContext);
         final Task scp;
-        final JschNodeExecutor.NodeSSHConnectionInfo nodeAuthentication = new JschNodeExecutor.NodeSSHConnectionInfo(
+        final NodeSSHConnectionInfo nodeAuthentication = new NodeSSHConnectionInfo(
                 node,
                 framework,
                 context);

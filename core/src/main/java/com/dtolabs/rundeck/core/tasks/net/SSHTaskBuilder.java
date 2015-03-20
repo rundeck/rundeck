@@ -23,25 +23,19 @@
 */
 package com.dtolabs.rundeck.core.tasks.net;
 
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
-import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.SSHAgentProcess;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.dtolabs.utils.Streams;
-import com.jcraft.jsch.IdentityRepository.Wrapper;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.KeyPair;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.agentproxy.AgentProxyException;
 import com.jcraft.jsch.agentproxy.Connector;
 import com.jcraft.jsch.agentproxy.ConnectorFactory;
 import com.jcraft.jsch.agentproxy.RemoteIdentityRepository;
 import org.apache.commons.lang.StringUtils;
-import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.optional.ssh.SSHUserInfo;
 import org.apache.tools.ant.taskdefs.optional.ssh.Scp;
@@ -549,24 +543,19 @@ public class SSHTaskBuilder {
                  * Configure keybased authentication
                  */
                 final String sshKeypath = sshConnectionInfo.getPrivateKeyfilePath();
-                final String sshKeyResource = sshConnectionInfo.getPrivateKeyResourcePath();
+                final String sshKeyResource = sshConnectionInfo.getPrivateKeyStoragePath();
                 if (null != sshKeyResource) {
-                    if (!PathUtil.asPath(sshKeyResource).getPath().startsWith("keys/")) {
+                    if (!PathUtil.hasRoot(sshKeyResource, "keys/")) {
                         throw new BuilderException("SSH Private key path is expected to start with \"keys/\": " +
                                 sshKeyResource);
                     }
                     logger.log(Project.MSG_DEBUG, "Using ssh key storage path: " + sshKeyResource);
                     try {
-                        InputStream privateKeyResourceData = sshConnectionInfo.getPrivateKeyResourceData();
+                        InputStream privateKeyResourceData = sshConnectionInfo.getPrivateKeyStorageData();
                         sshbase.setSshKeyData(privateKeyResourceData);
-                    } catch (StorageException e) {
+                    } catch (StorageException | IOException e) {
                         logger.log(Project.MSG_ERR,"Failed to read SSH Private key stored at path: " +
                                 sshKeyResource+": "+ e);
-                        throw new BuilderException("Failed to read SSH Private key stored at path: " +
-                                sshKeyResource,e);
-                    } catch (IOException e) {
-                        logger.log(Project.MSG_ERR, "Failed to read SSH Private key stored at path: " +
-                                sshKeyResource + ": " + e);
                         throw new BuilderException("Failed to read SSH Private key stored at path: " +
                                 sshKeyResource,e);
                     }
@@ -582,9 +571,38 @@ public class SSHTaskBuilder {
                     throw new BuilderException("SSH Keyfile or storage path must be set to use privateKey " +
                             "authentication");
                 }
-                final String passphrase = sshConnectionInfo.getPrivateKeyPassphrase();
-                if (null != passphrase) {
-                    sshbase.setPassphrase(passphrase);
+
+                //load private key passphrase from storage if a path is set
+                String privateKeyPassphraseStoragePath = sshConnectionInfo.getPrivateKeyPassphraseStoragePath();
+                if (null != privateKeyPassphraseStoragePath) {
+                    if (!PathUtil.hasRoot(privateKeyPassphraseStoragePath, "keys")) {
+                        throw new BuilderException(
+                                "SSH Private key path is expected to start with \"keys/\": " +
+                                privateKeyPassphraseStoragePath
+                        );
+                    }
+                    logger.log(Project.MSG_DEBUG,
+                               "Using ssh key passphrase storage path: " +
+                               privateKeyPassphraseStoragePath
+                    );
+                    try {
+                        byte[] passphrase = sshConnectionInfo.getPrivateKeyPassphraseStorageData();
+                        sshbase.setPassphrase(new String(passphrase));
+                    } catch (StorageException | IOException e) {
+                        logger.log(
+                                Project.MSG_ERR, "Failed to read SSH Private key passphrase stored at path: " +
+                                                 privateKeyPassphraseStoragePath + ": " + e
+                        );
+                        throw new BuilderException(
+                                "Failed to read SSH Private key passphrase stored at path: " +
+                                privateKeyPassphraseStoragePath, e
+                        );
+                    }
+                    //XXX: bypass password & keyfile null check in Ant 1.8.3's Scp.java:370, is restored to null in
+                    // {@link #openSession}.
+                    sshbase.setPassword("");
+                }else if (null != sshConnectionInfo.getPrivateKeyPassphrase()) {
+                    sshbase.setPassphrase(sshConnectionInfo.getPrivateKeyPassphrase());
                 } else {
                     sshbase.setPassphrase(""); // set empty otherwise password will be required
                 }
@@ -703,16 +721,26 @@ public class SSHTaskBuilder {
 
         public String getPrivateKeyfilePath();
 
-        public String getPrivateKeyResourcePath();
+        public String getPrivateKeyStoragePath();
         public String getPasswordStoragePath();
 
-        public InputStream getPrivateKeyResourceData() throws IOException;
+        public InputStream getPrivateKeyStorageData() throws IOException;
 
         public byte[] getPasswordStorageData() throws IOException;
+
+        String getSudoPasswordStoragePath(String prefix);
+
+        byte[] getSudoPasswordStorageData(String prefix) throws IOException;
+
+        String getSudoPassword(String prefix);
+
+
         /**
          * @return the private key passphrase if set, or null.
          */
         public String getPrivateKeyPassphrase();
+        public String getPrivateKeyPassphraseStoragePath();
+        public byte[] getPrivateKeyPassphraseStorageData() throws IOException;
 
         public String getPassword();
 

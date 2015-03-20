@@ -166,6 +166,7 @@ public class TestResponderThread extends TestCase {
         private long responseMaxTimeout;
         private boolean failOnResponseThreshold;
         private String inputString;
+        private byte[] inputBytes;
 
         public String getInputSuccessPattern() {
             return inputSuccessPattern;
@@ -207,9 +208,8 @@ public class TestResponderThread extends TestCase {
             return failOnResponseThreshold;
         }
 
-        public String getInputString() {
-            return inputString;
-        }
+        @Override
+        public byte[] getInputBytes() { return null!=inputBytes?inputBytes:null!=inputString?inputString.getBytes():null; }
 
         public boolean isSuccessOnInputThreshold() {
             return successOnInputThreshold;
@@ -515,6 +515,28 @@ public class TestResponderThread extends TestCase {
         testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
         testResponder.inputString = "Test";
+
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+        final ResponderTask.ResponderResult call = responderThread.call();
+        assertTrue(call.isSuccess());
+        assertNull(call.getFailureReason());
+        assertEquals("Test", baos.toString());
+    }
+    public void testRunResponderWriteBytes() throws Exception {
+        ByteArrayInputStream bais = new ByteArrayInputStream(
+            "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        final testResponder testResponder = new testResponder();
+        testResponder.inputSuccessPattern = null;
+        testResponder.responseSuccessPattern = null;
+        testResponder.inputMaxLines = 5;
+        testResponder.inputMaxTimeout = 1000;
+        testResponder.responseMaxLines = 5;
+        testResponder.responseMaxTimeout = 1000;
+        testResponder.failOnInputLinesThreshold = true;
+        testResponder.failOnResponseThreshold = true;
+        testResponder.inputBytes = "Test".getBytes();
 
         final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
         final ResponderTask.ResponderResult call = responderThread.call();

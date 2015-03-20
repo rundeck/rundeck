@@ -23,29 +23,25 @@
 */
 package com.dtolabs.rundeck.core.execution.impl.jsch;
 
-import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.impl.common.AntSupport;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
+import com.dtolabs.rundeck.core.execution.utils.BasicSource;
 import com.dtolabs.rundeck.core.execution.utils.LeadPipeOutputStream;
-import com.dtolabs.rundeck.core.execution.utils.Responder;
+import com.dtolabs.rundeck.core.execution.utils.PasswordSource;
 import com.dtolabs.rundeck.core.execution.utils.ResponderTask;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
-import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.dtolabs.rundeck.core.tasks.net.ExtSSHExec;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
-import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 import com.jcraft.jsch.JSchException;
@@ -53,8 +49,6 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
-import org.rundeck.storage.api.Path;
-import org.rundeck.storage.api.PathUtil;
 
 import java.io.*;
 import java.net.NoRouteToHostException;
@@ -64,7 +58,6 @@ import java.net.UnknownHostException;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.regex.Pattern;
 
 
 /**
@@ -106,6 +99,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String DEFAULT_SUDO_PASSWORD_OPTION = "option.sudoPassword";
     public static final String DEFAULT_SUDO2_PASSWORD_OPTION = "option.sudo2Password";
     public static final String NODE_ATTR_SSH_KEY_PASSPHRASE_OPTION = "ssh-key-passphrase-option";
+    public static final String NODE_ATTR_SSH_KEY_PASSPHRASE_STORAGE_PATH = "ssh-key-passphrase-storage-path";
     public static final String DEFAULT_SSH_KEY_PASSPHRASE_OPTION = "option.sshKeyPassphrase";
 
 
@@ -135,6 +129,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String NODE_ATTR_SUDO_FAIL_ON_RESPONSE_TIMEOUT = "fail-on-response-timeout";
     public static final boolean DEFAULT_SUDO_FAIL_ON_RESPONSE_TIMEOUT = false;
     public static final String NODE_ATTR_SUDO_SUCCESS_ON_PROMPT_THRESHOLD = "success-on-prompt-threshold";
+    public static final String NODE_ATTR_SUDO_PASSWORD_STORAGE_PATH= "password-storage-path";
     public static final boolean DEFAULT_SUDO_SUCCESS_ON_PROMPT_THRESHOLD = true;
     public static final String PROJECT_SSH_USER = PROJ_PROP_PREFIX + "ssh.user";
 
@@ -150,6 +145,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String CONFIG_KEYPATH = "keypath";
     public static final String CONFIG_KEYSTORE_PATH = "keystoragepath";
     public static final String CONFIG_PASSSTORE_PATH = "passwordstoragepath";
+    public static final String CONFIG_SUDO_PASSSTORE_PATH = "sudopasswordstoragepath";
     public static final String CONFIG_AUTHENTICATION = "authentication";
 
     static final Description DESC ;
@@ -254,7 +250,21 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         );
 
         final Future<ResponderTask.ResponderResult> responderFuture;
-        final SudoResponder sudoResponder = SudoResponder.create(node, framework, context);
+
+        final SudoResponder sudoResponder;
+        try {
+            sudoResponder = SudoResponder.create(
+                    node,
+                    framework,
+                    context,
+                    SUDO_OPT_PREFIX,
+                    passwordSourceWithPrefix(nodeAuthentication, SUDO_OPT_PREFIX),
+                    DEFAULT_SUDO_COMMAND_PATTERN
+            );
+        } catch (IOException e) {
+            return NodeExecutorResultImpl.createFailure(StepFailureReason.ConfigurationFailure,
+                                                        e.getMessage(), node);
+        }
         Runnable responderCleanup=null;
         if (sudoResponder.isSudoEnabled() && sudoResponder.matchesCommandPattern(command[0])) {
             final DisconnectResultHandler resultHandler = new DisconnectResultHandler();
@@ -282,9 +292,21 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
 
             //if 2nd responder
-            final SudoResponder sudoResponder2 = SudoResponder.create(node, framework, context, SUDO2_OPT_PREFIX,
-                                                                      DEFAULT_SUDO2_PASSWORD_OPTION,
-                                                                      DEFAULT_SUDO2_COMMAND_PATTERN);
+
+            final SudoResponder sudoResponder2;
+            try {
+                sudoResponder2 = SudoResponder.create(
+                        node,
+                        framework,
+                        context,
+                        SUDO2_OPT_PREFIX,
+                        passwordSourceWithPrefix(nodeAuthentication, SUDO2_OPT_PREFIX),
+                        DEFAULT_SUDO2_COMMAND_PATTERN
+                );
+            } catch (IOException e) {
+                return NodeExecutorResultImpl.createFailure(StepFailureReason.ConfigurationFailure,
+                                                            e.getMessage(), node);
+            }
             if (sudoResponder2.isSudoEnabled()
                 && sudoResponder2.matchesCommandPattern(CLIUtils.generateArgline(null, command, false))) {
                 logger.debug("Enable second sudo responder");
@@ -375,6 +397,25 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             return NodeExecutorResultImpl.createSuccess(node);
         } else {
             return NodeExecutorResultImpl.createFailure(failureReason, errormsg, node, resultCode);
+        }
+    }
+
+    /**
+     * create password source
+     * @param nodeAuthentication auth
+     * @param prefix prefix
+     * @return source
+     * @throws IOException if password loading from storage fails
+     */
+    private PasswordSource passwordSourceWithPrefix(
+            final NodeSSHConnectionInfo nodeAuthentication,
+            final String prefix
+    ) throws IOException
+    {
+        if (null != nodeAuthentication.getSudoPasswordStoragePath(prefix)) {
+            return new BasicSource(nodeAuthentication.getSudoPasswordStorageData(prefix));
+        } else {
+            return new BasicSource(nodeAuthentication.getSudoPassword(prefix));
         }
     }
 
@@ -471,330 +512,6 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         }
     }
 
-    final static class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
-        final INodeEntry node;
-        final Framework framework;
-        final ExecutionContext context;
-        FrameworkProject frameworkProject;
-
-        NodeSSHConnectionInfo(final INodeEntry node, final Framework framework, final ExecutionContext context) {
-
-            this.node = node;
-            this.framework = framework;
-            this.context = context;
-            this.frameworkProject = framework.getFrameworkProjectMgr().getFrameworkProject(
-                context.getFrameworkProject());
-        }
-
-        public SSHTaskBuilder.AuthenticationType getAuthenticationType() {
-            if (null != node.getAttributes().get(NODE_ATTR_SSH_AUTHENTICATION)) {
-                return SSHTaskBuilder.AuthenticationType.valueOf(node.getAttributes().get(
-                    NODE_ATTR_SSH_AUTHENTICATION));
-            }
-
-            if (frameworkProject.hasProperty(PROJ_PROP_SSH_AUTHENTICATION)) {
-                return SSHTaskBuilder.AuthenticationType.valueOf(frameworkProject.getProperty(
-                    PROJ_PROP_SSH_AUTHENTICATION));
-            } else if (framework.hasProperty(FWK_PROP_SSH_AUTHENTICATION)) {
-                return SSHTaskBuilder.AuthenticationType.valueOf(framework.getProperty(FWK_PROP_SSH_AUTHENTICATION));
-            } else {
-                return SSHTaskBuilder.AuthenticationType.privateKey;
-            }
-        }
-
-        public String getPrivateKeyfilePath() {
-            String path = null;
-            if (null != nonBlank(node.getAttributes().get(NODE_ATTR_SSH_KEYPATH))) {
-                path = node.getAttributes().get(NODE_ATTR_SSH_KEYPATH);
-            } else if (frameworkProject.hasProperty(PROJ_PROP_SSH_KEYPATH)) {
-                path = frameworkProject.getProperty(PROJ_PROP_SSH_KEYPATH);
-            } else if (framework.hasProperty(FWK_PROP_SSH_KEYPATH)) {
-                path = framework.getProperty(FWK_PROP_SSH_KEYPATH);
-            } else if (framework.hasProperty(Constants.SSH_KEYPATH_PROP)) {
-                //return default framework level
-                path = framework.getProperty(Constants.SSH_KEYPATH_PROP);
-            }
-            //expand properties in path
-            if (path != null && path.contains("${")) {
-                path = DataContextUtils.replaceDataReferences(path, context.getDataContext());
-            }
-            return path;
-        }
-
-        public InputStream getPrivateKeyResourceData() throws IOException{
-            String privateKeyResourcePath = getPrivateKeyResourcePath();
-            if (null == privateKeyResourcePath) {
-                return null;
-            }
-            Path path = PathUtil.asPath(privateKeyResourcePath);
-            ResourceMeta contents = context.getStorageTree().getResource(path)
-                    .getContents();
-            return contents.getInputStream();
-        }
-        public byte[] getPasswordStorageData() throws IOException{
-            String passwordStoragePath = getPasswordStoragePath();
-            if (null == passwordStoragePath) {
-                return null;
-            }
-            Path path = PathUtil.asPath(passwordStoragePath);
-            ResourceMeta contents = context.getStorageTree().getResource(path)
-                    .getContents();
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            contents.writeContent(byteArrayOutputStream);
-            return byteArrayOutputStream.toByteArray();
-        }
-
-        public String getPrivateKeyResourcePath() {
-            String path = null;
-            if (null != nonBlank(node.getAttributes().get(NODE_ATTR_SSH_KEY_RESOURCE))) {
-                path = node.getAttributes().get(NODE_ATTR_SSH_KEY_RESOURCE);
-            } else if (frameworkProject.hasProperty(PROJ_PROP_SSH_KEY_RESOURCE)) {
-                path = frameworkProject.getProperty(PROJ_PROP_SSH_KEY_RESOURCE);
-            } else if (framework.hasProperty(FWK_PROP_SSH_KEY_RESOURCE)) {
-                path = framework.getProperty(FWK_PROP_SSH_KEY_RESOURCE);
-            } else if (framework.hasProperty(Constants.SSH_KEYRESOURCE_PROP)) {
-                //return default framework level
-                path = framework.getProperty(Constants.SSH_KEYRESOURCE_PROP);
-            }
-            //expand properties in path
-            if (path != null && path.contains("${")) {
-                path = DataContextUtils.replaceDataReferences(path, context.getDataContext());
-            }
-            return path;
-        }
-        public String getPasswordStoragePath() {
-            String path = null;
-            if (null != nonBlank(node.getAttributes().get(NODE_ATTR_SSH_PASSWORD_STORAGE_PATH))) {
-                path = node.getAttributes().get(NODE_ATTR_SSH_PASSWORD_STORAGE_PATH);
-            } else if (frameworkProject.hasProperty(PROJ_PROP_SSH_PASSWORD_STORAGE_PATH)) {
-                path = frameworkProject.getProperty(PROJ_PROP_SSH_PASSWORD_STORAGE_PATH);
-            } else if (framework.hasProperty(FWK_PROP_SSH_PASSWORD_STORAGE_PATH)) {
-                path = framework.getProperty(FWK_PROP_SSH_PASSWORD_STORAGE_PATH);
-            }
-            //expand properties in path
-            if (path != null && path.contains("${")) {
-                path = DataContextUtils.replaceDataReferences(path, context.getDataContext());
-            }
-            return path;
-        }
-
-        public String getPrivateKeyPassphrase() {
-            if (null != node.getAttributes().get(NODE_ATTR_SSH_KEY_PASSPHRASE_OPTION)) {
-                return evaluateSecureOption(node.getAttributes().get(NODE_ATTR_SSH_KEY_PASSPHRASE_OPTION), context);
-            } else {
-                return evaluateSecureOption(DEFAULT_SSH_KEY_PASSPHRASE_OPTION, context);
-            }
-
-        }
-
-        static String evaluateSecureOption(final String optionName, final ExecutionContext context) {
-            if (null == optionName) {
-                logger.debug("option name was null");
-                return null;
-            }
-            if (null == context.getPrivateDataContext()) {
-                logger.debug("private context was null");
-                return null;
-            }
-            final String[] opts = optionName.split("\\.", 2);
-            if (null != opts && 2 == opts.length) {
-                final Map<String, String> option = context.getPrivateDataContext().get(opts[0]);
-                if (null != option) {
-                    final String value = option.get(opts[1]);
-                    if (null == value) {
-                        logger.debug("private context '" + optionName + "' was null");
-                    }
-                    return value;
-                } else {
-                    logger.debug("private context '" + opts[0] + "' was null");
-                }
-            }
-            return null;
-        }
-
-
-        public String getPassword() {
-            if (null != node.getAttributes().get(NODE_ATTR_SSH_PASSWORD_OPTION)) {
-                return evaluateSecureOption(node.getAttributes().get(NODE_ATTR_SSH_PASSWORD_OPTION), context);
-            } else {
-                return evaluateSecureOption(DEFAULT_SSH_PASSWORD_OPTION, context);
-            }
-        }
-
-        public int getSSHTimeout() {
-            int timeout = 0;
-            if (framework.getPropertyLookup().hasProperty(Constants.SSH_TIMEOUT_PROP)) {
-                final String val = framework.getProperty(Constants.SSH_TIMEOUT_PROP);
-                try {
-                    timeout = Integer.parseInt(val);
-                } catch (NumberFormatException e) {
-                }
-            }
-            return timeout;
-        }
-
-        /**
-         * Return null if the input is null or empty or whitespace, otherwise return the input string trimmed.
-         */
-        public static String nonBlank(final String input) {
-            if (null == input || "".equals(input.trim())) {
-                return null;
-            } else {
-                return input.trim();
-            }
-        }
-
-        public String getUsername() {
-            String user;
-            if (null != nonBlank(node.getUsername()) || node.containsUserName()) {
-                user = nonBlank(node.extractUserName());
-            } else if (frameworkProject.hasProperty(PROJECT_SSH_USER)
-                       && null != nonBlank(frameworkProject.getProperty(PROJECT_SSH_USER))) {
-                user = nonBlank(frameworkProject.getProperty(PROJECT_SSH_USER));
-            } else {
-                user = nonBlank(framework.getProperty(Constants.SSH_USER_PROP));
-            }
-            if (null != user && user.contains("${")) {
-                return DataContextUtils.replaceDataReferences(user, context.getDataContext());
-            }
-            return user;
-        }
-
-        public Boolean getLocalSSHAgent() {
-            return resolveBooleanProperty(
-                    NODE_ATTR_LOCAL_SSH_AGENT,
-                    false,
-                    node,
-                    frameworkProject,
-                    framework
-            );
-        }
-
-        public Integer getTtlSSHAgent() {
-            return resolveIntProperty(
-                    NODE_ATTR_LOCAL_TTL_SSH_AGENT,
-                    0,
-                    node,
-                    frameworkProject,
-                    framework
-            );
-        }
-
-        public static Map<String, String> sshConfigFromFramework(Framework framework) {
-            HashMap<String, String> config = new HashMap<String, String>();
-            IPropertyLookup propertyLookup = framework.getPropertyLookup();
-            for (Object o : propertyLookup.getPropertiesMap().keySet()) {
-                String key = (String) o;
-
-                if (key.startsWith(FWK_SSH_CONFIG_PREFIX)) {
-                    String name = key.substring(FWK_SSH_CONFIG_PREFIX.length());
-                    config.put(name, propertyLookup.getProperty(key));
-                }
-            }
-            return config;
-        }
-
-        public static Map<String, String> sshConfigFromProject(FrameworkProject frameworkProject) {
-            HashMap<String, String> config = new HashMap<String, String>();
-            for (Object o : frameworkProject.getProperties().keySet()) {
-                String key = (String) o;
-
-                if (key.startsWith(PROJ_SSH_CONFIG_PREFIX)) {
-                    String name = key.substring(PROJ_SSH_CONFIG_PREFIX.length());
-                    config.put(name, frameworkProject.getProperty(key));
-                }
-            }
-            return config;
-        }
-
-        public static Map<String, String> sshConfigFromNode(INodeEntry node) {
-            HashMap<String, String> config = new HashMap<String, String>();
-            for (String s : node.getAttributes().keySet()) {
-                if (s.startsWith(SSH_CONFIG_PREFIX)) {
-                    String name = s.substring(SSH_CONFIG_PREFIX.length());
-                    config.put(name, node.getAttributes().get(s));
-                }
-            }
-            return config;
-        }
-
-        @Override
-        public Map<String, String> getSshConfig() {
-            Map<String, String> config = new HashMap<String, String>();
-            Map<String, String> fwkConfig = sshConfigFromFramework(framework);
-            Map<String, String> projConfig = sshConfigFromProject(frameworkProject);
-            Map<String, String> nodeConfig = sshConfigFromNode(node);
-            if(null!=fwkConfig){
-                config.putAll(fwkConfig);
-            }
-            if(null!=projConfig){
-                config.putAll(projConfig);
-            }
-            if(null!=nodeConfig){
-                config.putAll(nodeConfig);
-            }
-            return config;
-        }
-    }
-
-
-    /**
-     * Resolve a node/project/framework property by first checking node attributes named X, then project properties
-     * named "project.X", then framework properties named "framework.X". If none of those exist, return the default
-     * value
-     */
-    private static String resolveProperty(final String nodeAttribute, final String defaultValue, final INodeEntry node,
-                                          final FrameworkProject frameworkProject, final Framework framework) {
-
-        if (null != node.getAttributes().get(nodeAttribute)) {
-            return node.getAttributes().get(nodeAttribute);
-        } else if (frameworkProject.hasProperty(PROJ_PROP_PREFIX + nodeAttribute)
-                   && !"".equals(frameworkProject.getProperty(PROJ_PROP_PREFIX + nodeAttribute))) {
-            return frameworkProject.getProperty(PROJ_PROP_PREFIX + nodeAttribute);
-        } else if (framework.hasProperty(FWK_PROP_PREFIX + nodeAttribute)) {
-            return framework.getProperty(FWK_PROP_PREFIX + nodeAttribute);
-        } else {
-            return defaultValue;
-        }
-    }
-
-    private static int resolveIntProperty(final String attribute, final int defaultValue, final INodeEntry iNodeEntry,
-                                          final FrameworkProject frameworkProject, final Framework framework) {
-        int value = defaultValue;
-        final String string = resolveProperty(attribute, null, iNodeEntry, frameworkProject, framework);
-        if (null != string) {
-            try {
-                value = Integer.parseInt(string);
-            } catch (NumberFormatException e) {
-            }
-        }
-        return value;
-    }
-
-    private static long resolveLongProperty(final String attribute, final long defaultValue,
-                                            final INodeEntry iNodeEntry,
-                                            final FrameworkProject frameworkProject, final Framework framework) {
-        long value = defaultValue;
-        final String string = resolveProperty(attribute, null, iNodeEntry, frameworkProject, framework);
-        if (null != string) {
-            try {
-                value = Long.parseLong(string);
-            } catch (NumberFormatException e) {
-            }
-        }
-        return value;
-    }
-
-    private static boolean resolveBooleanProperty(final String attribute, final boolean defaultValue,
-                                                  final INodeEntry iNodeEntry,
-                                                  final FrameworkProject frameworkProject, final Framework framework) {
-        boolean value = defaultValue;
-        final String string = resolveProperty(attribute, null, iNodeEntry, frameworkProject, framework);
-        if (null != string) {
-            value = Boolean.parseBoolean(string);
-        }
-        return value;
-    }
 
     /**
      * Disconnects the SSH connection if the result was not successful.
@@ -822,240 +539,6 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                 disconnectable.disconnect();
                 needsDisconnect = false;
             }
-        }
-    }
-
-    /**
-     * Sudo responder that determines response patterns from node attributes and project properties. Also handles
-     * responder thread result by closing the SSH connection on failure. The mechanism for sudo response: <ol> <li>look
-     * for "[sudo] password for &lt;username&gt;: " (inputSuccessPattern)</li> <li>if not seen in 12 lines, then assume
-     * password is not needed (isSuccessOnInputThreshold=true)</li> <li>if fewer than 12 lines, and no new input in 5000
-     * milliseconds, then fail (isFailOnInputTimeoutThreshold=true)</li> <li>if seen, output password and carriage
-     * return (inputString)</li> <li>look for "Sorry, try again" (responseFailurePattern)</li> <li>if not seen in 3
-     * lines, or 5000 milliseconds, then assume success (isFailOnResponseThreshold)</li> <li>if seen, then fail</li>
-     * </ol>
-     */
-    private static class SudoResponder implements Responder {
-        public static final String DEFAULT_DESCRIPTION = "Sudo execution password response";
-        private String sudoCommandPattern;
-        private String inputSuccessPattern;
-        private String inputFailurePattern;
-        private String responseSuccessPattern;
-        private String responseFailurePattern;
-        private int inputMaxLines = -1;
-        private long inputMaxTimeout = -1;
-        private boolean failOnInputLinesThreshold = false;
-        private boolean failOnInputTimeoutThreshold = true;
-        private boolean successOnInputThreshold = true;
-        private int responseMaxLines = -1;
-        private long responseMaxTimeout = -1;
-        private boolean failOnResponseThreshold = false;
-        private String inputString;
-        private String configPrefix;
-        private String description;
-        private String defaultSudoPasswordOption;
-        private String defaultSudoCommandPattern;
-
-
-        private SudoResponder() {
-            description = DEFAULT_DESCRIPTION;
-            defaultSudoPasswordOption = DEFAULT_SUDO_PASSWORD_OPTION;
-            defaultSudoCommandPattern = DEFAULT_SUDO_COMMAND_PATTERN;
-            configPrefix = SUDO_OPT_PREFIX;
-        }
-
-        private SudoResponder(final String configPrefix,
-                              final String defaultSudoPasswordOption,
-                              final String defaultSudoCommandPattern) {
-            this();
-            if (null != configPrefix) {
-                this.configPrefix = configPrefix;
-            }
-            if (null != defaultSudoPasswordOption) {
-                this.defaultSudoPasswordOption = defaultSudoPasswordOption;
-            }
-            if (null != defaultSudoCommandPattern) {
-                this.defaultSudoCommandPattern = defaultSudoCommandPattern;
-            }
-        }
-
-        static SudoResponder create(final INodeEntry node, final Framework framework, final ExecutionContext context) {
-            return create(node, framework, context, null, null, null);
-        }
-
-        static SudoResponder create(final INodeEntry node,
-                                    final Framework framework,
-                                    final ExecutionContext context,
-                                    final String configPrefix,
-                                    final String defaultSudoPasswordOption, final String defaultSudoCommandPattern) {
-            final SudoResponder sudoResponder = new SudoResponder(configPrefix, defaultSudoPasswordOption,
-                                                                  defaultSudoCommandPattern);
-            sudoResponder.init(node, framework.getFrameworkProjectMgr().getFrameworkProject(
-                context.getFrameworkProject()), framework, context);
-            return sudoResponder;
-        }
-
-
-        public boolean matchesCommandPattern(final String command) {
-            final String sudoCommandPattern1 = getSudoCommandPattern();
-            if (null != sudoCommandPattern1) {
-                return Pattern.compile(sudoCommandPattern1).matcher(command).matches();
-            } else {
-                return false;
-            }
-        }
-
-        private void init(final INodeEntry node, final FrameworkProject frameworkProject,
-                          final Framework framework, final ExecutionContext context) {
-            sudoEnabled = resolveBooleanProperty(configPrefix + NODE_ATTR_SUDO_COMMAND_ENABLED,
-                                                 false,
-                                                 node,
-                                                 frameworkProject,
-                                                 framework);
-            if (sudoEnabled) {
-                final String sudoPassOptname = resolveProperty(configPrefix + NODE_ATTR_SUDO_PASSWORD_OPTION,
-                                                               null,
-                                                               node,
-                                                               frameworkProject,
-                                                               framework);
-                final String sudoPassword = NodeSSHConnectionInfo.evaluateSecureOption(
-                    null != sudoPassOptname ? sudoPassOptname : defaultSudoPasswordOption, context);
-                inputString = (null != sudoPassword ? sudoPassword : "") + "\n";
-
-                sudoCommandPattern = resolveProperty(configPrefix + NODE_ATTR_SUDO_COMMAND_PATTERN,
-                                                     defaultSudoCommandPattern,
-                                                     node,
-                                                     frameworkProject,
-                                                     framework);
-                inputSuccessPattern = resolveProperty(configPrefix + NODE_ATTR_SUDO_PROMPT_PATTERN,
-                                                      DEFAULT_SUDO_PROMPT_PATTERN,
-                                                      node,
-                                                      frameworkProject,
-                                                      framework);
-                inputFailurePattern = null;
-                responseFailurePattern = resolveProperty(configPrefix + NODE_ATTR_SUDO_FAILURE_PATTERN,
-                                                         DEFAULT_SUDO_FAILURE_PATTERN,
-                                                         node,
-                                                         frameworkProject,
-                                                         framework);
-                responseSuccessPattern = null;
-                inputMaxLines = resolveIntProperty(configPrefix + NODE_ATTR_SUDO_PROMPT_MAX_LINES,
-                                                   DEFAULT_SUDO_PROMPT_MAX_LINES,
-                                                   node,
-                                                   frameworkProject,
-                                                   framework);
-                inputMaxTimeout = resolveLongProperty(configPrefix + NODE_ATTR_SUDO_PROMPT_MAX_TIMEOUT,
-                                                      DEFAULT_SUDO_PROMPT_MAX_TIMEOUT,
-                                                      node, frameworkProject, framework);
-                responseMaxLines = resolveIntProperty(configPrefix + NODE_ATTR_SUDO_RESPONSE_MAX_LINES,
-                                                      DEFAULT_SUDO_RESPONSE_MAX_LINES,
-                                                      node, frameworkProject, framework);
-                responseMaxTimeout = resolveLongProperty(configPrefix + NODE_ATTR_SUDO_RESPONSE_MAX_TIMEOUT,
-                                                         DEFAULT_SUDO_RESPONSE_MAX_TIMEOUT,
-                                                         node,
-                                                         frameworkProject,
-                                                         framework);
-
-                failOnInputLinesThreshold = resolveBooleanProperty(
-                    configPrefix + NODE_ATTR_SUDO_FAIL_ON_PROMPT_MAX_LINES,
-                    DEFAULT_SUDO_FAIL_ON_PROMPT_MAX_LINES, node, frameworkProject, framework);
-
-                failOnInputTimeoutThreshold = resolveBooleanProperty(
-                    configPrefix + NODE_ATTR_SUDO_FAIL_ON_PROMPT_TIMEOUT,
-                    DEFAULT_SUDO_FAIL_ON_PROMPT_TIMEOUT, node, frameworkProject, framework);
-                failOnResponseThreshold = resolveBooleanProperty(configPrefix + NODE_ATTR_SUDO_FAIL_ON_RESPONSE_TIMEOUT,
-                                                                 DEFAULT_SUDO_FAIL_ON_RESPONSE_TIMEOUT,
-                                                                 node,
-                                                                 frameworkProject,
-                                                                 framework);
-                successOnInputThreshold = resolveBooleanProperty(
-                    configPrefix + NODE_ATTR_SUDO_SUCCESS_ON_PROMPT_THRESHOLD,
-                    DEFAULT_SUDO_SUCCESS_ON_PROMPT_THRESHOLD, node, frameworkProject, framework);
-            }
-        }
-
-        private boolean sudoEnabled = false;
-
-        /**
-         * Return true if sudo should be used for the command execution on this node
-         */
-        public boolean isSudoEnabled() {
-            return sudoEnabled;
-        }
-
-        public String getInputString() {
-            return inputString;
-        }
-
-
-        public boolean isFailOnInputLinesThreshold() {
-            return failOnInputLinesThreshold;
-        }
-
-        public boolean isFailOnInputTimeoutThreshold() {
-            return failOnInputTimeoutThreshold;
-        }
-
-        public boolean isFailOnResponseThreshold() {
-            return failOnResponseThreshold;
-        }
-
-        public boolean isSuccessOnInputThreshold() {
-            return successOnInputThreshold;
-        }
-
-        /**
-         * Return the regular expression to use to match the command to determine if Sudo should be used.
-         */
-        public String getSudoCommandPattern() {
-            return sudoCommandPattern;
-        }
-
-        public String getInputFailurePattern() {
-            return inputFailurePattern;
-        }
-
-        public String getInputSuccessPattern() {
-
-            return inputSuccessPattern;
-        }
-
-        public String getResponseSuccessPattern() {
-            return responseSuccessPattern;
-        }
-
-        public String getResponseFailurePattern() {
-            return responseFailurePattern;
-        }
-
-        public int getInputMaxLines() {
-            return inputMaxLines;
-        }
-
-        public long getInputMaxTimeout() {
-            return inputMaxTimeout;
-        }
-
-
-        public int getResponseMaxLines() {
-            return responseMaxLines;
-        }
-
-        public long getResponseMaxTimeout() {
-            return responseMaxTimeout;
-        }
-
-        @Override
-        public String toString() {
-            return description;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
         }
     }
 

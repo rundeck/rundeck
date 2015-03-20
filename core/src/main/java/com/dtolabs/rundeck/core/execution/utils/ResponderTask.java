@@ -146,10 +146,12 @@ public class ResponderTask implements Callable<ResponderTask.ResponderResult> {
             }
             step++;
 
-            if (null != responder.getInputString()) {
+            byte[] bytes = responder.getInputBytes();
+            if (null != bytes) {
                 logger.debug("Writing to output");
                 //write responseString
-                outputStream.write(responder.getInputString().getBytes());
+                outputStream.write(bytes,0,bytes.length);
+                outputStream.flush();
                 logger.debug("Wrote to output");
             }
             step++;

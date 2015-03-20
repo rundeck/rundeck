@@ -262,6 +262,9 @@ public class TestSSHTaskBuilder extends TestCase {
         StorageException privateKeyResourceDataStorageException;
         StorageException passwordStorageDataStorageException;
         Map<String,String> sshConfig;
+        private byte[] sudoPasswordStorageData;
+        private String privateKeyPassphraseStoragePath;
+        private byte[] privateKeyPassphraseStorageData;
 
         public SSHTaskBuilder.AuthenticationType getAuthenticationType() {
             return authenticationType;
@@ -287,7 +290,7 @@ public class TestSSHTaskBuilder extends TestCase {
             return privateKeyPassphrase;
         }
 
-        public String getPrivateKeyResourcePath() {
+        public String getPrivateKeyStoragePath() {
             return privateKeyResourcePath;
         }
         
@@ -299,7 +302,7 @@ public class TestSSHTaskBuilder extends TestCase {
           return localTtlSSHAgent;
         }
 
-        public InputStream getPrivateKeyResourceData() throws IOException {
+        public InputStream getPrivateKeyStorageData() throws IOException {
             if (null != privateKeyResourceDataIOException) {
                 throw privateKeyResourceDataIOException;
             }
@@ -326,6 +329,31 @@ public class TestSSHTaskBuilder extends TestCase {
 
         public Map<String, String> getSshConfig() {
             return sshConfig;
+        }
+
+        @Override
+        public String getSudoPasswordStoragePath(final String prefix) {
+            return null;
+        }
+
+        @Override
+        public byte[] getSudoPasswordStorageData(final String prefix) throws IOException {
+            return sudoPasswordStorageData;
+        }
+
+        @Override
+        public String getSudoPassword(final String prefix) {
+            return null;
+        }
+
+        @Override
+        public String getPrivateKeyPassphraseStoragePath() {
+            return privateKeyPassphraseStoragePath;
+        }
+
+        @Override
+        public byte[] getPrivateKeyPassphraseStorageData() throws IOException {
+            return privateKeyPassphraseStorageData;
         }
     }
 
