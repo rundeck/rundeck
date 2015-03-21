@@ -99,7 +99,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
     private static final Logger LOG = Log.getLogger(JettyCachingLdapLoginModule.class);
 
-    private static final Pattern rolePattern = Pattern.compile("^cn=([^,]+)");
+    private static final Pattern rolePattern = Pattern.compile("^cn=([^,]+)", Pattern.CASE_INSENSITIVE);
 
     protected final String _roleMemberFilter = "member=*";
     /**
@@ -433,14 +433,14 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             }
         }
 
+        if(_nestedGroups) {
+            roleList = getNestedRoles(dirContext, roleList);
+        }
+
         if (roleList.size() < 1) {
             LOG.warn("JettyCachingLdapLoginModule: User '" + username + "' has no role membership; role query configuration may be incorrect");
         }else{
             LOG.debug("JettyCachingLdapLoginModule: User '" + username + "' has roles: " + roleList);
-        }
-
-        if(_nestedGroups) {
-            roleList = getNestedRoles(dirContext, roleList);
         }
 
         return roleList;
