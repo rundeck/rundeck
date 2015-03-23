@@ -22,7 +22,7 @@ dependencies {
         'dom4j:dom4j:1.6.1',
         'commons-cli:commons-cli:1.0',
         'org.apache.ant:ant-jsch:1.8.3',
-        'com.jcraft:jsch:0.1.50',
+        'com.jcraft:jsch:0.1.52',
         'com.jcraft:jsch.agentproxy.jsch:0.0.9',
         'com.jcraft:jsch.agentproxy.sshagent:0.0.9',
         'com.jcraft:jsch.agentproxy.usocket-jna:0.0.9',
