@@ -582,6 +582,9 @@ class ApiService {
                     }
                     description(summary)
                     argstring(e.argString)
+                    if(e.serverNodeUUID){
+                        serverUUID(e.serverNodeUUID)
+                    }
                     if(e.succeededNodeList){
                         successfulNodes{
                             e.succeededNodeList.split(',').each {

@@ -968,6 +968,9 @@ Result: An Item List of `executions`.  Each `execution` of the form:
     <!-- argString (arguments) of the execution -->
     <argstring>...</argstring>
 
+    <!-- if Rundeck is in cluster mode -->
+    <serverUUID>...</serverUUID>
+
     <!-- The following elements included only if the execution has ended -->
 
     <!-- the completion time of the execution -->
@@ -1015,6 +1018,8 @@ The `job` section contains `options` if an `argstring` value is set (**API v10 a
 * `name` the parsed option name
 * `value` the parsed option value
 
+**Since API v13**: The `serverUUID` will indicate the server UUID 
+if executed in cluster mode.
 
 ### Execution Info
 
