@@ -1427,7 +1427,25 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def props = [:]
 
         se = ScheduledExecution.get(se.id)
-        props.putAll(se.properties)
+        def propset=[
+                'project',
+                'user',
+                'loglevel',
+                'doNodedispatch',
+                'filter',
+                'nodeExcludePrecedence',
+                'nodeThreadcount',
+                'nodeKeepgoing',
+                'nodeRankOrderAscending',
+                'nodeRankAttribute',
+                'workflow',
+                'argString',
+                'timeout',
+                'retry'
+        ]
+        propset.each{k->
+            props.put(k,se[k])
+        }
         if (user) {
             props.user = user
         }
