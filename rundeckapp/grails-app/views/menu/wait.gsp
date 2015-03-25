@@ -10,7 +10,7 @@
 <head>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="configure"/>
-    <title><g:message code="Wait" default="Wait"/></title>
+    <title><g:message code="archive.request.please.wait.pagetitle.wait" default="Export archive"/></title>
     <asset:javascript src="knockout.min.js"/>
     <asset:javascript src="knockout-mapping.js"/>
     <g:embedJSON data="${[
@@ -22,6 +22,7 @@
             percentage:percentage,
             url:createLink(controller: 'project', action: 'exportWait', params: [project: params.project, token: params.token, format: 'json'])
     ]}" id="requestdata"/>
+    <g:jsMessages code="archive.request.please.wait.pagetitle.ready"/>
     <g:javascript>
         var request = {
             ready: ko.observable(false),
@@ -58,6 +59,11 @@
                     request.timeout = null;
                 }
             });
+            request.ready.subscribe(function(newval){
+                if(newval){
+                    document.title = Messages['archive.request.please.wait.pagetitle.ready'];
+                }
+            });
             ko.mapping.fromJS(loadJsonData('requestdata'), {}, request);
             ko.applyBindings(request);
         });
@@ -67,7 +73,7 @@
 <body>
 <div class="panel panel-default panel-tab-content" data-bind="visible: ready() && !notFound() && !errorMessage()">
     <div class="panel-heading">
-        Download an archive of project <strong><g:enc>${params.project ?: request.project}</g:enc></strong>
+        <g:message code="archive.request.download.title" args="${[params.project ?: request.project]}"/>
     </div>
 
     <div class="panel-body">
@@ -79,13 +85,13 @@
             <g:enc>${params.project ?: request.project}</g:enc>.rdproject.jar
         </g:link>
         <div class="text-info">
-            This archive will be available for 30 minutes.
+            <g:message code="archive.request.will.expire" />
         </div>
 
     </div>
     <div class="panel-footer">
         <g:link controller="menu" action="admin" params="${[project: params.project]}">
-            &larr; Return to Configuration
+            <g:message code="return.to.configuration" />
         </g:link>
     </div>
 
@@ -93,12 +99,12 @@
 
 <div class="panel panel-danger panel-tab-content" data-bind="visible: notFound">
     <div class="panel-heading">
-        Not Found
+        <g:message code="request.error.notfound.title" />
     </div>
 
     <div class="panel-body">
 
-        The token <code>${token}</code> was not found.  It may have expired.
+        <g:message code="archive.request.token.not.found" args="${[token]}" />
 
     </div>
 
@@ -106,7 +112,7 @@
 
 <div class="panel panel-danger panel-tab-content" data-bind="visible: errorMessage">
     <div class="panel-heading">
-        There was an error exporting the Project Archive
+        <g:message code="archive.request.error" />
     </div>
 
     <div class="panel-body" data-bind="text: errorMessage">
@@ -119,18 +125,18 @@
 
 <div class="panel panel-default panel-tab-content" data-bind="visible: !ready() && !errorMessage() && !notFound()">
     <div class="panel-heading">
-        Exporting an archive of project <strong><g:enc>${params.project ?: request.project}</g:enc></strong>&hellip;
+        <g:message code="archive.request.exporting.title" args="${[params.project ?: request.project]}"/>
     </div>
 
     <div class="panel-body">
         <div class="container ">
         <div class="col-md-12 text-info ">
-            Please wait, your request is being processed.
+            <g:message code="archive.request.please.wait" />
         </div>
         <div class="col-md-6">
         <g:render template="/common/progressBar" model="${[
                 completePercent:percentage?:0,
-               bind: 'percentage()',
+                bind: 'percentage()',
                 showpercent: true,
         ]}"/>
         </div>
@@ -143,12 +149,12 @@
                 class="btn  btn-link reload_button"
                 data-loading="Loading...">
             <i class="glyphicon glyphicon-refresh"></i>
-            Refresh this page
+            <g:message code="refresh.this.page" />
         </g:link>
         <div class="checkbox">
             <label>
                 <input type="checkbox" id="dorefresh" value="true" data-bind="checked: refresh"/>
-                Refresh every 5 seconds
+                <g:message code="refresh.every.5.seconds" />
             </label>
         </div>
     </div>
