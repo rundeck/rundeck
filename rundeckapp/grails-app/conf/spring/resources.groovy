@@ -15,8 +15,11 @@ import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProvi
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
+import org.rundeck.web.infosec.ContainerPrincipalRoleSource
+import org.rundeck.web.infosec.ContainerRoleSource
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
 import groovy.io.FileType
+import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import rundeck.services.PasswordFieldsService
 
@@ -104,6 +107,17 @@ beans={
 
     storageConverterPluginProviderService(StorageConverterPluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
+    }
+    containerPrincipalRoleSource(ContainerPrincipalRoleSource){
+        enabled=grailsApplication.config.rundeck?.security?.authorization?.containerPrincipal?.enabled in [true,'true']
+    }
+    containerRoleSource(ContainerRoleSource){
+        enabled=grailsApplication.config.rundeck?.security?.authorization?.container?.enabled in [true,'true']
+    }
+    preauthenticatedAttributeRoleSource(PreauthenticatedAttributeRoleSource){
+        enabled=grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.enabled in [true,'true']
+        attributeName=grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.attributeName
+        delimiter=grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.delimiter
     }
 
     def storageDir= new File(varDir, 'storage')

@@ -1,5 +1,9 @@
 package rundeck.filters
 
+import org.rundeck.web.infosec.AuthorizationRoleSource
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
+
 import javax.security.auth.Subject;
 
 import com.dtolabs.rundeck.core.authentication.Group;
@@ -12,7 +16,6 @@ import rundeck.services.FrameworkService
 
 import javax.servlet.ServletContext
 import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
 
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -38,10 +41,9 @@ import javax.servlet.http.HttpServletResponse
 * $Id$
 */
 
-public class AuthorizationFilters {
-    def userService
+public class AuthorizationFilters implements ApplicationContextAware{
     def FrameworkService frameworkService
-    
+    def ApplicationContext applicationContext
     def dependsOn = [ApiRequestFilters]
 
     def filters = {
@@ -58,45 +60,8 @@ public class AuthorizationFilters {
                 if (request.remoteUser && session.user!=request.remoteUser) {
                     session.user = request.remoteUser
                     
-                    def principal = request.userPrincipal
-                    def subject = new Subject();
-                    subject.principals << new Username(principal.name)
-                    if(principal.hasProperty('subject')){
-                        Subject osubject = (Subject) principal.subject
-                        osubject.getPrincipals().each {p->
-                            if(p.class.name.equals('org.eclipse.jetty.plus.jaas.JAASRole') || p.class.name.contains('Role')){
-                                subject.principals << new Group(p.name)
-                            }
-                        }
-                    }else if (principal.hasProperty('roles')){
-                        if(principal.roles instanceof Iterator){
-                            def Iterator iter= principal.roles
-                            while(iter.hasNext()){
-                                def role=iter.next()
-                                if(role.rolename){
-                                    subject.principals << new Group(role.rolename)
-                                }else if(role instanceof String){
-                                    subject.principals << new Group(role)
-                                }
 
-                            }
-                        } else if (principal.roles instanceof Collection || principal.roles instanceof Object[]){
-                            principal.roles?.each { name ->
-                                subject.principals << new Group(name);
-                            }
-                        }else{
-                            principal.roles?.members.each { group ->
-                                subject.principals << new Group(group.name);
-                            }
-                        }
-                    }else{
-                        //try to determine roles based on aclpolicy group definitions
-                        frameworkService.getFrameworkRoles().each {rolename->
-                            if(request.isUserInRole(rolename)){
-                                subject.principals<<new Group(rolename)
-                            }
-                        }
-                    }
+                    Subject subject=createAuthSubject(request)
                     
                     request.subject = subject
                     session.subject = subject
@@ -176,6 +141,32 @@ public class AuthorizationFilters {
                 }
             }
         }
+    }
+
+    private Subject createAuthSubject(HttpServletRequest request) {
+        def principal = request.userPrincipal
+        def subject = new Subject();
+        subject.principals << new Username(principal.name)
+
+        //find AuthorizationRoleSource instances
+        Map<String,AuthorizationRoleSource> type = applicationContext.getBeansOfType(AuthorizationRoleSource)
+        def roleset = new HashSet<String>()
+        type.each {name,AuthorizationRoleSource source->
+            if(source.enabled) {
+                def roles = source.getUserRoles(principal.name, request)
+                if(roles){
+                    roleset.addAll(roles)
+                    log.debug("Accepting user role list from bean ${name} for ${principal.name}: ${roles}")
+                }else{
+                    log.debug("Empty role list from bean ${name} for ${principal.name}")
+                }
+            }else {
+                log.debug("Role source not enabled, bean ${name}")
+            }
+        }
+        subject.principals.addAll(roleset.collect{new Group(it)})
+
+        subject
     }
 
     /**

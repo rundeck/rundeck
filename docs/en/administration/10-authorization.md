@@ -1,5 +1,16 @@
 % Access Control Policy
 
+Based on the [Authentication](authenticating-users.html) mechanism,
+the Container provides Rundeck
+with a list of "group" or "role" names
+that the user belongs to.
+Rundeck uses this list to determine what access rights the user has.
+(For more about the role list,
+refer to [Authenticating Users - Container authentication and authorization][1].)
+
+[1]: authenticating-users.html#container-authentication-and-authorization
+
+
 A Rundeck *access control policy* grants users
 and user groups certain
 privileges to perform actions against rundeck resources

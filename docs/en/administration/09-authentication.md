@@ -1,6 +1,20 @@
 % Authenticating Users
 
-**Note:** The underlying security mechanism relies on JAAS, so you are free to use what ever JAAS provider you feel is suitable for your environment. See [JAAS](http://en.wikipedia.org/wiki/Java_Authentication_and_Authorization_Service) and specifically for Jetty, [JAAS for Jetty](http://docs.codehaus.org/display/JETTY/JAAS).
+Rundeck uses *Container Authentication* to determine
+the logged in user name and the user's authorized roles.
+
+For the default installation (Rundeck Launcher, RPM, Deb),
+the Servlet Container is Jetty,
+and the underlying security mechanism is JAAS,
+so you are free to use what ever JAAS provider
+you feel is suitable for your environment.
+See [JAAS](http://en.wikipedia.org/wiki/Java_Authentication_and_Authorization_Service)
+and specifically for Jetty,
+[JAAS for Jetty](http://docs.codehaus.org/display/JETTY/JAAS).
+
+If you use the Rundeck war file with a different container, such as Tomcat, refer to [Container authentication and authorization](#container-authentication-and-authorization) below.
+
+## Jetty and JAAS authentication
 
 Rundeck has three basic ways of defining authentication.
 
@@ -586,3 +600,93 @@ Based on the flags, JAAS would attempt the following for authentication:
 2. Check username/pass against the properties file
   1. If auth succeeds, finish with successful authentication
   2. If auth fails, finish with failed authentication
+
+## Container authentication and authorization
+
+Container Authentication provides the Servlet context used by Rundeck
+with a few mechanisms to determine what roles the user has.
+
+`containerPrincipal`
+
+:   JAAS authentication modules define a "Principal"
+that represents the authenticated user, 
+and which can list the "roles" the user has. 
+
+`container`
+:   The Container also provides a query mechanism `isUserInRole`.
+
+Both of these methods are used by default, 
+although they can be disabled 
+with the following configuration flags in `rundeck-config.properties`:
+
+
+    rundeck.security.authorization.containerPrincipal.enabled=false
+    rundeck.security.authorization.container.enabled=false
+
+### Preauthenticated Mode
+
+`preauthenticated`
+
+:   "Preauthenticated" means that the Servlet Container (e.g. Tomcat) 
+is not being used for authentication/authorization. 
+The user name and role list are provided to Rundeck
+from another system, usually a reverse proxy set up "in front"
+of the Rundeck web application, such as Apache HTTPD.
+Rundeck accepts the "REMOTE_USER" as the username, 
+and allows a configurable Request Attribute to contain 
+the list of user roles.
+
+**Note**: If you use this method, make sure that *only* your proxy
+ has direct access to the ports Rundeck is listening on 
+ (e.g. firewall them), 
+ otherwise you are opening access to rundeck 
+ without requiring authentication.
+
+This method can be enabled with this config in `rundeck-config.properties`:
+
+    rundeck.security.authorization.preauthenticated.enabled=true
+    rundeck.security.authorization.preauthenticated.attributeName=REMOTE_USER_GROUPS
+    rundeck.security.authorization.preauthenticated.delimiter=:
+
+This configuration requires some additional setup to enable:
+
+1. The file `WEB-INF/web.xml` inside the war contents **must** be modified to remove the `<auth-constraint>` element.  This disables the behavior which causes the Container to trigger its authentication mechanism when a user browses to a Rundeck page requiring authorizaton.
+
+2. Apache HTTPD and Tomcat must be configured to communicate so that a list of User Roles is sent to Tomcat as a request Attribute with the given "attributeName".
+
+For Tomcat and Apache HTTPd with `mod_proxy_ajp`, here are some additional instructions:
+
+1. Modify the tomcat server.xml, and make sure to set `tomcatAuthentication="false"` on the AJP connector:
+
+        <Connector port="8009" protocol="AJP/1.3" redirectPort="4440" tomcatAuthentication="false"/>
+
+2. Configure Apache to perform the necessary authentication, and to pass an environment variable named "REMOTE_USER_GROUPS", the value should be all colon-separated e.g.: "user:admin:ops" (or using the `delimiter` you have configured.)
+
+Here is an example using just `mod_proxy_ajp`, and passing a static list of roles. A real solution should use [mod_lookup_identity](http://www.adelton.com/apache/mod_lookup_identity/):
+
+
+    <Location /rundeck>
+        ProxyPass  ajp://localhost:8009/rundeck
+
+        AuthType basic
+        AuthName "private area"
+        AuthBasicProvider file
+
+        AuthUserFile /etc/httpd/users.htpasswd
+        SetEnv AJP_REMOTE_USER_GROUPS "admin:testrole1:testrole2"
+        Require valid-user
+    </Location>
+
+**Note**: `mod_proxy_ajp` requires prefixing the environment variable with "AJP_", but `mod_jk` can pass the environment variable directly.
+
+Once authenticated via Apache, you should be able to access rundeck.
+You might see a page saying "You have no authorized access to projects",
+and then "(User roles: role1, role2, ...)"
+with a list of all of the user roles seen by Rundeck.
+This page just means that there are no aclpolicy files
+that match those roles,
+but the apache->tomcat authorization is still working correctly.
+At this point, move on to [Access Control Policy](access-control-policy.html)
+to set up access control for the listed roles.
+
+If the "User roles: " part is blank, then it may not be working correctly.
