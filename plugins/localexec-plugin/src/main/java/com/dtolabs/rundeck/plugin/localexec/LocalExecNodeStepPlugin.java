@@ -27,6 +27,7 @@ package com.dtolabs.rundeck.plugin.localexec;
 import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
@@ -41,6 +42,7 @@ import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 
@@ -82,8 +84,11 @@ public class LocalExecNodeStepPlugin implements NodeStepPlugin {
         try {
             result = ScriptExecUtil.runLocalCommand(finalCommand, env, null, System.out, System.err);
             if(result!=0) {
+                Map<String,Object> failureData=new HashMap<>();
+                failureData.put(NodeExecutorResultImpl.FAILURE_DATA_RESULT_CODE, result);
                 throw new NodeStepException("Result code was " + result,
                                             NodeStepFailureReason.NonZeroResultCode,
+                                            failureData,
                                             entry.getNodename());
             }
         } catch (IOException e) {

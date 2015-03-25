@@ -28,6 +28,8 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
 
+import java.util.Map;
+
 
 /**
  * NodeStepResultImpl is ...
@@ -60,6 +62,25 @@ public class NodeStepResultImpl extends StepExecutionResultImpl implements NodeS
                               INodeEntry node) {
         super(exception, failureReason, failureMessage);
         this.node = node;
+    }
+    /**
+     * Create a failure result
+     * @param exception exception
+     * @param failureReason reason
+     * @param failureMessage message
+     * @param node node
+     */
+    public NodeStepResultImpl(
+                              Throwable exception,
+                              FailureReason failureReason,
+                              String failureMessage,
+                              Map<String,Object> failureData,
+                              INodeEntry node) {
+        super(exception, failureReason, failureMessage);
+        this.node = node;
+        if(null!=failureData) {
+            setFailureData(failureData);
+        }
     }
 
     public INodeEntry getNode() {

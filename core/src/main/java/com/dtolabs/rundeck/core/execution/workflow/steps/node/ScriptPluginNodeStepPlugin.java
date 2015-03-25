@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
@@ -36,6 +37,7 @@ import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 
@@ -92,8 +94,11 @@ class ScriptPluginNodeStepPlugin extends BaseScriptPlugin implements NodeStepPlu
         }
         executionContext.getLogger().log(3, "[" + pluginname + "]: result code: " + result);
         if (result != 0) {
+            Map<String,Object> failureData=new HashMap<>();
+            failureData.put(NodeExecutorResultImpl.FAILURE_DATA_RESULT_CODE, result);
             throw new NodeStepException("Script result code was: " + result,
                                         NodeStepFailureReason.NonZeroResultCode,
+                                        failureData,
                                         node.getNodename());
         }
     }

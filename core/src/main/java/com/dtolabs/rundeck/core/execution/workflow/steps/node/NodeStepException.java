@@ -26,6 +26,8 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 
+import java.util.Map;
+
 
 /**
  * Represents an exception when executing a node step
@@ -47,6 +49,21 @@ public class NodeStepException extends StepException {
 
     public NodeStepException(Throwable throwable, FailureReason reason, String nodeName) {
         super(throwable, reason);
+        this.nodeName = nodeName;
+    }
+
+    public NodeStepException(String s, FailureReason reason,Map<String,Object> failureData, String nodeName) {
+        super(s, reason,failureData);
+        this.nodeName = nodeName;
+    }
+
+    public NodeStepException(String s, Throwable throwable, FailureReason reason, Map<String,Object> failureData,String nodeName) {
+        super(s, throwable, reason,failureData);
+        this.nodeName = nodeName;
+    }
+
+    public NodeStepException(Throwable throwable, FailureReason reason,Map<String,Object> failureData, String nodeName) {
+        super(throwable, reason,failureData);
         this.nodeName = nodeName;
     }
 

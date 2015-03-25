@@ -109,6 +109,7 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
             return new NodeStepResultImpl(e,
                     e.getFailureReason(),
                     e.getMessage(),
+                    e.getFailureData(),
                     node);
         } catch (Throwable e) {
             log.error("Uncaught throwable executing node step.", e);
