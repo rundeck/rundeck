@@ -205,11 +205,12 @@
             Download an archive of project <strong><g:enc>${params.project ?: request.project}</g:enc></strong>
         </div>
         <div class="panel-body">
-                <g:link controller="project" action="export" params="[project: params.project ?: request.project]"
+                <g:link controller="project" action="exportPrepare" params="[project: params.project ?: request.project]"
                     class="btn btn-success"
                 >
-                    <i class="glyphicon glyphicon-download-alt"></i>
-                    <g:enc>${params.project ?: request.project}</g:enc>.rdproject.jar
+                    Export <g:enc>${params.project ?: request.project}</g:enc>.rdproject.jar
+
+                    &hellip;
                 </g:link>
 
         </div>

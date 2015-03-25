@@ -8,6 +8,7 @@ import rundeck.CommandExec
 import rundeck.ScheduledExecution
 import rundeck.ExecReport
 import rundeck.BaseReport
+import rundeck.services.ArchiveRequestProgress
 import rundeck.services.LoggingService
 import rundeck.services.ProjectService
 import rundeck.services.ScheduledExecutionService
@@ -609,5 +610,36 @@ class ProjectServiceTests  {
                 message: 'Report message',
         ].keySet()
         assertPropertiesEquals exec.properties.subMap(keys), result
+    }
+
+    /**
+     * Imported execution where jobId should be skipped, should not be loaded
+     */
+    public void  testArchiveRequestProgressSingle(){
+        ArchiveRequestProgress svc = new ArchiveRequestProgress()
+        svc.total("a",10)
+        assertEquals(0,svc.percent())
+        svc.inc("a",5)
+        assertEquals(50,svc.percent())
+        svc.inc("a",5)
+        assertEquals(100,svc.percent())
+    }
+
+    /**
+     * Imported execution where jobId should be skipped, should not be loaded
+     */
+    public void  testArchiveRequestProgressMulti(){
+        ArchiveRequestProgress svc = new ArchiveRequestProgress()
+        svc.total("a",10)
+        svc.total("b",10)
+        assertEquals(0,svc.percent())
+        svc.inc("a",5)
+        assertEquals(25,svc.percent())
+        svc.inc("a",5)
+        assertEquals(50,svc.percent())
+        svc.inc("b",5)
+        assertEquals(75,svc.percent())
+        svc.inc("b",5)
+        assertEquals(100,svc.percent())
     }
 }

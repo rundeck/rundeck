@@ -78,6 +78,110 @@ class ProjectController extends ControllerBase{
         }
         outfile.delete()
     }
+    /**
+     * Async version of export, acquires a token and redirects to exportWait
+     * @param archiveParams
+     * @return
+     */
+    public def exportPrepare(ProjectArchiveParams archiveParams){
+        if (archiveParams.hasErrors()) {
+            flash.errors = archiveParams.errors
+            return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
+        }
+        def project=params.project
+        if (!project){
+            return renderErrorView("Project parameter is required")
+        }
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
+            return
+        }
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(authContext,
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]),
+                AuthConstants.ACTION_EXPORT, 'Project',project)) {
+            return
+        }
+        def project1 = frameworkService.getFrameworkProject(project)
+
+        //request token
+        def token = projectService.exportProjectToFileAsync(project1,framework,session.user)
+        return redirect(action:'exportWait',params: [token:token,project:archiveParams.project])
+    }
+    /**
+     * poll for archive export process completion using a token, responds in html or json
+     * @param token
+     * @return
+     */
+    public def exportWait(String token){
+        if(!projectService.hasPromise(session.user,token)){
+            return withFormat{
+                html{
+                    request.errorCode = 'request.error.notfound.message'
+                    request.errorArgs = ["Export Request Token", token]
+                    response.status = HttpServletResponse.SC_NOT_FOUND
+                    request.titleCode = 'request.error.notfound.title'
+                    return render(view: "/common/error",model:[:])
+                }
+
+                json{
+                    render(contentType:'application/json'){
+                        delegate.'token'=token
+                        delegate.'notFound'=true
+                    }
+                }
+            }
+        }
+        if(projectService.promiseError(session.user,token)){
+            def errorMessage="Project export request failed: "+projectService.promiseError(session.user,token).message
+            return withFormat{
+                html{
+                    request.errorMessage = errorMessage
+                    response.status = HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+                    return render(view: "/common/error",model:[:])
+                }
+                json{
+                    render(contentType:'application/json'){
+                        delegate.'token'=token
+                        delegate.'errorMessage'=errorMessage
+                    }
+                }
+            }
+        }
+        File outfile = projectService.promiseReady(session.user,token)
+        if(null!=outfile && params.download=='true'){
+            SimpleDateFormat dateFormater = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US);
+            Date date=projectService.promiseRequestStarted(session.user,token)
+            def dateStamp = dateFormater.format(null!=date?date:new Date());
+            //output the file as an attachment
+            response.setContentType("application/zip")
+            response.setHeader("Content-Disposition", "attachment; filename=\"${params.project}-${dateStamp}.rdproject.jar\"")
+
+            outfile.withInputStream {instream->
+                Streams.copy(instream,response.outputStream,false)
+            }
+            projectService.releasePromise(session.user,token)
+        }else{
+            def percentage = projectService.promiseSummary(session.user,token).percent()
+            withFormat{
+                html{
+                    render(view: "/menu/wait",model:[token:token,ready:null!=outfile,percentage:percentage])
+                }
+                json{
+                    render(contentType:'application/json'){
+                        delegate.'token'=token
+                        delegate.ready=null!=outfile
+                        delegate.'percentage'=percentage
+                    }
+                }
+            }
+
+        }
+    }
 
     public def importArchive(ProjectArchiveParams archiveParams){
         withForm{
