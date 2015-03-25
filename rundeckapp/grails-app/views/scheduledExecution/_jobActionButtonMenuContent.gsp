@@ -50,6 +50,19 @@
             <li class="divider"></li>
         </g:if>
         <li>
+            <g:if test="${jobDeleteSingle}">
+            <g:link
+                controller="scheduledExecution"
+                action="delete"
+                params="${[id:scheduledExecution.extid,project: scheduledExecution.project]}"
+                class="act_job_delete_single"
+                data-job-id="${enc(attr: scheduledExecution.extid)}"
+               title="${g.message(code: 'delete.this.job')}">
+                <b class="glyphicon glyphicon-remove-circle"></b>
+                <g:message code="scheduledExecution.action.delete.button.label"/>
+            </g:link>
+            </g:if>
+            <g:else>
             <a data-toggle="modal"
                 class="act_job_delete_single"
                 data-job-id="${enc(attr: scheduledExecution.extid)}"
@@ -58,6 +71,7 @@
                 <b class="glyphicon glyphicon-remove-circle"></b>
                 <g:message code="scheduledExecution.action.delete.button.label"/>
             </a>
+            </g:else>
         </li>
     </g:if>
 </g:unless>

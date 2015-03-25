@@ -98,7 +98,7 @@ class ScheduledExecutionController  extends ControllerBase{
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
-            delete: 'POST',
+            delete: ['POST','GET'],
             deleteBulk: 'POST',
             runJobInline: 'POST',
             runJobNow: 'POST',
@@ -120,7 +120,7 @@ class ScheduledExecutionController  extends ControllerBase{
             apiJobUpdateSingle: 'PUT'
     ]
 
-    def cancel = {
+    def cancel (){
         //clear session workflow data
         if(session.editWF ){
             session.removeAttribute('editWF');
@@ -186,7 +186,7 @@ class ScheduledExecutionController  extends ControllerBase{
     /**
      * used by jobs page, displays actions for the job as li's
      */
-    def actionMenuFragment = {
+    def actionMenuFragment(){
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
         if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
@@ -208,7 +208,11 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         return render(template: '/scheduledExecution/jobActionButtonMenuContent',
-                      model: [scheduledExecution: scheduledExecution,hideJobDelete:params.hideJobDelete])
+                      model: [
+                              scheduledExecution: scheduledExecution,
+                              hideJobDelete:params.hideJobDelete,
+                              jobDeleteSingle:params.jobDeleteSingle
+                      ])
     }
 
     def detailFragment = {
@@ -782,27 +786,59 @@ class ScheduledExecutionController  extends ControllerBase{
 
     /**
     */
-    def delete = {
+    def delete(){
         if (!params.id) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
             return renderErrorView(g.message(code: 'api.error.parameter.required', args: ['id']))
         }
         def jobid=params.id
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        withForm {
-            def result = scheduledExecutionService.deleteScheduledExecutionById(jobid, authContext,
-                params.deleteExecutions=='true', session.user, 'delete')
-            if (!result.success) {
-                return renderErrorView(result.error.message)
-            } else {
-                def project = result.success.job ? result.success.job.project : params.project
-                flash.bulkDeleteResult = [success: [result.success]]
-                redirect(controller: 'menu', action: 'jobs', params: [project: project])
+        if(request.method=='POST') {
+            withForm {
+                def result = scheduledExecutionService.deleteScheduledExecutionById(
+                        jobid,
+                        authContext,
+                        params.deleteExecutions == 'true',
+                        session.user,
+                        'delete'
+                )
+                if (!result.success) {
+                    return renderErrorView(result.error.message)
+                } else {
+                    def project = result.success.job ? result.success.job.project : params.project
+                    flash.bulkDeleteResult = [success: [result.success]]
+                    redirect(controller: 'menu', action: 'jobs', params: [project: project])
+                }
+            }.invalidToken {
+                response.status = HttpServletResponse.SC_BAD_REQUEST
+                request.errorCode = 'request.error.invalidtoken.message'
+                return renderErrorView([:])
             }
-        }.invalidToken {
-            response.status = HttpServletResponse.SC_BAD_REQUEST
-            request.errorCode = 'request.error.invalidtoken.message'
-            return renderErrorView([:])
+        }else{
+            def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
+
+            if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
+                return
+            }
+            if (unauthorizedResponse(
+                    frameworkService.authorizeProjectResource(
+                            authContext,
+                            AuthConstants.RESOURCE_TYPE_JOB,
+                            AuthConstants.ACTION_DELETE,
+                            scheduledExecution.project
+                    ) && frameworkService.authorizeProjectJobAll(
+                            authContext,
+                            scheduledExecution,
+                            [AuthConstants.ACTION_DELETE],
+                            scheduledExecution.project
+                    ),
+                    AuthConstants.ACTION_DELETE,
+                    'Job',
+                    params.id
+            )) {
+                return
+            }
+            [scheduledExecution: scheduledExecution]
         }
 
     }
