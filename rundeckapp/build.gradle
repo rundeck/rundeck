@@ -234,9 +234,7 @@ task testGrails(type: Exec, overwrite: true, dependsOn: [ installDependencies, e
             "-Dgrails.local.repo=${grailsLocalRepo}",
             "-DRUNDECK_VERSION=${version}",
             "-Drdeck.base=${project.buildDir}/rdeck_base",
-            'test-app',
-            '-coverage',
-            '-xml'
+            'test-app'
 }
 test.dependsOn testGrails
 
