@@ -20,5 +20,5 @@ buildscript {
 apply plugin: net.saliman.gradle.plugin.cobertura.CoberturaPlugin
 
 cobertura {
-	format = 'xml'
+	coverageFormats = ['xml','html']
 }
