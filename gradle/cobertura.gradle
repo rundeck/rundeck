@@ -12,11 +12,12 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.mapvine:gradle-cobertura-plugin:1.0'
+        classpath "net.saliman:gradle-cobertura-plugin:2.2.7"
+        classpath 'org.codehaus.groovy:groovy-backports-compat23:2.3.5'
     }
 }
 
-apply plugin: org.gradle.api.plugins.cobertura.CoberturaPlugin
+apply plugin: net.saliman.gradle.plugin.cobertura.CoberturaPlugin
 
 cobertura {
 	format = 'xml'

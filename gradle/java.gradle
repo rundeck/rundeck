@@ -7,6 +7,9 @@ apply plugin: 'maven';
 apply plugin: 'eclipse';
 apply plugin: 'idea';
 
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
 // add static analysis support when running on build servers (-Penvironment=build)
 if (project.hasProperty('environment') && environment == 'build') {
     if(project in rootProject.exportedProjects.collect{project(it)}){
@@ -32,8 +35,6 @@ repositories {
     }
 }
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
 
 // set the eclipse project naming convention to rundeck:<path>:<projectName>
 // so it matches the logical hierarchy more closely
