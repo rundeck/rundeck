@@ -192,27 +192,26 @@ class ScheduledExecutionController  extends ControllerBase{
         if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
             return
         }
-        if (
-                unauthorizedResponse(
-                    frameworkService.authorizeProjectJobAll(
-                            authContext,
-                            scheduledExecution,
-                            [AuthConstants.ACTION_READ],
-                            scheduledExecution.project
-                    ),
-                    AuthConstants.ACTION_READ,
-                    'Job',
-                    params.id
-                )
+        if (!unauthorizedResponse(
+                frameworkService.authorizeProjectJobAll(
+                        authContext,
+                        scheduledExecution,
+                        [AuthConstants.ACTION_READ],
+                        scheduledExecution.project
+                ),
+                AuthConstants.ACTION_READ,
+                'Job',
+                params.id
+            )
         ) {
-            return
+             render(template: '/scheduledExecution/jobActionButtonMenuContent',
+                          model: [
+                                  scheduledExecution: scheduledExecution,
+                                  hideJobDelete     : params.hideJobDelete,
+                                  jobDeleteSingle   : params.jobDeleteSingle
+                          ]
+            )
         }
-        return render(template: '/scheduledExecution/jobActionButtonMenuContent',
-                      model: [
-                              scheduledExecution: scheduledExecution,
-                              hideJobDelete:params.hideJobDelete,
-                              jobDeleteSingle:params.jobDeleteSingle
-                      ])
     }
 
     def detailFragment = {
