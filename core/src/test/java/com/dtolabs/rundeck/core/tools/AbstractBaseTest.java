@@ -135,9 +135,13 @@ public abstract class AbstractBaseTest extends TestCase {
 
     protected Framework getFrameworkInstance() {
         if(null==instance){
-            instance = FrameworkFactory.createForFilesystem(RDECK_BASE);
+            instance = createTestFramework();
         }
         return instance;
+    }
+
+    public static Framework createTestFramework() {
+        return FrameworkFactory.createForFilesystem(RDECK_BASE);
     }
 
     protected void configureFramework()

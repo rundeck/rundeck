@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.core.execution.utils
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import spock.lang.Specification
 /**
  * Created by greg on 3/20/15.
@@ -12,7 +13,7 @@ class ResolverUtilSpec extends Specification {
 
     }
     def teardown(){
-        def framework = Framework.getInstanceWithoutProjectsDir(System.getProperty("rdeck.base"))
+        def framework = AbstractBaseTest.createTestFramework()
         framework.getFrameworkProjectMgr().removeFrameworkProject('ResolverUtilSpec')
     }
 
@@ -51,7 +52,7 @@ class ResolverUtilSpec extends Specification {
         } else {
             removePrefixes << projectPropName
         }
-        def framework = Framework.getInstanceWithoutProjectsDir(System.getProperty("rdeck.base"))
+        def framework = AbstractBaseTest.createTestFramework()
         framework.getFrameworkProjectMgr().removeFrameworkProject('ResolverUtilSpec')
         framework.getFrameworkProjectMgr().createFrameworkProject('ResolverUtilSpec')
         def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('ResolverUtilSpec')
@@ -91,7 +92,7 @@ class ResolverUtilSpec extends Specification {
                 frameworkPropName
         )
 
-        def framework = Framework.getInstanceWithoutProjectsDir(System.getProperty("rdeck.base"))
+        def framework = AbstractBaseTest.createTestFramework()
         def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('ResolverUtilSpec')
 
         expect:
