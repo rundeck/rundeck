@@ -944,8 +944,6 @@ class FrameworkController extends ControllerBase {
                         ]
                     }
 
-            System.err.println("resourceConfig: ${resourceConfig}")
-//            resourcesPasswordFieldsService.adjust(ndxes)
             //replace any unmodified password fields with the session data
             resourcesPasswordFieldsService.untrack(resourceConfig, *resourceModelSourceDescriptions)
             //for each resources model source definition, add project properties from the input config
@@ -969,10 +967,11 @@ class FrameworkController extends ControllerBase {
             }
 
             if (!errors) {
-                def projectName = frameworkService.getFrameworkProject(project).name
-                flash.message = "Project ${project} saved"
-                //TODO: clear session stored password fields
-                return redirect(controller: 'menu', action: 'admin', params: [project: projectName])
+                flash.message = "Project ${project} configuration file saved"
+                resourcesPasswordFieldsService.reset()
+                fcopyPasswordFieldsService.reset()
+                execPasswordFieldsService.reset()
+                return redirect(controller: 'menu', action: 'admin', params: [project: project])
             }
         }
         if(errors){
@@ -1131,7 +1130,10 @@ class FrameworkController extends ControllerBase {
                 def projectName = frameworkService.getFrameworkProject(project).name
                 def result = userService.storeFilterPref(session.user, [project: projectName])
                 flash.message = "Project ${project} saved"
-                //TODO: clear session stored password fields
+
+                resourcesPasswordFieldsService.reset()
+                fcopyPasswordFieldsService.reset()
+                execPasswordFieldsService.reset()
                 return redirect(controller: 'menu', action: 'admin', params: [project: projectName])
             }
         }
