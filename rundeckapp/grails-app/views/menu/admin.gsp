@@ -99,21 +99,38 @@
 <div class="tab-pane active" id="configure">
 <ul class="list-group list-group-tab-content">
          <g:if test="${authConfigure}">
-             <li class="list-group-item">
-        <g:link controller="framework" action="editProject" params="[project: params.project ?: request.project]"
-                class="btn btn-success   ">
-            <i class="glyphicon glyphicon-edit"></i>
-            <g:message code="page.admin.EditProjectSimple.button" default="Simple Configuration"/>
-        </g:link>
-        <g:link controller="framework" action="editProjectConfig" params="[project: params.project ?: request.project]"
-                class="btn btn-info has_tooltip"
-                data-placement="right"
-                title="${message(code:'page.admin.EditProjectConfigFile.title',default:'Advanced: Edit config file directly')}"
-                   >
-            <i class="glyphicon glyphicon-edit"></i>
-            <g:message code="page.admin.EditProjectConfigFile.button" default="Edit Configuration File"/>
-        </g:link>
-             </li>
+         <li class="list-group-item">
+            <g:link controller="framework" action="editProject" params="[project: params.project ?: request.project]"
+                    class="btn btn-success   ">
+                <i class="glyphicon glyphicon-edit"></i>
+                <g:message code="page.admin.EditProjectSimple.button" default="Simple Configuration"/>
+            </g:link>
+            <g:link controller="framework" action="editProjectConfig" params="[project: params.project ?: request.project]"
+                    class="btn btn-info has_tooltip"
+                    data-placement="right"
+                    title="${message(code:'page.admin.EditProjectConfigFile.title',default:'Advanced: Edit config file directly')}"
+                       >
+                <i class="glyphicon glyphicon-edit"></i>
+                <g:message code="page.admin.EditProjectConfigFile.button" default="Edit Configuration File"/>
+            </g:link>
+         </li>
+         <li class="list-group-item">
+            <g:link controller="framework"
+                    action="editProjectFile"
+                    params="[project: params.project ?: request.project, filename: 'readme.md']"
+                    class="btn btn-${hasreadme?'info':'link btn-success'} btn-sm">
+                <i class="glyphicon glyphicon-edit"></i>
+                ${hasreadme?'Edit':'Add'} Project Readme
+            </g:link>
+            <g:link
+                    controller="framework"
+                    action="editProjectFile"
+                    params="[project: params.project ?: request.project,filename:'motd.md']"
+                    class="btn btn-${hasmotd?'info':'link btn-success'} btn-sm">
+                <i class="glyphicon glyphicon-edit"></i>
+                ${hasmotd?'Edit':'Add'} Message of the Day
+            </g:link>
+         </li>
 
         <li class="list-group-item">
             <h4 class="list-group-item-heading">

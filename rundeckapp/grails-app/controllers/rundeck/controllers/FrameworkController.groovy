@@ -1228,6 +1228,87 @@ class FrameworkController extends ControllerBase {
             prefixKey: 'plugin'
         ]
     }
+    def editProjectFile (){
+        if(!params.project){
+            return renderErrorView("Project parameter is required")
+        }
+        if(!params.filename || !(params.filename in ['readme.md','motd.md'])){
+            return renderErrorView("filename parameter must be one of readme.md,motd.md")
+        }
+
+        def project = params.project
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAll(
+                        frameworkService.getAuthContextForSubject(session.subject),
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_ADMIN]),
+                AuthConstants.ACTION_ADMIN, 'Project', project)) {
+            return
+        }
+
+        final def fwkProject = frameworkService.getFrameworkProject(project)
+        def fileText=''
+        if(fwkProject.existsFileResource(params.filename)){
+            def baos=new ByteArrayOutputStream()
+            fwkProject.loadFileResource(params.filename,baos)
+            fileText=baos.toString('UTF-8')
+        }
+        [
+                filename:params.filename,
+                fileText:fileText
+        ]
+    }
+    def saveProjectFile (){
+        boolean valid=false
+        withForm {
+            valid = true
+        }.invalidToken {
+            request.errorCode = 'request.error.invalidtoken.message'
+            renderErrorView([:])
+        }
+        if (!valid) {
+            return
+        }
+        if(!params.project){
+            return renderErrorView("Project parameter is required")
+        }
+        if(!params.filename || !(params.filename in ['readme.md','motd.md'])){
+            return renderErrorView("filename parameter must be one of readme.md,motd.md")
+        }
+        if(null==params.fileText){
+            return renderErrorView("fileText parameter is required")
+        }
+
+        def project = params.project
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAll(
+                        frameworkService.getAuthContextForSubject(session.subject),
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_ADMIN]),
+                AuthConstants.ACTION_ADMIN, 'Project', project)) {
+            return
+        }
+
+        //cancel modification
+        if (params.cancel == 'Cancel') {
+            return redirect(controller: 'menu', action: 'admin', params: [project: project])
+        }
+
+        final def fwkProject = frameworkService.getFrameworkProject(project)
+        if(params.fileText.trim()){
+            def bais=new ByteArrayInputStream(params.fileText.toString().bytes)
+            fwkProject.storeFileResource(params.filename,bais)
+            flash.message='Saved project file '+params.filename
+        }else{
+            //delete
+            fwkProject.deleteFileResource(params.filename)
+            flash.message='Cleared project file '+params.filename
+        }
+
+        return redirect(controller: 'menu', action: 'admin', params: [project: project])
+    }
     def editProjectConfig (){
         if(!params.project){
             return renderErrorView("Project parameter is required")

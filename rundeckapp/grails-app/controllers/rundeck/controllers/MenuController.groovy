@@ -563,6 +563,8 @@ class MenuController extends ControllerBase{
                 defaultFileCopy: defaultFileCopy,
                 nodeExecDescriptions: nodeexecdescriptions,
                 fileCopyDescriptions: filecopydescs,
+                hasreadme:fproject.existsFileResource("readme.md"),
+                hasmotd:fproject.existsFileResource("motd.md"),
             ]
     }
     def systemConfig(){
