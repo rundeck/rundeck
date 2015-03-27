@@ -7,10 +7,10 @@
             code="ScheduledExecution.page.edit.title"/></title>
     <asset:javascript src="leavePageConfirm.js"/>
     <asset:javascript src="jobEditPage_bundle.js"/>
-    <g:jsMessages code="page.jobedit.unsaved.changes"/>
+    <g:jsMessages code="page.unsaved.changes"/>
     <g:javascript>
         var workflowEditor = new WorkflowEditor();
-        var confirm = new PageConfirm(Messages['page.jobedit.unsaved.changes']);
+        var confirm = new PageConfirm(Messages['page.unsaved.changes']);
         _onJobEdit(confirm.setNeedsConfirm);
     </g:javascript>
 </head>

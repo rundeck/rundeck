@@ -1,5 +1,5 @@
 %{--
-  - Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+  - Copyright 2015 SimplifyOps, Inc. (http://simplifyops.com)
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -14,24 +14,19 @@
   - limitations under the License.
   --}%
 <%--
-   chooseProject.gsp
-
-   Author: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-   Created: Dec 29, 2010 6:28:51 PM
+   Author: Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
 --%>
-
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
-    <g:set var="rkey" value="${g.rkey()}"/>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="configure"/>
-    <title><g:message code="domain.Project.choose.title" default="Edit Project"/></title>
+    <title><g:message code="project.config.editor.title" default="Edit Project Configuration File"/></title>
 
     <g:javascript library="prototype/effects"/>
     <asset:javascript src="leavePageConfirm.js"/>
-    <g:jsMessages code="page.jobedit.unsaved.changes"/>
+    <g:jsMessages code="page.unsaved.changes"/>
     <g:javascript>
 
     function init(){
@@ -40,7 +35,7 @@
                 elem.observe('keypress',noenter);
             }
         });
-        var confirm = new PageConfirm(Messages['page.jobedit.unsaved.changes']);
+        var confirm = new PageConfirm(Messages['page.unsaved.changes']);
         jQuery('.apply_ace').each(function () {
             _setupAceTextareaEditor(this,confirm.setNeetsConfirm);
         });
@@ -61,19 +56,13 @@
             <div class="panel panel-primary"  id="createform">
                 <div class="panel-heading">
                         <span class="h3">
-                            <g:message code="domain.Project.edit.message"
-                                       default="Configure Project"/>: <g:enc>${params.project ?: request.project}</g:enc>
+                            <g:message code="project.config.edit.message"
+                                       default="Edit Project Configuration File"/>: <g:enc>${params.project ?: request.project}</g:enc>
                     </span>
                 </div>
                 <div class="panel-body">
                     <div class="help-block">
-<g:markdown>Password values are obscured. You can enter a new value or you can leave
-the entire line with `key=*****` to
-preserve the original value when saving.
-
-**Note**: If you modify the *key name* of an obscured property,
-the value *will not be preserved*, and you must enter a
-new value.</g:markdown>
+                        <g:markdown><g:message code="project.config.editor.help.markdown" /></g:markdown>
                     </div>
 
                     <textarea
