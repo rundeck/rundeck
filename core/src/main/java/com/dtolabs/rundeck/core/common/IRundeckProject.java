@@ -22,7 +22,7 @@ public interface IRundeckProject {
      * <li>props - configuration properties</li>
      * </ul>
      */
-    List<Map> listResourceModelConfigurations();
+    List<Map<String, Object>> listResourceModelConfigurations();
 
     /**
      * Returns the set of nodes for the project

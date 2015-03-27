@@ -29,7 +29,7 @@ public interface IProjectNodes {
      * <li>props - configuration properties</li>
      * </ul>
      */
-    List<Map> listResourceModelConfigurations();
+    List<Map<String, Object>> listResourceModelConfigurations();
 
     /**
      * Conditionally update the nodes resources file if a URL source is defined for it and return

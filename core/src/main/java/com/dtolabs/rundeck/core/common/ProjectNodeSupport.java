@@ -160,9 +160,9 @@ public class ProjectNodeSupport implements IProjectNodes {
             }
         }
 
-        final List<Map> list = listResourceModelConfigurations();
+        final List<Map<String, Object>> list = listResourceModelConfigurations();
         int i = 1;
-        for (final Map map : list) {
+        for (final Map<String, Object> map : list) {
             final String providerType = (String) map.get("type");
             final Properties props = (Properties) map.get("props");
 
@@ -255,6 +255,7 @@ public class ProjectNodeSupport implements IProjectNodes {
 
         final ResourceModelSourceService nodesSourceService =
                 getResourceModelSourceService();
+        configuration.put("project",project.getName());
         ResourceModelSource sourceForConfiguration = nodesSourceService.getSourceForConfiguration(type, configuration);
 
         if (useCache) {
@@ -308,15 +309,20 @@ public class ProjectNodeSupport implements IProjectNodes {
      * </ul>
      */
     @Override
-    public synchronized List<Map> listResourceModelConfigurations(){
+    public synchronized List<Map<String, Object>> listResourceModelConfigurations(){
         Map propertiesMap = project.getProperties();
         Properties properties = new Properties();
         properties.putAll(propertiesMap);
-        return listResourceModelConfigurations(project.getName(), properties);
+        return listResourceModelConfigurations(properties);
     }
 
-    public static List<Map> listResourceModelConfigurations(final String projectName, final Properties props) {
-        final ArrayList<Map> list = new ArrayList<Map>();
+    /**
+     * Return a list of resource model configuration
+     * @param props properties
+     * @return List of Maps, each map containing "type": String, "props":Properties
+     */
+    public static List<Map<String, Object>> listResourceModelConfigurations(final Properties props) {
+        final ArrayList<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
         int i = 1;
         boolean done = false;
         while (!done) {
@@ -324,7 +330,6 @@ public class ProjectNodeSupport implements IProjectNodes {
             if (props.containsKey(prefix + ".type")) {
                 final String providerType = props.getProperty(prefix + ".type");
                 final Properties configProps = new Properties();
-                configProps.setProperty("project", projectName);
                 final int len = (prefix + ".config.").length();
                 for (final Object o : props.keySet()) {
                     final String key = (String) o;
@@ -332,7 +337,6 @@ public class ProjectNodeSupport implements IProjectNodes {
                         configProps.setProperty(key.substring(len), props.getProperty(key));
                     }
                 }
-//                logger.info("Source #" + i + " (" + providerType + "): loading with properties: " + configProps);
                 final HashMap<String, Object> map = new HashMap<String, Object>();
                 map.put("type", providerType);
                 map.put("props", configProps);

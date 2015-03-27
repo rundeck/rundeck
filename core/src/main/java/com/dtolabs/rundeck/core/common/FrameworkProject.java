@@ -279,7 +279,7 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
      * </ul>
      */
     @Override
-    public synchronized List<Map> listResourceModelConfigurations(){
+    public synchronized List<Map<String, Object>> listResourceModelConfigurations(){
         return projectNodes.listResourceModelConfigurations();
     }
 
