@@ -96,11 +96,21 @@
 <div class="tab-pane active" id="configure">
 <ul class="list-group list-group-tab-content">
          <g:if test="${authConfigure}">
+             <li class="list-group-item">
         <g:link controller="framework" action="editProject" params="[project: params.project ?: request.project]"
-                class="textbtn textbtn-info list-group-item  textbtn-on-hover">
+                class="btn btn-success   ">
             <i class="glyphicon glyphicon-edit"></i>
-            <g:message code="gui.menu.ProjectEdit" default="edit configuration"/>
+            <g:message code="gui.menu.ProjectEdit" default="Easy Configuration"/>
         </g:link>
+        <g:link controller="framework" action="editProjectConfig" params="[project: params.project ?: request.project]"
+                class="btn btn-info has_tooltip"
+                data-placement="right"
+                title="${message(code:'gui.menu.EditProjectConfigFile.title',default:'Advanced: Edit config file directly')}"
+                   >
+            <i class="glyphicon glyphicon-edit"></i>
+            <g:message code="gui.menu.EditProjectConfigFile" default="Edit Configuration File"/>
+        </g:link>
+             </li>
 
         <li class="list-group-item">
             <h4 class="list-group-item-heading">

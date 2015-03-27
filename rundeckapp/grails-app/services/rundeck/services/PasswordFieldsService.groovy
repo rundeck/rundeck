@@ -77,6 +77,9 @@ class PasswordFieldsService {
      * @return
      */
     public int track(configurations, Description... descriptions) {
+        return track(configurations,false,descriptions)
+    }
+    public int track(configurations,boolean hidden, Description... descriptions) {
         if(!configurations) {
             return 0
         }
@@ -99,7 +102,7 @@ class PasswordFieldsService {
                     String key = property.getName()
                     String value = config.props[key]
                     if(value!=null){
-                        def h = hash(value)
+                        def h = hidden?'*****':hash(value)
 
                         config.props[key] = h
                         fields.put(fieldKey(key, configPos), [original: value, hash: h])

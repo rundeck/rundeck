@@ -643,9 +643,10 @@ class ProjectController extends ControllerBase{
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json','text'], 'xml')
         switch (respFormat) {
             case 'text':
-                render(contentType: 'text/plain') {
-                    response.outputStream<< proj.propertyFile.text
-                }
+                response.setContentType("text/plain")
+                def props=proj.getProjectProperties() as Properties
+                props.store(response.outputStream,request.forwardURI)
+                response.outputStream.close()
                 break
             case 'xml':
                 apiService.renderSuccessXml(request, response) {

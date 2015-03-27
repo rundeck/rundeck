@@ -8,7 +8,7 @@ import com.dtolabs.rundeck.core.common.ProviderService
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
-
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource
 import com.dtolabs.rundeck.core.resources.FileResourceModelSourceFactory
 import com.dtolabs.rundeck.core.utils.NodeSet
@@ -22,6 +22,7 @@ import rundeck.services.ApiService
 import rundeck.services.PasswordFieldsService
 
 import javax.servlet.http.HttpServletResponse
+import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.INodeSet
@@ -830,7 +831,163 @@ class FrameworkController extends ControllerBase {
         config?.subMap(config?.keySet().findAll{config[it]})
     }
 
-    def saveProject={
+    def saveProjectConfig(){
+        boolean valid=false
+        withForm {
+            valid = true
+        }.invalidToken {
+            request.errorCode = 'request.error.invalidtoken.message'
+            renderErrorView([:])
+        }
+        if (!valid) {
+            return
+        }
+        def project=params.project
+        if (!project) {
+            return renderErrorView("Project parameter is required")
+        }
+
+        //cancel modification
+        if (params.cancel == 'Cancel') {
+            return redirect(controller: 'menu', action: 'admin', params: [project: project])
+        }
+
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAll(
+                        authContext,
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_ADMIN, 'Project',project
+        )) {
+            return
+        }
+
+        def configText=params.projectConfig
+        if (configText==null) {
+            return renderErrorView("projectConfig parameter is required")
+        }
+
+        //parse input config
+        def inputProps = new Properties()
+        inputProps.load(new StringReader(configText))
+
+        def framework = frameworkService.getRundeckFramework()
+
+        def (resourceModelSourceDescriptions, nodeexecdescriptions, filecopydescs) = frameworkService.listDescriptions()
+        def errors=[]
+        def configs = []
+        def nodeexecreport, fcopyreport
+        if(request.method=='POST'){
+            //only attempt project create if form POST is used
+            def Properties projProps = new Properties()
+            projProps.putAll(inputProps)
+            def inputMap = new HashMap(inputProps)
+
+            final nodeExecType = frameworkService.getDefaultNodeExecutorService(projProps)
+            final nodeConfig = frameworkService.getNodeExecConfigurationForType(nodeExecType, projProps)
+
+            //load node exec properties
+            def nodeExecService=frameworkService.getNodeExecutorService()
+
+            //restore tracked password values
+            try {
+                execPasswordFieldsService.untrack([[config: [type: nodeExecType, props: nodeConfig], index: 0]], * nodeexecdescriptions)
+            } catch (ExecutionServiceException e) {
+                log.error(e.message)
+                errors << e.getMessage()
+            }
+
+            //validate input values
+            final nevalidation = frameworkService.validateServiceConfig(nodeExecType, "", nodeConfig, nodeExecService)
+            if (!nevalidation.valid) {
+                nodeexecreport = nevalidation.report
+                errors << nevalidation.error ? "Node Executor configuration was invalid: " + nevalidation.error : "Node Executor configuration was invalid"
+            }else{
+                //store back in props
+                frameworkService.addProjectNodeExecutorPropertiesForType(nodeExecType, projProps, nodeConfig)
+            }
+
+            //load file copy properties
+
+            final fileCopyType = frameworkService.getDefaultFileCopyService(projProps)
+            final filecopyConfig = frameworkService.getFileCopyConfigurationForType(fileCopyType, projProps)
+            def fileCopierService=frameworkService.getFileCopierService()
+
+            //restore tracked password values
+            try {
+                fcopyPasswordFieldsService.untrack([[config: [type: fileCopyType, props: filecopyConfig], index: 0]], * filecopydescs)
+            } catch (ExecutionServiceException e) {
+                log.error(e.message)
+                errors << e.getMessage()
+            }
+
+            //validate input values
+            final fcvalidation = frameworkService.validateServiceConfig(fileCopyType, "", filecopyConfig, fileCopierService)
+            if (!fcvalidation.valid) {
+                nodeexecreport = fcvalidation.report
+                errors << fcvalidation.error ? "File Copier configuration was invalid: " + fcvalidation.error : "File Copier configuration was invalid"
+            }else{
+                frameworkService.addProjectFileCopierPropertiesForType(fileCopyType, projProps, filecopyConfig)
+            }
+
+
+            //parse plugin config properties, and convert to project.properties
+            def newndx=0
+            def resourceConfig = frameworkService.
+                    listResourceModelConfigurations(projProps).
+                    collect{
+                        [
+                                config: it,
+                                index:newndx++
+                        ]
+                    }
+
+            System.err.println("resourceConfig: ${resourceConfig}")
+//            resourcesPasswordFieldsService.adjust(ndxes)
+            //replace any unmodified password fields with the session data
+            resourcesPasswordFieldsService.untrack(resourceConfig, *resourceModelSourceDescriptions)
+            //for each resources model source definition, add project properties from the input config
+            resourceConfig.each{ Map mapping->
+                def props=mapping.config.props
+                def resourceConfigPrefix=FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + '.' + (mapping.index+1) + '.config.'
+                props.keySet().each { k ->
+                    if (props[k]) {
+                        projProps[resourceConfigPrefix + k] = props[k]
+                    }
+                }
+            }
+
+            if (!errors) {
+                // Password Field Substitution
+
+                def result = frameworkService.setFrameworkProjectConfig(project, projProps)
+                if (!result.success) {
+                    errors << result.error
+                }
+            }
+
+            if (!errors) {
+                def projectName = frameworkService.getFrameworkProject(project).name
+                flash.message = "Project ${project} saved"
+                //TODO: clear session stored password fields
+                return redirect(controller: 'menu', action: 'admin', params: [project: projectName])
+            }
+        }
+        if(errors){
+            request.errors=errors
+        }
+
+
+        return render(view:'editProjectConfig',model:
+                [
+                        project: params.project,
+                        configs: configs,
+                        projectPropertiesText: configText
+                ])
+    }
+    def saveProject(){
         boolean valid=false
         withForm {
             valid = true
@@ -1015,7 +1172,7 @@ class FrameworkController extends ControllerBase {
         [type, config, report]
     }
 
-    def editProject = {
+    def editProject (){
         if(!params.project){
             return renderErrorView("Project parameter is required")
         }
@@ -1066,6 +1223,91 @@ class FrameworkController extends ControllerBase {
             defaultFileCopy: defaultFileCopy,
             nodeExecDescriptions: execDesc,
             fileCopyDescriptions: filecopyDesc,
+            prefixKey: 'plugin'
+        ]
+    }
+    def editProjectConfig (){
+        if(!params.project){
+            return renderErrorView("Project parameter is required")
+        }
+
+        def project = params.project
+
+        if (unauthorizedResponse(
+            frameworkService.authorizeApplicationResourceAll(
+                frameworkService.getAuthContextForSubject(session.subject),
+                frameworkService.authResourceForProject(project),
+                [AuthConstants.ACTION_ADMIN]),
+            AuthConstants.ACTION_ADMIN, 'Project', project)) {
+            return
+        }
+
+        final def framework = frameworkService.getRundeckFramework()
+        final def fwkProject = frameworkService.getFrameworkProject(project)
+        final def (resourceDescs, execDesc, filecopyDesc) = frameworkService.listDescriptions()
+
+        def projectProps = fwkProject.getProjectProperties() as Properties
+
+        //get list of node executor, and file copier services
+
+        final defaultNodeExec = frameworkService.getDefaultNodeExecutorService(projectProps)
+        final defaultFileCopy = frameworkService.getDefaultFileCopyService(projectProps)
+
+        final nodeConfig = frameworkService.getNodeExecConfigurationForType(defaultNodeExec, projectProps)
+        final filecopyConfig = frameworkService.getFileCopyConfigurationForType(defaultFileCopy, projectProps)
+        final resourceConfig = frameworkService.listResourceModelConfigurations(projectProps)
+
+        // Reset Password Fields in Session
+        resourcesPasswordFieldsService.reset()
+        execPasswordFieldsService.reset()
+        fcopyPasswordFieldsService.reset()
+        // Store Password Fields values in Session
+        // Replace the Password Fields in configs with hashes
+        resourcesPasswordFieldsService.track(resourceConfig,true, *resourceDescs)
+        execPasswordFieldsService.track([[type:defaultNodeExec,props:nodeConfig]], true, *execDesc)
+        fcopyPasswordFieldsService.track([[type:defaultFileCopy,props:filecopyConfig]],true, *filecopyDesc)
+        // resourceConfig CRUD rely on this session mapping
+        // saveProject will replace the password fields on change
+        //replace password values with hashed values
+        frameworkService.addProjectFileCopierPropertiesForType(defaultFileCopy, projectProps, filecopyConfig)
+        frameworkService.addProjectNodeExecutorPropertiesForType(defaultNodeExec, projectProps, nodeConfig)
+        def count = 1
+        final service = framework.getResourceModelSourceService()
+        resourceConfig.each {resconfig ->
+            def type = resconfig.type
+
+            final String resourceConfigPrefix = FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + '.' + count + '.config.'
+            final String resourceType = FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + '.' + count + '.type'
+            count++
+
+            projectProps[resourceType] = type
+            resconfig.props.each{k,v->
+                projectProps[resourceConfigPrefix+k]=v
+            }
+        }
+
+
+//        def baos=new ByteArrayOutputStream()
+//        projectProps.storeToXML(baos,"edit below",'UTF-8')
+//        def projectPropertiesText = new String(baos.toByteArray(),"UTF-8")//.
+        def sw=new StringWriter()
+        projectProps.store(sw,"edit below")
+        def projectPropertiesText = sw.toString().
+                split(Pattern.quote(System.getProperty("line.separator"))).
+                sort().
+                join(System.getProperty("line.separator"))
+        [
+            project: project,
+            projectDescription:fwkProject.getProjectProperties().get("project.description"),
+            resourceModelConfigDescriptions: resourceDescs,
+            configs: resourceConfig,
+            nodeexecconfig:nodeConfig,
+            fcopyconfig:filecopyConfig,
+            defaultNodeExec: defaultNodeExec,
+            defaultFileCopy: defaultFileCopy,
+            nodeExecDescriptions: execDesc,
+            fileCopyDescriptions: filecopyDesc,
+            projectPropertiesText:projectPropertiesText,
             prefixKey: 'plugin'
         ]
     }

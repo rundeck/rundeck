@@ -827,6 +827,10 @@ class FrameworkService implements ApplicationContextAware {
         fproject.projectNodes.listResourceModelConfigurations()
     }
 
+    public def listResourceModelConfigurations(Properties properties) {
+        ProjectNodeSupport.listResourceModelConfigurations(properties)
+    }
+
     /**
      * Return all the descriptions for the Rundeck Framework
      * @return tuple(resourceConfigs, nodeExec
@@ -843,14 +847,23 @@ class FrameworkService implements ApplicationContextAware {
         final fproject = getFrameworkProject(project)
         fproject.hasProperty(NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY) ? fproject.getProperty(NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY) : null
     }
+    public getDefaultNodeExecutorService(Properties properties) {
+        properties.getProperty(NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY)
+    }
 
     public getDefaultFileCopyService(String project) {
         final fproject = getFrameworkProject(project)
         fproject.hasProperty(FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY) ? fproject.getProperty(FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY) : null
     }
+    public getDefaultFileCopyService(Properties properties) {
+        properties.getProperty(FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY)
+    }
 
     public Map<String, String> getFileCopyConfigurationForType(String serviceType, String project) {
         getServicePropertiesForType(serviceType, getFileCopierService(), project)
+    }
+    public Map<String, String> getFileCopyConfigurationForType(String serviceType, Properties properties) {
+        getServicePropertiesMapForType(serviceType, getFileCopierService(), properties)
     }
 
     /**
@@ -864,6 +877,16 @@ class FrameworkService implements ApplicationContextAware {
     }
 
     /**
+     * Return a map of property name to value
+     * @param serviceType
+     * @param project
+     * @return
+     */
+    public Map<String, String> getNodeExecConfigurationForType(String serviceType, Properties properties) {
+        getServicePropertiesMapForType(serviceType, getNodeExecutorService(), properties)
+    }
+
+    /**
      * Return a map of property name to value for the configured project plugin
      * @param serviceType
      * @param service
@@ -871,11 +894,21 @@ class FrameworkService implements ApplicationContextAware {
      * @return
      */
     private Map<String,String> getServicePropertiesForType(String serviceType, PluggableProviderRegistryService service, String project) {
+        return getServicePropertiesMapForType(serviceType,service,getFrameworkProject(project).getProperties())
+    }
+    /**
+     * Return a map of property name to value for the configured project plugin
+     * @param serviceType
+     * @param service
+     * @param project
+     * @return
+     */
+    public Map<String,String> getServicePropertiesMapForType(String serviceType, PluggableProviderRegistryService service, Map props) {
         def properties = [:]
         if (serviceType) {
             try {
                 final desc = service.providerOfType(serviceType).description
-                properties = Validator.demapProperties(getFrameworkProject(project).getProperties(), desc)
+                properties = Validator.demapProperties(props, desc)
             } catch (ExecutionServiceException e) {
                 log.error(e.message)
             }
@@ -884,7 +917,7 @@ class FrameworkService implements ApplicationContextAware {
     }
 
 
-    private ProviderService getFileCopierService() {
+    public ProviderService getFileCopierService() {
         getRundeckFramework().getFileCopierService()
     }
 
@@ -899,7 +932,18 @@ class FrameworkService implements ApplicationContextAware {
     public void addProjectFileCopierPropertiesForType(String type, Properties projectProps, config, Set removePrefixes = null) {
         addProjectServicePropertiesForType(type, getFileCopierService(), projectProps, FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY, config, removePrefixes)
     }
+    public void demapFileCopierProperties(String type, Properties projectProps, config, Set removePrefixes = null) {
+        demapPropertiesForType(type, getFileCopierService(), projectProps, FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY, config, removePrefixes)
+    }
 
+    private void demapPropertiesForType(String type, ProviderService service, Properties projProps, String defaultProviderProp, config, Set removePrefixes) {
+        final executor = service.providerOfType(type)
+        final Description desc = executor.description
+
+        projProps[defaultProviderProp] = type
+        mapProperties(config, desc, projProps)
+        accumulatePrefixesToRemoveFrom(desc, removePrefixes)
+    }
     private void addProjectServicePropertiesForType(String type, ProviderService service, Properties projProps, String defaultProviderProp, config, Set removePrefixes) {
         final executor = service.providerOfType(type)
         final Description desc = executor.description
