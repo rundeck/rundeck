@@ -66,6 +66,7 @@ service iptables stop
 echo "admin=${API_KEY}" >> /etc/rundeck/keys.properties
 echo "rundeck.tokens.file=/etc/rundeck/keys.properties" >> /etc/rundeck/framework.properties
 chown rundeck:rundeck /etc/rundeck/keys.properties
+chown -R rundeck:rundeck /var/rundeck/projects
 
 # Start up rundeck
 mkdir -p /var/log/vagrant
