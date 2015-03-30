@@ -411,7 +411,6 @@ public class Setup implements CLIToolLogger {
                 baseDir = Constants.getSystemBaseDir();
             }
 
-            System.out.println("Using rdeck.base: " + Preferences.forwardSlashPath(baseDir));
             properties.setProperty("rdeck.base", Preferences.forwardSlashPath(baseDir));
             properties.setProperty("framework.server.hostname", serverHostname);
             properties.setProperty("framework.server.name", serverName);

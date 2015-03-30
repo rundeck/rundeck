@@ -149,6 +149,9 @@ public abstract class AbstractBaseTest extends TestCase {
 
         baseDir = RDECK_BASE;
         projectsBase = PROJECTS_BASE;
+        if(new File(baseDir).exists()){
+            FileUtils.deleteDir(new File(baseDir));
+        }
         File projectsDir = new File(projectsBase);
         FileUtils.deleteDir(projectsDir);
         projectsDir.mkdirs();
@@ -173,7 +176,6 @@ public abstract class AbstractBaseTest extends TestCase {
 
 
         try {
-            System.out.println("Running Setup");
             Setup setup = new Setup();
             setup.execute((String[]) argsList.toArray(new String[argsList.size()]));
         } catch (Exception e) {
