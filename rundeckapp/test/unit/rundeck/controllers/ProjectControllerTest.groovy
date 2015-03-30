@@ -1041,7 +1041,7 @@ class ProjectControllerTest {
             }
             getFrameworkProject{name->
                 assertEquals('test1',name)
-                [name:name,propertyFile:[text:textformat]]
+                [name:name,propertyFile:[text:textformat],getProjectProperties:{->props}]
             }
             loadProjectProperties{proj->
                 props
@@ -1332,7 +1332,7 @@ class ProjectControllerTest {
         response.format='text'
         controller.apiProjectConfigGet()
         assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals "text format for properties",response.text
+        assertTrue response.text.startsWith("#\n#")
     }
 
     @Test
