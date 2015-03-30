@@ -38,10 +38,7 @@ import org.apache.commons.cli.CommandLine;
 
 import java.io.File;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
+import java.util.*;
 
 
 public class TestJobsTool extends AbstractBaseTest {
@@ -154,6 +151,14 @@ public class TestJobsTool extends AbstractBaseTest {
             this.purgeJobsRequest=jobIds;
             return purgeJobsResult;
         }
+
+        @Override
+        public void createProject(final String project, final Properties projectProperties)
+                throws CentralDispatcherException
+        {
+
+            fail("unexpected call to createProject");
+        }
     }
 
     public void testRun() throws Exception {
@@ -164,7 +169,7 @@ public class TestJobsTool extends AbstractBaseTest {
 
             final JobsTool tool = new JobsTool(framework);
             final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-            framework.setCentralDispatcherMgr(centralDispatcher1);
+            tool.setCentralDispatcher(centralDispatcher1);
 
             try {
                 tool.run(new String[]{"list","-p","test"});
@@ -179,7 +184,7 @@ public class TestJobsTool extends AbstractBaseTest {
 
             final JobsTool tool = new JobsTool(framework);
             final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-            framework.setCentralDispatcherMgr(centralDispatcher1);
+            tool.setCentralDispatcher(centralDispatcher1);
 
             final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
             centralDispatcher1.listJobsResult = jobs;
@@ -197,7 +202,7 @@ public class TestJobsTool extends AbstractBaseTest {
 
             final JobsTool tool = new JobsTool(framework);
             final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-            framework.setCentralDispatcherMgr(centralDispatcher1);
+            tool.setCentralDispatcher(centralDispatcher1);
 
             final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
             centralDispatcher1.listJobsResult = jobs;
@@ -215,7 +220,7 @@ public class TestJobsTool extends AbstractBaseTest {
 
             final JobsTool tool = new JobsTool(framework);
             final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-            framework.setCentralDispatcherMgr(centralDispatcher1);
+            tool.setCentralDispatcher(centralDispatcher1);
             File t = File.createTempFile("TestJobsTool", "xml");
             t.deleteOnExit();
 
@@ -235,7 +240,7 @@ public class TestJobsTool extends AbstractBaseTest {
 
             final JobsTool tool = new JobsTool(framework);
             final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-            framework.setCentralDispatcherMgr(centralDispatcher1);
+            tool.setCentralDispatcher(centralDispatcher1);
             File t = File.createTempFile("TestJobsTool", "xml");
             t.deleteOnExit();
 
@@ -255,7 +260,7 @@ public class TestJobsTool extends AbstractBaseTest {
 
             final JobsTool tool = new JobsTool(framework);
             final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-            framework.setCentralDispatcherMgr(centralDispatcher1);
+            tool.setCentralDispatcher(centralDispatcher1);
 
             final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
             centralDispatcher1.listJobsResult = jobs;
@@ -273,7 +278,7 @@ public class TestJobsTool extends AbstractBaseTest {
 
             final JobsTool tool = new JobsTool(framework);
             final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-            framework.setCentralDispatcherMgr(centralDispatcher1);
+            tool.setCentralDispatcher(centralDispatcher1);
 
             final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
             centralDispatcher1.listJobsResult = jobs;
@@ -291,7 +296,7 @@ public class TestJobsTool extends AbstractBaseTest {
 
             final JobsTool tool = new JobsTool(framework);
             final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-            framework.setCentralDispatcherMgr(centralDispatcher1);
+            tool.setCentralDispatcher(centralDispatcher1);
 
             final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
             centralDispatcher1.listJobsResult = jobs;
@@ -309,7 +314,7 @@ public class TestJobsTool extends AbstractBaseTest {
 
             final JobsTool tool = new JobsTool(framework);
             final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-            framework.setCentralDispatcherMgr(centralDispatcher1);
+            tool.setCentralDispatcher(centralDispatcher1);
 
             final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
             centralDispatcher1.listJobsResult = jobs;
@@ -327,7 +332,7 @@ public class TestJobsTool extends AbstractBaseTest {
 
             final JobsTool tool = new JobsTool(framework);
             final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-            framework.setCentralDispatcherMgr(centralDispatcher1);
+            tool.setCentralDispatcher(centralDispatcher1);
 
             final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
             centralDispatcher1.listJobsResult = jobs;
@@ -346,7 +351,7 @@ public class TestJobsTool extends AbstractBaseTest {
 
             final JobsTool tool = new JobsTool(framework);
             final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-            framework.setCentralDispatcherMgr(centralDispatcher1);
+            tool.setCentralDispatcher(centralDispatcher1);
 
             final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
             centralDispatcher1.listJobsResult = jobs;
@@ -367,7 +372,7 @@ public class TestJobsTool extends AbstractBaseTest {
 
         final JobsTool tool = new JobsTool(framework);
         final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-        framework.setCentralDispatcherMgr(centralDispatcher1);
+        tool.setCentralDispatcher(centralDispatcher1);
 
         final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
         centralDispatcher1.loadJobsResult = new ArrayList<IStoredJobLoadResult>();
@@ -389,7 +394,7 @@ public class TestJobsTool extends AbstractBaseTest {
 
         final JobsTool tool = new JobsTool(framework);
         final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-        framework.setCentralDispatcherMgr(centralDispatcher1);
+        tool.setCentralDispatcher(centralDispatcher1);
 
         final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
         centralDispatcher1.loadJobsResult = new ArrayList<IStoredJobLoadResult>();
@@ -411,7 +416,7 @@ public class TestJobsTool extends AbstractBaseTest {
 
         final JobsTool tool = new JobsTool(framework);
         final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-        framework.setCentralDispatcherMgr(centralDispatcher1);
+        tool.setCentralDispatcher(centralDispatcher1);
 
         final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
         centralDispatcher1.loadJobsResult = new ArrayList<IStoredJobLoadResult>();
@@ -434,7 +439,7 @@ public class TestJobsTool extends AbstractBaseTest {
 
         final JobsTool tool = new JobsTool(framework);
         final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-        framework.setCentralDispatcherMgr(centralDispatcher1);
+        tool.setCentralDispatcher(centralDispatcher1);
 
         final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
         centralDispatcher1.loadJobsResult = new ArrayList<IStoredJobLoadResult>();
@@ -459,7 +464,7 @@ public class TestJobsTool extends AbstractBaseTest {
 
             final JobsTool tool = new JobsTool(framework);
             final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-            framework.setCentralDispatcherMgr(centralDispatcher1);
+            tool.setCentralDispatcher(centralDispatcher1);
 
             final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
             jobs.add(StoredJobImpl.create("3", "test3", "blah", "blah", "blah", "test"));
@@ -488,7 +493,7 @@ public class TestJobsTool extends AbstractBaseTest {
 
             final JobsTool tool = new JobsTool(framework);
             final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-            framework.setCentralDispatcherMgr(centralDispatcher1);
+            tool.setCentralDispatcher(centralDispatcher1);
 
             final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
             centralDispatcher1.listJobsResult = jobs;
@@ -514,7 +519,7 @@ public class TestJobsTool extends AbstractBaseTest {
 
             final JobsTool tool = new JobsTool(framework);
             final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-            framework.setCentralDispatcherMgr(centralDispatcher1);
+            tool.setCentralDispatcher(centralDispatcher1);
 
             final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
             jobs.add(StoredJobImpl.create("3", "test3", "blah", "blah", "blah", "test"));
@@ -545,7 +550,7 @@ public class TestJobsTool extends AbstractBaseTest {
 
             final JobsTool tool = new JobsTool(framework);
             final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
-            framework.setCentralDispatcherMgr(centralDispatcher1);
+            tool.setCentralDispatcher(centralDispatcher1);
 
             final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
             jobs.add(StoredJobImpl.create("3", "test3", "blah", "blah", "blah", "test"));

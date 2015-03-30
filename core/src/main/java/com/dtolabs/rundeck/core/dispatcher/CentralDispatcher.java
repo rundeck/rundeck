@@ -27,7 +27,8 @@ package com.dtolabs.rundeck.core.dispatcher;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
+import java.util.Properties;
+import java.util.Set;
 
 
 /**
@@ -177,4 +178,17 @@ public interface CentralDispatcher {
      * @throws com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException on error
      */
     ExecutionDetail getExecution(String execId) throws CentralDispatcherException;
+
+    /**
+     * Create a project
+     * @param project project name
+     * @param projectProperties properties
+     * @throws CentralDispatcherException on error
+     */
+    void createProject(String project, Properties projectProperties) throws CentralDispatcherException;
+    /**
+     * List the project names
+     * @throws CentralDispatcherException on error
+     */
+//    Set<String> listProjects() throws CentralDispatcherException;
 }

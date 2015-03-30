@@ -216,11 +216,13 @@ class FrameworkService implements ApplicationContextAware {
      * @return [success:boolean, error: String]
      */
     def removeFrameworkProjectConfigProperties(String project,Set<String> toremove){
-        def projProps = loadProjectProperties(getFrameworkProject(project))
+        def projProps = new HashMap(loadProjectProperties(getFrameworkProject(project)))
         for (String s: toremove) {
             projProps.remove(s)
         }
-        return setFrameworkProjectConfig(project,projProps)
+        def props=new Properties()
+        props.putAll(projProps)
+        return setFrameworkProjectConfig(project,props)
     }
     /**
      * Return a map of the project's readme and motd content
@@ -230,19 +232,20 @@ class FrameworkService implements ApplicationContextAware {
      */
     def getFrameworkProjectReadmeContents(String project){
         def project1 = getFrameworkProject(project)
-        def readme = new File(project1.baseDir, "readme.md")
-        def motd = new File(project1.baseDir, "motd.md")
-        def result=[:]
-        if (motd.exists() && motd.isFile()) {
-            //load file and apply markdown
-            result.motd= motd.text
-            result.motdHTML= result.motd?.decodeMarkdown()
+        def result = [:]
+        if(project1.existsFileResource("readme.md")){
+            def baos=new ByteArrayOutputStream()
+            def len=project1.loadFileResource("readme.md",baos)
+            result.readme = baos.toString()
+            result.readmeHTML = result.readme?.decodeMarkdown()
         }
-        if (readme.exists() && readme.isFile()) {
-            //load file and apply markdown
-            result.readme= readme.text
-            result.readmeHTML= result.readme?.decodeMarkdown()
+        if(project1.existsFileResource("motd.md")){
+            def baos=new ByteArrayOutputStream()
+            def len=project1.loadFileResource("motd.md",baos)
+            result.motd = baos.toString()
+            result.motdHTML = result.motd?.decodeMarkdown()
         }
+
         return result
     }
 
@@ -254,7 +257,7 @@ class FrameworkService implements ApplicationContextAware {
     def getFrameworkPropertyResolver(String projectName=null, Map instanceConfiguration=null) {
         return PropertyResolverFactory.createResolver(
                 instanceConfiguration ? PropertyResolverFactory.instanceRetriever(instanceConfiguration) : null,
-                null != projectName ? getFrameworkProject(projectName).getPropertyRetriever() : null,
+                null != projectName ? PropertyResolverFactory.instanceRetriever(getFrameworkProject(projectName).getProperties()) : null,
                 rundeckFramework.getPropertyRetriever()
         )
     }
@@ -273,7 +276,11 @@ class FrameworkService implements ApplicationContextAware {
      */
     def INodeSet filterNodeSet( NodesSelector selector, String project) {
         metricService.withTimer(this.class.name,'filterNodeSet') {
-            rundeckFramework.filterNodeSet(selector, project, null)
+            def unfiltered = rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project).getNodeSet();
+            if(0==unfiltered.getNodeNames().size()) {
+                log.warn("Empty node list");
+            }
+            NodeFilter.filterNodes(selector, unfiltered);
         }
     }
 
@@ -811,23 +818,17 @@ class FrameworkService implements ApplicationContextAware {
      * @param pject the project
      * @return loaded properties
      */
-    def Map loadProjectProperties(FrameworkProject pject) {
-        Properties props = new Properties()
-        try {
-            final FileInputStream fileInputStream = new FileInputStream(pject.getPropertyFile());
-            try {
-                props.load(fileInputStream)
-            } finally {
-                fileInputStream.close()
-            }
-        } catch (IOException e) {
-        }
-        return props
+    def Map loadProjectProperties(IRundeckProject pject) {
+        pject.getProjectProperties()
     }
 
     public def listResourceModelConfigurations(String project) {
         def fproject = getFrameworkProject(project)
-        fproject.listResourceModelConfigurations()
+        fproject.projectNodes.listResourceModelConfigurations()
+    }
+
+    public def listResourceModelConfigurations(Properties properties) {
+        ProjectNodeSupport.listResourceModelConfigurations(properties)
     }
 
     /**
@@ -846,14 +847,23 @@ class FrameworkService implements ApplicationContextAware {
         final fproject = getFrameworkProject(project)
         fproject.hasProperty(NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY) ? fproject.getProperty(NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY) : null
     }
+    public getDefaultNodeExecutorService(Properties properties) {
+        properties.getProperty(NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY)
+    }
 
     public getDefaultFileCopyService(String project) {
         final fproject = getFrameworkProject(project)
         fproject.hasProperty(FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY) ? fproject.getProperty(FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY) : null
     }
+    public getDefaultFileCopyService(Properties properties) {
+        properties.getProperty(FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY)
+    }
 
     public Map<String, String> getFileCopyConfigurationForType(String serviceType, String project) {
         getServicePropertiesForType(serviceType, getFileCopierService(), project)
+    }
+    public Map<String, String> getFileCopyConfigurationForType(String serviceType, Properties properties) {
+        getServicePropertiesMapForType(serviceType, getFileCopierService(), properties)
     }
 
     /**
@@ -867,6 +877,16 @@ class FrameworkService implements ApplicationContextAware {
     }
 
     /**
+     * Return a map of property name to value
+     * @param serviceType
+     * @param project
+     * @return
+     */
+    public Map<String, String> getNodeExecConfigurationForType(String serviceType, Properties properties) {
+        getServicePropertiesMapForType(serviceType, getNodeExecutorService(), properties)
+    }
+
+    /**
      * Return a map of property name to value for the configured project plugin
      * @param serviceType
      * @param service
@@ -874,11 +894,21 @@ class FrameworkService implements ApplicationContextAware {
      * @return
      */
     private Map<String,String> getServicePropertiesForType(String serviceType, PluggableProviderRegistryService service, String project) {
+        return getServicePropertiesMapForType(serviceType,service,getFrameworkProject(project).getProperties())
+    }
+    /**
+     * Return a map of property name to value for the configured project plugin
+     * @param serviceType
+     * @param service
+     * @param project
+     * @return
+     */
+    public Map<String,String> getServicePropertiesMapForType(String serviceType, PluggableProviderRegistryService service, Map props) {
         def properties = [:]
         if (serviceType) {
             try {
                 final desc = service.providerOfType(serviceType).description
-                properties = Validator.demapProperties(getFrameworkProject(project).getProperties(), desc)
+                properties = Validator.demapProperties(props, desc)
             } catch (ExecutionServiceException e) {
                 log.error(e.message)
             }
@@ -887,7 +917,7 @@ class FrameworkService implements ApplicationContextAware {
     }
 
 
-    private ProviderService getFileCopierService() {
+    public ProviderService getFileCopierService() {
         getRundeckFramework().getFileCopierService()
     }
 
@@ -902,7 +932,18 @@ class FrameworkService implements ApplicationContextAware {
     public void addProjectFileCopierPropertiesForType(String type, Properties projectProps, config, Set removePrefixes = null) {
         addProjectServicePropertiesForType(type, getFileCopierService(), projectProps, FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY, config, removePrefixes)
     }
+    public void demapFileCopierProperties(String type, Properties projectProps, config, Set removePrefixes = null) {
+        demapPropertiesForType(type, getFileCopierService(), projectProps, FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY, config, removePrefixes)
+    }
 
+    private void demapPropertiesForType(String type, ProviderService service, Properties projProps, String defaultProviderProp, config, Set removePrefixes) {
+        final executor = service.providerOfType(type)
+        final Description desc = executor.description
+
+        projProps[defaultProviderProp] = type
+        mapProperties(config, desc, projProps)
+        accumulatePrefixesToRemoveFrom(desc, removePrefixes)
+    }
     private void addProjectServicePropertiesForType(String type, ProviderService service, Properties projProps, String defaultProviderProp, config, Set removePrefixes) {
         final executor = service.providerOfType(type)
         final Description desc = executor.description

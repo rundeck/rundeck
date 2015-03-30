@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.storage;
 
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
+import org.apache.log4j.Logger;
 import org.rundeck.storage.api.HasInputStream;
 import org.rundeck.storage.api.Path;
 import org.rundeck.storage.api.StorageException;
@@ -12,6 +13,7 @@ import java.util.HashMap;
  * StorageConverter}
  */
 public class StorageConverterPluginAdapter implements StorageConverter {
+    static final Logger logger = Logger.getLogger(StorageConverterPluginAdapter.class);
     StorageConverterPlugin plugin;
     String providerName;
 
@@ -55,6 +57,10 @@ public class StorageConverterPluginAdapter implements StorageConverter {
             default:
                 throw new IllegalStateException();
         }
+        logger.debug(
+                "Plugin(" + providerName + "):" + op + ":" + path +
+                ";" + (null == result ? "_" : "+") + ":" + resourceMetaBuilder.getResourceMeta()
+        );
         //construct the new data
         return StorageUtil.withStream(null == result ? resourceMeta : result, resourceMetaBuilder.getResourceMeta());
     }

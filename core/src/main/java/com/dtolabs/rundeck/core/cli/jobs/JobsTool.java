@@ -26,6 +26,8 @@ package com.dtolabs.rundeck.core.cli.jobs;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.*;
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.FrameworkFactory;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -363,7 +365,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
     /**
      * Reference to the Framework instance
      */
-    private final Framework framework;
+    private final IFramework framework;
     SingleProjectResolver internalResolver;
 
     /**
@@ -400,7 +402,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
      * Create QueueTool with default Framework instances located by the system rdeck.base property.
      */
     public JobsTool() {
-        this(Framework.getInstanceWithoutProjectsDir(Constants.getSystemBaseDir()), new Log4JCLIToolLogger(log4j));
+        this(FrameworkFactory.createForFilesystem(Constants.getSystemBaseDir()), new Log4JCLIToolLogger(log4j));
     }
 
     protected boolean isUseHelpOption() {
@@ -413,7 +415,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
      * @param logger the logger
      */
     public JobsTool(final CLIToolLogger logger) {
-        this(Framework.getInstanceWithoutProjectsDir(Constants.getSystemBaseDir()), logger);
+        this(FrameworkFactory.createForFilesystem(Constants.getSystemBaseDir()), logger);
     }
 
     /**
@@ -431,8 +433,9 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
      * @param framework the framework
      * @param logger    the logger
      */
-    public JobsTool(final Framework framework, final CLIToolLogger logger) {
+    public JobsTool(final IFramework framework, final CLIToolLogger logger) {
         this.framework = framework;
+        setCentralDispatcher(FrameworkFactory.createDispatcher(framework.getPropertyLookup()));
         internalResolver = new FrameworkSingleProjectResolver(framework);
         this.clilogger = logger;
         if (null == clilogger) {
@@ -676,7 +679,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
     private void loadAction() throws JobsToolException {
         final Collection<IStoredJobLoadResult> result;
         try {
-            result = framework.getCentralDispatcherMgr().loadJobs(this, argFile,format);
+            result = getCentralDispatcher().loadJobs(this, argFile,format);
         } catch (CentralDispatcherException e) {
             final String msg = "Failed request to load jobs: " + e.getMessage();
             throw new JobsToolException(msg, e);
@@ -740,7 +743,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
             final FileOutputStream output = null != argFile ? new FileOutputStream(
                 argFile) : null;
             try {
-                result = framework.getCentralDispatcherMgr().listStoredJobs(this, output, format);
+                result = getCentralDispatcher().listStoredJobs(this, output, format);
             } finally {
                 if(null!=output){
                     output.close();
@@ -784,7 +787,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
         }
         try {
             try {
-                result = framework.getCentralDispatcherMgr().listStoredJobs(this, output, format);
+                result = getCentralDispatcher().listStoredJobs(this, output, format);
             } finally {
                 if (null != output) {
                     output.close();
@@ -815,7 +818,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
         }
 
         try{
-            deleteresult = framework.getCentralDispatcherMgr().deleteStoredJobs(jobIds);
+            deleteresult = getCentralDispatcher().deleteStoredJobs(jobIds);
         } catch (CentralDispatcherException e) {
             final String msg = "Failed request to delete jobs: " + e.getMessage();
             throw new JobsToolException(msg, e);

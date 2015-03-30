@@ -48,21 +48,23 @@ public class ServerService {
     /**
      * Create ServerService using the Framework to provdie connection parameters
      *
-     * @param framework Framework to provide connection parameters
+     * @param url connection url
+     * @param username connection username
+     * @param password connection password
      */
-    public ServerService(final Framework framework) {
+    public ServerService(final String url, final String username, final String password) {
         this(new WebConnectionParameters() {
 
             public String getPassword() {
-                return framework.getProperty("framework.server.password");
+                return password;
             }
 
             public String getUsername() {
-                return framework.getProperty("framework.server.username");
+                return username;
             }
 
             public String getServerUrl() {
-                return framework.getProperty("framework.server.url");
+                return url;
             }
         });
 
@@ -191,6 +193,7 @@ public class ServerService {
                 queryParams,
                 formData);
         }
+        hc.setRequestHeader("X-Rundeck-API-XML-Response-Wrapper","true");
         if (null != method) {
             hc.setMethodType(method);
         }

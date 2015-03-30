@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
@@ -274,6 +275,11 @@ class FrameworkControllerTest {
         fwk.demand.getNodeExecConfigurationForType { -> null }
         fwk.demand.getFileCopyConfigurationForType { -> null }
 
+        def proj = mockFor(IRundeckProject,true)
+        proj.demand.getProjectProperties{-> [:]}
+
+        fwk.demand.getFrameworkProject { name-> proj.createMock() }
+
         controller.frameworkService = fwk.createMock()
 
         def resourcePFmck = mockFor(PasswordFieldsService)
@@ -397,18 +403,22 @@ class FrameworkControllerTest {
         def execPFmck = mockFor(PasswordFieldsService)
         def fcopyPFmck = mockFor(PasswordFieldsService)
 
-        resourcePFmck.demand.adjust{a -> return null}
-        resourcePFmck.demand.untrack{a, b -> return null}
-        execPFmck.demand.untrack{a, b -> return null}
-        fcopyPFmck.demand.untrack{a, b -> return null}
+        controller.resourcesPasswordFieldsService = mockWith(PasswordFieldsService){
+            adjust{a -> return null}
+            untrack{a, b -> return null}
+            reset{ -> }
+        }
+        controller.execPasswordFieldsService = mockWith(PasswordFieldsService){
+            untrack{a, b -> return null}
+            reset{ -> }
+        }
+        controller.fcopyPasswordFieldsService = mockWith(PasswordFieldsService){
+            reset{ -> }
+        }
 
-        controller.resourcesPasswordFieldsService = resourcePFmck.createMock()
-        controller.execPasswordFieldsService = execPFmck.createMock()
-        controller.fcopyPasswordFieldsService = fcopyPFmck.createMock()
-
-        def us = mockFor(UserService)
-        us.demand.storeFilterPref { -> true }
-        controller.userService = us.createMock()
+        controller.userService = mockWith(UserService){
+            storeFilterPref { -> true }
+        }
 
         request.method = "POST"
 

@@ -7,7 +7,7 @@ import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.FrameworkProject
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
@@ -520,7 +520,7 @@ class MenuController extends ControllerBase{
 
             def project= params.project
             def fproject = frameworkService.getFrameworkProject(project)
-            def configs = fproject.listResourceModelConfigurations()
+            def configs = fproject.projectNodes.listResourceModelConfigurations()
 
             final service = framework.getResourceModelSourceService()
             final descriptions = service.listDescriptions()
@@ -563,6 +563,8 @@ class MenuController extends ControllerBase{
                 defaultFileCopy: defaultFileCopy,
                 nodeExecDescriptions: nodeexecdescriptions,
                 fileCopyDescriptions: filecopydescs,
+                hasreadme:fproject.existsFileResource("readme.md"),
+                hasmotd:fproject.existsFileResource("motd.md"),
             ]
     }
     def systemConfig(){
@@ -802,7 +804,7 @@ class MenuController extends ControllerBase{
         n.add(Calendar.DAY_OF_YEAR, -1)
         Date today = n.getTime()
         def summary=[:]
-        fprojects.each { FrameworkProject project->
+        fprojects.each { IRundeckProject project->
             summary[project.name]=[
                     jobCount: ScheduledExecution.countByProject(project.name),
                     execCount: Execution.countByProjectAndDateStartedGreaterThan(project.name,today),

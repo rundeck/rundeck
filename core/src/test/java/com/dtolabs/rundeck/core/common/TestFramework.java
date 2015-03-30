@@ -85,7 +85,6 @@ public class TestFramework extends AbstractBaseTest {
     public void testServices() {
         final Framework fw = Framework.getInstance(getBaseDir(), getFrameworkProjectsBase());
         //test default service implementations
-        assertNotNull(fw.services);
         assertNotNull(fw.getService(ServiceNameConstants.WorkflowStep));
         assertNotNull(fw.getService(ServiceNameConstants.WorkflowNodeStep));
         assertNotNull(fw.getService(ServiceNameConstants.NodeExecutor));
@@ -98,7 +97,6 @@ public class TestFramework extends AbstractBaseTest {
     public void testSetService() {
         final Framework fw = Framework.getInstance(getBaseDir(), getFrameworkProjectsBase());
         //test removing services
-        assertNotNull(fw.services);
         final FrameworkSupportService commandInterpreter = fw.getService(ServiceNameConstants.WorkflowNodeStep);
         assertNotNull(commandInterpreter);
         fw.setService(ServiceNameConstants.WorkflowNodeStep, null);
@@ -112,7 +110,7 @@ public class TestFramework extends AbstractBaseTest {
 
 
     public void testIsLocal() {
-        final Framework framework = Framework.getInstanceWithoutProjectsDir(getBaseDir());
+        final Framework framework = Framework.getInstance(getBaseDir(),null);
         assertTrue("framework node self-comparison should be true",
                 framework.isLocalNode(framework.getNodeDesc()));
 

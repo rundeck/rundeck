@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.utils.ResolverUtil;
@@ -24,7 +25,7 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
     final INodeEntry node;
     final Framework framework;
     final ExecutionContext context;
-    FrameworkProject frameworkProject;
+    IRundeckProject frameworkProject;
 
     NodeSSHConnectionInfo(final INodeEntry node, final Framework framework, final ExecutionContext context) {
 
@@ -268,7 +269,7 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
         return config;
     }
 
-    public static Map<String, String> sshConfigFromProject(FrameworkProject frameworkProject) {
+    public static Map<String, String> sshConfigFromProject(IRundeckProject frameworkProject) {
         HashMap<String, String> config = new HashMap<String, String>();
         for (Object o : frameworkProject.getProperties().keySet()) {
             String key = (String) o;

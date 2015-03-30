@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.dtolabs.rundeck.core.common.*;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -39,12 +40,6 @@ import org.junit.Assert;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
-import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.common.INodeSet;
-import com.dtolabs.rundeck.core.common.NodesSelector;
-import com.dtolabs.rundeck.core.common.SelectorUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
@@ -89,16 +84,13 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
         super.setUp();
         testFramework = getFrameworkInstance();
         testnode=testFramework.getFrameworkNodeName();
-        final FrameworkProject frameworkProject = testFramework.getFrameworkProjectMgr().createFrameworkProject(
-            TEST_PROJECT);
-        File resourcesfile = new File(frameworkProject.getNodesResourceFilePath());
-        //copy test nodes to resources file
-        try {
-            FileUtils.copyFileStreams(new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
-                resourcesfile);
-        } catch (IOException e) {
-            throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
-        }
+        final IRundeckProject frameworkProject = testFramework.getFrameworkProjectMgr().createFrameworkProject(
+            TEST_PROJECT,
+            generateProjectResourcesFile(
+                    new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml")
+            )
+        );
+
     }
 
     protected void tearDown() throws Exception {
@@ -285,7 +277,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
 
     public void testExecuteWorkflow() throws Exception {
         {
-            final FrameworkProject frameworkProject = testFramework.getFrameworkProjectMgr().getFrameworkProject(
+            final IRundeckProject frameworkProject = testFramework.getFrameworkProjectMgr().getFrameworkProject(
                 TEST_PROJECT);
             final INodeSet nodes = frameworkProject.getNodeSet();
             assertNotNull(nodes);
@@ -307,7 +299,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
-                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
+                    .nodes(testFramework.getFrameworkProjectMgr().getFrameworkProject(TEST_PROJECT).getNodeSet())
                     .build();
 
             //setup testInterpreter for all command types
@@ -347,7 +339,8 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset.nodeSelectorWithDefaultAll())
                     .executionListener(new testListener())
                     .framework(testFramework)
-                    .nodes(testFramework.filterNodeSet(nodeset.nodeSelectorWithDefaultAll(), TEST_PROJECT, null))
+                    .nodes(NodeFilter.filterNodes(nodeset.nodeSelectorWithDefaultAll(),
+                                                  testFramework.getFrameworkProjectMgr().getFrameworkProject(TEST_PROJECT).getNodeSet()))
                     .build();
 
             //setup testInterpreter for all command types
@@ -399,7 +392,10 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
-                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
+                    .nodes(NodeFilter.filterNodes(
+                                   nodeset,
+                                   testFramework.getFrameworkProjectMgr().getFrameworkProject(TEST_PROJECT).getNodeSet()
+                           ))
                     .build();
 
             //setup testInterpreter for all command types
@@ -467,7 +463,10 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
-                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
+                    .nodes(NodeFilter.filterNodes(
+                                   nodeset,
+                                   testFramework.getFrameworkProjectMgr().getFrameworkProject(TEST_PROJECT).getNodeSet()
+                           ))
                     .build();
 
             //setup testInterpreter for all command types
@@ -565,7 +564,10 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
-                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
+                    .nodes(NodeFilter.filterNodes(
+                                   nodeset,
+                                   testFramework.getFrameworkProjectMgr().getFrameworkProject(TEST_PROJECT).getNodeSet()
+                           ))
                     .build();
 
             //setup testInterpreter for all command types
@@ -708,7 +710,10 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
-                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
+                    .nodes(NodeFilter.filterNodes(
+                                   nodeset,
+                                   testFramework.getFrameworkProjectMgr().getFrameworkProject(TEST_PROJECT).getNodeSet()
+                           ))
                     .build();
 
             //setup testInterpreter for all command types
@@ -858,7 +863,10 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
-                    .nodes(testFramework.filterNodeSet(nodeset,TEST_PROJECT,null))
+                    .nodes(NodeFilter.filterNodes(
+                                   nodeset,
+                                   testFramework.getFrameworkProjectMgr().getFrameworkProject(TEST_PROJECT).getNodeSet()
+                           ))
                     .build();
 
             //setup testInterpreter for all command types
@@ -1018,7 +1026,10 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
-                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
+                    .nodes(NodeFilter.filterNodes(
+                                   nodeset,
+                                   testFramework.getFrameworkProjectMgr().getFrameworkProject(TEST_PROJECT).getNodeSet()
+                           ))
                     .build();
 
             //setup testInterpreter for all command types
@@ -1201,7 +1212,10 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
-                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
+                    .nodes(NodeFilter.filterNodes(
+                                   nodeset,
+                                   testFramework.getFrameworkProjectMgr().getFrameworkProject(TEST_PROJECT).getNodeSet()
+                           ))
                     .build();
 
             //setup testInterpreter for all command types
@@ -1428,7 +1442,10 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
-                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
+                    .nodes(NodeFilter.filterNodes(
+                                   nodeset,
+                                   testFramework.getFrameworkProjectMgr().getFrameworkProject(TEST_PROJECT).getNodeSet()
+                           ))
                     .build();
 
             //setup testInterpreter for all command types
@@ -1564,7 +1581,10 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
-                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
+                    .nodes(NodeFilter.filterNodes(
+                                   nodeset,
+                                   testFramework.getFrameworkProjectMgr().getFrameworkProject(TEST_PROJECT).getNodeSet()
+                           ))
                     .build();
 
             //setup testInterpreter for all command types
@@ -1630,7 +1650,10 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
-                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
+                    .nodes(NodeFilter.filterNodes(
+                                   nodeset,
+                                   testFramework.getFrameworkProjectMgr().getFrameworkProject(TEST_PROJECT).getNodeSet()
+                           ))
                     .build();
 
             //setup testInterpreter for all command types
@@ -1723,7 +1746,10 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
-                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
+                    .nodes(NodeFilter.filterNodes(
+                                   nodeset,
+                                   testFramework.getFrameworkProjectMgr().getFrameworkProject(TEST_PROJECT).getNodeSet()
+                           ))
                     .build();
 
             //setup testInterpreter for all command types

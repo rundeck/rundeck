@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.PluginRegistry
@@ -114,6 +115,18 @@ class PluginServiceTests extends GrailsUnitTestCase {
         PropertyResolver resolver, PropertyScope defaultScope) {
             cpWithResolverCalled=true
             return new ConfiguredPlugin<T>( plugin,  extraConfiguration)
+        }
+
+        @Override
+        def <T> ConfiguredPlugin<T> configurePluginByName(
+                final String name,
+                final PluggableProviderService<T> service,
+                final IPropertyLookup frameworkLookup,
+                final IPropertyLookup projectLookup,
+                final Map instanceConfiguration
+        )
+        {
+            return null
         }
 
         @Override

@@ -47,6 +47,9 @@ class UrlMappings {
             action = [GET: 'apiProjectConfigKeyGet', PUT: 'apiProjectConfigKeyPut',
                     DELETE: 'apiProjectConfigKeyDelete']
         }
+        "/api/$api_version/project/$project/$filename"(controller: 'project'){
+            action = [GET: 'apiProjectFileGet', PUT: 'apiProjectFilePut', DELETE: 'apiProjectFileDelete']
+        }
         "/api/$api_version/project/$project/export"(controller: 'project',action: 'apiProjectExport')
         "/api/$api_version/project/$project/import"(controller: 'project',action: 'apiProjectImport')
         /** v2 */

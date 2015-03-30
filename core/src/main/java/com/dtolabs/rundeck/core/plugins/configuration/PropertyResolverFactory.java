@@ -25,9 +25,11 @@
 package com.dtolabs.rundeck.core.plugins.configuration;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 
 import java.util.HashMap;
 import java.util.List;
@@ -144,6 +146,29 @@ public class PropertyResolverFactory {
                 frameworkRetriever(frameworkPrefix, framework)
         );
     }
+    /**
+     * @return Create a PropertyResolver for a plugin for resolving Framework, Project and instance scoped properties.
+     * @param framework the framework property lookup
+     * @param projectLookup the project property lookup
+     * @param pluginType service type name
+     * @param providerName provider name
+     * @param instanceProperties instance properties, or null
+     */
+    public static PropertyResolver createFrameworkProjectRuntimeResolver(
+            final IPropertyLookup framework,
+            final IPropertyLookup projectLookup,
+            final Map<String, Object> instanceProperties,
+            final String pluginType,
+            final String providerName) {
+
+        final String projectPrefix = projectPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
+        final String frameworkPrefix = frameworkPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
+
+        return createResolver(instanceRetriever(instanceProperties),
+                null != projectLookup ? prefixedRetriever(projectPrefix, projectLookup) : null,
+                prefixedRetriever(frameworkPrefix, framework)
+        );
+    }
 
     /**
      * @return Create a resolver from a set of retrievers, possibly null
@@ -207,10 +232,18 @@ public class PropertyResolverFactory {
     private static PropertyRetriever projectRetriever(final String projectPrefix,
                                                       final Framework framework,
                                                       final String project) {
-        return prefixedRetriever(projectPrefix, framework
-            .getFrameworkProjectMgr()
-            .getFrameworkProject(project)
-            .getPropertyRetriever());
+        IRundeckProject frameworkProject = framework
+                .getFrameworkProjectMgr()
+                .getFrameworkProject(project);
+        return prefixedRetriever(
+                projectPrefix, instanceRetriever(frameworkProject.getProperties())
+        );
+    }
+    private static PropertyRetriever projectRetriever(final String projectPrefix,
+                                                      final IPropertyLookup projectLookup) {
+        return prefixedRetriever(
+                projectPrefix, projectLookup
+        );
     }
 
     /**

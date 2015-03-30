@@ -23,10 +23,7 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow;
 
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
-import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.common.SelectorUtils;
+import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionListenerOverride;
@@ -42,6 +39,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionS
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
+import com.dtolabs.rundeck.core.resources.FileResourceModelSource;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.NodeSet;
@@ -55,6 +53,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * TestNodeFirstWorkflowStrategy is ...
@@ -80,16 +79,12 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
         super.setUp();
         testFramework = getFrameworkInstance();
         testnode = testFramework.getFrameworkNodeName();
-        final FrameworkProject frameworkProject = testFramework.getFrameworkProjectMgr().createFrameworkProject(
-            TEST_PROJECT);
-        File resourcesfile = new File(frameworkProject.getNodesResourceFilePath());
-        //copy test nodes to resources file
-        try {
-            FileUtils.copyFileStreams(new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
-                resourcesfile);
-        } catch (IOException e) {
-            throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
-        }
+        final IRundeckProject frameworkProject = testFramework.getFrameworkProjectMgr().createFrameworkProject(
+                TEST_PROJECT,
+                generateProjectResourcesFile(
+                        new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml")
+                )
+        );
         extResourcesfile = new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes2.xml");
         extResourcesfile2 = new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes4.xml");
     }
@@ -253,7 +248,12 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                     .user("user1")
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
-                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
+                    .nodes(NodeFilter.filterNodes(
+                                   nodeset,
+                                   testFramework.getFrameworkProjectMgr()
+                                                    .getFrameworkProject(TEST_PROJECT)
+                                                    .getNodeSet()
+                           ))
                     .framework(testFramework).build();
 
             //setup testInterpreter for all command types
@@ -341,7 +341,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                     .executionListener(new testListener())
                     .framework(testFramework)
                     .nodesFile(extResourcesfile)
-                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, extResourcesfile))
+                    .nodes(FileResourceModelSource.parseFile(extResourcesfile, testFramework, TEST_PROJECT))
                     .build();
                     //specify ext resources file
 
@@ -544,7 +544,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                 .executionListener(new testListener())
                 .framework(testFramework)
                 .nodesFile(extResourcesfile2)
-                .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, extResourcesfile2))
+                .nodes(FileResourceModelSource.parseFile(extResourcesfile2, testFramework, TEST_PROJECT))
                 .build();
 
         //setup testInterpreter for all command types
@@ -608,7 +608,12 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
-                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
+                    .nodes(NodeFilter.filterNodes(
+                                   nodeset,
+                                   testFramework.getFrameworkProjectMgr()
+                                                .getFrameworkProject(TEST_PROJECT)
+                                                .getNodeSet()
+                           ))
                     .build();
 
             //setup testInterpreter for all command types

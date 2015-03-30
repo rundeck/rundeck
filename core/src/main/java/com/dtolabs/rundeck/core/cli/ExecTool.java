@@ -21,11 +21,7 @@ import com.dtolabs.rundeck.core.cli.project.ProjectToolException;
 import com.dtolabs.rundeck.core.cli.queue.ConsoleExecutionFollowReceiver;
 import com.dtolabs.rundeck.core.cli.queue.QueueTool;
 import com.dtolabs.rundeck.core.common.*;
-import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException;
-import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
-import com.dtolabs.rundeck.core.dispatcher.QueuedItem;
-import com.dtolabs.rundeck.core.dispatcher.QueuedItemResult;
-import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
+import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.utils.*;
 import org.apache.commons.cli.*;
 import org.apache.log4j.PropertyConfigurator;
@@ -106,10 +102,11 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
     /**
      * Reference to the framework instance
      */
-    private Framework framework;
+    private IFramework framework;
     private String baseDir;
     protected NodeFormatter nodeFormatter;
     private String nodeFilter;
+    private CentralDispatcher centralDispatcher;
 
     void setFramework(Framework framework) {
         this.framework = framework;
@@ -135,7 +132,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
      * @param baseDir path to RDECK_BASE
      */
     ExecTool(String baseDir) {
-        this(Framework.getInstanceWithoutProjectsDir(baseDir));
+        this(FrameworkFactory.createForFilesystem(baseDir));
     }
 
     /**
@@ -143,9 +140,10 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
      *
      * @param framework framework instance
      */
-    public ExecTool(Framework framework) {
+    public ExecTool(IFramework framework) {
         this.framework = framework;
         this.nodeFormatter = new NodeYAMLFormatter();
+        this.centralDispatcher=FrameworkFactory.createDispatcher(framework.getPropertyLookup());
     }
 
     /**
@@ -428,7 +426,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
                 // request
                 setScriptAsStream(instream);
             }
-            result = framework.getCentralDispatcherMgr().queueDispatcherScript(this);
+            result = getCentralDispatcher().queueDispatcherScript(this);
         } catch (CentralDispatcherException e) {
             throw new CoreException("Unable to queue the execution: " + e.getMessage(), e);
         }
@@ -458,7 +456,10 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
             } else if (progress) {
                 mode = ConsoleExecutionFollowReceiver.Mode.progress;
             }
-            successful = QueueTool.followAction(item.getId(), true, mode, framework, System.out, this);
+            successful = QueueTool.followAction(item.getId(), true, mode,
+                                                System.out, this,
+                                                getCentralDispatcher()
+            );
         } catch (CentralDispatcherException e) {
             throw new CoreException("Failed following output for execution: " + item.getId(), e);
         }
@@ -638,7 +639,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
      */
     protected void configurePrintStream(boolean quiet) {
         if (quiet) {
-            final String logpath = framework.getProperty("framework.logs.dir");
+            final String logpath = framework.getPropertyLookup().getProperty("framework.logs.dir");
             if (null == logpath || "".equals(logpath)) {
                 throw new CoreException("Cannot configure print stream to a file. "
                         + "framework.logs.dir property not set");
@@ -679,7 +680,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
         return inlineScriptContent;
     }
 
-    public Framework getFramework() {
+    public IFramework getFramework() {
         return framework;
     }
 
@@ -826,7 +827,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
      * @return Nodes object
      */
     private INodeSet readNodesFile() {
-        FrameworkProject project = framework.getFrameworkProjectMgr().getFrameworkProject(argProject);
+        IRundeckProject project = framework.getFrameworkProjectMgr().getFrameworkProject(argProject);
 
         try {
             return project.getNodeSet();
@@ -909,6 +910,14 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
 
     public void setNodeThreadcount(Integer nodeThreadcount) {
         this.nodeThreadcount = nodeThreadcount;
+    }
+
+    public CentralDispatcher getCentralDispatcher() {
+        return centralDispatcher;
+    }
+
+    public void setCentralDispatcher(final CentralDispatcher centralDispatcher) {
+        this.centralDispatcher = centralDispatcher;
     }
 
     /**

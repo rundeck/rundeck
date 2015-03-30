@@ -23,10 +23,7 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
-import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.common.NodeEntryImpl;
+import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
@@ -59,16 +56,13 @@ public class TestExecNodeStepExecutor extends AbstractBaseTest {
         super.setUp();
 
         final Framework frameworkInstance = getFrameworkInstance();
-        final FrameworkProject frameworkProject = frameworkInstance.getFrameworkProjectMgr().createFrameworkProject(
+        final IRundeckProject frameworkProject = frameworkInstance.getFrameworkProjectMgr().createFrameworkProject(
             PROJ_NAME);
-        File resourcesfile = new File(frameworkProject.getNodesResourceFilePath());
-        //copy test nodes to resources file
-        try {
-            FileUtils.copyFileStreams(new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
-                resourcesfile);
-        } catch (IOException e) {
-            throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
-        }
+
+        generateProjectResourcesFile(
+                new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
+                frameworkProject
+        );
 
     }
 

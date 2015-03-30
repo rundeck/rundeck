@@ -23,6 +23,7 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import java.io.File;
+import java.io.IOException;
 
 
 /**
@@ -51,6 +52,13 @@ public class TestFrameworkProjectMgr extends AbstractBaseTest {
         super.setUp();
         final File projectDir = new File(getFrameworkProjectsBase(), PROJECT_NAME);
         projectDir.mkdir();
+        final File propsFile = new File(projectDir, "etc/project.properties");
+        try {
+            propsFile.getParentFile().mkdirs();
+            propsFile.createNewFile();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         final File projectDir2 = new File(getFrameworkProjectsBase(), PROJECT_NAME2);
         if(projectDir2.exists()){
             FileUtils.deleteDir(projectDir2);
@@ -76,32 +84,45 @@ public class TestFrameworkProjectMgr extends AbstractBaseTest {
                    mgr.listFrameworkProjects().size() );
     }
 
-    public void testChildCouldBeLoaded() {
+    public void testChildCouldBeLoaded() throws IOException {
         final FrameworkProjectMgr mgr = FrameworkProjectMgr.create("projectMgr",
                                                              new File(getFrameworkProjectsBase()),
                                                              getFrameworkInstance());
         assertTrue(mgr.childCouldBeLoaded(PROJECT_NAME));
         assertFalse(mgr.childCouldBeLoaded(PROJECT_NAME2));
+        assertFalse(mgr.childCouldBeLoaded(PROJECT_NAME2));
         final File projectDir2 = new File(mgr.getBaseDir(), PROJECT_NAME2);
-        projectDir2.mkdir();
+        File propsfile = fakeCreateProject(projectDir2);
+
         assertTrue(mgr.childCouldBeLoaded(PROJECT_NAME2));
+        propsfile.delete();
+        propsfile.getParentFile().delete();
         projectDir2.delete();
 
     }
-    public void testListChildNames(){
+
+    private File fakeCreateProject(final File projectDir2) throws IOException {
+        projectDir2.mkdir();
+        File propsfile = new File(projectDir2, "etc/project.properties");
+        assertTrue(propsfile.getParentFile().mkdirs());
+        assertTrue(propsfile.createNewFile());
+        return propsfile;
+    }
+
+    public void testListChildNames() throws IOException {
         final FrameworkProjectMgr mgr = FrameworkProjectMgr.create("projectMgr",
                                                              new File(getFrameworkProjectsBase()),
                                                              getFrameworkInstance());
         assertTrue(mgr.listChildNames().contains(PROJECT_NAME));
         assertFalse(mgr.listChildNames().contains(PROJECT_NAME2));
         final File projectDir2 = new File(mgr.getBaseDir(), PROJECT_NAME2);
-        projectDir2.mkdir();
+        File propsfile = fakeCreateProject(projectDir2);
         assertTrue(mgr.listChildNames().contains(PROJECT_NAME));
         assertTrue(mgr.listChildNames().contains(PROJECT_NAME2));
         projectDir2.delete();
     }
 
-    public void testLoadChild(){
+    public void testLoadChild() throws IOException {
         final FrameworkProjectMgr mgr = FrameworkProjectMgr.create("projectMgr",
                                                              new File(getFrameworkProjectsBase()),
                                                              getFrameworkInstance());
@@ -113,15 +134,12 @@ public class TestFrameworkProjectMgr extends AbstractBaseTest {
         } catch (FrameworkResourceException e) {
             fail("loadChild threw exception: " + e.getMessage());
         }
-        try {
-            IFrameworkResource res = mgr.loadChild(PROJECT_NAME2);
-            assertNull(res);
-        } catch (FrameworkResourceException e) {
-            assertNotNull(e);
-        }
+
+        IFrameworkResource resa = mgr.loadChild(PROJECT_NAME2);
+        assertNull(resa);
 
         final File projectDir2 = new File(mgr.getBaseDir(), PROJECT_NAME2);
-        projectDir2.mkdir();
+        fakeCreateProject(projectDir2);
         try {
             IFrameworkResource res = mgr.loadChild(PROJECT_NAME);
             assertNotNull(res);
@@ -145,11 +163,10 @@ public class TestFrameworkProjectMgr extends AbstractBaseTest {
         final IFrameworkProjectMgr mgr = FrameworkProjectMgr.create("projectMgr",
                                                       new File(getFrameworkProjectsBase()),
                                                       getFrameworkInstance());
-        final FrameworkProject d1 = mgr.createFrameworkProject("Depot1");
+        final IRundeckProject d1 = mgr.createFrameworkProject("Depot1");
         assertEquals("exected two listed FrameworkProject after the addDepot call", 2, mgr.listFrameworkProjects().size());
         assertTrue("expected existsFrameworkProject to be true after it was added", mgr.existsFrameworkProject("Depot1"));
         assertEquals("getFrameworkProject did not return the expected project instance", d1.getName(), mgr.getFrameworkProject("Depot1").getName() );
-        assertEquals("getFrameworkProject did not return the expected project instance", d1.getParent(), mgr.getFrameworkProject("Depot1").getParent() );
         try {
             mgr.getFrameworkProject("NotThere");
             fail("Should have failed getting a non existent project");
@@ -162,10 +179,16 @@ public class TestFrameworkProjectMgr extends AbstractBaseTest {
         final FrameworkProjectMgr mgr = FrameworkProjectMgr.create("projectMgr",
                                                              new File(getFrameworkProjectsBase()),
                                                              getFrameworkInstance());
-        final FrameworkProject d1 = mgr.createFrameworkProject("Depot1");
+        final FrameworkProject d1 = mgr.createFSFrameworkProject("Depot1");
         assertTrue("existsFrameworkProject did not return true for a type that should exist",
                    mgr.existsFrameworkProject("Depot1"));
-        mgr.remove(d1.getName());
+        File projectBaseDir = d1.getBaseDir();
+        assertTrue(projectBaseDir.exists());
+        assertTrue(projectBaseDir.isDirectory());
+        assertTrue(new File(projectBaseDir,"etc/project.properties").exists());
+        assertTrue(new File(projectBaseDir,"etc/project.properties").isFile());
+        mgr.removeFrameworkProject(d1.getName());
+        assertFalse(projectBaseDir.exists());
         assertFalse(mgr.existsFrameworkProject(d1.getName()));
     }
 }

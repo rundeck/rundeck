@@ -37,6 +37,12 @@ If the version number is not included or if the requested version number is unsu
 
 Changes introduced by API Version number:
 
+**Version 13**:
+
+* New endpoints
+    - `/api/13/project/[NAME]/readme.md` and `/api/13/project/[NAME]/motd.md`
+        - [Project Readme File](#project-readme-file) (`GET`, `PUT`, `DELETE`)
+
 **Version 12**:
 
 * New endpoints
@@ -2506,6 +2512,54 @@ Multiple regexes can be specified in those config files by adding multiple prope
     project.resources.allowedURL.0=^http://myserver:9090/resources/.*$
     project.resources.allowedURL.1=^http://server2:9090/resources/.*$
 
+### Project Readme File
+
+The `readme.md` and `motd.md` files, 
+which are Markdown formatted and displayed in the Project listing page, 
+can be managed via the API. (See [Project Readme.md](http://rundeck.org/docs/administration/project-setup.html#project-readme.md).)
+
+URL: 
+    
+    /api/13/project/[NAME]/readme.md
+    /api/13/project/[NAME]/motd.md
+
+Method: `GET`, `PUT` and `DELETE`.
+
+Format: XML, JSON and plain text formats.
+
+#### GET Request
+
+Response format depends on the `Accept:` HTTP header.
+
+`text/plain`:
+
+    The readme contents
+
+`application/xml`:
+
+```{.xml}
+<contents>The readme contents</contents>
+```
+
+*Note*: XML output will use CDATA to preserve formatting of the contents
+
+`application/json`:
+
+```{.json}
+{"contents":"The readme contents"}
+```
+
+If the file does not exist, then the response will be : `404 Not Found`
+
+#### PUT Request
+
+To create or modify the contents, use a `PUT` request, and `Content-Type` header to specify the same format.  Use the same format as returned by the GET responses.
+
+#### DELETE Request
+
+Deletes the resource if it exists.
+
+Response: `204 No Content`
 
 ### Listing History
 

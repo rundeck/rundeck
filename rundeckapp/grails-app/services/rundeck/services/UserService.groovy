@@ -51,6 +51,10 @@ class UserService {
         return ""
     }
 
+    /**
+     * @param username
+     * @deprecated
+     */
     public Map getFilterPref(String username){
         def User u = findOrCreateUser(username)
         if(!u){
@@ -60,6 +64,7 @@ class UserService {
     }
     /**
      * Store filter pref input string for a user
+     * @deprecated
      */
     public storeFilterPref(String username, pref){
         def User u = findOrCreateUser(username)

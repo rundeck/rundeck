@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder
+import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import org.rundeck.storage.api.Resource
 import spock.lang.Specification
 
@@ -18,7 +19,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
     Framework framework
     FrameworkProject testProject
     def setup() {
-        framework = Framework.getInstanceWithoutProjectsDir(System.getProperty("rdeck.base"))
+        framework = AbstractBaseTest.createTestFramework()
         testProject=framework.getFrameworkProjectMgr().createFrameworkProject('NodeSSHConnectionInfoTest')
     }
     def teardown(){
@@ -72,7 +73,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 null
         )
 
-        def framework = Framework.getInstanceWithoutProjectsDir(System.getProperty("rdeck.base"))
+        def framework = AbstractBaseTest.createTestFramework()
         def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
@@ -119,7 +120,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 dataContext
         )
 
-        def framework = Framework.getInstanceWithoutProjectsDir(System.getProperty("rdeck.base"))
+        def framework = AbstractBaseTest.createTestFramework()
         def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
@@ -166,7 +167,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 dataContext
         )
 
-        def framework = Framework.getInstanceWithoutProjectsDir(System.getProperty("rdeck.base"))
+        def framework = AbstractBaseTest.createTestFramework()
         def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
@@ -213,7 +214,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 dataContext
         )
 
-        def framework = Framework.getInstanceWithoutProjectsDir(System.getProperty("rdeck.base"))
+        def framework = AbstractBaseTest.createTestFramework()
         def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
@@ -261,7 +262,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 dataContext
         )
 
-        def framework = Framework.getInstanceWithoutProjectsDir(System.getProperty("rdeck.base"))
+        def framework = AbstractBaseTest.createTestFramework()
         def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
@@ -320,7 +321,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 null
         )
 
-        def framework = Framework.getInstanceWithoutProjectsDir(System.getProperty("rdeck.base"))
+        def framework = AbstractBaseTest.createTestFramework()
         def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
@@ -371,7 +372,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 null
         )
 
-        def framework = Framework.getInstanceWithoutProjectsDir(System.getProperty("rdeck.base"))
+        def framework = AbstractBaseTest.createTestFramework()
         def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
@@ -422,7 +423,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 null
         )
 
-        def framework = Framework.getInstanceWithoutProjectsDir(System.getProperty("rdeck.base"))
+        def framework = AbstractBaseTest.createTestFramework()
         def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
 
         expect:
@@ -582,7 +583,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
         } else {
             removePrefixes << projectPropName
         }
-        def framework = Framework.getInstanceWithoutProjectsDir(System.getProperty("rdeck.base"))
+        def framework = AbstractBaseTest.createTestFramework()
         framework.getFrameworkProjectMgr().removeFrameworkProject('NodeSSHConnectionInfoTest')
         framework.getFrameworkProjectMgr().createFrameworkProject('NodeSSHConnectionInfoTest')
         def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
@@ -598,7 +599,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
             removeProps(new File(framework.getBaseDir(), "etc/framework.properties"), [frameworkPropName])
         }
         //reload fwk props
-        framework = Framework.getInstanceWithoutProjectsDir(System.getProperty("rdeck.base"))
+        framework = AbstractBaseTest.createTestFramework()
 
         new NodeSSHConnectionInfo(
                 node,

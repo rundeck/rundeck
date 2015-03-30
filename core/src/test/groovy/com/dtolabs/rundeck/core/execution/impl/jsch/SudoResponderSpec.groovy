@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.utils.BasicSource
 import com.dtolabs.rundeck.core.execution.utils.PasswordSource
+import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import spock.lang.Specification
 
 /**
@@ -17,7 +18,7 @@ class SudoResponderSpec extends Specification {
     def "sudo not enabled"(String password, byte[] expected, boolean enabled) {
         setup:
         def node = new NodeEntryImpl("test")
-        def fwk = Framework.getInstanceWithoutProjectsDir(System.getProperty("rdeck.base"))
+        def fwk = AbstractBaseTest.createTestFramework()
         fwk.getFrameworkProjectMgr().createFrameworkProject("SudoResponderTest")
         def pwdsource = Mock(PasswordSource) {
             getPassword() >> password.bytes
@@ -40,7 +41,7 @@ class SudoResponderSpec extends Specification {
         setup:
         def node = new NodeEntryImpl("test")
         node.getAttributes().put("sudo-command-enabled", "true")
-        def fwk = Framework.getInstanceWithoutProjectsDir(System.getProperty("rdeck.base"))
+        def fwk = AbstractBaseTest.createTestFramework()
         fwk.getFrameworkProjectMgr().createFrameworkProject("SudoResponderTest")
         def pwdsource = new BasicSource(password.bytes)
         def resp = SudoResponder.create(node, fwk, Mock(ExecutionContext) {

@@ -23,11 +23,7 @@
 */
 package com.dtolabs.rundeck.core.resources;
 
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
-import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.common.INodeSet;
-import com.dtolabs.rundeck.core.common.NodeSetImpl;
+import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
@@ -53,16 +49,13 @@ public class TestResourceModelSourceService extends AbstractBaseTest {
     public void setUp() {
         super.setUp();
         final Framework frameworkInstance = getFrameworkInstance();
-        final FrameworkProject frameworkProject = frameworkInstance.getFrameworkProjectMgr().createFrameworkProject(
-            PROJ_NAME);
-        File resourcesfile = new File(frameworkProject.getNodesResourceFilePath());
-        //copy test nodes to resources file
-        try {
-            FileUtils.copyFileStreams(new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
-                resourcesfile);
-        } catch (IOException e) {
-            throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
-        }
+       final IRundeckProject frameworkProject = frameworkInstance.getFrameworkProjectMgr().createFrameworkProject(
+                PROJ_NAME);
+        generateProjectResourcesFile(
+                new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
+                frameworkProject
+        );
+
 
     }
 

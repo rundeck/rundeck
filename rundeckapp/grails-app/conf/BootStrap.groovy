@@ -24,6 +24,8 @@ class BootStrap {
     def frameworkService
     def workflowService
     def logFileStorageService
+    def projectManagerService
+    def filesystemProjectManager
     def filterInterceptor
     Scheduler quartzScheduler
     MetricRegistry metricRegistry
@@ -170,6 +172,14 @@ class BootStrap {
                 result?.logs?.each {
                     log.debug(it)
                 }
+            }
+
+            //import filesystem projects if using DB storage
+            if((grailsApplication.config.rundeck?.projectsStorageType?:'db') == 'db'){
+                log.error("importing existing filesystem projects")
+                projectManagerService.importProjectsFromProjectManager(filesystemProjectManager)
+            }else{
+                log.error("NOT importing existing filesystem projects ${grailsApplication.config.rundeck?.projectsStorageType}")
             }
          }
 

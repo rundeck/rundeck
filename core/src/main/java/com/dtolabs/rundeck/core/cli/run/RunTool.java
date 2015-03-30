@@ -28,6 +28,8 @@ import com.dtolabs.rundeck.core.cli.*;
 import com.dtolabs.rundeck.core.cli.queue.ConsoleExecutionFollowReceiver;
 import com.dtolabs.rundeck.core.cli.queue.QueueTool;
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.FrameworkFactory;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 import org.apache.commons.cli.CommandLine;
@@ -104,7 +106,7 @@ public class RunTool extends BaseTool {
     /**
      * Reference to the Framework instance
      */
-    private final Framework framework;
+    private final IFramework framework;
     SingleProjectResolver internalResolver;
 
     /**
@@ -140,7 +142,7 @@ public class RunTool extends BaseTool {
      * Create QueueTool with default Framework instances located by the system rdeck.base property.
      */
     public RunTool() {
-        this(Framework.getInstanceWithoutProjectsDir(Constants.getSystemBaseDir()), new Log4JCLIToolLogger(log4j));
+        this(FrameworkFactory.createForFilesystem(Constants.getSystemBaseDir()), new Log4JCLIToolLogger(log4j));
     }
 
     /**
@@ -149,7 +151,7 @@ public class RunTool extends BaseTool {
      * @param logger the logger
      */
     public RunTool(final CLIToolLogger logger) {
-        this(Framework.getInstanceWithoutProjectsDir(Constants.getSystemBaseDir()), logger);
+        this(FrameworkFactory.createForFilesystem(Constants.getSystemBaseDir()), logger);
     }
 
     /**
@@ -167,8 +169,9 @@ public class RunTool extends BaseTool {
      * @param framework the framework
      * @param logger    the logger
      */
-    public RunTool(final Framework framework, final CLIToolLogger logger) {
+    public RunTool(final IFramework framework, final CLIToolLogger logger) {
         this.framework = framework;
+        setCentralDispatcher(FrameworkFactory.createDispatcher(framework.getPropertyLookup()));
         internalResolver = new FrameworkSingleProjectResolver(framework);
         this.clilogger = logger;
         if (null == clilogger) {
@@ -433,7 +436,7 @@ public class RunTool extends BaseTool {
         final String[] extraOpts = extendedOptions.getExtendedOptions();
 
         try {
-            result = framework.getCentralDispatcherMgr().queueDispatcherJob(new IDispatchedJob() {
+            result = getCentralDispatcher().queueDispatcherJob(new IDispatchedJob() {
                 public String[] getArgs() {
                     return extraOpts;
                 }
@@ -513,7 +516,10 @@ public class RunTool extends BaseTool {
             }else if(progress){
                 mode= ConsoleExecutionFollowReceiver.Mode.progress;
             }
-            successful = QueueTool.followAction(item.getId(), true, mode, framework, System.out, this);
+            successful = QueueTool.followAction(item.getId(), true, mode,
+                                                System.out, this,
+                                                getCentralDispatcher()
+            );
         } catch (CentralDispatcherException e) {
             throw new RunToolException("Failed following output for execution: " + item.getId(), e);
         }

@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.dispatcher;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
+import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.common.NodeEntryImpl;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
@@ -54,9 +55,10 @@ public class TestDataContextUtils extends AbstractBaseTest {
 
     protected void setUp() {
         super.setUp();
-        FrameworkProject d = getFrameworkInstance().getFrameworkProjectMgr().createFrameworkProject(
+        Framework frameworkInstance = getFrameworkInstance();
+        IRundeckProject d = frameworkInstance.getFrameworkProjectMgr().createFrameworkProject(
             TEST_PROJECT);
-        final File dir = new File(d.getBaseDir(), "var");
+        final File dir = new File(frameworkInstance.getFrameworkProjectsBaseDir(), TEST_PROJECT + "/var");
         assertTrue(dir.mkdirs());
         testfile1 = new File(dir, "test-file.sh");
         try {
@@ -74,10 +76,10 @@ public class TestDataContextUtils extends AbstractBaseTest {
 
     protected void tearDown() throws Exception {
         testfile1.delete();
-        FrameworkProject d = getFrameworkInstance().getFrameworkProjectMgr().createFrameworkProject(
+        IRundeckProject d = getFrameworkInstance().getFrameworkProjectMgr().createFrameworkProject(
             TEST_PROJECT);
-        FileUtils.deleteDir(d.getBaseDir());
-        getFrameworkInstance().getFrameworkProjectMgr().remove(TEST_PROJECT);
+        FileUtils.deleteDir(new File(getFrameworkInstance().getFrameworkProjectsBaseDir(), TEST_PROJECT));
+        getFrameworkInstance().getFrameworkProjectMgr().removeFrameworkProject(TEST_PROJECT);
 
     }
 

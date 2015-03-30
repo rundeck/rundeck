@@ -27,6 +27,7 @@ package com.dtolabs.rundeck.core.cli;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
@@ -50,11 +51,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class TestExecTool extends AbstractBaseTest {
     ExecTool main;
@@ -84,8 +81,10 @@ public class TestExecTool extends AbstractBaseTest {
 
     public void setUp() {
         super.setUp();
-        FrameworkProject d = getFrameworkInstance().getFrameworkProjectMgr().createFrameworkProject(
-            TEST_EXEC_TOOL_PROJECT);
+        FrameworkProject d = getFrameworkInstance().getFilesystemFrameworkProjectManager().createFSFrameworkProject(
+                TEST_EXEC_TOOL_PROJECT
+        );
+        assert d.getBaseDir().isDirectory();
         File projectEtcDir = new File(d.getBaseDir(), "etc");
         //copy test nodes xml file to test dir
         try {
@@ -101,23 +100,25 @@ public class TestExecTool extends AbstractBaseTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        FrameworkProject d2 = getFrameworkInstance().getFrameworkProjectMgr().createFrameworkProject(
+        IRundeckProject d2 = getFrameworkInstance().getFrameworkProjectMgr().createFrameworkProject(
             TEST_EXEC_TOOL_PROJ2);
 
     }
 
     public void tearDown() throws Exception {
         super.tearDown();
-        FrameworkProject d = getFrameworkInstance().getFrameworkProjectMgr().createFrameworkProject(
-            TEST_EXEC_TOOL_PROJECT);
+        FrameworkProject d = getFrameworkInstance().getFilesystemFrameworkProjectManager().createFSFrameworkProject(
+                TEST_EXEC_TOOL_PROJECT
+        );
         FileUtils.deleteDir(d.getBaseDir());
-        getFrameworkInstance().getFrameworkProjectMgr().remove(TEST_EXEC_TOOL_PROJECT);
-        FrameworkProject d2 = getFrameworkInstance().getFrameworkProjectMgr().createFrameworkProject(
-            TEST_EXEC_TOOL_PROJ2);
+        getFrameworkInstance().getFrameworkProjectMgr().removeFrameworkProject(TEST_EXEC_TOOL_PROJECT);
+        FrameworkProject d2 = getFrameworkInstance().getFilesystemFrameworkProjectManager().createFSFrameworkProject(
+                TEST_EXEC_TOOL_PROJ2
+        );
         FileUtils.deleteDir(d2.getBaseDir());
 
 
-        getFrameworkInstance().getFrameworkProjectMgr().remove(TEST_EXEC_TOOL_PROJ2);
+        getFrameworkInstance().getFrameworkProjectMgr().removeFrameworkProject(TEST_EXEC_TOOL_PROJ2);
 //        ExecutionServiceFactory.resetDefaultExecutorClasses();
         getFrameworkInstance().setService(NodeStepExecutionService.SERVICE_NAME, null);
     }
@@ -521,6 +522,12 @@ public class TestExecTool extends AbstractBaseTest {
         public ExecutionDetail getExecution(String execId) throws CentralDispatcherException {
             return null;
         }
+        @Override
+        public void createProject(final String project, final Properties projectProperties)
+                throws CentralDispatcherException
+        {
+
+        }
     }
     static class testDispatcher extends noopDispatcher{
         boolean wascalled;
@@ -814,6 +821,13 @@ public class TestExecTool extends AbstractBaseTest {
         public ExecutionDetail getExecution(String execId) throws CentralDispatcherException {
             return null;
         }
+        @Override
+        public void createProject(final String project, final Properties projectProperties)
+                throws CentralDispatcherException
+        {
+
+            fail("unexpected call to createProject");
+        }
 
         @Override
         public String toString() {
@@ -836,7 +850,7 @@ public class TestExecTool extends AbstractBaseTest {
             ExecTool main = newExecTool();
             main.setFramework(framework);
             final testCentralDispatcher test = new testCentralDispatcher();
-            framework.setCentralDispatcherMgr(test);
+            main.setCentralDispatcher(test);
 
             //exec the dispatch
 
@@ -856,7 +870,7 @@ public class TestExecTool extends AbstractBaseTest {
             ExecTool main = newExecTool();
             main.setFramework(framework);
             final testCentralDispatcher test = new testCentralDispatcher();
-            framework.setCentralDispatcherMgr(test);
+            main.setCentralDispatcher(test);
 
             //exec the dispatch
 
@@ -877,7 +891,7 @@ public class TestExecTool extends AbstractBaseTest {
             ExecTool main = newExecTool();
             main.setFramework(framework);
             final testCentralDispatcher test = new testCentralDispatcher();
-            framework.setCentralDispatcherMgr(test);
+            main.setCentralDispatcher(test);
 
             //exec the dispatch
 
@@ -898,7 +912,7 @@ public class TestExecTool extends AbstractBaseTest {
             ExecTool main = newExecTool();
             main.setFramework(framework);
             final testCentralDispatcher test = new testCentralDispatcher();
-            framework.setCentralDispatcherMgr(test);
+            main.setCentralDispatcher(test);
 
             //exec the dispatch
 

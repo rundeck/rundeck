@@ -76,7 +76,7 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
             .property(PropertyBuilder.builder()
                           .booleanType(Configuration.GENERATE_FILE_AUTOMATICALLY)
                           .title("Generate")
-                          .description("Automatically generate the file if it is missing?")
+                          .description("Automatically generate the file if it is missing?\n\nAlso creates missing directories.")
                           .required(true)
                           .defaultValue("false")
                           .build()
@@ -298,6 +298,14 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
         if (configuration.includeServerNode) {
             NodeSetImpl nodes = new NodeSetImpl();
             nodes.putNode(node);
+
+            if(!resfile.getParentFile().exists()) {
+                if(!resfile.getParentFile().mkdirs()) {
+                    throw new ResourceModelSourceException(
+                            "Parent dir for resource file does not exists, and could not be created: " + resfile
+                    );
+                }
+            }
 
             try {
                 final FileOutputStream stream = new FileOutputStream(resfile);

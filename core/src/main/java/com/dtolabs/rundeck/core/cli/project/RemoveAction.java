@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.core.cli.project;
 import com.dtolabs.rundeck.core.cli.CLIToolLogger;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
+import com.dtolabs.rundeck.core.common.IFramework;
 import org.apache.commons.cli.CommandLine;
 import org.apache.log4j.Category;
 
@@ -38,7 +39,7 @@ public class RemoveAction extends BaseAction {
      * @param framework framework
      * @param cli cli
      */
-    public RemoveAction(final CLIToolLogger main, final Framework framework, final CommandLine cli) {
+    public RemoveAction(final CLIToolLogger main, final IFramework framework, final CommandLine cli) {
         this(main, framework, BaseAction.parseBaseActionArgs(cli));
     }
 
@@ -50,7 +51,7 @@ public class RemoveAction extends BaseAction {
      * @param baseArgs  base args
      */
     public RemoveAction(final CLIToolLogger main,
-                        final Framework framework,
+                        final IFramework framework,
                         final BaseActionArgs baseArgs) {
         super(main, framework, baseArgs);
         initArgs();

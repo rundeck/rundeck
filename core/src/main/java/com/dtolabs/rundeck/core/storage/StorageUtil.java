@@ -3,9 +3,7 @@ package com.dtolabs.rundeck.core.storage;
 
 import com.dtolabs.rundeck.core.authorization.AuthContext;
 import com.dtolabs.utils.Streams;
-import org.rundeck.storage.api.ContentFactory;
-import org.rundeck.storage.api.HasInputStream;
-import org.rundeck.storage.api.Tree;
+import org.rundeck.storage.api.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,10 +11,7 @@ import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TimeZone;
+import java.util.*;
 
 /**
  * Provides utility methods for use by the storage layer, or implementing plugins.
@@ -108,6 +103,36 @@ public class StorageUtil {
         };
     }
 
+    /**
+     * Delete all resources and subdirectories of the given resource path
+     * @param tree tree
+     * @param path path
+     * @return true if all resources were deleted successfully.
+     */
+    public static boolean deletePathRecursive(Tree<ResourceMeta> tree, Path path){
+        if(tree.hasResource(path)) {
+            //delete just this resource
+            return tree.deleteResource(path);
+        }else if (tree.hasDirectory(path)) {
+            //list resources and delete
+            Set<Resource<ResourceMeta>> resources = tree.listDirectory(path);
+            boolean failed=false;
+            for (Resource<ResourceMeta> resource : resources) {
+                if(resource.isDirectory()){
+                    if(!deletePathRecursive(tree,resource.getPath())){
+                        failed=true;
+                    }
+                }else {
+                    if(!tree.deleteResource(resource.getPath())){
+                        failed=true;
+                    }
+                }
+            }
+            return !failed;
+        }else{
+            return true;
+        }
+    }
 
     /**
      * Coerce a Tree of ResourceMeta into A StorageTree

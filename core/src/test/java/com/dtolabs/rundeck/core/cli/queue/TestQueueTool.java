@@ -23,6 +23,7 @@ package com.dtolabs.rundeck.core.cli.queue;
 * $Id$
 */
 
+import com.dtolabs.rundeck.core.cli.FailDispatcher;
 import com.dtolabs.rundeck.core.cli.SingleProjectResolver;
 import junit.framework.*;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
@@ -35,6 +36,7 @@ import java.util.Collection;
 import java.util.ArrayList;
 import java.util.Date;
 import java.io.OutputStream;
+import java.util.Properties;
 
 
 /**
@@ -203,84 +205,23 @@ public class TestQueueTool extends AbstractBaseTest {
      * @throws Exception if exception
      */
     public void testRun() throws Exception {
-        class FailDispatcher implements CentralDispatcher{
 
-            public QueuedItemResult queueDispatcherJob(IDispatchedJob job) throws CentralDispatcherException {
-                fail("unexpected call to queueDispatcherJob");
-                return null;
-            }
-
-            public QueuedItemResult queueDispatcherScript(final IDispatchedScript dispatch) throws
-                CentralDispatcherException {
-                fail("unexpected call to queueDispatcherScript");
-                return null;
-            }
-
-            public Collection<QueuedItem> listDispatcherQueue(final String project) throws CentralDispatcherException {
-                //
-                fail("unexpected call to listDispatcherQueue");
-                return null;
-            }
-            public Collection<QueuedItem> listDispatcherQueue() throws CentralDispatcherException {
-                //
-                fail("unexpected call to listDispatcherQueue");
-                return null;
-            }
-
-            public DispatcherResult killDispatcherExecution(final String id) throws CentralDispatcherException {
-                fail("unexpected call to killDispatcherExecution");
-                return null;
-            }
-
-            public ExecutionFollowResult followDispatcherExecution(String id, ExecutionFollowRequest request,
-                                                                   ExecutionFollowReceiver receiver) throws
-                CentralDispatcherException {
-                fail("unexpected call to followDispatcherExecution");
-                return null;
-            }
-
-            public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, java.io.File input, JobDefinitionFileFormat format) throws
-                CentralDispatcherException {
-                fail("unexpected call to loadJobs");
-                return null;
-            }
-
-            public Collection<IStoredJob> listStoredJobs(IStoredJobsQuery query, OutputStream output,
-                                                         JobDefinitionFileFormat format) throws
-                CentralDispatcherException {
-                fail("unexpected call to listStoredJobs");
-                return null;
-            }
-
-            public void reportExecutionStatus(String project, String title, String status, int totalNodeCount,
-                                              int successNodeCount, String tags, String script, String summary,
-                                              Date start,
-                                              Date end) throws CentralDispatcherException {
-                fail("unexpected call to reportExecutionStatus");
-            }
-
-            public Collection<DeleteJobResult> deleteStoredJobs(Collection<String> jobIds) throws CentralDispatcherException {
-                fail("unexpected call to deleteStoredJobs");
-                return null;
-            }
-
-            public ExecutionDetail getExecution(String execId) throws CentralDispatcherException {
-                fail("unexpected call to getExecution");
-                return null;
-            }
-        }
         final Framework framework = getFrameworkInstance();
         {
             final QueueTool tool = new QueueTool(framework);
             final boolean[] actionCalled = new boolean[]{false};
-            framework.setCentralDispatcherMgr(new FailDispatcher(){
-                public Collection<QueuedItem> listDispatcherQueue(final String project) throws CentralDispatcherException {
-                    //
-                    actionCalled[0] = true;
-                    return new ArrayList<QueuedItem>();
-                }
+            tool.setCentralDispatcher(
+                    new FailDispatcher() {
+                        public Collection<QueuedItem> listDispatcherQueue(final String project)
+                                throws CentralDispatcherException
+                        {
+                            //
+                            actionCalled[0] = true;
+                            return new ArrayList<QueuedItem>();
+                        }
 
-            });
+                    }
+            );
 
             //test list action without required -p
 
@@ -307,7 +248,7 @@ public class TestQueueTool extends AbstractBaseTest {
             final QueueTool tool = new QueueTool(framework);
             final boolean[] actionCalled = new boolean[]{false};
             final String[] idCalled = new String[]{"wrong"};
-            framework.setCentralDispatcherMgr(new FailDispatcher() {
+            tool.setCentralDispatcher(new FailDispatcher() {
                 public DispatcherResult killDispatcherExecution(final String id) throws CentralDispatcherException {
                     actionCalled[0] = true;
                     idCalled[0] = id;

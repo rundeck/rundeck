@@ -3,6 +3,7 @@ package com.dtolabs.rundeck.core.execution.impl.jsch;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.utils.PasswordSource;
 import com.dtolabs.rundeck.core.execution.utils.ResolverUtil;
@@ -93,7 +94,7 @@ class SudoResponder implements Responder {
 
     private void init(
             final INodeEntry node,
-            final FrameworkProject frameworkProject,
+            final IRundeckProject frameworkProject,
             final Framework framework
     ) {
         sudoEnabled = ResolverUtil.resolveBooleanProperty(

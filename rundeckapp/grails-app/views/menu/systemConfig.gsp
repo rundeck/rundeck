@@ -6,7 +6,7 @@
   To change this template use File | Settings | File Templates.
 --%>
 
-<%@ page import="com.dtolabs.rundeck.core.common.Framework" contentType="text/html;charset=UTF-8" %>
+<%@ page import="com.dtolabs.rundeck.core.common.FilesystemFramework; com.dtolabs.rundeck.core.common.Framework" contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
@@ -30,7 +30,7 @@
     </div>
     </div>
     <h4>Server Connection Info</h4>
-        <g:set var="fwkPropFile" value="${Framework.getPropertyFile(rundeckFramework.getConfigDir())}"/>
+        <g:set var="fwkPropFile" value="${FilesystemFramework.getPropertyFile(rundeckFramework.getConfigDir())}"/>
 
         <div class="text-muted"><g:enc>${fwkPropFile.absolutePath}</g:enc>:</div>
 

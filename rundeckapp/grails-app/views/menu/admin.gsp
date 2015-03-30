@@ -26,7 +26,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="configure"/>
-    <title>Configure</title>
+    <title><g:message code="gui.menu.Admin" /></title>
 </head>
 
 <body>
@@ -50,8 +50,7 @@
 <div class="col-sm-9">
 
     <span class="h3">
-        Project: <g:enc>${params.project ?: request.project}</g:enc>
-
+        <g:message code="project.named.prompt" args="${[params.project ?: request.project]}"/>
     </span>
 <g:set var="authAdmin" value="${auth.resourceAllowedTest(action: AuthConstants.ACTION_ADMIN, type: "project",
         name: (params.project ?: request.project), context: "application")}"/>
@@ -72,21 +71,25 @@
     <ul class="nav nav-tabs">
         <li class="${authConfigure ? 'active' : 'disabled'}">
             <a href="#configure"
-               data-toggle="${authConfigure ? 'tab' : ''}" title="${authConfigure ? '' : 'Unauthorized'}"
-                >Configuration</a>
+               data-toggle="${authConfigure ? 'tab' : ''}"
+               title="${authConfigure ? '' : message(code:"request.error.unauthorized.title")}"
+                ><g:message code="configuration" /></a>
         </li>
         <li class="${!authExport ? 'disabled' : ''}">
             <a href="#export"
-               data-toggle="${authExport ? 'tab' : ''}" title="${authExport ? '' : 'Unauthorized'}"
-                >Export Archive</a>
+               data-toggle="${authExport ? 'tab' : ''}"
+               title="${authExport ? '' : message(code:"request.error.unauthorized.title")}"
+                ><g:message code="export.archive" /></a>
         </li>
         <li class="${!authImport ? 'disabled' : ''}">
             <a href="#import"
-               data-toggle="${authImport ? 'tab' : ''}" title="${authImport ? '' : 'Unauthorized'}"
-                >Import Archive</a>
+               data-toggle="${authImport ? 'tab' : ''}"
+               title="${authImport ? '' : message(code:"request.error.unauthorized.title")}"
+                ><g:message code="import.archive" /></a>
         </li>
         <li class="${!authDelete?'disabled':''}">
-            <a href="#delete" data-toggle="${authDelete?'tab':''}" title="${authDelete?'':'Unauthorized'}">
+            <a href="#delete" data-toggle="${authDelete?'tab':''}"
+               title="${authDelete?'':message(code:"request.error.unauthorized.title")}">
                 <g:message code="delete.project" />
             </a>
         </li>
@@ -96,11 +99,38 @@
 <div class="tab-pane active" id="configure">
 <ul class="list-group list-group-tab-content">
          <g:if test="${authConfigure}">
-        <g:link controller="framework" action="editProject" params="[project: params.project ?: request.project]"
-                class="textbtn textbtn-info list-group-item  textbtn-on-hover">
-            <i class="glyphicon glyphicon-edit"></i>
-            <g:message code="gui.menu.ProjectEdit" default="edit configuration"/>
-        </g:link>
+         <li class="list-group-item">
+            <g:link controller="framework" action="editProject" params="[project: params.project ?: request.project]"
+                    class="btn btn-success   ">
+                <i class="glyphicon glyphicon-edit"></i>
+                <g:message code="page.admin.EditProjectSimple.button" default="Simple Configuration"/>
+            </g:link>
+            <g:link controller="framework" action="editProjectConfig" params="[project: params.project ?: request.project]"
+                    class="btn btn-info has_tooltip"
+                    data-placement="right"
+                    title="${message(code:'page.admin.EditProjectConfigFile.title',default:'Advanced: Edit config file directly')}"
+                       >
+                <i class="glyphicon glyphicon-edit"></i>
+                <g:message code="page.admin.EditProjectConfigFile.button" default="Edit Configuration File"/>
+            </g:link>
+         </li>
+         <li class="list-group-item">
+            <g:link controller="framework"
+                    action="editProjectFile"
+                    params="[project: params.project ?: request.project, filename: 'readme.md']"
+                    class="btn btn-${hasreadme?'info':'link btn-success'} btn-sm">
+                <i class="glyphicon glyphicon-edit"></i>
+                ${hasreadme?'Edit':'Add'} Project Readme
+            </g:link>
+            <g:link
+                    controller="framework"
+                    action="editProjectFile"
+                    params="[project: params.project ?: request.project,filename:'motd.md']"
+                    class="btn btn-${hasmotd?'info':'link btn-success'} btn-sm">
+                <i class="glyphicon glyphicon-edit"></i>
+                ${hasmotd?'Edit':'Add'} Message of the Day
+            </g:link>
+         </li>
 
         <li class="list-group-item">
             <h4 class="list-group-item-heading">
@@ -124,7 +154,7 @@
                                 </g:if>
                                 <g:else>
                                     <span
-                                        class="warn note">Invalid Resource Model Source configuration: Provider not found: <g:enc>${config.type}</g:enc></span>
+                                        class="warn note"><g:message code="invalid.resource.model.source.configuration.provider.not.found"  args="${[config.type]}"/></span>
                                 </g:else>
                             </div>
                         </li>
@@ -135,7 +165,7 @@
 
         <li class="list-group-item">
             <h4 class="list-group-item-heading">
-                Default <g:message code="framework.service.NodeExecutor.label"/>
+                <g:message code="framework.service.NodeExecutor.default.label" />
             </h4>
             <span class="text-muted"><g:message code="domain.Project.edit.NodeExecutor.explanation"/></span>
             <g:if test="${!nodeexecconfig}">
@@ -161,7 +191,7 @@
 
         <li class="list-group-item">
             <h4 class="list-group-item-heading">
-                Default <g:message code="framework.service.FileCopier.label"/>
+                <g:message code="framework.service.FileCopier.default.label" />
             </h4>
             <span
                 class="text-muted"><g:message code="domain.Project.edit.FileCopier.explanation"/></span>
@@ -190,7 +220,7 @@
         <g:else>
             <li class="list-group-item">
                 <p class="text-muted">
-                    Configuration not available.
+                    <g:message code="configuration.not.available" />
                 </p>
             </li>
         </g:else>
@@ -202,15 +232,13 @@
 <div class="tab-pane" id="export">
     <div class="panel panel-default panel-tab-content">
         <div class="panel-heading">
-            Download an archive of project <strong><g:enc>${params.project ?: request.project}</g:enc></strong>
+            <g:message code="download.an.archive.of.project.named.prompt" args="${[params.project ?: request.project]}"/>
         </div>
         <div class="panel-body">
                 <g:link controller="project" action="exportPrepare" params="[project: params.project ?: request.project]"
                     class="btn btn-success"
                 >
-                    Export <g:enc>${params.project ?: request.project}</g:enc>.rdproject.jar
-
-                    &hellip;
+                    <g:message code="export.project.jar.button" args="${[params.project ?: request.project]}" />
                 </g:link>
 
         </div>
@@ -224,13 +252,13 @@
 <div class="tab-pane" id="delete">
     <div class="panel panel-default panel-tab-content">
         <div class="panel-heading">
-            Delete Project
+            <g:message code="delete.project" />
         </div>
         <div class="panel-body">
 
 
                 <a class="btn btn-danger btn-lg" data-toggle="modal" href="#deleteProjectModal">
-                    Delete this Project&hellip;
+                    <g:message code="delete.this.project.button" />
                     <i class="glyphicon glyphicon-remove"></i>
                 </a>
                 <g:form style="display: inline;" controller="project" action="delete" params="[project: (params.project ?: request.project)]"
@@ -243,15 +271,15 @@
                             <div class="modal-header">
                                 <button type="button" class="close" data-dismiss="modal"
                                         aria-hidden="true">&times;</button>
-                                <h4 class="modal-title" id="deleteProjectModalLabel">Delete Project</h4>
+                                <h4 class="modal-title" id="deleteProjectModalLabel"><g:message code="delete.project" /></h4>
                             </div>
 
                             <div class="modal-body">
-                                <span class="text-danger">Really delete this Project?</span>
+                                <span class="text-danger"><g:message code="really.delete.this.project" /></span>
                             </div>
                             <div class="modal-body container">
                                 <div class="form-group">
-                                    <label class="control-label col-sm-2">Project:</label>
+                                    <label class="control-label col-sm-2"><g:message code="project.prompt" /></label>
 
                                     <div class="col-sm-10">
                                         <span class="form-control-static"
@@ -262,9 +290,8 @@
 
 
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
-                                <button type="submit" class="btn btn-danger"><g:message code="gui.menu.ProjectDelete"
-                                                                                        default="Delete Project Now"/></button>
+                                <button type="button" class="btn btn-default" data-dismiss="modal"><g:message code="no" /></button>
+                                <button type="submit" class="btn btn-danger"><g:message code="delete.project.now.button" /></button>
                             </div>
                         </div><!-- /.modal-content -->
                     </div><!-- /.modal-dialog -->
@@ -290,18 +317,18 @@
         <div class="list-group-item">
             <div class="form-group">
                 <label>
-                    Choose a Rundeck archive
+                    <g:message code="choose.a.rundeck.archive" />
                     <input type="file" name="zipFile" class="form-control"/>
                 </label>
 
                 <p class="help-block">
-                    Existing Jobs in this project that match imported Jobs (group and name match, or UUID matches) will be updated.
+                    <g:message code="archive.import.help" />
                 </p>
             </div>
         </div>
 
         <div class="list-group-item">
-            <h4 class="list-group-item-heading">Imported Jobs</h4>
+            <h4 class="list-group-item-heading"><g:message code="imported.jobs" /></h4>
 
             <div class="radio">
                     <label title="Original UUIDs will be preserved, conflicting UUIDs will be replaced">
@@ -324,22 +351,22 @@
         </div>
 
         <div class="list-group-item">
-            <h4 class="list-group-item-heading">Executions</h4>
+            <h4 class="list-group-item-heading"><g:message code="Execution.plural" /></h4>
 
             <div class="radio">
                 <label title="All executions and reports will be imported">
                     <input type="radio" name="executionImportBehavior" value="import" checked/>
-                    Import All
+                    <g:message code="archive.import.executionImportBehavior.import.title" />
                 </label>
-                <span class="help-block">Creates new Executions and History reports from the archive</span>
+                <span class="help-block"><g:message code="archive.import.executionImportBehavior.import.help" /></span>
             </div>
 
             <div class="radio">
                 <label title="No executions or reports will be imported">
                     <input type="radio" name="executionImportBehavior" value="skip"/>
-                    Do Not Import
+                    <g:message code="archive.import.executionImportBehavior.skip.title" />
                 </label>
-                <span class="help-block">Does not import any Executions or History</span>
+                <span class="help-block"><g:message code="archive.import.executionImportBehavior.skip.help" /></span>
             </div>
         </div>
         <div class="list-group-item">
@@ -354,7 +381,7 @@
                 <div id="importUploadSpinner" class="spinner block" style="display:none;">
                     <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}"
                          alt="Spinner"/>
-                    Uploading File...
+                    <g:message code="uploading.file" />
                 </div>
             </div>
         </div>

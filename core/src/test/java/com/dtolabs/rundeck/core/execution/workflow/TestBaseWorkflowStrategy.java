@@ -63,16 +63,13 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         super.setUp();
         testFramework = getFrameworkInstance();
         testnode = testFramework.getFrameworkNodeName();
-        final FrameworkProject frameworkProject = testFramework.getFrameworkProjectMgr().createFrameworkProject(
+        final IRundeckProject frameworkProject = testFramework.getFrameworkProjectMgr().createFrameworkProject(
             TEST_PROJECT);
-        File resourcesfile = new File(frameworkProject.getNodesResourceFilePath());
-        //copy test nodes to resources file
-        try {
-            FileUtils.copyFileStreams(new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
-                                      resourcesfile);
-        } catch (IOException e) {
-            throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
-        }
+        generateProjectResourcesFile(
+                new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
+                frameworkProject
+        );
+
     }
 
     protected void tearDown() throws Exception {
@@ -206,7 +203,10 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
-                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
+                    .nodes(NodeFilter.filterNodes(
+                                   nodeset,
+                                   testFramework.getFrameworkProjectMgr().getFrameworkProject(TEST_PROJECT).getNodeSet()
+                           ))
                     .stepNumber(1)
                     .build();
             itemsSuccess = strategy.executeWorkflowItemsForNodeSet(context, map, resultList, items, keepgoing);

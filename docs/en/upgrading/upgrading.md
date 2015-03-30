@@ -1,6 +1,36 @@
 % Upgrade Guide
 % Greg Schueler
-% January 30, 2014
+% March 12, 2015
+
+## Upgrading to Rundeck 2.5
+
+**IMPORTANT**: Read the section about [Project definitions stored in DB](#project-definitions-stored-in-db) prior to upgrading from Rundeck 2.4.x and earlier.
+
+### Database schema
+
+This release adds a new DB table 
+but does not alter the schema of other tables.
+
+### Project definitions stored in DB
+
+Rundeck 2.4 and earlier used the filesystem to store **Projects** and their configuration,
+but Rundeck 2.5 now uses the DB to store project definition and configuration by default. 
+
+If you have projects that exist on the filesystem, when you upgrade to Rundeck 2.5, these projects 
+and their configuration files will be *automatically imported* into the DB.  This means that
+the contents of `project.properties` will be copied to the DB, using Rundeck's [Storage Facility](../administration/storage-facility.html).
+
+In addition, there is *no encryption by default*, if you want the contents of your project.properties
+to be encrypted in the DB, you must configure [Storage Converter Plugins](../plugins-user-guide/configuring.html#storage-converter-plugins) to use an encryption plugin.
+
+**Opt out**:
+
+You can configure Rundeck to still use the filesystem for the time being by adding the following to 
+`rundeck-config.properties`:
+
+    rundeck.projectsStorageType=filesystem
+
+This will preserve the behavior in Rundeck 2.4 and earlier.
 
 ## Upgrading to Rundeck 2.1
 

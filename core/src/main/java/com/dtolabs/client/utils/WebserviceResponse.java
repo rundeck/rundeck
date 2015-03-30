@@ -32,6 +32,7 @@ import org.dom4j.Document;
  * @version $Revision$
  */
 public interface WebserviceResponse extends ServerResponse{
+    int getResultCode();
 
     /**
      * Return true if the response was an error message

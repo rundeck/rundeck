@@ -1,8 +1,14 @@
 package com.dtolabs.rundeck.server.storage;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.PropertyRetriever;
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
 import com.dtolabs.rundeck.core.storage.*;
+import com.dtolabs.rundeck.core.utils.IPropertyLookup;
+import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import com.dtolabs.rundeck.core.utils.PropertyUtil;
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
@@ -21,7 +27,9 @@ import org.springframework.beans.factory.FactoryBeanNotInitializedException;
 import org.springframework.beans.factory.InitializingBean;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * StorageTreeFactory constructs Rundeck's StorageTree based on the configuration in the framework.properties
@@ -40,6 +48,7 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
     public static final String REMOVE_PATH_PREFIX = "removePathPrefix";
     public static final String RESOURCE_SELECTOR = "resourceSelector";
     Framework rundeckFramework;
+    private IPropertyLookup frameworkPropertyLookup;
     private PluginRegistry pluginRegistry;
     private String storageConfigPrefix;
     private String converterConfigPrefix;
@@ -47,6 +56,7 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
     private String loggerName =ORG_RUNDECK_STORAGE_EVENTS_LOGGER_NAME;
     private Map<String, String> baseStorageConfig = new HashMap<String, String>();
     private Map<String, String> configuration = new HashMap<String, String>();
+    private Set<String> defaultConverters = new HashSet<String>();
 
     private StoragePluginProviderService storagePluginProviderService;
     private StorageConverterPluginProviderService storageConverterPluginProviderService;
@@ -59,7 +69,7 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
 
     @Override
     public StorageTree getObject() throws Exception {
-        if (null == rundeckFramework) {
+        if (null == rundeckFramework && null == frameworkPropertyLookup) {
             throw new FactoryBeanNotInitializedException("'rundeckFramework' is required");
         }
         if (null == pluginRegistry) {
@@ -132,28 +142,37 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
 
     /**
      * Apply base converters for metadata timestamps
-     * @param builder
-     * @return
+     * @param builder builder
+     * @return builder
      */
     private TreeBuilder<ResourceMeta> baseConverter(TreeBuilder<ResourceMeta> builder) {
-        logger.debug("Configuring base converter: StorageTimestamperConverter" );
-        logger.debug("Configuring base converter: KeyStorageLayer" );
-        return builder.convert(
-                new StorageConverterPluginAdapter("builtin:timestamp",
-                        new StorageTimestamperConverter()
-                )
-        ).convert(
-                new StorageConverterPluginAdapter("builtin:ssh-storage",
-                        new KeyStorageLayer()
-                ), PathUtil.asPath("/keys"));
+        if(null!=defaultConverters && defaultConverters.contains("StorageTimestamperConverter")) {
+            logger.debug("Configuring base converter: StorageTimestamperConverter" );
+            builder=builder.convert(
+                    new StorageConverterPluginAdapter(
+                            "builtin:timestamp",
+                            new StorageTimestamperConverter()
+                    )
+            );
+        }
+        if(null!=defaultConverters && defaultConverters.contains("KeyStorageLayer")){
+            logger.debug("Configuring base converter: KeyStorageLayer" );
+            builder=builder.convert(
+                    new StorageConverterPluginAdapter(
+                            "builtin:ssh-storage",
+                            new KeyStorageLayer()
+                    ), PathUtil.asPath("/keys")
+            );
+        }
+        return builder;
     }
 
     /**
      * Append final listeners to the tree
      *
-     * @param builder
+     * @param builder builder
      *
-     * @return
+     * @return builder
      */
     private TreeBuilder<ResourceMeta> addLogger(TreeBuilder<ResourceMeta> builder, Map<String,String> config) {
         String loggerName= getLoggerName();
@@ -318,7 +337,13 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
      * @return expanded map
      */
     private Map<String, String> expandConfig(Map<String, String> map) {
-        return expandAllProperties(map, rundeckFramework.getPropertyLookup().getPropertiesMap());
+        return expandAllProperties(map, getPropertyLookup().getPropertiesMap());
+    }
+
+    private IPropertyLookup getPropertyLookup() {
+        return null != frameworkPropertyLookup
+               ? frameworkPropertyLookup
+               : null != rundeckFramework ? rundeckFramework.getPropertyLookup() : null;
     }
 
     private Map<String, String> expandAllProperties(Map<String, String> source, Map values) {
@@ -330,13 +355,24 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
     }
 
     private <T> T loadPlugin(String pluginType, Map<String, String> config,
-            PluggableProviderService<T> service) {
-        ConfiguredPlugin<T> configured = getPluginRegistry().configurePluginByName(pluginType, service,
-                rundeckFramework, null, config);
+            PluggableProviderService<T> service)
+    {
+        ConfiguredPlugin<T> configured = getPluginRegistry().configurePluginByName(
+                pluginType,
+                service,
+                PropertyResolverFactory.createResolver(
+                        PropertyResolverFactory.instanceRetriever(config),
+                        null,
+                        PropertyLookup.safePropertyRetriever(getPropertyLookup())
+                ),
+                PropertyScope.Instance
+        );
         if (null == configured) {
-            throw new IllegalArgumentException(service.getName() + " Plugin named \"" + pluginType + "\" could not be" +
+            throw new IllegalArgumentException(
+                    service.getName() + " Plugin named \"" + pluginType + "\" could not be" +
                     " " +
-                    "loaded");
+                    "loaded"
+            );
         }
         return configured.getInstance();
     }
@@ -413,5 +449,21 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
 
     public void setConfiguration(Map<String, String> configuration) {
         this.configuration = configuration;
+    }
+
+    public Set<String> getDefaultConverters() {
+        return defaultConverters;
+    }
+
+    public void setDefaultConverters(final Set<String> defaultConverters) {
+        this.defaultConverters = defaultConverters;
+    }
+
+    public IPropertyLookup getFrameworkPropertyLookup() {
+        return frameworkPropertyLookup;
+    }
+
+    public void setFrameworkPropertyLookup(final IPropertyLookup frameworkPropertyLookup) {
+        this.frameworkPropertyLookup = frameworkPropertyLookup;
     }
 }

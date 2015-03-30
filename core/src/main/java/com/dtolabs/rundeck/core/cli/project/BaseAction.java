@@ -22,6 +22,8 @@ import com.dtolabs.rundeck.core.cli.CLIToolLogger;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.FrameworkResource;
+import com.dtolabs.rundeck.core.common.IFramework;
+import com.dtolabs.rundeck.core.dispatcher.CentralDispatcher;
 import org.apache.commons.cli.CommandLine;
 
 import java.io.File;
@@ -30,19 +32,19 @@ import java.io.File;
  * Base class for implementing project setup actions
  */
 public class BaseAction implements Action {
-    final File FWK_PROP_FILE ;
 
     final protected CLIToolLogger main;
-    final protected Framework framework;
+    final protected IFramework framework;
     private boolean verbose=false;
 
     protected String project;
+    private CentralDispatcher centralDispatcher;
 
-    public BaseAction(final CLIToolLogger main, final Framework framework, final CommandLine cli) {
+    public BaseAction(final CLIToolLogger main, final IFramework framework, final CommandLine cli) {
         this(main, framework, parseBaseActionArgs(cli));
     }
 
-    public BaseAction(final CLIToolLogger main, final Framework framework, final BaseActionArgs args) {
+    public BaseAction(final CLIToolLogger main, final IFramework framework, final BaseActionArgs args) {
         if (null == main) {
             throw new NullPointerException("main parameter was null");
         }
@@ -52,8 +54,6 @@ public class BaseAction implements Action {
         }
         this.main = main;
         this.framework = framework;
-        FWK_PROP_FILE = new File(Constants.getFrameworkConfigDir(framework.getBaseDir().getAbsolutePath()),
-                                 "framework.properties");
         initArgs(args);
     }
 
@@ -96,6 +96,14 @@ public class BaseAction implements Action {
 
     }
 
+    public CentralDispatcher getCentralDispatcher() {
+        return centralDispatcher;
+    }
+
+    public void setCentralDispatcher(final CentralDispatcher centralDispatcher) {
+        this.centralDispatcher = centralDispatcher;
+    }
+
 
     /**
      * Arguments for the BaseAction.
@@ -127,19 +135,6 @@ public class BaseAction implements Action {
         verbose = args.isVerbose();
     }
 
-    /**
-     * Check if software was installed and setup process was run
-     */
-    protected void validateInstall() {
-        final File baseDir = framework.getBaseDir();
-        if (null == baseDir || !baseDir.exists()) {
-            throw new ProjectToolException(
-                "RDECK_BASE dir not found: " + (null == baseDir ? "(null)" : baseDir.getAbsolutePath()));
-        }
-        if (!FWK_PROP_FILE.exists()) {
-            throw new ProjectToolException("framework configuration not found: " + FWK_PROP_FILE.getAbsolutePath());
-        }
-    }
 
 
     /**
@@ -148,7 +143,6 @@ public class BaseAction implements Action {
      * @throws Throwable any throwable
      */
     public void exec() throws Throwable {
-        validateInstall();
     }
 
 

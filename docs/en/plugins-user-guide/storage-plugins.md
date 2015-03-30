@@ -1,6 +1,6 @@
 % Storage Plugins
 
-Storage plugins define ways to store and dynamically modify file contents such as store [Private Key Files](../administration/key-storage.html)
+Storage plugins define ways to store and dynamically modify file contents such as store [Private Key Files](../administration/key-storage.html) and [Project Configuration](../administration/project-setup.html).
 
 For configuration see [Configuring - Storage Plugins](configuring.html#storage-plugins).
 

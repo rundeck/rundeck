@@ -27,5 +27,5 @@ service.FileCopier.default.provider=jsch-scp
 EOF
 echo "Added project: ${PROJECT}, properties at $PROPSFILE"
 
-chown -R ${RUNDECK_USER}:${RUNDECK_USER} $DIR
-chown -R ${RUNDECK_USER}:${RUNDECK_USER} $RESOURCES_DIR
+#chown -R ${RUNDECK_USER}:${RUNDECK_USER} $DIR
+#chown -R ${RUNDECK_USER}:${RUNDECK_USER} $RESOURCES_DIR
