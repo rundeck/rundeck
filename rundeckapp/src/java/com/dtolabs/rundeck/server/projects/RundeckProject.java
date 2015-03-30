@@ -44,7 +44,7 @@ public class RundeckProject implements IRundeckProject{
     }
 
     @Override
-    public List<Map> listResourceModelConfigurations() {
+    public List<Map<String, Object>> listResourceModelConfigurations() {
         return projectNodes.listResourceModelConfigurations();
     }
 
