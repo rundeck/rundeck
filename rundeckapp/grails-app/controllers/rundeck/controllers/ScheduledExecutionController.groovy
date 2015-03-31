@@ -652,7 +652,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def stats=[:]
         if(url.startsWith("http:") || url.startsWith("https:")){
             final HttpClientParams params = new HttpClientParams()
-            p   arams.setConnectionManagerTimeout(timeout*1000L)
+            params.setConnectionManagerTimeout(timeout*1000L)
             params.setSoTimeout(timeout*1000)
             if(contimeout>0){
                 params.setIntParameter('http.connection.timeout',contimeout*1000)
