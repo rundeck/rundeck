@@ -24,6 +24,17 @@
         <span class="rundeck-version-identity" data-version-string="${enc(attr: buildIdent)}"
               data-app-id="${enc(attr: appId)}"></span>
     </g:if>
+    <g:ifServletContextAttributeExists attribute="CLUSTER_MODE_ENABLED">
+        <g:ifServletContextAttribute attribute="CLUSTER_MODE_ENABLED" value="true">
+            <g:if test="${grailsApplication.config.rundeck?.gui?.clusterIdentityInFooter in [true,'true']}">
+                <span class=" rundeck-server-uuid"
+                data-server-uuid="${ servletContextAttribute(attribute: 'SERVER_UUID')}"
+                      data-server-name="${ servletContextAttribute(attribute: 'FRAMEWORK_NODE')}"
+                >
+                </span>
+            </g:if>
+        </g:ifServletContextAttribute>
+    </g:ifServletContextAttributeExists>
 </div>
 </div>
 

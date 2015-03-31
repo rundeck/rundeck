@@ -64,6 +64,14 @@ these properties in the [rundeck-config.properties](configuration-file-reference
 `rundeck.gui.job.description.disableHTML`   Disable extended Job description     true/false
                                             and Option description rendering
                                             as HTML. (Default: false)
+
+`rundeck.gui.clusterIdentityInHeader`       When cluster mode is enabled,        true/false
+                                            display server name/ID in header.
+                                            (Default: false)
+
+`rundeck.gui.clusterIdentityInFooter`       When cluster mode is enabled,        true/false
+                                            display server name/ID in footer.
+                                            (Default: true)
 -------------------------------------------------------------------------------
 
 The `rundeck.gui.errorpage.hidestacktrace` can also be set to true via a Java system property defined at system startup: 

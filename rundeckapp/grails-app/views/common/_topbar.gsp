@@ -131,6 +131,19 @@
 </g:if>
 </ul>
   <ul class="nav navbar-nav navbar-right">
+      <g:ifServletContextAttributeExists attribute="CLUSTER_MODE_ENABLED">
+          <g:ifServletContextAttribute attribute="CLUSTER_MODE_ENABLED" value="true">
+              <g:if test="${grailsApplication.config.rundeck?.gui?.clusterIdentityInHeader in [true,'true']}">
+                  <li>
+                      <span class="navbar-text rundeck-server-uuid"
+                            data-server-uuid="${ servletContextAttribute(attribute: 'SERVER_UUID')}"
+                            data-server-name="${ servletContextAttribute(attribute: 'FRAMEWORK_NODE')}"
+                      >
+                      </span>
+                  </li>
+              </g:if>
+          </g:ifServletContextAttribute>
+      </g:ifServletContextAttributeExists>
     <g:set var="helpLinkUrl" value="${g.helpLinkUrl()}"/>
     <g:if test="${session?.user && request.subject}">
         <li class="headright">

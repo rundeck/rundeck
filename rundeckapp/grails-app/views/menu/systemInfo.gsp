@@ -71,7 +71,7 @@
                                         var="valuename">
                                         <tr>
                                             <td title="${enc(attr:dataset[dataname][valuename + '.info'] ?: '')}"><g:enc>${valuename}</g:enc></td>
-                                            <td>
+                                            <td class="${valuename=='serverUUID'?'rundeck-server-uuid':''}" data-server-uuid="${ valuename=='serverUUID'? dataset[dataname][valuename]:''}">
 
                                                 <g:if test="${dataset[dataname][valuename+'.unit']=='ratio'}">
                                                     <g:render template="/common/progressBar"

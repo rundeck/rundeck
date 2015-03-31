@@ -21,6 +21,7 @@ var VersionIdentity=function(data){
     self.nameIdentity= data && data.nameIdentity ? data.nameIdentity : 'majorMinor';
     self.iconIdentity= data && data.iconIdentity ? data.iconIdentity : 'minorPoint';
     self.appId=data && data['appId'] ? data['appId'] : 'Rundeck';
+    self.serverName=data && data['serverName'] ? data['serverName'] : null;
     self.csscolors= [
         'BlueViolet',
         'CadetBlue',
@@ -147,6 +148,23 @@ var VersionIdentity=function(data){
         data['full']=data.major*100 + data.minor*10+data.point;
         return data;
     }
+    function splitUUID(versionString) {
+        var partsa = String(versionString).split('-');
+        var apart = partsa.length > 0 ? partsa[0].substring(0,2) : versionString;
+        var data = {};
+        for(var i=0;i<partsa.length;i++){
+            data['uuid'+i]=parseInt(partsa[i].substring(0,2),16);
+            data['hexuuid'+i]=partsa[i];
+        }
+        var partsb = partsa.join('');
+        var sixes=[];
+        for(var j=0;(j+1)*6<partsb.length;j++){
+            data['6let'+i]=partsb.substring(j*6,(j+1)*6);
+            sixes.push(partsb.substring(j*6,(j+1)*6));
+        }
+        data['sixes']=sixes;
+        return data;
+    }
     function inList(list,val){
         return list[val % list.length];
     }
@@ -206,7 +224,21 @@ var VersionIdentity=function(data){
             colorb+" "+px2+"px "+
             ")"
             ;
-    }
+    };
+    self.stripeAllBg=function(angle,colors,width){
+        var s="repeating-linear-gradient("+angle+", ";
+        var w=0;
+        for(var x=0;x<colors.length;x++){
+            if(x>0){
+                s+=', '
+            }
+            s+='#'+colors[x]+" "+w+"px, ";
+            w+=width;
+            s+='#'+colors[x]+" "+w+"px";
+        }
+        return s+")";
+
+    };
     self.showVersionBlock=function(dom){
         var color=self.color();
         var name=self.name();
@@ -228,7 +260,58 @@ var VersionIdentity=function(data){
             jQuery(dom).css({ 'background': color, 'color': 'white'}).append(span);
         }
     };
-    self.versionData=splitVersion(self.versionString);
+    self.showServerName=function(dom){
+        if(!data.serverUuid){
+            return;
+        }
+        var color='#'+((self.versionData['hexuuid0'].substring(0,6)));
+        var icon=iconForVersion(self.versionData['uuid0']);
+        var codename=[
+            icon,
+            self.versionData['hexuuid0'].substring(0,2)
+        ].join('-').toLowerCase();
+        var name=self.serverName?self.serverName:'';
+        var shortname=self.versionData['hexuuid0'].substring(0,2);
+        var nodeicon= jQuery('<i></i>').addClass('rdicon node node-runnable icon-small');
+        var glyphicon= jQuery('<span></span>');
+        var ispan = jQuery('<span></span>');
+        ispan.append(jQuery('<i></i>').addClass('glyphicon glyphicon-' + icon));
+        glyphicon.append(ispan);
+        var nametext= jQuery('<span></span>').text(' '+name+' ');
+        var colorpill= jQuery('<span></span>').css({
+            'border-image': self.stripeAllBg('90deg',self.versionData['sixes'],20),
+            'border-width':'0 0 2px 0',
+            'padding': '1px',
+            'border-color':'solid transparent',
+            'border-image-slice':'1'
+            //'color': 'white',
+            //'text-shadow': '1px 1px 3px #333333'
+        });
+        var span=jQuery('<span></span>')
+                .attr('title',codename+' / '+data.serverUuid)
+                //.addClass('version-icon')
+                .css({
+                    //'color': color
+                    //'text-shadow': '1px 1px 3px #333333'
+                })
+            .append(
+                colorpill
+                    .append(nametext)
+                    .append(glyphicon)
+                    .append(' '+(self.serverName?shortname:codename))
+            )
+            //.append(nodeicon)
+
+            .append(jQuery('<span></span>').text(' '))
+            ;
+            jQuery(dom).append(span);
+            //jQuery(dom).append(jQuery('<a></a>').attr('href','/menu/systemInfo').append(span));
+    };
+    if(self.versionString) {
+        self.versionData = splitVersion(self.versionString);
+    }else if(data.serverUuid){
+        self.versionData = splitUUID(data.serverUuid);
+    }
 };
 (function(){
     jQuery(function(){
@@ -237,6 +320,9 @@ var VersionIdentity=function(data){
         });
         jQuery('.rundeck-version-block').each(function () {
             new VersionIdentity(jQuery(this).data()).showVersionBlock(this);
+        });
+        jQuery('.rundeck-server-uuid').each(function () {
+            new VersionIdentity(jQuery(this).data()).showServerName(this);
         });
     });
 })();

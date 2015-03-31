@@ -163,6 +163,8 @@ rundeck.web.metrics.servlets.healthcheck.enabled = true
 
 rundeck.gui.job.description.disableHTML=false
 rundeck.pagination.default.max=20
+rundeck.gui.clusterIdentityInHeader=false
+rundeck.gui.clusterIdentityInFooter=true
 
 rundeck.projectService.projectExportCache.spec= "expireAfterAccess=30m"
 rundeck.projectManagerService.projectCache.spec='expireAfterAccess=10m,refreshAfterWrite=1m'
