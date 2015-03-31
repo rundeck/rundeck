@@ -39,7 +39,7 @@ public abstract class AbstractBaseLoginModule implements LoginModule {
 
 
     @Override
-    public void initialize(Subject subject, CallbackHandler callbackHandler, Map stringMap, Map options) {
+    public void initialize(Subject subject, CallbackHandler callbackHandler, Map<String, ?> stringMap, Map<String, ?> options) {
         Object debug1 = options.get("debug");
         if (null != debug1) {
             this.debug = Boolean.parseBoolean(debug1.toString());

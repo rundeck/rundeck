@@ -42,9 +42,9 @@ public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule 
     UserInfo userInfo;
 
     @Override
-    public void initialize(Subject subject, CallbackHandler callbackHandler, Map shared, Map options) {
+    public void initialize(Subject subject, CallbackHandler callbackHandler, Map<String, ?>  shared, Map<String, ?> options) {
         super.initialize(subject, callbackHandler, shared, options);
-        if (!isUseFirstPass() && !isTryFirstPass()) {
+        if (!getSharedLoginCreds().isUseFirstPass() && !getSharedLoginCreds().isTryFirstPass()) {
             throw new IllegalStateException("JettyRolePropertyFileLoginModule must have useFirstPass or tryFirstPass " +
                     "set to true");
         }
@@ -53,8 +53,8 @@ public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule 
     }
 
     protected Object[] getCallBackAuth() throws IOException, UnsupportedCallbackException, LoginException {
-        if (isHasSharedAuth()) {
-            return new Object[]{getSharedUserName(), getSharedUserPass().toString().toCharArray()};
+        if (getSharedLoginCreds().isHasSharedAuth()) {
+            return new Object[]{getSharedLoginCreds().getSharedUserName(), getSharedLoginCreds().getSharedUserPass().toString().toCharArray()};
         } else {
             return new Object[]{null, null};
         }
@@ -88,7 +88,7 @@ public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule 
 
     @Override
     protected boolean authenticate(String sharedUserName, char[] chars) throws LoginException {
-        if (!isHasSharedAuth()) {
+        if (!getSharedLoginCreds().isHasSharedAuth()) {
             debug("JettyRolePropertyFileLoginModule: no shared auth, skipping.");
             return false;
         }

@@ -16,8 +16,6 @@
 
 package org.rundeck.jaas;
 
-import org.rundeck.jaas.AbstractBaseLoginModule;
-
 import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
@@ -29,50 +27,34 @@ import java.util.Map;
  * Abstract login module supporting the `useFirstPass`,`tryFirstPass`,`storePass` and `clearPass` options.
  */
 public abstract class AbstractSharedLoginModule extends AbstractBaseLoginModule {
-    public static final String SHARED_LOGIN_NAME = "javax.security.auth.login.name";
-    public static final String SHARED_LOGIN_PASSWORD = "javax.security.auth.login.password";
-    private boolean useFirstPass;
-    private boolean tryFirstPass;
-    private boolean storePass;
-    private boolean clearPass;
-    private Map<String, Object> sharedState;
+    private Map<String, ?> sharedState;
+    private SharedLoginCreds sharedLoginCreds;
 
     @Override
-    public void initialize(Subject subject, CallbackHandler callbackHandler, Map shared, Map options) {
-        super.initialize(subject, callbackHandler, shared, options);
-        this.sharedState = shared;
-        if (options.get("useFirstPass") != null) {
-            useFirstPass = Boolean.parseBoolean(options.get("useFirstPass").toString());
-        }
-        if (options.get("tryFirstPass") != null) {
-            tryFirstPass = Boolean.parseBoolean(options.get("tryFirstPass").toString());
-        }
-        if (options.get("storePass") != null) {
-            storePass = Boolean.parseBoolean(options.get("storePass").toString());
-        }
-        if (options.get("clearPass") != null) {
-            clearPass = Boolean.parseBoolean(options.get("clearPass").toString());
-        }
+    public void initialize(Subject subject, CallbackHandler callbackHandler, Map<String, ?> sharedState, Map<String, ?> options) {
+        super.initialize(subject, callbackHandler, sharedState, options);
+        this.sharedState=sharedState;
+        this.sharedLoginCreds = new SharedLoginCreds(sharedState, options);
     }
 
     @Override
     public boolean login() throws LoginException {
-        if ((isUseFirstPass() || isTryFirstPass()) && isHasSharedAuth()) {
-            debug(String.format("AbstractSharedLoginModule: login with shared auth, " +
-                    "try? %s, use? %s", isTryFirstPass(), isUseFirstPass()));
-            setAuthenticated(authenticate(getSharedUserName(), getSharedUserPass().toString().toCharArray()));
+        if ((getSharedLoginCreds().isUseFirstPass() || getSharedLoginCreds().isTryFirstPass()) && getSharedLoginCreds().isHasSharedAuth()) {
+            debug(String.format("AbstractSharedLoginModule: login with sharedLoginState auth, " +
+                    "try? %s, use? %s", getSharedLoginCreds().isTryFirstPass(), getSharedLoginCreds().isUseFirstPass()));
+            setAuthenticated(authenticate(getSharedLoginCreds().getSharedUserName(), getSharedLoginCreds().getSharedUserPass().toString().toCharArray()));
         }
 
-        if (isUseFirstPass() && isHasSharedAuth()) {
-            //finish with shared password auth attempt
+        if (getSharedLoginCreds().isUseFirstPass() && getSharedLoginCreds().isHasSharedAuth()) {
+            //finish with sharedLoginState password auth attempt
             debug(String.format("AbstractSharedLoginModule: using login result: %s", isAuthenticated()));
             if (isAuthenticated()) {
-                wasAuthenticated(getSharedUserName(), getSharedUserPass());
+                wasAuthenticated(getSharedLoginCreds().getSharedUserName(), getSharedLoginCreds().getSharedUserPass());
             }
             return isAuthenticated();
         }
-        if (isHasSharedAuth()) {
-            debug(String.format("AbstractSharedLoginModule: shared auth failed, now trying callback auth."));
+        if (getSharedLoginCreds().isHasSharedAuth()) {
+            debug(String.format("AbstractSharedLoginModule: sharedLoginState auth failed, now trying callback auth."));
         }
         Object[] userPass = new Object[0];
         try {
@@ -104,10 +86,9 @@ public abstract class AbstractSharedLoginModule extends AbstractBaseLoginModule 
 
     protected void wasAuthenticated(String user, Object pass) {
 
-        //store shared credentials if successful and not already stored
-        if (isAuthenticated() && isStorePass() && !isHasSharedAuth()) {
-            sharedState.put(SHARED_LOGIN_NAME, user);
-            sharedState.put(SHARED_LOGIN_PASSWORD, pass);
+        //store sharedLoginState credentials if successful and not already stored
+        if (isAuthenticated() && getSharedLoginCreds().isStorePass() && !getSharedLoginCreds().isHasSharedAuth()) {
+            getSharedLoginCreds().storeLoginCreds(user, pass);
         }
         wasAuthenticated();
     }
@@ -115,17 +96,15 @@ public abstract class AbstractSharedLoginModule extends AbstractBaseLoginModule 
     @Override
     public boolean commit() throws LoginException {
 
-        if (isClearPass() && isHasSharedAuth()) {
-            sharedState.remove(SHARED_LOGIN_NAME);
-            sharedState.remove(SHARED_LOGIN_PASSWORD);
+        if (getSharedLoginCreds().isClearPass() && getSharedLoginCreds().isHasSharedAuth()) {
+            getSharedLoginCreds().clear();
         }
         return super.commit();
     }
 
     /**
-     * Return the object[] containing username and password, by using the callback mechanism
      *
-     * @return
+     * @return Return the object[] containing username and password, by using the callback mechanism
      *
      * @throws IOException
      * @throws UnsupportedCallbackException
@@ -134,43 +113,16 @@ public abstract class AbstractSharedLoginModule extends AbstractBaseLoginModule 
     protected abstract Object[] getCallBackAuth() throws IOException, UnsupportedCallbackException, LoginException;
 
     /**
-     * Return true if the authentication succeeds.
+     * @param sharedUserName user
+     * @param chars password
      *
-     * @param sharedUserName
-     * @param chars
-     *
-     * @return
+     * @return true if the authentication succeeds
      *
      * @throws LoginException
      */
     protected abstract boolean authenticate(String sharedUserName, char[] chars) throws LoginException;
 
-
-    protected boolean isHasSharedAuth() {
-        return null != sharedState.get(SHARED_LOGIN_NAME) && null != sharedState.get(SHARED_LOGIN_PASSWORD);
-    }
-
-    protected String getSharedUserName() {
-        return sharedState.get(SHARED_LOGIN_NAME).toString();
-    }
-
-    protected Object getSharedUserPass() {
-        return sharedState.get(SHARED_LOGIN_PASSWORD);
-    }
-
-    protected boolean isUseFirstPass() {
-        return useFirstPass;
-    }
-
-    protected boolean isTryFirstPass() {
-        return tryFirstPass;
-    }
-
-    protected boolean isStorePass() {
-        return storePass;
-    }
-
-    protected boolean isClearPass() {
-        return clearPass;
+    protected SharedLoginCreds getSharedLoginCreds() {
+        return sharedLoginCreds;
     }
 }
