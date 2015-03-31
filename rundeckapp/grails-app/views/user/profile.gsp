@@ -33,7 +33,7 @@
                 }
             },
             error:function(jqxhr,status,error){
-                tokenAjaxError(elem,jqxhr.responseJSON.error?jqxhr.responseJSON.error:error);
+                tokenAjaxError(elem,jqxhr.responseJSON&&jqxhr.responseJSON.error?jqxhr.responseJSON.error:error);
             }
         }).success(_ajaxReceiveTokens.curry('api_req_tokens'));
     }
@@ -55,7 +55,7 @@
                 }
             },
             error:function(jqxhr,status,error){
-                tokenAjaxError(nelem,jqxhr.responseJSON.error?jqxhr.responseJSON.error:error);
+                tokenAjaxError(nelem,jqxhr.responseJSON&&jqxhr.responseJSON.error?jqxhr.responseJSON.error:error);
             },complete:function(){
                 jQuery('#'+elem.identify()+' .modal').modal('hide');
             }

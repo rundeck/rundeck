@@ -31,8 +31,8 @@
         executionFollowFragment: "${createLink(controller:'execution',action:'followFragment',params:projParams)}",
         menuJobs: "${createLink(controller:'menu',action:'jobs',params: projParams)}",
         userAddFilterPref: "${createLink(controller:'user',action:'addFilterPref',params:projParams)}",
-        userClearApiToken: "${g.createLink(controller: 'user', action: 'clearApiToken')}",
-        userGenerateApiToken: "${g.createLink(controller: 'user', action: 'generateApiToken')}",
+        userClearApiToken: "${g.createLink(controller: 'user', action: 'clearApiToken',params:[format:'json'])}",
+        userGenerateApiToken: "${g.createLink(controller: 'user', action: 'generateApiToken',params:[format:'json'])}",
 
         workflowEdit: '${createLink(controller:"workflow",action:"edit",params:projParams)}',
         workflowRender: '${createLink(controller:"workflow",action:"render",params:projParams)}',

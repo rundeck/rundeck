@@ -240,25 +240,19 @@ class UserController extends ControllerBase{
                 }
             }
         }
-        def done=false
         withFormat {
             html{
-
+                if (result.error) {
+                    flash.error = result.error
+                }else{
+                    flash.newtoken=result.apitoken
+                }
+                redirect(controller: 'user', action: 'profile', params: [login: login])
             }
             json {
-                done=true
                 render(result as JSON)
             }
         }
-        if (done) {
-            return
-        }
-        if (result.error) {
-            flash.error = result.error
-        }else{
-            flash.newtoken=result.apitoken
-        }
-        return redirect(controller: 'user', action: 'profile', params: [login: login])
     }
 
     def renderApiToken = {
