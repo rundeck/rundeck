@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.jetty.jaas;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 
@@ -44,6 +45,83 @@ public class JettyCachingLdapLoginModuleTest {
     private final String role2 = "role2";
     private final String nestedRole1 = "nestedRole1";
 
+    @Test
+    public void testTimeoutDefaults() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule();
+        module._contextFactory = "foo";
+        module._providerUrl = "ldap://localhost";
+
+        Hashtable env = module.getEnvironment();
+        Assert.assertTrue("Expected ldap read timeout default",
+                           env.containsKey("com.sun.jndi.ldap.read.timeout"));
+        Assert.assertEquals("Expected ldap read timeout default","0",
+                           env.get("com.sun.jndi.ldap.read.timeout"));
+        Assert.assertTrue("Expected ldap connect timeout default",
+                           env.containsKey("com.sun.jndi.ldap.connect.timeout"));
+        Assert.assertEquals(
+                "Expected ldap connect timeout default", "0",
+                env.get("com.sun.jndi.ldap.connect.timeout"));
+    }
+    @Test
+    public void testTimeoutReadInitialize() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule();
+        module.initializeOptions(new HashMap(){{
+                                     put("timeoutRead", "100");
+                                 }});
+
+        Assert.assertEquals("Expected ldap read timeout value", 100, module._timeoutRead);
+        Assert.assertEquals("Expected ldap connect timeout default", 0, module._timeoutConnect);
+    }
+    @Test
+    public void testTimeoutConnectInitialize() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule();
+        module.initializeOptions(new HashMap(){{
+                                     put("timeoutConnect", "200");
+                                 }});
+
+        Assert.assertEquals("Expected ldap read timeout default", 0, module._timeoutRead);
+        Assert.assertEquals("Expected ldap connect timeout value", 200, module._timeoutConnect);
+    }
+    @Test
+    public void testTimeoutRead() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule();
+        module._contextFactory = "foo";
+        module._providerUrl = "ldap://localhost";
+        module._timeoutRead=1000;
+
+        Hashtable env = module.getEnvironment();
+        Assert.assertTrue(
+                "Expected ldap read timeout default",
+                env.containsKey("com.sun.jndi.ldap.read.timeout")
+        );
+        Assert.assertEquals("Expected ldap read timeout value","1000",
+                           env.get("com.sun.jndi.ldap.read.timeout"));
+
+        Assert.assertTrue("Expected ldap connect timeout default",
+                           env.containsKey("com.sun.jndi.ldap.connect.timeout"));
+        Assert.assertEquals(
+                "Expected ldap connect timeout default", "0",
+                env.get("com.sun.jndi.ldap.connect.timeout"));
+    }
+    @Test
+    public void testTimeoutConnect() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule();
+        module._contextFactory = "foo";
+        module._providerUrl = "ldap://localhost";
+        module._timeoutConnect=5000;
+
+        Hashtable env = module.getEnvironment();
+        Assert.assertTrue("Expected ldap read timeout default",
+                           env.containsKey("com.sun.jndi.ldap.read.timeout"));
+        Assert.assertEquals("Expected ldap read timeout default","0",
+                           env.get("com.sun.jndi.ldap.read.timeout"));
+
+        Assert.assertTrue("Expected ldap connect timeout default",
+                           env.containsKey("com.sun.jndi.ldap.connect.timeout"));
+        Assert.assertEquals(
+                "Expected ldap connect timeout value", "5000",
+                env.get("com.sun.jndi.ldap.connect.timeout"));
+    }
     @Test
     public void testGetEnvironmentNoSSL() {
         JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule();

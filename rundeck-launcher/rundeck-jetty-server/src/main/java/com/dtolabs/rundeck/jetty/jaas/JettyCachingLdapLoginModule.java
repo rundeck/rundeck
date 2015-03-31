@@ -68,6 +68,8 @@ import org.eclipse.jetty.util.security.Credential;
  *    contextFactory="com.sun.jndi.ldap.LdapCtxFactory"
  *    hostname="ldap.example.com"
  *    port="389"
+ *    timeoutRead="5000"
+ *    timeoutConnect="30000"
  *    bindDn="cn=Directory Manager"
  *    bindPassword="directory"
  *    authenticationMethod="simple"
@@ -225,6 +227,16 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     private List<String> _supplementalRoles;
 
     protected boolean _nestedGroups;
+
+    /**
+     * timeout for LDAP read
+     */
+    protected long _timeoutRead =0;
+
+    /**
+     * timeout for LDAP connection
+     */
+    protected long _timeoutConnect =0;
 
     protected static final ConcurrentHashMap<String, CachedUserInfo> USERINFOCACHE =
         new ConcurrentHashMap<String, CachedUserInfo>();
@@ -728,6 +740,17 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             Map options) {
         super.initialize(subject, callbackHandler, sharedState, options);
 
+        initializeOptions(options);
+
+        try {
+            _rootContext = new InitialDirContext(getEnvironment());
+        } catch (NamingException ex) {
+            LOG.warn(ex);
+            throw new IllegalStateException("Unable to establish root context: "+ex.getMessage());
+        }
+    }
+
+    public void initializeOptions(final Map options) {
         _hostname = (String) options.get("hostname");
         if(options.containsKey("port")) {
             _port = Integer.parseInt((String) options.get("port"));
@@ -785,11 +808,11 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                         ". Using default: " + _cacheDuration, e);
             }
         }
-
-        try {
-            _rootContext = new InitialDirContext(getEnvironment());
-        } catch (NamingException ex) {
-            throw new IllegalStateException("Unable to establish root context", ex);
+        if (options.containsKey("timeoutRead")) {
+            _timeoutRead = Long.parseLong((String) options.get("timeoutRead"));
+        }
+        if (options.containsKey("timeoutConnect")) {
+            _timeoutConnect = Long.parseLong((String) options.get("timeoutConnect"));
         }
     }
 
@@ -860,6 +883,8 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         if (_bindPassword != null) {
             env.put(Context.SECURITY_CREDENTIALS, _bindPassword);
         }
+        env.put("com.sun.jndi.ldap.read.timeout", Long.toString(_timeoutRead));
+        env.put("com.sun.jndi.ldap.connect.timeout", Long.toString(_timeoutConnect));
 
         // Set the SSLContextFactory to implementation that validates cert subject
         if (url != null && url.startsWith("ldaps")) {
