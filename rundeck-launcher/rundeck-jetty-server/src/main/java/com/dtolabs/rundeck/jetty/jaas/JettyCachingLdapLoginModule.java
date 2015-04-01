@@ -224,7 +224,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
      * List of supplemental roles provided in config file that get added to
      * all users.
      */
-    private List<String> _supplementalRoles;
+    protected List<String> _supplementalRoles;
 
     protected boolean _nestedGroups;
 
@@ -367,7 +367,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
     /**
      * attempts to get the users roles from the root context
-     * <p/>
+     *
      * NOTE: this is not an user authenticated operation
      *
      * @param dirContext
@@ -376,7 +376,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
      * @throws LoginException
      */
     @SuppressWarnings("unchecked")
-    private List getUserRoles(DirContext dirContext, String username) throws LoginException,
+    protected List getUserRoles(DirContext dirContext, String username) throws LoginException,
             NamingException {
         String userDn = _userRdnAttribute + "=" + username + "," + _userBaseDn;
 
@@ -437,13 +437,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             }
         }
 
-        if (null != _supplementalRoles) {
-            for (String supplementalRole : _supplementalRoles) {
-                if(null!=supplementalRole&& !"".equals(supplementalRole.trim())){
-                    roleList.add(supplementalRole.trim());
-                }
-            }
-        }
+        addSupplementalRoles(roleList);
 
         if(_nestedGroups) {
             roleList = getNestedRoles(dirContext, roleList);
@@ -456,6 +450,16 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         }
 
         return roleList;
+    }
+
+    protected void addSupplementalRoles(final List<String> roleList) {
+        if (null != _supplementalRoles) {
+            for (String supplementalRole : _supplementalRoles) {
+                if(null!=supplementalRole&& !"".equals(supplementalRole.trim())){
+                    roleList.add(supplementalRole.trim());
+                }
+            }
+        }
     }
 
     private List<String> getNestedRoles(DirContext dirContext, List<String> roleList) {
@@ -561,6 +565,69 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         }
         return roleMemberOfMap;
     }
+    protected boolean isDebug(){
+        return _debug;
+    }
+    /**
+     * Default behavior to emit to System.err
+     * @param message message
+     */
+    protected void debug(String message) {
+        if (isDebug()) {
+            LOG.debug(message);
+        }
+    }
+
+
+    /**
+     * Gets credentials by calling {@link #getCallBackAuth()}, then performs {@link #authenticate(String, Object)}
+     *
+     * @return true if authenticated
+     * @throws LoginException
+     */
+    @Override
+    public boolean login() throws LoginException {
+        try{
+            Object[] userPass= getCallBackAuth();
+            if (null == userPass || userPass.length < 2) {
+                setAuthenticated(false);
+            } else {
+                String name = (String) userPass[0];
+                Object pass = userPass[1];
+                setAuthenticated(authenticate(name, pass));
+            }
+            return isAuthenticated();
+        } catch (UnsupportedCallbackException e) {
+            throw new LoginException("Error obtaining callback information.");
+        } catch (IOException e) {
+            if (_debug) {
+                e.printStackTrace();
+            }
+            throw new LoginException("IO Error performing login.");
+        }
+    }
+
+    /**
+     *
+     * @return Return the object[] containing username and password, by using the callback mechanism
+     *
+     * @throws IOException
+     * @throws UnsupportedCallbackException
+     * @throws LoginException
+     */
+    protected Object[] getCallBackAuth() throws IOException, UnsupportedCallbackException, LoginException {
+        if (getCallbackHandler() == null) {
+            throw new LoginException("No callback handler");
+        }
+
+        Callback[] callbacks = configureCallbacks();
+        getCallbackHandler().handle(callbacks);
+
+        String webUserName = ((NameCallback) callbacks[0]).getName();
+        Object webCredential = ((ObjectCallback) callbacks[1]).getObject();
+        return new Object[]{webUserName,webCredential};
+    }
+
 
     /**
      * since ldap uses a context bind for valid authentication checking, we
@@ -570,21 +637,15 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
      * forcing the binding check then we try a binding authentication check,
      * otherwise if we have the users encoded password then we can try
      * authentication via that mechanic
+     * @param webUserName user
+     * @param webCredential password
      *
-     * @return
+     *
+     * @return true if authenticated
      * @throws LoginException
      */
-    public boolean login() throws LoginException {
+    protected boolean authenticate(final String webUserName, final Object webCredential) throws LoginException {
         try {
-            if (getCallbackHandler() == null) {
-                throw new LoginException("No callback handler");
-            }
-
-            Callback[] callbacks = configureCallbacks();
-            getCallbackHandler().handle(callbacks);
-
-            String webUserName = ((NameCallback) callbacks[0]).getName();
-            Object webCredential = ((ObjectCallback) callbacks[1]).getObject();
 
             if (webUserName == null || webCredential == null) {
                 setAuthenticated(false);
@@ -736,8 +797,8 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     }
 
     @SuppressWarnings("unchecked")
-    public void initialize(Subject subject, CallbackHandler callbackHandler, Map sharedState,
-            Map options) {
+    public void initialize(Subject subject, CallbackHandler callbackHandler, Map<String, ?> sharedState,
+                           Map<String, ?> options) {
         super.initialize(subject, callbackHandler, sharedState, options);
 
         initializeOptions(options);
@@ -837,7 +898,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     }
 
     @SuppressWarnings("unchecked")
-    private String getOption(Map options, String key, String defaultValue) {
+    protected String getOption(Map options, String key, String defaultValue) {
         Object value = options.get(key);
 
         if (value == null) {
