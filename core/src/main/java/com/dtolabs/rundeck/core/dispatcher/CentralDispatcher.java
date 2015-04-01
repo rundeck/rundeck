@@ -24,6 +24,8 @@
 package com.dtolabs.rundeck.core.dispatcher;
 
 
+import com.dtolabs.rundeck.core.common.INodeSet;
+
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
@@ -63,6 +65,8 @@ public interface CentralDispatcher {
      * @param job job execution reference definition
      */
     public QueuedItemResult queueDispatcherJob(IDispatchedJob job) throws CentralDispatcherException;
+
+    INodeSet filterProjectNodes(String project, String filter) throws CentralDispatcherException;
 
     /**
      * List the items on the dispatcher queue

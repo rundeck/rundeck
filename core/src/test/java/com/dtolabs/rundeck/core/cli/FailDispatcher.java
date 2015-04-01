@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.core.cli;
 
+import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.dispatcher.*;
 
 import java.io.OutputStream;
@@ -82,5 +83,12 @@ public class FailDispatcher implements CentralDispatcher {
     {
 
         fail("unexpected call to createProject");
+    }
+    @Override
+    public INodeSet filterProjectNodes(final String project, final String filter)
+            throws CentralDispatcherException
+    {
+        fail("unexpected call to filterProjectNodes");
+        return null;
     }
 }

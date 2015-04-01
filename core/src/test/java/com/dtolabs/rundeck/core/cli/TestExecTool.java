@@ -24,10 +24,7 @@ package com.dtolabs.rundeck.core.cli;
 */
 
 
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
-import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.common.IRundeckProject;
+import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
@@ -239,54 +236,97 @@ public class TestExecTool extends AbstractBaseTest {
         }
     }
 
-    public void testFilterNodes() {
-        {
-            ExecTool main = newExecTool();
-            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT});
-            Map exmap = main.parseExcludeArgs(nodeKeys);
-            Map incmap = main.parseIncludeArgs(nodeKeys);
-            final Collection c = main.filterNodes().getNodes();
-            assertEquals("wrong size", 4, c.size());
-        }
-        {
-            ExecTool main = newExecTool();
-            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-X", "homestar", "-I", "os-name=Testux"});
-            Map exmap = main.parseExcludeArgs(nodeKeys);
-            Map incmap = main.parseIncludeArgs(nodeKeys);
-            NodeSet nodeset = main.createNodeSet(incmap, exmap);
-            assertTrue(nodeset.getExclude().isDominant());
-            assertFalse(nodeset.getInclude().isDominant());
-            final Collection c = main.filterNodes().getNodes();
-            assertEquals("wrong size", 1, c.size());
-        }
+    public void testFilterNodesDefaultAll() throws CentralDispatcherException {
+        ExecTool main = newExecTool();
+        NodeSetImpl nodeSet = new NodeSetImpl();
+        nodeSet.putNode(new NodeEntryImpl("node1"));
+        nodeSet.putNode(new NodeEntryImpl("node2"));
+        nodeSet.putNode(new NodeEntryImpl("node3"));
+        nodeSet.putNode(new NodeEntryImpl("node4"));
 
-        {
-            ExecTool main = newExecTool();
-            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-X", "strongbad,homestar",
-                "-I", "os-family=fakeos"});
-            Map exmap = main.parseExcludeArgs(nodeKeys);
-            Map incmap = main.parseIncludeArgs(nodeKeys);
-            final Collection c = main.filterNodes().getNodes();
-            assertEquals("wrong size", 1, c.size());
-        }
+        testCentralDispatcher centralDispatcher = getFilterNodesDispatcher(main, nodeSet);
+
+        main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT});
+        Map exmap = main.parseExcludeArgs(nodeKeys);
+        Map incmap = main.parseIncludeArgs(nodeKeys);
+        final Collection c = main.filterNodes().getNodes();
+
+        assertEquals("wrong size", 4, c.size());
+        assertEquals(TEST_EXEC_TOOL_PROJECT, centralDispatcher.nodesProject);
+        assertEquals(".*", centralDispatcher.nodesFilter);
+    }
+
+    private testCentralDispatcher getFilterNodesDispatcher(
+            final ExecTool main,
+            final NodeSetImpl nodeSet
+    )
+    {
+        testCentralDispatcher centralDispatcher = new testCentralDispatcher();
+        centralDispatcher.hasFilteredNodes = true;
+        centralDispatcher.filteredNodes = nodeSet;
+        main.setCentralDispatcher(centralDispatcher);
+        return centralDispatcher;
+    }
+
+    public void testFilterNodesSimple1() throws CentralDispatcherException {
+        ExecTool main = newExecTool();
+        NodeSetImpl nodeSet = new NodeSetImpl();
+        nodeSet.putNode(new NodeEntryImpl("node1"));
+        testCentralDispatcher centralDispatcher = getFilterNodesDispatcher(main, nodeSet);
+        main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-X", "homestar", "-I", "os-name=Testux"});
+        Map exmap = main.parseExcludeArgs(nodeKeys);
+        Map incmap = main.parseIncludeArgs(nodeKeys);
+        NodeSet nodeset = main.createNodeSet(incmap, exmap);
+        assertTrue(nodeset.getExclude().isDominant());
+        assertFalse(nodeset.getInclude().isDominant());
+        final Collection c = main.filterNodes().getNodes();
+        assertEquals("wrong size", 1, c.size());
+        assertEquals(TEST_EXEC_TOOL_PROJECT, centralDispatcher.nodesProject);
+        assertEquals("osname: Testux !hostname: homestar", centralDispatcher.nodesFilter);
+    }
+
+    public void testFilterNodes3() throws CentralDispatcherException {
+        ExecTool main = newExecTool();
+        NodeSetImpl nodeSet = new NodeSetImpl();
+        nodeSet.putNode(new NodeEntryImpl("node1"));
+        testCentralDispatcher centralDispatcher = getFilterNodesDispatcher(main, nodeSet);
+        main.parseArgs(
+                new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-X", "strongbad,homestar",
+                        "-I", "os-family=fakeos"}
+        );
+        Map exmap = main.parseExcludeArgs(nodeKeys);
+        Map incmap = main.parseIncludeArgs(nodeKeys);
+        final Collection c = main.filterNodes().getNodes();
+        assertEquals("wrong size", 1, c.size());
+        assertEquals(TEST_EXEC_TOOL_PROJECT, centralDispatcher.nodesProject);
+        assertEquals("osfamily: fakeos !hostname: strongbad,homestar", centralDispatcher.nodesFilter);
     }
 
 
 
-    public void testDefaultNodeFormatter() {
-        {
+    public void testDefaultNodeFormatter() throws CentralDispatcherException {
             ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT});
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
+        NodeSetImpl nodeSet = new NodeSetImpl();
+        nodeSet.putNode(new NodeEntryImpl("cheat"));
+        nodeSet.putNode(new NodeEntryImpl("homestar"));
+        nodeSet.putNode(new NodeEntryImpl("strongbad"));
+        nodeSet.putNode(new NodeEntryImpl("test1"));
+        testCentralDispatcher centralDispatcher = getFilterNodesDispatcher(main, nodeSet);
             final Collection c = main.filterNodes().getNodes();
             final String result = new ExecTool.DefaultNodeFormatter().formatResults(c).toString();
-            System.out.println("TEST-DEBUG: result='" + result + "'");
             assertNotNull(result);
             assertEquals("doesn't contain correct result", "cheat homestar strongbad test1", result);
+        assertEquals(TEST_EXEC_TOOL_PROJECT,centralDispatcher.nodesProject);
+        assertEquals(".*",centralDispatcher.nodesFilter);
         }
-        {
+    public void testDefaultNodeFormatter2() throws CentralDispatcherException {
             ExecTool main = newExecTool();
+        NodeSetImpl nodeSet = new NodeSetImpl();
+        nodeSet.putNode(new NodeEntryImpl("cheat"));
+        testCentralDispatcher centralDispatcher = getFilterNodesDispatcher(main, nodeSet);
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-X", "homestar", "-I", "os-name=Testux"});
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
@@ -298,10 +338,15 @@ public class TestExecTool extends AbstractBaseTest {
             final String result = new ExecTool.DefaultNodeFormatter().formatResults(c).toString();
             assertNotNull(result);
             assertEquals("doesn't contain correct result", "cheat", result);
+        assertEquals(TEST_EXEC_TOOL_PROJECT,centralDispatcher.nodesProject);
+        assertEquals("osname: Testux !hostname: homestar",centralDispatcher.nodesFilter);
         }
 
-        {
+    public void testDefaultNodeFormatter3() throws CentralDispatcherException {
             ExecTool main = newExecTool();
+        NodeSetImpl nodeSet = new NodeSetImpl();
+        nodeSet.putNode(new NodeEntryImpl("cheat"));
+        testCentralDispatcher centralDispatcher = getFilterNodesDispatcher(main, nodeSet);
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-X", "strongbad,homestar",
                 "-I", "os-family=fakeos"});
             Map exmap = main.parseExcludeArgs(nodeKeys);
@@ -311,7 +356,8 @@ public class TestExecTool extends AbstractBaseTest {
             final String result = new ExecTool.DefaultNodeFormatter().formatResults(c).toString();
             assertNotNull(result);
             assertEquals("doesn't contain correct result", "cheat", result);
-        }
+        assertEquals(TEST_EXEC_TOOL_PROJECT,centralDispatcher.nodesProject);
+        assertEquals("osfamily: fakeos !hostname: strongbad,homestar",centralDispatcher.nodesFilter);
     }
 
     static class TestFormatter implements ExecTool.NodeFormatter{
@@ -321,48 +367,67 @@ public class TestExecTool extends AbstractBaseTest {
             return new StringBuffer();
         }
     }
-    public void testListAction() {
-        {
-            ExecTool main = newExecTool();
-            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-v"});
-            Map exmap = main.parseExcludeArgs(nodeKeys);
-            Map incmap = main.parseIncludeArgs(nodeKeys);
-            final Collection c = main.filterNodes().getNodes();
-            final TestFormatter formatter = new TestFormatter();
-            main.setNodeFormatter(formatter);
-            main.listAction();
-            assertNotNull(formatter.nodes);
-            assertEquals(4, formatter.nodes.size());
-        }
-        {
-            ExecTool main = newExecTool();
-            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-v", "-X", "homestar", "-I", "os-name=Testux"});
-            Map exmap = main.parseExcludeArgs(nodeKeys);
-            Map incmap = main.parseIncludeArgs(nodeKeys);
-            NodeSet nodeset = main.createNodeSet(incmap, exmap);
-            assertTrue(nodeset.getExclude().isDominant());
-            assertFalse(nodeset.getInclude().isDominant());
-            final Collection c = main.filterNodes().getNodes();
-            final TestFormatter formatter = new TestFormatter();
-            main.setNodeFormatter(formatter);
-            main.listAction();
-            assertNotNull(formatter.nodes);
-            assertEquals(1, formatter.nodes.size());
-        }
 
-        {
-            ExecTool main = newExecTool();
-            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-v", "-X", "strongbad,homestar",
-                "-I", "os-family=fakeos"});
-            Map exmap = main.parseExcludeArgs(nodeKeys);
-            Map incmap = main.parseIncludeArgs(nodeKeys);
-            final Collection c = main.filterNodes().getNodes();
-            final TestFormatter formatter = new TestFormatter();
-            main.setNodeFormatter(formatter);
-            main.listAction();
-            assertNotNull(formatter.nodes);
-            assertEquals(1, formatter.nodes.size());
-        }
+    public void testListActionAll() throws CentralDispatcherException {
+        ExecTool main = newExecTool();
+        NodeSetImpl nodeSet = new NodeSetImpl();
+        nodeSet.putNode(new NodeEntryImpl("node1"));
+        nodeSet.putNode(new NodeEntryImpl("node2"));
+        nodeSet.putNode(new NodeEntryImpl("node3"));
+        nodeSet.putNode(new NodeEntryImpl("node4"));
+        testCentralDispatcher centralDispatcher = getFilterNodesDispatcher(main, nodeSet);
+        main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-v"});
+        Map exmap = main.parseExcludeArgs(nodeKeys);
+        Map incmap = main.parseIncludeArgs(nodeKeys);
+        final Collection c = main.filterNodes().getNodes();
+        final TestFormatter formatter = new TestFormatter();
+        main.setNodeFormatter(formatter);
+        main.listAction();
+        assertNotNull(formatter.nodes);
+        assertEquals(4, formatter.nodes.size());
+    }
+
+    public void testListActionFiltered1() throws CentralDispatcherException {
+        ExecTool main = newExecTool();
+        NodeSetImpl nodeSet = new NodeSetImpl();
+        nodeSet.putNode(new NodeEntryImpl("node1"));
+        testCentralDispatcher centralDispatcher = getFilterNodesDispatcher(main, nodeSet);
+        main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-v", "-X", "homestar", "-I", "os-name=Testux"});
+        Map exmap = main.parseExcludeArgs(nodeKeys);
+        Map incmap = main.parseIncludeArgs(nodeKeys);
+        NodeSet nodeset = main.createNodeSet(incmap, exmap);
+        assertTrue(nodeset.getExclude().isDominant());
+        assertFalse(nodeset.getInclude().isDominant());
+        final Collection c = main.filterNodes().getNodes();
+        final TestFormatter formatter = new TestFormatter();
+        main.setNodeFormatter(formatter);
+        main.listAction();
+        assertNotNull(formatter.nodes);
+        assertEquals(1, formatter.nodes.size());
+        assertEquals(TEST_EXEC_TOOL_PROJECT, centralDispatcher.nodesProject);
+        assertEquals("osname: Testux !hostname: homestar", centralDispatcher.nodesFilter);
+    }
+
+    public void testListAction3() throws CentralDispatcherException {
+        ExecTool main = newExecTool();
+        NodeSetImpl nodeSet = new NodeSetImpl();
+        nodeSet.putNode(new NodeEntryImpl("node1"));
+        testCentralDispatcher centralDispatcher = getFilterNodesDispatcher(main, nodeSet);
+
+        main.parseArgs(
+                new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-v", "-X", "strongbad,homestar",
+                        "-I", "os-family=fakeos"}
+        );
+        Map exmap = main.parseExcludeArgs(nodeKeys);
+        Map incmap = main.parseIncludeArgs(nodeKeys);
+        final Collection c = main.filterNodes().getNodes();
+        final TestFormatter formatter = new TestFormatter();
+        main.setNodeFormatter(formatter);
+        main.listAction();
+        assertNotNull(formatter.nodes);
+        assertEquals(1, formatter.nodes.size());
+        assertEquals(TEST_EXEC_TOOL_PROJECT, centralDispatcher.nodesProject);
+        assertEquals("osfamily: fakeos !hostname: strongbad,homestar", centralDispatcher.nodesFilter);
     }
 
     private ExecTool newExecTool() {
@@ -527,6 +592,13 @@ public class TestExecTool extends AbstractBaseTest {
                 throws CentralDispatcherException
         {
 
+        }
+
+        @Override
+        public INodeSet filterProjectNodes(final String project, final String filter)
+                throws CentralDispatcherException
+        {
+            return null;
         }
     }
     static class testDispatcher extends noopDispatcher{
@@ -752,6 +824,10 @@ public class TestExecTool extends AbstractBaseTest {
         boolean queueDispatcherJobCalled = false;
         IDispatchedScript passedinScript;
         String passedinId;
+        boolean hasFilteredNodes=false;
+        INodeSet filteredNodes;
+        String nodesFilter;
+        String nodesProject;
 
         public QueuedItemResult queueDispatcherJob(IDispatchedJob job) throws CentralDispatcherException {
             queueDispatcherJobCalled=true;
@@ -827,6 +903,18 @@ public class TestExecTool extends AbstractBaseTest {
         {
 
             fail("unexpected call to createProject");
+        }
+
+        @Override
+        public INodeSet filterProjectNodes(final String project, final String filter)
+                throws CentralDispatcherException
+        {
+            this.nodesFilter=filter;
+            this.nodesProject=project;
+            if(!hasFilteredNodes) {
+                fail("unexpected call to filterProjectNodes");
+            }
+            return filteredNodes;
         }
 
         @Override

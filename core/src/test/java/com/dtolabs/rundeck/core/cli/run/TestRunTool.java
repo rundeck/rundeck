@@ -27,6 +27,7 @@ import com.dtolabs.client.services.QueuedItemResultImpl;
 import com.dtolabs.rundeck.core.cli.CLIToolOptionsException;
 import com.dtolabs.rundeck.core.cli.SingleProjectResolver;
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import junit.framework.Test;
@@ -278,6 +279,14 @@ public class TestRunTool extends AbstractBaseTest {
         {
 
             fail("unexpected call to createProject");
+        }
+
+        @Override
+        public INodeSet filterProjectNodes(final String project, final String filter)
+                throws CentralDispatcherException
+        {
+            fail("unexpected call to filterProjectNodes");
+            return null;
         }
     }
 

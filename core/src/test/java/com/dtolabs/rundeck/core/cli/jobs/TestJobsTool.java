@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.cli.CLIToolException;
 import com.dtolabs.rundeck.core.cli.CLIToolOptionsException;
 import com.dtolabs.rundeck.core.cli.SingleProjectResolver;
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import junit.framework.Test;
@@ -79,6 +80,7 @@ public class TestJobsTool extends AbstractBaseTest {
         Collection<DeleteJobResult> purgeJobsResult;
         JobDefinitionFileFormat loadFormat;
         JobDefinitionFileFormat listFormat;
+        INodeSet filteredNodes;
 
 
         public QueuedItemResult queueDispatcherJob(IDispatchedJob job) throws CentralDispatcherException {
@@ -158,6 +160,15 @@ public class TestJobsTool extends AbstractBaseTest {
         {
 
             fail("unexpected call to createProject");
+        }
+
+        @Override
+        public INodeSet filterProjectNodes(final String project, final String filter)
+                throws CentralDispatcherException
+        {
+
+            fail("unexpected call to createProject");
+            return filteredNodes;
         }
     }
 

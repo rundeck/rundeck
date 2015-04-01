@@ -688,7 +688,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
         return createFilterNodeSelector().nodeSelectorWithDefault(framework.getFrameworkNodeName());
     }
 
-    public INodeSet getNodes() {
+    public INodeSet getNodes() throws CentralDispatcherException {
         return filterNodes(true);
     }
 
@@ -838,29 +838,29 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
 
 
 
-    INodeSet filterNodes() {
+    INodeSet filterNodes() throws CentralDispatcherException {
         return filterNodes(false);
     }
 
-    INodeSet filterNodes(final boolean singleNodeDefault) {
-        /**
-         * Read the nodes.properties file
-         */
-        final INodeSet n = readNodesFile();
-        debug("total unfiltered nodes=" + n.getNodeNames().size());
-        final NodeSet filterNodeSelector = createFilterNodeSelector();
+    INodeSet filterNodes(final boolean singleNodeDefault) throws CentralDispatcherException {
+        NodeSet filterNodeSelector = createFilterNodeSelector();
+        String usedFilter;
+        if(filterNodeSelector.isBlank()){
+            if(singleNodeDefault){
+                usedFilter=framework.getFrameworkNodeName();
+            }else {
+                usedFilter = ".*";
+            }
+        }else {
+            usedFilter = NodeSet.generateFilter(filterNodeSelector);
+        }
+        INodeSet n = centralDispatcher.filterProjectNodes(
+                getFrameworkProject(),
+                usedFilter
+        );
+
         if (0 == n.getNodeNames().size()) {
             verbose("Empty node list");
-        } else {
-            /**
-             * Apply the include/exclude filters to the list
-             */
-            debug("applying nodeset filter... " + getNodeSelector().toString());
-            /**
-             * Reset collection to filter results
-             */
-            return NodeFilter.filterNodes(singleNodeDefault ? filterNodeSelector.nodeSelectorWithDefault(
-                    framework.getFrameworkNodeName()) : filterNodeSelector.nodeSelectorWithDefaultAll(), n);
         }
 
         /**

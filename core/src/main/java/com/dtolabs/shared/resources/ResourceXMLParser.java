@@ -55,6 +55,7 @@ public class ResourceXMLParser {
 
     private File file;
     private InputStream input;
+    private Document doc;
     private ResourceXMLReceiver receiver;
     public static final String DEFAULT_ENTITY_XPATH = NODE_ENTITY_TAG ;
     private String entityXpath = DEFAULT_ENTITY_XPATH;
@@ -78,6 +79,16 @@ public class ResourceXMLParser {
 
 
     /**
+     * Constructor for the ResourceXMLParser
+     *
+     * @param doc     source document
+     */
+    public ResourceXMLParser(final Document doc) {
+        this.doc = doc;
+    }
+
+
+    /**
      * Parse the document, applying the configured Receiver to the parsed entities
      *
      * @throws ResourceXMLParserException parse error
@@ -90,34 +101,40 @@ public class ResourceXMLParser {
 
         try {
 
-            final InputStream in;
-            if(null!=file){
-                in = new FileInputStream(file);
-            }else{
-                in = input;
-            }
-            try{
-                final Document doc = reader.read(in);
-                final EntitySet set = new EntitySet();
-                final Element root = doc.getRootElement();
-
-                final List list = root.selectNodes(entityXpath);
-                for (final Object n : list) {
-                    final Node node = (Node) n;
-                    final Entity ent = parseEnt(node, set);
-                    if (null != receiver) {
-                        if (!receiver.resourceParsed(ent)) {
-                            break;
-                        }
+            final Document doc;
+            if(null==this.doc){
+                final InputStream in;
+                if(null!=file){
+                    in = new FileInputStream(file);
+                }else{
+                    in = input;
+                }
+                try{
+                    doc=reader.read(in);
+                }finally{
+                    if(null!=file){
+                        in.close();
                     }
                 }
+            }else{
+                doc=this.doc;
+            }
+
+            final EntitySet set = new EntitySet();
+            final Element root = doc.getRootElement();
+
+            final List list = root.selectNodes(entityXpath);
+            for (final Object n : list) {
+                final Node node = (Node) n;
+                final Entity ent = parseEnt(node, set);
                 if (null != receiver) {
-                    receiver.resourcesParsed(set);
+                    if (!receiver.resourceParsed(ent)) {
+                        break;
+                    }
                 }
-            }finally{
-                if(null!=file){
-                    in.close();
-                }
+            }
+            if (null != receiver) {
+                receiver.resourcesParsed(set);
             }
 
         } catch (DocumentException e) {

@@ -26,8 +26,13 @@ package com.dtolabs.client.services;
 import com.dtolabs.client.utils.WebserviceResponse;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.common.NodeSetImpl;
+import com.dtolabs.rundeck.core.common.NodesXMLParser;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.utils.OptsUtil;
+import com.dtolabs.shared.resources.ResourceXMLParser;
+import com.dtolabs.shared.resources.ResourceXMLParserException;
 import com.dtolabs.utils.Streams;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.util.URIUtil;
@@ -162,6 +167,10 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      * Webservice endpoint for running job by name or id
      */
     public static final String RUNDECK_API_JOBS_RUN = RUNDECK_API_BASE + "/job/$id/run";
+    /**
+     * Webservice endpoint for list project nodes
+     */
+    public static final String RUNDECK_API_PROJECT_NODES = RUNDECK_API_BASE + "/project/$name/resources";
 
     /**
      * logger
@@ -366,6 +375,30 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
     }
 
 
+    @Override
+    public INodeSet filterProjectNodes(final String project, final String filter) throws CentralDispatcherException {
+        final HashMap<String, String> params = new HashMap<String, String>();
+        params.put("filter", null != filter ? filter : ".*");
+        final WebserviceResponse response;
+        final String apipath = substitutePathVariable(RUNDECK_API_PROJECT_NODES, "name", project);
+        try {
+            response = serverService.makeRundeckRequest(apipath, params, null, "GET", "text/xml", null);
+        } catch (MalformedURLException e) {
+            throw new CentralDispatcherServerRequestException("Failed to make request", e);
+        }
+        validResourceXMLResponse(response);
+
+        ResourceXMLParser resourceXMLParser = new ResourceXMLParser(response.getResultDoc());
+        NodeSetImpl iNodeEntries = new NodeSetImpl();
+        NodesXMLParser nodesXMLParser = new NodesXMLParser(iNodeEntries);
+        resourceXMLParser.setReceiver(nodesXMLParser);
+        try {
+            resourceXMLParser.parse();
+        } catch (ResourceXMLParserException | IOException e) {
+            throw new CentralDispatcherException("Error parsing result: " + e.getMessage(), e);
+        }
+        return iNodeEntries;
+    }
     /**
      * Submit a request to the server which expects an execution id in response, and return a single
      * QueuedItemResult parsed from the response.
@@ -610,7 +643,6 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         }
 
     }
-
     /**
      * Validate the response is in expected envlope form with &lt;result&gt; content.
      *
@@ -621,6 +653,50 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      * @throws com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException
      *          if the format is incorrect, or the Envelope indicates an error response.
      */
+    private void validResourceXMLResponse(final WebserviceResponse response) throws
+            CentralDispatcherException
+    {
+        if (null == response) {
+            throw new CentralDispatcherServerRequestException("Response was null");
+        }
+
+        if (null != response.getResponseMessage()) {
+            logger.debug("Response: " + response.getResponseMessage());
+        }
+        final Document resultDoc = response.getResultDoc();
+        if (null == resultDoc) {
+            throw new CentralDispatcherServerRequestException(
+                    "Response content unexpectedly empty. " + (response
+                                                                       .getResponseMessage()
+                                                               != null
+                                                               ? response
+                                                                       .getResponseMessage() : "")
+            );
+        }
+        try {
+            logger.debug(serialize(resultDoc));
+        } catch (IOException e) {
+            logger.debug("ioexception serializing result doc", e);
+        }
+
+        if (!"project".equals(resultDoc.getRootElement().getName())) {
+            throw new CentralDispatcherServerRequestException(
+                    "Response had unexpected content: "+
+                    resultDoc.getRootElement().getName() + ": " + resultDoc
+            );
+        }
+    }
+
+        /**
+         * Validate the response is in expected envlope form with &lt;result&gt; content.
+         *
+         * @param response response
+         *
+         * @return Envelope if format is correct and there is no error
+         *
+         * @throws com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException
+         *          if the format is incorrect, or the Envelope indicates an error response.
+         */
     private Envelope validateResponse(final WebserviceResponse response) throws
         CentralDispatcherException {
         if (null == response) {

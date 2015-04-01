@@ -54,6 +54,16 @@ public class NodesXMLParser implements NodeFileParser, ResourceXMLReceiver {
     /**
      * Create NodesXmlParser
      *
+     * @param nodeReceiver Nodes object
+     */
+    public NodesXMLParser(final NodeReceiver nodeReceiver) {
+        this.file = null;
+        this.input=null;
+        this.nodeReceiver = nodeReceiver;
+    }
+    /**
+     * Create NodesXmlParser
+     *
      * @param file         nodes file
      * @param nodeReceiver Nodes object
      */
