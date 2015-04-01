@@ -82,7 +82,7 @@ beans={
     frameworkFactory(RundeckFrameworkFactory){
         frameworkFilesystem=frameworkFilesystem
         propertyLookup=ref('frameworkPropertyLookup')
-        type=application.config.rundeck?.projectsStorageType?:'db'
+        type=application.config.rundeck?.projectsStorageType?:'filesystem'
         dbProjectManager=ref('projectManagerService')
         filesystemProjectManager=ref('filesystemProjectManager')
     }

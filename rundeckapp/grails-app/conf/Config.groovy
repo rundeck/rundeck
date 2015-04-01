@@ -166,6 +166,8 @@ rundeck.gui.job.description.disableHTML=false
 rundeck.projectService.projectExportCache.spec= "expireAfterAccess=30m"
 rundeck.projectManagerService.projectCache.spec='expireAfterAccess=10m,refreshAfterWrite=1m'
 
+rundeck.projectsStorageType='filesystem'
+
 grails.assets.less.compile = 'less4j'
 grails.assets.plugin."twitter-bootstrap".excludes = ["**/*.less"]
 grails.assets.plugin."twitter-bootstrap".includes = ["bootstrap.less"]
