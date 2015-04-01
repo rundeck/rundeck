@@ -19,14 +19,14 @@ you with a dialog to create one.
 In Rundeck 2.4 and earlier, all project definitions and configuration files were stored
 on the filesystem.
 
-Starting in Rundeck 2.5, the default behavior is to store project definitions and
+Starting in Rundeck 2.5, you have the option to store project definitions and
 configuration files in the database.
 
 The storage type can be changed by a configuration flag in the `rundeck-config.properties` file:
 
     rundeck.projectsStorageType=db/filesystem
 
-If you wish to use filesystem storage you must add this configuration entry.  
+If you wish to use db storage you must add this configuration entry.  
 
 If you have existing filesystem-based projects, and you start Rundeck 
 with the `db` storage type, those projects will be automatically imported to the Database.  
