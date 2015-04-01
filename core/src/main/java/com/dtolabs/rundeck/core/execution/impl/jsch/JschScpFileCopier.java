@@ -126,6 +126,8 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
                               context.getDataContext().get("job").get("execid"):null;
             remotefile = generateRemoteFilepathForNode(
                     node,
+                    context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+                    context.getFramework(),
                     (null != scriptfile ? scriptfile.getName() : "dispatch-script"),
                     null,
                     identity

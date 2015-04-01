@@ -53,7 +53,14 @@ public class StubFileCopier implements FileCopier, Describable {
 
         String identity = null!=context.getDataContext() && null!=context.getDataContext().get("job")?
                           context.getDataContext().get("job").get("execid"):null;
-        final String resultpath = BaseFileCopier.generateRemoteFilepathForNode(node, "stub-script", null, identity);
+        final String resultpath = BaseFileCopier.generateRemoteFilepathForNode(
+                node,
+                context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+                context.getFramework(),
+                "stub-script",
+                null,
+                identity
+        );
         context.getExecutionListener().log(Constants.WARN_LEVEL,
             "[stub] copy inputstream to node " + node.getNodename() + ": " + resultpath);
         return resultpath;
@@ -64,7 +71,14 @@ public class StubFileCopier implements FileCopier, Describable {
 
         String identity = null!=context.getDataContext() && null!=context.getDataContext().get("job")?
                           context.getDataContext().get("job").get("execid"):null;
-        final String resultpath = BaseFileCopier.generateRemoteFilepathForNode(node, file.getName(), null, identity);
+        final String resultpath = BaseFileCopier.generateRemoteFilepathForNode(
+                node,
+                context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+                context.getFramework(),
+                file.getName(),
+                null,
+                identity
+        );
         context.getExecutionListener().log(Constants.WARN_LEVEL,
             "[stub] copy local file to node " + node.getNodename() + ": " + resultpath);
         return resultpath;
@@ -75,7 +89,14 @@ public class StubFileCopier implements FileCopier, Describable {
 
         String identity = null!=context.getDataContext() && null!=context.getDataContext().get("job")?
                           context.getDataContext().get("job").get("execid"):null;
-        final String resultpath = BaseFileCopier.generateRemoteFilepathForNode(node, "stub-script", null, identity);
+        final String resultpath = BaseFileCopier.generateRemoteFilepathForNode(
+                node,
+                context.getFramework().getFrameworkProjectMgr().getFrameworkProject( context.getFrameworkProject()),
+                context.getFramework(),
+                "stub-script",
+                null,
+                identity
+        );
         final int linecount = script != null ? script.split("(\\r?\\n)").length : 0;
         context.getExecutionListener().log(Constants.WARN_LEVEL,
             "[stub] copy [" + linecount + " lines] to node " + node.getNodename() + ": " + resultpath);

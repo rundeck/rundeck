@@ -7,14 +7,7 @@ The SSH plugin expects each node definition to have the following properties in 
 * `hostname`: the hostname of the remote node.  It can be in the format "hostname:port" to indicate that a non-default port should be used. The default port is 22.
 * `username`: the username to connect to the remote node.
 
-When a Script is executed on a remote node, it is copied over via SCP first, and then executed.  In addition to the SSH connection properties above, these node attributes
-can be configured for SCP:
-
-* `file-copy-destination-dir`: The directory on the remote node to copy the script file to before executing it. The default value is `C:/WINDOWS/TEMP/` on Windows nodes, and `/tmp` for other nodes.
-* `osFamily`: specify "windows" for windows nodes.
-
 In addition, for both SSH and SCP, you must either configure a public/private keypair for the remote node or configure the node for SSH Password authentication.
-
 
 Out of the box typical node configuration to make use of these is simple. 
 
@@ -34,11 +27,8 @@ The SSH plugin also includes support for a secondary Sudo Password Authenticatio
 
 In addition to the general SSH configuration mentioned for in this section, some additional configuration can be done for SCP. 
 
-When a Script is executed on a remote node, it is copied over via SCP first, and then executed.  In addition to the SSH connection properties, these node attributes
-can be configured for SCP:
-
-* `file-copy-destination-dir`: The directory on the remote node to copy the script file to before executing it. The default value is `C:/WINDOWS/TEMP/` on Windows nodes, and `/tmp` for other nodes.
-* `osFamily`: specify "windows" for windows nodes.
+When a Script is executed on a remote node, it is copied over via SCP first, and then executed.  In addition to the SSH connection properties, some attributes
+can be configured.  See [File Copier destination directory](node-execution-plugins.html#file-copier-destination-directory).
 
 ###  Authentication types
 

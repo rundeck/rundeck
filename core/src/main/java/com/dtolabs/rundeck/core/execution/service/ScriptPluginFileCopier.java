@@ -191,6 +191,8 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
                               executionContext.getDataContext().get("job").get("execid"):null;
             destFilePath = BaseFileCopier.generateRemoteFilepathForNode(
                     node,
+                    executionContext.getFramework().getFrameworkProjectMgr().getFrameworkProject(executionContext.getFrameworkProject()),
+                    executionContext.getFramework(),
                     (null != file ? file.getName() : "dispatch-script"),
                     null,
                     identity

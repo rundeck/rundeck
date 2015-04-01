@@ -24,7 +24,9 @@
 package com.dtolabs.rundeck.core.execution.impl.common;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
@@ -44,6 +46,8 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class BaseFileCopier {
     public static final String FILE_COPY_DESTINATION_DIR = "file-copy-destination-dir";
+    public static final String FRAMEWORK_FILE_COPY_DESTINATION_DIR = "framework." + FILE_COPY_DESTINATION_DIR;
+    public static final String PROJECT_FILE_COPY_DESTINATION_DIR = "project." + FILE_COPY_DESTINATION_DIR;
     public static final String DEFAULT_WINDOWS_FILE_EXT = ".bat";
     public static final String DEFAULT_UNIX_FILE_EXT = ".sh";
 
@@ -228,6 +232,64 @@ public class BaseFileCopier {
     }
 
     /**
+     * Return a remote destination temp dir path for the given node.  If specified, the node attribute named {@value
+     * #FILE_COPY_DESTINATION_DIR} is used, otherwise a temp directory appropriate for the os-family of the node is
+     * returned.
+     *
+     * @param node the node entry
+     * @param project project
+     * @param framework framework
+     *
+     * @return a path to destination dir for the node
+     */
+    public static String getRemoteDirForNode(
+            final INodeEntry node,
+            final IRundeckProject project,
+            final IFramework framework
+    )
+    {
+        String pathSeparator = "/";
+        String remotedir = "/tmp/";
+        String osfamily = null != node.getOsFamily() ? node.getOsFamily().trim().toLowerCase() : "unix";
+        if ("windows".equalsIgnoreCase(osfamily)) {
+            pathSeparator = "\\";
+            remotedir = "C:\\WINDOWS\\TEMP\\";
+        }
+        //node specific
+        if (null != node.getAttributes() && null != node.getAttributes().get(FILE_COPY_DESTINATION_DIR)) {
+            String s = node.getAttributes().get(FILE_COPY_DESTINATION_DIR);
+            return s.endsWith(pathSeparator) ? s : s + pathSeparator;
+        }
+        //project, os-specific
+        if (null != project && project.hasProperty(PROJECT_FILE_COPY_DESTINATION_DIR + "." + osfamily)) {
+            String s = project.getProperty(PROJECT_FILE_COPY_DESTINATION_DIR + "." + osfamily);
+            return s.endsWith(pathSeparator) ? s : s + pathSeparator;
+        }
+        //project specific
+        if (null != project && project.hasProperty(PROJECT_FILE_COPY_DESTINATION_DIR)) {
+            String s = project.getProperty(PROJECT_FILE_COPY_DESTINATION_DIR);
+            return s.endsWith(pathSeparator) ? s : s + pathSeparator;
+        }
+        //framework, os-specific
+        if (null != framework && framework.getPropertyLookup().hasProperty(
+                FRAMEWORK_FILE_COPY_DESTINATION_DIR +
+                "." +
+                osfamily
+        )) {
+            String s = framework.getPropertyLookup().getProperty(FRAMEWORK_FILE_COPY_DESTINATION_DIR + "." + osfamily);
+            return s.endsWith(pathSeparator) ? s : s + pathSeparator;
+        }
+        //framework specific
+        if (null != framework && framework.getPropertyLookup().hasProperty(FRAMEWORK_FILE_COPY_DESTINATION_DIR)) {
+            String s = framework.getPropertyLookup().getProperty(FRAMEWORK_FILE_COPY_DESTINATION_DIR);
+            return s.endsWith(pathSeparator) ? s : s + pathSeparator;
+        }
+        //default
+
+        return remotedir;
+    }
+
+    /**
      * Return a temporary filepath for a file to be copied to the node, given the input filename (without directory
      * path)
      *
@@ -275,9 +337,35 @@ public class BaseFileCopier {
      * @param identity       unique identifier, or null to include a random string
      *
      * @return a filepath specifying destination of the file to copy that should be unique
+     * @deprecated use {@link #generateRemoteFilepathForNode(com.dtolabs.rundeck.core.common.INodeEntry, com.dtolabs.rundeck.core.common.IRundeckProject, com.dtolabs.rundeck.core.common.IFramework, String, String, String)}
      */
     public static String generateRemoteFilepathForNode(
             final INodeEntry node,
+            final String scriptfileName,
+            final String fileExtension,
+            final String identity
+    )
+    {
+        return generateRemoteFilepathForNode(node, null, null, scriptfileName, fileExtension, identity);
+    }
+
+    /**
+     * Return a temporary filepath for a file to be copied to the node, given the input filename (without directory
+     * path)
+     *
+     * @param node           the destination node
+     * @param project        project
+     * @param framework      framework
+     * @param scriptfileName the name of the file to copy
+     * @param fileExtension  optional extension to use for the temp file, or null for default
+     * @param identity       unique identifier, or null to include a random string
+     *
+     * @return a filepath specifying destination of the file to copy that should be unique
+     */
+    public static String generateRemoteFilepathForNode(
+            final INodeEntry node,
+            final IRundeckProject project,
+            final IFramework framework,
             final String scriptfileName,
             final String fileExtension,
             final String identity
@@ -300,7 +388,7 @@ public class BaseFileCopier {
                 cleanFileName(tempfilename),
                 null != extension ? cleanFileName(extension) : null
         );
-        final String remotedir = getRemoteDirForNode(node);
+        final String remotedir = getRemoteDirForNode(node, project, framework);
 
         return remotedir + remoteFilename;
     }

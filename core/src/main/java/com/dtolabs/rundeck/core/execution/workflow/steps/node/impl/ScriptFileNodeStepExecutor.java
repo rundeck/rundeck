@@ -122,6 +122,8 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
                        : null;
         String filepath = BaseFileCopier.generateRemoteFilepathForNode(
                 node,
+                context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+                context.getFramework(),
                 filename,
                 fileExtension,
                 ident

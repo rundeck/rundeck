@@ -30,6 +30,34 @@ The procedure for executing a "script" command is:
 5. execute the NodeExecutor#executeCommand method, passing the filepath of the 
   copied file, and any arguments to the script command.
 
+## File Copier destination directory
+
+When executing a Script step, the destination file path to be used when copying the script can be set using Node, Project, or Framework configuration values.
+
+Node Attributes:
+
+* `file-copy-destination-dir`: The directory on the remote node to copy the script file to before executing it. The default value is `C:/WINDOWS/TEMP/` on Windows nodes, and `/tmp` for other nodes.
+* `osFamily`: specify "windows" for windows nodes.
+
+The `file-copy-destination-dir` can be set at the project and framework level, and can have a default be specified depending on the osfamily as well:
+
+In `project.properties` file:
+
+* `project.file-copy-destination-dir` - default for all nodes in project
+* `project.file-copy-destination-dir.[osfamily]` - default for nodes in the project with specified osfamily
+
+In `framework.properties` file:
+
+* `framework.file-copy-destination-dir` - default for all nodes in framework
+* `framework.file-copy-destination-dir.[osfamily]` - default for nodes in the framework with specified osfamily
+
+The order to determine the value is:
+
+1. node-specific
+2. project-os-specific
+3. project-specific
+4. framework-os-specific
+5. framework-specific
 
 ## Built-in Node Execution plugins
 
