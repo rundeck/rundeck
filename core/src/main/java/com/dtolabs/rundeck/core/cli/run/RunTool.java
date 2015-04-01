@@ -427,6 +427,10 @@ public class RunTool extends BaseTool {
         final boolean argFollow=followOptions.argFollow;
         final boolean argProgress=followOptions.argProgress;
         final boolean argQuiet=followOptions.argQuiet;
+
+        if (nodefilterOptions.getArgIncludeNodes()!=null || nodefilterOptions.getArgExcludeNodes()!=null) {
+            warn("-I/-X are deprecated, use -F with a filter string. This option will be removed in a future version.");
+        }
         final String nodeFilter = null != nodefilterOptions.getArgNodeFilter() ? nodefilterOptions.getArgNodeFilter() :
                 null != nodefilterOptions.getNodeSet() ? NodeSet.generateFilter(nodefilterOptions.getNodeSet()) : null;
         final Boolean argKeepgoing = nodefilterOptions.isKeepgoingSet() ? nodefilterOptions.isArgKeepgoing() : null;

@@ -250,6 +250,9 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
 
         //if failedNodes file exists, parse it for a list of node names to include.
 
+        if (cli.hasOption("I") || cli.hasOption("X")) {
+            warn("-I/-X are deprecated, use -F with a filter string. This option will be removed in a future version.");
+        }
         final String[] keys = NodeSet.FILTER_KEYS_LIST.toArray(new String[NodeSet.FILTER_KEYS_LIST.size()]);
         excludeMap = parseExcludeArgs(keys);
         includeMap = parseIncludeArgs(keys);
