@@ -20,10 +20,9 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.Action;
 import com.dtolabs.rundeck.core.cli.ActionMaker;
 import com.dtolabs.rundeck.core.cli.CLITool;
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkFactory;
-import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcher;
+import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import org.apache.commons.cli.*;
 import org.apache.log4j.PropertyConfigurator;
 
@@ -75,16 +74,11 @@ public class ProjectTool implements ActionMaker, CLITool {
     }
 
     CentralDispatcher dispatcher;
+    IPropertyLookup frameworkProperties;
 
 
     public ProjectTool() {
-        /**
-         * Initialize the log4j logger
-         */
-        PropertyConfigurator.configure(Constants.getLog4jPropertiesFile().getAbsolutePath());
-        framework = FrameworkFactory.createForFilesystem(Constants.getSystemBaseDir());
-        dispatcher=FrameworkFactory.createDispatcher(framework.getPropertyLookup());
-        extraProperties=new Properties();
+        this(new File(Constants.getSystemBaseDir()));
     }
 
     public ProjectTool(final File baseDir) {
@@ -93,14 +87,10 @@ public class ProjectTool implements ActionMaker, CLITool {
          */
         PropertyConfigurator.configure(new File(Constants.getLog4jProperties(baseDir.getAbsolutePath()))
             .getAbsolutePath());
-        framework = FrameworkFactory.createForFilesystem(baseDir.getAbsolutePath());
-        dispatcher=FrameworkFactory.createDispatcher(framework.getPropertyLookup());
+        frameworkProperties = FrameworkFactory.createFilesystemFramework(baseDir).getPropertyLookup();
+        dispatcher = FrameworkFactory.createDispatcher(frameworkProperties);
         extraProperties = new Properties();
     }
-    /**
-     * Reference to the framework instance
-     */
-    private final IFramework framework ;
 
     /**
      * Creates an instance and executes {@link #run(String[])}.
@@ -269,11 +259,11 @@ public class ProjectTool implements ActionMaker, CLITool {
     public Action createAction(final String actionName) {
         try {
             if (ACTION_CREATE.equals(actionName)) {
-                CreateAction createAction = new CreateAction(this, framework, cli, extraProperties);
+                CreateAction createAction = new CreateAction(this, frameworkProperties, cli, extraProperties);
                 createAction.setCentralDispatcher(dispatcher);
                 return createAction;
             } else if (ACTION_REMOVE.equals(actionName)) {
-                RemoveAction removeAction = new RemoveAction(this, framework, cli);
+                RemoveAction removeAction = new RemoveAction(this, frameworkProperties, cli);
                 removeAction.setCentralDispatcher(dispatcher);
                 return removeAction;
             } else {

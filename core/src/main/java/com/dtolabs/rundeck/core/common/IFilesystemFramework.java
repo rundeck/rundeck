@@ -1,5 +1,8 @@
 package com.dtolabs.rundeck.core.common;
 
+import com.dtolabs.rundeck.core.utils.IPropertyLookup;
+import com.dtolabs.rundeck.core.utils.PropertyLookup;
+
 import java.io.File;
 
 /**
@@ -23,6 +26,11 @@ public interface IFilesystemFramework {
      * @return the cache directory used by the plugin system
      */
     File getLibextCacheDir();
+
+    /**
+     * @return a framework property lookup for this basedir
+     */
+    IPropertyLookup getPropertyLookup();
 
     File getBaseDir();
 }

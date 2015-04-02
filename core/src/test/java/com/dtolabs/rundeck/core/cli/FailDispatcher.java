@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.core.dispatcher.*;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Properties;
 import static junit.framework.Assert.fail;
 
@@ -89,6 +90,12 @@ public class FailDispatcher implements CentralDispatcher {
             throws CentralDispatcherException
     {
         fail("unexpected call to filterProjectNodes");
+        return null;
+    }
+
+    @Override
+    public List<String> listProjectNames() throws CentralDispatcherException {
+        fail("unexpected call to listProjectNames");
         return null;
     }
 }

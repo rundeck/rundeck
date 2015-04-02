@@ -27,16 +27,17 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.*;
 import com.dtolabs.rundeck.core.cli.queue.ConsoleExecutionFollowReceiver;
 import com.dtolabs.rundeck.core.cli.queue.QueueTool;
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkFactory;
-import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.dispatcher.*;
+import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 import org.apache.commons.cli.CommandLine;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
+import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -74,6 +75,19 @@ public class RunTool extends BaseTool {
         this.action = action;
     }
 
+    public String getSingleProjectName() {
+        try {
+            List<String> strings = getCentralDispatcher().listProjectNames();
+            if(strings.size()==1) {
+                return strings.get(0);
+            }
+        } catch (CentralDispatcherException e) {
+            debug(org.apache.tools.ant.util.StringUtils.getStackTrace(e));
+            error("Couldn't list projects: " + e.getMessage());
+        }
+        return null;
+    }
+
     /**
      * Enumeration of available actions
      */
@@ -102,12 +116,6 @@ public class RunTool extends BaseTool {
     private Actions action = Actions.run;
     private CLIToolLogger clilogger;
 
-
-    /**
-     * Reference to the Framework instance
-     */
-    private final IFramework framework;
-    SingleProjectResolver internalResolver;
 
     /**
      * Creates an instance and executes {@link #run(String[])}.
@@ -139,10 +147,11 @@ public class RunTool extends BaseTool {
     }
 
     /**
-     * Create QueueTool with default Framework instances located by the system rdeck.base property.
+     * Create QueueTool with default framework properties located by the system rdeck.base property.
      */
     public RunTool() {
-        this(FrameworkFactory.createForFilesystem(Constants.getSystemBaseDir()), new Log4JCLIToolLogger(log4j));
+        this(FrameworkFactory.createFilesystemFramework(new File(Constants.getSystemBaseDir())).getPropertyLookup(),
+             new Log4JCLIToolLogger(log4j));
     }
 
     /**
@@ -151,28 +160,24 @@ public class RunTool extends BaseTool {
      * @param logger the logger
      */
     public RunTool(final CLIToolLogger logger) {
-        this(FrameworkFactory.createForFilesystem(Constants.getSystemBaseDir()), logger);
+        this(FrameworkFactory.createFilesystemFramework(new File(Constants.getSystemBaseDir())).getPropertyLookup(), logger);
     }
 
     /**
      * Create QueueTool specifying the framework
      *
-     * @param framework framework
      */
-    public RunTool(final Framework framework) {
-        this(framework, null);
+    public RunTool(final IPropertyLookup frameworkProps) {
+        this(frameworkProps, null);
     }
 
     /**
      * Create QueueTool with the framework.
      *
-     * @param framework the framework
      * @param logger    the logger
      */
-    public RunTool(final IFramework framework, final CLIToolLogger logger) {
-        this.framework = framework;
-        setCentralDispatcher(FrameworkFactory.createDispatcher(framework.getPropertyLookup()));
-        internalResolver = new FrameworkSingleProjectResolver(framework);
+    public RunTool(final IPropertyLookup frameworkProps, final CLIToolLogger logger) {
+        setCentralDispatcher(FrameworkFactory.createDispatcher(frameworkProps));
         this.clilogger = logger;
         if (null == clilogger) {
             clilogger = new Log4JCLIToolLogger(log4j);
@@ -335,25 +340,36 @@ public class RunTool extends BaseTool {
 
             if (null == argJob && null == argIdlist) {
                 throw new CLIToolOptionsException(
-                    "run action: -" + Options.JOB_OPTION + "/--" + Options.JOB_OPTION_LONG + " option or -"
-                    + Options.ID_OPTION + "/--"
-                    + Options.ID_OPTION_LONG + " is required");
+                        "run action: -" + Options.JOB_OPTION + "/--" + Options.JOB_OPTION_LONG + " option or -"
+                        + Options.ID_OPTION + "/--"
+                        + Options.ID_OPTION_LONG + " is required"
+                );
             }
             if (null != argJob && null != argIdlist) {
                 throw new CLIToolOptionsException(
-                    "run action: -" + Options.JOB_OPTION + "/--" + Options.JOB_OPTION_LONG + " option and -"
-                    + Options.ID_OPTION + "/--"
-                    + Options.ID_OPTION_LONG + " cannot be combined, please specify only one.");
+                        "run action: -" + Options.JOB_OPTION + "/--" + Options.JOB_OPTION_LONG + " option and -"
+                        + Options.ID_OPTION + "/--"
+                        + Options.ID_OPTION_LONG + " cannot be combined, please specify only one."
+                );
             }
             if (null != argJob && null == argProject) {
-                if (internalResolver.hasSingleProject()) {
-                    argProject = internalResolver.getSingleProjectName();
+                argProject = getSingleProjectName();
+                if (null != argProject) {
                     debug("# No project specified, defaulting to: " + argProject);
                 } else {
                     throw new CLIToolOptionsException(
-                        "run action: -" + Options.JOB_OPTION + "/--" + Options.JOB_OPTION_LONG + " option requires -"
-                        + Options.PROJECT_OPTION + "/--"
-                        + Options.PROJECT_OPTION_LONG + " option");
+                            "run action: -" +
+                            Options.JOB_OPTION +
+                            "/--" +
+                            Options.JOB_OPTION_LONG +
+                            " option requires -"
+                            +
+                            Options.PROJECT_OPTION +
+                            "/--"
+                            +
+                            Options.PROJECT_OPTION_LONG +
+                            " option"
+                    );
                 }
             }
         }

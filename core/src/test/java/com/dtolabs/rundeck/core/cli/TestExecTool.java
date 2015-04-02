@@ -129,11 +129,44 @@ public class TestExecTool extends AbstractBaseTest {
         junit.textui.TestRunner.run(suite());
     }
 
-    public void testParseArgs() throws Exception {
+    public void testParseArgsNoProject_multipleExist() throws Exception {
 
-        {
             //test missing -p option when multiple projects exist
             ExecTool main = newExecTool();
+        testCentralDispatcher centralDispatcher = new testCentralDispatcher();
+        centralDispatcher.projectNames = Arrays.asList("project1", "project2");
+        main.setCentralDispatcher(centralDispatcher);
+        try {
+                main.parseArgs(
+                    new String[]{"-K", "-C", "2", "-I", "hostname1", "-X", "tags=baloney", "-Q", "--", "shell",
+                        "command",
+                        "string"});
+                fail("should not complete");
+            } catch (IllegalArgumentException e) {
+                assertNotNull(e);
+                assertEquals("project parameter not specified", e.getMessage());
+            }
+    }
+    public void testParseArgsNoProject_singleExists() throws Exception {
+
+            //test missing -p option when multiple projects exist
+            ExecTool main = newExecTool();
+        testCentralDispatcher centralDispatcher = new testCentralDispatcher();
+        centralDispatcher.projectNames = Arrays.asList("project1");
+        main.setCentralDispatcher(centralDispatcher);
+
+        main.parseArgs(
+            new String[]{"-K", "-C", "2", "-I", "hostname1", "-X", "tags=baloney", "-Q", "--", "shell",
+                "command",
+                "string"});
+    }
+    public void testParseArgsNoProject_noneExists() throws Exception {
+
+            //test missing -p option when multiple projects exist
+            ExecTool main = newExecTool();
+        testCentralDispatcher centralDispatcher = new testCentralDispatcher();
+        centralDispatcher.projectNames = Arrays.asList();
+        main.setCentralDispatcher(centralDispatcher);
 
             try {
                 main.parseArgs(
@@ -145,7 +178,6 @@ public class TestExecTool extends AbstractBaseTest {
                 assertNotNull(e);
                 assertEquals("project parameter not specified", e.getMessage());
             }
-        }
     }
 
     public void testParseNodeDispatchArgs() throws Exception {
@@ -431,7 +463,7 @@ public class TestExecTool extends AbstractBaseTest {
     }
 
     private ExecTool newExecTool() {
-        return new ExecTool(getFrameworkInstance());
+        return new ExecTool(getFrameworkInstance().getFilesystemFramework());
     }
 
 
@@ -474,166 +506,6 @@ public class TestExecTool extends AbstractBaseTest {
                 main.argsDeferredString);
         }
     }*/
-
-    /**
-     * Stub to set as Executor class for StepExecutionItem types, used for testing.
-     */
-    /*public static class testExecutor1 implements Executor {
-        static StepExecutionItem testItem;
-        static ExecutionListener testListener;
-        static boolean executeItemCalled=false;
-        static Framework testFramework;
-        static ExecutionResult returnResult=null;
-        static ExecutionService testExecutionService;
-        public testExecutor1() {
-        }
-        public ExecutionResult executeItem(StepExecutionItem item, ExecutionListener listener,
-                                           final ExecutionService executionService,
-                                           final Framework framework) throws ExecutionException {
-            testItem=item;
-            testListener=listener;
-            executeItemCalled=true;
-            testFramework = framework;
-            testExecutionService=executionService;
-            return returnResult;
-        }
-        static void reset(){
-            testItem=null;
-            testListener=null;
-            executeItemCalled=false;
-            testFramework=null;
-            testExecutionService=null;
-        }
-
-    }*/
-    public static class testExecutor1 implements NodeStepExecutor {
-        static StepExecutionItem testItem;
-        static ExecutionContext testContext;
-        static ExecutionListener testListener;
-        static boolean executeItemCalled = false;
-        static Framework testFramework;
-        static NodeStepResult returnResult = null;
-        Framework framework;
-
-        public testExecutor1(Framework framework) {
-            this.framework = framework;
-        }
-
-        public NodeStepResult executeNodeStep(StepExecutionContext context, NodeStepExecutionItem item, INodeEntry node) throws
-                                                                                                             NodeStepException {
-            testContext=context;
-            testItem = item;
-            testListener = context.getExecutionListener();
-            executeItemCalled = true;
-            testFramework = framework;
-            return returnResult;
-        }
-
-        static void reset() {
-            testContext=null;
-            testItem = null;
-            testListener = null;
-            executeItemCalled = false;
-            testFramework = null;
-        }
-    }
-
-    static class noopDispatcher implements CentralDispatcher{
-        public QueuedItemResult queueDispatcherScript(IDispatchedScript dispatch) throws CentralDispatcherException {
-            return null;
-        }
-
-        public QueuedItemResult queueDispatcherJob(IDispatchedJob job) throws CentralDispatcherException {
-            return null;
-        }
-
-        public Collection<QueuedItem> listDispatcherQueue(final String project) throws CentralDispatcherException {
-            return null;
-        }
-        public Collection<QueuedItem> listDispatcherQueue() throws CentralDispatcherException {
-            return null;
-        }
-
-        public DispatcherResult killDispatcherExecution(String id) throws CentralDispatcherException {
-            return null;
-        }
-
-        public ExecutionFollowResult followDispatcherExecution(String id, ExecutionFollowRequest request,
-                                                               ExecutionFollowReceiver receiver) throws
-            CentralDispatcherException {
-            return null;
-        }
-
-        public Collection<IStoredJob> listStoredJobs(IStoredJobsQuery query, OutputStream output,
-                                                     JobDefinitionFileFormat format) throws CentralDispatcherException {
-            return null;
-        }
-
-        public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, File input,
-                                                         JobDefinitionFileFormat format) throws
-            CentralDispatcherException {
-            return null;
-        }
-
-        public void reportExecutionStatus(String project, String title, String status, int failedNodeCount,
-                                          int successNodeCount, String tags, String script, String summary, Date start,
-                                          Date end) throws CentralDispatcherException {
-        }
-
-        public Collection<DeleteJobResult> deleteStoredJobs(Collection<String> jobIds) throws CentralDispatcherException {
-            return null;
-        }
-
-        public ExecutionDetail getExecution(String execId) throws CentralDispatcherException {
-            return null;
-        }
-        @Override
-        public void createProject(final String project, final Properties projectProperties)
-                throws CentralDispatcherException
-        {
-
-        }
-
-        @Override
-        public INodeSet filterProjectNodes(final String project, final String filter)
-                throws CentralDispatcherException
-        {
-            return null;
-        }
-    }
-    static class testDispatcher extends noopDispatcher{
-        boolean wascalled;
-        String project;
-        String name;
-        String status;
-        int failedNodeCount;
-        int successNodeCount;
-        String tags;
-        String script;
-        String summary;
-        Date start;
-        Date end;
-
-        @Override
-        public void reportExecutionStatus(String project, String title, String status, int failedNodeCount,
-                                          int successNodeCount, String tags, String script, String summary, Date start,
-                                          Date end) throws CentralDispatcherException {
-            wascalled=true;
-            this.project=project;
-            this.name= title;
-            this.status = status;
-            this.failedNodeCount = failedNodeCount;
-            this.successNodeCount=successNodeCount;
-            this.tags=tags;
-            this.script = script;
-            this.summary=summary;
-            this.start=start;
-            this.end=end;
-        }
-    }
-
-
-
 
 
     /**
@@ -828,6 +700,7 @@ public class TestExecTool extends AbstractBaseTest {
         INodeSet filteredNodes;
         String nodesFilter;
         String nodesProject;
+        List<String> projectNames;
 
         public QueuedItemResult queueDispatcherJob(IDispatchedJob job) throws CentralDispatcherException {
             queueDispatcherJobCalled=true;
@@ -918,6 +791,11 @@ public class TestExecTool extends AbstractBaseTest {
         }
 
         @Override
+        public List<String> listProjectNames() throws CentralDispatcherException {
+            return projectNames;
+        }
+
+        @Override
         public String toString() {
             return "testCentralDispatcher{" +
                    "killCalled=" + killCalled +
@@ -930,13 +808,9 @@ public class TestExecTool extends AbstractBaseTest {
         }
     }
 
-    public void testQueueOption() throws Exception {
+    public void testQueueOptionArgs() throws Exception {
         //test action calls
-        final Framework framework = getFrameworkInstance();
-
-        {
             ExecTool main = newExecTool();
-            main.setFramework(framework);
             final testCentralDispatcher test = new testCentralDispatcher();
             main.setCentralDispatcher(test);
 
@@ -954,9 +828,8 @@ public class TestExecTool extends AbstractBaseTest {
             assertNull(test.passedinScript.getScriptAsStream());
             assertEquals("testProject", test.passedinScript.getFrameworkProject());
         }
-        {
+    public void testQueueOptionArgsSpaces() throws Exception {
             ExecTool main = newExecTool();
-            main.setFramework(framework);
             final testCentralDispatcher test = new testCentralDispatcher();
             main.setCentralDispatcher(test);
 
@@ -973,11 +846,10 @@ public class TestExecTool extends AbstractBaseTest {
             assertNull(test.passedinScript.getScriptAsStream());
             assertEquals("testProject", test.passedinScript.getFrameworkProject());
         }
-        {
+    public void testQueueOptionScriptFile() throws Exception {
             //test script path input available as InputStream when queueing dispatch
 
             ExecTool main = newExecTool();
-            main.setFramework(framework);
             final testCentralDispatcher test = new testCentralDispatcher();
             main.setCentralDispatcher(test);
 
@@ -994,11 +866,10 @@ public class TestExecTool extends AbstractBaseTest {
             assertEquals("testProject", test.passedinScript.getFrameworkProject());
         }
 
-        {
+    public void testQueueOptionNodeFilters() throws Exception {
             //test the node filter arguments
 
             ExecTool main = newExecTool();
-            main.setFramework(framework);
             final testCentralDispatcher test = new testCentralDispatcher();
             main.setCentralDispatcher(test);
 
@@ -1012,8 +883,6 @@ public class TestExecTool extends AbstractBaseTest {
             assertEquals("hostname: hostname1 !tags: baloney", test.passedinScript.getNodeFilter());
             assertEquals(2, test.passedinScript.getNodeThreadcount());
             assertEquals(Boolean.TRUE, test.passedinScript.isKeepgoing());
-
-        }
 
     }
 }

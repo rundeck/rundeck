@@ -25,10 +25,9 @@ package com.dtolabs.rundeck.core.cli.jobs;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.*;
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkFactory;
-import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.dispatcher.*;
+import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.commons.cli.Options;
@@ -363,12 +362,6 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
 
 
     /**
-     * Reference to the Framework instance
-     */
-    private final IFramework framework;
-    SingleProjectResolver internalResolver;
-
-    /**
      * Creates an instance and executes {@link #run(String[])}.
      *
      * @param args command line arg vector
@@ -399,10 +392,13 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
     }
 
     /**
-     * Create QueueTool with default Framework instances located by the system rdeck.base property.
+     * Create QueueTool with default framework properties located by the system rdeck.base property.
      */
     public JobsTool() {
-        this(FrameworkFactory.createForFilesystem(Constants.getSystemBaseDir()), new Log4JCLIToolLogger(log4j));
+        this(
+                FrameworkFactory.createFilesystemFramework(new File(Constants.getSystemBaseDir())).getPropertyLookup(),
+                new Log4JCLIToolLogger(log4j)
+        );
     }
 
     protected boolean isUseHelpOption() {
@@ -415,28 +411,29 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
      * @param logger the logger
      */
     public JobsTool(final CLIToolLogger logger) {
-        this(FrameworkFactory.createForFilesystem(Constants.getSystemBaseDir()), logger);
+        this(
+                FrameworkFactory.createFilesystemFramework(new File(Constants.getSystemBaseDir())).getPropertyLookup(),
+                logger
+        );
     }
 
     /**
      * Create QueueTool specifying the framework
      *
-     * @param framework framework
+     * @param frameworkProperties framework properties
      */
-    public JobsTool(final Framework framework) {
-        this(framework, null);
+    public JobsTool(final IPropertyLookup frameworkProperties) {
+        this(frameworkProperties, null);
     }
 
     /**
      * Create QueueTool with the framework.
      *
-     * @param framework the framework
+     * @param frameworkProperties framework properties
      * @param logger    the logger
      */
-    public JobsTool(final IFramework framework, final CLIToolLogger logger) {
-        this.framework = framework;
-        setCentralDispatcher(FrameworkFactory.createDispatcher(framework.getPropertyLookup()));
-        internalResolver = new FrameworkSingleProjectResolver(framework);
+    public JobsTool(final IPropertyLookup frameworkProperties, final CLIToolLogger logger) {
+        setCentralDispatcher(FrameworkFactory.createDispatcher(frameworkProperties));
         this.clilogger = logger;
         if (null == clilogger) {
             clilogger = new Log4JCLIToolLogger(log4j);
@@ -567,8 +564,14 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
         public void validate(final CommandLine cli, final String[] original) throws CLIToolOptionsException {
             if (Actions.list == action) {
                 if(null==argProject){
-                    if(internalResolver.hasSingleProject()) {
-                        argProject = internalResolver.getSingleProjectName();
+                    try {
+                        argProject = getSingleProjectName();
+                    } catch (CentralDispatcherException e) {
+
+                        throw new CLIToolOptionsException(
+                                ACTION_LIST + " could not determine project to use: "+e.getMessage(),e);
+                    }
+                    if(null!=argProject) {
                         debug("# No project specified, defaulting to: " + argProject);
                     }else {
                         throw new CLIToolOptionsException(
@@ -578,6 +581,14 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
                 }
             }
         }
+    }
+
+    private String getSingleProjectName() throws CentralDispatcherException {
+        List<String> strings = getCentralDispatcher().listProjectNames();
+        if(strings!=null && strings.size()==1) {
+            return strings.get(0);
+        }
+        return null;
     }
 
     /**
@@ -594,8 +605,13 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
         public void validate(final CommandLine cli, final String[] original) throws CLIToolOptionsException {
             if (Actions.purge == action) {
                 if(null==argProject){
-                    if(internalResolver.hasSingleProject()) {
-                        argProject = internalResolver.getSingleProjectName();
+                    try {
+                        argProject = getSingleProjectName();
+                    } catch (CentralDispatcherException e) {
+                        throw new CLIToolOptionsException(
+                                ACTION_PURGE + " could not determine project to use: "+e.getMessage(),e);
+                    }
+                    if(null!=argProject) {
                         debug("# No project specified, defaulting to: " + argProject);
                     }else {
                         throw new CLIToolOptionsException(

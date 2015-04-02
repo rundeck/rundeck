@@ -102,15 +102,12 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
     /**
      * Reference to the framework instance
      */
-    private IFramework framework;
+    private IFilesystemFramework filesystemFramework;
     private String baseDir;
     protected NodeFormatter nodeFormatter;
     private String nodeFilter;
     private CentralDispatcher centralDispatcher;
 
-    void setFramework(Framework framework) {
-        this.framework = framework;
-    }
 
     private boolean nodeExcludePrecedence = true;
     private String scriptpath;
@@ -132,7 +129,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
      * @param baseDir path to RDECK_BASE
      */
     ExecTool(String baseDir) {
-        this(FrameworkFactory.createForFilesystem(baseDir));
+        this(FrameworkFactory.createFilesystemFramework(new File(baseDir)));
     }
 
     /**
@@ -140,8 +137,8 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
      *
      * @param framework framework instance
      */
-    public ExecTool(IFramework framework) {
-        this.framework = framework;
+    public ExecTool(FilesystemFramework framework) {
+        this.filesystemFramework = framework;
         this.nodeFormatter = new NodeYAMLFormatter();
         this.centralDispatcher=FrameworkFactory.createDispatcher(framework.getPropertyLookup());
     }
@@ -228,11 +225,17 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
 
         if (cli.hasOption('p')) {
             argProject = cli.getOptionValue("p");
-        } else if (!cli.hasOption("p") &&
-                framework.getFrameworkProjectMgr().listFrameworkProjects().size() == 1) {
-            final FrameworkProject project =
-                    (FrameworkProject) framework.getFrameworkProjectMgr().listFrameworkProjects().iterator().next();
-            argProject = project.getName();
+        }
+        else if (!cli.hasOption("p")) {
+            List<String> projects= null;
+            try {
+                projects = listProjectNames();
+            } catch (CentralDispatcherException e) {
+                throw new ProjectToolException(e);
+            }
+            if(projects.size()==1) {
+                argProject = projects.get(0);
+            }
         }
 
         if (cli.hasOption("C")) {
@@ -262,6 +265,10 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
             throw new IllegalArgumentException("project parameter not specified");
         }
         return cli;
+    }
+
+    private List<String> listProjectNames() throws CentralDispatcherException {
+        return centralDispatcher.listProjectNames();
     }
 
     /**
@@ -361,7 +368,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
         try {
             parseArgs(args);
 
-            configurePrintStream(argQuiet);
 
             if (!hasNecessaryRunArgs()) {
                 listAction();
@@ -635,33 +641,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
 
 
 
-    /**
-     * Reconfigures the System.out PrintStream to write to a file output stream.
-     *
-     * @param quiet If true, configures to write to a file.
-     */
-    protected void configurePrintStream(boolean quiet) {
-        if (quiet) {
-            final String logpath = framework.getPropertyLookup().getProperty("framework.logs.dir");
-            if (null == logpath || "".equals(logpath)) {
-                throw new CoreException("Cannot configure print stream to a file. "
-                        + "framework.logs.dir property not set");
-            }
-            final File logsdir = new File(logpath);
-            if (!logsdir.isDirectory() || !logsdir.exists()) {
-                throw new CoreException("Cannot configure print stream to a file. " +
-                        "Path does not exist or is not a directory: " + logpath);
-            }
-            try {
-                final File logfile = File.createTempFile("dispatch-", ".log", logsdir);
-                ThreadBoundOutputStream.bindSystemOut().installThreadStream(new FileOutputStream(logfile));
-            } catch (IOException e) {
-                throw new CoreException("Cannot configure print stream to a file. " +
-                        "Failed created log file: " + e.getMessage());
-            }
-        }
-    }
-
 
     public String getArgFrameworkProject() {
         return argProject;
@@ -683,14 +662,13 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
         return inlineScriptContent;
     }
 
-    public IFramework getFramework() {
-        return framework;
-    }
-
     public NodesSelector getNodeSelector() {
-        return createFilterNodeSelector().nodeSelectorWithDefault(framework.getFrameworkNodeName());
+        return createFilterNodeSelector().nodeSelectorWithDefault(getFrameworkNodeName());
     }
 
+    public String getFrameworkNodeName() {
+        return filesystemFramework.getPropertyLookup().getProperty("framework.node.name");
+    }
     public INodeSet getNodes() throws CentralDispatcherException {
         return filterNodes(true);
     }
@@ -824,20 +802,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
     }
 
 
-    /**
-     * Looks up node registrations in nodes.properties
-     *
-     * @return Nodes object
-     */
-    private INodeSet readNodesFile() {
-        IRundeckProject project = framework.getFrameworkProjectMgr().getFrameworkProject(argProject);
-
-        try {
-            return project.getNodeSet();
-        } catch (NodeFileParserException e) {
-            throw new CoreException("Error parsing nodes resource file: " + e.getMessage(), e);
-        }
-    }
 
 
 
@@ -850,7 +814,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
         String usedFilter;
         if(filterNodeSelector.isBlank()){
             if(singleNodeDefault){
-                usedFilter=framework.getFrameworkNodeName();
+                usedFilter=getFrameworkNodeName();
             }else {
                 usedFilter = ".*";
             }

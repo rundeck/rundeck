@@ -19,14 +19,15 @@ package com.dtolabs.rundeck.core.cli.project;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.Action;
 import com.dtolabs.rundeck.core.cli.CLIToolLogger;
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.FrameworkResource;
-import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcher;
+import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException;
+import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import org.apache.commons.cli.CommandLine;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * Base class for implementing project setup actions
@@ -34,17 +35,17 @@ import java.io.File;
 public class BaseAction implements Action {
 
     final protected CLIToolLogger main;
-    final protected IFramework framework;
     private boolean verbose=false;
 
     protected String project;
     private CentralDispatcher centralDispatcher;
+    final protected IPropertyLookup frameworkProperties;
 
-    public BaseAction(final CLIToolLogger main, final IFramework framework, final CommandLine cli) {
+    public BaseAction(final CLIToolLogger main, final IPropertyLookup framework, final CommandLine cli) {
         this(main, framework, parseBaseActionArgs(cli));
     }
 
-    public BaseAction(final CLIToolLogger main, final IFramework framework, final BaseActionArgs args) {
+    public BaseAction(final CLIToolLogger main, final IPropertyLookup frameworkProperties, final BaseActionArgs args) {
         if (null == main) {
             throw new NullPointerException("main parameter was null");
         }
@@ -53,7 +54,7 @@ public class BaseAction implements Action {
 
         }
         this.main = main;
-        this.framework = framework;
+        this.frameworkProperties = frameworkProperties;
         initArgs(args);
     }
 
@@ -120,16 +121,27 @@ public class BaseAction implements Action {
          */
         public boolean isVerbose();
     }
+    protected String getSingleProjectName() throws CentralDispatcherException {
+        List<String> strings = getCentralDispatcher().listProjectNames();
+        if(strings.size()==1) {
+            return strings.get(0);
+        }
+        return null;
+    }
+
 
     private void initArgs(BaseActionArgs args) {
         if (null != args.getProject()) {
             project = args.getProject();
-        } else if (null == args.getProject() &&
-                framework.getFrameworkProjectMgr().listFrameworkProjects().size() == 1) {
-            final FrameworkProject d = (FrameworkProject) framework.getFrameworkProjectMgr().listFrameworkProjects().iterator().next();
-            project = d.getName();
-            main.log("defaulting to project: " + d.getName());
-        } else {
+        } else if (null == args.getProject()) {
+            try {
+                project = getSingleProjectName();
+                main.log("defaulting to project: " + project);
+            } catch (CentralDispatcherException e) {
+                e.printStackTrace();
+            }
+        }
+        if(null==project){
             throw new InvalidArgumentsException("-p option not specified");
         }
         verbose = args.isVerbose();

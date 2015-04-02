@@ -374,6 +374,30 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         }
     }
 
+    @Override
+    public List<String> listProjectNames() throws CentralDispatcherException {
+        final HashMap<String, String> params = new HashMap<String, String>();
+        final WebserviceResponse response;
+        try {
+            response = serverService.makeRundeckRequest(RUNDECK_API_PROJECTS, params, null, "GET", "text/xml", null);
+        } catch (MalformedURLException e) {
+            throw new CentralDispatcherServerRequestException("Failed to make request", e);
+        }
+        validateResponse(response);
+
+
+        final Document resultDoc = response.getResultDoc();
+
+        ArrayList<String> result = new ArrayList<>();
+        if (null != resultDoc.selectNodes("/projects/project/name") ) {
+            for (Object o : resultDoc.selectNodes("/projects/project/name") ){
+                Element elem=(Element)o;
+                result.add(elem.getText());
+            }
+        }
+        return result;
+    }
+
 
     @Override
     public INodeSet filterProjectNodes(final String project, final String filter) throws CentralDispatcherException {
@@ -647,8 +671,6 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      * Validate the response is in expected envlope form with &lt;result&gt; content.
      *
      * @param response response
-     *
-     * @return Envelope if format is correct and there is no error
      *
      * @throws com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException
      *          if the format is incorrect, or the Envelope indicates an error response.

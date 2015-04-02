@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.Constants;
+import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 
 import java.io.File;
@@ -137,6 +138,13 @@ public class FilesystemFramework implements IFilesystemFramework {
      */
     public static PropertyLookup createPropertyLookupFromBasedir(File baseDir) {
         return PropertyLookup.create(getPropertyFile(getConfigDir(baseDir)));
+    }
+    /**
+     * @return a framework property lookup for this basedir
+     */
+    @Override
+    public IPropertyLookup getPropertyLookup() {
+        return createPropertyLookupFromBasedir(baseDir);
     }
     @Override
     public File getBaseDir() {

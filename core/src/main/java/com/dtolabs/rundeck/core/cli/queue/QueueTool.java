@@ -25,17 +25,18 @@ package com.dtolabs.rundeck.core.cli.queue;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.*;
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkFactory;
-import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.BaseLogger;
+import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import org.apache.commons.cli.CommandLine;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
+import java.io.File;
 import java.io.PrintStream;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * QueueTool is ...
@@ -156,11 +157,6 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
     String argProject;
 
 
-    /**
-     * Reference to the Framework instance
-     */
-    private final IFramework framework;
-    SingleProjectResolver internalResolver;
 
     /**
      * Creates an instance and executes {@link #run(String[])}.
@@ -193,10 +189,13 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
     }
 
     /**
-     * Create QueueTool with default Framework instances located by the system rdeck.base property.
+     * Create QueueTool with default framework properties located by the system rdeck.base property.
      */
     public QueueTool() {
-        this(FrameworkFactory.createForFilesystem(Constants.getSystemBaseDir()), new Log4JCLIToolLogger(log4j));
+        this(
+                FrameworkFactory.createFilesystemFramework(new File(Constants.getSystemBaseDir())).getPropertyLookup(),
+                new Log4JCLIToolLogger(log4j)
+        );
     }
 
     protected boolean isUseHelpOption() {
@@ -216,28 +215,29 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
      * @param logger the logger
      */
     public QueueTool(final CLIToolLogger logger) {
-        this(FrameworkFactory.createForFilesystem(Constants.getSystemBaseDir()), logger);
+        this(
+                FrameworkFactory.createFilesystemFramework(new File(Constants.getSystemBaseDir())).getPropertyLookup(),
+                logger
+        );
     }
     
     /**
      * Create QueueTool specifying the framework
      *
-     * @param framework framework
+     * @param frameworkProperties framework properties
      */
-    public QueueTool(final Framework framework) {
-        this(framework, null);
+    public QueueTool(final IPropertyLookup frameworkProperties) {
+        this(frameworkProperties, null);
     }
 
     /**
      * Create QueueTool with the framework.
      *
-     * @param framework the framework
+     * @param frameworkProperties framework properties
      * @param logger    the logger
      */
-    public QueueTool(final IFramework framework, final CLIToolLogger logger) {
-        this.framework = framework;
-        setCentralDispatcher(FrameworkFactory.createDispatcher(framework.getPropertyLookup()));
-        internalResolver=new FrameworkSingleProjectResolver(framework);
+    public QueueTool(final IPropertyLookup frameworkProperties, final CLIToolLogger logger) {
+        setCentralDispatcher(FrameworkFactory.createDispatcher(frameworkProperties));
         this.clilogger = logger;
         if (null == clilogger) {
             clilogger = new Log4JCLIToolLogger(log4j);
@@ -317,8 +317,12 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
                 warn("-"+ EXECID_OPTION +"/--"+ EXECID_OPTION_LONG +" argument only valid with kill/follow actions");
             }
             if(null==argProject){
-                if (internalResolver.hasSingleProject()) {
-                    argProject = internalResolver.getSingleProjectName();
+                try {
+                    argProject = getSingleProjectName();
+                } catch (CentralDispatcherException e) {
+                    throw new CLIToolOptionsException("Could not determine project: " + e.getMessage(), e);
+                }
+                if (null!=argProject) {
                     debug("# No project specified, defaulting to: " + argProject);
                 } else {
                     throw new CLIToolOptionsException("-" + PROJECT_OPTION + " argument is required with list action");
@@ -347,6 +351,14 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
             return execid;
         }
     }
+    private String getSingleProjectName() throws CentralDispatcherException {
+        List<String> strings = getCentralDispatcher().listProjectNames();
+        if(strings.size()==1) {
+            return strings.get(0);
+        }
+        return null;
+    }
+
 
     /**
      * Reads the argument vector and constructs a {@link org.apache.commons.cli.CommandLine} object containing params
@@ -466,7 +478,7 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
      * @param mode follow mode
      * @param out output for progress marks
      * @param logger logger for output of log lines
-     * @param dispatcher
+     * @param dispatcher dispatcher
      * @param execid the execution id
      * @param restart true to restart the output
      *
