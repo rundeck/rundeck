@@ -1,0 +1,42 @@
+#!/bin/bash
+
+errorMsg() {
+	echo "$*" 1>&2
+}
+log () {
+	echo ${1}: ${2}
+}
+
+#
+# This hack checks if this shell script was called within (most probably) a cygwin context
+# during an ssh to a windows box and if so, to actually exec the .bat batch file instead.
+#
+if [ -n "$OS" -a "$OS" = "Windows_NT" ]
+then
+   exec cmd.exe /C $RDECK_BASE/bin/rd-acl.bat "$@"
+fi
+
+# Look for parent directory
+PDIR=$(cd `dirname $0/`/../.. && pwd)
+
+if [ -r $RDECK_BASE/etc/framework.properties ]; then
+	. $RDECK_BASE/etc/profile
+elif [ -r /etc/rundeck/profile ]; then
+	. /etc/rundeck/profile
+elif [ -r "$PDIR/etc/profile" ]; then
+	. $PDIR/etc/profile
+fi
+
+if [ "${RDECK_BASE}X" = "X" ]; then
+	errorMsg "Unable to determine RDECK_BASE."
+	exit 1
+fi
+
+#
+# Launch the cmdline tool
+#
+exec ${JAVA_CMD:-java} ${RDECK_JVM} -classpath ${CLI_CP} \
+     -Duser.java_home=$JAVA_HOME \
+     -Drdeck.base=$RDECK_BASE \
+     $RDECK_SSL_OPTS \
+     com.dtolabs.rundeck.core.cli.acl.AclTool "$@"

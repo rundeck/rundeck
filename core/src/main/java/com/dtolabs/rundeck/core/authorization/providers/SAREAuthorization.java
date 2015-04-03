@@ -59,17 +59,19 @@ public class SAREAuthorization implements Authorization {
         policies = Policies.load(directory);
         baseDirectory = directory;
     }
-
     /**
-     * Convenience constructor that looks in a predefine spot for policy files.
-     * 
+     * Create an authorization object that uses understands the .aclpolicy files.
+     *
+     * @param policies Loaded policies
+     *
      * @throws IOException on io error
      * @throws PoliciesParseException on parse error
      */
-    public SAREAuthorization() throws IOException, PoliciesParseException {
-        this(new File("/etc/rundeck/security.d/"));
+    public SAREAuthorization(final Policies policies) throws IOException, PoliciesParseException {
+        this.policies=policies;
+        baseDirectory = null;
     }
-    
+
     /**
      * 
      * @param resource resource

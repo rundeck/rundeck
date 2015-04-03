@@ -42,7 +42,7 @@ public interface Explanation {
         REJECTED_DENIED,
     };
     
-    Code getCode();
+    public Code getCode();
     
     public void describe(PrintStream out);
 }
