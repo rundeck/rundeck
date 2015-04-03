@@ -33,10 +33,10 @@ public class Policies {
 
     private final List<File> policyFiles = new ArrayList<File>();
 
-    private PoliciesCache cache;
+    private Iterable<PolicyCollection> cache;
 
 
-    public Policies(final PoliciesCache cache) {
+    public Policies(final Iterable<PolicyCollection> cache) {
         this.cache = cache;
     }
 
@@ -62,6 +62,28 @@ public class Policies {
         Policies p = null;
         try {
             p = new Policies(new PoliciesCache(rootPath));
+        } catch (ParserConfigurationException e) {
+            throw new PoliciesParseException(e);
+        }
+
+        return p;
+    }
+    /**
+     * @return Load the policies contained in the root path.
+     *
+     * @param singleFile single file
+     *
+     *
+     * @throws PoliciesParseException Thrown when there is a problem parsing a file.
+     * @throws IOException  on io error
+     */
+    public static Policies loadFile(File singleFile) throws IOException, PoliciesParseException {
+
+        Policies p = null;
+        try {
+            PoliciesCache policyCollections = new PoliciesCache();
+            policyCollections.add(singleFile);
+            p = new Policies(policyCollections);
         } catch (ParserConfigurationException e) {
             throw new PoliciesParseException(e);
         }

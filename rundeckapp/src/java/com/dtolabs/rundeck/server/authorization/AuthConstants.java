@@ -55,6 +55,7 @@ public class AuthConstants {
     public static final String TYPE_PROJECT = "project";
     public static final String TYPE_EVENT = "event";
     public static final String TYPE_USER = "user";
+    public static final String TYPE_STORAGE = "storage";
 
     private static Map<String, String> resType(String type) {
         return Collections.unmodifiableMap(AuthorizationUtil.resourceType(type));

@@ -119,6 +119,7 @@ fi
 %attr(755, root, root) /usr/bin/run
 %attr(755, root, root) /usr/bin/dispatch
 %attr(755, root, root) /usr/bin/rd-jobs
+%attr(755, root, root) /usr/bin/rd-acl
 %attr(755, root, root) /usr/bin/rd-project
 %attr(755, root, root) /usr/bin/rd-queue
 

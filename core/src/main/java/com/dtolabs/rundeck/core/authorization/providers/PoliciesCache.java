@@ -55,6 +55,9 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
     private DocumentBuilder builder;
     private File rootDir;
 
+    public PoliciesCache() throws ParserConfigurationException {
+        this(null);
+    }
     public PoliciesCache(File rootDir) throws ParserConfigurationException {
         this.rootDir = rootDir;
         DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
@@ -89,7 +92,7 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
     }
 
     private void doListDir() {
-        lastDirList = rootDir.listFiles(filenameFilter);
+        lastDirList = null!=rootDir?rootDir.listFiles(filenameFilter):new File[0];
         lastDirListCheckTime=System.currentTimeMillis();
     }
 
