@@ -16,8 +16,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkFactory;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Options;
+import org.apache.commons.cli.*;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -72,16 +71,24 @@ public class AclTool extends BaseTool {
     public static final String ADHOC_LONG_OPT = "adhoc";
     public static final String NODE_OPT = "n";
     public static final String NODE_LONG_OPT = "node";
+    public static final String TAGS_OPT = "t";
+    public static final String TAGS_LONG_OPT = "tags";
     public static final String DENY_OPT = "D";
     public static final String DENY_LONG_OPT = "deny";
     public static final String VERBOSE_OPT = "v";
     public static final String VERBOSE_LONG_OPT = "verbose";
     public static final String STORAGE_OPT = "s";
     public static final String STORAGE_LONG_OPT = "storage";
+    public static final String GENERIC_OPT = "G";
+    public static final String GENERIC_LONG_OPT = "generic";
     public static final String RESOURCE_OPT = "R";
     public static final String RESOURCE_LONG_OPT = "resource";
     public static final String INPUT_OPT = "i";
     public static final String INPUT_OPT_LONG = "input";
+    public static final String REGEX_OPT = "r";
+    public static final String REGEX_OPT_LONG = "regex";
+    public static final String ATTRS_OPT = "b";
+    public static final String ATTRS_OPT_LONG = "attributes";
 
     final CLIToolLogger clilogger;
 
@@ -160,7 +167,6 @@ public class AclTool extends BaseTool {
         } catch (CLIToolOptionsException e) {
             exitCode = 2;
             tool.error(e.getMessage());
-            tool.help();
             if (tool.argVerbose) {
                 e.printStackTrace();
             }
@@ -227,96 +233,177 @@ public class AclTool extends BaseTool {
     private String argProject;
     private String argProjectJob;
     private String argProjectNode;
+    private String argTags;
+    private List<String> tagsSet;
     private boolean argProjectAdhoc;
 
     private String argAppStorage;
+    private String argGenericType;
     private String argResource;
     private String argInput;
+    private boolean argRegex;
+    private Map<String, String> attrsMap;
+    private boolean attrHelp;
 
     private class TestOptions implements CLIToolOptions {
         @Override
         public void addOptions(final Options options) {
             options.addOption(VERBOSE_OPT, VERBOSE_LONG_OPT, false, "Verbose output.");
 
-            options.addOption(FILE_OPTION, FILE_OPTION_LONG, true, "File path. Load the specified aclpolicy file.");
             options.addOption(
-                    DIR_OPTION,
-                    DIR_OPTION_LONG,
-                    true,
-                    "Directory. Load all policy files in the specified directory."
+                    OptionBuilder.withArgName("file")
+                                 .withLongOpt(FILE_OPTION_LONG)
+                                 .hasArg()
+                                 .withDescription("File path. Load the specified aclpolicy file.")
+                                 .create(FILE_OPTION)
             );
             options.addOption(
-                    ALLOW_OPT,
-                    ALLOW_LONG_OPT,
-                    true,
-                    "Allow actions. Comma-separated list of actions to validate (test command) or allow (create " +
-                    "command)."
+                    OptionBuilder.withArgName("dir")
+                                 .withLongOpt(DIR_OPTION_LONG)
+                                 .hasArg()
+                                 .withDescription(
+                                         "Directory. Load all policy files in the specified directory."
+                                 )
+                                 .create(DIR_OPTION)
             );
             options.addOption(
-                    DENY_OPT,
-                    DENY_LONG_OPT,
-                    true,
-                    "Deny the specified actions. (create command)"
+                    OptionBuilder.withArgName("action,...")
+                                 .withLongOpt(ALLOW_LONG_OPT)
+                                 .hasArg()
+                                 .withDescription(
+                                         "Actions to validate (test command) or allow (create command)."
+                                 )
+                                 .create(ALLOW_OPT)
             );
             options.addOption(
-                    GROUPS_OPT,
-                    GROUPS_LONG_OPT,
-                    true,
-                    "Subject Groups names. Comma-separated list of user groups to validate (test command) or for by: clause (create command)."
+                    OptionBuilder.withArgName("action,...")
+                                 .withLongOpt(DENY_LONG_OPT)
+                                 .hasArg()
+                                 .withDescription(
+                                         "Deny the specified actions. (create command)"
+                                 )
+                                 .create(DENY_OPT)
             );
             options.addOption(
-                    USER_OPT,
-                    USER_LONG_OPT,
-                    true,
-                    "Subject User name. Comma-separated list of user names to validate (test command) or for by: clause (create command)."
+                    OptionBuilder.withArgName("group,...")
+                                 .withLongOpt(GROUPS_LONG_OPT)
+                                 .hasArg()
+                                 .withDescription(
+                                         "Subject Groups names to validate (test command) or for by: " +
+                                         "clause (create command)."
+                                 )
+                                 .create(GROUPS_OPT)
             );
             options.addOption(
-                    PROJECT_OPT,
-                    PROJECT_LONG_OPT,
-                    true,
-                    "Name of project, used in project context or for application resource."
+                    OptionBuilder.withArgName("user,...")
+                                 .withLongOpt(USER_LONG_OPT)
+                                 .hasArg()
+                                 .withDescription(
+                                         "Subject User names to validate (test command) or for by: " +
+                                         "clause (create command)."
+                                 )
+                                 .create(USER_OPT)
             );
             options.addOption(
-                    JOB_OPT,
-                    JOB_LONG_OPT,
-                    true,
-                    "Job name/group. (project context)"
+                    OptionBuilder.withArgName("project")
+                                 .withLongOpt(PROJECT_LONG_OPT)
+                                 .hasArg()
+                                 .withDescription(
+                                         "Name of project, used in project context or for application resource."
+                                 )
+                                 .create(PROJECT_OPT)
             );
             options.addOption(
-                    CONTEXT_OPT,
-                    CONTEXT_LONG_OPT,
-                    true,
-                    "Context: either 'project' or 'application'."
+                    OptionBuilder.withArgName("group/name")
+                                 .withLongOpt(JOB_LONG_OPT)
+                                 .hasArg()
+                                 .withDescription(
+                                         "Job group/name. (project context)"
+                                 )
+                                 .create(JOB_OPT)
             );
             options.addOption(
-                    ADHOC_OPT,
-                    ADHOC_LONG_OPT,
+                    OptionBuilder.withArgName("application | project")
+                                 .withLongOpt(CONTEXT_LONG_OPT)
+                                 .hasArg()
+                                 .withDescription(
+                                         "Context: either 'project' or 'application'."
+                                 )
+                                 .create(CONTEXT_OPT)
+            );
+            options.addOption(
+                    OptionBuilder
+                            .withLongOpt(ADHOC_LONG_OPT)
+                            .withDescription(
+                                    "Adhoc execution (project context)"
+                            )
+                            .create(ADHOC_OPT)
+            );
+            options.addOption(
+                    OptionBuilder.withArgName("nodename")
+                                 .withLongOpt(NODE_LONG_OPT)
+                                 .hasArg()
+                                 .withDescription(
+                                         "Node name. (project context)"
+                                 )
+                                 .create(NODE_OPT)
+            );
+            options.addOption(
+                    OptionBuilder.withArgName("tag,..")
+                                 .withLongOpt(TAGS_LONG_OPT)
+                                 .hasArg()
+                                 .withDescription(
+                                         "Node tags. If specified, the resource match will be defined using " +
+                                         "'contains'. (project context)"
+                                 )
+                                 .create(TAGS_OPT)
+            );
+            options.addOption(
+                    OptionBuilder.withArgName("path/file")
+                                 .withLongOpt(STORAGE_LONG_OPT)
+                                 .hasArg()
+                                 .withDescription(
+                                         "Storage path/name. (application context)"
+                                 )
+                                 .create(STORAGE_OPT)
+            );
+            options.addOption(
+                    OptionBuilder.withArgName("kind")
+                                 .withLongOpt(GENERIC_LONG_OPT)
+                                 .hasArg()
+                                 .withDescription("Generic resource kind.")
+                                 .create(GENERIC_OPT)
+            );
+            options.addOption(
+                    OptionBuilder.withArgName("type")
+                                 .withLongOpt(RESOURCE_LONG_OPT)
+                                 .hasArg()
+                                 .withDescription("Resource type name.")
+                                 .create(RESOURCE_OPT)
+            );
+            options.addOption(
+                    OptionBuilder.withArgName("file | -")
+                                 .withLongOpt(INPUT_OPT_LONG)
+                                 .hasArg()
+                                 .withDescription("Read file or stdin for audit log data. (create command)")
+                                 .create(INPUT_OPT)
+            );
+            options.addOption(
+                    REGEX_OPT,
+                    REGEX_OPT_LONG,
                     false,
-                    "Adhoc execution (project context)"
+                    "Match the resource using regular expressions. (create command)."
             );
             options.addOption(
-                    NODE_OPT,
-                    NODE_LONG_OPT,
-                    true,
-                    "Node name. (project context)"
-            );
-            options.addOption(
-                    STORAGE_OPT,
-                    STORAGE_LONG_OPT,
-                    true,
-                    "Storage path/name. (application context)"
-            );
-            options.addOption(
-                    RESOURCE_OPT,
-                    RESOURCE_LONG_OPT,
-                    true,
-                    "Resource type name."
-            );
-            options.addOption(
-                    INPUT_OPT,
-                    INPUT_OPT_LONG,
-                    true,
-                    "Read file for audit log data."
+                    OptionBuilder.withArgName("key=value ...")
+                                 .withDescription(
+                                         "Attributes for the resource. A sequence of key=value pairs, multiple pairs " +
+                                         "can follow with a space. Use a value of '?' to see suggestions."
+                                 )
+                                 .withLongOpt(ATTRS_OPT_LONG)
+                                 .withValueSeparator()
+                                 .hasArgs()
+                                 .create(ATTRS_OPT)
             );
 
         }
@@ -364,11 +451,42 @@ public class AclTool extends BaseTool {
             if (cli.hasOption(STORAGE_OPT)) {
                 argAppStorage = cli.getOptionValue(STORAGE_OPT);
             }
-            if (cli.hasOption(RESOURCE_OPT)) {
-                argResource = cli.getOptionValue(RESOURCE_OPT);
+            if (cli.hasOption(GENERIC_OPT)) {
+                argGenericType = cli.getOptionValue(GENERIC_OPT);
             }
             if (cli.hasOption(INPUT_OPT)) {
                 argInput = cli.getOptionValue(INPUT_OPT);
+            }
+            if (cli.hasOption(REGEX_OPT)) {
+                argRegex = cli.hasOption(REGEX_OPT);
+            }
+            if (cli.hasOption(TAGS_OPT)) {
+                argTags = cli.getOptionValue(TAGS_OPT);
+                tagsSet = Arrays.asList(argTags.split(", *"));
+            }
+            if (cli.hasOption(RESOURCE_OPT)) {
+                argResource = cli.getOptionValue(RESOURCE_OPT);
+            }
+            if (cli.hasOption(ATTRS_OPT)) {
+                attrsMap = new HashMap<>();
+                cli.getOptionValues(ATTRS_OPT);
+                String key = null;
+                for (String s : cli.getOptionValues(ATTRS_OPT)) {
+                    if (key == null) {
+                        key = s;
+                    } else if (s.equals("")) {
+                        warn("Extraneous attribute key with no value: " + key);
+                        attrHelp = true;
+                        key = null;
+                    } else if (!s.equals("")) {
+                        attrsMap.put(key, s);
+                        key = null;
+                    }
+                }
+                if (key != null) {
+                    attrHelp = true;
+                    warn("Extraneous attribute key with no value: " + key);
+                }
             }
         }
 
@@ -400,6 +518,10 @@ public class AclTool extends BaseTool {
                 );
             }
         }
+        if (line.hasOption("h")) {
+            help();
+            exit(1);
+        }
         return line;
     }
 
@@ -410,7 +532,7 @@ public class AclTool extends BaseTool {
      * @throws com.dtolabs.rundeck.core.cli.jobs.JobsToolException if an error occurs
      */
     protected void go() throws JobsToolException, CLIToolOptionsException {
-        if(null==action) {
+        if (null == action) {
             throw new CLIToolOptionsException("Command expected. Choose one of: " + Arrays.asList(Actions.values()));
         }
         try {
@@ -454,9 +576,11 @@ public class AclTool extends BaseTool {
             Arrays.asList(
                     ACLConstants.TYPE_PROJECT,
                     ACLConstants.TYPE_SYSTEM,
-                    ACLConstants.TYPE_USER
+                    ACLConstants.TYPE_USER,
+                    ACLConstants.TYPE_JOB
             )
     );
+
     static final List<String> appProjectActions =
             Arrays.asList(
                     ACLConstants.ACTION_ADMIN,
@@ -486,6 +610,38 @@ public class AclTool extends BaseTool {
             Arrays.asList(
                     ACLConstants.ACTION_ADMIN
             );
+    static final List<String> appJobKindActions =
+            Arrays.asList(
+                    ACLConstants.ACTION_ADMIN
+            );
+    static final Map<String, List<String>> appResActionsByType;
+    static final Map<String, List<String>> appResAttrsByType;
+
+    static {
+        appResActionsByType = new HashMap<>();
+        appResActionsByType.put(ACLConstants.TYPE_PROJECT, appProjectActions);
+        appResActionsByType.put(ACLConstants.TYPE_STORAGE, appStorageActions);
+    }
+
+    static {
+        appResAttrsByType = new HashMap<>();
+        appResAttrsByType.put(ACLConstants.TYPE_PROJECT, Arrays.asList("name"));
+        appResAttrsByType.put(ACLConstants.TYPE_STORAGE, Arrays.asList("path", "name"));
+
+    }
+
+    static final Map<String, List<String>> appKindActionsByType;
+
+    static {
+
+        appKindActionsByType = new HashMap<>();
+        appKindActionsByType.put(ACLConstants.TYPE_PROJECT, appProjectKindActions);
+        appKindActionsByType.put(ACLConstants.TYPE_SYSTEM, appSystemKindActions);
+        appKindActionsByType.put(ACLConstants.TYPE_USER, appUserKindActions);
+        appKindActionsByType.put(ACLConstants.TYPE_JOB, appJobKindActions);
+    }
+
+
     static final List<String> projectJobActions =
             Arrays.asList(
                     ACLConstants.ACTION_READ,
@@ -515,6 +671,33 @@ public class AclTool extends BaseTool {
                     ACLConstants.ACTION_READ,
                     ACLConstants.ACTION_RUN
             );
+    static final Map<String, List<String>> projResActionsByType;
+    static final Map<String, List<String>> projResAttrsByType;
+
+    static {
+        projResActionsByType = new HashMap<>();
+        projResActionsByType.put(ACLConstants.TYPE_JOB, projectJobActions);
+        projResActionsByType.put(ACLConstants.TYPE_ADHOC, projectAdhocActions);
+        projResActionsByType.put(ACLConstants.TYPE_NODE, projectNodeActions);
+    }
+
+
+    static {
+        projResAttrsByType = new HashMap<>();
+        projResAttrsByType.put(ACLConstants.TYPE_JOB, Arrays.asList("group", "name"));
+        projResAttrsByType.put(ACLConstants.TYPE_ADHOC, new ArrayList<String>());
+        List<String> nodeAttributeNames = Arrays.asList(
+                "nodename",
+                "rundeck_server",
+                "username",
+                "hostname",
+                "osFamily",
+                "osVersion",
+                "(etc. any node attribute)"
+        );
+        projResAttrsByType.put(ACLConstants.TYPE_NODE, nodeAttributeNames);
+    }
+
     static final List<String> projectNodeKindActions =
             Arrays.asList(
                     ACLConstants.ACTION_READ,
@@ -527,6 +710,15 @@ public class AclTool extends BaseTool {
                     ACLConstants.ACTION_READ,
                     ACLConstants.ACTION_CREATE
             );
+    static final Map<String, List<String>> projKindActionsByType;
+
+    static {
+
+        projKindActionsByType = new HashMap<>();
+        projKindActionsByType.put(ACLConstants.TYPE_JOB, projectJobKindActions);
+        projKindActionsByType.put(ACLConstants.TYPE_NODE, projectNodeKindActions);
+        projKindActionsByType.put(ACLConstants.TYPE_EVENT, projectEventKindActions);
+    }
 
     private AuthRequest createAuthRequestFromArgs(boolean prompt)
             throws CLIToolOptionsException, IOException, PoliciesParseException
@@ -534,7 +726,7 @@ public class AclTool extends BaseTool {
         //determine context
         if (null == argContext) {
             throw new OptionsPrompt(
-                    "-c/--context is required.",
+                    optionDisplayString(CONTEXT_OPT, false) + " is required.",
                     "Choose one of: \n" +
                     "  -c " + Context.application + "\n" +
                     "    Access to projects, users, storage, system info.\n" +
@@ -544,7 +736,7 @@ public class AclTool extends BaseTool {
         }
         if (argContext == Context.project && null == argProject) {
             throw new OptionsPrompt(
-                    "-p/--project is required.",
+                    optionDisplayString(PROJECT_OPT, false) + " is required.",
                     "Choose the name of a project, or .*: \n" +
                     "  -p myproject\n" +
                     "  -p '.*'"
@@ -563,7 +755,8 @@ public class AclTool extends BaseTool {
             subject = t;
         } else {
             throw new OptionsPrompt(
-                    "-g <groups> or -u <user> are required",
+                    optionDisplayString(GROUPS_OPT) + " or " +
+                    optionDisplayString(USER_OPT) + " are required",
                     "  -u user1,user2... \n" +
                     "  -g group1,group2... \n" +
                     "    Groups control access for a set of users, and correspond\n" +
@@ -572,14 +765,36 @@ public class AclTool extends BaseTool {
         }
 
         //determine resource
-        Map<String, String> resourceMap = new HashMap<>();
+        Map<String, Object> resourceMap = new HashMap<>();
 
-        if (argContext == Context.application && argProject != null) {
-            HashMap<String, String> res = new HashMap<>();
+        if (argContext == Context.application && argResource != null) {
+            if (!appTypes.contains(argResource.toLowerCase())) {
+
+                throw new OptionsPrompt(
+                        optionDisplayString(RESOURCE_OPT, false) + " invalid resource type: " + argResource,
+                        "  resource types in application context: " +
+                        "    " + StringUtils.join(appTypes, "\n    ")
+
+                );
+            }
+            resourceMap = AuthorizationUtil.resourceRule(argResource.toLowerCase(), null);
+        } else if (argContext == Context.project && argResource != null) {
+            if (!projectTypes.contains(argResource.toLowerCase())) {
+
+                throw new OptionsPrompt(
+                        optionDisplayString(RESOURCE_OPT, false) + " invalid resource type: " + argResource,
+                        "  resource types in project context: " +
+                        "    " + StringUtils.join(projectTypes, "\n    ")
+
+                );
+            }
+            resourceMap = AuthorizationUtil.resourceRule(argResource.toLowerCase(), null);
+        } else if (argContext == Context.application && argProject != null) {
+            HashMap<String, Object> res = new HashMap<>();
             res.put("name", argProject);
-            resourceMap = AuthorizationUtil.resource(ACLConstants.TYPE_PROJECT, res);
+            resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_PROJECT, res);
         } else if (argContext == Context.application && argAppStorage != null) {
-            HashMap<String, String> res = new HashMap<>();
+            HashMap<String, Object> res = new HashMap<>();
             int nx = argAppStorage.lastIndexOf("/");
             if (nx >= 0) {
                 res.put("path", argAppStorage.substring(0, nx));
@@ -587,9 +802,9 @@ public class AclTool extends BaseTool {
             } else {
                 res.put("name", argAppStorage);
             }
-            resourceMap = AuthorizationUtil.resource(ACLConstants.TYPE_STORAGE, res);
+            resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_STORAGE, res);
         } else if (argContext == Context.project && argProjectJob != null) {
-            HashMap<String, String> res = new HashMap<>();
+            HashMap<String, Object> res = new HashMap<>();
             int nx = argProjectJob.lastIndexOf("/");
             if (nx >= 0) {
                 res.put("group", argProjectJob.substring(0, nx));
@@ -598,52 +813,78 @@ public class AclTool extends BaseTool {
                 res.put("group", "");
                 res.put("name", argProjectJob);
             }
-            resourceMap = AuthorizationUtil.resource(ACLConstants.TYPE_JOB, res);
+            resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_JOB, res);
         } else if (argContext == Context.project && argProjectNode != null) {
-            HashMap<String, String> res = new HashMap<>();
+            HashMap<String, Object> res = new HashMap<>();
             res.put("nodename", argProjectNode);
-            resourceMap = AuthorizationUtil.resource(ACLConstants.TYPE_NODE, res);
+            resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_NODE, res);
+        } else if (argContext == Context.project && argTags != null) {
+            HashMap<String, Object> res = new HashMap<>();
+            res.put("tags", tagsSet);
+            resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_NODE, res);
         } else if (argContext == Context.project && argProjectAdhoc) {
-            resourceMap = AuthorizationUtil.resource(ACLConstants.TYPE_ADHOC, new HashMap<String, String>());
-        } else if (argContext == Context.project && null != argResource) {
-            if (!projectKinds.contains(argResource.toLowerCase())) {
+            resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_ADHOC, new HashMap<String, Object>());
+        } else if (argContext == Context.project && null != argGenericType) {
+            if (!projectKinds.contains(argGenericType.toLowerCase())) {
                 throw new OptionsPrompt(
-                        "-R/--resource invalid resource type: " + argResource,
-                        "  resource types in this context: " +
+                        optionDisplayString(GENERIC_OPT, false) + " invalid generic kind: " + argGenericType,
+                        "  generic kinds in this context: " +
                         "    " + StringUtils.join(projectKinds, "\n    ")
 
                 );
             }
-            resourceMap = AuthorizationUtil.resourceType(argResource.toLowerCase());
-        } else if (argContext == Context.application && null != argResource) {
-            if (!appKinds.contains(argResource.toLowerCase())) {
+            resourceMap = AuthorizationUtil.resourceTypeRule(argGenericType.toLowerCase());
+        } else if (argContext == Context.application && null != argGenericType) {
+            if (!appKinds.contains(argGenericType.toLowerCase())) {
 
                 throw new OptionsPrompt(
-                        "-R/--resource invalid resource type: " + argResource,
-                        "  resource types in this context: " +
+                        optionDisplayString(GENERIC_OPT, false) + " invalid generic kind: " + argGenericType,
+                        "  generic kind in this context: " +
                         "    " + StringUtils.join(appKinds, "\n    ")
 
                 );
             }
-            resourceMap = AuthorizationUtil.resourceType(argResource.toLowerCase());
+            resourceMap = AuthorizationUtil.resourceTypeRule(argGenericType.toLowerCase());
         } else if (argContext == Context.project) {
 
             throw new OptionsPrompt(
                     "Project-context resource option is required.",
                     "Possible options:\n" +
-                    "  Job: -j/--job <jobgroup/name>\n" +
+                    "  Job: " +
+                    optionDisplayString(JOB_OPT) +
+                    "\n" +
                     "    View, modify, create*, delete*, run, and kill specific jobs.\n" +
-                    "    * Create and delete also require -R/--resource level access.\n" +
-                    "  Adhoc: -A/--adhoc\n" +
+                    "    * Create and delete also require additional " +
+                    optionDisplayString(GENERIC_OPT) +
+                    " level access.\n" +
+                    "  Adhoc: " +
+                    optionDisplayString(ADHOC_OPT) +
+                    "\n" +
                     "    View, run, and kill adhoc commands.\n" +
-                    "  Node: -n/--node <nodename>\n" +
-                    "    View and run on specific nodes.\n" +
-                    "  Resource: -R/--resource <type>\n" +
+                    "  Node: " +
+                    optionDisplayString(NODE_OPT) +
+                    "\n" +
+                    "      : " +
+                    optionDisplayString(TAGS_OPT) +
+                    "\n" +
+                    "    View and run on specific nodes by name or tag.\n" +
+                    "  Resource: " +
+                    optionDisplayString(RESOURCE_OPT) +
+                    "\n" +
+                    "    Specify the resource type directly. "+optionDisplayString(ATTRS_OPT)+" should also be used.\n" +
+                    "    resource types in this context: \n" +
+                    "    " +
+                    StringUtils.join(projectTypes, "\n    ") +
+                    "\n" +
+                    "  Generic: " +
+                    optionDisplayString(GENERIC_OPT) +
+                    "\n" +
                     "    Create and delete jobs.\n" +
                     "    View and manage nodes.\n" +
                     "    View events.\n" +
-                    "  resource types in this context: \n" +
-                    "    " + StringUtils.join(projectKinds, "\n    ")
+                    "    generic kinds in this context: \n" +
+                    "    " +
+                    StringUtils.join(projectKinds, "\n    ")
 
             );
         } else {
@@ -651,71 +892,87 @@ public class AclTool extends BaseTool {
             throw new OptionsPrompt(
                     "Application-context resource option is required.",
                     "Possible options:\n" +
-                    "  Project: -p/--project <projectname>\n" +
+                    "  Project: " +
+                    optionDisplayString(PROJECT_OPT) +
+                    "\n" +
                     "    Visibility, import, export, config, and delete executions.\n" +
-                    "    *Note: Project create requires -R/--resource access*\n" +
-                    "  Storage: -s/--storage <path/name>\n" +
+                    "    *Note: Project create requires additional " +
+                    optionDisplayString(GENERIC_OPT) +
+                    " level access.\n" +
+                    "  Storage: " +
+                    optionDisplayString(STORAGE_OPT) +
+                    "\n" +
                     "    CRUD access for the key storage system.\n" +
-                    "  Resource: -R/--resource <type>\n" +
+                    "  Resource: " +
+                    optionDisplayString(RESOURCE_OPT) +
+                    "\n" +
+                    "    Specify the resource type directly. "+optionDisplayString(ATTRS_OPT)+" should also be used.\n" +
+                    "    resource types in this context: \n" +
+                    "    " +
+                    StringUtils.join(appTypes, "\n    ") +
+                    "\n" +
+                    "  Generic: " +
+                    optionDisplayString(GENERIC_OPT) +
+                    "\n" +
                     "    Create projects, read system info, manage users.\n" +
-                    "  resource types in this context: \n" +
-                    "    " + StringUtils.join(appKinds, "\n    ")
+                    "    generic kinds" +
+                    " in this context: \n" +
+                    "    " +
+                    StringUtils.join(appKinds, "\n    ")
+            );
+        }
+        if (null != attrsMap && attrsMap.size() > 0) {
+            resourceMap.putAll(attrsMap);
+        } else if (attrHelp && null != argResource
+                   && !argResource.equalsIgnoreCase(ACLConstants.TYPE_ADHOC)) {
+            List<String> possibleAttrs =
+                    (argContext == Context.application ? appResAttrsByType : projResAttrsByType)
+                            .get(argResource.toLowerCase());
+            throw new OptionsPrompt(
+                    optionDisplayString(ATTRS_OPT) +
+                    " should be specified when " +
+                    optionDisplayString(RESOURCE_OPT) +
+                    " is used",
+                    "Possible attributes for resource type "+argResource+" in this context:\n" +
+                    "  " + StringUtils.join(possibleAttrs, "\n  ")
             );
         }
 
-        List<String> possibleActions = new ArrayList<>(Arrays.asList("admin", "*"));
-        if (argContext == Context.application && argAppStorage != null) {
+        List<String> possibleActions = new ArrayList<>(Arrays.asList("*"));
+
+        if (argContext == Context.application && null != argResource) {
+            //actions for resources for application context
+            possibleActions.addAll(appResActionsByType.get(argResource));
+        } else if (argContext == Context.project && null != argResource) {
+            //actions for resources for project context
+            possibleActions.addAll(projResActionsByType.get(argResource));
+        } else if (argContext == Context.application && argAppStorage != null) {
             //actions for job
             possibleActions.addAll(appStorageActions);
         } else if (argContext == Context.application && argProject != null) {
             //actions for job
             possibleActions.addAll(appProjectActions);
-        } else if (argContext == Context.application &&
-                   argResource != null &&
-                   argResource.equalsIgnoreCase(ACLConstants.TYPE_PROJECT)) {
+        } else if (argContext == Context.application && argGenericType != null) {
             //actions for job
-            possibleActions.addAll(appProjectKindActions);
-        } else if (argContext == Context.application &&
-                   argResource != null &&
-                   argResource.equalsIgnoreCase(ACLConstants.TYPE_SYSTEM)) {
+            possibleActions.addAll(appKindActionsByType.get(argGenericType.toLowerCase()));
+        } else if (argContext == Context.project && argGenericType != null) {
             //actions for job
-            possibleActions.addAll(appSystemKindActions);
-        } else if (argContext == Context.application &&
-                   argResource != null &&
-                   argResource.equalsIgnoreCase(ACLConstants.TYPE_USER)) {
-            //actions for job
-            possibleActions.addAll(appUserKindActions);
-        } else if (argContext == Context.project &&
-                   argResource != null &&
-                   argResource.equalsIgnoreCase(ACLConstants.TYPE_JOB)) {
-            //actions for job
-            possibleActions.addAll(projectJobKindActions);
-        } else if (argContext == Context.project &&
-                   argResource != null &&
-                   argResource.equalsIgnoreCase(ACLConstants.TYPE_EVENT)) {
-            //actions for job
-            possibleActions.addAll(projectEventKindActions);
-        } else if (argContext == Context.project &&
-                   argResource != null &&
-                   argResource.equalsIgnoreCase(ACLConstants.TYPE_NODE)) {
-            //actions for job
-            possibleActions.addAll(projectNodeKindActions);
+            possibleActions.addAll(projKindActionsByType.get(argGenericType.toLowerCase()));
         } else if (argContext == Context.project && argProjectJob != null) {
             //actions for job
             possibleActions.addAll(projectJobActions);
         } else if (argContext == Context.project && argProjectAdhoc) {
             //actions for job
             possibleActions.addAll(projectAdhocActions);
-        } else if (argContext == Context.project && argProjectNode != null) {
+        } else if (argContext == Context.project && (argProjectNode != null || argTags != null)) {
             //actions for job
             possibleActions.addAll(projectNodeActions);
         }
         if (null == argAllowAction && null == argDenyAction) {
             //listing actions
             throw new OptionsPrompt(
-                    "-a/--allow or -D/--deny is required.",
-                    "  -a action1,action2,...\n" +
-                    "  -D action1,action2,...\n" +
+                    optionDisplayString(ALLOW_OPT) + " or " +
+                    optionDisplayString(DENY_OPT) + " is required.",
                     "Possible actions in this context: \n" +
                     "  " + StringUtils.join(possibleActions, "\n  ")
             );
@@ -730,7 +987,7 @@ public class AclTool extends BaseTool {
             }
             if (invalid.size() > 0) {
                 throw new OptionsPrompt(
-                        "-a/--allow specified invalid actions.",
+                        optionDisplayString(ALLOW_OPT, false) + " specified invalid actions.",
                         "These actions are not valid for the context:"
                         + "  " + StringUtils.join(invalid, "\n  ") +
                         "Possible actions in this context: \n" +
@@ -748,7 +1005,7 @@ public class AclTool extends BaseTool {
             }
             if (invalid.size() > 0) {
                 throw new OptionsPrompt(
-                        "-D/--deny specified invalid actions.",
+                        optionDisplayString(DENY_OPT, false) + " specified invalid actions.",
                         "These actions are not valid for the context:\n"
                         + "  " + StringUtils.join(invalid, "\n  ") + "\n\n" +
                         "Possible actions in this context:\n" +
@@ -768,6 +1025,8 @@ public class AclTool extends BaseTool {
         if (null != actionsDenyList) {
             request.denyActions = new HashSet<>(actionsDenyList);
         }
+        request.regexMatch = argRegex;
+        request.containsMatch = argContext == Context.project && argTags != null;
         return request;
     }
 
@@ -830,7 +1089,7 @@ public class AclTool extends BaseTool {
                     Map<String, Object> subjMap = res.resourceMap;
                     Subject subject = createSubject(subjMap);
                     if (null == subject) {
-                        verbose("parse subject< failed: "+subjMap+": " + line);
+                        verbose("parse subject< failed: " + subjMap + ": " + line);
                         continue;
                     }
                     line = line.substring(res.len);
@@ -865,10 +1124,10 @@ public class AclTool extends BaseTool {
                             Framework.RUNDECK_APP_ENV :
                             FrameworkProject.authorizationEnvironment(env.substring(env.lastIndexOf(":") + 1));
                     request.actions = new HashSet<>(Arrays.asList(action));
-                    request.resourceMap = toStringMap(resourceMap);
+                    request.resourceMap = resourceMap;
                     request.subject = subject;
                     reqs.add(request);
-                }else{
+                } else {
                     verbose("did not see start. skip line: " + line);
                 }
             }
@@ -897,9 +1156,9 @@ public class AclTool extends BaseTool {
         }
         Object group = subjMap.get("Group");
         Collection<String> groups;
-        if(group instanceof Collection) {
+        if (group instanceof Collection) {
             groups = (Collection<String>) group;
-        }else {
+        } else {
             groups = Arrays.asList((String) group);
         }
         return makeSubject(subjMap.get("Username").toString(), groups);
@@ -919,7 +1178,7 @@ public class AclTool extends BaseTool {
         if (v < 0 || v > test.length() - (name.length() + 1)) {
             return null;
         }
-        String r1 = test.substring(v + name.length() +1);
+        String r1 = test.substring(v + name.length() + 1);
         int v2 = r1.indexOf(">");
         if (v2 < 0) {
             return null;
@@ -929,7 +1188,7 @@ public class AclTool extends BaseTool {
         if (null == resourceMap) {
             return null;
         }
-        len = v + (name.length())+1 + v2 + 1;
+        len = v + (name.length()) + 1 + v2 + 1;
         ParsePart parsePart = new ParsePart();
         parsePart.len = len;
         parsePart.resourceMap = resourceMap;
@@ -944,7 +1203,7 @@ public class AclTool extends BaseTool {
         if (v < 0 || v > test.length() - (name.length() + 1)) {
             return null;
         }
-        String r1 = test.substring(v + name.length()+1);
+        String r1 = test.substring(v + name.length() + 1);
         int v2 = r1.indexOf(">");
         if (v2 < 0) {
             return null;
@@ -1035,9 +1294,9 @@ public class AclTool extends BaseTool {
             stringHashMap.put("by", s);
         }
 
-        Map<String, String> resource = new HashMap<>();
+        Map<String, Object> resource = new HashMap<>();
         //resource
-        String type = authRequest.resourceMap.get("type");
+        String type = authRequest.resourceMap.get("type").toString();
         resource.putAll(authRequest.resourceMap);
         resource.remove("type");
 
@@ -1046,7 +1305,9 @@ public class AclTool extends BaseTool {
         ArrayList<Map<String, Object>> maps = new ArrayList<>();
         s.put(type, maps);
         HashMap<String, Object> r = new HashMap<>();
-        r.put("equals", resource);
+        if (resource.size() > 0) {
+            r.put(authRequest.regexMatch ? "match" : authRequest.containsMatch ? "contains" : "equals", resource);
+        }
         if (authRequest.actions != null && authRequest.actions.size() > 0) {
 
             r.put(
@@ -1078,7 +1339,7 @@ public class AclTool extends BaseTool {
         final SAREAuthorization authorization = createAuthorization();
         AuthRequest authRequest = createAuthRequestFromArgs(true);
         HashSet<Map<String, String>> resource = new HashSet<>();
-        resource.add(authRequest.resourceMap);
+        resource.add(toStringMap(authRequest.resourceMap));
 
         Set<Decision> result = authorization.evaluate(
                 resource,
@@ -1091,22 +1352,25 @@ public class AclTool extends BaseTool {
         List<Decision> failed = new ArrayList<>();
         for (Decision decision : result) {
             if (!decision.isAuthorized()) {
-                log("Result: "+decision.explain().getCode());
+                log("Result: " + decision.explain().getCode());
                 verbose(decision.toString());
-                switch (decision.explain().getCode()){
+                switch (decision.explain().getCode()) {
                     case REJECTED_NO_SUBJECT_OR_ENV_FOUND:
                         log(
                                 "Meaning: " +
                                 "No rules were found among the aclpolicies that match" +
                                 " the subject (user,group) and context (" +
                                 (authRequest.isAppContext() ? "application" : "project") +
-                                ")"
+                                ")" +
+                                " and resource (" + authRequest.resourceMap + ")"
                         );
                         break;
                     case REJECTED_DENIED:
-                        log("Meaning: " +
-                            "A matching rule declared that the requested action be DENIED.");
-                        denied=true;
+                        log(
+                                "Meaning: " +
+                                "A matching rule declared that the requested action be DENIED."
+                        );
+                        denied = true;
                 }
                 allowed = false;
                 failed.add(decision);
@@ -1117,7 +1381,7 @@ public class AclTool extends BaseTool {
             }
         }
         log("The result was: " + (allowed ? "allowed" : denied ? "denied" : "not allowed"));
-        if (argVerbose && !allowed&&!denied) {
+        if (argVerbose && !allowed && !denied) {
             log("Policies to allow the requested actions:");
             generateYaml(authRequest, System.out);
         } else if (argVerbose && denied) {
@@ -1128,7 +1392,7 @@ public class AclTool extends BaseTool {
                     "To allow it, you must remove the DENY rule."
             );
         }
-        if(!allowed){
+        if (!allowed) {
             exit(2);
         }
     }
@@ -1152,13 +1416,17 @@ public class AclTool extends BaseTool {
 
     private class AuthRequest {
         String description;
-        Map<String, String> resourceMap;
+        Map<String, Object> resourceMap;
+        boolean regexMatch;
+        boolean containsMatch;
         Subject subject;
         Set<String> actions;
         Set<Attribute> environment;
-        boolean isAppContext(){
+
+        boolean isAppContext() {
             return environment.equals(Framework.RUNDECK_APP_ENV);
         }
+
         Set<String> denyActions;
     }
 

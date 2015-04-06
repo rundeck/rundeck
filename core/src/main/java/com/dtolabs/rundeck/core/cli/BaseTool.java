@@ -96,6 +96,54 @@ public abstract class BaseTool implements CLITool {
     }
 
     /**
+     * Return a string to display the specified option in help text
+     * @param opt opt name
+     * @return full display string
+     */
+    protected String optionDisplayString(final String opt) {
+        return optionDisplayString(opt, true);
+    }
+
+    /**
+     * Return a string to display the specified option in help text
+     * @param extended if true, include full argument descriptor
+     * @param opt opt name
+     * @return  display string
+     */
+    protected String optionDisplayString(final String opt, boolean extended) {
+        StringBuffer stringBuffer = new StringBuffer();
+        stringBuffer.append("-").append(opt);
+        Option option = getOption(opt);
+        if(null!=option) {
+            if (option.getLongOpt() != null) {
+                stringBuffer.append("/--");
+                stringBuffer.append(option.getLongOpt());
+            }
+            if(option.getArgName()!=null && extended){
+                stringBuffer.append(" <");
+                stringBuffer.append(option.getArgName());
+                stringBuffer.append(">");
+            }
+        }
+        return stringBuffer.toString();
+    }
+
+    /**
+     * Options.getOption(name) doesnt properly clone the option :( and leaves out the argName
+     * @param opt optname
+     * @return found option, or null
+     */
+    private Option getOption(final String opt) {
+        for (Object o : getOptions().getOptions()) {
+            Option opto=(Option) o;
+            if (opto.getOpt().equals(opt)) {
+                return opto;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Run the tool's lifecycle given the input arguments.
      *
      * @param args the cli arg vector
