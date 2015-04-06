@@ -106,7 +106,7 @@ public class AclTool extends BaseTool {
         this(
                 cliToolLogger,
                 rdeckBase,
-                FrameworkFactory.createFilesystemFramework(new File(rdeckBase)).getPropertyLookup()
+                null!=rdeckBase?FrameworkFactory.createFilesystemFramework(new File(rdeckBase)).getPropertyLookup():null
         );
     }
 
@@ -117,13 +117,16 @@ public class AclTool extends BaseTool {
     {
 
         if (null == cliToolLogger) {
+            PropertyConfigurator.configure(Constants.getLog4jPropertiesFile().getAbsolutePath());
             clilogger = new Log4JCLIToolLogger(log4j);
         } else {
             this.clilogger = cliToolLogger;
         }
-        configDir = frameworkProps.hasProperty("framework.etc.dir") ? frameworkProps.getProperty(
-                "framework.etc.dir"
-        ) : Constants.getFrameworkConfigDir(rdeckBase);
+        if(null!=frameworkProps) {
+            configDir = frameworkProps.hasProperty("framework.etc.dir") ? frameworkProps.getProperty(
+                    "framework.etc.dir"
+            ) : Constants.getFrameworkConfigDir(rdeckBase);
+        }
 
 
         final TestOptions testOptions = new TestOptions();
@@ -149,7 +152,6 @@ public class AclTool extends BaseTool {
      * @throws Exception action error
      */
     public static void main(final String[] args) throws Exception {
-        PropertyConfigurator.configure(Constants.getLog4jPropertiesFile().getAbsolutePath());
         final AclTool tool = new AclTool(new DefaultCLIToolLogger());
         tool.setShouldExit(true);
         int exitCode = 1; //pessimistic initial value
@@ -271,7 +273,7 @@ public class AclTool extends BaseTool {
                                  .withLongOpt(ALLOW_LONG_OPT)
                                  .hasArg()
                                  .withDescription(
-                                         "Actions to validate (test command) or allow (create command)."
+                                         "Actions to test are allowed (test command) or to allow (create command)."
                                  )
                                  .create(ALLOW_OPT)
             );
@@ -280,7 +282,7 @@ public class AclTool extends BaseTool {
                                  .withLongOpt(DENY_LONG_OPT)
                                  .hasArg()
                                  .withDescription(
-                                         "Deny the specified actions. (create command)"
+                                         "Actions to test are denied (test command) or to deny (create command)."
                                  )
                                  .create(DENY_OPT)
             );
@@ -720,7 +722,7 @@ public class AclTool extends BaseTool {
         projKindActionsByType.put(ACLConstants.TYPE_EVENT, projectEventKindActions);
     }
 
-    private AuthRequest createAuthRequestFromArgs(boolean prompt)
+    private AuthRequest createAuthRequestFromArgs()
             throws CLIToolOptionsException, IOException, PoliciesParseException
     {
         //determine context
@@ -1047,7 +1049,7 @@ public class AclTool extends BaseTool {
         if (null != argInput) {
             reqs = readRequests(argInput);
         } else {
-            reqs.add(createAuthRequestFromArgs(true));
+            reqs.add(createAuthRequestFromArgs());
         }
         //generate yaml
         for (AuthRequest req : reqs) {
@@ -1337,21 +1339,44 @@ public class AclTool extends BaseTool {
 
     private void testAction() throws CLIToolOptionsException, IOException, PoliciesParseException {
         final SAREAuthorization authorization = createAuthorization();
-        AuthRequest authRequest = createAuthRequestFromArgs(true);
+        AuthRequest authRequest = createAuthRequestFromArgs();
         HashSet<Map<String, String>> resource = new HashSet<>();
         resource.add(toStringMap(authRequest.resourceMap));
 
-        Set<Decision> result = authorization.evaluate(
-                resource,
-                authRequest.subject,
-                authRequest.actions,
-                authRequest.environment
-        );
-        boolean allowed = true;
-        boolean denied = false;
-        List<Decision> failed = new ArrayList<>();
-        for (Decision decision : result) {
-            if (!decision.isAuthorized()) {
+        boolean expectAuthorized=true;
+        boolean expectDenied=false;
+        Set<Decision> testResult=null;
+        if (null != authRequest.actions && authRequest.actions.size() > 0) {
+            testResult =
+                    authorization.evaluate(
+                            resource,
+                            authRequest.subject,
+                            authRequest.actions,
+                            authRequest.environment
+                    );
+        }else if (null != authRequest.denyActions && authRequest.denyActions.size() > 0) {
+            expectAuthorized=false;
+            expectDenied=true;
+            testResult = authorization.evaluate(
+                    resource,
+                    authRequest.subject,
+                    authRequest.denyActions,
+                    authRequest.environment
+            );
+        }else {
+            error(optionDisplayString(ALLOW_OPT) + " or " + optionDisplayString(DENY_OPT) + " is required");
+            exit(2);
+        }
+        boolean testPassed = true;
+        boolean wasAllowed = true;
+        boolean wasDenied = false;
+
+        for (Decision decision : testResult) {
+            if(!decision.isAuthorized()){
+                wasAllowed=false;
+            }
+            if (expectAuthorized && !decision.isAuthorized() ||
+                    expectDenied && decision.isAuthorized() ) {
                 log("Result: " + decision.explain().getCode());
                 verbose(decision.toString());
                 switch (decision.explain().getCode()) {
@@ -1370,21 +1395,24 @@ public class AclTool extends BaseTool {
                                 "Meaning: " +
                                 "A matching rule declared that the requested action be DENIED."
                         );
-                        denied = true;
+                        wasDenied = true;
                 }
-                allowed = false;
-                failed.add(decision);
+                testPassed = false;
             } else {
+                switch (decision.explain().getCode()) {
+                    case REJECTED_DENIED:
+                        wasDenied = true;
+                }
                 if (argVerbose) {
                     log(decision.toString());
                 }
             }
         }
-        log("The result was: " + (allowed ? "allowed" : denied ? "denied" : "not allowed"));
-        if (argVerbose && !allowed && !denied) {
+        log("The decision was: " + (wasAllowed ? "allowed" : wasDenied ? "denied" : "not allowed"));
+        if (argVerbose && !testPassed ) {
             log("Policies to allow the requested actions:");
             generateYaml(authRequest, System.out);
-        } else if (argVerbose && denied) {
+        } else if (argVerbose && !testPassed && expectAuthorized && wasDenied) {
             log(
                     "No new policy can allow the requested action.\n" +
                     "DENY rules will always prevent access, even if ALLOW " +
@@ -1392,7 +1420,8 @@ public class AclTool extends BaseTool {
                     "To allow it, you must remove the DENY rule."
             );
         }
-        if (!allowed) {
+        log("The test " + (testPassed ? "passed" : "failed"));
+        if (!testPassed) {
             exit(2);
         }
     }
@@ -1402,12 +1431,22 @@ public class AclTool extends BaseTool {
     {
         final SAREAuthorization authorization;
         if (null != argFile) {
+            if(!argFile.isFile()) {
+                throw new CLIToolOptionsException("File: " + argFile + ", does not exist or is not a file");
+            }
             authorization = createAuthorizationSingleFile(argFile);
         } else if (null != argDir) {
+            if(!argDir.isDirectory()) {
+                throw new CLIToolOptionsException("File: " + argDir + ", does not exist or is not a directory");
+            }
             authorization = createAuthorization(argDir);
         } else if (null != configDir) {
             log("Using configured Rundeck etc dir: " + configDir);
-            authorization = createAuthorization(new File(configDir));
+            File directory = new File(configDir);
+            if(!directory.isDirectory()) {
+                throw new CLIToolOptionsException("File: " + directory + ", does not exist or is not a directory");
+            }
+            authorization = createAuthorization(directory);
         } else {
             throw new CLIToolOptionsException("-f or -d are required");
         }

@@ -61,8 +61,6 @@ In addition to the [Common Options](#common-options), the `test` command takes t
 `-v`
 :   If the tested action is not allowed, print the necessary ACL policy to allow it (as per the `create` action.)
 
-`-a,--allow <action,...>`
-:   Actions to validate (test command) or allow (create command).
 
 One of `--dir` or `--file` is required for the `test` command. If the rdeck.base system property is defined, then
 the Rundeck "etc" dir will be used as for the `--dir` option by default.
@@ -80,11 +78,6 @@ In addition to the [Common Options](#common-options), the `create` command takes
 `-r, --regex`
 :   Match the resource using regular expressions. (create command).
 
-`-a,--allow <action,...>`
-:   Actions to validate (test command) or allow (create command).
-
-`-D,--deny <action,...>`
-:   Deny the specified actions. (create command)
 
 ## Common Options
 
@@ -110,10 +103,10 @@ and to define a rule in the ACL Policy (for the `create` command).
 **Action options:**
 
 `-a,--allow <action,...>`
-:   Actions to validate (test command) or allow (create command).
+:   Actions to test are allowed (test command) or to allow (create command).
 
 `-D,--deny <action,...>`
-:   Deny the specified actions. (create command)
+:   Actions to test are denied (test command) or to deny (create command).
 
 **Resource Options:**
 
