@@ -54,12 +54,20 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
     private Map<File, CacheItem> cache = new HashMap<File, CacheItem>();
     private DocumentBuilder builder;
     private File rootDir;
+    private File singleFile;
 
     public PoliciesCache() throws ParserConfigurationException {
         this(null);
     }
     public PoliciesCache(File rootDir) throws ParserConfigurationException {
         this.rootDir = rootDir;
+        DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
+        domFactory.setNamespaceAware(true);
+        builder = domFactory.newDocumentBuilder();
+        builder.setErrorHandler(null);
+    }
+    public PoliciesCache(File singleFile, boolean single) throws ParserConfigurationException {
+        this.singleFile = singleFile;
         DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
         domFactory.setNamespaceAware(true);
         builder = domFactory.newDocumentBuilder();
@@ -92,8 +100,10 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
     }
 
     private void doListDir() {
-        lastDirList = null!=rootDir?rootDir.listFiles(filenameFilter):new File[0];
-        lastDirListCheckTime=System.currentTimeMillis();
+        lastDirList = null != rootDir
+                      ? rootDir.listFiles(filenameFilter)
+                      : singleFile != null ? new File[]{singleFile} : new File[0];
+        lastDirListCheckTime = System.currentTimeMillis();
     }
 
     public synchronized void add(final File file) throws PoliciesParseException {

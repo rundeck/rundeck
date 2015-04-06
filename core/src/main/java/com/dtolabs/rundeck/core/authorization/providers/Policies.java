@@ -81,8 +81,7 @@ public class Policies {
 
         Policies p = null;
         try {
-            PoliciesCache policyCollections = new PoliciesCache();
-            policyCollections.add(singleFile);
+            PoliciesCache policyCollections = new PoliciesCache(singleFile,true);
             p = new Policies(policyCollections);
         } catch (ParserConfigurationException e) {
             throw new PoliciesParseException(e);

@@ -69,4 +69,23 @@ public class TestPoliciesCache extends TestCase {
         }
         assertEquals(4, docs.size());
     }
+
+    public void testSingleFile() throws Exception {
+
+        policiesCache = new PoliciesCache(
+                new File(
+                        "src/test/resources/com/dtolabs/rundeck/core/authorization/admintest.aclpolicy"
+                ), true
+        );
+        final Iterator<PolicyCollection> iterator = policiesCache.iterator();
+        assertNotNull(iterator);
+        assertTrue(iterator.hasNext());
+        ArrayList<PolicyCollection> docs = new ArrayList<PolicyCollection>();
+        while (iterator.hasNext()) {
+            final PolicyCollection policiesDocument = iterator.next();
+            assertNotNull(policiesDocument);
+            docs.add(policiesDocument);
+        }
+        assertEquals(1, docs.size());
+    }
 }
