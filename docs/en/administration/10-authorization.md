@@ -37,7 +37,7 @@ control policy.
 *Note from the project team*: The authorization layer is an early work
  in progress. Please share your ideas on the IRC or mailing list.
 
-### Access control policy
+## Access control policy
 
 Access to running or modifying Jobs is managed in an access control
 policy defined using the aclpolicy YAML document. 
@@ -120,9 +120,9 @@ The second is the "application" level context, which allows access to things
 like creating projects, access to projects, managing users, and access to system
 information.
 
-### Specific Resources and Resource Types
+## Specific Resources and Resource Types
 
-As described in the [aclpolicy-v10(5)](../man5/aclpolicy-v10.html) definition, access
+As described in the [aclpolicy-v10(5)](../man5/aclpolicy.html) definition, access
 is granted or denied to specific "resources". Resources can take two forms:
 
 * A specific resource, with a type and properties
@@ -136,7 +136,7 @@ You might also want to restrict who can create *new* jobs. Since a new job does
 not exist yet, you cannot create a rule for this action to apply to an existing 
 job.  Which means this corresponds to a generic resource with a "kind" called "job".
 
-### Special API Token Authentication group
+## Special API Token Authentication group
 
 Clients of the [Web API](../api/index.html) may use the [Token Authentication](../api/index.html#token-authentication) method.  These clients are
 placed in the special authorization group called `api_token_group`.
@@ -144,13 +144,13 @@ placed in the special authorization group called `api_token_group`.
 `api_token_group`
 ~   Special role given to all [API Token](../api/index.html#token-authentication) authenticated access.
 
-### Rundeck resource authorizations
+## Rundeck resource authorizations
 
 Rundeck declares a number of actions that can be referenced inside the access control policy document.
 
 The actions and resources are divided into project scope and application scope:
 
-#### Application Scope Resources and Actions
+### Application Scope Resources and Actions
 
 You define application scope rules in the aclpolicy, by declaring this context:
 
@@ -181,6 +181,7 @@ Type       Resource Kind     Properties   Actions  Description
 `resource` `project`         none         `create` Create a new project
 `resource` `system`          none         `read`   Read system information
 `resource` `user`            none         `admin`  Modify user profiles
+`resource` `job`             none         `admin`  Manage job schedules
 ----------------------------
 
 Table: Application scope generic type actions
@@ -203,7 +204,7 @@ Type      Properties    Actions                Description
 Table: Application scope specific resource actions
 
 
-#### Project Scope Resources and Actions
+### Project Scope Resources and Actions
 
 You define project scope rules in the aclpolicy by declaring this context:
 
@@ -300,7 +301,7 @@ for:
       allow: [run]
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-#### Node resource properties
+### Node resource properties
 
 The properties available are the attributes that are defined on the node, so you can apply authorizations based on tag, osName, hostname, etc. The special `rundeck_server` property will be set to "true" for the Rundeck server node only, and "false" for all other nodes.
 
@@ -322,7 +323,7 @@ Name             Description
 
 Table: Pre-defined Node resource properties for authorization filters
 
-#### Access control policy actions example
+### Access control policy actions example
 
 Below is an example policy document demonstrating policy actions
 to create limited access for a group of users.
@@ -371,7 +372,7 @@ by:
   group: [restart_user]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-### Troubleshooting access control policy
+## Troubleshooting access control policy
 
 After defining an aclpolicy file to grant access to a particular group
 of users, you may find them getting "unauthorized" messages or
@@ -391,6 +392,6 @@ AUTHORIZED or a REJECTED message.  It's not uncommon to see REJECTED
 messages followed by AUTHORIZED.  The important thing is to look at
 the last decision made.
 
-### Authorization caveats
+## Authorization caveats
 
 * aclpolicy changes do not require a restart.
