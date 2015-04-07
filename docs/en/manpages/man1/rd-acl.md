@@ -2,15 +2,15 @@
 % Greg Schueler; Alex Honor
 % April 6, 2015
 
-# NAME
+## Name
 
 rd-acl - Test and generate Rundeck ACL policy files.
 
-# SYNOPSIS
+## Synopsis
 
 `rd-acl [*command*] [*command options*]...`
 
-# DESCRIPTION
+## Description
 
 The rd-acl command can test aclpolicy files to check whether they will allow a certain action request or not.
 
@@ -31,14 +31,14 @@ The tool works in one of two *COMMAND* modes:
 :   generate the correct ACL policy YAML definition for a specific action, or to allow a previously rejected 
     action as logged in the Rundeck AUDIT log.
 
-# RELATED
+## Related
 
 See:
 
 * [ACL Policy syntax](../man5/aclpolicy.html)
 * [Access Control Policy](../administration/access-control-policy.html)
 
-# OPTIONS
+## Options
 
 
 `-h, --help`
@@ -48,7 +48,7 @@ See:
 :   Run verbosely.
 
 
-## TEST ACTION OPTIONS
+### Test Command Options
 
 In addition to the [Common Options](#common-options), the `test` command takes these input options.
 
@@ -66,7 +66,7 @@ One of `--dir` or `--file` is required for the `test` command. If the rdeck.base
 the Rundeck "etc" dir will be used as for the `--dir` option by default.
 
 
-## CREATE ACTION OPTIONS
+### Create Command Options
 
 In addition to the [Common Options](#common-options), the `create` command takes these input options.
 
@@ -79,7 +79,7 @@ In addition to the [Common Options](#common-options), the `create` command takes
 :   Match the resource using regular expressions. (create command).
 
 
-## Common Options
+### Common Options
 
 These options define the Context, Subject, Action, and Resource,
 which are used both to define an Access Request (for the `test` command),
@@ -146,7 +146,7 @@ The following define [Application scope resources](../administration/access-cont
 :   Name of project, used in project context or for application resource.
 
 
-# TEST COMMAND
+## Test Command
 
 The Test command loads the specified aclpolicy file or directory of files, and evaluates the Access Request defined 
 by the [Common Options](#common-options), and emits the decision of whether the request is allowed, disallowed, or denied.
@@ -187,7 +187,7 @@ Result: REJECTED
 Decision for: res<name:key1.pem, path:keys, type:storage> subject<Username:user Group:test> action<create> env<http://dtolabs.com/rundeck/env/application:rundeck>: authorized: false: REJECTED, reason: REJECTED, evaluations: None
 The result was: not allowed
 Policies to allow the requested actions:
-# create or append this to a .aclpolicy file
+## create or append this to a .aclpolicy file
 ---
 for:
   storage:
@@ -203,7 +203,7 @@ by:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
    
-# CREATE COMMAND
+## Create Command
    
 The Create Command can generate ACL Policy YAML definitions based on the [Common Options](#common-options).
 It can also parse the output from an authorization evaluation, as logged in the Rundeck AUDIT log, and generate
@@ -303,7 +303,7 @@ definition is printed.
 
 ~~~
 rd-acl create -c project -p '.*' -g test -t prod,www -a read -D run
-# create or append this to a .aclpolicy file
+## create or append this to a .aclpolicy file
 ---
 for:
   node:
@@ -321,8 +321,9 @@ by:
 ~~~
 
    
-# SEE ALSO
+## See Also
 
-[`aclpolicy`](../man5/aclpolicy.html).
-[Access Control Policy](../administration/access-control-policy.html).
+[`aclpolicy`](../man5/aclpolicy.html)
+
+[Access Control Policy](../administration/access-control-policy.html)
 
