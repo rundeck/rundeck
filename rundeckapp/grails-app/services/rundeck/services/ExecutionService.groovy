@@ -81,6 +81,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def logFileStorageService
     MessageSource messageSource
     def jobStateService
+    def grailsApplication
 
     /**
      * Render execution document for api response
@@ -221,10 +222,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def crit = Execution.createCriteria()
         def runlist = crit.list{
             if(query?.max){
-                maxResults(query?.max.toInteger())
+                maxResults(query.max.toInteger())
             }else{
-//                maxResults(grailsApplication.config.reportservice.pagination.default?grailsApplication.config.reportservice.pagination.default.toInteger():20)
-                maxResults(20)
+                maxResults(grailsApplication.config.rundeck?.pagination?.default?.max ?
+                                   grailsApplication.config.rundeck.pagination.default.max.toInteger() :
+                                   20 )
             }
             if(query?.offset){
                 firstResult(query.offset.toInteger())

@@ -1,12 +1,12 @@
 % Configuration
 
 
-## Configuration layout
+# Configuration layout
 
 Configuration file layout differs between the RPM and Launcher
 installation methods. 
 
-### RPM layout
+## RPM layout
 
     /etc/rundeck
     |-- admin.aclpolicy
@@ -23,7 +23,7 @@ installation methods.
         |-- keystore (not packaged)
         `-- truststore (not packaged)
 
-### Launcher layout
+## Launcher layout
 
     $RDECK_BASE/etc
     |-- admin.aclpolicy
@@ -36,13 +36,13 @@ installation methods.
     |-- realm.properties
     `-- rundeck-config.properties
 
-## Configuration files
+# Configuration files
 Configuration is specified in a number of standard Rundeck
 configuration files generated during the installation process.
 
 The purpose of each configuration file is described in its own section.
 
-### admin.aclpolicy
+## admin.aclpolicy
 
 Administrator access control policy defined with a [aclpolicy]
 document.
@@ -51,7 +51,7 @@ This file governs the access for the "admin" group and role.
 
 See [role based access control](access-control-policy.html) for information about setting up policy files for other user groups.
 
-### framework.properties
+## framework.properties
 
 Configuration file used by shell tools and core Rundeck services. This file will be created for you at install time.
 
@@ -91,20 +91,20 @@ The `tokens.properties` file should contain static authentication tokens you wis
 
 The token_strings can be used as Authentication tokens to the [API](../api/index.html#token-authentication).
 
-### log4j.properties
+## log4j.properties
 
 Rundeck uses [log4j] as its application logging facility. This file
 defines the logging configuration for the Rundeck server. 
 
 [log4j]: http://logging.apache.org/log4j/
 
-### profile
+## profile
 
 Shell environment variables used by the shell tools. This file
 contains several parameters needed during the startup of the shell
 tools like umask, Java home and classpath, and SSL options.
 
-### project.properties
+## project.properties
 
 Rundeck project configuration file when using Filsystem based project defintions (see [Project Setup - Project Definitions](project-setup.html#project-definitions)). 
 
@@ -150,7 +150,7 @@ resources.source.3.type=directory
 
 Additional sources increment the source number. You can reference the project name by using the `${project.name}` context variable.
 
-### jaas-loginmodule.conf
+## jaas-loginmodule.conf
 
 [JAAS] configuration for the Rundeck server. The listing below
 shows the file content for a normal RPM installation. One can see it
@@ -164,18 +164,18 @@ specifies the use of the PropertyFileLoginModule:
 
 [JAAS]: http://docs.codehaus.org/display/JETTY/JAAS
 
-### realm.properties
+## realm.properties
 
 Property file user directory when PropertyFileLoginModule is
 used. Specified from [jaas-loginmodule.conf](#jaas-loginmodule.conf).
 
-### rundeck-config.properties
+## rundeck-config.properties
 
 The primary Rundeck webapp configuration file. Defines default
 loglevel, datasource configuration, and
 [GUI customization](gui-customization.html).
 
-#### Security
+### Security
 
 * `rundeck.security.useHMacRequestTokens` : `true/false`.  Default: `true`.
    Switches between HMac based request tokens, and the default grails UUID 
@@ -193,7 +193,7 @@ loglevel, datasource configuration, and
     correctly if they use username and password login.
 
 
-#### Project Configuration Storage settings
+### Project Configuration Storage settings
 
 The [Project Setup - Project Definitions](project-setup.html#project-definitions) mechanism is configured within this file, see:
 
@@ -203,7 +203,7 @@ The [Project Setup - Project Definitions](project-setup.html#project-definitions
 [Configuring Storage Plugins]: ssh-key-storage.html#configuring-storage-plugins
 [Configuring Storage Converter Plugins]: ssh-key-storage.html#configuring-storage-converter-plugins
 
-#### SSH Key Storage settings
+### SSH Key Storage settings
 
 The [SSH Key storage](ssh-key-storage.html) mechanism is configured within this file, see:
 
@@ -213,15 +213,15 @@ The [SSH Key storage](ssh-key-storage.html) mechanism is configured within this 
 [Configuring Storage Plugins]: ssh-key-storage.html#configuring-storage-plugins
 [Configuring Storage Converter Plugins]: ssh-key-storage.html#configuring-storage-converter-plugins
 
-#### Notification email settings
+### Notification email settings
 
 See [Email Settings: Notification email settings](email-settings.html#notification-email-settings)
 
-#### Custom Email Templates
+### Custom Email Templates
 
 See [Email Settings: Custom Email Templates](email-settings.html#custom-email-templates)
 
-#### Execution finalize retry settings
+### Execution finalize retry settings
 
 If a sporadic DB connection failure happens when an execution finishes, Rundeck may fail to update the state of the execution in the database, causing the execution to appear is if it is still "running". 
 
@@ -237,7 +237,7 @@ Rundeck now attempts to retry the update to correctly register the final state o
 
 Delay is in milliseconds. If a max is set to `-1`, then retries will happen indefinitely.
 
-#### Metrics servlets
+### Metrics servlets
 
 Rundeck includes the [Metrics](http://metrics.codahale.com) servlets.  You can selectively disable these by setting these config values:
 
@@ -254,7 +254,13 @@ All of the servlets are enabled by default.
 
 [Resource Model Sources]: ../administration/managing-node-sources.html
 
-#### Job Remote Option URL connection parameters
+### Pagination defaults
+
+Default paging size for the Activity page and results from execution API queries can be changed.
+
+    rundeck.pagination.default.max=20
+
+### Job Remote Option URL connection parameters
 
 Change the defaults for for [Job Remote Option Value URLs](../manual/jobs.html#remote-option-values) loading.
 
@@ -288,7 +294,7 @@ Change this by setting:
 
     rundeck.jobs.options.remoteUrlRetry=[total]
 
-#### Groovy config format
+### Groovy config format
 You can change you rundeck-config.properties to a rundeck-config.groovy, but you will need to modify the syntax to be groovy, and you will need to point rundeck at the new filename when you start up rundeck:
 
 Launcher:

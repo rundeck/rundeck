@@ -970,8 +970,14 @@ class MenuController extends ControllerBase{
         }
 
         QueueQuery query = new QueueQuery(runningFilter:'running',projFilter:params.project)
+        if(params.max){
+            query.max=params.int('max')
+        }
+        if(params.offset){
+            query.offset=params.int('offset')
+        }
         def results = nowrunning(query)
-        return executionService.respondExecutionsXml(request,response,results.nowrunning)
+        return executionService.respondExecutionsXml(request,response,results.nowrunning,[total:results.total,offset:results.offset,max:results.max])
     }
 }
 

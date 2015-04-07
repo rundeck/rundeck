@@ -323,7 +323,9 @@ class ReportService  {
             if (query?.max) {
                 maxResults(query?.max.toInteger())
             } else {
-                maxResults(grailsApplication.config.reportservice.pagination.default ? grailsApplication.config.reportservice.pagination.default.toInteger() : 20)
+                maxResults(grailsApplication.config.rundeck?.pagination?.default?.max ?
+                                   grailsApplication.config.rundeck.pagination.default.max.toInteger() :
+                                   20 )
             }
             if (query?.offset) {
                 firstResult(query.offset.toInteger())
