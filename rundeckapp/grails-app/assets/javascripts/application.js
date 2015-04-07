@@ -42,7 +42,7 @@ function loadJsonData(id){
     if(!dataElement){
         return null;
     }
-    var jsonText = dataElement.textContent || dataElement.innerText
+    var jsonText = dataElement.textContent || dataElement.innerText;
     return jsonText && jsonText!=''?JSON.parse(jsonText):null;
 }
 
