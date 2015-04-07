@@ -149,11 +149,13 @@
                          style="${wdgt.styleVisible(if: defaultNodeExec == description.name)}">
                         <div class="form-horizontal " >
                         <g:each in="${description.properties}" var="prop">
+                            <g:if test="${!prop.scope || prop.scope.isProjectLevel() || prop.scope.isUnspecified()}">
                                 <g:render
                                     template="pluginConfigPropertyFormField"
                                     model="${[prop:prop,prefix:nodeexecprefix,error:nodeexecreport?.errors && isSelected ?nodeexecreport?.errors[prop.name]:null,
                                               values: isSelected ? nodeexecconfig : null,
                                 fieldname:nodeexecprefix+prop.name,origfieldname:'orig.'+nodeexecprefix+prop.name]}"/>
+                            </g:if>
                         </g:each>
                     </div>
                     </div>
@@ -195,11 +197,13 @@
                        style="${wdgt.styleVisible(if: defaultFileCopy == description.name)}">
                 <div class="form-horizontal " >
                     <g:each in="${description.properties}" var="prop">
+                        <g:if test="${!prop.scope || prop.scope.isProjectLevel() || prop.scope.isUnspecified()}">
                             <g:render
                                 template="pluginConfigPropertyFormField"
                                 model="${[prop:prop,prefix:fcopyprefix,error:fcopyreport?.errors && isSelected ?fcopyreport?.errors[prop.name]:null,
                                           values: isSelected?fcopyconfig:null,
                             fieldname:fcopyprefix+prop.name,origfieldname:'orig.'+fcopyprefix+prop.name]}"/>
+                        </g:if>
                     </g:each>
                 </div>
                 </div>

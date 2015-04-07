@@ -51,7 +51,9 @@
     <g:if test="${description}">
         <div class="col-sm-12 form-horizontal">
         <g:each in="${description.properties}" var="prop">
+            <g:if test="${!prop.scope || prop.scope.isProjectLevel() || prop.scope.isUnspecified()}">
             <g:render template="pluginConfigPropertyFormField" model="${[prop:prop,prefix:prefix,error:report?.errors?report?.errors[prop.name]:null,values:values,fieldname:prefix+'config.'+prop.name,origfieldname:'orig.'+prefix+'config.'+prop.name]}"/>
+            </g:if>
         </g:each>
         </div>
     </g:if>
