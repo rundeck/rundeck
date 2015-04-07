@@ -48,6 +48,13 @@ The tool provides the following actions:
 :    If specified, all output from the Execution is retrieved from the beginning, rather than resuming from
      the current point in time.
 
+## list mode
+
+`-m, --max`
+:   Maximum number of results to show, default 20.
+
+`-o, --offset`
+:   Offset of the first result to show, default 0.
 
 # LIST ACTION #
 

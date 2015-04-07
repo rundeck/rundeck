@@ -44,7 +44,7 @@ import java.util.List;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public class QueueTool extends BaseTool implements CLIToolLogger {
+public class QueueTool extends BaseTool implements CLIToolLogger, Paging {
     static final long WAIT_BASE_DELAY = Long.getLong(QueueTool.class.getName() + ".WAIT_BASE_DELAY", 1000L);
     static final long WAIT_MAX_DELAY = Long.getLong(QueueTool.class.getName() + ".WAIT_MAX_DELAY", 5000L);
     /**
@@ -153,10 +153,21 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
     private boolean argQuiet;
     private boolean argProgress;
     private boolean argRestart;
+    int argOffset=0;
+    int argMax=20;
     private CLIToolLogger clilogger;
     String argProject;
 
 
+    @Override
+    public int getOffset() {
+        return argOffset;
+    }
+
+    @Override
+    public int getMax() {
+        return argMax;
+    }
 
     /**
      * Creates an instance and executes {@link #run(String[])}.
@@ -258,6 +269,10 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
         public static final String PROGRESS_OPTION_LONG = "progress";
         public static final String EXECID_OPTION = "e";
         public static final String EXECID_OPTION_LONG = "eid";
+        public static final String MAX_OPTION = "m";
+        public static final String MAX_OPTION_LONG = "max";
+        public static final String OFFSET_OPTION = "o";
+        public static final String OFFSET_OPTION_LONG = "offset";
         /**
          * short option string for verbose
          */
@@ -279,6 +294,8 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
             options.addOption(PROGRESS_OPTION, PROGRESS_OPTION_LONG, false, "Progress mark output (follow only)");
             options.addOption(PROJECT_OPTION, null, true, "Project name (list action only)");
             options.addOption(RESTART_OPTION, RESTART_OPTION_LONG, false, "Restart log output from beginning (follow action only)");
+            options.addOption(MAX_OPTION, MAX_OPTION_LONG, true, "Maximum result count. Default 20. (list action only)");
+            options.addOption(OFFSET_OPTION, OFFSET_OPTION_LONG, true, "First result offset. Default 0. (list action only)");
         }
 
         public void parseArgs(final CommandLine cli, final String[] original) throws CLIToolOptionsException {
@@ -299,6 +316,12 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
             }
             if (cli.hasOption(PROGRESS_OPTION)) {
                 argProgress = true;
+            }
+            if (cli.hasOption(MAX_OPTION)) {
+                argMax = Integer.parseInt(cli.getOptionValue(MAX_OPTION));
+            }
+            if (cli.hasOption(OFFSET_OPTION)) {
+                argOffset = Integer.parseInt(cli.getOptionValue(OFFSET_OPTION));
             }
         }
 
@@ -434,24 +457,27 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
      * @throws QueueToolException if an error occurs
      */
     private void listAction() throws QueueToolException {
-        final Collection<QueuedItem> result;
+        final PagedResult<QueuedItem> result;
         try {
-            result = getDispatcher().listDispatcherQueue(argProject);
+            result = getDispatcher().listDispatcherQueue(argProject, this);
         } catch (CentralDispatcherException e) {
             final String msg = "Failed request to list the queue: " + e.getMessage();
             throw new QueueToolException(msg, e);
         }
         if (null != result) {
-            log("Queue: " + result.size() + " items");
-            for (final QueuedItem item : result) {
+            log(
+                    "Queue: " +
+                    result.getResults().size() +
+                    (result.getTotal() > -1 ? " of " + result.getTotal() : "") +
+                    " items"
+            );
+            for (final QueuedItem item : result.getResults()) {
                 final String url = item.getUrl();
                 log("[" + item.getId() + "] " + item.getName() + " <" + url + ">");
             }
         } else {
             throw new QueueToolException("List request returned null");
         }
-
-
     }
 
     private void followAction(final String execid) throws QueueToolException {

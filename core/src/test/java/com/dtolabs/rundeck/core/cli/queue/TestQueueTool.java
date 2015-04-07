@@ -234,17 +234,35 @@ public class TestQueueTool extends AbstractBaseTest {
     }
 
     public void testRunProjectUsed() throws Exception {
-            //exec the dispatch
+        //exec the dispatch
         final QueueTool tool = createQueueTool();
         final boolean[] actionCalled = new boolean[]{false};
         tool.setCentralDispatcher(
                 new FailDispatcher() {
-                    public Collection<QueuedItem> listDispatcherQueue(final String project)
-                            throws CentralDispatcherException
+
+                    @Override
+                    public PagedResult<QueuedItem> listDispatcherQueue(
+                            final String project, final Paging paging
+                    ) throws CentralDispatcherException
                     {
                         //
                         actionCalled[0] = true;
-                        return new ArrayList<QueuedItem>();
+                        return new PagedResult<QueuedItem>() {
+                            @Override
+                            public Collection<QueuedItem> getResults() {
+                                return new ArrayList<QueuedItem>();
+                            }
+
+                            @Override
+                            public long getTotal() {
+                                return 0;
+                            }
+
+                            @Override
+                            public Paging getPaging() {
+                                return null;
+                            }
+                        };
                     }
 
                     @Override
@@ -253,10 +271,56 @@ public class TestQueueTool extends AbstractBaseTest {
                     }
                 }
         );
-            tool.run(new String[]{"list","-p","test"});
-            assertTrue("list action was not called", actionCalled[0]);
+        tool.run(new String[]{"list", "-p", "test"});
+        assertTrue("list action was called", actionCalled[0]);
 
-        }
+    }
+    public void testPaging() throws Exception {
+        //exec the dispatch
+        final QueueTool tool = createQueueTool();
+        final boolean[] actionCalled = new boolean[]{false};
+        tool.setCentralDispatcher(
+                new FailDispatcher() {
+
+                    @Override
+                    public PagedResult<QueuedItem> listDispatcherQueue(
+                            final String project, final Paging paging
+                    ) throws CentralDispatcherException
+                    {
+                        //
+                        actionCalled[0] = true;
+                        assertEquals(10, paging.getOffset());
+                        assertEquals(12, paging.getMax());
+                        return new PagedResult<QueuedItem>() {
+                            @Override
+                            public Collection<QueuedItem> getResults() {
+                                return new ArrayList<QueuedItem>();
+                            }
+
+                            @Override
+                            public long getTotal() {
+                                return 0;
+                            }
+
+                            @Override
+                            public Paging getPaging() {
+                                return paging;
+                            }
+                        };
+                    }
+
+                    @Override
+                    public List<String> listProjectNames() throws CentralDispatcherException {
+                        return Arrays.asList("test", "test2");
+                    }
+                }
+        );
+        tool.argOffset=10;
+        tool.argMax=12;
+        tool.run(new String[]{"list", "-p", "test"});
+        assertTrue("list action was called", actionCalled[0]);
+
+    }
     public void testRunKillIdRequired() throws Exception {
 
             final QueueTool tool = createQueueTool();

@@ -690,6 +690,7 @@ public class TestExecTool extends AbstractBaseTest {
         boolean queueCommandCalled = false;
         boolean queueScriptCalled = false;
         boolean listDispatcherCalled = false;
+        boolean listDispatcherPagedCalled = false;
         boolean killCalled = false;
         boolean listStoredJobsCalled = false;
         boolean loadJobsCalled = false;
@@ -720,6 +721,14 @@ public class TestExecTool extends AbstractBaseTest {
         }
         public Collection<QueuedItem> listDispatcherQueue() throws CentralDispatcherException {
             listDispatcherCalled = true;
+            return null;
+        }
+
+        @Override
+        public PagedResult<QueuedItem> listDispatcherQueue(final String project, final Paging paging)
+                throws CentralDispatcherException
+        {
+            listDispatcherPagedCalled = true;
             return null;
         }
 

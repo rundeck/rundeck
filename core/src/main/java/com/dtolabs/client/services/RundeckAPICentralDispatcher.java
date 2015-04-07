@@ -522,6 +522,56 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
 
     }
 
+    /**
+     * List the items on the dispatcher queue for a project, with paging
+     *
+     * @param project Project name
+     * @param paging  paging params
+     *
+     * @return Paged Collection of Strings listing the active dispatcher queue items
+     *
+     * @throws CentralDispatcherException if an error occurs
+     */
+    @Override
+    public PagedResult<QueuedItem> listDispatcherQueue(final String project, final Paging paging)
+            throws CentralDispatcherException
+    {
+        if (null == project) {
+            throw new CentralDispatcherException(
+                    "Unsupported operation: project is required by the RunDeck API"
+            );
+        }
+        final HashMap<String, String> params = new HashMap<String, String>();
+        params.put("project", project);
+        if (null != paging && paging.getMax() > 0) {
+            params.put("max", Integer.toString(paging.getMax()));
+        }
+        if (null != paging && paging.getOffset() >= 0) {
+            params.put("offset", Integer.toString(paging.getOffset()));
+        }
+
+        final WebserviceResponse response;
+        try {
+            response = serverService.makeRundeckRequest(
+                    RUNDECK_API_LIST_EXECUTIONS_PATH,
+                    params,
+                    null,
+                    null,
+                    null
+            );
+        } catch (MalformedURLException e) {
+            throw new CentralDispatcherServerRequestException("Failed to make request", e);
+        }
+
+        validateResponse(response);
+
+        ////////////////////
+        //parse result list of queued items, return the collection of QueuedItems
+        ///////////////////
+
+        return parsePagedExecutionListResult(response);
+    }
+
     private List<ExecutionDetail> parseExecutionsResult(final WebserviceResponse response) {
         final Document resultDoc = response.getResultDoc();
 
@@ -590,6 +640,57 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
             }
         }
         return list;
+    }
+
+    private PagedResult<QueuedItem> parsePagedExecutionListResult(final WebserviceResponse response) {
+        final Document resultDoc = response.getResultDoc();
+
+        final Node node = resultDoc.selectSingleNode("/result/executions");
+        final int offset;
+        final int total;
+        final int max;
+        offset = intAttribute(node, -1, "@offset");
+        total = intAttribute(node, -1, "@total");
+        max = intAttribute(node, -1, "@max");
+        final Paging paging = new Paging() {
+            @Override
+            public int getOffset() {
+                return offset;
+            }
+
+            @Override
+            public int getMax() {
+                return max;
+            }
+        };
+        final ArrayList<QueuedItem> queuedItems = parseExecutionListResult(response);
+        return new PagedResult<QueuedItem>() {
+            @Override
+            public Collection<QueuedItem> getResults() {
+                return queuedItems;
+            }
+
+            @Override
+            public long getTotal() {
+                return total;
+            }
+
+            @Override
+            public Paging getPaging() {
+                return paging;
+            }
+        };
+    }
+
+    private int intAttribute(final Node node, int defval, final String attribute) {
+        if(node.selectSingleNode(attribute)!=null) {
+            try {
+                return Integer.parseInt(node.selectSingleNode(attribute).getStringValue());
+            } catch (NumberFormatException e) {
+
+            }
+        }
+        return defval;
     }
 
     /**

@@ -37,6 +37,14 @@ public class FailDispatcher implements CentralDispatcher {
         return null;
     }
 
+    @Override
+    public PagedResult<QueuedItem> listDispatcherQueue(final String project, final Paging paging)
+            throws CentralDispatcherException
+    {
+        fail("unexpected call to listDispatcherQueue");
+        return null;
+    }
+
     public DispatcherResult killDispatcherExecution(final String id) throws CentralDispatcherException {
         fail("unexpected call to killDispatcherExecution");
         return null;
