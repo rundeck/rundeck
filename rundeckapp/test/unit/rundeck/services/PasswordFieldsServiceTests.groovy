@@ -37,6 +37,14 @@ class PasswordFieldsServiceTests {
                 ]
             }
     ] as Property
+    static passwordField2 = [
+            getName: { "password2" },
+            getRenderingOptions: {
+                [
+                        "displayType": "PASSWORD",
+                ]
+            }
+    ] as Property
 
     static textField = [
             getName: { "textField" },
@@ -57,6 +65,15 @@ class PasswordFieldsServiceTests {
             getTitle: { "With Password" },
             getDescription: {"With Password Description" },
             getProperties: { [textField, passwordField] },
+            getPropertyMapping: { [:] },
+            getFwkPropertyMapping: { [:] }
+    ] as Description
+
+    static withPasswordFieldDescriptionText = [
+            getName: { "withPasswordDescription2" },
+            getTitle: { "With Password2" },
+            getDescription: {"With Password Description2" },
+            getProperties: { [textField, passwordField2] },
             getPropertyMapping: { [:] },
             getFwkPropertyMapping: { [:] }
     ] as Description
@@ -118,6 +135,19 @@ class PasswordFieldsServiceTests {
                 ]
         ].collect { [config: it, index: i++] }
     }
+    private def genConfiguration2() {
+        def i=0
+        [
+                [
+                        "type": "withPasswordDescription2",
+                        "props": props("simple=text", "password2=secret", "textField=a test field")
+                ],
+                [
+                        "type": "noPasswordFieldDescription",
+                        "props": props("simple=text", "password=secret", "textField=a test field")
+                ]
+        ].collect { [config: it, index: i++] }
+    }
 
     private def genMissingPropField() {
         def i=0
@@ -153,15 +183,27 @@ class PasswordFieldsServiceTests {
     }
 
     void testPasswordIdentifyPasswordFieldsEmptyList() {
-        int count = service.track(genConfiguration())
+        int count = service.track(genConfiguration()*.config)
         assertEquals(0, count)
         assertEquals(0, service.tracking())
     }
 
     void testTrackDescription() {
-        int count = service.track(genConfiguration(), noPasswordFieldDescription)
+        int count = service.track(genConfiguration()*.config, noPasswordFieldDescription)
         assertEquals(0, count)
         assertEquals(0, service.tracking())
+    }
+
+    void testTrackDescriptionPassword() {
+        int count = service.track(genConfiguration()*.config, withPasswordFieldDescription)
+        assertEquals(1, count)
+        assertEquals(1, service.tracking())
+    }
+
+    void testTrackDescriptionPasswordText() {
+        int count = service.track(genConfiguration2()*.config, withPasswordFieldDescriptionText)
+        assertEquals(1, count)
+        assertEquals(1, service.tracking())
     }
 
     void testAdjustFields() {

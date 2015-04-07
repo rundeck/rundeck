@@ -214,7 +214,7 @@ class PasswordFieldsService {
     }
 
     private boolean isPasswordDisplay(Property property) {
-        property.renderingOptions[StringRenderingConstants.DISPLAY_TYPE_KEY] == StringRenderingConstants.DisplayType.PASSWORD
+        property.renderingOptions[StringRenderingConstants.DISPLAY_TYPE_KEY]?.toString() == StringRenderingConstants.DisplayType.PASSWORD.toString()
     }
 
     private String hash(String input) {
