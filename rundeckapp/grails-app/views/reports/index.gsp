@@ -39,19 +39,32 @@
         var autoLoad=${params.refresh == 'true' ? true : false};
         var links = {
             events:'${createLink(controller: "reports", action: "eventsFragment", params: [project: params.project])}',
-            nowrunning:'${createLink(controller: "menu", action: "nowrunningFragment",params: [project:params.project])}',
+            nowrunning:'${createLink(controller: "menu", action: "nowrunningFragment",params: [project:params.project,max:params.max?:""])}',
             baseUrl:"${createLink(controller: "reports", action: "index", params: [project: params.project])}"
         };
         var runupdate;
+        var nroffset=0;
+        var nrtimeout;
+        function loadNowRunningHref(href){
+            var data=parseUrlParams(href);
+            if(data.offset){
+                nowRunningOffset(data.offset);
+            }
+        }
+        function nowRunningOffset(val){
+            nroffset=val;
+            clearTimeout(nrtimeout);
+            loadNowRunning();
+        }
         function loadNowRunning(){
-            jQuery('#nowrunning').load(_genUrl(links.nowrunning,eventsparams),
+            jQuery('#nowrunning').load(_genUrl(links.nowrunning,jQuery.extend(eventsparams,{offset:nroffset})),
                 function(response, status, xhr){
                     if ( status == "error" ) {
                         showError("AJAX error: Now Running [" + links.nowrunning + "]: " + xhr.status + " "+ xhr.statusText);
 
                     }else{
                         //reschedule
-                        setTimeout(loadNowRunning,5000);
+                        nrtimeout=setTimeout(loadNowRunning,5000);
                     }
                 }
             );
@@ -105,6 +118,11 @@
                     Event.observe(e,'click',  changeHandler);
                 }
 
+            });
+            jQuery('body').on("click",".paginate.nowrunning a",function(e) {
+                e.preventDefault();
+                //console.log("click: "+jQuery(this).attr('href'));
+                loadNowRunningHref(jQuery(this).attr('href'));
             });
         }
 
@@ -171,6 +189,10 @@
                 if(autoLoad){
                     loadHistory();
                 }
+            }
+            if(name=='nowrunning' && data.count !=null && data.count<1 && nroffset>0){
+                //now running page is advanced, but dataset has dropped to 0
+                nowRunningOffset(0);
             }
         }
         var sincechecktimer=null;

@@ -45,6 +45,21 @@ function loadJsonData(id){
     var jsonText = dataElement.textContent || dataElement.innerText;
     return jsonText && jsonText!=''?JSON.parse(jsonText):null;
 }
+function parseUrlParams(href){
+    var data={};
+    var parts=href.split('?',2);
+    if(parts.length==2){
+        href=parts[1];
+        parts=href.split('&');
+        for (var i = 0; i < parts.length; i++) {
+            var comps = parts[i].split('=',2);
+            if(comps.length==2){
+                data[comps[0]]=comps[1];
+            }
+        }
+    }
+    return data;
+}
 
 function toggleDisclosure(id,iconid,closeUrl,openUrl){
     $(id).toggle();
