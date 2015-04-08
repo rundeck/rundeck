@@ -1824,6 +1824,9 @@ class ScheduledExecutionControllerTests  {
                 []
             }
         }
+        sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
+            listOrchestratorPlugins(){->null}
+        }
 
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
@@ -1914,6 +1917,9 @@ class ScheduledExecutionControllerTests  {
                 []
             }
         }
+        sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
+            listOrchestratorPlugins(){->null}
+        }
 
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
@@ -2003,6 +2009,9 @@ class ScheduledExecutionControllerTests  {
             listNotificationPlugins() {->
                 []
             }
+        }
+        sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
+            listOrchestratorPlugins(){->null}
         }
 
         def params = [id: se.id.toString(),project:'project1']
@@ -2119,6 +2128,9 @@ class ScheduledExecutionControllerTests  {
             listNotificationPlugins() {->
                 []
             }
+        }
+        sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
+            listOrchestratorPlugins(){->null}
         }
 
         def params = [id: se.id.toString(),project:'project1',retryExecId:exec.id.toString()]
