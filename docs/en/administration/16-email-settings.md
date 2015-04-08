@@ -47,12 +47,17 @@ Here's an example:
 
 ### Custom Email Templates
 
-You can define these properties to customize the email notifications. Each property can be defined for a specific Trigger, or for the general case.  Available triggers are: `success`,`failure`, and `start`:
+You can define these properties to customize the email notifications. Each property can be defined for a specific Trigger, or for the general case.  Available triggers are: `success`,`failure`, and `start`. In addition, you can have custom settings for a project and job name combination as well:
 
     # trigger-specific templating
     rundeck.mail.[trigger].template.subject=[custom subject line]
     rundeck.mail.[trigger].template.file=[path to template file]
     rundeck.mail.[trigger].template.log.formatted=true/false (if true, prefix log lines with context information)
+
+    # project and job specific
+    rundeck.mail.[project].[jobname].template.subject=[custom subject line]
+    rundeck.mail.[project].[jobname].template.file=[path to template file]
+    rundeck.mail.[project].[jobname].template.log.formatted=true/false (if true, prefix log lines with context information)
 
     # apply to any triggers not specified
     rundeck.mail.template.subject=[Default subject line]
