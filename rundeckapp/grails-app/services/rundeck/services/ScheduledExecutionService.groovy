@@ -3,6 +3,7 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.plugins.quartz.listeners.SessionBinderJobListener
 import org.apache.commons.validator.EmailValidator
@@ -1115,6 +1116,41 @@ class ScheduledExecutionService implements ApplicationContextAware{
         }
         nots
     }
+    
+    
+
+    
+    
+    static def parseOrchestratorFromParams(params){
+        
+        if (params.orchestratorId) {
+            params.orchestrator = parseParamOrchestrator(params)
+        }
+    }
+    
+    static Orchestrator parseParamOrchestrator(params){
+        Orchestrator orchestrator = new Orchestrator(type:params.orchestratorId)
+        def plugin = params.orchestratorPlugin[params.orchestratorId];
+        //def config = params.orchestratorPlugin[params.orchestratorId].config
+        if(plugin){
+            orchestrator.configuration = plugin.config
+        }
+        orchestrator
+    }
+    
+    
+    private Map _updateOrchestratorData(params, ScheduledExecution scheduledExecution) {
+        //plugin type
+        Orchestrator orchestrator = params.orchestrator
+        if(scheduledExecution.orchestrator){
+            scheduledExecution.orchestrator.discard()
+        }
+        scheduledExecution.orchestrator = orchestrator
+        //TODO:validate inputs
+        return [failed:false]
+    }
+    
+    
 
     def _doupdate ( params, user, String roleList, Framework framework, AuthContext authContext, changeinfo = [:] ){
         log.debug("ScheduledExecutionController: update : attempting to update: " + params.id +
@@ -1404,6 +1440,17 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 }
             }
 
+        }
+        
+        parseOrchestratorFromParams(params)
+        if(params.orchestrator){
+            def result = _updateOrchestratorData(params, scheduledExecution)
+            scheduledExecution.orchestrator.save()
+            if (result.failed) {
+                failed = result.failed
+            }
+        }else{
+            scheduledExecution.orchestrator = null
         }
 
         parseNotificationsFromParams(params)
@@ -1854,6 +1901,16 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 i++
             }
 
+        }
+        
+        if(params.orchestrator){
+            def result = _updateOrchestratorData(params, scheduledExecution)
+            scheduledExecution.orchestrator.save(flush: true)
+            if (result.failed) {
+                failed = result.failed
+            }
+        }else{
+            scheduledExecution.orchestrator = null
         }
 
         def todiscard = []
@@ -2315,7 +2372,18 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 }
             }
         }
-
+        
+        parseOrchestratorFromParams(params)
+        if(params.orchestrator){
+            def result = _updateOrchestratorData(params, scheduledExecution)
+            scheduledExecution.orchestrator.save(flush: true)
+            if (result.failed) {
+                failed = result.failed
+            }
+        }else{
+            scheduledExecution.orchestrator = null
+        }
+        
         parseNotificationsFromParams(params)
         if (params.notifications) {
             //create notifications

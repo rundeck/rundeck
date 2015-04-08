@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.common.NodeSetImpl;
 import com.dtolabs.rundeck.core.common.NodesSelector;
+import com.dtolabs.rundeck.core.common.OrchestratorConfig;
 import com.dtolabs.rundeck.core.common.SelectorUtils;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.workflow.FlowControl;
@@ -36,6 +37,7 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeExecutionContext;
 import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.storage.StorageTree;
+import com.dtolabs.rundeck.plugins.orchestrator.OrchestratorPlugin;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -72,6 +74,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private JobService jobService;
     private FlowControl flowControl;
 
+    private OrchestratorConfig orchestrator;
     private ExecutionContextImpl() {
         stepContext = new ArrayList<Integer>();
         nodes = new NodeSetImpl();
@@ -138,6 +141,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.nodeRankOrderAscending = original.isNodeRankOrderAscending();
                 ctx.storageTree = original.getStorageTree();
                 ctx.jobService = original.getJobService();
+                ctx.orchestrator = original.getOrchestrator();
                 if(original instanceof NodeExecutionContext){
                     NodeExecutionContext original1 = (NodeExecutionContext) original;
                     ctx.nodeDataContext.putAll(original1.getNodeDataContext());
@@ -301,6 +305,12 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             ctx.stepContext = stepContext;
             return this;
         }
+        
+        public Builder orchestrator(OrchestratorConfig orchestrator) {
+            ctx.orchestrator = orchestrator;
+            return this;
+        }
+        
         public Builder pushContextStep(final int step) {
             ctx.stepContext.add(ctx.stepNumber);
             ctx.stepNumber = step;
@@ -388,4 +398,9 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         return jobService;
     }
 
+
+    @Override
+    public OrchestratorConfig getOrchestrator() {
+    	return orchestrator;
+    }
 }

@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.logging.ContextLogWriter
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
+import com.dtolabs.rundeck.core.common.OrchestratorConfig
 import com.dtolabs.rundeck.core.common.NodesSelector
 import com.dtolabs.rundeck.core.common.SelectorUtils
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
@@ -1016,6 +1017,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (null != extraParams) {
             privatecontext.put("option", extraParams)
         }
+        
+        def OrchestratorConfig orchestrator
+        if(execMap.orchestrator){
+            orchestrator = new OrchestratorConfig(execMap.orchestrator.type, execMap.orchestrator.configuration);
+        }else{
+            orchestrator = null;
+        }
 
         //create execution context
         def builder = ExecutionContextImpl.builder((StepExecutionContext)origContext)
@@ -1035,6 +1043,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             .keepgoing(keepgoing)
             .nodeRankAttribute(execMap.nodeRankAttribute)
             .nodeRankOrderAscending(null == execMap.nodeRankOrderAscending || execMap.nodeRankOrderAscending)
+            .orchestrator(orchestrator)
         if(origContext){
             //start a sub context
             builder.pushContextStep(1)
@@ -1270,6 +1279,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                     nodeExcludePrecedence:params.nodeExcludePrecedence,
                                     nodeThreadcount:params.nodeThreadcount,
                                     nodeKeepgoing:params.nodeKeepgoing,
+                                    orchestrator:params.orchestrator,
                                     nodeRankOrderAscending:params.nodeRankOrderAscending,
                                     nodeRankAttribute:params.nodeRankAttribute,
                                     workflow:params.workflow,

@@ -56,4 +56,5 @@ public class ServiceNameConstants {
     public static final String ExecutionFileStorage = "ExecutionFileStorage";
     public static final String StorageConverter = "StorageConverter";
     public static final String Storage = "Storage";
+    public static final String Orchestrator = "Orchestrator";
 }
