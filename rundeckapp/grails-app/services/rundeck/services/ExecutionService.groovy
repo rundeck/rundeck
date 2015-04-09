@@ -1453,6 +1453,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 'workflow',
                 'argString',
                 'timeout',
+                'orchestrator',
                 'retry'
         ]
         propset.each{k->
