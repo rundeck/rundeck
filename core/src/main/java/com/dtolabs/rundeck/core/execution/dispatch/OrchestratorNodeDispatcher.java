@@ -53,10 +53,6 @@ import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
  * @author Ashley Taylor
  */
 public class OrchestratorNodeDispatcher implements NodeDispatcher {
-    public static final String STATUS_LISTENER_REF_ID = OrchestratorNodeDispatcher.class.getName() + ":status.listener";
-    public static final String NODE_NAME_LOCAL_REF_ID = OrchestratorNodeDispatcher.class.getName() + ":node.name";
-    public static final String NODE_USER_LOCAL_REF_ID = OrchestratorNodeDispatcher.class.getName() + ":node.user";
-    
     public static final String ORCHESTRATOR_DATA = "orchestratorData";
     
     private Framework framework;
@@ -151,8 +147,7 @@ public class OrchestratorNodeDispatcher implements NodeDispatcher {
         OrchestratorNodeProcessor processor = new OrchestratorNodeProcessor(context.getThreadCount(), keepgoing, orchestrator, executions);
         
         try {
-            processor.execute();
-            success = true;
+            success = processor.execute();
         } catch (ExecutionException e) {
             context.getExecutionListener().log(0, e.getMessage());
             if (!keepgoing) {
