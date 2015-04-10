@@ -30,6 +30,11 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
  */
 public interface OrchestratorPlugin {
 
+    /**
+     * @param context the execution context
+     * @param nodes the collection of target nodes
+     * @return an Orchestrator instance
+     */
     public Orchestrator createOrchestrator(StepExecutionContext context, Collection<INodeEntry> nodes);
 
 }

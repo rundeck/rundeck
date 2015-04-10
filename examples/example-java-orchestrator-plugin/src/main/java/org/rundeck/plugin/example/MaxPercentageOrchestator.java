@@ -51,4 +51,7 @@ public class MaxPercentageOrchestator implements Orchestrator {
 	    count.decrementAndGet();
 	}
 
+    public boolean isComplete(){
+    	return queue.size()==0 && count.get()==0;
+    }
 }

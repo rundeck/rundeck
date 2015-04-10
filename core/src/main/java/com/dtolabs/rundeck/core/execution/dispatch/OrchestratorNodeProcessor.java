@@ -40,7 +40,7 @@ public class OrchestratorNodeProcessor {
     private final ExecutorService threadPool;
 
     private Set<INodeEntry> processedNodes;
-    private BlockingQueue<Boolean> resultqueue;
+    private BlockingQueue<Result> resultqueue;
     private BlockingQueue<Entry> taskqueue ;
 
     public OrchestratorNodeProcessor(int threadCount, boolean keepgoing,
@@ -75,12 +75,22 @@ public class OrchestratorNodeProcessor {
                         taskqueue.put(callable);
                     } else if (completedNodes < processedNodes.size()) {
                         //no nodes available, wait for previous tasks to complete
-                        if(!resultqueue.take()){
+                        Result result = resultqueue.take();
+                        if(!result.success){
                             success=false;
                         }
+                        if(result.node!=null) {
+                            returnNode(result.node);
+                        }
                         completedNodes++;
+                    }else if(!orchestrator.isComplete()) {
+                        //no nodes available, orchestrator is not complete, perform wait
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }else{
-                        //no node available, and no nodes being processed
                         break;
                     }
                 } catch (DispatcherException e) {
@@ -138,10 +148,7 @@ public class OrchestratorNodeProcessor {
                         throw e;
                     }
                 } finally {
-                    if(task != null && task.node!=null) {
-                        returnNode(task.node);
-                    }
-                    resultqueue.put(success);
+                    resultqueue.put(new Result(task != null?task.node:null,success));
                     Thread.currentThread().setName(originalname);
                 }
             }
@@ -167,6 +174,15 @@ public class OrchestratorNodeProcessor {
         this.orchestrator.returnNode(node);
     }
 
+    public static class Result {
+        private final INodeEntry node;
+        private final boolean success;
+
+        public Result(final INodeEntry node, final boolean success) {
+            this.node = node;
+            this.success = success;
+        }
+    }
     public static class Entry {
         private boolean finish;
         private final INodeEntry node;

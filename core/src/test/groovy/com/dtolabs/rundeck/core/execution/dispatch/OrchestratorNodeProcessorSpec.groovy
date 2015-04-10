@@ -4,7 +4,6 @@ import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl
-import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.plugins.orchestrator.Orchestrator
 import spock.lang.Specification
 
@@ -37,6 +36,10 @@ class OrchestratorNodeProcessorSpec extends Specification {
             void returnNode(final INodeEntry node) {
 
             }
+            @Override
+            boolean isComplete() {
+                return true
+            }
         }
         Map<INodeEntry, Callable<NodeStepResult>> executions = new HashMap<>()
 
@@ -66,6 +69,10 @@ class OrchestratorNodeProcessorSpec extends Specification {
             void returnNode(final INodeEntry node) {
                 returned << node
             }
+            @Override
+            boolean isComplete() {
+                return sent.size()==0
+            }
         }
         Map<INodeEntry, Callable<NodeStepResult>> executions = new HashMap<>()
         sent.each{node->
@@ -80,6 +87,116 @@ class OrchestratorNodeProcessorSpec extends Specification {
         then:
         result
         returned == [node1, node2]
+    }
+
+    def "single thread fewer nodes"() {
+        given:
+        def node1 = new NodeEntryImpl("node1")
+        def node2 = new NodeEntryImpl("node2")
+        def sent = [node1, node2]
+        def returned = []
+
+        def orchestrator = new Orchestrator() {
+            @Override
+            INodeEntry getNode() {
+                return sent.size() > 1 ? sent.remove(0) : null
+            }
+
+            @Override
+            void returnNode(final INodeEntry node) {
+                returned << node
+            }
+            @Override
+            boolean isComplete() {
+                return sent.size()==1
+            }
+        }
+        Map<INodeEntry, Callable<NodeStepResult>> executions = new HashMap<>()
+        sent.each{node->
+            executions.put(node, { -> new NodeStepResultImpl(node) })
+        }
+
+        def onp = new OrchestratorNodeProcessor(1, false, orchestrator, executions)
+
+        when:
+        def result = onp.execute()
+
+        then:
+        result
+        returned == [node1]
+    }
+
+    /**
+     * one node in first batch, delay start for second batch
+     * @return
+     */
+    def "single thread wait for nodes"() {
+        given:
+        def node1 = new NodeEntryImpl("node1")
+        def node2 = new NodeEntryImpl("node2")
+        def batch1 = [node1]
+        def batch2 = [node2]
+        def returned = []
+        def batch=batch1
+        def complete = new CountDownLatch(1)
+        def node1return = new CountDownLatch(1)
+        def node2return = new CountDownLatch(2)
+        def orchestrator = new Orchestrator() {
+            @Override
+            INodeEntry getNode() {
+                return batch.size() > 0 ? batch.remove(0) : null
+            }
+
+            @Override
+            void returnNode(final INodeEntry node) {
+                returned << node
+                node2return.countDown()
+                node1return.countDown()
+            }
+            @Override
+            boolean isComplete() {
+                return returned.size()==2
+            }
+        }
+        def ran=[]
+        Map<INodeEntry, Callable<NodeStepResult>> executions = new HashMap<>()
+        batch1.each{node->
+            executions.put(node, { ->
+                ran<<node
+                new NodeStepResultImpl(node)
+            })
+        }
+        batch2.each{node->
+            executions.put(node, { ->
+                ran<<node
+                new NodeStepResultImpl(node)
+            })
+        }
+
+        def onp = new OrchestratorNodeProcessor(1, false, orchestrator, executions)
+
+        expect:
+        def result = false
+
+        //start processor in other thread
+        new Thread({
+            result = onp.execute()
+            complete.countDown()
+        }
+        ).start()
+
+        node1return.await(10, TimeUnit.SECONDS)
+        //first node has been returned
+        returned==[node1]
+        ran==[node1]
+
+        batch1.addAll(batch2)
+        node2return.await(10, TimeUnit.SECONDS)
+
+        complete.await(10,TimeUnit.SECONDS)
+        result
+        returned == [node1,node2]
+        ran == [node1,node2]
     }
 
     /**
@@ -99,13 +216,18 @@ class OrchestratorNodeProcessorSpec extends Specification {
 
         def orchestrator = new Orchestrator() {
             @Override
-            synchronized INodeEntry getNode() {
+            INodeEntry getNode() {
                 return batch1.size() > 0 ? batch1.remove(0) : null
             }
 
             @Override
             void returnNode(final INodeEntry node) {
                 returned << node
+            }
+
+            @Override
+            boolean isComplete() {
+                return batch1.size()==0
             }
         }
         Map<INodeEntry, Callable<NodeStepResult>> executions = new HashMap<>()
@@ -179,18 +301,23 @@ class OrchestratorNodeProcessorSpec extends Specification {
         def batch = batch1
         def orchestrator = new Orchestrator() {
             @Override
-            synchronized INodeEntry getNode() {
+            INodeEntry getNode() {
                 return batch.size() > 0 ? batch.remove(0) : null
             }
 
             @Override
-            void returnNode(final INodeEntry node) {
+            synchronized void returnNode(final INodeEntry node) {
                 returned << node
                 if (returned.size() == 2) {
                     batch = batch2
                     //send batch2 ready
                     batch2Ready.countDown()
                 }
+            }
+
+            @Override
+            boolean isComplete() {
+                return returned.size() == 5
             }
         }
         Map<INodeEntry, Callable<NodeStepResult>> executions = new HashMap<>()
@@ -252,7 +379,7 @@ class OrchestratorNodeProcessorSpec extends Specification {
         runningcount2.intValue() == 3
         proceed2.countDown()
 
-        finish.await(10, TimeUnit.SECONDS)
+        finish.await(60, TimeUnit.SECONDS)
 
         result
         returned.containsAll(batch1)
