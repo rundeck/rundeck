@@ -324,6 +324,18 @@ that will then be used in the node filter to determine the nodes to dispatch to.
 
 > Note, Since the dynamic option value is not set yet, the "Matched Nodes" shown in the node filtering input may indicate that there are "None" matched.  Also, when the Job is executed, you may see a message saying "Warning: The Node filters specified for this Job do not match any nodes, execution may fail." The nodes matched will be determined after the user enters the option values.
 
+#### Orchestrator
+
+Orchestrators define how a Job orchestrates the dispatching of executions to multiple nodes.
+
+The default behavior is to dispatch based on these Job configuration values:
+
+* Threadcount: how many nodes to process in parallel
+* Rank Order: which node attribute to use to sort the nodes (default is the node name.), and whether to sort ascending or descending
+
+You can select an Orchestrator plugin to use instead, which can choose its own logic 
+for how many and what order to process the nodes.
+
 ## Scheduled Jobs
 
 Jobs can be configured to run on a periodic basis. 

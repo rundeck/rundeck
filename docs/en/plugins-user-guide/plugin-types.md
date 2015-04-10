@@ -27,7 +27,9 @@ of services:
 * [Notification] - defines a mechanism for notification that can be triggered when a Job starts or finishes
 * [Streaming Logging] - defines a mechanism for reading and writing log events
 * [Log File Storage] - defines a mechanism for storage of log files
+* [Orchestrator][] - defines a mechanism for orchestrating nodes when performing dispatched commands
 
+[Orchestrator]: orchestrator-plugins.html
 
 
 ## About Services and Providers
@@ -70,6 +72,7 @@ Services fall into different categories, which determine how and where they are 
     1. Workflow Step - providers define behavior for all nodes 
     2. Workflow Node Step - providers define behavior for a single node
     3. Remote Script Node Step - a specific use-case for Node Step providers
+    4. Orchestrator - providers define how nodes are iterated over during node dispatch steps
 
 5. **Notification services**
     
