@@ -27,9 +27,6 @@ import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.plugins.BaseProviderRegistryService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
-import com.dtolabs.rundeck.core.resources.FileResourceModelSource;
-import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
 
@@ -46,9 +43,15 @@ public class NodeDispatcherService extends BaseProviderRegistryService<NodeDispa
         super(framework);
         registry.put("parallel", ParallelNodeDispatcher.class);
         registry.put("sequential", SequentialNodeDispatcher.class);
+        registry.put("orchestrator", OrchestratorNodeDispatcher.class);
     }
 
     public  NodeDispatcher getNodeDispatcher(ExecutionContext context) throws ExecutionServiceException {
+        //this gets called for each node as well if we already have data then the parent orchestrator has fired
+        if(context.getOrchestrator() != null && 
+                !context.getDataContext().containsKey(OrchestratorNodeDispatcher.ORCHESTRATOR_DATA)){
+            return providerOfType("orchestrator");
+        }
         if (context.getThreadCount() > 1 && context.getNodes().getNodeNames().size() > 1) {
             return providerOfType("parallel");
         }else{

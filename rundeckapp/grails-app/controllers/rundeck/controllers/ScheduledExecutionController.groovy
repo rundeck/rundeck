@@ -9,6 +9,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
 
 import com.dtolabs.rundeck.core.common.INodeEntry
+
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
@@ -46,6 +47,7 @@ import rundeck.services.ExecutionService
 import rundeck.services.ExecutionServiceException
 import rundeck.services.FrameworkService
 import rundeck.services.NotificationService
+import rundeck.services.OrchestratorPluginService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.UserService
 
@@ -88,7 +90,8 @@ class ScheduledExecutionController  extends ControllerBase{
     def ExecutionService executionService
     def FrameworkService frameworkService
     def ScheduledExecutionService scheduledExecutionService
-    def NotificationService notificationService
+    def OrchestratorPluginService orchestratorPluginService
+	def NotificationService notificationService
     def ApiService apiService
     def UserService userService
 
@@ -244,9 +247,10 @@ class ScheduledExecutionController  extends ControllerBase{
             executions:executions,
             total:total,
             nextExecution:scheduledExecutionService.nextExecutionTime(scheduledExecution),
-                remoteClusterNodeUUID: remoteClusterNodeUUID,
+            remoteClusterNodeUUID: remoteClusterNodeUUID,
             max: params.max?params.max:10,
-                notificationPlugins: notificationService.listNotificationPlugins(),
+            notificationPlugins: notificationService.listNotificationPlugins(),
+            orchestratorPlugins: orchestratorPluginService.listOrchestratorPlugins(),
             offset:params.offset?params.offset:0])
     }
     def show = {
@@ -284,8 +288,10 @@ class ScheduledExecutionController  extends ControllerBase{
                 nextExecution: scheduledExecutionService.nextExecutionTime(scheduledExecution),
                 remoteClusterNodeUUID: remoteClusterNodeUUID,
                 notificationPlugins: notificationService.listNotificationPlugins(),
+				orchestratorPlugins: orchestratorPluginService.listOrchestratorPlugins(),
                 max: params.int('max') ?: 10,
                 offset: params.int('offset') ?: 0] + _prepareExecute(scheduledExecution, framework,authContext)
+                
         withFormat{
             html{
                 dataMap
@@ -1145,6 +1151,7 @@ class ScheduledExecutionController  extends ControllerBase{
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         return [ scheduledExecution:scheduledExecution, crontab:crontab,params:params,
                 notificationPlugins: notificationService.listNotificationPlugins(),
+                orchestratorPlugins: orchestratorPluginService.listDescriptions(),
                 nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
                 authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
                 nodeStepDescriptions: nodeStepTypes,
@@ -1199,6 +1206,7 @@ class ScheduledExecutionController  extends ControllerBase{
                     nodeStepDescriptions: nodeStepTypes,
                     stepDescriptions: stepTypes,
                     notificationPlugins: notificationService.listNotificationPlugins(),
+                    orchestratorPlugins: orchestratorPluginService.listDescriptions(),
                     params:params
                    ])
         }else{
@@ -1261,12 +1269,14 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
+		
         render(view:'create',model: [ scheduledExecution:newScheduledExecution, crontab:crontab,params:params,
                 iscopy:true,
                 authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
                 nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions: stepTypes,
-                notificationPlugins: notificationService.listNotificationPlugins()])
+                notificationPlugins: notificationService.listNotificationPlugins(),
+                orchestratorPlugins: orchestratorPluginService.listDescriptions()])
 
     }
     /**
@@ -1387,10 +1397,12 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
+        def framework = frameworkService.getRundeckFramework()
         log.debug("ScheduledExecutionController: create : now returning model data to view...")
         return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],
                 nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes,
-                notificationPlugins: notificationService.listNotificationPlugins()]
+                notificationPlugins: notificationService.listNotificationPlugins(),
+                orchestratorPlugins: orchestratorPluginService.listDescriptions()]
     }
 
     private clearEditSession(id='_new'){
@@ -1604,6 +1616,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 projects: frameworkService.projects(authContext), nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions: stepTypes,
                 notificationPlugins: notificationService.listNotificationPlugins(),
+                orchestratorPlugins: orchestratorPluginService.listDescriptions(),
                 notificationValidation:params['notificationValidation']
         ])
         }.invalidToken{

@@ -729,6 +729,10 @@ function getCurSEID(){
                 </div>
             </div>
         </div>
+	        
+        %{--orchestrator--}%
+        <g:render template="editOrchestratorForm" model="[scheduledExecution:scheduledExecution, orchestratorPlugins: orchestratorPlugins,adminauth:adminauth]"/>
+        %{--//orchestrator--}%
     </div>
 </div>
 

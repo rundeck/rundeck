@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.ExecutionServiceFactory;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcherService;
+import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService;
 import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService;
@@ -79,6 +80,11 @@ public class ServiceSupport implements IFrameworkServices {
                 services.remove(name);
             }
         }
+    }
+
+    @Override
+    public OrchestratorService getOrchestratorService() {
+        return OrchestratorService.getInstanceForFramework(getFramework());
     }
 
     @Override

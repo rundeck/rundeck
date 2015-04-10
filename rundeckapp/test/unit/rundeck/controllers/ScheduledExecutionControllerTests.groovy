@@ -35,6 +35,7 @@ import org.springframework.mock.web.MockMultipartHttpServletRequest
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.ApiService
 import rundeck.services.NotificationService
+import rundeck.services.OrchestratorPluginService
 
 import javax.security.auth.Subject
 import com.dtolabs.rundeck.core.authentication.Username
@@ -210,6 +211,8 @@ class ScheduledExecutionControllerTests  {
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
             sec.scheduledExecutionService = seServiceControl.createMock()
 
+			def oServiceControl = mockFor(OrchestratorPluginService, true)
+			sec.orchestratorPluginService = oServiceControl.createMock()
 
             sec.metaClass.message={params -> params?.code?:'messageCodeMissing'}
 
@@ -568,6 +571,10 @@ class ScheduledExecutionControllerTests  {
             nServiceControl.demand.listNotificationPlugins { []}
             sec.notificationService = nServiceControl.createMock()
 
+			def oServiceControl = mockFor(OrchestratorPluginService, true)
+			oServiceControl.demand.listDescriptions{[]}
+			sec.orchestratorPluginService = oServiceControl.createMock()
+			
             def params = [
                     jobName: 'monkey1',
                     project: 'testProject',
@@ -627,6 +634,10 @@ class ScheduledExecutionControllerTests  {
             nServiceControl.demand.listNotificationPlugins { [] }
             sec.notificationService = nServiceControl.createMock()
 
+			def oServiceControl = mockFor(OrchestratorPluginService, true)
+			oServiceControl.demand.listDescriptions{[]}
+			sec.orchestratorPluginService = oServiceControl.createMock()
+			
             def params = [
                     jobName: 'monkey1',
                     project: 'testProject',
@@ -1741,6 +1752,10 @@ class ScheduledExecutionControllerTests  {
             seServiceControl.demand.userAuthorizedForJob { user, schedexec, framework -> return true }
             sec.scheduledExecutionService = seServiceControl.createMock()
 
+			def oServiceControl = mockFor(OrchestratorPluginService, true)
+			oServiceControl.demand.listDescriptions{[]}
+			sec.orchestratorPluginService = oServiceControl.createMock()
+			
             def pControl = mockFor(NotificationService)
             pControl.demand.listNotificationPlugins() {->
                 []
@@ -1808,6 +1823,9 @@ class ScheduledExecutionControllerTests  {
             listNotificationPlugins() {->
                 []
             }
+        }
+        sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
+            listOrchestratorPlugins(){->null}
         }
 
         def params = [id: se.id.toString(),project:'project1']
@@ -1899,6 +1917,9 @@ class ScheduledExecutionControllerTests  {
                 []
             }
         }
+        sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
+            listOrchestratorPlugins(){->null}
+        }
 
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
@@ -1988,6 +2009,9 @@ class ScheduledExecutionControllerTests  {
             listNotificationPlugins() {->
                 []
             }
+        }
+        sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
+            listOrchestratorPlugins(){->null}
         }
 
         def params = [id: se.id.toString(),project:'project1']
@@ -2104,6 +2128,9 @@ class ScheduledExecutionControllerTests  {
             listNotificationPlugins() {->
                 []
             }
+        }
+        sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
+            listOrchestratorPlugins(){->null}
         }
 
         def params = [id: se.id.toString(),project:'project1',retryExecId:exec.id.toString()]

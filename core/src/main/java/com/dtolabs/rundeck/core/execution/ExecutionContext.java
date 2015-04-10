@@ -28,7 +28,9 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.common.NodesSelector;
 import com.dtolabs.rundeck.core.jobs.JobService;
+import com.dtolabs.rundeck.core.common.OrchestratorConfig;
 import com.dtolabs.rundeck.core.storage.StorageTree;
+import com.dtolabs.rundeck.plugins.orchestrator.OrchestratorPlugin;
 
 import java.io.File;
 import java.util.Map;
@@ -127,4 +129,6 @@ public interface ExecutionContext {
      * @return Specific file to use for nodes source instead of project nodes
      */
     public File getNodesFile();
+
+	public OrchestratorConfig getOrchestrator();
 }

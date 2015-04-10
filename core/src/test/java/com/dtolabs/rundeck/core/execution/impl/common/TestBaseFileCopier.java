@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
+import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService;
 import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService;
@@ -311,6 +312,11 @@ public class TestBaseFileCopier extends TestCase {
         @Override
         public void setService(final String name, final FrameworkSupportService service) {
 
+        }
+
+        @Override
+        public OrchestratorService getOrchestratorService() {
+            return null;
         }
 
         @Override
