@@ -18,6 +18,9 @@ or a .zip file archive, will be placed in the plugin directory
 Java plugins are distributed as .jar files containing the necessary classes for 
 one or more service provider, as well as any other java jar dependency files.
 
+Each classname listed must be a valid "[Provider Class](#provider-classes)" as defined below,
+and must have a `@Plugin` annotation to define it's service type and provider name.
+
 The `.jar` file you distribute must have this metadata within the main Manifest
 for the jar file to be correctly loaded by the system:
 
@@ -25,8 +28,6 @@ for the jar file to be correctly loaded by the system:
 * `Rundeck-Plugin-Archive: true`
 * `Rundeck-Plugin-Classnames: classname,..`
 * `Rundeck-Plugin-Libs: lib/something.jar ...` *(optional)*
-
-Each classname listed must be a valid "[Provider Class](#provider-classes)" as defined below.
 
 Additionally, you should include a manifest entry to indicate the plugin file's version:
 
@@ -120,6 +121,12 @@ Storage services:
 
 * `Storage` - backend for storing data: [Storage Plugin](storage-plugin.html)
 * `StorageConverter` - modifies stored content or metadata: [Storage Converter Plugin](storage-converter-plugin.html)
+
+Logging services:
+
+* `ExecutionFileStorage` - stores and retrieves execution files to another location: [Execution File Storage Plugin](logging-plugin.html)
+* `StreamingLogWriter` - writes execution log events to a destination: [Streaming Log Writer Plugin](logging-plugin.html)
+* `StreamingLogReader` - reads execution log events from a destination: [Streaming Log Reader Plugin](logging-plugin.html)
 
 Orchestrator:
 

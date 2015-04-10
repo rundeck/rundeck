@@ -19,16 +19,26 @@ referring to an actual file containing the provider implementations we will say
 Rundeck supports several different types of plugins to perform different kinds 
 of services:
 
-* [Workflow Step] - defines an action that can be a distinct step within a workflow, either for an individual Node or a set of Nodes
-* [Node Execution] - defines a mechanism to connect to a remote Node and execute a command
-* [File Copier] - defines a mechanism to copy a file to a remote node
-* [Resource Model Source]- defines a mechanism to retrieve Resource Model data (Node definitions) for use by a Rundeck project
-* [Resource Format] - defines a data format for Resource Models
-* [Notification] - defines a mechanism for notification that can be triggered when a Job starts or finishes
-* [Streaming Logging] - defines a mechanism for reading and writing log events
-* [Log File Storage] - defines a mechanism for storage of log files
+* [Workflow Step][] - defines an action that can be a distinct step within a workflow, either for an individual Node or a set of Nodes
+* [Node Execution][] - defines a mechanism to connect to a remote Node and execute a command
+* [File Copier][] - defines a mechanism to copy a file to a remote node
+* [Resource Model Source][] - defines a mechanism to retrieve Resource Model data (Node definitions) for use by a Rundeck project
+* [Resource Format][] - defines a data format for Resource Models
+* [Notification][] - defines a mechanism for notification that can be triggered when a Job starts or finishes
+* [Streaming Logging][] - defines a mechanism for reading and writing log events
+* [Execution File Storage][] - defines a mechanism for storage of log files
+* [Storage Facility][] - defines storage backends and content conversion
 * [Orchestrator][] - defines a mechanism for orchestrating nodes when performing dispatched commands
 
+[Workflow Step]: workflow-step-plugins.html
+[Node Execution]: node-execution-plugins.html
+[File Copier]: node-execution-plugins.html
+[Resource Model Source]: resource-model-source-plugins.html
+[Resource Format]: resource-model-source-plugins.html#resource-model-document-formats
+[Notification]: notification-plugins.html
+[Streaming Logging]: logging-plugins.html
+[Execution File Storage]: logging-plugins.html
+[Storage Facility]: storage-plugins.html
 [Orchestrator]: orchestrator-plugins.html
 
 
@@ -66,6 +76,8 @@ Services fall into different categories, which determine how and where they are 
 
     1. Resource Format Parser - these define document format parsers
     2. Resource Format Generators - these define document format generators
+    2. Storage Facility - these define storage backends and converters
+    2. Logging - these define log file storage and log streaming input and output
 
 3. **Workflow services** 
 
