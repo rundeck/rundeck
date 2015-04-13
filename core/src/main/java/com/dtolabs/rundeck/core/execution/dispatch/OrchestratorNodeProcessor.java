@@ -15,9 +15,7 @@
  */
 package com.dtolabs.rundeck.core.execution.dispatch;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
@@ -80,7 +78,7 @@ public class OrchestratorNodeProcessor {
                             success=false;
                         }
                         if(result.node!=null) {
-                            returnNode(result.node);
+                            this.orchestrator.returnNode(result.node, result.success, result.result);
                         }
                         completedNodes++;
                     }else if(!orchestrator.isComplete()) {
@@ -124,6 +122,7 @@ public class OrchestratorNodeProcessor {
             while (!stop) {
                 boolean success=false;
                 Entry task = null;
+                NodeStepResult result=null;
                 Thread.currentThread().setName("OrchestratorNodeProcessor[take]");
                 try {
                     //make sure the get callable happens within the try catch so the finally will always be called
@@ -136,9 +135,9 @@ public class OrchestratorNodeProcessor {
                             task.node.getNodename() +
                             ")"
                     );
-                    NodeStepResult result = task.callable.call();
+                    result = task.callable.call();
                     success=result.isSuccess();
-                    if (!result.isSuccess() && !keepgoing) {
+                    if (!success && !keepgoing) {
                         stop = true;
                         break;
                     }
@@ -148,7 +147,7 @@ public class OrchestratorNodeProcessor {
                         throw e;
                     }
                 } finally {
-                    resultqueue.put(new Result(task != null?task.node:null,success));
+                    resultqueue.put(new Result(task != null ? task.node : null, success, result));
                     Thread.currentThread().setName(originalname);
                 }
             }
@@ -157,7 +156,7 @@ public class OrchestratorNodeProcessor {
     }
 
     public Entry getCallable() throws DispatcherException {
-        INodeEntry node = this.orchestrator.getNode();
+        INodeEntry node = this.orchestrator.nextNode();
         if(node == null){
             return null;
         }
@@ -167,21 +166,23 @@ public class OrchestratorNodeProcessor {
         }
 
         Callable<NodeStepResult> callable = this.executions.get(node);
+        if (null == callable) {
+            throw new DispatcherException("Can not process the a node that is not from the target list: " + node);
+        }
         return new Entry(node, callable);
-    }
-
-    public void returnNode(INodeEntry node) {
-        this.orchestrator.returnNode(node);
     }
 
     public static class Result {
         private final INodeEntry node;
         private final boolean success;
+        private final NodeStepResult result;
 
-        public Result(final INodeEntry node, final boolean success) {
+        public Result(final INodeEntry node, final boolean success, NodeStepResult result) {
             this.node = node;
             this.success = success;
+            this.result=result;
         }
+
     }
     public static class Entry {
         private boolean finish;

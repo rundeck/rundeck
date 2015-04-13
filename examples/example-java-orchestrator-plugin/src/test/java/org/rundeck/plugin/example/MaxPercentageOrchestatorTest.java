@@ -51,34 +51,34 @@ public class MaxPercentageOrchestatorTest {
         MaxPercentageOrchestator plugin = new MaxPercentageOrchestator(null, nodes, 33);
         
         //should return nodes in order
-        assertEquals(node1, plugin.getNode());
-        assertEquals(node2, plugin.getNode());
+        assertEquals(node1, plugin.nextNode());
+        assertEquals(node2, plugin.nextNode());
         //hit our max will return node this thread would then stop
-        assertNull(plugin.getNode());
-        plugin.returnNode(node1);
+        assertNull(plugin.nextNode());
+        plugin.returnNode(node1,true,null);
         //can get the next node
-        assertEquals(node3, plugin.getNode());
-        assertNull(plugin.getNode());
+        assertEquals(node3, plugin.nextNode());
+        assertNull(plugin.nextNode());
         
         //return the 2 nodes
-        plugin.returnNode(node2);
-        plugin.returnNode(node3);
+        plugin.returnNode(node1,true,null);
+        plugin.returnNode(node1,true,null);
         
         //get a single node and return it
-        assertEquals(node4, plugin.getNode());
-        plugin.returnNode(node4);
+        assertEquals(node4, plugin.nextNode());
+        plugin.returnNode(node1,true,null);
         
         //get next 2 nodes
-        assertEquals(node5, plugin.getNode());
-        assertEquals(node6, plugin.getNode());
+        assertEquals(node5, plugin.nextNode());
+        assertEquals(node6, plugin.nextNode());
         
         //check returns null since 2 currently being processed
-        assertNull(plugin.getNode());
+        assertNull(plugin.nextNode());
         
-        plugin.returnNode(node5);
-        plugin.returnNode(node6);
+        plugin.returnNode(node1,true,null);
+        plugin.returnNode(node1,true,null);
         //check no more nodes
-        assertNull(plugin.getNode());
+        assertNull(plugin.nextNode());
     }
 
 

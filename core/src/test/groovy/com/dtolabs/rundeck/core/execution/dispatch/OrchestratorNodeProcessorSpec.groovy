@@ -28,12 +28,12 @@ class OrchestratorNodeProcessorSpec extends Specification {
         given:
         def orchestrator = new Orchestrator() {
             @Override
-            INodeEntry getNode() {
+            INodeEntry nextNode() {
                 return null
             }
 
             @Override
-            void returnNode(final INodeEntry node) {
+            void returnNode(final INodeEntry node, boolean success, NodeStepResult result) {
 
             }
             @Override
@@ -61,12 +61,12 @@ class OrchestratorNodeProcessorSpec extends Specification {
 
         def orchestrator = new Orchestrator() {
             @Override
-            INodeEntry getNode() {
+            INodeEntry nextNode() {
                 return sent.size() > 0 ? sent.remove(0) : null
             }
 
             @Override
-            void returnNode(final INodeEntry node) {
+            void returnNode(final INodeEntry node, boolean success, NodeStepResult result) {
                 returned << node
             }
             @Override
@@ -98,12 +98,12 @@ class OrchestratorNodeProcessorSpec extends Specification {
 
         def orchestrator = new Orchestrator() {
             @Override
-            INodeEntry getNode() {
+            INodeEntry nextNode() {
                 return sent.size() > 1 ? sent.remove(0) : null
             }
 
             @Override
-            void returnNode(final INodeEntry node) {
+            void returnNode(final INodeEntry node, boolean success, NodeStepResult result) {
                 returned << node
             }
             @Override
@@ -143,12 +143,12 @@ class OrchestratorNodeProcessorSpec extends Specification {
         def node2return = new CountDownLatch(2)
         def orchestrator = new Orchestrator() {
             @Override
-            INodeEntry getNode() {
+            INodeEntry nextNode() {
                 return batch.size() > 0 ? batch.remove(0) : null
             }
 
             @Override
-            void returnNode(final INodeEntry node) {
+            void returnNode(final INodeEntry node, boolean success, NodeStepResult result) {
                 returned << node
                 node2return.countDown()
                 node1return.countDown()
@@ -216,12 +216,12 @@ class OrchestratorNodeProcessorSpec extends Specification {
 
         def orchestrator = new Orchestrator() {
             @Override
-            INodeEntry getNode() {
+            INodeEntry nextNode() {
                 return batch1.size() > 0 ? batch1.remove(0) : null
             }
 
             @Override
-            void returnNode(final INodeEntry node) {
+            void returnNode(final INodeEntry node, boolean success, NodeStepResult result) {
                 returned << node
             }
 
@@ -301,12 +301,12 @@ class OrchestratorNodeProcessorSpec extends Specification {
         def batch = batch1
         def orchestrator = new Orchestrator() {
             @Override
-            INodeEntry getNode() {
+            INodeEntry nextNode() {
                 return batch.size() > 0 ? batch.remove(0) : null
             }
 
             @Override
-            synchronized void returnNode(final INodeEntry node) {
+            synchronized void returnNode(final INodeEntry node, boolean success, NodeStepResult result) {
                 returned << node
                 if (returned.size() == 2) {
                     batch = batch2

@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.plugins.orchestrator;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 
 /**
  * Orchestrator is created for each execution this deals with the actual selection of nodes
@@ -28,14 +29,16 @@ public interface Orchestrator {
     /**
      * @return the next available node, or null if no node is available
      */
-    public INodeEntry getNode();
+    public INodeEntry nextNode();
 
     /**
      * Indicates that the node processor has completed work on the given node
      *
      * @param node the node
+     * @param success true if the execution was successful
+     * @param result the result if available
      */
-    public void returnNode(INodeEntry node);
+    public void returnNode(INodeEntry node, boolean success, NodeStepResult result);
 
     /**
      * @return true if no more nodes will ever be available, false to indicate that new nodes might become available
