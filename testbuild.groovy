@@ -32,6 +32,10 @@ if(props.'release'){
 } 
 def debug=Boolean.getBoolean('debug')?:("-debug" in args)
 def version=props.currentVersion+tag
+//versions of dependency we want to verify
+def versions=[
+        mysql:'5.1.35'
+]
 
 def warFile= "rundeckapp/target/rundeck-${version}.war"
 def coreJarFile = "core/${target}/rundeck-core-${version}.jar"
@@ -67,6 +71,7 @@ def manifest=[
         "pkgs/webapp/WEB-INF/lib/rundeck-storage-conf-${version}.jar",
         "pkgs/webapp/WEB-INF/lib/rundeck-storage-data-${version}.jar",
         "pkgs/webapp/WEB-INF/lib/rundeck-storage-filesys-${version}.jar",
+        "pkgs/webapp/WEB-INF/lib/mysql-connector-java-${versions.mysql}.jar",
         // ##file : require checksum verify to top level
         "pkgs/webapp/WEB-INF/lib/rundeck-core-${version}.jar##core/${target}/rundeck-core-${version}.jar",
         "pkgs/webapp/WEB-INF/lib/rundeck-storage-api-${version}.jar##rundeck-storage/rundeck-storage-api/${target}/rundeck-storage-api-${version}.jar",

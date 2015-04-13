@@ -100,6 +100,7 @@ grails.project.dependency.resolution = {
         compile("org.rundeck:rundeck-storage-filesys:${rundeckVersion}")
 
         runtime 'postgresql:postgresql:9.1-901.jdbc4'
+        runtime 'mysql:mysql-connector-java:5.1.35'
 
         //BEGIN fix hibernate4 bug with dateCreated auto timestamp, see: https://jira.grails.org/browse/GPHIB-30
         compile "javax.validation:validation-api:1.1.0.Final"
