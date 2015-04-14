@@ -78,16 +78,16 @@ public class Orchestrator {
 
     public static Orchestrator fromMap(Map data){
         Orchestrator n = new Orchestrator(type:data.type)
-        n.configuration=data.configuration
+        n.configuration=data.configuration instanceof Map?data.configuration:[:]
         return n;
     }
     public Map toMap(){
         if(type){
-            def config=[:]
-            if(content){
-                config=this.configuration
+            def data=[type:type]
+            if(this.configuration){
+                data.configuration=this.configuration
             }
-            return [type:type,configuration:config]
+            return data
         }else{
             return null
         }
