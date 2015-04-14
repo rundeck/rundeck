@@ -27,6 +27,8 @@ import com.dtolabs.client.utils.WebserviceResponse;
 import com.dtolabs.rundeck.core.CoreException;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException;
+import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
+import com.dtolabs.rundeck.core.dispatcher.QueuedItemResult;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -635,5 +637,118 @@ public class TestRundeckAPICentralDispatcher extends TestCase {
         }catch (CentralDispatcherException e) {
             assertTrue(e.getMessage().contains("Response had unexpected content"));
         }
+    }
+    public void testQueueScriptArgs() throws Exception {
+        final String testUrl = "http://localhost:4440/test";
+        final RundeckAPICentralDispatcher rundeckAPICentralDispatcher = new RundeckAPICentralDispatcher(
+                testUrl,
+                "test",
+                "test"
+        );
+        final TestResponse testResponse = new TestResponse();
+        testResponse.resultDoc= DocumentFactory.getInstance().createDocument();
+        testResponse.resultDoc.addElement("result").addElement("execution").addAttribute(
+                "id",
+                "12"
+        );
+        testResponse.resultCode=200;
+        TestServerService testService = new TestServerService(
+                testUrl,
+                "test",
+                "test"
+        )
+        {
+            @Override
+            public WebserviceResponse makeRundeckRequest(final String urlPath,
+                                                         final Map queryParams,
+                                                         final File uploadFile,
+                                                         final String method,
+                                                         final String expectedContentType,
+                                                         final Map<String, ? extends Object> formData,
+                                                         final String uploadFileParam)
+                    throws CoreException, MalformedURLException
+            {
+                assertEquals("/api/2/run/script", urlPath);
+                assertEquals("no form data expected",0, formData.size());
+                assertEquals(5, queryParams.size());
+                assertEquals("testproject", queryParams.get("project"));
+                assertEquals("arg1 arg2", queryParams.get("argString"));
+                assertNotNull(uploadFile);
+                assertEquals("test.sh",uploadFile.getName());
+                assertEquals(null, method);
+                assertEquals(null, expectedContentType);
+                assertEquals("scriptFile", uploadFileParam);
+
+                return testResponse;
+            }
+        };
+        rundeckAPICentralDispatcher.setServerService(testService);
+        QueuedItemResult result = rundeckAPICentralDispatcher.queueDispatcherScript(
+                new IDispatchedScript() {
+                    @Override
+                    public String getFrameworkProject() {
+                        return "testproject";
+                    }
+
+                    @Override
+                    public String getScript() {
+                        return null;
+                    }
+
+                    @Override
+                    public InputStream getScriptAsStream() {
+                        return null;
+                    }
+
+                    @Override
+                    public String getServerScriptFilePath() {
+                        return "test.sh";
+                    }
+
+                    @Override
+                    public String getScriptURLString() {
+                        return null;
+                    }
+
+                    @Override
+                    public Boolean getNodeExcludePrecedence() {
+                        return null;
+                    }
+
+                    @Override
+                    public int getNodeThreadcount() {
+                        return 1;
+                    }
+
+                    @Override
+                    public Boolean isKeepgoing() {
+                        return false;
+                    }
+
+                    @Override
+                    public String getNodeFilter() {
+                        return null;
+                    }
+
+                    @Override
+                    public String[] getArgs() {
+                        return new String[]{"arg1", "arg2"};
+                    }
+
+                    @Override
+                    public int getLoglevel() {
+                        return 0;
+                    }
+
+                    @Override
+                    public Map<String, Map<String, String>> getDataContext() {
+                        return null;
+                    }
+                }
+        );
+
+        assertEquals(true, result.isSuccessful());
+
+        assertEquals("12", result.getItem().getId());
     }
 }

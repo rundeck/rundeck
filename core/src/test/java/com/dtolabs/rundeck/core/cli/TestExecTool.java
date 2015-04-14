@@ -874,6 +874,26 @@ public class TestExecTool extends AbstractBaseTest {
             assertNull(test.passedinScript.getScriptAsStream());
             assertEquals("testProject", test.passedinScript.getFrameworkProject());
         }
+    public void testQueueOptionScriptFileArgs() throws Exception {
+            //test script path input available as InputStream when queueing dispatch
+
+        ExecTool main = newExecTool();
+        final testCentralDispatcher test = new testCentralDispatcher();
+        main.setCentralDispatcher(test);
+
+        //exec the dispatch
+
+        main.run(new String[]{"-p", "testProject", "-s",
+            "src/test/resources/com/dtolabs/rundeck/core/cli/test-dispatch-script.txt","--","arg1","arg2"});
+        test.assertQueueScriptOnlyCalled();
+        assertNotNull("unexpected value: ", test.passedinScript.getArgs());
+        assertEquals("unexpected value: ",Arrays.asList("arg1","arg2"), Arrays.asList(test.passedinScript.getArgs()));
+        assertNull("unexpected value: "+ test.passedinScript.getScript(), test.passedinScript.getScript());
+        assertEquals("unexpected value: " + test.passedinScript.getServerScriptFilePath(),
+            new File("src/test/resources/com/dtolabs/rundeck/core/cli/test-dispatch-script.txt").getAbsolutePath(), test.passedinScript.getServerScriptFilePath());
+        assertNull(test.passedinScript.getScriptAsStream());
+        assertEquals("testProject", test.passedinScript.getFrameworkProject());
+    }
 
     public void testQueueOptionNodeFilters() throws Exception {
             //test the node filter arguments
