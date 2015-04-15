@@ -14,6 +14,8 @@ rd-acl - Test and generate Rundeck ACL policy files.
 
 The rd-acl command can test aclpolicy files to check whether they will allow a certain action request or not.
 
+It can also list the results for all defined access tests for a user or group.
+
 It can also generate the correct policy for a certain action. This can be done in a semi-interactive mode
 by specifying each [Common Option](#common-options) in turn, allowing it to prompt you with a set
 of next possible options.
@@ -22,10 +24,13 @@ It can also take as input the output from the Rundeck AUDIT log, and generate AC
 to allow any disallowed actions.
 
 
-The tool works in one of two *COMMAND* modes:
+The tool works in these *COMMAND* modes:
 
 `test`
 :   test one or more aclpolicy files to determine if an action would be allowed.
+
+`list`
+:   list all access tests for a user or group for one or more aclpolicy files.
 
 `create`
 :   generate the correct ACL policy YAML definition for a specific action, or to allow a previously rejected 
@@ -77,7 +82,6 @@ In addition to the [Common Options](#common-options), the `create` command takes
 
 `-r, --regex`
 :   Match the resource using regular expressions. (create command).
-
 
 ### Common Options
 
@@ -145,6 +149,20 @@ The following define [Application scope resources](../administration/access-cont
 `-p,--project <project>`
 :   Name of project, used in project context or for application resource.
 
+### List Command Options
+
+The `list` command uses these [Test Comand Options](#test-command-options) to set the aclpolicy files to be evaluated: `-f,--file` and `-d,--dir`.
+
+It also allows these options from the [Common Options](#common-options):
+
+The Subject options: `-g,--groups` and `-u,--user`
+
+These Resource options:
+
+* `-p,--project` name of a project to test
+* `-s,--storage` Storage path/name
+* `-n,--node` or `-t,--tags` name or tags of a node to tests
+* `-j,--job` Job group/name.
 
 ## Test Command
 
@@ -202,6 +220,155 @@ by:
   group: test
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+## List Command
+
+The List command loads the specified aclpolicy file or directory of files, 
+and evaluates all access requests possible for the specified Group or User.
+It lists the decision of whether each request is allowed, disallowed, or denied.
+
+Further evaluations can be done by supplying some concrete values to identify a Project, Nodes, Jobs, and a Storage path.
+
+If the `-v, --verbose` flag is enabled, and the decision was "denied", 
+then it will print the decision details including the file name of the policy rule that denies the request.
+
+In the output, a line starting with `-` indicates the action was rejected, 
+`+` indicates the action was allowed, and `!` indicates the action was denied.
+
+The evaluation lines are in the form:
+
+    <result> <action>: <resource> [<reason>]
+
+*Examples*
+
+List results for just a group name:
+
+~~~~
+rd-acl list -g api_token_group
+Using configured Rundeck etc dir: /etc/rundeck
+# Application Context access for group api_token_group
+
+
+(No project (-p) specified, skipping Application context actions for a specific project.)
+
+
+(No storage path (-s) specified, skipping Application context actions for a specific storage path.)
+
+- create: project [REJECTED]
++ read: system
+- admin: job [REJECTED]
+- admin: user [REJECTED]
+
+(No project (-p) specified, skipping Project context listing.)
+~~~~
+
+Add a `-p` to specify a project:
+
+~~~~
+rd-acl list  -g api_token_group -p test
+Using configured Rundeck etc dir: /etc/rundeck
+# Application Context access for group api_token_group
+
+- admin: project named "test" [REJECTED]
+- delete_execution: project named "test" [REJECTED]
+- import: project named "test" [REJECTED]
++ read: project named "test"
+- export: project named "test" [REJECTED]
+- configure: project named "test" [REJECTED]
+- delete: project named "test" [REJECTED]
+
+(No storage path (-s) specified, skipping Application context actions for a specific storage path.)
+
+- create: project [REJECTED]
++ read: system
+- admin: job [REJECTED]
+- admin: user [REJECTED]
+
+# Project "test" access for group api_token_group
+
+- runAs: Adhoc executions [REJECTED]
++ kill: Adhoc executions
++ run: Adhoc executions
++ read: Adhoc executions
+- killAs: Adhoc executions [REJECTED]
+
+(No job (-j) specified, skipping Project context actions for a specific job.)
+
+
+(No node (-n) or tags (-t) specified, skipping Project context actions for a specific node or node tags.)
+
++ read: node
++ refresh: node
++ create: node
++ update: node
++ create: event
++ read: event
++ create: job
++ delete: job
+~~~~
+
+Include `-j`, `-n` and `-s`:
+
+~~~~
+rd-acl list  -g api_token_group -p test -s keys/boingo.pem -j test/job -n mynode
+Using configured Rundeck etc dir: /etc/rundeck
+# Application Context access for group api_token_group
+
+- configure: project named "test" [REJECTED]
+- import: project named "test" [REJECTED]
+- export: project named "test" [REJECTED]
+- delete: project named "test" [REJECTED]
+- delete_execution: project named "test" [REJECTED]
++ read: project named "test"
+- admin: project named "test" [REJECTED]
++ read: storage path "keys/boingo.pem"
++ update: storage path "keys/boingo.pem"
+! delete: storage path "keys/boingo.pem" [REJECTED_DENIED]
++ create: storage path "keys/boingo.pem"
+- create: project [REJECTED]
++ read: system
+- admin: job [REJECTED]
+- admin: user [REJECTED]
+
+# Project "test" access for group api_token_group
+
+- runAs: Adhoc executions [REJECTED]
+- killAs: Adhoc executions [REJECTED]
++ kill: Adhoc executions
++ run: Adhoc executions
++ read: Adhoc executions
++ run: Job "test/job"
+- runAs: Job "test/job" [REJECTED]
++ create: Job "test/job"
++ read: Job "test/job"
++ delete: Job "test/job"
++ update: Job "test/job"
+- killAs: Job "test/job" [REJECTED]
++ kill: Job "test/job"
++ read: Node "mynode"
++ run: Node "mynode"
++ update: node
++ refresh: node
++ read: node
++ create: node
++ create: event
++ read: event
++ delete: job
++ create: job
+~~~~
+
+Using the `-v` verbose flag shows more detail about the REJECTED_DENIED result:
+
+~~~~
+rd-acl list  -g api_token_group -p test -s keys/boingo.pem -v
+Using configured Rundeck etc dir: /etc/rundeck
+# Application Context access for group api_token_group
+
+...snip
+! delete: storage path "keys/boingo.pem" [REJECTED_DENIED]
+  REJECTED, reason: REJECTED_DENIED, evaluations:   /etc/rundeck/apitoken.aclpolicy[2][rule: 1: {match={path=(keys|keys/.*)}, allow=*, deny=delete}] for actions: [delete] => REJECTED_DENIED
+...snip
+
+~~~~
    
 ## Create Command
    

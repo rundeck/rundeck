@@ -6,10 +6,8 @@ import com.dtolabs.rundeck.core.authentication.Username;
 import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
 import com.dtolabs.rundeck.core.authorization.Decision;
-import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
-import com.dtolabs.rundeck.core.authorization.providers.Policies;
-import com.dtolabs.rundeck.core.authorization.providers.PoliciesParseException;
-import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization;
+import com.dtolabs.rundeck.core.authorization.Explanation;
+import com.dtolabs.rundeck.core.authorization.providers.*;
 import com.dtolabs.rundeck.core.cli.*;
 import com.dtolabs.rundeck.core.cli.jobs.JobsToolException;
 import com.dtolabs.rundeck.core.common.Framework;
@@ -89,6 +87,8 @@ public class AclTool extends BaseTool {
     public static final String REGEX_OPT_LONG = "regex";
     public static final String ATTRS_OPT = "b";
     public static final String ATTRS_OPT_LONG = "attributes";
+    public static final String LIST_OPT = "l";
+    public static final String LIST_OPT_LONG = "list";
 
     final CLIToolLogger clilogger;
 
@@ -186,6 +186,7 @@ public class AclTool extends BaseTool {
      */
     public static final String ACTION_TEST = "test";
     public static final String ACTION_CREATE = "create";
+    public static final String ACTION_LIST = "list";
 
     static enum Actions {
 
@@ -193,7 +194,8 @@ public class AclTool extends BaseTool {
          * List action
          */
         test(ACTION_TEST),
-        create(ACTION_CREATE);
+        create(ACTION_CREATE),
+        list(ACTION_LIST);
         private String name;
 
         Actions(final String name) {
@@ -216,6 +218,7 @@ public class AclTool extends BaseTool {
     }
 
     private boolean argVerbose;
+    private boolean argList;
     private File argFile;
     private File argDir;
     private String argDenyAction;
@@ -397,6 +400,12 @@ public class AclTool extends BaseTool {
                     "Match the resource using regular expressions. (create command)."
             );
             options.addOption(
+                    LIST_OPT,
+                    LIST_OPT_LONG,
+                    false,
+                    "List all permissions for the group or user. (test command)."
+            );
+            options.addOption(
                     OptionBuilder.withArgName("key=value ...")
                                  .withDescription(
                                          "Attributes for the resource. A sequence of key=value pairs, multiple pairs " +
@@ -461,6 +470,9 @@ public class AclTool extends BaseTool {
             }
             if (cli.hasOption(REGEX_OPT)) {
                 argRegex = cli.hasOption(REGEX_OPT);
+            }
+            if (cli.hasOption(LIST_OPT)) {
+                argList = cli.hasOption(LIST_OPT);
             }
             if (cli.hasOption(TAGS_OPT)) {
                 argTags = cli.getOptionValue(TAGS_OPT);
@@ -539,6 +551,9 @@ public class AclTool extends BaseTool {
         }
         try {
             switch (action) {
+                case list:
+                    listAction();
+                    break;
                 case test:
                     testAction();
                     break;
@@ -550,6 +565,165 @@ public class AclTool extends BaseTool {
             }
         } catch (IOException | PoliciesParseException e) {
             throw new JobsToolException(e);
+        }
+    }
+
+    private void listAction() throws CLIToolOptionsException, IOException, PoliciesParseException {
+
+        final SAREAuthorization authorization = createAuthorization();
+        Subject subject = createSubject();
+        String subjdesc = null != argGroups ? "group " + argGroups : "username " + argUser;
+
+        log("# Application Context access for "+subjdesc+"\n");
+        //iterate app context resources, test actions
+        if(null!=argProject){
+            HashMap<String, Object> res = new HashMap<>();
+            res.put("name", argProject);
+            Map<String,Object> resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_PROJECT, res);
+
+            logDecisions(
+                    "project named \"" + argProject+"\"",
+                    authorization,
+                    subject,
+                    resources(resourceMap),
+                    new HashSet<>(appProjectActions),
+                    Framework.RUNDECK_APP_ENV
+            );
+        }else{
+            log("\n(No project (-p) specified, skipping Application context actions for a specific project.)\n");
+        }
+        if(null!=argAppStorage){
+            Map<String,Object> resourceMap = createStorageResource();
+            logDecisions(
+                    "storage path \"" + argAppStorage+"\"",
+                    authorization,
+                    subject,
+                    resources(resourceMap),
+                    new HashSet<>(appStorageActions),
+                    Framework.RUNDECK_APP_ENV
+            );
+        }else{
+            log("\n(No storage path (-s) specified, skipping Application context actions for a specific storage " +
+                "path.)\n"
+            );
+        }
+        for (String kind : appKindActionsByType.keySet()) {
+            logDecisions(
+                    kind,
+                    authorization,
+                    subject,
+                    resources(AuthorizationUtil.resourceTypeRule(kind)),
+                    new HashSet<>(appKindActionsByType.get(kind)),
+                    Framework.RUNDECK_APP_ENV
+            );
+        }
+
+
+
+        if (null == argProject) {
+            log("\n(No project (-p) specified, skipping Project context listing.)");
+            return;
+        }
+        Set<Attribute> projectEnv = FrameworkProject.authorizationEnvironment(argProject);
+
+        log("\n# Project \"" + argProject + "\" access for " + subjdesc + "\n");
+        //adhoc
+        logDecisions(
+                "Adhoc executions",
+                authorization,
+                subject,
+                resources(createProjectAdhocResource()),
+                new HashSet<>(projectAdhocActions),
+                projectEnv
+        );
+        //job
+        if(null!=argProjectJob){
+
+            Map<String,Object> resourceMap = createProjectJobResource();
+            logDecisions(
+                    "Job \""+argProjectJob+"\"",
+                    authorization,
+                    subject,
+                    resources(resourceMap),
+                    new HashSet<>(projectJobActions),
+                    projectEnv
+            );
+        }else{
+            log("\n(No job (-j) specified, skipping Project context actions for a specific job.)\n");
+        }
+        //node
+
+        if (null != argProjectNode || null != argTags) {
+            Map<String, Object> resourceMap = createProjectNodeResource();
+            logDecisions(
+                    "Node " + (null!=argProjectNode?("\""+argProjectNode+"\""):"")  +
+                    (null!=argTags?" tags: "+argTags:"")
+                    ,
+                    authorization,
+                    subject,
+                    resources(resourceMap),
+                    new HashSet<>(projectNodeActions),
+                    projectEnv
+            );
+        } else {
+            log("\n(No node (-n) or tags (-t) specified, skipping Project context actions for a specific node or" +
+                    " node tags.)\n");
+        }
+
+        //kinds
+
+        for (String kind : projKindActionsByType.keySet()) {
+            logDecisions(
+                    kind,
+                    authorization,
+                    subject,
+                    resources(AuthorizationUtil.resourceTypeRule(kind)),
+                    new HashSet<>(projKindActionsByType.get(kind)),
+                    projectEnv
+            );
+        }
+
+
+    }
+
+    private HashSet<Map<String, String>> resources(final Map<String, Object>... resourceMap) {
+        HashSet<Map<String, String>> resource = new HashSet<>();
+        for (Map<String, Object> stringObjectMap : resourceMap) {
+            resource.add(toStringMap(stringObjectMap));
+        }
+        return resource;
+    }
+
+    private void logDecisions(
+            final String title,
+            final SAREAuthorization authorization,
+            final Subject subject,
+            final HashSet<Map<String, String>> resource,
+            final HashSet<String> actions,
+            final Set<Attribute> env
+    )
+    {
+        for (Decision decision : authorization.evaluate(
+                resource,
+                subject,
+                actions,
+                env
+        )) {
+            log(
+                    (decision.isAuthorized()
+                     ? "+"
+                     : decision.explain().getCode() == Explanation.Code.REJECTED_DENIED ? "!" : "-") +
+                    " " +
+                    decision.getAction() +
+                    ": " +
+                    title +
+                    (decision.isAuthorized() ? "" : (" [" + decision.explain().getCode() + "]"))
+            );
+            if(!decision.isAuthorized() && decision.explain().getCode() == Explanation.Code.REJECTED_DENIED) {
+                verbose(
+                        "  " + decision.explain().toString()
+                );
+            }
         }
     }
 
@@ -751,20 +925,7 @@ public class AclTool extends BaseTool {
 
         //determine subject
 
-        Subject subject;
-        if (argGroups != null || argUser != null) {
-            Subject t = makeSubject(argUser, groupsList);
-            subject = t;
-        } else {
-            throw new OptionsPrompt(
-                    optionDisplayString(GROUPS_OPT) + " or " +
-                    optionDisplayString(USER_OPT) + " are required",
-                    "  -u user1,user2... \n" +
-                    "  -g group1,group2... \n" +
-                    "    Groups control access for a set of users, and correspond\n" +
-                    "    to authorization roles."
-            );
-        }
+        Subject subject = createSubject();
 
         //determine resource
         Map<String, Object> resourceMap = new HashMap<>();
@@ -796,36 +957,13 @@ public class AclTool extends BaseTool {
             res.put("name", argProject);
             resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_PROJECT, res);
         } else if (argContext == Context.application && argAppStorage != null) {
-            HashMap<String, Object> res = new HashMap<>();
-            int nx = argAppStorage.lastIndexOf("/");
-            if (nx >= 0) {
-                res.put("path", argAppStorage.substring(0, nx));
-                res.put("name", argAppStorage.substring(nx + 1));
-            } else {
-                res.put("name", argAppStorage);
-            }
-            resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_STORAGE, res);
+            resourceMap = createStorageResource();
         } else if (argContext == Context.project && argProjectJob != null) {
-            HashMap<String, Object> res = new HashMap<>();
-            int nx = argProjectJob.lastIndexOf("/");
-            if (nx >= 0) {
-                res.put("group", argProjectJob.substring(0, nx));
-                res.put("name", argProjectJob.substring(nx + 1));
-            } else {
-                res.put("group", "");
-                res.put("name", argProjectJob);
-            }
-            resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_JOB, res);
-        } else if (argContext == Context.project && argProjectNode != null) {
-            HashMap<String, Object> res = new HashMap<>();
-            res.put("nodename", argProjectNode);
-            resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_NODE, res);
-        } else if (argContext == Context.project && argTags != null) {
-            HashMap<String, Object> res = new HashMap<>();
-            res.put("tags", tagsSet);
-            resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_NODE, res);
+            resourceMap = createProjectJobResource();
+        } else if (argContext == Context.project && (argProjectNode != null || argTags != null)) {
+            resourceMap = createProjectNodeResource();
         } else if (argContext == Context.project && argProjectAdhoc) {
-            resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_ADHOC, new HashMap<String, Object>());
+            resourceMap = createProjectAdhocResource();
         } else if (argContext == Context.project && null != argGenericType) {
             if (!projectKinds.contains(argGenericType.toLowerCase())) {
                 throw new OptionsPrompt(
@@ -873,7 +1011,9 @@ public class AclTool extends BaseTool {
                     "  Resource: " +
                     optionDisplayString(RESOURCE_OPT) +
                     "\n" +
-                    "    Specify the resource type directly. "+optionDisplayString(ATTRS_OPT)+" should also be used.\n" +
+                    "    Specify the resource type directly. " +
+                    optionDisplayString(ATTRS_OPT) +
+                    " should also be used.\n" +
                     "    resource types in this context: \n" +
                     "    " +
                     StringUtils.join(projectTypes, "\n    ") +
@@ -908,7 +1048,9 @@ public class AclTool extends BaseTool {
                     "  Resource: " +
                     optionDisplayString(RESOURCE_OPT) +
                     "\n" +
-                    "    Specify the resource type directly. "+optionDisplayString(ATTRS_OPT)+" should also be used.\n" +
+                    "    Specify the resource type directly. " +
+                    optionDisplayString(ATTRS_OPT) +
+                    " should also be used.\n" +
                     "    resource types in this context: \n" +
                     "    " +
                     StringUtils.join(appTypes, "\n    ") +
@@ -1030,6 +1172,67 @@ public class AclTool extends BaseTool {
         request.regexMatch = argRegex;
         request.containsMatch = argContext == Context.project && argTags != null;
         return request;
+    }
+
+    private Map<String, Object> createProjectNodeResource() {
+        final Map<String, Object> resourceMap;HashMap<String, Object> res = new HashMap<>();
+        if(null!=argProjectNode) {
+            res.put("nodename", argProjectNode);
+        }
+        if(null!=argTags) {
+            res.put("tags", tagsSet);
+        }
+        resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_NODE, res);
+        return resourceMap;
+    }
+
+    private Map<String, Object> createProjectJobResource() {
+        final Map<String, Object> resourceMap;HashMap<String, Object> res = new HashMap<>();
+        int nx = argProjectJob.lastIndexOf("/");
+        if (nx >= 0) {
+            res.put("group", argProjectJob.substring(0, nx));
+            res.put("name", argProjectJob.substring(nx + 1));
+        } else {
+            res.put("group", "");
+            res.put("name", argProjectJob);
+        }
+        resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_JOB, res);
+        return resourceMap;
+    }
+
+    private Map<String, Object> createProjectAdhocResource() {
+        return AuthorizationUtil.resourceRule(ACLConstants.TYPE_ADHOC, new HashMap<String, Object>());
+    }
+
+    private Map<String, Object> createStorageResource() {
+        final Map<String, Object> resourceMap;HashMap<String, Object> res = new HashMap<>();
+        int nx = argAppStorage.lastIndexOf("/");
+        if (nx >= 0) {
+            res.put("path", argAppStorage.substring(0, nx));
+            res.put("name", argAppStorage.substring(nx + 1));
+        } else {
+            res.put("name", argAppStorage);
+        }
+        resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_STORAGE, res);
+        return resourceMap;
+    }
+
+    private Subject createSubject() throws OptionsPrompt {
+        final Subject subject;
+        if (argGroups != null || argUser != null) {
+            Subject t = makeSubject(argUser, groupsList);
+            subject = t;
+        } else {
+            throw new OptionsPrompt(
+                    optionDisplayString(GROUPS_OPT) + " or " +
+                    optionDisplayString(USER_OPT) + " are required",
+                    "  -u user1,user2... \n" +
+                    "  -g group1,group2... \n" +
+                    "    Groups control access for a set of users, and correspond\n" +
+                    "    to authorization roles."
+            );
+        }
+        return subject;
     }
 
     private Subject makeSubject(final String argUser1user, final Collection<String> groupsList1) {
@@ -1340,8 +1543,7 @@ public class AclTool extends BaseTool {
     private void testAction() throws CLIToolOptionsException, IOException, PoliciesParseException {
         final SAREAuthorization authorization = createAuthorization();
         AuthRequest authRequest = createAuthRequestFromArgs();
-        HashSet<Map<String, String>> resource = new HashSet<>();
-        resource.add(toStringMap(authRequest.resourceMap));
+        HashSet<Map<String, String>> resource = resources(authRequest.resourceMap);
 
         boolean expectAuthorized=true;
         boolean expectDenied=false;
@@ -1429,28 +1631,33 @@ public class AclTool extends BaseTool {
     private SAREAuthorization createAuthorization()
             throws IOException, PoliciesParseException, CLIToolOptionsException
     {
-        final SAREAuthorization authorization;
+        return new SAREAuthorization(createPolicies());
+    }
+    private Policies createPolicies()
+            throws IOException, PoliciesParseException, CLIToolOptionsException
+    {
+        final Policies policies;
         if (null != argFile) {
             if(!argFile.isFile()) {
                 throw new CLIToolOptionsException("File: " + argFile + ", does not exist or is not a file");
             }
-            authorization = createAuthorizationSingleFile(argFile);
+            policies = Policies.loadFile(argFile);
         } else if (null != argDir) {
             if(!argDir.isDirectory()) {
                 throw new CLIToolOptionsException("File: " + argDir + ", does not exist or is not a directory");
             }
-            authorization = createAuthorization(argDir);
+            policies = Policies.load(argDir);
         } else if (null != configDir) {
             log("Using configured Rundeck etc dir: " + configDir);
             File directory = new File(configDir);
             if(!directory.isDirectory()) {
                 throw new CLIToolOptionsException("File: " + directory + ", does not exist or is not a directory");
             }
-            authorization = createAuthorization(directory);
+            policies = Policies.load(directory);
         } else {
             throw new CLIToolOptionsException("-f or -d are required");
         }
-        return authorization;
+        return policies;
     }
 
     private class AuthRequest {
