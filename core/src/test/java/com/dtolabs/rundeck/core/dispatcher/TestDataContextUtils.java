@@ -88,6 +88,31 @@ public class TestDataContextUtils extends AbstractBaseTest {
     }
 
 
+    public void testResolve(){
+
+        Map<String, Map<String, String>> dataContext = new HashMap<String, Map<String, String>>();
+
+        assertEquals(null, DataContextUtils.resolve(null, "test", "a"));
+        assertEquals("defval", DataContextUtils.resolve(null, "test", "a", "defval"));
+
+        assertEquals(null, DataContextUtils.resolve(dataContext, "test", "a"));
+        assertEquals("defval", DataContextUtils.resolve(dataContext, "test", "a", "defval"));
+
+        //add context but no data for the keys
+        dataContext.put("test", new HashMap<String, String>());
+        assertEquals(null, DataContextUtils.resolve(dataContext, "test", "a"));
+        assertEquals("defval", DataContextUtils.resolve(dataContext, "test", "a", "defval"));
+
+        //put in null value
+        dataContext.get("test").put("a", null);
+        assertEquals(null, DataContextUtils.resolve(dataContext, "test", "a"));
+        assertEquals("defval", DataContextUtils.resolve(dataContext, "test", "a", "defval"));
+        //put in a value
+        dataContext.get("test").put("a", "b");
+        assertEquals("b", DataContextUtils.resolve(dataContext, "test", "a"));
+        assertEquals("b", DataContextUtils.resolve(dataContext, "test", "a", "defval"));
+
+    }
     public void testReplaceDataReferences() throws Exception {
         //null input, null data
         assertEquals(null, DataContextUtils.replaceDataReferences((String)null, null));

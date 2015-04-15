@@ -179,6 +179,38 @@ public class DataContextUtils {
     }
 
     /**
+     * Return the resolved value from the context
+     * @param data data context
+     * @param group group name
+     * @param key key name
+     * @return resolved value or null
+     */
+    public static String resolve(
+            final Map<String, Map<String, String>> data, final String group,
+            final String key
+    )
+    {
+        return resolve(data, group, key, null);
+    }
+    /**
+     * Return the resolved value from the context
+     * @param data data context
+     * @param group group name
+     * @param key key name
+     * @param defaultValue default if the value is not resolvable
+     * @return resolved value or default
+     */
+    public static String resolve(
+            final Map<String, Map<String, String>> data, final String group,
+            final String key,
+            final String defaultValue
+    )
+    {
+        return null != data && null != data.get(group) && null != data.get(group).get(key)
+        ? data.get(group).get(key)
+        : defaultValue;
+    }
+    /**
      * Replace the embedded  properties of the form '${key.name}' in the input Strings with the value from the data
      * context
      *
