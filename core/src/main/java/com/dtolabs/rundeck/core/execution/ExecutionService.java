@@ -117,6 +117,7 @@ public interface ExecutionService extends FrameworkSupportService {
      * @param node node
      * @throws FileCopierException on error
      * @return filepath on the node for the destination file.
+     * @deprecated use {@link #fileCopyFileStream(ExecutionContext, java.io.InputStream, com.dtolabs.rundeck.core.common.INodeEntry, String)}
      */
     public String fileCopyFileStream(final ExecutionContext context, InputStream input, INodeEntry node) throws
         FileCopierException;
@@ -143,6 +144,7 @@ public interface ExecutionService extends FrameworkSupportService {
      * @param node node
      * @throws FileCopierException on error
      * @return filepath for the copied file on the node.
+     * @deprecated use {@link #fileCopyFile(ExecutionContext, java.io.File, com.dtolabs.rundeck.core.common.INodeEntry, String)}
      */
     public String fileCopyFile(final ExecutionContext context, File file, INodeEntry node) throws FileCopierException;
 
@@ -167,6 +169,8 @@ public interface ExecutionService extends FrameworkSupportService {
      * @param node node
      * @throws FileCopierException on error
      * @return filepath for the copied file on the node
+     *
+     * @deprecated use {@link #fileCopyScriptContent(ExecutionContext, String, com.dtolabs.rundeck.core.common.INodeEntry, String)}
      */
     public String fileCopyScriptContent(final ExecutionContext context, String script,
                                         INodeEntry node) throws
