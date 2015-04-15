@@ -74,6 +74,14 @@ Example configuration for the Key Storage facility:
 	rundeck.storage.converter.1.config.algorithm=PBEWITHSHA256AND128BITAES-CBC-BC
 	rundeck.storage.converter.1.config.provider=BC
 
+Example configuration for the Project Configuration storage facility:
+
+	rundeck.config.storage.converter.1.type=jasypt-encryption
+	rundeck.config.storage.converter.1.path=/
+	rundeck.config.storage.converter.1.config.password=sekrit
+	rundeck.config.storage.converter.1.config.algorithm=PBEWITHSHA256AND128BITAES-CBC-BC
+	rundeck.config.storage.converter.1.config.provider=BC
+
 ## Develop your own
 
 See:
