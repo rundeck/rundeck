@@ -1,36 +1,66 @@
 % Upgrade Guide
 % Greg Schueler
-% March 12, 2015
+% April 15, 2015
 
 ## Upgrading to Rundeck 2.5
 
-**IMPORTANT**: Read the section about [Project definitions stored in DB](#project-definitions-stored-in-db) prior to upgrading from Rundeck 2.4.x and earlier.
+
+### Java 7 required
+
+Java 7 is now required for Rundeck 2.5, and Java 8 can be used.  Java 6 will not work.
+
+### Scheduled Jobs with required option default values
+
+A bug in Rundeck previously allowed Jobs to saved with a schedule
+even if an Option marked "required" did not have a default value.
+The result was that the scheduler would fail to execute the job silently.
+
+In Rundeck 2.5 this is now considered a validation error when creating or importing the job definition,
+so any scheduled jobs with required options need to have a default value set.
+
+### rd-project create of existing project
+
+If `rd-project -a create -p projectname` is executed for an existing project, this will now fail.
 
 ### Database schema
 
-This release adds a new DB table 
-but does not alter the schema of other tables.
+This release adds some new DB tables but does not alter the schema of other tables.
 
 ### Project definitions stored in DB
 
-Rundeck 2.4 and earlier used the filesystem to store **Projects** and their configuration,
-but Rundeck 2.5 now uses the DB to store project definition and configuration by default. 
+Rundeck 2.4 and earlier used the filesystem to store Projects and their configuration.
+Rundeck 2.5 can now use the DB to store project definition and configuration, 
+but this is not enabled by default. 
 
-If you have projects that exist on the filesystem, when you upgrade to Rundeck 2.5, these projects 
-and their configuration files will be *automatically imported* into the DB.  This means that
-the contents of `project.properties` will be copied to the DB, using Rundeck's [Storage Facility](../administration/storage-facility.html).
+If you have projects that exist on the filesystem, when you upgrade to Rundeck 2.5, these projects
+and their configuration files can be automatically imported into the DB.  This means that
+the contents of `project.properties` will be copied to the DB,
+using Rundeck's [Storage Facility](../administration/storage-facility.html).
 
 In addition, there is *no encryption by default*, if you want the contents of your project.properties
-to be encrypted in the DB, you must configure [Storage Converter Plugins](../plugins-user-guide/configuring.html#storage-converter-plugins) to use an encryption plugin.
+to be encrypted in the DB, you must configure 
+[Storage Converter Plugins](../plugins-user-guide/configuring.html#storage-converter-plugins) 
+to use an encryption plugin.  There is now a [Jasypt Encryption Plugin](../plugins-user-guide/storage-plugins.html#jasypt-encryption-converter-plugin) included with Rundeck which can be used.
 
-**Opt out**:
+**Enable project DB storage**:
 
-You can configure Rundeck to still use the filesystem for the time being by adding the following to 
-`rundeck-config.properties`:
+You can configure Rundeck to use the Database by adding the following to 
+`rundeck-config.properties` before starting it up:
 
-    rundeck.projectsStorageType=filesystem
+    rundeck.projectsStorageType=db
 
-This will preserve the behavior in Rundeck 2.4 and earlier.
+When importing previously created filesystem projects, the contents of these files are imported to the DB:
+
+* `etc/project.properties`
+* `readme.md`
+* `motd.md`
+
+In addition, after importing, the `project.properties` file will be renamed to `project.properties.imported`.
+
+If desired, you can switch back to using filesystem projects by doing this:
+
+1. set `rundeck.projectsStorageType=filesystem` in `rundeck-config.properties`
+2. rename each `project.properties.imported` file back to `project.properties`
 
 ## Upgrading to Rundeck 2.1
 
