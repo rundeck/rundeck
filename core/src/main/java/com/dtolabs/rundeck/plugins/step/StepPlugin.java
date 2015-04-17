@@ -36,7 +36,7 @@ import java.util.Map;
  */
 public interface StepPlugin {
     /**
-     * Execute the step, return true if the step succeeded.
+     * Execute the step.
      *
      * @param context       the plugin step context
      * @param configuration Any configuration property values not otherwise applied to the plugin
