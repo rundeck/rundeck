@@ -199,11 +199,27 @@ abstract class DirPluginScanner implements PluginScanner {
      * Return the first valid file found
      */
     private File scanFor(final ProviderIdent ident, final File[] files) throws PluginScannerException {
+        final List<File> candidates = new ArrayList<File>();
         for (final File file : files) {
             if (cachedFileValidity(file)) {
                 if (test(ident, file)) {
-                    return file;
+                    candidates.add(file);
                 }
+            }
+        }
+        if (candidates.size() == 1) {
+            return candidates.get(0);
+        }
+        if (candidates.size() > 1) {
+            final File resolved = resolveProviderConflict(candidates);
+            if(null==resolved) {
+                log.warn(
+                        "More than one plugin file matched: " + StringArrayUtil.asString(candidates.toArray(), ",")
+                        +": "+ ident
+                );
+            }
+            else {
+                return resolved;
             }
         }
         return null;

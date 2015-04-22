@@ -28,9 +28,7 @@ import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
 import junit.framework.TestCase;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileOutputStream;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -351,9 +349,72 @@ public class TestDirPluginScanner extends TestCase {
         assertFalse(scanner.shouldRescan());
     }
 
-    public void testVersionCompare() throws Exception {
+    public void testScanForResolveConflict() throws Exception {
+
         //set scan interval to 60 seconds, shouldRescan should now return false
-        File basedir = new File(testdir, "testVersionCompare");
+        File basedir = new File(testdir, "testScanForResolveConflict");
+        basedir.mkdirs();
+        final FileCache<ProviderLoader> loaderFileCache = new FileCache<ProviderLoader>();
+
+        //scan interval set to 60 seconds
+        test scanner = new test(basedir, loaderFileCache, 60 * 1000);
+
+        final Map<File, String> versions = new HashMap<File, String>();
+
+        File testfile1 = touchFile(basedir, "test1-service_provider1");
+        File testfile2 = touchFile(basedir, "test2-service_provider1");
+        File testfile3 = touchFile(basedir, "test3-service_provider1");
+        versions.put(testfile1, "1.6");
+        versions.put(testfile2, "1.22");
+        versions.put(testfile3, "1.8");
+
+        ArrayList<File> arr = new ArrayList<File>();
+        arr.add(testfile1);
+        arr.add(testfile2);
+        scanner.versions = versions;
+
+        final File file = scanner.scanForFile(new ProviderIdent("service", "provider1"));
+        assertEquals(testfile2, file);
+    }
+    public void testScanForConflict() throws Exception {
+
+        //set scan interval to 60 seconds, shouldRescan should now return false
+        File basedir = new File(testdir, "testScanForResolveConflict");
+        basedir.mkdirs();
+        final FileCache<ProviderLoader> loaderFileCache = new FileCache<ProviderLoader>();
+
+        //scan interval set to 60 seconds
+        test scanner = new test(basedir, loaderFileCache, 60 * 1000);
+
+        final Map<File, String> versions = new HashMap<File, String>();
+
+        File testfile1 = touchFile(basedir, "test1-service_provider1");
+        File testfile2 = touchFile(basedir, "test2-service_provider1");
+        File testfile3 = touchFile(basedir, "test3-service_provider1");
+        File testfile4 = touchFile(basedir, "test4-service_provider1");
+        versions.put(testfile1, "1.6");
+        versions.put(testfile2, "1.22");
+        versions.put(testfile3, "1.22");
+        versions.put(testfile4, "1.8");
+
+        scanner.versions = versions;
+
+        final File file = scanner.scanForFile(new ProviderIdent("service", "provider1"));
+        assertEquals(testfile3, file);
+    }
+
+    private File touchFile(final File basedir, final String name) throws IOException {
+        File file = new File(basedir, name);
+        try (FileOutputStream stream = new FileOutputStream(file)) {
+            stream.write("test".getBytes());
+        }
+        file.deleteOnExit();
+        return file;
+    }
+
+    public void testResolveProviderConflict() throws Exception {
+        //set scan interval to 60 seconds, shouldRescan should now return false
+        File basedir = new File(testdir, "testResolveProviderConflict");
         basedir.mkdirs();
         final FileCache<ProviderLoader> loaderFileCache = new FileCache<ProviderLoader>();
 
