@@ -28,7 +28,6 @@ import rundeck.codecs.JobsYAMLCodec
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ApiService
 import rundeck.services.ExecutionService
-import rundeck.services.ExecutionServiceException
 import rundeck.services.FrameworkService
 import rundeck.services.LogFileStorageService
 import rundeck.services.LoggingService
@@ -538,7 +537,7 @@ class MenuController extends ControllerBase{
                     final executor = framework.getNodeExecutorService().providerOfType(defaultNodeExec)
                     final desc = executor.description
                     nodeexec.config = Validator.demapProperties(fproject.getProperties(), desc)
-                } catch (ExecutionServiceException e) {
+                } catch (com.dtolabs.rundeck.core.execution.service.ExecutionServiceException e) {
                     log.error(e.message)
                 }
             }
@@ -550,7 +549,7 @@ class MenuController extends ControllerBase{
                     final executor = framework.getFileCopierService().providerOfType(defaultFileCopy)
                     final desc = executor.description
                     fcopy.config = Validator.demapProperties(fproject.getProperties(), desc)
-                } catch (ExecutionServiceException e) {
+                } catch (com.dtolabs.rundeck.core.execution.service.ExecutionServiceException e) {
                     log.error(e.message)
                 }
             }
