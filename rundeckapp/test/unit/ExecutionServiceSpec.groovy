@@ -7,6 +7,7 @@ import rundeck.Workflow
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionServiceException
 import rundeck.services.FrameworkService
+import rundeck.services.ReportService
 import spock.lang.Specification
 
 /**
@@ -82,5 +83,59 @@ class ExecutionServiceSpec extends Specification {
 
         then:
         e2!=null
+    }
+
+    def "log execution state"(String statusString, String resultStatus, boolean issuccess,boolean iscancelled,boolean istimedout,boolean willretry) {
+        given:
+        def params = [:]
+        service.reportService = Stub(ReportService) {
+            reportExecutionResult(_) >> { args ->
+                params = args[0]
+            }
+        }
+        when:
+        service.logExecution(
+                null,
+                'test1',
+                'user1',
+                issuccess,
+                statusString,
+                11,
+                new Date(),
+                'abc',
+                'job1',
+                'blah',
+                iscancelled,
+                istimedout,
+                willretry,
+                '1/1/1',
+                null
+        )
+
+        then:
+        params.jcExecId == 11
+        params.jcJobId == 'abc'
+        params.reportId == 'job1'
+        params.adhocExecution == false
+        params.ctxProject == 'test1'
+        params.author == 'user1'
+        params.title == 'blah'
+        params.status == resultStatus
+        params.node == '1/1/1'
+        params.message == "Job status ${statusString}"
+        params.dateStarted != null
+        params.dateCompleted != null
+
+        where:
+        statusString   | resultStatus | issuccess | iscancelled | istimedout | willretry
+        'succeeded'    | 'succeed'    | true      | false       | false      | false
+        'true'         | 'succeed'    | true      | false       | false      | false
+        'custom'       | 'other'      | false     | false       | false      | false
+        'other status' | 'other'      | false     | false       | false      | false
+        'false'        | 'fail'       | false     | false       | false      | false
+        'failed'       | 'fail'       | false     | false       | false      | false
+        'failed'       | 'cancel'     | false     | true        | false      | false
+        'failed'       | 'timeout'    | false     | false       | true       | false
+        'failed'       | 'retry'      | false     | false       | false      | true
     }
 }
