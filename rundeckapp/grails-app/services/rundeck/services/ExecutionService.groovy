@@ -661,8 +661,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             reportMap.abortedByUser=user
         }
         reportMap.author=user
-        reportMap.title= jobSummary?jobSummary:"RunDeck Job Execution"
-        reportMap.status= statusString?: issuccess ? "succeed":iscancelled?"cancel": willretry?'retry':istimedout?"timeout":"fail"
+        reportMap.title= jobSummary?jobSummary:"Rundeck Job Execution"
+        reportMap.status= (statusString in ['true', 'succeeded'] && issuccess) ? "succeed":iscancelled?"cancel": willretry?'retry':istimedout?"timeout": (statusString in ['failed','false']) ? "fail" : "other"
         reportMap.node= null!=nodesummary?nodesummary: frameworkService.getFrameworkNodeName()
 
         reportMap.message=(statusString? "Job status ${statusString}" : issuccess?'Job completed successfully':iscancelled?('Job killed by: '+(abortedby?:user)):
