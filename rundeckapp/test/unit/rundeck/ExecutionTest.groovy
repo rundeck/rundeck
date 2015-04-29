@@ -3,6 +3,7 @@ package rundeck
 import grails.test.GrailsUnitTestCase
 import grails.test.mixin.TestFor
 import junit.framework.Assert
+import rundeck.services.ExecutionService
 
 /**
  * $INTERFACE is ...
@@ -47,6 +48,46 @@ class ExecutionTest {
         se.retry='1 '
         def validate = se.validate()
         assertFalse("Invalid: "+se.errors.allErrors*.toString().join(","), validate)
+    }
+    void testExecutionState() {
+        Execution se = createBasicExecution()
+        se.dateCompleted=null
+        assertEquals(ExecutionService.EXECUTION_RUNNING,se.executionState)
+        se.dateCompleted=new Date()
+        se.status='true'
+        assertEquals(ExecutionService.EXECUTION_SUCCEEDED,se.executionState)
+        se.status='succeeded'
+        assertEquals(ExecutionService.EXECUTION_SUCCEEDED,se.executionState)
+        se.status='failed'
+        assertEquals(ExecutionService.EXECUTION_FAILED,se.executionState)
+        se.status='false'
+        assertEquals(ExecutionService.EXECUTION_FAILED,se.executionState)
+        se.cancelled=true
+        assertEquals(ExecutionService.EXECUTION_ABORTED,se.executionState)
+        se.cancelled=false
+        se.willRetry=true
+        assertEquals(ExecutionService.EXECUTION_FAILED_WITH_RETRY,se.executionState)
+        se.cancelled=false
+        se.willRetry=false
+        se.timedOut=true
+        assertEquals(ExecutionService.EXECUTION_TIMEDOUT,se.executionState)
+        se.timedOut=false
+        se.status="custom"
+        assertEquals(ExecutionService.EXECUTION_STATE_OTHER,se.executionState)
+        se.status="any string"
+        assertEquals(ExecutionService.EXECUTION_STATE_OTHER,se.executionState)
+    }
+    void testStatusSucceededTrue() {
+        Execution se = createBasicExecution()
+        se.dateCompleted=new Date()
+        se.status='true'
+        assertTrue(se.statusSucceeded())
+    }
+    void testStatusSucceededSucceeded() {
+        Execution se = createBasicExecution()
+        se.dateCompleted=new Date()
+        se.status='succeeded'
+        assertTrue(se.statusSucceeded())
     }
 
     Execution createBasicExecution() {

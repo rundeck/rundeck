@@ -39,7 +39,7 @@
                 <input type="checkbox" value="${enc(attr:rpt.jcExecId)}" name="bulk_edit" class="_defaultInput bulk_edit"/>
             </td>
             </g:if>
-            <g:set var="statusIcon" value="${!execution.dateCompleted ? 'running' : execution.status in ['true','succeeded'] ?
+            <g:set var="statusIcon" value="${!execution.dateCompleted ? 'running' : execution.statusSucceeded() ?
                     'succeed' : execution.cancelled ? 'aborted' :execution.willRetry ? 'failedretry' :execution.timedOut ? 'timedout' :
                     execution.status in ['false','failed']?'fail':'other'}"/>
             <td class="eventicon autoclickable">

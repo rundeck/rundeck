@@ -111,6 +111,9 @@ class Execution extends ExecutionContext {
         return "Workflow execution: ${workflow}"
     }
 
+    public boolean statusSucceeded(){
+        return getExecutionState()==ExecutionService.EXECUTION_SUCCEEDED
+    }
     public String getExecutionState() {
         return null == dateCompleted ? ExecutionService.EXECUTION_RUNNING :
                 (status in ['true', 'succeeded']) ? ExecutionService.EXECUTION_SUCCEEDED :

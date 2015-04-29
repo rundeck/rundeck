@@ -1820,7 +1820,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 scheduledExecution = ScheduledExecution.get(schedId)
             }
 
-            if (!execution.cancelled && execution.status != 'true' && scheduledExecution && retryContext) {
+            if (!execution.cancelled && !(execution.statusSucceeded()) && scheduledExecution && retryContext) {
                 //determine retry necessity
                 int count = retryContext?.retryAttempt ?: 0
                 def retryStr = execution.retry
@@ -1884,7 +1884,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         null,
                         execution.project,
                         execution.user,
-                        execution.status.toLowerCase() in ['true','succeeded'],
+                        execution.statusSucceeded(),
                         execution.status,
                         exId,
                         execution.dateStarted,
@@ -1901,7 +1901,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
                 def context = execmap?.thread?.context
                 notificationService.triggerJobNotification(
-                        props.status.toLowerCase() in ['true','succeeded'] ? 'success' : 'failure',
+                        execution.statusSucceeded() ? 'success' : 'failure',
                         schedId,
                         [
                                 execution: execution,
