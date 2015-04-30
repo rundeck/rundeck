@@ -28,4 +28,7 @@ log4j.appender.file.append=true
 log4j.appender.file.layout=org.apache.log4j.PatternLayout
 log4j.appender.file.layout.ConversionPattern=%d{ISO8601} [%t] %-5p %c - %m%n
 
-
+#
+# Disable h2database logging
+# workaround for issue https://github.com/rundeck/rundeck/issues/1175
+log4j.logger.h2database = off
