@@ -6,7 +6,7 @@ rdeck.base=${rdeck.base}
 rss.enabled=false
 grails.serverURL=http://${server.hostname}:${server.http.port}${server.web.context}
 dataSource.dbCreate = update
-dataSource.url = jdbc:h2:file:${server.datastore.path};MVCC=true;TRACE_LEVEL_FILE=4
+dataSource.url = jdbc:h2:file:${server.datastore.path};MVCC=true
 
 # Pre Auth mode settings
 rundeck.security.authorization.preauthenticated.enabled=false

@@ -149,8 +149,3 @@ log4j.appender.access.file=${rundeck.log.dir}${file.separator}rundeck.access.log
 log4j.appender.access.append=true
 log4j.appender.access.layout=org.apache.log4j.PatternLayout
 log4j.appender.access.layout.ConversionPattern=${logger.access.format}
-
-#
-# Disable h2database logging
-# workaround for issue https://github.com/rundeck/rundeck/issues/1175
-log4j.logger.h2database = off

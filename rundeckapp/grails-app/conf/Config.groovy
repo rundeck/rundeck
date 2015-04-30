@@ -153,7 +153,7 @@ log4j={
 //            debug 'org.rundeck.web.infosec'
             debug 'org.apache.commons.httpclient'
             info 'grails.app.services.rundeck.services.ProjectManagerService'
-            off 'h2database'
+            //off 'h2database'
             //info 'grails.app.utils.rundeck.codecs.SanitizedHTMLCodec'
         }
     }
