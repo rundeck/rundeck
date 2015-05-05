@@ -35,7 +35,8 @@ import java.util.logging.Logger;
 /**
  * Extends Jetty property file login module {@link PropertyFileLoginModule}, to ignore authentication via property file
  * login, but match the username with supplied Role lists from the property file.<br>
- *     Adds a "caseInsensitive" option, default true.  If true, then the username will be lowercased before lookup in the property file.
+ * Adds a "caseInsensitive" option, default true.  If true, then the username will be lowercased before lookup in the
+ * property file.
  */
 public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule {
     public static final Logger logger = Logger.getLogger(JettyRolePropertyFileLoginModule.class.getName());
@@ -44,14 +45,22 @@ public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule 
     boolean caseInsensitive = true;
 
     @Override
-    public void initialize(Subject subject, CallbackHandler callbackHandler, Map<String, ?>  shared, Map<String, ?> options) {
+    public void initialize(
+            Subject subject,
+            CallbackHandler callbackHandler,
+            Map<String, ?> shared,
+            Map<String, ?> options
+    )
+    {
         super.initialize(subject, callbackHandler, shared, options);
         if (!getSharedLoginCreds().isUseFirstPass() && !getSharedLoginCreds().isTryFirstPass()) {
-            throw new IllegalStateException("JettyRolePropertyFileLoginModule must have useFirstPass or tryFirstPass " +
-                    "set to true");
+            throw new IllegalStateException(
+                    "JettyRolePropertyFileLoginModule must have useFirstPass or tryFirstPass " +
+                    "set to true"
+            );
         }
         Object caseInsensitiveStr = options.get("caseInsensitive");
-        if(null!=caseInsensitiveStr) {
+        if (null != caseInsensitiveStr) {
             this.caseInsensitive = Boolean.parseBoolean(caseInsensitiveStr.toString());
         }
         module = new PropertyFileLoginModule();
@@ -60,7 +69,8 @@ public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule 
 
     protected Object[] getCallBackAuth() throws IOException, UnsupportedCallbackException, LoginException {
         if (getSharedLoginCreds().isHasSharedAuth()) {
-            return new Object[]{getSharedLoginCreds().getSharedUserName(), getSharedLoginCreds().getSharedUserPass().toString().toCharArray()};
+            return new Object[]{getSharedLoginCreds().getSharedUserName(),
+                    getSharedLoginCreds().getSharedUserPass().toString().toCharArray()};
         } else {
             return new Object[]{null, null};
         }
@@ -76,7 +86,7 @@ public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule 
     @Override
     protected List<Principal> createRolePrincipals() {
 
-        ArrayList<Principal> roles = new ArrayList<Principal>();
+        ArrayList<Principal> roles = new ArrayList<>();
         if (null != this.userInfo) {
             List roleNames = this.userInfo.getRoleNames();
             debug(String.format("role names: %s", roleNames));
@@ -99,9 +109,13 @@ public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule 
             return false;
         }
         try {
-            this.userInfo = module.getUserInfo(caseInsensitive?sharedUserName.toLowerCase():sharedUserName);
-            debug(String.format("JettyRolePropertyFileLoginModule: userInfo found for %s? %s", sharedUserName,
-                    this.userInfo != null));
+            this.userInfo = module.getUserInfo(caseInsensitive ? sharedUserName.toLowerCase() : sharedUserName);
+            debug(
+                    String.format(
+                            "JettyRolePropertyFileLoginModule: userInfo found for %s? %s", sharedUserName,
+                            this.userInfo != null
+                    )
+            );
         } catch (Exception e) {
             if (isDebug()) {
                 e.printStackTrace();
@@ -111,9 +125,9 @@ public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule 
     }
 
     /**
-     * Emit Debug message via System.err by default
+     * Emit Debug message via logger
      *
-     * @param message
+     * @param message message
      */
     protected void debug(String message) {
         logger.log(Level.INFO, message);
