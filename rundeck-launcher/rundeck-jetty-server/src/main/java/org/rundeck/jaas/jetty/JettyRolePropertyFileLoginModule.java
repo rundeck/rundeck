@@ -34,12 +34,14 @@ import java.util.logging.Logger;
 
 /**
  * Extends Jetty property file login module {@link PropertyFileLoginModule}, to ignore authentication via property file
- * login, but match the username with supplied Role lists from the property file.
+ * login, but match the username with supplied Role lists from the property file.<br>
+ *     Adds a "caseInsensitive" option, default true.  If true, then the username will be lowercased before lookup in the property file.
  */
 public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule {
     public static final Logger logger = Logger.getLogger(JettyRolePropertyFileLoginModule.class.getName());
     PropertyFileLoginModule module;
     UserInfo userInfo;
+    boolean caseInsensitive = true;
 
     @Override
     public void initialize(Subject subject, CallbackHandler callbackHandler, Map<String, ?>  shared, Map<String, ?> options) {
@@ -47,6 +49,10 @@ public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule 
         if (!getSharedLoginCreds().isUseFirstPass() && !getSharedLoginCreds().isTryFirstPass()) {
             throw new IllegalStateException("JettyRolePropertyFileLoginModule must have useFirstPass or tryFirstPass " +
                     "set to true");
+        }
+        Object caseInsensitiveStr = options.get("caseInsensitive");
+        if(null!=caseInsensitiveStr) {
+            this.caseInsensitive = Boolean.parseBoolean(caseInsensitiveStr.toString());
         }
         module = new PropertyFileLoginModule();
         module.initialize(subject, callbackHandler, shared, options);
@@ -93,7 +99,7 @@ public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule 
             return false;
         }
         try {
-            this.userInfo = module.getUserInfo(sharedUserName);
+            this.userInfo = module.getUserInfo(caseInsensitive?sharedUserName.toLowerCase():sharedUserName);
             debug(String.format("JettyRolePropertyFileLoginModule: userInfo found for %s? %s", sharedUserName,
                     this.userInfo != null));
         } catch (Exception e) {

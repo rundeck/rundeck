@@ -591,6 +591,7 @@ It then looks the username up in the Properties file, and applies any roles for 
 Configuration properties:
 
 * `file` - path to a Java Property formatted file in the format defined under [realm.properties](#PropertyFileLoginModule)
+* `caseInsensitive` - true/false. If true, usernames are converted to lowercase before being looked up in the property file, otherwise they are compared as entered. Default: true.
 
 Note that since the user password is not used for authentication, you can have a dummy value in the password field of the file, but *some value is required* in that position.
 
