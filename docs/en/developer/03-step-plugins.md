@@ -67,16 +67,18 @@ Implement the interface [StepPlugin](../javadoc/com/dtolabs/rundeck/plugins/step
 
 ~~~~~~ {.java}
 /**
-  * Execute the step, return true if the step succeeded.
+  * Execute the step.
   *
   * @param context       the plugin step context
   * @param configuration Any configuration property values not otherwise applied to the plugin
+  *
+  * @throws StepException if an error occurs, the failureReason should indicate the reason
   */
-public boolean executeStep(final PluginStepContext context, final Map<String, Object> configuration)
-     throws StepException;
+public void executeStep(final PluginStepContext context, final Map<String, Object> configuration)
+    throws StepException;
 ~~~~~~~~~
 
-Your implementation should return `true` if it was successful, and `false` otherwise.
+Your implementation should throw a [StepException](../javadoc/com/dtolabs/rundeck/core/execution/workflow/steps/node/NodeStepException.html) if an error occurs.
 
 ### WorkflowNodeStep Plugin
 
@@ -94,13 +96,13 @@ Implement the interface [NodeStepPlugin](../javadoc/com/dtolabs/rundeck/plugins/
  *
  * @throws NodeStepException if an error occurs
  */
-public boolean executeNodeStep(final PluginStepContext context,
+public void executeNodeStep(final PluginStepContext context,
                                final Map<String, Object> configuration,
                                final INodeEntry entry)
     throws NodeStepException;
 ~~~~~~
 
-Your implementation should return `true` if it was successful, and `false` otherwise.
+Your implementation should throw a [StepException](../javadoc/com/dtolabs/rundeck/core/execution/workflow/steps/node/NodeStepException.html) if an error occurs.
 
 ### RemoteScriptNodeStep Plugin
 
