@@ -49,7 +49,7 @@
             <g:if test="${loginhtml}">
             <div class="row">
                 <span class="col-sm-12">
-                    <g:sanitize>${loginhtml}</g:sanitize>
+                    ${enc(sanitize:loginhtml)}
                 </span>
             </div>
             </g:if>

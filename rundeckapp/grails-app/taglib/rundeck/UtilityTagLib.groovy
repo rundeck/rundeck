@@ -722,6 +722,8 @@ class UtilityTagLib{
             out << attrs.html.toString().encodeAsHTML()
         }else if(attrs.stripHtml){
             out << raw(attrs.stripHtml.toString().encodeAsStripHTML())
+        }else if(attrs.sanitize){
+            out << raw(attrs.sanitize.toString().encodeAsSanitizedHTML())
         }else if(null!=attrs.attr){
             out << raw(attrs.attr.toString().encodeAsHTMLAttribute())
         }else if(attrs.xml){
@@ -746,16 +748,7 @@ class UtilityTagLib{
             out << body().encodeAsHTML()
         }
     }
-    /**
-     * Sanitize an HTML string
-     */
-    def sanitize={attrs,body->
-        if(attrs.html){
-            out<<attrs.html.encodeAsSanitizedHTML()
-        }else{
-            out<<body().encodeAsSanitizedHTML()
-        }
-    }
+
     /**
      * Strip tags out of an HTML string and then encode the remaining text
      */
