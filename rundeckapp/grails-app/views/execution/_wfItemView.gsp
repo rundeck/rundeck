@@ -24,7 +24,7 @@
  --%>
             <g:set var="jobitem" value="${item.instanceOf(JobExec)|| (item instanceof java.util.Map && item.jobName)}"/>
             <g:set var="pluginitem" value="${item.instanceOf(PluginStep)}"/>
-            <span class="${edit?'autohilite autoedit':''} wfitem ${jobitem?'jobtype':'exectype'}" title="${edit?'Click to edit':''}">
+            <span class="${edit?'autohilite autoedit':''} wfitem ${jobitem?'jobtype':pluginitem?'plugintype':'exectype'}" title="${edit?'Click to edit':''}">
             <g:if test="${jobitem}">
 
                 %{--Display job icon and name--}%
