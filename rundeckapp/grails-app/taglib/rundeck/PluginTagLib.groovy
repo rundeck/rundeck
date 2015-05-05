@@ -9,13 +9,17 @@ class PluginTagLib {
 
     def display={attrs,body->
         def step=attrs.step
-        if(request.session?.user && request?.session?.subject){
-            def Framework framework = frameworkService.rundeckFramework
-            def description = frameworkService.getPluginDescriptionForItem(step)
-            if(description){
-                out << render(template: "/framework/renderPluginConfig", model: [type: step.type, values: step?.configuration, description: description] + attrs.subMap(['showPluginIcon','showNodeIcon','prefix', 'includeFormFields']))
-                return
-            }
+        def description = frameworkService.getPluginDescriptionForItem(step)
+        if(description){
+            out << render(
+                    template: "/framework/renderPluginConfig",
+                    model: [
+                            type: step.type,
+                            values: step?.configuration,
+                            description: description
+                    ] + attrs.subMap(['showPluginIcon','showNodeIcon','prefix', 'includeFormFields'])
+            )
+            return
         }
         out << "Plugin " + (step.nodeStep ? "Node" : "") + " Step (${step.type})"
     }
