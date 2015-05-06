@@ -1284,6 +1284,11 @@ public class AclTool extends BaseTool {
                         continue;
                     }
                     Map<String, Object> resourceMap = res.resourceMap;
+                    if(resourceMap.containsKey("tags") && resourceMap.get("tags").toString().contains(",")) {
+                        //split tags
+                        List<String> tags = Arrays.asList(resourceMap.get("tags").toString().split(","));
+                        resourceMap.put("tags", tags);
+                    }
                     line = line.substring(res.len);
 
                     res = parsePart("subject", line, " ", true);
