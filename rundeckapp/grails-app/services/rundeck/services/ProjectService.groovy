@@ -298,7 +298,7 @@ class ProjectService implements InitializingBean{
      * @param ident username or identify of requestor
      * @return token string to identify the new request
      */
-    def exportProjectToFileAsync(FrameworkProject project, Framework framework, String ident){
+    def exportProjectToFileAsync(IRundeckProject project, Framework framework, String ident){
         final def summary=new ArchiveRequestProgress()
         final String token = UUID.randomUUID().toString()
         final def request=new ArchiveRequest(summary:summary,token:token)
