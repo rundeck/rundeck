@@ -1343,7 +1343,12 @@ public class AclTool extends BaseTool {
     private Map<String, String> toStringMap(final Map<String, Object> resourceMap) {
         Map<String, String> r = new HashMap<>();
         for (String s : resourceMap.keySet()) {
-            r.put(s, resourceMap.get(s).toString());
+            Object value = resourceMap.get(s);
+            if(s.equals("tags") && value instanceof Collection) {
+                r.put(s, StringUtils.join((Collection) value, ","));
+            }else {
+                r.put(s, value.toString());
+            }
         }
         return r;
     }
