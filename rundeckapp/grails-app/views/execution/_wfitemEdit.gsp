@@ -524,6 +524,19 @@
         </div>
     </div>
 </g:elseif>
+<g:elseif test="${( newitemtype || item && item.instanceOf(PluginStep) ) && pluginNotFound}">
+    <div>
+        <div>
+            <span class="text-danger invalidProvider">Provider not found</span>
+            <span class="help-block text-danger">
+                The step plugin provider "${newitemtype?:item?.type}" is not installed, or could not be loaded.
+            </span>
+        </div>
+        <g:hiddenField name="pluginItem" value="true"/>
+        <g:hiddenField name="newitemnodestep" value="${item?!!item.nodeStep:newitemnodestep=='true'}"/>
+
+    </div>
+</g:elseif>
 <g:if test="${isErrorHandler}">
     <div class="presentation">
         <label>

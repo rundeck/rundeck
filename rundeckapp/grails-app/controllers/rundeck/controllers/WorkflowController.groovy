@@ -1,5 +1,6 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import rundeck.WorkflowStep
 import rundeck.Workflow
@@ -65,7 +66,12 @@ class WorkflowController extends ControllerBase {
         } else{
             newitemDescription = getPluginStepDescription(params.newitemnodestep == 'true', params['newitemtype'])
         }
-        return render(template: "/execution/wfitemEdit", model: [item: item, key:params.key, num: numi, scheduledExecutionId: params.scheduledExecutionId, newitemtype: params['newitemtype'], newitemDescription: newitemDescription, edit: true, isErrorHandler: isErrorHandler,newitemnodestep: params.newitemnodestep])
+        return render(template: "/execution/wfitemEdit",
+                      model: [item: item, key:params.key, num: numi, scheduledExecutionId: params.scheduledExecutionId,
+                              newitemtype: params['newitemtype'], newitemDescription: newitemDescription,
+                              pluginNotFound:null==newitemDescription,
+                              edit: true, isErrorHandler: isErrorHandler,newitemnodestep:
+                                      params.newitemnodestep])
     }
 
     /**
@@ -76,7 +82,11 @@ class WorkflowController extends ControllerBase {
      */
     private Description getPluginStepDescription(boolean isNodeStep, String type) {
         if (type && !(type in ['command', 'script', 'scriptfile', 'job'])) {
-            return isNodeStep ? frameworkService.getNodeStepPluginDescription(type) : frameworkService.getStepPluginDescription(type)
+            try{
+                return isNodeStep ? frameworkService.getNodeStepPluginDescription(type) : frameworkService.getStepPluginDescription(type)
+            }catch(MissingProviderException e){
+                log.warn("step provider not found: ${type}: ${e.message}",e)
+            }
         }
         return null
     }
