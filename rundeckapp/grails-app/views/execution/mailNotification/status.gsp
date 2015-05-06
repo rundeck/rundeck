@@ -226,6 +226,9 @@ div.progressContainer div.progressContent{
 
         <div class="presentation">
             &bull; <span class="result ${execfailed ? 'fail' : ''}"><g:message code="status.label.${execstate}"/></span>
+            <g:if test="${execution.customStatusString}">
+                "${execution.customStatusString}"
+            </g:if>
             <g:if test="${execution.dateCompleted && execution.dateStarted}">
             <span class="date">
                 after <g:timeDuration end="${execution?.dateCompleted}" start="${execution.dateStarted}"/>

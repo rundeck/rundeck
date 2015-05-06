@@ -4,16 +4,17 @@
         </span>
     </g:if>
     <g:else>
-        <span class="exec-status ${execution.status == 'true' ? 'succeed' : execution.cancelled?'warn': 'fail'}">
-            <g:if test="${execution.status == 'true'}">
-                Succeeded
+        <span class="exec-status ${execution.statusSucceeded() ? 'succeed' : execution.cancelled?'warn': execution.customStatusString?'other':'fail'}">
+
+            <g:if test="${execution.customStatusString}">
+                "${execution.customStatusString}"
             </g:if>
-            <g:elseif test="${execution.cancelled}">
-                Killed<g:if
-                    test="${execution.abortedby}"> by <g:username user="${execution.abortedby}"/></g:if>
-            </g:elseif>
             <g:else>
-                Failed
+                <g:message code="status.label.${execution.executionState}"/>
+                <g:if test="${execution.cancelled}">
+                    <g:if test="${execution.abortedby}"> by <g:username user="${execution.abortedby}"/></g:if>
+                </g:if>
             </g:else>
+
         </span>
     </g:else>
