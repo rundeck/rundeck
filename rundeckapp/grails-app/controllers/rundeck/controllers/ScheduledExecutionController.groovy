@@ -1234,8 +1234,6 @@ class ScheduledExecutionController  extends ControllerBase{
         )){
             return
         }
-        def user = (session?.user) ? session.user : "anonymous"
-        def rolelist = (session?.roles) ? session.roles : []
         log.debug("ScheduledExecutionController: create : params: " + params)
 
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
@@ -1249,7 +1247,13 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         def newScheduledExecution = new ScheduledExecution()
-        newScheduledExecution.properties = new java.util.HashMap(scheduledExecution.properties)
+
+        def origprops = [:]+scheduledExecution.properties
+        ScheduledExecution.transients.each{origprops.remove(it)}
+        newScheduledExecution.properties = origprops
+        if (newScheduledExecution.hasErrors()) {
+            newScheduledExecution.errors.allErrors.each{log.warn("job copy data binding: "+it)}
+        }
         newScheduledExecution.id=null
         newScheduledExecution.uuid=null
         newScheduledExecution.nextExecution=null
