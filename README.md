@@ -95,7 +95,7 @@ For Debian, download the .deb from the [downloads page](http://rundeck.org/downl
 Requirements
 =======
 
-Java 6/7 (openjdk, sun)
+Java 7 (openjdk, sun)
 
 [Pandoc](http://johnmacfarlane.net/pandoc/) (documentation build only)
 
