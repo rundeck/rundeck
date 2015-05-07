@@ -58,10 +58,16 @@ class BaseReport {
 
     static buildFromMap(BaseReport obj, Map data) {
         data.each { k, v ->
-            if ((k == 'status' || k == 'actionType') && v == 'timedout') {
-                //XXX: use 'timeout' internally for timedout status, due to previous varchar(7) length limitations on
-                // the field :-Σ
-                v='timeout'
+            if ((k == 'status' || k == 'actionType')) {
+                if (v == 'timedout') {
+                    //XXX: use 'timeout' internally for timedout status, due to previous varchar(7) length limitations on
+                    // the field :-Σ
+                    v = 'timeout'
+                }else if (v == 'succeeded') {
+                    v='succeed'
+                }else if (v.toString().length()>7) {
+                    v='other'
+                }
             }
             obj[k] = v
         }
