@@ -1,5 +1,4 @@
 package rundeck.services
-
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
@@ -14,8 +13,6 @@ import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
 import rundeck.Project
-import rundeck.services.FrameworkService
-import rundeck.services.ProjectManagerService
 import spock.lang.Specification
 
 /**
@@ -41,7 +38,7 @@ class ProjectManagerServiceSpec extends Specification {
     void "exists project does exist"(){
         setup:
         def p = new Project(name:'test1')
-        p.save()
+        p.save(flush: true)
 
         when:
         def result=service.existsFrameworkProject('test1')
@@ -60,7 +57,7 @@ class ProjectManagerServiceSpec extends Specification {
     void "get project exists no props"(){
         setup:
         def p = new Project(name:'test1')
-        p.save()
+        p.save(flush: true)
         service.storage=Stub(StorageTree){
 
         }
@@ -87,7 +84,7 @@ class ProjectManagerServiceSpec extends Specification {
     void "get project exists with props"(){
         setup:
         def p = new Project(name:'test1')
-        p.save()
+        p.save(flush: true)
         def modDate= new Date(123)
 
         service.storage=Stub(StorageTree){
@@ -125,7 +122,7 @@ class ProjectManagerServiceSpec extends Specification {
     void "get project exists invalid props content"(){
         setup:
         def p = new Project(name:'test1')
-        p.save()
+        p.save(flush: true)
         def modDate= new Date(123)
 
         service.storage=Stub(StorageTree){
@@ -276,7 +273,7 @@ class ProjectManagerServiceSpec extends Specification {
     void "remove project does exist"(){
         setup:
         def p = new Project(name:'test1')
-        p.save()
+        p.save(flush: true)
 
         service.storage=Mock(StorageTree){
             1*hasResource({it.path=="projects/test1"}) >> false

@@ -77,7 +77,9 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
     @Override
     boolean existsFrameworkProject(final String project) {
-        return Project.findByName(project) ? true : false
+        Project.withNewSession{
+            Project.findByName(project) ? true : false
+        }
     }
 
     @Override
@@ -491,11 +493,13 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
 
     boolean needsReload(IRundeckProject project) {
-        Project rdproject = Project.findByName(project.name)
-        boolean needsReload = rdproject == null ||
-                project.configLastModifiedTime == null ||
-                getProjectConfigLastModified(project.name) > project.configLastModifiedTime
-        needsReload
+        Project.withNewSession {
+            Project rdproject = Project.findByName(project.name)
+            boolean needsReload = rdproject == null ||
+                    project.configLastModifiedTime == null ||
+                    getProjectConfigLastModified(project.name) > project.configLastModifiedTime
+            needsReload
+        }
     }
 
     /**
