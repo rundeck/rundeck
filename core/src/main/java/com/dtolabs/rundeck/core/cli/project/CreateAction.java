@@ -42,21 +42,11 @@ public class CreateAction extends BaseAction {
      * @param main logger
      * @param framework framework
      * @param cli cli
-     */
-    public CreateAction(final CLIToolLogger main, final IPropertyLookup framework, final CommandLine cli) {
-        this(main, framework, parseBaseActionArgs(cli), parseCreateActionArgs(cli));
-    }
-    /**
-     * Create a new CreateAction, and parse the args from the CommandLine, using {@link BaseAction#parseBaseActionArgs(org.apache.commons.cli.CommandLine)} and
-     * {@link #parseCreateActionArgs(org.apache.commons.cli.CommandLine)} to create the argument specifiers.
-     * @param main logger
-     * @param framework framework
-     * @param cli cli
      * @param properties properties
      */
     public CreateAction(final CLIToolLogger main, final IPropertyLookup framework, final CommandLine cli,
-                        final Properties properties) {
-        this(main, framework, parseBaseActionArgs(cli), parseCreateActionArgs(cli), properties);
+                        final Properties properties, final CentralDispatcher dispatcher) {
+        this(main, framework, parseBaseActionArgs(cli), parseCreateActionArgs(cli), properties, dispatcher);
     }
 
     /**
@@ -71,24 +61,12 @@ public class CreateAction extends BaseAction {
                         final IPropertyLookup framework,
                         final BaseActionArgs baseArgs,
                         final CreateActionArgs createArgs,
-                        final Properties projectProperties) {
-        super(main, framework, baseArgs);
+                        final Properties projectProperties,
+                        final CentralDispatcher dispatcher) {
+        super(main, framework, baseArgs,dispatcher);
         properties = projectProperties;
+        setCentralDispatcher(dispatcher);
         initArgs(createArgs);
-
-    }
-    /**
-     * Create a new CreateAction
-     * @param main logger
-     * @param framework framework object
-     * @param baseArgs base args
-     *                 @param createArgs create args
-     */
-    public CreateAction(final CLIToolLogger main,
-                        final IPropertyLookup framework,
-                        final BaseActionArgs baseArgs,
-                        final CreateActionArgs createArgs) {
-        this(main, framework, baseArgs, createArgs, null);
     }
 
     /**

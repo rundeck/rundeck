@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.core.cli.project;
 
 import com.dtolabs.rundeck.core.cli.CLIToolLogger;
+import com.dtolabs.rundeck.core.dispatcher.CentralDispatcher;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import org.apache.commons.cli.CommandLine;
 import org.apache.log4j.Category;
@@ -37,8 +38,8 @@ public class RemoveAction extends BaseAction {
      * @param framework framework
      * @param cli cli
      */
-    public RemoveAction(final CLIToolLogger main, final IPropertyLookup framework, final CommandLine cli) {
-        this(main, framework, BaseAction.parseBaseActionArgs(cli));
+    public RemoveAction(final CLIToolLogger main, final IPropertyLookup framework, final CommandLine cli, final CentralDispatcher dispatcher) {
+        this(main, framework, BaseAction.parseBaseActionArgs(cli), dispatcher);
     }
 
     /**
@@ -50,8 +51,9 @@ public class RemoveAction extends BaseAction {
      */
     public RemoveAction(final CLIToolLogger main,
                         final IPropertyLookup framework,
-                        final BaseActionArgs baseArgs) {
-        super(main, framework, baseArgs);
+                        final BaseActionArgs baseArgs,
+                        final CentralDispatcher dispatcher) {
+        super(main, framework, baseArgs,dispatcher);
         initArgs();
     }
 

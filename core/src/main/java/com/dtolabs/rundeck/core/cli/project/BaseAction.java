@@ -16,17 +16,14 @@
 
 package com.dtolabs.rundeck.core.cli.project;
 
-import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.Action;
 import com.dtolabs.rundeck.core.cli.CLIToolLogger;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.FrameworkResource;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcher;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import org.apache.commons.cli.CommandLine;
 
-import java.io.File;
 import java.util.List;
 
 /**
@@ -41,11 +38,8 @@ public class BaseAction implements Action {
     private CentralDispatcher centralDispatcher;
     final protected IPropertyLookup frameworkProperties;
 
-    public BaseAction(final CLIToolLogger main, final IPropertyLookup framework, final CommandLine cli) {
-        this(main, framework, parseBaseActionArgs(cli));
-    }
 
-    public BaseAction(final CLIToolLogger main, final IPropertyLookup frameworkProperties, final BaseActionArgs args) {
+    public BaseAction(final CLIToolLogger main, final IPropertyLookup frameworkProperties, final BaseActionArgs args, final CentralDispatcher dispatcher) {
         if (null == main) {
             throw new NullPointerException("main parameter was null");
         }
@@ -55,7 +49,8 @@ public class BaseAction implements Action {
         }
         this.main = main;
         this.frameworkProperties = frameworkProperties;
-        initArgs(args);
+        this.centralDispatcher=dispatcher;
+        initArgs(args, true);
     }
 
     public boolean isVerbose() {
@@ -130,24 +125,20 @@ public class BaseAction implements Action {
     }
 
 
-    private void initArgs(BaseActionArgs args) {
+    private void initArgs(BaseActionArgs args, final boolean allowDefaultProject) {
         if (null != args.getProject()) {
             project = args.getProject();
-        } else if (null == args.getProject()) {
-            try {
-                project = getSingleProjectName();
-                main.log("defaulting to project: " + project);
-            } catch (CentralDispatcherException e) {
-                e.printStackTrace();
-            }
-        }
-        if(null==project){
-            throw new InvalidArgumentsException("-p option not specified");
         }
         verbose = args.isVerbose();
     }
 
+    void validate(){
+        if(null==project){
+            throw new InvalidArgumentsException("-p option not specified");
+        }
+    }
 
+    /**
 
     /**
      * Execute the action.  Currently checks if installation is valid.
@@ -155,6 +146,7 @@ public class BaseAction implements Action {
      * @throws Throwable any throwable
      */
     public void exec() throws Throwable {
+        validate();
     }
 
 

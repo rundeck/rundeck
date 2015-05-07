@@ -259,13 +259,9 @@ public class ProjectTool implements ActionMaker, CLITool {
     public Action createAction(final String actionName) {
         try {
             if (ACTION_CREATE.equals(actionName)) {
-                CreateAction createAction = new CreateAction(this, frameworkProperties, cli, extraProperties);
-                createAction.setCentralDispatcher(dispatcher);
-                return createAction;
+                return new CreateAction(this, frameworkProperties, cli, extraProperties,dispatcher);
             } else if (ACTION_REMOVE.equals(actionName)) {
-                RemoveAction removeAction = new RemoveAction(this, frameworkProperties, cli);
-                removeAction.setCentralDispatcher(dispatcher);
-                return removeAction;
+                return new RemoveAction(this, frameworkProperties, cli,dispatcher);
             } else {
                 throw new IllegalArgumentException("unknown action name: " + actionName);
             }

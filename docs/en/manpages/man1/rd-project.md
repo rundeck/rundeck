@@ -32,7 +32,7 @@ The command will create the necessary directory structure and configuration file
 
 `-p`
 
-:    The project name
+:    The project name, required.
 
 `--property=value`
 

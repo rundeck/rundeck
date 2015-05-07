@@ -28,6 +28,8 @@ import junit.framework.TestSuite;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -115,6 +117,42 @@ public class TestProjectTool extends AbstractBaseTest {
         create.exec();
         assertTrue(createCalled[0]);
 
+    }
+    public void testCreateActionsNoArgs() throws Throwable {
+        final ProjectTool setup = createProjectTool();
+        final String[] args = new String[]{
+
+        };
+        setup.parseArgs(args);
+        Action create = null;
+        setup.dispatcher=new FailDispatcher();
+        create = setup.createAction(ProjectTool.ACTION_CREATE);
+
+        assertTrue(create instanceof CreateAction);
+        try {
+            create.exec();
+            fail("Expected exception");
+        } catch (InvalidArgumentsException throwable) {
+            assertEquals("-p option not specified", throwable.getMessage());
+        }
+    }
+    public void testRemoveActionsNoArgs() throws Throwable {
+        final ProjectTool setup = createProjectTool();
+        final String[] args = new String[]{
+
+        };
+        setup.parseArgs(args);
+        Action create = null;
+        setup.dispatcher=new FailDispatcher();
+        create = setup.createAction(ProjectTool.ACTION_REMOVE);
+
+        assertTrue(create instanceof RemoveAction);
+        try {
+            create.exec();
+            fail("Expected exception");
+        } catch (RuntimeException throwable) {
+            assertEquals("unimplemented: RemoveAction.exec", throwable.getMessage());
+        }
     }
 
     public void testCreateActionProperties() throws Throwable {
