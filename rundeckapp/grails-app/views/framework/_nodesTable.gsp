@@ -29,7 +29,6 @@
                     data-node-table-id="nodesTable"
                     data-node-paging-id="nodesPaging"
                     data-bind="click: updateNodesNextPage, visible: hasMultiplePages"
-                    %{--onclick="_loadNextNodesPageTable(${max},${total},'nodesTable','nodesPaging');"--}%
                     title="Load next ${enc(attr:max)} nodes...">Next <g:enc>${max}</g:enc>&hellip;</span>
             </g:if>
             <span
@@ -37,7 +36,6 @@
                     data-node-table-id="nodesTable"
                     data-node-paging-id="nodesPaging"
                     data-bind="click: updateNodesRemainingPages"
-                    %{--onclick="_loadNextNodesPageTable(${max},-1,'nodesTable','nodesPaging');"--}%
                     title="Load all remaining nodes...">Load <span data-bind="text: pageRemaining"></span> remaining&hellip;</span>
         </div>
         </div>
