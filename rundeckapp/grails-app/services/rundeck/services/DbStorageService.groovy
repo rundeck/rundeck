@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.storage.NamespacedStorage
+import grails.transaction.Transactional
 import org.rundeck.storage.api.HasInputStream
 import org.rundeck.storage.api.Path
 import org.rundeck.storage.api.PathUtil
@@ -88,6 +89,7 @@ class DbStorageService implements NamespacedStorage{
     }
 
     @Override
+    @Transactional(readOnly = true)
     boolean hasResource(String ns,Path path) {
         findResource(ns,path) !=null
     }
@@ -125,6 +127,7 @@ class DbStorageService implements NamespacedStorage{
     }
 
     @Override
+    @Transactional(readOnly = true)
     Resource<ResourceMeta> getPath(String ns,Path path) {
         Storage found = findResource(ns,path)
         if(found){
@@ -143,6 +146,7 @@ class DbStorageService implements NamespacedStorage{
     }
 
     @Override
+    @Transactional(readOnly = true)
     Resource<ResourceMeta> getResource(String ns,Path path) {
         Storage found = findResource(ns,path)
         if (!found) {
@@ -154,8 +158,11 @@ class DbStorageService implements NamespacedStorage{
     protected Storage findResource(String ns, Path path) {
         def dir, name
         (dir, name) = splitPath(path)
-        def found = Storage.findByNamespaceAndDirAndName(ns?:null,dir, name)
-        found
+//        Storage.withNewSession {
+
+            def found = Storage.findByNamespaceAndDirAndName(ns?:null,dir, name)
+            found
+//        }
     }
 
     Resource<ResourceMeta> getResource(String ns,String path) {
