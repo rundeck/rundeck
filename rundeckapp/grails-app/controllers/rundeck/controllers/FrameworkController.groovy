@@ -129,9 +129,8 @@ class FrameworkController extends ControllerBase {
 //            summaryOnly=true
             //filter all and summarize
         }
-        if (query && !query.project && params.project) {
-            query.project = params.project
-        }
+        //in case named filter stored from another project
+        query.project = params.project
         def sortkeys = filterSummaryKeys(query)
         def model = [query: query, params: params, showFilter:true,filter:query.filter,colkeys:sortkeys]
 
@@ -220,9 +219,7 @@ class FrameworkController extends ControllerBase {
             usedFilter = null
         }
 
-        if (query && !query.project && params.project) {
-            query.project = params.project
-        }
+        query.project = params.project
         def result
         if(!query.nodeFilterIsEmpty()){
             params.requireRunAuth='true'
@@ -488,9 +485,8 @@ class FrameworkController extends ControllerBase {
                 query.nodeIncludeName = framework.getFrameworkNodeName()
             }
         }
-        if (query && !query.project && params.project) {
-            query.project = params.project
-        }
+        //in case named filter stored from another project
+        query.project = params.project
         def result = nodesdata(query)
         result.colkeys= filterSummaryKeys(query)
         if (usedFilter) {
