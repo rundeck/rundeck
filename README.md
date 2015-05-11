@@ -12,7 +12,7 @@ See the [Release Notes](RELEASE.md) for the latest version information.
 To Build:
 =====
 
-Primary build is supported with either gradle or maven2+. 
+Primary build is supported with gradle. More info in the [wiki](https://github.com/rundeck/rundeck/wiki/Building-and-Testing).
 
 Gradle Build
 =====
@@ -24,19 +24,8 @@ Artifacts:
 * `rundeckapp/target/rundeck-X.Y.war`
 * `rundeck-launcher/launcher/build/libs/rundeck-launcher-X.Y.jar`
 
-Maven2 Build
-======
+Note: some pom.xml files exist, but the Maven build is not currently working.
 
-    MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=192m" mvn clean package
-
-Artifacts: 
-
-* `rundeckapp/target/rundeck-X.Y.war`
-* `rundeck-launcher/launcher/target/rundeck-launcher-X.Y.jar`
-
-Notes: 
-
-* the underlying Grails build requires the MaxPermSize to be increased in the MAVEN_OPTS as shown above.
 
 Other builds
 ======
