@@ -167,6 +167,9 @@
 
     </script>
 
+    <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
+        <asset:javascript src="nodeFiltersKOTest.js"/>
+    </g:if>
     <g:embedJSON id="filterParamsJSON"
                  data="${[filterName: params.filterName, filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
 </head>
