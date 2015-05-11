@@ -108,7 +108,7 @@ Do you have changes to contribute? Please see the [Development](https://github.c
 License
 ======
 
-Copyright 2014 SimplifyOps
+Copyright 2015 SimplifyOps
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
