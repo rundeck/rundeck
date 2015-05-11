@@ -33,8 +33,8 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.project=ko.observable(data.project);
     self.page=ko.observable(data.page?data.page:0);
     self.pagingMax=ko.observable(data.pagingMax?data.pagingMax:20);
-    self.paging=ko.observable(data.paging != null ? (data.paging ? true : false) : false)
-    self.maxShown=ko.observable(data.maxShown)
+    self.paging=ko.observable(data.paging != null ? (data.paging ? true : false) : false);
+    self.maxShown=ko.observable(data.maxShown);
     self.elem=ko.observable(data.elem);
     self.tableElem=ko.observable(data.tableElem?data.tableElem:'nodesTable');
     self.pagingElem=ko.observable(data.pagingElem);
