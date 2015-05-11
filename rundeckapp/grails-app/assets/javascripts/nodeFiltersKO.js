@@ -47,7 +47,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         if(self.total()<=0 || self.page()<0){
             return 0;
         }
-        return self.total()-(self.page()+1)*self.pagingMax();
+        return self.allcount()-(self.page()+1)*self.pagingMax();
     });
     self.hasMoreNodes=ko.computed(function(){
         return self.pageRemaining()>0;
