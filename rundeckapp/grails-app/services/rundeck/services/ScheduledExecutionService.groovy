@@ -1913,7 +1913,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         
         if(params.orchestrator){
             def result = _updateOrchestratorData(params, scheduledExecution)
-            scheduledExecution.orchestrator.save(flush: true)
+            scheduledExecution.orchestrator.save()
             if (result.failed) {
                 failed = result.failed
             }
@@ -2384,7 +2384,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         parseOrchestratorFromParams(params)
         if(params.orchestrator){
             def result = _updateOrchestratorData(params, scheduledExecution)
-            scheduledExecution.orchestrator.save(flush: true)
+            scheduledExecution.orchestrator.save()
             if (result.failed) {
                 failed = result.failed
             }
