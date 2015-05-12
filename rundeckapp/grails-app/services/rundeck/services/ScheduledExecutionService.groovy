@@ -1348,6 +1348,14 @@ class ScheduledExecutionService implements ApplicationContextAware{
             failed = true
             scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message')
         }
+        if(scheduledExecution.workflow) {
+            if(params.workflow && null!=params.workflow.keepgoing) {
+                scheduledExecution.workflow.keepgoing = params.workflow.keepgoing in ['true', true]
+            }
+            if(params.workflow && null!=params.workflow.strategy){
+                scheduledExecution.workflow.strategy = params.workflow.strategy
+            }
+        }
 
         //validate error handler types
         if (!validateWorkflow(scheduledExecution.workflow,scheduledExecution)) {

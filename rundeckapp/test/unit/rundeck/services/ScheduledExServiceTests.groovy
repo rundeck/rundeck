@@ -2124,7 +2124,7 @@ class ScheduledExServiceTests {
 
             def params = [id: se.id.toString(), jobName: 'monkey2', project: 'testProject2', description: 'blah',
                     _workflow_data: true,
-                    workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
+                    workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
             ]
             def results = sec._doupdate(params, 'test', 'test', null, null)
             def succeeded = results.success
@@ -2767,7 +2767,7 @@ class ScheduledExServiceTests {
         sec.messageSource = ms.createMock()
 
         def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
-                      workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
+                      workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
                       _workflow_data: true,
                       scheduled: true,
                       options: ["options[0]": [name: 'test', required:true, enforced: false,defaultValue:'abc' ]],
@@ -2995,7 +2995,7 @@ class ScheduledExServiceTests {
         qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
         sec.quartzScheduler = qtzControl.createMock()
         def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
-                workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
+                workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
                 _workflow_data: true,
                 scheduled: true,
                 crontabString: crontabString, useCrontabString: 'true']
@@ -3873,7 +3873,7 @@ class ScheduledExServiceTests {
 //            sec.scheduledExecutionService = sesControl.createMock()
 
             def params = [id: se.id.toString(), jobName: 'monkey2', project: 'testProject2', description: 'blah',
-                    workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocLocalString: 'test local']],
+                    workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocLocalString: 'test local']],
                     _workflow_data: true,
             ]
             def results = sec._doupdate(params, 'test', 'test', null, null)
@@ -4051,7 +4051,7 @@ class ScheduledExServiceTests {
 //            sec.scheduledExecutionService = sesControl.createMock()
 
         def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah2',
-                workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
+                workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
                 _workflow_data: true,
                 notified: 'true',
                 (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true',
@@ -4194,7 +4194,8 @@ class ScheduledExServiceTests {
         sec.frameworkService = fwkControl.createMock()
 
         def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah2',
-                workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
+                workflow: [threadcount: 1, keepgoing: true, strategy: 'node-first',
+                           "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
                 _workflow_data: true,
         ] + inputParams
         def results = sec._doupdate(params, 'test', 'test', null, null)
@@ -4265,7 +4266,7 @@ class ScheduledExServiceTests {
 //            sec.scheduledExecutionService = sesControl.createMock()
 
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah2',
-                    workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
+                    workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
                     _workflow_data: true,
                     notified: 'true',
                     (ScheduledExecutionController.NOTIFY_ONSUCCESS_URL): 'true', (ScheduledExecutionController.NOTIFY_SUCCESS_URL): 'http://example.com',
@@ -4354,7 +4355,7 @@ class ScheduledExServiceTests {
 //            sec.scheduledExecutionService = sesControl.createMock()
 
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah2',
-                    workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
+                    workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
                     _workflow_data: true,
                     notified: 'false',
                     (ScheduledExecutionController.NOTIFY_ONSUCCESS_URL): 'true', (ScheduledExecutionController.NOTIFY_SUCCESS_URL): 'http://example.com',
@@ -4431,7 +4432,7 @@ class ScheduledExServiceTests {
 //            sec.scheduledExecutionService = sesControl.createMock()
 
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah2',
-                    workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
+                    workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
                     _workflow_data: true,
                     notified: 'true',
                     (ScheduledExecutionController.NOTIFY_SUCCESS_URL): 'http://example.com',
@@ -4507,7 +4508,7 @@ class ScheduledExServiceTests {
 //            sec.scheduledExecutionService = sesControl.createMock()
 
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
-                    workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
+                    workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
                     _workflow_data: true,
                     notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'spaghetti@nowhere.com'], [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'milk@store.com']]
             ]
@@ -4592,7 +4593,7 @@ class ScheduledExServiceTests {
 //            sec.scheduledExecutionService = sesControl.createMock()
 
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
-                    workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
+                    workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
                     _workflow_data: true,
                     notified: 'true',
                     (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true', (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'spaghetti@nowhere.com',
@@ -4889,7 +4890,6 @@ class ScheduledExServiceTests {
 
     public void testDoUpdateWorkflow() {
         def sec = new ScheduledExecutionService()
-        if (true) {//test update workflow 
 
             def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah3')
             def workflow = new Workflow(threadcount: 1, keepgoing: true)
@@ -4918,7 +4918,7 @@ class ScheduledExServiceTests {
 //            sesControl.demand.getByIDorUUID {id -> return se }
 //            sec.scheduledExecutionService = sesControl.createMock()
 
-            def params = [id: se.id.toString(), description: 'changed description', workflow: ['commands[0]': [adhocExecution: true, adhocRemoteString: 'test command2',]], '_workflow_data': true]
+            def params = [id: se.id.toString(), description: 'changed description', workflow: ['commands[0]': [adhocExecution: true, adhocRemoteString: 'test command2',], strategy:'node-first'], '_workflow_data': true]
             def results = sec._doupdate(params, 'test', 'test', null, null)
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
@@ -4956,7 +4956,225 @@ class ScheduledExServiceTests {
             assertLength(1, execution.workflow.commands as Object[])
             def CommandExec cexec = execution.workflow.commands[0]
             assertEquals 'test command2', cexec.adhocRemoteString
-        }
+    }
+    public void testDoUpdateWorkflowDataStrategy() {
+        def sec = new ScheduledExecutionService()
+
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah3')
+            def workflow = new Workflow(threadcount: 1, keepgoing: true,strategy: 'node-first')
+            def wfitem = new CommandExec(adhocExecution: true, adhocRemoteString: 'test command',)
+            workflow.addToCommands(wfitem)
+            se.workflow = workflow
+            se.save()
+
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+            fwkControl.demand.existsFrameworkProject { project, framework ->
+                return true
+            }
+            fwkControl.demand.getCommand { project, type, command, framework ->
+                return null
+            }
+            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
+            fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+            sec.frameworkService = fwkControl.createMock()
+
+//            def sesControl = mockFor(ScheduledExecutionService, true)
+//            sesControl.demand.getByIDorUUID {id -> return se }
+//            sec.scheduledExecutionService = sesControl.createMock()
+
+            def params = [id: se.id.toString(),
+                          workflow: [
+                                  'commands[0]': [adhocExecution: true, adhocRemoteString: 'test command2',],
+                                  strategy: 'step-first',
+                                  keepgoing: 'false'
+                          ],
+                          '_workflow_data': true]
+            def results = sec._doupdate(params, 'test', 'test', null, null)
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            if (scheduledExecution.workflow) {
+                if (scheduledExecution.workflow.errors.hasErrors()) {
+                    scheduledExecution.workflow.errors.allErrors.each {
+                        System.err.println(it);
+                    }
+                }
+                if (scheduledExecution.workflow.commands) {
+                    scheduledExecution.workflow.commands.each { cexec ->
+                        if (cexec.errors.hasErrors()) {
+                            cexec.errors.allErrors.each {
+                                System.err.println(it);
+                            }
+                        }
+                    }
+                }
+            }
+
+            assertTrue succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertFalse(execution.errors.hasErrors())
+            assertNotNull(execution.workflow)
+            assertEquals 'step-first', execution.workflow.strategy
+            assertEquals false, execution.workflow.keepgoing
+    }
+    public void testDoUpdateWorkflowSessionStrategy() {
+        def sec = new ScheduledExecutionService()
+
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah3')
+            def workflow = new Workflow(threadcount: 1, keepgoing: true,strategy: 'node-first')
+            def wfitem = new CommandExec(adhocExecution: true, adhocRemoteString: 'test command',)
+            workflow.addToCommands(wfitem)
+            se.workflow = workflow
+            se.save()
+
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+            fwkControl.demand.existsFrameworkProject { project, framework ->
+                return true
+            }
+            fwkControl.demand.getCommand { project, type, command, framework ->
+                return null
+            }
+            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
+            fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+            sec.frameworkService = fwkControl.createMock()
+
+//            def sesControl = mockFor(ScheduledExecutionService, true)
+//            sesControl.demand.getByIDorUUID {id -> return se }
+//            sec.scheduledExecutionService = sesControl.createMock()
+            def sessionWf = new Workflow(workflow)
+            def params = [id: se.id.toString(),
+                    '_sessionwf':true,
+                    '_sessionEditWFObject':sessionWf,
+                          workflow: [
+                                  strategy: 'step-first',
+                                  keepgoing: 'false'
+                          ]
+            ]
+            def results = sec._doupdate(params, 'test', 'test', null, null)
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            if (scheduledExecution.workflow) {
+                if (scheduledExecution.workflow.errors.hasErrors()) {
+                    scheduledExecution.workflow.errors.allErrors.each {
+                        System.err.println(it);
+                    }
+                }
+                if (scheduledExecution.workflow.commands) {
+                    scheduledExecution.workflow.commands.each { cexec ->
+                        if (cexec.errors.hasErrors()) {
+                            cexec.errors.allErrors.each {
+                                System.err.println(it);
+                            }
+                        }
+                    }
+                }
+            }
+
+            assertTrue succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertFalse(execution.errors.hasErrors())
+            assertNotNull(execution.workflow)
+            assertEquals 'step-first', execution.workflow.strategy
+            assertEquals false, execution.workflow.keepgoing
+    }
+    public void testDoUpdateWorkflowJustStrategy() {
+        def sec = new ScheduledExecutionService()
+
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah3')
+            def workflow = new Workflow(threadcount: 1, keepgoing: true,strategy: 'node-first')
+            def wfitem = new CommandExec(adhocExecution: true, adhocRemoteString: 'test command',)
+            workflow.addToCommands(wfitem)
+            se.workflow = workflow
+            se.save()
+
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+            fwkControl.demand.existsFrameworkProject { project, framework ->
+                return true
+            }
+            fwkControl.demand.getCommand { project, type, command, framework ->
+                return null
+            }
+            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
+            fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+            sec.frameworkService = fwkControl.createMock()
+
+//            def sesControl = mockFor(ScheduledExecutionService, true)
+//            sesControl.demand.getByIDorUUID {id -> return se }
+//            sec.scheduledExecutionService = sesControl.createMock()
+            def sessionWf = new Workflow(workflow)
+            def params = [id: se.id.toString(),
+                          workflow: [
+                                  strategy: 'step-first',
+                                  keepgoing: 'false'
+                          ]
+            ]
+            def results = sec._doupdate(params, 'test', 'test', null, null)
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            if (scheduledExecution.workflow) {
+                if (scheduledExecution.workflow.errors.hasErrors()) {
+                    scheduledExecution.workflow.errors.allErrors.each {
+                        System.err.println(it);
+                    }
+                }
+                if (scheduledExecution.workflow.commands) {
+                    scheduledExecution.workflow.commands.each { cexec ->
+                        if (cexec.errors.hasErrors()) {
+                            cexec.errors.allErrors.each {
+                                System.err.println(it);
+                            }
+                        }
+                    }
+                }
+            }
+
+            assertTrue succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertFalse(execution.errors.hasErrors())
+            assertNotNull(execution.workflow)
+            assertEquals 'step-first', execution.workflow.strategy
+            assertEquals false, execution.workflow.keepgoing
     }
 
     public void testDoUpdateNodeThreadcountShouldNotBeBlank() {
@@ -4993,7 +5211,7 @@ class ScheduledExServiceTests {
             def params = [id: se.id.toString(), description: 'changed description',
                     //set nodeThreadcount to blank
                     nodeThreadcount: '',
-                    workflow: ['commands[0]': [adhocExecution: true, adhocRemoteString: 'test command2',]], '_workflow_data': true]
+                    workflow: [ strategy:'node-first','commands[0]': [adhocExecution: true, adhocRemoteString: 'test command2',]], '_workflow_data': true]
             def results = sec._doupdate(params, 'test', 'test', null, null)
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
@@ -5191,7 +5409,7 @@ class ScheduledExServiceTests {
 //            sec.scheduledExecutionService = sesControl.createMock()
 
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah2',
-                    workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
+                    workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
                     _workflow_data: true,
             ]
             def results = sec._doupdate(params, 'test', 'test', null, null)
@@ -5394,7 +5612,7 @@ class ScheduledExServiceTests {
 //            sec.scheduledExecutionService = sesControl.createMock()
 
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah2',
-                    workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
+                    workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
                     _workflow_data: true,
                     options: ["options[0]": [name: 'test1', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"],
                             "options[1]": [name: 'test2', defaultValue: 'd', enforced: true, values: ['a', 'b', 'c', 'd']]]
