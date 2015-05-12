@@ -117,6 +117,7 @@ log4j={
 //            info 'org.rundeck.web.requests'
 //            debug 'org.rundeck.web.infosec'
             debug 'org.apache.commons.httpclient'
+            off 'h2database'
         }
     }
 }
