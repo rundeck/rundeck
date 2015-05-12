@@ -80,7 +80,7 @@ fi
 # Export the chosen id
 ###
 
-echo "TEST: export single job in jobs.xml format"
+echo "TEST: export single job in default format (xml)"
 
 
 # now submit req
@@ -118,12 +118,89 @@ else
     fail "Wrong job count: $itemcount, or wrong found id: $foundjobid"
 fi
 
+echo "TEST: export single job in jobs.xml format (format param)"
+
+
+# now submit req
+runurl="${APIURL}/job/${jobid}"
+params="format=xml"
+
+# get listing
+docurl  ${runurl}?${params} > $DIR/curl.out
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: failed query request"
+    exit 2
+fi
+
+#test curl.out for valid xml
+$XMLSTARLET val -w $DIR/curl.out > /dev/null 2>&1
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: Response was not valid xml"
+    exit 2
+fi
+
+#test for expected /joblist element
+$XMLSTARLET el $DIR/curl.out | grep -e '^joblist' -q
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: Response did not contain expected result"
+    exit 2
+fi
+
+# job export doesn't wrap result in common result wrapper
+#Check projects list
+itemcount=$($XMLSTARLET sel -T -t -m "/joblist" -v "count(job)" $DIR/curl.out)
+foundjobid=$($XMLSTARLET sel -T -t -m "/joblist" -v "job/uuid" $DIR/curl.out)
+if [ "1" == "$itemcount" -a "$jobid" == "$foundjobid" ] ; then
+    echo "OK"
+else
+    fail "Wrong job count: $itemcount, or wrong found id: $foundjobid"
+fi
+
+
+echo "TEST: export single job in jobs.xml format (Accept header)"
+
+
+# now submit req
+runurl="${APIURL}/job/${jobid}"
+params=""
+
+# get listing
+docurl -H 'Accept: application/xml' ${runurl}?${params} > $DIR/curl.out
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: failed query request"
+    exit 2
+fi
+
+#test curl.out for valid xml
+$XMLSTARLET val -w $DIR/curl.out > /dev/null 2>&1
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: Response was not valid xml"
+    exit 2
+fi
+
+#test for expected /joblist element
+$XMLSTARLET el $DIR/curl.out | grep -e '^joblist' -q
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: Response did not contain expected result"
+    exit 2
+fi
+
+# job export doesn't wrap result in common result wrapper
+#Check projects list
+itemcount=$($XMLSTARLET sel -T -t -m "/joblist" -v "count(job)" $DIR/curl.out)
+foundjobid=$($XMLSTARLET sel -T -t -m "/joblist" -v "job/uuid" $DIR/curl.out)
+if [ "1" == "$itemcount" -a "$jobid" == "$foundjobid" ] ; then
+    echo "OK"
+else
+    fail "Wrong job count: $itemcount, or wrong found id: $foundjobid"
+fi
+
 
 ###
 # Export the chosen id, with format=yaml
 ###
 
-echo "TEST: export single job in jobs.yaml format"
+echo "TEST: export single job in jobs.yaml format (format param)"
 
 
 # now submit req
@@ -154,3 +231,74 @@ echo OK
 
 rm $DIR/curl.out
 
+###
+# Export the chosen id, with Accept: application/yaml
+###
+
+echo "TEST: export single job in jobs.yaml format (Accept header)"
+
+
+# now submit req
+runurl="${APIURL}/job/${jobid}"
+params=""
+
+# get listing
+docurl -H 'Accept: application/yaml' -D $DIR/headers.out ${runurl}?${params} > $DIR/curl.out
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: failed query request"
+    exit 2
+fi
+
+#test headers.out for valid yaml content type
+grep "Content-Type: text/yaml" $DIR/headers.out -q
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: Response was not yaml"
+    exit 2
+fi
+
+#test yaml output for at least the id: entry
+grep "id: ${jobid}" $DIR/curl.out -q
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: Response yaml did not have expected job id"
+    exit 2
+fi
+echo OK
+
+rm $DIR/curl.out
+
+
+
+
+###
+# Export the chosen id, with unsupported content type application/json
+###
+
+echo "TEST: export single job in unsupported format (Accept header)"
+
+
+# now submit req
+runurl="${APIURL}/job/${jobid}"
+params="format=json"
+
+# get listing
+# specify the file for upload with curl, named "xmlBatch"
+ulopts="-H Accept:application/json"
+
+CURL_REQ_OPTS=$ulopts sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "The format is not valid: json" 415 || exit 2
+echo OK
+rm $DIR/curl.out
+###
+# Export the chosen id, with unsupported content type application/json
+###
+
+echo "TEST: export single job in unsupported format (format param)"
+
+
+# now submit req
+runurl="${APIURL}/job/${jobid}"
+params="format=json"
+
+# get listing
+sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "The format is not valid: json" 415 || exit 2
+echo OK
+rm $DIR/curl.out

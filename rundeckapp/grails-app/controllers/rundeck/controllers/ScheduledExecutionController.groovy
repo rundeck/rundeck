@@ -2264,7 +2264,10 @@ class ScheduledExecutionController  extends ControllerBase{
             return apiService.renderErrorXml(response,[status:HttpServletResponse.SC_FORBIDDEN,
                     code:'api.error.item.unauthorized',args:['Read','Job ID',params.id]])
         }
-
+        if(!(response.format in ['all','xml','yaml'])){
+            return apiService.renderErrorXml(response,[status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                                                       code:'api.error.item.unsupported-format',args:[response.format]])
+        }
         withFormat{
             xml{
                 def writer = new StringWriter()
