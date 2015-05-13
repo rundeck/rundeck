@@ -49,10 +49,13 @@ function Report(data) {
     self.endTimeSimple = ko.computed(function () {
         return MomentUtil.formatTimeSimple(self.dateCompleted());
     });
-    self.statusList=['running','succeeded','failed','cancel','retry','timeout','fail'];
+    self.statusList=['running','succeed','succeeded','failed','cancel','retry','timedout','timeout','fail'];
 
     self.isCustomStatus = ko.computed(function () {
         return self.statusList.indexOf(self.status()) < 0 ;
+    });
+    self.customStatusString = ko.computed(function () {
+        return self.execution()?self.execution().status():status();
     });
     self.isJob = ko.computed(function () {
         var id = self.jobId();

@@ -93,9 +93,6 @@
             </td>
             <td class="eventtitle autoclickable" data-bind="css: { job: isJob(), adhoc: isAdhoc() }">
                 <a href="#" data-bind="text: '#'+executionId(), attr: { href: executionHref() }" class="_defaultAction"></a>
-                <span data-bind="if: isCustomStatus">
-                    <span class="exec-status-text custom-status" data-bind="text: status"></span>
-                </span>
                 <g:if test="${showTitle}">
                     <span data-bind="if: !jobDeleted()">
                         <span data-bind="text: isJob()?jobName():executionString()"></span>
@@ -106,6 +103,9 @@
                         has been deleted)
                     </span>
                 </g:if>
+                <span data-bind="if: isCustomStatus">
+                    <span class="exec-status-text custom-status" data-bind="text: customStatusString"></span>
+                </span>
             </td>
             <td class="eventargs autoclickable" >
                 <div class="argstring-scrollable">
