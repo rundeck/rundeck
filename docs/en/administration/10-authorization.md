@@ -56,6 +56,26 @@ to be given "admin" access level to control and modify all Jobs. More
 typically, a group of users will be given access to just a subset of
 Jobs.
 
+### Lifecycle
+
+Rundeck loads all `*.aclpolicy` files found in the rundeck etc dir,
+which is either `/etc/rundeck` (rpm and debian install defaults),
+or `$RDECK_BASE/etc` (launcher/war configuration).
+
+The Rundeck server does not need to be restarted for changes to aclpolicy files to take effect.
+
+The files are loaded at startup, and each file's policies are cached.
+When an authorization request occurs, the policies may be reloaded if the file was modified.
+A file's contents are cached for at least 60 seconds before checking if they need to be reloaded.
+Also, the etc directory is only re-scanned for new/removed files after a 60 second delay.
+
+### rd-acl
+
+Added in Rundeck 2.5, the [rd-acl](../man1/rd-acl.html) tool
+can help to create, test, and validate your policy files.
+
+### Example
+
 File listing: admin.aclpolicy example
 
 ~~~~~~ {.yaml .numberLines}
@@ -386,12 +406,9 @@ To diagnose this, begin by checking two bits:
 2. Read the messages inside the `rundeck.audit.log` log file. The
    authorization facility generates fairly low level messages describing
    how the policy is matched to the user context.
+3. Use the [rd-acl](../man1/rd-acl.html) tool to test and validate your policy files
 
 For each entry in the audit log, you'll see all decisions leading up to either a
 AUTHORIZED or a REJECTED message.  It's not uncommon to see REJECTED
 messages followed by AUTHORIZED.  The important thing is to look at
 the last decision made.
-
-## Authorization caveats
-
-* aclpolicy changes do not require a restart.
