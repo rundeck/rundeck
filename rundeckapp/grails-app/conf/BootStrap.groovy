@@ -26,6 +26,7 @@ class BootStrap {
     def logFileStorageService
     def projectManagerService
     def filesystemProjectManager
+    def reportService
     def filterInterceptor
     Scheduler quartzScheduler
     MetricRegistry metricRegistry
@@ -262,6 +263,7 @@ class BootStrap {
              executionUtilService.sysThreadBoundErr=newErr
              executionService.defaultLogLevel=servletContext.getAttribute("LOGLEVEL_DEFAULT")
 
+             reportService.fixReportStatusStrings()
              executionService.cleanupRunningJobs(clusterMode ? serverNodeUUID : null)
              if(clusterMode){
                 scheduledExecutionService.claimScheduledJobs(serverNodeUUID)

@@ -238,6 +238,17 @@ class ReportService  {
                             isNotNull(val)
                             ne(val, '')
                         }
+                    } else if (key=='stat' && query["${key}Filter"]=='succeed') {
+                        or{
+                            eq(val,'succeed')
+                            eq(val,'succeeded')
+                            eq(val,'true')
+                        }
+                    }  else if (key=='stat' && query["${key}Filter"] =='fail') {
+                        or{
+                            eq(val, 'fail')
+                            eq(val, 'failed')
+                        }
                     } else if (query["${key}Filter"]) {
                         eq(val, query["${key}Filter"])
                     }
@@ -363,5 +374,26 @@ class ReportService  {
             _filters:filters
             ]
 	}
+    /**
+     * Find any report status strings that are incorrect and fix them
+     */
+    def fixReportStatusStrings(){
+        int count=0
+        ExecReport.findAllByStatus("succeeded").each{
+            it.status='succeed'
+            it.actionType='succeed'
+            it.save()
+            count++
+        }
+        ExecReport.findAllByStatus("failed").each{
+            it.status='fail'
+            it.actionType='fail'
+            it.save()
+            count++
+        }
+        if(count){
+            log.info("Corrected ${count} report status strings")
+        }
+    }
 
 }

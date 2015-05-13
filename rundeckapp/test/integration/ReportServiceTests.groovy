@@ -119,6 +119,21 @@ class ReportServiceTests extends GroovyTestCase {
         assertQueryResult([jobListFilter: ['group/name2','group/name3']],[r2,r3])
         assertQueryResult([jobListFilter: ['group/name','group/name2','group/name3']],[r1,r2,r3])
     }
+    void testgetExecReportsStatusStringVariations(){
+        def r1=proto(reportId:'group/name',jcExecId:'1',status:'failed',actionType: 'failed')
+        assert null!=r1.save(flush: true)
+        def r2=proto(reportId:'group/name2',jcExecId:'2',status:'fail',actionType: 'fail')
+        assert null!=r2.save(flush: true)
+
+        def r3=proto(reportId:'group/name2',jcExecId:'3',status:'succeed',actionType: 'succeed')
+        assert null!=r3.save(flush: true)
+        def r4=proto(reportId:'group/name2',jcExecId:'4',status:'succeeded',actionType: 'succeeded')
+        assert null!=r4.save(flush: true)
+
+        assertQueryResult([statFilter: 'fail'],[r1,r2])
+        assertQueryResult([statFilter: 'succeed'],[r3,r4])
+
+    }
     void testgetCombinedReportsExcludeJobListFilter(){
         def r1=proto(reportId:'group/name', jcExecId: '1')
         assert null!=r1.save(flush: true)
