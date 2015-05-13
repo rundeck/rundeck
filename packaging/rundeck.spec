@@ -5,7 +5,8 @@ license: APL
 summary: It Slices, it Dices, it Takes Out Your Garbage
 group: System
 requires(post): chkconfig
-requires(postun): chkconfig
+requires(preun): chkconfig
+requires(postun): initscripts
 requires: openssh
 requires: rundeck-config
 
@@ -39,7 +40,12 @@ fi
 
 %preun
 if [ "$1" = 0 ]; then
+    /sbin/service rundeckd stop >/dev/null 2>&1
 	/sbin/chkconfig --del rundeckd
+fi
+%postun
+if [ "$1" -ge "1" ] ; then
+    /sbin/service rundeckd condrestart >/dev/null 2>&1 || :
 fi
 
 %files
