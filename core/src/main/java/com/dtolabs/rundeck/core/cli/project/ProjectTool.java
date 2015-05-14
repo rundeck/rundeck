@@ -16,9 +16,11 @@
 
 package com.dtolabs.rundeck.core.cli.project;
 
+import com.dtolabs.client.services.DispatcherConfig;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.Action;
 import com.dtolabs.rundeck.core.cli.ActionMaker;
+import com.dtolabs.rundeck.core.cli.BaseTool;
 import com.dtolabs.rundeck.core.cli.CLITool;
 import com.dtolabs.rundeck.core.common.FrameworkFactory;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcher;
@@ -77,18 +79,14 @@ public class ProjectTool implements ActionMaker, CLITool {
     IPropertyLookup frameworkProperties;
 
 
-    public ProjectTool() {
-        this(new File(Constants.getSystemBaseDir()));
-    }
-
-    public ProjectTool(final File baseDir) {
+    public ProjectTool(final DispatcherConfig config,final File baseDir) {
         /**
          * Initialize the log4j logger
          */
         PropertyConfigurator.configure(new File(Constants.getLog4jProperties(baseDir.getAbsolutePath()))
             .getAbsolutePath());
         frameworkProperties = FrameworkFactory.createFilesystemFramework(baseDir).getPropertyLookup();
-        dispatcher = FrameworkFactory.createDispatcher(frameworkProperties);
+        dispatcher = FrameworkFactory.createDispatcher(config);
         extraProperties = new Properties();
     }
 
@@ -99,7 +97,10 @@ public class ProjectTool implements ActionMaker, CLITool {
      * @throws Exception if an error occurs
      */
     public static void main(final String[] args) throws Exception {
-        final ProjectTool c = new ProjectTool();
+        final ProjectTool c = new ProjectTool(
+                BaseTool.createDefaultDispatcherConfig(),
+                new File(Constants.getSystemBaseDir())
+        );
         c.run(args);
     }
 

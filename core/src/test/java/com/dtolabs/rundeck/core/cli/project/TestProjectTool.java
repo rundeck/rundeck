@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.core.cli.project;
 
 import com.dtolabs.rundeck.core.cli.Action;
+import com.dtolabs.rundeck.core.cli.BaseTool;
 import com.dtolabs.rundeck.core.cli.FailDispatcher;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
@@ -69,7 +70,7 @@ public class TestProjectTool extends AbstractBaseTest {
     }
 
     private ProjectTool createProjectTool() {
-        return new ProjectTool(new File(getBaseDir()));
+        return new ProjectTool(BaseTool.createDefaultDispatcherConfig(),new File(getBaseDir()));
     }
 
 

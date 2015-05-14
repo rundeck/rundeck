@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.cli.run;
 
+import com.dtolabs.client.services.DispatcherConfig;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.*;
 import com.dtolabs.rundeck.core.cli.queue.ConsoleExecutionFollowReceiver;
@@ -126,7 +127,7 @@ public class RunTool extends BaseTool {
      */
     public static void main(final String[] args) throws Exception {
         PropertyConfigurator.configure(Constants.getLog4jPropertiesFile().getAbsolutePath());
-        final RunTool tool = new RunTool(new DefaultCLIToolLogger());
+        final RunTool tool = new RunTool(createDefaultDispatcherConfig(),new DefaultCLIToolLogger());
         tool.setShouldExit(true);
         int exitCode = 1; //pessimistic initial value
 
@@ -177,7 +178,10 @@ public class RunTool extends BaseTool {
      * @param logger    the logger
      */
     public RunTool(final IPropertyLookup frameworkProps, final CLIToolLogger logger) {
-        setCentralDispatcher(FrameworkFactory.createDispatcher(frameworkProps));
+        this(FrameworkFactory.createDispatcherConfig(frameworkProps), logger);
+    }
+    public RunTool(final DispatcherConfig dispatcherConfig, final CLIToolLogger logger) {
+        setCentralDispatcher(FrameworkFactory.createDispatcher(dispatcherConfig));
         this.clilogger = logger;
         if (null == clilogger) {
             clilogger = new Log4JCLIToolLogger(log4j);

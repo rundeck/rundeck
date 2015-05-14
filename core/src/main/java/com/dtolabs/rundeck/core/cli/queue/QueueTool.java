@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.cli.queue;
 
+import com.dtolabs.client.services.DispatcherConfig;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.*;
 import com.dtolabs.rundeck.core.common.FrameworkFactory;
@@ -179,7 +180,7 @@ public class QueueTool extends BaseTool implements CLIToolLogger, Paging {
     public static void main(final String[] args) throws Exception {
         
         PropertyConfigurator.configure(Constants.getLog4jPropertiesFile().getAbsolutePath());
-        final QueueTool tool = new QueueTool(new DefaultCLIToolLogger());
+        final QueueTool tool = new QueueTool(createDefaultDispatcherConfig(), new DefaultCLIToolLogger());
         tool.setShouldExit(true);
         int exitCode = 1; //pessimistic initial value
 
@@ -248,7 +249,10 @@ public class QueueTool extends BaseTool implements CLIToolLogger, Paging {
      * @param logger    the logger
      */
     public QueueTool(final IPropertyLookup frameworkProperties, final CLIToolLogger logger) {
-        setCentralDispatcher(FrameworkFactory.createDispatcher(frameworkProperties));
+        this(FrameworkFactory.createDispatcherConfig(frameworkProperties), logger);
+    }
+    public QueueTool(final DispatcherConfig dispatcherConfig, final CLIToolLogger logger) {
+        setCentralDispatcher(FrameworkFactory.createDispatcher(dispatcherConfig));
         this.clilogger = logger;
         if (null == clilogger) {
             clilogger = new Log4JCLIToolLogger(log4j);

@@ -463,7 +463,7 @@ public class TestExecTool extends AbstractBaseTest {
     }
 
     private ExecTool newExecTool() {
-        return new ExecTool(getFrameworkInstance().getFilesystemFramework());
+        return new ExecTool(BaseTool.createDefaultDispatcherConfig());
     }
 
 

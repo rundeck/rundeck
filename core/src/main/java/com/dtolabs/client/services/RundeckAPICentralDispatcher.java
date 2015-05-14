@@ -182,12 +182,26 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      * Create a RundeckCentralDispatcher
      *
      * @param framework the framework
+     * @deprecated use {@link #RundeckAPICentralDispatcher(DispatcherConfig)}
      */
     public RundeckAPICentralDispatcher(final Framework framework) {
         this(
                 framework.getProperty("framework.server.url"),
                 framework.getProperty("framework.server.username"),
                 framework.getProperty("framework.server.password")
+        );
+    }
+
+    /**
+     * Create a RundeckCentralDispatcher
+     *
+     * @param config api client config
+     */
+    public RundeckAPICentralDispatcher(final DispatcherConfig config) {
+        this(
+                config.getUrl(),
+                config.getUsername(),
+                config.getPassword()
         );
     }
 

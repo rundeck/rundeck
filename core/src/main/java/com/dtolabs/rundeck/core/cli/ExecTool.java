@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.core.cli;
 
+import com.dtolabs.client.services.DispatcherConfig;
 import com.dtolabs.rundeck.core.*;
 import com.dtolabs.rundeck.core.cli.project.ProjectToolException;
 import com.dtolabs.rundeck.core.cli.queue.ConsoleExecutionFollowReceiver;
@@ -102,7 +103,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
     /**
      * Reference to the framework instance
      */
-    private IFilesystemFramework filesystemFramework;
     private String baseDir;
     protected NodeFormatter nodeFormatter;
     private String nodeFilter;
@@ -117,30 +117,12 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
     private String scriptURLString;
 
     /**
-     * Create a new ExecTool initialized at the RDECK_BASE location via System property
-     */
-    ExecTool() {
-        this(Constants.getSystemBaseDir());
-    }
-
-    /**
-     * Create a new ExecTool with the given RDECK_BASE location
-     *
-     * @param baseDir path to RDECK_BASE
-     */
-    ExecTool(String baseDir) {
-        this(FrameworkFactory.createFilesystemFramework(new File(baseDir)));
-    }
-
-    /**
      * Create a new ExecTool with the given framework instance.
      *
-     * @param framework framework instance
      */
-    public ExecTool(FilesystemFramework framework) {
-        this.filesystemFramework = framework;
+    public ExecTool(DispatcherConfig config) {
         this.nodeFormatter = new NodeYAMLFormatter();
-        this.centralDispatcher=FrameworkFactory.createDispatcher(framework.getPropertyLookup());
+        this.centralDispatcher=FrameworkFactory.createDispatcher(config);
     }
 
     /**
@@ -412,7 +394,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
      */
     void listAction() {
         try {
-            log((argVerbose ? getNodeFormatter() : new DefaultNodeFormatter()).formatNodes(filterNodes(false)
+            log((argVerbose ? getNodeFormatter() : new DefaultNodeFormatter()).formatNodes(filterNodes()
                     .getNodes()).toString());
         } catch (Exception e) {
             e.printStackTrace();
@@ -549,8 +531,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
         File configDir = Constants.getFrameworkConfigFile();
         PropertyConfigurator.configure(new File(configDir,
                 "log4j.properties").getAbsolutePath());
-        File systemBaseDir = new File(Constants.getSystemBaseDir());
-        final ExecTool ExecTool = new ExecTool(systemBaseDir.getAbsolutePath());
+        final ExecTool ExecTool = new ExecTool( BaseTool.createDefaultDispatcherConfig());
         ExecTool.shouldExit = true;
         ExecTool.run(args);
     }
@@ -660,17 +641,6 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
 
     public String getInlineScriptContent() {
         return inlineScriptContent;
-    }
-
-    public NodesSelector getNodeSelector() {
-        return createFilterNodeSelector().nodeSelectorWithDefault(getFrameworkNodeName());
-    }
-
-    public String getFrameworkNodeName() {
-        return filesystemFramework.getPropertyLookup().getProperty("framework.node.name");
-    }
-    public INodeSet getNodes() throws CentralDispatcherException {
-        return filterNodes(true);
     }
 
     public int getThreadCount() {
@@ -801,23 +771,11 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
         return parseMultiNodeArgs(keys, strings);
     }
 
-
-
-
-
     INodeSet filterNodes() throws CentralDispatcherException {
-        return filterNodes(false);
-    }
-
-    INodeSet filterNodes(final boolean singleNodeDefault) throws CentralDispatcherException {
         NodeSet filterNodeSelector = createFilterNodeSelector();
         String usedFilter;
         if(filterNodeSelector.isBlank()){
-            if(singleNodeDefault){
-                usedFilter=getFrameworkNodeName();
-            }else {
-                usedFilter = ".*";
-            }
+            usedFilter = ".*";
         }else {
             usedFilter = NodeSet.generateFilter(filterNodeSelector);
         }

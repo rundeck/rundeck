@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.cli.jobs;
 
+import com.dtolabs.client.services.DispatcherConfig;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.*;
 import com.dtolabs.rundeck.core.common.FrameworkFactory;
@@ -371,7 +372,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
     public static void main(final String[] args) throws Exception {
         PropertyConfigurator.configure(new File(Constants.getFrameworkConfigFile(),
             "log4j.properties").getAbsolutePath());
-        final JobsTool tool = new JobsTool(new DefaultCLIToolLogger());
+        final JobsTool tool = new JobsTool(createDefaultDispatcherConfig(),new DefaultCLIToolLogger());
         tool.setShouldExit(true);
         int exitCode = 1; //pessimistic initial value
 
@@ -433,7 +434,16 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
      * @param logger    the logger
      */
     public JobsTool(final IPropertyLookup frameworkProperties, final CLIToolLogger logger) {
-        setCentralDispatcher(FrameworkFactory.createDispatcher(frameworkProperties));
+        this(FrameworkFactory.createDispatcherConfig(frameworkProperties), logger);
+    }
+    /**
+     * Create QueueTool with the framework.
+     *
+     * @param config API dispatcher configuration
+     * @param logger    the logger
+     */
+    public JobsTool(final DispatcherConfig config, final CLIToolLogger logger) {
+        setCentralDispatcher(FrameworkFactory.createDispatcher(config));
         this.clilogger = logger;
         if (null == clilogger) {
             clilogger = new Log4JCLIToolLogger(log4j);
