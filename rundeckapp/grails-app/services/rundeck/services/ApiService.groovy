@@ -1,7 +1,6 @@
 package rundeck.services
 
 import grails.converters.JSON
-import grails.util.GrailsWebUtil
 import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
 import org.apache.commons.lang.RandomStringUtils
@@ -173,7 +172,8 @@ class ApiService {
      * @param recall
      */
     def renderSuccessJson(HttpServletResponse response,Closure recall){
-        response.contentType=GrailsWebUtil.getContentType(JSON_CONTENT_TYPE, null)
+        response.contentType=JSON_CONTENT_TYPE
+        response.characterEncoding='UTF-8'
         JSONBuilder builder = new JSONBuilder();
         JSON json = builder.build(recall);
         json.render(response);
