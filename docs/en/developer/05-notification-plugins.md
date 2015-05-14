@@ -79,6 +79,12 @@ The following values may be available after the job is finished (not available f
 
 `execution.failedNodeList`: Java List of any node names that failed, if present
 
+`execution.succeededNodeListString`: Comma-separated list of any nodes that succeeded, if present
+
+`execution.succeededNodeList`: Java List of any node names that succeeded, if present
+
+`execution.nodestatus`: Java Map containing summary counts of node success/failure/total, in the form: `[succeeded: int, failed: int, total: int]`
+
 `execution.dateEnded`: End time (java.util.Date)
 
 `execution.dateEndedUnixtime`: End time as milliseconds since epoch (long)
