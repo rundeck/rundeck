@@ -88,6 +88,40 @@ class OrchestratorNodeProcessorSpec extends Specification {
         result
         returned == [node1, node2]
     }
+    def "invalid threadcount"() {
+        given:
+        def node1 = new NodeEntryImpl("node1")
+        def node2 = new NodeEntryImpl("node2")
+        def sent = [node1, node2]
+        def returned = []
+
+        def orchestrator = new Orchestrator() {
+            @Override
+            INodeEntry nextNode() {
+                return sent.size() > 0 ? sent.remove(0) : null
+            }
+
+            @Override
+            void returnNode(final INodeEntry node, boolean success, NodeStepResult result) {
+                returned << node
+            }
+            @Override
+            boolean isComplete() {
+                return sent.size()==0
+            }
+        }
+        Map<INodeEntry, Callable<NodeStepResult>> executions = new HashMap<>()
+        sent.each{node->
+            executions.put(node, { -> new NodeStepResultImpl(node) })
+        }
+
+        when:
+        def onp = new OrchestratorNodeProcessor(-12, false, orchestrator, executions)
+
+        then:
+        IllegalArgumentException e = thrown()
+        e.message.startsWith('threadCount must be greater than 0')
+    }
 
     def "single thread fewer nodes"() {
         given:

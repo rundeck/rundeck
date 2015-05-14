@@ -45,6 +45,9 @@ public class OrchestratorNodeProcessor {
             Orchestrator orchestrator,
             Map<INodeEntry, Callable<NodeStepResult>> executions) {
         stop = false;
+        if(threadCount<1) {
+            throw new IllegalArgumentException("threadCount must be greater than 0: " + threadCount);
+        }
         this.threadCount = threadCount;
         this.resultqueue = new LinkedBlockingQueue<>();
         this.taskqueue = new LinkedBlockingQueue<>(threadCount);

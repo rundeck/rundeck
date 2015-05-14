@@ -73,7 +73,9 @@ class ScheduledExecution extends ExecutionContext {
         loglevel(nullable:true)
         totalTime(nullable:true)
         execCount(nullable:true)
-        nodeThreadcount(nullable:true)
+        nodeThreadcount(nullable:true,validator:{val,obj->
+            return null==val||val>=1
+        })
         nodeRankOrderAscending(nullable:true)
         nodeRankAttribute(nullable:true)
         argString(nullable:true)
