@@ -840,9 +840,9 @@ class ExecutionController extends ControllerBase{
         def completed=false
         def max= 0
         def lastlinesSupported= (ReverseSeekingStreamingLogReader.isInstance(logread))
-        if(params.lastlines && lastlinesSupported){
+        def lastlines = params.lastlines?Long.parseLong(params.lastlines):0
+        if(lastlines && lastlinesSupported){
             def ReverseSeekingStreamingLogReader reversing= (ReverseSeekingStreamingLogReader) logread
-            def lastlines = Long.parseLong(params.lastlines)
             reversing.openStreamFromReverseOffset(lastlines)
             //load only the last X lines of the file, by going to the end and searching backwards for the
             max=lastlines+1

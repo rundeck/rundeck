@@ -23,11 +23,9 @@
 */
 package com.dtolabs.rundeck.core.utils;
 
-import java.util.*;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import com.google.common.base.Predicate;
+
+import java.io.*;
 
 
 /**
@@ -49,6 +47,20 @@ public class Utility {
      * @throws IOException
      */
     public static long seekBack(File f, int count, String marker) throws IOException {
+        return seekBack(f, count, marker, null);
+    }
+    /**
+     * seekBack searches backwards for certain markers in a file, and returns position of the final marker found.
+     * count specifies how many markers to search for.  if the search reaches the beginning of the file without finding
+     * all of the markers, then 0 is returned.
+     * @param f the file to search
+     * @param count number of markers to find
+     * @param marker text string marker
+     * @param validity predicate to test whether the stream is at a valid position, or null
+     * @return location of marker number <i>count</i> found from the end of the file, or 0
+     * @throws IOException
+     */
+    public static long seekBack(File f, int count, String marker, Predicate<InputStream> validity) throws IOException {
         FileInputStream fis = new FileInputStream(f);
         long size = fis.getChannel().size();
         long pos = size;
@@ -84,8 +96,10 @@ public class Utility {
                     //matched the buffer with the comparison at point 'cycle'.
                     //if cycle is 0, then  found one count. otherwise, backup
                     if (0 == cycle) {
-                        matchcount++;
-                        foundpos = pos;
+                        if (null == validity || validity.apply(fis)) {
+                            matchcount++;
+                            foundpos = pos;
+                        }
                         pos -= marker.length();
                     } else {
                         pos -= cycle;
@@ -106,4 +120,5 @@ public class Utility {
         fis.close();
         return foundpos;
     }
+
 }

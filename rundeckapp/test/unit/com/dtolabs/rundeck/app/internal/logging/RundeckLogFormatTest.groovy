@@ -1,7 +1,7 @@
 package com.dtolabs.rundeck.app.internal.logging
 
 import com.dtolabs.rundeck.core.logging.LogLevel
-
+import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin;
 
 import java.text.SimpleDateFormat
@@ -245,5 +245,75 @@ class RundeckLogFormatTest  {
         assertEquals("foo", text);
         assertEquals("}", done);
         assertEquals("|", rest);
+    }
+
+    /**
+     * basic seek back with only log message lines
+     */
+    void testSeekBackSimple(){
+        RundeckLogFormat format = new RundeckLogFormat()
+        def f = File.createTempFile("log-format-test", ".rdlog")
+
+        def line1 = '^2015-05-15T16:50:57Z|||{node=madmartigan.local|step=1|stepctx=1|user=greg}|testing execution output api-plain line 1^\n'
+        def line2 = '^2015-05-15T16:50:57Z|||{node=madmartigan.local|step=1|stepctx=1|user=greg}|line 2^\n'
+        def line3 = '^2015-05-15T16:50:57Z|||{node=madmartigan.local|step=1|stepctx=1|user=greg}|line 3^\n'
+        def line4 = '^2015-05-15T16:50:57Z|||{node=madmartigan.local|step=1|stepctx=1|user=greg}|line 4 final^\n'
+        f<<     line1 +
+                line2 +
+                line3 +
+                line4 +
+        assertEquals(0, format.seekBackwards(f, 5))
+        assertEquals(0, format.seekBackwards(f, 4))
+        assertEquals(line1.length(), format.seekBackwards(f, 3))
+        assertEquals(line1.length()+line2.length(), format.seekBackwards(f, 2))
+        assertEquals(line1.length()+line2.length()+line3.length(), format.seekBackwards(f, 1))
+
+    }
+
+    /**
+     * seek back with interstitial log entries
+     */
+    void testSeekBackMeta(){
+        RundeckLogFormat format = new RundeckLogFormat()
+        def f = File.createTempFile("log-format-test", ".rdlog")
+
+        def line1 = '^2015-05-15T16:50:57Z|||{node=madmartigan.local|step=1|stepctx=1|user=greg}|testing execution output api-plain line 1^\n'
+        def line2 = '^2015-05-15T16:50:57Z|nodebegin||{node=madmartigan.local|step=1|stepctx=1|user=greg}|^\n'
+        def line3 = '^2015-05-15T16:50:57Z|||{node=madmartigan.local|step=1|stepctx=1|user=greg}|testing execution output api-plain line 1^\n'
+        def line4 = '^2015-05-15T16:50:58Z|nodeend||{node=madmartigan.local|step=1|stepctx=1|user=greg}|^\n'
+        f<<     line1 + line2 + line3 + line4
+        assertEquals(0, format.seekBackwards(f, 2))
+        assertEquals(line1.length() + line2.length(), format.seekBackwards(f, 1))
+    }
+    void testSeekBackFull(){
+        RundeckLogFormat format = new RundeckLogFormat()
+        def f = File.createTempFile("log-format-test", ".rdlog")
+
+        def part1 = '^text/x-rundeck-log-v2.0^\n' +
+                '^2015-05-15T16:50:57Z|stepbegin||{node=madmartigan.local|step=1|stepctx=1|user=admin}|^\n' +
+                '^2015-05-15T16:50:57Z|nodebegin||{node=madmartigan.local|step=1|stepctx=1|user=greg}|^\n'
+
+        def line1 = '^2015-05-15T16:50:57Z|||{node=madmartigan.local|step=1|stepctx=1|user=greg}|testing execution output api-plain line 1^\n'
+
+        def line2 = '^2015-05-15T16:50:57Z|||{node=madmartigan.local|step=1|stepctx=1|user=greg}|line 2^\n'
+
+        def line3 = '^2015-05-15T16:50:57Z|||{node=madmartigan.local|step=1|stepctx=1|user=greg}|line 3^\n'
+
+        def line4 = '^2015-05-15T16:50:57Z|||{node=madmartigan.local|step=1|stepctx=1|user=greg}|line 4 final^\n'
+        def endpart='^2015-05-15T16:50:58Z|nodeend||{node=madmartigan.local|step=1|stepctx=1|user=greg}|^\n' +
+                '^2015-05-15T16:50:58Z|stepend||{node=madmartigan.local|step=1|stepctx=1|user=admin}|^\n' +
+                '^END^\n'
+        f<<     part1 +
+                line1 +
+                line2 +
+                line3 +
+                line4 +
+                endpart
+        assertEquals(0, format.seekBackwards(f, 5))
+        assertEquals(part1.length(), format.seekBackwards(f, 4))
+        assertEquals(part1.length() + line1.length(), format.seekBackwards(f, 3))
+        assertEquals(part1.length() + line1.length() + line2.length(), format.seekBackwards(f, 2))
+        assertEquals(part1.length() + line1.length() + line2.length() + line3.length(), format.seekBackwards(f, 1))
+
     }
 }

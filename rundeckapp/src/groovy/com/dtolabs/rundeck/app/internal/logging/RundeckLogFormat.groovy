@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.utils.Utility
+import com.google.common.base.Predicate
 
 import java.text.DateFormat
 import java.text.SimpleDateFormat
@@ -212,15 +213,53 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
     }
 
     long seekBackwards(File file, int count) {
-        //NB: we search for log entry ending indicators, so we have to skip 2 of them
-        //1: the final sigil, 2: the end of the final entry, before we can seek back the number of entries
-        //this might skip over a single entry if the log is not complete at the end of the file
+        //seek backwards to log entry ending strings, using the LogMessagePositionTester to
+        //verify that the following line is a log message, not some other entry type
         String lSep = System.getProperty("line.separator")
-        def seek = Utility.seekBack(file, count + 2, DELIM + lSep)
+        def seek = Utility.seekBack(file, count , DELIM + lSep, new LogMessageBegin())
         if (seek > 0) {
             seek += "^${lSep}".getBytes("UTF-8").length
         }
         seek
+    }
+    /**
+     * verifies that the input stream is positioned at the start of a log message entry
+     */
+    static class LogMessageBegin implements Predicate<InputStream> {
+        boolean firstTime = true;
+        /**
+         * Return true if the stream position is at a log message entry
+         * @param stream
+         * @return
+         */
+        public boolean apply(final InputStream stream) {
+            if (firstTime) {
+                //first line ending found will never have a valid
+                //log entry following it, even if the prefix check is correct
+                //because it means the log entry isn't complete
+                firstTime = false
+                return false
+            }
+            def prefix = '^DDDD-DD-DDTDD:DD:DDZ|'
+            def sample = prefix + DEFAULT_EVENT_TYPE + '|'
+            def buff = new byte[sample.length()]
+            def len = stream.read(buff)
+            if (len != buff.length) {
+                return false
+            }
+
+            //simple verification that date prefix matches
+            def s = new String(buff)
+            for (int i = 0; i < prefix.length(); i++) {
+                if (prefix.charAt(i) != 'D' && prefix.charAt(i) != s.charAt(i)) {
+                    return false
+                }
+            }
+
+            //match log message with explicit or elided type string
+            def sub = s.substring(prefix.length())
+            return sub.startsWith('|') || sub.startsWith(DEFAULT_EVENT_TYPE + '|')
+        }
     }
 
     static List decodeMetaKey(String input) {
