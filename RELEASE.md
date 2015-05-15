@@ -1,117 +1,80 @@
-Release 2.5.0
+Release 2.5.1
 =============
 
-Date: 2015-04-15
+Date: 2015-05-15
 
-Name: <span style="color: saddlebrown"><span class="glyphicon glyphicon-grain"></span> "cafe au lait saddlebrown grain"</span>
+Name: <span style="color: seagreen"><span class="glyphicon glyphicon-sunglasses"></span> "cafe au lait seagreen sunglasses"</span>
 
-This release has many new features and bugfixes, and contains some refactoring under the hood.
+This release has primarily bugfixes.
 
-## New Features
+## Enhancements
 
-* Upgraded grails framework, which adds support for Java 8 (and removes Java 6)
-* Can now store Project definition and configuration in the database (optional), see [Project Definitions](http://rundeck.org/2.5.0/administration/project-setup.html#project-definitions) and information in the [Upgrade Guide](http://rundeck.org/2.5.0/upgrading/index.html).
-* Improved GUI for administering a project: modify Project configuration file contents, and readme.md/motd.md contents. Project archiving is also now performed asynchronously.
-* New Jasypt encryption plugin can be used for Key Storage and Project Configuration, see [Jasypt Encryption Converter Plugin](http://rundeck.org/2.5.0/plugins-user-guide/storage-plugins.html#jasypt-encryption-converter-plugin)
-* Support Key Storage password for SSH sudo and SSH private key passphrase
-* New workflow step plugin: Assert state of another Job, optionally halt workflow with custom status string
-* New `rd-acl` commandline tool can list test and generate .aclpolicy file contents, see [rd-acl](http://rundeck.org/2.5.0/man1/rd-acl.html)
-* New Orchestrator plugin point. Orchestrators can be used to batch and sequence the matched nodes used in node dispatching, e.g.: only allow a certain % to run simultaneously.
-	* [Plugins User Guide -  Orchestrator Plugins](http://rundeck.org/2.5.0/plugins-user-guide/orchestrator-plugins.html)
-	* [Plugin Developer Guide -  Orchestrator Plugin](http://rundeck.org/2.5.0/developer/orchestrator-plugin.html)
-	* [Example code](https://github.com/rundeck/rundeck/tree/development/examples/example-java-orchestrator-plugin)
-* Added hybrid LDAP + properties file group authentication for JAAS (`JettyCombinedLdapLoginModule`)
-	* [Administration - Authentication - Combining LDAP with other modules](http://rundeck.org/2.5.0/administration/authenticating-users.html#combining-ldap-with-other-modules)
+* CLI tools can authenticate to the server using environment variables instead of the credentials stored in the framework.properties file.
+	* see [CLI Tool Authentication](http://rundeck.org/2.5.1/man1/cli-tool-authentication.html)
 
-## Upgrading
+## Upgrading to 2.5
 
 **Note:** We've attempted to maintain compatibility with previous plugins, but due to changes in the core library,
 Rundeck may have issues loading or running some plugins.
 
 Please report issues found to [Github issues](https://github.com/rundeck/rundeck/issues).
 
-See the [Upgrading Guide](http://rundeck.org/2.5.0/upgrading/index.html)
+See the [Upgrading Guide](http://rundeck.org/2.5.1/upgrading/index.html)
 
 ## Contributors
 
-* Andreas Knifh
 * Greg Schueler (gschueler)
-* Mark Bidewell (mbidewell)
-* Mayank Asthana (mayankasthana)
-* Puru Tuladhar (tuladhar)
-* Thomas Mueller (vinzent)
-* Yagi (yagince)
-* ashley-taylor
-* new23d
 
 ## Bug Reporters
 
-* MartinMulder
-* MartyNeal
 * Zophar78
-* adamhamner
-* ahonor
-* ashley-taylor
-* brismuth
+* andham
+* arthurlogilab
+* ctgaff
 * danifr
-* dbeckham
-* ffk23
+* dspinellis
 * gschueler
-* hirsts
-* hjdr4
-* knifhen
-* mayankasthana
-* mbidewell
-* mgherman
-* mikagika
-* new23d
-* reigner-yrastorza
-* travisgroth
-* tuladhar
-* vinzent
-* yagince
+* harlanbarnes
+* hbakkum
+* jasonaughton
+* michlaustn
+* mikeleigh
+* rveznaver
+* schast
+* snebel29
+* tiahino
+* wcooley
 
 ## Issues
 
-* [Project config page: plugin properties of wrong scope displayed](https://github.com/rundeck/rundeck/issues/1164)
-* [Security: Script plugins: password rendering option plugin property files not properly obscured](https://github.com/rundeck/rundeck/issues/1163)
-* [Display of active jobs maxes out at 20](https://github.com/rundeck/rundeck/issues/1161)
-* [dispatch command does not work when project config stored in RDB](https://github.com/rundeck/rundeck/issues/1158)
-* [Schedules don't launch](https://github.com/rundeck/rundeck/issues/1150)
-* [Fix LDAP nested groups for Active Directory](https://github.com/rundeck/rundeck/pull/1149)
-* [Documentation: Database docs link to 404 Not Found](https://github.com/rundeck/rundeck/issues/1148)
-* [Fixed typo in command in docs and grammar](https://github.com/rundeck/rundeck/pull/1143)
-* [Project definitions and configuration stored in DB](https://github.com/rundeck/rundeck/pull/1135)
-* [Refactor authorization into components, add preauth attribute role](https://github.com/rundeck/rundeck/pull/1134)
-* [Support ServerAliveInterval and ServerAliveCountMax](https://github.com/rundeck/rundeck/pull/1133)
-* [Rundeck v2.4.0-1 rundeck not deleting dispatch files](https://github.com/rundeck/rundeck/issues/1131)
-* [Dispatched inline script has race condition with crontab](https://github.com/rundeck/rundeck/issues/1129)
-* [Storage provider/converter config info on Plugins page is wrong](https://github.com/rundeck/rundeck/issues/1128)
-* [Add default storage encryption plugin](https://github.com/rundeck/rundeck/pull/1127)
-* [JettyPamLoginModule: supplementalRoles split regex requires whitespace](https://github.com/rundeck/rundeck/pull/1124)
-* [Using SSH stored password for sudo](https://github.com/rundeck/rundeck/issues/1122)
-* [Jobs initiated from the crontab do not respect the timeout value given for that job](https://github.com/rundeck/rundeck/issues/1121)
-* [Script plugin non-instance configuration fails](https://github.com/rundeck/rundeck/issues/1120)
-* [Add "server uuid" element to the Execution info](https://github.com/rundeck/rundeck/issues/1119)
-* [API doc: Getting Project Info response xml has bad formatting](https://github.com/rundeck/rundeck/issues/1118)
-* [${result.resultCode} is not available in the error handler for a Local Command Plugin step.](https://github.com/rundeck/rundeck/issues/1114)
-* [job state conditional plugin](https://github.com/rundeck/rundeck/pull/1105)
-* [Add workflow step plugin: Assert state of another Job, optionally halt workflow with custom status string](https://github.com/rundeck/rundeck/issues/1104)
-* [GUI: 2.4.x: Custom property input fields for node-step plugins style issues](https://github.com/rundeck/rundeck/issues/1095)
-* [Export archive does not work](https://github.com/rundeck/rundeck/issues/1094)
-* [LDAP auth requests have no timeout](https://github.com/rundeck/rundeck/issues/1092)
-* [upload jobs page: after uploading, Delete action from action menu should be available](https://github.com/rundeck/rundeck/issues/1090)
-* [List Plugins admin page should show Resource Model Source providers](https://github.com/rundeck/rundeck/issues/1089)
-* [Scheduled jobs without a default value for required options fail to run](https://github.com/rundeck/rundeck/issues/1088)
-* ['Algorithm negotiation fail'  JSCH](https://github.com/rundeck/rundeck/issues/1087)
-* [Upgrade grails to 2.4.4](https://github.com/rundeck/rundeck/pull/1075)
-* [Launcher: fix "nohup: redirecting stderr to stdout" warning](https://github.com/rundeck/rundeck/pull/1074)
-* [Inline scripts for jobs do not honor File Copy Settings](https://github.com/rundeck/rundeck/issues/1056)
-* [Add text/plain MIME type for YAML files](https://github.com/rundeck/rundeck/pull/1043)
-* [Support project-specific email template overrides](https://github.com/rundeck/rundeck/pull/1026)
-* [Add support for Java 8](https://github.com/rundeck/rundeck/issues/920)
-* [aclpolicy validation/builder tool](https://github.com/rundeck/rundeck/issues/859)
-* [adding orchestrator](https://github.com/rundeck/rundeck/pull/826)
-* [The run shell tool can clobber plugin cache](https://github.com/rundeck/rundeck/issues/808)
-* [Allow hybrid LDAP + properties file group authentication](https://github.com/rundeck/rundeck/issues/608)
-* [add configurable timeout for remote option URLs](https://github.com/rundeck/rundeck/issues/232)
+* [Job with a negative threadcount causes exception when using Orchestrator](https://github.com/rundeck/rundeck/issues/1239)
+* [Failed job runs not shown in 'failed' tab](https://github.com/rundeck/rundeck/issues/1234)
+* [Information missing from aclpolicy docs](https://github.com/rundeck/rundeck/issues/1232)
+* [Saved Node Filters shown in all projects, will show node results from other projects](https://github.com/rundeck/rundeck/issues/1231)
+* [Job copy: Data Binding Failed](https://github.com/rundeck/rundeck/issues/1228)
+* [Archive import fails if db still has varchar(7) in actionType column](https://github.com/rundeck/rundeck/issues/1227)
+* [running rd-project without -p argument causes NPE](https://github.com/rundeck/rundeck/issues/1226)
+* [Change to "If a step fails" selection for workflow isn't persisted](https://github.com/rundeck/rundeck/issues/1224)
+* [Email Reporting Error On Success](https://github.com/rundeck/rundeck/issues/1221)
+* [edit job step when plugin cannot be loaded causes javascript error](https://github.com/rundeck/rundeck/issues/1220)
+* [rd-acl create -i doesn't correctly parse node tags in resource section](https://github.com/rundeck/rundeck/issues/1219)
+* [rd-acl test with -t tags doesn't work properly](https://github.com/rundeck/rundeck/issues/1218)
+* [Rundeck start fails in Tomcat 7 on Win2012](https://github.com/rundeck/rundeck/issues/1216)
+* [Error requesting json on API](https://github.com/rundeck/rundeck/issues/1215)
+* [Updating job with orchestrator fails](https://github.com/rundeck/rundeck/issues/1212)
+* [Incomplete view in Node list](https://github.com/rundeck/rundeck/issues/1208)
+* [Limiting execution output through API with lastlines seems to be off by 2](https://github.com/rundeck/rundeck/issues/1207)
+* [Rundeck rpm package should conditionally restart the service on upgrade](https://github.com/rundeck/rundeck/issues/1199)
+* [No signature of method: rundeck.services.ProjectService.exportProjectToFileAsync() when trying to export project archive with the DB storage type](https://github.com/rundeck/rundeck/issues/1198)
+* [Key Storage - DB Backend Exception - Could not obtain current Hibernate Session](https://github.com/rundeck/rundeck/issues/1197)
+* [Unable to save changes to jobs using Local Command node step](https://github.com/rundeck/rundeck/issues/1193)
+* [2.5 debian package should require java 7](https://github.com/rundeck/rundeck/issues/1192)
+* [Bulk Delete Execution Failing](https://github.com/rundeck/rundeck/issues/1184)
+* [JettyCombinedLdapLoginModule -\> case sensitve](https://github.com/rundeck/rundeck/issues/1182)
+* [Email Notifications Broken - ERROR NotificationService](https://github.com/rundeck/rundeck/issues/1181)
+* [Jobs don't complete: Data truncation: Data too long for column 'action_type' at row 1](https://github.com/rundeck/rundeck/issues/1179)
+* [rundeck.gui.login.welcomeHtml option is not rendering HTML](https://github.com/rundeck/rundeck/issues/1177)
+* [org.h2.jdbc.JdbcSQLException: Feature not supported: "isWrapperFor"](https://github.com/rundeck/rundeck/issues/1175)
+* [documentation: workflow node step plugin java interface shown is wrong](https://github.com/rundeck/rundeck/issues/1174)
+* [Documentation: Missing execution data attributes on notification plugin page](https://github.com/rundeck/rundeck/issues/1035)
+* [Re-write command line tools to support auth w/o properties file.](https://github.com/rundeck/rundeck/issues/137)
