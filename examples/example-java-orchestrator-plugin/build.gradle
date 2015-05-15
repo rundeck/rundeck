@@ -2,7 +2,7 @@ version = '2.5.0-SNAPSHOT'
 defaultTasks 'clean','build'
 apply plugin: 'java'
 apply plugin: 'idea'
-sourceCompatibility = 1.6
+sourceCompatibility = 1.7
 ext.rundeckPluginVersion= '1.1'
 
 
@@ -18,7 +18,7 @@ dependencies {
     testCompile('junit:junit:4.8.1')
 }
 
-ext.pluginClassNames='org.rundeck.plugin.example.MaxPercentageOrchestatorPlugin,org.rundeck.plugin.example.RankTieredOrchestatorPlugin'
+ext.pluginClassNames='org.rundeck.plugin.example.MaxPercentageOrchestatorPlugin,org.rundeck.plugin.example.RankTieredOrchestatorPlugin,org.rundeck.plugin.example.RandomSubsetOrchestratorPlugin'
 jar {
     manifest {
         attributes 'Rundeck-Plugin-Classnames': pluginClassNames
