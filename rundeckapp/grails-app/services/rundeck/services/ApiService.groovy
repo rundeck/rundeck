@@ -529,6 +529,14 @@ class ApiService {
         }
     }
     /**
+     * Render execution document for api response
+     */
+    public def respondExecutionsJson(HttpServletRequest request,HttpServletResponse response,execlist,paging=[:]) {
+        renderSuccessJson(response){
+            renderExecutionsJson(execlist, paging, delegate)
+        }
+    }
+    /**
      * Render execution list xml given a List of executions, and a builder delegate
      * @param execlist list of Maps containing [execution:Execution, href: URL to execution, status: rendered status text, summary: rendered summary text]
      */
@@ -608,6 +616,83 @@ class ApiService {
                         }
                     }
                 }
+            }
+        }
+    }
+    /**
+     * Render execution list json given a List of executions, and a builder delegate
+     * @param execlist list of Maps containing [execution:Execution, href: URL to execution, status: rendered status text, summary: rendered summary text]
+     */
+    public def renderExecutionsJson(execlist, paging = [:], delegate){
+        def execAttrs = [count: execlist.size()]
+        boolean isSingle=paging.single && execlist.size()==1
+        if (paging) {
+            execAttrs.putAll(paging)
+        }
+        def execarr= execlist.collect { Map execdata ->
+
+                def href=execdata.href
+                def status=execdata.status
+                def summary=execdata.summary
+                def Execution e = Execution.get(execdata.execution.id)
+                def execMap=[
+                        /** attributes   **/
+                        id: e.id,
+                        href: href,
+                        status: status,
+                        project: e.project
+                ]
+                /** elements   */
+                execMap.user=(e.user)
+                execMap.'date-started'=[unixtime: e.dateStarted.time, date: w3cDateValue(e.dateStarted)]
+                if (null != e.dateCompleted) {
+                    execMap.'date-ended'=[unixtime: e.dateCompleted.time, date:w3cDateValue(e.dateCompleted)]
+                }
+                if (e.cancelled) {
+                    execMap.abortedby=(e.abortedby ? e.abortedby : e.user)
+                }
+                if (e.scheduledExecution) {
+                    def jobparams = [id: e.scheduledExecution.extid]
+                    if (e.scheduledExecution.totalTime >= 0 && e.scheduledExecution.execCount > 0) {
+                        def long avg = Math.floor(e.scheduledExecution.totalTime / e.scheduledExecution.execCount)
+                        jobparams.averageDuration = avg
+                    }
+                    execMap.job=jobparams
+                    execMap.job.name=(e.scheduledExecution.jobName)
+                    execMap.job.group=(e.scheduledExecution.groupPath ?: '')
+                    execMap.job.project=(e.scheduledExecution.project)
+                    execMap.job.description=(e.scheduledExecution.description)
+                    if(e.argString){
+                        execMap.job.options=FrameworkService.parseOptsFromString(e.argString)
+                    }
+
+                }
+                execMap.description=(summary)
+                execMap.argstring=(e.argString)
+                if(e.serverNodeUUID){
+                    execMap.serverUUID=(e.serverNodeUUID)
+                }
+                if(e.succeededNodeList){
+                    execMap.successfulNodes=e.succeededNodeList.split(',')
+                }
+                if(e.failedNodeList){
+                    execMap.failedNodes=e.failedNodeList.split(',')
+                }
+                if(e.retryAttempt){
+                    execMap.retryAttempt=e.retryAttempt
+                }
+                if(execdata.retryExecution){
+                    execMap.retriedExecution=execdata.retryExecution
+                }
+                execMap
+            }
+
+        if(!isSingle) {
+            delegate.'paging' = execAttrs
+            delegate.'executions' = execarr
+        }else{
+            execarr[0].each{k,v->
+                delegate[k]=v
             }
         }
     }

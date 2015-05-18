@@ -968,6 +968,13 @@ class MenuController extends ControllerBase{
                         code: 'api.error.parameter.doesnotexist', args: ['project',params.project]])
             }
         }
+        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorXml(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
+        }
 
         QueueQuery query = new QueueQuery(runningFilter:'running',projFilter:params.project)
         if(params.max){
@@ -977,7 +984,34 @@ class MenuController extends ControllerBase{
             query.offset=params.int('offset')
         }
         def results = nowrunning(query)
-        return executionService.respondExecutionsXml(request,response,results.nowrunning,[total:results.total,offset:results.offset,max:results.max])
+
+        withFormat{
+            xml {
+                return executionService.respondExecutionsXml(
+                        request,
+                        response,
+                        results.nowrunning,
+                        [
+                                total: results.total,
+                                offset: results.offset,
+                                max: results.max
+                        ]
+                )
+            }
+            json {
+                return executionService.respondExecutionsJson(
+                        request,
+                        response,
+                        results.nowrunning,
+                        [
+                                total: results.total,
+                                offset: results.offset,
+                                max: results.max
+                        ]
+                )
+            }
+        }
+
     }
 }
 

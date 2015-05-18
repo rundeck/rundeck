@@ -1042,7 +1042,7 @@ class ExecutionController extends ControllerBase{
     /**
      * API: /api/execution/{id} , version 1
      */
-    def apiExecution={
+    def apiExecution(){
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -1059,8 +1059,21 @@ class ExecutionController extends ControllerBase{
                             args: [AuthConstants.ACTION_READ, "Execution", params.id]
                     ])
         }
-
-        return executionService.respondExecutionsXml(request,response, [e])
+        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorXml(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
+        }
+        withFormat{
+            xml{
+                return executionService.respondExecutionsXml(request,response, [e])
+            }
+            json{
+                return executionService.respondExecutionsJson(request,response, [e],[single:true])
+            }
+        }
     }
     /**
      * API: /api/execution/{id}/state , version 10
@@ -1376,7 +1389,14 @@ class ExecutionController extends ControllerBase{
                             args: ['project']
                     ])
         }
-        
+
+        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorXml(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
+        }
         query.projFilter=params.project
         if (null != query) {
             query.configureFilter()
@@ -1411,8 +1431,14 @@ class ExecutionController extends ControllerBase{
         //filter query results to READ authorized executions
         def filtered = frameworkService.filterAuthorizedProjectExecutionsAll(authContext,result,[AuthConstants.ACTION_READ])
 
-
-        return executionService.respondExecutionsXml(request,response,filtered,[total:total,offset:resOffset,max:resMax])
+        withFormat{
+            xml{
+                return executionService.respondExecutionsXml(request,response,filtered,[total:total,offset:resOffset,max:resMax])
+            }
+            json{
+                return executionService.respondExecutionsJson(request,response,filtered,[total:total,offset:resOffset,max:resMax])
+            }
+        }
     }
 }
 

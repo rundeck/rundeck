@@ -106,6 +106,24 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 data
             }, paging)
     }
+    public def respondExecutionsJson(HttpServletRequest request,HttpServletResponse response, List<Execution> executions, paging = [:]) {
+        return apiService.respondExecutionsJson(request,response,executions.collect { Execution e ->
+                def data=[
+                        execution: e,
+                        href: getFollowURLForExecution(e),
+                        status: getExecutionState(e),
+                        summary: summarizeJob(e.scheduledExecution, e)
+                ]
+                if(e.retryExecution){
+                    data.retryExecution=[
+                            id:e.retryExecution.id,
+                            href: getFollowURLForExecution(e.retryExecution),
+                            status: getExecutionState(e.retryExecution),
+                    ]
+                }
+                data
+            }, paging)
+    }
 
     /**
      * Render xml or json response data for the result of a call to {@link #deleteBulkExecutionIds(java.util.Collection, com.dtolabs.rundeck.core.authorization.AuthContext, java.lang.String)}

@@ -2652,6 +2652,13 @@ class ScheduledExecutionController  extends ControllerBase{
             )
         }
 
+        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorXml(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
+        }
 
         def result = executionService.queryJobExecutions(
                 scheduledExecution,
@@ -2660,8 +2667,22 @@ class ScheduledExecutionController  extends ControllerBase{
                 params.max  ? params.int('max') : -1
 
         )
+        def resOffset = params.offset ? params.int('offset') : 0
+        def resMax = params.max ?
+                params.int('max') :
+                grailsApplication.config.rundeck?.pagination?.default?.max ?
+                        grailsApplication.config.rundeck.pagination.default.max.toInteger() :
+                        20
+        def total=result.total
+        withFormat{
+            xml{
+                return executionService.respondExecutionsXml(request,response,result.result,[total:total,offset:resOffset,max:resMax])
+            }
+            json{
+                return executionService.respondExecutionsJson(request,response,result.result,[total:total,offset:resOffset,max:resMax])
+            }
+        }
 
-        return executionService.respondExecutionsXml(request,response,result.result)
     }
     /**
      * API: /api/incubator/jobs/takeoverSchedule , version 7

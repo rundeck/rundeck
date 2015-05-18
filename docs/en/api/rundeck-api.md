@@ -39,8 +39,14 @@ Changes introduced by API Version number:
 
 **Version 14**:
 
-* Added JSON support for endpoints:
-   - `/api/14/system/info`
+* Added JSON support for endpoints, when using API v14:
+    - `/api/1/system/info`
+    - `/api/1/execution/[ID]`
+    - `/api/9/executions/running`
+    - `/api/5/executions`
+    - `/api/1/job/[ID]/executions`
+* TODO json support:
+    - /api/9/jobs/import
 
 **Version 13**:
 
@@ -1030,7 +1036,23 @@ Required Parameters:
 
 * `project`: the project name, or '*' for all projects (**Since API v9**)
 
-Result: An Item List of `executions`.  Each `execution` of the form:
+Response with `Content-Type: application/xml`: An `<executions>` element containing multiple `<execution>` elements.
+
+~~~~ {.xml}
+<executions count="[count]" offset="[offset]" max="[max]" total="[total]">
+    <execution...>...</execution>
+    <execution...>...</execution>
+</executions>
+~~~~
+
+The `executions` element will have paging attributes:
+
+* `max`: maximum number of results per page
+* `offset`: offset from first of all results
+* `total`: total number of results
+* `count`: number of results in the response
+
+Each `execution` of the form:
 
 ~~~~~~~~~~ {.xml}
 <execution id="[ID]" href="[url]" status="[status]" project="[project]">
@@ -1080,6 +1102,60 @@ Result: An Item List of `executions`.  Each `execution` of the form:
 </execution>
 ~~~~~~~~~~
 
+**Since API v14, JSON format is available**
+
+Response with `Content-Type: application/json`:
+
+It contains a `paging` entry with paging information, and a `executions` array:
+
+~~~~~~~~~~ {.json}
+{
+  "paging": {
+    "count": 2,
+    "total": 2,
+    "offset": 0,
+    "max": 20
+  },
+  "executions": [
+    {
+      "id": 387,
+      "href": "[url]",
+      "status": "[status]",
+      "project": "test",
+      "user": "[user]",
+      "serverUUID":"[UUID]",
+      "date-started": {
+        "unixtime": 1431536339809,
+        "date": "2015-05-13T16:58:59Z"
+      },
+      "date-ended": {
+        "unixtime": 1431536346423,
+        "date": "2015-05-13T16:59:06Z"
+      },
+      "job": {
+        "id": "7400ff98-31c4-4834-ba3d-aee9646e867f",
+        "averageDuration": 6094,
+        "name": "test job",
+        "group": "api-test/job-run-steps",
+        "project": "test",
+        "description": "",
+        "options": {
+          "opt2": "a",
+          "opt1": "testvalue"
+        }
+      },
+      "description": "echo hello there [... 5 steps]",
+      "argstring": "-opt1 testvalue -opt2 a",
+      "successfulNodes": [
+        "madmartigan.local"
+      ]
+    },
+    ...
+  ]
+}
+
+~~~~~~~~~~
+
 The `[status]` value indicates the execution status.  It is one of:
 
 * `running`: execution is running
@@ -1116,6 +1192,46 @@ Request:
     GET /api/1/execution/[ID]
 
 Result: an Item List of `executions` with a single item. See [Listing Running Executions](#listing-running-executions).
+
+With `Content-Type: application/json`, a single object:
+
+~~~~~ {.json}
+{
+  "id": 387,
+  "href": "http://server.tld/execution/follow/387",
+  "status": "succeeded/failed/aborted/timedout/retried/other",
+  "project": "[project]",
+  "user": "[user]",
+  "date-started": {
+    "unixtime": 1431536339809,
+    "date": "2015-05-13T16:58:59Z"
+  },
+  "date-ended": {
+    "unixtime": 1431536346423,
+    "date": "2015-05-13T16:59:06Z"
+  },
+  "job": {
+    "id": "7400ff98-31c4-4834-ba3d-aee9646e867f",
+    "averageDuration": 6094,
+    "name": "test job",
+    "group": "api-test/job-run-steps",
+    "project": "[project]",
+    "description": "",
+    "options": {
+      "opt2": "a",
+      "opt1": "testvalue"
+    }
+  },
+  "description": "echo hello there [... 5 steps]",
+  "argstring": "-opt1 testvalue -opt2 a",
+  "successfulNodes": [
+    "nodea","nodeb"
+  ],
+  "failedNodes": [
+    "nodec","noded"
+  ]
+}
+~~~~~
 
 ### Delete an Execution
 
@@ -1222,13 +1338,6 @@ URL:
     /api/5/executions
 
 Result: an Item List of `executions`. See [Listing Running Executions](#listing-running-executions).
-
-The `executions` element will have paging attributes:
-
-* `max`: maximum number of results per page
-* `offset`: offset from first of all results
-* `total`: total number of results
-* `count`: number of results in the response
 
 Required Parameters:
 
