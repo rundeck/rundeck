@@ -153,7 +153,17 @@
                         order.
                     </span>
                     </div>
-
+                    <g:if test="${execdata instanceof ScheduledExecution}">
+                    <div>
+                        <span class="text-muted text-em">
+                            <g:message code="scheduledExecution.property.nodesSelectedByDefault.label" />:
+                            <strong>
+                                <g:message
+                                        code="scheduledExecution.property.nodesSelectedByDefault.${!!execdata?.nodesSelectedByDefault}.description"/>
+                            </strong>
+                        </span>
+                    </div>
+                    </g:if>
                 </td>
 
             </tr>

@@ -26,6 +26,7 @@ class ScheduledExecution extends ExecutionContext {
 
     Date nextExecution
     boolean scheduled = false
+    Boolean nodesSelectedByDefault = true
     Long totalTime=0
     Long execCount=0
     String adhocExecutionType
@@ -105,6 +106,7 @@ class ScheduledExecution extends ExecutionContext {
             }
         })
         crontabString(bindable: true,nullable: true)
+        nodesSelectedByDefault(nullable: true)
     }
 
     static mapping = {
@@ -186,6 +188,7 @@ class ScheduledExecution extends ExecutionContext {
             map.multipleExecutions=true
         }
         if(doNodedispatch){
+            map.nodesSelectedByDefault = nodesSelectedByDefault == null || nodesSelectedByDefault
             map.nodefilters=[dispatch:[threadcount:null!=nodeThreadcount?nodeThreadcount:1,keepgoing:nodeKeepgoing?true:false,excludePrecedence:nodeExcludePrecedence?true:false]]
             if(nodeRankAttribute){
                 map.nodefilters.dispatch.rankAttribute= nodeRankAttribute
@@ -295,6 +298,7 @@ class ScheduledExecution extends ExecutionContext {
             se.multipleExecutions=data.multipleExecutions?true:false
         }
         if(data.nodefilters){
+            se.nodesSelectedByDefault = data.nodesSelectedByDefault?true:false
             if(data.nodefilters.dispatch){
                 se.nodeThreadcount = data.nodefilters.dispatch.threadcount ?: 1
                 if(data.nodefilters.dispatch.containsKey('keepgoing')){

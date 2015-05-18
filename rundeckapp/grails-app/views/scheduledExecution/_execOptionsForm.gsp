@@ -41,7 +41,7 @@
         </g:elseif>
         <g:elseif test="${nodes}">
             <g:set var="selectedNodes"
-                   value="${failedNodes? failedNodes.split(','):selectedNodes? selectedNodes.split(','):null}"/>
+                   value="${failedNodes? failedNodes.split(','):selectedNodes!=null? selectedNodes.split(','):null}"/>
             <div class="container">
             <div class="row">
                 <div class="col-sm-12 checkbox">
@@ -49,22 +49,22 @@
                     <input name="extra._replaceNodeFilters" value="true" type="checkbox"
                            data-toggle="collapse"
                            data-target="#nodeSelect"
-                        ${selectedNodes?'checked':''}
+                        ${selectedNodes!=null?'checked':''}
                            id="doReplaceFilters"/>
                     Change the Target Nodes
-                (<span class="nodeselectcount"><g:enc>${selectedNodes?selectedNodes.size():nodes.size()}</g:enc></span>)</label>
+                (<span class="nodeselectcount"><g:enc>${selectedNodes!=null?selectedNodes.size():nodes.size()}</g:enc></span>)</label>
                 </div>
 
             </div>
             </div>
-            <div class=" matchednodes embed jobmatchednodes group_section collapse ${selectedNodes ? 'in' : ''}" id="nodeSelect">
+            <div class=" matchednodes embed jobmatchednodes group_section collapse ${selectedNodes!=null? 'in' : ''}" id="nodeSelect">
                 <%--
                  split node names into groups, in several patterns
                   .*\D(\d+)
                   (\d+)\D.*
                 --%>
                 <g:if test="${namegroups}">
-                    <div class=" group_select_control" style="${wdgt.styleVisible(if: selectedNodes)}">
+                    <div class=" group_select_control" style="${wdgt.styleVisible(if: selectedNodes !=null)}">
                         Select:
                         <span class="textbtn textbtn-default textbtn-on-hover selectall">All</span>
                         <span class="textbtn textbtn-default textbtn-on-hover selectnone">None</span>
@@ -77,7 +77,7 @@
                         <div class="panel panel-default">
                       <div class="panel-heading">
                           <g:set var="expkey" value="${g.rkey()}"/>
-                            <g:expander key="${expkey}" open="${selectedNodes?'true':'false'}">
+                            <g:expander key="${expkey}" open="${selectedNodes!=null?'true':'false'}">
                                 <g:if test="${group!='other'}">
                                     <span class="prompt">
                                     <g:enc>${namegroups[group][0]}</g:enc></span>
@@ -92,7 +92,7 @@
                                 <g:enc>(${namegroups[group].size()})</g:enc>
                             </g:expander>
                         </div>
-                        <div id="${enc(attr:expkey)}" style="${wdgt.styleVisible(if: selectedNodes)}" class="group_section panel-body">
+                        <div id="${enc(attr:expkey)}" style="${wdgt.styleVisible(if: selectedNodes!=null)}" class="group_section panel-body">
                                 <g:if test="${namegroups.size()>1}">
                                 <div class="group_select_control" style="display:none">
                                     Select:
@@ -113,7 +113,7 @@
                                                    type="checkbox"
                                                    name="extra.nodeIncludeName"
                                                    value="${enc(attr:node.nodename)}"
-                                                   ${selectedNodes ? '':'disabled' }
+                                                   ${selectedNodes!=null ? '':'disabled' }
                                                    data-tag="${enc(attr:node.tags?.join(' '))}"
                                                     ${(null== selectedNodes||selectedNodes.contains(node.nodename))?'checked':''}
                                                    /><g:enc>${node.nodename}</g:enc></label>
@@ -248,6 +248,11 @@
                 });
 
             </g:javascript>
+            <g:if test="${nodesSelectedByDefault != null && !nodesSelectedByDefault}">
+                <g:javascript>
+                    Event.fire($('nodeSelect'), 'nodeset:change');
+                </g:javascript>
+            </g:if>
         </g:elseif>
     </div>
     </div>
