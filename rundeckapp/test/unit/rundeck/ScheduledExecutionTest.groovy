@@ -37,6 +37,30 @@ class ScheduledExecutionTest  {
         assertEquals('${option.retry}',jobMap.retry)
     }
 
+    void testToMapNodesSelectedByDefault_default() {
+        ScheduledExecution se = createBasicScheduledExecution()
+        se.doNodedispatch=true
+        def jobMap = se.toMap()
+        assertNotNull(jobMap)
+        assertEquals(true,jobMap.nodesSelectedByDefault)
+    }
+    void testToMapNodesSelectedByDefault_false() {
+        ScheduledExecution se = createBasicScheduledExecution()
+        se.doNodedispatch=true
+        se.nodesSelectedByDefault=false
+        def jobMap = se.toMap()
+        assertNotNull(jobMap)
+        assertEquals(false,jobMap.nodesSelectedByDefault)
+    }
+    void testToMapNodesSelectedByDefault_true() {
+        ScheduledExecution se = createBasicScheduledExecution()
+        se.doNodedispatch=true
+        se.nodesSelectedByDefault=true
+        def jobMap = se.toMap()
+        assertNotNull(jobMap)
+        assertEquals(true,jobMap.nodesSelectedByDefault)
+    }
+
     void testFromMapScheduleCrontabString() {
         ScheduledExecution se = ScheduledExecution.fromMap(
                 [
@@ -60,6 +84,44 @@ class ScheduledExecutionTest  {
         assertNotNull(se)
         assertNotNull(se.retry)
         assertEquals('${option.retry}', se.retry)
+    }
+    void testFromMapnodesSelectedByDefault_default() {
+        ScheduledExecution se = ScheduledExecution.fromMap(
+                [
+                        jobName: 'abc',
+                        nodefilters: [
+                                filter:'abc'
+                        ]
+                ]
+        )
+        assertNotNull(se)
+        assertTrue(se.nodesSelectedByDefault)
+    }
+    void testFromMapnodesSelectedByDefault_true() {
+        ScheduledExecution se = ScheduledExecution.fromMap(
+                [
+                        jobName: 'abc',
+                        nodesSelectedByDefault:true,
+                        nodefilters: [
+                                filter:'abc'
+                        ]
+                ]
+        )
+        assertNotNull(se)
+        assertTrue(se.nodesSelectedByDefault)
+    }
+    void testFromMapnodesSelectedByDefault_false() {
+        ScheduledExecution se = ScheduledExecution.fromMap(
+                [
+                        jobName: 'abc',
+                        nodesSelectedByDefault:false,
+                        nodefilters: [
+                                filter:'abc'
+                        ]
+                ]
+        )
+        assertNotNull(se)
+        assertFalse(se.nodesSelectedByDefault)
     }
     void testFromMapSchedule() {
         ScheduledExecution se = ScheduledExecution.fromMap(

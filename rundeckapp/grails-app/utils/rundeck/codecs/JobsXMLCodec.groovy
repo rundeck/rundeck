@@ -188,6 +188,9 @@ class JobsXMLCodec {
                 def value= map.nodefilters.dispatch.excludePrecedence
                 map.nodefilters.dispatch.excludePrecedence= XmlParserUtil.stringToBool(value,false)
             }
+            if(map.nodesSelectedByDefault){
+                map.nodesSelectedByDefault=XmlParserUtil.stringToBool(map.nodesSelectedByDefault,false)
+            }
         }
         if(map.schedule){
             if(map.schedule.month && map.schedule.month instanceof Map && map.schedule.month?.day){

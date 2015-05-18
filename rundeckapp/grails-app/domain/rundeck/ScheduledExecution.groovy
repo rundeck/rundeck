@@ -298,7 +298,7 @@ class ScheduledExecution extends ExecutionContext {
             se.multipleExecutions=data.multipleExecutions?true:false
         }
         if(data.nodefilters){
-            se.nodesSelectedByDefault = data.nodesSelectedByDefault?true:false
+            se.nodesSelectedByDefault = null!=data.nodesSelectedByDefault?(data.nodesSelectedByDefault?true:false):true
             if(data.nodefilters.dispatch){
                 se.nodeThreadcount = data.nodefilters.dispatch.threadcount ?: 1
                 if(data.nodefilters.dispatch.containsKey('keepgoing')){
