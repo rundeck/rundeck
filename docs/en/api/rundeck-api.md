@@ -38,7 +38,10 @@ If the version number is not included or if the requested version number is unsu
 Changes introduced by API Version number:
 
 **Version 14**:
- 
+
+* Added JSON support for endpoints:
+   - `/api/14/system/info`
+
 **Version 13**:
 
 * New endpoints
@@ -484,11 +487,13 @@ Get Rundeck server information and stats.
 
 URL:
 
-    /api/1/system/info
+    /api/14/system/info
 
 Parameters: none
 
 Result: Success response, with included system info and stats in this format:
+
+`Content-Type: application/xml`:
 
 ~~~~~~~~~~~~~ {.xml}
 <system>
@@ -539,6 +544,79 @@ Result: Success response, with included system info and stats in this format:
     <threadDump href='http://dignan:4440/metrics/threads' contentType='text/plain' />
 </system>
 ~~~~~~~~~~~~~~~
+
+
+`Content-Type: application/json`:
+
+~~~~~~~~~~~~~ {.json}
+{
+  "system": {
+    "timestamp": {
+      "epoch": 1431975278220,
+      "unit": "ms",
+      "datetime": "2015-05-18T18:54:38Z"
+    },
+    "rundeck": {
+      "version": "2.5.2-SNAPSHOT",
+      "build": "2.5.2-0-SNAPSHOT",
+      "node": "madmartigan.local",
+      "base": "/Users/greg/rundeck25",
+      "apiversion": 14,
+      "serverUUID": null
+    },
+    "os": {
+      "arch": "x86_64",
+      "name": "Mac OS X",
+      "version": "10.10.3"
+    },
+    "jvm": {
+      "name": "Java HotSpot(TM) 64-Bit Server VM",
+      "vendor": "Oracle Corporation",
+      "version": "1.7.0_71",
+      "implementationVersion": "24.71-b01"
+    },
+    "stats": {
+      "uptime": {
+        "duration": 546776,
+        "unit": "ms",
+        "since": {
+          "epoch": 1431974731444,
+          "unit": "ms",
+          "datetime": "2015-05-18T18:45:31Z"
+        }
+      },
+      "cpu": {
+        "loadAverage": {
+          "unit": "percent",
+          "average": 2.689453125
+        },
+        "processors": 8
+      },
+      "memory": {
+        "unit": "byte",
+        "max": 716177408,
+        "free": 138606040,
+        "total": 527958016
+      },
+      "scheduler": {
+        "running": 0
+      },
+      "threads": {
+        "active": 35
+      }
+    },
+    "metrics": {
+      "href": "http://madmartigan.local:4440/metrics/metrics?pretty=true",
+      "contentType": "text/json"
+    },
+    "threadDump": {
+      "href": "http://madmartigan.local:4440/metrics/threads",
+      "contentType": "text/plain"
+    }
+  }
+}
+~~~~~~~~~~~~~
+
 
 Description of included elements:
 
