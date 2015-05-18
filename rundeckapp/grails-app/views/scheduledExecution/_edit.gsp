@@ -729,7 +729,33 @@ function getCurSEID(){
                 </div>
             </div>
         </div>
-	        
+
+        <div class="form-group">
+            <label class="${labelColClass}"><g:message code="scheduledExecution.property.nodesSelectedByDefault.label"/></label>
+
+            <div class="${fieldColSize}">
+                <div class="radio">
+                    <label>
+                        <g:radio
+                                name="nodesSelectedByDefault"
+                                value="true"
+                                checked="${scheduledExecution.nodesSelectedByDefault}"
+                                id="nodesSelectedByDefaultTrue"/>
+                        <g:message code="scheduledExecution.property.nodesSelectedByDefault.true.description"/>
+                    </label>
+                </div>
+                <div class="radio">
+                    <label>
+                        <g:radio name="nodesSelectedByDefault"
+                                 value="false"
+                                 checked="${!scheduledExecution.nodesSelectedByDefault}"
+                                 id="nodesSelectedByDefaultFalse"/>
+                        <g:message code="scheduledExecution.property.nodesSelectedByDefault.false.description"/>
+                    </label>
+                </div>
+            </div>
+        </div>
+
         %{--orchestrator--}%
         <g:render template="editOrchestratorForm" model="[scheduledExecution:scheduledExecution, orchestratorPlugins: orchestratorPlugins,adminauth:adminauth]"/>
         %{--//orchestrator--}%

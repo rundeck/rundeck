@@ -1847,6 +1847,7 @@ class ScheduledExecutionControllerTests  {
         assertEquals([:],model.dependentoptions)
         assertEquals([:],model.optiondependencies)
         assertEquals(null,model.optionordering)
+        assertEquals(null,model.nodesSelectedByDefault)
         assertEquals([:],model.remoteOptionData)
     }
     /**
@@ -1861,6 +1862,7 @@ class ScheduledExecutionControllerTests  {
                 project: 'project1',
                 groupPath: 'testgroup',
                 doNodedispatch: true,
+                nodesSelectedByDefault: false,
                 filter:'name: nodea,nodeb',
                 workflow: new Workflow(
                         keepgoing: true,
@@ -1927,14 +1929,14 @@ class ScheduledExecutionControllerTests  {
         assertNull sec.response.redirectedUrl
         assertNotNull model
         assertNotNull(model.scheduledExecution)
-        assertNull(model.selectedNodes)
+        assertEquals("", model.selectedNodes)
         assertEquals('fwnode',model.localNodeName)
         assertEquals('name: nodea,nodeb',model.nodefilter)
         assertEquals(null,model.nodesetvariables)
         assertEquals(null,model.failedNodes)
         assertEquals(null,model.nodesetempty)
+        assertEquals(false,model.nodesSelectedByDefault)
         assertEquals(testNodeSet.nodes,model.nodes)
-        assertEquals(null,model.selectedNodes)
         assertEquals([:],model.grouptags)
         assertEquals(null,model.selectedoptsmap)
         assertEquals([:],model.dependentoptions)
@@ -2030,6 +2032,7 @@ class ScheduledExecutionControllerTests  {
         assertEquals(null,model.selectedNodes)
         assertEquals(null,model.grouptags)
         assertEquals(null,model.selectedoptsmap)
+        assertEquals(null,model.nodesSelectedByDefault)
         assertEquals([:],model.dependentoptions)
         assertEquals([:],model.optiondependencies)
         assertEquals(null,model.optionordering)
@@ -2149,6 +2152,7 @@ class ScheduledExecutionControllerTests  {
         assertEquals('nodea',model.selectedNodes)
         assertEquals([:],model.grouptags)
         assertEquals(null,model.selectedoptsmap)
+        assertEquals(true,model.nodesSelectedByDefault)
         assertEquals([:],model.dependentoptions)
         assertEquals([:],model.optiondependencies)
         assertEquals(null,model.optionordering)

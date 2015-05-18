@@ -95,7 +95,7 @@ class ScheduledExecutionController  extends ControllerBase{
     def ApiService apiService
     def UserService userService
 
- 
+
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
 
     // the delete, save and update actions only
@@ -1747,6 +1747,10 @@ class ScheduledExecutionController  extends ControllerBase{
                 model.nodemap=[:]
                 model.tagsummary=[:]
                 model.grouptags=[:]
+                model.nodesSelectedByDefault=scheduledExecution.nodesSelectedByDefault
+                if (!model.nodesSelectedByDefault) {
+                    model.selectedNodes = ""
+                }
                 //summarize node groups
                 def namegroups=[other: new TreeList()]
                 nodes.each{INodeEntry node->
