@@ -112,7 +112,7 @@ class ScheduledExecutionController  extends ControllerBase{
             upload: 'GET',
             uploadPost: ['POST'],
             apiJobCreateSingle: 'POST',
-            apiJobRun: ['POST','GET'],
+            apiJobRun: ['POST'],
             apiJobsImport: 'POST',
             apiJobDelete: 'DELETE',
             apiRunScript: 'POST',
@@ -2288,41 +2288,54 @@ class ScheduledExecutionController  extends ControllerBase{
     /**
      * API: Run a job immediately: /job/{id}/run, version 1
      */
-    def apiJobRun = {
+    def apiJobRun() {
         if (!apiService.requireApi(request, response)) {
             return
         }
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
-        if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
+        def jobid=params.id
+        def jobAsUser,jobArgString,jobLoglevel,jobFilter
+        if(request.format=='json' ){
+            def data= request.JSON
+            jobAsUser = data?.asUser
+            jobArgString = data?.argString
+            jobLoglevel = data?.loglevel
+            jobFilter = data?.filter
+        }else{
+            jobAsUser=params.asUser
+            jobArgString=params.argString
+            jobLoglevel=params.loglevel
+        }
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
+        if (!apiService.requireExists(response, scheduledExecution, ['Job ID', jobid])) {
             return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
             scheduledExecution.project)) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                    code: 'api.error.item.unauthorized', args: ['Run', 'Job ID', params.id]])
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
+                    code: 'api.error.item.unauthorized', args: ['Run', 'Job ID', jobid]])
         }
         def username=session.user
-        if(params.asUser && apiService.requireVersion(request,response,ApiRequestFilters.V5)){
+        if(jobAsUser && apiService.requireVersion(request,response,ApiRequestFilters.V5)){
             //authorize RunAs User
             if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUNAS],
                     scheduledExecution.project)) {
-                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                        code: 'api.error.item.unauthorized', args: ['Run as User', 'Job ID', params.id]])
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
+                        code: 'api.error.item.unauthorized', args: ['Run as User', 'Job ID', jobid]])
             }
-            username= params.asUser
+            username= jobAsUser
         }
         def inputOpts = [:]
 
-        if (params.argString) {
-            inputOpts["argString"] = params.argString
+        if (jobArgString) {
+            inputOpts["argString"] = jobArgString
         }
-        if (params.loglevel) {
-            inputOpts["loglevel"] = params.loglevel
+        if (jobLoglevel) {
+            inputOpts["loglevel"] = jobLoglevel
         }
         //convert api parameters to node filter parameters
-        def filters = FrameworkController.extractApiNodeFilterParams(params)
+        def filters = jobFilter?[filter:jobFilter]:FrameworkController.extractApiNodeFilterParams(params)
         if (filters) {
             inputOpts['_replaceNodeFilters']='true'
             inputOpts['doNodedispatch']=true
@@ -2334,25 +2347,40 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
 
+        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorXml(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
+        }
+
         def result = executionService.executeJob(scheduledExecution, authContext, username, inputOpts)
         if(!result.success){
             if(result.error=='unauthorized'){
-                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                        code: 'api.error.item.unauthorized', args: ['Execute', 'Job ID', params.id]])
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
+                        code: 'api.error.item.unauthorized', args: ['Execute', 'Job ID', jobid]])
             }else if(result.error=='invalid'){
-                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                         code: 'api.error.job.options-invalid', args: [result.message]])
             }else if(result.error=='conflict'){
-                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_CONFLICT,
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_CONFLICT,
                         code: 'api.error.execution.conflict', args: [result.message]])
             }else{
                 //failed
-                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                         code: 'api.error.execution.failed', args: [result.message]])
             }
         }
         def e = result.execution
-        return executionService.respondExecutionsXml(request,response,[e])
+        withFormat{
+            xml{
+                return executionService.respondExecutionsXml(request,response,[e])
+            }
+            json{
+                return executionService.respondExecutionsJson(request,response,[e],[single:true])
+            }
+        }
     }
 
     /**

@@ -48,6 +48,7 @@ import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
 import rundeck.controllers.ExecutionController
+import rundeck.filters.ApiRequestFilters
 import rundeck.services.logging.ExecutionLogWriter
 
 import javax.servlet.http.HttpServletRequest
@@ -110,14 +111,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return apiService.respondExecutionsJson(request,response,executions.collect { Execution e ->
                 def data=[
                         execution: e,
-                        href: getFollowURLForExecution(e),
+//                        href: getFollowURLForExecution(e),
+                        href: getAPIURLForExecution(e),
                         status: getExecutionState(e),
                         summary: summarizeJob(e.scheduledExecution, e)
                 ]
                 if(e.retryExecution){
                     data.retryExecution=[
                             id:e.retryExecution.id,
-                            href: getFollowURLForExecution(e.retryExecution),
+                            href: getAPIURLForExecution(e.retryExecution),
                             status: getExecutionState(e.retryExecution),
                     ]
                 }
@@ -168,6 +170,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     public String getFollowURLForExecution(Execution e) {
         grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: e.id, absolute: true)
+    }
+
+    public String getAPIURLForExecution(Execution e) {
+        grailsLinkGenerator.link(uri:"/api/${ApiRequestFilters.API_CURRENT_VERSION}/execution/${e.id}", absolute: true)
     }
 
     def listLastExecutionsPerProject(AuthContext authContext, int max=5){
