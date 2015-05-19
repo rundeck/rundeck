@@ -39,20 +39,24 @@ Changes introduced by API Version number:
 **Version 14**:
 
 * Added JSON support for endpoints, when using API v14:
-    - `/api/1/system/info`
-    - `/api/1/execution/[ID]`
-    - `/api/9/executions/running`
-    - `/api/5/executions`
-    - `/api/1/job/[ID]/executions`
-    - `/api/1/jobs`
-    - `/api/2/project/[name]/jobs`
-    - `/api/2/job/[id]/run`
-    - `POST /api/2/job/[id]/executions`
+    - `/api/14/system/info`
+    - `/api/14/execution/[ID]`
+    - `/api/14/executions/running`
+    - `/api/14/executions`
+    - `/api/14/job/[ID]/executions`
+    - `/api/14/jobs`
+    - `/api/14/project/[name]/jobs`
+    - `/api/14/job/[id]/run`
+    - `POST /api/14/job/[id]/executions`
+    - `/api/14/jobs/import`
 * TODO json support:
-    - /api/9/jobs/import
+    - /api/1/jobs/export
 
 * Updated endpoints:
-    - `/api/2/job/[id]/run` action `GET` is no longer allowed, `POST` is required. For POST, this endpoint is now equivalent to `/api/2/job/[id]/executions`.  JSON request content is now allowed.
+    - `/api/14/job/[id]/run` action `GET` is no longer allowed, `POST` is required. For POST, this endpoint is now equivalent to `/api/14/job/[id]/executions`. JSON request content is now supported.
+    - `/api/14/jobs/import` 
+        * Both XML and YAML job definitions can now be posted directly using the appropriate MIME type
+        * JSON response support
 
 **Version 13**:
 
@@ -808,7 +812,7 @@ Optional parameters:
 * `asUser` : specifies a username identifying the user who ran the job. Requires `runAs` permission.
 * Node filter parameters as described under [Using Node Filters](#using-node-filters)
 
-If the request `Content-Type` is `application/json`, then the parameters will be ignored,
+(**API v14**) If the request `Content-Type` is `application/json`, then the parameters will be ignored,
 and this format is expected in the content:
 
 ~~~~~ {.json}
@@ -864,15 +868,19 @@ URL:
 
 Method: `POST`
 
-Expected Content-Type: `application/x-www-form-urlencoded` (**since 1.3**) or `multipart/form-data`
+Requst Content:
 
-Required Content:
+One of the following:
 
-* `xmlBatch`: Either a `x-www-form-urlencoded` request parameter containing the input content (**since 1.3**), or a `multipart/form-data` multipart MIME request part containing the content.
+
+* `Content-Type: x-www-form-urlencoded`, with a `xmlBatch` request parameter containing the input content
+* `Content-Type: multipart/form-data` multipart MIME request part named `xmlBatch` containing the content.
+* `Content-Type: application/xml`, request body is the Jobs XML formatted job definition (**since API v14**) 
+* `Content-Type: application/yaml`, request body is the Jobs YAML formatted job definition (**since API v14**)
 
 Optional parameters:
 
-* `format` : can be "xml" or "yaml" to specify the output format. Default is "xml"
+* `format` : can be "xml" or "yaml" to specify the input format, if multipart of form input is sent. Default is "xml"
 * `dupeOption`: A value to indicate the behavior when importing jobs which already exist.  Value can be "skip", "create", or "update". Default is "create".
 * `project` : (**since v8**) Specify the project that all job definitions should be imported to. If not specified, each job definition must define the project to import to.
 * `uuidOption`: Whether to preserve or remove UUIDs from the imported jobs. Allowed values (**since V9**):
@@ -882,6 +890,8 @@ Optional parameters:
 Result:
 
 A set of status results.  Each imported job definition will be either "succeeded", "failed" or "skipped".  These status sections contain a `count` attribute declaring how many jobs they contain.  Within each one there will be 0 or more `job` elements.
+
+`Content-Type: application/xml`:
 
 ~~~~~~~~~~ {.xml}
     <succeeded count="x">
@@ -908,6 +918,35 @@ Each Job element will be of the form:
     <error>Error message</error>
 </job>
 ~~~~~~~~~~~~~~
+
+`Content-Type: application/json`:
+
+~~~~~~ {.json}
+{
+  "succeeded": [...],
+  "failed": [...],
+  "skipped": [...]
+}
+~~~~~~
+
+Each array may contain a job data object:
+
+~~~~~~ {.json}
+{
+  "index": 1,
+  "href": "http://madmartigan.local:4440/api/14/job/3b6c19f6-41ee-475f-8fd0-8f1a26f27a9a",
+  "id": "3b6c19f6-41ee-475f-8fd0-8f1a26f27a9a",
+  "name": "restart",
+  "group": "app2/dev",
+  "project": "test",
+  "url": "http://madmartigan.local:4440/job/show/3b6c19f6-41ee-475f-8fd0-8f1a26f27a9a"
+}
+~~~~~~
+
+* `index`: index in the input content of the job definition.
+* `id`: If the job exists, or was successfully created, its UUID
+* `href`: If the job exists, or was successfully created, its API href
+* `url`: If the job exists, or was successfully created, its GUI URL.
 
 ## Getting a Job Definition ###
 

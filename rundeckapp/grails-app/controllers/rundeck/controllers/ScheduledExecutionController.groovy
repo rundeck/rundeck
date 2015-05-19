@@ -2183,24 +2183,100 @@ class ScheduledExecutionController  extends ControllerBase{
                 }
             }
         }
+    }/**
+     * Utility, render content for jobs/import response
+     */
+    private def renderJobsImportApiJson(jobs,jobsi,errjobs,skipjobs, delegate){
+        delegate.'succeeded'=delegate.array{
+            jobsi.each { Map job ->
+                delegate.element(
+                        index: job.entrynum,
+                        href: apiService.apiHrefForJob(job.scheduledExecution),
+                        id:job.scheduledExecution.extid,
+                        name:job.scheduledExecution.jobName,
+                        group:job.scheduledExecution.groupPath ?: '',
+                        project:job.scheduledExecution.project,
+                        url:g.createLink(action: 'show', id: job.scheduledExecution.extid, absolute: true)
+                )
+            }
+        }
+        delegate.failed=delegate.array{
+            errjobs.each{ Map job ->
+                def jmap=[index:job.entrynum]
+                if(job.scheduledExecution.id){
+                    jmap.href=apiService.apiHrefForJob(job.scheduledExecution)
+                }
+                if(job.scheduledExecution.id){
+                    jmap.id=job.scheduledExecution.extid
+                    jmap.url=(g.createLink(action:'show',id: job.scheduledExecution.extid, absolute:true))
+                }
+                StringBuffer sb = new StringBuffer()
+                job.scheduledExecution?.errors?.allErrors?.each{err->
+                    if(sb.size()>0){
+                        sb<<"\n"
+                    }
+                    sb << g.message(error:err)
+                }
+                if(job.errmsg){
+                    if(sb.size()>0){
+                        sb<<"\n"
+                    }
+                    sb<<job.errmsg
+                }
+                jmap.'error'=(sb.toString())
+                delegate.element(jmap + [name:(job.scheduledExecution.jobName),
+                                           group:(job.scheduledExecution.groupPath?:''),
+                                           project:(job.scheduledExecution.project)])
+            }
+        }
+        delegate.skipped=delegate.array{
+
+            skipjobs.each{ Map job ->
+                def jmap = [index: job.entrynum]
+                if (job.scheduledExecution.id) {
+                    jmap.href = apiService.apiHrefForJob(job.scheduledExecution)
+                }
+                if(job.scheduledExecution.id){
+                    jmap.id=(job.scheduledExecution.extid)
+                    jmap.url=(g.createLink(action:'show',id: job.scheduledExecution.extid,absolute:true))
+                }
+                StringBuffer sb = new StringBuffer()
+                if(job.errmsg){
+                    if(sb.size()>0){
+                        sb<<"\n"
+                    }
+                    sb<<job.errmsg
+                }
+                jmap.'error'=(sb.toString())
+                jmap.name=(job.scheduledExecution.jobName)
+                jmap.group=(job.scheduledExecution.groupPath?:'')
+                jmap.project=(job.scheduledExecution.project)
+                delegate.element(jmap)
+            }
+        }
     }
     /**
      * API: /jobs/import, version 1
      */
-    def apiJobsImport= {
+    def apiJobsImport(){
         if (!apiService.requireApi(request, response)) {
             return
         }
         log.debug("ScheduledExecutionController: upload " + params)
         def fileformat = params.format ?: 'xml'
         def parseresult
-        if (!apiService.requireParameters(params,response,['xmlBatch'])) {
+        if(request.api_version >= ApiRequestFilters.V14 && request.format=='xml'){
+            //xml input
+            parseresult = scheduledExecutionService.parseUploadedFile(request.getInputStream(), 'xml')
+        }else if(request.api_version >= ApiRequestFilters.V14 && request.format=='yaml'){
+            //yaml input
+            parseresult = scheduledExecutionService.parseUploadedFile(request.getInputStream(), 'yaml')
+        }else if (!apiService.requireParameters(params,response,['xmlBatch'])) {
             return
-        }
-        if (request instanceof MultipartHttpServletRequest) {
+        }else if (request instanceof MultipartHttpServletRequest) {
             def file = request.getFile("xmlBatch")
             if (!file) {
-                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                         code: 'api.error.jobs.import.missing-file', args: null])
             }
             parseresult = scheduledExecutionService.parseUploadedFile(file.getInputStream(), fileformat)
@@ -2208,16 +2284,16 @@ class ScheduledExecutionController  extends ControllerBase{
             String fileContent = params.xmlBatch
             parseresult = scheduledExecutionService.parseUploadedFile(fileContent, fileformat)
         }else{
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.jobs.import.missing-file', args: null])
         }
         if (parseresult.errorCode) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: parseresult.errorCode, args: parseresult.args])
         }
 
         if (parseresult.error) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.jobs.import.invalid', args: [fileformat,parseresult.error]])
         }
         def jobset = parseresult.jobset
@@ -2244,9 +2320,26 @@ class ScheduledExecutionController  extends ControllerBase{
         def errjobs = loadresults.errjobs
         def skipjobs = loadresults.skipjobs
 
+        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorXml(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
+        }
+        withFormat{
+            xml{
 
-        apiService.renderSuccessXmlWrap(request,response){
-            renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
+                apiService.renderSuccessXmlWrap(request,response){
+                    renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
+                }
+            }
+            json{
+
+                apiService.renderSuccessJson(response){
+                    renderJobsImportApiJson(jobs, jobsi, errjobs, skipjobs, delegate)
+                }
+            }
         }
     }
 
