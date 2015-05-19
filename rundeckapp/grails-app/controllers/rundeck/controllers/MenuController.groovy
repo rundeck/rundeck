@@ -859,7 +859,7 @@ class MenuController extends ControllerBase{
     /**
      * API: /api/jobs, version 1
      */
-    def apiJobsList = {ScheduledExecutionQuery query ->
+    def apiJobsList (ScheduledExecutionQuery query){
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -934,7 +934,7 @@ class MenuController extends ControllerBase{
     /**
      * API: /api/2/project/NAME/jobs, version 2
      */
-    def apiJobsListv2 = {ScheduledExecutionQuery query ->
+    def apiJobsListv2 (ScheduledExecutionQuery query) {
         if(!apiService.requireVersion(request,response,ApiRequestFilters.V2)){
             return
         }
