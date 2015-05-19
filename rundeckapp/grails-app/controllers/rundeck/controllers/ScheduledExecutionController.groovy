@@ -1057,12 +1057,14 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         if (deleteRequest.hasErrors()) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.invalid.request', args: [deleteRequest.errors.allErrors.collect { g.message(error: it) }.join("; ")]])
         }
         log.debug("ScheduledExecutionController: apiJobDeleteBulk : params: " + params)
-        if (!apiService.requireAnyParameters(params, response, ['ids', 'idlist'])) {
-            return
+        if(!deleteRequest.ids && !deleteRequest.idlist) {
+            if (!apiService.requireAnyParameters(params, response, ['ids', 'idlist'])) {
+                return
+            }
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
@@ -1090,22 +1092,55 @@ class ScheduledExecutionController  extends ControllerBase{
                 successful<< result.success
             }
         }
-        return apiService.renderSuccessXml(request,response) {
-            delegate.'deleteJobs'(requestCount: ids.size(), allsuccessful:(successful.size()==ids.size())){
-                if(successful){
-                    delegate.'succeeded'(count:successful.size()) {
-                        successful.each{del->
-                            delegate.'deleteJobResult'(id:del.job.extid,){
-                                delegate.'message'(del.message)
+
+        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorXml(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
+        }
+        withFormat{
+            xml{
+                return apiService.renderSuccessXml(request,response) {
+                    delegate.'deleteJobs'(requestCount: ids.size(), allsuccessful:(successful.size()==ids.size())){
+                        if(successful){
+                            delegate.'succeeded'(count:successful.size()) {
+                                successful.each{del->
+                                    delegate.'deleteJobResult'(id:del.job.extid,){
+                                        delegate.'message'(del.message)
+                                    }
+                                }
+                            }
+                        }
+                        if(deleteerrs){
+                            delegate.'failed'(count: deleteerrs.size()) {
+                                deleteerrs.each{del->
+                                    delegate.'deleteJobResult'(id:del.id,errorCode:del.errorCode){
+                                        delegate.'error'(del.message)
+                                    }
+                                }
                             }
                         }
                     }
                 }
-                if(deleteerrs){
-                    delegate.'failed'(count: deleteerrs.size()) {
-                        deleteerrs.each{del->
-                            delegate.'deleteJobResult'(id:del.id,errorCode:del.errorCode){
-                                delegate.'error'(del.message)
+
+            }
+            json{
+                return apiService.renderSuccessJson(response) {
+                    requestCount= ids.size()
+                    allsuccessful=(successful.size()==ids.size())
+                    if(successful){
+                        delegate.'succeeded'=array {
+                            successful.each{del->
+                                delegate.'element'(id:del.job.extid,message:del.message)
+                            }
+                        }
+                    }
+                    if(deleteerrs){
+                        delegate.'failed'=array {
+                            deleteerrs.each{del->
+                                delegate.'element'(id:del.id,errorCode:del.errorCode,message:del.message)
                             }
                         }
                     }
@@ -2494,22 +2529,22 @@ class ScheduledExecutionController  extends ControllerBase{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_DELETE],
                 scheduledExecution.project)) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Delete', 'Job ID', params.id]])
         }
         def result = scheduledExecutionService.deleteScheduledExecutionById(params.id, authContext,
                 false, session.user, 'apiJobDelete')
         if (!result.success) {
             if (result.error?.errorCode == 'notfound') {
-                apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND, code: 'api.error.item.doesnotexist',
+                apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND, code: 'api.error.item.doesnotexist',
                         args: ['Job ID', params.id]])
             } else if (result.error?.errorCode == 'unauthorized') {
-                apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
+                apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                         code: 'api.error.item.unauthorized',
                         args: ['Delete', 'Job ID', params.id]]
                 )
             } else {
-                apiService.renderErrorXml(response, [status: HttpServletResponse.SC_CONFLICT,
+                apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_CONFLICT,
                         code: 'api.error.job.delete.failed',
                         args: [result.error.message]]
                 )

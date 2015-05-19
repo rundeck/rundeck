@@ -49,6 +49,7 @@ Changes introduced by API Version number:
     - `/api/14/job/[id]/run`
     - `POST /api/14/job/[id]/executions`
     - `/api/14/jobs/import`
+    - `/api/14/jobs/delete`
 * TODO json support:
     - /api/1/jobs/export
 
@@ -1000,14 +1001,30 @@ URL:
 
 Method: `DELETE`, or `POST`
 
-Query parameters:
+Request:
+
+Either Query parameters:
 
 * `ids`: The Job IDs to delete, can be specified multiple times
 * `idlist`: The Job IDs to delete as a single comma-separated string.
 
+Or JSON/XML content:
+
+`Content-Type: application/json`
+
+~~~~~ {.json}
+{
+  "ids": [
+    "fefa50e1-2265-47af-b101-d4bbaa3ba21c",
+    "f07e2311-4dae-40ca-bdfa-412bd223f863"
+  ],
+  "idlist":"49336998-21a3-42c7-8da3-a855587982e0,a387f77f-a623-45dc-967f-746a2e3f6686"
+}
+~~~~~
+
 Note: you can combine `ids` with `idlist`
 
-Result:
+`application/xml` response:
 
 The common `result` element described in the [Response Format](#response-format) section, indicating success or failure and any messages.
 
@@ -1027,6 +1044,7 @@ If successful, then the `result` will contain a `deleteJobs` element with two se
     </failed>
 </deleteJobs>
 ~~~~~~~~~~
+
 
 `deleteJobs` will have two attributes:
 
@@ -1048,6 +1066,28 @@ Each `deleteJobRequest` under the `failed` section will contain:
 * `id` attribute - the Job ID
 * `error` sub-element - result error message for the delete request
 * `errorCode` attribute - a code indicating the type of failure, currently one of `failed`, `unauthorized` or `notfound`.
+
+`application/json` response:
+
+
+~~~~~~ {.json}
+{
+  "requestCount": #integer#,
+  "allsuccessful": true/false,
+  "succeeded": [...],
+  "failed":[...]
+}
+~~~~~~
+
+The list of succeeded/failed will contain objects of this form:
+
+~~~~~~ {.json}
+{
+  "id": "[UUID]",
+  "errorCode": "(error code, see above)",
+  "message": "(success or failure message)"
+}
+~~~~~~
 
 
 ## Executions
