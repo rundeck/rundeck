@@ -884,16 +884,48 @@ class MenuController extends ControllerBase{
                 return
             }
         }
-        def results = jobsFragment(query)
 
-        return apiService.renderSuccessXml(request,response){
-            delegate.'jobs'(count:results.nextScheduled.size()){
-                results.nextScheduled.each{ ScheduledExecution se->
-                    job(id:se.extid){
-                        name(se.jobName)
-                        group(se.groupPath)
-                        project(se.project)
-                        description(se.description)
+        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorXml(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
+        }
+        def results = jobsFragment(query)
+        withFormat{
+            xml {
+                return apiService.renderSuccessXml(request, response) {
+                    delegate.'jobs'(count: results.nextScheduled.size()) {
+                        results.nextScheduled.each { ScheduledExecution se ->
+                            job(id: se.extid) {
+                                name(se.jobName)
+                                group(se.groupPath)
+                                project(se.project)
+                                description(se.description)
+                                href(g.createLink(
+                                        uri: "/api/${ApiRequestFilters.API_CURRENT_VERSION}/job/${se.extid}",
+                                        absolute: true
+                                ))
+                            }
+                        }
+                    }
+                }
+            }
+            json{
+                return apiService.renderSuccessJson(response) {
+                    results.nextScheduled.each { ScheduledExecution se ->
+                        element(
+                                id: se.extid,
+                                name: (se.jobName),
+                                group: (se.groupPath),
+                                project: (se.project),
+                                description: (se.description),
+                                href: g.createLink(
+                                        uri: "/api/${ApiRequestFilters.API_CURRENT_VERSION}/job/${se.extid}",
+                                        absolute: true
+                                )
+                        )
                     }
                 }
             }
