@@ -46,6 +46,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationCo
     RundeckJobDefinitionManager() {
         defaultFormats.put('xml', new JobXMLFormat())
         defaultFormats.put('yaml', new JobYAMLFormat())
+        defaultFormats.put('json', new JobJSONFormat())
     }
 
     /**
