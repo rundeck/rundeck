@@ -45,8 +45,15 @@ Changes introduced by API Version number:
     - `/api/9/executions/running`
     - `/api/5/executions`
     - `/api/1/job/[ID]/executions`
+    - `/api/1/jobs`
+    - `/api/2/project/[name]/jobs`
+    - `/api/2/job/[id]/run`
+    - `POST /api/2/job/[id]/executions`
 * TODO json support:
     - /api/9/jobs/import
+
+* Updated endpoints:
+    - `/api/2/job/[id]/run` action `GET` is no longer allowed, `POST` is required. For POST, this endpoint is now equivalent to `/api/2/job/[id]/executions`.  JSON request content is now allowed.
 
 **Version 13**:
 
@@ -796,7 +803,7 @@ Run a job specified by ID.
 
 URL:
 
-    GET /api/1/job/[ID]/run
+    POST /api/1/job/[ID]/run
     POST /api/12/job/[ID]/executions
 
 Optional parameters:
@@ -805,6 +812,20 @@ Optional parameters:
 * `loglevel`: argument specifying the loglevel to use, one of: 'DEBUG','VERBOSE','INFO','WARN','ERROR'
 * `asUser` : specifies a username identifying the user who ran the job. Requires `runAs` permission.
 * Node filter parameters as described under [Using Node Filters](#using-node-filters)
+
+If the request `Content-Type` is `application/json`, then the parameters will be ignored,
+and this format is expected in the content:
+
+~~~~~ {.json}
+{
+    "argString":"...",
+    "loglevel":"...",
+    "asUser":"...",
+    "filter":"..."
+}
+~~~~~
+
+The `filter` can be a node filter string.
 
 Result:  An Item List of `executions` containing a single entry for the execution that was created.  See [Listing Running Executions](#listing-running-executions).
 
