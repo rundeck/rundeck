@@ -4,8 +4,7 @@
 
 Rundeck provides a Web API for use with your application.  
 
-API Version Number
-----
+## API Version Number
 
 The current API version is `${APIVERS}`.
 
@@ -33,7 +32,7 @@ If the version number is not included or if the requested version number is unsu
 </result>
 ~~~~~~~~~~~~~~~~~~~
 
-### Changes
+## Changes
 
 Changes introduced by API Version number:
 
@@ -214,8 +213,7 @@ Added in Rundeck 1.4.6, 1.5.1:
     * `/api/1/jobs` - [Listing Jobs](#listing-jobs)
         * Additional parameters added
 
-URLs
-----
+## URLs
 
 The Rundeck server has a "Base URL", where you access the server. Your Rundeck Server URL may look like: `http://myserver:4440`.
 
@@ -223,8 +221,7 @@ The root URL path for all calls to the API in this version is:
 
     $RUNDECK_SERVER_URL/api/2
 
-XML and JSON
-----
+## XML and JSON
 
 The majority of API calls use XML for input and output.  Some import/export features support YAML formatted documents, but XML is used for most API-level information.
 
@@ -234,8 +231,7 @@ JSON results can be retrieved by sending the HTTP "Accept" header with a `applic
 
 If an "Accept" header is not specified, then the response will be either the same format as the request content (for POST, or PUT requests), or XML by default.
 
-Authentication
------
+## Authentication
 
 Authentication can be done in two different ways, either with Token based authentication,
 or with a username and password.
@@ -299,8 +295,7 @@ Otherwise, if the response is a redirect chain which results in `200 successful`
 
 The response should set a cookie named `JSESSIONID`.
 
-Response Format
-------
+## XML Response Format
 
 For version 11 and later API requests, XML responses will have only the content indicated in the appropriate endpoint documentation.
 
@@ -359,14 +354,13 @@ Where the list of specific items are wrapped in a pluralized element name which 
 When an API path declares its results as an "Item List" this is the format that will be returned.
 
 
-API Contents
------
+# API Contents
 
-### Authentication Tokens ###
+## Authentication Tokens ###
 
 Authentication tokens can be managed via the API itself.
 
-#### List Tokens ####
+### List Tokens ####
 
 List all tokens or all tokens for a specific user.
 
@@ -416,7 +410,7 @@ For a specific user:
 ]
 ~~~~
 
-#### Get a token ####
+### Get a token ####
 
 Get a specified auth token.
 
@@ -441,7 +435,7 @@ Response:
 }
 ~~~~
 
-#### Create a Token ####
+### Create a Token ####
 
 Create a new token for a specific user.
 
@@ -482,7 +476,7 @@ Response:
 }
 ~~~~
 
-#### Delete a token ####
+### Delete a token ####
 
 Delete a specified auth token.
 
@@ -494,7 +488,7 @@ Response:
 
     204 No Content
 
-### System Info ###
+## System Info ###
 
 Get Rundeck server information and stats.
 
@@ -734,6 +728,7 @@ The `memory` section describes memory usage in bytes:
 
 :   Number of active Threads in the JVM
 
+## Jobs
 
 ### Listing Jobs ###
 
@@ -914,7 +909,7 @@ Each Job element will be of the form:
 </job>
 ~~~~~~~~~~~~~~
 
-### Getting a Job Definition ###
+## Getting a Job Definition ###
 
 Export a single job definition in XML or YAML formats.
 
@@ -934,7 +929,7 @@ If you specify `format=yaml`, then the output will be in [job-yaml](../man5/job-
 
 If an error occurs, then the output will be in XML format, using the common `result` element described in the [Response Format](#response-format) section.
 
-### Deleting a Job Definition ###
+## Deleting a Job Definition ###
 
 Delete a single job definition.
 
@@ -1016,6 +1011,7 @@ Each `deleteJobRequest` under the `failed` section will contain:
 * `errorCode` attribute - a code indicating the type of failure, currently one of `failed`, `unauthorized` or `notfound`.
 
 
+## Executions
 
 ### Getting Executions for a Job
 
@@ -1268,7 +1264,7 @@ Result: `204 No Content`
 
 * Requires the `delete_execution` action allowed for a `project` in the `application` context. See: [Administration - Access Control Policy - Application Scope Resources and Actions](../administration/access-control-policy.html#application-scope-resources-and-actions)
 
-### Bulk Delete Executions
+## Bulk Delete Executions
 
 Delete a set of Executions by their IDs.
 
@@ -1986,6 +1982,8 @@ Result:  The result will contain a `success/message` element will contain a desc
 
 The `[abort-state]` will be one of: "pending", "failed", or "aborted".
 
+## Adhoc
+
 ### Running Adhoc Commands
 
 Run a command string.
@@ -2098,7 +2096,7 @@ new execution by ID:
 
 **Since API version 8**: The script interpreter and whether the arguments to the interpreter are quoted can be specified.
 
-### Key Storage ###
+## Key Storage ###
 
 Upload and manage public and private key files. For more information see the [Administration - Key Storage](../administration/key-storage.html) document.
 
@@ -2112,7 +2110,7 @@ URL:
 
     /api/11/storage/keys/[PATH]/[FILE]
 
-#### Upload Keys ####
+### Upload Keys ####
 
 Specify the type of key via the `Content-type` header:
 
@@ -2131,7 +2129,7 @@ PUT /api/11/storage/keys/[PATH]/[FILE]
 Content-Type: [...]
 ~~~
 
-#### List keys ####
+### List keys ####
 
 Lists resources at the specified PATH, provides a JSON or XML response based on the `Accept` request header.
 
@@ -2238,7 +2236,7 @@ url='http://dignan.local:4440/api/11/storage/keys'>
 ~~~~
 
 
-#### Get Key Metadata ####
+### Get Key Metadata ####
 
 Returns the metadata about the stored key file.
 
@@ -2281,7 +2279,7 @@ name='test1.pub'>
 }
 ~~~~
 
-#### GET Key Contents ####
+### GET Key Contents ####
 
 Provides the **public key** content if the `Accept` request header matches `*/*` or `application/pgp-keys`:
 
@@ -2300,12 +2298,13 @@ Response:
     403 Unauthorized
     ...
 
-#### Delete Keys ####
+### Delete Keys ####
 
 Deletes the file if it exists and returns `204` response.
 
 `DELETE /api/11/storage/keys/[PATH]/[FILE]`
 
+## Projects
 
 ### Listing Projects ###
 
@@ -2771,7 +2770,7 @@ Deletes the resource if it exists.
 
 Response: `204 No Content`
 
-### Listing History
+## Listing History
 
 List the event history for a project.
 
@@ -2841,6 +2840,8 @@ The `events` element will also have `max`, `offset`, and `total` attributes, to 
 `count` is the number of events included in the results.
 `max` is the paging size as specified in the request, or with the default value of 20.
 `offset` is the offset specified, or default value of 0.
+
+## Resources/Nodes
 
 ### Listing Resources
 
@@ -2926,7 +2927,7 @@ Result: Depending on the `format` parameter, a value of "xml" will return [resou
 
 The result will contain a single item for the specified resource.
 
-### Takeover Schedule in Cluster Mode
+## Takeover Schedule in Cluster Mode
 
 **INCUBATOR**: this endpoint is available under the `/incubator` top-level path to indicate it is under development, and the specific behavior may change before it is finalized, or even completely removed.
 
