@@ -739,7 +739,7 @@ function getCurSEID(){
                         <g:radio
                                 name="nodesSelectedByDefault"
                                 value="true"
-                                checked="${scheduledExecution.nodesSelectedByDefault}"
+                                checked="${scheduledExecution.nodesSelectedByDefault==null||scheduledExecution.nodesSelectedByDefault}"
                                 id="nodesSelectedByDefaultTrue"/>
                         <g:message code="scheduledExecution.property.nodesSelectedByDefault.true.description"/>
                     </label>
@@ -748,7 +748,7 @@ function getCurSEID(){
                     <label>
                         <g:radio name="nodesSelectedByDefault"
                                  value="false"
-                                 checked="${!scheduledExecution.nodesSelectedByDefault}"
+                                 checked="${scheduledExecution.nodesSelectedByDefault!=null && !scheduledExecution.nodesSelectedByDefault}"
                                  id="nodesSelectedByDefaultFalse"/>
                         <g:message code="scheduledExecution.property.nodesSelectedByDefault.false.description"/>
                     </label>
