@@ -414,7 +414,7 @@ class ExecutionControllerTests  {
             return true
         }
         controller.apiService = svcMock.createMock()
-        controller.apiExecutionAbort(null)
+        controller.apiExecutionAbort()
 
         assert 200 == controller.response.status
         assert null == controller.request.apiErrorCode
@@ -443,7 +443,7 @@ class ExecutionControllerTests  {
 
         def svcMock = mockFor(ApiService, false)
         svcMock.demand.requireApi { req, resp -> true }
-        svcMock.demand.renderErrorXml { response, Map args ->
+        svcMock.demand.renderErrorFormat { response, Map args ->
             assertEquals('api.error.item.unauthorized',args.code)
             assertEquals(403,args.status)
             assertEquals([AuthConstants.ACTION_KILL, "Execution", execs[2].id.toString()],args.args)
@@ -451,7 +451,7 @@ class ExecutionControllerTests  {
             return true
         }
         controller.apiService = svcMock.createMock()
-        controller.apiExecutionAbort(null)
+        controller.apiExecutionAbort()
 
         assert 403 == controller.response.status
         assert null == controller.flash.errorCode
@@ -482,7 +482,7 @@ class ExecutionControllerTests  {
 
         def svcMock = mockFor(ApiService, false)
         svcMock.demand.requireApi { req, resp -> true }
-        svcMock.demand.renderErrorXml { response, Map args ->
+        svcMock.demand.renderErrorFormat { response, Map args ->
             assertEquals('api.error.item.unauthorized', args.code)
             assertEquals(403, args.status)
             assertEquals([AuthConstants.ACTION_KILL, "Execution", execs[2].id.toString()], args.args)
@@ -490,7 +490,7 @@ class ExecutionControllerTests  {
             return true
         }
         controller.apiService = svcMock.createMock()
-        controller.apiExecutionAbort(null)
+        controller.apiExecutionAbort()
 
         assert 403 == controller.response.status
         assert null == controller.flash.errorCode
@@ -529,7 +529,7 @@ class ExecutionControllerTests  {
             return true
         }
         controller.apiService = svcMock.createMock()
-        controller.apiExecutionAbort(null)
+        controller.apiExecutionAbort()
 
         assert 200 == controller.response.status
         assert null == controller.request.apiErrorCode
@@ -567,7 +567,7 @@ class ExecutionControllerTests  {
             return true
         }
         controller.apiService = svcMock.createMock()
-        controller.apiExecutionAbort(null)
+        controller.apiExecutionAbort()
 
         assert 200 == controller.response.status
         assert null == controller.request.apiErrorCode
@@ -601,7 +601,7 @@ class ExecutionControllerTests  {
             return true
         }
         controller.apiService = svcMock.createMock()
-        controller.apiExecution(null)
+        controller.apiExecution()
 
         assert 403 == controller.response.status
         assert null == controller.flash.errorCode
