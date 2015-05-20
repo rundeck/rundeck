@@ -46,10 +46,13 @@ Changes introduced by API Version number:
     - `/api/14/job/[ID]/executions`
     - `/api/14/jobs`
     - `/api/14/project/[name]/jobs`
-    - `/api/14/job/[id]/run`
-    - `POST /api/14/job/[id]/executions`
+    - `/api/14/job/[id]/run` and `POST /api/14/job/[id]/executions`
     - `/api/14/jobs/import`
     - `/api/14/jobs/delete`
+    - `/api/14/execution/[ID]/abort`
+    - `/api/14/run/command`
+    - `/api/14/run/script`
+    - `/api/14/run/url`
 * TODO json support:
     - /api/1/jobs/export
 
@@ -2091,24 +2094,48 @@ URL:
 
     /api/1/run/command
 
-Required Parameters:
+The necessary content can be supplied as request Parameters:
 
-* `project`: the project name
-* `exec`: the shell command string to run, e.g. "echo hello".
-
-Optional Parameters:
-
-* `nodeThreadcount`: threadcount to use
-* `nodeKeepgoing`: if "true", continue executing on other nodes even if some fail.
-* `asUser` : specifies a username identifying the user who ran the command. Requires `runAs` permission.
+* `project`: the project name (required)
+* `exec`: the shell command string to run, e.g. "echo hello". (required)
+* `nodeThreadcount`: threadcount to use (optional)
+* `nodeKeepgoing`: if "true", continue executing on other nodes even if some fail. (optional)
+* `asUser` : specifies a username identifying the user who ran the command. Requires `runAs` permission. (optional)
 
 Node filter parameters as described under [Using Node Filters](#using-node-filters)
 
-Result: A success message, and a single `<execution>` item identifying the
+Or the request can be `Content-type: application/json`:
+
+~~~~~~ {.json}
+{
+    "project":"[project]",
+    "exec":"[exec]",
+    "nodeThreadcount": #threadcount#,
+    "nodeKeepgoing": true/false,
+    "asUser": "[asUser]",
+    "filter": "[node filter string]"
+}
+~~~~~~
+
+Result:
+
+`Content-Type: application/xml`: A success message, and a single `<execution>` item identifying the
 new execution by ID:
 
 ~~~~~~~~~~ {.xml}
     <execution id="X"/>
+~~~~~~~~~~
+
+`Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+{
+  "message": "Immediate execution scheduled (X)",
+  "execution": {
+    "id": X,
+    "href": "[API Href]"
+  }
+}
 ~~~~~~~~~~
 
 ### Running Adhoc Scripts
@@ -2121,13 +2148,10 @@ URL:
 
 Method: `POST`
 
-Required Parameters:
 
-* `project`: the project name
+Request Content:
 
-Required Content:
-
-The script file content can be submitted either as a form request or multipart attachment.
+The script file content can be submitted either as a form request or multipart attachment with request parameters, or can be a json document.
 
 For Content-Type: `application/x-www-form-urlencoded`
 
@@ -2137,23 +2161,57 @@ For Content-Type: `multipart/form-data`
 
 * `scriptFile`: the script file contents (`scriptFile` being the `name` attribute of the `Content-Disposition` header)
 
-Optional Parameters:
+Parameters:
 
+* `project`: the project name (required)
 * `argString`: Arguments to pass to the script when executed.
 * `nodeThreadcount`: threadcount to use
 * `nodeKeepgoing`: if "true", continue executing on other nodes even if some fail.
 * `asUser` : specifies a username identifying the user who ran the script. Requires `runAs` permission.
 * `scriptInterpreter`: a command to use to run the script (*since version 8*)
 * `interpreterArgsQuoted`: `true`/`false`: if true, the script file and arguments will be quoted as the last argument to the `scriptInterpreter` (*since version 8*)
+* `fileExtension`: extension of of the script file on the remote node (*since version 14*)
 
 Node filter parameters as described under [Using Node Filters](#using-node-filters)
 
-Result: A success message, and a single `<execution>` item identifying the
+If using a json document with Content-type: `application/json`:
+
+~~~~~~ {.json}
+{
+    "project":"[project]",
+    "script":"[script]",
+    "nodeThreadcount": #threadcount#,
+    "nodeKeepgoing": true/false,
+    "asUser": "[asUser]",
+    "argString": "[argString]",
+    "scriptInterpreter": "[scriptInterpreter]",
+    "interpreterArgsQuoted": true/false,
+    "fileExtension": "[fileExtension]",
+    "filter": "[node filter string]"
+}
+~~~~~~
+
+#### Response
+
+`Content-Type: application/xml`: A success message, and a single `<execution>` item identifying the
 new execution by ID:
 
     <execution id="X"/>
 
 **Since API version 8**: The script interpreter and whether the arguments to the interpreter are quoted can be specified.
+
+
+`Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+{
+  "message": "Immediate execution scheduled (X)",
+  "execution": {
+    "id": X,
+    "href": "[API Href]"
+  }
+}
+~~~~~~~~~~
 
 ### Running Adhoc Script URLs
 
@@ -2165,26 +2223,39 @@ URL:
 
 Method: `POST`
 
-Expected Content-Type: `application/x-www-form-urlencoded`
+The request can be form content, or a JSON document.
 
-Required Parameters:
+With Content-Type: `application/x-www-form-urlencoded` form or query parameters are used.
 
-* `project`: the project name
-
-Required Content:
-
-* `scriptURL`: A URL pointing to a script file
-
-Optional Parameters:
-
+* `project`: the project name (required)
+* `scriptURL`: A URL pointing to a script file (required)
 * `argString`: Arguments to pass to the script when executed.
 * `nodeThreadcount`: threadcount to use
 * `nodeKeepgoing`: if "true", continue executing on other nodes even if some fail.
 * `asUser` : specifies a username identifying the user who ran the script. Requires `runAs` permission.
 * `scriptInterpreter`: a command to use to run the script (*since version 8*)
 * `interpreterArgsQuoted`: `true`/`false`: if true, the script file and arguments will be quoted as the last argument to the `scriptInterpreter` (*since version 8*)
+* `fileExtension`: extension of of the script file on the remote node (*since version 14*)
 
 Node filter parameters as described under [Using Node Filters](#using-node-filters)
+
+
+If using a json document with Content-type: `application/json`:
+
+~~~~~~ {.json}
+{
+    "project":"[project]",
+    "url":"[scriptURL]",
+    "nodeThreadcount": #threadcount#,
+    "nodeKeepgoing": true/false,
+    "asUser": "[asUser]",
+    "argString": "[argString]",
+    "scriptInterpreter": "[scriptInterpreter]",
+    "interpreterArgsQuoted": true/false,
+    "fileExtension": "[fileExtension]",
+    "filter": "[node filter string]"
+}
+~~~~~~
 
 Result: A success message, and a single `<execution>` item identifying the
 new execution by ID:
@@ -2194,6 +2265,19 @@ new execution by ID:
 ~~~~~~~~~~
 
 **Since API version 8**: The script interpreter and whether the arguments to the interpreter are quoted can be specified.
+
+
+`Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+{
+  "message": "Immediate execution scheduled (X)",
+  "execution": {
+    "id": X,
+    "href": "[API Href]"
+  }
+}
+~~~~~~~~~~
 
 ## Key Storage ###
 
