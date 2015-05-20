@@ -949,7 +949,7 @@ Each array may contain a job data object:
 * `href`: If the job exists, or was successfully created, its API href
 * `url`: If the job exists, or was successfully created, its GUI URL.
 
-## Getting a Job Definition ###
+### Getting a Job Definition ###
 
 Export a single job definition in XML or YAML formats.
 
@@ -969,7 +969,7 @@ If you specify `format=yaml`, then the output will be in [job-yaml](../man5/job-
 
 If an error occurs, then the output will be in XML format, using the common `result` element described in the [Response Format](#response-format) section.
 
-## Deleting a Job Definition ###
+### Deleting a Job Definition ###
 
 Delete a single job definition.
 
@@ -1343,7 +1343,7 @@ Result: `204 No Content`
 
 * Requires the `delete_execution` action allowed for a `project` in the `application` context. See: [Administration - Access Control Policy - Application Scope Resources and Actions](../administration/access-control-policy.html#application-scope-resources-and-actions)
 
-## Bulk Delete Executions
+### Bulk Delete Executions
 
 Delete a set of Executions by their IDs.
 
