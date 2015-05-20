@@ -2051,7 +2051,9 @@ Optional Parameters:
 
 * `asUser` : specifies a username identifying the user who aborted the execution. Requires `runAs` permission.
 
-Result:  The result will contain a `success/message` element will contain a descriptive message.  The status of the abort action will be included as an element:
+Result:
+
+`Content-Type: application/xml`: The result will contain a `success/message` element will contain a descriptive message.  The status of the abort action will be included as an element:
 
 ~~~~~~~~~~ {.xml}
     <abort status="[abort-state]">
@@ -2059,7 +2061,25 @@ Result:  The result will contain a `success/message` element will contain a desc
     </abort>
 ~~~~~~~~~~
 
+`Content-Type: application/json`:
+
+~~~~~~ {.json}
+{
+  "abort": {
+    "status": "[abort-state]",
+    "reason": "[reason]"
+  },
+  "execution": {
+    "id": "[id]",
+    "status": "[execution status]",
+    "href": "[API href]"
+  }
+}
+~~~~~~
+
 The `[abort-state]` will be one of: "pending", "failed", or "aborted".
+
+If the `[abort-state]` is "failed", then `[reason]` will be a textual description of the reason.
 
 ## Adhoc
 
