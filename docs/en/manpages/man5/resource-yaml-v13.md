@@ -142,6 +142,25 @@ bartholemew:
   https-port: 8443
 ~~~~~~~~ 
 
+Here is the same two nodes but in the sequence style syntax:
+
+~~~~~~~~ {.yaml}
+- Homestar.local:
+  description: The production redis server.
+  hostname: Homestar.local
+  nodename: Homestar.local
+  tags: 'redis_server,production'
+  username: greg
+- bartholemew:
+  description: Webapp node
+  hostname: bartholemew
+  nodename: bartholemew
+  tags: 'web,app'
+  username: greg
+  app-port: 8080
+  https-port: 8443
+~~~~~~~~ 
+
 
 The Rundeck source code and all documentation may be downloaded from
 <https://github.com/rundeck/rundeck/>.
