@@ -53,9 +53,9 @@ Changes introduced by API Version number:
     - `/api/14/run/command`
     - `/api/14/run/script`
     - `/api/14/run/url`
+    - `/api/14/history`
 * TODO json support:
     - /api/1/jobs/export
-
 * Updated endpoints:
     - `/api/14/job/[id]/run` action `GET` is no longer allowed, `POST` is required. For POST, this endpoint is now equivalent to `/api/14/job/[id]/executions`. JSON request content is now supported.
     - `/api/14/jobs/import` 
@@ -2992,7 +2992,9 @@ The format for the `end`, and `begin` filters is either:  a unix millisecond tim
 
 The format for the `jobListFilter` and `excludeJobListFilter` is the job's group and name separated by a '/' character, such as: "group1/job name", or "my job" if there is no group.
 
-Result:  an Item List of `events`.  Each `event` has this form:
+Result:
+
+`Content-Type: application/xml`: an Item List of `events`.  Each `event` has this form:
 
 ~~~~~~~~~~ {.xml}
 <event starttime="[unixtime]" endtime="[unixtime]">
@@ -3007,9 +3009,9 @@ Result:  an Item List of `events`.  Each `event` has this form:
   <!-- if the execution was aborted, the username who aborted it: -->
   <abortedby>[username]</abortedby>
   <!-- if associated with an Execution, include the execution id: -->
-  <execution id="[execid]"/>
+  <execution id="[execid]" href="[api href]" permalink="[gui href]"/>
   <!-- if associated with a Job, include the Job ID: -->
-  <job id="[jobid]"/>
+  <job id="[jobid]"  href="[api href]" permalink="[gui href]"/>
 </event>
 ~~~~~~~~~~
 
@@ -3023,6 +3025,52 @@ The `events` element will also have `max`, `offset`, and `total` attributes, to 
 `count` is the number of events included in the results.
 `max` is the paging size as specified in the request, or with the default value of 20.
 `offset` is the offset specified, or default value of 0.
+
+**As of v14**: the `<execution>` and `<job>` elements will have a `href` attribute with the URL to the API for that resource.
+
+`Content-Type: application/json`:
+
+~~~~~~ {.json}
+{
+  "paging": {
+    "count": 10,
+    "total": 110,
+    "max": 20,
+    "offset": 100
+  },
+  "events": [...]
+}
+~~~~~~
+
+The `events` array contains elements like:
+
+~~~~~ {.json}
+{
+  "starttime": #[unixtime],
+  "endtime": #[unixtime],
+  "title": "[job title, or "adhoc"]",
+  "status": "[status]",
+  "statusString": "[string]",
+  "summary": "[summary text]",
+  "node-summary": {
+    "succeeded": X,
+    "failed": Y,
+    "total": Z
+  },
+  "user": "[user]",
+  "project": "[project]",
+  "date-started": "[yyyy-MM-ddTHH:mm:ssZ]",
+  "date-ended": "[yyyy-MM-ddTHH:mm:ssZ]",
+  "job": {
+    "id": "[uuid]",
+    "href": "[api href]"
+  },
+  "execution": {
+    "id": "[id]",
+    "href": "[api href]"
+  }
+}
+~~~~~
 
 ## Resources/Nodes
 
