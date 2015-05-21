@@ -586,6 +586,7 @@ class ApiService {
                                     }
                                 }
                             }
+                            href(apiHrefForJob(e.scheduledExecution))
                         }
                     }
                     description(summary)
@@ -665,7 +666,7 @@ class ApiService {
                     if(e.argString){
                         execMap.job.options=FrameworkService.parseOptsFromString(e.argString)
                     }
-                    execMap.job.href=grailsLinkGenerator.link(uri:"/api/${ApiRequestFilters.API_CURRENT_VERSION}/job/${jobparams.id}",absolute: true)
+                    execMap.job.href=apiHrefForJob(e.scheduledExecution)
                 }
                 execMap.description=(summary)
                 execMap.argstring=(e.argString)
