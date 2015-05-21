@@ -715,4 +715,13 @@ class ApiService {
                 params: [api_version: ApiRequestFilters.API_CURRENT_VERSION],
                 absolute: true)
     }
+    String guiHrefForExecution(Execution execution) {
+        return grailsLinkGenerator.link(
+                controller: 'execution',
+                id: execution.id,
+                action: 'show',
+                params: [project: execution.project],
+                absolute: true
+        )
+    }
 }
