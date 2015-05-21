@@ -2624,7 +2624,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 return
             }
         }
-        def project=runCommandRequest.project
+        def project=runCommandRequest.project?:params.project
+        runCommandRequest.project=project
         //test valid project
         def exists=frameworkService.existsFrameworkProject(project)
         if (!apiService.requireExists(response, exists, ['project', project])) {
@@ -2664,10 +2665,12 @@ class ScheduledExecutionController  extends ControllerBase{
                 return
             }
         }
+        def project=runCommandRequest.project?:params.project
+        runCommandRequest.project=project
         //test valid project
 
-        def exists=frameworkService.existsFrameworkProject(runCommandRequest.project)
-        if (!apiService.requireExists(response, exists, ['project', runCommandRequest.project])) {
+        def exists=frameworkService.existsFrameworkProject(project)
+        if (!apiService.requireExists(response, exists, ['project', project])) {
             return
         }
 
@@ -2788,10 +2791,11 @@ class ScheduledExecutionController  extends ControllerBase{
                 return
             }
         }
+        def project=runCommandRequest.project?:params.project
+        runCommandRequest.project=project
         //test valid project
-
-        def exists = frameworkService.existsFrameworkProject(runAdhocRequest.project)
-        if (!apiService.requireExists(response, exists, ['project', runAdhocRequest.project])) {
+        def exists=frameworkService.existsFrameworkProject(project)
+        if (!apiService.requireExists(response, exists, ['project', project])) {
             return
         }
 
