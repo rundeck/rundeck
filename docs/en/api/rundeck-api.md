@@ -60,7 +60,19 @@ Changes introduced by API Version number:
     - `/api/14/job/[id]/run` action `GET` is no longer allowed, `POST` is required. For POST, this endpoint is now equivalent to `/api/14/job/[id]/executions`. JSON request content is now supported.
     - `/api/14/jobs/import` 
         * Both XML and YAML job definitions can now be posted directly using the appropriate MIME type
+        * Add API `href` and GUI `permalink` values into XML response
         * JSON response support
+    - `/api/14/execution/[ID]/abort` - added API/GUI href/permalink to XML responses.
+    - `/api/14/history` - added API/GUI href/permalink to XML responses.
+    - `/api/14/jobs/import` - added API/GUI href/permalink to XML responses.
+    - `/api/14/run/*` - added API/GUI href/permalink to XML responses for adhoc command/script/url.
+* Modified `href` meaning for XML responses:
+    * Some endpoints that included a `href` value in XML responses used the link that was appropriate 
+    for an end user to use in a web browser,
+    essentially the permalink to the GUI view for the linked object.
+    When using API v14, these URLs now point to the API,
+    and a new attribute `permalink` will be included to link to the GUI view for the object.
+    * Using an API version 13 or earlier will retain the old behavior of `href` in XML responses.
 
 **Version 13**:
 
@@ -912,9 +924,10 @@ A set of status results.  Each imported job definition will be either "succeeded
 Each Job element will be of the form:
 
 ~~~~~~~~~~ {.xml}
-<job>
-    <!-- ID may not exist if the job was not created yet -->
+<job index="x" href="[API url]">
+    <!-- ID, href, and permalink may not be present if the job was not created yet -->
     <id>ID</id>
+    <permalink>[GUI url]</permalink>
     <name>job name</name>
     <group>job group</group>
     <project>job project</project>
@@ -943,14 +956,14 @@ Each array may contain a job data object:
   "name": "restart",
   "group": "app2/dev",
   "project": "test",
-  "url": "http://madmartigan.local:4440/job/show/3b6c19f6-41ee-475f-8fd0-8f1a26f27a9a"
+  "permalink": "http://madmartigan.local:4440/job/show/3b6c19f6-41ee-475f-8fd0-8f1a26f27a9a"
 }
 ~~~~~~
 
 * `index`: index in the input content of the job definition.
 * `id`: If the job exists, or was successfully created, its UUID
 * `href`: If the job exists, or was successfully created, its API href
-* `url`: If the job exists, or was successfully created, its GUI URL.
+* `permalink`: If the job exists, or was successfully created, its GUI URL.
 
 ### Getting a Job Definition ###
 
@@ -1154,7 +1167,7 @@ The `executions` element will have paging attributes:
 Each `execution` of the form:
 
 ~~~~~~~~~~ {.xml}
-<execution id="[ID]" href="[url]" status="[status]" project="[project]">
+<execution id="[ID]" href="[url]" permalink="[url]" status="[status]" project="[project]">
     <user>[user]</user>
     <date-started unixtime="[unixtime]">[datetime]</date-started>
 
@@ -1219,6 +1232,7 @@ It contains a `paging` entry with paging information, and a `executions` array:
     {
       "id": 387,
       "href": "[url]",
+      "permalink": "[GUI link url]",
       "status": "[status]",
       "project": "test",
       "user": "[user]",
@@ -1262,7 +1276,8 @@ The `[status]` value indicates the execution status.  It is one of:
 * `failed`: execution completed with failure
 * `aborted`: execution was aborted
 
-The `[url]` value is a URL to the Rundeck server page to view the execution output.
+The `[url]` value for the `href` is a URL the Rundeck API for the execution.
+The `[url]` value for the `permalink` is a URL to the Rundeck server page to view the execution output.
 
 `[user]` is the username of the user who started the execution.
 
@@ -1296,8 +1311,9 @@ With `Content-Type: application/json`, a single object:
 
 ~~~~~ {.json}
 {
-  "id": 387,
-  "href": "http://server.tld/execution/follow/387",
+  "id": X,
+  "href": "[url]",
+  "permalink": "[url]",
   "status": "succeeded/failed/aborted/timedout/retried/other",
   "project": "[project]",
   "user": "[user]",
@@ -1310,10 +1326,12 @@ With `Content-Type: application/json`, a single object:
     "date": "2015-05-13T16:59:06Z"
   },
   "job": {
-    "id": "7400ff98-31c4-4834-ba3d-aee9646e867f",
+    "id": "[uuid]",
+    "href": "[url]",
+    "permalink": "[url]",
     "averageDuration": 6094,
-    "name": "test job",
-    "group": "api-test/job-run-steps",
+    "name": "[name]",
+    "group": "[group]",
     "project": "[project]",
     "description": "",
     "options": {
@@ -2075,7 +2093,7 @@ Result:
   "execution": {
     "id": "[id]",
     "status": "[execution status]",
-    "href": "[API href]"
+    "href": "[API href]",
   }
 }
 ~~~~~~
@@ -2123,7 +2141,7 @@ Result:
 new execution by ID:
 
 ~~~~~~~~~~ {.xml}
-    <execution id="X"/>
+<execution id="X" href="[API Href]" permalink="[GUI href]"/>
 ~~~~~~~~~~
 
 `Content-Type: application/json`:
@@ -2133,7 +2151,8 @@ new execution by ID:
   "message": "Immediate execution scheduled (X)",
   "execution": {
     "id": X,
-    "href": "[API Href]"
+    "href": "[API Href]",
+    "permalink": "[GUI Href]"
   }
 }
 ~~~~~~~~~~
@@ -2196,10 +2215,9 @@ If using a json document with Content-type: `application/json`:
 `Content-Type: application/xml`: A success message, and a single `<execution>` item identifying the
 new execution by ID:
 
-    <execution id="X"/>
-
-**Since API version 8**: The script interpreter and whether the arguments to the interpreter are quoted can be specified.
-
+~~~~~~~~~~ {.xml}
+<execution id="X" href="[API Href]" permalink="[GUI href]"/>
+~~~~~~~~~~
 
 `Content-Type: application/json`:
 
@@ -2208,7 +2226,8 @@ new execution by ID:
   "message": "Immediate execution scheduled (X)",
   "execution": {
     "id": X,
-    "href": "[API Href]"
+    "href": "[API Href]",
+    "permalink": "[GUI Href]"
   }
 }
 ~~~~~~~~~~
@@ -2261,7 +2280,7 @@ Result: A success message, and a single `<execution>` item identifying the
 new execution by ID:
 
 ~~~~~~~~~~ {.xml}
-    <execution id="X"/>
+<execution id="X" href="[API Href]" permalink="[GUI href]"/>
 ~~~~~~~~~~
 
 **Since API version 8**: The script interpreter and whether the arguments to the interpreter are quoted can be specified.
@@ -2274,7 +2293,8 @@ new execution by ID:
   "message": "Immediate execution scheduled (X)",
   "execution": {
     "id": X,
-    "href": "[API Href]"
+    "href": "[API Href]",
+    "permalink": "[GUI Href]"
   }
 }
 ~~~~~~~~~~
