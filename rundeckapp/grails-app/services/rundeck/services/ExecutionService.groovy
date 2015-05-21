@@ -111,15 +111,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return apiService.respondExecutionsJson(request,response,executions.collect { Execution e ->
                 def data=[
                         execution: e,
-//                        href: getFollowURLForExecution(e),
-                        href: getAPIURLForExecution(e),
+                        viewUrl: getFollowURLForExecution(e),
+                        href: apiService.apiHrefForExecution(e),
                         status: getExecutionState(e),
                         summary: summarizeJob(e.scheduledExecution, e)
                 ]
                 if(e.retryExecution){
                     data.retryExecution=[
                             id:e.retryExecution.id,
-                            href: getAPIURLForExecution(e.retryExecution),
+                            viewUrl: getFollowURLForExecution(e.retryExecution),
+                            href: apiService.apiHrefForExecution(e.retryExecution),
                             status: getExecutionState(e.retryExecution),
                     ]
                 }
@@ -172,9 +173,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: e.id, absolute: true)
     }
 
-    public String getAPIURLForExecution(Execution e) {
-        grailsLinkGenerator.link(uri:"/api/${ApiRequestFilters.API_CURRENT_VERSION}/execution/${e.id}", absolute: true)
-    }
 
     def listLastExecutionsPerProject(AuthContext authContext, int max=5){
         def projects = frameworkService.projects(authContext).collect{ it.name }
