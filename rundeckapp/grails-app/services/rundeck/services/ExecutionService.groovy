@@ -90,19 +90,27 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
 
     public def respondExecutionsXml(HttpServletRequest request,HttpServletResponse response, List<Execution> executions, paging = [:]) {
+        def apiv14=request.api_version>=ApiRequestFilters.V14
         return apiService.respondExecutionsXml(request,response,executions.collect { Execution e ->
                 def data=[
                         execution: e,
-                        href: getFollowURLForExecution(e),
+                        href: apiv14?apiService.apiHrefForExecution(e):apiService.guiHrefForExecution(e),
                         status: getExecutionState(e),
                         summary: summarizeJob(e.scheduledExecution, e)
                 ]
-                if(e.retryExecution){
-                    data.retryExecution=[
-                            id:e.retryExecution.id,
-                            href: getFollowURLForExecution(e.retryExecution),
+                if(apiv14){
+                    data.permalink=apiService.guiHrefForExecution(e)
+                }
+                if(e.retryExecution) {
+                    data.retryExecution = [
+                            id    : e.retryExecution.id,
+                            href  : apiv14 ? apiService.apiHrefForExecution(e.retryExecution) :
+                                    apiService.guiHrefForExecution(e.retryExecution),
                             status: getExecutionState(e.retryExecution),
                     ]
+                    if (apiv14) {
+                        data.retryExecution.permalink = apiService.guiHrefForExecution(e.retryExecution)
+                    }
                 }
                 data
             }, paging)
@@ -111,7 +119,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return apiService.respondExecutionsJson(request,response,executions.collect { Execution e ->
                 def data=[
                         execution: e,
-                        viewUrl: getFollowURLForExecution(e),
+                        permalink: apiService.guiHrefForExecution(e),
                         href: apiService.apiHrefForExecution(e),
                         status: getExecutionState(e),
                         summary: summarizeJob(e.scheduledExecution, e)
@@ -119,7 +127,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 if(e.retryExecution){
                     data.retryExecution=[
                             id:e.retryExecution.id,
-                            viewUrl: getFollowURLForExecution(e.retryExecution),
+                            permalink: apiService.guiHrefForExecution(e.retryExecution),
                             href: apiService.apiHrefForExecution(e.retryExecution),
                             status: getExecutionState(e.retryExecution),
                     ]
@@ -167,10 +175,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
                 break;
         }
-    }
-
-    public String getFollowURLForExecution(Execution e) {
-        grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: e.id, absolute: true)
     }
 
 
