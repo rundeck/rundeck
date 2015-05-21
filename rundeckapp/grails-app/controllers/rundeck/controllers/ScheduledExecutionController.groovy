@@ -2177,7 +2177,7 @@ class ScheduledExecutionController  extends ControllerBase{
                     name(job.scheduledExecution.jobName)
                     group(job.scheduledExecution.groupPath ?: '')
                     project(job.scheduledExecution.project)
-                    url(g.createLink(action: 'show', id: job.scheduledExecution.extid, absolute: true))
+                    permalink(apiService.guiHrefForJob(job.scheduledExecution))
                 }
             }
         }
@@ -2190,7 +2190,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 delegate.'job'(jmap){
                     if(job.scheduledExecution.id){
                         id(job.scheduledExecution.extid)
-                        url(g.createLink(action:'show',id: job.scheduledExecution.extid, absolute:true))
+                        permalink(apiService.guiHrefForJob(job.scheduledExecution))
                     }
                     name(job.scheduledExecution.jobName)
                     group(job.scheduledExecution.groupPath?:'')
@@ -2222,7 +2222,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 delegate.'job'(jmap){
                     if(job.scheduledExecution.id){
                         id(job.scheduledExecution.extid)
-                        url(g.createLink(action:'show',id: job.scheduledExecution.extid,absolute:true))
+                        permalink(apiService.guiHrefForJob(job.scheduledExecution))
                     }
                     name(job.scheduledExecution.jobName)
                     group(job.scheduledExecution.groupPath?:'')
@@ -2251,7 +2251,7 @@ class ScheduledExecutionController  extends ControllerBase{
                         name:job.scheduledExecution.jobName,
                         group:job.scheduledExecution.groupPath ?: '',
                         project:job.scheduledExecution.project,
-                        url:g.createLink(action: 'show', id: job.scheduledExecution.extid, absolute: true)
+                        permalink:apiService.guiHrefForJob(job.scheduledExecution)
                 )
             }
         }
@@ -2260,10 +2260,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 def jmap=[index:job.entrynum]
                 if(job.scheduledExecution.id){
                     jmap.href=apiService.apiHrefForJob(job.scheduledExecution)
-                }
-                if(job.scheduledExecution.id){
                     jmap.id=job.scheduledExecution.extid
-                    jmap.url=(g.createLink(action:'show',id: job.scheduledExecution.extid, absolute:true))
+                    jmap.permalink=apiService.guiHrefForJob(job.scheduledExecution)
                 }
                 StringBuffer sb = new StringBuffer()
                 job.scheduledExecution?.errors?.allErrors?.each{err->
@@ -2290,10 +2288,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 def jmap = [index: job.entrynum]
                 if (job.scheduledExecution.id) {
                     jmap.href = apiService.apiHrefForJob(job.scheduledExecution)
-                }
-                if(job.scheduledExecution.id){
                     jmap.id=(job.scheduledExecution.extid)
-                    jmap.url=(g.createLink(action:'show',id: job.scheduledExecution.extid,absolute:true))
+                    jmap.permalink=apiService.guiHrefForJob(job.scheduledExecution)
                 }
                 StringBuffer sb = new StringBuffer()
                 if(job.errmsg){
@@ -2766,17 +2762,17 @@ class ScheduledExecutionController  extends ControllerBase{
                         delegate.'execution'(
                                 id: results.id,
                                 href: apiService.apiHrefForExecution(results.execution),
-                                viewUrl: apiService.guiHrefForExecution(results.execution)
+                                permalink: apiService.guiHrefForExecution(results.execution)
                         )
                     }
                 }
                 json{
                     return apiService.renderSuccessJson(response) {
                         delegate.'message'=("Immediate execution scheduled (${results.id})")
-                        delegate.'execution'=[
-                                id: results.id,
-                                href: apiService.apiHrefForExecution(results.execution),
-                                viewUrl: apiService.guiHrefForExecution(results.execution)
+                        delegate.'execution' = [
+                                id       : results.id,
+                                href     : apiService.apiHrefForExecution(results.execution),
+                                permalink: apiService.guiHrefForExecution(results.execution)
                         ]
                     }
                 }
