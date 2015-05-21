@@ -903,10 +903,7 @@ class MenuController extends ControllerBase{
                                 group(se.groupPath)
                                 project(se.project)
                                 description(se.description)
-                                href(g.createLink(
-                                        uri: "/api/${ApiRequestFilters.API_CURRENT_VERSION}/job/${se.extid}",
-                                        absolute: true
-                                ))
+                                href(apiService.apiHrefForJob(se))
                             }
                         }
                     }
@@ -921,10 +918,7 @@ class MenuController extends ControllerBase{
                                 group: (se.groupPath),
                                 project: (se.project),
                                 description: (se.description),
-                                href: g.createLink(
-                                        uri: "/api/${ApiRequestFilters.API_CURRENT_VERSION}/job/${se.extid}",
-                                        absolute: true
-                                )
+                                href: apiService.apiHrefForJob(se)
                         )
                     }
                 }

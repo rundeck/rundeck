@@ -1265,7 +1265,7 @@ class ExecutionController extends ControllerBase{
             json{
                 apiService.renderSuccessJson(response) {
                     abort=reportstate
-                    execution=[id: params.id, status: abortresult.jobstate,href:executionService.getAPIURLForExecution(e)]
+                    execution=[id: params.id, status: abortresult.jobstate,href:apiService.apiHrefForExecution(e)]
                 }
             }
         }
