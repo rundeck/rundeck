@@ -1258,14 +1258,21 @@ class ExecutionController extends ControllerBase{
                         }
                     }
                     abort(reportstate) {
-                        execution(id: params.id, status: abortresult.jobstate)
+                        execution(id: params.id, status: abortresult.jobstate,
+                                  href:apiService.apiHrefForExecution(e),
+                                  permalink: apiService.guiHrefForExecution(e))
                     }
                 }
             }
             json{
                 apiService.renderSuccessJson(response) {
                     abort=reportstate
-                    execution=[id: params.id, status: abortresult.jobstate,href:apiService.apiHrefForExecution(e)]
+                    execution=[
+                            id: params.id,
+                            status: abortresult.jobstate,
+                            href:apiService.apiHrefForExecution(e),
+                            permalink: apiService.guiHrefForExecution(e)
+                    ]
                 }
             }
         }
