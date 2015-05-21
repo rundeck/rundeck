@@ -393,7 +393,7 @@ class ReportsController extends ControllerBase{
     /**
      * API, /api/history, version 1
      */
-    def apiHistory={ExecQuery query->
+    def apiHistory(ExecQuery query){
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -463,36 +463,118 @@ class ReportsController extends ControllerBase{
             (ExecutionService.EXECUTION_FAILED_WITH_RETRY): ExecutionService.EXECUTION_FAILED_WITH_RETRY,
             timeout: ExecutionService.EXECUTION_TIMEDOUT,
             (ExecutionService.EXECUTION_TIMEDOUT): ExecutionService.EXECUTION_TIMEDOUT]
-        return apiService.renderSuccessXml(request,response){
-            delegate.'events'(count:model.reports.size(),total:model.total, max: model.max, offset: model.offset){
-                model.reports.each{  rpt->
-                    def nodes=rpt.node
-                    final Matcher matcher = nodes =~ /^(\d+)\/(\d+)\/(\d+)$/
-                    def nodesum=[rpt.status =='succeed'?1:0,rpt.status =='succeed'?0:1,1]
-                    if(matcher.matches()){
-                        nodesum[0]=matcher.group(1)
-                        nodesum[1]=matcher.group(2)
-                        nodesum[2]=matcher.group(3)
+        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorFormat(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
+        }
+        withFormat{
+            xml{
+                return apiService.renderSuccessXml(request,response){
+                    delegate.'events'(count:model.reports.size(),total:model.total, max: model.max, offset: model.offset){
+                        model.reports.each{  rpt->
+                            def nodes=rpt.node
+                            final Matcher matcher = nodes =~ /^(\d+)\/(\d+)\/(\d+)$/
+                            def nodesum=[rpt.status =='succeed'?1:0,rpt.status =='succeed'?0:1,1]
+                            if(matcher.matches()){
+                                nodesum[0]=matcher.group(1)
+                                nodesum[1]=matcher.group(2)
+                                nodesum[2]=matcher.group(3)
+                            }
+                            event(starttime:rpt.dateStarted.time,endtime:rpt.dateCompleted.time){
+                                title(rpt.reportId?:'adhoc')
+                                status(statusMap[rpt.status]?:ExecutionService.EXECUTION_STATE_OTHER)
+                                statusString(rpt.status)
+                                summary(rpt.adhocScript?:rpt.title)
+                                delegate.'node-summary'(succeeded:nodesum[0],failed:nodesum[1],total:nodesum[2])
+                                user(rpt.author)
+                                project(rpt.ctxProject)
+                                if(rpt.status=='cancel' && rpt.abortedByUser){
+                                    abortedby(rpt.abortedByUser)
+                                }
+                                delegate.'date-started'(g.w3cDateValue(date:rpt.dateStarted))
+                                delegate.'date-ended'(g.w3cDateValue(date:rpt.dateCompleted))
+                                if(rpt.jcJobId){
+                                    def foundjob=scheduledExecutionService.getByIDorUUID(rpt.jcJobId)
+                                    def jparms=[id:foundjob?foundjob.extid:rpt.jcJobId]
+                                    if(foundjob){
+                                        jparms.href=apiService.apiHrefForJob(foundjob)
+                                        jparms.permalink=apiService.guiHrefForJob(foundjob)
+                                    }
+                                    job(jparms)
+                                }
+                                if(rpt.jcExecId){
+                                    def foundExec=Execution.get(rpt.jcExecId)
+                                    def execparms=[id:rpt.jcExecId]
+                                    if(foundExec){
+                                        execparms.href=apiService.apiHrefForExecution(foundExec)
+                                        execparms.permalink=apiService.guiHrefForExecution(foundExec)
+                                    }
+                                    execution(execparms)
+                                }
+                            }
+                        }
                     }
-                    event(starttime:rpt.dateStarted.time,endtime:rpt.dateCompleted.time){
-                        title(rpt.reportId?:'adhoc')
-                        status(statusMap[rpt.status]?:ExecutionService.EXECUTION_STATE_OTHER)
-                        statusString(rpt.status)
-                        summary(rpt.adhocScript?:rpt.title)
-                        delegate.'node-summary'(succeeded:nodesum[0],failed:nodesum[1],total:nodesum[2])
-                        user(rpt.author)
-                        project(rpt.ctxProject)
-                        if(rpt.status=='cancel' && rpt.abortedByUser){
-                            abortedby(rpt.abortedByUser)
-                        }
-                        delegate.'date-started'(g.w3cDateValue(date:rpt.dateStarted))
-                        delegate.'date-ended'(g.w3cDateValue(date:rpt.dateCompleted))
-                        if(rpt.jcJobId){
-                            def foundjob=scheduledExecutionService.getByIDorUUID(rpt.jcJobId)
-                            job(id:foundjob?foundjob.extid:rpt.jcJobId)
-                        }
-                        if(rpt.jcExecId){
-                            execution(id:rpt.jcExecId)
+                }
+
+            }
+            json{
+                return apiService.renderSuccessJson(response){
+                    paging=[
+                        count:model.reports.size(),
+                        total:model.total,
+                        max: model.max,
+                        offset: model.offset
+                    ]
+
+                    delegate.'events'=array{
+                        model.reports.each{  rpt->
+                            def nodes=rpt.node
+                            final Matcher matcher = nodes =~ /^(\d+)\/(\d+)\/(\d+)$/
+                            def nodesum=[rpt.status =='succeed'?1:0,rpt.status =='succeed'?0:1,1]
+                            if(matcher.matches()){
+                                nodesum[0]=Integer.parseInt matcher.group(1)
+                                nodesum[1]=Integer.parseInt matcher.group(2)
+                                nodesum[2]=Integer.parseInt matcher.group(3)
+                            }
+                            delegate.'element'{
+                                starttime=rpt.dateStarted.time
+                                endtime=rpt.dateCompleted.time
+                                title=(rpt.reportId?:'adhoc')
+                                status=(statusMap[rpt.status]?:ExecutionService.EXECUTION_STATE_OTHER)
+                                statusString=(rpt.status)
+                                summary=(rpt.adhocScript?:rpt.title)
+                                delegate.'node-summary'=[succeeded:nodesum[0],failed:nodesum[1],total:nodesum[2]]
+                                user=(rpt.author)
+                                project=(rpt.ctxProject)
+                                if(rpt.status=='cancel' && rpt.abortedByUser){
+                                    abortedby=(rpt.abortedByUser)
+                                }
+                                delegate.'date-started'=(g.w3cDateValue(date:rpt.dateStarted))
+                                delegate.'date-ended'=(g.w3cDateValue(date:rpt.dateCompleted))
+                                if(rpt.jcJobId){
+                                    def foundjob=scheduledExecutionService.getByIDorUUID(rpt.jcJobId)
+                                    if(foundjob){
+                                        job = [
+                                                id       : foundjob.extid,
+                                                href     : apiService.apiHrefForJob(foundjob),
+                                                permalink: apiService.guiHrefForJob(foundjob)
+                                        ]
+                                    }
+                                }
+                                if(rpt.jcExecId){
+                                    def foundExec=Execution.get(rpt.jcExecId)
+                                    if(foundExec) {
+                                        execution = [
+                                                id       : rpt.jcExecId,
+                                                href     : apiService.apiHrefForExecution(foundExec),
+                                                permalink: apiService.guiHrefForExecution(foundExec)
+                                        ]
+                                    }
+                                }
+                            }
                         }
                     }
                 }
