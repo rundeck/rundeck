@@ -710,6 +710,13 @@ class ApiService {
                 params: [api_version:ApiRequestFilters.API_CURRENT_VERSION],
                 absolute: true)
     }
+    String guiHrefForJob(ScheduledExecution scheduledExecution) {
+        return grailsLinkGenerator.link(controller: 'scheduledExecution',
+                action:"show",
+                id: scheduledExecution.extid,
+                params: [project:scheduledExecution.project],
+                absolute: true)
+    }
     String apiHrefForExecution(Execution execution) {
         return grailsLinkGenerator.link(controller: 'execution', id: execution.id,
                 params: [api_version: ApiRequestFilters.API_CURRENT_VERSION],
