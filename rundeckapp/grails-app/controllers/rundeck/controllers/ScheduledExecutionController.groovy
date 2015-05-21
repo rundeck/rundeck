@@ -2763,13 +2763,21 @@ class ScheduledExecutionController  extends ControllerBase{
                                 message("Immediate execution scheduled (${results.id})")
                             }
                         }
-                        delegate.'execution'(id: results.id)
+                        delegate.'execution'(
+                                id: results.id,
+                                href: apiService.apiHrefForExecution(results.execution),
+                                viewUrl: apiService.guiHrefForExecution(results.execution)
+                        )
                     }
                 }
                 json{
                     return apiService.renderSuccessJson(response) {
                         delegate.'message'=("Immediate execution scheduled (${results.id})")
-                        delegate.'execution'=[id: results.id,href:apiService.apiHrefForExecution(results.execution)]
+                        delegate.'execution'=[
+                                id: results.id,
+                                href: apiService.apiHrefForExecution(results.execution),
+                                viewUrl: apiService.guiHrefForExecution(results.execution)
+                        ]
                     }
                 }
             }
