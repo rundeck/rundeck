@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerator;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
 import java.io.File;
@@ -59,6 +60,7 @@ public class ResourceFormatGeneratorService extends PluggableProviderRegistrySer
 
         registry.put(ResourceXMLFormatGenerator.SERVICE_PROVIDER_TYPE, ResourceXMLFormatGenerator.class);
         registry.put(ResourceYamlFormatGenerator.SERVICE_PROVIDER_TYPE, ResourceYamlFormatGenerator.class);
+        registry.put(ResourceJsonFormatGenerator.SERVICE_PROVIDER_TYPE, ResourceJsonFormatGenerator.class);
     }
 
     public String getName() {
