@@ -38,34 +38,61 @@ Changes introduced by API Version number:
 
 **Version 14**:
 
+* Deprecated Endpoints.  These endpoints are deprecated, and new versions are added which include the Project name in the URL path
+    - `/api/14/executions/running` replacement: `/api/14/project/[PROJECT*]/executions/running`
+    - `/api/14/executions` replacement: `/api/14/project/[PROJECT]/executions`
+    - `/api/14/history` replacement: `/api/14/project/[PROJECT]/history`
+    - `/api/14/jobs/export` replacement: `/api/14/project/[PROJECT]/jobs/export`
+    - `/api/14/jobs/import` replacement: `/api/14/project/[PROJECT]/jobs/import`
+    - `/api/14/jobs` replacement: `/api/2/project/[PROJECT]/jobs`
+    - `/api/14/resource/[NAME]` replacement: `/api/14/project/[PROJECT]/resource/[NAME]`
+    - `/api/14/resources(/*)` replacement: `/api/14/project/[PROJECT]/resources(/*)`
+    - `/api/14/run/command` replacement: `/api/14/project/[PROJECT]/run/command`
+    - `/api/14/run/script` replacement: `/api/14/project/[PROJECT]/run/script`
+    - `/api/14/run/url` replacement: `/api/14/project/[PROJECT]/run/url`
+* Deprecated Endpoints with no replacement
+    - `/api/2/project/[PROJECT]/resources/refresh`
+* New Endpoints, replacing deprecated versions:
+    - `/api/14/project/[PROJECT*]/executions/running`
+    - `/api/14/project/[PROJECT]/executions`
+    - `/api/14/project/[PROJECT]/history`
+    - `/api/14/project/[PROJECT]/jobs/export`
+    - `/api/14/project/[PROJECT]/jobs/import`
+    - `/api/14/project/[PROJECT]/resource/[NAME]`
+    - `/api/14/project/[PROJECT]/resources(/*)`
+    - `/api/14/project/[PROJECT]/run/command`
+    - `/api/14/project/[PROJECT]/run/script`
+    - `/api/14/project/[PROJECT]/run/url`
 * Added JSON support for endpoints, when using API v14:
-    - `/api/14/system/info`
-    - `/api/14/execution/[ID]`
-    - `/api/14/executions/running`
-    - `/api/14/executions`
-    - `/api/14/job/[ID]/executions`
-    - `/api/14/jobs`
-    - `/api/14/project/[name]/jobs`
-    - `/api/14/job/[id]/run` and `POST /api/14/job/[id]/executions`
-    - `/api/14/jobs/import`
-    - `/api/14/jobs/delete`
     - `/api/14/execution/[ID]/abort`
-    - `/api/14/run/command`
-    - `/api/14/run/script`
-    - `/api/14/run/url`
-    - `/api/14/history`
+    - `/api/14/execution/[ID]`
+    - `/api/14/job/[ID]/executions`
+    - `/api/14/job/[ID]/run` and `POST /api/14/job/[ID]/executions`
+    - `/api/14/jobs/delete`
+    - `/api/14/project/[PROJECT*]/executions/running`
+    - `/api/14/project/[PROJECT]/executions`
+    - `/api/14/project/[PROJECT]/history`
+    - `/api/14/project/[PROJECT]/jobs/import`
+    - `/api/14/project/[PROJECT]/jobs`
+    - `/api/14/project/[PROJECT]/jobs`
+    - `/api/14/project/[PROJECT]/resource/[NAME]`
+    - `/api/14/project/[PROJECT]/resources`
+    - `/api/14/project/[PROJECT]/run/command`
+    - `/api/14/project/[PROJECT]/run/script`
+    - `/api/14/project/[PROJECT]/run/url`
+    - `/api/14/system/info`
 * TODO json support:
     - /api/1/jobs/export
 * Updated endpoints:
-    - `/api/14/job/[id]/run` action `GET` is no longer allowed, `POST` is required. For POST, this endpoint is now equivalent to `/api/14/job/[id]/executions`. JSON request content is now supported.
-    - `/api/14/jobs/import` 
+    - `/api/14/job/[ID]/run` action `GET` is no longer allowed, `POST` is required. For POST, this endpoint is now equivalent to `/api/14/job/[ID]/executions`. JSON request content is now supported.
+    - `/api/14/project/[PROJECT]/jobs/import` 
         * Both XML and YAML job definitions can now be posted directly using the appropriate MIME type
         * Add API `href` and GUI `permalink` values into XML response
         * JSON response support
+    - `/api/14/project/[PROJECT]/jobs` - added API/GUI href/permalink to XML responses.
     - `/api/14/execution/[ID]/abort` - added API/GUI href/permalink to XML responses.
-    - `/api/14/history` - added API/GUI href/permalink to XML responses.
-    - `/api/14/jobs/import` - added API/GUI href/permalink to XML responses.
-    - `/api/14/run/*` - added API/GUI href/permalink to XML responses for adhoc command/script/url.
+    - `/api/14/project/[PROJECT]/history` - added API/GUI href/permalink to XML responses.
+    - `/api/14/project/[PROJECT]/run/*` - added API/GUI href/permalink to XML responses for adhoc command/script/url.
 * Modified `href` meaning for XML responses:
     * Some endpoints that included a `href` value in XML responses used the link that was appropriate 
     for an end user to use in a web browser,
@@ -756,40 +783,11 @@ List the jobs that exist for a project.
 
 URL:
 
-    /api/1/jobs
+    /api/14/project/[NAME]/jobs
 
-Required parameters:
+(**Deprecated URL**: `/api/14/jobs` with required parameter: `project`.)
 
-* `project`: the project name
-
-The following parameters can also be used to narrow down the result set.
-
-* `idlist`: specify a comma-separated list of Job IDs to include
-* `groupPath`: specify a group or partial group path to include all jobs within that group path. (Default value: "*", all groups).  Set to the special value "-" to match the top level jobs only.
-* `jobFilter`: specify a filter for the job Name. Matches any job name that contains this value.
-* `jobExactFilter`: specify an exact job name to match. (**API version 2** required.)
-* `groupPathExact`: specify an exact group path to match.  Set to the special value "-" to match the top level jobs only. (**API version 2** required.)
-
-Result:  An Item List of `jobs`. Each `job` is of the form:
-
-~~~~~~~~~~ {.xml}
-    <job id="ID">
-        <name>Job Name</name>
-        <group>Job Name</group>
-        <project>Project Name</project>
-        <description>...</description>
-    </job>
-~~~~~~~~~~~~
-
-Note: If neither `groupPath` nor `groupPathExact` are specified, then the default `groupPath` value of "*" will be used (matching jobs in all groups).  `groupPathExact` cannot be combined with `groupPath`.  You can set either one to "-" to match only the top-level jobs which are not within a group.
-
-### Listing Jobs for a Project ###
-
-List the jobs that exist for a project. (**API version 2** required.)
-
-URL:
-
-    /api/2/project/[NAME]/jobs
+**Request**
 
 The following parameters can also be used to narrow down the result set.
 
@@ -799,18 +797,36 @@ The following parameters can also be used to narrow down the result set.
 * `jobExactFilter`: specify an exact job name to match.
 * `groupPathExact`: specify an exact group path to match.  Set to the special value "-" to match the top level jobs only
 
-Result:  An Item List of `jobs`. Each `job` is of the form:
+Note: If neither `groupPath` nor `groupPathExact` are specified, then the default `groupPath` value of "*" will be used (matching jobs in all groups).  `groupPathExact` cannot be combined with `groupPath`.  You can set either one to "-" to match only the top-level jobs which are not within a group.
+
+**Response**
+
+`Content-Type: application/xml`:  An Item List of `jobs`. Each `job` is of the form:
 
 ~~~~~~~~~~ {.xml}
-<job id="ID">
+<job id="ID" href="[API url]" permalink="[GUI URL]">
     <name>Job Name</name>
     <group>Job Name</group>
     <project>Project Name</project>
     <description>...</description>
 </job>
-~~~~~~~~~~
+~~~~~~~~~~~~
 
-Note: If neither `groupPath` nor `groupPathExact` are specified, then the default `groupPath` value of "*" will be used (matching jobs in all groups).  `groupPathExact` cannot be combined with `groupPath`.  You can set either one to "-" to match only the top-level jobs which are not within a group.
+`Content-Type: application/json`
+
+~~~~~~~~~~ {.xml}
+[
+  {
+    "id": "[UUID]",
+    "name": "[name]",
+    "group": "[group]",
+    "project": "[project]",
+    "description": "...",
+    "href": "[API url]",
+    "permalink": "[GUI url]"
+  }
+]
+~~~~~~~~~~~~
 
 ### Running a Job
 
@@ -821,6 +837,8 @@ URL:
     POST /api/1/job/[ID]/run
     POST /api/12/job/[ID]/executions
 
+**Request**
+
 Optional parameters:
 
 * `argString`: argument string to pass to the job, of the form: `-opt value -opt2 value ...`.
@@ -828,7 +846,7 @@ Optional parameters:
 * `asUser` : specifies a username identifying the user who ran the job. Requires `runAs` permission.
 * Node filter parameters as described under [Using Node Filters](#using-node-filters)
 
-(**API v14**) If the request `Content-Type` is `application/json`, then the parameters will be ignored,
+(**API v14**) If the request has `Content-Type: application/json`, then the parameters will be ignored,
 and this format is expected in the content:
 
 ~~~~~ {.json}
@@ -842,7 +860,7 @@ and this format is expected in the content:
 
 The `filter` can be a node filter string.
 
-Result:  An Item List of `executions` containing a single entry for the execution that was created.  See [Listing Running Executions](#listing-running-executions).
+**Response**:  See [Listing Running Executions](#listing-running-executions).
 
 ### Exporting Jobs
 
@@ -850,11 +868,9 @@ Export the job definitions for in XML or YAML formats.
 
 URL:
 
-    /api/1/jobs/export
+    /api/14/project/[PROJECT]/jobs/export
 
-Required parameters:
-
-* `project`
+(**Deprecated URL**: `/api/14/jobs/export` with required parameter: `project`.)
 
 Optional parameters:
 
@@ -880,7 +896,9 @@ Import job definitions in XML or YAML formats.
 
 URL:
 
-    /api/1/jobs/import
+    /api/1/project/[PROJECT]/jobs/import
+
+(**Deprecated URL**: `/api/14/jobs/import` with optional parameter: `project`.)
 
 Method: `POST`
 
@@ -898,7 +916,6 @@ Optional parameters:
 
 * `format` : can be "xml" or "yaml" to specify the input format, if multipart of form input is sent. Default is "xml"
 * `dupeOption`: A value to indicate the behavior when importing jobs which already exist.  Value can be "skip", "create", or "update". Default is "create".
-* `project` : (**since v8**) Specify the project that all job definitions should be imported to. If not specified, each job definition must define the project to import to.
 * `uuidOption`: Whether to preserve or remove UUIDs from the imported jobs. Allowed values (**since V9**):
     *  `preserve`: Preserve the UUIDs in imported jobs.  This may cause the import to fail if the UUID is already used. (Default value).
     *  `remove`: Remove the UUIDs from imported jobs. Allows update/create to succeed without conflict on UUID.
@@ -910,15 +927,15 @@ A set of status results.  Each imported job definition will be either "succeeded
 `Content-Type: application/xml`:
 
 ~~~~~~~~~~ {.xml}
-    <succeeded count="x">
-        <!-- job elements -->
-    </succeeded>
-    <failed count="x">
-        <!-- job elements -->
-    </failed>
-    <skipped count="x">
-        <!-- job elements -->
-    </skipped>
+<succeeded count="x">
+    <!-- job elements -->
+</succeeded>
+<failed count="x">
+    <!-- job elements -->
+</failed>
+<skipped count="x">
+    <!-- job elements -->
+</skipped>
 ~~~~~~~~~~
 
 Each Job element will be of the form:
@@ -1142,11 +1159,11 @@ List the currently running executions for a project
 
 URL:
 
-    /api/1/executions/running
+    /api/14/project/[PROJECT]/executions/running
 
-Required Parameters:
+(**Deprecated URL**: `/api/14/executions/running`, required URL parameter `project`.)
 
-* `project`: the project name, or '*' for all projects (**Since API v9**)
+Note: `PROJECT` is the project name, or '*' for all projects.
 
 Response with `Content-Type: application/xml`: An `<executions>` element containing multiple `<execution>` elements.
 
@@ -1452,17 +1469,13 @@ Query for Executions based on Job or Execution details.
 
 URL:
 
-    /api/5/executions
+    /api/14/project/[PROJECT]/executions
 
-Result: an Item List of `executions`. See [Listing Running Executions](#listing-running-executions).
+(**Deprecated URL**: `/api/14/executions`, required parameter `project`.)
 
-Required Parameters:
-
-* `project`: the project name
+**Request**
 
 The following parameters can also be used to narrow down the result set.
-
-Parameters for Execution details:
 
 * `statusFilter`: execution status, one of "running", succeeded", "failed" or "aborted"
 * `abortedbyFilter`: Username who aborted an execution
@@ -1496,13 +1509,16 @@ Parameters for querying for Executions for particular jobs:
 * `jobExactFilter`: specify an exact job name to match.
 * `excludeJobExactFilter`: specify an exact job name to exclude.
 
-
 The format for the `jobListFilter` and `excludeJobListFilter` is the job's group and name separated by a '/' character, such as: "group1/job name", or "my job" if there is no group.
 
 Paging parameters:
 
 * `max`: maximum number of results to include in response. (default: 20)
 * `offset`: offset for first result to include. (default: 0)
+
+**Response**
+
+See [Listing Running Executions](#listing-running-executions).
 
 ### Execution State
 
@@ -2889,6 +2905,8 @@ Response:
 
 ### Refreshing Resources for a Project
 
+**DEPRECATED** 
+
 Refresh the resources for a project via its Resource Model Provider URL. The URL can be
 specified as a request parameter, or the pre-configured URL for the project
 can be used. (**API version 2** required.)
@@ -2979,11 +2997,11 @@ List the event history for a project.
 
 URL:
 
-    /api/1/history
+    /api/14/project/[PROJECT]/history
 
-Required Parameters:
+(**Deprecated URL**: `/api/14/history`, requires URL parameter: `project`.)
 
-* `project` : project name
+**Request**
 
 Optional Parameters:
 
@@ -3012,7 +3030,7 @@ The format for the `end`, and `begin` filters is either:  a unix millisecond tim
 
 The format for the `jobListFilter` and `excludeJobListFilter` is the job's group and name separated by a '/' character, such as: "group1/job name", or "my job" if there is no group.
 
-Result:
+**Response**
 
 `Content-Type: application/xml`: an Item List of `events`.  Each `event` has this form:
 
@@ -3037,16 +3055,18 @@ Result:
 
 The `events` element will also have `max`, `offset`, and `total` attributes, to indicate the state of paged results.  E.G:
 
-    <events count="8" total="268" max="20" offset="260">
-    ...
-    </events>
+~~~~ {.xml}
+<events count="8" total="268" max="20" offset="260">
+...
+</events>
+~~~~ {.xml}
 
 `total` is the total number of events matching the query parameters.
 `count` is the number of events included in the results.
 `max` is the paging size as specified in the request, or with the default value of 20.
 `offset` is the offset specified, or default value of 0.
 
-**As of v14**: the `<execution>` and `<job>` elements will have a `href` attribute with the URL to the API for that resource.
+**As of v14**: the `<execution>` and `<job>` elements will have a `href` attribute with the URL to the API for that resource, and a `permalink` attribute with the URL to the GUI view for the job or execution.
 
 `Content-Type: application/json`:
 
@@ -3066,16 +3086,16 @@ The `events` array contains elements like:
 
 ~~~~~ {.json}
 {
-  "starttime": #[unixtime],
-  "endtime": #[unixtime],
+  "starttime": #unixtime,
+  "endtime": #unixtime,
   "title": "[job title, or "adhoc"]",
   "status": "[status]",
   "statusString": "[string]",
   "summary": "[summary text]",
   "node-summary": {
-    "succeeded": X,
-    "failed": Y,
-    "total": Z
+    "succeeded": #X,
+    "failed": #Y,
+    "total": #Z
   },
   "user": "[user]",
   "project": "[project]",
@@ -3100,11 +3120,9 @@ List or query the resources for a project.
 
 URL:
 
-    /api/1/resources
+    /api/14/project/[PROJECT]/resources
 
-Required Parameters:
-
-* `project` : project name
+(**Deprecated URL**: `/api/1/resources` requires `project` query parameter.)
 
 Optional Parameters:
 
@@ -3164,11 +3182,9 @@ Get a specific resource within a project.
 
 URL:
 
-    /api/1/resource/[NAME]
+    /api/14/project/[PROJECT]/resource/[NAME]
 
-Required Parameters:
-
-* `project` : project name
+(**Deprecated URL**: `/api/1/resource/[NAME]` requires `project` query parameter.)
 
 Optional Parameters:
 
