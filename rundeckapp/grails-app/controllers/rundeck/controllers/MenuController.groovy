@@ -898,12 +898,11 @@ class MenuController extends ControllerBase{
                 return apiService.renderSuccessXml(request, response) {
                     delegate.'jobs'(count: results.nextScheduled.size()) {
                         results.nextScheduled.each { ScheduledExecution se ->
-                            job(id: se.extid) {
+                            job(id: se.extid, href:apiService.apiHrefForJob(se),permalink:apiService.guiHrefForJob(se)) {
                                 name(se.jobName)
                                 group(se.groupPath)
                                 project(se.project)
                                 description(se.description)
-                                href(apiService.apiHrefForJob(se))
                             }
                         }
                     }
@@ -918,7 +917,8 @@ class MenuController extends ControllerBase{
                                 group: (se.groupPath),
                                 project: (se.project),
                                 description: (se.description),
-                                href: apiService.apiHrefForJob(se)
+                                href: apiService.apiHrefForJob(se),
+                                permalink: apiService.guiHrefForJob(se)
                         )
                     }
                 }
