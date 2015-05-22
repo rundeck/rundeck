@@ -1634,7 +1634,7 @@ class FrameworkController extends ControllerBase {
      * calls performNodeReload, then returns API response
      * @deprecated will be removed
      * */
-    def apiProjectResourcesRefresh = {
+    def apiProjectResourcesRefresh () {
         if (!apiService.requireVersion(request,response,ApiRequestFilters.V2)) {
             return
         }
@@ -1797,9 +1797,18 @@ class FrameworkController extends ControllerBase {
 
 
     /**
+     * API: /api/14/project/PROJECT/resource/NAME, version 14
+     */
+    def apiResourcev14 () {
+        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+            return
+        }
+        return apiResource()
+    }
+    /**
      * API: /api/resource/$name, version 1
      */
-    def apiResource={
+    def apiResource(){
         if (!apiService.requireApi(request, response)) {
             return
         }

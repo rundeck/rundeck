@@ -936,9 +936,18 @@ class MenuController extends ControllerBase{
     }
 
     /**
-     * API: /jobs/export, version 1
+     * API: /api/14/project/NAME/jobs/export
      */
-    def apiJobsExport = {ScheduledExecutionQuery query ->
+    def apiJobsExportv14 (ScheduledExecutionQuery query){
+        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+            return
+        }
+        return apiJobsExport(query)
+    }
+    /**
+     * API: /jobs/export, version 1, deprecated since v14
+     */
+    def apiJobsExport (ScheduledExecutionQuery query){
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -973,9 +982,19 @@ class MenuController extends ControllerBase{
     }
 
     /**
+     * API: /project/PROJECT/executions/running, version 14
+     */
+    def apiExecutionsRunningv14 (){
+        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+            return
+        }
+        return apiExecutionsRunning()
+    }
+
+    /**
      * API: /executions/running, version 1
      */
-    def apiExecutionsRunning = {
+    def apiExecutionsRunning (){
         if (!apiService.requireApi(request, response)) {
             return
         }

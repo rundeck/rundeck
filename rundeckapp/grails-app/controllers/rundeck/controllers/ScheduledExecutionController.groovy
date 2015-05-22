@@ -2307,7 +2307,16 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
     /**
-     * API: /jobs/import, version 1
+     * API: /api/14/project/NAME/jobs/import
+     */
+    def apiJobsImportv14(){
+        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+            return
+        }
+        return apiJobsImport()
+    }
+    /**
+     * API: /jobs/import, version 1, deprecated since v14
      */
     def apiJobsImport(){
         if (!apiService.requireApi(request, response)) {
@@ -2348,6 +2357,12 @@ class ScheduledExecutionController  extends ControllerBase{
                     code: 'api.error.jobs.import.invalid', args: [fileformat,parseresult.error]])
         }
         def jobset = parseresult.jobset
+        if(request.api_version >= ApiRequestFilters.V14){
+            //require project parameter
+            if(!apiService.requireParameters(params,response, ['project'])){
+                return
+            }
+        }
         if(request.api_version >= ApiRequestFilters.V8){
             //v8 override project using parameter
             if(params.project){
@@ -2599,6 +2614,15 @@ class ScheduledExecutionController  extends ControllerBase{
         executionService.renderBulkExecutionDeleteResult(request,response,result)
     }
     /**
+     * API: run simple exec: /api/14/project/PROJECT/run/command
+     */
+    def apiRunCommandv14(ApiRunAdhocRequest runCommandRequest){
+        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+            return
+        }
+        return apiRunCommand(runCommandRequest)
+    }
+    /**
      * API: run simple exec: /api/run/command, version 1
      */
     def apiRunCommand(ApiRunAdhocRequest runCommandRequest){
@@ -2649,6 +2673,15 @@ class ScheduledExecutionController  extends ControllerBase{
     }
 
 
+    /**
+     * API: run script: /api/14/project/PROJECT/run/script
+     */
+    def apiRunScriptv14(ApiRunAdhocRequest runCommandRequest){
+        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+            return
+        }
+        return apiRunScript(runCommandRequest)
+    }
     /**
      * API: run script: /api/run/script, version 1
      */
@@ -2778,6 +2811,16 @@ class ScheduledExecutionController  extends ControllerBase{
                 }
             }
         }
+    }
+
+    /**
+     * API: run script: /api/14/project/PROJECT/run/url
+     */
+    def apiRunScriptUrlv14 (ApiRunAdhocRequest runAdhocRequest){
+        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+            return
+        }
+        return apiRunScriptUrl(runAdhocRequest)
     }
 
     /**

@@ -391,6 +391,15 @@ class ReportsController extends ControllerBase{
 
 
     /**
+     * API, /api/14/project/PROJECT/history
+     */
+    def apiHistoryv14(ExecQuery query){
+        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+            return
+        }
+        return apiHistory(query)
+    }
+    /**
      * API, /api/history, version 1
      */
     def apiHistory(ExecQuery query){
