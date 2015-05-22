@@ -3126,10 +3126,7 @@ URL:
 
 Optional Parameters:
 
-* `format` : Result format.  
-    * for **API Version 2 or earlier**: One of "xml" or "yaml".
-    * for **API Version 3**: any supported Resource Format Parser format name.
-    * Default is "xml".
+* `format` : Result format. Default is "xml", can use "yaml" or "json", or an installed ResourceFormat plugin name.  
 
 * Node Filter parameters: You can select resources to include and exclude in the result set, see [Using Node Filters](#using-node-filters) below.
 
@@ -3188,7 +3185,7 @@ URL:
 
 Optional Parameters:
 
-* `format` : Result format.  One of "xml" or "yaml". Default is "xml".
+* `format` : Result format.  Default is "xml", can use "yaml" or "json", or an installed ResourceFormat plugin name.
 
 Result: Depending on the `format` parameter, a value of "xml" will return [resource-xml](../man5/resource-xml.html) and "yaml" will return [resource-yaml](../man5/resource-yaml.html) formatted results.
 
