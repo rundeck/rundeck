@@ -2939,7 +2939,7 @@ class ScheduledExecutionController  extends ControllerBase{
     /**
      * API: /api/incubator/jobs/takeoverSchedule , version 7
      */
-    def apiJobClusterTakeoverSchedule = {
+    def apiJobClusterTakeoverSchedule (){
         if (!apiService.requireVersion(request,response,ApiRequestFilters.V7)) {
             return
         }
@@ -2948,12 +2948,25 @@ class ScheduledExecutionController  extends ControllerBase{
 
         if (!frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
                 AuthConstants.ACTION_ADMIN)) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                    code: 'api.error.item.unauthorized', args: ['Reschedule Jobs', 'Server', params.serverNodeUUID]])
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
+                    code: 'api.error.item.unauthorized', args: ['Reschedule Jobs (admin)', 'Server', params.serverNodeUUID]])
         }
-        if(!frameworkService.isClusterModeEnabled()){
-            return apiService.renderSuccessXmlWrap(request,response) {
-                message("No action performed, cluster mode is not enabled.")
+        if (!frameworkService.isClusterModeEnabled()) {
+            withFormat {
+                xml {
+                    return apiService.renderSuccessXmlWrap(request, response) {
+                        delegate.'message'("No action performed, cluster mode is not enabled.")
+                    }
+                }
+                json {
+
+                    return apiService.renderSuccessJson(response) {
+                        delegate.'message'=("No action performed, cluster mode is not enabled.")
+                        success=true
+                        apiversion=ApiRequestFilters.API_CURRENT_VERSION
+                        self=[server:[uuid:frameworkService.getServerUUID()]]
+                    }
+                }
             }
         }
 
@@ -2967,23 +2980,26 @@ class ScheduledExecutionController  extends ControllerBase{
                 serverUUID = data.'@uuid'?.text()
             }
         }else{
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.invalid.request',
                     args: ['Expected content of type text/xml or text/json, content was of type: ' + request.format]])
         }
         if (!serverUUID) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.invalid.request', args: ['Expected server.uuid in request.']])
         }
 
         def reclaimMap=scheduledExecutionService.reclaimAndScheduleJobs(serverUUID)
-        def successCount=reclaimMap.findAll {it.value}.size()
+        def successCount=reclaimMap.findAll {it.value.success}.size()
         def failedCount = reclaimMap.size() - successCount
         //TODO: retry for failed reclaims?
 
         def jobData = { entry ->
-            [id: entry.key, href: g.createLink(action: 'show', controller: 'scheduledExecution',
-                    id: entry.key, absolute: true)]
+            [
+                    id: entry.key,
+                    href: apiService.apiHrefForJob(entry.value.job),
+                    permalink:apiService.guiHrefForJob(entry.value.job)
+            ]
         }
         def jobLink={ delegate, entry->
             delegate.'job'(jobData(entry))
@@ -3007,10 +3023,10 @@ class ScheduledExecutionController  extends ControllerBase{
                         delegate.'server'(uuid: serverUUID)
                         delegate.'jobs'(total: reclaimMap.size()){
                             delegate.'successful'(count: successCount) {
-                                reclaimMap.findAll { it.value }.each(jobLink.curry(delegate))
+                                reclaimMap.findAll { it.value.success }.each(jobLink.curry(delegate))
                             }
                             delegate.'failed'(count: failedCount) {
-                                reclaimMap.findAll { !it.value }.each(jobLink.curry(delegate))
+                                reclaimMap.findAll { !it.value.success }.each(jobLink.curry(delegate))
                             }
                         }
                     }
@@ -3026,8 +3042,8 @@ class ScheduledExecutionController  extends ControllerBase{
                         server:[uuid: serverUUID],
                         jobs:[
                             total:reclaimMap.size(),
-                            successful:reclaimMap.findAll { it.value }.collect (jobData),
-                            failed:reclaimMap.findAll { !it.value }.collect (jobData)
+                            successful:reclaimMap.findAll { it.value.success }.collect (jobData),
+                            failed:reclaimMap.findAll { !it.value.success }.collect (jobData)
                         ]
                     ]
                 ] as JSON)

@@ -704,13 +704,13 @@ class ApiService {
         return dateFormater.format(date);
     }
 
-    String apiHrefForJob(ScheduledExecution scheduledExecution) {
+    String apiHrefForJob(def scheduledExecution) {
         return grailsLinkGenerator.link(controller: 'scheduledExecution',
                 id: scheduledExecution.extid,
                 params: [api_version:ApiRequestFilters.API_CURRENT_VERSION],
                 absolute: true)
     }
-    String guiHrefForJob(ScheduledExecution scheduledExecution) {
+    String guiHrefForJob(def scheduledExecution) {
         return grailsLinkGenerator.link(controller: 'scheduledExecution',
                 action:"show",
                 id: scheduledExecution.extid,
