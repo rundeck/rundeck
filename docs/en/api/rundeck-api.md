@@ -3147,7 +3147,7 @@ Optional Parameters:
 
 **Note:** If no query parameters are included, the result set will include all Node resources for the project.
 
-Result: Depending on the `format` parameter, a value of "xml" will return [resource-xml](../man5/resource-xml.html) and "yaml" will return [resource-yaml](../man5/resource-yaml.html) formatted results.  Any other supported format value will return content in the specified format.
+Result: Depending on the `format` parameter, a value of "xml" will return [resource-xml](../man5/resource-xml.html) and "yaml" will return [resource-yaml](../man5/resource-yaml.html), and "json" will return [resource-json](../man5/resource-json.html) formatted results.  Any other supported format value will return content in the specified format.
 
 #### Using Node Filters
 
@@ -3202,7 +3202,7 @@ Optional Parameters:
 
 * `format` : Result format.  Default is "xml", can use "yaml" or "json", or an installed ResourceFormat plugin name.
 
-Result: Depending on the `format` parameter, a value of "xml" will return [resource-xml](../man5/resource-xml.html) and "yaml" will return [resource-yaml](../man5/resource-yaml.html) formatted results.
+Result: Depending on the `format` parameter, a value of "xml" will return [resource-xml](../man5/resource-xml.html) and "yaml" will return [resource-yaml](../man5/resource-yaml.html), and "json" will return [resource-json](../man5/resource-json.html) formatted results.
 
 The result will contain a single item for the specified resource.
 
