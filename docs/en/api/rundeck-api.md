@@ -74,7 +74,6 @@ Changes introduced by API Version number:
     - `/api/14/project/[PROJECT]/history`
     - `/api/14/project/[PROJECT]/jobs/import`
     - `/api/14/project/[PROJECT]/jobs`
-    - `/api/14/project/[PROJECT]/jobs`
     - `/api/14/project/[PROJECT]/resource/[NAME]`
     - `/api/14/project/[PROJECT]/resources`
     - `/api/14/project/[PROJECT]/run/command`
@@ -93,6 +92,7 @@ Changes introduced by API Version number:
     - `/api/14/execution/[ID]/abort` - added API/GUI href/permalink to XML responses.
     - `/api/14/project/[PROJECT]/history` - added API/GUI href/permalink to XML responses.
     - `/api/14/project/[PROJECT]/run/*` - added API/GUI href/permalink to XML responses for adhoc command/script/url.
+    - `/api/14/incubator/jobs/takeoverSchedule` - added API/GUI href/permalink to XML responses for adhoc command/script/url. Note: `href` was modified as mentioned below.
 * Modified `href` meaning for XML responses:
     * Some endpoints that included a `href` value in XML responses used the link that was appropriate 
     for an end user to use in a web browser,
@@ -3197,27 +3197,27 @@ The result will contain a single item for the specified resource.
 
 Tell a Rundeck server in cluster mode to claim all scheduled jobs from another cluster server.
 
-URL:
+**Request** 
 
-    /api/7/incubator/jobs/takeoverSchedule
-
-HTTP Method:
-
-    PUT
+    PUT /api/7/incubator/jobs/takeoverSchedule
 
 Required Content:
 
 One of the following:
 
-* XML content:
+* `Content-Type: application/xml`:
 
-        <server uuid="[UUID]"/>
+~~~ {.xml}
+<server uuid="[UUID]"/>
+~~~
 
-* JSON content:
+* `Content-Type: application/json`:
 
-        { server: { uuid: "[UUID]" } }
+~~~ {.json}
+{ server: { uuid: "[UUID]" } }
+~~~
 
-Result:
+**Response**
 
 If request was XML, then Standard API response containing the following additional elements:
 
@@ -3232,29 +3232,29 @@ If request was XML, then Standard API response containing the following addition
             *  `@count` number of jobs in the set
             *  `job` - one element for each job
                 *  `@id` Job ID
-                *  `@href` Job HREF
+                *  `@href` Job API HREF
+                *  `@permalink` Job GUI HREF
 
 Example XML Response:
 
 ~~~~~~~~~~ {.xml}
-<result success='true' apiversion='7'>
-  <message>Schedule Takeover successful for 2/2 Jobs.</message>
-  <self>
-    <server uuid='C677C663-F902-4B97-B8AC-4AA57B58DDD6' />
-  </self>
-  <takeoverSchedule>
+<takeoverSchedule>
+    <self>
+      <server uuid='C677C663-F902-4B97-B8AC-4AA57B58DDD6' />
+    </self>
     <server uuid='8F3D5976-2232-4529-847B-8E45764608E3' />
     <jobs total='2'>
       <successful count='2'>
         <job id='a1aa53ac-73a6-4ead-bbe4-34afbff8e057'
-        href='http://localhost:9090/rundeck/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057' />
+        href='http://localhost:9090/api/14/job/a1aa53ac-73a6-4ead-bbe4-34afbff8e057'
+        permalink='http://localhost:9090/rundeck/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057' />
         <job id='116e2025-7895-444a-88f7-d96b4f19fdb3'
-        href='http://localhost:9090/rundeck/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3' />
+        href='http://localhost:9090/api/14/job/116e2025-7895-444a-88f7-d96b4f19fdb3'
+        permalink='http://localhost:9090/rundeck/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3' />
       </successful>
       <failed count='0'></failed>
     </jobs>
-  </takeoverSchedule>
-</result>
+</takeoverSchedule>
 ~~~~~~~~~~
 
 If request was JSON, then the following JSON:
@@ -3266,11 +3266,13 @@ If request was JSON, then the following JSON:
           "failed": [],
           "successful": [
             {
-              "href": "http://dignan:4440/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057",
+              "href": "http://dignan:4440/api/14/job/a1aa53ac-73a6-4ead-bbe4-34afbff8e057",
+              "permalink": "http://dignan:4440/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057",
               "id": "a1aa53ac-73a6-4ead-bbe4-34afbff8e057"
             },
             {
-              "href": "http://dignan:4440/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3",
+              "href": "http://dignan:4440/api/14/job/116e2025-7895-444a-88f7-d96b4f19fdb3",
+              "permalink": "http://dignan:4440/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3",
               "id": "116e2025-7895-444a-88f7-d96b4f19fdb3"
             }
           ],
@@ -3286,7 +3288,7 @@ If request was JSON, then the following JSON:
         }
       },
       "message": "Schedule Takeover successful for 2/2 Jobs.",
-      "apiversion": 7,
+      "apiversion": 14,
       "success": true
     }
 ~~~~~~~~~~
