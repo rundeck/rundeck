@@ -22,6 +22,7 @@ installation methods.
         |-- ssl.properties
         |-- keystore (not packaged)
         `-- truststore (not packaged)
+    /var/lib/rundeck/exp/webapp/WEB-INF/web.xml
 
 ## Launcher layout
 
@@ -174,6 +175,27 @@ used. Specified from [jaas-loginmodule.conf](#jaas-loginmodule.conf).
 The primary Rundeck webapp configuration file. Defines default
 loglevel, datasource configuration, and
 [GUI customization](gui-customization.html).
+
+## Session timeout
+
+Edit the web.xml to modify session-timout from 30 to 90 minutes:
+
+RPM: /var/lib/rundeck/exp/webapp/WEB-INF/web.xml
+
+Example: Set the timout to 60 seconds:
+
+~~~~
+diff /var/lib/rundeck/exp/webapp/WEB-INF/web.xml web.xml
+
+214c214
+
+< <session-timeout>30</session-timeout>
+
+---
+
+> <session-timeout>90</session-timeout>
+~~~~
+
 
 ### Security
 
