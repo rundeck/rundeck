@@ -22,6 +22,9 @@ The API Version Number is required to be included in all API calls within the UR
 
 If the version number is not included or if the requested version number is unsupported, then the API call will fail.  The error response will include the code "api-version-unsupported" and have HTTP status code of `400 Bad Request`:
 
+
+`Content-Type: application/xml`:
+
 ~~~~~~~~~~~~~~~~~~~ {.xml}
 <result error="true" apiversion="2">
     <error code="api-version-unsupported">
@@ -30,6 +33,18 @@ If the version number is not included or if the requested version number is unsu
         </message>
     </error>
 </result>
+~~~~~~~~~~~~~~~~~~~
+
+
+`Content-Type: application/json`:
+
+~~~~~~~~~~~~~~~~~~~ {.json}
+{
+  "error": true,
+  "apiversion": 14,
+  "errorCode": "api.error.api-version.unsupported",
+  "message": "Unsupported API Version \"1\". API Request: /api/1/project/test/resources. Reason: Minimum supported version: 2"
+}
 ~~~~~~~~~~~~~~~~~~~
 
 ## Changes
