@@ -1545,7 +1545,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
     }
-    private def runAdhoc(ApiRunAdhocRequest runCommandRequest){
+    private def runAdhoc(ApiRunAdhocRequest runAdhocRequest){
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         params["user"] = (session?.user) ? session.user : "anonymous"
@@ -1553,40 +1553,40 @@ class ScheduledExecutionController  extends ControllerBase{
         params.jobName='Temporary_Job'
         params.groupPath='adhoc'
 
-        if (runCommandRequest.asUser && apiService.requireVersion(request,response,ApiRequestFilters.V5)) {
+        if (runAdhocRequest.asUser && apiService.requireVersion(request,response,ApiRequestFilters.V5)) {
             //authorize RunAs User
             if (!frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
-                    AuthConstants.ACTION_RUNAS, runCommandRequest.project)) {
+                    AuthConstants.ACTION_RUNAS, runAdhocRequest.project)) {
 
                 def msg = g.message(code: "api.error.item.unauthorized", args: ['Run as User', 'Run', 'Adhoc'])
                 return [failed:true,error: 'unauthorized', message: msg]
             }
-            params['user'] = runCommandRequest.asUser
+            params['user'] = runAdhocRequest.asUser
         }
-        if(runCommandRequest.exec){
-            params.workflow = new Workflow(commands: [new CommandExec(adhocRemoteString: runCommandRequest.exec, adhocExecution: true)])
-        }else if(runCommandRequest.script){
-            params.workflow = new Workflow(commands: [new CommandExec(adhocLocalString: runCommandRequest.script,
+        if(runAdhocRequest.exec){
+            params.workflow = new Workflow(commands: [new CommandExec(adhocRemoteString: runAdhocRequest.exec, adhocExecution: true)])
+        }else if(runAdhocRequest.script){
+            params.workflow = new Workflow(commands: [new CommandExec(adhocLocalString: runAdhocRequest.script,
                                                                       adhocExecution: true,
-                                                                      argString: runCommandRequest.argString,
-                                                                      scriptInterpreter: runCommandRequest.scriptInterpreter,
-                                                                      interpreterArgsQuoted: runCommandRequest.interpreterArgsQuoted,
-                                                                      fileExtension:runCommandRequest.fileExtension)])
-        }else if(runCommandRequest.url){
-            params.workflow = new Workflow(commands: [new CommandExec(adhocFilepath: runCommandRequest.url, adhocExecution: true,
-                                                                      argString: runCommandRequest.argString,
-                                                                      scriptInterpreter: runCommandRequest.scriptInterpreter,
-                                                                      interpreterArgsQuoted: runCommandRequest.interpreterArgsQuoted,
-                                                                      fileExtension:runCommandRequest.fileExtension)])
+                                                                      argString: runAdhocRequest.argString,
+                                                                      scriptInterpreter: runAdhocRequest.scriptInterpreter,
+                                                                      interpreterArgsQuoted: runAdhocRequest.interpreterArgsQuoted,
+                                                                      fileExtension:runAdhocRequest.fileExtension)])
+        }else if(runAdhocRequest.url){
+            params.workflow = new Workflow(commands: [new CommandExec(adhocFilepath: runAdhocRequest.url, adhocExecution: true,
+                                                                      argString: runAdhocRequest.argString,
+                                                                      scriptInterpreter: runAdhocRequest.scriptInterpreter,
+                                                                      interpreterArgsQuoted: runAdhocRequest.interpreterArgsQuoted,
+                                                                      fileExtension:runAdhocRequest.fileExtension)])
         }else{
 
             def msg = g.message(code: "api.error.parameter.required", args: ["url, script, or exec"])
             return [failed:true,error: 'invalid', message: msg]
         }
-        params.project=runCommandRequest.project
-        params.nodeKeepgoing= runCommandRequest.nodeKeepgoing!=null?runCommandRequest.nodeKeepgoing:true
-        params.nodeThreadcount= runCommandRequest.nodeThreadcount?:1
-        params.description = runCommandRequest.description ?: ""
+        params.project=runAdhocRequest.project
+        params.nodeKeepgoing= runAdhocRequest.nodeKeepgoing!=null?runAdhocRequest.nodeKeepgoing:true
+        params.nodeThreadcount= runAdhocRequest.nodeThreadcount?:1
+        params.description = runAdhocRequest.description ?: ""
         if (params.filterName) {
             def User u = userService.findOrCreateUser(session.user)
             //load a named filter and create a query from it
@@ -2386,13 +2386,6 @@ class ScheduledExecutionController  extends ControllerBase{
         def errjobs = loadresults.errjobs
         def skipjobs = loadresults.skipjobs
 
-        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
-            return apiService.renderErrorXml(response,[
-                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code: 'api.error.item.unsupported-format',
-                    args: [response.format]
-            ])
-        }
         withFormat{
             xml{
 
@@ -2616,36 +2609,36 @@ class ScheduledExecutionController  extends ControllerBase{
     /**
      * API: run simple exec: /api/14/project/PROJECT/run/command
      */
-    def apiRunCommandv14(ApiRunAdhocRequest runCommandRequest){
+    def apiRunCommandv14(ApiRunAdhocRequest runAdhocRequest){
         if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
             return
         }
-        return apiRunCommand(runCommandRequest)
+        return apiRunCommand(runAdhocRequest)
     }
     /**
      * API: run simple exec: /api/run/command, version 1
      */
-    def apiRunCommand(ApiRunAdhocRequest runCommandRequest){
-        if(runCommandRequest.hasErrors()){
+    def apiRunCommand(ApiRunAdhocRequest runAdhocRequest){
+        if(runAdhocRequest.hasErrors()){
             return apiService.renderErrorFormat(
                     response,
                     [
                             status: HttpServletResponse.SC_BAD_REQUEST,
                             code: 'api.error.invalid.request',
-                            args: [runCommandRequest.errors.allErrors.collect { g.message(error: it) }.join("; ")]
+                            args: [runAdhocRequest.errors.allErrors.collect { g.message(error: it) }.join("; ")]
                     ]
             )
         }
         if (!apiService.requireApi(request, response)) {
             return
         }
-        if (null==runCommandRequest.exec || null==runCommandRequest.project){
+        if (null==runAdhocRequest.exec || null==runAdhocRequest.project){
             if(!apiService.requireParameters(params, response, ['project','exec'])) {
                 return
             }
         }
-        def project=runCommandRequest.project?:params.project
-        runCommandRequest.project=project
+        def project=runAdhocRequest.project?:params.project
+        runAdhocRequest.project=project
         //test valid project
         def exists=frameworkService.existsFrameworkProject(project)
         if (!apiService.requireExists(response, exists, ['project', project])) {
@@ -2656,7 +2649,7 @@ class ScheduledExecutionController  extends ControllerBase{
         ['options','scheduled'].each{params.remove(it)}
 
         //convert api parameters to node filter parameters
-        def filters = runCommandRequest.filter ? [filter: runCommandRequest.filter] :
+        def filters = runAdhocRequest.filter ? [filter: runAdhocRequest.filter] :
                 FrameworkController.extractApiNodeFilterParams(params)
         if(filters){
             filters['doNodedispatch']=true
@@ -2668,7 +2661,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
 
-        def results=runAdhoc(runCommandRequest)
+        def results=runAdhoc(runAdhocRequest)
         return apiResponseAdhoc(results)
     }
 
@@ -2676,26 +2669,26 @@ class ScheduledExecutionController  extends ControllerBase{
     /**
      * API: run script: /api/14/project/PROJECT/run/script
      */
-    def apiRunScriptv14(ApiRunAdhocRequest runCommandRequest){
+    def apiRunScriptv14(ApiRunAdhocRequest runAdhocRequest){
         if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
             return
         }
-        return apiRunScript(runCommandRequest)
+        return apiRunScript(runAdhocRequest)
     }
     /**
      * API: run script: /api/run/script, version 1
      */
-    def apiRunScript(ApiRunAdhocRequest runCommandRequest){
+    def apiRunScript(ApiRunAdhocRequest runAdhocRequest){
         if (!apiService.requireApi(request, response)) {
             return
         }
-        if(null==runCommandRequest.project || null==runCommandRequest.script) {
+        if(null==runAdhocRequest.project || null==runAdhocRequest.script) {
             if (!apiService.requireParameters(params, response, ['project', 'scriptFile'])) {
                 return
             }
         }
-        def project=runCommandRequest.project?:params.project
-        runCommandRequest.project=project
+        def project=runAdhocRequest.project?:params.project
+        runAdhocRequest.project=project
         //test valid project
 
         def exists=frameworkService.existsFrameworkProject(project)
@@ -2705,7 +2698,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def script
         //read attached script content
-        if(runCommandRequest.script){
+        if(runAdhocRequest.script){
 
         }else if (request instanceof MultipartHttpServletRequest) {
             def file = request.getFile("scriptFile")
@@ -2718,9 +2711,9 @@ class ScheduledExecutionController  extends ControllerBase{
                         status: HttpServletResponse.SC_BAD_REQUEST,
                         code: 'api.error.run-script.upload.is-empty'])
             }
-            runCommandRequest.script = new String(file.bytes)
+            runAdhocRequest.script = new String(file.bytes)
         }else if(params.scriptFile){
-            runCommandRequest.script=params.scriptFile
+            runAdhocRequest.script=params.scriptFile
         }
 
 
@@ -2736,7 +2729,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
 
         //convert api parameters to node filter parameters
-        def filters = runCommandRequest.filter ? [filter: runCommandRequest.filter] :
+        def filters = runAdhocRequest.filter ? [filter: runAdhocRequest.filter] :
                 FrameworkController.extractApiNodeFilterParams(params)
         if(filters){
             filters['doNodedispatch']=true
@@ -2748,7 +2741,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
 
-        def results=runAdhoc(runCommandRequest)
+        def results=runAdhoc(runAdhocRequest)
         return apiResponseAdhoc(results)
     }
 
@@ -2838,8 +2831,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 return
             }
         }
-        def project=runCommandRequest.project?:params.project
-        runCommandRequest.project=project
+        def project=runAdhocRequest.project?:params.project
+        runAdhocRequest.project=project
         //test valid project
         def exists=frameworkService.existsFrameworkProject(project)
         if (!apiService.requireExists(response, exists, ['project', project])) {
