@@ -1682,25 +1682,25 @@ class FrameworkController extends ControllerBase {
      * POST: update resources data with either: text/xml content, text/yaml content, form-data param providerURL=<url>
      *     GET: see {@link #apiResourcesv2}
      * */
-    def apiProjectResourcesPost = {
+    def apiProjectResourcesPost() {
         if (!apiService.requireVersion(request, response,ApiRequestFilters.V2)) {
             return
         }
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!params.project) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
 
         }
         def exists = frameworkService.existsFrameworkProject(params.project)
         if (!exists) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
         }
         if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
                 [AuthConstants.ACTION_CREATE,AuthConstants.ACTION_UPDATE], params.project)) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Update Nodes', 'Project', params.project]])
         }
         final IRundeckProject project = frameworkService.getFrameworkProject(params.project)
@@ -1711,7 +1711,7 @@ class FrameworkController extends ControllerBase {
         //assume post request
         if(!request.post){
             //bad method
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_METHOD_NOT_ALLOWED,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_METHOD_NOT_ALLOWED,
                     code: 'api.error.invalid.request', args: ['Method not allowed']])
         }
         final contentType = request.contentType
@@ -1728,7 +1728,7 @@ class FrameworkController extends ControllerBase {
             parser = framework.getResourceFormatParserService().getParserForMIMEType(contentType)
         } catch (UnsupportedFormatException e) {
             //invalid data
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.resources-import.unsupported-format', args: [contentType]])
         }
 
@@ -1746,10 +1746,10 @@ class FrameworkController extends ControllerBase {
         try {
             nodeset=parser.parseDocument(tempfile)
         }catch (ResourceFormatParserException e){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.invalid.request', args: [e.message]])
         }catch (Exception e){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     code: 'api.project.updateResources.failed', args: [e.message]])
         }
         tempfile.delete()
@@ -1761,10 +1761,21 @@ class FrameworkController extends ControllerBase {
         } catch (Exception e) {
             log.error("Failed updating nodes file: "+e.getMessage())
             e.printStackTrace(System.err)
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     code: 'api.project.updateResources.failed', args: [e.message]])
         }
-        return apiService.renderSuccessXml(response, 'api.project.updateResources.succeeded', [params.project])
+        withFormat{
+            xml{
+                return apiService.renderSuccessXml(response, 'api.project.updateResources.succeeded', [params.project])
+            }
+            json{
+                return apiService.renderSuccessJson(response){
+                    success=true
+                    message=g.message(code:'api.project.updateResources.succeeded', args:[params.project])
+                }
+            }
+        }
+
     }
 
     /**
