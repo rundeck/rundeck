@@ -556,6 +556,7 @@ class ApiService {
                         /** attributes   **/
                         id: e.id,
                         href: href,
+                        permalink: execdata.permalink,
                         status: status,
                         project: e.project
                 ) {
@@ -574,6 +575,8 @@ class ApiService {
                             def long avg = Math.floor(e.scheduledExecution.totalTime / e.scheduledExecution.execCount)
                             jobparams.averageDuration = avg
                         }
+                        jobparams.'href'=(apiHrefForJob(e.scheduledExecution))
+                        jobparams.'permalink'=(guiHrefForJob(e.scheduledExecution))
                         job(jobparams) {
                             name(e.scheduledExecution.jobName)
                             group(e.scheduledExecution.groupPath ?: '')
@@ -586,7 +589,6 @@ class ApiService {
                                     }
                                 }
                             }
-                            href(apiHrefForJob(e.scheduledExecution))
                         }
                     }
                     description(summary)
@@ -640,6 +642,7 @@ class ApiService {
                         /** attributes   **/
                         id: e.id,
                         href: href,
+                        permalink: execdata.permalink,
                         status: status,
                         project: e.project
                 ]
@@ -667,6 +670,7 @@ class ApiService {
                         execMap.job.options=FrameworkService.parseOptsFromString(e.argString)
                     }
                     execMap.job.href=apiHrefForJob(e.scheduledExecution)
+                    execMap.job.permalink=guiHrefForJob(e.scheduledExecution)
                 }
                 execMap.description=(summary)
                 execMap.argstring=(e.argString)
