@@ -53,61 +53,63 @@ Changes introduced by API Version number:
 
 **Version 14**:
 
+**Note**: this document now has an [Index](#index) listing API paths.
+
 * Deprecated Endpoints.  These endpoints are deprecated, and new versions are added which include the Project name in the URL path
-    - `/api/14/executions/running` replacement: `/api/14/project/[PROJECT*]/executions/running`
-    - `/api/14/executions` replacement: `/api/14/project/[PROJECT]/executions`
-    - `/api/14/history` replacement: `/api/14/project/[PROJECT]/history`
-    - `/api/14/jobs/export` replacement: `/api/14/project/[PROJECT]/jobs/export`
-    - `/api/14/jobs/import` replacement: `/api/14/project/[PROJECT]/jobs/import`
-    - `/api/14/jobs` replacement: `/api/2/project/[PROJECT]/jobs`
-    - `/api/14/resource/[NAME]` replacement: `/api/14/project/[PROJECT]/resource/[NAME]`
-    - `/api/14/resources(/*)` replacement: `/api/14/project/[PROJECT]/resources(/*)`
-    - `/api/14/run/command` replacement: `/api/14/project/[PROJECT]/run/command`
-    - `/api/14/run/script` replacement: `/api/14/project/[PROJECT]/run/script`
-    - `/api/14/run/url` replacement: `/api/14/project/[PROJECT]/run/url`
+    - `/api/14/executions/running` replacement: [`/api/14/project/[PROJECT*]/executions/running`][/api/V/project/[PROJECT*]/executions/running]
+    - `/api/14/executions` replacement: [`/api/14/project/[PROJECT]/executions`][/api/V/project/[PROJECT]/executions]
+    - `/api/14/history` replacement: [`/api/14/project/[PROJECT]/history`][/api/V/project/[PROJECT]/history]
+    - `/api/14/jobs/export` replacement: [`/api/14/project/[PROJECT]/jobs/export`][/api/V/project/[PROJECT]/jobs/export]
+    - `/api/14/jobs/import` replacement: [`/api/14/project/[PROJECT]/jobs/import`][/api/V/project/[PROJECT]/jobs/import]
+    - `/api/14/jobs` replacement: [`/api/14/project/[PROJECT]/jobs`][/api/V/project/[PROJECT]/jobs]
+    - `/api/14/resource/[NAME]` replacement: [`/api/14/project/[PROJECT]/resource/[NAME]`][/api/V/project/[PROJECT]/resource/[NAME]]
+    - `/api/14/resources(/*)` replacement: [`/api/14/project/[PROJECT]/resources`][/api/V/project/[PROJECT]/resources]
+    - `/api/14/run/command` replacement: [`/api/14/project/[PROJECT]/run/command`][/api/V/project/[PROJECT]/run/command]
+    - `/api/14/run/script` replacement: [`/api/14/project/[PROJECT]/run/script`][/api/V/project/[PROJECT]/run/script]
+    - `/api/14/run/url` replacement: [`/api/14/project/[PROJECT]/run/url`][/api/V/project/[PROJECT]/run/url]
 * Deprecated Endpoints with no replacement
     - `/api/2/project/[PROJECT]/resources/refresh`
 * New Endpoints, replacing deprecated versions:
-    - `/api/14/project/[PROJECT*]/executions/running`
-    - `/api/14/project/[PROJECT]/executions`
-    - `/api/14/project/[PROJECT]/history`
-    - `/api/14/project/[PROJECT]/jobs/export`
-    - `/api/14/project/[PROJECT]/jobs/import`
-    - `/api/14/project/[PROJECT]/resource/[NAME]`
+    - [`/api/14/project/[PROJECT*]/executions/running`][/api/V/project/[PROJECT*]/executions/running]
+    - [`/api/14/project/[PROJECT]/executions`][/api/V/project/[PROJECT]/executions]
+    - [`/api/14/project/[PROJECT]/history`][/api/V/project/[PROJECT]/history]
+    - [`/api/14/project/[PROJECT]/jobs/export`][/api/V/project/[PROJECT]/jobs/export]
+    - [`/api/14/project/[PROJECT]/jobs/import`][/api/V/project/[PROJECT]/jobs/import]
+    - [`/api/14/project/[PROJECT]/resource/[NAME]`][/api/V/project/[PROJECT]/resource/[NAME]]
     - `/api/14/project/[PROJECT]/resources(/*)`
-    - `/api/14/project/[PROJECT]/run/command`
-    - `/api/14/project/[PROJECT]/run/script`
-    - `/api/14/project/[PROJECT]/run/url`
+    - [`/api/14/project/[PROJECT]/run/command`][/api/V/project/[PROJECT]/run/command]
+    - [`/api/14/project/[PROJECT]/run/script`][/api/V/project/[PROJECT]/run/script]
+    - [`/api/14/project/[PROJECT]/run/url`][/api/V/project/[PROJECT]/run/url]
 * Added JSON support for endpoints, when using API v14:
-    - `/api/14/execution/[ID]/abort`
-    - `/api/14/execution/[ID]`
-    - `/api/14/job/[ID]/executions`
-    - `/api/14/job/[ID]/run` and `POST /api/14/job/[ID]/executions`
-    - `/api/14/jobs/delete`
-    - `/api/14/project/[PROJECT*]/executions/running`
-    - `/api/14/project/[PROJECT]/executions`
-    - `/api/14/project/[PROJECT]/history`
-    - `/api/14/project/[PROJECT]/jobs/import`
-    - `/api/14/project/[PROJECT]/jobs`
-    - `/api/14/project/[PROJECT]/resource/[NAME]`
-    - `/api/14/project/[PROJECT]/resources`
-    - `/api/14/project/[PROJECT]/run/command`
-    - `/api/14/project/[PROJECT]/run/script`
-    - `/api/14/project/[PROJECT]/run/url`
-    - `/api/14/system/info`
+    - [`/api/14/execution/[ID]/abort`][/api/V/execution/[ID]/abort]
+    - [`/api/14/execution/[ID]`][/api/V/execution/[ID]]
+    - [`/api/14/job/[ID]/executions`][/api/V/job/[ID]/executions]
+    - [`/api/14/job/[ID]/run`][/api/V/job/[ID]/run] and [`POST /api/14/job/[ID]/executions`][POST /api/V/job/[ID]/executions]
+    - [`/api/14/jobs/delete`][/api/V/jobs/delete]
+    - [`/api/14/project/[PROJECT*]/executions/running`][/api/V/project/[PROJECT*]/executions/running]
+    - [`/api/14/project/[PROJECT]/executions`][/api/V/project/[PROJECT]/executions]
+    - [`/api/14/project/[PROJECT]/history`][/api/V/project/[PROJECT]/history]
+    - [`/api/14/project/[PROJECT]/jobs/import`][/api/V/project/[PROJECT]/jobs/import]
+    - [`/api/14/project/[PROJECT]/jobs`][/api/V/project/[PROJECT]/jobs]
+    - [`/api/14/project/[PROJECT]/resource/[NAME]`][/api/V/project/[PROJECT]/resource/[NAME]]
+    - [`/api/14/project/[PROJECT]/resources`][/api/V/project/[PROJECT]/resources]
+    - [`/api/14/project/[PROJECT]/run/command`][/api/V/project/[PROJECT]/run/command]
+    - [`/api/14/project/[PROJECT]/run/script`][/api/V/project/[PROJECT]/run/script]
+    - [`/api/14/project/[PROJECT]/run/url`][/api/V/project/[PROJECT]/run/url]
+    - [`/api/14/system/info`][/api/V/system/info]
 * TODO json support:
-    - /api/1/jobs/export
+    - [`/api/14/project/[PROJECT]/jobs/export`][/api/V/project/[PROJECT]/jobs/export]
 * Updated endpoints:
-    - `/api/14/job/[ID]/run` action `GET` is no longer allowed, `POST` is required. For POST, this endpoint is now equivalent to `/api/14/job/[ID]/executions`. JSON request content is now supported.
-    - `/api/14/project/[PROJECT]/jobs/import` 
+    - [`/api/14/job/[ID]/run`][/api/V/job/[ID]/run] action `GET` is no longer allowed, `POST` is required. For POST, this endpoint is now equivalent to `/api/14/job/[ID]/executions`. JSON request content is now supported.
+    - [`/api/14/project/[PROJECT]/jobs/import`][/api/V/project/[PROJECT]/jobs/import]
         * Both XML and YAML job definitions can now be posted directly using the appropriate MIME type
         * Add API `href` and GUI `permalink` values into XML response
         * JSON response support
-    - `/api/14/project/[PROJECT]/jobs` - added API/GUI href/permalink to XML responses.
-    - `/api/14/execution/[ID]/abort` - added API/GUI href/permalink to XML responses.
-    - `/api/14/project/[PROJECT]/history` - added API/GUI href/permalink to XML responses.
+    - [`/api/14/project/[PROJECT]/jobs`][/api/V/project/[PROJECT]/jobs] - added API/GUI href/permalink to XML responses.
+    - [`/api/14/execution/[ID]/abort`][/api/V/execution/[ID]/abort] - added API/GUI href/permalink to XML responses.
+    - [`/api/14/project/[PROJECT]/history`][/api/V/project/[PROJECT]/history] - added API/GUI href/permalink to XML responses.
     - `/api/14/project/[PROJECT]/run/*` - added API/GUI href/permalink to XML responses for adhoc command/script/url.
-    - `/api/14/incubator/jobs/takeoverSchedule` - added API/GUI href/permalink to XML responses for adhoc command/script/url. Note: `href` was modified as mentioned below.
+    - [`/api/14/incubator/jobs/takeoverSchedule`][/api/V/incubator/jobs/takeoverSchedule] - added API/GUI href/permalink to XML responses for adhoc command/script/url. Note: `href` was modified as mentioned below.
 * Modified `href` meaning for XML responses:
     * Some endpoints that included a `href` value in XML responses used the link that was appropriate 
     for an end user to use in a web browser,
@@ -115,6 +117,10 @@ Changes introduced by API Version number:
     When using API v14, these URLs now point to the API,
     and a new attribute `permalink` will be included to link to the GUI view for the object.
     * Using an API version 13 or earlier will retain the old behavior of `href` in XML responses.
+
+Corrections:
+
+* The response for [DELETE /api/V/job/[ID]][] incorrectly stated it would return XML response, when the actual response is `204 No Content`.
 
 **Version 13**:
 
@@ -285,13 +291,15 @@ The root URL path for all calls to the API in this version is:
 
 ## XML and JSON
 
-The majority of API calls use XML for input and output.  Some import/export features support YAML formatted documents, but XML is used for most API-level information.
+The API supports both XML and JSON.  Some import/export features support YAML or `text/plain` formatted documents, but XML and JSON are used for all API-level information.
 
-As of API version 11, new and updated endpoints will support JSON format, with content type `application/json`.
+As of API version 14, all endpoints support JSON format, with content type `application/json`, with one exception ([/api/V/project/[PROJECT]/jobs/export][]).
 
 JSON results can be retrieved by sending the HTTP "Accept" header with a `application/json` value.  JSON request content is supported when the HTTP "Content-Type" header specifies `application/json`.
 
 If an "Accept" header is not specified, then the response will be either the same format as the request content (for POST, or PUT requests), or XML by default.
+
+Some endpoints also support using a `format` query parameter to specify the expected output format.
 
 ## Authentication
 
@@ -426,12 +434,12 @@ Authentication tokens can be managed via the API itself.
 
 List all tokens or all tokens for a specific user.
 
-Request:
+**Request:**
 
     GET /api/11/tokens
     GET /api/11/tokens/[USER]
 
-Result:
+**Response:**
 
 `application/xml`:
 
@@ -476,7 +484,7 @@ For a specific user:
 
 Get a specified auth token.
 
-Request:
+**Request:**
 
     GET /api/11/token/[ID]
 
@@ -501,7 +509,7 @@ Response:
 
 Create a new token for a specific user.
 
-Request:
+**Request:**
 
     POST /api/11/tokens
     POST /api/11/tokens/[USER]
@@ -542,7 +550,7 @@ Response:
 
 Delete a specified auth token.
 
-Request:
+**Request:**
 
     DELETE /api/11/token/[ID]
 
@@ -554,13 +562,15 @@ Response:
 
 Get Rundeck server information and stats.
 
-URL:
+**Request:**
 
     GET /api/14/system/info
 
 Parameters: none
 
-Result: Success response, with included system info and stats in this format:
+**Response:**
+
+Success response, with included system info and stats in this format:
 
 `Content-Type: application/xml`:
 
@@ -796,13 +806,11 @@ The `memory` section describes memory usage in bytes:
 
 List the jobs that exist for a project.
 
-URL:
+**Request:**
 
     GET  /api/14/project/[PROJECT]/jobs
 
 (**Deprecated URL**: `/api/14/jobs` with required parameter: `project`.)
-
-**Request**
 
 The following parameters can also be used to narrow down the result set.
 
@@ -829,7 +837,7 @@ Note: If neither `groupPath` nor `groupPathExact` are specified, then the defaul
 
 `Content-Type: application/json`
 
-~~~~~~~~~~ {.xml}
+~~~~~~~~~~ {.json}
 [
   {
     "id": "[UUID]",
@@ -847,12 +855,10 @@ Note: If neither `groupPath` nor `groupPathExact` are specified, then the defaul
 
 Run a job specified by ID.
 
-URL:
+**Request:**
 
     POST /api/1/job/[ID]/run
     POST /api/12/job/[ID]/executions
-
-**Request**
 
 Optional parameters:
 
@@ -875,13 +881,15 @@ and this format is expected in the content:
 
 The `filter` can be a node filter string.
 
-**Response**:  See [Listing Running Executions](#listing-running-executions).
+**Response**:
+
+See [Listing Running Executions](#listing-running-executions).
 
 ### Exporting Jobs
 
 Export the job definitions for in XML or YAML formats.
 
-URL:
+**Request:**
 
     GET /api/14/project/[PROJECT]/jobs/export
 
@@ -897,7 +905,7 @@ The following parameters can also be used to narrow down the result set.
 * `groupPath`: specify a group or partial group path to include all jobs within that group path.
 * `jobFilter`: specify a filter for the job Name
 
-Result:
+**Response:**
 
 If you specify `format=xml`, then the output will be in [job-xml](../man5/job-xml.html) format.
 
@@ -909,13 +917,13 @@ If an error occurs, then the output will be in XML format, using the common `res
 
 Import job definitions in XML or YAML formats.
 
-URL:
+**Request:**
 
     POST /api/1/project/[PROJECT]/jobs/import
 
 (**Deprecated URL**: `/api/14/jobs/import` with optional parameter: `project`.)
 
-Requst Content:
+Request Content:
 
 One of the following:
 
@@ -933,7 +941,7 @@ Optional parameters:
     *  `preserve`: Preserve the UUIDs in imported jobs.  This may cause the import to fail if the UUID is already used. (Default value).
     *  `remove`: Remove the UUIDs from imported jobs. Allows update/create to succeed without conflict on UUID.
 
-Result:
+**Response:**
 
 A set of status results.  Each imported job definition will be either "succeeded", "failed" or "skipped".  These status sections contain a `count` attribute declaring how many jobs they contain.  Within each one there will be 0 or more `job` elements.
 
@@ -999,7 +1007,7 @@ Each array may contain a job data object:
 
 Export a single job definition in XML or YAML formats.
 
-URL:
+**Request:**
 
     GET /api/1/job/[ID]
 
@@ -1007,7 +1015,7 @@ Optional parameters:
 
 * `format` : can be "xml" or "yaml" to specify the output format. Default is "xml"
 
-Result:
+**Response:**
 
 If you specify `format=xml`, then the output will be in [job-xml](../man5/job-xml.html) format.
 
@@ -1019,32 +1027,22 @@ If an error occurs, then the output will be in XML format, using the common `res
 
 Delete a single job definition.
 
-URL:
+**Request:**
 
     DELETE /api/1/job/[ID]
 
-Result:
+**Response:**
 
-The common `result` element described in the [Response Format](#response-format) section, indicating success or failure and any messages.
-
-If successful, then the `result` will contain a `success/message` element with the result message:
-
-~~~~~~~~~~ {.xml}
-<success>
-   <message>Job was successfully deleted: ... </message>
-</success>
-~~~~~~~~~~
+    204 No Content
 
 ### Bulk Job Delete ###
 
 Delete multiple job definitions at once.
 
-URL:
+**Request:**
 
     DELETE /api/5/jobs/delete
     POST /api/5/jobs/delete
-
-Request:
 
 Either Query parameters:
 
@@ -1139,7 +1137,7 @@ The list of succeeded/failed will contain objects of this form:
 
 Get the list of executions for a Job.
 
-URL:
+**Request:**
 
     GET /api/1/job/[ID]/executions
 
@@ -1150,24 +1148,27 @@ Optional Query Parameters:
     * `max`: indicate the maximum number of results to return. If unspecified, all results will be returned.
     * `offset`: indicate the 0-indexed offset for the first result to return.
 
-Result: an Item List of `executions`.  See [Listing Running Executions](#listing-running-executions).
+**Response:** 
 
+An Item List of `executions`.  See [Listing Running Executions](#listing-running-executions).
 
 ### Delete all Executions for a Job
 
 Delete all executions for a Job.
 
-Request:
+**Request:**
 
     DELETE /api/12/job/[ID]/executions
 
-Result: The same format as [Bulk Delete Executions](#bulk-delete-executions).
+**Response:** 
+
+The same format as [Bulk Delete Executions](#bulk-delete-executions).
 
 ### Listing Running Executions
 
 List the currently running executions for a project
 
-URL:
+**Request:**
 
     GET /api/14/project/[PROJECT]/executions/running
 
@@ -1328,11 +1329,13 @@ if executed in cluster mode.
 
 Get the status for an execution by ID.
 
-Request:
+**Request:**
 
     GET /api/1/execution/[ID]
 
-Result: an Item List of `executions` with a single item. See [Listing Running Executions](#listing-running-executions).
+**Response:**
+
+An Item List of `executions` with a single item. See [Listing Running Executions](#listing-running-executions).
 
 With `Content-Type: application/json`, a single object:
 
@@ -1381,11 +1384,13 @@ With `Content-Type: application/json`, a single object:
 
 Delete an execution by ID.
 
-Request:
+**Request:**
 
     DELETE /api/12/execution/[ID]
 
-Result: `204 No Content`
+**Response:** 
+
+`204 No Content`
 
 *Authorization requirement*:
 
@@ -1395,7 +1400,7 @@ Result: `204 No Content`
 
 Delete a set of Executions by their IDs.
 
-Request:
+**Request:**
 
     POST /api/12/executions/delete
 
@@ -1410,48 +1415,56 @@ The IDs can be specified in two ways:
 
 If using a request body, the formats are specified below:
 
-**Content-Type: application/json**
+`Content-Type: application/json`
 
-    {"ids": [ 1, 2, 17 ] }
+~~~~ {.json}
+{"ids": [ 1, 2, 17 ] }
+~~~~
 
 *OR* more simply:
 
-    [ 1, 2, 17 ]
+~~~~ {.json}
+[ 1, 2, 17 ]
+~~~~
 
-**Content-Type: application/xml**
+`Content-Type: application/xml`
 
-    <executions>
-        <execution id="1"/>
-        <execution id="2"/>
-        <execution id="17"/>
-    </executions>
+~~~~ {.xml}
+<executions>
+    <execution id="1"/>
+    <execution id="2"/>
+    <execution id="17"/>
+</executions>
+~~~~
 
 Response:
 
 The response format will be either `xml` or `json`, depending on the `Accept` header.
 
-**Content-Type: application/json**
+`Content-Type: application/json`
 
+~~~~ {.json}
+{
+  "failures": [
     {
-      "failures": [
-        {
-          "id": "82",
-          "message": "Not found: 82"
-        },
-        {
-          "id": "83",
-          "message": "Not found: 83"
-        },
-        {
-          "id": "84",
-          "message": "Not found: 84"
-        }
-      ],
-      "failedCount": 3,
-      "successCount": 2,
-      "allsuccessful": false,
-      "requestCount": 5
+      "id": "82",
+      "message": "Not found: 82"
+    },
+    {
+      "id": "83",
+      "message": "Not found: 83"
+    },
+    {
+      "id": "84",
+      "message": "Not found: 84"
     }
+  ],
+  "failedCount": 3,
+  "successCount": 2,
+  "allsuccessful": false,
+  "requestCount": 5
+}
+~~~~
 
 The JSON fields will be:
 
@@ -1461,29 +1474,29 @@ The JSON fields will be:
 * `allsuccessful`: true if all deletions were successful
 * `requestCount`: number of requested execution deletions
 
-**Content-Type: application/xml**
+`Content-Type: application/xml`
 
-    <deleteExecutions requestCount='4' allsuccessful='false'>
-      <successful count='0' />
-      <failed count='4'>
-        <execution id='131' message='Unauthorized: Delete execution 131' />
-        <execution id='109' message='Not found: 109' />
-        <execution id='81' message='Not found: 81' />
-        <execution id='74' message='Not found: 74' />
-      </failed>
-    </deleteExecutions>
+~~~~ {.xml}
+<deleteExecutions requestCount='4' allsuccessful='false'>
+  <successful count='0' />
+  <failed count='4'>
+    <execution id='131' message='Unauthorized: Delete execution 131' />
+    <execution id='109' message='Not found: 109' />
+    <execution id='81' message='Not found: 81' />
+    <execution id='74' message='Not found: 74' />
+  </failed>
+</deleteExecutions>
+~~~~
 
 ### Execution Query
 
 Query for Executions based on Job or Execution details.
 
-URL:
+**Request:**
 
     GET /api/14/project/[PROJECT]/executions
 
 (**Deprecated URL**: `/api/14/executions`, required parameter `project`.)
-
-**Request**
 
 The following parameters can also be used to narrow down the result set.
 
@@ -1534,7 +1547,7 @@ See [Listing Running Executions](#listing-running-executions).
 
 Get detail about the node and step state of an execution by ID. The execution can be currently running or completed.
 
-URL:
+**Request:**
 
     GET /api/10/execution/[ID]/state
 
@@ -1671,26 +1684,26 @@ A sequence of state details for a set of Nodes for the containing step. Each ent
 In XML:
 
 ~~~~~~~~~~ {.xml}
-    <nodeState name="abc">
-      <startTime>2014-01-13T20:58:59Z</startTime>
-      <updateTime>2014-01-13T20:59:04Z</updateTime>
-      <endTime>2014-01-13T20:59:04Z</endTime>
-      <executionState>SUCCEEDED</executionState>
-    </nodeState>
-    <!-- more nodeState elements -->
+<nodeState name="abc">
+  <startTime>2014-01-13T20:58:59Z</startTime>
+  <updateTime>2014-01-13T20:59:04Z</updateTime>
+  <endTime>2014-01-13T20:59:04Z</endTime>
+  <executionState>SUCCEEDED</executionState>
+</nodeState>
+<!-- more nodeState elements -->
 ~~~~~~~~~~
 
 In JSON: an object with node names as keys.  Values are objects containing the state information entries.
 
 ~~~~~~~~~~ {.json}
-          {
-            "abc": {
-              "executionState": "SUCCEEDED",
-              "endTime": "2014-01-13T20:38:31Z",
-              "updateTime": "2014-01-13T20:38:31Z",
-              "startTime": "2014-01-13T20:38:25Z"
-            }
-          }
+{
+    "abc": {
+      "executionState": "SUCCEEDED",
+      "endTime": "2014-01-13T20:38:31Z",
+      "updateTime": "2014-01-13T20:38:31Z",
+      "startTime": "2014-01-13T20:38:25Z"
+    }
+}
 ~~~~~~~~~~
 
 **Full XML Example**
@@ -1797,93 +1810,93 @@ Within the `<result>` element:
 **Full JSON example**
 
 ~~~~~~~~~~ {.json}
-    {
-      "completed": true,
-      "executionState": "SUCCEEDED",
-      "endTime": "2014-01-13T20:38:36Z",
-      "serverNode": "dignan",
-      "startTime": "2014-01-13T20:38:25Z",
-      "updateTime": "2014-01-13T20:38:36Z",
-      "stepCount": 2,
-      "allNodes": [
-        "dignan"
-      ],
-      "targetNodes": [
-        "dignan"
-      ],
-      "nodes": {
-        "dignan": [
-          {
-            "executionState": "SUCCEEDED",
-            "stepctx": "1"
-          },
-          {
-            "executionState": "SUCCEEDED",
-            "stepctx": "2/1"
-          }
-        ]
+{
+  "completed": true,
+  "executionState": "SUCCEEDED",
+  "endTime": "2014-01-13T20:38:36Z",
+  "serverNode": "dignan",
+  "startTime": "2014-01-13T20:38:25Z",
+  "updateTime": "2014-01-13T20:38:36Z",
+  "stepCount": 2,
+  "allNodes": [
+    "dignan"
+  ],
+  "targetNodes": [
+    "dignan"
+  ],
+  "nodes": {
+    "dignan": [
+      {
+        "executionState": "SUCCEEDED",
+        "stepctx": "1"
       },
-      "executionId": 134,
-      "steps": [
-        {
+      {
+        "executionState": "SUCCEEDED",
+        "stepctx": "2/1"
+      }
+    ]
+  },
+  "executionId": 134,
+  "steps": [
+    {
+      "executionState": "SUCCEEDED",
+      "endTime": "2014-01-13T20:38:31Z",
+      "nodeStates": {
+        "dignan": {
           "executionState": "SUCCEEDED",
           "endTime": "2014-01-13T20:38:31Z",
-          "nodeStates": {
-            "dignan": {
-              "executionState": "SUCCEEDED",
-              "endTime": "2014-01-13T20:38:31Z",
-              "updateTime": "2014-01-13T20:38:31Z",
-              "startTime": "2014-01-13T20:38:25Z"
-            }
-          },
-          "updateTime": "2014-01-13T20:38:25Z",
-          "nodeStep": true,
-          "id": "1",
+          "updateTime": "2014-01-13T20:38:31Z",
           "startTime": "2014-01-13T20:38:25Z"
-        },
-        {
-          "workflow": {
-            "completed": true,
-            "startTime": "2014-01-13T20:38:31Z",
-            "updateTime": "2014-01-13T20:38:36Z",
-            "stepCount": 1,
-            "allNodes": [
-              "dignan"
-            ],
-            "targetNodes": [
-              "dignan"
-            ],
-            "steps": [
-              {
+        }
+      },
+      "updateTime": "2014-01-13T20:38:25Z",
+      "nodeStep": true,
+      "id": "1",
+      "startTime": "2014-01-13T20:38:25Z"
+    },
+    {
+      "workflow": {
+        "completed": true,
+        "startTime": "2014-01-13T20:38:31Z",
+        "updateTime": "2014-01-13T20:38:36Z",
+        "stepCount": 1,
+        "allNodes": [
+          "dignan"
+        ],
+        "targetNodes": [
+          "dignan"
+        ],
+        "steps": [
+          {
+            "executionState": "SUCCEEDED",
+            "endTime": "2014-01-13T20:38:36Z",
+            "nodeStates": {
+              "dignan": {
                 "executionState": "SUCCEEDED",
                 "endTime": "2014-01-13T20:38:36Z",
-                "nodeStates": {
-                  "dignan": {
-                    "executionState": "SUCCEEDED",
-                    "endTime": "2014-01-13T20:38:36Z",
-                    "updateTime": "2014-01-13T20:38:36Z",
-                    "startTime": "2014-01-13T20:38:31Z"
-                  }
-                },
-                "updateTime": "2014-01-13T20:38:31Z",
-                "nodeStep": true,
-                "id": "1",
+                "updateTime": "2014-01-13T20:38:36Z",
                 "startTime": "2014-01-13T20:38:31Z"
               }
-            ],
-            "endTime": "2014-01-13T20:38:36Z",
-            "executionState": "SUCCEEDED"
-          },
-          "executionState": "SUCCEEDED",
-          "endTime": "2014-01-13T20:38:36Z",
-          "hasSubworkflow": true,
-          "updateTime": "2014-01-13T20:38:36Z",
-          "nodeStep": false,
-          "id": "2",
-          "startTime": "2014-01-13T20:38:31Z"
-        }
-      ]
+            },
+            "updateTime": "2014-01-13T20:38:31Z",
+            "nodeStep": true,
+            "id": "1",
+            "startTime": "2014-01-13T20:38:31Z"
+          }
+        ],
+        "endTime": "2014-01-13T20:38:36Z",
+        "executionState": "SUCCEEDED"
+      },
+      "executionState": "SUCCEEDED",
+      "endTime": "2014-01-13T20:38:36Z",
+      "hasSubworkflow": true,
+      "updateTime": "2014-01-13T20:38:36Z",
+      "nodeStep": false,
+      "id": "2",
+      "startTime": "2014-01-13T20:38:31Z"
     }
+  ]
+}
 ~~~~~~~~~~
 
 **Timestamp format:**
@@ -1908,7 +1921,7 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
 
 Get the output for an execution by ID.  The execution can be currently running or may have already completed. Output can be filtered down to a specific node or workflow step.
 
-URL:
+**Request:**
 
     GET /api/5/execution/[ID]/output
     GET /api/10/execution/[ID]/output/node/[NODE]
@@ -1930,7 +1943,9 @@ Optional Parameters:
 * `lastmod`: epoch datestamp in milliseconds, return results only if modification changed since the specified date OR if more data is available at the given `offset`
 * `maxlines`: maximum number of lines to retrieve forward from the specified offset.
 
-Result: The output content in the requested format.
+**Response:**
+
+The output content in the requested format, see [Output Content](#output-content).
 
 #### Tailing Output
 
@@ -2069,12 +2084,14 @@ Included in the response will be some HTTP headers that provide the metadata abo
 
 Get the metadata associated with workflow step state changes along with the log output, optionally excluding log output.
 
-URL:
+**Request:**
 
     GET /api/10/execution/[ID]/output/state
     GET /api/10/execution/[ID]/output/state?stateOnly=true
 
 This API endpoint provides the sequential log of state changes for steps and nodes, optionally interleaved with the actual log output.
+
+**Response:** 
 
 The output format is the same as [Execution Output](#execution-output), with this change:
 
@@ -2090,7 +2107,7 @@ The output format is the same as [Execution Output](#execution-output), with thi
 
 Abort a running execution by ID.
 
-URL:
+**Request:**
 
     GET /api/1/execution/[ID]/abort
 
@@ -2098,14 +2115,14 @@ Optional Parameters:
 
 * `asUser` : specifies a username identifying the user who aborted the execution. Requires `runAs` permission.
 
-Result:
+**Response:**
 
 `Content-Type: application/xml`: The result will contain a `success/message` element will contain a descriptive message.  The status of the abort action will be included as an element:
 
 ~~~~~~~~~~ {.xml}
-    <abort status="[abort-state]">
-        <execution id="[id]" status="[status]"/>
-    </abort>
+<abort status="[abort-state]">
+    <execution id="[id]" status="[status]"/>
+</abort>
 ~~~~~~~~~~
 
 `Content-Type: application/json`:
@@ -2134,14 +2151,15 @@ If the `[abort-state]` is "failed", then `[reason]` will be a textual descriptio
 
 Run a command string.
 
-URL:
+**Request:**
 
-    GET /api/1/run/command
-    POST /api/1/run/command
+    GET /api/14/project/[PROJECT]/run/command
+    POST /api/14/project/[PROJECT]run/command
+
+(**Deprecated URLs**: `/api/14/run/command`, with required parameter `project`).
 
 The necessary content can be supplied as request Parameters:
 
-* `project`: the project name (required)
 * `exec`: the shell command string to run, e.g. "echo hello". (required)
 * `nodeThreadcount`: threadcount to use (optional)
 * `nodeKeepgoing`: if "true", continue executing on other nodes even if some fail. (optional)
@@ -2162,7 +2180,7 @@ Or the request can be `Content-type: application/json`:
 }
 ~~~~~~
 
-Result:
+**Response:**
 
 `Content-Type: application/xml`: A success message, and a single `<execution>` item identifying the
 new execution by ID:
@@ -2188,9 +2206,11 @@ new execution by ID:
 
 Run a script.
 
-URL:
+**Request:**
 
-    POST /api/1/run/script
+    POST /api/14/project/[PROJECT]/run/script
+
+(**Deprecated URL**: `/api/14/run/script`, with required parameter `project`).
 
 Request Content:
 
@@ -2206,7 +2226,6 @@ For Content-Type: `multipart/form-data`
 
 Parameters:
 
-* `project`: the project name (required)
 * `argString`: Arguments to pass to the script when executed.
 * `nodeThreadcount`: threadcount to use
 * `nodeKeepgoing`: if "true", continue executing on other nodes even if some fail.
@@ -2260,16 +2279,17 @@ new execution by ID:
 
 Run a script downloaded from a URL.  (**API version 4** required.)
 
-URL:
+**Request:**
 
-    POST /api/4/run/url
-    GET /api/4/run/url
+    POST /api/14/project/[PROJECT]/run/url
+    GET /api/14/project/[PROJECT]/run/url
+
+(**Deprecated URL**: `/api/14/run/url`, with required parameter `project`).
 
 The request can be form content, or a JSON document.
 
 With Content-Type: `application/x-www-form-urlencoded` form or query parameters are used.
 
-* `project`: the project name (required)
 * `scriptURL`: A URL pointing to a script file (required)
 * `argString`: Arguments to pass to the script when executed.
 * `nodeThreadcount`: threadcount to use
@@ -2299,7 +2319,9 @@ If using a json document with Content-type: `application/json`:
 }
 ~~~~~~
 
-Result: A success message, and a single `<execution>` item identifying the
+**Response:**
+
+A success message, and a single `<execution>` item identifying the
 new execution by ID:
 
 ~~~~~~~~~~ {.xml}
@@ -2534,11 +2556,13 @@ Deletes the file if it exists and returns `204` response.
 
 List the existing projects on the server.
 
-URL:
+**Request:**
 
     GET /api/1/projects
 
-Result:  An Item List of `projects`, each `project` of the form specified in the [Getting Project Info](#getting-project-info) section.
+**Response:**
+
+An Item List of `projects`, each `project` of the form specified in the [Getting Project Info](#getting-project-info) section.
 
 *Since API version 11*: JSON content can be retrieved with `Accept: application/json`
 
@@ -2588,7 +2612,9 @@ Get information about a project.
 
     GET /api/1/project/[PROJECT]
 
-Result:  An Item List of `projects` with one `project`.  XML or JSON is determined by the `Accept` request header. The `project` is of the form:
+**Response:**
+
+An Item List of `projects` with one `project`.  XML or JSON is determined by the `Accept` request header. The `project` is of the form:
 
 `Content-Type: application/xml`
 
@@ -2693,9 +2719,11 @@ key2=value
 
 Replaces all configuration data with the submitted values.
 
+**Request:**
+
     PUT /api/11/project/[PROJECT]/config
 
-Request:
+Content:
 
 `Content-Type: application/xml`
 
@@ -2844,14 +2872,9 @@ Response will indicate whether the imported contents had any errors:
 Update or retrieve the Resources for a project.  A GET request returns the resources
 for the project, and a POST request will update the resources. (**API version 2** required.)
 
-URL:
-
-    GET /api/2/project/[PROJECT]/resources
-    POST /api/2/project/[PROJECT]/resources
-
 #### List Resources for a Project
 
-URL:
+**Request:**
 
     GET /api/2/project/[PROJECT]/resources
 
@@ -2859,7 +2882,7 @@ See [Listing Resources](#listing-resources).
 
 #### Update Resources for a Project
 
-URL:
+**Request:**
 
     POST /api/2/project/[PROJECT]/resources
 
@@ -2885,7 +2908,7 @@ Example POST request:
       hostname: node2
       username: bob
 
-Result:
+**Response:**
 
     200 OK
 
@@ -2904,7 +2927,7 @@ Refresh the resources for a project via its Resource Model Provider URL. The URL
 specified as a request parameter, or the pre-configured URL for the project
 can be used. (**API version 2** required.)
 
-URL:
+**Request:**
 
     POST /api/2/project/[PROJECT]/resources/refresh
 
@@ -2916,7 +2939,9 @@ Optional Parameters:
     not specified then the configured provider URL in the `project.properties`
     file will be used.
 
-Result: A success or failure result with a message.
+**Response:**
+
+A success or failure result with a message.
 
 The URL requested as the `providerURL` must be allowed by the `project.properties` and `framework.properties` configuration settings according to these rules:
 
@@ -2939,7 +2964,7 @@ The `readme.md` and `motd.md` files,
 which are Markdown formatted and displayed in the Project listing page, 
 can be managed via the API. (See [Project Readme.md](http://rundeck.org/docs/administration/project-setup.html#project-readme.md).)
 
-URL: 
+**Request:** 
     
     /api/13/project/[PROJECT]/readme.md
     /api/13/project/[PROJECT]/motd.md
@@ -2995,13 +3020,11 @@ Response: `204 No Content`
 
 List the event history for a project.
 
-URL:
+**Request:**
 
     GET /api/14/project/[PROJECT]/history
 
 (**Deprecated URL**: `/api/14/history`, requires URL parameter: `project`.)
-
-**Request**
 
 Optional Parameters:
 
@@ -3030,7 +3053,7 @@ The format for the `end`, and `begin` filters is either:  a unix millisecond tim
 
 The format for the `jobListFilter` and `excludeJobListFilter` is the job's group and name separated by a '/' character, such as: "group1/job name", or "my job" if there is no group.
 
-**Response**
+**Response:**
 
 `Content-Type: application/xml`: an Item List of `events`.  Each `event` has this form:
 
@@ -3118,7 +3141,7 @@ The `events` array contains elements like:
 
 List or query the resources for a project.
 
-URL:
+**Request:**
 
     GET /api/14/project/[PROJECT]/resources
 
@@ -3132,7 +3155,9 @@ Optional Parameters:
 
 **Note:** If no query parameters are included, the result set will include all Node resources for the project.
 
-Result: Depending on the `format` parameter, a value of "xml" will return [resource-xml](../man5/resource-xml.html) and "yaml" will return [resource-yaml](../man5/resource-yaml.html), and "json" will return [resource-json](../man5/resource-json.html) formatted results.  Any other supported format value will return content in the specified format.
+**Response:**
+
+Depending on the `format` parameter, a value of "xml" will return [resource-xml](../man5/resource-xml.html) and "yaml" will return [resource-yaml](../man5/resource-yaml.html), and "json" will return [resource-json](../man5/resource-json.html) formatted results.  Any other supported format value will return content in the specified format.
 
 #### Using Node Filters
 
@@ -3177,7 +3202,7 @@ Using set logic, if "A" is the set of all resources, "X" is the set of all resou
 
 Get a specific resource within a project.
 
-URL:
+**Request:**
 
     GET /api/14/project/[PROJECT]/resource/[NAME]
 
@@ -3187,7 +3212,9 @@ Optional Parameters:
 
 * `format` : Result format.  Default is "xml", can use "yaml" or "json", or an installed ResourceFormat plugin name.
 
-Result: Depending on the `format` parameter, a value of "xml" will return [resource-xml](../man5/resource-xml.html) and "yaml" will return [resource-yaml](../man5/resource-yaml.html), and "json" will return [resource-json](../man5/resource-json.html) formatted results.
+**Response:**
+
+Depending on the `format` parameter, a value of "xml" will return [resource-xml](../man5/resource-xml.html) and "yaml" will return [resource-yaml](../man5/resource-yaml.html), and "json" will return [resource-json](../man5/resource-json.html) formatted results.
 
 The result will contain a single item for the specified resource.
 
@@ -3217,7 +3244,7 @@ One of the following:
 { server: { uuid: "[UUID]" } }
 ~~~
 
-**Response**
+**Response:**
 
 If request was XML, then Standard API response containing the following additional elements:
 
@@ -3292,3 +3319,268 @@ If request was JSON, then the following JSON:
       "success": true
     }
 ~~~~~~~~~~
+
+## Index
+
+[/api/V/execution/[ID]][]
+
+* `GET` [Execution Info](#execution-info)
+* `DELETE` [Delete an Execution](#delete-an-execution)
+
+[/api/V/execution/[ID]/abort][]
+
+* `GET` [Aborting Executions](#aborting-executions)
+
+[/api/V/execution/[ID]/output/state][]
+
+* `GET` [Execution Output with State](#execution-output-with-state)
+
+[/api/V/execution/[ID]/output][]
+
+* `GET` [Tailing Output](#tailing-output)
+
+[/api/V/execution/[ID]/output/step/[STEPCTX]][]
+
+[/api/V/execution/[ID]/output/node/[NODE]/step/[STEPCTX]][]
+
+[/api/V/execution/[ID]/output/node/[NODE]][]
+
+[/api/V/execution/[ID]/output][]
+
+* `GET` [Execution Output](#execution-output)
+
+[/api/V/execution/[ID]/state][]
+
+* `GET` [Execution State](#execution-state)
+
+[/api/V/executions/delete][]
+
+* `POST` [Bulk Delete Executions](#bulk-delete-executions)
+
+[/api/V/incubator/jobs/takeoverSchedule][]
+
+* `PUT` [Takeover Schedule in Cluster Mode](#takeover-schedule-in-cluster-mode)
+
+[/api/V/job/[ID]][]
+
+* `GET` [Getting a Job Definition](#getting-a-job-definition)
+* `DELETE` [Deleting a Job Definition](#deleting-a-job-definition)
+
+[/api/V/job/[ID]/executions][]
+
+* `POST` [Running a Job](#running-a-job)
+* `GET` [Getting Executions for a Job](#getting-executions-for-a-job)
+* `DELETE` [Delete all Executions for a Job](#delete-all-executions-for-a-job)
+
+[/api/V/job/[ID]/run][]
+
+* `POST` [Running a Job](#running-a-job)
+
+[/api/V/jobs/delete][]
+
+* `DELETE` [Bulk Job Delete](#bulk-job-delete)
+
+[/api/V/project/[PROJECT]][]
+
+* `GET` [Getting Project Info](#getting-project-info)
+* `DELETE` [Project Deletion](#project-deletion)
+
+[/api/V/project/[PROJECT]/config][]
+
+* `GET` [GET Project Configuration](#get-project-configuration)
+* `PUT` [PUT Project Configuration](#put-project-configuration)
+
+[/api/V/project/[PROJECT]/config/[KEY]][]
+
+* `GET` [GET Project Configuration Key](#get-project-configuration-key)
+* `PUT` [PUT Project Configuration Key](#put-project-configuration-key)
+* `DELETE` [DELETE Project Configuration Key](#delete-project-configuration-key)
+
+[/api/V/project/[PROJECT]/executions][]
+
+* `GET` [Execution Query](#execution-query)
+
+[/api/V/project/[PROJECT*]/executions/running][]
+
+* `GET` [Listing Running Executions](#listing-running-executions)
+
+[/api/V/project/[PROJECT]/export][]
+
+* `GET` [Project Archive Export](#project-archive-export)
+
+[/api/V/project/[PROJECT]/[FILE.md]][]
+
+* `GET` [GET Readme File](#get-readme-file)
+* `PUT` [PUT Readme File](#put-readme-file)
+* `DELETE` [DELETE Readme File](#delete-readme-file)
+
+[/api/V/project/[PROJECT]/history][]
+
+* `GET` [Listing History](#listing-history)
+
+[/api/V/project/[PROJECT]/import][]
+
+* `PUT` [Project Archive Import](#project-archive-import)
+
+[/api/V/project/[PROJECT]/jobs][]
+
+* `GET` [Listing Jobs](#listing-jobs)
+
+[/api/V/project/[PROJECT]/jobs/export][]
+
+* `GET` [Exporting Jobs](#exporting-jobs)
+
+[/api/V/project/[PROJECT]/jobs/import][]
+
+* `POST` [Importing Jobs](#importing-jobs)
+
+[/api/V/project/[PROJECT]/resources][]
+
+* `GET` [Listing Resources](#listing-resources)
+* `POST` [Update Resources for a Project](#update-resources-for-a-project)
+
+[/api/V/project/[PROJECT]/resource/[NAME]][]
+
+* `GET` [Getting Resource Info](#getting-resource-info)
+
+[/api/V/project/[PROJECT]/resources/refresh][]
+
+* `POST` [Refreshing Resources for a Project](#refreshing-resources-for-a-project)
+
+[/api/V/project/[PROJECT]/run/command][]
+
+* `POST` [Running Adhoc Commands](#running-adhoc-commands)
+
+[/api/V/project/[PROJECT]/run/script][]
+
+* `POST` [Running Adhoc Scripts](#running-adhoc-scripts)
+
+[/api/V/project/[PROJECT]/run/url][]
+
+* `POST` [Running Adhoc Script URLs](#running-adhoc-script-urls)
+
+[/api/V/projects][]
+
+* `GET` [Listing Projects](#listing-projects)
+* `POST` [Project Creation](#project-creation)
+
+[/api/V/storage/keys/[PATH]/[FILE]][]
+
+* `PUT` [Upload Keys](#upload-keys)
+* `GET` [List keys](#list-keys)
+* `GET` [Get Key Metadata](#get-key-metadata)
+* `GET` [Get Key Contents](#get-key-contents)
+* `DELETE` [Delete Keys](#delete-keys)
+
+[/api/V/system/info][]
+
+* `GET` [System Info](#system-info)
+
+[/api/V/tokens][]
+
+[/api/V/tokens/[USER]][]
+
+* `GET` [List Tokens](#list-tokens)
+* `POST` [Create a Token](#create-a-token)
+
+[/api/V/token/[ID]][]
+
+* `GET` [Get a token](#get-a-token)
+* `DELETE` [Delete a token](#delete-a-token)
+
+
+[/api/V/execution/[ID]]: #execution-info
+
+[/api/V/execution/[ID]/abort]:#aborting-executions
+
+[/api/V/execution/[ID]/output/state]:#execution-output-with-state
+
+[/api/V/execution/[ID]/output/step/[STEPCTX]]:#execution-output
+
+[/api/V/execution/[ID]/output/node/[NODE]/step/[STEPCTX]]:#execution-output
+
+[/api/V/execution/[ID]/output/node/[NODE]]:#execution-output
+
+[/api/V/execution/[ID]/output]:#execution-output
+
+[/api/V/execution/[ID]/state]:#execution-state
+
+[/api/V/executions/delete]:#bulk-delete-executions
+
+
+[/api/V/incubator/jobs/takeoverSchedule]:#takeover-schedule-in-cluster-mode
+
+
+[/api/V/job/[ID]]:#getting-a-job-definition
+[DELETE /api/V/job/[ID]]:#deleting-a-job-definition
+
+[/api/V/job/[ID]/executions]:#getting-executions-for-a-job
+[POST /api/V/job/[ID]/executions]:#running-a-job
+[DELETE /api/V/job/[ID]/executions]:#delete-all-executions-for-a-job
+
+
+[/api/V/job/[ID]/run]:#running-a-job
+
+[/api/V/jobs/delete]:#bulk-job-delete
+
+[/api/V/project/[PROJECT]]:#getting-project-info
+[DELETE /api/V/project/[PROJECT]]:#project-deletion
+
+[/api/V/project/[PROJECT]/config]:#get-project-configuration
+[PUT /api/V/project/[PROJECT]/config]:#put-project-configuration
+
+
+[/api/V/project/[PROJECT]/config/[KEY]]:#get-project-configuration-key
+[PUT /api/V/project/[PROJECT]/config/[KEY]]:#put-project-configuration-key
+[DELETE /api/V/project/[PROJECT]/config/[KEY]]:#delete-project-configuration-key
+
+
+[/api/V/project/[PROJECT]/executions]:#execution-query
+
+
+[/api/V/project/[PROJECT*]/executions/running]:#listing-running-executions
+
+
+[/api/V/project/[PROJECT]/export]:#project-archive-export
+
+
+[/api/V/project/[PROJECT]/[FILE.md]]:#get-readme-file
+[PUT /api/V/project/[PROJECT]/[FILE.md]]:#put-readme-file
+[DELETE /api/V/project/[PROJECT]/[FILE.md]]:#delete-readme-file
+
+[/api/V/project/[PROJECT]/history]:#listing-history
+
+[/api/V/project/[PROJECT]/import]:#project-archive-import
+
+[/api/V/project/[PROJECT]/jobs]:#listing-jobs
+
+[/api/V/project/[PROJECT]/jobs/export]:#exporting-jobs
+
+[/api/V/project/[PROJECT]/jobs/import]:#importing-jobs
+
+[/api/V/project/[PROJECT]/resources]:#listing-resources
+[POST /api/V/project/[PROJECT]/resources]:#update-resources-for-a-project
+
+[/api/V/project/[PROJECT]/resource/[NAME]]:#getting-resource-info
+
+[/api/V/project/[PROJECT]/resources/refresh]:#refreshing-resources-for-a-project
+
+[/api/V/projects]:#listing-projects
+[POST /api/V/projects]:#project-creation
+
+[/api/V/project/[PROJECT]/run/command]:#running-adhoc-commands
+
+[/api/V/project/[PROJECT]/run/script]:#running-adhoc-scripts
+
+[/api/V/project/[PROJECT]/run/url]:#running-adhoc-script-urls
+
+[/api/V/storage/keys/[PATH]/[FILE]]:#list-keys
+[PUT /api/V/storage/keys/[PATH]/[FILE]]:#upload-keys
+[DELETE /api/V/storage/keys/[PATH]/[FILE]]:#delete-keys
+[/api/V/system/info]:#system-info
+[/api/V/tokens]:#list-tokens
+[/api/V/tokens/[USER]]:#list-tokens
+[POST /api/V/tokens/[USER]]:#create-a-token
+[/api/V/token/[ID]]:#get-a-token
+[DELETE /api/V/token/[ID]]:#delete-a-token
+
