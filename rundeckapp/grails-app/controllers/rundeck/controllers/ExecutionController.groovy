@@ -1049,10 +1049,10 @@ class ExecutionController extends ControllerBase{
         def Execution e = Execution.get(params.id)
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!e) {
-            return apiService.renderErrorXml(response,
+            return apiService.renderErrorFormat(response,
                     [status: HttpServletResponse.SC_NOT_FOUND,code: "api.error.item.doesnotexist", args: ['Execution ID', params.id]])
         } else if (!frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_READ])){
-            return apiService.renderErrorXml(response,
+            return apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_FORBIDDEN,
                             code: "api.error.item.unauthorized",
@@ -1060,7 +1060,7 @@ class ExecutionController extends ControllerBase{
                     ])
         }
         if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
-            return apiService.renderErrorXml(response,[
+            return apiService.renderErrorFormat(response,[
                     status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.item.unsupported-format',
                     args: [response.format]

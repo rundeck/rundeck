@@ -407,7 +407,7 @@ class ReportsController extends ControllerBase{
             return
         }
         if(!params.project){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
         }
         if(params.jobListFilter || params.excludeJobListFilter){
@@ -421,13 +421,13 @@ class ReportsController extends ControllerBase{
         def exists=frameworkService.existsFrameworkProject(params.project)
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(!exists){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
 
         }
         if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_EVENT,
                 [AuthConstants.ACTION_READ], params.project)) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read Events', 'Project', params.project]])
         }
         params.projFilter=params.project
@@ -440,7 +440,7 @@ class ReportsController extends ControllerBase{
                 query.endafterFilter=parseDate(params.begin)
                 query.doendafterFilter=true
             }catch(ParseException e){
-                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                         code: 'api.error.history.date-format', args: ['begin', params.begin]])
 
             }
@@ -450,7 +450,7 @@ class ReportsController extends ControllerBase{
                 query.endbeforeFilter=parseDate(params.end)
                 query.doendbeforeFilter=true
             }catch(ParseException e){
-                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                         code: 'api.error.history.date-format', args: ['end', params.end]])
             }
         }

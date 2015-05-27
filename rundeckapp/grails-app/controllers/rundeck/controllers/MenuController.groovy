@@ -864,7 +864,7 @@ class MenuController extends ControllerBase{
             return
         }
         if(!params.project){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
 
         }
@@ -874,7 +874,7 @@ class MenuController extends ControllerBase{
 
         def exists=frameworkService.existsFrameworkProject(params.project)
         if(!exists){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
 
         }
@@ -886,7 +886,7 @@ class MenuController extends ControllerBase{
         }
 
         if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
-            return apiService.renderErrorXml(response,[
+            return apiService.renderErrorFormat(response,[
                     status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.item.unsupported-format',
                     args: [response.format]
@@ -999,7 +999,7 @@ class MenuController extends ControllerBase{
             return
         }
         if(!params.project){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
         }
         //test valid project
@@ -1009,7 +1009,7 @@ class MenuController extends ControllerBase{
         def allProjects = request.api_version >= ApiRequestFilters.V9 && params.project == '*'
         if(!allProjects){
             if(!frameworkService.existsFrameworkProject(params.project)){
-                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
                         code: 'api.error.parameter.doesnotexist', args: ['project',params.project]])
             }
         }

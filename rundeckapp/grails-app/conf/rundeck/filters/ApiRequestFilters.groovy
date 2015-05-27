@@ -137,14 +137,14 @@ public class ApiRequestFilters {
                     flash.errorCode = 'api.error.api-version.required'
                     AA_TimerFilters.afterRequest(request, response, session)
                     logDetail(request, params.toString(), actionName, controllerName, 'api.error.api-version.required')
-                    apiService.renderErrorXml(response,[code: 'api.error.api-version.required'])
+                    apiService.renderErrorFormat(response,[code: 'api.error.api-version.required'])
                     return false
                 }
                 def unsupported = !(VersionMap.containsKey(params.api_version))
                 if (unsupported) {
                     AA_TimerFilters.afterRequest(request, response, session)
                     logDetail(request, params.toString(), actionName, controllerName, 'api.error.api-version.unsupported')
-                    apiService.renderErrorXml(response,
+                    apiService.renderErrorFormat(response,
                             [
                                     status: HttpServletResponse.SC_BAD_REQUEST,
                                     code: 'api.error.api-version.unsupported',
@@ -174,7 +174,7 @@ public class ApiRequestFilters {
                     splat || (grailsApplication.config?.feature?.incubator?.getAt(it) in ['true', true])
                 }
                 if (feature && !(featurePresent(feature))) {
-                    apiService.renderErrorXml(response,
+                    apiService.renderErrorFormat(response,
                             [
                                     status: HttpServletResponse.SC_NOT_FOUND,
                                     code: 'api.error.invalid.request',

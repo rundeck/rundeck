@@ -2710,11 +2710,11 @@ class ScheduledExecutionController  extends ControllerBase{
         }else if (request instanceof MultipartHttpServletRequest) {
             def file = request.getFile("scriptFile")
             if(!file) {
-                return apiService.renderErrorXml(response, [
+                return apiService.renderErrorFormat(response, [
                         status: HttpServletResponse.SC_BAD_REQUEST,
                         code: 'api.error.run-script.upload.missing',args:['scriptFile']])
             }else if(file.empty) {
-                return apiService.renderErrorXml(response, [
+                return apiService.renderErrorFormat(response, [
                         status: HttpServletResponse.SC_BAD_REQUEST,
                         code: 'api.error.run-script.upload.is-empty'])
             }

@@ -352,7 +352,7 @@ class ApiService {
     def requireParameters(Map reqparams,HttpServletResponse response,List<String> params){
         def notfound=params.find{!reqparams[it]}
         if(notfound){
-            renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: [notfound]])
             return false
         }
@@ -368,7 +368,7 @@ class ApiService {
     def requireAnyParameters(Map reqparams,HttpServletResponse response,List<String> params){
         def found=params.any{ reqparams[it]}
         if(!found){
-            renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['Any of: '+params.join(', ')]])
             return false
         }
