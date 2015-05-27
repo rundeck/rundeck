@@ -119,7 +119,7 @@ Changes introduced by API Version number:
 **Version 13**:
 
 * New endpoints
-    - `/api/13/project/[NAME]/readme.md` and `/api/13/project/[NAME]/motd.md`
+    - `/api/13/project/[PROJECT]/readme.md` and `/api/13/project/[PROJECT]/motd.md`
         - [Project Readme File](#project-readme-file) (`GET`, `PUT`, `DELETE`)
 
 **Version 12**:
@@ -153,13 +153,13 @@ In this version, all new and updated endpoints support XML or JSON request and r
 **Version 11**:
 
 * New endpoints
-    - `/api/11/project/[NAME]/config`
+    - `/api/11/project/[PROJECT]/config`
         - PUT and GET for [Project Configuration](#project-configuration)
-    - `/api/11/project/[NAME]/config/[KEY]`
+    - `/api/11/project/[PROJECT]/config/[KEY]`
         + PUT, GET, DELETE for [Project Configuration Keys](#project-configuration-keys)
-    - `/api/11/project/[NAME]/export`
+    - `/api/11/project/[PROJECT]/export`
         + GET to retrieve archive of a project - [Project Archive Export](#project-archive-export)
-    - `/api/11/project/[NAME]/import`
+    - `/api/11/project/[PROJECT]/import`
         + PUT to import an archive to a project - [Project Archive Import](#project-archive-import)
     - `/api/11/storage/keys/[PATH]`
         + GET, POST, PUT, DELETE: manage stored keys - [Key Storage](#key-storage)
@@ -173,7 +173,7 @@ In this version, all new and updated endpoints support XML or JSON request and r
         + GET: get a token - [Get a token](#get-a-tokens)
         + DELETE: delete a token - [Delete a Token](#delete-a-token)
 * Updated endpoints
-    - `/api/11/project/[NAME]`
+    - `/api/11/project/[PROJECT]`
         + DELETE method can delete a project - [Project Deletion](#project-deletion)
         + GET method response updated - [Getting Project Info](#getting-project-info)
     - `/api/11/projects`
@@ -262,15 +262,15 @@ Added in Rundeck 1.4.6, 1.5.1:
 * Updated endpoints
     * `/api/1/resources` - [Listing Resources](#listing-resources)
         * `format` parameter can now use any supported Resource Format Parser format name.
-    * `/api/2/project/[NAME]/resources` - [Updating and Listing Resources for a Project](#updating-and-listing-resources-for-a-project)
+    * `/api/2/project/[PROJECT]/resources` - [Updating and Listing Resources for a Project](#updating-and-listing-resources-for-a-project)
         * `POST` request Content-Type can be any MIME type supported by a Resource Format Parser plugin.
 
 **Version 2**:
 
 * New endpoints
-    * `/api/2/project/[NAME]/jobs` - [Listing Jobs for a Project](#listing-jobs-for-a-project)
-    * `/api/2/project/[NAME]/resources` - [Updating and Listing Resources for a Project](#updating-and-listing-resources-for-a-project)
-    * `/api/2/project/[NAME]/resources/refresh` - [Refreshing Resources for a Project](#refreshing-resources-for-a-project)
+    * `/api/2/project/[PROJECT]/jobs` - [Listing Jobs for a Project](#listing-jobs-for-a-project)
+    * `/api/2/project/[PROJECT]/resources` - [Updating and Listing Resources for a Project](#updating-and-listing-resources-for-a-project)
+    * `/api/2/project/[PROJECT]/resources/refresh` - [Refreshing Resources for a Project](#refreshing-resources-for-a-project)
 * Updated endpoints
     * `/api/1/jobs` - [Listing Jobs](#listing-jobs)
         * Additional parameters added
@@ -556,7 +556,7 @@ Get Rundeck server information and stats.
 
 URL:
 
-    /api/14/system/info
+    GET /api/14/system/info
 
 Parameters: none
 
@@ -798,7 +798,7 @@ List the jobs that exist for a project.
 
 URL:
 
-    /api/14/project/[NAME]/jobs
+    GET  /api/14/project/[PROJECT]/jobs
 
 (**Deprecated URL**: `/api/14/jobs` with required parameter: `project`.)
 
@@ -883,7 +883,7 @@ Export the job definitions for in XML or YAML formats.
 
 URL:
 
-    /api/14/project/[PROJECT]/jobs/export
+    GET /api/14/project/[PROJECT]/jobs/export
 
 (**Deprecated URL**: `/api/14/jobs/export` with required parameter: `project`.)
 
@@ -911,11 +911,9 @@ Import job definitions in XML or YAML formats.
 
 URL:
 
-    /api/1/project/[PROJECT]/jobs/import
+    POST /api/1/project/[PROJECT]/jobs/import
 
 (**Deprecated URL**: `/api/14/jobs/import` with optional parameter: `project`.)
-
-Method: `POST`
 
 Requst Content:
 
@@ -1003,7 +1001,7 @@ Export a single job definition in XML or YAML formats.
 
 URL:
 
-    /api/1/job/[ID]
+    GET /api/1/job/[ID]
 
 Optional parameters:
 
@@ -1023,9 +1021,7 @@ Delete a single job definition.
 
 URL:
 
-    /api/1/job/[ID]
-
-Method: `DELETE`
+    DELETE /api/1/job/[ID]
 
 Result:
 
@@ -1045,9 +1041,8 @@ Delete multiple job definitions at once.
 
 URL:
 
-    /api/5/jobs/delete
-
-Method: `DELETE`, or `POST`
+    DELETE /api/5/jobs/delete
+    POST /api/5/jobs/delete
 
 Request:
 
@@ -1146,7 +1141,7 @@ Get the list of executions for a Job.
 
 URL:
 
-    /api/1/job/[ID]/executions
+    GET /api/1/job/[ID]/executions
 
 Optional Query Parameters:
 
@@ -1174,7 +1169,7 @@ List the currently running executions for a project
 
 URL:
 
-    /api/14/project/[PROJECT]/executions/running
+    GET /api/14/project/[PROJECT]/executions/running
 
 (**Deprecated URL**: `/api/14/executions/running`, required URL parameter `project`.)
 
@@ -1484,7 +1479,7 @@ Query for Executions based on Job or Execution details.
 
 URL:
 
-    /api/14/project/[PROJECT]/executions
+    GET /api/14/project/[PROJECT]/executions
 
 (**Deprecated URL**: `/api/14/executions`, required parameter `project`.)
 
@@ -1541,7 +1536,7 @@ Get detail about the node and step state of an execution by ID. The execution ca
 
 URL:
 
-    /api/10/execution/[ID]/state
+    GET /api/10/execution/[ID]/state
 
 Specify expected output format with the `Accept: ` HTTP header. Supported formats:
 
@@ -1915,10 +1910,10 @@ Get the output for an execution by ID.  The execution can be currently running o
 
 URL:
 
-    /api/5/execution/[ID]/output
-    /api/10/execution/[ID]/output/node/[NODE]
-    /api/10/execution/[ID]/output/node/[NODE]/step/[STEPCTX]
-    /api/10/execution/[ID]/output/step/[STEPCTX]
+    GET /api/5/execution/[ID]/output
+    GET /api/10/execution/[ID]/output/node/[NODE]
+    GET /api/10/execution/[ID]/output/node/[NODE]/step/[STEPCTX]
+    GET /api/10/execution/[ID]/output/step/[STEPCTX]
 
 The log output for each execution is stored in a file on the Rundeck server, and this API endpoint allows you to retrieve some or all of the output, in several possible formats: json, XML, and plain text.  When retrieving the plain text output, some metadata about the log is included in HTTP Headers.  JSON and XML output formats include metadata about each output log line, as well as metadata about the state of the execution and log file, and your current index location in the file.
 
@@ -2076,8 +2071,8 @@ Get the metadata associated with workflow step state changes along with the log 
 
 URL:
 
-    /api/10/execution/[ID]/output/state
-    /api/10/execution/[ID]/output/state?stateOnly=true
+    GET /api/10/execution/[ID]/output/state
+    GET /api/10/execution/[ID]/output/state?stateOnly=true
 
 This API endpoint provides the sequential log of state changes for steps and nodes, optionally interleaved with the actual log output.
 
@@ -2097,7 +2092,7 @@ Abort a running execution by ID.
 
 URL:
 
-    /api/1/execution/[ID]/abort
+    GET /api/1/execution/[ID]/abort
 
 Optional Parameters:
 
@@ -2141,7 +2136,8 @@ Run a command string.
 
 URL:
 
-    /api/1/run/command
+    GET /api/1/run/command
+    POST /api/1/run/command
 
 The necessary content can be supplied as request Parameters:
 
@@ -2194,10 +2190,7 @@ Run a script.
 
 URL:
 
-    /api/1/run/script
-
-Method: `POST`
-
+    POST /api/1/run/script
 
 Request Content:
 
@@ -2269,9 +2262,8 @@ Run a script downloaded from a URL.  (**API version 4** required.)
 
 URL:
 
-    /api/4/run/url
-
-Method: `POST`
+    POST /api/4/run/url
+    GET /api/4/run/url
 
 The request can be form content, or a JSON document.
 
@@ -2369,7 +2361,7 @@ Lists resources at the specified PATH, provides a JSON or XML response based on 
 
 Each resource has a type of `file` or `directory`.
 
-`GET /api/11/storage/keys/[PATH]/`
+    GET /api/11/storage/keys/[PATH]/
 
 Response:
 
@@ -2476,9 +2468,7 @@ Returns the metadata about the stored key file.
 
 Provides a JSON or XML response based on the `Accept` request header:
 
-~~~
-GET /api/11/storage/keys/[PATH]/[FILE]
-~~~
+    GET /api/11/storage/keys/[PATH]/[FILE]
 
 Response:
 
@@ -2513,11 +2503,11 @@ name='test1.pub'>
 }
 ~~~~
 
-### GET Key Contents ####
+### Get Key Contents ####
 
 Provides the **public key** content if the `Accept` request header matches `*/*` or `application/pgp-keys`:
 
-`GET /api/11/storage/keys/[PATH]/[FILE]`
+    GET /api/11/storage/keys/[PATH]/[FILE]
 
 **Retrieving private key file contents is not allowed.**
 
@@ -2536,7 +2526,7 @@ Response:
 
 Deletes the file if it exists and returns `204` response.
 
-`DELETE /api/11/storage/keys/[PATH]/[FILE]`
+    DELETE /api/11/storage/keys/[PATH]/[FILE]
 
 ## Projects
 
@@ -2546,7 +2536,7 @@ List the existing projects on the server.
 
 URL:
 
-    /api/1/projects
+    GET /api/1/projects
 
 Result:  An Item List of `projects`, each `project` of the form specified in the [Getting Project Info](#getting-project-info) section.
 
@@ -2596,7 +2586,7 @@ Response:  XML or JSON project definition of the form indicated in the [Getting 
 
 Get information about a project.
 
-    GET /api/1/project/[NAME]
+    GET /api/1/project/[PROJECT]
 
 Result:  An Item List of `projects` with one `project`.  XML or JSON is determined by the `Accept` request header. The `project` is of the form:
 
@@ -2620,7 +2610,7 @@ If the project defines a Resource Model Provider URL, then the additional items 
 
 Updated in version 11:
 
-    GET /api/11/project/[NAME]
+    GET /api/11/project/[PROJECT]
 
 
 `Content-Type: application/xml`
@@ -2658,7 +2648,7 @@ Updated in version 11:
 
 Delete an existing projects on the server. Requires 'delete' authorization.
 
-    DELETE /api/11/project/[NAME]
+    DELETE /api/11/project/[PROJECT]
 
 Response:
 
@@ -2670,7 +2660,7 @@ Retrieve or modify the project configuration data.  Requires `configure` authori
 
 #### GET Project Configuration ####
 
-`GET /api/11/project/[NAME]/config`
+    GET /api/11/project/[PROJECT]/config
 
 Response, based on `Accept` header:
 
@@ -2703,7 +2693,7 @@ key2=value
 
 Replaces all configuration data with the submitted values.
 
-`PUT /api/11/project/[NAME]/config`
+    PUT /api/11/project/[PROJECT]/config
 
 Request:
 
@@ -2740,7 +2730,7 @@ Retrieve, change or delete individual configuration properties by their key.  Re
 
 URL:
 
-    /api/11/project/[NAME]/config/[KEY]
+    /api/11/project/[PROJECT]/config/[KEY]
 
 Request and response formats:
 
@@ -2766,19 +2756,19 @@ key value
 
 Retrieve the value.
 
-`GET /api/11/project/[NAME]/config/[KEY]`
+    GET /api/11/project/[PROJECT]/config/[KEY]
 
 #### PUT Project Configuration Key ####
 
 Set the value.
 
-`PUT /api/11/project/[NAME]/config/[KEY]`
+    PUT /api/11/project/[PROJECT]/config/[KEY]
 
 #### DELETE Project Configuration Key ####
 
 Delete the key.
 
-`DELETE /api/11/project/[NAME]/config/[KEY]`
+    DELETE /api/11/project/[PROJECT]/config/[KEY]
 
 Response will be
 
@@ -2788,7 +2778,7 @@ Response will be
 
 Export a zip archive of the project.  Requires `export` authorization for the project.
 
-    GET /api/11/project/[NAME]/export
+    GET /api/11/project/[PROJECT]/export
 
 Response content type is `application/zip`
 
@@ -2796,7 +2786,7 @@ Response content type is `application/zip`
 
 Import a zip archive to the project. Requires `import` authorization for the project.
 
-    PUT /api/11/project/[NAME]/import{?jobUuidOption,importExecutions}
+    PUT /api/11/project/[PROJECT]/import{?jobUuidOption,importExecutions}
 
 Parameters:
 
@@ -2856,11 +2846,22 @@ for the project, and a POST request will update the resources. (**API version 2*
 
 URL:
 
-    /api/2/project/[NAME]/resources
+    GET /api/2/project/[PROJECT]/resources
+    POST /api/2/project/[PROJECT]/resources
 
-Method: POST, GET
+#### List Resources for a Project
 
-#### POST request
+URL:
+
+    GET /api/2/project/[PROJECT]/resources
+
+See [Listing Resources](#listing-resources).
+
+#### Update Resources for a Project
+
+URL:
+
+    POST /api/2/project/[PROJECT]/resources
 
 POSTing to this URL will set the resources for the project to the content of the request.
 
@@ -2894,29 +2895,6 @@ Result:
         </success>
     </result>
 
-#### GET request
-
-Optional GET Parameters:
-
-* `format` : Result format.  One of "xml" or "yaml". Default is "xml".
-*  Query
-parameters can also be used. This is an alternate interface to [Listing Resources](#listing-resources).
-
-GET Result: Depending on the `format` parameter, a value of "xml" will return [resource-xml](../man5/resource-xml.html) and "yaml" will return [resource-yaml](../man5/resource-yaml.html) formatted results.
-
-Example GET request:
-
-    GET /api/2/project/test/resources
-
-Response:
-
-    200 OK
-    Content-Type: text/xml
-
-    <project>
-        <node name="node1" hostname="node1" username="bob" />
-        <node name="node2" hostname="node2" username="bob" />
-    </project>
 
 ### Refreshing Resources for a Project
 
@@ -2928,9 +2906,7 @@ can be used. (**API version 2** required.)
 
 URL:
 
-    /api/2/project/[NAME]/resources/refresh
-
-Method: POST
+    POST /api/2/project/[PROJECT]/resources/refresh
 
 Optional Parameters:
 
@@ -2965,14 +2941,17 @@ can be managed via the API. (See [Project Readme.md](http://rundeck.org/docs/adm
 
 URL: 
     
-    /api/13/project/[NAME]/readme.md
-    /api/13/project/[NAME]/motd.md
+    /api/13/project/[PROJECT]/readme.md
+    /api/13/project/[PROJECT]/motd.md
 
 Method: `GET`, `PUT` and `DELETE`.
 
 Format: XML, JSON and plain text formats.
 
-#### GET Request
+#### GET Readme File
+
+    GET /api/13/project/[PROJECT]/readme.md
+    GET /api/13/project/[PROJECT]/motd.md
 
 Response format depends on the `Accept:` HTTP header.
 
@@ -2996,11 +2975,17 @@ Response format depends on the `Accept:` HTTP header.
 
 If the file does not exist, then the response will be : `404 Not Found`
 
-#### PUT Request
+#### PUT Readme File
+
+    PUT /api/13/project/[PROJECT]/readme.md
+    PUT /api/13/project/[PROJECT]/motd.md
 
 To create or modify the contents, use a `PUT` request, and `Content-Type` header to specify the same format.  Use the same format as returned by the GET responses.
 
-#### DELETE Request
+#### DELETE Readme File
+
+    DELETE /api/13/project/[PROJECT]/readme.md
+    DELETE /api/13/project/[PROJECT]/motd.md
 
 Deletes the resource if it exists.
 
@@ -3012,7 +2997,7 @@ List the event history for a project.
 
 URL:
 
-    /api/14/project/[PROJECT]/history
+    GET /api/14/project/[PROJECT]/history
 
 (**Deprecated URL**: `/api/14/history`, requires URL parameter: `project`.)
 
@@ -3135,7 +3120,7 @@ List or query the resources for a project.
 
 URL:
 
-    /api/14/project/[PROJECT]/resources
+    GET /api/14/project/[PROJECT]/resources
 
 (**Deprecated URL**: `/api/1/resources` requires `project` query parameter.)
 
@@ -3194,7 +3179,7 @@ Get a specific resource within a project.
 
 URL:
 
-    /api/14/project/[PROJECT]/resource/[NAME]
+    GET /api/14/project/[PROJECT]/resource/[NAME]
 
 (**Deprecated URL**: `/api/1/resource/[NAME]` requires `project` query parameter.)
 
