@@ -1200,7 +1200,7 @@ Each `execution` of the form:
     <date-started unixtime="[unixtime]">[datetime]</date-started>
 
     <!-- optional job context if the execution is associated with a job -->
-    <job id="jobID" averageDuration="[milliseconds]">
+    <job id="jobID" averageDuration="[milliseconds]" href="[API url]" permalink="[GUI url]">
         <name>..</name>
         <group>..</group>
         <description>..</description>
@@ -1259,8 +1259,8 @@ It contains a `paging` entry with paging information, and a `executions` array:
   "executions": [
     {
       "id": 387,
-      "href": "[url]",
-      "permalink": "[GUI link url]",
+      "href": "[API url]",
+      "permalink": "[GUI url]",
       "status": "[status]",
       "project": "test",
       "user": "[user]",
@@ -1280,6 +1280,8 @@ It contains a `paging` entry with paging information, and a `executions` array:
         "group": "api-test/job-run-steps",
         "project": "test",
         "description": "",
+        "href": "[API url]",
+        "permalink": "[GUI url]",
         "options": {
           "opt2": "a",
           "opt1": "testvalue"
