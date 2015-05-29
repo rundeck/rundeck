@@ -148,6 +148,7 @@ Create a `jaas-ldap.conf` file in the same directory as the `jaas-loginmodule.co
 Make sure the name of your Login Module configuration is the same as you use in the next step.  The Login Module configuration is defined like this:
 
     myloginmodule {
+        // comment line
         ...
     }
 
