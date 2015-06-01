@@ -48,7 +48,7 @@ uploadJob(){
     # now submit req
     runurl="${APIURL}/jobs/import"
 
-    params="dupeOption=update"
+    params="dupeOption=update&project=${proj}"
 
     # specify the file for upload with curl, named "xmlBatch"
     ulopts="-F xmlBatch=@$file"
