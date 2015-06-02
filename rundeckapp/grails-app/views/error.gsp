@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title><g:message code="main.app.name"/> - Error</title>
+    <title><g:appTitle/> - Error</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
 </head>

@@ -14,7 +14,7 @@ class UtilityTagLib{
     def static  daysofweekkey = [Calendar.SUNDAY,Calendar.MONDAY,Calendar.TUESDAY,Calendar.WEDNESDAY,Calendar.THURSDAY,Calendar.FRIDAY,Calendar.SATURDAY];
     def public static daysofweekord = ScheduledExecution.daysofweeklist;
     def public static monthsofyearord = ScheduledExecution.monthsofyearlist;
-	static returnObjectForTags = ['rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','helpLinkParams','parseOptsFromString','relativeDateString','enc','textFirstLine','textRemainingLines']
+	static returnObjectForTags = ['appTitle','rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','helpLinkParams','parseOptsFromString','relativeDateString','enc','textFirstLine','textRemainingLines']
 
     private static Random rand=new java.util.Random()
     def HMacSynchronizerTokensManager hMacSynchronizerTokensManager
@@ -864,6 +864,10 @@ class UtilityTagLib{
         //call original form tag
         def applicationTagLib = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.FormTagLib')
         applicationTagLib.form.call(attrs,body)
+    }
+
+    def appTitle={attrs,body->
+        grailsApplication.config.rundeck.gui.title ?:g.message(code:'main.app.name',default:'')?:g.message(code:'main.app.default.name')
     }
 
 }

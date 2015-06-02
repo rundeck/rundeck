@@ -11,7 +11,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="tabpage" content="jobs"/>
     <meta name="layout" content="base"/>
-    <title><g:message code="main.app.name"/> - <g:message
+    <title><g:appTitle/> - <g:message
             code="ScheduledExecution.page.delete.title"/></title>
 
 </head>

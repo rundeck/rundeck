@@ -10,10 +10,10 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <g:set var="appTitle" value="${grailsApplication.config.rundeck.gui.title ?: g.message(code: 'main.app.name')}"/>
+
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="home"/>
-    <title><g:enc>${appTitle}</g:enc></title>
+    <title><g:appTitle/></title>
 
 </head>
 <body>

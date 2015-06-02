@@ -6,7 +6,7 @@
 <!--[if (gt IE 9)|!(IE)]><!--> <html lang="en"><!--<![endif]-->
 <head>
     <title>
-        <g:layoutTitle default="${g.message(code:'main.app.name')}"/>
+        <g:layoutTitle default="${g.appTitle()}"/>
     </title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="SHORTCUT" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>

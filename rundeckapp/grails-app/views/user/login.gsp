@@ -5,7 +5,7 @@
 <!--[if IE 9 ]>    <html class="ie9"> <![endif]-->
 <!--[if (gt IE 9)|!(IE)]><!--> <html lang="en"><!--<![endif]-->
 <head>
-    <title><g:message code="main.app.name"/> - Login</title>
+    <title><g:appTitle/> - Login</title>
     <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
     <META HTTP-EQUIV="Expires" CONTENT="-1">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

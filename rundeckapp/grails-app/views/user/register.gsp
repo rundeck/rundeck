@@ -2,7 +2,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
-    <title><g:message code="main.app.name"/> - User Profile</title>
+    <title><g:appTitle/> - User Profile</title>
 
 </head>
 <body>

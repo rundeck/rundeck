@@ -8,7 +8,7 @@
 
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
-<head><title><g:message code="main.app.name"/> - <g:message code="request.error.notfound.title" /></title>
+<head><title><g:appTitle/> - <g:message code="request.error.notfound.title" /></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="SHORTCUT" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
