@@ -37,7 +37,8 @@ ext.exportedProjects = [
         ":rundeck-storage:rundeck-storage-api",
         ":rundeck-storage:rundeck-storage-data",
         ":rundeck-storage:rundeck-storage-filesys",
-        ":rundeck-storage:rundeck-storage-conf"
+        ":rundeck-storage:rundeck-storage-conf",
+        ":rundeck-launcher:launcher"
 ]
 /**
  * Defaults for all projects
@@ -48,17 +49,18 @@ subprojects {
     apply from: "${rootDir}/gradle/java.gradle"
     apply plugin: 'eclipse'
     eclipse.project.name = "${project.getParent().eclipse.project.name}:${name}"
-    
+
     // the environment can be set by adding -Penvironment={value} as a command
     // line switch. by default we run as 'development'
     ext.environment = project.hasProperty('environment') ? environment : 'development';
-    
+
     // Unless we're doing a release build, append -SNAPSHOT to the end of the
     // artifacts. Otherwise use the currentVersion as defined in gradle.properties and
     // the releaseTag if it is not 'GA'
-    def vtag = environment != 'release' ? '-SNAPSHOT' : (project.hasProperty('releaseTag') && releaseTag!='GA' ? '-'+releaseTag : '')  
+    def vtag = environment != 'release' ? '-SNAPSHOT' : (project.hasProperty('releaseTag') && releaseTag != 'GA' ? '-' + releaseTag : '')
     version = currentVersion + vtag
-
+}
+allprojects{
     ext.isReleaseBuild = false
     ext.isSnapshotBuild = false
     ext.isDevBuild = false
@@ -77,8 +79,7 @@ task wrapper(type: Wrapper) {
 
 // prompt for PGP key passphrase if not set
 gradle.taskGraph.whenReady { taskGraph ->
-    if (taskGraph.allTasks.any { it instanceof Sign } && project.hasProperty("signing.keyId") && !project.hasProperty
-            ("signing.password") && !isDevBuild) {
+    if (taskGraph.allTasks.any { it instanceof Sign } && project.hasProperty("signing.keyId") && !project.hasProperty( "signing.password") && !project.isDevBuild) {
         // Use Java 6's console to read from the console (no good for a CI environment)
         Console console = System.console()
         console.printf "\n\nWe have to sign some things in this build.\n\nPlease enter your signing details.\n\n"
@@ -179,7 +180,7 @@ exportedProjects.each {
         }
 
         //utility to create a pom for building
-        if(project.name!='core'){
+        if(!(project.name in ['core','launcher'])){
             //:core buildfile will generate its own pom for specialized purpose
             task createPom << {
                 publishPom.writeTo("pom.xml")
