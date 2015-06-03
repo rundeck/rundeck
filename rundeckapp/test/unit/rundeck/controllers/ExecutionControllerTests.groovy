@@ -593,7 +593,7 @@ class ExecutionControllerTests  {
 
         def svcMock = mockFor(ApiService, false)
         svcMock.demand.requireApi { req, resp -> true }
-        svcMock.demand.renderErrorXml { response, Map args ->
+        svcMock.demand.renderErrorFormat{ response, Map args ->
             assertEquals('api.error.item.unauthorized', args.code)
             assertEquals(403, args.status)
             assertEquals([AuthConstants.ACTION_READ, "Execution", execs[2].id.toString()], args.args)
