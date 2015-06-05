@@ -90,7 +90,7 @@ deb:
 	@find ../core/src/main/resources/com/dtolabs/rundeck/core/cli/templates ! -regex ".*.bat$$" -and -type f | sed -e /rd-check/d -e /rd-setup/d | xargs -I Z cp Z debdist/usr/bin
 	@unzip -oq ../rundeckapp/target/rundeck-$(JVERS).war -d debdist/var/lib/rundeck/exp/webapp/
 	@ln -s /etc/rundeck/log4j.properties; mv log4j.properties debdist/var/lib/rundeck/exp/webapp/WEB-INF/classes
-	fakeroot dpkg-deb --build debdist
+	fakeroot dpkg-deb --build -Zgzip debdist
 	@mv debdist.deb rundeck-$(VERSION)-$(RELEASE)$(DEB_TAG).deb
 
 clean: rpmclean debclean
