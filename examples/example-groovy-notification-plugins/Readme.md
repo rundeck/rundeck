@@ -2,7 +2,7 @@
 
 This directory contains some example Groovy Notification plugins for Rundeck.
 
-More information can be found in: [Rundeck Developer Guide - Notification Plugin Development - Groovy Plugins](http://rundeck.org/docs/developer/notification-plugin-development.html#groovy-plugins).
+More information can be found in: [Rundeck Developer Guide - Notification Plugin Development - Groovy Plugins](http://rundeck.org/docs/developer/notification-plugin.html#groovy-plugin-type).
 
 ## `MinimalNotificationPlugin.groovy`
 
