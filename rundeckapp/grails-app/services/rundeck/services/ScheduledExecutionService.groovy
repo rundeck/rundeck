@@ -784,7 +784,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
      */
     def Date tempNextExecutionTime(ScheduledExecution se){
         def trigger = createTrigger(se)
-        return trigger.nextFireTime
+        return trigger.getFireTimeAfter(new Date())
     }
 
     /**
