@@ -64,7 +64,7 @@ class ExecReport extends BaseReport{
             adhocScript=exec.workflow.commands[0].adhocRemoteString
         }
         def summary = "[${exec.workflow.commands.size()} steps]"
-        def issuccess = exec.status == 'true'
+        def issuccess = exec.statusSucceeded()
         def iscancelled = exec.cancelled
         def istimedout = exec.timedOut
         def status = issuccess ? "succeed" : iscancelled ? "cancel" : exec.willRetry ? "retry" : istimedout ?

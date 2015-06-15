@@ -13,6 +13,35 @@ class ExecReportSpec extends Specification {
         given:
         def wf = new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")])
         def exec = new Execution(
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                failedNodeList: null,
+                succeededNodeList: null,
+                workflow: wf,
+                project: "test",
+                user: "user",
+                status: 'true'
+        ).save(flush:true)
+
+
+        when:
+        def report = ExecReport.fromExec(exec)
+
+        then:
+        exec!=null
+        report.jcExecId==exec.id.toString()
+        report.author=='user'
+        report.adhocExecution
+        report.adhocScript=='test exec'
+        report.ctxProject=='test'
+        report.status=='succeed'
+    }
+    def "adhoc from execution, succeeded"(){
+        given:
+        def wf = new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")])
+        def exec = new Execution(
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
                 failedNodeList: null,
                 succeededNodeList: null,
                 workflow: wf,
@@ -32,13 +61,15 @@ class ExecReportSpec extends Specification {
         report.adhocExecution
         report.adhocScript=='test exec'
         report.ctxProject=='test'
-        report.ctxProject=='test'
+        report.status=='succeed'
     }
 
     def "jobref from execution"(){
         given:
         def wf = new Workflow(commands: [new JobExec(jobName: "test job",jobGroup:"a group")])
         def exec = new Execution(
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
                 failedNodeList: null,
                 succeededNodeList: null,
                 workflow: wf,
@@ -58,7 +89,7 @@ class ExecReportSpec extends Specification {
         report.adhocExecution
         report.adhocScript==null
         report.ctxProject=='test'
-        report.ctxProject=='test'
+        report.status=='succeed'
     }
 
 }
