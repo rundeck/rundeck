@@ -613,7 +613,30 @@ class ProjectServiceTests  {
     }
 
     /**
-     * Imported execution where jobId should be skipped, should not be loaded
+     * empty archive progress meter
+     */
+    public void  testArchiveRequestProgressEmpty(){
+        ArchiveRequestProgress svc = new ArchiveRequestProgress()
+        assertEquals(0,svc.percent())
+    }
+
+    /**
+     *  archive progress meter with 0 total for a key
+     */
+    public void  testArchiveRequestProgressZerocount(){
+        ArchiveRequestProgress svc = new ArchiveRequestProgress()
+        assertEquals(0,svc.percent())
+        svc.total("a",0)
+        assertEquals(100,svc.percent())
+        svc.inc("a",0)
+        assertEquals(100,svc.percent())
+        svc.inc("a",10)
+        assertEquals(100,svc.percent())
+
+    }
+
+    /**
+     * basic archive progress meter with single key
      */
     public void  testArchiveRequestProgressSingle(){
         ArchiveRequestProgress svc = new ArchiveRequestProgress()
@@ -626,7 +649,7 @@ class ProjectServiceTests  {
     }
 
     /**
-     * Imported execution where jobId should be skipped, should not be loaded
+     * archive progress meter with multiple keys
      */
     public void  testArchiveRequestProgressMulti(){
         ArchiveRequestProgress svc = new ArchiveRequestProgress()
@@ -635,6 +658,23 @@ class ProjectServiceTests  {
         assertEquals(0,svc.percent())
         svc.inc("a",5)
         assertEquals(25,svc.percent())
+        svc.inc("a",5)
+        assertEquals(50,svc.percent())
+        svc.inc("b",5)
+        assertEquals(75,svc.percent())
+        svc.inc("b",5)
+        assertEquals(100,svc.percent())
+    }
+    /**
+     * archive progress meter with multiple keys, some zero
+     */
+    public void  testArchiveRequestProgressMultiAndZero(){
+        ArchiveRequestProgress svc = new ArchiveRequestProgress()
+        svc.total("a",0)
+        svc.total("b",10)
+        assertEquals(50,svc.percent())
+        svc.inc("a",5)
+        assertEquals(50,svc.percent())
         svc.inc("a",5)
         assertEquals(50,svc.percent())
         svc.inc("b",5)

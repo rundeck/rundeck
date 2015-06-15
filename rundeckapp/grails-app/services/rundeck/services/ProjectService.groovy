@@ -825,7 +825,7 @@ class ArchiveRequestProgress implements ProgressSummary,ProgressListener{
     @Override
     int percent() {
         Double sum=totals.keySet().inject(0){a,k->
-            a + ( counts[k]!=null  ? ( (counts[k]/totals[k]) / totals.size() ) : 0d)
+            a + ( ( totals[k]>0 ? ( (counts[k]!=null?counts[k]:0d)/totals[k] ) : 1d) / totals.size() )
         }
         return Math.floor(100*sum)
     }
