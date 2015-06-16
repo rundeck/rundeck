@@ -35,11 +35,25 @@
 <div class="col-sm-12">
     <g:render template="/common/messages"/>
     <g:if test="${flash.joberrors}">
-        <ul class="error note">
-            <g:each in="${flash.joberrors}" var="errmsg">
-                <li><g:enc>${errmsg}</g:enc></li>
-            </g:each>
-        </ul>
+        <div class="alert alert-danger alert-dismissable">
+            <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+            <ul>
+                <g:each in="${flash.joberrors}" var="errmsg">
+                    <li><g:enc>${errmsg}</g:enc></li>
+                </g:each>
+            </ul>
+        </div>
+    </g:if>
+    <g:if test="${flash.execerrors}">
+        <div class="alert alert-warning alert-dismissable">
+            <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+            <g:message code="some.files.in.the.archive.could.not.be.imported" />
+            <ul>
+                <g:each in="${flash.execerrors}" var="errmsg">
+                    <li><g:enc>${errmsg}</g:enc></li>
+                </g:each>
+            </ul>
+        </div>
     </g:if>
     </div>
 </div>
