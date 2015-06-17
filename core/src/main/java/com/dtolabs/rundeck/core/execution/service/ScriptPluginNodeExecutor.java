@@ -116,7 +116,7 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
         } catch (ConfigurationException e) {
             return NodeExecutorResultImpl.createFailure(
                     StepFailureReason.ConfigurationFailure,
-                    e.getMessage(),
+                    "[" + pluginname + "] " + e.getMessage(),
                     e,
                     node,
                     -1
@@ -148,7 +148,7 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
             if (0 != result) {
                 return NodeExecutorResultImpl.createFailure(
                         NodeStepFailureReason.NonZeroResultCode,
-                        "Result code: " + result,
+                        "[" + pluginname + "] " +  "Result code: " + result,
                         node,
                         result
                 );
@@ -158,7 +158,7 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
         } catch (IOException e) {
             return NodeExecutorResultImpl.createFailure(
                     StepFailureReason.IOFailure,
-                    e.getMessage(),
+                    "[" + pluginname + "] " + e.getMessage(),
                     e,
                     node,
                     result
@@ -167,7 +167,7 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
             Thread.currentThread().interrupt();
             return NodeExecutorResultImpl.createFailure(
                     StepFailureReason.Interrupted,
-                    e.getMessage(),
+                    "[" + pluginname + "] " + e.getMessage(),
                     e,
                     node,
                     result
