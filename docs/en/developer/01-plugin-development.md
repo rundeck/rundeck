@@ -584,3 +584,7 @@ Available rendering option keys:
     - Value is a Storage metadata filter string, indicating the types of Storage Files to select from if selectionAccessor is `STORAGE_PATH`. Filt string format: `metadatakey=value`, e.g. `Rundeck-key-type=private`.
 * `valueConversion` defines a way to convert a the value of the resolved property. Allowed values:
     - `STORAGE_PATH_AUTOMATIC_READ` - automatically loads the storage contents from the given Storage Path, replacing the path with the loaded file contents as a String. E.g. can be used to load a Password file contents.
+    - `PRIVATE_DATA_CONTEXT` - automatically read a value from the Private data context, which contains Secure Authentication Job Option values. E.g. With this conversion enabled, a config value of "option.mypassword" would be replaced with the value of a secure authentication job option named "mypassword".
+  * `valueConversionFailure` can be used to indicate that if the Private data context, or Storage path data is not present,
+    then the config data key should be removed.  Allowed values:
+    - `remove` - remove the original config property value if the conversion is not successful
