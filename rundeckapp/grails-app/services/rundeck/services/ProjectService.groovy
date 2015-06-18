@@ -684,6 +684,11 @@ class ProjectService implements InitializingBean{
             retryexecs.putAll(results.retryidmap)
             execlist.each { Execution e ->
                 e.project = projectName
+                if (e.orchestrator && !e.orchestrator.save()) {
+                    execerrors<<"[${execxmlmap[exml]}] Unable to save orchestrator for execution: ${e.orchestrator.errors}"
+                    log.error("[${execxmlmap[exml]}] Unable to save orchestrator for execution: ${e.orchestrator.errors}")
+                    return
+                }
                 if (e.workflow && !e.workflow.save()) {
                     execerrors<<"[${execxmlmap[exml]}] Unable to save workflow for execution: ${e.workflow.errors}"
                     log.error("[${execxmlmap[exml]}] Unable to save workflow for execution: ${e.workflow.errors}")
