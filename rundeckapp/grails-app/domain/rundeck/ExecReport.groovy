@@ -53,17 +53,18 @@ class ExecReport extends BaseReport{
      */
     static ExecReport fromExec(Execution exec){
         def failedCount = exec.failedNodeList ?exec.failedNodeList.split(',').size():0
-        def successCount=exec.succeededNodeList? exec.succeededNodeList.split(','):0;
+        def successCount=exec.succeededNodeList? exec.succeededNodeList.split(',').size():0;
         def totalCount = failedCount+successCount;
         def adhocScript = null
         if(
             null == exec.scheduledExecution
+            && exec.workflow.commands
             && exec.workflow.commands.size()==1
             && exec.workflow.commands[0] instanceof CommandExec
         ){
             adhocScript=exec.workflow.commands[0].adhocRemoteString
         }
-        def summary = "[${exec.workflow.commands.size()} steps]"
+        def summary = "[${exec.workflow.commands?exec.workflow.commands.size():0} steps]"
         def issuccess = exec.statusSucceeded()
         def iscancelled = exec.cancelled
         def istimedout = exec.timedOut
