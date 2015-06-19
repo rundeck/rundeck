@@ -238,8 +238,12 @@ class ProjectService implements InitializingBean{
         def XmlParser parser = new XmlParser()
         def doc
         def reader
-        if (xmlinput instanceof File || xmlinput instanceof InputStream) {
-            reader = xmlinput
+        def filestream
+        if (xmlinput instanceof File ) {
+            filestream=new FileInputStream(xmlinput)
+            reader = new InputStreamReader(filestream,"UTF-8")
+        } else if (xmlinput instanceof InputStream) {
+            reader = new InputStreamReader(xmlinput,"UTF-8")
         } else if (xmlinput instanceof String) {
             reader = new StringReader(xmlinput)
         } else {
@@ -250,6 +254,10 @@ class ProjectService implements InitializingBean{
             doc = parser.parse(reader)
         } catch (Exception e) {
             throw new ProjectServiceException("Unable to parse xml: ${e.message}",e)
+        }finally{
+            if(null!=filestream){
+                filestream.close()
+            }
         }
         doc
     }
@@ -548,7 +556,8 @@ class ProjectService implements InitializingBean{
             def jobset
             jxml.withInputStream {
                 try {
-                    jobset = it.decodeJobsXML()
+                    def reader = new InputStreamReader(it,"UTF-8")
+                    jobset = reader.decodeJobsXML()
                 } catch (JobXMLException e) {
                     log.error("Failed parsing jobs from XML at archive path: ${path}${name}")
                     loadjoberrors << "Job XML file at archive path: ${path}${name} had errors: ${e.message}"

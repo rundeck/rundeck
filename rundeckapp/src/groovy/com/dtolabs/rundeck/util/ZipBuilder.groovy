@@ -159,7 +159,7 @@ class ZipBuilder {
         privateFile(name){
             //write file to output
             def baos = new ByteArrayOutputStream(8192)
-            source.render(new OutputStreamWriter(baos))
+            source.render(new OutputStreamWriter(baos,"UTF-8"))
             output.write baos.toByteArray()
         }
     }
@@ -181,7 +181,7 @@ class ZipBuilder {
     }
     def ZipBuilder file(String name, Closure withStream){
         privateFile(name){
-            def writer= new OutputStreamWriter(output)
+            def writer= new OutputStreamWriter(output,"UTF-8")
             withStream.delegate=writer
             if(withStream.maximumNumberOfParameters>=1){
                 withStream.call(writer)
