@@ -23,6 +23,7 @@ import rundeck.services.ApiService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.LoggingService
+import rundeck.services.OrchestratorPluginService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.WorkflowService
 import rundeck.services.logging.ExecutionLogReader
@@ -42,6 +43,7 @@ class ExecutionController extends ControllerBase{
     ExecutionService executionService
     LoggingService loggingService
     ScheduledExecutionService scheduledExecutionService
+    OrchestratorPluginService orchestratorPluginService
     ApiService apiService
     WorkflowService workflowService
 
@@ -134,6 +136,7 @@ class ExecutionController extends ControllerBase{
 //        }
         return [scheduledExecution: e.scheduledExecution?:null,execution:e, filesize:filesize,
                 nextExecution: e.scheduledExecution?.scheduled ? scheduledExecutionService.nextExecutionTime(e.scheduledExecution) : null,
+                orchestratorPlugins: orchestratorPluginService.listOrchestratorPlugins(),
                 enext: enext, eprev: eprev,stepPluginDescriptions: pluginDescs, ]
     }
     def delete = {
