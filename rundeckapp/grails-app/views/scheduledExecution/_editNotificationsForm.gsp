@@ -15,7 +15,7 @@
        value="${params[ScheduledExecutionController.NOTIFY_START_RECIPIENTS] && 'true' == params[ScheduledExecutionController.NOTIFY_ONSTART_EMAIL] || null == params[ScheduledExecutionController.NOTIFY_ONSTART_EMAIL] && defStart}"/>
 <g:set var="defStartUrl" value="${scheduledExecution.findNotification(ScheduledExecutionController.ONSTART_TRIGGER_NAME, ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE)}"/>
 <g:set var="isStartUrl"
-       value="${params[ScheduledExecutionController.NOTIFY_START_URL] && 'true' == params[ScheduledExecutionController.NOTIFY_ONSTART_URL] || null == params[ScheduledExecutionController.NOTIFY_ONSTART_URL] && defFailureUrl}"/>
+       value="${params[ScheduledExecutionController.NOTIFY_START_URL] && 'true' == params[ScheduledExecutionController.NOTIFY_ONSTART_URL] || null == params[ScheduledExecutionController.NOTIFY_ONSTART_URL] && defStartUrl}"/>
 <div class="form-group">
     <div class="col-sm-2 control-label text-form-label">
         Send Notification?
