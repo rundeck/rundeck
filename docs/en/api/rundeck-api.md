@@ -1890,13 +1890,14 @@ new execution by ID:
 
 ### Key Storage ###
 
-Upload and manage public and private key files. For more information see the [Administration - Key Storage](../administration/key-storage.html) document.
+Upload and manage public and private key files and passwords. 
+For more information see the [Administration - Key Storage](../administration/key-storage.html) document.
 
 Keys are stored via Rundeck's *Storage* facility.  This is a path-based interface to manage files.  The underlying storage may be on disk or in a database.
 
 The Storage facility manages "resources", which may be files or directories.  File resources can have metadata associated with them (such as MIME content type).
 
-Note: Private Keys can be uploaded but not retrieved directly with this API.  They can only be used internally by Rundeck.
+Note: Private Keys and Passwords can be uploaded but not retrieved directly with this API.  They can only be used internally by Rundeck.
 
 URL:
 
@@ -1908,6 +1909,7 @@ Specify the type of key via the `Content-type` header:
 
 * `application/octet-stream` specifies a **private key**
 * `application/pgp-keys` specifies a **public key**
+* `application/x-rundeck-data-password` specifies a **password**
 
 Use `POST` to create a new file, or `PUT` to modify an existing file.
 
@@ -2077,9 +2079,11 @@ Provides the **public key** content if the `Accept` request header matches `*/*`
 
 `GET /api/11/storage/keys/[PATH]/[FILE]`
 
-**Retrieving private key file contents is not allowed.**
+**Retrieving private key or password file contents is not allowed.**
 
-A GET request for a private key file if the `Accept` request header matches `*/*` or `application/octet-stream` will result in a `403 Unauthorized` response.
+A GET request for a private key file if the `Accept` request header matches `*/*` or `application/octet-stream`,
+or a password if the request header matches `*/*` or `application/x-rundeck-data-password`
+will result in a `403 Unauthorized` response.
 
     GET /api/11/storage/keys/[PATH]/[FILE]
     Accept: application/octet-stream
