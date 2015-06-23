@@ -359,6 +359,7 @@ public class ScriptFileCopier implements DestinationFileCopier, Describable {
 
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try {
+            exec.getOutputStream().close();
             errthread = Streams.copyStreamThread(exec.getErrorStream(), System.err);
             if (null == copiedFilepath) {
                 outthread = Streams.copyStreamThread(exec.getInputStream(), byteArrayOutputStream);
@@ -367,12 +368,15 @@ public class ScriptFileCopier implements DestinationFileCopier, Describable {
             if (null != outthread) {
                 outthread.start();
             }
-            exec.getOutputStream().close();
             result = exec.waitFor();
+            System.err.flush();
+            byteArrayOutputStream.flush();
             errthread.join();
             if (null != outthread) {
                 outthread.join();
             }
+            exec.getErrorStream().close();
+            exec.getInputStream().close();
             success = 0 == result;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

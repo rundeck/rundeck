@@ -113,6 +113,7 @@ public class Streams {
         public void run() {
             try {
                 Streams.copyStream(in, out);
+                out.flush();
             } catch (IOException e) {
                 exception = e;
             }
