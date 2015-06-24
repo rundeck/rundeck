@@ -3,10 +3,8 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.plugins.quartz.listeners.SessionBinderJobListener
-import org.apache.commons.validator.EmailValidator
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
@@ -24,7 +22,6 @@ import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.quartzjobs.ExecutionJob
 
-import javax.security.auth.Subject
 import javax.servlet.http.HttpSession
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
@@ -1588,10 +1585,11 @@ class ScheduledExecutionService implements ApplicationContextAware{
         ]
         def conf = notif.configuration
         def arr = (conf?.recipients?: notif.content)?.split(",")
+        def validator = new AnyDomainEmailValidator()
         arr?.each { email ->
             if(email && email.indexOf('${')>=0){
                 //don't reject embedded prop refs
-            }else if (email && !EmailValidator.getInstance().isValid(email)) {
+            }else if (email && !validator.isValid(email)) {
                 failed = true
                 scheduledExecution.errors.rejectValue(
                         fieldNames[trigger],
