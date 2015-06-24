@@ -27,13 +27,7 @@ import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
-import com.dtolabs.rundeck.core.execution.service.FileCopier;
-import com.dtolabs.rundeck.core.execution.service.FileCopierException;
-import com.dtolabs.rundeck.core.execution.service.FileCopierService;
-import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorService;
+import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
@@ -45,6 +39,8 @@ import com.dtolabs.utils.Streams;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * TestScriptFileNodeStepExecutor is ...
@@ -53,6 +49,8 @@ import java.util.*;
  */
 public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
     private static final String PROJ_NAME = "TestScriptFileNodeStepExecutor";
+    public static final String UNIX_FILE_EXT = "sh";
+    public static final String WINDOWS_FILE_EXT = "bat";
 
     public TestScriptFileNodeStepExecutor(String name) {
         super(name);
@@ -76,10 +74,10 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         File projectdir = new File(getFrameworkProjectsBase(), PROJ_NAME);
         FileUtils.deleteDir(projectdir);
     }
-    static enum TestReason implements FailureReason{
+    enum TestReason implements FailureReason{
         Test
     }
-    public static class testFileCopier implements FileCopier {
+    public static class testFileCopier implements FileCopier,DestinationFileCopier {
         String testResult;
         ExecutionContext testContext;
         InputStream testInput;
@@ -95,6 +93,15 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
                 throw new FileCopierException("copyFileStream test", TestReason.Test);
             }
             return testResult;
+        }
+
+        @Override
+        public String copyFileStream(
+                final ExecutionContext context, final InputStream input, final INodeEntry node, final String destination
+        ) throws FileCopierException
+        {
+            testResult = copyFileStream(context, input, node);
+            return destination;
         }
 
         File testFile;
@@ -115,6 +122,19 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             return testResult;
         }
 
+        @Override
+        public String copyFile(
+                final ExecutionContext context,
+                final File file,
+                final INodeEntry node,
+                final String destination
+        )
+                throws FileCopierException
+        {
+            testResult = copyFile(context, file, node);
+            return destination;
+        }
+
         String testScript;
 
         public String copyScriptContent(ExecutionContext context, String script, INodeEntry node) throws
@@ -127,6 +147,15 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
                 throw new FileCopierException("copyScriptContent test", TestReason.Test);
             }
             return testResult;
+        }
+
+        @Override
+        public String copyScriptContent(
+                final ExecutionContext context, final String script, final INodeEntry node, final String destination
+        ) throws FileCopierException
+        {
+            testResult = copyScriptContent(context, script, node);
+            return destination;
         }
     }
 
@@ -173,6 +202,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             .threadCount(1)
             .build();
         final String testScript = "a script\n";
+        final String fileExt= UNIX_FILE_EXT;
 
         ScriptFileCommand command = new ScriptFileCommandBase()  {
             public String getScript() {
@@ -205,15 +235,15 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(3, strings.length);
             assertEquals("chmod", strings[0]);
             assertEquals("+x", strings[1]);
-            assertEquals("/test/file/path", strings[2]);
+            String filepath = strings[2];
+            assertTrue(filepath.endsWith("." + UNIX_FILE_EXT));
 //            assertEquals(context, testexec.testContext.get(0));
             assertEquals(test1, testexec.testNode.get(0));
 
             //second call is to exec the filepath
             final String[] strings2 = testexec.testCommand.get(1);
             assertEquals(1, strings2.length);
-            assertEquals(strings2[0], strings[2]);
-            assertEquals("/test/file/path", strings2[0]);
+            assertEquals(filepath, strings2[0]);
 //            assertEquals(context, testexec.testContext.get(1));
             assertEquals(test1, testexec.testNode.get(1));
 
@@ -222,7 +252,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(3, strings3.length);
             assertEquals("rm", strings3[0]);
             assertEquals("-f", strings3[1]);
-            assertEquals("/test/file/path", strings3[2]);
+            assertEquals(filepath, strings3[2]);
 //            assertEquals(context, testexec.testContext.get(1));
             assertEquals(test1, testexec.testNode.get(2));
         }
@@ -290,15 +320,15 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(3, strings.length);
             assertEquals("chmod", strings[0]);
             assertEquals("+x", strings[1]);
-            assertEquals("/test/file/path", strings[2]);
+            String filepath = strings[2];
+            assertTrue(filepath.endsWith("." + UNIX_FILE_EXT));
 //            assertEquals(context, testexec.testContext.get(0));
             assertEquals(test1, testexec.testNode.get(0));
 
             //second call is to exec the filepath
             final String[] strings2 = testexec.testCommand.get(1);
             assertEquals(1, strings2.length);
-            assertEquals(strings2[0], strings[2]);
-            assertEquals("/test/file/path", strings2[0]);
+            assertEquals(filepath, strings2[0]);
 //            assertEquals(context, testexec.testContext.get(1));
             assertEquals(test1, testexec.testNode.get(1));
 
@@ -307,7 +337,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(3, strings3.length);
             assertEquals("rm", strings3[0]);
             assertEquals("-f", strings3[1]);
-            assertEquals("/test/file/path", strings3[2]);
+            assertEquals(filepath, strings3[2]);
 //            assertEquals(context, testexec.testContext.get(1));
             assertEquals(test1, testexec.testNode.get(2));
         }
@@ -372,15 +402,15 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(3, strings.length);
             assertEquals("chmod", strings[0]);
             assertEquals("+x", strings[1]);
-            assertEquals("/test/file/path", strings[2]);
+            String filepath = strings[2];
+            assertTrue(filepath.endsWith("." + UNIX_FILE_EXT));
 //            assertEquals(context, testexec.testContext.get(0));
             assertEquals(test1, testexec.testNode.get(0));
 
             //second call is to exec the filepath
             final String[] strings2 = testexec.testCommand.get(1);
             assertEquals(1, strings2.length);
-            assertEquals(strings2[0], strings[2]);
-            assertEquals("/test/file/path", strings2[0]);
+            assertEquals(filepath, strings2[0]);
 //            assertEquals(context, testexec.testContext.get(1));
             assertEquals(test1, testexec.testNode.get(1));
 
@@ -389,7 +419,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(3, strings3.length);
             assertEquals("rm", strings3[0]);
             assertEquals("-f", strings3[1]);
-            assertEquals("/test/file/path", strings3[2]);
+            assertEquals(filepath, strings3[2]);
 //            assertEquals(context, testexec.testContext.get(1));
             assertEquals(test1, testexec.testNode.get(2));
         }
@@ -463,15 +493,15 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(3, strings.length);
             assertEquals("chmod", strings[0]);
             assertEquals("+x", strings[1]);
-            assertEquals("/test/file/path", strings[2]);
+            String filepath = strings[2];
+            assertTrue(filepath.endsWith("." + UNIX_FILE_EXT));
 //            assertEquals(context, testexec.testContext.get(0));
             assertEquals(test1, testexec.testNode.get(0));
 
             //second call is to exec the filepath
             final String[] strings2 = testexec.testCommand.get(1);
             assertEquals(3, strings2.length);
-            assertEquals(strings2[0], strings[2]);
-            assertEquals("/test/file/path", strings2[0]);
+            assertEquals(filepath, strings2[0]);
             assertEquals("some", strings2[1]);
             assertEquals("args", strings2[2]);
 //            assertEquals(context, testexec.testContext.get(1));
@@ -482,7 +512,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(3, strings3.length);
             assertEquals("rm", strings3[0]);
             assertEquals("-f", strings3[1]);
-            assertEquals("/test/file/path", strings3[2]);
+            assertEquals(filepath, strings3[2]);
 //            assertEquals(context, testexec.testContext.get(1));
             assertEquals(test1, testexec.testNode.get(2));
         }
@@ -550,7 +580,8 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(3, strings.length);
             assertEquals("chmod", strings[0]);
             assertEquals("+x", strings[1]);
-            assertEquals("/test/file/path", strings[2]);
+            String filepath = strings[2];
+            assertTrue( filepath.endsWith("."+UNIX_FILE_EXT));
 //            assertEquals(context, testexec.testContext.get(0));
             assertEquals(test1, testexec.testNode.get(0));
 
@@ -616,8 +647,9 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             //second call is to exec the filepath
             final String[] strings2 = testexec.testCommand.get(0);
             assertEquals(1, strings2.length);
-            assertNotNull(strings2[0]);
-            assertEquals("/test/file/path", strings2[0]);
+        String filepath = strings2[0];
+        assertNotNull(filepath);
+            assertTrue(filepath.endsWith("." + WINDOWS_FILE_EXT));
 //            assertEquals(context, testexec.testContext.get(0));
             assertEquals(test1, testexec.testNode.get(0));
 
@@ -625,7 +657,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             final String[] strings3 = testexec.testCommand.get(1);
             assertEquals(2, strings3.length);
             assertEquals("del", strings3[0]);
-            assertEquals("/test/file/path", strings3[1]);
+            assertEquals(filepath, strings3[1]);
             assertEquals(test1, testexec.testNode.get(1));
     }
 
@@ -690,15 +722,16 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(3, strings.length);
             assertEquals("chmod", strings[0]);
             assertEquals("+x", strings[1]);
-            assertEquals("/test/file/path", strings[2]);
+            String filepath = strings[2];
+            assertTrue(filepath.endsWith("." + UNIX_FILE_EXT));
 //            assertEquals(context, testexec.testContext.get(0));
             assertEquals(test1, testexec.testNode.get(0));
 
             //second call is to exec the filepath
             final String[] strings2 = testexec.testCommand.get(1);
             assertEquals(1, strings2.length);
-            assertEquals(strings2[0], strings[2]);
-            assertEquals("/test/file/path", strings2[0]);
+            assertEquals(strings2[0], filepath);
+            assertEquals(filepath, strings2[0]);
 //            assertEquals(context, testexec.testContext.get(1));
             assertEquals(test1, testexec.testNode.get(1));
             //second call is to exec the filepath
@@ -706,7 +739,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(3, strings3.length);
             assertEquals("rm", strings3[0]);
             assertEquals("-f", strings3[1]);
-            assertEquals("/test/file/path", strings3[2]);
+            assertEquals(filepath, strings3[2]);
             assertEquals(test1, testexec.testNode.get(2));
         }
     }
@@ -794,15 +827,15 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(3, strings.length);
             assertEquals("chmod", strings[0]);
             assertEquals("+x", strings[1]);
-            assertEquals("/test/file/path", strings[2]);
+            String filepath = strings[2];
+            assertTrue(filepath.endsWith("." + UNIX_FILE_EXT));
 //            assertEquals(context, testexec.testContext.get(0));
             assertEquals(test1, testexec.testNode.get(0));
 
             //second call is to exec the filepath
             final String[] strings2 = testexec.testCommand.get(1);
             assertEquals(1, strings2.length);
-            assertEquals(strings2[0], strings[2]);
-            assertEquals("/test/file/path", strings2[0]);
+            assertEquals(filepath, strings2[0]);
 //            assertEquals(context, testexec.testContext.get(1));
             assertEquals(test1, testexec.testNode.get(1));
             //second call is to exec the filepath
@@ -810,7 +843,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(3, strings3.length);
             assertEquals("rm", strings3[0]);
             assertEquals("-f", strings3[1]);
-            assertEquals("/test/file/path", strings3[2]);
+            assertEquals(filepath, strings3[2]);
             assertEquals(test1, testexec.testNode.get(2));
         }
     }
@@ -821,7 +854,9 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
     public void testInterpretCommandScriptFileInterpreterLocal() throws Exception {
         final String interpreter = "sudo -u bob";
         final File testScriptFile = new File("Testfile");
-        testExecute(new String[]{"sudo", "-u", "bob", "/test/file/path"}, testScriptFile, interpreter, null, false, null);
+        testExecute(new String[]{"sudo", "-u", "bob", "${scriptfile}"}, testScriptFile, interpreter, null, false, null,
+                    null
+        );
     }
 
     /**
@@ -831,8 +866,19 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         final String interpreter = "sudo -u bob";
         final String[] args = new String[]{"arg1", "arg2"};
         final File testScriptFile = new File("Testfile");
-        String[] expected = {"sudo", "-u", "bob", "/test/file/path", "arg1", "arg2"};
-        testExecute(expected, testScriptFile, interpreter, args, false, null);
+        String[] expected = {"sudo", "-u", "bob", "${scriptfile}", "arg1", "arg2"};
+        testExecute(expected, testScriptFile, interpreter, args, false, null, null);
+    }
+
+    /**
+     * Use script file specifier in execution item
+     */
+    public void testInterpretCommandScriptFile_withExtension() throws Exception {
+        final String interpreter = "sudo -u bob";
+        final String[] args = new String[]{"arg1", "arg2"};
+        final File testScriptFile = new File("Testfile");
+        String[] expected = {"sudo", "-u", "bob", "${scriptfile}", "arg1", "arg2"};
+        testExecute(expected, testScriptFile, interpreter, args, false, null, "myext");
     }
     /**
      * Use script file specifier in execution item
@@ -841,13 +887,13 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         final String interpreter = "sudo -u bob";
         final String[] args = new String[]{"arg1", "arg2", "${option.opt1}"};
         final File testScriptFile = new File("Testfile");
-        String[] expected = {"sudo", "-u", "bob", "/test/file/path", "arg1", "arg2", "somevalue"};
+        String[] expected = {"sudo", "-u", "bob", "${scriptfile}", "arg1", "arg2", "somevalue"};
         HashMap<String, String> options = new HashMap<String, String>() {{
             put("opt1","somevalue");
             put("opt2","other value");
         }};
         Map<String, Map<String, String>> dataContext = DataContextUtils.addContext("option", options, null);
-        testExecute(expected, testScriptFile, interpreter, args, false, dataContext);
+        testExecute(expected, testScriptFile, interpreter, args, false, dataContext, null);
     }
     /**
      * Use script file specifier in execution item
@@ -861,8 +907,8 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             put("opt2","other value");
         }};
         Map<String, Map<String, String>> dataContext = DataContextUtils.addContext("option", options, null);
-        String[] expected = {"sudo", "-u", "bob", "/test/file/path", "arg1", "arg2", "'other value'"};
-        testExecute(expected, testScriptFile, interpreter, args, false, dataContext);
+        String[] expected = {"sudo", "-u", "bob", "${scriptfile}", "arg1", "arg2", "'other value'"};
+        testExecute(expected, testScriptFile, interpreter, args, false, dataContext, null);
     }
     /**
      * Use script file specifier in execution item
@@ -871,8 +917,8 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         final String interpreter = "sudo -u bob";
         final String[] args = new String[]{"arg1 arg2"};
         final File testScriptFile = new File("Testfile");
-        String[] expected = {"sudo", "-u", "bob", "/test/file/path", "'arg1 arg2'"};
-        testExecute(expected, testScriptFile, interpreter, args, false, null);
+        String[] expected = {"sudo", "-u", "bob", "${scriptfile}", "'arg1 arg2'"};
+        testExecute(expected, testScriptFile, interpreter, args, false, null, null);
     }
 
     /**
@@ -881,7 +927,9 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
     public void testInterpretCommandScriptFileInterpreterQuotedLocal() throws Exception {
         final String interpreter = "sudo -u bob";
         final File testScriptFile = new File("Testfile");
-        testExecute(new String[]{"sudo", "-u", "bob", "/test/file/path"}, testScriptFile, interpreter, null, true, null);
+        testExecute(new String[]{"sudo", "-u", "bob", "${scriptfile}"}, testScriptFile, interpreter, null, true, null,
+                    null
+        );
     }
     /**
      * Use script file specifier in execution item
@@ -890,7 +938,9 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         final String interpreter = "sudo -u bob";
         final File testScriptFile = new File("Testfile");
         String[] args = new String[]{"arg1", "arg2"};
-        testExecute(new String[]{"sudo", "-u", "bob", "'/test/file/path arg1 arg2'"}, testScriptFile, interpreter, args, true, null);
+        testExecute(new String[]{"sudo", "-u", "bob", "'${scriptfile} arg1 arg2'"}, testScriptFile, interpreter, args, true, null,
+                    null
+        );
     }
 
     /**
@@ -900,8 +950,9 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         final String interpreter = "sudo -u bob";
         final File testScriptFile = new File("Testfile");
         String[] args = new String[]{"arg1 arg2"};
-        testExecute(new String[]{"sudo", "-u", "bob", "'/test/file/path '\"'\"'arg1 arg2'\"'\"''"}, testScriptFile,
-                interpreter, args, true, null);
+        testExecute(new String[]{"sudo", "-u", "bob", "'${scriptfile} '\"'\"'arg1 arg2'\"'\"''"}, testScriptFile,
+                interpreter, args, true, null, null
+        );
     }
 
     public void testInterpretCommandScriptFileInterpreterQuotedOptionArgsWithoutSpace() throws Exception {
@@ -913,8 +964,10 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             put("opt2", "other value");
         }};
         Map<String, Map<String, String>> dataContext = DataContextUtils.addContext("option", options, null);
-        testExecute(new String[]{"sudo", "-u", "bob", "'/test/file/path '\"'\"'arg1 arg2'\"'\"' somevalue'"}, testScriptFile,
-                interpreter, args, true, dataContext);
+        testExecute(new String[]{"sudo", "-u", "bob", "'${scriptfile} '\"'\"'arg1 arg2'\"'\"' somevalue'"}, testScriptFile,
+                interpreter, args, true, dataContext,
+                    null
+        );
     }
 
 
@@ -927,13 +980,22 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             put("opt2", "other value");
         }};
         Map<String, Map<String, String>> dataContext = DataContextUtils.addContext("option", options, null);
-        testExecute(new String[]{"sudo", "-u", "bob", "'/test/file/path '\"'\"'arg1 arg2'\"'\"' '\"'\"'other " +
+        testExecute(new String[]{"sudo", "-u", "bob", "'${scriptfile} '\"'\"'arg1 arg2'\"'\"' '\"'\"'other " +
                 "value'\"'\"''"}, testScriptFile,
-                interpreter, args, true, dataContext);
+                interpreter, args, true, dataContext, null
+        );
     }
 
 
-    private void testExecute(String[] expectedCommand, final File testScriptFile, final String scriptInterpreter, final String[] args, final boolean argsQuoted, Map<String, Map<String, String>> dataContext) throws NodeStepException {
+    private void testExecute(
+            String[] expectedCommand,
+            final File testScriptFile,
+            final String scriptInterpreter,
+            final String[] args,
+            final boolean argsQuoted,
+            Map<String, Map<String, String>> dataContext,
+            final String fileExtension
+    ) throws NodeStepException {
         final Framework frameworkInstance = getFrameworkInstance();
         ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
 
@@ -975,6 +1037,11 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             }
 
             @Override
+            public String getFileExtension() {
+                return fileExtension;
+            }
+
+            @Override
             public boolean getInterpreterArgsQuoted() {
                 return argsQuoted;
             }
@@ -1002,15 +1069,34 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(3, testexec.index);
             //first call is chmod +x filepath
             final String[] strings = testexec.testCommand.get(0);
+            final String filepath=strings[2];
+            if(null!=fileExtension) {
+                assertTrue(filepath.endsWith("." + fileExtension));
+            }else {
+                assertTrue(filepath.endsWith(
+                                   "." +
+                                   (test1.getOsFamily().equals("windows")
+                                    ? WINDOWS_FILE_EXT
+                                    : UNIX_FILE_EXT)
+                           )
+                );
+            }
             assertEquals(3, strings.length);
             assertEquals("chmod", strings[0]);
             assertEquals("+x", strings[1]);
-            assertEquals("/test/file/path", strings[2]);
+
 //            assertEquals(context, testexec.testContext.get(0));
             assertEquals(test1, testexec.testNode.get(0));
 
             //second call is to exec the filepath
             final String[] strings2 = testexec.testCommand.get(1);
+            //replace ${scriptfile} with actual filepath
+            for (int i = 0; i < expectedCommand.length; i++) {
+                String s = expectedCommand[i];
+                if(s.contains("${scriptfile}")) {
+                    expectedCommand[i]=s.replaceAll(Pattern.quote("${scriptfile}"), Matcher.quoteReplacement(filepath));
+                }
+            }
             assertArrayEquals(expectedCommand, strings2);
             assertEquals(test1, testexec.testNode.get(1));
 
@@ -1019,7 +1105,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(3, strings3.length);
             assertEquals("rm", strings3[0]);
             assertEquals("-f", strings3[1]);
-            assertEquals("/test/file/path", strings3[2]);
+            assertEquals(filepath, strings3[2]);
 //            assertEquals(context, testexec.testContext.get(0));
             assertEquals(test1, testexec.testNode.get(2));
 
@@ -1093,24 +1179,22 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(3, strings.length);
             assertEquals("chmod", strings[0]);
             assertEquals("+x", strings[1]);
-            assertEquals("/test/file/path", strings[2]);
-//            assertEquals(context, testexec.testContext.get(0));
+            String filepath = strings[2];
+            assertTrue(filepath.endsWith("."+UNIX_FILE_EXT));
             assertEquals(test1, testexec.testNode.get(0));
 
             //second call is to exec the filepath
             final String[] strings2 = testexec.testCommand.get(1);
             assertEquals(1, strings2.length);
-            assertEquals(strings2[0], strings[2]);
-            assertEquals("/test/file/path", strings2[0]);
-//            assertEquals(context, testexec.testContext.get(1));
+            assertEquals(strings2[0], filepath);
+            assertEquals(filepath, strings2[0]);
             assertEquals(test1, testexec.testNode.get(1));
             //first call is chmod +x filepath
             final String[] strings3 = testexec.testCommand.get(2);
             assertEquals(3, strings3.length);
             assertEquals("rm", strings3[0]);
             assertEquals("-f", strings3[1]);
-            assertEquals("/test/file/path", strings3[2]);
-//            assertEquals(context, testexec.testContext.get(0));
+            assertEquals(filepath, strings3[2]);
             assertEquals(test1, testexec.testNode.get(2));
         }
     }
@@ -1190,24 +1274,21 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(3, strings.length);
             assertEquals("chmod", strings[0]);
             assertEquals("+x", strings[1]);
-            assertEquals("/test/file/path", strings[2]);
-//            assertEquals(context, testexec.testContext.get(0));
+            String filepath = strings[2];
+            assertTrue(filepath.endsWith("." + UNIX_FILE_EXT));
             assertEquals(test1, testexec.testNode.get(0));
 
             //second call is to exec the filepath
             final String[] strings2 = testexec.testCommand.get(1);
             assertEquals(1, strings2.length);
-            assertEquals(strings2[0], strings[2]);
-            assertEquals("/test/file/path", strings2[0]);
+            assertEquals(filepath, strings2[0]);
 //            assertEquals(context, testexec.testContext.get(1));
             assertEquals(test1, testexec.testNode.get(1));
-            //first call is chmod +x filepath
             final String[] strings3 = testexec.testCommand.get(2);
             assertEquals(3, strings3.length);
             assertEquals("rm", strings3[0]);
             assertEquals("-f", strings3[1]);
-            assertEquals("/test/file/path", strings3[2]);
-//            assertEquals(context, testexec.testContext.get(0));
+            assertEquals(filepath, strings3[2]);
             assertEquals(test1, testexec.testNode.get(2));
         }
     }
@@ -1271,15 +1352,15 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(3, strings.length);
             assertEquals("chmod", strings[0]);
             assertEquals("+x", strings[1]);
-            assertEquals("/test/file/path", strings[2]);
+            String filepath = strings[2];
+            assertTrue(filepath.endsWith("."+UNIX_FILE_EXT));
 //            assertEquals(context, testexec.testContext.get(0));
             assertEquals(test1, testexec.testNode.get(0));
 
             //second call is to exec the filepath
             final String[] strings2 = testexec.testCommand.get(1);
             assertEquals(1, strings2.length);
-            assertEquals(strings2[0], strings[2]);
-            assertEquals("/test/file/path", strings2[0]);
+            assertEquals(filepath, strings2[0]);
 //            assertEquals(context, testexec.testContext.get(1));
             assertEquals(test1, testexec.testNode.get(1));
             //first call is chmod +x filepath
@@ -1287,7 +1368,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             assertEquals(3, strings3.length);
             assertEquals("rm", strings3[0]);
             assertEquals("-f", strings3[1]);
-            assertEquals("/test/file/path", strings3[2]);
+            assertEquals(filepath, strings3[2]);
 //            assertEquals(context, testexec.testContext.get(0));
             assertEquals(test1, testexec.testNode.get(2));
         }
