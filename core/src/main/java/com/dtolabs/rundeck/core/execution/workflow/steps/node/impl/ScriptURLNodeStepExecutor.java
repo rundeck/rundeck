@@ -114,7 +114,7 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
                 null,
                 destinationTempFile.getAbsolutePath(),
                 null,
-                null,
+                script.getFileExtension(),
                 script.getArgs(),
                 script.getScriptInterpreter(),
                 script.getInterpreterArgsQuoted(),
