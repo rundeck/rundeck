@@ -2240,7 +2240,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         //substitute any data context references in the arguments
         if (null != newargs && executionContext.dataContext) {
-            newargs = DataContextUtils.replaceDataReferences(newargs, executionContext.dataContext)
+            newargs = DataContextUtils.replaceDataReferences(
+                    newargs,
+                    executionContext.dataContext,
+                    DataContextUtils.replaceMissingOptionsWithBlank,
+                    false
+            )
         }
 
         def jobOptsMap = frameworkService.parseOptsFromArray(newargs)

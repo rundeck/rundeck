@@ -2259,4 +2259,96 @@ class ExecutionServiceTests  {
                      ], newCtxt.dataContext['job'])
 
     }
+    /**
+     * Option references for missing values should expand to blank in arglist
+     */
+    void testcreateJobReferenceContext_argDataReferences_blank(){
+        ScheduledExecution job = prepare()
+
+        def context = ExecutionContextImpl.builder()
+                                          .nodes(makeNodeSet(['x', 'y']))
+                                          .nodeSelector(makeSelector("x y", 1, false))
+                                          .threadCount(1)
+                                          .keepgoing(false)
+                                          .dataContext(['option':['monkey':'wakeful'],'job':['execid':'123']])
+                                          .user('aUser')
+                                          .build()
+        def parseOptsCount=0
+        service.frameworkService=mockWith(FrameworkService){
+            parseOptsFromArray(1..2){String[] args->
+                def argsl=args as List
+                if(parseOptsCount<1){
+                    assertEquals(4,argsl.size())
+                }else{
+                    assertTrue(argsl.indexOf('-test1')>=0 && argsl.indexOf('-test1')<=argsl.size()-2)
+                    assertTrue(argsl.indexOf('-test2')>=0 && argsl.indexOf('-test2')<=argsl.size()-2)
+                    assertTrue(argsl.indexOf('-test3')>=0 && argsl.indexOf('-test3')<=argsl.size()-2)
+                    assertEquals('wakeful',argsl[argsl.indexOf('-test1')+1])
+                    assertEquals('',argsl[argsl.indexOf('-test2')+1])
+                    assertEquals('val3',argsl[argsl.indexOf('-test3')+1])
+                }
+                parseOptsCount++
+                def opts=[:]
+                def key=null
+                argsl.each{v->
+                    if(key){
+                        opts[key]=v
+                        key=null
+                    }else{
+                        key=v.replaceFirst('^-','')
+                    }
+                }
+                opts
+            }
+            //called by createContext
+            filterNodeSet(1..1) { NodesSelector selector, String project ->
+                makeNodeSet(['x','y'])
+            }
+            filterAuthorizedNodes(1..1) { final String project,
+                                          final Set<String> actions,
+                                          final INodeSet unfiltered,
+                                          AuthContext authContext ->
+                makeNodeSet(['x', 'y'])
+            }
+
+        }
+        service.storageService=mockWith(StorageService){
+            storageTreeWithContext(1..1){AuthContext->
+                null
+            }
+        }
+
+        service.jobStateService = mockWith(JobStateService) {
+            jobServiceWithAuthContext { ctx ->
+                null
+            }
+        }
+        def newCtxt=service.createJobReferenceContext(job,context,
+                                                      ['test1','${option.monkey}','test2','${option.balloon}'] as String[],
+                                                      null,null,null, null, null,false);
+
+        //verify nodeset
+        assertEquals(['x','y'] as Set,newCtxt.nodes.nodeNames as Set)
+        assertEquals(1,newCtxt.threadCount)
+        assertEquals(false,newCtxt.keepgoing)
+
+        assertNotNull(newCtxt.dataContext['option'])
+
+        //values from parseOptsFromArray mock
+        assertEquals("expected options size incorrect",3,newCtxt.dataContext['option'].size())
+        assertEquals(['test1':'wakeful','test2':'','test3':'val3'],newCtxt.dataContext['option'])
+
+        //expected job data context
+        assertEquals("expected job data size incorrect", 8, newCtxt.dataContext['job'].size())
+        assertEquals(['id': '1',
+                      'execid': '123',
+                      'project': 'AProject',
+                      'username':'aUser',
+                      'loglevel': 'ERROR',
+                      'user.name': 'aUser',
+                      'name':'blue',
+                      'group':'some/where'
+                     ], newCtxt.dataContext['job'])
+
+    }
 }
