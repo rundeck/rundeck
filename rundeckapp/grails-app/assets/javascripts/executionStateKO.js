@@ -105,7 +105,7 @@ function RDNode(name, steps,flow){
                 return new RDNodeStep(options.data, self, flow);
             }
         }
-    }
+    };
     self.toggleExpand=function(){ self.expanded(!self.expanded()); };
     self.duration=ko.computed(function(){
         //sum up duration of all completed steps
@@ -209,7 +209,7 @@ function RDNode(name, steps,flow){
     self.updateSteps=function(steps){
         ko.mapping.fromJS({steps: steps}, mapping, this);
         self.summarize();
-    }
+    };
     self.updateSteps(steps);
 }
 
@@ -281,7 +281,7 @@ function NodeFlowViewModel(workflow,outputUrl){
             }
         });
         return completed;
-    })
+    });
     self.succeededNodes=ko.computed(function(){
         var completed=new Array();
         ko.utils.arrayForEach(self.nodes(), function (n) {
@@ -290,7 +290,7 @@ function NodeFlowViewModel(workflow,outputUrl){
             }
         });
         return completed;
-    })
+    });
 
     self.runningNodes=ko.computed(function(){
         var completed=new Array();
@@ -407,7 +407,7 @@ function NodeFlowViewModel(workflow,outputUrl){
         var x = element.x ? element.x : element.offsetLeft,
             y = element.y ? element.y : element.offsetTop;
         window.scrollTo(x+(offx?offx:0), y+(offy?offy:0));
-    }
+    };
 
     self.scrollToNodeStep=function(node,stepctx){
         var elem = $$('.wfnodestep[data-node=' + node + '][data-stepctx=' + stepctx + ']');
@@ -432,7 +432,7 @@ function NodeFlowViewModel(workflow,outputUrl){
             self.toggleOutputForNodeStep(nodestep);
         }
         self.scrollToNode(nodestep.node.name);
-    }
+    };
 
     self.pluralize = function (count, singular, plural) {
         return count == 1 ? singular : null != plural ? plural : (singular + 's');
@@ -456,7 +456,7 @@ function NodeFlowViewModel(workflow,outputUrl){
         }
     };
     self.pendingStepsForNode = function(node){
-        var pendingData=self.pendingNodeSteps()
+        var pendingData=self.pendingNodeSteps();
         if(pendingData[node] != null){
             return pendingData[node];
         }else if(pendingData['_other'] != null){
@@ -485,7 +485,7 @@ function NodeFlowViewModel(workflow,outputUrl){
             if (step.hasSubworkflow && step.nodeStep && step.parameterStates || step.nodeStep && !step.hasSubworkflow) {
                 //node step may have empty targetNodes => implies targets unknown, so node may be pending for this step
                 //otherwise if targetNodes contains nodes => only they might be pending for this step
-                var targetNodes = null==workflowData.targetNodes || workflowData.targetNodes.length==0 ? nodes : workflowData.targetNodes
+                var targetNodes = null==workflowData.targetNodes || workflowData.targetNodes.length==0 ? nodes : workflowData.targetNodes;
 
                 if(null != step.nodeStates){
                     //include only nodes that do not have states for this step
@@ -517,13 +517,13 @@ function NodeFlowViewModel(workflow,outputUrl){
         var newsteps=[];
         for (var i = 0; i < count; i++) {
             var stepstate = steps[i];
-            var stepStateForCtx = this.stepStateForCtx(model, stepstate.stepctx);
+            var stepStateForCtx = self.stepStateForCtx(model, stepstate.stepctx);
             var found = stepStateForCtx.nodeStates[node];
             found.stepctx=stepstate.stepctx;
             newsteps.push(found);
         }
         return newsteps;
-    }
+    };
     self.updateNodes=function(model){
         if (!model.nodes || !model.allNodes) {
             return;
@@ -545,16 +545,16 @@ function NodeFlowViewModel(workflow,outputUrl){
                 self.addNode(node, nodesteps);
             }
         }
-    }
+    };
     self.formatTimeAtDate=function(text){
         return MomentUtil.formatTimeAtDate(text);
-    }
+    };
     self.formatDurationHumanize=function(ms){
         return MomentUtil.formatDurationHumanize(ms);
-    }
+    };
     self.formatDurationMomentHumanize=function(ms){
         return MomentUtil.formatDurationMomentHumanize(ms);
-    }
+    };
     self.addNode=function(node,steps){
         self.nodes.push(new RDNode(node, steps,self));
     };
