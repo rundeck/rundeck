@@ -195,7 +195,7 @@ class ExecutionController extends ControllerBase{
             return redirect(action: 'index', controller: 'reports', params: [project: params.project])
         }
     }
-    def ajaxExecState={
+    def ajaxExecState(){
         def Execution e = Execution.get(params.id)
         if (!e) {
             log.error("Execution not found for id: " + params.id)
