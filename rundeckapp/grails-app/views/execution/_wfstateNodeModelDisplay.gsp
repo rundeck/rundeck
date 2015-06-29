@@ -49,7 +49,7 @@
     </div>
 </div>
 <div data-bind="if: stateLoaded()">
-<div class="container">
+<div class="container" data-bind="if: activeTab()=='flow'">
 
     <div class="row row-space" data-bind="if: completed()">
         <div class="col-sm-12">

@@ -166,12 +166,15 @@
             //by default show state
             followState();
             jQuery('#tab_link_summary').on('show.bs.tab',function(e){
+                nodeflowvm.activeTab("summary");
                 followState();
             });
             jQuery('#tab_link_flow').on('show.bs.tab',function(e){
+                nodeflowvm.activeTab("flow");
                 followState();
             });
             jQuery('#tab_link_output').on('show.bs.tab',function(e){
+                nodeflowvm.activeTab("output");
                 followOutput();
             });
             if(document.getElementById('activity_section')){

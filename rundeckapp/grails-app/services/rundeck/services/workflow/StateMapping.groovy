@@ -45,6 +45,7 @@ class StateMapping {
         map.nodeSteps=nodeSteps
         map.steps=[]
         map.remove('nodes')
+        map.remove('targetNodes')
         map
     }
     def boolean stateCompare(a,b){
@@ -76,6 +77,7 @@ class StateMapping {
             duration_ms_total: 0,
         ]
 
+        Date updated=null;
         def testStates= ['SUCCEEDED', 'FAILED', 'WAITING', 'NOT_STARTED', 'RUNNING', 'RUNNING_HANDLER'];
         def duration=-1;
         steps.each{step->
@@ -97,48 +99,47 @@ class StateMapping {
                     duration+=stepDuration
                 }
             }
+            def lastUpdated=lastUpdatedFor(step)
+            if(!updated || lastUpdated>updated){
+                updated=lastUpdated
+            }
         }
         summary.duration=duration
-        summary.currentStep=currentStep
+        if(currentStep){
+            summary.currentStep=currentStep
+        }
+        summary.lastUpdated=encodeDate(updated)
 
         //based on step states set the summary for this node
         if (summarydata.total > 0) {
             if (summarydata.RUNNING > 0) {
-                summary.summary=("Running");
                 summary.summaryState=("RUNNING");
             } else if (summarydata.RUNNING_HANDLER > 0) {
-                summary.summary=("Running");
                 summary.summaryState=("RUNNING_HANDLER");
             } else if (summarydata.total == summarydata.SUCCEEDED && summarydata.pending < 1) {
-                summary.summary=("All Steps OK");
                 summary.summaryState=("SUCCEEDED");
             } else if (summarydata.FAILED > 0) {
-                summary.summary=(summarydata.FAILED + " " + pluralize(summarydata.FAILED, "Step") + " FAILED");
+                summary.FAILED=summarydata.FAILED;
                 summary.summaryState=("FAILED");
             } else if (summarydata.WAITING > 0) {
-                summary.summary=("Waiting to run " + summarydata.WAITING + " " + pluralize(summarydata.WAITING, "Step"))
+                summary.WAITING=summarydata.WAITING;
                 summary.summaryState=("WAITING");
             } else if (summarydata.NOT_STARTED == summarydata.total && summarydata.pending < 1) {
-                summary.summary=("No steps were run");
                 summary.summaryState=("NOT_STARTED");
             } else if (summarydata.NOT_STARTED > 0) {
-                summary.summary=(summarydata.NOT_STARTED + " " + pluralize(summarydata.NOT_STARTED, "Step") + " not run");
+                summary.PARTIAL_NOT_STARTED=summarydata.NOT_STARTED;
                 summary.summaryState=("PARTIAL_NOT_STARTED");
             }else if(summarydata.pending > 0 ){
-                summary.summary=("Waiting");
                 summary.summaryState=("WAITING");
             } else if (summarydata.SUCCEEDED > 0) {
-                summary.summary=((summarydata.total - summarydata.SUCCEEDED) + " did not succeed");
+                summary.PARTIAL_SUCCEEDED=summarydata.total - summarydata.SUCCEEDED;
                 summary.summaryState=("PARTIAL_SUCCEEDED");
             } else {
-                summary.summary=("No steps succeeded");
                 summary.summaryState=("NONE_SUCCEEDED");
             }
         } else if(summarydata.pending > 0){
-            summary.summary=("Waiting");
             summary.summaryState=("WAITING");
         } else {
-            summary.summary=("No Steps");
             summary.summaryState=("NONE");
         }
         summary
@@ -153,6 +154,15 @@ class StateMapping {
             return (end!=null?end.time:update.time)-start.time
         }else{
             -1
+        }
+    }
+    def Date lastUpdatedFor(Map step){
+        if(step.endTime || step.updateTime){
+            long end=step.endTime?decodeDate(step.endTime).time:0
+            long update=step.updateTime?decodeDate(step.updateTime).time:0
+            return new Date(Math.max(end,update))
+        }else{
+            null
         }
     }
     def String pluralize(int amount, String singular, String plural=null){

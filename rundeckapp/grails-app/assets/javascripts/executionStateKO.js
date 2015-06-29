@@ -26,39 +26,42 @@
  */
 function RDNodeStep(data, node, flow){
     var self = this;
-    self.node= node;
-    self.flow= flow;
-    self.stepctx=data.stepctx;
-    self.type=ko.observable();
-    self.parameters=ko.observable();
-    self.followingOutput=ko.observable(false);
-    self.outputLineCount=ko.observable(-1);
-    self.startTime=ko.observable();
-    self.updateTime=ko.observable();
-    self.endTime=ko.observable();
-    self.duration=ko.observable(-1);
+    self.node = node;
+    self.flow = flow;
+    self.stepctx = data.stepctx;
+    self.type = flow.workflow.contextType(self.stepctx);
+    self.stepident = flow.workflow.renderContextString(self.stepctx);
+    self.stepctxdesc = "Workflow Step: " + self.stepctx;
+    self.parameters = ko.observable(data.parameters || null);
+    self.followingOutput = ko.observable(false);
+    self.outputLineCount = ko.observable(-1);
+    self.startTime = ko.observable(data.startTime || null);
+    self.updateTime = ko.observable(data.updateTime || null);
+    self.endTime = ko.observable(data.endTime || null);
+    self.duration = ko.observable(data.duration || -1);
+    self.executionState = ko.observable(data.executionState || null);
     self.parameterizedStep = function () {
         return self.stepctx.indexOf('@')>=0;
     };
-    self.type=ko.computed(function(){
-        return flow.workflow.contextType(self.stepctx);
-    });
-    self.stepident=ko.computed(function(){
-        return flow.workflow.renderContextString(self.stepctx);
-    });
-    self.startTimeSimple=ko.computed(function(){
+    //self.type=ko.computed(function(){
+    //    return flow.workflow.contextType(self.stepctx);
+    //});
+    //self.stepident=ko.computed(function(){
+    //    return flow.workflow.renderContextString(self.stepctx);
+    //});
+    self.startTimeSimple=ko.pureComputed(function(){
         return MomentUtil.formatTimeSimple(self.startTime());
     });
     self.startTimeFormat=function(format){
         return MomentUtil.formatTime(self.startTime(),format);
     };
-    self.endTimeSimple=ko.computed(function(){
+    self.endTimeSimple=ko.pureComputed(function(){
         return MomentUtil.formatTimeSimple(self.endTime());
     });
     self.endTimeFormat= function (format) {
         return MomentUtil.formatTime(self.endTime(), format);
     };
-    self.durationCalc=ko.computed(function(){
+    self.durationCalc=ko.pureComputed(function(){
         var dur=self.duration();
         if(dur<0 && self.endTime() && self.startTime()){
             return moment(self.endTime()).diff(moment(self.startTime()));
@@ -66,13 +69,13 @@ function RDNodeStep(data, node, flow){
             return dur;
         }
     });
-    self.durationSimple=ko.computed(function(){
+    self.durationSimple=ko.pureComputed(function(){
         return MomentUtil.formatDurationSimple(self.durationCalc());
     });
-    self.stepctxdesc = ko.computed(function () {
-        return "Workflow Step: "+self.stepctx;
-    });
-    ko.mapping.fromJS(data, {}, this);
+    //self.stepctxdesc = ko.computed(function () {
+    //    return "Workflow Step: "+self.stepctx;
+    //});
+    //ko.mapping.fromJS(data, {}, this);
 }
 /**
  * Return true if state B should be used instead of a
@@ -121,7 +124,7 @@ function RDNode(name, steps,flow){
             flow.selectedNodes.remove(self.name);
         }
     };
-    self.duration=ko.computed(function(){
+    self.duration=ko.pureComputed(function(){
         //sum up duration of all completed steps
        var ms=self.durationMs();
         if(ms<0) {
@@ -138,13 +141,45 @@ function RDNode(name, steps,flow){
         }
        return ms;
     });
-    self.durationSimple=ko.computed(function(){
+    self.durationSimple=ko.pureComputed(function(){
        return MomentUtil.formatDurationSimple(self.duration());
     });
     self.summary=ko.observable();
     self.summaryState=ko.observable();
     self.currentStep=ko.observable();
+    //date string indicating last updated
+    self.lastUpdated=ko.observable(null);
 
+    self.summaryDescriptionForState=function(data){
+        var state = data.summaryState;
+        if (state=='RUNNING') {
+            return "Running";
+        } else if (state=='RUNNING_HANDLER') {
+            return ("Running");
+        } else if (state=='SUCCEEDED') {
+            return ("All Steps OK");
+        } else if (state=='FAILED') {
+            if(data.FAILED){
+                return (data.FAILED + " " + flow.pluralize(data.FAILED, "Step") + " FAILED");
+            }
+            return ("Failed");
+        } else if (state=='WAITING' && data.WAITING) {
+            return("Waiting to run " + (data.WAITING||"some") + " " + flow.pluralize(data.WAITING, "Step"));
+        } else if (state=='NOT_STARTED') {
+            return("No steps were run");
+        } else if (state=='PARTIAL_NOT_STARTED') {
+            return((data.PARTIAL_NOT_STARTED||"Some") + " " + flow.pluralize(data.PARTIAL_NOT_STARTED, "Step") + " not run");
+        }else if(state=='WAITING' ){
+            return("Waiting");
+        } else if (state=='PARTIAL_SUCCEEDED') {
+            return ((data.PARTIAL_SUCCEEDED||"Some") + " did not succeed");
+        } else if(state=='NONE_SUCCEEDED'){
+            return("No steps succeeded");
+        } else if(state=='NONE') {
+          return("No Steps");
+        }
+        return null;
+    };
     /**
      * Determine summary data for the node, sets the summaryState and summary and currentStep
      */
@@ -222,13 +257,25 @@ function RDNode(name, steps,flow){
             self.summaryState("NONE");
         }
     };
+    self.currentStepFromData=function(data){
+        if(self.currentStep()){
+            ko.mapping.fromJS(data,{},self.currentStep());
+        }else{
+            self.currentStep(new RDNodeStep(data, self, flow));
+        }
+    };
     self.updateSummary=function(nodesummary){
-        self.summary(nodesummary.summary);
+        if(nodesummary.lastUpdated && self.lastUpdated()==nodesummary.lastUpdated){
+            return;
+        }
+        self.lastUpdated(nodesummary.lastUpdated);
         self.summaryState(nodesummary.summaryState);
+        self.summary(self.summaryDescriptionForState(nodesummary));
+
         //self.currentStep(nodesummary.currentStep);
         self.durationMs(nodesummary.duration);
         if(nodesummary.currentStep){
-            self.currentStep(new RDNodeStep(nodesummary.currentStep, self, flow));
+            self.currentStepFromData(nodesummary.currentStep);
         }else{
             self.currentStep(null);
         }
@@ -277,26 +324,27 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl){
     self.endTime=ko.observable();
     self.executionId=ko.observable();
     self.outputScrollOffset=0;
-    self.failed=ko.computed(function(){ return self.executionState()=='FAILED'; });
-    self.totalSteps=ko.computed(function(){ return self.workflow.workflow.length; });
-    self.activeNodes=ko.computed(function(){
+    self.activeTab=ko.observable("summary");
+    self.failed=ko.pureComputed(function(){ return self.executionState()=='FAILED'; });
+    self.totalSteps=ko.pureComputed(function(){ return self.workflow.workflow.length; });
+    self.activeNodes=ko.pureComputed(function(){
         return ko.utils.arrayFilter(self.nodes(), function (n) {
             return n.summaryState() != 'NONE';
         });
     });
     self.totalNodeCount=ko.observable(0);
-    self.totalNodes=ko.computed(function(){
+    self.totalNodes=ko.pureComputed(function(){
         var nodes = ko.utils.arrayFilter(self.nodes(),function(n){return n.summaryState()!='NONE';});
         return nodes?nodes.length:0;
     });
-    self.jobPercentage=ko.computed(function(){
+    self.jobPercentage=ko.pureComputed(function(){
         if(self.jobAverageDuration()>0){
             return 100*(self.execDuration()/self.jobAverageDuration());
         }else{
             return -1;
         }
     });
-    self.jobPercentageFixed=ko.computed(function(){
+    self.jobPercentageFixed=ko.pureComputed(function(){
         var pct = self.jobPercentage();
         if(pct>=0){
             return pct.toFixed(0)
@@ -304,7 +352,7 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl){
             return '0';
         }
     });
-    self.jobOverrunDuration=ko.computed(function(){
+    self.jobOverrunDuration=ko.pureComputed(function(){
         var jobAverageDuration = self.jobAverageDuration();
         var execDuration = self.execDuration();
         if(jobAverageDuration > 0 && execDuration > jobAverageDuration){
@@ -637,10 +685,10 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl){
     };
 
 
-    self.execDurationSimple = ko.computed(function () {
+    self.execDurationSimple = ko.pureComputed(function () {
         return MomentUtil.formatDurationSimple(self.execDuration());
     });
-    self.execDurationHumanized = ko.computed(function () {
+    self.execDurationHumanized = ko.pureComputed(function () {
         return MomentUtil.formatDurationHumanize(self.execDuration());
     });
 }
