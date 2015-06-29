@@ -574,7 +574,6 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl){
         var nodeList= model.allNodes;
         var count = nodeList.length;
         self.totalNodeCount(count);
-        var currentNodes=self.nodes();
         for (var i = 0; i < count; i++) {
             var node = nodeList[i];
             //var data = model.nodes[node];
@@ -593,10 +592,9 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl){
             } else {
                 var rdNode = new RDNode(node, nodesteps, self);
                 rdNode.updateSummary(nodeSummary);
-                currentNodes.push(rdNode);
+                self.nodes.push(rdNode);
             }
         }
-        self.nodes(currentNodes);
     };
 
     self.loadStateForNode=function(node){
