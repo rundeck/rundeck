@@ -33,6 +33,10 @@ function RDNodeStep(data, node, flow){
     self.parameters=ko.observable();
     self.followingOutput=ko.observable(false);
     self.outputLineCount=ko.observable(-1);
+    self.startTime=ko.observable();
+    self.updateTime=ko.observable();
+    self.endTime=ko.observable();
+    self.duration=ko.observable(-1);
     self.parameterizedStep = function () {
         return self.stepctx.indexOf('@')>=0;
     };
@@ -54,15 +58,16 @@ function RDNodeStep(data, node, flow){
     self.endTimeFormat= function (format) {
         return MomentUtil.formatTime(self.endTime(), format);
     };
-    self.duration=ko.computed(function(){
-        if(self.endTime() && self.startTime()){
+    self.durationCalc=ko.computed(function(){
+        var dur=self.duration();
+        if(dur<0 && self.endTime() && self.startTime()){
             return moment(self.endTime()).diff(moment(self.startTime()));
         }else{
-            return -1;
+            return dur;
         }
     });
     self.durationSimple=ko.computed(function(){
-        return MomentUtil.formatDurationSimple(self.duration());
+        return MomentUtil.formatDurationSimple(self.durationCalc());
     });
     self.stepctxdesc = ko.computed(function () {
         return "Workflow Step: "+self.stepctx;
@@ -106,20 +111,31 @@ function RDNode(name, steps,flow){
             }
         }
     };
-    self.toggleExpand=function(){ self.expanded(!self.expanded()); };
+    self.durationMs=ko.observable(-1);
+    self.toggleExpand=function(){
+        self.expanded(!self.expanded());
+        if(self.expanded()){
+            flow.selectedNodes.push(self.name);
+            flow.loadStateForNode(self);
+        }else {
+            flow.selectedNodes.remove(self.name);
+        }
+    };
     self.duration=ko.computed(function(){
         //sum up duration of all completed steps
-       var ms=-1;
-       ko.utils.arrayForEach(self.steps(),function(x){
-           if(!x.parameterizedStep()){
-               var ms2 = x.duration();
-               if(ms2>=0 && ms<0){
-                   ms=ms2;
-               }else if(ms2>=0){
-                   ms += ms2;
-               }
-           }
-       });
+       var ms=self.durationMs();
+        if(ms<0) {
+            ko.utils.arrayForEach(self.steps(), function (x) {
+                if (!x.parameterizedStep()) {
+                    var ms2 = x.duration();
+                    if (ms2 >= 0 && ms < 0) {
+                        ms = ms2;
+                    } else if (ms2 >= 0) {
+                        ms += ms2;
+                    }
+                }
+            });
+        }
        return ms;
     });
     self.durationSimple=ko.computed(function(){
@@ -206,24 +222,47 @@ function RDNode(name, steps,flow){
             self.summaryState("NONE");
         }
     };
+    self.updateSummary=function(nodesummary){
+        self.summary(nodesummary.summary);
+        self.summaryState(nodesummary.summaryState);
+        //self.currentStep(nodesummary.currentStep);
+        self.durationMs(nodesummary.duration);
+        if(nodesummary.currentStep){
+            self.currentStep(new RDNodeStep(nodesummary.currentStep, self, flow));
+        }else{
+            self.currentStep(null);
+        }
+    };
+    /**
+     * Update from direct ajax response
+     * @param steps
+     */
+    self.loadData=function(data){
+        self.updateSummary(data.summary);
+        self.updateSteps(data.steps);
+    };
     self.updateSteps=function(steps){
         ko.mapping.fromJS({steps: steps}, mapping, this);
         self.summarize();
     };
-    self.updateSteps(steps);
+    if(steps){
+        self.updateSteps(steps);
+    }
 }
 
-function NodeFlowViewModel(workflow,outputUrl){
+function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl){
     var self=this;
     self.workflow=workflow;
     self.errorMessage=ko.observable();
     self.statusMessage=ko.observable();
     self.stateLoaded=ko.observable(false);
     self.pendingNodeSteps=ko.observable({});
-    self.nodes=ko.observableArray([ ]);
+    self.nodes=ko.observableArray([ ]).extend({ rateLimit: 500 });
+    self.selectedNodes=ko.observableArray([ ]);
     self.followingStep=ko.observable();
     self.followingControl=null;
     self.followOutputUrl= outputUrl;
+    self.nodeStateUpdateUrl= nodeStateUpdateUrl;
     self.completed=ko.observable();
     self.executionState=ko.observable();
     self.executionStatusString=ko.observable();
@@ -245,6 +284,7 @@ function NodeFlowViewModel(workflow,outputUrl){
             return n.summaryState() != 'NONE';
         });
     });
+    self.totalNodeCount=ko.observable(0);
     self.totalNodes=ko.computed(function(){
         var nodes = ko.utils.arrayFilter(self.nodes(),function(n){return n.summaryState()!='NONE';});
         return nodes?nodes.length:0;
@@ -525,7 +565,7 @@ function NodeFlowViewModel(workflow,outputUrl){
         return newsteps;
     };
     self.updateNodes=function(model){
-        if (!model.nodes || !model.allNodes) {
+        if ( !model.allNodes) {
             return;
         }
         self.stateLoaded(true);
@@ -533,18 +573,47 @@ function NodeFlowViewModel(workflow,outputUrl){
         self.pendingNodeSteps(model.completed ? {'_other':0} : self.countPendingStepsForNodes(model, model.allNodes));
         var nodeList= model.allNodes;
         var count = nodeList.length;
+        self.totalNodeCount(count);
+        var currentNodes=self.nodes();
         for (var i = 0; i < count; i++) {
             var node = nodeList[i];
-            var data = model.nodes[node];
+            //var data = model.nodes[node];
 
-            var nodesteps = self.extractNodeStepStates(node, data, model);
+            var nodeSummary = model.nodeSummaries[node];
+            var nodesteps =null;//= model.steps && model.steps.length>0?self.extractNodeStepStates(node,data,model):null;
+            if(!nodesteps && model.nodeSteps && model.nodeSteps[node]){
+                nodesteps=model.nodeSteps[node];
+            }
             var nodea = self.findNode(node);
-            if (nodea) {
+
+            if (nodea && nodesteps) {
                 nodea.updateSteps(nodesteps);
+            } else if(nodea) {
+                nodea.updateSummary(nodeSummary);
             } else {
-                self.addNode(node, nodesteps);
+                var rdNode = new RDNode(node, nodesteps, self);
+                rdNode.updateSummary(nodeSummary);
+                currentNodes.push(rdNode);
             }
         }
+        self.nodes(currentNodes);
+    };
+
+    self.loadStateForNode=function(node){
+        jQuery.ajax({
+            url:_genUrl(self.nodeStateUpdateUrl,{node:node.name}),
+            dataType:'json',
+            success: function (data,status,jqxhr) {
+                if(data.error){
+                    state.updateError( "Failed to load state: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err),jqxhr.responseJSON);
+                }else{
+                    node.loadData(data);
+                }
+            },
+            error: function (jqxhr,status,err) {
+                state.updateError( "Failed to load state: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err),jqxhr.responseJSON);
+            }
+        });
     };
     self.formatTimeAtDate=function(text){
         return MomentUtil.formatTimeAtDate(text);

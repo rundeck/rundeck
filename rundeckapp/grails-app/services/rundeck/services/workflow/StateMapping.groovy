@@ -18,7 +18,6 @@ package rundeck.services.workflow
 
 import com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState
 import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
-import com.dtolabs.rundeck.core.execution.workflow.state.StepAspect
 import com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier
 import com.dtolabs.rundeck.core.execution.workflow.state.StepState
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowState
@@ -31,6 +30,163 @@ import java.text.SimpleDateFormat
  */
 class StateMapping {
 
+    def Map summarize(Map map,List<String> nodes,boolean selectedOnly){
+        def nodeSummaries=[:]
+        def nodeSteps=[:]
+        (selectedOnly?nodes:map.allNodes).each{node->
+
+            def states = stepStatesForNode(map, node)
+            nodeSummaries[node]=summarizeForNode(map,node, states)
+            if(nodes.contains(node)){
+                nodeSteps[node]=states
+            }
+        }
+        map.nodeSummaries=nodeSummaries
+        map.nodeSteps=nodeSteps
+        map.steps=[]
+        map.remove('nodes')
+        map
+    }
+    def boolean stateCompare(a,b){
+        if (a == b) {
+            return false
+        }
+        def states = ['SUCCEEDED', 'NONE','NOT_STARTED', 'WAITING', 'FAILED', 'ABORTED', 'RUNNING', 'RUNNING_HANDLER'];
+        def ca = states.indexOf(a);
+        def cb = states.indexOf(b);
+        if (ca < 0) {
+            return true;
+        }
+        return cb > ca
+    }
+    def Map summarizeForNode(Map map,String node, List steps){
+        def summary=[:]
+        def currentStep=null;
+
+        //step summary info
+        def summarydata = [
+            total: steps.size(),
+            SUCCEEDED: 0,
+            FAILED: 0,
+            WAITING: 0,
+            NOT_STARTED: 0,
+            RUNNING: 0,
+            RUNNING_HANDLER: 0,
+            other: 0,
+            duration_ms_total: 0,
+        ]
+
+        def testStates= ['SUCCEEDED', 'FAILED', 'WAITING', 'NOT_STARTED', 'RUNNING', 'RUNNING_HANDLER'];
+        def duration=-1;
+        steps.each{step->
+            def z = step.executionState;
+            if(testStates.indexOf(z)>=0 && null != summarydata[z] ) {
+                summarydata[z]++;
+            } else {
+                summarydata['other']++;
+            }
+            if (!currentStep && stateCompare('NONE',step.executionState)
+                    || currentStep && stateCompare(currentStep.executionState,step.executionState)) {
+                currentStep = step;
+            }
+            def stepDuration=durationForStep(step)
+            if(stepDuration>=0){
+                if(duration<0){
+                    duration=stepDuration
+                }else{
+                    duration+=stepDuration
+                }
+            }
+        }
+        summary.duration=duration
+        summary.currentStep=currentStep
+
+        //based on step states set the summary for this node
+        if (summarydata.total > 0) {
+            if (summarydata.RUNNING > 0) {
+                summary.summary=("Running");
+                summary.summaryState=("RUNNING");
+            } else if (summarydata.RUNNING_HANDLER > 0) {
+                summary.summary=("Running");
+                summary.summaryState=("RUNNING_HANDLER");
+            } else if (summarydata.total == summarydata.SUCCEEDED && summarydata.pending < 1) {
+                summary.summary=("All Steps OK");
+                summary.summaryState=("SUCCEEDED");
+            } else if (summarydata.FAILED > 0) {
+                summary.summary=(summarydata.FAILED + " " + pluralize(summarydata.FAILED, "Step") + " FAILED");
+                summary.summaryState=("FAILED");
+            } else if (summarydata.WAITING > 0) {
+                summary.summary=("Waiting to run " + summarydata.WAITING + " " + pluralize(summarydata.WAITING, "Step"))
+                summary.summaryState=("WAITING");
+            } else if (summarydata.NOT_STARTED == summarydata.total && summarydata.pending < 1) {
+                summary.summary=("No steps were run");
+                summary.summaryState=("NOT_STARTED");
+            } else if (summarydata.NOT_STARTED > 0) {
+                summary.summary=(summarydata.NOT_STARTED + " " + pluralize(summarydata.NOT_STARTED, "Step") + " not run");
+                summary.summaryState=("PARTIAL_NOT_STARTED");
+            }else if(summarydata.pending > 0 ){
+                summary.summary=("Waiting");
+                summary.summaryState=("WAITING");
+            } else if (summarydata.SUCCEEDED > 0) {
+                summary.summary=((summarydata.total - summarydata.SUCCEEDED) + " did not succeed");
+                summary.summaryState=("PARTIAL_SUCCEEDED");
+            } else {
+                summary.summary=("No steps succeeded");
+                summary.summaryState=("NONE_SUCCEEDED");
+            }
+        } else if(summarydata.pending > 0){
+            summary.summary=("Waiting");
+            summary.summaryState=("WAITING");
+        } else {
+            summary.summary=("No Steps");
+            summary.summaryState=("NONE");
+        }
+        summary
+    }
+    def long durationForStep(Map step){
+        if(step.duration){
+            return step.duration
+        }else if(step.startTime && (step.endTime || step.updateTime)){
+            Date start=decodeDate(step.startTime)
+            Date end=step.endTime?decodeDate(step.endTime):null
+            Date update=step.updateTime?decodeDate(step.updateTime):null
+            return (end!=null?end.time:update.time)-start.time
+        }else{
+            -1
+        }
+    }
+    def String pluralize(int amount, String singular, String plural=null){
+        return amount==1?singular: plural?:singular+'s'
+    }
+    def List stepStatesForNode(Map map,String node){
+        def newsteps=[]
+
+        map.steps.each{step->
+            def stepStateForCtx = stepStateForCtx(map, StateUtils.stepIdentifierFromString(step.stepctx))
+            def found = stepStateForCtx.nodeStates[node]
+            found.stepctx=step.stepctx
+            newsteps.push(found)
+        }
+        newsteps
+    }
+
+    def Map stepStateForCtx(Map model,StepIdentifier stepctx){
+
+        def stepid = stepctx.context[0]
+
+        def ndx = stepid.step - 1
+        def params = StateUtils.parameterString(stepid)
+
+        Map step = model.steps[ndx];
+        if(params && step.parameterStates && step.parameterStates[params]){
+            step = step.parameterStates[params];
+        }
+        if (stepctx.context.size()>1 && step.workflow) {
+            return stepStateForCtx(step.workflow, StateUtils.stepIdentifierTail(stepctx))
+        } else {
+            return step;
+        }
+    }
     def Map mapOf(Long id, WorkflowState workflowState) {
         def nodestates = [:]
         def allNodes = []
@@ -39,6 +195,15 @@ class StateMapping {
         return [executionId: id, nodes: nodestates, serverNode: workflowState.serverNode] + map
     }
 
+    /**
+     * Return a map containing:
+     *
+     * @param workflowState
+     * @param parent
+     * @param nodestates
+     * @param allNodes
+     * @return
+     */
     def Map mapOf(WorkflowState workflowState, StepIdentifier parent = null, Map nodestates, List<String> allNodes) {
         allNodes.addAll(workflowState.allNodes.findAll { !allNodes.contains(it) })
         [
@@ -108,12 +273,21 @@ class StateMapping {
         StateUtils.stepIdentifierToString(ident)
     }
 
-
+    def long longDuration(Date start, Date update, Date end){
+        if(end!=null && start!=null){
+            end.time-start.time
+        }else if(update!=null && start!=null){
+            update.time-start.time
+        }else{
+            -1
+        }
+    }
     def Map mapOf(StepState state) {
         [
                 executionState: state.executionState.toString(),
                 startTime: encodeDate(state.startTime),
                 updateTime: encodeDate(state.updateTime),
+                duration:longDuration(state.startTime,state.updateTime,state.endTime),
                 endTime: encodeDate(state.endTime),
         ] + (state.errorMessage ? [errorMessage: state.errorMessage] : [:]) + (state.metadata ? [meta: state.metadata] : [:])
     }

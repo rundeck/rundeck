@@ -95,7 +95,11 @@
             totalDuration : '${enc(js:scheduledExecution?.totalTime ?: -1)}',
             totalCount: '${enc(js:scheduledExecution?.execCount ?: -1)}'
           });
-          nodeflowvm=new NodeFlowViewModel(workflow,"${enc(js:g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id,params:[format:'json']))}");
+          nodeflowvm=new NodeFlowViewModel(
+            workflow,
+            "${enc(js:g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id,params:[format:'json']))}",
+            "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecNodeState', id: execution.id))}"
+          );
           flowState = new FlowState('${enc(js:execution?.id)}','flowstate',{
             workflow:workflow,
             loadUrl: "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id))}",
@@ -151,7 +155,17 @@
                 executionStatusString:'${enc(js:execution.status)}'
             },{},nodeflowvm);
             ko.applyBindings(nodeflowvm,jQuery('#execution_main')[0]);
-
+            nodeflowvm.selectedNodes.subscribe(function (newValue) {
+                if (newValue) {
+                    flowState.loadUrlParams={nodes:newValue.join(",")};
+                }else{
+                    flowState.loadUrlParams=null;
+                }
+                if(nodeflowvm.completed()){
+                    //reload
+                    followState();
+                }
+            });
             //link flow and output tabs to initialize following
             //by default show state
             followState();

@@ -24,6 +24,7 @@ var FlowState = Class.create({
     targetElement:null,
     retry:5,
     loadUrl:null,
+    loadUrlParams:null,
     outputUrl:null,
     shouldUpdate:false,
     updateCompleted:false,
@@ -235,7 +236,7 @@ var FlowState = Class.create({
         var state=this;
         this.updateRunning=true;
         jQuery.ajax({
-           url:this.loadUrl,
+           url:_genUrl(this.loadUrl,this.loadUrlParams),
             dataType:'json',
             success: function (data,status,jqxhr) {
                 state.update(data);
