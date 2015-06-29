@@ -161,10 +161,6 @@
                 }else{
                     flowState.loadUrlParams=null;
                 }
-                if(nodeflowvm.completed()){
-                    //reload
-                    followState();
-                }
             });
             //link flow and output tabs to initialize following
             //by default show state
