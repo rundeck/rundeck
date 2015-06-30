@@ -209,7 +209,7 @@ var FlowState = Class.create({
         }
     },
     update: function (json) {
-        var data=json.state
+        var data=json.state;
         //compare
         if (data.error=='pending' ) {
             this.retry--;
