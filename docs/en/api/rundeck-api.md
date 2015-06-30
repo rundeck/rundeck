@@ -2663,6 +2663,10 @@ To include certain resources, specify the inclusion filters:
 
 * `hostname`, `tags`, `os-[name,family,arch,version]`, `name`
 
+To include custom attributes, specify them like so:
+
+* `filter: <name>:<value>`
+
 To exclude certain resources, specify the exclusion filters as above but with `exclude-` prepended:
 
 * `exclude-hostname`, `exclude-tags`, etc..
