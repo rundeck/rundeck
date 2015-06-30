@@ -29,9 +29,9 @@ function RDNodeStep(data, node, flow){
     self.node = node;
     self.flow = flow;
     self.stepctx = data.stepctx;
-    self.type = flow.workflow.contextType(self.stepctx);
-    self.stepident = flow.workflow.renderContextString(self.stepctx);
-    self.stepctxdesc = "Workflow Step: " + self.stepctx;
+    self.type = flow.workflow.contextType(data.stepctx);
+    self.stepident = flow.workflow.renderContextString(data.stepctx);
+    self.stepctxdesc = "Workflow Step: " + data.stepctx;
     self.parameters = ko.observable(data.parameters || null);
     self.followingOutput = ko.observable(false);
     self.outputLineCount = ko.observable(-1);
@@ -40,15 +40,7 @@ function RDNodeStep(data, node, flow){
     self.endTime = ko.observable(data.endTime || null);
     self.duration = ko.observable(data.duration || -1);
     self.executionState = ko.observable(data.executionState || null);
-    self.parameterizedStep = function () {
-        return self.stepctx.indexOf('@')>=0;
-    };
-    //self.type=ko.computed(function(){
-    //    return flow.workflow.contextType(self.stepctx);
-    //});
-    //self.stepident=ko.computed(function(){
-    //    return flow.workflow.renderContextString(self.stepctx);
-    //});
+    self.parameterizedStep = ko.observable(data.stepctx.indexOf('@')>=0);
     self.startTimeSimple=ko.pureComputed(function(){
         return MomentUtil.formatTimeSimple(self.startTime());
     });
@@ -72,10 +64,6 @@ function RDNodeStep(data, node, flow){
     self.durationSimple=ko.pureComputed(function(){
         return MomentUtil.formatDurationSimple(self.durationCalc());
     });
-    //self.stepctxdesc = ko.computed(function () {
-    //    return "Workflow Step: "+self.stepctx;
-    //});
-    //ko.mapping.fromJS(data, {}, this);
 }
 /**
  * Return true if state B should be used instead of a
@@ -102,13 +90,13 @@ function RDNode(name, steps,flow){
     self.flow= flow;
     self.name=name;
     self.state=ko.observable();
-    self.steps=ko.observableArray([]);
+    self.steps=ko.observableArray([]).extend({ rateLimit: 200 });
     self.expanded=ko.observable(false);
     var mapping = {
         'steps': {
-            key: function (data) {
-                return ko.utils.unwrapObservable(data.stepctx);
-            },
+            //key: function (data) {
+            //    return ko.utils.unwrapObservable(data.stepctx);
+            //},
             create: function (options) {
                 return new RDNodeStep(options.data, self, flow);
             }
@@ -272,7 +260,6 @@ function RDNode(name, steps,flow){
         self.summaryState(nodesummary.summaryState);
         self.summary(self.summaryDescriptionForState(nodesummary));
 
-        //self.currentStep(nodesummary.currentStep);
         self.durationMs(nodesummary.duration);
         if(nodesummary.currentStep){
             self.currentStepFromData(nodesummary.currentStep);
