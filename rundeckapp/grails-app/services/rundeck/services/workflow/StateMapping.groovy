@@ -173,17 +173,22 @@ class StateMapping {
     }
     def List stepStatesForNode(Map map,String node){
         def newsteps=[]
-
-        map.steps.each{step->
-            def stepStateForCtx = stepStateForCtx(map, StateUtils.stepIdentifierFromString(step.stepctx))
-            def found = stepStateForCtx.nodeStates[node]
-            found.stepctx=step.stepctx
-            newsteps.push(found)
+        def steps = map.nodes[node]
+        steps.each{step->
+            def stepStateForCtx = stepStateForCtx(map, StateUtils.stepIdentifierFromString(step.stepctx),node)
+            if(stepStateForCtx) {
+                def found = stepStateForCtx.nodeStates?.get(node)
+                if (found) {
+                    def newfound=new HashMap(found)
+                    newfound.stepctx = step.stepctx
+                    newsteps.push(newfound)
+                }
+            }
         }
         newsteps
     }
 
-    def Map stepStateForCtx(Map model,StepIdentifier stepctx){
+    def Map stepStateForCtx(Map model,StepIdentifier stepctx,String node=null){
 
         def stepid = stepctx.context[0]
 
@@ -193,11 +198,13 @@ class StateMapping {
         Map step = model.steps[ndx];
         if(params && step.parameterStates && step.parameterStates[params]){
             step = step.parameterStates[params];
+        }else if(!params && node && step.parameterStates["node=${node}"]){
+            step = step.parameterStates["node=${node}"];
         }
         if (stepctx.context.size()>1 && step.workflow) {
             return stepStateForCtx(step.workflow, StateUtils.stepIdentifierTail(stepctx))
         } else {
-            return step;
+            return step
         }
     }
     def Map mapOf(Long id, WorkflowState workflowState) {
