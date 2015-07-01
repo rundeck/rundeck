@@ -235,8 +235,9 @@ var FlowState = Class.create({
     callUpdate: function(){
         var state=this;
         this.updateRunning=true;
+        var url = _genUrl(state.loadUrl, state.loadUrlParams);
         jQuery.ajax({
-           url:_genUrl(this.loadUrl,this.loadUrlParams),
+            url: url,
             dataType:'json',
             success: function (data,status,jqxhr) {
                 state.update(data);
