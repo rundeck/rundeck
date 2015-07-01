@@ -62,11 +62,11 @@ class StateMapping {
     }
     def Map summarizeForNode(Map map,String node, List steps){
         def summary=[:]
-        def currentStep=null;
+        def currentStep=[:];
 
         //step summary info
         def summarydata = [
-            total: steps.size(),
+            total: 0,
             SUCCEEDED: 0,
             FAILED: 0,
             WAITING: 0,
@@ -80,29 +80,32 @@ class StateMapping {
         Date updated=null;
         def testStates= ['SUCCEEDED', 'FAILED', 'WAITING', 'NOT_STARTED', 'RUNNING', 'RUNNING_HANDLER'];
         def duration=-1;
+        Date dateStarted=null;
         steps.each{step->
             def z = step.executionState;
-            if(testStates.indexOf(z)>=0 && null != summarydata[z] ) {
-                summarydata[z]++;
-            } else {
-                summarydata['other']++;
-            }
-            if (!currentStep && stateCompare('NONE',step.executionState)
-                    || currentStep && stateCompare(currentStep.executionState,step.executionState)) {
-                currentStep = step;
-            }
-            def stepDuration=durationForStep(step)
-            if(stepDuration>=0){
-                if(duration<0){
-                    duration=stepDuration
-                }else{
-                    duration+=stepDuration
+            if(step.stepctx.indexOf("@")<0) {
+                summarydata.total++
+                if (testStates.indexOf(z) >= 0 && null != summarydata[z]) {
+                    summarydata[z]++;
+                } else {
+                    summarydata['other']++;
                 }
+            }
+            if (!currentStep && stateCompare('NONE', step.executionState)
+                    || currentStep && stateCompare(currentStep.executionState, step.executionState)) {
+                currentStep.putAll(step);
+            }
+            def started=step.startTime?decodeDate(step.startTime):null
+            if(!dateStarted || (started && started<dateStarted)){
+                dateStarted=started;
             }
             def lastUpdated=lastUpdatedFor(step)
             if(!updated || lastUpdated>updated){
                 updated=lastUpdated
             }
+        }
+        if (updated && dateStarted) {
+            duration = updated.time - dateStarted.time
         }
         summary.duration=duration
         if(currentStep){
