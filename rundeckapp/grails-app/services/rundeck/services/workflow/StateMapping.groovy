@@ -193,7 +193,7 @@ class StateMapping {
         def stepid = stepctx.context[0]
 
         def ndx = stepid.step - 1
-        def params = StateUtils.parameterString(stepid)
+        def params = stepid.params?StateUtils.parameterString(stepid.params):''
 
         Map step = model.steps[ndx];
         if(params && step.parameterStates && step.parameterStates[params]){
