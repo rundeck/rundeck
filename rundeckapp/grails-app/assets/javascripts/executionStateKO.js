@@ -253,7 +253,8 @@ function RDNode(name, steps,flow){
         }
     };
     self.updateSummary=function(nodesummary){
-        if(nodesummary.lastUpdated && self.lastUpdated()==nodesummary.lastUpdated){
+        if(nodesummary.lastUpdated && self.lastUpdated()==nodesummary.lastUpdated
+            && nodesummary.summaryState==self.summaryState()){
             return;
         }
         self.lastUpdated(nodesummary.lastUpdated);
@@ -320,6 +321,7 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl){
         });
     });
     self.totalNodeCount=ko.observable(0);
+    self.nodeIndex={};
     self.totalNodes=ko.pureComputed(function(){
         var nodes = ko.utils.arrayFilter(self.nodes(),function(n){return n.summaryState()!='NONE';});
         return nodes?nodes.length:0;
@@ -628,6 +630,7 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl){
                 var rdNode = new RDNode(node, nodesteps, self);
                 rdNode.updateSummary(nodeSummary);
                 self.nodes.push(rdNode);
+                self.nodeIndex[rdNode.name]=rdNode;
             }
         }
     };
@@ -658,17 +661,12 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl){
         return MomentUtil.formatDurationMomentHumanize(ms);
     };
     self.addNode=function(node,steps){
-        self.nodes.push(new RDNode(node, steps,self));
+        var rdNode = new RDNode(node, steps, self);
+        self.nodes.push(rdNode);
+        self.nodeIndex[rdNode.name]=rdNode;
     };
     self.findNode=function(node){
-        var len= self.nodes().length;
-        for(var x=0;x<len;x++){
-            var n= self.nodes()[x];
-            if(n.name==node){
-                return n;
-            }
-        }
-        return null;
+        return self.nodeIndex[node];
     };
 
 
