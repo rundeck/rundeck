@@ -137,7 +137,16 @@ function RDNode(name, steps,flow){
     self.currentStep=ko.observable();
     //date string indicating last updated
     self.lastUpdated=ko.observable(null);
+    self.findStepForCtx=function(stepctx){
 
+        var found=ko.utils.arrayFilter(self.steps(),function(e){
+            return e.stepctx==stepctx;
+        });
+        if(found && found.length==1){
+            return found[0];
+        }
+        return null;
+    };
     self.summaryDescriptionForState=function(data){
         var state = data.summaryState;
         if (state=='RUNNING') {
@@ -427,16 +436,17 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl){
     self.showOutput= function (nodestep) {
         var node=nodestep.node.name;
         var stepctx=nodestep.stepctx;
-        var sel = '.wfnodeoutput[data-node=' + node + ']';
+        var sel = '.wfnodeoutput[data-node="' + node + '"]';
         if (stepctx) {
             sel += '[data-stepctx=\'' + stepctx + '\']';
         } else {
             sel += '[data-stepctx=]';
         }
-        var targetElement = $(document.body).down(sel);
-        if (!$(targetElement)) {
-            return null;
+        var targetElement = jQuery.find(sel);
+        if (!targetElement || targetElement.length!=1) {
+            throw "could not find output area";
         }
+        targetElement=targetElement[0];
         var params = {nodename: node};
         if (stepctx) {
             Object.extend(params, {stepctx: stepctx});
@@ -458,57 +468,74 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl){
         return ctrl;
     };
 
-    self.toggleOutputForNodeStep = function (nodestep) {
+    self.toggleOutputForNodeStep = function (nodestep,callback) {
         self.stopShowingOutput();
         //toggle following output for selected nodestep
-        nodestep.followingOutput(!nodestep.followingOutput());
-        ko.utils.arrayForEach(self.nodes(), function (n) {
-            ko.utils.arrayForEach(n.steps(), function (step) {
-                //disable following for every other nodestep
-                if(step != nodestep){
-                    step.followingOutput(false);
-                }
+        var node = nodestep.node;
+        var stepctx=RDWorkflow.cleanContextId(nodestep.stepctx);
+        //
+        var postload=function(){
+            node.expanded(true);
+            //find correct nodestep given the context string, strip of parameters
+            var nodestep=node.findStepForCtx(stepctx);
+            if(!nodestep){
+                throw "failed to find step for context: "+stepctx +" and node: "+node.name;
+            }
+            nodestep.followingOutput(true);
+            ko.utils.arrayForEach(self.nodes(), function (n) {
+                ko.utils.arrayForEach(n.steps(), function (step) {
+                    //disable following for every other nodestep
+                    if(step != nodestep){
+                        step.followingOutput(false);
+                    }
+                });
             });
-        });
-        if(nodestep.followingOutput()){
             var ctrl = self.showOutput(nodestep);
             self.followingStep(nodestep);
             self.followingControl=ctrl;
-            nodestep.node.expanded(true);
+            if(typeof(callback)=='function'){callback();}
+        };
+        if(!node.expanded() && !nodestep.followingOutput()){
+            //need to load the step states for the node before showing the output
+            return self.loadStateForNode(node).then(postload);
+        }else if(!nodestep.followingOutput()){
+            postload();
         }else{
+            nodestep.followingOutput(false);
             self.followingStep(null);
         }
+
     };
     self.scrollTo= function (element,offx,offy) {
-        element = $(element);
         var x = element.x ? element.x : element.offsetLeft,
             y = element.y ? element.y : element.offsetTop;
         window.scrollTo(x+(offx?offx:0), y+(offy?offy:0));
     };
 
     self.scrollToNodeStep=function(node,stepctx){
-        var elem = $$('.wfnodestep[data-node=' + node + '][data-stepctx=' + stepctx + ']');
+        var elem = $$('.wfnodestep[data-node="' + node + '"][data-stepctx="' + stepctx + '"]');
         if (elem) {
             jQuery('#tab_link_flow a').tab('show');
             //scroll to
             self.scrollTo($(elem[0]));
-//            $(elem[0]).scrollTo();
         }
     };
     self.scrollToNode=function(node){
-        var elem = $$('.wfnodesteps[data-node=' + node + ']');
+        var elem = jQuery.find('.wfnodestate.container[data-node="' + node + '"]');
         if (elem) {
             jQuery('#tab_link_flow a').tab('show');
             //scroll to
-            self.scrollTo($(elem[0]));
-//            $(elem[0]).scrollTo();
+            self.scrollTo(elem[0]);
         }
     };
     self.scrollToOutput=function(nodestep){
         if(!nodestep.followingOutput()){
-            self.toggleOutputForNodeStep(nodestep);
+            self.toggleOutputForNodeStep(nodestep,function(){
+                self.scrollToNode(nodestep.node.name);
+            });
+        }else {
+            self.scrollToNode(nodestep.node.name);
         }
-        self.scrollToNode(nodestep.node.name);
     };
 
     self.pluralize = function (count, singular, plural) {
@@ -636,7 +663,7 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl){
     };
 
     self.loadStateForNode=function(node){
-        jQuery.ajax({
+        return jQuery.ajax({
             url:_genUrl(self.nodeStateUpdateUrl,{node:node.name}),
             dataType:'json',
             success: function (data,status,jqxhr) {

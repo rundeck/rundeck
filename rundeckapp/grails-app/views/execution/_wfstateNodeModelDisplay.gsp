@@ -76,7 +76,7 @@
 
 
 <div data-bind="foreach: activeNodes()">
-<div class="wfnodestate container" data-bind="css: { open: expanded() }">
+<div class="wfnodestate container" data-bind="css: { open: expanded() }, attr: { 'data-node': name } ">
     <div class="row wfnodeoverall action" data-bind="click: toggleExpand">
         <div class="col-sm-3  nodectx"
              data-bind="attr: { title: name }, css: { 'auto-caret-container': expanded() } ">
