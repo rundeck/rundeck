@@ -193,6 +193,10 @@
         }
         jQuery(init);
       </g:javascript>
+
+      <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
+          <asset:javascript src="workflow.test.js"/>
+      </g:if>
       <style type="text/css">
 
         #log{
