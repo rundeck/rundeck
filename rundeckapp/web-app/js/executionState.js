@@ -18,7 +18,6 @@
  * State of workflow, step oriented
  */
 var FlowState = Class.create({
-    model:{},
     executionId:null,
     selectedOutputStatusId:null,
     targetElement:null,
@@ -218,18 +217,14 @@ var FlowState = Class.create({
             this.shouldUpdate=false;
         }
         if(!data.error){
-            this.model = json;
-            if($(this.targetElement + '_json')){
-                setText($(this.targetElement + '_json'), Object.toJSON(this.model));
-            }
-            this.updateState(this.model);
+            this.updateState(json);
         }else{
             this.updateError(data.error,json);
         }
-        if (data.error && this.retry>=0 || !this.model.completed && this.shouldUpdate) {
+        if (data.error && this.retry>=0 || !json.completed && this.shouldUpdate) {
             this.timer = setTimeout(this.callUpdate.bind(this), this.reloadInterval);
         } else {
-            this.stopFollowing(this.model.completed);
+            this.stopFollowing(json.completed);
         }
     },
     callUpdate: function(){
