@@ -94,9 +94,9 @@ function RDNode(name, steps,flow){
     self.expanded=ko.observable(false);
     var mapping = {
         'steps': {
-            //key: function (data) {
-            //    return ko.utils.unwrapObservable(data.stepctx);
-            //},
+            key: function (data) {
+                return ko.utils.unwrapObservable(data.stepctx);
+            },
             create: function (options) {
                 return new RDNodeStep(options.data, self, flow);
             }
