@@ -258,7 +258,12 @@ class ExecutionController extends ControllerBase{
             data.state = [error: 'pending',
                     errorMessage: g.message(code: 'execution.state.storage.state.' + loader.state, default: "Pending")]
         }
-        return render(contentType: 'application/json', text: data.encodeAsJSON())
+        def limit=grailsApplication.config.rundeck?.ajax?.executionState?.compression?.nodeThreshold?:500
+        if(selectedNodes || data.state.allNodes?.size()>limit) {
+            return renderCompressed(request, response, 'application/json', data.encodeAsJSON())
+        }else{
+            return render(contentType: 'application/json', text: data.encodeAsJSON())
+        }
     }
     def ajaxExecNodeState(){
         def Execution e = Execution.get(params.id)
@@ -305,7 +310,7 @@ class ExecutionController extends ControllerBase{
             data = [error: 'pending',
                     errorMessage: g.message(code: 'execution.state.storage.state.' + loader.state, default: "Pending")]
         }
-        return render(contentType: 'application/json', text: data.encodeAsJSON())
+        return renderCompressed(request, response, 'application/json', data.encodeAsJSON())
     }
     def mail ={
         def Execution e = Execution.get(params.id)

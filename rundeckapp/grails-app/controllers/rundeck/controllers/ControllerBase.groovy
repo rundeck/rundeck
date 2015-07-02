@@ -7,7 +7,9 @@ import org.codehaus.groovy.grails.web.servlet.mvc.GrailsWebRequest
 import org.codehaus.groovy.grails.web.servlet.mvc.TokenResponseHandler
 import org.springframework.web.context.request.RequestContextHolder
 
+import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
+import java.util.zip.GZIPOutputStream
 
 /**
  * Mixin utility for controllers
@@ -15,6 +17,7 @@ import javax.servlet.http.HttpServletResponse
  * @since 2014-03-12
  */
 class ControllerBase {
+    def grailsApplication
 
     protected def withHmacToken(Closure valid){
         GrailsWebRequest request= (GrailsWebRequest) RequestContextHolder.currentRequestAttributes()
@@ -60,6 +63,18 @@ class ControllerBase {
         }
         catch (IllegalArgumentException) {
             return false
+        }
+    }
+    def renderCompressed(HttpServletRequest request,HttpServletResponse response,String contentType, data){
+        if(grailsApplication.config.rundeck?.ajax?.compression=='gzip'
+                && request.getHeader("Accept-Encoding").contains("gzip")){
+            response.setHeader("Content-Encoding","x-gzip")
+            response.setHeader("Content-Type",contentType)
+            def stream = new GZIPOutputStream(response.outputStream)
+            stream.withWriter("UTF-8"){ it << data }
+            stream.close()
+        }else{
+            return render(contentType:contentType,text:data)
         }
     }
 /**
