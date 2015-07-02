@@ -185,7 +185,7 @@ function RDNode(name, steps,flow){
 
         //step summary info
         var summarydata = {
-            total: self.steps().length,
+            total: 0,
             SUCCEEDED: 0,
             FAILED: 0,
             WAITING: 0,
@@ -201,10 +201,14 @@ function RDNode(name, steps,flow){
         //determine count for step states
         ko.utils.arrayForEach(self.steps(),function(step){
             var z = step.executionState();
-            if(testStates.indexOf(z)>=0 && null != summarydata[z] ) {
-                summarydata[z]++;
-            } else {
-                summarydata['other']++;
+
+            if(!step.parameterizedStep()) {
+                summarydata.total++;
+                if (testStates.indexOf(z) >= 0 && null != summarydata[z]) {
+                    summarydata[z]++;
+                } else {
+                    summarydata['other']++;
+                }
             }
             if (!currentStep && RDNodeStep.stateCompare('NONE', step.executionState())
                 || currentStep && RDNodeStep.stateCompare(currentStep.executionState(), step.executionState())) {

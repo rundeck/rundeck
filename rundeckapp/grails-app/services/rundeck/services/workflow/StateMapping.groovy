@@ -83,11 +83,13 @@ class StateMapping {
         Date dateStarted=null;
         steps.each{step->
             def z = step.executionState;
-            summarydata.total++
-            if (testStates.indexOf(z) >= 0 && null != summarydata[z]) {
-                summarydata[z]++;
-            } else {
-                summarydata['other']++;
+            if(step.stepctx.indexOf('@')<0) {
+                summarydata.total++
+                if (testStates.indexOf(z) >= 0 && null != summarydata[z]) {
+                    summarydata[z]++;
+                } else {
+                    summarydata['other']++;
+                }
             }
             if (!currentStep && stateCompare('NONE', step.executionState)
                     || currentStep && stateCompare(currentStep.executionState, step.executionState)) {
