@@ -195,7 +195,7 @@ class ExecutionController extends ControllerBase{
             return redirect(action: 'index', controller: 'reports', params: [project: params.project])
         }
     }
-    def ajaxExecState={
+    def ajaxExecState(){
         def Execution e = Execution.get(params.id)
         if (!e) {
             log.error("Execution not found for id: " + params.id)
@@ -211,10 +211,8 @@ class ExecutionController extends ControllerBase{
         }
 
         def jobcomplete = e.dateCompleted != null
-        def hasFailedNodes = e.failedNodeList ? true : false
         def execState = executionService.getExecutionState(e)
-        def execDuration = 0L
-        execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
+        def execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
         def jobAverage=-1L
         if (e.scheduledExecution && e.scheduledExecution.totalTime >= 0 && e.scheduledExecution.execCount > 0) {
             def long avg = Math.floor(e.scheduledExecution.totalTime / e.scheduledExecution.execCount)
@@ -238,7 +236,13 @@ class ExecutionController extends ControllerBase{
             data['retryExecutionState']=ExecutionService.getExecutionState(e.retryExecution).toUpperCase()
             data['retryExecutionAttempt']= e.retryExecution.retryAttempt
         }
-        def loader = workflowService.requestState(e)
+        def selectedNodes=[]
+        if(params.nodes instanceof String){
+            selectedNodes=params.nodes.split(',') as List
+        }else if(params.nodes){
+            selectedNodes=[params.nodes].flatten()
+        }
+        def loader = workflowService.requestStateSummary(e,selectedNodes,false)
         if (loader.state == ExecutionLogState.AVAILABLE) {
             data.state = loader.workflowState
         }else if(loader.state in [ExecutionLogState.NOT_FOUND]) {
@@ -252,7 +256,50 @@ class ExecutionController extends ControllerBase{
             data.state = [error: 'pending',
                     errorMessage: g.message(code: 'execution.state.storage.state.' + loader.state, default: "Pending")]
         }
-        return render(contentType: 'application/json', text: data.encodeAsJSON())
+        def limit=grailsApplication.config.rundeck?.ajax?.executionState?.compression?.nodeThreshold?:500
+        if(selectedNodes || data.state.allNodes?.size()>limit) {
+            return renderCompressed(request, response, 'application/json', data.encodeAsJSON())
+        }else{
+            return render(contentType: 'application/json', text: data.encodeAsJSON())
+        }
+    }
+    def ajaxExecNodeState(){
+        def Execution e = Execution.get(params.id)
+        if (!e) {
+            log.error("Execution not found for id: " + params.id)
+            response.status=HttpServletResponse.SC_NOT_FOUND
+            return render(contentType: 'application/json', text: [error: "Execution not found for id: " + params.id] as JSON)
+        }
+
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (e && !frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_READ])) {
+            response.status=HttpServletResponse.SC_FORBIDDEN
+            return render(contentType: 'application/json',text:[error: "Unauthorized: Read Execution ${params.id}"] as JSON)
+        }
+
+
+        def data=[:]
+        def selectedNode=params.node
+        def loader = workflowService.requestStateSummary(e,[selectedNode],true)
+        if (loader.state == ExecutionLogState.AVAILABLE) {
+            data = [
+                    name:selectedNode,
+                    summary:loader.workflowState.nodeSummaries[selectedNode],
+                    steps:loader.workflowState.nodeSteps[selectedNode]
+            ]
+        }else if(loader.state in [ExecutionLogState.NOT_FOUND]) {
+            data = [error: 'not found',
+                    errorMessage: g.message(code: 'execution.state.storage.state.' + loader.state,
+                            default: "Not Found")]
+        }else if(loader.state in [ExecutionLogState.ERROR]) {
+            data = [error: 'error', errorMessage: g.message(code: loader.errorCode, args: loader.errorData)]
+        }else if (loader.state in [ ExecutionLogState.PENDING_LOCAL, ExecutionLogState.WAITING,
+                ExecutionLogState.AVAILABLE_REMOTE, ExecutionLogState.PENDING_REMOTE]) {
+            data = [error: 'pending',
+                    errorMessage: g.message(code: 'execution.state.storage.state.' + loader.state, default: "Pending")]
+        }
+        return renderCompressed(request, response, 'application/json', data.encodeAsJSON())
     }
     def mail ={
         def Execution e = Execution.get(params.id)
