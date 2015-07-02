@@ -211,10 +211,8 @@ class ExecutionController extends ControllerBase{
         }
 
         def jobcomplete = e.dateCompleted != null
-        def hasFailedNodes = e.failedNodeList ? true : false
         def execState = executionService.getExecutionState(e)
-        def execDuration = 0L
-        execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
+        def execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
         def jobAverage=-1L
         if (e.scheduledExecution && e.scheduledExecution.totalTime >= 0 && e.scheduledExecution.execCount > 0) {
             def long avg = Math.floor(e.scheduledExecution.totalTime / e.scheduledExecution.execCount)
@@ -280,16 +278,7 @@ class ExecutionController extends ControllerBase{
             return render(contentType: 'application/json',text:[error: "Unauthorized: Read Execution ${params.id}"] as JSON)
         }
 
-        def jobcomplete = e.dateCompleted != null
-        def hasFailedNodes = e.failedNodeList ? true : false
-        def execState = executionService.getExecutionState(e)
-        def execDuration = 0L
-        execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
-        def jobAverage=-1L
-        if (e.scheduledExecution && e.scheduledExecution.totalTime >= 0 && e.scheduledExecution.execCount > 0) {
-            def long avg = Math.floor(e.scheduledExecution.totalTime / e.scheduledExecution.execCount)
-            jobAverage = avg
-        }
+
         def data=[:]
         def selectedNode=params.node
         def loader = workflowService.requestStateSummary(e,[selectedNode],true)
