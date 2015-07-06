@@ -115,6 +115,10 @@ class LogFileStorageService implements InitializingBean{
             //use executorService to run within hibernate session
             executorService.execute {
                 log.debug("executorService saving storage request status...")
+                if (!task.request.isAttached()) {
+                    task.request.attach()
+                }
+                task.request.refresh()
                 task.request.completed = success
                 task.request.save(flush: true)
                 running.remove(task)
@@ -251,6 +255,8 @@ class LogFileStorageService implements InitializingBean{
             return {->}
         }
         LogFileStorageRequest request = createStorageRequest(e, filetype)
+        //detach from current hibernate session, will reattach in async thread later
+        request.discard()
         def reqid = request.execution.id.toString() + ":" + request.filetype
         return {->
             storeLogFileAsync(reqid, file, plugin, request)
@@ -275,7 +281,7 @@ class LogFileStorageService implements InitializingBean{
     private LogFileStorageRequest createStorageRequest(Execution e, String filetype) {
         LogFileStorageRequest request = new LogFileStorageRequest(execution: e,
                 pluginName: getConfiguredPluginName(), completed: false, filetype: filetype)
-        request.save()
+        request.save(flush:true)
         request
     }
     /**
