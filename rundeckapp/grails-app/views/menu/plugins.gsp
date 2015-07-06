@@ -54,7 +54,7 @@
     <div class="panel panel-default">
             <div class="panel-heading">
                 <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#${ukey}">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#${ukey}" title="${serviceName}">
                         <i class="glyphicon glyphicon-chevron-down"></i>
     <g:message code="framework.service.${serviceName}.label.plural" default="${serviceName}"/></a>
 
@@ -90,7 +90,7 @@
     <div class="panel panel-default">
             <div class="panel-heading">
                 <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion${enc(attr:ukey)}" href="#${enc(attr:ukeyx)}">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion${enc(attr:ukey)}" href="#${enc(attr:ukeyx)}" title="${pluginName}">
                         <i class="glyphicon glyphicon-chevron-down"></i>
                     <i class="rdicon icon-small plugin"></i>
                     <g:enc>${pluginTitle?:pluginName}</g:enc></a>
@@ -111,7 +111,7 @@
 
             <div id="${enc(attr:ukeyx)}" class="panel-collapse collapse">
                 <div class="panel-body">
-
+                    <div><g:message code="provider.name" />: <code>${pluginName}</code></div>
                     <g:render template="/scheduledExecution/description"
                               model="[description: pluginDesc, textCss: 'text-muted',
                                       mode: 'shown', rkey: g.rkey()]"/>
