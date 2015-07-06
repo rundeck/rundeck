@@ -53,7 +53,7 @@
         </label>
         </g:if>
 
-    <span class="action" id="nodeStratHelp"
+    <span id="nodeStratHelp"
           data-toggle="popover"
           data-popover-content-ref="#nodeStratHelp_tooltip"
           data-placement="bottom"
