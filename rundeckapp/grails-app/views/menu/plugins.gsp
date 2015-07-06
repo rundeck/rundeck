@@ -73,6 +73,12 @@
 
             <div id="${enc(attr:ukey)}" class="panel-collapse collapse">
                 <div class="panel-body">
+                    <g:set var="pluginExtendedDesc" value="${message(code:"framework.service.${serviceName}.extended.description",default:'')}"/>
+                    <g:if test="${pluginExtendedDesc}">
+                        <span class="text-info">
+                            <g:markdown>${pluginExtendedDesc}</g:markdown>
+                        </span>
+                    </g:if>
                 <div class="panel-group" id="accordion${enc(attr:ukey)}">
         <g:each in="${pluginDescList}" var="${pluginDescription}">
             <g:set var="pluginName" value="${pluginDescription.name}"/>
@@ -120,7 +126,7 @@
                             <g:render
                                     template="/framework/pluginConfigPropertyFormField"
                                     model="${[prop: prop,
-                                            prefix: specialConfiguration[serviceName]?.prefix,
+                                            prefix: specialConfiguration[serviceName]?.prefix?:'',
                                             specialConfiguration: specialConfiguration[serviceName],
                                             error: null,
                                             values: [:],
