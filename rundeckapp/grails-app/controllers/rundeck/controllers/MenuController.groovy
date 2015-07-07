@@ -788,6 +788,9 @@ class MenuController extends ControllerBase{
                 (framework.getResourceModelSourceService().name):[
                         description: message(code:"plugin.resourceModelSource.special.description"),
                         prefix:"resources.source.[index].config."
+                ],
+                (logFileStorageService.executionFileStoragePluginProviderService.name):[
+                        description: message(code:"plugin.executionFileStorage.special.description"),
                 ]
         ]
 

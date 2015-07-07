@@ -58,7 +58,7 @@ class DbStorageService implements NamespacedStorage{
     boolean hasPath(String ns,Path path) {
         def dir,name
         (dir,name)=splitPath(path)
-        if(path.path==''){
+        if(PathUtil.isRoot(path)){
             return true
         }
         def c = Storage.createCriteria()
@@ -102,7 +102,7 @@ class DbStorageService implements NamespacedStorage{
     boolean hasDirectory(String ns,Path path) {
         def dir, name
         (dir, name) = splitPath(path)
-        if (path.path == '') {
+        if (PathUtil.isRoot(path)) {
             return true
         }
         def c = Storage.createCriteria()

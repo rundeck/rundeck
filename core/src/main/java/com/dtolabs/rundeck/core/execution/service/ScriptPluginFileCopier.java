@@ -175,7 +175,7 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
                                               ServiceNameConstants.FileCopier
             );
         } catch (ConfigurationException e) {
-            throw new FileCopierException("[" + pluginname + "]: Configuration failure: "+e.getMessage(),
+            throw new FileCopierException("[" + pluginname + "]: "+e.getMessage(),
                     StepFailureReason.ConfigurationFailure, e);
         }
 
@@ -241,10 +241,10 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
                                               NodeStepFailureReason.NonZeroResultCode);
             }
         } catch (IOException e) {
-            throw new FileCopierException(e.getMessage(), StepFailureReason.IOFailure);
+            throw new FileCopierException("[" + pluginname + "] " + e.getMessage(), StepFailureReason.IOFailure);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new FileCopierException(e.getMessage(), StepFailureReason.Interrupted);
+            throw new FileCopierException("[" + pluginname + "] " + e.getMessage(), StepFailureReason.Interrupted);
         }finally {
             if(null == file) {
                 if (!ScriptfileUtils.releaseTempFile(srcFile)) {

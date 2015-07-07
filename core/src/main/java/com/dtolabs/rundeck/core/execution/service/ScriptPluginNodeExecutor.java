@@ -74,19 +74,25 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
         }
     }
 
-    public NodeExecutorResult executeCommand(final ExecutionContext executionContext, final String[] command,
-                                             final INodeEntry node)  {
+    public NodeExecutorResult executeCommand(
+            final ExecutionContext executionContext,
+            final String[] command,
+            final INodeEntry node
+    )
+    {
         Description pluginDesc = getDescription();
         final ScriptPluginProvider plugin = getProvider();
         final String pluginname = plugin.getName();
-        executionContext.getExecutionListener().log(3,
-                                                    "[" + pluginname + "] execCommand started, command: "
-                                                    + StringArrayUtil.asString(command, " "));
+        executionContext.getExecutionListener().log(
+                3,
+                "[" + pluginname + "] execCommand started, command: " + StringArrayUtil.asString(command, " ")
+        );
 
         final Map<String, Map<String, String>> localDataContext = createScriptDataContext(
-            executionContext.getFramework(),
-                                                                                          executionContext.getFrameworkProject(),
-                                                                                          executionContext.getDataContext());
+                executionContext.getFramework(),
+                executionContext.getFrameworkProject(),
+                executionContext.getDataContext()
+        );
         final HashMap<String, String> scptexec = new HashMap<String, String>();
         scptexec.put("command", StringArrayUtil.asString(command, " "));
         localDataContext.put("exec", scptexec);
@@ -100,21 +106,30 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
         //load config.* property values in from project or framework scope
         final Map<String, Map<String, String>> finalDataContext;
         try {
-            finalDataContext = loadConfigData(executionContext, loadInstanceDataFromNodeAttributes(node, pluginDesc), localDataContext, pluginDesc,
-                                              ServiceNameConstants.NodeExecutor
+            finalDataContext = loadConfigData(
+                    executionContext,
+                    loadInstanceDataFromNodeAttributes(node, pluginDesc),
+                    localDataContext,
+                    pluginDesc,
+                    ServiceNameConstants.NodeExecutor
             );
         } catch (ConfigurationException e) {
-            return NodeExecutorResultImpl.createFailure(StepFailureReason.ConfigurationFailure,
-                    e.getMessage(),
+            return NodeExecutorResultImpl.createFailure(
+                    StepFailureReason.ConfigurationFailure,
+                    "[" + pluginname + "] " + e.getMessage(),
                     e,
-                    node, -1);
+                    node,
+                    -1
+            );
         }
 
         final ExecArgList execArgList = createScriptArgsList(nodeExecContext);
         final String localNodeOsFamily = getFramework().createFrameworkNode().getOsFamily();
 
-        executionContext.getExecutionListener().log(3, "[" + getProvider().getName() + "] executing: " + Arrays.asList(
-                execArgList));
+        executionContext.getExecutionListener().log(
+                3,
+                "[" + getProvider().getName() + "] executing: " + Arrays.asList( execArgList)
+        );
 
         int result = -1;
         try {
@@ -126,28 +141,37 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
                     System.out,
                     System.err
             );
-            executionContext.getExecutionListener().log(3,
-                                                        "[" + pluginname + "]: result code: " + result + ", success: "
-                                                        + (0 == result));
-            if(0!=result){
-                return NodeExecutorResultImpl.createFailure(NodeStepFailureReason.NonZeroResultCode,
-                                                            "Result code: " + result, node, result);
-            }else {
+            executionContext.getExecutionListener().log(
+                    3,
+                    "[" + pluginname + "]: result code: " + result + ", success: " + (0 == result)
+            );
+            if (0 != result) {
+                return NodeExecutorResultImpl.createFailure(
+                        NodeStepFailureReason.NonZeroResultCode,
+                        "[" + pluginname + "] " +  "Result code: " + result,
+                        node,
+                        result
+                );
+            } else {
                 return NodeExecutorResultImpl.createSuccess(node);
             }
         } catch (IOException e) {
-            return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure,
-                                                        e.getMessage(),
-                                                        e,
-                                                        node,
-                                                        result);
+            return NodeExecutorResultImpl.createFailure(
+                    StepFailureReason.IOFailure,
+                    "[" + pluginname + "] " + e.getMessage(),
+                    e,
+                    node,
+                    result
+            );
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            return NodeExecutorResultImpl.createFailure(StepFailureReason.Interrupted,
-                                                        e.getMessage(),
-                                                        e,
-                                                        node,
-                                                        result);
+            return NodeExecutorResultImpl.createFailure(
+                    StepFailureReason.Interrupted,
+                    "[" + pluginname + "] " + e.getMessage(),
+                    e,
+                    node,
+                    result
+            );
         }
     }
 

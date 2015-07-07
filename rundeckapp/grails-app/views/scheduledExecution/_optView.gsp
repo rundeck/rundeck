@@ -36,7 +36,11 @@
             <g:each var="val" in="${opts}" status="i"><g:enc>${0!=i?', ':''}</g:enc><span class="valueItem"><g:enc>${val}</g:enc></span></g:each>
         </div>
         <span class="valuesSet">
-        <span class="valueslist" id="vls_${rkey}"><g:enc>${opts ? opts.size() :0}</g:enc> Value${1==opts?.size()?'':'s'}</span>
+        <span class="valueslist" id="xvls_${rkey}"
+              data-toggle="popover"
+              data-trigger="hover"
+              data-placement="bottom"
+              data-popover-content-ref="#vls_${rkey}_tooltip"><g:enc>${opts ? opts.size() :0}</g:enc> Value${1==opts?.size()?'':'s'}</span>
         </span>
     </g:if>
     <g:elseif test="${option.realValuesUrl}">
@@ -51,13 +55,18 @@
         </span>
     </g:if>
     <g:elseif test="${option.regex}">
-        <span class="enforceSet">
-        <span class="regex" id="rgx_${rkey}"><g:enc>${option.regex}</g:enc></span>
-        </span>
         <div class="popout detailpopup" style="display:none; width: 200px" id="rgx_${rkey}_tooltip">
             <div class="info note">Values must match the regular expression:</div>
             <code><g:enc>${option.regex}</g:enc></code>
         </div>
+        <span class="enforceSet">
+        <span class="regex"
+              data-toggle="popover"
+              data-trigger="hover"
+              data-placement="bottom"
+              data-popover-content-ref="#rgx_${rkey}_tooltip"
+              id="rgx_${rkey}"><g:enc>${option.regex}</g:enc></span>
+        </span>
     </g:elseif>
     <g:else>
         <span class="enforceSet">
@@ -65,11 +74,10 @@
         </span>
     </g:else>
 </span>
+
 <g:javascript>
     fireWhenReady('opt_${enc(js:rkey)}',function(){
-    if(typeof(initTooltipForElements)=='function'){
-        initTooltipForElements('#vls_${enc(js: rkey)}');
-        initTooltipForElements('#rgx_${enc(js: rkey)}');
-    }
+        _initPopoverContentRef('#opt_${enc(js: rkey)}');
     });
 </g:javascript>
+

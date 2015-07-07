@@ -306,7 +306,8 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
             final ExecutionContext context,
             final Map<String, Object> instanceData,
             final Map<String, Map<String, String>> localDataContext,
-            final Description description, String serviceName
+            final Description description,
+            final String serviceName
     ) throws ConfigurationException
     {
 
@@ -333,9 +334,9 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
 
         Map<String, String> data = toStringStringMap(expanded);
 
-        loadStoragePathProperties(
+        loadContentConversionPropertyValues(
                 data,
-                context.getStorageTree(),
+                context,
                 description.getProperties()
         );
 
@@ -344,76 +345,146 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     }
 
     /**
-     * Looks for storage path properties, and loads the values into the config data.
-     * @param data map of values for config properties
-     * @param storageTree storage tree
+     * Looks for properties with content conversion, and converts the values
+     *
+     * @param data             map of values for config properties
+     * @param context          execution context
      * @param pluginProperties definition of plugin properties
      */
-    private void loadStoragePathProperties(
-            Map<String, String> data,
-            StorageTree storageTree,
-            List<Property> pluginProperties
-    ) throws ConfigurationException{
-        //look for "storageAccessor" properties
-        List<Property> properties = pluginProperties;
-        for (Property property : properties) {
+    private void loadContentConversionPropertyValues(
+            final Map<String, String> data,
+            final ExecutionContext context,
+            final List<Property> pluginProperties
+    ) throws ConfigurationException
+    {
+        //look for "valueConversion" properties
+        for (Property property : pluginProperties) {
             String name = property.getName();
             String propValue = data.get(name);
             if (null == propValue) {
                 continue;
             }
             Map<String, Object> renderingOptions = property.getRenderingOptions();
-            if(renderingOptions !=null){
+            if (renderingOptions != null) {
                 Object conversion = renderingOptions.get(StringRenderingConstants.VALUE_CONVERSION_KEY);
+
                 if (StringRenderingConstants.ValueConversion.STORAGE_PATH_AUTOMATIC_READ.equalsOrString(conversion)) {
-
-                    //a storage path property
-                    String root = null;
-                    if (null != renderingOptions.get(StringRenderingConstants
-                            .STORAGE_PATH_ROOT_KEY)) {
-                        root = renderingOptions.get(StringRenderingConstants
-                                .STORAGE_PATH_ROOT_KEY).toString();
-                    }
-                    String filter = null;
-                    if (null != renderingOptions.get(StringRenderingConstants
-                            .STORAGE_FILE_META_FILTER_KEY)) {
-                        filter = renderingOptions.get(StringRenderingConstants
-                                .STORAGE_FILE_META_FILTER_KEY).toString();
-                    }
-
-                    if (null != root && !PathUtil.hasRoot(propValue,root)) {
-                        continue;
-                    }
-                    try {
-                        Resource<ResourceMeta> resource = storageTree.getResource
-                                (propValue);
-                        ResourceMeta contents = resource.getContents();
-                        //test filter
-                        if (filter != null) {
-                            String[] filterComponents = filter.split("=", 2);
-                            if (filterComponents != null && filterComponents.length == 2) {
-                                String key = filterComponents[0];
-                                String test = filterComponents[1];
-                                Map<String, String> meta = contents.getMeta();
-                                if (meta == null || !test.equals(meta.get(key))) {
-                                    continue;
-                                }
-                            }
-                        }
-                        //finally load storage contents into a string
-                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                        contents.writeContent(byteArrayOutputStream);
-                        data.put(name, new String(byteArrayOutputStream.toByteArray()));
-                    } catch (StorageException e) {
-                        throw new ConfigurationException("Unable to load configuration key '" +
-                                name + "' value from storage path:  " + propValue, e);
-                    } catch (IOException e) {
-                        throw new ConfigurationException("Unable to load configuration key '" +
-                                name + "' value from storage path:  " + propValue, e);
-                    }
+                    convertStoragePathValue(data, context.getStorageTree(), name, propValue, renderingOptions);
+                } else if (StringRenderingConstants.ValueConversion.PRIVATE_DATA_CONTEXT.equalsOrString(conversion)) {
+                    convertPrivateDataValue(data, context.getPrivateDataContext(), name, propValue, renderingOptions);
                 }
             }
         }
+    }
+
+    /**
+     * Converts storage path properties by loading the values into the config data.
+     * @param data config data
+     * @param storageTree storage
+     * @param name property name
+     * @param propValue value to convert
+     * @param renderingOptions options
+     * @throws ConfigurationException
+     */
+    private void convertStoragePathValue(
+            final Map<String, String> data,
+            final StorageTree storageTree,
+            final String name,
+            final String propValue,
+            final Map<String, Object> renderingOptions
+    ) throws ConfigurationException
+    {
+        //a storage path property
+        String root = null;
+        if (null != renderingOptions.get( StringRenderingConstants.STORAGE_PATH_ROOT_KEY)) {
+            root = renderingOptions.get(StringRenderingConstants.STORAGE_PATH_ROOT_KEY).toString();
+        }
+        String filter = null;
+        if (null != renderingOptions.get(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY)) {
+            filter = renderingOptions.get(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY).toString();
+        }
+        boolean clearValue = isValueConversionFailureRemove(renderingOptions);
+        if (null != root && !PathUtil.hasRoot(propValue, root)) {
+            if(clearValue) {
+                data.remove(name);
+            }
+            return;
+        }
+        try {
+            Resource<ResourceMeta> resource = storageTree.getResource(propValue);
+            ResourceMeta contents = resource.getContents();
+            //test filter
+            if (filter != null) {
+                String[] filterComponents = filter.split("=", 2);
+                if (filterComponents.length == 2) {
+                    String key = filterComponents[0];
+                    String test = filterComponents[1];
+                    Map<String, String> meta = contents.getMeta();
+                    if (meta == null || !test.equals(meta.get(key))) {
+                        if(clearValue) {
+                            data.remove(name);
+                        }
+                        return;
+                    }
+                }
+            }
+            //finally load storage contents into a string
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            contents.writeContent(byteArrayOutputStream);
+            data.put(name, new String(byteArrayOutputStream.toByteArray()));
+        } catch (StorageException | IOException e) {
+            if(clearValue) {
+                data.remove(name);
+                return;
+            }
+            throw new ConfigurationException("Unable to load configuration key '" +
+                    name + "' value from storage path:  " + propValue, e);
+        }
+    }
+
+    /**
+     * Converts properties that refer to a private data context value
+     * @param data config data
+     * @param privateDataContext private data
+     * @param name property name
+     * @param propValue value to convert
+     */
+    private void convertPrivateDataValue(
+            final Map<String, String> data,
+            final Map<String, Map<String, String>> privateDataContext,
+            final String name,
+            final String propValue,
+            final Map<String, Object> renderingOptions
+    ) throws ConfigurationException
+    {
+        boolean clearValue = isValueConversionFailureRemove(renderingOptions);
+        String[] prop = propValue.split("\\.", 2);
+        if (prop.length < 2 || prop[0].length() < 1 || prop[1].length() < 1) {
+
+            throw new ConfigurationException(
+                    "Unable to load '" +
+                    name +
+                    "' configuration value: Expected 'option.name' format, but saw: " +
+                    propValue
+            );
+        }
+        String newvalue = DataContextUtils.resolve(privateDataContext, prop[0], prop[1]);
+
+        if (null == newvalue) {
+            if(clearValue) {
+                data.remove(name);
+            }
+            return;
+        }
+        data.put(name, newvalue);
+    }
+
+    private boolean isValueConversionFailureRemove(final Map<String, Object> renderingOptions) {
+        return StringRenderingConstants.VALUE_CONVERSION_FAILURE_REMOVE.equals(
+                renderingOptions.get(
+                        StringRenderingConstants.VALUE_CONVERSION_FAILURE_KEY
+                )
+        );
     }
 
     private static Map<String, String> toStringStringMap(Map input) {

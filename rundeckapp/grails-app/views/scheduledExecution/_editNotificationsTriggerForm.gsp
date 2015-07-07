@@ -80,7 +80,7 @@
         </div>
 
             <g:hasErrors bean="${scheduledExecution}" field="${triggerEmailRecipientsName }">
-                <div class="text-warning">
+                <div class="col-sm-12 text-warning">
                     <g:renderErrors bean="${scheduledExecution}" as="list" field="${triggerEmailRecipientsName}"/>
                 </div>
             </g:hasErrors>
@@ -135,7 +135,7 @@
 
 
                 <g:hasErrors bean="${scheduledExecution}" field="${triggerUrlFieldName}">
-                    <div class="text-warning">
+                    <div class="col-sm-12 text-warning">
                         <g:renderErrors bean="${scheduledExecution}" as="list" field="${triggerUrlFieldName}"/>
                     </div>
                 </g:hasErrors>

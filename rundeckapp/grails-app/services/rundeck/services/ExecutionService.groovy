@@ -613,7 +613,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             jobstring = " job: " + e.scheduledExecution.extid + " " + (e.scheduledExecution.groupPath ?: '') + "/" +
                     e.scheduledExecution.jobName
         } else {
-            def adhocCommand = e.workflow.commands[0].adhocRemoteString
+            def adhocCommand = e.workflow.commands.size()==1 && (e.workflow.commands[0] instanceof CommandExec) && e.workflow.commands[0].adhocRemoteString
             if (adhocCommand) {
                 mdcprops.put("command", adhocCommand)
                 jobstring += " command: " + adhocCommand
@@ -2240,7 +2240,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         //substitute any data context references in the arguments
         if (null != newargs && executionContext.dataContext) {
-            newargs = DataContextUtils.replaceDataReferences(newargs, executionContext.dataContext)
+            newargs = DataContextUtils.replaceDataReferences(
+                    newargs,
+                    executionContext.dataContext,
+                    DataContextUtils.replaceMissingOptionsWithBlank,
+                    false
+            )
         }
 
         def jobOptsMap = frameworkService.parseOptsFromArray(newargs)

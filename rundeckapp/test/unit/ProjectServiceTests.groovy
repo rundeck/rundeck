@@ -3,6 +3,7 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.Execution
 import rundeck.Option
+import rundeck.Orchestrator
 import rundeck.Workflow
 import rundeck.CommandExec
 import rundeck.ScheduledExecution
@@ -39,7 +40,7 @@ import rundeck.services.WorkflowService
  * 
  */
 @TestFor(ProjectService)
-@Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution,BaseReport, ExecReport])
+@Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution,BaseReport, ExecReport,Orchestrator])
 class ProjectServiceTests  {
     static String EXECS_START='<executions>'
     static String EXECS_END= '</executions>'
@@ -123,6 +124,45 @@ class ProjectServiceTests  {
         <description>echo on node</description>
       </command>
     </workflow>
+  </execution>
+</executions>''' /**
+     * Execution xml with orchestrator
+     */
+    static String EXEC_XML_TEST5 = EXEC_XML_TEST1_START + '''
+    <outputfilepath>output-1.rdlog</outputfilepath>''' + '''
+    <failedNodeList />
+    <succeededNodeList />
+    <abortedby />
+    <cancelled>false</cancelled>
+    <argString>-test args</argString>
+    <loglevel>WARN</loglevel>
+    <doNodedispatch>true</doNodedispatch>
+    <nodefilters>
+      <dispatch>
+        <threadcount>1</threadcount>
+        <keepgoing>false</keepgoing>
+        <excludePrecedence>true</excludePrecedence>
+        <rankOrder>ascending</rankOrder>
+      </dispatch>
+      <filter>hostname: test1 !tags: monkey</filter>
+    </nodefilters>
+    <project>testproj</project>
+    <user>testuser</user>
+    <workflow keepgoing='false' strategy='node-first'>
+      <command>
+        <jobref name='echo' nodeStep='true'>
+          <arg line='-name ${node.name}' />
+        </jobref>
+        <description>echo on node</description>
+      </command>
+    </workflow>
+
+    <orchestrator>
+      <type>subset</type>
+      <configuration>
+        <count>1</count>
+      </configuration>
+    </orchestrator>
   </execution>
 </executions>'''
 
@@ -321,7 +361,7 @@ class ProjectServiceTests  {
         assertEquals 1,e.workflow.commands.size()
         assertPropertiesEquals( [adhocRemoteString: 'exec command'],e.workflow.commands[0])
     }
-    public void  testImportExecutionWorkflow(){
+    public void  testLoadExecutionsWorkflow(){
         ProjectService svc = new ProjectService()
         def result = svc.loadExecutions(EXEC_XML_TEST4)
         assertNotNull result
@@ -335,6 +375,22 @@ class ProjectServiceTests  {
         assertPropertiesEquals( [jobName: 'echo', nodeStep:true,argString: '-name ${node.name}',
                 description: 'echo on node'],
                 e.workflow.commands[0])
+    }
+    /**
+     * load execution xml with orchestrator definition
+     */
+    public void  testLoadExecutionsOrchestrator(){
+        ProjectService svc = new ProjectService()
+        def result = svc.loadExecutions(EXEC_XML_TEST5)
+        assertNotNull result
+        assertNotNull result.executions
+        assertNotNull result.execidmap
+        assertEquals 1,result.executions.size()
+        def Execution e = result.executions[0]
+
+        assertNotNull e.orchestrator
+        assertEquals  'subset',e.orchestrator.type
+        assertEquals( [count:"1"],e.orchestrator.configuration)
     }
     /**
      * Imported execution where jobId should be skipped, should not be loaded
@@ -613,7 +669,30 @@ class ProjectServiceTests  {
     }
 
     /**
-     * Imported execution where jobId should be skipped, should not be loaded
+     * empty archive progress meter
+     */
+    public void  testArchiveRequestProgressEmpty(){
+        ArchiveRequestProgress svc = new ArchiveRequestProgress()
+        assertEquals(0,svc.percent())
+    }
+
+    /**
+     *  archive progress meter with 0 total for a key
+     */
+    public void  testArchiveRequestProgressZerocount(){
+        ArchiveRequestProgress svc = new ArchiveRequestProgress()
+        assertEquals(0,svc.percent())
+        svc.total("a",0)
+        assertEquals(100,svc.percent())
+        svc.inc("a",0)
+        assertEquals(100,svc.percent())
+        svc.inc("a",10)
+        assertEquals(100,svc.percent())
+
+    }
+
+    /**
+     * basic archive progress meter with single key
      */
     public void  testArchiveRequestProgressSingle(){
         ArchiveRequestProgress svc = new ArchiveRequestProgress()
@@ -626,7 +705,7 @@ class ProjectServiceTests  {
     }
 
     /**
-     * Imported execution where jobId should be skipped, should not be loaded
+     * archive progress meter with multiple keys
      */
     public void  testArchiveRequestProgressMulti(){
         ArchiveRequestProgress svc = new ArchiveRequestProgress()
@@ -635,6 +714,23 @@ class ProjectServiceTests  {
         assertEquals(0,svc.percent())
         svc.inc("a",5)
         assertEquals(25,svc.percent())
+        svc.inc("a",5)
+        assertEquals(50,svc.percent())
+        svc.inc("b",5)
+        assertEquals(75,svc.percent())
+        svc.inc("b",5)
+        assertEquals(100,svc.percent())
+    }
+    /**
+     * archive progress meter with multiple keys, some zero
+     */
+    public void  testArchiveRequestProgressMultiAndZero(){
+        ArchiveRequestProgress svc = new ArchiveRequestProgress()
+        svc.total("a",0)
+        svc.total("b",10)
+        assertEquals(50,svc.percent())
+        svc.inc("a",5)
+        assertEquals(50,svc.percent())
         svc.inc("a",5)
         assertEquals(50,svc.percent())
         svc.inc("b",5)

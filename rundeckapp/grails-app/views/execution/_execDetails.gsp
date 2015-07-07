@@ -231,11 +231,11 @@
             </td>
         </tr>
     </g:if>
-    <g:if test="${execdata instanceof rundeck.ScheduledExecution && execdata.orchestrator}">
+    <g:if test="${execdata.orchestrator}">
         <tr>
             <td class="displabel">Orchestrator:</td>
             <td class="container">
-                <g:render template="/execution/execDetailsOrchestrator" model="${[orchestrator: scheduledExecution.orchestrator]}"/>
+                <g:render template="/execution/execDetailsOrchestrator" model="${[orchestrator: execdata.orchestrator]}"/>
             </td>
     </g:if>
     <g:if test="${execdata instanceof rundeck.ScheduledExecution}">

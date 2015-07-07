@@ -36,8 +36,14 @@ public class RunServer {
     public static final String SERVER_HTTP_HOST = "server.http.host";
     public static final String RUNDECK_JETTY_CONNECTOR_FORWARDED = "rundeck.jetty.connector.forwarded";
     public static final String RUNDECK_JETTY_SSL_CONNECTOR_EXCLUDED_PROTOCOLS= "rundeck.jetty.connector.ssl.excludedProtocols";
+    public static final String RUNDECK_JETTY_SSL_CONNECTOR_INCLUDED_PROTOCOLS= "rundeck.jetty.connector.ssl.includedProtocols";
+    public static final String RUNDECK_JETTY_SSL_CONNECTOR_EXCLUDED_CIPHER_SUITES= "rundeck.jetty.connector.ssl.excludedCipherSuites";
+    public static final String RUNDECK_JETTY_SSL_CONNECTOR_INCLUDED_CIPHER_SUITES= "rundeck.jetty.connector.ssl.includedCipherSuites";
 
     public static final String DEFAULT_SSL_CONNECTER_EXCLUDED_PROTOCOLS = "SSLv3";
+    public static final String DEFAULT_SSL_CONNECTER_INCLUDED_PROTOCOLS = null;
+    public static final String DEFAULT_SSL_CONNECTER_EXCLUDED_CIPHER_SUITES = null;
+    public static final String DEFAULT_SSL_CONNECTER_INCLUDED_CIPHER_SUITES = null;
 
 
     int port = Integer.getInteger("server.http.port", 4440);
@@ -163,6 +169,27 @@ public class RunServer {
                         DEFAULT_SSL_CONNECTER_EXCLUDED_PROTOCOLS
                 ).split(",")
         );
+        String includedProtocols = System.getProperty(
+                RUNDECK_JETTY_SSL_CONNECTOR_INCLUDED_PROTOCOLS,
+                DEFAULT_SSL_CONNECTER_INCLUDED_PROTOCOLS
+        );
+        if(null!=includedProtocols) {
+            cf.setIncludeProtocols(includedProtocols.split(","));
+        }
+        String excludeCipherSuites = System.getProperty(
+                RUNDECK_JETTY_SSL_CONNECTOR_EXCLUDED_CIPHER_SUITES,
+                DEFAULT_SSL_CONNECTER_EXCLUDED_CIPHER_SUITES
+        );
+        if(excludeCipherSuites!=null) {
+            cf.setExcludeCipherSuites(excludeCipherSuites.split(","));
+        }
+        String includeCipherSuites = System.getProperty(
+                RUNDECK_JETTY_SSL_CONNECTOR_INCLUDED_CIPHER_SUITES,
+                DEFAULT_SSL_CONNECTER_INCLUDED_CIPHER_SUITES
+        );
+        if(includeCipherSuites!=null) {
+            cf.setIncludeCipherSuites(includeCipherSuites.split(","));
+        }
         connector.setHost(System.getProperty(SERVER_HTTP_HOST, null));
         server.addConnector(connector);
     }

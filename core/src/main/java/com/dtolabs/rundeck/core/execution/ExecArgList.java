@@ -127,16 +127,7 @@ public class ExecArgList {
             String osFamily) {
         final Converter<String, String> quote = CLIUtils.argumentQuoteForOperatingSystem(osFamily);
         final Converter<String, String> expand = DataContextUtils.replaceDataReferencesConverter(dataContext,
-                new Converter<String, String>() {
-                    @Override
-                    public String convert(String s) {
-                        if (s.startsWith("${option.") && s.endsWith("}")) {
-                            return "";
-                        }else{
-                            return s;
-                        }
-                    }
-                },
+                DataContextUtils.replaceMissingOptionsWithBlank,
                 false);
 
         final ArrayList<String> commandList = new ArrayList<String>();

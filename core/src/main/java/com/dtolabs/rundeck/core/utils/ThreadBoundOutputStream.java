@@ -123,6 +123,16 @@ public class ThreadBoundOutputStream extends FilterOutputStream {
             out.write(i);
         }
     }
+    @Override
+    public void flush() throws IOException {
+        final OutputStream out = getThreadLocalOutputStream();
+        if (out == null || out == this) {
+            super.flush();
+        } else {
+            out.flush();
+        }
+    }
+
 
     private static PrintStream origSystemOut;
     private static ThreadBoundPrintStream boundOutPrint;

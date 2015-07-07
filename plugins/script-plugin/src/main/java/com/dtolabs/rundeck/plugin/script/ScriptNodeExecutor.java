@@ -221,14 +221,18 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
         FailureReason reason;
         String message;
         try {
+            exec.getOutputStream().close();
             errthread = Streams.copyStreamThread(exec.getErrorStream(), System.err);
             outthread = Streams.copyStreamThread(exec.getInputStream(), System.out);
             errthread.start();
             outthread.start();
-            exec.getOutputStream().close();
             result = exec.waitFor();
+            System.err.flush();
+            System.out.flush();
             errthread.join();
             outthread.join();
+            exec.getErrorStream().close();
+            exec.getInputStream().close();
             success = 0 == result;
             executionContext.getExecutionListener().log(3,
                                                         "[script-exec]: result code: " + result + ", success: "

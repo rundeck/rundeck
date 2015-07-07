@@ -49,7 +49,7 @@
     </div>
 </div>
 <div data-bind="if: stateLoaded()">
-<div class="container">
+<div class="container" data-bind="if: activeTab()=='flow'">
 
     <div class="row row-space" data-bind="if: completed()">
         <div class="col-sm-12">
@@ -76,7 +76,7 @@
 
 
 <div data-bind="foreach: activeNodes()">
-<div class="wfnodestate container" data-bind="css: { open: expanded() }">
+<div class="wfnodestate container" data-bind="css: { open: expanded() }, attr: { 'data-node': name } ">
     <div class="row wfnodeoverall action" data-bind="click: toggleExpand">
         <div class="col-sm-3  nodectx"
              data-bind="attr: { title: name }, css: { 'auto-caret-container': expanded() } ">
@@ -113,6 +113,7 @@
 
     </div>
     %{--step specific info for node--}%
+    <div data-bind="if: expanded">
     <div  data-bind="visible: expanded" >
         <div data-bind="foreach: steps">
             <div data-bind="if: !$data.parameterizedStep()">
@@ -147,6 +148,7 @@
 
                 </div>
 
+                <div data-bind="if: followingOutput">
                 <div class="row " data-bind="visible: followingOutput">
                     <div class="col-sm-12 wfnodeoutput" data-bind="attr: { 'data-node': $parent.name , 'data-stepctx': stepctx } ">
 
@@ -173,12 +175,15 @@
                         </div>
                     </div>
                 </div>
+                </div>
             </div>
             </div>
             </div>
         </div>
 
     </div>
+</div>
+    %{--endif--}%
 </div>
 </div>
 </div>

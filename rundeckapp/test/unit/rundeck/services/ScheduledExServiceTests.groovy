@@ -1407,7 +1407,10 @@ class ScheduledExServiceTests {
             sec.frameworkService = fwkControl.createMock()
 
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand',
-                    notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.comd@example.com'], [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@ example.com']]
+                    notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email',
+                                     content: 'c@example.comd@example.com'],
+                                    [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email',
+                                     content: 'monkey@ example.com']]
             ]
             def results = sec._dovalidate(params, 'test', 'test', null)
             if (results.scheduledExecution.errors.hasErrors()) {
@@ -1424,6 +1427,48 @@ class ScheduledExServiceTests {
             assertTrue(execution.errors.hasErrors())
             assertTrue(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS))
             assertTrue(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS))
+        }
+
+    /**
+     * allow any domain name in emails
+     */
+    public void testDoValidateNotifications_validemail() {
+
+        def sec = service//test job with notifications, invalid email addresses using map based notifications definition
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+            fwkControl.demand.existsFrameworkProject { project, framework ->
+                assertEquals 'testProject', project
+                return true
+            }
+            sec.frameworkService = fwkControl.createMock()
+
+            def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
+                          workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
+
+                    notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email',
+                                     content: 'c@example.comd'],
+                                    [eventTrigger: ScheduledExecutionController.ONSTART_TRIGGER_NAME, type: 'email',
+                                     content: 'example@any.domain'],
+                                    [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email',
+                                     content: 'monkey@internal']]
+            ]
+            def results = sec._dovalidate(params, 'test', 'test', null)
+            if (results.scheduledExecution.errors.hasErrors()) {
+                results.scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            assertFalse results.failed
+            assertNotNull(results.scheduledExecution)
+            assertTrue(results.scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = results.scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertFalse(execution.errors.hasErrors())
+            assertFalse(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS))
+            assertFalse(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS))
+            assertFalse(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_START_RECIPIENTS))
         }
 
     public void testDoValidateNotifications_invalidurls() {

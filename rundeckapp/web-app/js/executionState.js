@@ -18,12 +18,12 @@
  * State of workflow, step oriented
  */
 var FlowState = Class.create({
-    model:{},
     executionId:null,
     selectedOutputStatusId:null,
     targetElement:null,
     retry:5,
     loadUrl:null,
+    loadUrlParams:null,
     outputUrl:null,
     shouldUpdate:false,
     updateCompleted:false,
@@ -208,7 +208,7 @@ var FlowState = Class.create({
         }
     },
     update: function (json) {
-        var data=json.state
+        var data=json.state;
         //compare
         if (data.error=='pending' ) {
             this.retry--;
@@ -217,25 +217,22 @@ var FlowState = Class.create({
             this.shouldUpdate=false;
         }
         if(!data.error){
-            this.model = json;
-            if($(this.targetElement + '_json')){
-                setText($(this.targetElement + '_json'), Object.toJSON(this.model));
-            }
-            this.updateState(this.model);
+            this.updateState(json);
         }else{
             this.updateError(data.error,json);
         }
-        if (data.error && this.retry>=0 || !this.model.completed && this.shouldUpdate) {
+        if (data.error && this.retry>=0 || !json.completed && this.shouldUpdate) {
             this.timer = setTimeout(this.callUpdate.bind(this), this.reloadInterval);
         } else {
-            this.stopFollowing(this.model.completed);
+            this.stopFollowing(json.completed);
         }
     },
     callUpdate: function(){
         var state=this;
         this.updateRunning=true;
+        var url = _genUrl(state.loadUrl, state.loadUrlParams);
         jQuery.ajax({
-           url:this.loadUrl,
+            url: url,
             dataType:'json',
             success: function (data,status,jqxhr) {
                 state.update(data);

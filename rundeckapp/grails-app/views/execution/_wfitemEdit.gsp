@@ -386,7 +386,7 @@
                        for="scriptInterpreterField${rkey}"><g:message
                         code="Workflow.Step.scriptInterpreter.label"/></label>
                 <div class="col-sm-10">
-                    <div class="popout tooltipcontent helptooltip"
+                    <div class=""
                          id="interpreterHelp${enc(attr: rkey)}_tooltip"
                          style="display:none;">
                         <div class="help-block"><g:message
@@ -402,7 +402,11 @@
                                id="scriptInterpreterField${rkey}" autofocus/>
 
                         <div class="input-group-addon">
-                            <span class="action obs_tooltip"
+                            <span class="action "
+                                data-toggle="popover"
+                                data-placement="left"
+                                data-trigger="hover"
+                                data-popover-content-ref="#interpreterHelp${enc(attr: rkey)}_tooltip"
                                   id="interpreterHelp${enc(attr: rkey)}"><i
                                     class="glyphicon glyphicon-question-sign  text-info"></i></span>
 
@@ -423,11 +427,16 @@
                                         data-bind="checked: argsQuoted"/>
                                 <g:message code="Workflow.Step.interpreterArgsQuoted.label"/>
                         </label>
-                          <span class="action obs_tooltip"
+                          <span class="action"
+
+                                data-toggle="popover"
+                                data-placement="bottom"
+                                data-trigger="hover"
+                                data-popover-content-ref="#interpreterArgsQuotedHelp${enc(attr: rkey)}_tooltip"
                                 id="interpreterArgsQuotedHelp${enc(attr: rkey)}"><i
                                   class="glyphicon glyphicon-question-sign  text-info"></i>
                           </span>
-                        <div class="popout tooltipcontent helptooltip"
+                        <div class=""
                              id="interpreterArgsQuotedHelp${enc(attr: rkey)}_tooltip"
                              style="display:none; ">
                             <div class="help-block"><g:message
@@ -463,7 +472,11 @@
                                id="fileExtensionField${rkey}" />
 
                         <div class="input-group-addon">
-                            <span class="action obs_tooltip"
+                            <span class="action"
+                                  data-toggle="popover"
+                                  data-placement="left"
+                                  data-trigger="hover"
+                                  data-popover-content-ref="#fileExtensionHelp${enc(attr: rkey)}_tooltip"
                                   id="fileExtensionHelp${enc(attr: rkey)}"><i
                                     class="glyphicon glyphicon-question-sign  text-info"></i></span>
 
@@ -485,6 +498,9 @@
                 <g:javascript>
                 fireWhenReady("scriptStep_${rkey}",function(){
                     workflowEditor.bindKey('${rkey}','scriptStep_${rkey}',loadJsonData('scriptStepData_${rkey}'));
+                    if (typeof(_initPopoverContentRef) == 'function') {
+                        _initPopoverContentRef("#scriptStep_${rkey}");
+                    }
                 });
                 </g:javascript>
             </div>

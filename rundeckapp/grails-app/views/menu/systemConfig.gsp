@@ -58,7 +58,7 @@
         <div class="text-muted"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
 
 
-    <g:render template="displayConfigProps" model="[map: flatConfig, keys: flatConfig.keySet().grep(/^rundeck\.execution\.logs\./)]"/>
+    <g:render template="displayConfigProps" model="[map: flatConfig, keys: flatConfig.keySet().grep(~/^rundeck\.execution\.logs\..*$/)]"/>
 
     </div>
 </div>

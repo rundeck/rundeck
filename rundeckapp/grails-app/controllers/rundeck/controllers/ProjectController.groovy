@@ -217,7 +217,7 @@ class ProjectController extends ControllerBase{
         if (request instanceof MultipartHttpServletRequest) {
             def file = request.getFile("zipFile")
             if (!file || file.empty) {
-                flash.error = "No file was uploaded."
+                flash.error = message(code:"no.file.was.uploaded")
                 return redirect(controller: 'menu', action: 'admin', params: [project: project])
             }
             String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
@@ -227,10 +227,17 @@ class ProjectController extends ControllerBase{
 
 
             if(result.success){
-                flash.message="Archive successfully imported"
+                if(result.execerrors){
+                    flash.message=message(code:"archive.jobs.imported.some.executions.could.not.be.imported")
+                }else{
+                    flash.message=message(code:"archive.successfully.imported")
+                }
             }else{
-                flash.error="Failed to import some jobs"
+                flash.error=message(code:"failed.to.import.some.jobs")
                 flash.joberrors=result.joberrors
+            }
+            if(result.execerrors){
+                flash.execerrors=result.execerrors
             }
             return redirect(controller: 'menu',action: 'admin',params:[project:project])
         }
@@ -1057,6 +1064,10 @@ class ProjectController extends ControllerBase{
                         //list errors
                         delegate.'errors'=result.joberrors
                     }
+
+                    if(result.execerrors){
+                        delegate.'execution_errors'=result.execerrors
+                    }
                 }
                 break;
             case 'xml':
@@ -1066,6 +1077,13 @@ class ProjectController extends ControllerBase{
                             //list errors
                             delegate.'errors'(count: result.joberrors.size()){
                                 result.joberrors.each{
+                                    delegate.'error'(it)
+                                }
+                            }
+                        }
+                        if(result.execerrors){
+                            delegate.'executionErrors'(count: result.execerrors.size()){
+                                result.execerrors.each{
                                     delegate.'error'(it)
                                 }
                             }

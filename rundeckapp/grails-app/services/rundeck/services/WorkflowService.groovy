@@ -248,4 +248,38 @@ class WorkflowService implements ApplicationContextAware{
         return new WorkflowStateFileLoader(workflowState: statemap, state: loader.state, errorCode: loader.errorCode,
                 errorData: loader.errorData, file: loader.file)
     }
+    /**
+     * Summarize the data for only the selected nodes
+     * @param loader
+     * @param nodes
+     * @return
+     */
+    WorkflowStateFileLoader requestStateSummary(Execution e, List<String> nodes,boolean selectedOnly=false,boolean performLoad = true){
+        //look for active state
+        def state1 = activeStates[e.id]
+        if (state1) {
+            def state= stateMapping.mapOf(e.id, state1)
+            state=stateMapping.summarize(new HashMap(state),nodes,selectedOnly)
+            return new WorkflowStateFileLoader(workflowState: state, state: ExecutionLogState.AVAILABLE)
+        }
+
+        //look for cached local data
+        def statemap=stateCache.getIfPresent(e.id)
+        if (statemap) {
+            statemap=stateMapping.summarize(new HashMap(statemap),nodes,selectedOnly)
+            return new WorkflowStateFileLoader(workflowState: statemap, state: ExecutionLogState.AVAILABLE)
+        }
+
+        //request file via file storage
+        def loader = logFileStorageService.requestLogFileLoad(e, STATE_FILE_FILETYPE, performLoad)
+
+        if (loader.file) {
+            //cache local data
+            statemap = deserializeState(loader.file)
+            stateCache.put(e.id,statemap)
+            statemap=stateMapping.summarize(new HashMap(statemap),nodes,selectedOnly)
+        }
+        return new WorkflowStateFileLoader(workflowState: statemap, state: loader.state, errorCode: loader.errorCode,
+                                           errorData: loader.errorData, file: loader.file)
+    }
 }

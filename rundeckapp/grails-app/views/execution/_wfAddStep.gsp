@@ -52,7 +52,7 @@
                     <div class="list-group-item text-muted ">
                         <g:plural for="${nodeStepDescriptions}" code="node.step.plugin" />
                     </div>
-                    <g:each in="${nodeStepDescriptions}" var="typedesc">
+                    <g:each in="${nodeStepDescriptions.sort{a,b->a.name<=>b.name}}" var="typedesc">
 
                         <a  class="list-group-item textbtn  add_node_step_type" data-node-step-type="${enc(attr:typedesc.name)}"
                             href="#">
@@ -84,7 +84,7 @@
                     <div class="list-group-item text-muted ">
                         <g:plural for="${stepDescriptions}" code="workflow.step.plugin" />
                     </div>
-                    <g:each in="${stepDescriptions}" var="typedesc">
+                    <g:each in="${stepDescriptions.sort{a,b->a.name<=>b.name}}" var="typedesc">
                         <a class="list-group-item textbtn  add_step_type" data-step-type="${enc(attr:typedesc.name)}" href="#">
                             <i class="rdicon icon-small plugin"></i>
                             <g:enc>${typedesc.title}</g:enc>

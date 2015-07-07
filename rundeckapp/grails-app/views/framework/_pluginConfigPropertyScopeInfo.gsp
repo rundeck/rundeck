@@ -12,7 +12,7 @@
     <g:expander key="${scopeinfo}">Admin configuration info</g:expander>
 </g:unless>
 <div class="" id="${enc(attr:scopeinfo)}" style="${wdgt.styleVisible(if: outofscopeShown)}">
-    <g:if test="${!specialConfiguration}">
+    <g:if test="${!specialConfiguration?.prefix}">
     <g:if test="${propScope?.isProjectLevel()}">
        <div>configure project:
         <code>

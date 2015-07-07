@@ -88,6 +88,17 @@ public class DataContextUtils {
             return ((String) o).contains("${") && match.matcher((String) o).matches();
         }
     };
+
+    /**
+     * A converter which replaces '${option.*}' with blank when replacing data references
+     */
+    public static final Converter<String,String> replaceMissingOptionsWithBlank = new Converter<String, String>() {
+        Pattern optionPattern = Pattern.compile("^"+Pattern.quote("${option.")+"[^}\\s]+?"+Pattern.quote("}")+"$");
+        @Override
+        public String convert(String s) {
+            return optionPattern.matcher(s).matches() ? "" : s;
+        }
+    };
     /**
      * Replace the embedded  properties of the form '${key.name}' in the input Strings with the value from the data
      * context

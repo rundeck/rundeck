@@ -2,7 +2,6 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.util.XmlParserUtil
 import com.dtolabs.rundeck.util.ZipBuilder
 import com.dtolabs.rundeck.util.ZipReader
@@ -229,7 +228,7 @@ class ProjectService implements InitializingBean{
                 }
                 ecount++
             } else {
-                throw new ProjectServiceException("Unexpected data type for Execution($ecount) in file (${xmlfile}): " + object.class.name)
+                throw new ProjectServiceException("Unexpected data type for Execution($ecount): " + object.class.name)
             }
         }
         [executions:execlist,execidmap:execidmap, retryidmap: retryidmap]
@@ -239,8 +238,12 @@ class ProjectService implements InitializingBean{
         def XmlParser parser = new XmlParser()
         def doc
         def reader
-        if (xmlinput instanceof File || xmlinput instanceof InputStream) {
-            reader = xmlinput
+        def filestream
+        if (xmlinput instanceof File ) {
+            filestream=new FileInputStream(xmlinput)
+            reader = new InputStreamReader(filestream,"UTF-8")
+        } else if (xmlinput instanceof InputStream) {
+            reader = new InputStreamReader(xmlinput,"UTF-8")
         } else if (xmlinput instanceof String) {
             reader = new StringReader(xmlinput)
         } else {
@@ -250,7 +253,11 @@ class ProjectService implements InitializingBean{
         try {
             doc = parser.parse(reader)
         } catch (Exception e) {
-            throw new ProjectServiceException("Unable to parse xml: ${e}")
+            throw new ProjectServiceException("Unable to parse xml: ${e.message}",e)
+        }finally{
+            if(null!=filestream){
+                filestream.close()
+            }
         }
         doc
     }
@@ -498,6 +505,7 @@ class ProjectService implements InitializingBean{
         def jobxml=[]
         def jobxmlmap=[:]
         def execxml=[]
+        def execxmlmap=[:]
         def Map<String,File> execout=[:]
         def reportxml=[]
         def reportxmlnames=[:]
@@ -516,6 +524,7 @@ class ProjectService implements InitializingBean{
                     'executions/'{
                         'execution-.*\\.xml' {path, name, inputs ->
                             execxml << copyToTemp()
+                            execxmlmap[execxml[-1]]=name
                         }
                         'output-.*\\.(txt|rdlog)|state-.*\\.state.json' {path, name, inputs ->
                             execout[name]= copyToTemp()
@@ -535,6 +544,7 @@ class ProjectService implements InitializingBean{
 
         def loadjobresults=[]
         def loadjoberrors=[]
+        def execerrors=[]
         def jobIdMap=[:]
         def jobsByOldId=[:]
         def skipJobIds=[]
@@ -546,7 +556,8 @@ class ProjectService implements InitializingBean{
             def jobset
             jxml.withInputStream {
                 try {
-                    jobset = it.decodeJobsXML()
+                    def reader = new InputStreamReader(it,"UTF-8")
+                    jobset = reader.decodeJobsXML()
                 } catch (JobXMLException e) {
                     log.error("Failed parsing jobs from XML at archive path: ${path}${name}")
                     loadjoberrors << "Job XML file at archive path: ${path}${name} had errors: ${e.message}"
@@ -595,12 +606,12 @@ class ProjectService implements InitializingBean{
         log.info("Loaded ${loadjobresults.size()} jobs")
 
         if(importExecutions){
-            Map execidmap = importExecutionsToProject(execxml, execout, projectName, framework, jobIdMap,skipJobIds)
+            Map execidmap = importExecutionsToProject(execxml, execout, projectName, framework, jobIdMap,skipJobIds,execxmlmap,execerrors)
             //load reports
-            importReportsToProject(reportxml, jobsByOldId, reportxmlnames, execidmap, projectName)
+            importReportsToProject(reportxml, jobsByOldId, reportxmlnames, execidmap, projectName,execerrors)
         }
         (jobxml + execxml + execout.values() + reportxml).each { it.delete() }
-        return [success:loadjoberrors?false:true,joberrors: loadjoberrors]
+        return [success:loadjoberrors?false:true,joberrors: loadjoberrors,execerrors: execerrors]
     }
 
     /**
@@ -611,18 +622,26 @@ class ProjectService implements InitializingBean{
      * @param execidmap
      * @param projectName
      */
-    private void importReportsToProject(ArrayList reportxml, jobsByOldId, reportxmlnames, Map execidmap, projectName) {
+    private void importReportsToProject(ArrayList reportxml, jobsByOldId, reportxmlnames, Map execidmap, projectName,loadjoberrors) {
         def loadedreports = []
         def execids = new ArrayList<Long>(execidmap.values())
         reportxml.each { rxml ->
-            def report = loadHistoryReport(rxml, execidmap, jobsByOldId, reportxmlnames[rxml])
+            def report
+            try {
+                report = loadHistoryReport(rxml, execidmap, jobsByOldId, reportxmlnames[rxml])
+            } catch (ProjectServiceException e) {
+                loadjoberrors<<"[${reportxmlnames[rxml]}] ${e.message}"
+                log.debug("[${reportxmlnames[rxml]}] ${e.message}",e)
+                log.error("[${reportxmlnames[rxml]}] ${e.message}")
+                return
+            }
             if(!report){
-                log.debug("Report skipped: no matching execution imported. (file ${rxml})")
+                log.debug("[${reportxmlnames[rxml]}] Report skipped: no matching execution imported.")
                 return
             }
             report.ctxProject = projectName
             if (!report.save()) {
-                log.error("Unable to save report: ${report.errors} (file ${rxml})")
+                log.error("[${reportxmlnames[rxml]}] Unable to save report: ${report.errors}")
                 return
             }
             execids.remove(Long.parseLong(report.jcExecId))
@@ -651,7 +670,9 @@ class ProjectService implements InitializingBean{
      * @param skipJobIds list of Job IDs to skip execution import
      * @return map from old execution ID to new ID
      */
-    private Map importExecutionsToProject(ArrayList execxml, Map<String, File> execout, projectName, Framework framework, jobIdMap, skipJobIds=[]) {
+    private Map importExecutionsToProject(ArrayList execxml, Map<String, File> execout, projectName,
+                                          Framework framework, jobIdMap, skipJobIds, Map execxmlmap, execerrors = [] )
+    {
         // map from old execution ID to new ID
         def execidmap = [:]
         def oldidtoexec = [:]
@@ -659,18 +680,32 @@ class ProjectService implements InitializingBean{
         def loadexecresults = []
         //load executions, and move/rewrite outputfile names
         execxml.each { File exml ->
-            def results = loadExecutions(exml, jobIdMap,skipJobIds)
+            def results
+            try {
+                results = loadExecutions(exml, jobIdMap,skipJobIds)
+            } catch (ProjectServiceException e) {
+                log.debug("[${execxmlmap[exml]}] ${e.message}",e)
+                execerrors<<"[${execxmlmap[exml]}] ${e.message}"
+                return
+            }
             def execlist = results.executions
             def oldids = results.execidmap
             retryexecs.putAll(results.retryidmap)
             execlist.each { Execution e ->
                 e.project = projectName
+                if (e.orchestrator && !e.orchestrator.save()) {
+                    execerrors<<"[${execxmlmap[exml]}] Unable to save orchestrator for execution: ${e.orchestrator.errors}"
+                    log.error("[${execxmlmap[exml]}] Unable to save orchestrator for execution: ${e.orchestrator.errors}")
+                    return
+                }
                 if (e.workflow && !e.workflow.save()) {
-                    log.error("Unable to save workflow for execution: ${e.workflow.errors} (file ${exml})")
+                    execerrors<<"[${execxmlmap[exml]}] Unable to save workflow for execution: ${e.workflow.errors}"
+                    log.error("[${execxmlmap[exml]}] Unable to save workflow for execution: ${e.workflow.errors}")
                     return
                 }
                 if (!e.save()) {
-                    log.error("Unable to save new execution: ${e.errors} (file ${exml})")
+                    execerrors<<"[${execxmlmap[exml]}] Unable to save new execution: ${e.errors}"
+                    log.error("[${execxmlmap[exml]}] Unable to save new execution: ${e.errors}")
                     return
                 }
                 loadexecresults << e
@@ -688,10 +723,12 @@ class ProjectService implements InitializingBean{
                     try{
                         FileUtils.moveFile(oldfile, newfile)
                     }catch (IOException exc) {
+                        execerrors<<"Failed to move temp log file to destination: ${newfile.absolutePath} (old id ${oldids[e]}): ${exc.message}"
                         log.error("Failed to move temp log file to destination: ${newfile.absolutePath} (old id ${oldids[e]})", exc)
                     }
                     e.outputfilepath = newfile.absolutePath
                 } else {
+                    execerrors<<"New execution ${e.id}, NO matching outfile: ${e.outputfilepath}"
                     log.error("New execution ${e.id}, NO matching outfile: ${e.outputfilepath}")
                 }
 
@@ -704,6 +741,7 @@ class ProjectService implements InitializingBean{
                     try {
                         FileUtils.moveFile(statefile, newfile)
                     } catch (IOException exc) {
+                        execerrors<<"Failed to move temp state file to destination: ${newfile.absolutePath} (old id ${oldids[e]}): ${exc.message}"
                         log.error("Failed to move temp state file to destination: ${newfile.absolutePath} (old id ${oldids[e]})", exc)
                     }
                 }
@@ -716,10 +754,12 @@ class ProjectService implements InitializingBean{
                 if (retryExec) {
                     e.retryExecution = retryExec
                     if (!e.save()) {
-                        log.error("Unable to update execution retry link: ${e.errors} (file ${exml})")
+                        execerrors<<"Unable to update execution retry link: ${e.errors} (Execution ${e.id})"
+                        log.error("Unable to update execution retry link: ${e.errors} (Execution ${e.id})")
                         return
                     }
                 }else{
+                    execerrors<<"Failed to link retry for ${e.id} to ${retryexecs[e]}"
                     log.error("Failed to link retry for ${e.id} to ${retryexecs[e]}")
                 }
             }
@@ -825,7 +865,7 @@ class ArchiveRequestProgress implements ProgressSummary,ProgressListener{
     @Override
     int percent() {
         Double sum=totals.keySet().inject(0){a,k->
-            a + ( counts[k]!=null  ? ( (counts[k]/totals[k]) / totals.size() ) : 0d)
+            a + ( ( totals[k]>0 ? ( (counts[k]!=null?counts[k]:0d)/totals[k] ) : 1d) / totals.size() )
         }
         return Math.floor(100*sum)
     }

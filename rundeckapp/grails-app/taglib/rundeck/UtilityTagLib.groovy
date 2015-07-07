@@ -683,7 +683,7 @@ class UtilityTagLib{
      */
     def plural={attrs,body->
         def singular=attrs.code?g.message(code:attrs.code):attrs.singular?:body()
-        def plural=attrs.code?g.message(code:(attrs.code+'.plural')):attrs.plural?:(singular+'s')
+        def plural=(attrs.code?g.message(code:(attrs.code+'.plural'),default:''):'')?:attrs.plural?:(singular+'s')
         def count=null!=attrs.count?attrs.count:null!=attrs.for?attrs.for.size():0
         def text= count == 1 ? singular.encodeAsHTML() : plural.encodeAsHTML()
         def parts = [count,text]

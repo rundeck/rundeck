@@ -24,7 +24,6 @@ package com.dtolabs.rundeck.core.dispatcher;
 */
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.common.NodeEntryImpl;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
@@ -87,6 +86,21 @@ public class TestDataContextUtils extends AbstractBaseTest {
         junit.textui.TestRunner.run(suite());
     }
 
+
+    public void testReplaceMissingOptionsWithBlankConverter() {
+        assertReplaceMOWB("", "${option.blah}");
+        assertReplaceMOWB("", "${option.blah.blee}");
+        assertReplaceMOWB("", "${option.blah-doodah123}");
+        assertReplaceMOWB("${option.blah} ", "${option.blah} ");
+        assertReplaceMOWB(" ${option.blah}", " ${option.blah}");
+        assertReplaceMOWB("${option.blah", "${option.blah");
+        assertReplaceMOWB("{option.blah}", "{option.blah}");
+        assertReplaceMOWB("${option. blah}", "${option. blah}");
+    }
+
+    private void assertReplaceMOWB(final String expected, final String input) {
+        assertEquals(expected, DataContextUtils.replaceMissingOptionsWithBlank.convert(input));
+    }
 
     public void testResolve(){
 

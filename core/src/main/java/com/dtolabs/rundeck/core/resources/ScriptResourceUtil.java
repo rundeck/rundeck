@@ -79,19 +79,20 @@ class ScriptResourceUtil {
             throw new ResourceModelSourceException("Script execution could not start: " + e.getMessage(), e);
         }
         try {
-            final FileOutputStream fileOutputStream = new FileOutputStream(destinationTempFile);
-            try {
+            exec.getOutputStream().close();
+            try (FileOutputStream fileOutputStream = new FileOutputStream(destinationTempFile)) {
                 errthread = Streams.copyStreamThread(exec.getErrorStream(), System.err);
                 outthread = Streams.copyStreamThread(exec.getInputStream(), fileOutputStream);
                 errthread.start();
                 outthread.start();
-                exec.getOutputStream().close();
                 result = exec.waitFor();
+                System.err.flush();
+                fileOutputStream.flush();
                 errthread.join();
                 outthread.join();
+                exec.getErrorStream().close();
+                exec.getInputStream().close();
                 success = 0 == result;
-            } finally {
-                fileOutputStream.close();
             }
         } catch (InterruptedException e) {
             logger.error("[" + pluginname + "]: " + e.getMessage());
