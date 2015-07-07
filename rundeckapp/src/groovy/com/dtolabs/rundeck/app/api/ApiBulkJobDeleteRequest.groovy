@@ -39,7 +39,6 @@ class ApiBulkJobDeleteRequest {
             def test = val.every{
                 it==~FrameworkResource.VALID_RESOURCE_NAME_REGEX
             }
-            println("test is ${test}")
             if(!test){
                 return false
             }
