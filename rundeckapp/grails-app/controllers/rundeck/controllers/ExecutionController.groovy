@@ -13,7 +13,6 @@ import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
-import org.codehaus.groovy.grails.web.json.JSONArray
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import rundeck.Execution
 import rundeck.PluginStep
@@ -53,7 +52,8 @@ class ExecutionController extends ControllerBase{
             apiExecutionAbort: ['POST','GET'],
             apiExecutionDelete: ['DELETE'],
             apiExecutionDeleteBulk: ['POST'],
-            apiPassiveMode: ['POST'],
+            apiExecutionModePassive: ['POST'],
+            apiExecutionModeActive: ['POST'],
             cancelExecution:'POST'
     ]
 
@@ -1543,14 +1543,57 @@ class ExecutionController extends ControllerBase{
 
 
     /**
-     * Delete bulk API action
+     *
      * @return
      */
-    def apiPassiveMode() {
+    def apiExecutionModeActive() {
+        apiExecutionMode(true)
+    }
+    /**
+     *
+     * @return
+     */
+    def apiExecutionModePassive() {
+        apiExecutionMode(false)
+    }
+    /**
+     *
+     * @return
+     */
+    private def apiExecutionMode(boolean active) {
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V14)) {
             return
         }
-        //TODO:
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+        if (!frameworkService.authorizeApplicationResourceAny(
+                authContext,
+                AuthConstants.RESOURCE_TYPE_SYSTEM,
+                [AuthConstants.ACTION_TOGGLE_ACTIVE, AuthConstants.ACTION_ADMIN]
+            )
+        ) {
+            return apiService.renderErrorFormat(response,
+                                                [
+                                                        status: HttpServletResponse.SC_FORBIDDEN,
+                                                        code: "api.error.item.unauthorized",
+                                                        args: [AuthConstants.ACTION_TOGGLE_ACTIVE, "Rundeck", ''],
+                                                        format: respFormat
+                                                ])
+        }
+        executionService.setExecutionsAreActive(active)
+        withFormat{
+            json {
+                render(contentType: "text/json") {
+                    delegate.success = true
+                    delegate.executionMode=active?'active':'passive'
+                }
+            }
+            xml {
+                apiService.renderSuccessXml {
+                    executionMode(active:active)
+                }
+            }
+        }
     }
 }
 

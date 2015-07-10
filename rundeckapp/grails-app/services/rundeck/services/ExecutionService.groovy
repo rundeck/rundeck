@@ -104,7 +104,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }else{
             log.info("Rundeck changed to ACTIVE: executions can be run.")
         }
-        //TODO: disable scheduler, etc.
+        if(active){
+            scheduledExecutionService.rescheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
+        }else{
+            scheduledExecutionService.unscheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
+        }
     }
 
     /**
