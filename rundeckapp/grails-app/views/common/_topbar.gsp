@@ -151,9 +151,9 @@
         <g:hiddenField name="project" value="${params.project}"/>
         <button type="submit"
                 class="btn btn-default "
-                title="Reactivate executions"
+                title="${message(code:"action.executionMode.set.active.description2")}"
         >
-            Reactivate
+            <g:message code="action.executionMode.set.active.label2" />
         </button>
     </g:form>
     </auth:resourceAllowed>
