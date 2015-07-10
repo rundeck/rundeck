@@ -53,6 +53,7 @@ class ExecutionController extends ControllerBase{
             apiExecutionAbort: ['POST','GET'],
             apiExecutionDelete: ['DELETE'],
             apiExecutionDeleteBulk: ['POST'],
+            apiPassiveMode: ['POST'],
             cancelExecution:'POST'
     ]
 
@@ -1538,6 +1539,18 @@ class ExecutionController extends ControllerBase{
                 return executionService.respondExecutionsJson(request,response,filtered,[total:total,offset:resOffset,max:resMax])
             }
         }
+    }
+
+
+    /**
+     * Delete bulk API action
+     * @return
+     */
+    def apiPassiveMode() {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V14)) {
+            return
+        }
+        //TODO:
     }
 }
 
