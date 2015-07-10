@@ -139,6 +139,26 @@
     </g:if>
 </g:if>
 </ul>
+<g:if test="${session?.user && request.subject }">
+<g:ifExecutionMode passive="true">
+    <p class="navbar-text has_tooltip" title="${g.message(code:'disabled.execution.run')}" data-toggle="tooltip" data-placement="bottom">
+        <i class="glyphicon glyphicon-exclamation-sign"></i>
+        <g:message code="passive.mode" />
+    </p>
+    <auth:resourceAllowed action="${AuthConstants.ACTION_TOGGLE_ACTIVE}"  context="application" kind="system">
+    <g:form class="navbar-form navbar-left" controller="execution" action="executionMode" method="POST" useToken="true">
+        <g:hiddenField name="mode" value="active"/>
+        <g:hiddenField name="project" value="${params.project}"/>
+        <button type="submit"
+                class="btn btn-default "
+                title="Reactivate executions"
+        >
+            Reactivate
+        </button>
+    </g:form>
+    </auth:resourceAllowed>
+</g:ifExecutionMode>
+</g:if>
   <ul class="nav navbar-nav navbar-right">
       <g:ifServletContextAttributeExists attribute="CLUSTER_MODE_ENABLED">
           <g:ifServletContextAttribute attribute="CLUSTER_MODE_ENABLED" value="true">

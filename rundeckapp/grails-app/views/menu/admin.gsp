@@ -60,6 +60,7 @@
 <div class="row">
 <div class="col-sm-3">
     <g:render template="configNav" model="[selected:'project']"/>
+    <g:render template="configExecutionMode"/>
 </div>
 <div class="col-sm-9">
 

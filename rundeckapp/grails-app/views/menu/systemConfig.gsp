@@ -19,6 +19,8 @@
 <div class="row">
     <div class="col-sm-3">
         <g:render template="configNav" model="[selected: 'syscfg']"/>
+
+        <g:render template="configExecutionMode"/>
     </div>
 
     <g:set var="flatConfig" value="${grailsApplication.config.flatten()}"/>

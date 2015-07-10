@@ -320,6 +320,25 @@ class ExecutionController extends ControllerBase{
             return render(view:"mailNotification/status" ,model:  [execstate: state, execution:e, filesize:filesize])
         }
     }
+    def executionMode(){
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        withForm {
+            if (unauthorizedResponse(frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                                      AuthConstants.RESOURCE_TYPE_SYSTEM,
+                                                                                      [AuthConstants.ACTION_TOGGLE_ACTIVE, AuthConstants.ACTION_ADMIN]),
+                                     AuthConstants.ACTION_TOGGLE_ACTIVE,'Rundeck','')) {
+                return
+            }
+            executionService.setExecutionsAreActive(params.mode == 'active')
+            flash.message="Execution mode is now ${params.mode=='active'?'Active':'Passive'}"
+            return redirect(controller: 'menu',action:'admin',params:[project:params.project])
+        }.invalidToken{
+
+            request.error=g.message(code:'request.error.invalidtoken.message')
+            renderErrorView([:])
+        }
+    }
 
 
     def xmlerror={
