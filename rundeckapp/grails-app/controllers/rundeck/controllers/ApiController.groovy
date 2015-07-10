@@ -68,11 +68,13 @@ class ApiController extends ControllerBase{
                 respond()
             }
         }else{
-            render(contentType: 'text/plain'){
-                grailsApplication.config.feature?.incubator?.each{k,v->
-                    out<<"${k}:${v in [true,'true']}\n"
+            response.contentType='text/plain'
+            response.outputStream.withWriter('UTF-8') { w ->
+                grailsApplication.config.feature?.incubator?.each { k, v ->
+                    w << "${k}:${v in [true, 'true']}\n"
                 }
             }
+            response.outputStream.close()
         }
     }
     private renderToken(AuthToken oldtoken){

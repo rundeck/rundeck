@@ -1037,11 +1037,13 @@ class ExecutionController extends ControllerBase{
                 response.addHeader('X-Rundeck-ExecOutput-TotalSize', totsize.toString())
                 response.addHeader('X-Rundeck-ExecOutput-LastLinesSupported', lastlinesSupported.toString())
                 def lineSep = System.getProperty("line.separator")
-                render(contentType:"text/plain"){
+                response.setHeader("Content-Type","text/plain")
+                response.outputStream.withWriter("UTF-8"){w->
                     entry.each{
-                        out<<it.mesg+lineSep
+                        w<<it.mesg+lineSep
                     }
                 }
+                response.outputStream.close()
             }
         }
     }
