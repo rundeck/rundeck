@@ -57,6 +57,7 @@
                                 </span>
                                     <span class="inlinebuttons jobbuttons">
                                         <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_RUN]?.contains(scheduledExecution.id.toString())}">
+                                            <g:ifExecutionMode active="true">
                                             <g:link controller="scheduledExecution"
                                                     action="execute"
                                                     id="${scheduledExecution.extid}"
@@ -68,6 +69,18 @@
                                             >
                                                 <b class="glyphicon glyphicon-play"></b>
                                             </g:link>
+                                            </g:ifExecutionMode>
+                                            <g:ifExecutionMode passive="true">
+                                                <span title="${g.message(code: 'disabled.job.run')}"
+                                                      class="has_tooltip"
+                                                      data-toggle="tooltip"
+                                                      data-placement="auto bottom"
+                                                >%{--Extra span because .disabled will cancel tooltip from showing --}%
+                                                    <span class="btn btn-default btn-xs disabled ">
+                                                        <b class="glyphicon glyphicon-play"></b>
+                                                    </span>
+                                                </span>
+                                            </g:ifExecutionMode>
                                         </g:if>
                                     </span>
 
@@ -105,6 +118,14 @@
                                         <g:relativeDate elapsed="${nextExecution}" untilClass="timeuntil"/>
                                     </span>
                                 </g:if>
+                                <g:elseif test="${scheduledExecution.scheduled && !g.executionMode(is:'active')}">
+                                    <span class="scheduletime disabled has_tooltip" data-toggle="tooltip"
+                                          data-placement="auto left"
+                                          title="${g.message(code: 'disabled.schedule.run')}">
+                                        <i class="glyphicon glyphicon-time"></i>
+                                        <span class="detail"><g:message code="disabled" /></span>
+                                    </span>
+                                </g:elseif>
                                 <g:elseif test="${scheduledExecution.scheduled && !nextExecution}">
                                     <span class="scheduletime willnotrun has_tooltip"
                                           title="${g.message(code: 'job.schedule.will.never.fire')}"

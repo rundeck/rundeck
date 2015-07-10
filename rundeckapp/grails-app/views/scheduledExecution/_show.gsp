@@ -4,29 +4,31 @@
               model="[scheduledExecution: scheduledExecution, followparams: [mode: followmode, lastlines: params.lastlines], jobDescriptionMode:'expanded',jobActionButtons:true]"/>
 </div>
 <g:set var="runAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_RUN)}"/>
+<g:set var="runEnabled" value="${g.executionMode(is:'active')}"/>
+<g:set var="canRunJob" value="${runAccess && runEnabled}"/>
 <div class="row">
     <div class="col-sm-12">
         <ul class="nav nav-tabs">
-            <g:if test="${runAccess}">
+            <g:if test="${canRunJob}">
                 <li class="active"><a href="#runjob" data-toggle="tab"><g:message
                         code="scheduledExecution.show.run.tab.name"/></a></li>
             </g:if>
             <g:else>
                 <li class="disabled">
                     <a href="#"
-                       title="${message(code:'unauthorized.job.run')}"
+                       title="${message(code:!runEnabled?'disabled.job.run':'unauthorized.job.run')}"
                        class="has_tooltip"
                        data-placement="bottom">
                         <g:message code="scheduledExecution.show.run.tab.name"/>
                     </a>
                 </li>
             </g:else>
-            <li class="${runAccess ? '' : 'active'}"><a href="#schedExDetails${enc(attr:scheduledExecution?.id)}"
+            <li class="${canRunJob ? '' : 'active'}"><a href="#schedExDetails${enc(attr:scheduledExecution?.id)}"
                                                         data-toggle="tab"><g:message code="definition"/></a></li>
         </ul>
 
         <div class="tab-content">
-            <g:if test="${runAccess}">
+            <g:if test="${canRunJob}">
                 <div class="tab-pane active" id="runjob">
                     <tmpl:execOptionsForm
                             model="${[scheduledExecution: scheduledExecution, crontab: crontab, authorized: authorized]}"
@@ -36,7 +38,7 @@
                 </div>
             </g:if>
             <div id="schedExDetails${enc(attr:scheduledExecution?.id)}"
-                 class="tab-pane panel panel-default panel-tab-content  ${runAccess ? '' : 'active'}">
+                 class="tab-pane panel panel-default panel-tab-content  ${canRunJob ? '' : 'active'}">
                 <div class="panel-body">
                     <g:render template="showDetail"
                               model="[scheduledExecution: scheduledExecution, showEdit: true, hideOptions: true]"/>

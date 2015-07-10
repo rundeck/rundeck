@@ -28,6 +28,15 @@
                 </g:else>
 
                 </g:if>
+
+                <g:elseif test="${scheduledExecution.scheduled && !g.executionMode(is:'active')}">
+                    <span class="scheduletime disabled has_tooltip" data-toggle="tooltip"
+                          data-placement="auto left"
+                          title="${g.message(code: 'disabled.schedule.run')}">
+                        <i class="glyphicon glyphicon-time"></i>
+                        <span class="detail"><g:message code="disabled.schedule.run" /></span>
+                    </span>
+                </g:elseif>
                 <g:elseif test="${scheduledExecution.scheduled && !nextExecution}">
                     <span class="scheduletime willnotrun">
                         <i class="glyphicon glyphicon-time"></i>

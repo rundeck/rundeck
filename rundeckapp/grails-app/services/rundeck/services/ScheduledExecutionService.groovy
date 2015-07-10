@@ -547,7 +547,8 @@ class ScheduledExecutionService implements ApplicationContextAware{
 
     def scheduleJob(ScheduledExecution se, String oldJobName, String oldGroupName) {
         if(!executionService.executionsAreActive){
-            throw new Exception("Attempt to schedule job ${se}, but executions are disabled.")
+            log.warn("Attempt to schedule job ${se}, but executions are disabled.")
+            return null
         }
         def jobDetail = createJobDetail(se)
         def trigger = createTrigger(se)
