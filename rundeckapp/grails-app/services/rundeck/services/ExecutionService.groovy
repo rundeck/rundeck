@@ -62,7 +62,7 @@ import java.util.regex.Pattern
 /**
  * Coordinates Command executions via Ant Project objects
  */
-class ExecutionService implements ApplicationContextAware, StepExecutor, NodeStepExecutor,InitializingBean{
+class ExecutionService implements ApplicationContextAware, StepExecutor, NodeStepExecutor{
     static Logger executionStatusLogger = Logger.getLogger("org.rundeck.execution.status")
     static transactional = true
     def FrameworkService frameworkService
@@ -86,11 +86,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def jobStateService
     def grailsApplication
     def configurationService
-
-    @Override
-    void afterPropertiesSet() throws Exception {
-
-    }
 
     boolean getExecutionsAreActive(){
         !configurationService.passiveModeEnabled
