@@ -490,6 +490,24 @@ class MenuController extends ControllerBase{
         }
     }
 
+    def executionMode(){
+        def executionModeActive=!configurationService.passiveModeEnabled
+
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def authAction=executionModeActive?AuthConstants.ACTION_DISABLE_EXECUTIONS:AuthConstants.ACTION_ENABLE_EXECUTIONS
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        AuthConstants.RESOURCE_TYPE_SYSTEM,
+                        [authAction, AuthConstants.ACTION_ADMIN]
+                ),
+                authAction, 'for', 'Rundeck')) {
+            return
+        }
+
+
+    }
     def storage={
 //        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 //        if (unauthorizedResponse(

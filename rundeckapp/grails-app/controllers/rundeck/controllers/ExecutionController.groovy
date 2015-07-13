@@ -329,12 +329,17 @@ class ExecutionController extends ControllerBase{
             if (unauthorizedResponse(frameworkService.authorizeApplicationResourceAny(authContext,
                                                                                       AuthConstants.RESOURCE_TYPE_SYSTEM,
                                                                                       [authAction, AuthConstants.ACTION_ADMIN]),
-                                     authAction,'Rundeck','')) {
+
+                                     authAction,'for','Rundeck')) {
                 return
             }
+            if(requestActive == executionService.executionsAreActive){
+                flash.message=g.message(code:'action.executionMode.notchanged.'+(requestActive?'active':'passive')+'.text')
+                return redirect(controller: 'menu',action:'systemConfig',params:[project:params.project])
+            }
             executionService.setExecutionsAreActive(requestActive)
-            flash.message="Execution mode is now ${requestActive?'Active':'Passive'}"
-            return redirect(controller: 'menu',action:'admin',params:[project:params.project])
+            flash.message=g.message(code:'action.executionMode.changed.'+(requestActive?'active':'passive')+'.text')
+            return redirect(controller: 'menu',action:'systemConfig',params:[project:params.project])
         }.invalidToken{
 
             request.error=g.message(code:'request.error.invalidtoken.message')

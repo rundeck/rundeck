@@ -61,3 +61,5 @@
         </g:link>
     </li>
 </ul>
+
+<g:render template="configExecutionMode"/>

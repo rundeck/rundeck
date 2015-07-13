@@ -141,7 +141,11 @@
 </ul>
 <g:if test="${session?.user && request.subject }">
 <g:ifExecutionMode passive="true">
-    <p class="navbar-text has_tooltip text-warning" title="${g.message(code:'disabled.execution.run')}" data-toggle="tooltip" data-placement="bottom">
+    <p class="navbar-text has_tooltip navbar-text-warning"
+       title="${g.message(code:'system.executionMode.description.passive')}"
+       data-toggle="tooltip"
+       data-placement="bottom"
+    >
         <i class="glyphicon glyphicon-exclamation-sign"></i>
         <g:message code="passive.mode" />
     </p>
@@ -149,12 +153,13 @@
     <g:form class="navbar-form navbar-left" controller="execution" action="executionMode" method="POST" useToken="true">
         <g:hiddenField name="mode" value="active"/>
         <g:hiddenField name="project" value="${params.project}"/>
-        <button type="submit"
+        <g:link action="executionMode"
+                controller="menu"
                 class="btn btn-default "
-                title="${message(code:"action.executionMode.set.active.description2")}"
+                title="${message(code:"action.executionMode.set.active.help")}"
         >
-            <g:message code="action.executionMode.set.active.label2" />
-        </button>
+            Change
+        </g:link>
     </g:form>
     </auth:resourceAllowed>
 </g:ifExecutionMode>
