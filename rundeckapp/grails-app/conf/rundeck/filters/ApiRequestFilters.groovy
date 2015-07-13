@@ -53,15 +53,16 @@ public class ApiRequestFilters {
     public static final int V11 = 11
     public static final int V12 = 12
     public static final int V13 = 13
+    public static final int V14 = 14
     public static final Map VersionMap = [:]
-    public static final List Versions = [V1, V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13]
+    public static final List Versions = [V1, V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13,V14]
     static {
         Versions.each { VersionMap[it.toString()] = it }
     }
     public static final Set VersionStrings = new HashSet(VersionMap.values())
 
     public final static int API_EARLIEST_VERSION = V1
-    public final static int API_CURRENT_VERSION = V13
+    public final static int API_CURRENT_VERSION = V14
     public final static int API_MIN_VERSION = API_EARLIEST_VERSION
     public final static int API_MAX_VERSION = API_CURRENT_VERSION
 
@@ -136,14 +137,14 @@ public class ApiRequestFilters {
                     flash.errorCode = 'api.error.api-version.required'
                     AA_TimerFilters.afterRequest(request, response, session)
                     logDetail(request, params.toString(), actionName, controllerName, 'api.error.api-version.required')
-                    apiService.renderErrorXml(response,[code: 'api.error.api-version.required'])
+                    apiService.renderErrorFormat(response,[code: 'api.error.api-version.required'])
                     return false
                 }
                 def unsupported = !(VersionMap.containsKey(params.api_version))
                 if (unsupported) {
                     AA_TimerFilters.afterRequest(request, response, session)
                     logDetail(request, params.toString(), actionName, controllerName, 'api.error.api-version.unsupported')
-                    apiService.renderErrorXml(response,
+                    apiService.renderErrorFormat(response,
                             [
                                     status: HttpServletResponse.SC_BAD_REQUEST,
                                     code: 'api.error.api-version.unsupported',
@@ -173,7 +174,7 @@ public class ApiRequestFilters {
                     splat || (grailsApplication.config?.feature?.incubator?.getAt(it) in ['true', true])
                 }
                 if (feature && !(featurePresent(feature))) {
-                    apiService.renderErrorXml(response,
+                    apiService.renderErrorFormat(response,
                             [
                                     status: HttpServletResponse.SC_NOT_FOUND,
                                     code: 'api.error.invalid.request',

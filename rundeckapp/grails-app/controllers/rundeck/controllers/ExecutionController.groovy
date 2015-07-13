@@ -1092,25 +1092,38 @@ class ExecutionController extends ControllerBase{
     /**
      * API: /api/execution/{id} , version 1
      */
-    def apiExecution={
+    def apiExecution(){
         if (!apiService.requireApi(request, response)) {
             return
         }
         def Execution e = Execution.get(params.id)
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!e) {
-            return apiService.renderErrorXml(response,
+            return apiService.renderErrorFormat(response,
                     [status: HttpServletResponse.SC_NOT_FOUND,code: "api.error.item.doesnotexist", args: ['Execution ID', params.id]])
         } else if (!frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_READ])){
-            return apiService.renderErrorXml(response,
+            return apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_FORBIDDEN,
                             code: "api.error.item.unauthorized",
                             args: [AuthConstants.ACTION_READ, "Execution", params.id]
                     ])
         }
-
-        return executionService.respondExecutionsXml(request,response, [e])
+        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorFormat(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
+        }
+        withFormat{
+            xml{
+                return executionService.respondExecutionsXml(request,response, [e])
+            }
+            json{
+                return executionService.respondExecutionsJson(request,response, [e],[single:true])
+            }
+        }
     }
     /**
      * API: /api/execution/{id}/state , version 10
@@ -1244,21 +1257,21 @@ class ExecutionController extends ControllerBase{
     /**
      * API: /api/execution/{id}/abort, version 1
      */
-    def apiExecutionAbort={
+    def apiExecutionAbort(){
         if (!apiService.requireApi(request, response)) {
             return
         }
         def Execution e = Execution.get(params.id)
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!e) {
-            return apiService.renderErrorXml(response,
+            return apiService.renderErrorFormat(response,
                         [
                                 status: HttpServletResponse.SC_NOT_FOUND,
                                 code: "api.error.item.doesnotexist",
                                 args: ['Execution ID', params.id]
                         ])
         } else if (!frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_KILL])){
-            return apiService.renderErrorXml(response,
+            return apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_FORBIDDEN,
                             code: "api.error.item.unauthorized",
@@ -1278,14 +1291,39 @@ class ExecutionController extends ControllerBase{
         if(abortresult.failedreason){
             reportstate.reason= abortresult.failedreason
         }
-        apiService.renderSuccessXml(request,response) {
-            if (apiService.doWrapXmlResponse(request)) {
-                success {
-                    message("Execution status: ${abortresult.statusStr ? abortresult.statusStr : abortresult.jobstate}")
+
+        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorXml(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
+        }
+        withFormat{
+            xml{
+                apiService.renderSuccessXml(request,response) {
+                    if (apiService.doWrapXmlResponse(request)) {
+                        success {
+                            message("Execution status: ${abortresult.statusStr ? abortresult.statusStr : abortresult.jobstate}")
+                        }
+                    }
+                    abort(reportstate) {
+                        execution(id: params.id, status: abortresult.jobstate,
+                                  href:apiService.apiHrefForExecution(e),
+                                  permalink: apiService.guiHrefForExecution(e))
+                    }
                 }
             }
-            abort(reportstate) {
-                execution(id: params.id, status: abortresult.jobstate)
+            json{
+                apiService.renderSuccessJson(response) {
+                    abort=reportstate
+                    execution=[
+                            id: params.id,
+                            status: abortresult.jobstate,
+                            href:apiService.apiHrefForExecution(e),
+                            permalink: apiService.guiHrefForExecution(e)
+                    ]
+                }
             }
         }
     }
@@ -1403,7 +1441,17 @@ class ExecutionController extends ControllerBase{
 
 
     /**
-     * API: /api/executions query interface, version 5
+     * API: /api/14/project/NAME/executions
+     */
+    def apiExecutionsQueryv14(ExecutionQuery query){
+        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+            return
+        }
+        return apiExecutionsQuery(query)
+    }
+
+    /**
+     * API: /api/5/executions query interface, deprecated since v14
      */
     def apiExecutionsQuery(ExecutionQuery query){
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V5)) {
@@ -1411,7 +1459,7 @@ class ExecutionController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(query?.hasErrors()){
-            return apiService.renderErrorXml(response,
+            return apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_BAD_REQUEST,
                             code: "api.error.parameter.error",
@@ -1419,14 +1467,21 @@ class ExecutionController extends ControllerBase{
                     ])
         }
         if (!params.project) {
-            return apiService.renderErrorXml(response,
+            return apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_BAD_REQUEST,
                             code: "api.error.parameter.required",
                             args: ['project']
                     ])
         }
-        
+
+        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorFormat(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
+        }
         query.projFilter=params.project
         if (null != query) {
             query.configureFilter()
@@ -1438,7 +1493,14 @@ class ExecutionController extends ControllerBase{
                 query.endafterFilter = ReportsController.parseDate(params.begin)
                 query.doendafterFilter = true
             } catch (ParseException e) {
-                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST, code: 'api.error.history.date-format', args: ['begin', params.begin]])
+                return apiService.renderErrorFormat(
+                        response,
+                        [
+                                status: HttpServletResponse.SC_BAD_REQUEST,
+                                code: 'api.error.history.date-format',
+                                args: ['begin', params.begin]
+                        ]
+                )
             }
         }
         if (params.end) {
@@ -1446,7 +1508,14 @@ class ExecutionController extends ControllerBase{
                 query.endbeforeFilter = ReportsController.parseDate(params.end)
                 query.doendbeforeFilter = true
             } catch (ParseException e) {
-                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST, code: 'api.error.history.date-format', args: ['end', params.end]])
+                return apiService.renderErrorFormat(
+                        response,
+                        [
+                                status: HttpServletResponse.SC_BAD_REQUEST,
+                                code: 'api.error.history.date-format',
+                                args: ['end', params.end]
+                        ]
+                )
             }
         }
         def resOffset = params.offset ? params.int('offset') : 0
@@ -1461,8 +1530,14 @@ class ExecutionController extends ControllerBase{
         //filter query results to READ authorized executions
         def filtered = frameworkService.filterAuthorizedProjectExecutionsAll(authContext,result,[AuthConstants.ACTION_READ])
 
-
-        return executionService.respondExecutionsXml(request,response,filtered,[total:total,offset:resOffset,max:resMax])
+        withFormat{
+            xml{
+                return executionService.respondExecutionsXml(request,response,filtered,[total:total,offset:resOffset,max:resMax])
+            }
+            json{
+                return executionService.respondExecutionsJson(request,response,filtered,[total:total,offset:resOffset,max:resMax])
+            }
+        }
     }
 }
 

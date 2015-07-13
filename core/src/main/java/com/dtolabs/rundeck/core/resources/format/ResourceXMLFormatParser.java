@@ -48,8 +48,8 @@ public class ResourceXMLFormatParser implements ResourceFormatParser, Describabl
 
     public static final String SERVICE_PROVIDER_TYPE = "resourcexml";
 
-    public static final Set<String> EXTENSIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("xml")));
-    public static final Set<String> MIME_TYPES = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+    public static final Set<String> EXTENSIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("xml")));
+    public static final Set<String> MIME_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
         "*/xml")));
 
     public Set<String> getFileExtensions() {

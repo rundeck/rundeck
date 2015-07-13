@@ -48,6 +48,7 @@ import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
 import rundeck.controllers.ExecutionController
+import rundeck.filters.ApiRequestFilters
 import rundeck.services.logging.ExecutionLogWriter
 
 import javax.servlet.http.HttpServletRequest
@@ -89,17 +90,45 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
 
     public def respondExecutionsXml(HttpServletRequest request,HttpServletResponse response, List<Execution> executions, paging = [:]) {
+        def apiv14=request.api_version>=ApiRequestFilters.V14
         return apiService.respondExecutionsXml(request,response,executions.collect { Execution e ->
                 def data=[
                         execution: e,
-                        href: getFollowURLForExecution(e),
+                        href: apiv14?apiService.apiHrefForExecution(e):apiService.guiHrefForExecution(e),
+                        status: getExecutionState(e),
+                        summary: summarizeJob(e.scheduledExecution, e)
+                ]
+                if(apiv14){
+                    data.permalink=apiService.guiHrefForExecution(e)
+                }
+                if(e.retryExecution) {
+                    data.retryExecution = [
+                            id    : e.retryExecution.id,
+                            href  : apiv14 ? apiService.apiHrefForExecution(e.retryExecution) :
+                                    apiService.guiHrefForExecution(e.retryExecution),
+                            status: getExecutionState(e.retryExecution),
+                    ]
+                    if (apiv14) {
+                        data.retryExecution.permalink = apiService.guiHrefForExecution(e.retryExecution)
+                    }
+                }
+                data
+            }, paging)
+    }
+    public def respondExecutionsJson(HttpServletRequest request,HttpServletResponse response, List<Execution> executions, paging = [:]) {
+        return apiService.respondExecutionsJson(request,response,executions.collect { Execution e ->
+                def data=[
+                        execution: e,
+                        permalink: apiService.guiHrefForExecution(e),
+                        href: apiService.apiHrefForExecution(e),
                         status: getExecutionState(e),
                         summary: summarizeJob(e.scheduledExecution, e)
                 ]
                 if(e.retryExecution){
                     data.retryExecution=[
                             id:e.retryExecution.id,
-                            href: getFollowURLForExecution(e.retryExecution),
+                            permalink: apiService.guiHrefForExecution(e.retryExecution),
+                            href: apiService.apiHrefForExecution(e.retryExecution),
                             status: getExecutionState(e.retryExecution),
                     ]
                 }
@@ -148,9 +177,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
-    public String getFollowURLForExecution(Execution e) {
-        grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: e.id, absolute: true)
-    }
 
     def listLastExecutionsPerProject(AuthContext authContext, int max=5){
         def projects = frameworkService.projects(authContext).collect{ it.name }

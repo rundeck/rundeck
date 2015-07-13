@@ -10,17 +10,12 @@ proj="test"
 execargs="echo this is a test of /api/run/command"
 
 # now submit req
-runurl="${APIURL}/run/command"
+runurl="${APIURL}/project/$proj/run/command"
 
-echo "TEST: /api/run/command should fail with no project param"
-CURL_REQ_OPTS="-X POST $CURL_REQ_OPTS" sh $SRC_DIR/api-expect-error.sh "${runurl}" "project=" 'parameter "project" is required' && echo "OK" || exit 2
-
-
-echo "TEST: /api/run/command should fail with no exec param"
-params="project=${proj}"
+echo "TEST: $runurl should fail with no exec param"
 CURL_REQ_OPTS="-X POST $CURL_REQ_OPTS" sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" 'parameter "exec" is required' && echo "OK" || exit 2
 
-echo "TEST: /api/run/command should succeed and return execution id"
+echo "TEST: $runurl should succeed and return execution id"
 # make api request
 $CURL -X POST -H "$AUTHHEADER" --data-urlencode "exec=${execargs}" ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then

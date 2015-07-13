@@ -3,6 +3,7 @@
 #test /api/jobs/import
 
 DIR=$(cd `dirname $0` && pwd)
+API_VERSION=13
 source $DIR/include.sh
 
 args="echo hello there"
@@ -42,7 +43,7 @@ cat > $DIR/temp.out <<END
 END
 
 # now submit req
-runurl="${APIURL}/project/$project/jobs/import"
+runurl="${APIURL}/jobs/import"
 
 echo "TEST: import RunDeck Jobs in jobs.xml format (multipart request)"
 

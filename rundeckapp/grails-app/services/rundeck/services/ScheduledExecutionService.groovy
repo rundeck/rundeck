@@ -334,7 +334,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 scheduled==true
                 serverNodeUUID==fromServerUUID
             }.each { ScheduledExecution se ->
-                claimed[se.extid]=claimScheduledJob(se, toServerUUID, fromServerUUID)
+                claimed[se.extid]=[success:claimScheduledJob(se, toServerUUID, fromServerUUID),job:se]
             }
         }
         claimed
@@ -358,7 +358,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
     /**
      * Claim scheduling of jobs from the given fromServerUUID, and return a map identifying successfully claimed jobs
      * @param fromServerUUID server UUID to claim scheduling of jobs from
-     * @return map of job ID to boolean indicating reclaim was successful or not.
+     * @return map of job ID to [success:boolean, job:ScheduledExecution] indicating reclaim was successful or not.
      */
     def reclaimAndScheduleJobs(String fromServerUUID){
         def claimed=claimScheduledJobs(frameworkService.getServerUUID(), fromServerUUID)

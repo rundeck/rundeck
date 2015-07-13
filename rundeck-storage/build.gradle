@@ -28,8 +28,8 @@ project(':rundeck-storage:rundeck-storage-conf') {
 project(':rundeck-storage:rundeck-storage-filesys') {
     dependencies {
         compile project(':rundeck-storage:rundeck-storage-data')
-        compile "com.fasterxml.jackson.core:jackson-core:2.3.1"
-        compile "com.fasterxml.jackson.core:jackson-databind:2.3.1"
+        compile "com.fasterxml.jackson.core:jackson-core:2.5.3"
+        compile "com.fasterxml.jackson.core:jackson-databind:2.5.3"
     }
 }
 

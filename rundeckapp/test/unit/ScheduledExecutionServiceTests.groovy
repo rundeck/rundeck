@@ -317,7 +317,7 @@ public class ScheduledExecutionServiceTests {
 
         def resultMap = testService.claimScheduledJobs(serverUUID)
 
-        assertTrue(resultMap[job1.extid])
+        assertTrue(resultMap[job1.extid].success)
         assertEquals(null, resultMap[job2.extid])
         assertEquals(null, resultMap[job3.extid])
         ScheduledExecution.withSession {session->
@@ -364,7 +364,7 @@ public class ScheduledExecutionServiceTests {
         assertEquals(null, job3.serverNodeUUID)
 
         assertEquals(null, resultMap[job1.extid])
-        assertTrue(resultMap[job2.extid])
+        assertTrue(resultMap[job2.extid].success)
         assertEquals(null, resultMap[job3.extid])
     }
 

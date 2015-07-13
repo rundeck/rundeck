@@ -862,12 +862,12 @@ class MenuController extends ControllerBase{
     /**
      * API: /api/jobs, version 1
      */
-    def apiJobsList = {ScheduledExecutionQuery query ->
+    def apiJobsList (ScheduledExecutionQuery query){
         if (!apiService.requireApi(request, response)) {
             return
         }
         if(!params.project){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
 
         }
@@ -877,7 +877,7 @@ class MenuController extends ControllerBase{
 
         def exists=frameworkService.existsFrameworkProject(params.project)
         if(!exists){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
 
         }
@@ -887,16 +887,42 @@ class MenuController extends ControllerBase{
                 return
             }
         }
-        def results = jobsFragment(query)
 
-        return apiService.renderSuccessXml(request,response){
-            delegate.'jobs'(count:results.nextScheduled.size()){
-                results.nextScheduled.each{ ScheduledExecution se->
-                    job(id:se.extid){
-                        name(se.jobName)
-                        group(se.groupPath)
-                        project(se.project)
-                        description(se.description)
+        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorFormat(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
+        }
+        def results = jobsFragment(query)
+        withFormat{
+            xml {
+                return apiService.renderSuccessXml(request, response) {
+                    delegate.'jobs'(count: results.nextScheduled.size()) {
+                        results.nextScheduled.each { ScheduledExecution se ->
+                            job(id: se.extid, href:apiService.apiHrefForJob(se),permalink:apiService.guiHrefForJob(se)) {
+                                name(se.jobName)
+                                group(se.groupPath)
+                                project(se.project)
+                                description(se.description)
+                            }
+                        }
+                    }
+                }
+            }
+            json{
+                return apiService.renderSuccessJson(response) {
+                    results.nextScheduled.each { ScheduledExecution se ->
+                        element(
+                                id: se.extid,
+                                name: (se.jobName),
+                                group: (se.groupPath),
+                                project: (se.project),
+                                description: (se.description),
+                                href: apiService.apiHrefForJob(se),
+                                permalink: apiService.guiHrefForJob(se)
+                        )
                     }
                 }
             }
@@ -905,7 +931,7 @@ class MenuController extends ControllerBase{
     /**
      * API: /api/2/project/NAME/jobs, version 2
      */
-    def apiJobsListv2 = {ScheduledExecutionQuery query ->
+    def apiJobsListv2 (ScheduledExecutionQuery query) {
         if(!apiService.requireVersion(request,response,ApiRequestFilters.V2)){
             return
         }
@@ -913,9 +939,18 @@ class MenuController extends ControllerBase{
     }
 
     /**
-     * API: /jobs/export, version 1
+     * API: /api/14/project/NAME/jobs/export
      */
-    def apiJobsExport = {ScheduledExecutionQuery query ->
+    def apiJobsExportv14 (ScheduledExecutionQuery query){
+        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+            return
+        }
+        return apiJobsExport(query)
+    }
+    /**
+     * API: /jobs/export, version 1, deprecated since v14
+     */
+    def apiJobsExport (ScheduledExecutionQuery query){
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -950,14 +985,24 @@ class MenuController extends ControllerBase{
     }
 
     /**
+     * API: /project/PROJECT/executions/running, version 14
+     */
+    def apiExecutionsRunningv14 (){
+        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+            return
+        }
+        return apiExecutionsRunning()
+    }
+
+    /**
      * API: /executions/running, version 1
      */
-    def apiExecutionsRunning = {
+    def apiExecutionsRunning (){
         if (!apiService.requireApi(request, response)) {
             return
         }
         if(!params.project){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
         }
         //test valid project
@@ -967,9 +1012,16 @@ class MenuController extends ControllerBase{
         def allProjects = request.api_version >= ApiRequestFilters.V9 && params.project == '*'
         if(!allProjects){
             if(!frameworkService.existsFrameworkProject(params.project)){
-                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
                         code: 'api.error.parameter.doesnotexist', args: ['project',params.project]])
             }
+        }
+        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorXml(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
         }
 
         QueueQuery query = new QueueQuery(runningFilter:'running',projFilter:params.project)
@@ -980,7 +1032,34 @@ class MenuController extends ControllerBase{
             query.offset=params.int('offset')
         }
         def results = nowrunning(query)
-        return executionService.respondExecutionsXml(request,response,results.nowrunning,[total:results.total,offset:results.offset,max:results.max])
+
+        withFormat{
+            xml {
+                return executionService.respondExecutionsXml(
+                        request,
+                        response,
+                        results.nowrunning,
+                        [
+                                total: results.total,
+                                offset: results.offset,
+                                max: results.max
+                        ]
+                )
+            }
+            json {
+                return executionService.respondExecutionsJson(
+                        request,
+                        response,
+                        results.nowrunning,
+                        [
+                                total: results.total,
+                                offset: results.offset,
+                                max: results.max
+                        ]
+                )
+            }
+        }
+
     }
 }
 

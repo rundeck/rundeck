@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 #test output from /api/executions?queryparams
 
 DIR=$(cd `dirname $0` && pwd)
@@ -45,7 +46,7 @@ uploadJob(){
     file=$1;shift
 
     # now submit req
-    runurl="${APIURL}/jobs/import"
+    runurl="${APIURL}/project/$proj/jobs/import"
 
     params="dupeOption=update"
 
