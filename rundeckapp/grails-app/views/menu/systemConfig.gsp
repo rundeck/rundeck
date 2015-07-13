@@ -17,8 +17,14 @@
 
 <body>
 <div class="row">
+    <div class="col-sm-12">
+        <g:render template="/common/messages"/>
+    </div>
+</div>
+<div class="row">
     <div class="col-sm-3">
         <g:render template="configNav" model="[selected: 'syscfg']"/>
+
     </div>
 
     <g:set var="flatConfig" value="${grailsApplication.config.flatten()}"/>

@@ -4,7 +4,7 @@
 # Configuration layout
 
 Configuration file layout differs between the RPM and Launcher
-installation methods. 
+installation methods.
 
 ## RPM layout
 
@@ -48,7 +48,7 @@ The purpose of each configuration file is described in its own section.
 Administrator access control policy defined with a [aclpolicy]
 document.
 
-This file governs the access for the "admin" group and role. 
+This file governs the access for the "admin" group and role.
 
 See [role based access control](access-control-policy.html) for information about setting up policy files for other user groups.
 
@@ -95,7 +95,7 @@ The token_strings can be used as Authentication tokens to the [API](../api/index
 ## log4j.properties
 
 Rundeck uses [log4j] as its application logging facility. This file
-defines the logging configuration for the Rundeck server. 
+defines the logging configuration for the Rundeck server.
 
 [log4j]: http://logging.apache.org/log4j/
 
@@ -107,7 +107,7 @@ tools like umask, Java home and classpath, and SSL options.
 
 ## project.properties
 
-Rundeck project configuration file when using Filsystem based project defintions (see [Project Setup - Project Definitions](project-setup.html#project-definitions)). 
+Rundeck project configuration file when using Filsystem based project defintions (see [Project Setup - Project Definitions](project-setup.html#project-definitions)).
 
 One of these is
 generated at project setup time. Each project has a directory within the Rundeck projects directory, and the config file is within the `etc` subdirectory:
@@ -170,12 +170,6 @@ specifies the use of the PropertyFileLoginModule:
 Property file user directory when PropertyFileLoginModule is
 used. Specified from [jaas-loginmodule.conf](#jaas-loginmodule.conf).
 
-## rundeck-config.properties
-
-The primary Rundeck webapp configuration file. Defines default
-loglevel, datasource configuration, and
-[GUI customization](gui-customization.html).
-
 ## Session timeout
 
 Edit the web.xml to modify session-timout from 30 to 90 minutes:
@@ -196,16 +190,23 @@ diff /var/lib/rundeck/exp/webapp/WEB-INF/web.xml web.xml
 > <session-timeout>90</session-timeout>
 ~~~~
 
+## rundeck-config.properties
+
+This is the primary Rundeck webapp configuration file. Defines default
+loglevel, datasource configuration, and
+[GUI customization](gui-customization.html).
+
+The following sections describe configuration values for this file.
 
 ### Security
 
 * `rundeck.security.useHMacRequestTokens` : `true/false`.  Default: `true`.
-   Switches between HMac based request tokens, and the default grails UUID 
-   tokens.  HMac tokens have a timeout, which may cause submitted forms or 
+   Switches between HMac based request tokens, and the default grails UUID
+   tokens.  HMac tokens have a timeout, which may cause submitted forms or
    actions to fail with a message like "Token has expired".  
    If set to false, UUIDs will be used instead of HMac tokens,
    and they have no timeouts.
-   The default timeout for tokens can be changed with the 
+   The default timeout for tokens can be changed with the
    `-Dorg.rundeck.web.infosec.HMacSynchronizerTokensHolder.DEFAULT_DURATION=[timeout in ms]`.
 
 * `rundeck.security.apiCookieAccess.enabled`: `true/false`. Default: `true`.  
@@ -214,12 +215,24 @@ diff /var/lib/rundeck/exp/webapp/WEB-INF/web.xml web.xml
     set to `false`, the current CLI tools and API libraries will not operate
     correctly if they use username and password login.
 
+### Execution Mode
+
+* `rundeck.executionMode`:`active/passive`. Default `active`. Set the Execution
+  Mode for the Rundeck server.
+
+Rundeck can be in `active` or `passive` execution mode.
+
+* `active` mode: Jobs, scheduled Jobs, and adhoc executions can be run.
+* `passive` mode: No Jobs or adhoc executions can be run.
+
+Setting Rundeck to `passive` mode prevents users from running anything on the
+system and is useful when managing Rundeck server clusters.
 
 ### Project Configuration Storage settings
 
 The [Project Setup - Project Definitions](project-setup.html#project-definitions) mechanism is configured within this file, see:
 
-* [Configuring Storage Plugins][] 
+* [Configuring Storage Plugins][]
 * [Configuring Storage Converter Plugins][]
 
 [Configuring Storage Plugins]: ssh-key-storage.html#configuring-storage-plugins
@@ -229,7 +242,7 @@ The [Project Setup - Project Definitions](project-setup.html#project-definitions
 
 The [SSH Key storage](ssh-key-storage.html) mechanism is configured within this file, see:
 
-* [Configuring Storage Plugins][] 
+* [Configuring Storage Plugins][]
 * [Configuring Storage Converter Plugins][]
 
 [Configuring Storage Plugins]: ssh-key-storage.html#configuring-storage-plugins
@@ -245,7 +258,7 @@ See [Email Settings: Custom Email Templates](email-settings.html#custom-email-te
 
 ### Execution finalize retry settings
 
-If a sporadic DB connection failure happens when an execution finishes, Rundeck may fail to update the state of the execution in the database, causing the execution to appear is if it is still "running". 
+If a sporadic DB connection failure happens when an execution finishes, Rundeck may fail to update the state of the execution in the database, causing the execution to appear is if it is still "running".
 
 Rundeck now attempts to retry the update to correctly register the final state of the execution.  You can tune how many times and how often this retry occurs with these config values:
 
@@ -264,9 +277,9 @@ Delay is in milliseconds. If a max is set to `-1`, then retries will happen inde
 Rundeck includes the [Metrics](http://metrics.codahale.com) servlets.  You can selectively disable these by setting these config values:
 
 `rundeck.web.metrics.servlets.[name].enabled=true/false`
-    
+
 Servlet names are:
-    
+
 * `metrics`
 * `threads`
 * `ping`
@@ -324,6 +337,3 @@ Launcher:
     java -jar -Drundeck.config.name=rundeck-config.groovy rundeck-launcher.jar
 
 RPM/DEB: Modify the RDECK_JVM variable in /etc/rundeck/profile, and set the "-Drundeck.config.name=/etc/rundeck/rundeck-config.groovy" entry to point to the correct file.
-
-
-

@@ -19,6 +19,7 @@ class ApiController extends ControllerBase{
     def frameworkService
     def apiService
     def userService
+    def configurationService
 
     def invalid = {
         return apiService.renderErrorXml(response,[code:'api.error.invalid.request',args:[request.forwardURI],status:HttpServletResponse.SC_NOT_FOUND])
@@ -249,6 +250,7 @@ class ApiController extends ControllerBase{
         long durationTime=ManagementFactory.getRuntimeMXBean().uptime
         Date startupDate = new Date(nowDate.getTime()-durationTime)
         int threadActiveCount=Thread.activeCount()
+        boolean executionModeActive=configurationService.executionModeActive
         def metricsJsonUrl = createLink(uri: '/metrics/metrics?pretty=true',absolute: true)
         def metricsThreadDumpUrl = createLink(uri: '/metrics/threads',absolute: true)
         if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
@@ -278,6 +280,7 @@ class ApiController extends ControllerBase{
                             apiversion(ApiRequestFilters.API_CURRENT_VERSION)
                             serverUUID(sUUID)
                         }
+                        executions(active:executionModeActive,executionMode:executionModeActive?'active':'passive')
                         os {
                             arch(osArch)
                             name(osName)
@@ -335,6 +338,10 @@ class ApiController extends ControllerBase{
                             base=(servletContext.getAttribute("RDECK_BASE"))
                             apiversion=(ApiRequestFilters.API_CURRENT_VERSION)
                             serverUUID=(sUUID)
+                        }
+                        executions={
+                            active=executionModeActive
+                            executionMode=executionModeActive?'active':'passive'
                         }
                         os= {
                             arch=(osArch)

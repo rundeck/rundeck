@@ -690,6 +690,9 @@ section{
   .glyphicon{
     color:@brand-success;
   }
+  &.disabled .glyphicon, &.disabled .detail{
+    color:@text-muted;
+  }
   &.willnotrun .glyphicon, &.willnotrun .detail{
     color:@brand-warning;
   }
@@ -1546,5 +1549,15 @@ pre.filtererror{
   }
   &:after{
     content:'" ';
+  }
+}
+
+/////
+//navbar-text variations
+.navbar-default {
+  .navbar-text {
+    &.navbar-text-warning {
+      .text-warning();
+    }
   }
 }

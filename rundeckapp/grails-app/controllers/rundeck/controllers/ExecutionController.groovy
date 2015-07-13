@@ -13,7 +13,6 @@ import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
-import org.codehaus.groovy.grails.web.json.JSONArray
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import rundeck.Execution
 import rundeck.PluginStep
@@ -53,6 +52,8 @@ class ExecutionController extends ControllerBase{
             apiExecutionAbort: ['POST','GET'],
             apiExecutionDelete: ['DELETE'],
             apiExecutionDeleteBulk: ['POST'],
+            apiExecutionModePassive: ['POST'],
+            apiExecutionModeActive: ['POST'],
             cancelExecution:'POST'
     ]
 
@@ -317,6 +318,32 @@ class ExecutionController extends ControllerBase{
             return render(view:"mailNotification/status" ,model: [execstate: state, scheduledExecution: se, execution:e, filesize:filesize])
         }else{
             return render(view:"mailNotification/status" ,model:  [execstate: state, execution:e, filesize:filesize])
+        }
+    }
+    def executionMode(){
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        withForm {
+            def requestActive=params.mode == 'active'
+            def authAction=requestActive?AuthConstants.ACTION_ENABLE_EXECUTIONS:AuthConstants.ACTION_DISABLE_EXECUTIONS
+            if (unauthorizedResponse(frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                                      AuthConstants.RESOURCE_TYPE_SYSTEM,
+                                                                                      [authAction, AuthConstants.ACTION_ADMIN]),
+
+                                     authAction,'for','Rundeck')) {
+                return
+            }
+            if(requestActive == executionService.executionsAreActive){
+                flash.message=g.message(code:'action.executionMode.notchanged.'+(requestActive?'active':'passive')+'.text')
+                return redirect(controller: 'menu',action:'systemConfig',params:[project:params.project])
+            }
+            executionService.setExecutionsAreActive(requestActive)
+            flash.message=g.message(code:'action.executionMode.changed.'+(requestActive?'active':'passive')+'.text')
+            return redirect(controller: 'menu',action:'systemConfig',params:[project:params.project])
+        }.invalidToken{
+
+            request.error=g.message(code:'request.error.invalidtoken.message')
+            renderErrorView([:])
         }
     }
 
@@ -1536,6 +1563,63 @@ class ExecutionController extends ControllerBase{
             }
             json{
                 return executionService.respondExecutionsJson(request,response,filtered,[total:total,offset:resOffset,max:resMax])
+            }
+        }
+    }
+
+
+    /**
+     *
+     * @return
+     */
+    def apiExecutionModeActive() {
+        apiExecutionMode(true)
+    }
+    /**
+     *
+     * @return
+     */
+    def apiExecutionModePassive() {
+        apiExecutionMode(false)
+    }
+    /**
+     *
+     * @return
+     */
+    private def apiExecutionMode(boolean active) {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V14)) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+
+        def authAction = active?AuthConstants.ACTION_ENABLE_EXECUTIONS:AuthConstants.ACTION_DISABLE_EXECUTIONS
+        if (!frameworkService.authorizeApplicationResourceAny(
+                authContext,
+                AuthConstants.RESOURCE_TYPE_SYSTEM,
+                [authAction, AuthConstants.ACTION_ADMIN]
+            )
+        ) {
+            return apiService.renderErrorFormat(response,
+                                                [
+                                                        status: HttpServletResponse.SC_FORBIDDEN,
+                                                        code: "api.error.item.unauthorized",
+                                                        args: [authAction, "Rundeck", ''],
+                                                        format: respFormat
+                                                ])
+        }
+        executionService.setExecutionsAreActive(active)
+        withFormat{
+            json {
+                render(contentType: "text/json") {
+                    delegate.executionMode=active?'active':'passive'
+                    delegate.active=active
+                }
+            }
+            xml {
+                apiService.renderSuccessXml {
+                    delegate.'executions'(active:active,executionMode:active?'active':'passive')
+                }
             }
         }
     }

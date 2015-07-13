@@ -67,11 +67,11 @@
                                     <tbody>
                                     <th colspan="2"><g:enc>${dataname}</g:enc></th>
                                     <g:each
-                                        in="${dataset[dataname].keySet().sort().grep{!it.endsWith('.unit') && !it.endsWith('.info')}}"
+                                        in="${dataset[dataname].keySet().sort().grep{!it.endsWith('.unit') && !it.endsWith('.info')&& !it.endsWith('.status')}}"
                                         var="valuename">
                                         <tr>
                                             <td title="${enc(attr:dataset[dataname][valuename + '.info'] ?: '')}"><g:enc>${valuename}</g:enc></td>
-                                            <td class="${valuename=='serverUUID'?'rundeck-server-uuid':''}" data-server-uuid="${ valuename=='serverUUID'? dataset[dataname][valuename]:''}">
+                                            <td class="${valuename=='serverUUID'?'rundeck-server-uuid':''} ${dataset[dataname][valuename+'.status']?'text-'+dataset[dataname][valuename+'.status']:''}" data-server-uuid="${ valuename=='serverUUID'? dataset[dataname][valuename]:''}">
 
                                                 <g:if test="${dataset[dataname][valuename+'.unit']=='ratio'}">
                                                     <g:render template="/common/progressBar"

@@ -340,6 +340,20 @@ class ScheduledExecutionService implements ApplicationContextAware{
         claimed
     }
     /**
+     * Remove all scheduling for job executions, triggered when passive mode is enabled
+     * @param serverUUID
+     */
+    def unscheduleJobs(String serverUUID=null){
+        def schedJobs = serverUUID ? ScheduledExecution.findAllByScheduledAndServerNodeUUID(true, serverUUID) : ScheduledExecution.findAllByScheduled(true)
+        schedJobs.each { ScheduledExecution se ->
+            def jobname = se.generateJobScheduledName()
+            def groupname = se.generateJobGroupName()
+
+            quartzScheduler.deleteJob(new JobKey(jobname,groupname))
+            log.info("Unscheduled job: ${se.id}")
+        }
+    }
+    /**
      * Reschedule all scheduled jobs which match the given serverUUID, or all jobs if it is null.
      * @param serverUUID
      * @return
@@ -532,7 +546,10 @@ class ScheduledExecutionService implements ApplicationContextAware{
     }
 
     def scheduleJob(ScheduledExecution se, String oldJobName, String oldGroupName) {
-        
+        if(!executionService.executionsAreActive){
+            log.warn("Attempt to schedule job ${se}, but executions are disabled.")
+            return null
+        }
         def jobDetail = createJobDetail(se)
         def trigger = createTrigger(se)
         jobDetail.getJobDataMap().put("bySchedule", true)
@@ -635,7 +652,11 @@ class ScheduledExecutionService implements ApplicationContextAware{
     /**
      * Schedule a temp job to execute immediately.
      */
-    def long scheduleTempJob(AuthContext authContext, Execution e) {
+    def Map scheduleTempJob(AuthContext authContext, Execution e) {
+        if(!executionService.getExecutionsAreActive()){
+            def msg=g.message(code:'disabled.execution.run')
+            return [success:false,failed:true,error:'disabled',message:msg]
+        }
         def ident = getJobIdent(null, e);
         def jobDetail = JobBuilder.newJob(ExecutionJob)
                 .withIdentity(ident.jobname, ident.groupname)
@@ -662,7 +683,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         } catch (Exception exc) {
             throw new RuntimeException("caught exception while adding job: " + exc.getMessage(), exc)
         }
-        return e.id
+        return [success:true,execution:e,id:e.id]
     }
 
     def JobDetail createJobDetail(ScheduledExecution se) {

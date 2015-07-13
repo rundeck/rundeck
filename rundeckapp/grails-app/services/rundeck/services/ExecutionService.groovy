@@ -40,6 +40,7 @@ import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import org.hibernate.StaleObjectStateException
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
@@ -84,6 +85,26 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     MessageSource messageSource
     def jobStateService
     def grailsApplication
+    def configurationService
+
+    boolean getExecutionsAreActive(){
+        configurationService.executionModeActive
+    }
+
+    void setExecutionsAreActive(boolean active){
+        configurationService.executionModeActive=active
+
+        if(!active){
+            log.info("Rundeck changed to PASSIVE mode: No executions can be run.")
+        }else{
+            log.info("Rundeck changed to ACTIVE: executions can be run.")
+        }
+        if(active){
+            scheduledExecutionService.rescheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
+        }else{
+            scheduledExecutionService.unscheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
+        }
+    }
 
     /**
      * Render execution document for api response
@@ -1431,6 +1452,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
                 scheduledExecution.project)) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
+        }
+        if(!getExecutionsAreActive()){
+            return [success:false,failed:true,error:'disabled',message:lookupMessage('disabled.execution.run',null)]
         }
         input.retryAttempt = attempt
         try {

@@ -1627,6 +1627,11 @@ class ScheduledExecutionController  extends ControllerBase{
             def msg=g.message(code:'unauthorized.job.run.user',args:[params.user])
             return [success:false,error:'unauthorized',message:msg]
         }
+
+        if(!executionService.executionsAreActive){
+            def msg=g.message(code:'disabled.execution.run')
+            return [success:false,failed:true,error:'disabled',message:msg]
+        }
         params.workflow=new Workflow(scheduledExecution.workflow)
         params.argString=scheduledExecution.argString
         params.doNodedispatch=scheduledExecution.doNodedispatch
@@ -1639,8 +1644,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return [success:false,error:'failed',message:exc.getMessage()]
         }
 
-        def eid = scheduledExecutionService.scheduleTempJob(authContext, e);
-        return [success:true,execution:e,id:eid]
+        return scheduledExecutionService.scheduleTempJob(authContext, e);
     }
 
 
@@ -2142,6 +2146,10 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
             scheduledExecution.project)) {
             return [success:false,failed:true,error:'unauthorized',message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
+        }
+        if(!executionService.executionsAreActive){
+            def msg=g.message(code:'disabled.execution.run')
+            return [success:false,failed:true,error:'disabled',message: msg]
         }
         if(params.extra?.debug=='true'){
             params.extra.loglevel='DEBUG'
