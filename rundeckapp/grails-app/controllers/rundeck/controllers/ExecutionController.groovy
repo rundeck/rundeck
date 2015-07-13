@@ -324,14 +324,16 @@ class ExecutionController extends ControllerBase{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         withForm {
+            def requestActive=params.mode == 'active'
+            def authAction=requestActive?AuthConstants.ACTION_ENABLE_EXECUTIONS:AuthConstants.ACTION_DISABLE_EXECUTIONS
             if (unauthorizedResponse(frameworkService.authorizeApplicationResourceAny(authContext,
                                                                                       AuthConstants.RESOURCE_TYPE_SYSTEM,
-                                                                                      [AuthConstants.ACTION_TOGGLE_ACTIVE, AuthConstants.ACTION_ADMIN]),
-                                     AuthConstants.ACTION_TOGGLE_ACTIVE,'Rundeck','')) {
+                                                                                      [authAction, AuthConstants.ACTION_ADMIN]),
+                                     authAction,'Rundeck','')) {
                 return
             }
-            executionService.setExecutionsAreActive(params.mode == 'active')
-            flash.message="Execution mode is now ${params.mode=='active'?'Active':'Passive'}"
+            executionService.setExecutionsAreActive(requestActive)
+            flash.message="Execution mode is now ${requestActive?'Active':'Passive'}"
             return redirect(controller: 'menu',action:'admin',params:[project:params.project])
         }.invalidToken{
 
@@ -1585,17 +1587,19 @@ class ExecutionController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+
+        def authAction = active?AuthConstants.ACTION_ENABLE_EXECUTIONS:AuthConstants.ACTION_DISABLE_EXECUTIONS
         if (!frameworkService.authorizeApplicationResourceAny(
                 authContext,
                 AuthConstants.RESOURCE_TYPE_SYSTEM,
-                [AuthConstants.ACTION_TOGGLE_ACTIVE, AuthConstants.ACTION_ADMIN]
+                [authAction, AuthConstants.ACTION_ADMIN]
             )
         ) {
             return apiService.renderErrorFormat(response,
                                                 [
                                                         status: HttpServletResponse.SC_FORBIDDEN,
                                                         code: "api.error.item.unauthorized",
-                                                        args: [AuthConstants.ACTION_TOGGLE_ACTIVE, "Rundeck", ''],
+                                                        args: [authAction, "Rundeck", ''],
                                                         format: respFormat
                                                 ])
         }

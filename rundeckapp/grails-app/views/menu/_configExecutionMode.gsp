@@ -20,8 +20,8 @@
             </p>
         </g:ifExecutionMode>
     </div>
-
-    <auth:resourceAllowed action="${AuthConstants.ACTION_TOGGLE_ACTIVE}" context="application" kind="system">
+    <g:set var="authAction" value="${g.executionMode(active:true)?AuthConstants.ACTION_DISABLE_EXECUTIONS:AuthConstants.ACTION_ENABLE_EXECUTIONS}"/>
+    <auth:resourceAllowed action="${[authAction,AuthConstants.ACTION_ADMIN]}" any="true" context="application" kind="system">
         <g:ifExecutionMode active="true">
             <button type="submit"
                     class="btn btn-warning "
