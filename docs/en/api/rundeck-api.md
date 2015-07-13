@@ -115,7 +115,7 @@ Changes introduced by API Version number:
     - [`/api/14/incubator/jobs/takeoverSchedule`][/api/V/incubator/jobs/takeoverSchedule] - added API/GUI href/permalink to XML responses for adhoc command/script/url. Note: `href` was modified as mentioned below.
     - [`/api/14/system/info`][/api/V/system/info] - added information about Rundeck Execution Mode
 * Modified `href` meaning for XML responses:
-    * Some endpoints that included a `href` value in XML responses used the link that was appropriate 
+    * Some endpoints that included a `href` value in XML responses used the link that was appropriate
     for an end user to use in a web browser,
     essentially the permalink to the GUI view for the linked object.
     When using API v14, these URLs now point to the API,
@@ -995,7 +995,7 @@ One of the following:
 
 * `Content-Type: x-www-form-urlencoded`, with a `xmlBatch` request parameter containing the input content
 * `Content-Type: multipart/form-data` multipart MIME request part named `xmlBatch` containing the content.
-* `Content-Type: application/xml`, request body is the Jobs XML formatted job definition (**since API v14**) 
+* `Content-Type: application/xml`, request body is the Jobs XML formatted job definition (**since API v14**)
 * `Content-Type: application/yaml`, request body is the Jobs YAML formatted job definition (**since API v14**)
 
 Optional parameters:
@@ -1213,7 +1213,7 @@ Optional Query Parameters:
     * `max`: indicate the maximum number of results to return. If unspecified, all results will be returned.
     * `offset`: indicate the 0-indexed offset for the first result to return.
 
-**Response:** 
+**Response:**
 
 An Item List of `executions`.  See [Listing Running Executions](#listing-running-executions).
 
@@ -1225,7 +1225,7 @@ Delete all executions for a Job.
 
     DELETE /api/12/job/[ID]/executions
 
-**Response:** 
+**Response:**
 
 The same format as [Bulk Delete Executions](#bulk-delete-executions).
 
@@ -1389,7 +1389,7 @@ The `job` section contains `options` if an `argstring` value is set (**API v10 a
 * `name` the parsed option name
 * `value` the parsed option value
 
-**Since API v13**: The `serverUUID` will indicate the server UUID 
+**Since API v13**: The `serverUUID` will indicate the server UUID
 if executed in cluster mode.
 
 ### Execution Info
@@ -1455,7 +1455,7 @@ Delete an execution by ID.
 
     DELETE /api/12/execution/[ID]
 
-**Response:** 
+**Response:**
 
 `204 No Content`
 
@@ -2158,7 +2158,7 @@ Get the metadata associated with workflow step state changes along with the log 
 
 This API endpoint provides the sequential log of state changes for steps and nodes, optionally interleaved with the actual log output.
 
-**Response:** 
+**Response:**
 
 The output format is the same as [Execution Output](#execution-output), with this change:
 
@@ -2413,7 +2413,7 @@ new execution by ID:
 
 ## Key Storage ###
 
-Upload and manage public and private key files and passwords. 
+Upload and manage public and private key files and passwords.
 For more information see the [Administration - Key Storage](../administration/key-storage.html) document.
 
 Keys are stored via Rundeck's *Storage* facility.  This is a path-based interface to manage files.  The underlying storage may be on disk or in a database.
@@ -2992,7 +2992,7 @@ Example POST request:
 
 ### Refreshing Resources for a Project
 
-**DEPRECATED** 
+**DEPRECATED**
 
 Refresh the resources for a project via its Resource Model Provider URL. The URL can be
 specified as a request parameter, or the pre-configured URL for the project
@@ -3031,12 +3031,12 @@ Multiple regexes can be specified in those config files by adding multiple prope
 
 ### Project Readme File
 
-The `readme.md` and `motd.md` files, 
-which are Markdown formatted and displayed in the Project listing page, 
+The `readme.md` and `motd.md` files,
+which are Markdown formatted and displayed in the Project listing page,
 can be managed via the API. (See [Project Readme.md](http://rundeck.org/docs/administration/project-setup.html#project-readme.md).)
 
-**Request:** 
-    
+**Request:**
+
     /api/13/project/[PROJECT]/readme.md
     /api/13/project/[PROJECT]/motd.md
 
@@ -3299,7 +3299,7 @@ The result will contain a single item for the specified resource.
 
 Tell a Rundeck server in cluster mode to claim all scheduled jobs from another cluster server.
 
-**Request** 
+**Request**
 
     PUT /api/7/incubator/jobs/takeoverSchedule
 
