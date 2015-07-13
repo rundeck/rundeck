@@ -16,7 +16,7 @@ and user groups certain
 privileges to perform actions against rundeck resources
 like projects, jobs, nodes, commands and API.
 Every action requested by a user is evaluated by the
-Rundeck authorization system and logged for 
+Rundeck authorization system and logged for
 reporting and auditing purposes.
 
 Since Rundeck respects the policy definition, you can define role-based
@@ -40,7 +40,7 @@ control policy.
 ## Access control policy
 
 Access to running or modifying Jobs is managed in an access control
-policy defined using the aclpolicy YAML document. 
+policy defined using the aclpolicy YAML document.
 This file contains a number of policy elements that describe what user
 group is allowed to perform which actions.
 
@@ -95,7 +95,7 @@ for:
       allow: [read,create] # allow read/create events
   adhoc:
     - allow: [read,run,runAs,kill,killAs] # allow running/killing adhoc jobs
-  job: 
+  job:
     - allow: [create,read,update,delete,run,runAs,kill,killAs] # allow create/read/write/delete/run/kill of all jobs
   node:
     - allow: [read,run] # allow read/run for nodes
@@ -136,7 +136,7 @@ Both `username` and `group` can use regular expressions to match multiple users 
 
 Two separate policies define two levels of access control.  The first is the "project"
 context, which allows access to actions on resources within a specific project.
-The second is the "application" level context, which allows access to things 
+The second is the "application" level context, which allows access to things
 like creating projects, access to projects, managing users, and access to system
 information.
 
@@ -148,12 +148,12 @@ is granted or denied to specific "resources". Resources can take two forms:
 * A specific resource, with a type and properties
 * Resource types, which applies to all resources of a specific type or "kind"
 
-For example, you might want to restrict access to a job or jobs within a certain 
+For example, you might want to restrict access to a job or jobs within a certain
 group. This corresponds to specific "job" resources with a "group" property
 matching a certain pattern.
 
-You might also want to restrict who can create *new* jobs. Since a new job does 
-not exist yet, you cannot create a rule for this action to apply to an existing 
+You might also want to restrict who can create *new* jobs. Since a new job does
+not exist yet, you cannot create a rule for this action to apply to an existing
 job.  Which means this corresponds to a generic resource with a "kind" called "job".
 
 ## Special API Token Authentication group
@@ -262,7 +262,7 @@ aclpolicy:
 * Kill adhoc jobs ('kill' action on 'adhoc' resources)
 * Any Action on Jobs (actions on 'job' resources, see below)
 
-The following table summarizes the generic and specific resources and the 
+The following table summarizes the generic and specific resources and the
 actions you can restrict in the project scope:
 
 Type       Resource Kind     Actions   Description
@@ -304,9 +304,9 @@ Table: Project scope specific resource actions
 
 *Note*: `runAs` and `killAs` actions only apply to certain API endpoints, and allow running jobs or adhoc executions or killing executions to be performed with a different username attached as the author of the action.  See [Rundeck API - Running a Job](../api/index.html#running-a-job).
 
-*Note*: 
+*Note*:
 Job deletion requires allowing the 'delete' action
-both at the generic type 
+both at the generic type
 and specific resource levels.
 
 Recall that defining rules for a generic resource type is done in this way:
@@ -405,13 +405,13 @@ by:
 
 After defining an aclpolicy file to grant access to a particular group
 of users, you may find them getting "unauthorized" messages or
-complaints that certain actions are not possible. 
+complaints that certain actions are not possible.
 
 To diagnose this, begin by checking two bits:
 
 1. The user's group membership. This can be done by going to the
    user's profile page in Rundeck. That page will list the groups the
-   user is a member. 
+   user is a member.
 2. Read the messages inside the `rundeck.audit.log` log file. The
    authorization facility generates fairly low level messages describing
    how the policy is matched to the user context.
