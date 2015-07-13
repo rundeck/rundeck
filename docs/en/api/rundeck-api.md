@@ -69,6 +69,9 @@ Changes introduced by API Version number:
     - `/api/14/run/url` replacement: [`/api/14/project/[PROJECT]/run/url`][/api/V/project/[PROJECT]/run/url]
 * Deprecated Endpoints with no replacement
     - `/api/2/project/[PROJECT]/resources/refresh`
+* New Endpoints
+    - [`/api/14/system/executions/enable`][/api/V/system/executions/enable] - Enable executions (ACTIVE mode)
+    - [`/api/14/system/executions/disable`][/api/V/system/executions/disable] - Disable executions (PASSIVE mode)
 * New Endpoints, replacing deprecated versions:
     - [`/api/14/project/[PROJECT*]/executions/running`][/api/V/project/[PROJECT*]/executions/running]
     - [`/api/14/project/[PROJECT]/executions`][/api/V/project/[PROJECT]/executions]
@@ -110,6 +113,7 @@ Changes introduced by API Version number:
     - [`/api/14/project/[PROJECT]/history`][/api/V/project/[PROJECT]/history] - added API/GUI href/permalink to XML responses.
     - `/api/14/project/[PROJECT]/run/*` - added API/GUI href/permalink to XML responses for adhoc command/script/url.
     - [`/api/14/incubator/jobs/takeoverSchedule`][/api/V/incubator/jobs/takeoverSchedule] - added API/GUI href/permalink to XML responses for adhoc command/script/url. Note: `href` was modified as mentioned below.
+    - [`/api/14/system/info`][/api/V/system/info] - added information about Rundeck Execution Mode
 * Modified `href` meaning for XML responses:
     * Some endpoints that included a `href` value in XML responses used the link that was appropriate 
     for an end user to use in a web browser,
@@ -587,6 +591,7 @@ Success response, with included system info and stats in this format:
         <base>/Users/greg/rundeck121</base>
         <serverUUID>3E43E30D-F3D7-45AA-942A-04D5BAFED8CA</serverUUID>
     </rundeck>
+    <executions active="true" executionMode="active" />
     <os>
         <arch>x86_64</arch>
         <name>Mac OS X</name>
@@ -642,6 +647,10 @@ Success response, with included system info and stats in this format:
       "base": "/Users/greg/rundeck25",
       "apiversion": 14,
       "serverUUID": null
+    },
+    "executions":{
+      "active":true,
+      "executionMode":"active"
     },
     "os": {
       "arch": "x86_64",
@@ -799,6 +808,62 @@ The `memory` section describes memory usage in bytes:
 `threads/active`
 
 :   Number of active Threads in the JVM
+
+## Execution Mode ##
+
+Change the server execution mode to ACTIVE or PASSIVE.  The state of the current
+execution mode can be viewed via the [`/api/14/system/info`][/api/V/system/info]
+endpoint.
+
+### Set Active Mode ###
+
+Enables executions, allowing adhoc and manual and scheduled jobs to be run.
+
+**Request:**
+
+    POST /api/14/system/executions/enable
+
+**Response**
+
+`Content-Type: application/xml`:
+
+~~~ {.xml}
+<executions active="true" executionMode="active"/>
+~~~
+
+`Content-Type: application/json`:
+
+~~~ {.json}
+{
+  "active":true,
+  "executionMode":"active"
+}
+~~~
+
+### Set Passive Mode ###
+
+Disables executions, preventing adhoc and manual and scheduled jobs from running.
+
+**Request:**
+
+POST /api/14/system/executions/disable
+
+**Response**
+
+`Content-Type: application/xml`:
+
+~~~ {.xml}
+<executions active="false" executionMode="passive"/>
+~~~
+
+`Content-Type: application/json`:
+
+~~~ {.json}
+{
+  "active":false,
+  "executionMode":"passive"
+}
+~~~
 
 ## Jobs
 
@@ -3486,6 +3551,14 @@ If request was JSON, then the following JSON:
 
 * `GET` [System Info](#system-info)
 
+[/api/V/system/executions/enable][]
+
+* `POST` [Set Active Mode](#set-active-mode)
+
+[/api/V/system/executions/disable][]
+
+* `POST` [Set Passive Mode](#set-passive-mode)
+
 [/api/V/tokens][]
 
 [/api/V/tokens/[USER]][]
@@ -3587,10 +3660,13 @@ If request was JSON, then the following JSON:
 [/api/V/storage/keys/[PATH]/[FILE]]:#list-keys
 [PUT /api/V/storage/keys/[PATH]/[FILE]]:#upload-keys
 [DELETE /api/V/storage/keys/[PATH]/[FILE]]:#delete-keys
+
 [/api/V/system/info]:#system-info
+[/api/V/system/executions/enable]:#set-active-mode
+[/api/V/system/executions/disable]:#set-passive-mode
+
 [/api/V/tokens]:#list-tokens
 [/api/V/tokens/[USER]]:#list-tokens
 [POST /api/V/tokens/[USER]]:#create-a-token
 [/api/V/token/[ID]]:#get-a-token
 [DELETE /api/V/token/[ID]]:#delete-a-token
-
