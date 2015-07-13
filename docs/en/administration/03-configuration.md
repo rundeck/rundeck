@@ -170,12 +170,6 @@ specifies the use of the PropertyFileLoginModule:
 Property file user directory when PropertyFileLoginModule is
 used. Specified from [jaas-loginmodule.conf](#jaas-loginmodule.conf).
 
-## rundeck-config.properties
-
-The primary Rundeck webapp configuration file. Defines default
-loglevel, datasource configuration, and
-[GUI customization](gui-customization.html).
-
 ## Session timeout
 
 Edit the web.xml to modify session-timout from 30 to 90 minutes:
@@ -196,6 +190,13 @@ diff /var/lib/rundeck/exp/webapp/WEB-INF/web.xml web.xml
 > <session-timeout>90</session-timeout>
 ~~~~
 
+## rundeck-config.properties
+
+This is the primary Rundeck webapp configuration file. Defines default
+loglevel, datasource configuration, and
+[GUI customization](gui-customization.html).
+
+The following sections describe configuration values for this file.
 
 ### Security
 
@@ -214,6 +215,18 @@ diff /var/lib/rundeck/exp/webapp/WEB-INF/web.xml web.xml
     set to `false`, the current CLI tools and API libraries will not operate
     correctly if they use username and password login.
 
+### Execution Mode
+
+* `rundeck.executionMode`:`active/passive`. Default `active`. Set the Execution
+  Mode for the Rundeck server.
+
+Rundeck can be in `active` or `passive` execution mode.
+
+* `active` mode: Jobs, scheduled Jobs, and adhoc executions can be run.
+* `passive` mode: No Jobs or adhoc executions can be run.
+
+Setting Rundeck to `passive` mode prevents users from running anything on the
+system and is useful when managing Rundeck server clusters.
 
 ### Project Configuration Storage settings
 
