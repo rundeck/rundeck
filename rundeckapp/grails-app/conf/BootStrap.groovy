@@ -247,10 +247,10 @@ class BootStrap {
          def counter = metricRegistry.counter(MetricRegistry.name("rundeck.scheduler.quartz", "scheduledJobs"))
          quartzScheduler.getListenerManager().addSchedulerListener(new MetricsSchedulerListener(counter))
 
-         if(configurationService.passiveModeEnabled){
-             log.info("Rundeck is in PASSIVE MODE: No executions can be run.")
-         }else{
+         if (configurationService.executionModeActive) {
              log.info("Rundeck is ACTIVE: executions can be run.")
+         } else {
+             log.info("Rundeck is in PASSIVE MODE: No executions can be run.")
          }
 
          //configure System.out and System.err so that remote command execution will write to a specific print stream
@@ -275,7 +275,7 @@ class BootStrap {
              if(clusterMode){
                 scheduledExecutionService.claimScheduledJobs(serverNodeUUID)
              }
-             if(!configurationService.passiveModeEnabled) {
+             if(configurationService.executionModeActive) {
                  scheduledExecutionService.rescheduleJobs(clusterMode ? serverNodeUUID : null)
              }
              logFileStorageService.resumeIncompleteLogStorage(clusterMode ? serverNodeUUID : null)

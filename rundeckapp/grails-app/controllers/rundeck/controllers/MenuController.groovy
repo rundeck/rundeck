@@ -491,7 +491,7 @@ class MenuController extends ControllerBase{
     }
 
     def executionMode(){
-        def executionModeActive=!configurationService.passiveModeEnabled
+        def executionModeActive=configurationService.executionModeActive
 
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def authAction=executionModeActive?AuthConstants.ACTION_DISABLE_EXECUTIONS:AuthConstants.ACTION_ENABLE_EXECUTIONS
@@ -637,7 +637,7 @@ class MenuController extends ControllerBase{
         int threadActiveCount = Thread.activeCount()
         def build = grailsApplication.metadata['build.ident']
         def base = servletContext.getAttribute("RDECK_BASE")
-        boolean executionModeActive=!configurationService.passiveModeEnabled
+        boolean executionModeActive=configurationService.executionModeActive
 
         def memmax = Runtime.getRuntime().maxMemory()
         def memfree = Runtime.getRuntime().freeMemory()

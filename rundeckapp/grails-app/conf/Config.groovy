@@ -182,6 +182,8 @@ grails.assets.plugin."twitter-bootstrap".includes = ["bootstrap.less"]
 //turn off whitespace conversion to blank/null for data binding
 grails.databinding.trimStrings=false
 
+rundeck.executionMode='active'
+
 // GSP settings
 grails {
     views {

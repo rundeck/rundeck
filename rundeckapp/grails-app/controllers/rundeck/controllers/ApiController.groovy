@@ -250,7 +250,7 @@ class ApiController extends ControllerBase{
         long durationTime=ManagementFactory.getRuntimeMXBean().uptime
         Date startupDate = new Date(nowDate.getTime()-durationTime)
         int threadActiveCount=Thread.activeCount()
-        boolean executionModeActive=!configurationService.passiveModeEnabled
+        boolean executionModeActive=configurationService.executionModeActive
         def metricsJsonUrl = createLink(uri: '/metrics/metrics?pretty=true',absolute: true)
         def metricsThreadDumpUrl = createLink(uri: '/metrics/threads',absolute: true)
         if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {

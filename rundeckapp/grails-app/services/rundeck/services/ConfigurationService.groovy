@@ -5,10 +5,10 @@ class ConfigurationService {
     static transactional = false
     def grailsApplication
 
-    boolean isPassiveModeEnabled() {
-        grailsApplication.config?.rundeck?.passiveMode?.enabled
+    boolean isExecutionModeActive() {
+        grailsApplication.config?.rundeck?.executionMode=='active'
     }
-    void setPassiveModeEnabled(boolean enabled){
-        grailsApplication.config.rundeck.passiveMode.enabled=enabled
+    void setExecutionModeActive(boolean active){
+        grailsApplication.config.rundeck.executionMode=(active?'active':'passive')
     }
 }

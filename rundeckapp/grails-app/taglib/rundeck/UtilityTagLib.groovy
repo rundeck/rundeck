@@ -880,7 +880,7 @@ class UtilityTagLib{
         }else if(null!=attrs.is){
             testIsActive=attrs.is =='active'
         }
-        return testIsActive!=configurationService.passiveModeEnabled
+        return testIsActive==configurationService.executionModeActive
     }
     def ifExecutionMode={attrs,body->
         if(executionMode(attrs,body)){

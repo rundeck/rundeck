@@ -88,14 +88,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def configurationService
 
     boolean getExecutionsAreActive(){
-        !configurationService.passiveModeEnabled
+        configurationService.executionModeActive
     }
 
     void setExecutionsAreActive(boolean active){
-        configurationService.passiveModeEnabled=!active
+        configurationService.executionModeActive=active
 
         if(!active){
-            log.info("Rundeck changed to PASSIVE MODE: No executions can be run.")
+            log.info("Rundeck changed to PASSIVE mode: No executions can be run.")
         }else{
             log.info("Rundeck changed to ACTIVE: executions can be run.")
         }
