@@ -1603,13 +1603,13 @@ class ExecutionController extends ControllerBase{
         withFormat{
             json {
                 render(contentType: "text/json") {
-                    delegate.success = true
                     delegate.executionMode=active?'active':'passive'
+                    delegate.active=active
                 }
             }
             xml {
                 apiService.renderSuccessXml {
-                    executionMode(active:active)
+                    delegate.'executions'(active:active,executionMode:active?'active':'passive')
                 }
             }
         }
