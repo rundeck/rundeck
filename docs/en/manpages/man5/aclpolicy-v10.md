@@ -312,7 +312,7 @@ for:
       allow: [create] # allow create of projects
     - equals:
         kind: system
-      allow: [read] # allow read of system info
+      allow: [read,enable_executions,disable_executions,admin] # allow read of system info, enable/disable all executions
     - equals:
         kind: user
       allow: [admin] # allow modify user profiles

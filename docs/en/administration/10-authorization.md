@@ -114,7 +114,7 @@ for:
       allow: [create] # allow create of projects
     - equals:
         kind: system
-      allow: [read] # allow read of system info
+      allow: [read,enable_executions,disable_executions,admin] # allow read of system info
     - equals:
         kind: user
       allow: [admin] # allow modify user profiles
@@ -177,11 +177,17 @@ You define application scope rules in the aclpolicy, by declaring this context:
     context:
       application: 'rundeck'
 
+
 These are the Application scope actions that can be allowed or denied via the
 aclpolicy:
 
 * Creating Projects (`create` action on a resource type with kind 'project')
-* Reading system information (`read` action on a resource type with kind 'project')
+* Reading system information (`read` action on a resource type with kind 'system')
+* Disabling executions (`disable_executions` action on a resource type with kind 'system')
+* Managing executions
+    * Enabling executions (`enable_executions` action on a resource type with kind 'system')
+    * Disabling executions (`disable_executions` action on a resource type with kind 'system')
+    * Full control (`admin` action on a resource type with kind 'system')
 * Administering user profiles (`admin` action on a resource type of kind 'user')
 * Accessing SSH Keys (`create`,`update`,`read`, or `delete` action on a specific path within the storage 'storage' type)
 * Actions on specific projects by name
@@ -196,12 +202,15 @@ aclpolicy:
 The following table summarizes the generic and specific resources and the
 actions you can restrict in the application scope:
 
-Type       Resource Kind     Properties   Actions  Description
-------     --------------    -----------  -------- ------------
-`resource` `project`         none         `create` Create a new project
-`resource` `system`          none         `read`   Read system information
-`resource` `user`            none         `admin`  Modify user profiles
-`resource` `job`             none         `admin`  Manage job schedules
+Type       Resource Kind     Properties   Actions               Description
+------     --------------    -----------  --------              ------------
+`resource` `project`         none         `create`              Create a new project
+"          `system`          none         `read`                Read system information
+"          "                 none         `enable_executions`   Enable executions
+"          "                 none         `disable_executions`  Disable executions
+"          "                 none         `admin`               Enable or disable executions
+"          `user`            none         `admin`               Modify user profiles
+"          `job`             none         `admin`               Manage job schedules
 ----------------------------
 
 Table: Application scope generic type actions
