@@ -50,6 +50,7 @@ class MenuController extends ControllerBase{
     StoragePluginProviderService storagePluginProviderService
     StorageConverterPluginProviderService storageConverterPluginProviderService
     PluginService pluginService
+    def configurationService
     def quartzScheduler
     def ApiService apiService
     static allowedMethods = [
@@ -590,7 +591,7 @@ class MenuController extends ControllerBase{
         [rundeckFramework: frameworkService.rundeckFramework]
     }
 
-    def systemInfo = {
+    def systemInfo (){
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
@@ -618,6 +619,7 @@ class MenuController extends ControllerBase{
         int threadActiveCount = Thread.activeCount()
         def build = grailsApplication.metadata['build.ident']
         def base = servletContext.getAttribute("RDECK_BASE")
+        boolean executionModeActive=!configurationService.passiveModeEnabled
 
         def memmax = Runtime.getRuntime().maxMemory()
         def memfree = Runtime.getRuntime().freeMemory()
@@ -645,7 +647,8 @@ class MenuController extends ControllerBase{
             memmax: memmax,
             memfree: memfree,
             memtotal: memtotal,
-            schedulerRunningCount: schedulerRunningCount
+            schedulerRunningCount: schedulerRunningCount,
+            executionModeActive:executionModeActive
         ]
         def serverUUID=frameworkService.getServerUUID()
         if(serverUUID){
@@ -701,6 +704,13 @@ class MenuController extends ControllerBase{
                 base: info.base,
                 serverUUID: info.serverUUID,
             ]],
+            [
+                    executions:[
+                            active: info.executionModeActive,
+                            executionMode:info.executionModeActive?'ACTIVE':'PASSIVE',
+                            'executionMode.status':info.executionModeActive?'success':'warning'
+                    ]
+            ],
             [os:
             [arch: info.osArch,
                 name: info.osName,
