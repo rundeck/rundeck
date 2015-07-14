@@ -793,7 +793,7 @@ class ScheduledExecutionControllerTests  {
                 [failed: false, scheduledExecution: se]
             }
             scheduleTempJob { auth, exec ->
-                return exec.id
+                return [id:exec.id,execution:exec,success:true]
             }
             logJobChange { changeinfo, properties -> }
         }
@@ -805,6 +805,7 @@ class ScheduledExecutionControllerTests  {
         assertNotNull exec.save()
 
         controller.executionService = mockWith(ExecutionService){
+            getExecutionsAreActive{->true}
             executeJob{ ScheduledExecution scheduledExecution, AuthContext authContext, String user, Map input->
                 [executionId:exec.id]
             }
@@ -849,7 +850,7 @@ class ScheduledExecutionControllerTests  {
                 [failed: false, scheduledExecution: se]
             }
             scheduleTempJob { auth, exec ->
-                return exec.id
+                return [id:exec.id,execution:exec,success:true]
             }
             logJobChange { changeinfo, properties -> }
         }
@@ -912,7 +913,7 @@ class ScheduledExecutionControllerTests  {
                 [failed: false, scheduledExecution: se]
             }
             seServiceControl.demand.scheduleTempJob { auth, exec ->
-                return exec.id
+                [id:exec.id,execution:exec,success:true]
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
         controller.scheduledExecutionService = seServiceControl.createMock()
@@ -926,6 +927,7 @@ class ScheduledExecutionControllerTests  {
             eServiceControl.demand.createExecutionAndPrep {params, user ->
                 return exec
             }
+        eServiceControl.demand.getExecutionsAreActive{->true}
         controller.executionService = eServiceControl.createMock()
 
 
@@ -983,7 +985,7 @@ class ScheduledExecutionControllerTests  {
             [failed: false, scheduledExecution: se]
         }
         seServiceControl.demand.scheduleTempJob { auth, exec ->
-            return exec.id
+            [id:exec.id,execution:exec,success:true]
         }
         seServiceControl.demand.logJobChange {changeinfo, properties ->}
         controller.scheduledExecutionService = seServiceControl.createMock()
@@ -997,6 +999,7 @@ class ScheduledExecutionControllerTests  {
         eServiceControl.demand.createExecutionAndPrep {params, user ->
             return exec
         }
+        eServiceControl.demand.getExecutionsAreActive{->true}
         controller.executionService = eServiceControl.createMock()
 
 
@@ -1056,7 +1059,7 @@ class ScheduledExecutionControllerTests  {
                 [failed: true, scheduledExecution: se]
             }
             seServiceControl.demand.scheduleTempJob { auth, exec ->
-                return exec.id
+                [id:exec.id,execution:exec,success:true]
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
             sec.scheduledExecutionService = seServiceControl.createMock()
@@ -1425,7 +1428,7 @@ class ScheduledExecutionControllerTests  {
         }
 
         seServiceControl.demand.scheduleTempJob { auth, exec ->
-            'fakeid'
+            [id:'fakeid',execution:exec,success:true]
         }
 
         sec.scheduledExecutionService = seServiceControl.createMock()
@@ -1556,7 +1559,7 @@ class ScheduledExecutionControllerTests  {
         }
 
         seServiceControl.demand.scheduleTempJob { auth, exec ->
-            'fakeid'
+            [id:'fakeid',execution:exec,success:true]
         }
 
         sec.scheduledExecutionService = seServiceControl.createMock()
@@ -1571,6 +1574,7 @@ class ScheduledExecutionControllerTests  {
             assert 'anonymous' == user
             exec
         }
+        eServiceControl.demand.getExecutionsAreActive{->true}
         sec.executionService = eServiceControl.createMock()
 
 
@@ -1632,7 +1636,7 @@ class ScheduledExecutionControllerTests  {
         }
 
         seServiceControl.demand.scheduleTempJob { auth, exec ->
-            'fakeid'
+            [id:'fakeid',execution:exec,success:true]
         }
 
         sec.scheduledExecutionService = seServiceControl.createMock()
@@ -1647,6 +1651,7 @@ class ScheduledExecutionControllerTests  {
             assert 'anonymous' == user
             exec
         }
+        eServiceControl.demand.getExecutionsAreActive{->true}
         sec.executionService = eServiceControl.createMock()
 
 
@@ -1712,7 +1717,7 @@ class ScheduledExecutionControllerTests  {
         }
 
         seServiceControl.demand.scheduleTempJob { auth, exec ->
-            'fakeid'
+            [id:'fakeid',execution:exec,success:true]
         }
 
         sec.scheduledExecutionService = seServiceControl.createMock()
@@ -1727,6 +1732,7 @@ class ScheduledExecutionControllerTests  {
             assert 'anonymous' == user
             exec
         }
+        eServiceControl.demand.getExecutionsAreActive{->true}
         sec.executionService = eServiceControl.createMock()
 
 
@@ -1785,7 +1791,7 @@ class ScheduledExecutionControllerTests  {
         }
 
         seServiceControl.demand.scheduleTempJob { auth, exec ->
-            'fakeid'
+            [id:'fakeid',execution:exec,success:true]
         }
 
         sec.scheduledExecutionService = seServiceControl.createMock()
@@ -1800,6 +1806,7 @@ class ScheduledExecutionControllerTests  {
             assert 'anotheruser' == user
             exec
         }
+        eServiceControl.demand.getExecutionsAreActive{->true}
         sec.executionService = eServiceControl.createMock()
 
 
