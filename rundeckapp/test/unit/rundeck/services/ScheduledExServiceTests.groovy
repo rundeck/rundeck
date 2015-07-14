@@ -48,9 +48,18 @@ import rundeck.controllers.ScheduledExecutionController
 @Mock([Execution, FrameworkService, WorkflowStep, CommandExec, JobExec, PluginStep, Workflow, ScheduledExecution, Option, Notification])
 @TestMixin(ControllerUnitTestMixin)
 class ScheduledExServiceTests {
-    
-    
 
+
+
+
+    /**
+     * utility method to mock a class
+     */
+    private <T> T mockWith(Class<T> clazz, Closure clos) {
+        def mock = mockFor(clazz)
+        mock.demand.with(clos)
+        return mock.createMock()
+    }
 
     static void assertLength(int length, Object[] array){
         Assert.assertEquals(length,array.length)
@@ -2811,6 +2820,10 @@ class ScheduledExServiceTests {
         ms.demand.getMessage { error, locale -> 'message' }
         sec.messageSource = ms.createMock()
 
+        sec.executionServiceBean=mockWith(ExecutionService){
+            getExecutionsAreActive{-> true}
+        }
+
         def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
                       workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
                       _workflow_data: true,
@@ -3033,6 +3046,9 @@ class ScheduledExServiceTests {
         sec.frameworkService.metaClass.isClusterModeEnabled = {
             return false
         }
+        sec.executionServiceBean=mockWith(ExecutionService){
+            getExecutionsAreActive{-> true}
+        }
 
         def qtzControl = mockFor(FakeScheduler, true)
         qtzControl.demand.checkExists { key -> false }
@@ -3137,6 +3153,9 @@ class ScheduledExServiceTests {
         sec.frameworkService.metaClass.isClusterModeEnabled = {
             return false
         }
+        sec.executionServiceBean=mockWith(ExecutionService){
+            getExecutionsAreActive{-> true}
+        }
 
         def qtzControl = mockFor(FakeScheduler, true)
         qtzControl.demand.checkExists { key -> false }
@@ -3201,6 +3220,11 @@ class ScheduledExServiceTests {
         qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
         sec.quartzScheduler = qtzControl.createMock()
 
+
+        sec.executionServiceBean=mockWith(ExecutionService){
+            getExecutionsAreActive{-> true}
+        }
+
         def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
                 scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040', useCrontabString: 'true']
         def results = sec._doupdate(params, 'test', 'userrole,test', null, null)
@@ -3250,6 +3274,10 @@ class ScheduledExServiceTests {
         sec.frameworkService = fwkControl.createMock()
         sec.frameworkService.metaClass.isClusterModeEnabled = {
             return false
+        }
+
+        sec.executionServiceBean=mockWith(ExecutionService){
+            getExecutionsAreActive{-> true}
         }
 //        def sesControl = mockFor(ScheduledExecutionService, true)
 //        sesControl.demand.scheduleJob {schedEx, oldname, oldgroup ->
@@ -3327,6 +3355,11 @@ class ScheduledExServiceTests {
         qtzControl.demand.getListenerManager { -> [addJobListener:{a,b->}] }
         qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
         sec.quartzScheduler = qtzControl.createMock()
+
+        sec.executionServiceBean=mockWith(ExecutionService){
+            getExecutionsAreActive{-> true}
+        }
+        
         def params = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]),
                 scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040',
@@ -3383,6 +3416,11 @@ class ScheduledExServiceTests {
         qtzControl.demand.getListenerManager { -> [addJobListener:{a,b->}] }
         qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
         sec.quartzScheduler = qtzControl.createMock()
+
+        sec.executionServiceBean=mockWith(ExecutionService){
+            getExecutionsAreActive{-> true}
+        }
+
         def params = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]),
                 scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040',
