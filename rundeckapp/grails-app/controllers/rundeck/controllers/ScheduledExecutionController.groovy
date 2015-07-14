@@ -117,7 +117,7 @@ class ScheduledExecutionController  extends ControllerBase{
             apiJobsImportv14: 'POST',
             apiJobDelete: 'DELETE',
             apiRunScript: 'POST',
-            apiRunScriptUrlv14: 'POST',
+            apiRunScriptv14: 'POST',
             apiRunScriptUrl: ['POST','GET'],
             apiRunScriptUrlv14: ['POST','GET'],
             apiRunCommand: ['POST','GET'],
