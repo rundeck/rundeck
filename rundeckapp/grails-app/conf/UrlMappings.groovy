@@ -1,3 +1,5 @@
+import rundeck.filters.ApiRequestFilters
+
 class UrlMappings {
     static mappings = {
         "/$controller/$action?/$id?" {
@@ -65,6 +67,7 @@ class UrlMappings {
         "/api/$api_version/projects"(controller: 'project'){
             action = [GET: 'apiProjectList', POST:'apiProjectCreate']
         }
+        "/api/$api_version/scheduler/takeover"(controller: 'scheduledExecution', action: 'apiJobClusterTakeoverSchedule')
 
         //////////
         //BEGIN deprecated as of v14
@@ -92,7 +95,6 @@ class UrlMappings {
         "/api/$api_version/storage/keys"(controller: 'storage', action: 'apiKeys')
 
         //incubator endpoints
-        "/api/$api_version/incubator/jobs/takeoverSchedule"(controller: 'scheduledExecution', action: 'apiJobClusterTakeoverSchedule')
         "/api/$api_version/incubator/storage/$resourcePath**"(controller: 'storage') {
             action = [
                     GET: "apiGetResource",
@@ -104,6 +106,10 @@ class UrlMappings {
 
         "/api/$api_version/incubator/feature/$featureName?"(controller: 'api',action: 'featureToggle')
 
+        //promoted incubator endpoints
+        "/api/$api_version/incubator/jobs/takeoverSchedule"(controller: 'api',action:'endpointMoved'){
+            moved_to="/api/${ApiRequestFilters.API_CURRENT_VERSION}/scheduler/takeover"
+        }
 
         //catchall
         "/api/$api_version/$action?"(controller: 'api', action: 'invalid')
