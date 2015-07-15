@@ -18,7 +18,7 @@ If you use the Rundeck war file with a different container, such as Tomcat, refe
 
 Rundeck has three basic ways of defining authentication.
 
-1. [PropertyFileLoginModule](#PropertyFileLoginModule) 
+1. [PropertyFileLoginModule](#PropertyFileLoginModule)
 2. [LDAP](#ldap)
 3. [PAM](#pam)
 
@@ -45,7 +45,7 @@ Modify the section shown below and replace user with your own required role name
 Here's an example that changes the required role to one called "myADgroup" (the hypothetical group name from Active Directory):
 
 ~~~~~~ {.diff .numberLines }
---- /var/lib/rundeck/exp/webapp/WEB-INF/web.xml 
+--- /var/lib/rundeck/exp/webapp/WEB-INF/web.xml
 +++ /var/lib/rundeck/exp/webapp/WEB-INF/web.xml.new
 @@ -9,7 +9,7 @@
                 <param-value>rundeck-production-2.1.2</param-value>
@@ -60,13 +60,13 @@ Here's an example that changes the required role to one called "myADgroup" (the 
 
 ## PropertyFileLoginModule
 
-These instructions explain how to manage user credentials for 
-Rundeck using a text file containing usernames, passwords and role definitions. 
+These instructions explain how to manage user credentials for
+Rundeck using a text file containing usernames, passwords and role definitions.
 Usually this file is called <code>realm.properties</code>.
 
 The default Rundeck webapp handles user authentication via its
 container, which in turn is configured to pull its user authentication
-from the realm.properties file. 
+from the realm.properties file.
 This file is created at the time that you install the server.
 
 Location:
@@ -90,7 +90,7 @@ probably look something like this:
 #
 admin:admin,user,admin
 user:user,user
-~~~~~~ 
+~~~~~~
 
 *Adding additional users*
 
@@ -131,6 +131,8 @@ Rundeck includes two JAAS login modules you can use for LDAP directory authentic
 * `JettyCombinedLdapLoginModule` (**Since Rundeck 2.5**).   Performs LDAP authentication, and can use "shared authentication credentials" to allow another module to provide authorization lookup for user roles.  See [Login module configuration](#login-module-configuration) and [JettyRolePropertyFileLoginModule](#jettyrolepropertyfileloginmodule) and [Multiple Authentication Modules](#multiple-authentication-modules) below.
 
 These are an enhanced version of the default Jetty JAAS Ldap login module that caches authorization results for a period of time.
+
+JAAS supports evaluating `MD5` and `CRYPT` password hashes.
 
 You must change some configuration values to change the authentication module to use.
 
@@ -177,7 +179,7 @@ Otherwise, if you are starting the Launcher via the supplied `rundeckd` script, 
 ~~~~~~ {.bash}
 export RDECK_JVM="-Dloginmodule.conf.name=jaas-ldap.conf \
     -Dloginmodule.name=ldap"
-~~~~~~ 
+~~~~~~
 
 Note: more information about using the launcher and useful properties are under [Getting Started - Launcher Options](installation.html#launcher-options).
 
@@ -188,21 +190,21 @@ Update the `RDECK_JVM` in `/etc/rundeck/profile` by changing the following two J
 ~~~~~~ {.bash}
 export RDECK_JVM="-Djava.security.auth.login.config=/etc/rundeck/jaas-loginmodule.conf \
        -Dloginmodule.name=RDpropertyfilelogin \
-~~~~~~ 
+~~~~~~
 
 to
 
 ~~~~~~ {.bash}
 export RDECK_JVM="-Djava.security.auth.login.config=/etc/rundeck/jaas-ldap.conf \
        -Dloginmodule.name=ldap \
-~~~~~~ 
+~~~~~~
 
 
 #### Step 3: Restart rundeckd
 
 ~~~~~~ {.bash}
 sudo /etc/init.d/rundeckd restart
-~~~~~~ 
+~~~~~~
 
 #### Step 4: Attempt to logon
 
@@ -263,7 +265,7 @@ The `JettyCachingLdapLoginModule` has these configuration properties:
 :    Authentication method, e.g. "simple"
 
 `forceBindingLogin`
-:    "true/false" - if true, bind as the user that is authenticating, otherwise bind as the manager and perform a search to verify user password
+:    "true/false" - if true, bind as the user that is authenticating, otherwise bind as the manager and perform a search to verify user password. NOTE: This module can only verify passwords hashed with `MD5` or `CRYPT`. If your LDAP directory contains other hashes you'll likely need to set this to true to be able to authenticate.
 
 `forceBindingLoginUseRootContextForRoles`
 :    "true/false" - if true and forceBindingLogin is true, then role membership searches will be performed in the root context, rather than in the bound user context.
@@ -345,7 +347,7 @@ ldap {
 :    Clear the user/password that was stored after login is successful. (This would prevent any subsequent login modules from re-using the stored credentials.  Set it to `false` if you want to continue using the credentials.)
 
 `useFirstPass`
-:    Use the stored user/password for authentication, and do not attempt to use other mechanism (e.g. login callback). 
+:    Use the stored user/password for authentication, and do not attempt to use other mechanism (e.g. login callback).
 
 `tryFirstPass`
 :    Try to use the stored user/password for authentication, if it fails then proceed with normal mechanism.
@@ -401,9 +403,9 @@ Another option is to interrogate the secure ldap endpoint with openssl.  The exa
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
 $ openssl s_client -showcerts -connect paypal.com:443
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 CONNECTED(00000003)
 depth=1 C = US, O = "VeriSign, Inc.", OU = VeriSign Trust Network, OU = Terms of use at https://www.verisign.com/rpa (c)09, CN = VeriSign Class 3 Secure Server CA - G2
 verify error:num=20:unable to get local issuer certificate
@@ -497,7 +499,7 @@ SSL-Session:
     Protocol  : TLSv1
     Cipher    : DES-CBC3-SHA
     Session-ID: A8AAA4F22E9A4B3F12F76303464643525178846D96CA0BC0B81F35368BF55B89
-    Session-ID-ctx: 
+    Session-ID-ctx:
     Master-Key: 9F767B91FC2450E291CBB21E3438CA9A73FE8D5B825AD98F821F5EB912C088DFB66FCBF2D53591E2D1ED77E9B6A22504
     Key-Arg   : None
     PSK identity: None
@@ -514,20 +516,20 @@ Once a certificate has been obtained.  There are two options for adding the cert
 Both options require importing a certificate.  The following would import a certificate called, AD.cert into the `/etc/rundeck/ssl/truststore`.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-keytool -import -alias CompanyAD -file AD.cert -keystore  /etc/rundeck/ssl/truststore -storepass adminadmin 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+keytool -import -alias CompanyAD -file AD.cert -keystore  /etc/rundeck/ssl/truststore -storepass adminadmin
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To add the certificate to the JRE, locate the file $JAVA_HOME/lib/security/cacerts and run
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-keytool -import -alias CompanyAD -file AD.cert -keystore $JAVA_HOME/lib/security/cacerts -storepass changeit 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+keytool -import -alias CompanyAD -file AD.cert -keystore $JAVA_HOME/lib/security/cacerts -storepass changeit
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To verify your CA has been added, run keytool list and look for CompanyAD in the output.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
 keytool -list -keystore $JAVA_HOME/lib/security/cacerts -storepass changeit
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Refer to: http://download.oracle.com/javase/1.5.0/docs/tooldocs/solaris/keytool.html for more information how how to import a certificate.
 
@@ -563,7 +565,7 @@ RDpropertyfilelogin {
 };
 ~~~~~~~
 
-When combining the two login modules, note that the `storePass` and 
+When combining the two login modules, note that the `storePass` and
 `useFirstPass` are set to true, allowing the two modules to share the user information necessary for the second module to load the user roles.
 
 **Common configuration properties:**
@@ -667,14 +669,14 @@ with a few mechanisms to determine what roles the user has.
 `containerPrincipal`
 
 :   JAAS authentication modules define a "Principal"
-that represents the authenticated user, 
-and which can list the "roles" the user has. 
+that represents the authenticated user,
+and which can list the "roles" the user has.
 
 `container`
 :   The Container also provides a query mechanism `isUserInRole`.
 
-Both of these methods are used by default, 
-although they can be disabled 
+Both of these methods are used by default,
+although they can be disabled
 with the following configuration flags in `rundeck-config.properties`:
 
 
@@ -685,19 +687,19 @@ with the following configuration flags in `rundeck-config.properties`:
 
 `preauthenticated`
 
-:   "Preauthenticated" means that the Servlet Container (e.g. Tomcat) 
-is not being used for authentication/authorization. 
+:   "Preauthenticated" means that the Servlet Container (e.g. Tomcat)
+is not being used for authentication/authorization.
 The user name and role list are provided to Rundeck
 from another system, usually a reverse proxy set up "in front"
 of the Rundeck web application, such as Apache HTTPD.
-Rundeck accepts the "REMOTE_USER" as the username, 
-and allows a configurable Request Attribute to contain 
+Rundeck accepts the "REMOTE_USER" as the username,
+and allows a configurable Request Attribute to contain
 the list of user roles.
 
 **Note**: If you use this method, make sure that *only* your proxy
- has direct access to the ports Rundeck is listening on 
- (e.g. firewall them), 
- otherwise you are opening access to rundeck 
+ has direct access to the ports Rundeck is listening on
+ (e.g. firewall them),
+ otherwise you are opening access to rundeck
  without requiring authentication.
 
 This method can be enabled with this config in `rundeck-config.properties`:
