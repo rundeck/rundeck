@@ -132,7 +132,7 @@ class UrlMappings {
         "/project/$project/exportWait"(controller: 'project',action: 'exportWait')
         "/project/$project/export"(controller: 'project',action: 'export')
         "/project/$project/importArchive"(controller: 'project',action: 'importArchive')
-        "/project/$project"(controller: 'menu',action: 'index')
+        "/project/$project"(redirect:[controller: 'menu',action: 'index'])
         "/project/$project/$action"(controller: 'project')
         "/storage/access/keys/$resourcePath**"(controller: 'storage', action: 'keyStorageAccess')
         "/storage/access/keys"(controller: 'storage', action: 'keyStorageAccess')
