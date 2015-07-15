@@ -196,7 +196,7 @@ public class TestNodesYamlParser extends TestCase {
             assertEquals("ubuntu", entry.getNodename());
             assertEquals("192.168.1.101", entry.getHostname());
             assertNotNull(entry.getTags());
-            assertEquals(1,entry.getTags().size());
+            assertEquals(1, entry.getTags().size());
             assertTrue(entry.getTags().contains("dev"));
             assertEquals("Ubuntu server node", entry.getDescription());
             assertEquals("unix", entry.getOsFamily());
@@ -277,9 +277,8 @@ public class TestNodesYamlParser extends TestCase {
             assertEquals("http://b.com/aurl",entry.getAttributes().get("remoteUrl"));
         }
     }
-    public void testParseInvalid() throws Exception {
-        {
-            //no hostname value
+    public void testParseInvalid_require_nodename() throws Exception {
+            //no nodename value
             testReceiver recv = new testReceiver();
             ByteArrayInputStream is = new ByteArrayInputStream(
                 "- \n  hostname: bill\n  blah: test\n".getBytes());
@@ -294,23 +293,21 @@ public class TestNodesYamlParser extends TestCase {
             }
 
         }
-        {
-            //no hostname value
-            testReceiver recv = new testReceiver();
-            ByteArrayInputStream is = new ByteArrayInputStream(
-                "test: \n  nodename: bill\n  blah: test\n".getBytes());
+    public void testParseInvalid_allow_missing_hostname() throws Exception {
+        //allow no hostname value
+        testReceiver recv = new testReceiver();
+        ByteArrayInputStream is = new ByteArrayInputStream(
+            "bill: \n  nodename: bill\n  blah: test\n".getBytes());
 
-            NodesYamlParser nodesYamlParser = new NodesYamlParser(is, recv);
-            try {
-                nodesYamlParser.parse();
-                fail("parsing should fail");
-            } catch (NodeFileParserException e) {
-                assertTrue(e.getCause() instanceof IllegalArgumentException);
-                assertEquals("Required property 'hostname' was not specified", e.getCause().getMessage());
-            }
+        NodesYamlParser nodesYamlParser = new NodesYamlParser(is, recv);
+        nodesYamlParser.parse();
+        Assert.assertEquals(1, recv.nodes.size());
+        Assert.assertNotNull(recv.nodes.get("bill"));
+        Assert.assertEquals("bill", recv.nodes.get("bill").getNodename());
+        Assert.assertEquals(null, recv.nodes.get("bill").getHostname());
 
-        }
-        {
+    }
+    public void testParseInvalid_unexpecteddatatype() throws Exception {
             //unexpected data type for string field
             testReceiver recv = new testReceiver();
             ByteArrayInputStream is = new ByteArrayInputStream(
@@ -328,7 +325,7 @@ public class TestNodesYamlParser extends TestCase {
             }
 
         }
-        {
+    public void testParseInvalid_no_javaclass() throws Exception {
             //don't allow arbitrary java class
             testReceiver recv = new testReceiver();
             ByteArrayInputStream is = new ByteArrayInputStream(
@@ -345,7 +342,6 @@ public class TestNodesYamlParser extends TestCase {
                 assertTrue(e.getCause() instanceof YAMLException);
             }
 
-        }
     }
     public static class testReceiver implements NodeReceiver{
         HashMap<String,INodeEntry> nodes = new HashMap<String, INodeEntry>();
