@@ -719,8 +719,24 @@ Optional parameters:
 * `loglevel`: argument specifying the loglevel to use, one of: 'DEBUG','VERBOSE','INFO','WARN','ERROR'
 * `asUser` : specifies a username identifying the user who ran the job. Requires `runAs` permission.
 * Node filter parameters as described under [Using Node Filters](#using-node-filters)
+* `filter` can be a node filter string.
 
-Result:  An Item List of `executions` containing a single entry for the execution that was created.  See [Listing Running Executions](#listing-running-executions).
+(**API v14**) If the request has `Content-Type: application/json`, then the parameters will be ignored,
+and this format is expected in the content:
+
+~~~~~ {.json}
+{
+    "argString":"...",
+    "loglevel":"...",
+    "asUser":"...",
+    "filter":"..."
+}
+~~~~~
+
+
+**Response**:
+
+See [Listing Running Executions](#listing-running-executions).
 
 ### Exporting Jobs
 
@@ -2661,7 +2677,55 @@ Optional Parameters:
 
 Result: Depending on the `format` parameter, a value of "xml" will return [resource-xml](../man5/resource-xml.html) and "yaml" will return [resource-yaml](../man5/resource-yaml.html) formatted results.  Any other supported format value will return content in the specified format.
 
-#### Using Node Filters
+### Getting Resource Info
+
+Get a specific resource within a project.
+
+**Request:**
+
+    GET /api/14/project/[PROJECT]/resource/[NAME]
+
+(**Deprecated URL**: `/api/1/resource/[NAME]` requires `project` query parameter.)
+
+Optional Parameters:
+
+* `format` : Result format.  Default is "xml", can use "yaml" or "json", or an installed ResourceFormat plugin name.
+
+**Response:**
+
+Depending on the `format` parameter, a value of "xml" will return [resource-xml](../man5/resource-xml.html) and "yaml" will return [resource-yaml](../man5/resource-yaml.html), and "json" will return [resource-json](../man5/resource-json.html) formatted results.
+
+The result will contain a single item for the specified resource.
+
+### Using Node Filters
+
+Refer to the [User Guide - Node Filters](../manual/node-filters.html) Documentation for information on
+the node filter syntax and usage.
+
+A basic node filter looks like:
+
+    attribute: value attribute2: value2
+
+To specify a Node Filter string as a URL parameter for an API request, use a parameter named `filter`.
+Your HTTP client will have to correctly escape the value of the `filter` parameter.  For example you can
+use `curl` like this;
+
+    curl --data-urlencoded "filter=attribute: value"
+
+Common attributes:
+
+* `name` - node name
+* `tags` - tags
+* `hostname`
+* `username`
+* `osFamily`, `osName`, `osVersion`, `osArch`
+
+Custom attributes can also be used.
+
+Note: previous Rundeck versions supported individual URL parameters for specific node filter attributes,
+these are deprecated, but mentioned below.
+
+##### Deprecated Node Filter parameters
 
 To include certain resources, specify the inclusion filters:
 
@@ -2700,27 +2764,7 @@ Using set logic, if "A" is the set of all resources, "X" is the set of all resou
 * when `exclude-precedence=false` then the result is:
     * $( A - X ) \cup I$
 
-### Getting Resource Info
-
-Get a specific resource within a project.
-
-URL:
-
-    /api/1/resource/[NAME]
-
-Required Parameters:
-
-* `project` : project name
-
-Optional Parameters:
-
-* `format` : Result format.  One of "xml" or "yaml". Default is "xml".
-
-Result: Depending on the `format` parameter, a value of "xml" will return [resource-xml](../man5/resource-xml.html) and "yaml" will return [resource-yaml](../man5/resource-yaml.html) formatted results.
-
-The result will contain a single item for the specified resource.
-
-### Takeover Schedule in Cluster Mode
+## Takeover Schedule in Cluster Mode
 
 **INCUBATOR**: this endpoint is available under the `/incubator` top-level path to indicate it is under development, and the specific behavior may change before it is finalized, or even completely removed.
 
