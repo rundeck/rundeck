@@ -93,16 +93,11 @@ public class NodeEntryFactory {
         }
         try {
             BeanUtils.populate(nodeEntry, newmap);
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
+        } catch (IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         }
         if (null == nodeEntry.getNodename()) {
             throw new IllegalArgumentException("Required property 'nodename' was not specified");
-        }
-        if (null == nodeEntry.getHostname()) {
-            throw new IllegalArgumentException("Required property 'hostname' was not specified");
         }
         if (null == nodeEntry.getAttributes()) {
             nodeEntry.setAttributes(new HashMap<String, String>());

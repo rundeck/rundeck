@@ -34,12 +34,12 @@ public class TestNodeEntryFactory {
         stringObjectMap.put("hostname", "blah");
         NodeEntryImpl node = NodeEntryFactory.createFromMap(stringObjectMap);
     }
-    @Test(expected = IllegalArgumentException.class)
     public void createFromMapMissingHostname() {
         Map<String, Object> stringObjectMap = new HashMap<String, Object>();
         stringObjectMap.put("nodename", "blah");
 //        stringObjectMap.put("hostname", "blah");
         NodeEntryImpl node = NodeEntryFactory.createFromMap(stringObjectMap);
+        Assert.assertEquals("blah", node.getNodename());
     }
     @Test()
     public void createFromMapRequiredSet() {
