@@ -146,20 +146,22 @@ documentation as well.
 
 ### Installing with RPM
 
-Note, the java JRE must be installed. Install any JRE that is 1.7+.
+Note: The latest install documentation is available at <http://rundeck.org/downloads.html>.
+
+Note, the java JDK must be installed. Install any JDK that is 1.7+.
 
 If you want to install Rundeck on Linux via a binary installer, you
 can generally do so through the RPM tool that comes with your distribution. 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-# rpm -i rundeck-2.1.0.noarch.rpm
+# rpm -i rundeck-2.x.x.noarch.rpm rundeck-config-2.x.x.noarch.rpm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 To install it using yum, first install the yum repo package and then
 run yum install:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-# rpm -Uvh http://rundeck.org/latest.rpm
+# rpm -Uvh http://repo.rundeck.org/latest.rpm
 # yum install rundeck
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
