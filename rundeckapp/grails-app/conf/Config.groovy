@@ -11,6 +11,7 @@
 // }
 
 grails.config.locations = [ ]
+grails.config.locations = System.properties["${appName}.config.locations"]?.split(",").collect{ "file:$it" }
 
 if(environment=="development"){
    grails.config.locations << "file:${userHome}/.grails/${appName}-config.properties"
