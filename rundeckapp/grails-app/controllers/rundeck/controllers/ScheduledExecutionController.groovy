@@ -2942,10 +2942,10 @@ class ScheduledExecutionController  extends ControllerBase{
 
     }
     /**
-     * API: /api/incubator/jobs/takeoverSchedule , version 7
+     * API: /api/14/scheduler/takeover
      */
     def apiJobClusterTakeoverSchedule (){
-        if (!apiService.requireVersion(request,response,ApiRequestFilters.V7)) {
+        if (!apiService.requireVersion(request,response,ApiRequestFilters.V14)) {
             return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -2975,26 +2975,35 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
 
-        def serverUUID
+        String serverUUID=null
+        boolean serverAll=false
+        String project=null
         if(request.format=='json' ){
             def data= request.JSON
-            serverUUID = data?.server?.uuid
+            serverUUID = data?.server?.uuid?:null
+            serverAll = data?.server?.all?true:false
+            project = data?.project?:null
         }else if(request.format=='xml' || !request.format){
             def data= request.XML
             if(data.name()=='server'){
-                serverUUID = data.'@uuid'?.text()
+                serverUUID = data.'@uuid'?.text()?:null
+                serverAll = data.'@all'?.text()=='true'
+            }else if(data.name()=='takeoverSchedule'){
+                serverUUID = data.server?.'@uuid'?.text()?:null
+                serverAll = data.server?.'@all'?.text()=='true'
+                project = data.project?.'@name'?.text()?:null
             }
         }else{
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.invalid.request',
                     args: ['Expected content of type text/xml or text/json, content was of type: ' + request.format]])
         }
-        if (!serverUUID) {
+        if (!serverUUID && !serverAll) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.invalid.request', args: ['Expected server.uuid in request.']])
+                    code: 'api.error.invalid.request', args: ['Expected server.uuid or server.all in request.']])
         }
 
-        def reclaimMap=scheduledExecutionService.reclaimAndScheduleJobs(serverUUID)
+        def reclaimMap=scheduledExecutionService.reclaimAndScheduleJobs(serverUUID,serverAll,project)
         def successCount=reclaimMap.findAll {it.value.success}.size()
         def failedCount = reclaimMap.size() - successCount
         //TODO: retry for failed reclaims?
@@ -3025,7 +3034,14 @@ class ScheduledExecutionController  extends ControllerBase{
                                 delegate.'server'(uuid: frameworkService.getServerUUID())
                             }
                         }
-                        delegate.'server'(uuid: serverUUID)
+                        if(!serverAll) {
+                            delegate.'server'(uuid: serverUUID)
+                        }else{
+                            delegate.'server'(all: true)
+                        }
+                        if(project){
+                            delegate.'project'(name:project)
+                        }
                         delegate.'jobs'(total: reclaimMap.size()){
                             delegate.'successful'(count: successCount) {
                                 reclaimMap.findAll { it.value.success }.each(jobLink.curry(delegate))
@@ -3038,13 +3054,16 @@ class ScheduledExecutionController  extends ControllerBase{
                 }
             }
             json{
-                render(contentType: "text/json",text: [
+                def datamap=serverAll?[server:[all:true]]:[server:[uuid: serverUUID]]
+                if(project){
+                    datamap.project=project
+                }
+                render(contentType: "application/json",text: [
                     success:true,
                     apiversion:ApiRequestFilters.API_CURRENT_VERSION,
                     message: successMessage,
                     self:[server:[uuid:frameworkService.getServerUUID()]],
-                    takeoverSchedule:[
-                        server:[uuid: serverUUID],
+                    takeoverSchedule:datamap+[
                         jobs:[
                             total:reclaimMap.size(),
                             successful:reclaimMap.findAll { it.value.success }.collect (jobData),

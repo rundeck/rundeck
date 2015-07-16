@@ -112,8 +112,9 @@ Changes introduced by API Version number:
     - [`/api/14/execution/[ID]/abort`][/api/V/execution/[ID]/abort] - added API/GUI href/permalink to XML responses.
     - [`/api/14/project/[PROJECT]/history`][/api/V/project/[PROJECT]/history] - added API/GUI href/permalink to XML responses.
     - `/api/14/project/[PROJECT]/run/*` - added API/GUI href/permalink to XML responses for adhoc command/script/url.
-    - [`/api/14/incubator/jobs/takeoverSchedule`][/api/V/incubator/jobs/takeoverSchedule] - added API/GUI href/permalink to XML responses for adhoc command/script/url. Note: `href` was modified as mentioned below.
     - [`/api/14/system/info`][/api/V/system/info] - added information about Rundeck Execution Mode
+* Endpoints promoted out of "incubator" status:
+    - [`/api/14/scheduler/takeover`][/api/V/scheduler/takeover] - Can specify `all` servers, or jobs within a specific `project`. Added API/GUI href/permalink to XML responses for adhoc command/script/url. Note: `href` was modified as mentioned below.
 * Modified `href` meaning for XML responses:
     * Some endpoints that included a `href` value in XML responses used the link that was appropriate
     for an end user to use in a web browser,
@@ -865,6 +866,236 @@ POST /api/14/system/executions/disable
 }
 ~~~
 
+## Cluster Mode
+
+
+### Takeover Schedule in Cluster Mode
+
+Tell a Rundeck server in cluster mode to claim all scheduled jobs from another
+cluster server.
+
+This endpoint can take over the schedule of certain jobs based on the input:
+
+* specify a server `uuid`: take over all jobs from that server
+* specify server `all` value of `true`: take over all jobs regardless of server UUID
+
+Additionally, you can specify a `project` name to take over only jobs matching
+the given project name, in combination with the server options.
+
+**Request**
+
+    PUT /api/14/scheduler/takeover
+
+Either XML or JSON request.
+
+`Content-Type: application/xml`:
+
+XML Document containing:
+
+* `<takeoverSchedule>` top level element
+  * required `<server>` element, with one of required attributes:
+    * `uuid` server UUID to take over from
+    * `all` value of `true` to take over from all servers
+  * optional `<project>` element, required attribute: `name`
+
+Example for a single server UUID:
+
+~~~ {.xml}
+<takeoverSchedule>
+    <server uuid="[UUID]" />
+</takeoverSchedule>
+~~~
+
+Example for all servers:
+
+~~~ {.xml}
+<takeoverSchedule>
+    <server all="true"/>
+</takeoverSchedule>
+~~~
+
+Example for all servers and a specific project:
+
+~~~ {.xml}
+<takeoverSchedule>
+    <server all="true"/>
+    <project name="[PROJECT]"/>
+</takeoverSchedule>
+~~~
+
+**Note**: The `<server>` element can be the root of the document request for backwards compatibility.
+
+`Content-Type: application/json`:
+
+A JSON object.
+
+* required `server` entry, with one of these required entries:
+    * `uuid` server UUID to take over from
+    * `all` value of `true` to take over from all servers
+* optional `project` entry, specifying a project name
+
+~~~ {.json}
+{
+  "server": {
+    "uuid": "[UUID]",
+    "all": true
+  },
+  "project": "[PROJECT]"
+}
+~~~
+
+**Response:**
+
+If request was XML, then Standard API response containing the following additional elements:
+
+* `self`
+    * `server`
+        *  `@uuid` - this cluster server's uuid
+*  `takeoverSchedule`
+    *  `server`
+        *  `@uuid` - requested server uuid to take over, if specifed in the request
+        *  `@all` - `true` if requested
+    *  `project` - name of project, if specified in request
+    *  `jobs` - set of successful and failed jobs taken over
+        *  `successful`/`failed` - job set
+            *  `@count` number of jobs in the set
+            *  `job` - one element for each job
+                *  `@id` Job ID
+                *  `@href` Job API HREF
+                *  `@permalink` Job GUI HREF
+
+Example XML Response, when `uuid` was specified:
+
+~~~~~~~~~~ {.xml}
+<takeoverSchedule>
+    <self>
+      <server uuid='C677C663-F902-4B97-B8AC-4AA57B58DDD6' />
+    </self>
+    <server uuid='8F3D5976-2232-4529-847B-8E45764608E3' />
+    <jobs total='2'>
+      <successful count='2'>
+        <job id='a1aa53ac-73a6-4ead-bbe4-34afbff8e057'
+        href='http://localhost:9090/api/14/job/a1aa53ac-73a6-4ead-bbe4-34afbff8e057'
+        permalink='http://localhost:9090/rundeck/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057' />
+        <job id='116e2025-7895-444a-88f7-d96b4f19fdb3'
+        href='http://localhost:9090/api/14/job/116e2025-7895-444a-88f7-d96b4f19fdb3'
+        permalink='http://localhost:9090/rundeck/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3' />
+      </successful>
+      <failed count='0'></failed>
+    </jobs>
+</takeoverSchedule>
+~~~~~~~~~~
+
+Example XML Response, when `all` was specified:
+
+~~~~~~~~~~ {.xml}
+<takeoverSchedule>
+    <self>
+      <server uuid='C677C663-F902-4B97-B8AC-4AA57B58DDD6' />
+    </self>
+    <server all='true' />
+    <jobs total='2'>
+      ...
+    </jobs>
+</takeoverSchedule>
+~~~~~~~~~~
+
+Example XML Response, when `project` was specified:
+
+~~~~~~~~~~ {.xml}
+<takeoverSchedule>
+    <self>
+      <server uuid='C677C663-F902-4B97-B8AC-4AA57B58DDD6' />
+    </self>
+    <project name='My Project' />
+    <jobs total='2'>
+      ...
+    </jobs>
+</takeoverSchedule>
+~~~~~~~~~~
+
+JSON response for `uuid` specified:
+
+~~~~~~~~~~ {.json}
+{
+  "takeoverSchedule": {
+    "jobs": {
+      "failed": [],
+      "successful": [
+        {
+          "href": "http://dignan:4440/api/14/job/a1aa53ac-73a6-4ead-bbe4-34afbff8e057",
+          "permalink": "http://dignan:4440/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057",
+          "id": "a1aa53ac-73a6-4ead-bbe4-34afbff8e057"
+        },
+        {
+          "href": "http://dignan:4440/api/14/job/116e2025-7895-444a-88f7-d96b4f19fdb3",
+          "permalink": "http://dignan:4440/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3",
+          "id": "116e2025-7895-444a-88f7-d96b4f19fdb3"
+        }
+      ],
+      "total": 2
+    },
+    "server": {
+      "uuid": "8F3D5976-2232-4529-847B-8E45764608E3"
+    }
+  },
+  "self": {
+    "server": {
+      "uuid": "C677C663-F902-4B97-B8AC-4AA57B58DDD6"
+    }
+  },
+  "message": "Schedule Takeover successful for 2/2 Jobs.",
+  "apiversion": 14,
+  "success": true
+}
+~~~~~~~~~~
+
+JSON response for `all` specified:
+
+~~~~~~~~~~ {.json}
+{
+  "takeoverSchedule": {
+    "jobs": {
+      ...
+      "total": 2
+    },
+    "server": {
+      "all": true
+    }
+  },
+  "self": {
+    "server": {
+      "uuid": "C677C663-F902-4B97-B8AC-4AA57B58DDD6"
+    }
+  },
+  "message": "Schedule Takeover successful for 2/2 Jobs.",
+  "apiversion": 14,
+  "success": true
+}
+~~~~~~~~~~
+
+JSON response for `project` specified:
+
+~~~~~~~~~~ {.json}
+{
+  "takeoverSchedule": {
+    "jobs": {
+      ...
+      "total": 2
+    },
+    "project": "My Project"
+  },
+  "self": {
+    "server": {
+      "uuid": "C677C663-F902-4B97-B8AC-4AA57B58DDD6"
+    }
+  },
+  "message": "Schedule Takeover successful for 2/2 Jobs.",
+  "apiversion": 14,
+  "success": true
+}
+~~~~~~~~~~
+
 ## Jobs
 
 ### Listing Jobs ###
@@ -1194,7 +1425,6 @@ The list of succeeded/failed will contain objects of this form:
   "message": "(success or failure message)"
 }
 ~~~~~~
-
 
 ## Executions
 
@@ -3456,10 +3686,6 @@ If request was JSON, then the following JSON:
 
 * `POST` [Bulk Delete Executions](#bulk-delete-executions)
 
-[/api/V/incubator/jobs/takeoverSchedule][]
-
-* `PUT` [Takeover Schedule in Cluster Mode](#takeover-schedule-in-cluster-mode)
-
 [/api/V/job/[ID]][]
 
 * `GET` [Getting a Job Definition](#getting-a-job-definition)
@@ -3563,6 +3789,10 @@ If request was JSON, then the following JSON:
 * `GET` [Listing Projects](#listing-projects)
 * `POST` [Project Creation](#project-creation)
 
+[/api/V/scheduler/takeover][]
+
+* `PUT` [Takeover Schedule in Cluster Mode](#takeover-schedule-in-cluster-mode)
+
 [/api/V/storage/keys/[PATH]/[FILE]][]
 
 * `PUT` [Upload Keys](#upload-keys)
@@ -3614,8 +3844,6 @@ If request was JSON, then the following JSON:
 
 [/api/V/executions/delete]:#bulk-delete-executions
 
-
-[/api/V/incubator/jobs/takeoverSchedule]:#takeover-schedule-in-cluster-mode
 
 
 [/api/V/job/[ID]]:#getting-a-job-definition
@@ -3681,6 +3909,7 @@ If request was JSON, then the following JSON:
 
 [/api/V/project/[PROJECT]/run/url]:#running-adhoc-script-urls
 
+[/api/V/scheduler/takeover]:#takeover-schedule-in-cluster-mode
 [/api/V/storage/keys/[PATH]/[FILE]]:#list-keys
 [PUT /api/V/storage/keys/[PATH]/[FILE]]:#upload-keys
 [DELETE /api/V/storage/keys/[PATH]/[FILE]]:#delete-keys
