@@ -62,6 +62,22 @@ If desired, you can switch back to using filesystem projects by doing this:
 1. set `rundeck.projectsStorageType=filesystem` in `rundeck-config.properties`
 2. rename each `project.properties.imported` file back to `project.properties`
 
+### web.xml changes
+
+The `web.xml` file has changed significantly from 2.4.x to Rundeck 2.5.x.
+
+For this reason, if you have modified your `web.xml` file, located at
+`/var/lib/rundeck/exp/webapp/WEB-INF/web.xml`,
+for example to change the `<security-role><role-name>user</role-name><security-role>`,
+then you may need to back it up, and re-apply the changes you made after upgrading to 2.5.x.
+
+If you receive a "Service Unavailable" error on startup, and the service.log file contains this message:
+
+    java.lang.ClassNotFoundException: org.codehaus.groovy.grails.web.sitemesh.GrailsPageFilter
+
+Then that means your web.xml file is out of date.  Replace it with the one from 2.5 installation,
+then re-apply your changes to `<role-name>`.
+
 ## Upgrading to Rundeck 2.1
 
 ### Database schema

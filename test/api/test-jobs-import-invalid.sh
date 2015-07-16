@@ -42,7 +42,7 @@ cat > $DIR/temp.out <<END
 END
 
 # now submit req
-runurl="${APIURL}/jobs/import"
+runurl="${APIURL}/project/$project/jobs/import"
 
 echo "TEST: /jobs/import with invalid format"
 
@@ -123,11 +123,13 @@ cat > $DIR/temp.out <<END
 
 END
 
+APIv13URL="${RDURL}/api/13"
+runurl="${APIv13URL}/jobs/import"
 params="format=xml"
 # specify the file for upload with curl, named "xmlBatch"
 ulopts="-F xmlBatch=@$DIR/temp.out"
 
-echo "TEST: /jobs/import with bad definition"
+echo "TEST: /jobs/import with bad definition (api < v14)"
 
 # get listing
 docurl $ulopts  ${runurl}?${params} > $DIR/curl.out

@@ -19,6 +19,7 @@ class ApiController extends ControllerBase{
     def frameworkService
     def apiService
     def userService
+    def configurationService
 
     def invalid = {
         return apiService.renderErrorXml(response,[code:'api.error.invalid.request',args:[request.forwardURI],status:HttpServletResponse.SC_NOT_FOUND])
@@ -249,63 +250,141 @@ class ApiController extends ControllerBase{
         long durationTime=ManagementFactory.getRuntimeMXBean().uptime
         Date startupDate = new Date(nowDate.getTime()-durationTime)
         int threadActiveCount=Thread.activeCount()
+        boolean executionModeActive=configurationService.executionModeActive
         def metricsJsonUrl = createLink(uri: '/metrics/metrics?pretty=true',absolute: true)
         def metricsThreadDumpUrl = createLink(uri: '/metrics/threads',absolute: true)
-        return apiService.renderSuccessXml(request,response){
-            if(apiService.doWrapXmlResponse(request)){
-                delegate.'success' {
-                    delegate.'message'("System Stats for Rundeck ${appVersion} on node ${nodeName}")
-                }
-            }
-            delegate.'system'{
-                timestamp(epoch:nowDate.getTime(),unit:'ms'){
-                    datetime(g.w3cDateValue(date:nowDate))
-                }
-                rundeck{
-                    version(appVersion)
-                    build(grailsApplication.metadata['build.ident'])
-                    node(nodeName)
-                    base(servletContext.getAttribute("RDECK_BASE"))
-                    apiversion(ApiRequestFilters.API_CURRENT_VERSION)
-                    serverUUID(sUUID)
-                }
-                os {
-                    arch(osArch)
-                    name(osName)
-                    version(osVersion)
-                }
-                jvm {
-                    name(vmName)
-                    vendor(javaVendor)
-                    version(javaVersion)
-                    implementationVersion(vmVersion)
-                }
-                stats{
-                    uptime(duration:durationTime,unit: 'ms'){
-                        since(epoch: startupDate.getTime(),unit:'ms'){
-                            datetime(g.w3cDateValue(date: startupDate))
+        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorXml(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
+        }
+        withFormat{
+            xml{
+                return apiService.renderSuccessXml(request,response){
+                    if(apiService.doWrapXmlResponse(request)){
+                        delegate.'success' {
+                            delegate.'message'("System Stats for Rundeck ${appVersion} on node ${nodeName}")
                         }
                     }
-    //                errorCount('12')
-//                    requestCount('12')
-                    cpu{
-                        loadAverage(unit:'percent',load)
-                        processors(processorsCount)
-                    }
-                    memory(unit:'byte'){
-                        max(Runtime.getRuntime().maxMemory())
-                        free(Runtime.getRuntime().freeMemory())
-                        total(Runtime.getRuntime().totalMemory())
-                    }
-                    scheduler{
-                        running(quartzScheduler.getCurrentlyExecutingJobs().size())
-                    }
-                    threads{
-                        active(threadActiveCount)
+                    delegate.'system'{
+                        timestamp(epoch:nowDate.getTime(),unit:'ms'){
+                            datetime(g.w3cDateValue(date:nowDate))
+                        }
+                        rundeck{
+                            version(appVersion)
+                            build(grailsApplication.metadata['build.ident'])
+                            node(nodeName)
+                            base(servletContext.getAttribute("RDECK_BASE"))
+                            apiversion(ApiRequestFilters.API_CURRENT_VERSION)
+                            serverUUID(sUUID)
+                        }
+                        executions(active:executionModeActive,executionMode:executionModeActive?'active':'passive')
+                        os {
+                            arch(osArch)
+                            name(osName)
+                            version(osVersion)
+                        }
+                        jvm {
+                            name(vmName)
+                            vendor(javaVendor)
+                            version(javaVersion)
+                            implementationVersion(vmVersion)
+                        }
+                        stats{
+                            uptime(duration:durationTime,unit: 'ms'){
+                                since(epoch: startupDate.getTime(),unit:'ms'){
+                                    datetime(g.w3cDateValue(date: startupDate))
+                                }
+                            }
+            //                errorCount('12')
+        //                    requestCount('12')
+                            cpu{
+                                loadAverage(unit:'percent',load)
+                                processors(processorsCount)
+                            }
+                            memory(unit:'byte'){
+                                max(Runtime.getRuntime().maxMemory())
+                                free(Runtime.getRuntime().freeMemory())
+                                total(Runtime.getRuntime().totalMemory())
+                            }
+                            scheduler{
+                                running(quartzScheduler.getCurrentlyExecutingJobs().size())
+                            }
+                            threads{
+                                active(threadActiveCount)
+                            }
+                        }
+                        metrics(href:metricsJsonUrl,contentType:'text/json')
+                        threadDump(href:metricsThreadDumpUrl,contentType:'text/plain')
                     }
                 }
-                metrics(href:metricsJsonUrl,contentType:'text/json')
-                threadDump(href:metricsThreadDumpUrl,contentType:'text/plain')
+
+            }
+            json{
+
+                return apiService.renderSuccessJson(response){
+                    delegate.'system'={
+                        timestamp={
+                            epoch=nowDate.getTime()
+                            unit='ms'
+                            datetime=g.w3cDateValue(date:nowDate)
+                        }
+                        rundeck={
+                            version=(appVersion)
+                            build=(grailsApplication.metadata['build.ident'])
+                            node=(nodeName)
+                            base=(servletContext.getAttribute("RDECK_BASE"))
+                            apiversion=(ApiRequestFilters.API_CURRENT_VERSION)
+                            serverUUID=(sUUID)
+                        }
+                        executions={
+                            active=executionModeActive
+                            executionMode=executionModeActive?'active':'passive'
+                        }
+                        os= {
+                            arch=(osArch)
+                            name=(osName)
+                            version=(osVersion)
+                        }
+                        jvm= {
+                            name=(vmName)
+                            vendor=(javaVendor)
+                            version=(javaVersion)
+                            implementationVersion=(vmVersion)
+                        }
+                        stats={
+                            uptime={
+                                duration=durationTime
+                                unit= 'ms'
+                                since={
+                                    epoch= startupDate.getTime()
+                                    unit='ms'
+                                    datetime=(g.w3cDateValue(date: startupDate))
+                                }
+                            }
+                            cpu={
+                                loadAverage=[unit:'percent',average:load]
+                                processors=(processorsCount)
+                            }
+                            memory={
+                                unit='byte'
+                                max=(Runtime.getRuntime().maxMemory())
+                                free=(Runtime.getRuntime().freeMemory())
+                                total=(Runtime.getRuntime().totalMemory())
+                            }
+                            scheduler={
+                                running=(quartzScheduler.getCurrentlyExecutingJobs().size())
+                            }
+                            threads={
+                                active=(threadActiveCount)
+                            }
+                        }
+                        metrics=[href:metricsJsonUrl,contentType:'text/json']
+                        threadDump=[href:metricsThreadDumpUrl,contentType:'text/plain']
+                    }
+                }
             }
         }
     }

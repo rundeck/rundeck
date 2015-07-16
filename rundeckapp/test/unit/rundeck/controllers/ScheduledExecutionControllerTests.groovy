@@ -1,6 +1,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
+import com.dtolabs.rundeck.app.api.ApiRunAdhocRequest
 import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
@@ -792,7 +793,7 @@ class ScheduledExecutionControllerTests  {
                 [failed: false, scheduledExecution: se]
             }
             scheduleTempJob { auth, exec ->
-                return exec.id
+                return [id:exec.id,execution:exec,success:true]
             }
             logJobChange { changeinfo, properties -> }
         }
@@ -804,6 +805,7 @@ class ScheduledExecutionControllerTests  {
         assertNotNull exec.save()
 
         controller.executionService = mockWith(ExecutionService){
+            getExecutionsAreActive{->true}
             executeJob{ ScheduledExecution scheduledExecution, AuthContext authContext, String user, Map input->
                 [executionId:exec.id]
             }
@@ -824,6 +826,87 @@ class ScheduledExecutionControllerTests  {
         controller.runJobNow(command,extra)
 
         assertEquals('/scheduledExecution/show',response.redirectedUrl)
+    }
+    /**
+     * Run job now, when Passive execution mode is set
+     */
+    public void testRunJobNow_execModePassive() {
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+        )
+        se.save()
+        def executionModeActive = false
+        assertNotNull se.id
+
+        controller.frameworkService = mockWith(FrameworkService){
+            getAuthContextForSubject { Subject subject -> return null }
+            authorizeProjectJobAll { framework, resource, actions, project -> return true }
+
+            //methods called in show() action
+            getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
+            getAuthContextForSubject { subject -> return null }
+            authorizeProjectJobAll { AuthContext authContext, ScheduledExecution job, Collection actions, String project ->
+                return true
+            }
+            projects { return [] }
+            authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+            authorizeProjectJobAll { framework, resource, actions, project -> return true }
+            getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
+            getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
+            getNodeStepPluginDescriptions { [] }
+            getStepPluginDescriptions { [] }
+        }
+
+        controller.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getByIDorUUID(2..2) { id -> return se }
+            nextExecutionTime{jobdef->null}
+            userAuthorizedForJob { user, schedexec, framework -> return true }
+        }
+
+        controller.notificationService = mockWith(NotificationService){
+            listNotificationPlugins() {->
+                []
+            }
+        }
+        controller.orchestratorPluginService=mockWith(OrchestratorPluginService){
+            listOrchestratorPlugins(){->null}
+        }
+
+
+        def exec = new Execution(
+                user: "testuser", project: "testProject", loglevel: 'WARN',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+                )
+        assertNotNull exec.save()
+
+        controller.executionService = mockWith(ExecutionService){
+            getExecutionsAreActive{->
+                executionModeActive
+            }
+            executeJob{ ScheduledExecution scheduledExecution, AuthContext authContext, String user, Map input->
+                [executionId:exec.id]
+            }
+        }
+
+
+        controller.metaClass.message = {params -> params?.code ?: 'messageCodeMissing'}
+        final subject = new Subject()
+        controller.session.setAttribute("subject", subject)
+
+        def command = new RunJobCommand()
+        command.id=se.id.toString()
+        params.project='testProject'
+        params.id=se.id.toString()
+        def extra = new ExtraCommand()
+
+        setupFormTokens(controller)
+
+        request.method='POST'
+        controller.runJobNow(command,extra)
+
+        assertEquals(null,response.redirectedUrl)
+        assertEquals('disabled.execution.run',model.error)
     }
     public void testRunJobNow_missingToken() {
         def se = new ScheduledExecution(
@@ -848,7 +931,7 @@ class ScheduledExecutionControllerTests  {
                 [failed: false, scheduledExecution: se]
             }
             scheduleTempJob { auth, exec ->
-                return exec.id
+                return [id:exec.id,execution:exec,success:true]
             }
             logJobChange { changeinfo, properties -> }
         }
@@ -911,7 +994,7 @@ class ScheduledExecutionControllerTests  {
                 [failed: false, scheduledExecution: se]
             }
             seServiceControl.demand.scheduleTempJob { auth, exec ->
-                return exec.id
+                [id:exec.id,execution:exec,success:true]
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
         controller.scheduledExecutionService = seServiceControl.createMock()
@@ -925,31 +1008,102 @@ class ScheduledExecutionControllerTests  {
             eServiceControl.demand.createExecutionAndPrep {params, user ->
                 return exec
             }
+        eServiceControl.demand.getExecutionsAreActive{->true}
         controller.executionService = eServiceControl.createMock()
 
 
         controller.metaClass.message = {params -> params?.code ?: 'messageCodeMissing'}
 
-            def params = [
-                    jobName: 'monkey1',
-                    project: 'testProject',
-                    description: 'blah',
-                    workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']]
-            ]
-        controller.params.putAll(params)
-            final subject = new Subject()
-            subject.principals << new Username('test')
-            subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
+
+        final subject = new Subject()
+        subject.principals << new Username('test')
+        subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
         controller.request.setAttribute("subject", subject)
 
-            def model= controller.runAdhoc()
+        def model= controller.runAdhoc(new ApiRunAdhocRequest(exec:'a remote string',nodeKeepgoing: true,nodeThreadcount: 1,project:'testProject'))
 
-            assertNull model.failed
-            assertTrue model.success
-            assertNotNull model.execution
-            assertNotNull exec.id
-            assertEquals exec, model.execution
-            assertEquals('notequal',exec.id.toString(), model.id.toString())
+        assertNull model.failed
+        assertTrue model.success
+        assertNotNull model.execution
+        assertNotNull exec.id
+        assertEquals exec, model.execution
+        assertEquals('notequal',exec.id.toString(), model.id.toString())
+    }
+
+    public void testRunAdhocBasic_execModePassive() {
+
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        se.save()
+//
+        def executionModeActive = false
+        assertNotNull se.id
+
+        //try to do update of the ScheduledExecution
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getRundeckFramework { -> return null }
+        fwkControl.demand.getAuthContextForSubject { subject -> return null }
+        fwkControl.demand.projects { return [] }
+        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+        fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
+        fwkControl.demand.getRundeckFramework { -> return null }
+        fwkControl.demand.getRundeckFramework { -> return null }
+        controller.frameworkService = fwkControl.createMock()
+        def seServiceControl = mockFor(ScheduledExecutionService, true)
+
+        seServiceControl.demand.getByIDorUUID { id -> return se }
+        seServiceControl.demand.userAuthorizedForAdhoc { request, scheduledExecution, framework -> return true }
+        seServiceControl.demand._dovalidate { params, user, rolelist, framework ->
+            assertEquals('Temporary_Job', params.jobName)
+            assertEquals('adhoc', params.groupPath)
+            [failed: false, scheduledExecution: se]
+        }
+        seServiceControl.demand.scheduleTempJob { auth, exec ->
+            [id: exec.id, execution: exec, success: true]
+        }
+        seServiceControl.demand.logJobChange { changeinfo, properties -> }
+        controller.scheduledExecutionService = seServiceControl.createMock()
+
+        def eServiceControl = mockFor(ExecutionService, true)
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        assertNotNull exec.save()
+        eServiceControl.demand.createExecutionAndPrep { params, user ->
+            return exec
+        }
+        eServiceControl.demand.getExecutionsAreActive { -> executionModeActive }
+        controller.executionService = eServiceControl.createMock()
+
+
+        controller.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
+
+
+        final subject = new Subject()
+        subject.principals << new Username('test')
+        subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
+        controller.request.setAttribute("subject", subject)
+
+        def model = controller.runAdhoc(
+                new ApiRunAdhocRequest(
+                        exec: 'a remote string',
+                        nodeKeepgoing: true,
+                        nodeThreadcount: 1,
+                        project: 'testProject'
+                )
+        )
+
+        assertTrue model.failed
+        assertFalse model.success
+        assertNull model.execution
+        assertEquals 'disabled', model.error
     }
     /**
      * User input provides old node filters, runAdhoc should supply new filter string to scheduleTempJob
@@ -988,7 +1142,7 @@ class ScheduledExecutionControllerTests  {
             [failed: false, scheduledExecution: se]
         }
         seServiceControl.demand.scheduleTempJob { auth, exec ->
-            return exec.id
+            [id:exec.id,execution:exec,success:true]
         }
         seServiceControl.demand.logJobChange {changeinfo, properties ->}
         controller.scheduledExecutionService = seServiceControl.createMock()
@@ -1002,24 +1156,26 @@ class ScheduledExecutionControllerTests  {
         eServiceControl.demand.createExecutionAndPrep {params, user ->
             return exec
         }
+        eServiceControl.demand.getExecutionsAreActive{->true}
         controller.executionService = eServiceControl.createMock()
 
 
         controller.metaClass.message = {params -> params?.code ?: 'messageCodeMissing'}
 
-        def params = [
-                jobName: 'monkey1',
-                project: 'testProject',
-                description: 'blah',
-                workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']]
-        ]
-        controller.params.putAll(params)
+
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
         controller.request.setAttribute("subject", subject)
 
-        def model= controller.runAdhoc()
+        def model = controller.runAdhoc(
+                new ApiRunAdhocRequest(
+                        exec: 'a remote string',
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        project: 'testProject'
+                )
+        )
 
         assertNull model.failed
         assertNotNull model.execution
@@ -1060,7 +1216,7 @@ class ScheduledExecutionControllerTests  {
                 [failed: true, scheduledExecution: se]
             }
             seServiceControl.demand.scheduleTempJob { auth, exec ->
-                return exec.id
+                [id:exec.id,execution:exec,success:true]
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
             sec.scheduledExecutionService = seServiceControl.createMock()
@@ -1079,19 +1235,13 @@ class ScheduledExecutionControllerTests  {
 
             sec.metaClass.message = {params -> params?.code ?: 'messageCodeMissing'}
 
-            def params = [
-                    jobName: 'monkey1',
-                    project: 'testProject',
-                    description: 'blah',
-                    workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']]
-            ]
-            sec.params.putAll(params)
+
             final subject = new Subject()
             subject.principals << new Username('test')
             subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
             sec.request.setAttribute("subject", subject)
 
-            def model=sec.runAdhoc()
+            def model=sec.runAdhoc(new ApiRunAdhocRequest(exec:'a remote string',project:'testProject',nodeThreadcount: 1,nodeKeepgoing: true))
 
             assertTrue model.failed
             assertNotNull model.scheduledExecution
@@ -1435,7 +1585,7 @@ class ScheduledExecutionControllerTests  {
         }
 
         seServiceControl.demand.scheduleTempJob { auth, exec ->
-            'fakeid'
+            [id:'fakeid',execution:exec,success:true]
         }
 
         sec.scheduledExecutionService = seServiceControl.createMock()
@@ -1453,8 +1603,6 @@ class ScheduledExecutionControllerTests  {
         sec.executionService = eServiceControl.createMock()
 
 
-        def params = [exec: 'blah']
-        sec.params.putAll(params)
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
@@ -1475,13 +1623,12 @@ class ScheduledExecutionControllerTests  {
         svcMock.demand.requireParameters { reqparams, response, List needparams ->
             assertTrue('project' in needparams)
             assertTrue('exec' in needparams)
-            assertNotNull(reqparams.exec)
             assertNull(reqparams.project)
             requireFailed=true
             return false
         }
         sec.apiService = svcMock.createMock()
-        def result = sec.apiRunCommand()
+        def result = sec.apiRunCommand(new ApiRunAdhocRequest(exec: 'blah'))
         assert !succeeded
         assert null == view
         assertNull(response.redirectedUrl)
@@ -1542,7 +1689,23 @@ class ScheduledExecutionControllerTests  {
         assertFalse(cmd.validate())
         assertTrue(cmd.errors.hasFieldErrors('idlist'))
     }
-    public void testApiRunCommand() {
+
+    public void testApiRunScript_RequiresPOST() {
+        def sec = new ScheduledExecutionController()
+
+        sec.request.setAttribute("api_version", 14)
+        def result=sec.apiRunScript(new ApiRunAdhocRequest(script:'blah',project: 'test'))
+        assert 405==response.status
+    }
+    public void testApiRunScript_v14_RequiresPOST() {
+        def sec = new ScheduledExecutionController()
+
+        sec.request.setAttribute("api_version", 14)
+        def result=sec.apiRunScriptv14(new ApiRunAdhocRequest(script:'blah',project: 'test'))
+        assert 405==response.status
+    }
+
+    public void testApiRunScriptUrl_v14() {
         def sec = new ScheduledExecutionController()
 
         //try to do api job run
@@ -1569,7 +1732,7 @@ class ScheduledExecutionControllerTests  {
         }
 
         seServiceControl.demand.scheduleTempJob { auth, exec ->
-            'fakeid'
+            [id:'fakeid',execution:exec,success:true]
         }
 
         sec.scheduledExecutionService = seServiceControl.createMock()
@@ -1584,11 +1747,183 @@ class ScheduledExecutionControllerTests  {
             assert 'anonymous' == user
             exec
         }
+        eServiceControl.demand.getExecutionsAreActive{->true}
         sec.executionService = eServiceControl.createMock()
 
 
-        def params = [exec:'blah',project: 'test']
-        sec.params.putAll(params)
+        final subject = new Subject()
+        subject.principals << new Username('test')
+        subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
+        sec.request.setAttribute("subject", subject)
+        sec.request.setAttribute("api_version", 14)
+//        sec.request.api_version = 5
+        ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
+            assert 1 == execs.size()
+            assert execs.contains(exec)
+        }
+        sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
+        def succeeded=false
+        def apiverslist=[14,4]
+        sec.apiService = mockWith(ApiService) {
+            requireVersion(1..1){ req, resp, apivers ->
+                def val=apiverslist.remove(0)
+                assert apivers == val
+                assert req.api_version==14
+                true
+            }
+            requireApi { req, resp ->
+                true
+            }
+            requireVersion(1..1){ req, resp, apivers ->
+                def val=apiverslist.remove(0)
+                assert apivers == val
+                assert req.api_version==14
+                true
+            }
+            requireExists { response, exists, args ->
+                assertEquals(['project','test'],args)
+                return true
+            }
+            renderSuccessXml { request,response, closure ->
+                succeeded=true
+                return true
+            }
+        }
+        def result=sec.apiRunScriptUrlv14(new ApiRunAdhocRequest(url: 'blah',project: 'test'))
+        assert succeeded
+        assert null==view
+        assertNull(response.redirectedUrl)
+        assert !model
+    }
+
+    public void testApiRunCommand_v14() {
+        def sec = new ScheduledExecutionController()
+
+        //try to do api job run
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getRundeckFramework(1..2) {-> return null }
+        fwkControl.demand.getAuthContextForSubject { subject -> return null }
+        fwkControl.demand.existsFrameworkProject(1..1) { project, fwk ->
+            true
+        }
+
+        fwkControl.demand.authorizeProjectResource(1..1){framework, res, action, project ->
+            assert 'runAs' in actions
+            return true
+        }
+        sec.frameworkService = fwkControl.createMock()
+        def seServiceControl = mockFor(ScheduledExecutionService, true)
+
+        seServiceControl.demand._dovalidate(1..1){params, user, roleList, framework->
+            assert null==user
+            [scheduledExecution:new ScheduledExecution(),failed:false]
+        }
+        seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
+            true
+        }
+
+        seServiceControl.demand.scheduleTempJob { auth, exec ->
+            [id:'fakeid',execution:exec,success:true]
+        }
+
+        sec.scheduledExecutionService = seServiceControl.createMock()
+
+        def eServiceControl = mockFor(ExecutionService, true)
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+        )
+        assertNotNull exec.save()
+        eServiceControl.demand.createExecutionAndPrep { params, user ->
+            assert 'anonymous' == user
+            exec
+        }
+        eServiceControl.demand.getExecutionsAreActive{->true}
+        sec.executionService = eServiceControl.createMock()
+
+
+        final subject = new Subject()
+        subject.principals << new Username('test')
+        subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
+        sec.request.setAttribute("subject", subject)
+        sec.request.setAttribute("api_version", 14)
+//        sec.request.api_version = 5
+        ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
+            assert 1 == execs.size()
+            assert execs.contains(exec)
+        }
+        sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
+        def succeeded=false
+        sec.apiService = mockWith(ApiService) {
+            requireVersion { req, resp, apivers ->
+                assert apivers == 14
+                assert req.api_version==14
+                true
+            }
+            requireApi { req, resp ->
+                true
+            }
+            requireExists { response, exists, args ->
+                assertEquals(['project','test'],args)
+                return true
+            }
+            renderSuccessXml { request,response, closure ->
+                succeeded=true
+                return true
+            }
+        }
+        def result=sec.apiRunCommandv14(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
+        assert succeeded
+        assert null==view
+        assertNull(response.redirectedUrl)
+        assert !model
+    }
+    public void testApiRunCommand_XML() {
+        def sec = new ScheduledExecutionController()
+
+        //try to do api job run
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getRundeckFramework(1..2) {-> return null }
+        fwkControl.demand.getAuthContextForSubject { subject -> return null }
+        fwkControl.demand.existsFrameworkProject(1..1) { project, fwk ->
+            true
+        }
+
+        fwkControl.demand.authorizeProjectResource(1..1){framework, res, action, project ->
+            assert 'runAs' in actions
+            return true
+        }
+        sec.frameworkService = fwkControl.createMock()
+        def seServiceControl = mockFor(ScheduledExecutionService, true)
+
+        seServiceControl.demand._dovalidate(1..1){params, user, roleList, framework->
+            assert null==user
+            [scheduledExecution:new ScheduledExecution(),failed:false]
+        }
+        seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
+            true
+        }
+
+        seServiceControl.demand.scheduleTempJob { auth, exec ->
+            [id:'fakeid',execution:exec,success:true]
+        }
+
+        sec.scheduledExecutionService = seServiceControl.createMock()
+
+        def eServiceControl = mockFor(ExecutionService, true)
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+        )
+        assertNotNull exec.save()
+        eServiceControl.demand.createExecutionAndPrep { params, user ->
+            assert 'anonymous' == user
+            exec
+        }
+        eServiceControl.demand.getExecutionsAreActive{->true}
+        sec.executionService = eServiceControl.createMock()
+
+
         final subject = new Subject()
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
@@ -1602,17 +1937,8 @@ class ScheduledExecutionControllerTests  {
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded=false
         def svcMock = mockFor(ApiService, true)
-        def requireFailed = true
         svcMock.demand.requireApi { req, resp ->
             true
-        }
-        svcMock.demand.requireParameters { reqparams, response, List needparams ->
-            assertTrue('project' in needparams)
-            assertTrue('exec' in needparams)
-            assertNotNull(reqparams.exec)
-            assertNotNull(reqparams.project)
-            requireFailed = false
-            return true
         }
         svcMock.demand.requireExists { response, exists, args ->
             assertEquals(['project','test'],args)
@@ -1623,12 +1949,242 @@ class ScheduledExecutionControllerTests  {
             return true
         }
         sec.apiService = svcMock.createMock()
-        def result=sec.apiRunCommand()
+        def result=sec.apiRunCommand(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
         assert succeeded
         assert null==view
         assertNull(response.redirectedUrl)
         assert !model
-        assert !requireFailed
+    }
+    public void testApiRunCommand_executionModePassive() {
+        def sec = new ScheduledExecutionController()
+        def executionModeActive=false
+        //try to do api job run
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getRundeckFramework(1..2) {-> return null }
+        fwkControl.demand.getAuthContextForSubject { subject -> return null }
+        fwkControl.demand.existsFrameworkProject(1..1) { project, fwk ->
+            true
+        }
+
+        fwkControl.demand.authorizeProjectResource(1..1){framework, res, action, project ->
+            assert 'runAs' in actions
+            return true
+        }
+        sec.frameworkService = fwkControl.createMock()
+        def seServiceControl = mockFor(ScheduledExecutionService, true)
+
+        seServiceControl.demand._dovalidate(1..1){params, user, roleList, framework->
+            assert null==user
+            [scheduledExecution:new ScheduledExecution(),failed:false]
+        }
+        seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
+            true
+        }
+
+        seServiceControl.demand.scheduleTempJob { auth, exec ->
+            [id:'fakeid',execution:exec,success:true]
+        }
+
+        sec.scheduledExecutionService = seServiceControl.createMock()
+
+        def eServiceControl = mockFor(ExecutionService, true)
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+        )
+        assertNotNull exec.save()
+        eServiceControl.demand.createExecutionAndPrep { params, user ->
+            assert 'anonymous' == user
+            exec
+        }
+        eServiceControl.demand.getExecutionsAreActive{->executionModeActive}
+        sec.executionService = eServiceControl.createMock()
+
+
+        final subject = new Subject()
+        subject.principals << new Username('test')
+        subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
+        sec.request.setAttribute("subject", subject)
+        sec.request.setAttribute("api_version", 5)
+//        sec.request.api_version = 5
+        ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
+            assert 1 == execs.size()
+            assert execs.contains(exec)
+        }
+        sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
+        def succeeded=false
+        def svcMock = mockFor(ApiService, true)
+        svcMock.demand.requireApi { req, resp ->
+            true
+        }
+        svcMock.demand.requireExists { response, exists, args ->
+            assertEquals(['project','test'],args)
+            return true
+        }
+        svcMock.demand.renderErrorFormat { response, data ->
+            assertEquals(500,data.status)
+            assertEquals(['disabled.execution.run'],data.args)
+        }
+        sec.apiService = svcMock.createMock()
+        def result=sec.apiRunCommand(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
+        assert !succeeded
+        assert null==view
+        assertNull(response.redirectedUrl)
+        assert !model
+    }
+    public void testApiRunCommand_JSON_apiversionInvalid() {
+        def sec = new ScheduledExecutionController()
+
+        //try to do api job run
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getRundeckFramework(1..2) {-> return null }
+        fwkControl.demand.getAuthContextForSubject { subject -> return null }
+        fwkControl.demand.existsFrameworkProject(1..1) { project, fwk ->
+            true
+        }
+
+        fwkControl.demand.authorizeProjectResource(1..1){framework, res, action, project ->
+            assert 'runAs' in actions
+            return true
+        }
+        sec.frameworkService = fwkControl.createMock()
+        def seServiceControl = mockFor(ScheduledExecutionService, true)
+
+        seServiceControl.demand._dovalidate(1..1){params, user, roleList, framework->
+            assert null==user
+            [scheduledExecution:new ScheduledExecution(),failed:false]
+        }
+        seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
+            true
+        }
+
+        seServiceControl.demand.scheduleTempJob { auth, exec ->
+            [id:'fakeid',execution:exec,success:true]
+        }
+
+        sec.scheduledExecutionService = seServiceControl.createMock()
+
+        def eServiceControl = mockFor(ExecutionService, true)
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+        )
+        assertNotNull exec.save()
+        eServiceControl.demand.createExecutionAndPrep { params, user ->
+            assert 'anonymous' == user
+            exec
+        }
+        eServiceControl.demand.getExecutionsAreActive{->true}
+        sec.executionService = eServiceControl.createMock()
+
+
+        final subject = new Subject()
+        subject.principals << new Username('test')
+        subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
+        sec.request.setAttribute("subject", subject)
+        sec.request.setAttribute("api_version", 5)
+//        sec.request.api_version = 5
+        sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
+        def succeeded=false
+        def svcMock = mockFor(ApiService, true)
+        svcMock.demand.requireApi { req, resp ->
+            true
+        }
+        svcMock.demand.requireExists { response, exists, args ->
+            assertEquals(['project','test'],args)
+            return true
+        }
+        svcMock.demand.renderSuccessJson { response, closure ->
+            succeeded=true
+            return true
+        }
+        svcMock.demand.renderErrorFormat{response,data->
+            assertEquals([
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: ['json']
+            ],data)
+        }
+        sec.apiService = svcMock.createMock()
+        sec.response.format='json'
+        def result=sec.apiRunCommand(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
+        assert !succeeded
+        assert null==view
+        assertNull(response.redirectedUrl)
+        assert !model
+    }
+    public void testApiRunCommand_JSON_apiversionValid() {
+        def sec = new ScheduledExecutionController()
+
+        //try to do api job run
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getRundeckFramework(1..2) {-> return null }
+        fwkControl.demand.getAuthContextForSubject { subject -> return null }
+        fwkControl.demand.existsFrameworkProject(1..1) { project, fwk ->
+            true
+        }
+
+        fwkControl.demand.authorizeProjectResource(1..1){framework, res, action, project ->
+            assert 'runAs' in actions
+            return true
+        }
+        sec.frameworkService = fwkControl.createMock()
+        def seServiceControl = mockFor(ScheduledExecutionService, true)
+
+        seServiceControl.demand._dovalidate(1..1){params, user, roleList, framework->
+            assert null==user
+            [scheduledExecution:new ScheduledExecution(),failed:false]
+        }
+        seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
+            true
+        }
+
+        seServiceControl.demand.scheduleTempJob { auth, exec ->
+            [id:'fakeid',execution:exec,success:true]
+        }
+
+        sec.scheduledExecutionService = seServiceControl.createMock()
+
+        def eServiceControl = mockFor(ExecutionService, true)
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+        )
+        assertNotNull exec.save()
+        eServiceControl.demand.createExecutionAndPrep { params, user ->
+            assert 'anonymous' == user
+            exec
+        }
+        eServiceControl.demand.getExecutionsAreActive{->true}
+        sec.executionService = eServiceControl.createMock()
+
+
+        final subject = new Subject()
+        subject.principals << new Username('test')
+        subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
+        sec.request.setAttribute("subject", subject)
+        sec.request.setAttribute("api_version", 14)
+        sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
+        def succeeded=false
+        def svcMock = mockFor(ApiService, true)
+        svcMock.demand.requireApi { req, resp ->
+            true
+        }
+        svcMock.demand.requireExists { response, exists, args ->
+            assertEquals(['project','test'],args)
+            return true
+        }
+        svcMock.demand.renderSuccessJson { response, closure ->
+            succeeded=true
+            return true
+        }
+        sec.apiService = svcMock.createMock()
+        sec.response.format='json'
+        def result=sec.apiRunCommand(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
+        assert succeeded
+        assert null==view
+        assertNull(response.redirectedUrl)
+        assert !model
     }
 
     public void testApiRunCommandAsUser() {
@@ -1658,7 +2214,7 @@ class ScheduledExecutionControllerTests  {
         }
 
         seServiceControl.demand.scheduleTempJob { auth, exec ->
-            'fakeid'
+            [id:'fakeid',execution:exec,success:true]
         }
 
         sec.scheduledExecutionService = seServiceControl.createMock()
@@ -1673,6 +2229,7 @@ class ScheduledExecutionControllerTests  {
             assert 'anotheruser' == user
             exec
         }
+        eServiceControl.demand.getExecutionsAreActive{->true}
         sec.executionService = eServiceControl.createMock()
 
 

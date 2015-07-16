@@ -48,9 +48,18 @@ import rundeck.controllers.ScheduledExecutionController
 @Mock([Execution, FrameworkService, WorkflowStep, CommandExec, JobExec, PluginStep, Workflow, ScheduledExecution, Option, Notification])
 @TestMixin(ControllerUnitTestMixin)
 class ScheduledExServiceTests {
-    
-    
 
+
+
+
+    /**
+     * utility method to mock a class
+     */
+    private <T> T mockWith(Class<T> clazz, Closure clos) {
+        def mock = mockFor(clazz)
+        mock.demand.with(clos)
+        return mock.createMock()
+    }
 
     static void assertLength(int length, Object[] array){
         Assert.assertEquals(length,array.length)
@@ -1407,7 +1416,10 @@ class ScheduledExServiceTests {
             sec.frameworkService = fwkControl.createMock()
 
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand',
-                    notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.comd@example.com'], [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@ example.com']]
+                    notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email',
+                                     content: 'c@example.comd@example.com'],
+                                    [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email',
+                                     content: 'monkey@ example.com']]
             ]
             def results = sec._dovalidate(params, 'test', 'test', null)
             if (results.scheduledExecution.errors.hasErrors()) {
@@ -1424,6 +1436,48 @@ class ScheduledExServiceTests {
             assertTrue(execution.errors.hasErrors())
             assertTrue(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS))
             assertTrue(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS))
+        }
+
+    /**
+     * allow any domain name in emails
+     */
+    public void testDoValidateNotifications_validemail() {
+
+        def sec = service//test job with notifications, invalid email addresses using map based notifications definition
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+            fwkControl.demand.existsFrameworkProject { project, framework ->
+                assertEquals 'testProject', project
+                return true
+            }
+            sec.frameworkService = fwkControl.createMock()
+
+            def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
+                          workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
+
+                    notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email',
+                                     content: 'c@example.comd'],
+                                    [eventTrigger: ScheduledExecutionController.ONSTART_TRIGGER_NAME, type: 'email',
+                                     content: 'example@any.domain'],
+                                    [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email',
+                                     content: 'monkey@internal']]
+            ]
+            def results = sec._dovalidate(params, 'test', 'test', null)
+            if (results.scheduledExecution.errors.hasErrors()) {
+                results.scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            assertFalse results.failed
+            assertNotNull(results.scheduledExecution)
+            assertTrue(results.scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = results.scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertFalse(execution.errors.hasErrors())
+            assertFalse(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS))
+            assertFalse(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS))
+            assertFalse(execution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_START_RECIPIENTS))
         }
 
     public void testDoValidateNotifications_invalidurls() {
@@ -2766,6 +2820,10 @@ class ScheduledExServiceTests {
         ms.demand.getMessage { error, locale -> 'message' }
         sec.messageSource = ms.createMock()
 
+        sec.executionServiceBean=mockWith(ExecutionService){
+            getExecutionsAreActive{-> true}
+        }
+
         def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
                       workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
                       _workflow_data: true,
@@ -2988,6 +3046,9 @@ class ScheduledExServiceTests {
         sec.frameworkService.metaClass.isClusterModeEnabled = {
             return false
         }
+        sec.executionServiceBean=mockWith(ExecutionService){
+            getExecutionsAreActive{-> true}
+        }
 
         def qtzControl = mockFor(FakeScheduler, true)
         qtzControl.demand.checkExists { key -> false }
@@ -3092,6 +3153,9 @@ class ScheduledExServiceTests {
         sec.frameworkService.metaClass.isClusterModeEnabled = {
             return false
         }
+        sec.executionServiceBean=mockWith(ExecutionService){
+            getExecutionsAreActive{-> true}
+        }
 
         def qtzControl = mockFor(FakeScheduler, true)
         qtzControl.demand.checkExists { key -> false }
@@ -3156,6 +3220,11 @@ class ScheduledExServiceTests {
         qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
         sec.quartzScheduler = qtzControl.createMock()
 
+
+        sec.executionServiceBean=mockWith(ExecutionService){
+            getExecutionsAreActive{-> true}
+        }
+
         def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
                 scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040', useCrontabString: 'true']
         def results = sec._doupdate(params, 'test', 'userrole,test', null, null)
@@ -3205,6 +3274,10 @@ class ScheduledExServiceTests {
         sec.frameworkService = fwkControl.createMock()
         sec.frameworkService.metaClass.isClusterModeEnabled = {
             return false
+        }
+
+        sec.executionServiceBean=mockWith(ExecutionService){
+            getExecutionsAreActive{-> true}
         }
 //        def sesControl = mockFor(ScheduledExecutionService, true)
 //        sesControl.demand.scheduleJob {schedEx, oldname, oldgroup ->
@@ -3282,6 +3355,11 @@ class ScheduledExServiceTests {
         qtzControl.demand.getListenerManager { -> [addJobListener:{a,b->}] }
         qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
         sec.quartzScheduler = qtzControl.createMock()
+
+        sec.executionServiceBean=mockWith(ExecutionService){
+            getExecutionsAreActive{-> true}
+        }
+        
         def params = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]),
                 scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040',
@@ -3338,6 +3416,11 @@ class ScheduledExServiceTests {
         qtzControl.demand.getListenerManager { -> [addJobListener:{a,b->}] }
         qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
         sec.quartzScheduler = qtzControl.createMock()
+
+        sec.executionServiceBean=mockWith(ExecutionService){
+            getExecutionsAreActive{-> true}
+        }
+
         def params = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]),
                 scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040',

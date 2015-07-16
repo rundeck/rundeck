@@ -78,7 +78,9 @@ class ExecutionUtilService {
                 log.info("Execution successful: " + execMap.execution.id)
             }
         } finally {
+            sysThreadBoundOut.flush()
             sysThreadBoundOut.removeThreadStream()
+            sysThreadBoundErr.flush()
             sysThreadBoundErr.removeThreadStream()
             loghandler.close()
         }

@@ -168,11 +168,15 @@ to let Rundeck know how to properly generate absolute URLs.
 
 ## Disabling SSL Protocols
 
-You can disable SSL protocols using this JVM variable:
+You can disable SSL protocols or cipher suites using these
+JVM variables:
 
-* `rundeck.jetty.connector.ssl.excludedProtocols` set to a comma-separated list of SSL protocols to disable.
+* `rundeck.jetty.connector.ssl.includedProtocols` set to a comma-separated list of SSL protocols to enable. Default will be based on the available protocols.
+* `rundeck.jetty.connector.ssl.excludedProtocols` set to a comma-separated list of SSL protocols to disable. Default value: 'SSLv3'
+* `rundeck.jetty.connector.ssl.includedCipherSuites` set to a comma-separated list of Cipher suites to enable. Default will be based on the available cipher suites.
+* `rundeck.jetty.connector.ssl.excludedCipherSuites` set to a comma-separated list of Cipher suites to disable. No default value.
 
-If unset, the default value of 'SSLv3' will be  used.
+The `included` settings determine what protocols or cipher suites are enabled, and the `excluded` settings then remove values from that list.
 
 E.g. modify the `RDECK_JVM` variable
 in the file `/etc/rundeck/profile`
@@ -183,6 +187,8 @@ and add:
 When starting up the Jetty container will log a list of the disabled protocols:
 
     2014-10-27 11:08:41.225:INFO:oejus.SslContextFactory:Enabled Protocols [SSLv2Hello, TLSv1] of [SSLv2Hello, SSLv3, TLSv1]
+
+To see the list of enabled Cipher Suites, turn on DEBUG level logging for Jetty SSL utils: `-Dorg.eclipse.jetty.util.ssl.LEVEL=DEBUG`.
 
 
 [rundeck-config.properties]: configuration-file-reference.html#rundeck-config.properties

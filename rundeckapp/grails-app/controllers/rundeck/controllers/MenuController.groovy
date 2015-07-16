@@ -50,6 +50,7 @@ class MenuController extends ControllerBase{
     StoragePluginProviderService storagePluginProviderService
     StorageConverterPluginProviderService storageConverterPluginProviderService
     PluginService pluginService
+    def configurationService
     def quartzScheduler
     def ApiService apiService
     static allowedMethods = [
@@ -489,6 +490,24 @@ class MenuController extends ControllerBase{
         }
     }
 
+    def executionMode(){
+        def executionModeActive=configurationService.executionModeActive
+
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def authAction=executionModeActive?AuthConstants.ACTION_DISABLE_EXECUTIONS:AuthConstants.ACTION_ENABLE_EXECUTIONS
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        AuthConstants.RESOURCE_TYPE_SYSTEM,
+                        [authAction, AuthConstants.ACTION_ADMIN]
+                ),
+                authAction, 'for', 'Rundeck')) {
+            return
+        }
+
+
+    }
     def storage={
 //        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 //        if (unauthorizedResponse(
@@ -590,7 +609,7 @@ class MenuController extends ControllerBase{
         [rundeckFramework: frameworkService.rundeckFramework]
     }
 
-    def systemInfo = {
+    def systemInfo (){
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
@@ -618,6 +637,7 @@ class MenuController extends ControllerBase{
         int threadActiveCount = Thread.activeCount()
         def build = grailsApplication.metadata['build.ident']
         def base = servletContext.getAttribute("RDECK_BASE")
+        boolean executionModeActive=configurationService.executionModeActive
 
         def memmax = Runtime.getRuntime().maxMemory()
         def memfree = Runtime.getRuntime().freeMemory()
@@ -645,7 +665,8 @@ class MenuController extends ControllerBase{
             memmax: memmax,
             memfree: memfree,
             memtotal: memtotal,
-            schedulerRunningCount: schedulerRunningCount
+            schedulerRunningCount: schedulerRunningCount,
+            executionModeActive:executionModeActive
         ]
         def serverUUID=frameworkService.getServerUUID()
         if(serverUUID){
@@ -701,6 +722,13 @@ class MenuController extends ControllerBase{
                 base: info.base,
                 serverUUID: info.serverUUID,
             ]],
+            [
+                    executions:[
+                            active: info.executionModeActive,
+                            executionMode:info.executionModeActive?'ACTIVE':'PASSIVE',
+                            'executionMode.status':info.executionModeActive?'success':'warning'
+                    ]
+            ],
             [os:
             [arch: info.osArch,
                 name: info.osName,
@@ -788,6 +816,9 @@ class MenuController extends ControllerBase{
                 (framework.getResourceModelSourceService().name):[
                         description: message(code:"plugin.resourceModelSource.special.description"),
                         prefix:"resources.source.[index].config."
+                ],
+                (logFileStorageService.executionFileStoragePluginProviderService.name):[
+                        description: message(code:"plugin.executionFileStorage.special.description"),
                 ]
         ]
 
@@ -859,12 +890,12 @@ class MenuController extends ControllerBase{
     /**
      * API: /api/jobs, version 1
      */
-    def apiJobsList = {ScheduledExecutionQuery query ->
+    def apiJobsList (ScheduledExecutionQuery query){
         if (!apiService.requireApi(request, response)) {
             return
         }
         if(!params.project){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
 
         }
@@ -874,7 +905,7 @@ class MenuController extends ControllerBase{
 
         def exists=frameworkService.existsFrameworkProject(params.project)
         if(!exists){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
 
         }
@@ -884,16 +915,42 @@ class MenuController extends ControllerBase{
                 return
             }
         }
-        def results = jobsFragment(query)
 
-        return apiService.renderSuccessXml(request,response){
-            delegate.'jobs'(count:results.nextScheduled.size()){
-                results.nextScheduled.each{ ScheduledExecution se->
-                    job(id:se.extid){
-                        name(se.jobName)
-                        group(se.groupPath)
-                        project(se.project)
-                        description(se.description)
+        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorFormat(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
+        }
+        def results = jobsFragment(query)
+        withFormat{
+            xml {
+                return apiService.renderSuccessXml(request, response) {
+                    delegate.'jobs'(count: results.nextScheduled.size()) {
+                        results.nextScheduled.each { ScheduledExecution se ->
+                            job(id: se.extid, href:apiService.apiHrefForJob(se),permalink:apiService.guiHrefForJob(se)) {
+                                name(se.jobName)
+                                group(se.groupPath)
+                                project(se.project)
+                                description(se.description)
+                            }
+                        }
+                    }
+                }
+            }
+            json{
+                return apiService.renderSuccessJson(response) {
+                    results.nextScheduled.each { ScheduledExecution se ->
+                        element(
+                                id: se.extid,
+                                name: (se.jobName),
+                                group: (se.groupPath),
+                                project: (se.project),
+                                description: (se.description),
+                                href: apiService.apiHrefForJob(se),
+                                permalink: apiService.guiHrefForJob(se)
+                        )
                     }
                 }
             }
@@ -902,7 +959,7 @@ class MenuController extends ControllerBase{
     /**
      * API: /api/2/project/NAME/jobs, version 2
      */
-    def apiJobsListv2 = {ScheduledExecutionQuery query ->
+    def apiJobsListv2 (ScheduledExecutionQuery query) {
         if(!apiService.requireVersion(request,response,ApiRequestFilters.V2)){
             return
         }
@@ -910,9 +967,18 @@ class MenuController extends ControllerBase{
     }
 
     /**
-     * API: /jobs/export, version 1
+     * API: /api/14/project/NAME/jobs/export
      */
-    def apiJobsExport = {ScheduledExecutionQuery query ->
+    def apiJobsExportv14 (ScheduledExecutionQuery query){
+        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+            return
+        }
+        return apiJobsExport(query)
+    }
+    /**
+     * API: /jobs/export, version 1, deprecated since v14
+     */
+    def apiJobsExport (ScheduledExecutionQuery query){
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -947,14 +1013,24 @@ class MenuController extends ControllerBase{
     }
 
     /**
+     * API: /project/PROJECT/executions/running, version 14
+     */
+    def apiExecutionsRunningv14 (){
+        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+            return
+        }
+        return apiExecutionsRunning()
+    }
+
+    /**
      * API: /executions/running, version 1
      */
-    def apiExecutionsRunning = {
+    def apiExecutionsRunning (){
         if (!apiService.requireApi(request, response)) {
             return
         }
         if(!params.project){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
         }
         //test valid project
@@ -964,9 +1040,16 @@ class MenuController extends ControllerBase{
         def allProjects = request.api_version >= ApiRequestFilters.V9 && params.project == '*'
         if(!allProjects){
             if(!frameworkService.existsFrameworkProject(params.project)){
-                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
                         code: 'api.error.parameter.doesnotexist', args: ['project',params.project]])
             }
+        }
+        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorXml(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
         }
 
         QueueQuery query = new QueueQuery(runningFilter:'running',projFilter:params.project)
@@ -977,7 +1060,34 @@ class MenuController extends ControllerBase{
             query.offset=params.int('offset')
         }
         def results = nowrunning(query)
-        return executionService.respondExecutionsXml(request,response,results.nowrunning,[total:results.total,offset:results.offset,max:results.max])
+
+        withFormat{
+            xml {
+                return executionService.respondExecutionsXml(
+                        request,
+                        response,
+                        results.nowrunning,
+                        [
+                                total: results.total,
+                                offset: results.offset,
+                                max: results.max
+                        ]
+                )
+            }
+            json {
+                return executionService.respondExecutionsJson(
+                        request,
+                        response,
+                        results.nowrunning,
+                        [
+                                total: results.total,
+                                offset: results.offset,
+                                max: results.max
+                        ]
+                )
+            }
+        }
+
     }
 }
 

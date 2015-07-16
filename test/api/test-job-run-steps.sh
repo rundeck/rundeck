@@ -104,7 +104,7 @@ if [ 0 != $? ] ; then
 fi
 
 # now submit req
-runurl="${APIURL}/jobs/import"
+runurl="${APIURL}/project/$project/jobs/import"
 
 params="dupeOption=update&project=test"
 

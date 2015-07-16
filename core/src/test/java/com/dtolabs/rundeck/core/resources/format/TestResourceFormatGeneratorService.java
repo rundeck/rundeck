@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
+import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerator;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 
@@ -71,7 +72,7 @@ public class TestResourceFormatGeneratorService extends AbstractBaseTest {
     public void testBaseFormats() throws Exception {
         final ResourceFormatGeneratorService service = new ResourceFormatGeneratorService(
             getFrameworkInstance());
-        assertEquals(2, service.listFormats().size());
+        assertEquals(3, service.listFormats().size());
 
         final ResourceFormatGenerator xmlgen = service.getGeneratorForFormat(
             ResourceXMLFormatGenerator.SERVICE_PROVIDER_TYPE);
@@ -80,6 +81,10 @@ public class TestResourceFormatGeneratorService extends AbstractBaseTest {
         final ResourceFormatGenerator gen2 = service.getGeneratorForFormat(
             ResourceYamlFormatGenerator.SERVICE_PROVIDER_TYPE);
         assertNotNull(gen2);
+
+        final ResourceFormatGenerator gen3 = service.getGeneratorForFormat(
+            ResourceJsonFormatGenerator.SERVICE_PROVIDER_TYPE);
+        assertNotNull(gen3);
     }
 
     static class testGenerator implements ResourceFormatGenerator {
@@ -108,18 +113,20 @@ public class TestResourceFormatGeneratorService extends AbstractBaseTest {
 
         final ResourceFormatGeneratorService service = new ResourceFormatGeneratorService(getFrameworkInstance());
         final List<String> strings = service.listFormats();
-        assertEquals(2, strings.size());
+        assertEquals(3, strings.size());
         assertTrue(strings.contains(ResourceXMLFormatGenerator.SERVICE_PROVIDER_TYPE));
         assertTrue(strings.contains(ResourceYamlFormatGenerator.SERVICE_PROVIDER_TYPE));
+        assertTrue(strings.contains(ResourceJsonFormatGenerator.SERVICE_PROVIDER_TYPE));
 
         //add new format generator
         testGenerator generator = new testGenerator();
 
         service.registerInstance("testformat1", generator);
         final List<String> strings2 = service.listFormats();
-        assertEquals(3, strings2.size());
+        assertEquals(4, strings2.size());
         assertTrue(strings2.contains(ResourceXMLFormatGenerator.SERVICE_PROVIDER_TYPE));
         assertTrue(strings2.contains(ResourceYamlFormatGenerator.SERVICE_PROVIDER_TYPE));
+        assertTrue(strings2.contains(ResourceJsonFormatGenerator.SERVICE_PROVIDER_TYPE));
         assertTrue(strings2.contains("testformat1"));
     }
 

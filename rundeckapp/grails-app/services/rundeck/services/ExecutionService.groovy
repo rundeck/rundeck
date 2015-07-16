@@ -40,6 +40,7 @@ import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import org.hibernate.StaleObjectStateException
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
@@ -48,6 +49,7 @@ import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
 import rundeck.controllers.ExecutionController
+import rundeck.filters.ApiRequestFilters
 import rundeck.services.logging.ExecutionLogWriter
 
 import javax.servlet.http.HttpServletRequest
@@ -83,23 +85,71 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     MessageSource messageSource
     def jobStateService
     def grailsApplication
+    def configurationService
+
+    boolean getExecutionsAreActive(){
+        configurationService.executionModeActive
+    }
+
+    void setExecutionsAreActive(boolean active){
+        configurationService.executionModeActive=active
+
+        if(!active){
+            log.info("Rundeck changed to PASSIVE mode: No executions can be run.")
+        }else{
+            log.info("Rundeck changed to ACTIVE: executions can be run.")
+        }
+        if(active){
+            scheduledExecutionService.rescheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
+        }else{
+            scheduledExecutionService.unscheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
+        }
+    }
 
     /**
      * Render execution document for api response
      */
 
     public def respondExecutionsXml(HttpServletRequest request,HttpServletResponse response, List<Execution> executions, paging = [:]) {
+        def apiv14=request.api_version>=ApiRequestFilters.V14
         return apiService.respondExecutionsXml(request,response,executions.collect { Execution e ->
                 def data=[
                         execution: e,
-                        href: getFollowURLForExecution(e),
+                        href: apiv14?apiService.apiHrefForExecution(e):apiService.guiHrefForExecution(e),
+                        status: getExecutionState(e),
+                        summary: summarizeJob(e.scheduledExecution, e)
+                ]
+                if(apiv14){
+                    data.permalink=apiService.guiHrefForExecution(e)
+                }
+                if(e.retryExecution) {
+                    data.retryExecution = [
+                            id    : e.retryExecution.id,
+                            href  : apiv14 ? apiService.apiHrefForExecution(e.retryExecution) :
+                                    apiService.guiHrefForExecution(e.retryExecution),
+                            status: getExecutionState(e.retryExecution),
+                    ]
+                    if (apiv14) {
+                        data.retryExecution.permalink = apiService.guiHrefForExecution(e.retryExecution)
+                    }
+                }
+                data
+            }, paging)
+    }
+    public def respondExecutionsJson(HttpServletRequest request,HttpServletResponse response, List<Execution> executions, paging = [:]) {
+        return apiService.respondExecutionsJson(request,response,executions.collect { Execution e ->
+                def data=[
+                        execution: e,
+                        permalink: apiService.guiHrefForExecution(e),
+                        href: apiService.apiHrefForExecution(e),
                         status: getExecutionState(e),
                         summary: summarizeJob(e.scheduledExecution, e)
                 ]
                 if(e.retryExecution){
                     data.retryExecution=[
                             id:e.retryExecution.id,
-                            href: getFollowURLForExecution(e.retryExecution),
+                            permalink: apiService.guiHrefForExecution(e.retryExecution),
+                            href: apiService.apiHrefForExecution(e.retryExecution),
                             status: getExecutionState(e.retryExecution),
                     ]
                 }
@@ -148,9 +198,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
-    public String getFollowURLForExecution(Execution e) {
-        grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: e.id, absolute: true)
-    }
 
     def listLastExecutionsPerProject(AuthContext authContext, int max=5){
         def projects = frameworkService.projects(authContext).collect{ it.name }
@@ -613,7 +660,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             jobstring = " job: " + e.scheduledExecution.extid + " " + (e.scheduledExecution.groupPath ?: '') + "/" +
                     e.scheduledExecution.jobName
         } else {
-            def adhocCommand = e.workflow.commands[0].adhocRemoteString
+            def adhocCommand = e.workflow.commands.size()==1 && (e.workflow.commands[0] instanceof CommandExec) && e.workflow.commands[0].adhocRemoteString
             if (adhocCommand) {
                 mdcprops.put("command", adhocCommand)
                 jobstring += " command: " + adhocCommand
@@ -1405,6 +1452,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
                 scheduledExecution.project)) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
+        }
+        if(!getExecutionsAreActive()){
+            return [success:false,failed:true,error:'disabled',message:lookupMessage('disabled.execution.run',null)]
         }
         input.retryAttempt = attempt
         try {
@@ -2240,7 +2290,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         //substitute any data context references in the arguments
         if (null != newargs && executionContext.dataContext) {
-            newargs = DataContextUtils.replaceDataReferences(newargs, executionContext.dataContext)
+            newargs = DataContextUtils.replaceDataReferences(
+                    newargs,
+                    executionContext.dataContext,
+                    DataContextUtils.replaceMissingOptionsWithBlank,
+                    false
+            )
         }
 
         def jobOptsMap = frameworkService.parseOptsFromArray(newargs)

@@ -14,18 +14,16 @@ class UrlMappings {
         }
         "/api/$api_version/execution/$id/state"(controller: 'execution', action: 'apiExecutionState')
         "/api/$api_version/execution/$id/abort"(controller: 'execution', action: 'apiExecutionAbort')
-        /** v5 */
         "/api/$api_version/execution/$id/output(.$format)?"(controller: 'execution', action: 'apiExecutionOutput')
-        /** v10 */
         "/api/$api_version/execution/$id/output/state"(controller: 'execution', action: 'apiExecutionStateOutput')
         "/api/$api_version/execution/$id/output/node/$nodename"(controller: 'execution', action: 'apiExecutionOutput')
         "/api/$api_version/execution/$id/output/node/$nodename/step/$stepctx**?"(controller: 'execution', action: 'apiExecutionOutput')
         "/api/$api_version/execution/$id/output/step/$stepctx**?"(controller: 'execution', action: 'apiExecutionOutput')
 
-        "/api/$api_version/executions/running"(controller: 'menu', action: 'apiExecutionsRunning')
+
         "/api/$api_version/executions/delete"(controller: 'execution', action: 'apiExecutionDeleteBulk')
-        "/api/$api_version/executions"(controller: 'execution', action: 'apiExecutionsQuery')
-        "/api/$api_version/history"(controller: 'reports', action: 'apiHistory')
+
+
         "/api/$api_version/job/$id"(controller: 'scheduledExecution') {
             action = [GET: 'apiJobExport', DELETE: 'apiJobDelete', PUT: 'apiJobUpdateSingle', POST: 'apiJobCreateSingle']
         }
@@ -33,10 +31,11 @@ class UrlMappings {
         "/api/$api_version/job/$id/executions"(controller: 'scheduledExecution') {
             action = [GET: 'apiJobExecutions', DELETE: 'apiJobExecutionsDelete', POST: 'apiJobRun']
         }
-        "/api/$api_version/jobs"(controller: 'menu', action: 'apiJobsList')
-        "/api/$api_version/jobs/export"(controller: 'menu', action: 'apiJobsExport')
-        "/api/$api_version/jobs/import"(controller: 'scheduledExecution', action: 'apiJobsImport')
         "/api/$api_version/jobs/delete"(controller: 'scheduledExecution', action: 'apiJobDeleteBulk')
+        "/api/$api_version/project/$project/executions/running"(controller: 'menu', action: 'apiExecutionsRunningv14')
+        "/api/$api_version/project/$project/executions"(controller: 'execution', action: 'apiExecutionsQueryv14')
+        "/api/$api_version/project/$project/jobs/export"(controller: 'menu', action: 'apiJobsExportv14')
+        "/api/$api_version/project/$project/jobs/import"(controller: 'scheduledExecution', action: 'apiJobsImportv14')
         "/api/$api_version/project/$project"(controller: 'project'){
             action = [GET: 'apiProjectGet', DELETE:'apiProjectDelete']
         }
@@ -52,25 +51,40 @@ class UrlMappings {
         }
         "/api/$api_version/project/$project/export"(controller: 'project',action: 'apiProjectExport')
         "/api/$api_version/project/$project/import"(controller: 'project',action: 'apiProjectImport')
-        /** v2 */
         "/api/$api_version/project/$project/resources/refresh"(controller: 'framework', action: 'apiProjectResourcesRefresh')
-        /** v2  */
         "/api/$api_version/project/$project/resources"(controller: 'framework') {
             action = [GET: "apiResourcesv2",/* PUT: "update", DELETE: "delete",*/ POST: "apiProjectResourcesPost"]
         }
-        /** v2 */
         "/api/$api_version/project/$project/jobs"(controller: 'menu', action: 'apiJobsListv2')
+        "/api/$api_version/project/$project/resource/$name"(controller: 'framework',action:"apiResourcev14")
+        "/api/$api_version/project/$project/run/command"(controller: 'scheduledExecution', action: 'apiRunCommandv14')
+        "/api/$api_version/project/$project/run/script"(controller: 'scheduledExecution', action: 'apiRunScriptv14')
+        "/api/$api_version/project/$project/run/url"(controller: 'scheduledExecution', action: 'apiRunScriptUrl14')
+        "/api/$api_version/project/$project/history"(controller: 'reports', action: 'apiHistoryv14')
+
         "/api/$api_version/projects"(controller: 'project'){
             action = [GET: 'apiProjectList', POST:'apiProjectCreate']
         }
-//        "/api/renderError"(controller: 'api', action: 'renderError')
-//        "/api/error"(controller: 'api', action: 'error')
+
+        //////////
+        //BEGIN deprecated as of v14
+        "/api/$api_version/executions/running"(controller: 'menu', action: 'apiExecutionsRunning')
+        "/api/$api_version/executions"(controller: 'execution', action: 'apiExecutionsQuery')
+        "/api/$api_version/jobs"(controller: 'menu', action: 'apiJobsList')
+        "/api/$api_version/jobs/export"(controller: 'menu', action: 'apiJobsExport')
+        "/api/$api_version/jobs/import"(controller: 'scheduledExecution', action: 'apiJobsImport')
+        "/api/$api_version/history"(controller: 'reports', action: 'apiHistory')
         "/api/$api_version/resources"(controller: 'framework', action: 'apiResources')
         "/api/$api_version/resource/$name"(controller: 'framework', action: 'apiResource')
         "/api/$api_version/run/command"(controller: 'scheduledExecution', action: 'apiRunCommand')
         "/api/$api_version/run/script"(controller: 'scheduledExecution', action: 'apiRunScript')
         "/api/$api_version/run/url"(controller: 'scheduledExecution', action: 'apiRunScriptUrl')
+        //END deprecated
+        ///////////////
+
         "/api/$api_version/system/info"(controller: 'api', action: 'apiSystemInfo')
+        "/api/$api_version/system/executions/enable"(controller: 'execution', action: 'apiExecutionModeActive')
+        "/api/$api_version/system/executions/disable"(controller: 'execution', action: 'apiExecutionModePassive')
         "/api/$api_version/tokens/$user?"(controller: 'api', action: 'apiTokenList')
         "/api/$api_version/token/$token"(controller: 'api', action: 'apiTokenManage')
 
@@ -118,7 +132,7 @@ class UrlMappings {
         "/project/$project/exportWait"(controller: 'project',action: 'exportWait')
         "/project/$project/export"(controller: 'project',action: 'export')
         "/project/$project/importArchive"(controller: 'project',action: 'importArchive')
-        "/project/$project"(controller: 'menu',action: 'index')
+        "/project/$project"(redirect:[controller: 'menu',action: 'index'])
         "/project/$project/$action"(controller: 'project')
         "/storage/access/keys/$resourcePath**"(controller: 'storage', action: 'keyStorageAccess')
         "/storage/access/keys"(controller: 'storage', action: 'keyStorageAccess')

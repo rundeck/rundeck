@@ -32,9 +32,7 @@ import com.dtolabs.utils.Streams;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.collections.PredicateUtils;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -208,14 +206,19 @@ public class ScriptExecUtil {
 
         final Runtime runtime = Runtime.getRuntime();
         final Process exec = runtime.exec(command, envarr, workingdir);
+        exec.getOutputStream().close();
         final Streams.StreamCopyThread errthread = Streams.copyStreamThread(exec.getErrorStream(), errorStream);
         final Streams.StreamCopyThread outthread = Streams.copyStreamThread(exec.getInputStream(), outputStream);
         errthread.start();
         outthread.start();
-        exec.getOutputStream().close();
         final int result = exec.waitFor();
+
+        outputStream.flush();
+        errorStream.flush();
         errthread.join();
         outthread.join();
+        exec.getInputStream().close();
+        exec.getErrorStream().close();
         if (null != outthread.getException()) {
             throw outthread.getException();
         }

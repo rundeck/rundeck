@@ -3,10 +3,8 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.plugins.quartz.listeners.SessionBinderJobListener
-import org.apache.commons.validator.EmailValidator
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
@@ -24,7 +22,6 @@ import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.quartzjobs.ExecutionJob
 
-import javax.security.auth.Subject
 import javax.servlet.http.HttpSession
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
@@ -337,10 +334,24 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 scheduled==true
                 serverNodeUUID==fromServerUUID
             }.each { ScheduledExecution se ->
-                claimed[se.extid]=claimScheduledJob(se, toServerUUID, fromServerUUID)
+                claimed[se.extid]=[success:claimScheduledJob(se, toServerUUID, fromServerUUID),job:se]
             }
         }
         claimed
+    }
+    /**
+     * Remove all scheduling for job executions, triggered when passive mode is enabled
+     * @param serverUUID
+     */
+    def unscheduleJobs(String serverUUID=null){
+        def schedJobs = serverUUID ? ScheduledExecution.findAllByScheduledAndServerNodeUUID(true, serverUUID) : ScheduledExecution.findAllByScheduled(true)
+        schedJobs.each { ScheduledExecution se ->
+            def jobname = se.generateJobScheduledName()
+            def groupname = se.generateJobGroupName()
+
+            quartzScheduler.deleteJob(new JobKey(jobname,groupname))
+            log.info("Unscheduled job: ${se.id}")
+        }
     }
     /**
      * Reschedule all scheduled jobs which match the given serverUUID, or all jobs if it is null.
@@ -361,7 +372,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
     /**
      * Claim scheduling of jobs from the given fromServerUUID, and return a map identifying successfully claimed jobs
      * @param fromServerUUID server UUID to claim scheduling of jobs from
-     * @return map of job ID to boolean indicating reclaim was successful or not.
+     * @return map of job ID to [success:boolean, job:ScheduledExecution] indicating reclaim was successful or not.
      */
     def reclaimAndScheduleJobs(String fromServerUUID){
         def claimed=claimScheduledJobs(frameworkService.getServerUUID(), fromServerUUID)
@@ -535,7 +546,10 @@ class ScheduledExecutionService implements ApplicationContextAware{
     }
 
     def scheduleJob(ScheduledExecution se, String oldJobName, String oldGroupName) {
-        
+        if(!executionService.executionsAreActive){
+            log.warn("Attempt to schedule job ${se}, but executions are disabled.")
+            return null
+        }
         def jobDetail = createJobDetail(se)
         def trigger = createTrigger(se)
         jobDetail.getJobDataMap().put("bySchedule", true)
@@ -638,7 +652,11 @@ class ScheduledExecutionService implements ApplicationContextAware{
     /**
      * Schedule a temp job to execute immediately.
      */
-    def long scheduleTempJob(AuthContext authContext, Execution e) {
+    def Map scheduleTempJob(AuthContext authContext, Execution e) {
+        if(!executionService.getExecutionsAreActive()){
+            def msg=g.message(code:'disabled.execution.run')
+            return [success:false,failed:true,error:'disabled',message:msg]
+        }
         def ident = getJobIdent(null, e);
         def jobDetail = JobBuilder.newJob(ExecutionJob)
                 .withIdentity(ident.jobname, ident.groupname)
@@ -665,7 +683,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         } catch (Exception exc) {
             throw new RuntimeException("caught exception while adding job: " + exc.getMessage(), exc)
         }
-        return e.id
+        return [success:true,execution:e,id:e.id]
     }
 
     def JobDetail createJobDetail(ScheduledExecution se) {
@@ -787,7 +805,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
      */
     def Date tempNextExecutionTime(ScheduledExecution se){
         def trigger = createTrigger(se)
-        return trigger.nextFireTime
+        return trigger.getFireTimeAfter(new Date())
     }
 
     /**
@@ -1588,10 +1606,13 @@ class ScheduledExecutionService implements ApplicationContextAware{
         ]
         def conf = notif.configuration
         def arr = (conf?.recipients?: notif.content)?.split(",")
+        def validator = new AnyDomainEmailValidator()
+        def validcount=0
         arr?.each { email ->
             if(email && email.indexOf('${')>=0){
                 //don't reject embedded prop refs
-            }else if (email && !EmailValidator.getInstance().isValid(email)) {
+                validcount++
+            }else if (email && !validator.isValid(email)) {
                 failed = true
                 scheduledExecution.errors.rejectValue(
                         fieldNames[trigger],
@@ -1599,7 +1620,17 @@ class ScheduledExecutionService implements ApplicationContextAware{
                         [email] as Object[],
                         'Invalid email address: {0}'
                 )
+            }else if(email){
+                validcount++
             }
+        }
+        if(!failed && validcount<1){
+            failed=true
+            scheduledExecution.errors.rejectValue(
+                    fieldNames[trigger],
+                    'scheduledExecution.notifications.email.blank.message',
+                    'Cannot be blank'
+            )
         }
         if (failed) {
             return [failed:true]
@@ -1622,6 +1653,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 (ScheduledExecutionController.ONSTART_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_START_URL
         ]
         def arr = notif.content.split(",")
+        def validCount=0
         arr.each { String url ->
             boolean valid = false
             try {
@@ -1638,7 +1670,17 @@ class ScheduledExecutionService implements ApplicationContextAware{
                         [url] as Object[],
                         'Invalid URL: {0}'
                 )
+            }else if(url && valid){
+                validCount++
             }
+        }
+        if(validCount<1){
+            failed = true
+            scheduledExecution.errors.rejectValue(
+                    fieldNamesUrl[trigger],
+                    'scheduledExecution.notifications.url.blank.message',
+                    'Webhook URL cannot be blank'
+            )
         }
         if (failed) {
             return [failed: true]

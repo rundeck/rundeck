@@ -56,7 +56,13 @@ class JobsXMLCodec {
     static decode = {str ->
         def doc
         def reader
-        if(str instanceof File || str instanceof InputStream){
+        def filestream
+        if(str instanceof File){
+            filestream = new FileInputStream(str)
+            reader = new InputStreamReader(filestream,"UTF-8")
+        } else if( str instanceof InputStream ) {
+            reader = new InputStreamReader(str,"UTF-8")
+        }else if(str instanceof Reader){
             reader = str
         }else if(str instanceof String){
             reader=new StringReader(str)
@@ -69,6 +75,10 @@ class JobsXMLCodec {
                 doc = parser.parse(reader)
             } catch (Exception e) {
                 throw new JobXMLException( "Unable to parse xml: ${e}")
+            }finally{
+                if(null!=filestream){
+                    filestream.close()
+                }
             }
         }
         if (!doc) {

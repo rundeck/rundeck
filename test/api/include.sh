@@ -34,7 +34,7 @@ xmlsel(){
     $XMLSTARLET sel -T -t -v "$xpath" $*
 }
 
-API_CURRENT_VERSION=13
+API_CURRENT_VERSION=14
 
 API_VERSION=${API_VERSION:-$API_CURRENT_VERSION}
 
@@ -161,6 +161,26 @@ assert_json_null(){
     fi
     if [ "null" != "$propval" ] ; then
         errorMsg "Json query $1 wrong value, expected null was $propval (in file $2)"
+        exit 2
+    fi
+}
+##
+# assert_json_not_null  'jsonquery' $file
+##
+assert_json_not_null(){
+    JQ=`which jq`
+
+    if [ -z "$JQ" ] ; then
+        errorMsg "FAIL: Can't test JSON format, install jq"
+        exit 2
+    fi
+    propval=$($JQ  "$1" < $2 )
+    if [ $? != 0 ] ; then
+        errorMsg "Json query invalid: $1: $!"
+        exit 2
+    fi
+    if [ "null" == "$propval" ] ; then
+        errorMsg "Json query $1 wrong value, expected not null was $propval (in file $2)"
         exit 2
     fi
 }

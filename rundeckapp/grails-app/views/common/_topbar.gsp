@@ -139,6 +139,31 @@
     </g:if>
 </g:if>
 </ul>
+<g:if test="${session?.user && request.subject }">
+<g:ifExecutionMode passive="true">
+    <p class="navbar-text has_tooltip navbar-text-warning"
+       title="${g.message(code:'system.executionMode.description.passive')}"
+       data-toggle="tooltip"
+       data-placement="bottom"
+    >
+        <i class="glyphicon glyphicon-exclamation-sign"></i>
+        <g:message code="passive.mode" />
+    </p>
+    <auth:resourceAllowed action="${[AuthConstants.ACTION_ENABLE_EXECUTIONS,AuthConstants.ACTION_ADMIN]}" any="true" context="application" kind="system">
+    <g:form class="navbar-form navbar-left" controller="execution" action="executionMode" method="POST" useToken="true">
+        <g:hiddenField name="mode" value="active"/>
+        <g:hiddenField name="project" value="${params.project}"/>
+        <g:link action="executionMode"
+                controller="menu"
+                class="btn btn-default "
+                title="${message(code:"action.executionMode.set.active.help")}"
+        >
+            Change
+        </g:link>
+    </g:form>
+    </auth:resourceAllowed>
+</g:ifExecutionMode>
+</g:if>
   <ul class="nav navbar-nav navbar-right">
       <g:ifServletContextAttributeExists attribute="CLUSTER_MODE_ENABLED">
           <g:ifServletContextAttribute attribute="CLUSTER_MODE_ENABLED" value="true">

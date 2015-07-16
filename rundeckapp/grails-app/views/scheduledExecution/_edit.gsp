@@ -924,8 +924,8 @@ function getCurSEID(){
 
 
 <g:javascript>
-    if (typeof(initTooltipForElements) == 'function') {
-        initTooltipForElements('.obs_tooltip');
+    if (typeof(_initPopoverContentRef) == 'function') {
+        _initPopoverContentRef();
     }
 </g:javascript>
 <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->

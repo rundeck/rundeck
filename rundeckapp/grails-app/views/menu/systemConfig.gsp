@@ -17,8 +17,14 @@
 
 <body>
 <div class="row">
+    <div class="col-sm-12">
+        <g:render template="/common/messages"/>
+    </div>
+</div>
+<div class="row">
     <div class="col-sm-3">
         <g:render template="configNav" model="[selected: 'syscfg']"/>
+
     </div>
 
     <g:set var="flatConfig" value="${grailsApplication.config.flatten()}"/>
@@ -58,7 +64,7 @@
         <div class="text-muted"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
 
 
-    <g:render template="displayConfigProps" model="[map: flatConfig, keys: flatConfig.keySet().grep(/^rundeck\.execution\.logs\./)]"/>
+    <g:render template="displayConfigProps" model="[map: flatConfig, keys: flatConfig.keySet().grep(~/^rundeck\.execution\.logs\..*$/)]"/>
 
     </div>
 </div>

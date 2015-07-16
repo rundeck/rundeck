@@ -4,6 +4,7 @@ import org.rundeck.storage.api.*;
 import org.rundeck.storage.api.PathUtil;
 import org.rundeck.storage.impl.DelegateResource;
 import org.rundeck.storage.impl.DelegateTree;
+import org.rundeck.storage.impl.ResourceBase;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -75,7 +76,7 @@ public class SubPathTree<T extends ContentMeta> extends DelegateTree<T> implemen
 
     @Override
     public boolean hasResource(Path path) {
-        return super.hasResource(translatePathInternal(path));
+        return !isLocalRoot(path) && super.hasResource(translatePathInternal(path));
     }
 
     @Override
@@ -89,11 +90,19 @@ public class SubPathTree<T extends ContentMeta> extends DelegateTree<T> implemen
 
     @Override
     public Resource<T> getResource(Path path) {
+        if(isLocalRoot(path)) {
+            //root is treated as a dir
+            throw new IllegalArgumentException("No resource for path: " + path);
+        }
         return translateResourceExternal(super.getResource(translatePathInternal(path)));
     }
 
     @Override
     public Resource<T> getPath(Path path) {
+        if(isLocalRoot(path) && !super.hasDirectory(translatePathInternal(path))) {
+            //empty dir
+            return translateResourceExternal(new ResourceBase<T>(path, null, true));
+        }
         return translateResourceExternal(super.getPath(translatePathInternal(path)));
     }
 

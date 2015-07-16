@@ -780,7 +780,10 @@ public class AclTool extends BaseTool {
             );
     static final List<String> appSystemKindActions =
             Arrays.asList(
-                    ACLConstants.ACTION_READ
+                    ACLConstants.ACTION_READ,
+                    ACLConstants.ACTION_ENABLE_EXECUTIONS,
+                    ACLConstants.ACTION_DISABLE_EXECUTIONS,
+                    ACLConstants.ACTION_ADMIN
             );
     static final List<String> appUserKindActions =
             Arrays.asList(
@@ -905,7 +908,7 @@ public class AclTool extends BaseTool {
                     optionDisplayString(CONTEXT_OPT, false) + " is required.",
                     "Choose one of: \n" +
                     "  -c " + Context.application + "\n" +
-                    "    Access to projects, users, storage, system info.\n" +
+                    "    Access to projects, users, storage, system info, execution management.\n" +
                     "  -c " + Context.project + "\n" +
                     "    Access to jobs, nodes, events, within a project."
             );
@@ -1058,7 +1061,8 @@ public class AclTool extends BaseTool {
                     "  Generic: " +
                     optionDisplayString(GENERIC_OPT) +
                     "\n" +
-                    "    Create projects, read system info, manage users.\n" +
+                    "    Create projects, read system info, manage users, change\n" +
+                    "      execution mode.\n" +
                     "    generic kinds" +
                     " in this context: \n" +
                     "    " +
@@ -1753,10 +1757,12 @@ public class AclTool extends BaseTool {
         public static final String ACTION_IMPORT = "import";
         public static final String ACTION_EXPORT = "export";
         public static final String ACTION_DELETE_EXECUTION = "delete_execution";
+        public static final String ACTION_ENABLE_EXECUTIONS = "enable_executions";
+        public static final String ACTION_DISABLE_EXECUTIONS = "disable_executions";
 
         public static final String TYPE_SYSTEM = "system";
         public static final String TYPE_NODE = "node";
-        public static final String TYPE_JOB = JOB_LONG_OPT;
+        public static final String TYPE_JOB = "job";
         public static final String TYPE_ADHOC = "adhoc";
         public static final String TYPE_PROJECT = "project";
         public static final String TYPE_EVENT = "event";

@@ -57,6 +57,9 @@ class DbStorageServiceTests {
                 storageMeta: [abc: 'xyz3']).save(true)
 
         assertTrue(service.hasPath(null,''))
+        assertTrue(service.hasPath(null,'/'))
+        assertTrue(service.hasPath('zyx',''))
+        assertTrue(service.hasPath('zyx','/'))
         assertFalse(service.hasPath(null,'xy'))
         assertTrue(service.hasPath(null,'xyz'))
         assertTrue(service.hasPath(null,'xyz/abc'))
@@ -68,6 +71,23 @@ class DbStorageServiceTests {
         assertTrue(service.hasPath(null,'xyz/monkey/tree/banana.gif'))
         assertTrue(service.hasPath(null,'abc'))
         assertTrue(service.hasPath('zyx','abc'))
+    }
+    void testHasPathEmptyDB() {
+        assertTrue(service.hasPath(null,''))
+        assertTrue(service.hasPath(null,'/'))
+        assertTrue(service.hasPath('zyx',''))
+        assertTrue(service.hasPath('zyx','/'))
+        assertFalse(service.hasPath(null,'xy'))
+        assertFalse(service.hasPath(null,'xyz'))
+        assertFalse(service.hasPath(null,'xyz/abc'))
+        assertFalse(service.hasPath(null,'xyz/abc2'))
+        assertFalse(service.hasPath('zyx','xyz/abc'))
+        assertFalse(service.hasPath('zyx','xyz/abc2'))
+        assertFalse(service.hasPath(null,'xyz/monkey'))
+        assertFalse(service.hasPath(null,'xyz/monkey/tree'))
+        assertFalse(service.hasPath(null,'xyz/monkey/tree/banana.gif'))
+        assertFalse(service.hasPath(null,'abc'))
+        assertFalse(service.hasPath('zyx','abc'))
     }
     void testHasDirectory() {
         assertNotNull new Storage(data: 'abc'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz']).save(true)

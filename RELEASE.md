@@ -1,80 +1,66 @@
-Release 2.5.1
-=============
+Release 2.5.2
+===========
 
-Date: 2015-05-15
+Date: 2015-07-07
 
-Name: <span style="color: seagreen"><span class="glyphicon glyphicon-sunglasses"></span> "cafe au lait seagreen sunglasses"</span>
+Name: <span style="color: sienna"><span class="glyphicon glyphicon-bell"></span> "cafe au lait sienna bell"</span>
 
-This release has primarily bugfixes.
-
-## Enhancements
-
-* CLI tools can authenticate to the server using environment variables instead of the credentials stored in the framework.properties file.
-	* see [CLI Tool Authentication](http://rundeck.org/2.5.1/man1/cli-tool-authentication.html)
-
-## Upgrading to 2.5
-
-**Note:** We've attempted to maintain compatibility with previous plugins, but due to changes in the core library,
-Rundeck may have issues loading or running some plugins.
-
-Please report issues found to [Github issues](https://github.com/rundeck/rundeck/issues).
-
-See the [Upgrading Guide](http://rundeck.org/2.5.1/upgrading/index.html)
+* Improved performance on Execution follow page with many nodes (1000+).
+* Bug fixes
 
 ## Contributors
 
 * Greg Schueler (gschueler)
+* Noah Lorang (noahhl)
 
 ## Bug Reporters
 
-* Zophar78
 * andham
-* arthurlogilab
+* blysik
+* corecache
 * ctgaff
-* danifr
-* dspinellis
+* fanie-riekert
 * gschueler
-* harlanbarnes
-* hbakkum
-* jasonaughton
-* michlaustn
-* mikeleigh
-* rveznaver
-* schast
-* snebel29
-* tiahino
-* wcooley
+* jacekkow
+* jeffearl
+* mathieuchateau
+* mgsococo
+* noahhl
+* richiereynolds
+* stack72
+* touzoku
 
 ## Issues
 
-* [Job with a negative threadcount causes exception when using Orchestrator](https://github.com/rundeck/rundeck/issues/1239)
-* [Failed job runs not shown in 'failed' tab](https://github.com/rundeck/rundeck/issues/1234)
-* [Information missing from aclpolicy docs](https://github.com/rundeck/rundeck/issues/1232)
-* [Saved Node Filters shown in all projects, will show node results from other projects](https://github.com/rundeck/rundeck/issues/1231)
-* [Job copy: Data Binding Failed](https://github.com/rundeck/rundeck/issues/1228)
-* [Archive import fails if db still has varchar(7) in actionType column](https://github.com/rundeck/rundeck/issues/1227)
-* [running rd-project without -p argument causes NPE](https://github.com/rundeck/rundeck/issues/1226)
-* [Change to "If a step fails" selection for workflow isn't persisted](https://github.com/rundeck/rundeck/issues/1224)
-* [Email Reporting Error On Success](https://github.com/rundeck/rundeck/issues/1221)
-* [edit job step when plugin cannot be loaded causes javascript error](https://github.com/rundeck/rundeck/issues/1220)
-* [rd-acl create -i doesn't correctly parse node tags in resource section](https://github.com/rundeck/rundeck/issues/1219)
-* [rd-acl test with -t tags doesn't work properly](https://github.com/rundeck/rundeck/issues/1218)
-* [Rundeck start fails in Tomcat 7 on Win2012](https://github.com/rundeck/rundeck/issues/1216)
-* [Error requesting json on API](https://github.com/rundeck/rundeck/issues/1215)
-* [Updating job with orchestrator fails](https://github.com/rundeck/rundeck/issues/1212)
-* [Incomplete view in Node list](https://github.com/rundeck/rundeck/issues/1208)
-* [Limiting execution output through API with lastlines seems to be off by 2](https://github.com/rundeck/rundeck/issues/1207)
-* [Rundeck rpm package should conditionally restart the service on upgrade](https://github.com/rundeck/rundeck/issues/1199)
-* [No signature of method: rundeck.services.ProjectService.exportProjectToFileAsync() when trying to export project archive with the DB storage type](https://github.com/rundeck/rundeck/issues/1198)
-* [Key Storage - DB Backend Exception - Could not obtain current Hibernate Session](https://github.com/rundeck/rundeck/issues/1197)
-* [Unable to save changes to jobs using Local Command node step](https://github.com/rundeck/rundeck/issues/1193)
-* [2.5 debian package should require java 7](https://github.com/rundeck/rundeck/issues/1192)
-* [Bulk Delete Execution Failing](https://github.com/rundeck/rundeck/issues/1184)
-* [JettyCombinedLdapLoginModule -\> case sensitve](https://github.com/rundeck/rundeck/issues/1182)
-* [Email Notifications Broken - ERROR NotificationService](https://github.com/rundeck/rundeck/issues/1181)
-* [Jobs don't complete: Data truncation: Data too long for column 'action_type' at row 1](https://github.com/rundeck/rundeck/issues/1179)
-* [rundeck.gui.login.welcomeHtml option is not rendering HTML](https://github.com/rundeck/rundeck/issues/1177)
-* [org.h2.jdbc.JdbcSQLException: Feature not supported: "isWrapperFor"](https://github.com/rundeck/rundeck/issues/1175)
-* [documentation: workflow node step plugin java interface shown is wrong](https://github.com/rundeck/rundeck/issues/1174)
-* [Documentation: Missing execution data attributes on notification plugin page](https://github.com/rundeck/rundeck/issues/1035)
-* [Re-write command line tools to support auth w/o properties file.](https://github.com/rundeck/rundeck/issues/137)
+* [Enable the configuration of excluded cipher suites for SSL](https://github.com/rundeck/rundeck/issues/1321)
+* [GUI: Plugins List in Configure page: plugin provider names should be shown](https://github.com/rundeck/rundeck/issues/1320)
+* [GUI: Workflow editor: Step plugins list should be sorted](https://github.com/rundeck/rundeck/issues/1319)
+* [GUI: workflow plugin text incorrect](https://github.com/rundeck/rundeck/issues/1318)
+* [GUI: Execution File Storage Plugin: configuration listing is missing data](https://github.com/rundeck/rundeck/issues/1317)
+* [Job Fails after 0s](https://github.com/rundeck/rundeck/issues/1314)
+* [GUI: workflow strategy help text is not readable](https://github.com/rundeck/rundeck/issues/1313)
+* [2.5.1.1 - hoovering on tooltip, no way to make it disappear](https://github.com/rundeck/rundeck/issues/1307)
+* [Documentation: Storage API for creating Password doesn't mention MIME type to use](https://github.com/rundeck/rundeck/issues/1297)
+* [Archive Import: can fail for some execution data with missing reports](https://github.com/rundeck/rundeck/issues/1296)
+* [orchestrator config not shown for executions](https://github.com/rundeck/rundeck/issues/1295)
+* [#2.5.1 #debianpkg rd-acl is missing executable flag ](https://github.com/rundeck/rundeck/issues/1293)
+* [Rundeck 2.5.1 doesn't capture/display last line of output if it is not terminated by a newline](https://github.com/rundeck/rundeck/issues/1292)
+* [Archive Export should not use default JVM character encoding: can cause error on re-import](https://github.com/rundeck/rundeck/issues/1289)
+* [Archive Export: empty project (0 jobs, 0 activity), causes exception](https://github.com/rundeck/rundeck/issues/1288)
+* [Archive import: Invalid XML in execution/report.xml file causes import to halt with error](https://github.com/rundeck/rundeck/issues/1287)
+* [Key Storage DB backend with empty DB shows warning message](https://github.com/rundeck/rundeck/issues/1286)
+* [support secure auth password job option for script-based node executors](https://github.com/rundeck/rundeck/issues/1285)
+* [Error importing archive: executions for deleted jobs which use job references cause error at Report import stage](https://github.com/rundeck/rundeck/issues/1284)
+* [error: import archive with executions and orchestrator](https://github.com/rundeck/rundeck/issues/1282)
+* [email address validation on job import should not restrict domain TLDs](https://github.com/rundeck/rundeck/issues/1281)
+* [Fix next execution time on non-scheduled cluster member](https://github.com/rundeck/rundeck/pull/1280)
+* [signed debian file build fix](https://github.com/rundeck/rundeck/issues/1279)
+* [Add launcher to sonatype maven repo deploy](https://github.com/rundeck/rundeck/issues/1274)
+* [Options passed in "Job Reference" step are not being replaced by empty strings](https://github.com/rundeck/rundeck/issues/1272)
+* [File extension specified not used in URL script file execution](https://github.com/rundeck/rundeck/issues/1264)
+* [Service Unavailable on startup 2.5.1-1.7GA installed from rpm](https://github.com/rundeck/rundeck/issues/1252)
+* [Notification validation: require value for email/webhook](https://github.com/rundeck/rundeck/issues/1250)
+* ["On start" webhook notification selection persisted incorrectly](https://github.com/rundeck/rundeck/issues/1249)
+* [quartz.properties no longer exists](https://github.com/rundeck/rundeck/issues/1210)
+* [Blank options passed to sub jobs as literal strings, RD 2.2.3](https://github.com/rundeck/rundeck/issues/992)
+* [large rundeck jobs unusable in current UI](https://github.com/rundeck/rundeck/issues/822)

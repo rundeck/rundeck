@@ -520,7 +520,7 @@ class FrameworkController extends ControllerBase {
        //if reload parameter is specified, and user is admin, reload from source URL
         try {
             if(url){
-                if(!(url==~ /(?i)^(https?|file):\/\/.*$/)){
+                if(!(url==~ /(?i)^(https?|file):\/\/?.*$/)){
                     log.error("Error updating node resources file for project ${project.name}: invalid URL: " + url)
                     return [success: false, message: "Error updating node resources file for project ${project.name}: invalid URL: " + url, invalid: true]
                 }
@@ -1634,7 +1634,7 @@ class FrameworkController extends ControllerBase {
      * calls performNodeReload, then returns API response
      * @deprecated will be removed
      * */
-    def apiProjectResourcesRefresh = {
+    def apiProjectResourcesRefresh () {
         if (!apiService.requireVersion(request,response,ApiRequestFilters.V2)) {
             return
         }
@@ -1682,25 +1682,25 @@ class FrameworkController extends ControllerBase {
      * POST: update resources data with either: text/xml content, text/yaml content, form-data param providerURL=<url>
      *     GET: see {@link #apiResourcesv2}
      * */
-    def apiProjectResourcesPost = {
+    def apiProjectResourcesPost() {
         if (!apiService.requireVersion(request, response,ApiRequestFilters.V2)) {
             return
         }
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!params.project) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
 
         }
         def exists = frameworkService.existsFrameworkProject(params.project)
         if (!exists) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
         }
         if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
                 [AuthConstants.ACTION_CREATE,AuthConstants.ACTION_UPDATE], params.project)) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Update Nodes', 'Project', params.project]])
         }
         final IRundeckProject project = frameworkService.getFrameworkProject(params.project)
@@ -1711,7 +1711,7 @@ class FrameworkController extends ControllerBase {
         //assume post request
         if(!request.post){
             //bad method
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_METHOD_NOT_ALLOWED,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_METHOD_NOT_ALLOWED,
                     code: 'api.error.invalid.request', args: ['Method not allowed']])
         }
         final contentType = request.contentType
@@ -1728,7 +1728,7 @@ class FrameworkController extends ControllerBase {
             parser = framework.getResourceFormatParserService().getParserForMIMEType(contentType)
         } catch (UnsupportedFormatException e) {
             //invalid data
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.resources-import.unsupported-format', args: [contentType]])
         }
 
@@ -1746,10 +1746,10 @@ class FrameworkController extends ControllerBase {
         try {
             nodeset=parser.parseDocument(tempfile)
         }catch (ResourceFormatParserException e){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.invalid.request', args: [e.message]])
         }catch (Exception e){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     code: 'api.project.updateResources.failed', args: [e.message]])
         }
         tempfile.delete()
@@ -1761,10 +1761,21 @@ class FrameworkController extends ControllerBase {
         } catch (Exception e) {
             log.error("Failed updating nodes file: "+e.getMessage())
             e.printStackTrace(System.err)
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     code: 'api.project.updateResources.failed', args: [e.message]])
         }
-        return apiService.renderSuccessXml(response, 'api.project.updateResources.succeeded', [params.project])
+        withFormat{
+            xml{
+                return apiService.renderSuccessXml(response, 'api.project.updateResources.succeeded', [params.project])
+            }
+            json{
+                return apiService.renderSuccessJson(response){
+                    success=true
+                    message=g.message(code:'api.project.updateResources.succeeded', args:[params.project])
+                }
+            }
+        }
+
     }
 
     /**
@@ -1797,9 +1808,18 @@ class FrameworkController extends ControllerBase {
 
 
     /**
+     * API: /api/14/project/PROJECT/resource/NAME, version 14
+     */
+    def apiResourcev14 () {
+        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+            return
+        }
+        return apiResource()
+    }
+    /**
      * API: /api/resource/$name, version 1
      */
-    def apiResource={
+    def apiResource(){
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -1852,32 +1872,33 @@ class FrameworkController extends ControllerBase {
             return
         }
         if (query.hasErrors()) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.invalid.request', args: [query.errors.allErrors.collect { g.message(error: it) }.join("; ")]])
         }
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(!params.project){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
 
         }
         def exists=frameworkService.existsFrameworkProject(params.project)
         if(!exists){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project',params.project]])
 
 
         }
         if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
                 [AuthConstants.ACTION_READ], params.project)) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
 
         }
-        if (params.format && !(params.format in ['all','xml','yaml']) || request.format && !(request.format in ['all','html','xml','yaml'])) {
+        if (params.format && !(params.format in ['all','xml','yaml']) ||
+                response.format && !(response.format in ['all','html','xml','yaml'])) {
             //expected another content type
-            def reqformat = params.format ?: request.format
+            def reqformat = params.format ?: response.format
             if (!apiService.requireVersion(request, response,ApiRequestFilters.V3)) {
                 return
             }
@@ -1900,54 +1921,83 @@ class FrameworkController extends ControllerBase {
         final INodeSet nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(ExecutionService.filtersAsNodeSet(query), pject.getNodeSet())
         return apiRenderNodeResult(nodes,framework,params.project)
     }
-    protected String apiRenderNodeResult(INodeSet nodes, Framework framework, String project){
-        if (params.format && !(params.format in ['xml', 'yaml']) || request.format && !(request.format in ['all','html', 'xml', 'yaml'])) {
+    protected String apiRenderNodeResult(INodeSet nodes, Framework framework, String project) {
+        if (params.format && !(params.format in ['xml', 'yaml']) ||
+                response.format &&
+                !(response.format in ['all', 'html', 'xml', 'yaml'])) {
             //expected another content type
-            if (!apiService.requireVersion(request, response,ApiRequestFilters.V3)) {
+            if (!apiService.requireVersion(request, response, ApiRequestFilters.V3)) {
                 return
             }
-            def reqformat=params.format?:request.format
+            def reqformat = params.format ?: response.format
             //render specified format
             final service = framework.getResourceFormatGeneratorService()
             ByteArrayOutputStream baos = new ByteArrayOutputStream()
-            final generator
+            def generator
+            [params.format,response.format].each{
+                if(!generator && it){
+                    try{
+                        generator = service.getGeneratorForFormat(it)
+                    }catch (UnsupportedFormatException e) {
+                        log.debug("could not get generator for format: ${it}: ${e.message}",e)
+                    }
+                }
+            }
+            if(!generator){
+                //try accept header
+                try{
+                    generator = service.getGeneratorForMIMEType(request.getHeader("accept"))
+                }catch (UnsupportedFormatException e) {
+                    log.debug("could not get generator for mime type: ${request.getHeader("accept")}: ${e.message}",e)
+                }
+            }
+            if(!generator){
+                return apiService.renderErrorFormat(
+                        response,
+                        [
+                                status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                                code  : 'api.error.resource.format.unsupported',
+                                args: [reqformat]
+                        ]
+                )
+            }
+
+
             try {
-                generator = service.getGeneratorForFormat(reqformat?:'resourcexml')
-                generator.generateDocument(nodes,baos)
-            } catch (UnsupportedFormatException e) {
-                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                        code: 'api.error.resource.format.unsupported', args: [reqformat]])
-            }catch (ResourceFormatGeneratorException e){
-                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                        code: 'api.error.resource.format.generator', args: [e.message]])
-            }catch (IOException e){
-                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                        code: 'api.error.resource.format.generator', args: [e.message]])
+                generator.generateDocument(nodes, baos)
+            } catch (ResourceFormatGeneratorException e) {
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                                                               code  : 'api.error.resource.format.generator', args: [e.message]]
+                )
+            } catch (IOException e) {
+                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                                                               code  : 'api.error.resource.format.generator', args: [e.message]]
+                )
             }
             final types = generator.getMIMETypes() as List
-            return render(contentType: types[0],encoding:"UTF-8",text:baos.toString())
+            return render(contentType: types[0], encoding: "UTF-8", text: baos.toString())
         }
-        withFormat{
-            xml{
+        withFormat {
+            xml {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 final NodesFileGenerator generator = new ResourceXMLGenerator(baos)
-                nodes.nodes.each {INodeEntry node->
+                nodes.nodes.each { INodeEntry node ->
                     generator.addNode(node)
                 }
                 generator.generate()
-                return render(contentType:"text/xml",encoding:"UTF-8",text:baos.toString())
+                return render(contentType: "text/xml", encoding: "UTF-8", text: baos.toString())
             }
-            yaml{
-                if(nodes.nodes.size()>0){
+            yaml {
+                if (nodes.nodes.size() > 0) {
                     StringWriter sw = new StringWriter()
                     final NodesFileGenerator generator = new NodesYamlGenerator(sw)
-                    nodes.nodes.each {INodeEntry node->
+                    nodes.nodes.each { INodeEntry node ->
                         generator.addNode(node)
                     }
                     generator.generate()
-                    return render(contentType:"text/yaml",encoding:"UTF-8",text:sw.toString())
-                }else{
-                    return render(contentType:"text/yaml",encoding:"UTF-8",text:"# 0 results for query\n")
+                    return render(contentType: "text/yaml", encoding: "UTF-8", text: sw.toString())
+                } else {
+                    return render(contentType: "text/yaml", encoding: "UTF-8", text: "# 0 results for query\n")
                 }
             }
         }

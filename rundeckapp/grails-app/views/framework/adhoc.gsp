@@ -14,7 +14,7 @@
   limitations under the License.
   --}%
 
-<%@ page import="grails.util.Environment; rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="grails.util.Environment; rundeck.User" %>
 <html>
 <head>
     <g:set var="ukey" value="${g.rkey()}" />
@@ -277,6 +277,7 @@
     <g:render template="/common/messages"/>
         <div id="tabsarea">
             <div class="row ">
+                <g:ifExecutionMode active="true">
                 <div class="col-sm-10" >
                     <div class="" id="runtab">
                             <div class="form form-horizontal clearfix" id="runbox">
@@ -433,6 +434,14 @@
                         Run on <span data-bind="text: allcount">0</span> <span data-bind="text: nodesTitle">Nodes</span> <span class="glyphicon glyphicon-play"></span>
                     </button>
                 </div>
+                </g:ifExecutionMode>
+                <g:ifExecutionMode active="false">
+                    <div class="col-sm-12">
+                        <div class="alert alert-warning ">
+                            <g:message code="disabled.execution.run"/>
+                        </div>
+                    </div>
+                </g:ifExecutionMode>
 
 
             </div>

@@ -13,7 +13,6 @@ import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
-import org.codehaus.groovy.grails.web.json.JSONArray
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import rundeck.Execution
 import rundeck.PluginStep
@@ -23,6 +22,7 @@ import rundeck.services.ApiService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.LoggingService
+import rundeck.services.OrchestratorPluginService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.WorkflowService
 import rundeck.services.logging.ExecutionLogReader
@@ -42,6 +42,7 @@ class ExecutionController extends ControllerBase{
     ExecutionService executionService
     LoggingService loggingService
     ScheduledExecutionService scheduledExecutionService
+    OrchestratorPluginService orchestratorPluginService
     ApiService apiService
     WorkflowService workflowService
 
@@ -51,6 +52,8 @@ class ExecutionController extends ControllerBase{
             apiExecutionAbort: ['POST','GET'],
             apiExecutionDelete: ['DELETE'],
             apiExecutionDeleteBulk: ['POST'],
+            apiExecutionModePassive: ['POST'],
+            apiExecutionModeActive: ['POST'],
             cancelExecution:'POST'
     ]
 
@@ -134,6 +137,7 @@ class ExecutionController extends ControllerBase{
 //        }
         return [scheduledExecution: e.scheduledExecution?:null,execution:e, filesize:filesize,
                 nextExecution: e.scheduledExecution?.scheduled ? scheduledExecutionService.nextExecutionTime(e.scheduledExecution) : null,
+                orchestratorPlugins: orchestratorPluginService.listOrchestratorPlugins(),
                 enext: enext, eprev: eprev,stepPluginDescriptions: pluginDescs, ]
     }
     def delete = {
@@ -192,7 +196,7 @@ class ExecutionController extends ControllerBase{
             return redirect(action: 'index', controller: 'reports', params: [project: params.project])
         }
     }
-    def ajaxExecState={
+    def ajaxExecState(){
         def Execution e = Execution.get(params.id)
         if (!e) {
             log.error("Execution not found for id: " + params.id)
@@ -208,10 +212,8 @@ class ExecutionController extends ControllerBase{
         }
 
         def jobcomplete = e.dateCompleted != null
-        def hasFailedNodes = e.failedNodeList ? true : false
         def execState = executionService.getExecutionState(e)
-        def execDuration = 0L
-        execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
+        def execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
         def jobAverage=-1L
         if (e.scheduledExecution && e.scheduledExecution.totalTime >= 0 && e.scheduledExecution.execCount > 0) {
             def long avg = Math.floor(e.scheduledExecution.totalTime / e.scheduledExecution.execCount)
@@ -235,7 +237,13 @@ class ExecutionController extends ControllerBase{
             data['retryExecutionState']=ExecutionService.getExecutionState(e.retryExecution).toUpperCase()
             data['retryExecutionAttempt']= e.retryExecution.retryAttempt
         }
-        def loader = workflowService.requestState(e)
+        def selectedNodes=[]
+        if(params.nodes instanceof String){
+            selectedNodes=params.nodes.split(',') as List
+        }else if(params.nodes){
+            selectedNodes=[params.nodes].flatten()
+        }
+        def loader = workflowService.requestStateSummary(e,selectedNodes,false)
         if (loader.state == ExecutionLogState.AVAILABLE) {
             data.state = loader.workflowState
         }else if(loader.state in [ExecutionLogState.NOT_FOUND]) {
@@ -249,7 +257,50 @@ class ExecutionController extends ControllerBase{
             data.state = [error: 'pending',
                     errorMessage: g.message(code: 'execution.state.storage.state.' + loader.state, default: "Pending")]
         }
-        return render(contentType: 'application/json', text: data.encodeAsJSON())
+        def limit=grailsApplication.config.rundeck?.ajax?.executionState?.compression?.nodeThreshold?:500
+        if(selectedNodes || data.state.allNodes?.size()>limit) {
+            return renderCompressed(request, response, 'application/json', data.encodeAsJSON())
+        }else{
+            return render(contentType: 'application/json', text: data.encodeAsJSON())
+        }
+    }
+    def ajaxExecNodeState(){
+        def Execution e = Execution.get(params.id)
+        if (!e) {
+            log.error("Execution not found for id: " + params.id)
+            response.status=HttpServletResponse.SC_NOT_FOUND
+            return render(contentType: 'application/json', text: [error: "Execution not found for id: " + params.id] as JSON)
+        }
+
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (e && !frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_READ])) {
+            response.status=HttpServletResponse.SC_FORBIDDEN
+            return render(contentType: 'application/json',text:[error: "Unauthorized: Read Execution ${params.id}"] as JSON)
+        }
+
+
+        def data=[:]
+        def selectedNode=params.node
+        def loader = workflowService.requestStateSummary(e,[selectedNode],true)
+        if (loader.state == ExecutionLogState.AVAILABLE) {
+            data = [
+                    name:selectedNode,
+                    summary:loader.workflowState.nodeSummaries[selectedNode],
+                    steps:loader.workflowState.nodeSteps[selectedNode]
+            ]
+        }else if(loader.state in [ExecutionLogState.NOT_FOUND]) {
+            data = [error: 'not found',
+                    errorMessage: g.message(code: 'execution.state.storage.state.' + loader.state,
+                            default: "Not Found")]
+        }else if(loader.state in [ExecutionLogState.ERROR]) {
+            data = [error: 'error', errorMessage: g.message(code: loader.errorCode, args: loader.errorData)]
+        }else if (loader.state in [ ExecutionLogState.PENDING_LOCAL, ExecutionLogState.WAITING,
+                ExecutionLogState.AVAILABLE_REMOTE, ExecutionLogState.PENDING_REMOTE]) {
+            data = [error: 'pending',
+                    errorMessage: g.message(code: 'execution.state.storage.state.' + loader.state, default: "Pending")]
+        }
+        return renderCompressed(request, response, 'application/json', data.encodeAsJSON())
     }
     def mail ={
         def Execution e = Execution.get(params.id)
@@ -267,6 +318,32 @@ class ExecutionController extends ControllerBase{
             return render(view:"mailNotification/status" ,model: [execstate: state, scheduledExecution: se, execution:e, filesize:filesize])
         }else{
             return render(view:"mailNotification/status" ,model:  [execstate: state, execution:e, filesize:filesize])
+        }
+    }
+    def executionMode(){
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        withForm {
+            def requestActive=params.mode == 'active'
+            def authAction=requestActive?AuthConstants.ACTION_ENABLE_EXECUTIONS:AuthConstants.ACTION_DISABLE_EXECUTIONS
+            if (unauthorizedResponse(frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                                      AuthConstants.RESOURCE_TYPE_SYSTEM,
+                                                                                      [authAction, AuthConstants.ACTION_ADMIN]),
+
+                                     authAction,'for','Rundeck')) {
+                return
+            }
+            if(requestActive == executionService.executionsAreActive){
+                flash.message=g.message(code:'action.executionMode.notchanged.'+(requestActive?'active':'passive')+'.text')
+                return redirect(controller: 'menu',action:'systemConfig',params:[project:params.project])
+            }
+            executionService.setExecutionsAreActive(requestActive)
+            flash.message=g.message(code:'action.executionMode.changed.'+(requestActive?'active':'passive')+'.text')
+            return redirect(controller: 'menu',action:'systemConfig',params:[project:params.project])
+        }.invalidToken{
+
+            request.error=g.message(code:'request.error.invalidtoken.message')
+            renderErrorView([:])
         }
     }
 
@@ -1042,25 +1119,38 @@ class ExecutionController extends ControllerBase{
     /**
      * API: /api/execution/{id} , version 1
      */
-    def apiExecution={
+    def apiExecution(){
         if (!apiService.requireApi(request, response)) {
             return
         }
         def Execution e = Execution.get(params.id)
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!e) {
-            return apiService.renderErrorXml(response,
+            return apiService.renderErrorFormat(response,
                     [status: HttpServletResponse.SC_NOT_FOUND,code: "api.error.item.doesnotexist", args: ['Execution ID', params.id]])
         } else if (!frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_READ])){
-            return apiService.renderErrorXml(response,
+            return apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_FORBIDDEN,
                             code: "api.error.item.unauthorized",
                             args: [AuthConstants.ACTION_READ, "Execution", params.id]
                     ])
         }
-
-        return executionService.respondExecutionsXml(request,response, [e])
+        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorFormat(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
+        }
+        withFormat{
+            xml{
+                return executionService.respondExecutionsXml(request,response, [e])
+            }
+            json{
+                return executionService.respondExecutionsJson(request,response, [e],[single:true])
+            }
+        }
     }
     /**
      * API: /api/execution/{id}/state , version 10
@@ -1194,21 +1284,21 @@ class ExecutionController extends ControllerBase{
     /**
      * API: /api/execution/{id}/abort, version 1
      */
-    def apiExecutionAbort={
+    def apiExecutionAbort(){
         if (!apiService.requireApi(request, response)) {
             return
         }
         def Execution e = Execution.get(params.id)
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!e) {
-            return apiService.renderErrorXml(response,
+            return apiService.renderErrorFormat(response,
                         [
                                 status: HttpServletResponse.SC_NOT_FOUND,
                                 code: "api.error.item.doesnotexist",
                                 args: ['Execution ID', params.id]
                         ])
         } else if (!frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_KILL])){
-            return apiService.renderErrorXml(response,
+            return apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_FORBIDDEN,
                             code: "api.error.item.unauthorized",
@@ -1228,14 +1318,39 @@ class ExecutionController extends ControllerBase{
         if(abortresult.failedreason){
             reportstate.reason= abortresult.failedreason
         }
-        apiService.renderSuccessXml(request,response) {
-            if (apiService.doWrapXmlResponse(request)) {
-                success {
-                    message("Execution status: ${abortresult.statusStr ? abortresult.statusStr : abortresult.jobstate}")
+
+        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorXml(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
+        }
+        withFormat{
+            xml{
+                apiService.renderSuccessXml(request,response) {
+                    if (apiService.doWrapXmlResponse(request)) {
+                        success {
+                            message("Execution status: ${abortresult.statusStr ? abortresult.statusStr : abortresult.jobstate}")
+                        }
+                    }
+                    abort(reportstate) {
+                        execution(id: params.id, status: abortresult.jobstate,
+                                  href:apiService.apiHrefForExecution(e),
+                                  permalink: apiService.guiHrefForExecution(e))
+                    }
                 }
             }
-            abort(reportstate) {
-                execution(id: params.id, status: abortresult.jobstate)
+            json{
+                apiService.renderSuccessJson(response) {
+                    abort=reportstate
+                    execution=[
+                            id: params.id,
+                            status: abortresult.jobstate,
+                            href:apiService.apiHrefForExecution(e),
+                            permalink: apiService.guiHrefForExecution(e)
+                    ]
+                }
             }
         }
     }
@@ -1353,7 +1468,17 @@ class ExecutionController extends ControllerBase{
 
 
     /**
-     * API: /api/executions query interface, version 5
+     * API: /api/14/project/NAME/executions
+     */
+    def apiExecutionsQueryv14(ExecutionQuery query){
+        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+            return
+        }
+        return apiExecutionsQuery(query)
+    }
+
+    /**
+     * API: /api/5/executions query interface, deprecated since v14
      */
     def apiExecutionsQuery(ExecutionQuery query){
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V5)) {
@@ -1361,7 +1486,7 @@ class ExecutionController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(query?.hasErrors()){
-            return apiService.renderErrorXml(response,
+            return apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_BAD_REQUEST,
                             code: "api.error.parameter.error",
@@ -1369,14 +1494,21 @@ class ExecutionController extends ControllerBase{
                     ])
         }
         if (!params.project) {
-            return apiService.renderErrorXml(response,
+            return apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_BAD_REQUEST,
                             code: "api.error.parameter.required",
                             args: ['project']
                     ])
         }
-        
+
+        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorFormat(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
+        }
         query.projFilter=params.project
         if (null != query) {
             query.configureFilter()
@@ -1388,7 +1520,14 @@ class ExecutionController extends ControllerBase{
                 query.endafterFilter = ReportsController.parseDate(params.begin)
                 query.doendafterFilter = true
             } catch (ParseException e) {
-                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST, code: 'api.error.history.date-format', args: ['begin', params.begin]])
+                return apiService.renderErrorFormat(
+                        response,
+                        [
+                                status: HttpServletResponse.SC_BAD_REQUEST,
+                                code: 'api.error.history.date-format',
+                                args: ['begin', params.begin]
+                        ]
+                )
             }
         }
         if (params.end) {
@@ -1396,7 +1535,14 @@ class ExecutionController extends ControllerBase{
                 query.endbeforeFilter = ReportsController.parseDate(params.end)
                 query.doendbeforeFilter = true
             } catch (ParseException e) {
-                return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST, code: 'api.error.history.date-format', args: ['end', params.end]])
+                return apiService.renderErrorFormat(
+                        response,
+                        [
+                                status: HttpServletResponse.SC_BAD_REQUEST,
+                                code: 'api.error.history.date-format',
+                                args: ['end', params.end]
+                        ]
+                )
             }
         }
         def resOffset = params.offset ? params.int('offset') : 0
@@ -1411,8 +1557,71 @@ class ExecutionController extends ControllerBase{
         //filter query results to READ authorized executions
         def filtered = frameworkService.filterAuthorizedProjectExecutionsAll(authContext,result,[AuthConstants.ACTION_READ])
 
+        withFormat{
+            xml{
+                return executionService.respondExecutionsXml(request,response,filtered,[total:total,offset:resOffset,max:resMax])
+            }
+            json{
+                return executionService.respondExecutionsJson(request,response,filtered,[total:total,offset:resOffset,max:resMax])
+            }
+        }
+    }
 
-        return executionService.respondExecutionsXml(request,response,filtered,[total:total,offset:resOffset,max:resMax])
+
+    /**
+     *
+     * @return
+     */
+    def apiExecutionModeActive() {
+        apiExecutionMode(true)
+    }
+    /**
+     *
+     * @return
+     */
+    def apiExecutionModePassive() {
+        apiExecutionMode(false)
+    }
+    /**
+     *
+     * @return
+     */
+    private def apiExecutionMode(boolean active) {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V14)) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+
+        def authAction = active?AuthConstants.ACTION_ENABLE_EXECUTIONS:AuthConstants.ACTION_DISABLE_EXECUTIONS
+        if (!frameworkService.authorizeApplicationResourceAny(
+                authContext,
+                AuthConstants.RESOURCE_TYPE_SYSTEM,
+                [authAction, AuthConstants.ACTION_ADMIN]
+            )
+        ) {
+            return apiService.renderErrorFormat(response,
+                                                [
+                                                        status: HttpServletResponse.SC_FORBIDDEN,
+                                                        code: "api.error.item.unauthorized",
+                                                        args: [authAction, "Rundeck", ''],
+                                                        format: respFormat
+                                                ])
+        }
+        executionService.setExecutionsAreActive(active)
+        withFormat{
+            json {
+                render(contentType: "text/json") {
+                    delegate.executionMode=active?'active':'passive'
+                    delegate.active=active
+                }
+            }
+            xml {
+                apiService.renderSuccessXml {
+                    delegate.'executions'(active:active,executionMode:active?'active':'passive')
+                }
+            }
+        }
     }
 }
 

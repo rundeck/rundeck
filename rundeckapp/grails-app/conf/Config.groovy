@@ -173,12 +173,17 @@ rundeck.projectManagerService.projectCache.spec='expireAfterAccess=10m,refreshAf
 
 rundeck.projectsStorageType='filesystem'
 
+rundeck.ajax.compression='gzip'
+rundeck.ajax.executionState.compression.nodeThreshold=500
+
 grails.assets.less.compile = 'less4j'
 grails.assets.plugin."twitter-bootstrap".excludes = ["**/*.less"]
 grails.assets.plugin."twitter-bootstrap".includes = ["bootstrap.less"]
 
 //turn off whitespace conversion to blank/null for data binding
 grails.databinding.trimStrings=false
+
+rundeck.executionMode='active'
 
 // GSP settings
 grails {

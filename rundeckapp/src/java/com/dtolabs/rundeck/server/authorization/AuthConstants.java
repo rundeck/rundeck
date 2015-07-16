@@ -47,6 +47,8 @@ public class AuthConstants {
     public static final String ACTION_IMPORT = "import";
     public static final String ACTION_EXPORT = "export";
     public static final String ACTION_DELETE_EXECUTION = "delete_execution";
+    public static final String ACTION_ENABLE_EXECUTIONS = "enable_executions";
+    public static final String ACTION_DISABLE_EXECUTIONS = "disable_executions";
 
     public static final String TYPE_SYSTEM = "system";
     public static final String TYPE_NODE = "node";

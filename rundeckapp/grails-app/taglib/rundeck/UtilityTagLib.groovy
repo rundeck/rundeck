@@ -14,10 +14,11 @@ class UtilityTagLib{
     def static  daysofweekkey = [Calendar.SUNDAY,Calendar.MONDAY,Calendar.TUESDAY,Calendar.WEDNESDAY,Calendar.THURSDAY,Calendar.FRIDAY,Calendar.SATURDAY];
     def public static daysofweekord = ScheduledExecution.daysofweeklist;
     def public static monthsofyearord = ScheduledExecution.monthsofyearlist;
-	static returnObjectForTags = ['appTitle','rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','helpLinkParams','parseOptsFromString','relativeDateString','enc','textFirstLine','textRemainingLines']
+	static returnObjectForTags = ['executionMode','appTitle','rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','helpLinkParams','parseOptsFromString','relativeDateString','enc','textFirstLine','textRemainingLines']
 
     private static Random rand=new java.util.Random()
     def HMacSynchronizerTokensManager hMacSynchronizerTokensManager
+    def configurationService
     /**
      * Return a new random string every time it is called.  Attrs are:
      * len: number of random bytes to use
@@ -683,7 +684,7 @@ class UtilityTagLib{
      */
     def plural={attrs,body->
         def singular=attrs.code?g.message(code:attrs.code):attrs.singular?:body()
-        def plural=attrs.code?g.message(code:(attrs.code+'.plural')):attrs.plural?:(singular+'s')
+        def plural=(attrs.code?g.message(code:(attrs.code+'.plural'),default:''):'')?:attrs.plural?:(singular+'s')
         def count=null!=attrs.count?attrs.count:null!=attrs.for?attrs.for.size():0
         def text= count == 1 ? singular.encodeAsHTML() : plural.encodeAsHTML()
         def parts = [count,text]
@@ -870,4 +871,20 @@ class UtilityTagLib{
         grailsApplication.config.rundeck.gui.title ?:g.message(code:'main.app.name',default:'')?:g.message(code:'main.app.default.name')
     }
 
+    def executionMode={attrs,body->
+        def testIsActive = true
+        if(null!=attrs.active){
+            testIsActive=attrs.active in ['true',true]
+        }else if(null!=attrs.passive){
+            testIsActive=!(attrs.passive in ['true',true])
+        }else if(null!=attrs.is){
+            testIsActive=attrs.is =='active'
+        }
+        return testIsActive==configurationService.executionModeActive
+    }
+    def ifExecutionMode={attrs,body->
+        if(executionMode(attrs,body)){
+            out<<body()
+        }
+    }
 }

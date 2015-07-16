@@ -26,48 +26,44 @@
  */
 function RDNodeStep(data, node, flow){
     var self = this;
-    self.node= node;
-    self.flow= flow;
-    self.stepctx=data.stepctx;
-    self.type=ko.observable();
-    self.parameters=ko.observable();
-    self.followingOutput=ko.observable(false);
-    self.outputLineCount=ko.observable(-1);
-    self.parameterizedStep = function () {
-        return self.stepctx.indexOf('@')>=0;
-    };
-    self.type=ko.computed(function(){
-        return flow.workflow.contextType(self.stepctx);
-    });
-    self.stepident=ko.computed(function(){
-        return flow.workflow.renderContextString(self.stepctx);
-    });
-    self.startTimeSimple=ko.computed(function(){
+    self.node = node;
+    self.flow = flow;
+    self.stepctx = data.stepctx;
+    self.type = flow.workflow.contextType(data.stepctx);
+    self.stepident = flow.workflow.renderContextString(data.stepctx);
+    self.stepctxdesc = "Workflow Step: " + data.stepctx;
+    self.parameters = ko.observable(data.parameters || null);
+    self.followingOutput = ko.observable(false);
+    self.outputLineCount = ko.observable(-1);
+    self.startTime = ko.observable(data.startTime || null);
+    self.updateTime = ko.observable(data.updateTime || null);
+    self.endTime = ko.observable(data.endTime || null);
+    self.duration = ko.observable(data.duration || -1);
+    self.executionState = ko.observable(data.executionState || null);
+    self.parameterizedStep = ko.observable(data.stepctx.indexOf('@')>=0);
+    self.startTimeSimple=ko.pureComputed(function(){
         return MomentUtil.formatTimeSimple(self.startTime());
     });
     self.startTimeFormat=function(format){
         return MomentUtil.formatTime(self.startTime(),format);
     };
-    self.endTimeSimple=ko.computed(function(){
+    self.endTimeSimple=ko.pureComputed(function(){
         return MomentUtil.formatTimeSimple(self.endTime());
     });
     self.endTimeFormat= function (format) {
         return MomentUtil.formatTime(self.endTime(), format);
     };
-    self.duration=ko.computed(function(){
-        if(self.endTime() && self.startTime()){
+    self.durationCalc=ko.pureComputed(function(){
+        var dur=self.duration();
+        if(dur<0 && self.endTime() && self.startTime()){
             return moment(self.endTime()).diff(moment(self.startTime()));
         }else{
-            return -1;
+            return dur;
         }
     });
-    self.durationSimple=ko.computed(function(){
-        return MomentUtil.formatDurationSimple(self.duration());
+    self.durationSimple=ko.pureComputed(function(){
+        return MomentUtil.formatDurationSimple(self.durationCalc());
     });
-    self.stepctxdesc = ko.computed(function () {
-        return "Workflow Step: "+self.stepctx;
-    });
-    ko.mapping.fromJS(data, {}, this);
 }
 /**
  * Return true if state B should be used instead of a
@@ -94,7 +90,7 @@ function RDNode(name, steps,flow){
     self.flow= flow;
     self.name=name;
     self.state=ko.observable();
-    self.steps=ko.observableArray([]);
+    self.steps=ko.observableArray([]).extend({ rateLimit: 200 });
     self.expanded=ko.observable(false);
     var mapping = {
         'steps': {
@@ -105,30 +101,82 @@ function RDNode(name, steps,flow){
                 return new RDNodeStep(options.data, self, flow);
             }
         }
-    }
-    self.toggleExpand=function(){ self.expanded(!self.expanded()); };
-    self.duration=ko.computed(function(){
+    };
+    self.durationMs=ko.observable(-1);
+    self.toggleExpand=function(){
+        self.expanded(!self.expanded());
+        if(self.expanded()){
+            flow.selectedNodes.push(self.name);
+            flow.loadStateForNode(self);
+        }else {
+            flow.selectedNodes.remove(self.name);
+        }
+    };
+    self.duration=ko.pureComputed(function(){
         //sum up duration of all completed steps
-       var ms=-1;
-       ko.utils.arrayForEach(self.steps(),function(x){
-           if(!x.parameterizedStep()){
-               var ms2 = x.duration();
-               if(ms2>=0 && ms<0){
-                   ms=ms2;
-               }else if(ms2>=0){
-                   ms += ms2;
-               }
-           }
-       });
+       var ms=self.durationMs();
+        if(ms<0) {
+            ko.utils.arrayForEach(self.steps(), function (x) {
+                if (!x.parameterizedStep()) {
+                    var ms2 = x.duration();
+                    if (ms2 >= 0 && ms < 0) {
+                        ms = ms2;
+                    } else if (ms2 >= 0) {
+                        ms += ms2;
+                    }
+                }
+            });
+        }
        return ms;
     });
-    self.durationSimple=ko.computed(function(){
+    self.durationSimple=ko.pureComputed(function(){
        return MomentUtil.formatDurationSimple(self.duration());
     });
     self.summary=ko.observable();
     self.summaryState=ko.observable();
     self.currentStep=ko.observable();
+    //date string indicating last updated
+    self.lastUpdated=ko.observable(null);
+    self.findStepForCtx=function(stepctx){
 
+        var found=ko.utils.arrayFilter(self.steps(),function(e){
+            return e.stepctx==stepctx;
+        });
+        if(found && found.length==1){
+            return found[0];
+        }
+        return null;
+    };
+    self.summaryDescriptionForState=function(data){
+        var state = data.summaryState;
+        if (state=='RUNNING') {
+            return "Running";
+        } else if (state=='RUNNING_HANDLER') {
+            return ("Running");
+        } else if (state=='SUCCEEDED') {
+            return ("All Steps OK");
+        } else if (state=='FAILED') {
+            if(data.FAILED){
+                return (data.FAILED + " " + flow.pluralize(data.FAILED, "Step") + " FAILED");
+            }
+            return ("Failed");
+        } else if (state=='WAITING' && data.WAITING) {
+            return("Waiting to run " + (data.WAITING||"some") + " " + flow.pluralize(data.WAITING, "Step"));
+        } else if (state=='NOT_STARTED') {
+            return("No steps were run");
+        } else if (state=='PARTIAL_NOT_STARTED') {
+            return((data.PARTIAL_NOT_STARTED||"Some") + " " + flow.pluralize(data.PARTIAL_NOT_STARTED, "Step") + " not run");
+        }else if(state=='WAITING' ){
+            return("Waiting");
+        } else if (state=='PARTIAL_SUCCEEDED') {
+            return ((data.PARTIAL_SUCCEEDED||"Some") + " did not succeed");
+        } else if(state=='NONE_SUCCEEDED'){
+            return("No steps succeeded");
+        } else if(state=='NONE') {
+          return("No Steps");
+        }
+        return null;
+    };
     /**
      * Determine summary data for the node, sets the summaryState and summary and currentStep
      */
@@ -137,7 +185,7 @@ function RDNode(name, steps,flow){
 
         //step summary info
         var summarydata = {
-            total: self.steps().length,
+            total: 0,
             SUCCEEDED: 0,
             FAILED: 0,
             WAITING: 0,
@@ -153,10 +201,14 @@ function RDNode(name, steps,flow){
         //determine count for step states
         ko.utils.arrayForEach(self.steps(),function(step){
             var z = step.executionState();
-            if(testStates.indexOf(z)>=0 && null != summarydata[z] ) {
-                summarydata[z]++;
-            } else {
-                summarydata['other']++;
+
+            if(!step.parameterizedStep()) {
+                summarydata.total++;
+                if (testStates.indexOf(z) >= 0 && null != summarydata[z]) {
+                    summarydata[z]++;
+                } else {
+                    summarydata['other']++;
+                }
             }
             if (!currentStep && RDNodeStep.stateCompare('NONE', step.executionState())
                 || currentStep && RDNodeStep.stateCompare(currentStep.executionState(), step.executionState())) {
@@ -206,24 +258,59 @@ function RDNode(name, steps,flow){
             self.summaryState("NONE");
         }
     };
+    self.currentStepFromData=function(data){
+        if(self.currentStep()){
+            ko.mapping.fromJS(data,{},self.currentStep());
+        }else{
+            self.currentStep(new RDNodeStep(data, self, flow));
+        }
+    };
+    self.updateSummary=function(nodesummary){
+        if(nodesummary.lastUpdated && self.lastUpdated()==nodesummary.lastUpdated
+            && nodesummary.summaryState==self.summaryState()){
+            return;
+        }
+        self.lastUpdated(nodesummary.lastUpdated);
+        self.summaryState(nodesummary.summaryState);
+        self.summary(self.summaryDescriptionForState(nodesummary));
+
+        self.durationMs(nodesummary.duration);
+        if(nodesummary.currentStep){
+            self.currentStepFromData(nodesummary.currentStep);
+        }else{
+            self.currentStep(null);
+        }
+    };
+    /**
+     * Update from direct ajax response
+     * @param steps
+     */
+    self.loadData=function(data){
+        self.updateSummary(data.summary);
+        self.updateSteps(data.steps);
+    };
     self.updateSteps=function(steps){
         ko.mapping.fromJS({steps: steps}, mapping, this);
         self.summarize();
+    };
+    if(steps){
+        self.updateSteps(steps);
     }
-    self.updateSteps(steps);
 }
 
-function NodeFlowViewModel(workflow,outputUrl){
+function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl){
     var self=this;
     self.workflow=workflow;
     self.errorMessage=ko.observable();
     self.statusMessage=ko.observable();
     self.stateLoaded=ko.observable(false);
     self.pendingNodeSteps=ko.observable({});
-    self.nodes=ko.observableArray([ ]);
+    self.nodes=ko.observableArray([ ]).extend({ rateLimit: 500 });
+    self.selectedNodes=ko.observableArray([ ]);
     self.followingStep=ko.observable();
     self.followingControl=null;
     self.followOutputUrl= outputUrl;
+    self.nodeStateUpdateUrl= nodeStateUpdateUrl;
     self.completed=ko.observable();
     self.executionState=ko.observable();
     self.executionStatusString=ko.observable();
@@ -238,25 +325,28 @@ function NodeFlowViewModel(workflow,outputUrl){
     self.endTime=ko.observable();
     self.executionId=ko.observable();
     self.outputScrollOffset=0;
-    self.failed=ko.computed(function(){ return self.executionState()=='FAILED'; });
-    self.totalSteps=ko.computed(function(){ return self.workflow.workflow.length; });
-    self.activeNodes=ko.computed(function(){
+    self.activeTab=ko.observable("summary");
+    self.failed=ko.pureComputed(function(){ return self.executionState()=='FAILED'; });
+    self.totalSteps=ko.pureComputed(function(){ return self.workflow.workflow.length; });
+    self.activeNodes=ko.pureComputed(function(){
         return ko.utils.arrayFilter(self.nodes(), function (n) {
             return n.summaryState() != 'NONE';
         });
     });
-    self.totalNodes=ko.computed(function(){
+    self.totalNodeCount=ko.observable(0);
+    self.nodeIndex={};
+    self.totalNodes=ko.pureComputed(function(){
         var nodes = ko.utils.arrayFilter(self.nodes(),function(n){return n.summaryState()!='NONE';});
         return nodes?nodes.length:0;
     });
-    self.jobPercentage=ko.computed(function(){
+    self.jobPercentage=ko.pureComputed(function(){
         if(self.jobAverageDuration()>0){
             return 100*(self.execDuration()/self.jobAverageDuration());
         }else{
             return -1;
         }
     });
-    self.jobPercentageFixed=ko.computed(function(){
+    self.jobPercentageFixed=ko.pureComputed(function(){
         var pct = self.jobPercentage();
         if(pct>=0){
             return pct.toFixed(0)
@@ -264,7 +354,7 @@ function NodeFlowViewModel(workflow,outputUrl){
             return '0';
         }
     });
-    self.jobOverrunDuration=ko.computed(function(){
+    self.jobOverrunDuration=ko.pureComputed(function(){
         var jobAverageDuration = self.jobAverageDuration();
         var execDuration = self.execDuration();
         if(jobAverageDuration > 0 && execDuration > jobAverageDuration){
@@ -281,7 +371,7 @@ function NodeFlowViewModel(workflow,outputUrl){
             }
         });
         return completed;
-    })
+    });
     self.succeededNodes=ko.computed(function(){
         var completed=new Array();
         ko.utils.arrayForEach(self.nodes(), function (n) {
@@ -290,7 +380,7 @@ function NodeFlowViewModel(workflow,outputUrl){
             }
         });
         return completed;
-    })
+    });
 
     self.runningNodes=ko.computed(function(){
         var completed=new Array();
@@ -350,16 +440,17 @@ function NodeFlowViewModel(workflow,outputUrl){
     self.showOutput= function (nodestep) {
         var node=nodestep.node.name;
         var stepctx=nodestep.stepctx;
-        var sel = '.wfnodeoutput[data-node=' + node + ']';
+        var sel = '.wfnodeoutput[data-node="' + node + '"]';
         if (stepctx) {
             sel += '[data-stepctx=\'' + stepctx + '\']';
         } else {
             sel += '[data-stepctx=]';
         }
-        var targetElement = $(document.body).down(sel);
-        if (!$(targetElement)) {
-            return null;
+        var targetElement = jQuery.find(sel);
+        if (!targetElement || targetElement.length!=1) {
+            throw "could not find output area";
         }
+        targetElement=targetElement[0];
         var params = {nodename: node};
         if (stepctx) {
             Object.extend(params, {stepctx: stepctx});
@@ -381,58 +472,75 @@ function NodeFlowViewModel(workflow,outputUrl){
         return ctrl;
     };
 
-    self.toggleOutputForNodeStep = function (nodestep) {
+    self.toggleOutputForNodeStep = function (nodestep,callback) {
         self.stopShowingOutput();
         //toggle following output for selected nodestep
-        nodestep.followingOutput(!nodestep.followingOutput());
-        ko.utils.arrayForEach(self.nodes(), function (n) {
-            ko.utils.arrayForEach(n.steps(), function (step) {
-                //disable following for every other nodestep
-                if(step != nodestep){
-                    step.followingOutput(false);
-                }
+        var node = nodestep.node;
+        var stepctx=RDWorkflow.cleanContextId(nodestep.stepctx);
+        //
+        var postload=function(){
+            node.expanded(true);
+            //find correct nodestep given the context string, strip of parameters
+            var nodestep=node.findStepForCtx(stepctx);
+            if(!nodestep){
+                throw "failed to find step for context: "+stepctx +" and node: "+node.name;
+            }
+            nodestep.followingOutput(true);
+            ko.utils.arrayForEach(self.nodes(), function (n) {
+                ko.utils.arrayForEach(n.steps(), function (step) {
+                    //disable following for every other nodestep
+                    if(step != nodestep){
+                        step.followingOutput(false);
+                    }
+                });
             });
-        });
-        if(nodestep.followingOutput()){
             var ctrl = self.showOutput(nodestep);
             self.followingStep(nodestep);
             self.followingControl=ctrl;
-            nodestep.node.expanded(true);
+            if(typeof(callback)=='function'){callback();}
+        };
+        if(!node.expanded() && !nodestep.followingOutput()){
+            //need to load the step states for the node before showing the output
+            return self.loadStateForNode(node).then(postload);
+        }else if(!nodestep.followingOutput()){
+            postload();
         }else{
+            nodestep.followingOutput(false);
             self.followingStep(null);
         }
+
     };
     self.scrollTo= function (element,offx,offy) {
-        element = $(element);
         var x = element.x ? element.x : element.offsetLeft,
             y = element.y ? element.y : element.offsetTop;
         window.scrollTo(x+(offx?offx:0), y+(offy?offy:0));
-    }
+    };
 
     self.scrollToNodeStep=function(node,stepctx){
-        var elem = $$('.wfnodestep[data-node=' + node + '][data-stepctx=' + stepctx + ']');
+        var elem = $$('.wfnodestep[data-node="' + node + '"][data-stepctx="' + stepctx + '"]');
         if (elem) {
             jQuery('#tab_link_flow a').tab('show');
             //scroll to
             self.scrollTo($(elem[0]));
-//            $(elem[0]).scrollTo();
         }
     };
     self.scrollToNode=function(node){
-        var elem = $$('.wfnodesteps[data-node=' + node + ']');
+        var elem = jQuery.find('.wfnodestate.container[data-node="' + node + '"]');
         if (elem) {
             jQuery('#tab_link_flow a').tab('show');
             //scroll to
-            self.scrollTo($(elem[0]));
-//            $(elem[0]).scrollTo();
+            self.scrollTo(elem[0]);
         }
     };
     self.scrollToOutput=function(nodestep){
         if(!nodestep.followingOutput()){
-            self.toggleOutputForNodeStep(nodestep);
+            self.toggleOutputForNodeStep(nodestep,function(){
+                self.scrollToNode(nodestep.node.name);
+            });
+        }else {
+            self.scrollToNode(nodestep.node.name);
         }
-        self.scrollToNode(nodestep.node.name);
-    }
+    };
 
     self.pluralize = function (count, singular, plural) {
         return count == 1 ? singular : null != plural ? plural : (singular + 's');
@@ -456,7 +564,7 @@ function NodeFlowViewModel(workflow,outputUrl){
         }
     };
     self.pendingStepsForNode = function(node){
-        var pendingData=self.pendingNodeSteps()
+        var pendingData=self.pendingNodeSteps();
         if(pendingData[node] != null){
             return pendingData[node];
         }else if(pendingData['_other'] != null){
@@ -485,7 +593,7 @@ function NodeFlowViewModel(workflow,outputUrl){
             if (step.hasSubworkflow && step.nodeStep && step.parameterStates || step.nodeStep && !step.hasSubworkflow) {
                 //node step may have empty targetNodes => implies targets unknown, so node may be pending for this step
                 //otherwise if targetNodes contains nodes => only they might be pending for this step
-                var targetNodes = null==workflowData.targetNodes || workflowData.targetNodes.length==0 ? nodes : workflowData.targetNodes
+                var targetNodes = null==workflowData.targetNodes || workflowData.targetNodes.length==0 ? nodes : workflowData.targetNodes;
 
                 if(null != step.nodeStates){
                     //include only nodes that do not have states for this step
@@ -517,15 +625,15 @@ function NodeFlowViewModel(workflow,outputUrl){
         var newsteps=[];
         for (var i = 0; i < count; i++) {
             var stepstate = steps[i];
-            var stepStateForCtx = this.stepStateForCtx(model, stepstate.stepctx);
+            var stepStateForCtx = self.stepStateForCtx(model, stepstate.stepctx);
             var found = stepStateForCtx.nodeStates[node];
             found.stepctx=stepstate.stepctx;
             newsteps.push(found);
         }
         return newsteps;
-    }
+    };
     self.updateNodes=function(model){
-        if (!model.nodes || !model.allNodes) {
+        if ( !model.allNodes) {
             return;
         }
         self.stateLoaded(true);
@@ -533,47 +641,70 @@ function NodeFlowViewModel(workflow,outputUrl){
         self.pendingNodeSteps(model.completed ? {'_other':0} : self.countPendingStepsForNodes(model, model.allNodes));
         var nodeList= model.allNodes;
         var count = nodeList.length;
+        self.totalNodeCount(count);
         for (var i = 0; i < count; i++) {
             var node = nodeList[i];
-            var data = model.nodes[node];
+            //var data = model.nodes[node];
 
-            var nodesteps = self.extractNodeStepStates(node, data, model);
+            var nodeSummary = model.nodeSummaries[node];
+            var nodesteps =null;//= model.steps && model.steps.length>0?self.extractNodeStepStates(node,data,model):null;
+            if(!nodesteps && model.nodeSteps && model.nodeSteps[node]){
+                nodesteps=model.nodeSteps[node];
+            }
             var nodea = self.findNode(node);
-            if (nodea) {
+
+            if (nodea && nodesteps) {
                 nodea.updateSteps(nodesteps);
+            } else if(nodea) {
+                nodea.updateSummary(nodeSummary);
             } else {
-                self.addNode(node, nodesteps);
+                var rdNode = new RDNode(node, nodesteps, self);
+                rdNode.updateSummary(nodeSummary);
+                self.nodes.push(rdNode);
+                self.nodeIndex[rdNode.name]=rdNode;
             }
         }
-    }
+    };
+
+    self.loadStateForNode=function(node){
+        return jQuery.ajax({
+            url:_genUrl(self.nodeStateUpdateUrl,{node:node.name}),
+            dataType:'json',
+            success: function (data,status,jqxhr) {
+                if(data.error){
+                    state.updateError( "Failed to load state: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err),jqxhr.responseJSON);
+                }else{
+                    node.loadData(data);
+                }
+            },
+            error: function (jqxhr,status,err) {
+                state.updateError( "Failed to load state: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err),jqxhr.responseJSON);
+            }
+        });
+    };
     self.formatTimeAtDate=function(text){
         return MomentUtil.formatTimeAtDate(text);
-    }
+    };
     self.formatDurationHumanize=function(ms){
         return MomentUtil.formatDurationHumanize(ms);
-    }
+    };
     self.formatDurationMomentHumanize=function(ms){
         return MomentUtil.formatDurationMomentHumanize(ms);
-    }
+    };
     self.addNode=function(node,steps){
-        self.nodes.push(new RDNode(node, steps,self));
+        var rdNode = new RDNode(node, steps, self);
+        self.nodes.push(rdNode);
+        self.nodeIndex[rdNode.name]=rdNode;
     };
     self.findNode=function(node){
-        var len= self.nodes().length;
-        for(var x=0;x<len;x++){
-            var n= self.nodes()[x];
-            if(n.name==node){
-                return n;
-            }
-        }
-        return null;
+        return self.nodeIndex[node];
     };
 
 
-    self.execDurationSimple = ko.computed(function () {
+    self.execDurationSimple = ko.pureComputed(function () {
         return MomentUtil.formatDurationSimple(self.execDuration());
     });
-    self.execDurationHumanized = ko.computed(function () {
+    self.execDurationHumanized = ko.pureComputed(function () {
         return MomentUtil.formatDurationHumanize(self.execDuration());
     });
 }

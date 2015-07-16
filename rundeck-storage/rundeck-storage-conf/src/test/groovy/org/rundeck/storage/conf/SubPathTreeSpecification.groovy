@@ -106,6 +106,126 @@ class SubPathTreeSpecification extends Specification {
         null!=sub.getResource("test/path/abc2/def")
         null!=sub.getResource("test/path/abc3/def")
     }
+    def "hasPath root when fullPath and backing tree is empty"() {
+        given:
+        def mem = new MemoryTree()
+        def sub = new SubPathTree(mem,"test/path",true)
+        when:
+        def res2 = sub.hasPath("test/path")
+        then:
+        res2
+    }
+    def "hasPath root when fullPath and backing tree has resource"() {
+        given:
+        def mem = new MemoryTree()
+        def sub = new SubPathTree(mem,"test/path",true)
+        def memres = mem.createResource("test/path", dataWithText( 'test data2'))
+        when:
+        def res2 = sub.hasPath("test/path")
+        then:
+        res2
+    }
+    def "hasResource root is false when fullPath and backing tree is empty"() {
+        given:
+        def mem = new MemoryTree()
+        def sub = new SubPathTree(mem,"test/path",true)
+        when:
+        def res2 = sub.hasResource("test/path")
+        then:
+        !res2
+    }
+    def "hasResource root is false when fullPath and backing tree has resource"() {
+        given:
+        def mem = new MemoryTree()
+        def sub = new SubPathTree(mem,"test/path",true)
+        def memres = mem.createResource("test/path", dataWithText( 'test data2'))
+        when:
+        def res2 = sub.hasResource("test/path")
+        then:
+        !res2
+    }
+    def "hasDirectory root is true when fullPath and backing tree is empty"() {
+        given:
+        def mem = new MemoryTree()
+        def sub = new SubPathTree(mem,"test/path",true)
+        when:
+        def res2 = sub.hasDirectory("test/path")
+        then:
+        res2
+    }
+    def "hasDirectory root is true when fullPath and backing tree has resource"() {
+        given:
+        def mem = new MemoryTree()
+        def sub = new SubPathTree(mem,"test/path",true)
+        def memres = mem.createResource("test/path", dataWithText( 'test data2'))
+        when:
+        def res2 = sub.hasDirectory("test/path")
+        then:
+        res2
+    }
+    def "getResource root when fullPath and backing tree is empty is illegal argument"() {
+        given:
+        def mem = new MemoryTree()
+        def sub = new SubPathTree(mem,"test/path",true)
+        when:
+        def res2 = sub.getResource("test/path")
+        then:
+        IllegalArgumentException e = thrown()
+        e!=null
+    }
+    def "getResource root when fullPath and backing tree has resource is illegal argument"() {
+        given:
+        def mem = new MemoryTree()
+        def sub = new SubPathTree(mem,"test/path",true)
+        def memres = mem.createResource("test/path", dataWithText( 'test data2'))
+        when:
+        def res2 = sub.getResource("test/path")
+        then:
+        IllegalArgumentException e = thrown()
+        e!=null
+    }
+    def "getPath root when fullPath and backing tree is empty is a directory"() {
+        given:
+        def mem = new MemoryTree()
+        def sub = new SubPathTree(mem,"test/path",true)
+        when:
+        def res2 = sub.getPath("test/path")
+        then:
+        res2!=null
+        res2.isDirectory()
+    }
+    def "getPath root when fullPath and backing tree has resource is a directory"() {
+        given:
+        def mem = new MemoryTree()
+        def sub = new SubPathTree(mem,"test/path",true)
+        def memres = mem.createResource("test/path", dataWithText( 'test data2'))
+        when:
+        def res2 = sub.getPath("test/path")
+        then:
+        res2!=null
+        res2.isDirectory()
+    }
+    def "listDirectory root when fullPath and backing tree is empty is empty list"() {
+        given:
+        def mem = new MemoryTree()
+        def sub = new SubPathTree(mem,"test/path",true)
+        when:
+        def res2 = sub.listDirectory("test/path")
+        then:
+        res2!=null
+        res2.size()==0
+    }
+    def "listDirectory root when fullPath and backing tree has resource is empty list"() {
+        given:
+        def mem = new MemoryTree()
+        def sub = new SubPathTree(mem,"test/path",true)
+        def memres = mem.createResource("test/path", dataWithText( 'test data2'))
+        when:
+        def res2 = sub.listDirectory("test/path")
+        then:
+        res2!=null
+        res2.size()==0
+    }
     def "listResourceDirectory fullPath=true then path prefix is not removed"() {
         given:
         def mem = new MemoryTree()
