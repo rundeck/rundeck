@@ -4,9 +4,14 @@ jdk:
   - oraclejdk8
   - oraclejdk7
   - openjdk7
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y groovy rpm make zip unzip
 before_script:
   - rm -rf core/build
   - rm -rf rundeckapp/build
+script:
+  - './gradlew -Penvironment=build clean build && groovy testbuild.groovy -gradle && make TAG=SNAPSHOT BUILD_NUM=$TRAVIS_BUILD_NUMBER rpm deb'
 # whitelist
 branches:
   only:
