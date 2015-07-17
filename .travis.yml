@@ -1,10 +1,11 @@
 language: java
-env: MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=192m" GRADLE_OPTS="-Xmx512m -XX:MaxPermSize=192m" TERM="dumb"
+env: MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=192m" GRADLE_OPTS="-Xmx1024m -XX:MaxPermSize=192m" TERM="dumb"
 jdk:
   - oraclejdk8
   - oraclejdk7
   - openjdk7
-sudo: false
+#sudo: false
+# can uncomment above after resolution of https://github.com/travis-ci/travis-ci/issues/3120
 script:
   - './gradlew clean build && groovy testbuild.groovy -gradle && make TAG=SNAPSHOT BUILD_NUM=$TRAVIS_BUILD_NUMBER rpm deb'
 addons:
