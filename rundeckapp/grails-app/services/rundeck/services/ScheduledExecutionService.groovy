@@ -1643,8 +1643,6 @@ class ScheduledExecutionService implements ApplicationContextAware{
         }
     }
 
-
-
     private Map validatePluginNotification(ScheduledExecution scheduledExecution, String trigger,notif,params=null){
         //plugin type
         def failed=false
@@ -2100,7 +2098,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
             if (scheduledExecution.shouldScheduleExecution()) {
                 def nextdate = null
                 try {
-                    nextdate = scheduleJob(scheduledExecution, oldjobname, oldjobgroup);
+                    nextdate = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
                 } catch (SchedulerException e) {
                     log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
                 }
