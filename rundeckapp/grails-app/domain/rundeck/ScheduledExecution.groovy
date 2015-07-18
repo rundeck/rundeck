@@ -1,5 +1,5 @@
 package rundeck
-import com.dtolabs.rundeck.app.support.BaseNodeFilters
+
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
 
@@ -40,6 +40,10 @@ class ScheduledExecution extends ExecutionContext {
     String notifyStartUrl
     Boolean multipleExecutions = false
     Orchestrator orchestrator
+
+    Boolean scheduleEnabled = true
+    Boolean executionEnabled = true
+
     static transients = ['userRoles','adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients',
                          'notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl',
                          'crontabString']
@@ -107,6 +111,8 @@ class ScheduledExecution extends ExecutionContext {
         })
         crontabString(bindable: true,nullable: true)
         nodesSelectedByDefault(nullable: true)
+        scheduleEnabled(nullable: true)
+        executionEnabled(nullable: true)
     }
 
     static mapping = {
@@ -145,6 +151,10 @@ class ScheduledExecution extends ExecutionContext {
     Map toMap(){
         HashMap map = new HashMap()
         map.name=jobName
+
+        map.scheduleEnabled = hasScheduleEnabled()
+        map.executionEnabled = hasExecutionEnabled()
+
         if(groupPath){
             map.group=groupPath
         }
@@ -233,6 +243,10 @@ class ScheduledExecution extends ExecutionContext {
         if(data.orchestrator){
             se.orchestrator=Orchestrator.fromMap(data.orchestrator);
         }
+
+        se.scheduleEnabled = data['scheduleEnabled'] == null || data['scheduleEnabled']
+        se.executionEnabled = data['executionEnabled'] == null || data['executionEnabled']
+
         se.loglevel=data.loglevel?data.loglevel:'INFO'
         se.project=data.project
         if (data.uuid) {
@@ -394,6 +408,17 @@ class ScheduledExecution extends ExecutionContext {
         }
     }
 
+    def boolean hasScheduleEnabled() {
+        return (null == scheduleEnabled || scheduleEnabled)
+    }
+
+    def boolean shouldScheduleExecution() {
+        return scheduled && hasExecutionEnabled() && hasScheduleEnabled();
+    }
+
+    def boolean hasExecutionEnabled() {
+        return (null == executionEnabled || executionEnabled)
+    }
 
     def String generateJobScheduledName(){
         return [id,jobName].join(":")
@@ -753,5 +778,6 @@ class ScheduledExecution extends ExecutionContext {
             return null
         }
     }
+
 }
 

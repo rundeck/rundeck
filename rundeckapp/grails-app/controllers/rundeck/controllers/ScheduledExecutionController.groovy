@@ -8,9 +8,7 @@ import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
-
 import com.dtolabs.rundeck.core.common.INodeEntry
-
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
@@ -33,24 +31,11 @@ import org.quartz.CronExpression
 import org.quartz.Scheduler
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.multipart.commons.CommonsMultipartFile
-import rundeck.CommandExec
-import rundeck.Execution
-import rundeck.NodeFilter
-import rundeck.Option
-import rundeck.ScheduledExecution
-import rundeck.User
-import rundeck.Workflow
+import rundeck.*
 import rundeck.codecs.JobsXMLCodec
 import rundeck.codecs.JobsYAMLCodec
 import rundeck.filters.ApiRequestFilters
-import rundeck.services.ApiService
-import rundeck.services.ExecutionService
-import rundeck.services.ExecutionServiceException
-import rundeck.services.FrameworkService
-import rundeck.services.NotificationService
-import rundeck.services.OrchestratorPluginService
-import rundeck.services.ScheduledExecutionService
-import rundeck.services.UserService
+import rundeck.services.*
 
 import javax.servlet.http.HttpServletResponse
 import java.util.regex.Pattern
@@ -86,6 +71,7 @@ class ScheduledExecutionController  extends ControllerBase{
             NOTIFY_ONSTART_EMAIL,
             NOTIFY_ONSTART_URL
     ]
+
     def Scheduler quartzScheduler
     def ExecutionService executionService
     def FrameworkService frameworkService
@@ -791,6 +777,56 @@ class ScheduledExecutionController  extends ControllerBase{
             size = read.read(chars, 0, chars.length)
         }
         return len;
+    }
+
+    def flipScheduleEnabled() {
+        if (!params.id) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorView(g.message(code: 'api.error.parameter.required', args: ['id']))
+        }
+
+        def jobid = params.id
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
+        if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
+            return
+        }
+
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def changeinfo = [method: 'update', change: 'modify', user: session.user]
+
+        //pass session-stored edit state in params map
+        transferSessionEditState(session, params, params.id)
+
+        def roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
+        def result = scheduledExecutionService._doupdate(params, session.user, roleList, framework, authContext, changeinfo)
+
+        redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
+    }
+
+    def flipExecutionEnabled() {
+        if (!params.id) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorView(g.message(code: 'api.error.parameter.required', args: ['id']))
+        }
+
+        def jobid = params.id
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
+        if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
+            return
+        }
+
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def changeinfo = [method: 'update', change: 'modify', user: session.user]
+
+        //pass session-stored edit state in params map
+        transferSessionEditState(session, params, params.id)
+
+        def roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
+        def result = scheduledExecutionService._doupdate(params, session.user, roleList, framework, authContext, changeinfo)
+
+        redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
     }
 
     /**
@@ -1597,6 +1633,12 @@ class ScheduledExecutionController  extends ControllerBase{
             def msg=g.message(code:'disabled.execution.run')
             return [success:false,failed:true,error:'disabled',message:msg]
         }
+
+        if (!scheduledExecution.hasExecutionEnabled()) {
+            def msg=g.message(code:'scheduleExecution.execution.disabled')
+            return [success:false,failed:true,error:'disabled',message:msg]
+        }
+
         params.workflow=new Workflow(scheduledExecution.workflow)
         params.argString=scheduledExecution.argString
         params.doNodedispatch=scheduledExecution.doNodedispatch
@@ -1733,7 +1775,6 @@ class ScheduledExecutionController  extends ControllerBase{
             render(view: 'upload',params: [project:params.project])
         }
     }
-
 
     def execute = {
         return redirect(action: 'show',params:params)
@@ -2112,10 +2153,17 @@ class ScheduledExecutionController  extends ControllerBase{
             scheduledExecution.project)) {
             return [success:false,failed:true,error:'unauthorized',message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
+
         if(!executionService.executionsAreActive){
             def msg=g.message(code:'disabled.execution.run')
             return [success:false,failed:true,error:'disabled',message: msg]
         }
+
+        if (!scheduledExecution.hasExecutionEnabled()) {
+            def msg=g.message(code:'scheduleExecution.execution.disabled')
+            return [success:false,failed:true,error:'disabled',message:msg]
+        }
+
         if(params.extra?.debug=='true'){
             params.extra.loglevel='DEBUG'
         }

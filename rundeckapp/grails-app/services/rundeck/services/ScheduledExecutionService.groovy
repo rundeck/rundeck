@@ -26,9 +26,6 @@ import javax.servlet.http.HttpSession
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
 
-import org.quartz.JobBuilder
-import org.quartz.TriggerBuilder
-
 /**
  *  ScheduledExecutionService manages scheduling jobs with the Quartz scheduler
  */
@@ -568,6 +565,12 @@ class ScheduledExecutionService implements ApplicationContextAware{
             log.warn("Attempt to schedule job ${se}, but executions are disabled.")
             return null
         }
+
+        if (!se.hasExecutionEnabled()) {
+            log.warn("Attempt to schedule job ${se}, but job execution is disabled.")
+            return null;
+        }
+
         def jobDetail = createJobDetail(se)
         def trigger = createTrigger(se)
         jobDetail.getJobDataMap().put("bySchedule", true)
@@ -675,6 +678,12 @@ class ScheduledExecutionService implements ApplicationContextAware{
             def msg=g.message(code:'disabled.execution.run')
             return [success:false,failed:true,error:'disabled',message:msg]
         }
+
+        if (!e.hasExecutionEnabled()) {
+            def msg=g.message(code:'scheduleExecution.execution.disabled')
+            return [success:false,failed:true,error:'disabled',message:msg]
+        }
+
         def ident = getJobIdent(null, e);
         def jobDetail = JobBuilder.newJob(ExecutionJob)
                 .withIdentity(ident.jobname, ident.groupname)
@@ -1161,11 +1170,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         }
         nots
     }
-    
-    
 
-    
-    
     static def parseOrchestratorFromParams(params){
         
         if (params.orchestratorId) {
@@ -1182,8 +1187,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         }
         orchestrator
     }
-    
-    
+
     private Map _updateOrchestratorData(params, ScheduledExecution scheduledExecution) {
         //plugin type
         Orchestrator orchestrator = params.orchestrator
@@ -1194,8 +1198,6 @@ class ScheduledExecutionService implements ApplicationContextAware{
         //TODO:validate inputs
         return [failed:false]
     }
-    
-    
 
     def _doupdate ( params, user, String roleList, Framework framework, AuthContext authContext, changeinfo = [:] ){
         log.debug("ScheduledExecutionController: update : attempting to update: " + params.id +
@@ -1215,15 +1217,15 @@ class ScheduledExecutionService implements ApplicationContextAware{
         }
         boolean failed = false
         def ScheduledExecution scheduledExecution = getByIDorUUID(params.id)
+        if (!scheduledExecution) {
+            return [success: false]
+        }
 
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE], scheduledExecution.project)) {
             return [success: false, scheduledExecution: scheduledExecution, message: "Update Job ${scheduledExecution.extid}", unauthorized: true]
         }
 
         def crontab = [:]
-        if (!scheduledExecution) {
-            return [success: false]
-        }
         def oldjobname = scheduledExecution.generateJobScheduledName()
         def oldjobgroup = scheduledExecution.generateJobGroupName()
         def oldsched = scheduledExecution.scheduled
@@ -1555,8 +1557,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
             }
         }
         if (!failed && scheduledExecution.save(true)) {
-
-            if (scheduledExecution.scheduled) {
+            if (scheduledExecution.shouldScheduleExecution()) {
                 def nextdate = null
                 try {
                     nextdate = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
@@ -2032,9 +2033,9 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 failed = true
             }
         }
-        if (!failed && scheduledExecution.save(true)) {
 
-            if (scheduledExecution.scheduled) {
+        if (!failed && scheduledExecution.save(true)) {
+            if (scheduledExecution.shouldScheduleExecution()) {
                 def nextdate = null
                 try {
                     nextdate = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
@@ -2049,6 +2050,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
             } else if (oldsched && oldjobname && oldjobgroup) {
                 deleteJob(oldjobname, oldjobgroup)
             }
+
             return [true, scheduledExecution]
         } else {
             todiscard.each {
@@ -2107,7 +2109,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
             scheduledExecution.uuid = UUID.randomUUID().toString()
         }
         if (!failed && scheduledExecution.save(true)) {
-            if (scheduledExecution.scheduled) {
+            if (scheduledExecution.shouldScheduleExecution()) {
                 def nextdate = null
                 try {
                     nextdate = scheduleJob(scheduledExecution, null, null);
