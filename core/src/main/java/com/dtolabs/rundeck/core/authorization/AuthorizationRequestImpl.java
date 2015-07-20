@@ -1,20 +1,19 @@
 package com.dtolabs.rundeck.core.authorization;
 
-import javax.security.auth.Subject;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * Created by greg on 7/20/15.
  */
-public class AclRequestImpl implements AclRequest {
+public class AuthorizationRequestImpl implements AuthorizationRequest {
 
     private final Map<String, String> resource;
     private final AclSubject subject;
     private final String action;
     private final Set<Attribute> environment;
 
-    public AclRequestImpl(
+    public AuthorizationRequestImpl(
             final Set<Attribute> environment,
             final String action,
             final AclSubject subject,
