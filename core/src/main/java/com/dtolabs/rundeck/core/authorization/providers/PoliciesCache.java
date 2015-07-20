@@ -26,8 +26,6 @@ package com.dtolabs.rundeck.core.authorization.providers;
 import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.parser.ParserException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.FilenameFilter;
@@ -40,7 +38,7 @@ import java.util.*;
  */
 public class PoliciesCache implements Iterable<PolicyCollection> {
     static final long DIR_LIST_CHECK_DELAY = Long.getLong(PoliciesCache.class.getName()+".DirListCheckDelay", 60000);
-    static final long FILE_CHECK_DELAY = Long.getLong(PoliciesCache.class.getName() +".FileCheckDelay", 60000);
+    static final long FILE_CHECK_DELAY = Long.getLong(PoliciesCache.class.getName() + ".FileCheckDelay", 60000);
     private final static Logger logger = Logger.getLogger(PoliciesCache.class);
     
     static final FilenameFilter filenameFilter = new FilenameFilter() {
@@ -51,7 +49,6 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
     
     private Set<File> warned = new HashSet<File>();
     private Map<String, CacheItem> cache = new HashMap<>();
-    private DocumentBuilder builder;
     private File rootDir;
     private File singleFile;
 
@@ -60,17 +57,9 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
     }
     public PoliciesCache(File rootDir) throws ParserConfigurationException {
         this.rootDir = rootDir;
-        DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
-        domFactory.setNamespaceAware(true);
-        builder = domFactory.newDocumentBuilder();
-        builder.setErrorHandler(null);
     }
     public PoliciesCache(File singleFile, boolean single) throws ParserConfigurationException {
         this.singleFile = singleFile;
-        DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
-        domFactory.setNamespaceAware(true);
-        builder = domFactory.newDocumentBuilder();
-        builder.setErrorHandler(null);
     }
 
     private static class CacheItem{
