@@ -6,6 +6,7 @@ package com.dtolabs.rundeck.core.authorization.providers;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -22,35 +23,67 @@ import org.yaml.snakeyaml.Yaml;
 import com.dtolabs.rundeck.core.authorization.Attribute;
 
 /**
+ * Stores a collection of policies, read in from a source.
  * @author noahcampbell
  */
 public class YamlPolicyCollection implements PolicyCollection {
     static Logger logger = Logger.getLogger(YamlPolicyCollection.class.getName());
     private final Set<YamlPolicy> all = new HashSet<YamlPolicy>();
-    File file;
+    YamlSource source;
 
+    /**
+     * Create from a source
+     * @param source source
+     * @throws IOException
+     */
+    public YamlPolicyCollection(final YamlSource source) throws IOException {
+        this.source=source;
+        load(source);
+    }
 
-    public YamlPolicyCollection(final File file) throws IOException {
+    /**
+     * load yaml stream as sequence of policy documents
+     * @param source content source
+     * @throws IOException
+     */
+    private void load(final YamlSource source) throws IOException {
         final Yaml yaml = new Yaml();
-        this.file = file;
-        final FileInputStream stream = new FileInputStream(this.file);
-        int index=1;
-        try {
-            for (Object yamlDoc : yaml.loadAll(stream)) {
-                final Object yamlDoc1 = yamlDoc;
-                if (yamlDoc1 instanceof Map) {
-                    try {
-                        YamlPolicy yamlPolicy = new YamlPolicy((Map) yamlDoc1, file, index);
-                        all.add(yamlPolicy);
-                    } catch (YamlPolicy.AclPolicySyntaxException e) {
-                        logger.error("ERROR parsing a policy in file: " + file + "["+ index+"]. Reason: " + e.getMessage());
-                        logger.debug("ERROR parsing a policy in file: " + file + "["+ index+"]. Reason: " + e.getMessage(), e);
-                    }
+        int index = 1;
+        try(final YamlSource source1=source) {
+            for (Object yamlDoc : source1.loadAll(yaml)) {
+                if (!(yamlDoc instanceof Map)) {
+                    logger.error(
+                            "ERROR parsing a policy in: " +
+                            source.getIdentity() +
+                            "[" +
+                            index +
+                            "]. Expected a policy document Map, but found: " + yamlDoc.getClass().getName()
+                    );
+                }
+                try {
+                    YamlPolicy yamlPolicy = new YamlPolicy((Map) yamlDoc, source.getIdentity(), index);
+                    all.add(yamlPolicy);
+                } catch (YamlPolicy.AclPolicySyntaxException e) {
+                    logger.error(
+                            "ERROR parsing a policy in file: " +
+                            source.getIdentity() +
+                            "[" +
+                            index +
+                            "]. Reason: " +
+                            e.getMessage()
+                    );
+                    logger.debug(
+                            "ERROR parsing a policy in file: " +
+                            source.getIdentity() +
+                            "[" +
+                            index +
+                            "]. Reason: " +
+                            e.getMessage(), e
+                    );
                 }
                 index++;
             }
-        } finally {
-            stream.close();
+
         }
     }
 
@@ -68,25 +101,25 @@ public class YamlPolicyCollection implements PolicyCollection {
         return all.size();
     }
 
-    public Collection<AclContext> matchedContexts(final Subject subject, final Set<Attribute> environment)
-         {
-        return policyMatcher(subject, all, environment, file);
-
+    public Collection<AclContext> matchedContexts(final Subject subject, final Set<Attribute> environment) {
+        return policyMatcher(subject, all, environment, source.getIdentity());
     }
 
     /**
-     * @param file source file
-     * @param environment environment
-     * @param policyLister collection
-     * @param subject subject
+     * @param environment    environment
+     * @param policyLister   collection
+     * @param subject        subject
+     * @param sourceIdentity identity of source
      *
      * @return contexts
-     *
-     *
      */
-    static Collection<AclContext> policyMatcher(final Subject subject, final Collection<? extends Policy> policyLister,
-                                                final Set<Attribute> environment, final File file)
-         {
+    static Collection<AclContext> policyMatcher(
+            final Subject subject,
+            final Collection<? extends Policy> policyLister,
+            final Set<Attribute> environment,
+            final String sourceIdentity
+    )
+    {
         final ArrayList<AclContext> matchedContexts = new ArrayList<AclContext>();
         int i = 0;
         Set<Username> userPrincipals = subject.getPrincipals(Username.class);
@@ -115,18 +148,18 @@ public class YamlPolicyCollection implements PolicyCollection {
         for (final Policy policy : policyLister) {
             long userMatchStart = System.currentTimeMillis();
 
-            if(null!=policy.getEnvironment()){
+            if (null != policy.getEnvironment()) {
                 final EnvironmentalContext environment1 = policy.getEnvironment();
-                if(!environment1.isValid()) {
-                    logger.warn(policy.toString()+ ": Context section not valid: " + environment1.toString());
+                if (!environment1.isValid()) {
+                    logger.warn(policy.toString() + ": Context section not valid: " + environment1.toString());
                 }
-                if(!environment1.matches(environment)){
-                    if(logger.isDebugEnabled()){
+                if (!environment1.matches(environment)) {
+                    if (logger.isDebugEnabled()) {
                         logger.debug(policy.toString() + ": environment not matched: " + environment1.toString());
                     }
                     continue;
                 }
-            }else if (null != environment && environment.size() > 0) {
+            } else if (null != environment && environment.size() > 0) {
                 logger.debug(policy.toString() + ": empty environment not matched");
                 continue;
             }
@@ -135,7 +168,7 @@ public class YamlPolicyCollection implements PolicyCollection {
             if (usernamePrincipals.size() > 0) {
                 Set<String> policyUsers = policy.getUsernames();
                 if (!Collections.disjoint(policyUsers, usernamePrincipals)
-                        || matchesAnyPatterns(usernamePrincipals, policy.getUsernamePatterns())) {
+                    || matchesAnyPatterns(usernamePrincipals, policy.getUsernamePatterns())) {
                     matchedContexts.add(policy.getContext());
                     continue;
                 } else if (policyUsers.size() > 0) {
@@ -150,11 +183,11 @@ public class YamlPolicyCollection implements PolicyCollection {
                 // no username matched, check groups.
                 Set<String> policyGroups = policy.getGroups();
                 if (!Collections.disjoint(policyGroups, groupNames)
-                        || matchesAnyPatterns(groupNames, policy.getGroupPatterns())) {
+                    || matchesAnyPatterns(groupNames, policy.getGroupPatterns())) {
                     matchedContexts.add(policy.getContext());
                     continue;
-                }else if(policyGroups.size()>0){
-                    if(logger.isDebugEnabled()){
+                } else if (policyGroups.size() > 0) {
+                    if (logger.isDebugEnabled()) {
                         logger.debug(policy.toString() + ": group not matched: " + policyGroups);
                     }
                 }
@@ -162,7 +195,7 @@ public class YamlPolicyCollection implements PolicyCollection {
 
             i++;
         }
-        logger.debug(file.getAbsolutePath() + ": matched contexts: " + matchedContexts.size());
+        logger.debug(sourceIdentity + ": matched contexts: " + matchedContexts.size());
         return matchedContexts;
     }
 

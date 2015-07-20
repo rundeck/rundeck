@@ -62,25 +62,29 @@ final class YamlPolicy implements Policy {
     private Set<Pattern> groupPatterns = new HashSet<Pattern>();
     AclContext aclContext;
 
-    private File sourceFile;
+    private String sourceIdent;
     private int sourceIndex;
 
-    YamlPolicy(final Map policyInput, final File sourceFile, final int sourceIndex) {
+    YamlPolicy(final Map policyInput, final String sourceIdent, final int sourceIndex) {
         this.policyInput = policyInput;
-        this.sourceFile = sourceFile;
+        this.sourceIdent = sourceIdent;
         this.sourceIndex = sourceIndex;
         parseByClause();
         createAclContext();
         parseEnvironment();
+
+    }
+    YamlPolicy(final Map policyInput, final File sourceFile, final int sourceIndex) {
+        this(policyInput, sourceFile.getAbsolutePath(), sourceIndex);
     }
 
     public YamlPolicy(final Map yamlDoc) {
-        this(yamlDoc, null, -1);
+        this(yamlDoc, (String) null, -1);
     }
 
     String identify() {
         return null != policyInput.get("id") ? policyInput.get("id").toString()
-                : (null != sourceFile ? (sourceFile.getAbsolutePath()) : "(unknown file)")
+                : (null != sourceIdent ? (sourceIdent) : "(unknown source)")
                 + (sourceIndex >= 0 ? "[" + sourceIndex + "]" : "");
     }
 

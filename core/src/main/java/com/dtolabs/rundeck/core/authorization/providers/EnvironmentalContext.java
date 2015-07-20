@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.authorization.providers;
 
 import com.dtolabs.rundeck.core.authorization.Attribute;
 
+import java.net.URI;
 import java.util.*;
 
 /**
@@ -39,10 +40,29 @@ public interface EnvironmentalContext {
     static final String URI_BASE = "http://dtolabs.com/rundeck/env/";
 
     /**
-     * @return true if the context matches the input environment
+     * Environmental attribute for the rundeck app
+     */
+    public static final Attribute RUNDECK_APP_CONTEXT = new Attribute(
+            URI.create(
+                    EnvironmentalContext.URI_BASE +
+                    "application"
+            ), "rundeck"
+    );
+    /**
+     * the rundeck app environment for authorization
+     */
+    public static final Set<Attribute> RUNDECK_APP_ENV = Collections.singleton(RUNDECK_APP_CONTEXT);
+    public static final URI PROJECT_BASE_URI = URI.create(
+            EnvironmentalContext.URI_BASE + "project"
+    );
+
+    /**
      * @param environment environment
+     *
+     * @return true if the context matches the input environment
      */
     public boolean matches(Set<Attribute> environment);
+
     /**
      * @return true if the context definition is valid
      */

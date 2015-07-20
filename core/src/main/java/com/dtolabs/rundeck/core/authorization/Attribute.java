@@ -27,7 +27,13 @@ public class Attribute {
     
     public final URI property;
     public final String value;
-    
+
+    public URI getProperty(){
+        return property;
+    }
+    public String getValue(){
+        return value;
+    }
     @Override
     public String toString() {
         return property.toString() + ":" + value;

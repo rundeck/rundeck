@@ -31,7 +31,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.FilenameFilter;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -51,7 +50,7 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
     };
     
     private Set<File> warned = new HashSet<File>();
-    private Map<File, CacheItem> cache = new HashMap<File, CacheItem>();
+    private Map<String, CacheItem> cache = new HashMap<>();
     private DocumentBuilder builder;
     private File rootDir;
     private File singleFile;
@@ -110,9 +109,9 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
         getDocument(file);
     }
 
-    private PolicyCollection createEntry(final File file) throws PoliciesParseException {
+    private PolicyCollection createEntry(final YamlSource source) throws PoliciesParseException {
         try {
-            return new YamlPolicyCollection(file);
+            return YamlProvider.policiesFromSource(source);
         } catch (ParserException e1) {
             throw new PoliciesParseException("YAML syntax error: " + e1.toString(), e1);
         }catch (Exception e1) {
@@ -121,25 +120,28 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
     }
 
     public synchronized PolicyCollection getDocument(final File file) throws PoliciesParseException {
+        return getDocument(YamlProvider.sourceFromFile(file));
+    }
+    public synchronized PolicyCollection getDocument(final CacheableYamlSource source) throws PoliciesParseException {
 //        cacheTotal++;
-        CacheItem entry = cache.get(file);
+        CacheItem entry = cache.get(source.getIdentity());
 
         long checkTime = System.currentTimeMillis();
         if (null == entry || ((checkTime - entry.cacheTime) > FILE_CHECK_DELAY)) {
-            final long lastmod = file.lastModified();
+            final long lastmod = source.getLastModified().getTime();
             if (null == entry || lastmod > entry.modTime) {
-                    if (!file.exists()) {
-                        CacheItem remove = cache.remove(file);
+                    if (!source.isValid()) {
+                        CacheItem remove = cache.remove(source.getIdentity());
                         entry = null;
 //                        cacheRemove++;
                     } else {
 //                        cacheMiss++;
-                        PolicyCollection entry1 = createEntry(file);
+                        PolicyCollection entry1 = createEntry(source);
                         if (null != entry1) {
                             entry = new CacheItem(entry1, lastmod);
-                            cache.put(file, entry);
+                            cache.put(source.getIdentity(), entry);
                         } else {
-                            cache.remove(file);
+                            cache.remove(source.getIdentity());
                             entry = null;
                         }
                     }
