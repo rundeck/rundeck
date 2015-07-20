@@ -12,6 +12,25 @@ import javax.security.auth.Subject
  */
 class RuleEvaluatorSpec extends Specification {
 
+    def "test allow project context regex"(){
+        given:
+        Authorization eval = new RuleEvaluator(basicProjectRegexRules())
+        when:
+        def projectContext = [new Attribute(EnvironmentalContext.PROJECT_BASE_URI,"aproject")] as Set
+        def result = eval.evaluate(
+                [
+                        type   : 'job',
+                        jobName: 'bob'
+                ],
+                basicSubject("bob","admin","user"),
+                "EXECUTE",
+                projectContext
+        )
+        then:
+        result!=null
+        result.isAuthorized()
+        "EXECUTE"==result.action
+    }
     def "test allow"(){
         given:
         Authorization eval = new RuleEvaluator(basicRules())
@@ -157,11 +176,33 @@ class RuleEvaluatorSpec extends Specification {
                         resourceType  : 'job',
                         regexMatch    : false,
                         containsMatch : false,
+                        equalsMatch : true,
                         username      : null,
                         group         : 'admin',
                         allowActions  : ['EXECUTE'] as Set,
                         denyActions   : ['DELETE'] as Set,
                         environment   : BasicEnvironmentalContext.staticContextFor("application","rundeck")
+                ),
+        ] as Set
+        new AclRuleSetImpl(rules)
+    }
+    AclRuleSet basicProjectRegexRules() {
+        def rules = [
+                new Rule(
+                        sourceIdentity: "test1",
+                        description   : "bob job allow exec, deny delete for admin group",
+                        resource      : [
+                                jobName: 'bob'
+                        ],
+                        resourceType  : 'job',
+                        regexMatch    : false,
+                        containsMatch : false,
+                        equalsMatch : true,
+                        username      : null,
+                        group         : 'admin',
+                        allowActions  : ['EXECUTE'] as Set,
+                        denyActions   : ['DELETE'] as Set,
+                        environment   : BasicEnvironmentalContext.patternContextFor("project",".*")
                 ),
         ] as Set
         new AclRuleSetImpl(rules)
@@ -176,6 +217,7 @@ class RuleEvaluatorSpec extends Specification {
                         resourceType  : 'job',
                         regexMatch    : false,
                         containsMatch : false,
+                        equalsMatch : true,
                         username      : null,
                         group         : 'admin',
                         allowActions  : ['READ'] as Set,
@@ -196,6 +238,7 @@ class RuleEvaluatorSpec extends Specification {
         boolean regexMatch;
 
         boolean containsMatch;
+        boolean equalsMatch;
 
         String username;
 

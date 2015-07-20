@@ -17,6 +17,9 @@ import javax.security.auth.Subject;
 import com.dtolabs.rundeck.core.authentication.Group;
 import com.dtolabs.rundeck.core.authentication.LdapGroup;
 import com.dtolabs.rundeck.core.authentication.Username;
+import com.dtolabs.rundeck.core.authorization.AclRule;
+import com.dtolabs.rundeck.core.authorization.AclRuleSet;
+import com.dtolabs.rundeck.core.authorization.AclRuleSetImpl;
 import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 
@@ -28,7 +31,8 @@ import com.dtolabs.rundeck.core.authorization.Attribute;
  */
 public class YamlPolicyCollection implements PolicyCollection {
     static Logger logger = Logger.getLogger(YamlPolicyCollection.class.getName());
-    private final Set<YamlPolicy> all = new HashSet<YamlPolicy>();
+    private final Set<YamlPolicy> all = new HashSet<>();
+    private final Set<AclRule> ruleSet = new HashSet<>();
     YamlSource source;
 
     /**
@@ -39,6 +43,11 @@ public class YamlPolicyCollection implements PolicyCollection {
     public YamlPolicyCollection(final YamlSource source) throws IOException {
         this.source=source;
         load(source);
+    }
+
+    @Override
+    public AclRuleSet getRuleSet() {
+        return new AclRuleSetImpl(ruleSet);
     }
 
     /**
@@ -63,6 +72,7 @@ public class YamlPolicyCollection implements PolicyCollection {
                 try {
                     YamlPolicy yamlPolicy = new YamlPolicy((Map) yamlDoc, source.getIdentity(), index);
                     all.add(yamlPolicy);
+                    ruleSet.addAll(yamlPolicy.getRuleSet().getRules());
                 } catch (YamlPolicy.AclPolicySyntaxException e) {
                     logger.error(
                             "ERROR parsing a policy in file: " +

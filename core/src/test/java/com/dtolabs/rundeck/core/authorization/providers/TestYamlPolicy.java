@@ -23,6 +23,8 @@
 */
 package com.dtolabs.rundeck.core.authorization.providers;
 
+import com.dtolabs.rundeck.core.authorization.AclRule;
+import com.dtolabs.rundeck.core.authorization.AclRuleBuilder;
 import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.Explanation;
 import com.dtolabs.rundeck.core.utils.Converter;
@@ -185,6 +187,11 @@ public class TestYamlPolicy extends TestCase {
             typeContextFactory.context = new AclContext() {
                 public ContextDecision includes(Map<String, String> resource, String action) {
                     return res2;
+                }
+
+                @Override
+                public Set<AclRule> createRules(final AclRuleBuilder prototype) {
+                    return null;
                 }
             };
             final ContextDecision res1 = new ContextDecision(Explanation.Code.REJECTED, false);
@@ -377,6 +384,11 @@ public class TestYamlPolicy extends TestCase {
         return new YamlPolicy.ContextMatcher() {
             public YamlPolicy.MatchedContext includes(Map<String, String> resource, String action) {
                 return new YamlPolicy.MatchedContext(matched, new ContextDecision(code, granted, contextEvaluations));
+            }
+
+            @Override
+            public AclRule createRule(final AclRuleBuilder prototype) {
+                return null;
             }
         };
     }

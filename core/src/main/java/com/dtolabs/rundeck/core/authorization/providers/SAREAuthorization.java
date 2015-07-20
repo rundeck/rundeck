@@ -19,10 +19,7 @@
  */
 package com.dtolabs.rundeck.core.authorization.providers;
 
-import com.dtolabs.rundeck.core.authorization.Attribute;
-import com.dtolabs.rundeck.core.authorization.Authorization;
-import com.dtolabs.rundeck.core.authorization.Decision;
-import com.dtolabs.rundeck.core.authorization.Explanation;
+import com.dtolabs.rundeck.core.authorization.*;
 import com.dtolabs.rundeck.core.authorization.Explanation.Code;
 import org.apache.log4j.Logger;
 
@@ -150,6 +147,9 @@ public class SAREAuthorization implements Authorization {
      */
     public Decision evaluate(Map<String, String> resource, Subject subject, 
             String action, Set<Attribute> environment) {
+        if(true) {
+            return RuleEvaluator.createRuleEvaluator(policies).evaluate(resource, subject, action, environment);
+        }
         return evaluate(resource, subject, action, environment, policies.narrowContext(subject, environment));
     }
     /**

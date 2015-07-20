@@ -24,8 +24,7 @@
 */
 package com.dtolabs.rundeck.core.authorization.providers;
 
-import com.dtolabs.rundeck.core.authorization.Attribute;
-import com.dtolabs.rundeck.core.authorization.Explanation;
+import com.dtolabs.rundeck.core.authorization.*;
 import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.core.utils.PairImpl;
 import org.apache.commons.collections.CollectionUtils;
@@ -38,7 +37,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -47,7 +45,7 @@ import java.util.regex.PatternSyntaxException;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-final class YamlPolicy implements Policy {
+final class YamlPolicy implements Policy,AclRuleSetSource {
     final static Logger logger = Logger.getLogger(YamlPolicy.class.getName());
     public static final String TYPE_PROPERTY = "type";
     public static final String FOR_SECTION = "for";
@@ -60,7 +58,9 @@ final class YamlPolicy implements Policy {
     private Set<String> groups = new HashSet<String>();
     private Set<Pattern> usernamePatterns = new HashSet<Pattern>();
     private Set<Pattern> groupPatterns = new HashSet<Pattern>();
-    AclContext aclContext;
+    YamlAclContext aclContext;
+    private YamlEnvironmentalContext environment;
+    private Set<AclRule> rules = new HashSet<>();
 
     private String sourceIdent;
     private int sourceIndex;
@@ -72,8 +72,29 @@ final class YamlPolicy implements Policy {
         parseByClause();
         createAclContext();
         parseEnvironment();
-
+        enumerateRules();
     }
+
+    /**
+     * generate list of AclRules
+     */
+    private void enumerateRules() {
+        if(null==environment){
+            return;
+        }
+        AclRuleBuilder envProto = AclRuleBuilder.builder().environment(
+                environment.toBasic()
+        );
+        for (String username : usernames) {
+            AclRuleBuilder ruleBuilder = AclRuleBuilder.builder(envProto).username(username);
+            rules.addAll(aclContext.createRules(ruleBuilder));
+        }
+        for (String group : groups) {
+            AclRuleBuilder ruleBuilder = AclRuleBuilder.builder(envProto).group(group);
+            rules.addAll(aclContext.createRules(ruleBuilder));
+        }
+    }
+
     YamlPolicy(final Map policyInput, final File sourceFile, final int sourceIndex) {
         this(policyInput, sourceFile.getAbsolutePath(), sourceIndex);
     }
@@ -88,11 +109,15 @@ final class YamlPolicy implements Policy {
                 + (sourceIndex >= 0 ? "[" + sourceIndex + "]" : "");
     }
 
+    @Override
+    public AclRuleSet getRuleSet() {
+        return new AclRuleSetImpl(rules);
+    }
+
     public Set<String> getUsernames() {
         return usernames;
     }
 
-    private EnvironmentalContext environment;
     private boolean envchecked;
 
     public EnvironmentalContext getEnvironment() {
@@ -131,7 +156,33 @@ final class YamlPolicy implements Policy {
                 }
             }
         };
-        ;
+        EnvironmentalContext toBasic() {
+            if (matcherRegex.size() != 1 && matcher.size() != 1) {
+                throw new IllegalStateException("Expected environmental context to contain only one entry");
+            }
+            if (matcherRegex.size() == 1) {
+                URI key;
+                Pattern value;
+                Map.Entry<URI, Pattern> next = matcherRegex.entrySet().iterator().next();
+                key = next.getKey();
+                value = next.getValue();
+                return BasicEnvironmentalContext.patternContextFor(
+                        key.toString().substring(EnvironmentalContext.URI_BASE.length()),
+                        value.toString()
+                );
+            }else {
+                Map.Entry<URI, String> next = matcher.entrySet().iterator().next();
+                URI key=next.getKey();
+                String value=next.getValue();
+                return BasicEnvironmentalContext.staticContextFor(
+                        key.toString().substring(
+                                EnvironmentalContext.URI_BASE.length()
+                        ),
+                        value
+                );
+            }
+
+        }
 
         YamlEnvironmentalContext(final String uriPrefix, final Map ctx) {
             boolean invalidentry = false;
@@ -376,7 +427,7 @@ final class YamlPolicy implements Policy {
             boolean allowed = false;
             boolean denied = false;
             ContextEvaluation deniedEvaluation;
-            for (final ContextMatcher matcher : typeRules) {
+            for (final ContextMatcher matcher : getTypeRules()) {
                 final MatchedContext matched = matcher.includes(resource, action);
                 if (!matched.isMatched()) {
                     //indicates the section did not match
@@ -405,6 +456,22 @@ final class YamlPolicy implements Policy {
                     allowed && !denied, evaluations);
 
         }
+
+        public List<ContextMatcher> getTypeRules() {
+            return typeRules;
+        }
+
+        @Override
+        public Set<AclRule> createRules(final AclRuleBuilder prototype) {
+            HashSet<AclRule> aclRules = new HashSet<>();
+            for (ContextMatcher typeRule : typeRules) {
+                AclRuleBuilder builder = AclRuleBuilder.builder(
+                        prototype
+                );
+                aclRules.add(typeRule.createRule(builder));
+            }
+            return aclRules;
+        }
     }
 
     /**
@@ -432,6 +499,7 @@ final class YamlPolicy implements Policy {
 
     static interface ContextMatcher {
         public MatchedContext includes(Map<String, String> resource, String action);
+        AclRule createRule(AclRuleBuilder prototype);
     }
 
     /**
@@ -512,29 +580,61 @@ final class YamlPolicy implements Policy {
             }
             return new MatchedContext(true, evaluateActions(action, evaluations));
         }
+        public AclRule createRule(AclRuleBuilder prototype) {
+            AclRuleBuilder ruleBuilder = AclRuleBuilder.builder(prototype);
+
+            final HashSet<String> allowActions = ruleSection.containsKey(ALLOW_ACTIONS)
+                                                 ? getAllowActions()
+                                                 : new HashSet<String>();
+            final HashSet<String> denyActions = ruleSection.containsKey(DENY_ACTIONS)
+                                                ? getDenyActions()
+                                                : new HashSet<String>();
+            ruleBuilder.sourceIdentity( policy.sourceIdent + "[rule: " + index + "]")
+                       .allowActions(allowActions)
+                       .denyActions(denyActions);
+
+            //determine match section
+            Map resourceMap;
+            if(isRuleSectionMatch()) {
+                ruleBuilder.regexMatch(true);
+                resourceMap = (Map)ruleSection.get(MATCH_SECTION);
+            }else if(isRuleSectionContains()) {
+                ruleBuilder.containsMatch(true);
+                resourceMap = (Map)ruleSection.get(CONTAINS_SECTION);
+            }else if(isRuleSectionEquals()){
+                ruleBuilder.equalsMatch(true);
+                resourceMap = (Map)ruleSection.get(EQUALS_SECTION);
+            }else{
+                resourceMap=null;
+            }
+
+            ruleBuilder.resource(resourceMap);
+
+            return ruleBuilder.build();
+        }
 
         ContextDecision evaluateActions(final String action, final List<ContextEvaluation> evaluations) {
             //evaluate actions
             boolean denied = false;
 
             if (ruleSection.containsKey(DENY_ACTIONS)) {
-                final HashSet<String> actions = new HashSet<String>();
-                final Object actionsObj = ruleSection.get(DENY_ACTIONS);
-                if (actionsObj instanceof String) {
-                    final String actionStr = (String) actionsObj;
-                    actions.add(actionStr);
-                } else if (actionsObj instanceof List) {
-                    actions.addAll((List<String>) actionsObj);
-                } else {
-                    evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_CONTEXT_EVALUATION_ERROR,
-                            "Invalid action type."));
-                }
-                if (0 == actions.size()) {
-                    logger.warn(identify() + ": No actions defined in Deny section");
-                } else if (actions.contains("*") || actions.contains(action)) {
-                    evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_DENIED,
-                            this + " for actions: " + actions));
-                    denied = true;
+                final HashSet<String> actions = getDenyActions();
+                if(null==actions){
+                    evaluations.add(new ContextEvaluation(
+                                            Explanation.Code.REJECTED_CONTEXT_EVALUATION_ERROR,
+                                            "Invalid action type."));
+                }else {
+                    if (0 == actions.size()) {
+                        logger.warn(identify() + ": No actions defined in Deny section");
+                    } else if (actions.contains("*") || actions.contains(action)) {
+                        evaluations.add(
+                                new ContextEvaluation(
+                                        Explanation.Code.REJECTED_DENIED,
+                                        this + " for actions: " + actions
+                                )
+                        );
+                        denied = true;
+                    }
                 }
             }
             if (denied) {
@@ -542,23 +642,23 @@ final class YamlPolicy implements Policy {
             }
             boolean allowed = false;
             if (ruleSection.containsKey(ALLOW_ACTIONS)) {
-                final HashSet<String> actions = new HashSet<String>();
-                final Object actionsObj = ruleSection.get(ALLOW_ACTIONS);
-                if (actionsObj instanceof String) {
-                    final String actionStr = (String) actionsObj;
-                    actions.add(actionStr);
-                } else if (actionsObj instanceof List) {
-                    actions.addAll((List<String>) actionsObj);
-                } else {
-                    evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_CONTEXT_EVALUATION_ERROR,
-                            "Invalid action type."));
-                }
-                if (0 == actions.size()) {
-                    logger.warn(identify() + ": No actions defined in Allow section");
-                } else if (actions.contains("*") || actions.contains(action)) {
-                    evaluations.add(new ContextEvaluation(Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED,
-                            this + " for actions: " + actions));
-                    allowed = true;
+                final HashSet<String> actions = getAllowActions();
+                if(null==actions){
+                    evaluations.add(new ContextEvaluation(
+                                            Explanation.Code.REJECTED_CONTEXT_EVALUATION_ERROR,
+                                            "Invalid action type."));
+                }else {
+                    if (0 == actions.size()) {
+                        logger.warn(identify() + ": No actions defined in Allow section");
+                    } else if (actions.contains("*") || actions.contains(action)) {
+                        evaluations.add(
+                                new ContextEvaluation(
+                                        Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED,
+                                        this + " for actions: " + actions
+                                )
+                        );
+                        allowed = true;
+                    }
                 }
             }
 
@@ -569,6 +669,34 @@ final class YamlPolicy implements Policy {
             }
         }
 
+        private HashSet<String> getAllowActions() {
+            final HashSet<String> actions = new HashSet<String>();
+            final Object actionsObj = ruleSection.get(ALLOW_ACTIONS);
+            if (actionsObj instanceof String) {
+                final String actionStr = (String) actionsObj;
+                actions.add(actionStr);
+            } else if (actionsObj instanceof List) {
+                actions.addAll((List<String>) actionsObj);
+            } else {
+                return null;
+            }
+            return actions;
+        }
+
+        private HashSet<String> getDenyActions() {
+            final HashSet<String> actions = new HashSet<String>();
+            final Object actionsObj = ruleSection.get(DENY_ACTIONS);
+            if (actionsObj instanceof String) {
+                final String actionStr = (String) actionsObj;
+                actions.add(actionStr);
+            } else if (actionsObj instanceof List) {
+                actions.addAll((List<String>) actionsObj);
+            } else {
+                return null;
+            }
+            return actions;
+        }
+
         /**
          * Return true if all of the defined rule sections match for the specified resource. If no rule sections exist,
          * then the result is true.
@@ -577,7 +705,7 @@ final class YamlPolicy implements Policy {
             int matchesRequired = 0;
             int matchesMet = 0;
             //evaluate match:
-            if (ruleSection.containsKey(MATCH_SECTION)) {
+            if (isRuleSectionMatch()) {
                 matchesRequired++;
                 if (ruleMatchesMatchSection(resource, this.ruleSection)) {
                     matchesMet++;
@@ -587,7 +715,7 @@ final class YamlPolicy implements Policy {
                 }
             }
             //evaluate equals:
-            if (ruleSection.containsKey(EQUALS_SECTION)) {
+            if (isRuleSectionEquals()) {
                 matchesRequired++;
                 if (ruleMatchesEqualsSection(resource, this.ruleSection)) {
                     matchesMet++;
@@ -598,7 +726,7 @@ final class YamlPolicy implements Policy {
             }
 
             //evaluate contains:
-            if (ruleSection.containsKey(CONTAINS_SECTION)) {
+            if (isRuleSectionContains()) {
                 matchesRequired++;
                 if (ruleMatchesContainsSection(resource, this.ruleSection)) {
                     matchesMet++;
@@ -608,6 +736,18 @@ final class YamlPolicy implements Policy {
                 }
             }
             return matchesMet == matchesRequired;
+        }
+
+        private boolean isRuleSectionContains() {
+            return ruleSection.containsKey(CONTAINS_SECTION);
+        }
+
+        private boolean isRuleSectionEquals() {
+            return ruleSection.containsKey(EQUALS_SECTION);
+        }
+
+        private boolean isRuleSectionMatch() {
+            return ruleSection.containsKey(MATCH_SECTION);
         }
 
         private boolean validRuleSection(final Map section) {
@@ -830,7 +970,7 @@ final class YamlPolicy implements Policy {
                                 policyDef.get(CONTEXT_SECTION) + ", " +
                                 "by: " + policyDef.get("by"));
                     }
-                    typeContexts.putIfAbsent(type, createTypeContext((List) typeSection));
+                    typeContexts.putIfAbsent(type, createTypeContext(type,(List) typeSection));
                 }
             }
         }
@@ -839,8 +979,20 @@ final class YamlPolicy implements Policy {
             return "Context: " + description;
         }
 
-        private AclContext createTypeContext(final List typeSection) {
+        private AclContext createTypeContext(final String type,final List typeSection) {
             return typeContextFactory.createAclContext(typeSection);
+        }
+
+        @Override
+        public Set<AclRule> createRules(final AclRuleBuilder prototype) {
+            HashSet<AclRule> aclRules = new HashSet<>();
+            for (Map.Entry<String, AclContext> stringAclContextEntry : typeContexts.entrySet()) {
+                AclRuleBuilder builder = AclRuleBuilder.builder(prototype);
+                builder.resourceType(stringAclContextEntry.getKey());
+                AclContext value = stringAclContextEntry.getValue();
+                aclRules.addAll(value.createRules(builder));
+            }
+            return aclRules;
         }
 
         static final ContextDecision NO_RESOURCE_TYPE_DECISION = new ContextDecision(

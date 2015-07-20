@@ -20,14 +20,25 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 /**
- * Created by greg on 7/17/15.
+ * Evaluate ACL requests over a set of rules
  */
 public class RuleEvaluator implements Authorization {
     private final static Logger logger = Logger.getLogger(RuleEvaluator.class);
     private AclRuleSet rules;
 
-    public RuleEvaluator(final AclRuleSet rules) {
+    private RuleEvaluator(final AclRuleSetSource ruleSetSource) {
+        this.rules = ruleSetSource.getRuleSet();
+    }
+    private RuleEvaluator(final AclRuleSet rules) {
         this.rules = rules;
+    }
+
+    public static RuleEvaluator createRuleEvaluator(final AclRuleSetSource ruleSetSource) {
+        return new RuleEvaluator(ruleSetSource);
+    }
+
+    public static RuleEvaluator createRuleEvaluator(final AclRuleSet rules) {
+        return new RuleEvaluator(rules);
     }
 
     @Override
@@ -480,31 +491,35 @@ public class RuleEvaluator implements Authorization {
     public Explanation.Code includes(final AclRule rule, final Map<String, String> resource, final String action) {
         //evaluate type
         if(rule.getResourceType()!=null){
-            if(null==resource.get("type") || !rule.getResourceType().equals(resource.get("type"))){
+            String resType = resource.get("type");
+            if (null == resType || !rule.getResourceType().equals(resType)) {
                 return Explanation.Code.REJECTED;
             }
         }
-        if(rule.getResourceKind()!=null){
-            if(null==resource.get("kind") || !rule.getResourceType().equals(resource.get("kind"))){
-                return Explanation.Code.REJECTED;
-            }
-        }
+
         //evaluate match:
-        if (rule.isRegexMatch() && ruleMatchesMatchSection(resource, rule)) {
-            return allowOrDenyAction(rule, action);
-        } else if (!rule.isRegexMatch() && !rule.isContainsMatch() && ruleMatchesEqualsSection(resource, rule)) {
-            return allowOrDenyAction(rule, action);
-        } else if (rule.isContainsMatch() && ruleMatchesContainsSection(resource, rule)) {
-            return allowOrDenyAction(rule, action);
+        if (rule.isRegexMatch()) {
+            return ruleMatchesMatchSection(resource, rule)
+                   ? allowOrDenyAction(rule, action)
+                   : Explanation.Code.REJECTED;
+        } else if (rule.isEqualsMatch()) {
+            return ruleMatchesEqualsSection(resource, rule)
+                   ? allowOrDenyAction(rule, action)
+                   : Explanation.Code.REJECTED;
+        } else if (rule.isContainsMatch()) {
+            return ruleMatchesContainsSection(resource, rule)
+                   ? allowOrDenyAction(rule, action)
+                   : Explanation.Code.REJECTED;
         } else {
-            return Explanation.Code.REJECTED;
+            //no resource matching defined, matches all resources of this type.
+            return allowOrDenyAction(rule, action);
         }
     }
 
     private Explanation.Code allowOrDenyAction(final AclRule rule, final String action) {
-        if (rule.getDenyActions().contains(action)) {
+        if (rule.getDenyActions().contains(action) || rule.getDenyActions().contains("*")) {
             return Explanation.Code.REJECTED_DENIED;
-        } else if (rule.getAllowActions().contains(action)) {
+        } else if (rule.getAllowActions().contains(action) || rule.getAllowActions().contains("*")) {
             return Explanation.Code.GRANTED;
         } else {
             return Explanation.Code.REJECTED;

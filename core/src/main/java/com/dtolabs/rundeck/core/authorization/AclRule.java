@@ -19,11 +19,10 @@ public interface AclRule {
 
     public String getResourceType();
 
-    public String getResourceKind();
-
     public boolean isRegexMatch();
 
     public boolean isContainsMatch();
+    public boolean isEqualsMatch();
 
     //    public Subject getSubject();
     public String getUsername();

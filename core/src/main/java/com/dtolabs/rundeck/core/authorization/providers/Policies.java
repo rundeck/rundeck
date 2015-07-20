@@ -16,7 +16,7 @@
 
 package com.dtolabs.rundeck.core.authorization.providers;
 
-import com.dtolabs.rundeck.core.authorization.Attribute;
+import com.dtolabs.rundeck.core.authorization.*;
 
 import javax.security.auth.Subject;
 import javax.xml.parsers.ParserConfigurationException;
@@ -29,7 +29,7 @@ import java.util.*;
  *
  * @author noahcampbell
  */
-public class Policies {
+public class Policies implements AclRuleSetSource{
 
     private final List<File> policyFiles = new ArrayList<File>();
 
@@ -46,6 +46,15 @@ public class Policies {
             count += f.countPolicies();
         }
         return count;
+    }
+
+    @Override
+    public AclRuleSet getRuleSet() {
+        Set<AclRule> set = new HashSet<>();
+        for (final PolicyCollection f : cache) {
+            set.addAll(f.getRuleSet().getRules());
+        }
+        return new AclRuleSetImpl(set);
     }
 
     /**
