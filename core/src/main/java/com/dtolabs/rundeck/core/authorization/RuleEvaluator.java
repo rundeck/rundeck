@@ -188,13 +188,14 @@ public class RuleEvaluator implements Authorization {
     {
         Set<Decision> decisions = new HashSet<Decision>();
         long duration = 0;
+        List<AclRule> matchedRules = narrowContext(
+                subject,
+                environment
+        );
         for (Map<String, String> resource : resources) {
             for (String action : actions) {
                 final Decision decision = evaluate(
-                        resource, subject, action, environment, narrowContext(
-                                subject,
-                                environment
-                        )
+                        resource, subject, action, environment, matchedRules
                 );
                 duration += decision.evaluationDuration();
                 decisions.add(decision);
@@ -242,7 +243,7 @@ public class RuleEvaluator implements Authorization {
         );
     }
 
-    private static Decision createAuthorize(
+    static Decision createAuthorize(
             final boolean authorized, final Explanation explanation,
             final Map<String, String> resource, final Subject subject,
             final String action, final Set<Attribute> environment, final long evaluationTime
