@@ -94,8 +94,16 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
         lastDirListCheckTime = System.currentTimeMillis();
     }
 
+    /**
+     * @param file file
+     * @throws PoliciesParseException
+     * @deprecated use {@link #addSource(CacheableYamlSource)}
+     */
     public synchronized void add(final File file) throws PoliciesParseException {
         getDocument(file);
+    }
+    public synchronized void addSource(final CacheableYamlSource source) throws PoliciesParseException {
+        getDocument(source);
     }
 
     private PolicyCollection createEntry(final YamlSource source) throws PoliciesParseException {
@@ -108,6 +116,13 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
         }
     }
 
+    /**
+     * @param file file
+     * @return collection
+     * @throws PoliciesParseException
+     *
+     * @deprecated use {@link #getDocument(CacheableYamlSource)}
+     */
     public synchronized PolicyCollection getDocument(final File file) throws PoliciesParseException {
         return getDocument(YamlProvider.sourceFromFile(file));
     }
@@ -146,20 +161,30 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
 
     public Iterator<PolicyCollection> iterator() {
         final File[] files = listDirFiles();
-        return new cacheIterator(null!=files?Arrays.asList(files).iterator(): new ArrayList<File>().iterator());
+        return new cacheIterator(asSources(files));
     }
 
-    private Map<File, Long> cooldownset = Collections.synchronizedMap(new HashMap<File, Long>());
+    private Iterator<CacheableYamlSource> asSources(final File[] files) {
+        ArrayList<CacheableYamlSource> list = new ArrayList<>();
+        if(null!=files) {
+            for (File file : files) {
+                list.add(YamlProvider.sourceFromFile(file));
+            }
+        }
+        return list.iterator();
+    }
+
+    private Map<CacheableYamlSource, Long> cooldownset = Collections.synchronizedMap(new HashMap<CacheableYamlSource, Long>());
     /**
      * Iterator over the PoliciesDocuments for the cache's files.  It skips
      * files that cannot be loaded.
      */
     private class cacheIterator implements Iterator<PolicyCollection> {
-        Iterator<File> intIter;
-        private File nextFile;
+        Iterator<CacheableYamlSource> intIter;
+        private CacheableYamlSource nextFile;
         private PolicyCollection nextDocument;
 
-        public cacheIterator(final Iterator<File> intIter) {
+        public cacheIterator(final Iterator<CacheableYamlSource> intIter) {
             this.intIter = intIter;
             nextFile = this.intIter.hasNext() ? this.intIter.next() : null;
             loadNextDocument();
@@ -167,9 +192,9 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
 
         private void loadNextDocument() {
             while (hasNextFile() && null == nextDocument) {
-                File nextFile2 = getNextFile();
+                CacheableYamlSource nextFile2 = getNextFile();
                 Long aLong = cooldownset.get(nextFile2);
-                if (null != aLong && nextFile2.lastModified() == aLong.longValue()) {
+                if (null != aLong && nextFile2.getLastModified().getTime() == aLong) {
                     logger.debug("Skip parsing of: " + nextFile2 + ". Reason: parse error cooldown until modified");
                     continue;
                 } else if (null != aLong) {
@@ -181,14 +206,14 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
                 } catch (PoliciesParseException e) {
                     logger.error("ERROR unable to parse aclpolicy: " + nextFile2 + ". Reason: " + e.getMessage());
                     logger.debug("ERROR unable to parse aclpolicy: " + nextFile2 + ". Reason: " + e.getMessage(), e);
-                    cache.remove(nextFile2);
-                    cooldownset.put(nextFile2, nextFile2.lastModified());
+                    cache.remove(nextFile2.getIdentity());
+                    cooldownset.put(nextFile2, nextFile2.getLastModified().getTime());
                 }
             }
         }
 
-        private File getNextFile() {
-            File next = nextFile;
+        private CacheableYamlSource getNextFile() {
+            CacheableYamlSource next = nextFile;
             nextFile = intIter.hasNext() ? intIter.next() : null;
             return next;
         }
