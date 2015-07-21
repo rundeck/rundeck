@@ -1,5 +1,7 @@
 package com.dtolabs.rundeck.core.common;
 
+import com.dtolabs.rundeck.core.authorization.Authorization;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -113,10 +115,25 @@ public interface IRundeckProject {
     IProjectNodes getProjectNodes();
 
     /**
+     * @return authorization for this project
+     */
+    Authorization getProjectAuthorization();
+
+    /**
      * @param path path relative to the project
      * @return true if it exists
      */
     boolean existsFileResource(String path);
+    /**
+     * @param path path relative to the project
+     * @return true if it is a directory
+     */
+    boolean existsDirResource(String path);
+    /**
+     * @param path path relative to the project
+     * @return list of paths within the directory
+     */
+    List<String> listDirPaths(String path);
 
     /**
      * @param path path relative to the project

@@ -24,10 +24,7 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 
 /**
@@ -195,6 +192,55 @@ public class TestFrameworkProject extends AbstractBaseTest {
         FileUtils.copyFileStreams(new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"), testFile);
         assertTrue(project.existsFileResource("test.file"));
         testFile.delete();
+    }
+    /**
+     * Test exists dir resource
+     * @throws Exception
+     */
+    public void testExistsDirResource() throws Exception {
+        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
+                                                           new File(getFrameworkProjectsBase()),
+                                                           getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        //attempt to update nodes resource file without url prop
+        assertFalse(project.existsDirResource("monkey"));
+        File testdir = new File(projectBasedir, "monkey");
+        assertTrue(testdir.mkdirs());
+        assertTrue(project.existsDirResource("monkey"));
+        testdir.delete();
+    }
+    /**
+     * Test list dir paths
+     * @throws Exception
+     */
+    public void testListDirPaths() throws Exception {
+        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
+                                                           new File(getFrameworkProjectsBase()),
+                                                           getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        //attempt to update nodes resource file without url prop
+        assertFalse(project.existsDirResource("monkey"));
+        File testDir = new File(projectBasedir, "monkey");
+        assertTrue(testDir.mkdirs());
+        File testFile1 = new File(testDir, "test1.file");
+        File testFile2 = new File(testDir, "test2.file");
+        File testDir2 = new File(testDir, "testdir");
+        assertTrue(testDir2.mkdirs());
+
+        FileUtils.copyFileStreams(new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"), testFile1);
+        FileUtils.copyFileStreams(
+                new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
+                testFile2
+        );
+
+        List<String> listing = project.listDirPaths("monkey");
+        assertEquals(3, listing.size());
+        assertTrue("not expected: " + listing, listing.contains("monkey/test1.file"));
+        assertTrue("not expected: " + listing, listing.contains("monkey/test2.file"));
+        assertTrue("not expected: "+listing,listing.contains("monkey/testdir/"));
+
+        testFile1.delete();
+        testFile2.delete();
+        testDir2.delete();
+        testDir.delete();
     }
     /**
      * Test load file resource

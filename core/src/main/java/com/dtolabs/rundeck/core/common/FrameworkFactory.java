@@ -2,11 +2,17 @@ package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.client.services.DispatcherConfig;
 import com.dtolabs.client.services.RundeckAPICentralDispatcher;
+import com.dtolabs.rundeck.core.authorization.AclsUtil;
+import com.dtolabs.rundeck.core.authorization.Authorization;
+import com.dtolabs.rundeck.core.authorization.providers.Policies;
+import com.dtolabs.rundeck.core.authorization.providers.PoliciesParseException;
+import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcher;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Properties;
 
 /**
@@ -181,6 +187,7 @@ public class FrameworkFactory {
                                                                                           .getResourceModelSourceService()
         );
         frameworkProject.setProjectNodes(projectNodeSupport);
+        frameworkProject.setProjectAuthorization(AclsUtil.createAuthorization(Policies.load(new File(baseDir,"etc"))));
         return frameworkProject;
     }
 
