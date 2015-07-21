@@ -34,7 +34,7 @@ import java.util.*;
  * Given a Subject, Action, Resource and Environment deliver an authorization decision.
  * 
  * @author noahcampbell
- *
+ * @deprecated
  */
 public class SAREAuthorization implements Authorization {
     
@@ -49,10 +49,8 @@ public class SAREAuthorization implements Authorization {
      * 
      * @param directory The directory to ready *.aclpolicy from.
      * 
-     * @throws IOException on io error
-     * @throws PoliciesParseException on parse error
      */
-    public SAREAuthorization(File directory) throws IOException, PoliciesParseException {
+    public SAREAuthorization(File directory)  {
         policies = Policies.load(directory);
         baseDirectory = directory;
     }
@@ -61,10 +59,8 @@ public class SAREAuthorization implements Authorization {
      *
      * @param policies Loaded policies
      *
-     * @throws IOException on io error
-     * @throws PoliciesParseException on parse error
      */
-    public SAREAuthorization(final Policies policies) throws IOException, PoliciesParseException {
+    public SAREAuthorization(final Policies policies)  {
         this.policies=policies;
         baseDirectory = null;
     }
@@ -147,9 +143,6 @@ public class SAREAuthorization implements Authorization {
      */
     public Decision evaluate(Map<String, String> resource, Subject subject, 
             String action, Set<Attribute> environment) {
-        if(true) {
-            return RuleEvaluator.createRuleEvaluator(policies).evaluate(resource, subject, action, environment);
-        }
         return evaluate(resource, subject, action, environment, policies.narrowContext(subject, environment));
     }
     /**
