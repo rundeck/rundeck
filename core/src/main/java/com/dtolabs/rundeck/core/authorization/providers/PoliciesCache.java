@@ -26,7 +26,6 @@ package com.dtolabs.rundeck.core.authorization.providers;
 import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.parser.ParserException;
 
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.*;
@@ -49,17 +48,10 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
     
     private Set<File> warned = new HashSet<File>();
     private Map<String, CacheItem> cache = new HashMap<>();
-    private File rootDir;
-    private File singleFile;
+    private SourceProvider provider;
 
-    public PoliciesCache() throws ParserConfigurationException {
-        this(null);
-    }
-    public PoliciesCache(File rootDir) throws ParserConfigurationException {
-        this.rootDir = rootDir;
-    }
-    public PoliciesCache(File singleFile, boolean single) throws ParserConfigurationException {
-        this.singleFile = singleFile;
+    private PoliciesCache(final SourceProvider provider) {
+        this.provider = provider;
     }
 
     private static class CacheItem{
@@ -78,34 +70,6 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
         }
     }
 
-    long lastDirListCheckTime=0;
-    private File[] lastDirList;
-    private File[] listDirFiles() {
-        if(System.currentTimeMillis()-lastDirListCheckTime > DIR_LIST_CHECK_DELAY) {
-            doListDir();
-        }
-        return lastDirList;
-    }
-
-    private void doListDir() {
-        lastDirList = null != rootDir
-                      ? rootDir.listFiles(filenameFilter)
-                      : singleFile != null ? new File[]{singleFile} : new File[0];
-        lastDirListCheckTime = System.currentTimeMillis();
-    }
-
-    /**
-     * @param file file
-     * @throws PoliciesParseException
-     * @deprecated use {@link #addSource(CacheableYamlSource)}
-     */
-    public synchronized void add(final File file) throws PoliciesParseException {
-        getDocument(file);
-    }
-    public synchronized void addSource(final CacheableYamlSource source) throws PoliciesParseException {
-        getDocument(source);
-    }
-
     private PolicyCollection createEntry(final YamlSource source) throws PoliciesParseException {
         try {
             return YamlProvider.policiesFromSource(source);
@@ -117,15 +81,10 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
     }
 
     /**
-     * @param file file
+     * @param source source
      * @return collection
      * @throws PoliciesParseException
-     *
-     * @deprecated use {@link #getDocument(CacheableYamlSource)}
      */
-    public synchronized PolicyCollection getDocument(final File file) throws PoliciesParseException {
-        return getDocument(YamlProvider.sourceFromFile(file));
-    }
     public synchronized PolicyCollection getDocument(final CacheableYamlSource source) throws PoliciesParseException {
 //        cacheTotal++;
         CacheItem entry = cache.get(source.getIdentity());
@@ -160,11 +119,80 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
     }
 
     public Iterator<PolicyCollection> iterator() {
-        final File[] files = listDirFiles();
-        return new cacheIterator(asSources(files));
+        return new cacheIterator(provider.getSourceIterator());
     }
 
-    private Iterator<CacheableYamlSource> asSources(final File[] files) {
+    /**
+     * Create a cache from a single file source
+     * @param singleFile file
+     * @return cache
+     */
+    public static PoliciesCache fromFile(File singleFile) {
+        return new PoliciesCache(new FileProvider(singleFile));
+    }
+
+    /**
+     * Create a cache from a directory source
+     * @param rootDir base director
+     * @return cache
+     */
+    public static PoliciesCache fromDir(File rootDir) {
+        return new PoliciesCache(new DirProvider(rootDir));
+    }
+    /**
+     * Create a cache from cacheable sources
+     * @param sources source
+     * @return cache
+     */
+    public static PoliciesCache fromSources(final Iterable<CacheableYamlSource> sources) {
+        return new PoliciesCache(
+                new SourceProvider() {
+                    @Override
+                    public Iterator<CacheableYamlSource> getSourceIterator() {
+                        return sources.iterator();
+                    }
+                }
+        );
+    }
+    private static class DirProvider implements SourceProvider{
+        private File rootDir;
+
+        public DirProvider(final File rootDir) {
+            this.rootDir = rootDir;
+        }
+
+        long lastDirListCheckTime=0;
+        private File[] lastDirList;
+        private File[] listDirFiles() {
+            if(System.currentTimeMillis()-lastDirListCheckTime > DIR_LIST_CHECK_DELAY) {
+                doListDir();
+            }
+            return lastDirList;
+        }
+
+        private void doListDir() {
+            lastDirList = rootDir.listFiles(filenameFilter);
+            lastDirListCheckTime = System.currentTimeMillis();
+        }
+        public Iterator<CacheableYamlSource> getSourceIterator() {
+            return asSources(listDirFiles());
+        }
+    }
+    private static class FileProvider implements SourceProvider{
+        private File file;
+
+        public FileProvider(final File file) {
+            this.file = file;
+        }
+
+        @Override
+        public Iterator<CacheableYamlSource> getSourceIterator() {
+            return asSources(new File[]{file});
+        }
+    }
+
+
+    private static Iterator<CacheableYamlSource> asSources(final File[] files) {
         ArrayList<CacheableYamlSource> list = new ArrayList<>();
         if(null!=files) {
             for (File file : files) {
@@ -176,65 +204,65 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
 
     private Map<CacheableYamlSource, Long> cooldownset = Collections.synchronizedMap(new HashMap<CacheableYamlSource, Long>());
     /**
-     * Iterator over the PoliciesDocuments for the cache's files.  It skips
-     * files that cannot be loaded.
+     * Iterator over the PolicyCollections for the cache's sources.  It skips
+     * sources that are no longer valid
      */
     private class cacheIterator implements Iterator<PolicyCollection> {
         Iterator<CacheableYamlSource> intIter;
-        private CacheableYamlSource nextFile;
-        private PolicyCollection nextDocument;
+        private CacheableYamlSource nextSource;
+        private PolicyCollection nextPolicyCollection;
 
         public cacheIterator(final Iterator<CacheableYamlSource> intIter) {
             this.intIter = intIter;
-            nextFile = this.intIter.hasNext() ? this.intIter.next() : null;
-            loadNextDocument();
+            nextSource = this.intIter.hasNext() ? this.intIter.next() : null;
+            loadNextSource();
         }
 
-        private void loadNextDocument() {
-            while (hasNextFile() && null == nextDocument) {
-                CacheableYamlSource nextFile2 = getNextFile();
-                Long aLong = cooldownset.get(nextFile2);
-                if (null != aLong && nextFile2.getLastModified().getTime() == aLong) {
-                    logger.debug("Skip parsing of: " + nextFile2 + ". Reason: parse error cooldown until modified");
+        private void loadNextSource() {
+            while (hasNextFile() && null == nextPolicyCollection) {
+                CacheableYamlSource newNextSource = getNextSource();
+                Long aLong = cooldownset.get(newNextSource);
+                if (null != aLong && newNextSource.getLastModified().getTime() == aLong) {
+                    logger.debug("Skip parsing of: " + newNextSource + ". Reason: parse error cooldown until modified");
                     continue;
                 } else if (null != aLong) {
                     //clear
-                    cooldownset.remove(nextFile2);
+                    cooldownset.remove(newNextSource);
                 }
                 try {
-                    nextDocument = getDocument(nextFile2);
+                    nextPolicyCollection = getDocument(newNextSource);
                 } catch (PoliciesParseException e) {
-                    logger.error("ERROR unable to parse aclpolicy: " + nextFile2 + ". Reason: " + e.getMessage());
-                    logger.debug("ERROR unable to parse aclpolicy: " + nextFile2 + ". Reason: " + e.getMessage(), e);
-                    cache.remove(nextFile2.getIdentity());
-                    cooldownset.put(nextFile2, nextFile2.getLastModified().getTime());
+                    logger.error("ERROR unable to parse aclpolicy: " + newNextSource + ". Reason: " + e.getMessage());
+                    logger.debug("ERROR unable to parse aclpolicy: " + newNextSource + ". Reason: " + e.getMessage(), e);
+                    cache.remove(newNextSource.getIdentity());
+                    cooldownset.put(newNextSource, newNextSource.getLastModified().getTime());
                 }
             }
         }
 
-        private CacheableYamlSource getNextFile() {
-            CacheableYamlSource next = nextFile;
-            nextFile = intIter.hasNext() ? intIter.next() : null;
+        private CacheableYamlSource getNextSource() {
+            CacheableYamlSource next = nextSource;
+            nextSource = intIter.hasNext() ? intIter.next() : null;
             return next;
         }
 
-        private PolicyCollection getNextDocument() {
-            PolicyCollection doc = nextDocument;
-            nextDocument=null;
-            loadNextDocument();
+        private PolicyCollection getNextPolicyCollection() {
+            PolicyCollection doc = nextPolicyCollection;
+            nextPolicyCollection =null;
+            loadNextSource();
             return doc;
         }
 
         public boolean hasNextFile() {
-            return null != nextFile;
+            return null != nextSource;
         }
 
         public boolean hasNext() {
-            return null != nextDocument;
+            return null != nextPolicyCollection;
         }
 
         public PolicyCollection next() {
-            return getNextDocument();
+            return getNextPolicyCollection();
         }
 
         public void remove() {

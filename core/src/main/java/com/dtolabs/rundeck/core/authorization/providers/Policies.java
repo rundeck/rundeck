@@ -31,9 +31,8 @@ import java.util.*;
  */
 public class Policies implements AclRuleSetSource{
 
-    private final List<File> policyFiles = new ArrayList<File>();
-
     private Iterable<PolicyCollection> cache;
+    private Set<AclRule> set;
 
 
     public Policies(final Iterable<PolicyCollection> cache) {
@@ -50,10 +49,17 @@ public class Policies implements AclRuleSetSource{
 
     @Override
     public AclRuleSet getRuleSet() {
-        Set<AclRule> set = new HashSet<>();
-        for (final PolicyCollection f : cache) {
-            set.addAll(f.getRuleSet().getRules());
+        if(set==null) {
+            synchronized (this) {
+                if(set==null) {
+                    set = new HashSet<>();
+                    for (final PolicyCollection f : cache) {
+                        set.addAll(f.getRuleSet().getRules());
+                    }
+                }
+            }
         }
+
         return new AclRuleSetImpl(set);
     }
 
@@ -63,19 +69,9 @@ public class Policies implements AclRuleSetSource{
      * @param rootPath file root path
      *
      *
-     * @throws PoliciesParseException Thrown when there is a problem parsing a file.
-     * @throws IOException  on io error
      */
-    public static Policies load(File rootPath) throws IOException, PoliciesParseException {
-
-        Policies p = null;
-        try {
-            p = new Policies(new PoliciesCache(rootPath));
-        } catch (ParserConfigurationException e) {
-            throw new PoliciesParseException(e);
-        }
-
-        return p;
+    public static Policies load(File rootPath)  {
+        return new Policies(PoliciesCache.fromDir(rootPath));
     }
     /**
      * @return Load the policies contained in the root path.
@@ -83,20 +79,9 @@ public class Policies implements AclRuleSetSource{
      * @param singleFile single file
      *
      *
-     * @throws PoliciesParseException Thrown when there is a problem parsing a file.
-     * @throws IOException  on io error
      */
-    public static Policies loadFile(File singleFile) throws IOException, PoliciesParseException {
-
-        Policies p = null;
-        try {
-            PoliciesCache policyCollections = new PoliciesCache(singleFile,true);
-            p = new Policies(policyCollections);
-        } catch (ParserConfigurationException e) {
-            throw new PoliciesParseException(e);
-        }
-
-        return p;
+    public static Policies loadFile(File singleFile)  {
+        return new Policies(PoliciesCache.fromFile(singleFile));
     }
 
     public List<AclContext> narrowContext(final Subject subject, final Set<Attribute> environment) {
@@ -106,24 +91,6 @@ public class Policies implements AclRuleSetSource{
             matchedContexts.addAll(f.matchedContexts(subject, environment));
         }
         return matchedContexts;
-    }
-
-
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(getClass().getName());
-        builder.append(" [");
-        Iterator<File> iter = this.policyFiles.iterator();
-        while (iter.hasNext()) {
-            builder.append(iter.next());
-            if (iter.hasNext()) {
-                builder.append(", ");
-            }
-        }
-        builder.append("]");
-
-        return builder.toString();
     }
 
     /**

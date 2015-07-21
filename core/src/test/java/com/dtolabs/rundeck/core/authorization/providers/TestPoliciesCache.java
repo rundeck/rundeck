@@ -46,7 +46,7 @@ public class TestPoliciesCache extends TestCase {
 
 
     public void setUp() throws Exception {
-        policiesCache = new PoliciesCache(new File("src/test/resources/com/dtolabs/rundeck/core/authorization"));
+        policiesCache = PoliciesCache.fromDir(new File("src/test/resources/com/dtolabs/rundeck/core/authorization"));
     }
 
     protected void tearDown() throws Exception {
@@ -72,10 +72,10 @@ public class TestPoliciesCache extends TestCase {
 
     public void testSingleFile() throws Exception {
 
-        policiesCache = new PoliciesCache(
+        policiesCache = PoliciesCache.fromFile(
                 new File(
                         "src/test/resources/com/dtolabs/rundeck/core/authorization/admintest.aclpolicy"
-                ), true
+                )
         );
         final Iterator<PolicyCollection> iterator = policiesCache.iterator();
         assertNotNull(iterator);
