@@ -130,7 +130,7 @@ public class YamlProvider {
         }
 
         @Override
-        public Iterable<Object> loadAll(final Yaml yaml) throws FileNotFoundException, IOException {
+        public Iterable<Object> loadAll(final Yaml yaml) throws IOException {
             return yaml.loadAll(stream);
         }
 

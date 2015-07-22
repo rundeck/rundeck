@@ -11,5 +11,5 @@ import java.io.IOException;
  */
 public interface YamlSource extends Closeable{
     public String getIdentity();
-    public Iterable<Object> loadAll(Yaml yaml) throws FileNotFoundException, IOException;
+    public Iterable<Object> loadAll(Yaml yaml) throws IOException;
 }
