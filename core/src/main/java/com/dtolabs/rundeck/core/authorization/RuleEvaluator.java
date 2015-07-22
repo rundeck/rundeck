@@ -143,7 +143,7 @@ public class RuleEvaluator implements Authorization {
     }
 
     private List<AclRule> narrowContext(final Subject subject, final Set<Attribute> environment) {
-        return narrowContext(rules, subjectFrom(subject), environment);
+        return narrowContext(getRules(), subjectFrom(subject), environment);
     }
 
     private AclSubject subjectFrom(final Subject subject) {
@@ -447,6 +447,10 @@ public class RuleEvaluator implements Authorization {
                     System.currentTimeMillis() - start
             );
         }
+    }
+
+    public AclRuleSet getRules() {
+        return rules;
     }
 
     /**
