@@ -2,6 +2,11 @@ package rundeck.services
 
 import com.codahale.metrics.Gauge
 import com.codahale.metrics.MetricRegistry
+import com.dtolabs.rundeck.core.authorization.AclsUtil
+import com.dtolabs.rundeck.core.authorization.Authorization
+import com.dtolabs.rundeck.core.authorization.providers.Policies
+import com.dtolabs.rundeck.core.authorization.providers.PoliciesCache
+import com.dtolabs.rundeck.core.authorization.providers.YamlProvider
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.common.ProjectNodeSupport
@@ -192,6 +197,10 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
         return getStorage().hasResource(storagePath)
     }
+    boolean existsProjectDirResource(String projectName, String path) {
+        def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        return getStorage().hasDirectory(storagePath)
+    }
     Resource<ResourceMeta> getProjectFileResource(String projectName, String path) {
         def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
         if (!getStorage().hasResource(storagePath)) {
@@ -203,6 +212,23 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
         def resource = getStorage().getResource(storagePath)
         Streams.copy(resource.contents.inputStream,output,true)
+    }
+    /**
+     * List the full paths of file resources in the directory at the given path
+     * @param projectName projectname
+     * @param path path directory path
+     * @param pattern pattern match
+     * @return
+     */
+    List<String> listProjectDirPaths(String projectName, String path, String pattern=null) {
+        def prefix = 'projects/' + projectName
+        def storagePath = prefix + (path.startsWith("/")?path:"/${path}")
+        def resources = getStorage().listDirectory(storagePath)
+        def outprefix=path.endsWith('/')?path.substring(0,path.length()-1):path
+        resources.collect{Resource<ResourceMeta> res->
+            def pathName=res.path.name + (res.isDirectory()?'/':'')
+            (!pattern || pathName ==~ pattern) ? (outprefix+'/'+pathName) : null
+        }.findAll{it}
     }
     /**
      * Update existing resource, fails if it does not exist
@@ -462,6 +488,23 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         Map resource=storeProjectConfig(projectName, properties)
         projectCache.invalidate(projectName)
         resource
+    }
+
+    /**
+     * Create Authorization using project-owned aclpolicies
+     * @param projectName name of the project
+     * @return authorization
+     */
+    public Authorization getProjectAuthorization(String projectName) {
+        //TODO: limit ruleset to project?
+        log.debug("getProjectAuthorization for ${projectName}")
+        def paths = listProjectDirPaths(projectName, "etc/acls", ".*aclpolicy")
+        log.debug("getProjectAuthorization. paths= ${paths}")
+        def sources= paths.collect{path->
+            def file = getProjectFileResource(projectName,path).contents
+            YamlProvider.sourceFromStream("[${projectName}]${path}",file.inputStream,file.modificationTime)
+        }
+        return AclsUtil.createAuthorization(new Policies(PoliciesCache.fromSources(sources)))
     }
 
     /**
