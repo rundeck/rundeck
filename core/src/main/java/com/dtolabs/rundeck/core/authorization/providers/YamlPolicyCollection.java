@@ -70,7 +70,11 @@ public class YamlPolicyCollection implements PolicyCollection {
                     );
                 }
                 try {
-                    YamlPolicy yamlPolicy = new YamlPolicy((Map) yamlDoc, source.getIdentity(), index);
+                    YamlPolicy yamlPolicy = new YamlPolicy(
+                            (Map) yamlDoc,
+                            source.getIdentity() + "[" + index + "]",
+                            index
+                    );
                     all.add(yamlPolicy);
                     ruleSet.addAll(yamlPolicy.getRuleSet().getRules());
                 } catch (YamlPolicy.AclPolicySyntaxException e) {

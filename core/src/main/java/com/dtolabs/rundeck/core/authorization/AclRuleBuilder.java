@@ -51,6 +51,10 @@ public class AclRuleBuilder {
         return new AclRuleBuilder();
     }
 
+    public AclRuleBuilder sourceIdentityAppend(final String sourceIdentity) {
+        this.sourceIdentity = null != this.sourceIdentity ? this.sourceIdentity + sourceIdentity : sourceIdentity;
+        return this;
+    }
     public AclRuleBuilder sourceIdentity(final String sourceIdentity) {
         this.sourceIdentity = sourceIdentity;
         return this;

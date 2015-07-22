@@ -82,9 +82,11 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
         if(null==environment){
             return;
         }
+        String description = policyInput.containsKey("description")?policyInput.get("description").toString():null;
         AclRuleBuilder envProto = AclRuleBuilder.builder().environment(
                 environment.toBasic()
-        );
+        ).description(description).sourceIdentity(sourceIdent);
+
         for (String username : usernames) {
             AclRuleBuilder ruleBuilder = AclRuleBuilder.builder(envProto).username(username);
             rules.addAll(aclContext.createRules(ruleBuilder));
@@ -589,7 +591,7 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
             final HashSet<String> denyActions = ruleSection.containsKey(DENY_ACTIONS)
                                                 ? getDenyActions()
                                                 : new HashSet<String>();
-            ruleBuilder.sourceIdentity( policy.sourceIdent + "[rule: " + index + "]")
+            ruleBuilder.sourceIdentityAppend("[rule: " + index + "]")
                        .allowActions(allowActions)
                        .denyActions(denyActions);
 
@@ -988,7 +990,12 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
             HashSet<AclRule> aclRules = new HashSet<>();
             for (Map.Entry<String, AclContext> stringAclContextEntry : typeContexts.entrySet()) {
                 AclRuleBuilder builder = AclRuleBuilder.builder(prototype);
-                builder.resourceType(stringAclContextEntry.getKey());
+
+                String key = stringAclContextEntry.getKey();
+                builder.sourceIdentityAppend(
+                        "[type:" + key + "]"
+                );
+                builder.resourceType(key);
                 AclContext value = stringAclContextEntry.getValue();
                 aclRules.addAll(value.createRules(builder));
             }

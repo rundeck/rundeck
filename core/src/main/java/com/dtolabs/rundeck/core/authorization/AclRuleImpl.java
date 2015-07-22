@@ -54,7 +54,6 @@ public class AclRuleImpl implements AclRule {
 
     @Override
     public String getSourceIdentity() {
-        sourceIdentity = null;
         return sourceIdentity;
     }
 
