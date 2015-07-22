@@ -4,7 +4,9 @@ import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.authorization.MultiAuthorization
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization
@@ -592,6 +594,21 @@ class FrameworkService implements ApplicationContextAware {
             throw new RuntimeException("getAuthContextForSubject: Cannot get AuthContext without subject")
         }
         return new SubjectAuthContext(subject, rundeckPolicyAuthorization)
+    }
+    public AuthContext getAuthContextForSubjectAndProject(Subject subject, String project) {
+        if (!subject) {
+            throw new RuntimeException("getAuthContextForSubjectAndProject: Cannot get AuthContext without subject")
+        }
+        if(!project){
+            throw new RuntimeException("getAuthContextForSubjectAndProject: Cannot get AuthContext without project")
+        }
+
+        def project1 = getFrameworkProject(project)
+
+        def projectAuth = project1.getProjectAuthorization()
+        def authorization = new MultiAuthorization(rundeckPolicyAuthorization, projectAuth)
+        log.debug("getAuthContextForSubjectAndProject ${project}, authorization: ${authorization}, project auth ${projectAuth}")
+        return new SubjectAuthContext(subject, authorization)
     }
     public AuthContext getAuthContextForUserAndRoles(String user, List rolelist) {
         if (!(null != user && null != rolelist)) {
