@@ -1,7 +1,12 @@
 package com.dtolabs.rundeck.core.authorization;
 
+import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
+
+import java.net.URI;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * AuthorizationUtil provides utility methods for constructing authorization resource maps.
@@ -114,5 +119,29 @@ public class AuthorizationUtil {
         authResource.put(TYPE_FIELD, GENERIC_RESOURCE_TYPE_NAME);
         authResource.put(TYPE_KIND_FIELD, kind);
         return authResource;
+    }
+
+    /**
+     * Create a project context singleton attribute set
+     * @param projectName project name
+     * @return attribute set
+     */
+    public static Set<Attribute> projectContext(String projectName) {
+        return context("project", projectName);
+    }
+
+    /**
+     * Create a singleton context attribute set
+     * @param key context key
+     * @param value context value
+     * @return attribute set
+     */
+    public static Set<Attribute> context(String key, String value){
+        return Collections.singleton(
+                new Attribute(
+                        URI.create(EnvironmentalContext.URI_BASE + key),
+                        value
+                )
+        );
     }
 }

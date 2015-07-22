@@ -8,7 +8,8 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 /**
- * Created by greg on 7/17/15.
+ * Basic implementation matches value for equality or as a regular expression if specified.
+ * Matches only a single Attribute, and will not match for multiple inputs
  */
 public class BasicEnvironmentalContext implements EnvironmentalContext {
     String key;
@@ -25,16 +26,39 @@ public class BasicEnvironmentalContext implements EnvironmentalContext {
         );
     }
 
+    /**
+     * @param key   key
+     * @param value value to check for equality and regular expression if it is a valid regular expression
+     *
+     * @return context with possible regular expression value match
+     */
     public static BasicEnvironmentalContext patternContextFor(String key, String value) {
-        final Pattern pattern;
+        if (null == key) {
+            throw new IllegalArgumentException("key cannot be null");
+        }
+        if (null == value) {
+            throw new IllegalArgumentException("value cannot be null");
+        }
         try {
             return new BasicEnvironmentalContext(key, value, Pattern.compile(value));
-        } catch (PatternSyntaxException e) {
+        } catch (PatternSyntaxException ignored) {
         }
         return new BasicEnvironmentalContext(key, value, null);
     }
 
+    /**
+     * @param key   key
+     * @param value value to use for equality match
+     *
+     * @return context with equality matching
+     */
     public static BasicEnvironmentalContext staticContextFor(String key, String value) {
+        if (null == key) {
+            throw new IllegalArgumentException("key cannot be null");
+        }
+        if (null == value) {
+            throw new IllegalArgumentException("value cannot be null");
+        }
         return new BasicEnvironmentalContext(key, value, null);
     }
 
@@ -57,7 +81,17 @@ public class BasicEnvironmentalContext implements EnvironmentalContext {
     }
 
     @Override
+    public String toString() {
+        return "BasicEnvironmentalContext{" +
+               "key='" + key + '\'' +
+               ", value='" + value + '\'' +
+               ", valuePattern=" + valuePattern +
+               ", keyUri=" + keyUri +
+               '}';
+    }
+
+    @Override
     public boolean isValid() {
-        return false;
+        return true;
     }
 }
