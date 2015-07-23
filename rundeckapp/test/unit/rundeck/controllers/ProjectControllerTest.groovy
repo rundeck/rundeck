@@ -1191,8 +1191,8 @@ class ProjectControllerTest {
             getRundeckFramework{->
                 null
             }
-            getAuthContextForSubject{subj->
-
+            getAuthContextForSubjectAndProject{subj,proj->
+                null
             }
         }
     }

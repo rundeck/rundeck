@@ -161,7 +161,7 @@ class FrameworkController extends ControllerBase {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
             return renderErrorView([:])
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         if (unauthorizedResponse(
                 frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
                         AuthConstants.ACTION_RUN, params.project),
@@ -247,7 +247,6 @@ class FrameworkController extends ControllerBase {
         }
 
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if(query.nodeFilterIsEmpty()){
             if(params.formInput=='true' && 'true'!=params.defaultLocalNode){
@@ -256,6 +255,7 @@ class FrameworkController extends ControllerBase {
                 query.nodeIncludeName = framework.getFrameworkNodeName()
             }
         }
+
         if(query && !query.project && params.project){
             query.project= params.project
         }
@@ -266,6 +266,7 @@ class FrameworkController extends ControllerBase {
                 total:0,
                 query:query]
         }
+        AuthContext authContext=frameworkService.getAuthContextForSubjectAndProject(session.subject,query.project)
         if (unauthorizedResponse(
                 frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
                         [AuthConstants.ACTION_READ], query.project),
@@ -445,7 +446,7 @@ class FrameworkController extends ControllerBase {
         }
 
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         if (unauthorizedResponse(
                 frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
                         [AuthConstants.ACTION_READ],
@@ -509,7 +510,7 @@ class FrameworkController extends ControllerBase {
             return [success: false, message: "project parameter is required", invalid: true]
         }
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         if(!frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_NODE,
                 AuthConstants.ACTION_REFRESH,params.project)){
             def msg = "user: ${session.user} UNAUTHORIZED for performNodeReload"
@@ -1687,12 +1688,12 @@ class FrameworkController extends ControllerBase {
             return
         }
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!params.project) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
 
         }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         def exists = frameworkService.existsFrameworkProject(params.project)
         if (!exists) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
@@ -1824,7 +1825,6 @@ class FrameworkController extends ControllerBase {
             return
         }
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(!params.project){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
@@ -1838,6 +1838,7 @@ class FrameworkController extends ControllerBase {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project',params.project]])
         }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
                 [AuthConstants.ACTION_READ], params.project)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
@@ -1876,12 +1877,12 @@ class FrameworkController extends ControllerBase {
                     code: 'api.error.invalid.request', args: [query.errors.allErrors.collect { g.message(error: it) }.join("; ")]])
         }
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(!params.project){
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
 
         }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         def exists=frameworkService.existsFrameworkProject(params.project)
         if(!exists){
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,

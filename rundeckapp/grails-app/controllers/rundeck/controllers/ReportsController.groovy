@@ -47,7 +47,7 @@ class ReportsController extends ControllerBase{
         }
         //find previous executions
         def usedFilter
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if(unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil
                 .resourceType('event'), [AuthConstants.ACTION_READ],
@@ -133,7 +133,7 @@ class ReportsController extends ControllerBase{
     def since = { ExecQuery query->
        //find previous executions
         def usedFilter
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil
                 .resourceType('event'), [AuthConstants.ACTION_READ],
@@ -233,7 +233,7 @@ class ReportsController extends ControllerBase{
         }
     }
     def eventsFragment={ ExecQuery query ->
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil
                 .resourceType('event'), [AuthConstants.ACTION_READ],
@@ -245,7 +245,7 @@ class ReportsController extends ControllerBase{
         return results
     }
     def eventsAjax={ ExecQuery query ->
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
 
         if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil
@@ -293,7 +293,7 @@ class ReportsController extends ControllerBase{
         render(contentType: 'application/json', text: results as JSON)
     }
     def jobsFragment={ ExecQuery query ->
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil
                 .resourceType('event'), [AuthConstants.ACTION_READ],
@@ -419,12 +419,12 @@ class ReportsController extends ControllerBase{
         Framework framework = frameworkService.getRundeckFramework()
 
         def exists=frameworkService.existsFrameworkProject(params.project)
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(!exists){
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project', params.project]])
 
         }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_EVENT,
                 [AuthConstants.ACTION_READ], params.project)) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,

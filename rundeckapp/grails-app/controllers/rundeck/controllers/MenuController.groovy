@@ -230,7 +230,7 @@ class MenuController extends ControllerBase{
     
     def jobsFragment = {ScheduledExecutionQuery query ->
         long start=System.currentTimeMillis()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext
         def usedFilter=null
         
         if(params.filterName){
@@ -252,8 +252,11 @@ class MenuController extends ControllerBase{
             query=new ScheduledExecutionQuery()
             usedFilter=null
         }
-        if(query && !query.projFilter && params.project){
-            query.projFilter= params.project
+        if(query && !query.projFilter && params.project) {
+            query.projFilter = params.project
+            authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+        } else {
+            authContext = frameworkService.getAuthContextForSubject(session.subject)
         }
         def results=listWorkflows(query,authContext,session.user)
         if(usedFilter){
@@ -271,13 +274,16 @@ class MenuController extends ControllerBase{
     def jobsPicker = {ScheduledExecutionQuery query ->
 
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext
         def usedFilter=null
         if(!query){
             query = new ScheduledExecutionQuery()
         }
-        if(query && !query.projFilter && params.project){
-            query.projFilter= params.project
+        if(query && !query.projFilter && params.project) {
+            query.projFilter = params.project
+            authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+        } else {
+            authContext = frameworkService.getAuthContextForSubject(session.subject)
         }
         def results=listWorkflows(query,authContext,session.user)
         if(usedFilter){

@@ -47,7 +47,7 @@ class ProjectController extends ControllerBase{
             return renderErrorView("Project parameter is required")
         }
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
             return
@@ -95,7 +95,7 @@ class ProjectController extends ControllerBase{
             return renderErrorView("Project parameter is required")
         }
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
             return
@@ -196,7 +196,7 @@ class ProjectController extends ControllerBase{
             return renderErrorView("Project parameter is required")
         }
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
             return
@@ -1231,7 +1231,7 @@ class ProjectController extends ControllerBase{
         }
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'], 'xml')
         def framework = frameworkService.rundeckFramework
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         //uploaded file
         def stream = request.getInputStream()
         def len = request.getContentLength()

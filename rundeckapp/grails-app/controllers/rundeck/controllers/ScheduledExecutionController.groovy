@@ -148,7 +148,7 @@ class ScheduledExecutionController  extends ControllerBase{
     def list = {redirect(action:index,params:params) }
 
     def groupTreeFragment = {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         def tree = scheduledExecutionService.getGroupTree(params.project,authContext)
         render(template:"/menu/groupTree",model:[jobgroups:tree,jscallback:params.jscallback])
     }
@@ -194,11 +194,11 @@ class ScheduledExecutionController  extends ControllerBase{
      * used by jobs page, displays actions for the job as li's
      */
     def actionMenuFragment(){
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
         if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
             return
         }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (!unauthorizedResponse(
                 frameworkService.authorizeProjectJobAll(
                         authContext,
@@ -225,11 +225,11 @@ class ScheduledExecutionController  extends ControllerBase{
         log.debug("ScheduledExecutionController: show : params: " + params)
         def crontab = [:]
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if(notFoundResponse(scheduledExecution,'Job',params.id)){
             return
         }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if(unauthorizedResponse(frameworkService.authorizeProjectJobAll(authContext, scheduledExecution,
                 [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ,'Job',params.id)){
             return
@@ -261,12 +261,12 @@ class ScheduledExecutionController  extends ControllerBase{
         log.debug("ScheduledExecutionController: show : params: " + params)
         def crontab = [:]
         def framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
 
         if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
             return
         }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (unauthorizedResponse(frameworkService.authorizeProjectJobAll(authContext, scheduledExecution,
                 [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ, 'Job', params.id)) {
             return
@@ -356,7 +356,7 @@ class ScheduledExecutionController  extends ControllerBase{
         if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (unauthorizedResponse(frameworkService.authorizeProjectJobAll(authContext, scheduledExecution,
                 [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ, 'Job', params.id)) {
             return
@@ -801,7 +801,32 @@ class ScheduledExecutionController  extends ControllerBase{
             return renderErrorView(g.message(code: 'api.error.parameter.required', args: ['id']))
         }
         def jobid=params.id
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
+
+        if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeProjectResource(
+                        authContext,
+                        AuthConstants.RESOURCE_TYPE_JOB,
+                        AuthConstants.ACTION_DELETE,
+                        scheduledExecution.project
+                ) && frameworkService.authorizeProjectJobAll(
+                        authContext,
+                        scheduledExecution,
+                        [AuthConstants.ACTION_DELETE],
+                        scheduledExecution.project
+                ),
+                AuthConstants.ACTION_DELETE,
+                'Job',
+                params.id
+        )) {
+            return
+        }
         if(request.method=='POST') {
             withForm {
                 def result = scheduledExecutionService.deleteScheduledExecutionById(
@@ -824,30 +849,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 return renderErrorView([:])
             }
         }else{
-            def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
-
-            if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
-                return
-            }
-            if (unauthorizedResponse(
-                    frameworkService.authorizeProjectResource(
-                            authContext,
-                            AuthConstants.RESOURCE_TYPE_JOB,
-                            AuthConstants.ACTION_DELETE,
-                            scheduledExecution.project
-                    ) && frameworkService.authorizeProjectJobAll(
-                            authContext,
-                            scheduledExecution,
-                            [AuthConstants.ACTION_DELETE],
-                            scheduledExecution.project
-                    ),
-                    AuthConstants.ACTION_DELETE,
-                    'Job',
-                    params.id
-            )) {
-                return
-            }
-            [scheduledExecution: scheduledExecution]
+            return [scheduledExecution: scheduledExecution]
         }
 
     }
@@ -942,7 +944,7 @@ class ScheduledExecutionController  extends ControllerBase{
             jobset*.project = params.project
         }
         def Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_JOB,
                 [AuthConstants.ACTION_CREATE], jobset[0].project)) {
@@ -994,7 +996,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         def Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE],
                 scheduledExecution.project)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
@@ -1156,14 +1158,12 @@ class ScheduledExecutionController  extends ControllerBase{
     def edit = {
         log.debug("ScheduledExecutionController: edit : params: " + params)
         def scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
-        Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        def crontab = [:]
         if(!scheduledExecution) {
             flash.message = "ScheduledExecution not found with id ${params.id}"
             return redirect(action:index, params:params)
         }
 
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (unauthorizedResponse(frameworkService.authorizeProjectJobAll(authContext, scheduledExecution,
                 [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_READ], scheduledExecution.project),
                 AuthConstants.ACTION_UPDATE, 'Job', params.id)) {
@@ -1202,12 +1202,18 @@ class ScheduledExecutionController  extends ControllerBase{
     public def update (){
         withForm{
         Framework framework=frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def changeinfo=[method:'update',change:'modify',user:session.user]
 
         //pass session-stored edit state in params map
         transferSessionEditState(session, params,params.id)
         def roleList=request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
+        def found = scheduledExecutionService.getByIDorUUID( params.id )
+        if(!found) {
+            flash.message = "ScheduledExecution not found with id ${params.id}"
+            return redirect(action:index, params:params)
+        }
+
+            AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,found.project)
         def result = scheduledExecutionService._doupdate(params,session.user, roleList, framework, authContext, changeinfo)
         def scheduledExecution=result.scheduledExecution
         def success = result.success
@@ -1264,7 +1270,12 @@ class ScheduledExecutionController  extends ControllerBase{
     }
 
     def copy = {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
+
+        if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         //authorize
         if(unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext,
                 AuthConstants.RESOURCE_TYPE_JOB, [AuthConstants.ACTION_CREATE], params.project),
@@ -1275,11 +1286,6 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         log.debug("ScheduledExecutionController: create : params: " + params)
 
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
-
-        if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
-            return
-        }
         if (unauthorizedResponse(frameworkService.authorizeProjectJobAll(authContext, scheduledExecution,
                 [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ, 'Job', params.id)) {
             return
@@ -1327,18 +1333,25 @@ class ScheduledExecutionController  extends ControllerBase{
      */
     def createFromExecution={
 
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-
-        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext,
-                AuthConstants.RESOURCE_TYPE_JOB, [AuthConstants.ACTION_CREATE],
-                params.project), AuthConstants.ACTION_CREATE, 'New Job')) {
-            return
-        }
-
         log.debug("ScheduledExecutionController: create : params: " + params)
         Execution execution = Execution.get(params.executionId)
 
         if (notFoundResponse(execution, 'Execution', params.executionId)) {
+            return
+        }
+
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,execution.project)
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeProjectResourceAll(
+                        authContext,
+                        AuthConstants.RESOURCE_TYPE_JOB,
+                        [AuthConstants.ACTION_CREATE],
+                        params.project
+                ),
+                AuthConstants.ACTION_CREATE,
+                'New Job'
+        )) {
             return
         }
         if (unauthorizedResponse(frameworkService.authorizeProjectExecutionAll(authContext, execution,
@@ -1375,7 +1388,7 @@ class ScheduledExecutionController  extends ControllerBase{
     }
     def create = {
 
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         //authorize
         if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext,
                 AuthConstants.RESOURCE_TYPE_JOB, [AuthConstants.ACTION_CREATE],
@@ -1503,7 +1516,7 @@ class ScheduledExecutionController  extends ControllerBase{
     }
     private def runAdhoc(ApiRunAdhocRequest runAdhocRequest){
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,runAdhocRequest.project)
         params["user"] = (session?.user) ? session.user : "anonymous"
         params.request = request
         params.jobName='Temporary_Job'
@@ -1604,7 +1617,7 @@ class ScheduledExecutionController  extends ControllerBase{
     def save = {
         withForm{
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         def changeinfo=[user:session.user,change:'create',method:'save']
 
         //pass session-stored edit state in params map
@@ -1652,7 +1665,7 @@ class ScheduledExecutionController  extends ControllerBase{
         log.debug("ScheduledExecutionController: upload " + params)
         withForm{
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         
         def fileformat = params.fileformat ?: 'xml'
         def parseresult
@@ -1993,8 +2006,8 @@ class ScheduledExecutionController  extends ControllerBase{
             request.errors = [runParams, extra].find { it.hasErrors() }.errors
         }
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if(unauthorizedResponse(frameworkService.authorizeProjectJobAll(authContext, scheduledExecution,
                 [AuthConstants.ACTION_RUN], scheduledExecution.project), AuthConstants.ACTION_RUN,
                 'Job',params.id,true
@@ -2089,12 +2102,12 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
     private Map runJob () {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (!scheduledExecution) {
 //            response.setStatus (404)
             return [error:"No Job found for id: " + params.id,code:404]
         }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
             scheduledExecution.project)) {
             return [success:false,failed:true,error:'unauthorized',message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
@@ -2335,7 +2348,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def changeinfo = [user: session.user,method:'apiJobsImport']
         def Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         def option = params.uuidOption
         if (request.api_version < ApiRequestFilters.V9) {
@@ -2379,7 +2392,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
             return apiService.renderErrorXml(response,[status:HttpServletResponse.SC_FORBIDDEN,
                     code:'api.error.item.unauthorized',args:['Read','Job ID',params.id]])
@@ -2425,7 +2438,7 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', jobid])) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
 
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
             scheduledExecution.project)) {
@@ -2514,7 +2527,7 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_DELETE],
                 scheduledExecution.project)) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
@@ -2559,7 +2572,7 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (!frameworkService.authorizeApplicationResourceAny(authContext,
                 frameworkService.authResourceForProject(scheduledExecution.project),
                 [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN])) {
@@ -2841,7 +2854,7 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
 
         if (!frameworkService.authorizeProjectJobAll(
                 authContext,
