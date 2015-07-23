@@ -595,6 +595,24 @@ class FrameworkService implements ApplicationContextAware {
         }
         return new SubjectAuthContext(subject, rundeckPolicyAuthorization)
     }
+    /**
+     * Extend a generic auth context, with project-specific authorization
+     * @param orig original auth context
+     * @param project project name
+     * @return new AuthContext with project-specific authorization added
+     */
+    public AuthContext getAuthContextWithProject(AuthContext orig, String project) {
+        if (!orig) {
+            throw new RuntimeException("getAuthContextWithProject: Cannot get AuthContext without orig")
+        }
+        if(!project){
+            throw new RuntimeException("getAuthContextWithProject: Cannot get AuthContext without project")
+        }
+        def project1 = getFrameworkProject(project)
+        def projectAuth = project1.getProjectAuthorization()
+        log.debug("getAuthContextWithProject ${project}, orig: ${orig}, project auth ${projectAuth}")
+        return orig.combineWith(projectAuth)
+    }
     public AuthContext getAuthContextForSubjectAndProject(Subject subject, String project) {
         if (!subject) {
             throw new RuntimeException("getAuthContextForSubjectAndProject: Cannot get AuthContext without subject")

@@ -1,9 +1,6 @@
 package com.dtolabs.rundeck.core.storage;
 
-import com.dtolabs.rundeck.core.authorization.Attribute;
-import com.dtolabs.rundeck.core.authorization.AuthContext;
-import com.dtolabs.rundeck.core.authorization.Decision;
-import com.dtolabs.rundeck.core.authorization.Explanation;
+import com.dtolabs.rundeck.core.authorization.*;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import org.junit.Assert;
@@ -39,6 +36,11 @@ public class AuthRundeckStorageTreeTest {
         Set<Map<String, String>> resources;
         Set<String> actions;
         Set<Attribute> environments;
+
+        @Override
+        public AuthContext combineWith(final Authorization authorization) {
+            return null;
+        }
 
         @Override
         public Decision evaluate(Map<String, String> resource, String action, Set<Attribute> environment) {

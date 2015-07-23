@@ -491,13 +491,14 @@ class ScheduledExecutionService implements ApplicationContextAware{
     /**
      * Attempt to delete a job given an id
      * @param jobid
-     * @param framework
+     * @param original auth context
+     * @param deleteBulkExecutions true to delete all executions of the job
      * @param user user requesting delete action
-     * @param callingAction name of action/method requesting delete
+     * @param callingAction name of action/method requesting delete for logging
      *
-     * @return
+     * @return map [error: [message: String, errorCode: String, id: String, job: ScheduledExecution?], success:boolean]
      */
-    def deleteScheduledExecutionById(jobid, AuthContext authContext, boolean deleteExecutions, String user,
+    def deleteScheduledExecutionById(jobid, AuthContext original, boolean deleteExecutions, String user,
     String callingAction){
 
         def ScheduledExecution scheduledExecution = getByIDorUUID(jobid)
@@ -509,9 +510,21 @@ class ScheduledExecutionService implements ApplicationContextAware{
             ]
             return [error: err,success: false]
         }
-        if (!frameworkService.authorizeProjectResource (authContext, AuthConstants.RESOURCE_TYPE_JOB,
-                AuthConstants.ACTION_DELETE, scheduledExecution.project)
-            || !frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_DELETE], scheduledExecution.project)) {
+
+        //extend auth context using project-specific authorization
+        AuthContext authContext = frameworkService.getAuthContextWithProject(original, scheduledExecution.project)
+
+        if (!frameworkService.authorizeProjectResource(
+                authContext,
+                AuthConstants.RESOURCE_TYPE_JOB,
+                AuthConstants.ACTION_DELETE,
+                scheduledExecution.project
+        ) || !frameworkService.authorizeProjectJobAll(
+                authContext,
+                scheduledExecution,
+                [AuthConstants.ACTION_DELETE],
+                scheduledExecution.project
+        )) {
             def err = [
                     message: lookupMessage('api.error.item.unauthorized', ['Delete', 'Job ID', scheduledExecution.extid] as Object[]),
                     errorCode: 'unauthorized',
