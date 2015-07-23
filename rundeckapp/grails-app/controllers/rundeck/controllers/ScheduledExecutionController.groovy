@@ -1475,54 +1475,6 @@ class ScheduledExecutionController  extends ControllerBase{
     }
 
     /**
-     * @deprecated not used, should be removed
-     * @return
-     */
-    private def saveAndExec(){
-        log.debug("ScheduledExecutionController: saveAndExec : params: " + params)
-        def changeinfo = [user: session.user, change: 'create', method: 'saveAndExec']
-        Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext,
-                AuthConstants.RESOURCE_TYPE_JOB, [AuthConstants.ACTION_CREATE],
-                params.project),
-                AuthConstants.ACTION_CREATE, 'New Job')) {
-            return [success:false]
-        }
-
-        //pass session-stored edit state in params map
-        transferSessionEditState(session,params,'_new')
-        String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-        def result = scheduledExecutionService._dosave(params,session.user,roleList,framework, authContext, changeinfo)
-        def scheduledExecution = result.scheduledExecution
-        if(result.success && scheduledExecution && scheduledExecution.id){
-
-            clearEditSession()
-            params.id=scheduledExecution.extid
-            scheduledExecutionService.logJobChange(changeinfo, scheduledExecution.properties)
-            if(!scheduledExecution.scheduled){
-                return redirect(action:'execute',id:scheduledExecution.extid)
-            }else{
-                return redirect(action:'show',id:scheduledExecution.extid)
-            }
-        }else{
-
-            if(scheduledExecution){
-                scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
-            }
-            flash.message=g.message(code:'ScheduledExecutionController.save.failed')
-
-            def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
-            def stepTypes = frameworkService.getStepPluginDescriptions()
-            return render(view:'create',model:[scheduledExecution:scheduledExecution,params:params,
-                    projects: frameworkService.projects(authContext), nodeStepDescriptions: nodeStepTypes,
-                    stepDescriptions: stepTypes,
-                    notificationPlugins: notificationService.listNotificationPlugins(),
-                    notificationValidation: params['notificationValidation']])
-        }
-    }
-
-    /**
      * execute the job defined via input parameters, but do not store it.
      */
     def runAdhocInline(ApiRunAdhocRequest apiRunAdhocRequest){
