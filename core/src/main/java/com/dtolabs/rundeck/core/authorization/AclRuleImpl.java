@@ -109,19 +109,20 @@ public class AclRuleImpl implements AclRule {
 
     @Override
     public String toString() {
-        return "AclRuleImpl{" +
-               "sourceIdentity='" + sourceIdentity + '\'' +
-               ", description='" + description + '\'' +
-               ", resource=" + resource +
-               ", resourceType='" + resourceType + '\'' +
-               ", regexMatch=" + regexMatch +
-               ", containsMatch=" + containsMatch +
-               ", equalsMatch=" + equalsMatch +
-               ", username='" + username + '\'' +
-               ", group='" + group + '\'' +
-               ", allowActions=" + allowActions +
-               ", environment=" + environment +
-               ", denyActions=" + denyActions +
+        return "ACLRule<"  + sourceIdentity + ">{" +
+               "'" + description + '\'' +
+               " context=" + environment +
+               " type='" + resourceType + '\'' +
+               (regexMatch?" match " :"") +
+               (containsMatch?" contains " :"") +
+               (equalsMatch?" equals " :"") +
+               (null!=resource? ", resource=" + resource : "") +
+               " for: {"+
+               (null!=username?" username='" + username + '\'':"") +
+               (null!=group?" group='" + group + '\'':"") +
+               "}" +
+               (allowActions!=null&& allowActions.size()>0? " allow=" + allowActions : "") +
+               ( denyActions!=null && denyActions.size()>0 ?" deny=" + denyActions : "" ) +
                '}';
     }
 

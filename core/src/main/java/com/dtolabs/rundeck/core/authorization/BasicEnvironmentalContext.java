@@ -82,12 +82,7 @@ public class BasicEnvironmentalContext implements EnvironmentalContext {
 
     @Override
     public String toString() {
-        return "BasicEnvironmentalContext{" +
-               "key='" + key + '\'' +
-               ", value='" + value + '\'' +
-               ", valuePattern=" + valuePattern +
-               ", keyUri=" + keyUri +
-               '}';
+        return "{" + key + "='" + value + "'}";
     }
 
     @Override
