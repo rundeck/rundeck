@@ -686,7 +686,7 @@ class ProjectController extends ControllerBase{
                     format:respFormat
             ])
         }
-        def projectFilePath = "etc/acls/${params.path?:''}"
+        def projectFilePath = "acls/${params.path?:''}"
         log.debug("apiProjectAcls, path: ${params.path}, projectfile: ${projectFilePath}")
         switch (request.method) {
             case 'POST':
@@ -694,7 +694,7 @@ class ProjectController extends ControllerBase{
                 apiProjectAclsPutResource(project,projectFilePath)
                 break
             case 'GET':
-                apiProjectAclsGetResource(project,projectFilePath,'etc/acls/')
+                apiProjectAclsGetResource(project,projectFilePath,'acls/')
                 break
             case 'DELETE':
                 apiProjectAclsDeleteResource(project,projectFilePath)

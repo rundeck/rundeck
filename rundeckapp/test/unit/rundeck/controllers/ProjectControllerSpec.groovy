@@ -491,6 +491,8 @@ class ProjectControllerSpec extends Specification{
         setup:
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('test') >> true
+            1 * getAuthContextForSubject(_) >> null
+            1 * authResourceForProject('test') >> null
             1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             1 * getFrameworkProject('test') >> Stub(IRundeckProject){
                 existsFileResource(_) >> false
@@ -519,10 +521,12 @@ class ProjectControllerSpec extends Specification{
         setup:
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('test') >> true
+            1 * getAuthContextForSubject(_) >> null
+            1 * authResourceForProject('test') >> null
             1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             1 * getFrameworkProject('test') >> Mock(IRundeckProject){
                 1 * existsFileResource(_) >> true
-                1 * loadFileResource('etc/acls/blah.aclpolicy',_) >> {args->
+                1 * loadFileResource('acls/blah.aclpolicy',_) >> {args->
                     args[1].write('blah'.bytes)
                     4
                 }
@@ -547,10 +551,12 @@ class ProjectControllerSpec extends Specification{
         setup:
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('test') >> true
+            1 * getAuthContextForSubject(_) >> null
+            1 * authResourceForProject('test') >> null
             1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             1 * getFrameworkProject('test') >> Mock(IRundeckProject){
                 1 * existsFileResource(_) >> true
-                1 * loadFileResource('etc/acls/blah.aclpolicy',_) >> {args->
+                1 * loadFileResource('acls/blah.aclpolicy',_) >> {args->
                     args[1].write('blah'.bytes)
                     4
                 }
@@ -577,10 +583,12 @@ class ProjectControllerSpec extends Specification{
         setup:
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('test') >> true
+            1 * getAuthContextForSubject(_) >> null
+            1 * authResourceForProject('test') >> null
             1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             1 * getFrameworkProject('test') >> Mock(IRundeckProject){
                 1 * existsFileResource(_) >> true
-                1 * loadFileResource('etc/acls/blah.aclpolicy',_) >> {args->
+                1 * loadFileResource('acls/blah.aclpolicy',_) >> {args->
                     args[1].write('blah'.bytes)
                     4
                 }
@@ -610,12 +618,14 @@ class ProjectControllerSpec extends Specification{
         setup:
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('test') >> true
+            1 * getAuthContextForSubject(_) >> null
+            1 * authResourceForProject('test') >> null
             1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             1 * getFrameworkProject('test') >> Mock(IRundeckProject){
                 1 * existsFileResource(_) >> false
-                1 * existsDirResource('etc/acls/') >> true
-                1 * listDirPaths('etc/acls/') >> { args ->
-                    ['etc/acls/test','etc/acls/blah.aclpolicy','etc/acls/adir/']
+                1 * existsDirResource('acls/') >> true
+                1 * listDirPaths('acls/') >> { args ->
+                    ['acls/test','acls/blah.aclpolicy','acls/adir/']
                 }
                 getName()>>'test'
             }
@@ -657,12 +667,14 @@ class ProjectControllerSpec extends Specification{
         setup:
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('test') >> true
+            1 * getAuthContextForSubject(_) >> null
+            1 * authResourceForProject('test') >> null
             1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
             1 * getFrameworkProject('test') >> Mock(IRundeckProject){
                 1 * existsFileResource(_) >> false
-                1 * existsDirResource('etc/acls/') >> true
-                1 * listDirPaths('etc/acls/') >> { args ->
-                    ['etc/acls/test','etc/acls/blah.aclpolicy','etc/acls/adir/']
+                1 * existsDirResource('acls/') >> true
+                1 * listDirPaths('acls/') >> { args ->
+                    ['acls/test','acls/blah.aclpolicy','acls/adir/']
                 }
                 getName()>>'test'
             }
@@ -694,6 +706,49 @@ class ProjectControllerSpec extends Specification{
         response.xml.contents.resource[1].'@path'.text()=='adir/'
         response.xml.contents.resource[1].'@type'.text()=='directory'
         response.xml.contents.resource[1].'@href'.text()=='http://localhost:8080/api/14/project/test/acl/adir/'
+
+    }
+    def "project acls POST text"(){
+        setup:
+        controller.frameworkService=Mock(FrameworkService){
+            1 * existsFrameworkProject('test') >> true
+            1 * getAuthContextForSubject(_) >> null
+            1 * authResourceForProject('test') >> null
+            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                1 * storeFileResource('acls/test.aclpolicy',_) >> {args->
+                    0
+                }
+                1 * loadFileResource('acls/test.aclpolicy',_) >> {args->
+                    args[1].write('blah'.bytes)
+                    4
+                }
+
+                getName()>>'test'
+            }
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * requireVersion(_,_,11) >> true
+            1 * extractResponseFormat(_,_,_,_) >> 'json'
+        }
+        when:
+        params.path='test.aclpolicy'
+        params.project="test"
+        response.format='json'
+        request.method='POST'
+        request.contentType='application/yaml'
+        request.content=('{ description: \'\', \n' +
+                'context: { project: \'test\' }, \n' +
+                'by: { username: \'test\' }, \n' +
+                'for: { resource: [ { allow: \'x\' } ] } }').bytes
+        def result=controller.apiProjectAcls()
+
+        then:
+        response.status==200
+        response.contentType.split(';').contains('application/json')
+        response.json==[contents:'blah']
+
 
     }
 
