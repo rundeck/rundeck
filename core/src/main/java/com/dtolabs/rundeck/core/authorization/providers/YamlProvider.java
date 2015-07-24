@@ -1,10 +1,12 @@
 package com.dtolabs.rundeck.core.authorization.providers;
 
+import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
 import java.util.Date;
+import java.util.Set;
 
 /**
  * Created by greg on 7/17/15.
@@ -21,6 +23,22 @@ public class YamlProvider {
      */
     public static YamlPolicyCollection policiesFromSource(final YamlSource source) throws IOException {
         return new YamlPolicyCollection(source);
+    }
+
+    /**
+     * Load policies from a source
+     *
+     * @param source source
+     * @param forcedContext Context to require for all policies parsed
+     *
+     * @return policies
+     *
+     * @throws IOException
+     */
+    public static YamlPolicyCollection policiesFromSource(final YamlSource source, final Set<Attribute> forcedContext)
+            throws IOException
+    {
+        return new YamlPolicyCollection(source, forcedContext);
     }
 
     /**

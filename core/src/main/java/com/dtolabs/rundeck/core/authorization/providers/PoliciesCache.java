@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.authorization.providers;
 
+import com.dtolabs.rundeck.core.authorization.Attribute;
 import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.parser.ParserException;
 
@@ -49,11 +50,19 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
     private Set<File> warned = new HashSet<File>();
     private Map<String, CacheItem> cache = new HashMap<>();
     private SourceProvider provider;
+    /**
+     * Context to load the polices within, invalid policies will be flagged
+     */
+    final private Set<Attribute> forcedContext;
 
     private PoliciesCache(final SourceProvider provider) {
         this.provider = provider;
+        this.forcedContext =null;
     }
-
+    private PoliciesCache(final SourceProvider provider, final Set<Attribute> forcedContext) {
+        this.provider = provider;
+        this.forcedContext = forcedContext;
+    }
     private static class CacheItem{
         PolicyCollection policyCollection;
         Long cacheTime;
@@ -72,7 +81,7 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
 
     private PolicyCollection createEntry(final YamlSource source) throws PoliciesParseException {
         try {
-            return YamlProvider.policiesFromSource(source);
+            return YamlProvider.policiesFromSource(source, forcedContext);
         } catch (ParserException e1) {
             throw new PoliciesParseException("YAML syntax error: " + e1.toString(), e1);
         }catch (Exception e1) {
@@ -128,7 +137,42 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
      * @return cache
      */
     public static PoliciesCache fromFile(File singleFile) {
-        return new PoliciesCache(new FileProvider(singleFile));
+        return fromSourceProvider(new FileProvider(singleFile));
+    }
+
+    /**
+     * Create a cache from a single file source
+     *
+     * @param singleFile file
+     *
+     * @return cache
+     */
+    public static PoliciesCache fromFile(File singleFile, Set<Attribute> forcedContext) {
+        return fromSourceProvider(new FileProvider(singleFile), forcedContext);
+    }
+
+
+    /**
+     * Create from a provider
+     * @param provider source provider
+     * @return policies cache
+     */
+    public static PoliciesCache fromSourceProvider(final SourceProvider provider) {
+        return new PoliciesCache(provider);
+    }
+
+    /**
+     * Create from a provider with a forced context
+     * @param provider source provider
+     * @param forcedContext forced context
+     * @return policies cache
+     */
+    public static PoliciesCache fromSourceProvider(
+            final SourceProvider provider,
+            final Set<Attribute> forcedContext
+    )
+    {
+        return new PoliciesCache(provider, forcedContext);
     }
 
     /**
@@ -137,7 +181,15 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
      * @return cache
      */
     public static PoliciesCache fromDir(File rootDir) {
-        return new PoliciesCache(new DirProvider(rootDir));
+        return fromSourceProvider(new DirProvider(rootDir));
+    }
+    /**
+     * Create a cache from a directory source
+     * @param rootDir base director
+     * @return cache
+     */
+    public static PoliciesCache fromDir(File rootDir, final Set<Attribute> forcedContext) {
+        return fromSourceProvider(new DirProvider(rootDir),forcedContext);
     }
     /**
      * Create a cache from cacheable sources
@@ -145,13 +197,29 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
      * @return cache
      */
     public static PoliciesCache fromSources(final Iterable<CacheableYamlSource> sources) {
-        return new PoliciesCache(
+        return fromSourceProvider(
                 new SourceProvider() {
                     @Override
                     public Iterator<CacheableYamlSource> getSourceIterator() {
                         return sources.iterator();
                     }
                 }
+        );
+    }
+    /**
+     * Create a cache from cacheable sources
+     * @param sources source
+     * @return cache
+     */
+    public static PoliciesCache fromSources(final Iterable<CacheableYamlSource> sources, final Set<Attribute> context) {
+        return fromSourceProvider(
+                new SourceProvider() {
+                    @Override
+                    public Iterator<CacheableYamlSource> getSourceIterator() {
+                        return sources.iterator();
+                    }
+                },
+                context
         );
     }
     private static class DirProvider implements SourceProvider{

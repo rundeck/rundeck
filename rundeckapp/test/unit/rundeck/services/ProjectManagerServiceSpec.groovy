@@ -765,7 +765,10 @@ class ProjectManagerServiceSpec extends Specification {
             getResource("projects/test1/acls/file1.aclpolicy") >> Stub(Resource){
                 getContents() >> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream(
-                            ('{ description: \'\', context: { application: \'rundeck\' }, by: { username: \'test\' }, for: { resource: [ { allow: \'x\' } ] } }').bytes
+                            ('{ description: \'\', \n' +
+                                    'context: { project: \'test1\' }, \n' +
+                                    'by: { username: \'test\' }, \n' +
+                                    'for: { resource: [ { allow: \'x\' } ] } }').bytes
 //                            ('asdf').bytes
                     )
                     getModificationTime() >> new Date()
@@ -792,6 +795,8 @@ class ProjectManagerServiceSpec extends Specification {
         rulea.username=='test'
         rulea.group==null
         rulea.environment!=null
+        rulea.environment.key=='project'
+        rulea.environment.value=='test1'
         rulea.sourceIdentity=='[test1]acls/file1.aclpolicy[1][type:resource][rule: 1]'
     }
 

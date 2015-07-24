@@ -4,6 +4,7 @@ import com.codahale.metrics.Gauge
 import com.codahale.metrics.MetricRegistry
 import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.Authorization
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.providers.Policies
 import com.dtolabs.rundeck.core.authorization.providers.PoliciesCache
 import com.dtolabs.rundeck.core.authorization.providers.YamlProvider
@@ -504,7 +505,8 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             def file = getProjectFileResource(projectName,path).contents
             YamlProvider.sourceFromStream("[${projectName}]${path}",file.inputStream,file.modificationTime)
         }
-        return AclsUtil.createAuthorization(new Policies(PoliciesCache.fromSources(sources)))
+        def context = AuthorizationUtil.projectContext(projectName)
+        return AclsUtil.createAuthorization(new Policies(PoliciesCache.fromSources(sources,context)))
     }
 
     /**

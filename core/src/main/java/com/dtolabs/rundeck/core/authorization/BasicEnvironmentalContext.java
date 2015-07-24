@@ -12,10 +12,10 @@ import java.util.regex.PatternSyntaxException;
  * Matches only a single Attribute, and will not match for multiple inputs
  */
 public class BasicEnvironmentalContext implements EnvironmentalContext {
-    String key;
-    String value;
+    private String key;
+    private String value;
     Pattern valuePattern;
-    URI keyUri;
+    private URI keyUri;
 
     private BasicEnvironmentalContext(final String key, final String value, final Pattern valuePattern) {
         this.key = key;
@@ -69,8 +69,8 @@ public class BasicEnvironmentalContext implements EnvironmentalContext {
         }
         Attribute next = environment.iterator().next();
 
-        if (next.getProperty().equals(keyUri)) {
-            if (value.equals(next.getValue())) {
+        if (next.getProperty().equals(getKeyUri())) {
+            if (getValue().equals(next.getValue())) {
                 return true;
             } else if (null != valuePattern && valuePattern.matcher(next.getValue()).matches()) {
                 return true;
@@ -82,11 +82,23 @@ public class BasicEnvironmentalContext implements EnvironmentalContext {
 
     @Override
     public String toString() {
-        return "{" + key + "='" + value + "'}";
+        return "{" + getKey() + "='" + getValue() + "'}";
     }
 
     @Override
     public boolean isValid() {
         return true;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public URI getKeyUri() {
+        return keyUri;
     }
 }

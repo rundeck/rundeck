@@ -65,14 +65,22 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
     private String sourceIdent;
     private int sourceIndex;
 
-    YamlPolicy(final Map policyInput, final String sourceIdent, final int sourceIndex) {
+    private YamlPolicy(final Set<Attribute> context,final Map policyInput, final String sourceIdent, final int sourceIndex) {
         this.policyInput = policyInput;
         this.sourceIdent = sourceIdent;
         this.sourceIndex = sourceIndex;
         parseByClause();
         createAclContext();
-        parseEnvironment();
+        parseEnvironment(context);
         enumerateRules();
+    }
+
+    static YamlPolicy createYamlPolicy(final Map policyInput, final String sourceIdent, final int sourceIndex) {
+        return new YamlPolicy(null, policyInput, sourceIdent, sourceIndex);
+    }
+
+    static YamlPolicy createYamlPolicy(final Set<Attribute> context, final Map policyInput, final String sourceIdent, final int sourceIndex) {
+        return new YamlPolicy(context,policyInput, sourceIdent, sourceIndex);
     }
 
     /**
@@ -98,11 +106,11 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
     }
 
     YamlPolicy(final Map policyInput, final File sourceFile, final int sourceIndex) {
-        this(policyInput, sourceFile.getAbsolutePath(), sourceIndex);
+        this(null, policyInput, sourceFile.getAbsolutePath(), sourceIndex);
     }
 
     public YamlPolicy(final Map yamlDoc) {
-        this(yamlDoc, (String) null, -1);
+        this(null, yamlDoc, (String) null, -1);
     }
 
     String identify() {
@@ -126,11 +134,24 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
         return environment;
     }
 
-    private void parseEnvironment() {
+    private void parseEnvironment(Set<Attribute> forcedContext) {
         //create
         final Object ctxClause = policyInput.get(CONTEXT_SECTION);
         if (null != ctxClause && ctxClause instanceof Map) {
             environment = new YamlEnvironmentalContext(EnvironmentalContext.URI_BASE, (Map) ctxClause);
+
+            if (forcedContext != null && !environment.evaluateMatches(forcedContext)) {
+                throw new AclPolicySyntaxException(
+                        "Context section is not valid: " +
+                        ctxClause +
+                        ", it should be empty or match the expected context: " +
+                        forcedContext
+                );
+            }
+        }
+
+        if(forcedContext!=null) {
+            environment = new YamlEnvironmentalContext(EnvironmentalContext.URI_BASE, forcedContext);
         }
     }
 
@@ -186,6 +207,36 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
 
         }
 
+        /**
+         * Create context from attribute set
+         * @param uriPrefix prefix
+         * @param ctx context
+         */
+        YamlEnvironmentalContext(final String uriPrefix, final Set<Attribute> ctx) {
+            for (Attribute attribute : ctx) {
+                if(attribute.getProperty().toString().startsWith(uriPrefix)) {
+                    URI key = attribute.getProperty();
+                    String value = attribute.getValue();
+                    matcher.put(key, value);
+                    try {
+                        Pattern compile = Pattern.compile(value);
+                        matcherRegex.put(key, compile);
+                    } catch (PatternSyntaxException e) {
+                    }
+                }
+            }
+            valid =  matcher.size() >= 1;
+
+            description = "YamlEnvironmentalContext{" +
+                          (valid ?
+                           ", valid=" + valid +
+                           ", context='" + matcher + '\'' +
+                           '}'
+                                 :
+                           ", valid=" + valid +
+                           ", validation='" + getValidation() + '\'' +
+                           '}');
+        }
         YamlEnvironmentalContext(final String uriPrefix, final Map ctx) {
             boolean invalidentry = false;
             ArrayList<String> errors = new ArrayList<String>();

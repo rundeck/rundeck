@@ -4,6 +4,7 @@ import com.dtolabs.client.services.DispatcherConfig;
 import com.dtolabs.client.services.RundeckAPICentralDispatcher;
 import com.dtolabs.rundeck.core.authorization.AclsUtil;
 import com.dtolabs.rundeck.core.authorization.Authorization;
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
 import com.dtolabs.rundeck.core.authorization.providers.Policies;
 import com.dtolabs.rundeck.core.authorization.providers.PoliciesParseException;
 import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization;
@@ -191,7 +192,16 @@ public class FrameworkFactory {
         if(!aclPath.exists()) {
             aclPath.mkdirs();
         }
-        frameworkProject.setProjectAuthorization(AclsUtil.createAuthorization(Policies.load(aclPath)));
+        frameworkProject.setProjectAuthorization(
+                AclsUtil.createAuthorization(
+                        Policies.load(
+                                aclPath,
+                                AuthorizationUtil.projectContext(
+                                        projectName
+                                )
+                        )
+                )
+        );
         return frameworkProject;
     }
 

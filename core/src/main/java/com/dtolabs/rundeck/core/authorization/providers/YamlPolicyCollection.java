@@ -3,10 +3,7 @@
  */
 package com.dtolabs.rundeck.core.authorization.providers;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -34,6 +31,7 @@ public class YamlPolicyCollection implements PolicyCollection {
     private final Set<YamlPolicy> all = new HashSet<>();
     private final Set<AclRule> ruleSet = new HashSet<>();
     YamlSource source;
+    private final Set<Attribute> forcedContext;
 
     /**
      * Create from a source
@@ -42,6 +40,17 @@ public class YamlPolicyCollection implements PolicyCollection {
      */
     public YamlPolicyCollection(final YamlSource source) throws IOException {
         this.source=source;
+        this.forcedContext=null;
+        load(source);
+    }
+    /**
+     * Create from a source
+     * @param source source
+     * @throws IOException
+     */
+    public YamlPolicyCollection(final YamlSource source, Set<Attribute> forcedContext) throws IOException {
+        this.source=source;
+        this.forcedContext=forcedContext;
         load(source);
     }
 
@@ -70,7 +79,8 @@ public class YamlPolicyCollection implements PolicyCollection {
                     );
                 }
                 try {
-                    YamlPolicy yamlPolicy = new YamlPolicy(
+                    YamlPolicy yamlPolicy = YamlPolicy.createYamlPolicy(
+                            forcedContext,
                             (Map) yamlDoc,
                             source.getIdentity() + "[" + index + "]",
                             index
