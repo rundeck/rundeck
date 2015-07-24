@@ -32,7 +32,6 @@ import java.util.*;
 public class Policies implements AclRuleSetSource{
 
     private Iterable<PolicyCollection> cache;
-    private Set<AclRule> set;
 
 
     public Policies(final Iterable<PolicyCollection> cache) {
@@ -49,17 +48,10 @@ public class Policies implements AclRuleSetSource{
 
     @Override
     public AclRuleSet getRuleSet() {
-        if(set==null) {
-            synchronized (this) {
-                if(set==null) {
-                    set = new HashSet<>();
-                    for (final PolicyCollection f : cache) {
-                        set.addAll(f.getRuleSet().getRules());
-                    }
-                }
-            }
+        Set<AclRule> set = new HashSet<>();
+        for (final PolicyCollection f : cache) {
+            set.addAll(f.getRuleSet().getRules());
         }
-
         return new AclRuleSetImpl(set);
     }
 

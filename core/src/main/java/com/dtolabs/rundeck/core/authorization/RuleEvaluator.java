@@ -24,12 +24,16 @@ import java.util.regex.PatternSyntaxException;
  */
 public class RuleEvaluator implements Authorization {
     private final static Logger logger = Logger.getLogger(RuleEvaluator.class);
-    private AclRuleSet rules;
+    final private AclRuleSet rules;
+    final private AclRuleSetSource source;
 
     private RuleEvaluator(final AclRuleSetSource ruleSetSource) {
-        this.rules = ruleSetSource.getRuleSet();
+        this.source = ruleSetSource;
+        this.rules=null;
     }
+
     private RuleEvaluator(final AclRuleSet rules) {
+        this.source=null;
         this.rules = rules;
     }
 
@@ -450,7 +454,7 @@ public class RuleEvaluator implements Authorization {
     }
 
     public AclRuleSet getRules() {
-        return rules;
+        return null != source ? source.getRuleSet() : rules;
     }
 
     /**
