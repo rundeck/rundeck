@@ -1,10 +1,14 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.TestFor
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
 import spock.lang.Specification
+
+import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_ADMIN
+import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_CONFIGURE
 
 /**
  * Created by greg on 2/26/15.
@@ -376,6 +380,321 @@ class ProjectControllerSpec extends Specification{
         filename    | text
         'readme.md' | 'test1'
         'motd.md'   | 'test2'
+    }
+
+
+    def "project acls require api_version 14"(){
+        setup:
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> {args->
+                args[1].status=400
+                false
+            }
+        }
+        when:
+        controller.apiProjectAcls()
+
+        then:
+        response.status==400
+    }
+    def "project acls require project parameter"(){
+        setup:
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * requireVersion(_,_,11) >> true
+            1 * renderErrorFormat(_,[status:400,code:'api.error.parameter.required',args:['project']]) >> {args->
+                args[0].status=args[1].status
+            }
+        }
+        when:
+        controller.apiProjectAcls()
+
+        then:
+        response.status==400
+    }
+    def "project acls project not found"(){
+        setup:
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * requireVersion(_,_,11) >> true
+            1 * renderErrorFormat(_,[status:404,code:'api.error.item.doesnotexist',args:['Project','monkey']]) >> {args->
+                args[0].status=args[1].status
+            }
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            1 * existsFrameworkProject('monkey') >> false
+        }
+        when:
+        params.project='monkey'
+        controller.apiProjectAcls()
+
+        then:
+        response.status==404
+    }
+    def "project acls not authorized"(){
+        setup:
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * requireVersion(_,_,11) >> true
+            1 * renderErrorFormat(_,[status:403,code:'api.error.item.unauthorized',args:[ACTION_CONFIGURE,'Project','monkey']]) >> {args->
+                args[0].status=args[1].status
+            }
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            1 * existsFrameworkProject('monkey') >> true
+            1 * getAuthContextForSubject(_) >> null
+            1 * authResourceForProject('monkey') >> null
+            1 * authorizeApplicationResourceAny(null,null,[ACTION_CONFIGURE,ACTION_ADMIN])>>false
+        }
+        when:
+        params.project='monkey'
+        controller.apiProjectAcls()
+
+        then:
+        response.status==403
+    }
+    def "project acls invalid path"(){
+        setup:
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * requireVersion(_,_,11) >> true
+
+            1 * extractResponseFormat(_,_,_,_) >> 'json'
+            1 * renderErrorFormat(
+                    _,
+                    [
+                            status: 400,
+                            code: 'api.error.parameter.invalid',
+                            args: ['elf', 'path', 'Must refer to a file ending in .aclpolicy'],
+                            format: 'json'
+                    ]
+            ) >> { args ->
+                args[0].status = args[1].status
+            }
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            1 * existsFrameworkProject('monkey') >> true
+            1 * getAuthContextForSubject(_) >> null
+            1 * authResourceForProject('monkey') >> null
+            1 * authorizeApplicationResourceAny(null,null,[ACTION_CONFIGURE,ACTION_ADMIN])>>true
+            1 * getFrameworkProject('monkey') >> Stub(IRundeckProject)
+        }
+        when:
+        params.path='elf'
+        params.project='monkey'
+        controller.apiProjectAcls()
+
+        then:
+        response.status==400
+    }
+    def "project acls GET 404"(){
+        setup:
+        controller.frameworkService=Mock(FrameworkService){
+            1 * existsFrameworkProject('test') >> true
+            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            1 * getFrameworkProject('test') >> Stub(IRundeckProject){
+                existsFileResource(_) >> false
+                existsDirResource(_) >> false
+
+            }
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * requireVersion(_,_,11) >> true
+            1 * extractResponseFormat(_,_,_,_) >> 'json'
+            1 * renderErrorFormat(_,_) >> {args->
+                args[0].status=args[1].status
+                null
+            }
+        }
+        when:
+        params.path='blah.aclpolicy'
+        params.project="test"
+        def result=controller.apiProjectAcls()
+
+        then:
+        response.status==404
+    }
+    def "project acls GET json"(){
+        setup:
+        controller.frameworkService=Mock(FrameworkService){
+            1 * existsFrameworkProject('test') >> true
+            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                1 * existsFileResource(_) >> true
+                1 * loadFileResource('etc/acls/blah.aclpolicy',_) >> {args->
+                    args[1].write('blah'.bytes)
+                    4
+                }
+            }
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * requireVersion(_,_,11) >> true
+            1 * extractResponseFormat(_,_,_,_) >> 'json'
+        }
+        when:
+        params.path='blah.aclpolicy'
+        params.project="test"
+        def result=controller.apiProjectAcls()
+
+        then:
+        response.status==200
+        response.contentType.split(';').contains('application/json')
+        response.json==[contents:'blah']
+    }
+    def "project acls GET xml"(){
+        setup:
+        controller.frameworkService=Mock(FrameworkService){
+            1 * existsFrameworkProject('test') >> true
+            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                1 * existsFileResource(_) >> true
+                1 * loadFileResource('etc/acls/blah.aclpolicy',_) >> {args->
+                    args[1].write('blah'.bytes)
+                    4
+                }
+            }
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * requireVersion(_,_,11) >> true
+            1 * extractResponseFormat(_,_,_,_) >> 'xml'
+            1 * renderSuccessXml(_,_,_)>>{args->
+                'success'
+            }
+        }
+        when:
+        params.path='blah.aclpolicy'
+        params.project="test"
+        def result=controller.apiProjectAcls()
+
+        then:
+        response.status==200
+        result=='success'
+    }
+    def "project acls GET text/yaml"(String respFormat, String contentType){
+        setup:
+        controller.frameworkService=Mock(FrameworkService){
+            1 * existsFrameworkProject('test') >> true
+            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                1 * existsFileResource(_) >> true
+                1 * loadFileResource('etc/acls/blah.aclpolicy',_) >> {args->
+                    args[1].write('blah'.bytes)
+                    4
+                }
+            }
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * requireVersion(_,_,11) >> true
+            1 * extractResponseFormat(_,_,_,_) >> respFormat
+        }
+        when:
+        params.path='blah.aclpolicy'
+        params.project="test"
+        def result=controller.apiProjectAcls()
+
+        then:
+        response.status==200
+        response.contentType.split(';').contains(contentType)
+        response.contentAsString=='blah'
+
+        where:
+        respFormat | contentType
+        'text'     | 'text/plain'
+        'yaml'     | 'application/yaml'
+    }
+    def "project acls GET dir JSON"(){
+        setup:
+        controller.frameworkService=Mock(FrameworkService){
+            1 * existsFrameworkProject('test') >> true
+            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                1 * existsFileResource(_) >> false
+                1 * existsDirResource('etc/acls/') >> true
+                1 * listDirPaths('etc/acls/') >> { args ->
+                    ['etc/acls/test','etc/acls/blah.aclpolicy','etc/acls/adir/']
+                }
+                getName()>>'test'
+            }
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * requireVersion(_,_,11) >> true
+            1 * extractResponseFormat(_,_,_,_) >> 'json'
+        }
+        when:
+        params.path=''
+        params.project="test"
+        def result=controller.apiProjectAcls()
+
+        then:
+        response.status==200
+        response.contentType.split(';').contains('application/json')
+        response.json==[
+                resources:[
+                        [
+                                name:'blah.aclpolicy',
+                                path: 'blah.aclpolicy',
+                                type: 'file',
+                                href: 'http://localhost:8080/api/14/project/test/acl/blah.aclpolicy'
+
+                        ],
+                        [
+                                path:'adir/',
+                                type: 'directory',
+                                href: 'http://localhost:8080/api/14/project/test/acl/adir/'
+                        ]
+                ],
+                path:'',
+                type:'directory',
+                href:'http://localhost:8080/api/14/project/test/acl/']
+
+    }
+    def "project acls GET dir XML"(){
+        setup:
+        controller.frameworkService=Mock(FrameworkService){
+            1 * existsFrameworkProject('test') >> true
+            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                1 * existsFileResource(_) >> false
+                1 * existsDirResource('etc/acls/') >> true
+                1 * listDirPaths('etc/acls/') >> { args ->
+                    ['etc/acls/test','etc/acls/blah.aclpolicy','etc/acls/adir/']
+                }
+                getName()>>'test'
+            }
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * requireVersion(_,_,11) >> true
+            1 * extractResponseFormat(_,_,_,_) >> 'xml'
+        }
+        when:
+        params.path=''
+        params.project="test"
+        response.format='xml'
+        def result=controller.apiProjectAcls()
+
+        then:
+        response.status==200
+        response.contentType.split(';').contains('application/xml')
+//        response.contentAsString==''
+        response.xml.'@path'.text()==''
+        response.xml.'@type'.text()=='directory'
+        response.xml.'@href'.text()=='http://localhost:8080/api/14/project/test/acl/'
+        response.xml.contents.size()==1
+        response.xml.contents.resource.size()==2
+        response.xml.contents.resource[0].'@path'.text()=='blah.aclpolicy'
+        response.xml.contents.resource[0].'@name'.text()=='blah.aclpolicy'
+        response.xml.contents.resource[0].'@type'.text()=='file'
+        response.xml.contents.resource[0].'@href'.text()=='http://localhost:8080/api/14/project/test/acl/blah.aclpolicy'
+        response.xml.contents.resource[1].'@path'.text()=='adir/'
+        response.xml.contents.resource[1].'@type'.text()=='directory'
+        response.xml.contents.resource[1].'@href'.text()=='http://localhost:8080/api/14/project/test/acl/adir/'
+
     }
 
 }

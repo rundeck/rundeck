@@ -673,7 +673,7 @@ class ProjectController extends ControllerBase{
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V14)) {
             return
         }
-        def project = validateProjectConfigApiRequest(AuthConstants.ACTION_ADMIN)
+        def project = validateProjectConfigApiRequest(AuthConstants.ACTION_CONFIGURE)
         if (!project) {
             return
         }
@@ -687,7 +687,7 @@ class ProjectController extends ControllerBase{
             ])
         }
         def projectFilePath = "etc/acls/${params.path?:''}"
-        System.err.println("apiProjectAcls, path: ${params.path}, projectfile: ${projectFilePath}")
+        log.debug("apiProjectAcls, path: ${params.path}, projectfile: ${projectFilePath}")
         switch (request.method) {
             case 'POST':
             case 'PUT':
@@ -790,6 +790,35 @@ class ProjectController extends ControllerBase{
         }
     }
 
+    /**
+     * Render xml response for Acl dir listing
+     * @param project project
+     * @param path project file path
+     * @param rmprefix prefix to remove from path
+     * @param dirlist list of dir contents
+     * @param builder builder
+     * @return
+     */
+    private def xmlRenderProjectAcl(String project,String path,String rmprefix,List<String>dirlist,builder){
+        builder.'resource'(path:pathRmPrefix(path,rmprefix),type:'directory','href':renderProjectAclHref(project,pathRmPrefix(path,rmprefix))) {
+
+            delegate.'contents' {
+                def builder2 = delegate
+                dirlist.each { dirpath ->
+                    def resmap = [
+                            path: pathRmPrefix(dirpath, rmprefix),
+                            type: dirpath.endsWith('/') ? 'directory' : 'file',
+                            href: renderProjectAclHref( project, pathRmPrefix(dirpath, rmprefix))
+                    ]
+                    if (!dirpath.endsWith('/')) {
+                        resmap.'name' = pathName(dirpath)
+                    }
+                    builder2.'resource'(resmap)
+                }
+            }
+        }
+    }
+
     private String pathRmPrefix(String path,String prefix) {
         prefix&&path.startsWith(prefix)?path.substring(prefix.length()):path
     }
@@ -812,21 +841,22 @@ class ProjectController extends ControllerBase{
     private def apiProjectAclsGetResource(IRundeckProject project,String projectFilePath,String rmprefix) {
         def respFormat = apiService.extractResponseFormat(request, response, ['yaml','xml','json','text'],request.format)
         if(project.existsFileResource(projectFilePath)){
-
-            if(respFormat in ['yaml']){
+            if(respFormat in ['yaml','text']){
                 //write directly
-                response.setContentType("application/yaml")
+                response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
                 project.loadFileResource(projectFilePath,response.outputStream)
                 response.outputStream.close()
             }else{
-
+                //render as json/xml with contents as string
                 def baos=new ByteArrayOutputStream()
                 project.loadFileResource(projectFilePath,baos)
                 renderProjectFile(baos.toString(),request,response, respFormat)
             }
         }else if(project.existsDirResource(projectFilePath) || projectFilePath==rmprefix){
             //list aclpolicy files in the dir
-            def list=project.listDirPaths(projectFilePath)
+            def list=project.listDirPaths(projectFilePath).findAll{
+                it ==~ /.*(\.aclpolicy|\/)$/
+            }
             withFormat{
                 json{
                     render(contentType:'application/json'){
@@ -835,7 +865,7 @@ class ProjectController extends ControllerBase{
                 }
                 xml{
                     render(contentType: 'application/xml'){
-                        jsonRenderProjectAcl(project.getName(),projectFilePath,rmprefix,list,delegate)
+                        xmlRenderProjectAcl(project.getName(),projectFilePath,rmprefix,list,delegate)
                     }
 
                 }
