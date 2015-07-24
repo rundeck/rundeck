@@ -498,7 +498,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     public Authorization getProjectAuthorization(String projectName) {
         //TODO: limit ruleset to project?
         log.debug("getProjectAuthorization for ${projectName}")
-        def paths = listProjectDirPaths(projectName, "etc/acls", ".*aclpolicy")
+        def paths = listProjectDirPaths(projectName, "acls", ".*aclpolicy")
         log.debug("getProjectAuthorization. paths= ${paths}")
         def sources= paths.collect{path->
             def file = getProjectFileResource(projectName,path).contents

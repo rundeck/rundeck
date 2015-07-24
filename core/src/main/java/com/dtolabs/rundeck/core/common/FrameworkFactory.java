@@ -187,7 +187,11 @@ public class FrameworkFactory {
                                                                                           .getResourceModelSourceService()
         );
         frameworkProject.setProjectNodes(projectNodeSupport);
-        frameworkProject.setProjectAuthorization(AclsUtil.createAuthorization(Policies.load(new File(baseDir,"etc"))));
+        File aclPath = new File(baseDir, "acls");
+        if(!aclPath.exists()) {
+            aclPath.mkdirs();
+        }
+        frameworkProject.setProjectAuthorization(AclsUtil.createAuthorization(Policies.load(aclPath)));
         return frameworkProject;
     }
 

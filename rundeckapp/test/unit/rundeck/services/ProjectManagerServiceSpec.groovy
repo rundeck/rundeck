@@ -746,23 +746,23 @@ class ProjectManagerServiceSpec extends Specification {
         given:
 
         service.storage=Stub(StorageTree){
-            hasDirectory("projects/test1/etc/acls") >> true
-            listDirectory("projects/test1/etc/acls") >> [
+            hasDirectory("projects/test1/acls") >> true
+            listDirectory("projects/test1/acls") >> [
                     Stub(Resource){
                         isDirectory()>>false
-                        getPath()>>PathUtil.asPath("projects/test1/etc/acls/file1.aclpolicy")
+                        getPath()>>PathUtil.asPath("projects/test1/acls/file1.aclpolicy")
                     },
                     Stub(Resource){
                         isDirectory()>>false
-                        getPath()>>PathUtil.asPath("projects/test1/etc/acls/file2")
+                        getPath()>>PathUtil.asPath("projects/test1/acls/file2")
                     },
                     Stub(Resource){
                         isDirectory()>>true
-                        getPath()>>PathUtil.asPath("projects/test1/etc/acls/blah")
+                        getPath()>>PathUtil.asPath("projects/test1/acls/blah")
                     }
             ]
-            hasResource("projects/test1/etc/acls/file1.aclpolicy") >> true
-            getResource("projects/test1/etc/acls/file1.aclpolicy") >> Stub(Resource){
+            hasResource("projects/test1/acls/file1.aclpolicy") >> true
+            getResource("projects/test1/acls/file1.aclpolicy") >> Stub(Resource){
                 getContents() >> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream(
                             ('{ description: \'\', context: { application: \'rundeck\' }, by: { username: \'test\' }, for: { resource: [ { allow: \'x\' } ] } }').bytes
@@ -792,7 +792,7 @@ class ProjectManagerServiceSpec extends Specification {
         rulea.username=='test'
         rulea.group==null
         rulea.environment!=null
-        rulea.sourceIdentity=='[test1]etc/acls/file1.aclpolicy[1][type:resource][rule: 1]'
+        rulea.sourceIdentity=='[test1]acls/file1.aclpolicy[1][type:resource][rule: 1]'
     }
 
     void "mark existing other project as imported"(){
