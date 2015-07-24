@@ -23,11 +23,17 @@
     <asset:javascript src="bootstrap.js"/>
     <asset:javascript src="prototype.min.js"/>
     <style>
+        @keyframes riseup {
+            0% {bottom: -480px;}
+            50% {bottom: 0px;}
+            100% {bottom: -40px;}
+        }
         svg{
             position: fixed;
-            right: -10px;
-            bottom: -10px;
+            right: 0px;
+            bottom: -40px;
             z-index: -1;
+            animation: riseup 6s ease-in-out;
         }
         .grumpy{
             fill: #eee;
