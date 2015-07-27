@@ -502,7 +502,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         log.debug("getProjectAuthorization. paths= ${paths}")
         def sources= paths.collect{path->
             def file = getProjectFileResource(projectName,path).contents
-            YamlProvider.sourceFromStream("[${projectName}]${path}",file.inputStream,file.modificationTime)
+            YamlProvider.sourceFromStream("[project:${projectName}]${path}",file.inputStream,file.modificationTime)
         }
         def context = AuthorizationUtil.projectContext(projectName)
         return AclsUtil.createAuthorization(new Policies(PoliciesCache.fromSources(sources,context)))

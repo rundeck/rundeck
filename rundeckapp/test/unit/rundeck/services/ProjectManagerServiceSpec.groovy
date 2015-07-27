@@ -797,7 +797,7 @@ class ProjectManagerServiceSpec extends Specification {
         rulea.environment!=null
         rulea.environment.key=='project'
         rulea.environment.value=='test1'
-        rulea.sourceIdentity=='[test1]acls/file1.aclpolicy[1][type:resource][rule: 1]'
+        rulea.sourceIdentity=='[project:test1]acls/file1.aclpolicy[1][type:resource][rule: 1]'
     }
 
     void "mark existing other project as imported"(){
