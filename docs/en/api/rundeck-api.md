@@ -829,14 +829,13 @@ Enables executions, allowing adhoc and manual and scheduled jobs to be run.
 `Content-Type: application/xml`:
 
 ~~~ {.xml}
-<executions active="true" executionMode="active"/>
+<executions executionMode="active"/>
 ~~~
 
 `Content-Type: application/json`:
 
 ~~~ {.json}
 {
-  "active":true,
   "executionMode":"active"
 }
 ~~~
@@ -854,14 +853,13 @@ POST /api/14/system/executions/disable
 `Content-Type: application/xml`:
 
 ~~~ {.xml}
-<executions active="false" executionMode="passive"/>
+<executions executionMode="passive"/>
 ~~~
 
 `Content-Type: application/json`:
 
 ~~~ {.json}
 {
-  "active":false,
   "executionMode":"passive"
 }
 ~~~

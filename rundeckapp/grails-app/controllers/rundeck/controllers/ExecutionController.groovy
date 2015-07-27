@@ -1611,14 +1611,13 @@ class ExecutionController extends ControllerBase{
         executionService.setExecutionsAreActive(active)
         withFormat{
             json {
-                render(contentType: "text/json") {
+                render(contentType: "application/json") {
                     delegate.executionMode=active?'active':'passive'
-                    delegate.active=active
                 }
             }
             xml {
-                apiService.renderSuccessXml {
-                    delegate.'executions'(active:active,executionMode:active?'active':'passive')
+                render(contentType: "application/xml") {
+                    delegate.'executions'(executionMode:active?'active':'passive')
                 }
             }
         }

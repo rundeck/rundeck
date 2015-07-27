@@ -95,6 +95,14 @@ assert_http_status(){
 # utilities for testing xml or json
 ##
 
+assert_xml_valid(){
+    $XMLSTARLET val -w ${1} > /dev/null 2>&1
+    if [ 0 != $? ] ; then
+        errorMsg "FAIL: Response was not valid xml, file: $1"
+        exit 2
+    fi
+
+}
 ##
 # assert_xml_value 'value' 'xpath' $file
 ##
