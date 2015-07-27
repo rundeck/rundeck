@@ -754,7 +754,7 @@ class ProjectManagerServiceSpec extends Specification {
                     },
                     Stub(Resource){
                         isDirectory()>>false
-                        getPath()>>PathUtil.asPath("projects/test1/acls/file2")
+                        getPath()>>PathUtil.asPath("projects/test1/acls/file2aclpolicy")
                     },
                     Stub(Resource){
                         isDirectory()>>true
