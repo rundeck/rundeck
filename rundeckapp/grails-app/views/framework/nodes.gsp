@@ -289,6 +289,8 @@
                    Node Actions <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu" role="menu">
+                    <g:if test="${g.executionMode(is:'active')}">
+
                     <li data-bind="visible: hasNodes()" class="${run_authorized?'':'disabled'}">
                         <a href="#" data-bind="${run_authorized?'click: runCommand':''}"
                            title="${run_authorized ? '' : 'Not authorized'}"
@@ -300,6 +302,21 @@
                             <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
                         </a>
                     </li>
+                    </g:if>
+                    <g:else>
+
+                        <li data-bind="visible: hasNodes()" class="disabled">
+                            <a href="#"
+                               title="${g.message(code:'disabled.execution.run')}"
+                               class="has_tooltip"
+                               data-placement="left"
+                            >
+                                <i class="glyphicon glyphicon-play"></i>
+                                Run a command on <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
+                                <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
+                            </a>
+                        </li>
+                    </g:else>
 
                     <li class="${job_create_authorized?'':'disabled'}">
                         <a href="#" data-bind="${job_create_authorized?'click: saveJob':''}"
