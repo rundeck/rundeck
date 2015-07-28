@@ -552,7 +552,7 @@ class ApiService {
      * @param builder builder
      * @return
      */
-     def jsonRenderDirlist(String path,Closure genpath,Closure genhref,List<String>dirlist,builder){
+     void jsonRenderDirlist(String path,Closure genpath,Closure genhref,List<String>dirlist,builder){
         builder.with{
             delegate.'path'=genpath(path)
             delegate.'type'='directory'
@@ -581,7 +581,7 @@ class ApiService {
      * @param builder builder
      * @return
      */
-     def xmlRenderDirList(String path,Closure genpath,Closure genhref,List<String>dirlist,builder){
+     void xmlRenderDirList(String path,Closure genpath,Closure genhref,List<String>dirlist,builder){
         builder.'resource'(
                 path:genpath(path),
                 type:'directory',
