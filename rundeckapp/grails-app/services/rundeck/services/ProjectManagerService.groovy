@@ -43,6 +43,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     public static final String ETC_PROJECT_PROPERTIES_PATH = "/etc/project.properties"
     public static final String MIME_TYPE_PROJECT_PROPERTIES = 'text/x-java-properties'
     def FrameworkService frameworkService
+    //TODO: refactor to use configStorageService
     private StorageTree rundeckConfigStorageTree
     ApplicationContext applicationContext
     def grailsApplication
