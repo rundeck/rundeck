@@ -72,6 +72,8 @@ Changes introduced by API Version number:
 * New Endpoints
     - [`/api/14/system/executions/enable`][/api/V/system/executions/enable] - Enable executions (ACTIVE mode)
     - [`/api/14/system/executions/disable`][/api/V/system/executions/disable] - Disable executions (PASSIVE mode)
+    - [`/api/14/system/acl/*`][/api/V/system/acl/*] - Manage system ACLs
+    - [`/api/14/project/acl/*`][/api/V/project/acl/*] - Manage project ACLs
 * New Endpoints, replacing deprecated versions:
     - [`/api/14/project/[PROJECT*]/executions/running`][/api/V/project/[PROJECT*]/executions/running]
     - [`/api/14/project/[PROJECT]/executions`][/api/V/project/[PROJECT]/executions]
@@ -1093,6 +1095,154 @@ JSON response for `project` specified:
   "success": true
 }
 ~~~~~~~~~~
+
+## ACLs
+
+Manage the system global ACL policy files stored in the database.  
+
+The files managed via the API **do not** include the files located on disk, however these policy files will be merged with
+any policy files in the normal filesystem locations (e.g. `$RDECK_BASE/etc`).
+
+### List Global ACL Policies
+
+**Request:**
+
+    GET /api/14/system/acl/
+
+**Response:**
+
+`Content-Type: application/xml`:  A `<resource>` containing more resources within a `<contents>` element:
+
+~~~~~~~~~~ {.xml}
+<resource path="" type="directory" href="http://server/api/14/system/acl/">
+  <contents>
+    <resource path="name.aclpolicy" type="file" href="http://server/api/14/system/acl/name.aclpolicy" name="name.aclpolicy"/>
+  </contents>
+</resource>
+~~~~~~~~~~~~
+
+`Content-Type: application/json`
+
+`resources` contains a list of entries for each policy
+
+~~~~~~~~~~ {.json}
+{
+  "path": "",
+  "type": "directory",
+  "href": "http://server/api/14/system/acl/",
+  "resources": [
+    {
+      "path": "name.aclpolicy",
+      "type": "file",
+      "name": "name.aclpolicy",
+      "href": "http://server/api/14/system/acl/name.aclpolicy"
+    },
+    ...
+  ]
+}
+~~~~~~~~~~
+
+### Get an ACL Policy
+
+Retrieve the YAML text of the ACL Policy file.  If YAML or text content is requested, the contents will be returned directly.
+Otherwise if XML or JSON is requested, the YAML text will be wrapped within that format.
+
+**Request:**
+
+    GET /api/14/system/acl/name.aclpolicy
+
+**Response:**
+
+`Content-Type: application/yaml` or `Content-Type: text/plain`:  
+
+~~~~~ {.yaml}
+description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build
+~~~~~
+
+`Content-Type: application/json`:  
+
+~~~~ {.json}
+{
+  "contents": "description: \"my policy\"\ncontext:\n  application: rundeck\nfor:\n  project:\n    - allow: read\nby:\n  group: build"
+}
+~~~~
+
+`Content-Type: application/xml`:  The content is wrapped in a `CDATA` section to preserve whitespace formatting.
+
+~~~~ {.xml}
+<contents><![CDATA[description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build]]></contents>
+~~~~
+
+
+### Create or update an ACL Policy
+
+Use `POST` or `PUT` to create or update a policy.
+
+**Request:**
+
+    POST /api/14/system/acl/name.aclpolicy
+    PUT /api/14/system/acl/name.aclpolicy
+
+If the `Content-Type` is `application/yaml` or `text/plain`, then the request body is the ACL policy contents directly.
+
+Otherwise, you can use XML or JSON in the same format as returned by [Get an ACL Policy](#get-an-acl-policy):
+
+`Content-Type: application/json`
+
+~~~~ {.json}
+{
+  "contents": "description: \"my policy\"\ncontext:\n  application: rundeck\nfor:\n  project:\n    - allow: read\nby:\n  group: build"
+}
+
+~~~~
+
+`Content-Type: application/xml`
+
+~~~~ {.xml}
+<contents><![CDATA[description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build]]></contents>
+~~~~
+
+**Response:**
+
+Based on the `Accept:` header, the same format as returned by [Get an ACL Policy](#get-an-acl-policy).
+
+
+### Delete an ACL Policy
+
+Delete an ACL policy file.
+
+**Request:**
+
+    DELETE /api/14/system/acl/name.aclpolicy
+
+**Response:**
+
+    204 No Content
+
+### Project ACLs
+
+See [Project - ACL Policies](#acl-policies).
 
 ## Jobs
 
@@ -3799,6 +3949,13 @@ If request was JSON, then the following JSON:
 * `GET` [Get Key Contents](#get-key-contents)
 * `DELETE` [Delete Keys](#delete-keys)
 
+[/api/V/system/acl/*][]
+
+* `GET` [List Global ACL Policies](#list-global-acl-policies)
+* `GET` [Get an ACL Policy](#get-an-acl-policy)
+* `POST`/`PUT` [Create or update an ACL Policy](#create-or-update-an-acl-policy)
+* `DELETE` [Delete an ACL Policy](#delete-an-acl-policy)
+
 [/api/V/system/info][]
 
 * `GET` [System Info](#system-info)
@@ -3912,6 +4069,8 @@ If request was JSON, then the following JSON:
 [PUT /api/V/storage/keys/[PATH]/[FILE]]:#upload-keys
 [DELETE /api/V/storage/keys/[PATH]/[FILE]]:#delete-keys
 
+
+[/api/V/system/acl/*]:#acls
 [/api/V/system/info]:#system-info
 [/api/V/system/executions/enable]:#set-active-mode
 [/api/V/system/executions/disable]:#set-passive-mode
