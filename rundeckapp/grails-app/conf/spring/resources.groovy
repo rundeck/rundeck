@@ -1,7 +1,7 @@
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.core.Constants
-import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization
+import com.dtolabs.rundeck.core.authorization.AuthorizationFactory
 import com.dtolabs.rundeck.core.common.FilesystemFramework
 import com.dtolabs.rundeck.core.common.FrameworkFactory
 import com.dtolabs.rundeck.core.common.NodeSupport
@@ -89,8 +89,8 @@ beans={
     rundeckFramework(frameworkFactory:'createFramework'){
     }
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
-    rundeckPolicyAuthorization(SAREAuthorization, configDir){
-
+    rundeckFilesystemPolicyAuthorization(AuthorizationFactory, configDir){bean->
+        bean.factoryMethod='createFromDirectory'
     }
     /*
      * Define beans for Rundeck core-style plugin loader to load plugins from jar/zip files
@@ -174,7 +174,6 @@ beans={
         baseStorageType='db'
         baseStorageConfig=[namespace:'config']
         defaultConverters=['StorageTimestamperConverter']
-        //TODO: encryption plugin
         loggerName='org.rundeck.config.storage.events'
     }
     /**
