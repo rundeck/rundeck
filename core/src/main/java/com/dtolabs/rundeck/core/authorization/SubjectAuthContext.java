@@ -45,7 +45,7 @@ public class SubjectAuthContext implements NamedAuthContext {
 
     @Override
     public AuthContext combineWith(final Authorization authorization) {
-        return new SubjectAuthContext(subject, new MultiAuthorization(this.authorization, authorization));
+        return new SubjectAuthContext(subject, AclsUtil.append(this.authorization, authorization));
     }
 
     @Override
