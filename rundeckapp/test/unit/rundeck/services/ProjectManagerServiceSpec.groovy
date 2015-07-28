@@ -782,7 +782,7 @@ class ProjectManagerServiceSpec extends Specification {
         then:
         auth!=null
         auth instanceof RuleEvaluator
-        def rules=((RuleEvaluator)auth).getRules().rules
+        def rules=((RuleEvaluator)auth).getRuleSet().rules
         rules.size()==1
         def rulea=rules.first()
         rulea.allowActions==['x'] as Set
