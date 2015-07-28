@@ -536,16 +536,17 @@ class ProjectControllerSpec extends Specification{
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
+            1 * renderWrappedFileContents('blah','json',_) >> {args-> args[2].success=true}
         }
         when:
         params.path='blah.aclpolicy'
         params.project="test"
+        response.format='json'
         def result=controller.apiProjectAcls()
 
         then:
         response.status==200
         response.contentType.split(';').contains('application/json')
-        response.json==[contents:'blah']
     }
     def "project acls GET xml"(){
         setup:
@@ -566,18 +567,17 @@ class ProjectControllerSpec extends Specification{
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'xml'
-            1 * renderSuccessXml(_,_,_)>>{args->
-                'success'
-            }
+            1 * renderWrappedFileContents('blah','xml',_) >> {args-> args[2]}
         }
         when:
         params.path='blah.aclpolicy'
         params.project="test"
-        def result=controller.apiProjectAcls()
+        response.format='xml'
+        controller.apiProjectAcls()
 
         then:
         response.status==200
-        result=='success'
+        response.contentType.split(';').contains('application/xml')
     }
     def "project acls GET text/yaml"(String respFormat, String contentType){
         setup:
@@ -634,33 +634,20 @@ class ProjectControllerSpec extends Specification{
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
+            1 * jsonRenderDirlist('acls/',_,_,['acls/blah.aclpolicy','acls/adir/'],_) >> {args->
+                args[4].success=true
+            }
+            pathRmPrefix(_,_)>>'x'
         }
         when:
         params.path=''
         params.project="test"
+        response.format='json'
         def result=controller.apiProjectAcls()
 
         then:
         response.status==200
         response.contentType.split(';').contains('application/json')
-        response.json==[
-                resources:[
-                        [
-                                name:'blah.aclpolicy',
-                                path: 'blah.aclpolicy',
-                                type: 'file',
-                                href: 'http://localhost:8080/api/14/project/test/acl/blah.aclpolicy'
-
-                        ],
-                        [
-                                path:'adir/',
-                                type: 'directory',
-                                href: 'http://localhost:8080/api/14/project/test/acl/adir/'
-                        ]
-                ],
-                path:'',
-                type:'directory',
-                href:'http://localhost:8080/api/14/project/test/acl/']
 
     }
     def "project acls GET dir XML"(){
@@ -683,6 +670,7 @@ class ProjectControllerSpec extends Specification{
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'xml'
+            1 * xmlRenderDirList('acls/',_,_,['acls/blah.aclpolicy','acls/adir/'],_)
         }
         when:
         params.path=''
@@ -693,20 +681,6 @@ class ProjectControllerSpec extends Specification{
         then:
         response.status==200
         response.contentType.split(';').contains('application/xml')
-//        response.contentAsString==''
-        response.xml.'@path'.text()==''
-        response.xml.'@type'.text()=='directory'
-        response.xml.'@href'.text()=='http://localhost:8080/api/14/project/test/acl/'
-        response.xml.contents.size()==1
-        response.xml.contents.resource.size()==2
-        response.xml.contents.resource[0].'@path'.text()=='blah.aclpolicy'
-        response.xml.contents.resource[0].'@name'.text()=='blah.aclpolicy'
-        response.xml.contents.resource[0].'@type'.text()=='file'
-        response.xml.contents.resource[0].'@href'.text()=='http://localhost:8080/api/14/project/test/acl/blah.aclpolicy'
-        response.xml.contents.resource[1].'@path'.text()=='adir/'
-        response.xml.contents.resource[1].'@type'.text()=='directory'
-        response.xml.contents.resource[1].'@href'.text()=='http://localhost:8080/api/14/project/test/acl/adir/'
-
     }
     def "project acls POST text"(){
         setup:
@@ -731,6 +705,7 @@ class ProjectControllerSpec extends Specification{
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
+            1 * renderWrappedFileContents('blah','json',_)>>{args->args[2].contents=args[0]}
         }
         when:
         params.path='test.aclpolicy'

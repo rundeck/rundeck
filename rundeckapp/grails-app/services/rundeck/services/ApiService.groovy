@@ -529,7 +529,7 @@ class ApiService {
      * @param delegate
      * @return
      */
-    def renderWrappedFileContents(
+    void renderWrappedFileContents(
             String contentString,
             String respFormat,
             delegate
