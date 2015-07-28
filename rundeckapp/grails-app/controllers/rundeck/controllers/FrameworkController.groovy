@@ -8,7 +8,6 @@ import com.dtolabs.rundeck.core.common.ProviderService
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
-import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource
 import com.dtolabs.rundeck.core.resources.FileResourceModelSourceFactory
 import com.dtolabs.rundeck.core.utils.NodeSet
@@ -19,6 +18,7 @@ import grails.converters.JSON
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.services.ApiService
+import rundeck.services.AuthorizationService
 import rundeck.services.PasswordFieldsService
 
 import javax.servlet.http.HttpServletResponse
@@ -62,12 +62,14 @@ class FrameworkController extends ControllerBase {
 
     def metricService
     def ApiService apiService
+    def configStorageService
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
             apiProjectResources: ['POST'],
             apiProjectResourcesPost: ['POST'],
             apiProjectResourcesRefresh: ['POST'],
+            apiSystemAcls: ['GET','PUT','POST','DELETE'],
             createProjectPost: 'POST',
             deleteNodeFilter: 'POST',
             saveProject: 'POST',
@@ -2002,6 +2004,224 @@ class FrameworkController extends ControllerBase {
                 }
             }
         }
+    }
+
+    /**
+     * /api/14/system/acl/* endpoint
+     */
+    def apiSystemAcls(){
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V14)) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeApplicationResourceAny(
+                authContext,
+                AuthConstants.RESOURCE_TYPE_SYSTEM,
+                [
+                        AuthConstants.ACTION_CONFIGURE,//TODO:??
+                        AuthConstants.ACTION_ADMIN
+                ]
+        )) {
+            apiService.renderErrorFormat(response,
+                                         [
+                                                 status: HttpServletResponse.SC_FORBIDDEN,
+                                                 code: "api.error.item.unauthorized",
+                                                 args: ['Manage ACLs', "Rundeck", '']
+                                         ])
+            return null
+        }
+        if(params.path && !(params.path ==~ /^[^\/]+.aclpolicy$/ )){
+            def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','text'],request.format)
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.parameter.invalid',
+                    args:[params.path,'path','Must refer to a file ending in .aclpolicy'],
+                    format:respFormat
+            ])
+        }
+        def prefix = AuthorizationService.ACL_STORAGE_PATH_BASE + '/'
+        def storagePath = prefix + (params.path ?: '')
+        log.debug("apiSystemAcls, path: ${params.path}, storage path: ${storagePath}")
+        switch (request.method) {
+            case 'POST':
+            case 'PUT':
+                apiSystemAclsPutResource(storagePath)
+                break
+            case 'GET':
+                apiSystemAclsGetResource(storagePath, prefix)
+                break
+            case 'DELETE':
+                apiSystemAclsDeleteResource(storagePath)
+                break
+        }
+    }
+
+    private def renderAclHref(String path) {
+        createLink(absolute: true, uri: "/api/${ApiRequestFilters.API_CURRENT_VERSION}/system/acl/$path")
+    }
+    private def apiSystemAclsPutResource(String storagePath) {
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','yaml','text'],request.format)
+
+        def error = null
+        String text = null
+        if (request.format in ['yaml','text']) {
+            try {
+                text = request.inputStream.text
+            } catch (Throwable e) {
+                error = e.message
+            }
+        }else{
+            def succeeded = apiService.parseJsonXmlWith(request,response,[
+                    xml:{xml->
+                        if(xml?.name()=='contents'){
+                            text=xml?.text()
+                        }else{
+                            text = xml?.contents[0]?.text()
+                        }
+                    },
+                    json:{json->
+                        text = json?.contents
+                    }
+            ])
+            if(!succeeded){
+                error= "unexpected format: ${request.format}"
+                return
+            }
+        }
+        if(error){
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    message: error,
+                    format: respFormat
+            ])
+        }
+
+        if(!text){
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    message: "No content",
+                    format: respFormat
+            ])
+        }
+
+        configStorageService.writeFileResource(storagePath,new ByteArrayInputStream(text.bytes),[:])
+
+        if(respFormat in ['yaml','text']){
+            //write directly
+            response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
+            configStorageService.loadFileResource(storagePath,response.outputStream)
+            response.outputStream.close()
+        }else{
+            def baos=new ByteArrayOutputStream()
+            configStorageService.loadFileResource(storagePath,baos)
+            withFormat{
+                xml{
+                    render(contentType: 'application/xml'){
+                        apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
+                    }
+
+                }
+                def j={
+                    render(contentType:'application/json'){
+                        apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
+                    }
+                }
+                json j
+                '*' j
+            }
+        }
+    }
+    /**
+     * Get resource or dir listing for the specified project path
+     * @param project project
+     * @param projectFilePath path for the project file or dir
+     * @param rmprefix prefix string for the path, to be removed from paths in dir listings
+     * @return
+     */
+    private def apiSystemAclsGetResource(String projectFilePath,String rmprefix) {
+        def respFormat = apiService.extractResponseFormat(request, response, ['yaml','xml','json','text'],request.format)
+        if(configStorageService.existsFileResource(projectFilePath)){
+            if(respFormat in ['yaml','text']){
+                //write directly
+                response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
+                configStorageService.loadFileResource(projectFilePath,response.outputStream)
+                response.outputStream.close()
+            }else{
+                //render as json/xml with contents as string
+                def baos=new ByteArrayOutputStream()
+                configStorageService.loadFileResource(projectFilePath,baos)
+                withFormat{
+                    def j={
+                        render(contentType:'application/json'){
+                            apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
+                        }
+                    }
+                    xml{
+                        render(contentType: 'application/xml'){
+                            apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
+                        }
+
+                    }
+                    json j
+                    '*' j
+                }
+            }
+        }else if(configStorageService.existsDirResource(projectFilePath) || projectFilePath==rmprefix){
+            //list aclpolicy files in the dir
+            def list=configStorageService.listDirPaths(projectFilePath).findAll{
+                it ==~ /.*(\.aclpolicy|\/)$/
+            }
+            withFormat{
+                xml{
+                    render(contentType: 'application/xml'){
+                        apiService.xmlRenderDirList(
+                                projectFilePath,
+                                { String p -> apiService.pathRmPrefix(p, rmprefix) },
+                                { String p -> renderAclHref(apiService.pathRmPrefix(p, rmprefix)) },
+                                list,
+                                delegate
+                        )
+                    }
+
+                }
+                def j ={
+                    render(contentType:'application/json') {
+                        apiService.jsonRenderDirlist(
+                                projectFilePath,
+                                { String p -> apiService.pathRmPrefix(p, rmprefix) },
+                                { String p -> renderAclHref(apiService.pathRmPrefix(p, rmprefix)) },
+                                list,
+                                delegate
+                        )
+                    }
+                }
+                json j
+                '*' j
+            }
+        }else{
+
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist',
+                    args:['resource',params.path],
+                    format: respFormat
+            ])
+        }
+
+    }
+
+
+    private def apiSystemAclsDeleteResource(projectFilePath) {
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','text'],request.format)
+        boolean done=configStorageService.deleteFileResource(projectFilePath)
+        if(!done){
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_CONFLICT,
+                    message: "error",
+                    format: respFormat
+            ])
+        }
+        render(status: HttpServletResponse.SC_NO_CONTENT)
     }
 }
 

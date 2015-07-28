@@ -94,6 +94,7 @@ class UrlMappings {
         "/api/$api_version/system/info"(controller: 'api', action: 'apiSystemInfo')
         "/api/$api_version/system/executions/enable"(controller: 'execution', action: 'apiExecutionModeActive')
         "/api/$api_version/system/executions/disable"(controller: 'execution', action: 'apiExecutionModePassive')
+        "/api/$api_version/system/acl/$path**"(controller: 'framework',action: 'apiSystemAcls')
         "/api/$api_version/tokens/$user?"(controller: 'api', action: 'apiTokenList')
         "/api/$api_version/token/$token"(controller: 'api', action: 'apiTokenManage')
 
