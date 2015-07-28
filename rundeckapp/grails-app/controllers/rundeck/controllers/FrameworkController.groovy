@@ -2039,7 +2039,7 @@ class FrameworkController extends ControllerBase {
                     format:respFormat
             ])
         }
-        def prefix = AuthorizationService.ACL_STORAGE_PATH_BASE + '/'
+        def prefix = AuthorizationService.ACL_STORAGE_PATH_BASE
         def storagePath = prefix + (params.path ?: '')
         log.debug("apiSystemAcls, path: ${params.path}, storage path: ${storagePath}")
         switch (request.method) {
