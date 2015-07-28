@@ -46,7 +46,7 @@ class FrameworkService implements ApplicationContextAware {
     boolean initialized = false
     private String serverUUID
     private boolean clusterModeEnabled
-    SAREAuthorization rundeckPolicyAuthorization
+    def authorizationService
 
     def ApplicationContext applicationContext
     def ExecutionService executionService
@@ -573,7 +573,7 @@ class FrameworkService implements ApplicationContextAware {
 
     def getFrameworkRoles() {
         initialize()
-        return new HashSet(rundeckPolicyAuthorization.hackMeSomeRoles())
+        return new HashSet(authorizationService.getRoleList())
     }
 
     def AuthContext userAuthContext(session) {
@@ -593,7 +593,7 @@ class FrameworkService implements ApplicationContextAware {
         if (!subject) {
             throw new RuntimeException("getAuthContextForSubject: Cannot get AuthContext without subject")
         }
-        return new SubjectAuthContext(subject, rundeckPolicyAuthorization)
+        return new SubjectAuthContext(subject, authorizationService.systemAuthorization)
     }
     /**
      * Extend a generic auth context, with project-specific authorization
@@ -624,7 +624,7 @@ class FrameworkService implements ApplicationContextAware {
         def project1 = getFrameworkProject(project)
 
         def projectAuth = project1.getProjectAuthorization()
-        def authorization = new MultiAuthorization(rundeckPolicyAuthorization, projectAuth)
+        def authorization = new MultiAuthorization(authorizationService.systemAuthorization, projectAuth)
         log.debug("getAuthContextForSubjectAndProject ${project}, authorization: ${authorization}, project auth ${projectAuth}")
         return new SubjectAuthContext(subject, authorization)
     }
@@ -638,7 +638,7 @@ class FrameworkService implements ApplicationContextAware {
         rolelist.each { String s ->
             subject.getPrincipals().add(new Group(s))
         }
-        return new SubjectAuthContext(subject, rundeckPolicyAuthorization)
+        return new SubjectAuthContext(subject, authorizationService.systemAuthorization)
     }
 
 
