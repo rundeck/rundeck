@@ -22,18 +22,18 @@ import java.util.regex.PatternSyntaxException;
 /**
  * Evaluate ACL requests over a set of rules
  */
-public class RuleEvaluator implements Authorization {
+public class RuleEvaluator implements Authorization, AclRuleSetSource {
     private final static Logger logger = Logger.getLogger(RuleEvaluator.class);
     final private AclRuleSet rules;
     final private AclRuleSetSource source;
 
     private RuleEvaluator(final AclRuleSetSource ruleSetSource) {
         this.source = ruleSetSource;
-        this.rules=null;
+        this.rules = null;
     }
 
     private RuleEvaluator(final AclRuleSet rules) {
-        this.source=null;
+        this.source = null;
         this.rules = rules;
     }
 
@@ -53,7 +53,12 @@ public class RuleEvaluator implements Authorization {
             final Set<Attribute> environment
     )
     {
-        return evaluate(resource, subject, action, environment, narrowContext(subject, environment));
+        return evaluate(resource, subject, action, environment, narrowContext(
+                                getRuleSet(),
+                                subjectFrom(subject),
+                                environment
+                        )
+        );
     }
 
     public List<AclRule> narrowContext(
@@ -78,7 +83,7 @@ public class RuleEvaluator implements Authorization {
     {
         long userMatchStart = System.currentTimeMillis();
 
-        if (f.getEnvironment()!=null) {
+        if (f.getEnvironment() != null) {
             final EnvironmentalContext environment1 = f.getEnvironment();
             if (!environment1.isValid()) {
                 logger.warn(f.toString() + ": Context section not valid: " + environment1.toString());
@@ -146,12 +151,8 @@ public class RuleEvaluator implements Authorization {
         }
     }
 
-    private List<AclRule> narrowContext(final Subject subject, final Set<Attribute> environment) {
-        return narrowContext(getRules(), subjectFrom(subject), environment);
-    }
-
     private AclSubject subjectFrom(final Subject subject) {
-        if(null==subject) {
+        if (null == subject) {
             throw new NullPointerException("subject is null");
         }
         Set<Username> userPrincipals = subject.getPrincipals(Username.class);
@@ -192,10 +193,7 @@ public class RuleEvaluator implements Authorization {
     {
         Set<Decision> decisions = new HashSet<Decision>();
         long duration = 0;
-        List<AclRule> matchedRules = narrowContext(
-                subject,
-                environment
-        );
+        List<AclRule> matchedRules = narrowContext(getRuleSet(), subjectFrom(subject), environment);
         for (Map<String, String> resource : resources) {
             for (String action : actions) {
                 final Decision decision = evaluate(
@@ -453,7 +451,7 @@ public class RuleEvaluator implements Authorization {
         }
     }
 
-    public AclRuleSet getRules() {
+    public AclRuleSet getRuleSet() {
         return null != source ? source.getRuleSet() : rules;
     }
 
@@ -499,7 +497,7 @@ public class RuleEvaluator implements Authorization {
 
     public Explanation.Code includes(final AclRule rule, final Map<String, String> resource, final String action) {
         //evaluate type
-        if(rule.getResourceType()!=null){
+        if (rule.getResourceType() != null) {
             String resType = resource.get("type");
             if (null == resType || !rule.getResourceType().equals(resType)) {
                 return Explanation.Code.REJECTED;
