@@ -73,7 +73,7 @@ Changes introduced by API Version number:
     - [`/api/14/system/executions/enable`][/api/V/system/executions/enable] - Enable executions (ACTIVE mode)
     - [`/api/14/system/executions/disable`][/api/V/system/executions/disable] - Disable executions (PASSIVE mode)
     - [`/api/14/system/acl/*`][/api/V/system/acl/*] - Manage system ACLs
-    - [`/api/14/project/acl/*`][/api/V/project/acl/*] - Manage project ACLs
+    - [`/api/14/project/[PROJECT]/acl/*`][/api/V/project/[PROJECT]/acl/*] - Manage project ACLs
 * New Endpoints, replacing deprecated versions:
     - [`/api/14/project/[PROJECT*]/executions/running`][/api/V/project/[PROJECT*]/executions/running]
     - [`/api/14/project/[PROJECT]/executions`][/api/V/project/[PROJECT]/executions]
@@ -1098,12 +1098,19 @@ JSON response for `project` specified:
 
 ## ACLs
 
-Manage the system global ACL policy files stored in the database.  
+Manage the system system ACL policy files stored in the database.  
 
 The files managed via the API **do not** include the files located on disk, however these policy files will be merged with
 any policy files in the normal filesystem locations (e.g. `$RDECK_BASE/etc`).
 
-### List Global ACL Policies
+**Note:** For Project-specific ACLs see [Project ACLs](#project-acls).
+
+For more information about ACL Policies see:
+
+* [ACLPOLICY format][ACLPOLICY]
+* [Access Control Policy](../administration/access-control-policy.html)
+
+### List System ACL Policies
 
 **Request:**
 
@@ -1239,10 +1246,6 @@ Delete an ACL policy file.
 **Response:**
 
     204 No Content
-
-### Project ACLs
-
-See [Project - ACL Policies](#acl-policies).
 
 ## Jobs
 
@@ -3465,6 +3468,56 @@ Deletes the resource if it exists.
 
 Response: `204 No Content`
 
+### Project ACLs
+
+Manage a set of ACL Policy files for a project.  These files will apply to the specified project only,
+and must either have a `context:` section which specifies the project context, or have no `context:` section.
+
+The request and response formats for Project ACL Policies matches that of the
+[System ACL Policies][/api/V/system/acl/*],
+however the URL is rooted under the Project's URL path: `/api/13/project/[PROJECT]/acl/*`.
+
+For more information about ACL Policies see:
+
+* [ACLPOLICY format][ACLPOLICY]
+* [Access Control Policy](../administration/access-control-policy.html)
+
+#### List Project ACL Policies
+
+**Request:**
+
+    GET /api/13/project/[PROJECT]/acl/
+
+See [List System ACL Policies](#list-system-acl-policies) for request and response.
+
+#### Get a Project ACL Policy
+
+**Request:**
+
+    GET /api/13/project/[PROJECT]/acl/name.aclpolicy
+
+See [Get an ACL Policy](#get-an-acl-policy) for request and response.
+
+#### Create or update a Project ACL Policy
+
+**Request:**
+
+    POST /api/13/project/[PROJECT]/acl/name.aclpolicy
+    PUT /api/13/project/[PROJECT]/acl/name.aclpolicy
+
+See [Create or update an ACL Policy](#create-or-update-an-acl-policy) for request and response.
+
+#### Delete a Project ACL Policy
+
+**Request:**
+
+    DELETE /api/13/project/[PROJECT]/acl/name.aclpolicy
+
+**Response:**
+
+    204 No Content
+
+
 ## Listing History
 
 List the event history for a project.
@@ -3858,6 +3911,13 @@ If request was JSON, then the following JSON:
 * `GET` [Getting Project Info](#getting-project-info)
 * `DELETE` [Project Deletion](#project-deletion)
 
+[/api/V/project/[PROJECT]/acl/*][]
+
+* `GET` [List Project ACL Policies](#list-project-acl-policies)
+* `GET` [Get a Project ACL Policy](#get-a-project-acl-policy)
+* `PUT`/`POST` [Create or update a Project ACL Policy](#create-or-update-a-project-acl-policy)
+* `DELETE` [Delete a Project ACL Policy](#delete-a-project-acl-policy)
+
 [/api/V/project/[PROJECT]/config][]
 
 * `GET` [GET Project Configuration](#get-project-configuration)
@@ -3951,7 +4011,7 @@ If request was JSON, then the following JSON:
 
 [/api/V/system/acl/*][]
 
-* `GET` [List Global ACL Policies](#list-global-acl-policies)
+* `GET` [List System ACL Policies](#list-system-acl-policies)
 * `GET` [Get an ACL Policy](#get-an-acl-policy)
 * `POST`/`PUT` [Create or update an ACL Policy](#create-or-update-an-acl-policy)
 * `DELETE` [Delete an ACL Policy](#delete-an-acl-policy)
@@ -4015,6 +4075,8 @@ If request was JSON, then the following JSON:
 
 [/api/V/project/[PROJECT]]:#getting-project-info
 [DELETE /api/V/project/[PROJECT]]:#project-deletion
+
+[/api/V/project/[PROJECT]/acl/*]:#project-acls
 
 [/api/V/project/[PROJECT]/config]:#get-project-configuration
 [PUT /api/V/project/[PROJECT]/config]:#put-project-configuration
@@ -4080,3 +4142,5 @@ If request was JSON, then the following JSON:
 [POST /api/V/tokens/[USER]]:#create-a-token
 [/api/V/token/[ID]]:#get-a-token
 [DELETE /api/V/token/[ID]]:#delete-a-token
+
+[ACLPOLICY]:../man5/aclpolicy.html
