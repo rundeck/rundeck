@@ -756,76 +756,23 @@ class ProjectController extends ControllerBase{
         }else{
             def baos=new ByteArrayOutputStream()
             project.loadFileResource(projectFilePath,baos)
-            renderProjectFile(baos.toString(),request,response, respFormat)
-        }
-    }
-    /**
-     * Render json response for Acl dir listing
-     * @param project project
-     * @param path project file path
-     * @param rmprefix prefix to remove from path
-     * @param dirlist list of dir contents
-     * @param builder builder
-     * @return
-     */
-    private def jsonRenderProjectAcl(String project,String path,String rmprefix,List<String>dirlist,builder){
-        builder.with{
-            delegate.'path'=pathRmPrefix(path,rmprefix)
-            delegate.'type'='directory'
-            //delegate.'name'= pathName(path)
-            delegate.'href'= renderProjectAclHref(project,pathRmPrefix(path,rmprefix))
-            delegate.'resources'=array{
-                def builder2=delegate
-                dirlist.each{dirpath->
-                    builder2.element {
-                        delegate.'path'=pathRmPrefix(dirpath,rmprefix)
-                        delegate.'type'=dirpath.endsWith('/')?'directory':'file'
-                        if(!dirpath.endsWith('/')) {
-                            delegate.'name' = pathName(dirpath)
-                        }
-                        delegate.'href'= renderProjectAclHref(project,pathRmPrefix(dirpath,rmprefix))
+            withFormat{
+                json{
+                    render(contentType:'application/json'){
+                        apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
                     }
+                }
+                xml{
+                    render(contentType: 'application/xml'){
+                        apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
+                    }
+
                 }
             }
         }
     }
 
-    /**
-     * Render xml response for Acl dir listing
-     * @param project project
-     * @param path project file path
-     * @param rmprefix prefix to remove from path
-     * @param dirlist list of dir contents
-     * @param builder builder
-     * @return
-     */
-    private def xmlRenderProjectAcl(String project,String path,String rmprefix,List<String>dirlist,builder){
-        builder.'resource'(path:pathRmPrefix(path,rmprefix),type:'directory','href':renderProjectAclHref(project,pathRmPrefix(path,rmprefix))) {
 
-            delegate.'contents' {
-                def builder2 = delegate
-                dirlist.each { dirpath ->
-                    def resmap = [
-                            path: pathRmPrefix(dirpath, rmprefix),
-                            type: dirpath.endsWith('/') ? 'directory' : 'file',
-                            href: renderProjectAclHref( project, pathRmPrefix(dirpath, rmprefix))
-                    ]
-                    if (!dirpath.endsWith('/')) {
-                        resmap.'name' = pathName(dirpath)
-                    }
-                    builder2.'resource'(resmap)
-                }
-            }
-        }
-    }
-
-    private String pathRmPrefix(String path,String prefix) {
-        prefix&&path.startsWith(prefix)?path.substring(prefix.length()):path
-    }
-
-    private String pathName(String path) {
-        path.lastIndexOf('/')>=0?path.substring(path.lastIndexOf('/') + 1):path
-    }
 
     private def renderProjectAclHref(String project,String path) {
         createLink(absolute: true, uri: "/api/${ApiRequestFilters.API_CURRENT_VERSION}/project/$project/acl/$path")
@@ -850,7 +797,19 @@ class ProjectController extends ControllerBase{
                 //render as json/xml with contents as string
                 def baos=new ByteArrayOutputStream()
                 project.loadFileResource(projectFilePath,baos)
-                renderProjectFile(baos.toString(),request,response, respFormat)
+                withFormat{
+                    json{
+                        render(contentType:'application/json'){
+                            apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
+                        }
+                    }
+                    xml{
+                        render(contentType: 'application/xml'){
+                            apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
+                        }
+
+                    }
+                }
             }
         }else if(project.existsDirResource(projectFilePath) || projectFilePath==rmprefix){
             //list aclpolicy files in the dir
@@ -860,12 +819,24 @@ class ProjectController extends ControllerBase{
             withFormat{
                 json{
                     render(contentType:'application/json'){
-                        jsonRenderProjectAcl(project.getName(),projectFilePath,rmprefix,list,delegate)
+                        apiService.jsonRenderDirlist(
+                                projectFilePath,
+                                {p->apiService.pathRmPrefix(p,rmprefix)},
+                                {p->renderProjectAclHref(project.getName(),apiService.pathRmPrefix(p,rmprefix))},
+                                list,
+                                delegate
+                        )
                     }
                 }
                 xml{
                     render(contentType: 'application/xml'){
-                        xmlRenderProjectAcl(project.getName(),projectFilePath,rmprefix,list,delegate)
+                        apiService.xmlRenderDirList(
+                                projectFilePath,
+                                {p->apiService.pathRmPrefix(p,rmprefix)},
+                                {p->renderProjectAclHref(project.getName(),apiService.pathRmPrefix(p,rmprefix))},
+                                list,
+                                delegate
+                        )
                     }
 
                 }
