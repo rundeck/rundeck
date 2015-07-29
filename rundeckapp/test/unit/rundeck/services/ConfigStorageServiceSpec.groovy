@@ -8,6 +8,8 @@ import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
 import spock.lang.Specification
 
+import java.util.concurrent.atomic.AtomicInteger
+
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
@@ -144,6 +146,40 @@ class ConfigStorageServiceSpec extends Specification {
         then:
         resStub==result
     }
+    void "storage create listeners test"(){
+        setup:
+        def meta=Stub(ResourceMeta){
+            getInputStream() >> new ByteArrayInputStream('abcdef'.bytes)
+        }
+        def resStub = Stub(Resource){
+            getContents()>> meta
+        }
+        service.rundeckConfigStorageTree=Stub(StorageTree){
+            createResource("/my-resource",{ResourceMeta rm->
+                rm.meta['a']=='b' && null!=rm.inputStream
+            }) >> resStub
+        }
+        def AtomicInteger createdCount = new AtomicInteger(0)
+        def AtomicInteger modifiedCount = new AtomicInteger(0)
+        def AtomicInteger deletedCount = new AtomicInteger(0)
+
+        def listener1=[resourceCreated:{p->createdCount.incrementAndGet()},
+                       resourceModified:{p->modifiedCount.incrementAndGet()},
+                       resourceDeleted:{p->deletedCount.incrementAndGet()}] as StorageManagerListener
+        def listener2=[resourceCreated:{p->createdCount.incrementAndGet()},
+                       resourceModified:{p->modifiedCount.incrementAndGet()},
+                       resourceDeleted:{p->deletedCount.incrementAndGet()}] as StorageManagerListener
+
+        service.addListener(listener1)
+        service.addListener(listener2)
+        when:
+        def result=service.createFileResource("my-resource",new ByteArrayInputStream('abcdef'.bytes),[a:'b'])
+
+        then:
+        createdCount.get()==2
+        modifiedCount.get()==0
+        deletedCount.get()==0
+    }
     void "storage update test"(){
         setup:
         def meta=Stub(ResourceMeta){
@@ -163,6 +199,41 @@ class ConfigStorageServiceSpec extends Specification {
 
         then:
         resStub==result
+    }
+    void "storage update listeners test"(){
+        setup:
+        def meta=Stub(ResourceMeta){
+            getInputStream() >> new ByteArrayInputStream('abcdef'.bytes)
+        }
+        def resStub = Stub(Resource){
+            getContents()>> meta
+        }
+        service.rundeckConfigStorageTree=Stub(StorageTree){
+            updateResource("/my-resource",{ResourceMeta rm->
+                rm.meta['a']=='b' && null!=rm.inputStream
+            }) >> resStub
+        }
+        def AtomicInteger createdCount = new AtomicInteger(0)
+        def AtomicInteger modifiedCount = new AtomicInteger(0)
+        def AtomicInteger deletedCount = new AtomicInteger(0)
+
+        def listener1=[resourceCreated:{p->createdCount.incrementAndGet()},
+                       resourceModified:{p->modifiedCount.incrementAndGet()},
+                       resourceDeleted:{p->deletedCount.incrementAndGet()}] as StorageManagerListener
+        def listener2=[resourceCreated:{p->createdCount.incrementAndGet()},
+                       resourceModified:{p->modifiedCount.incrementAndGet()},
+                       resourceDeleted:{p->deletedCount.incrementAndGet()}] as StorageManagerListener
+
+        service.addListener(listener1)
+        service.addListener(listener2)
+        when:
+        def result=service.updateFileResource("my-resource",new ByteArrayInputStream('abcdef'.bytes),[a:'b'])
+
+        then:
+        resStub==result
+        createdCount.get()==0
+        modifiedCount.get()==2
+        deletedCount.get()==0
     }
     void "storage write test new resource"(){
         given:
@@ -258,6 +329,34 @@ class ConfigStorageServiceSpec extends Specification {
 
         then:
         result
+    }
+    void "storage delete listener test"(){
+        given:
+        service.rundeckConfigStorageTree=Stub(StorageTree){
+            hasResource("/my-resource") >> true
+            deleteResource("/my-resource") >> true
+        }
+        def AtomicInteger createdCount = new AtomicInteger(0)
+        def AtomicInteger modifiedCount = new AtomicInteger(0)
+        def AtomicInteger deletedCount = new AtomicInteger(0)
+
+        def listener1=[resourceCreated:{p->createdCount.incrementAndGet()},
+                       resourceModified:{p->modifiedCount.incrementAndGet()},
+                       resourceDeleted:{p->deletedCount.incrementAndGet()}] as StorageManagerListener
+        def listener2=[resourceCreated:{p->createdCount.incrementAndGet()},
+                       resourceModified:{p->modifiedCount.incrementAndGet()},
+                       resourceDeleted:{p->deletedCount.incrementAndGet()}] as StorageManagerListener
+
+        service.addListener(listener1)
+        service.addListener(listener2)
+        when:
+        def result=service.deleteFileResource("my-resource")
+
+        then:
+        result
+        createdCount.get()==0
+        modifiedCount.get()==0
+        deletedCount.get()==2
     }
     void "storage delete test missing resource"(){
         given:

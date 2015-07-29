@@ -16,12 +16,23 @@ import org.rundeck.storage.data.DataUtil
 class ConfigStorageService implements StorageManager {
 
     def StorageTree rundeckConfigStorageTree
+    def List<StorageManagerListener> listeners=Collections.synchronizedList([])
 
     /**
      * @return storage
      */
     def StorageTree getStorage() {
         rundeckConfigStorageTree
+    }
+
+    @Override
+    void addListener(final StorageManagerListener listener) {
+        listeners << listener
+    }
+
+    @Override
+    void removeListener(final StorageManagerListener listener) {
+        listeners.remove(listener)
     }
 
     boolean existsFileResource(String path) {
@@ -77,8 +88,10 @@ class ConfigStorageService implements StorageManager {
      */
     Resource<ResourceMeta> updateFileResource(String path, InputStream input, Map<String, String> meta) {
         def storagePath = (path.startsWith("/") ? path : "/${path}")
-        getStorage().
+        def res=getStorage().
                 updateResource(storagePath, DataUtil.withStream(input, meta, StorageUtil.factory()))
+        listeners*.resourceModified(path)
+        res
     }
     /**
      * Create new resource, fails if it exists
@@ -90,8 +103,10 @@ class ConfigStorageService implements StorageManager {
      */
     Resource<ResourceMeta> createFileResource(String path, InputStream input, Map<String, String> meta) {
         def storagePath = (path.startsWith("/") ? path : "/${path}")
-        getStorage().
+        def res=getStorage().
                 createResource(storagePath, DataUtil.withStream(input, meta, StorageUtil.factory()))
+        listeners*.resourceCreated(path)
+        res
     }
     /**
      * Write to a resource, create if it does not exist
@@ -120,7 +135,9 @@ class ConfigStorageService implements StorageManager {
         if (!getStorage().hasResource(storagePath)) {
             return true
         }else{
-            return getStorage().deleteResource(storagePath)
+            def res= getStorage().deleteResource(storagePath)
+            listeners*.resourceDeleted(path)
+            return res
         }
     }
 

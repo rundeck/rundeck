@@ -7,6 +7,18 @@ import org.rundeck.storage.api.Resource
 interface StorageManager {
 
     /**
+     * Receive notification of changes
+     * @param listener
+     */
+    void addListener(StorageManagerListener listener)
+
+    /**
+     * Remove a listener
+     * @param listener
+     */
+    void removeListener(StorageManagerListener listener)
+
+    /**
      * @param path
      * @return true if a file exists at the path
      */
