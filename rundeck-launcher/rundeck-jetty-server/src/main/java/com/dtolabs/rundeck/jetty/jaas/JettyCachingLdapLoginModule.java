@@ -647,7 +647,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     protected boolean authenticate(final String webUserName, final Object webCredential) throws LoginException {
         try {
 
-            if (webUserName == null || webCredential == null) {
+            if (isEmptyOrNull(webUserName) || isEmptyOrNull(webCredential)) {
                 setAuthenticated(false);
                 return isAuthenticated();
             }
@@ -693,6 +693,10 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             }
             throw new LoginException("Error obtaining user info.");
         }
+    }
+
+    private boolean isEmptyOrNull(final Object value) {
+        return null==value || "".equals(value);
     }
 
     /**
