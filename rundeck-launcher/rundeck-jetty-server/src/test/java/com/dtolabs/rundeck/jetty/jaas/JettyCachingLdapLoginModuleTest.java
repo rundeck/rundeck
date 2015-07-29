@@ -16,11 +16,13 @@
 
 package com.dtolabs.rundeck.jetty.jaas;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 
+import org.eclipse.jetty.plus.jaas.callback.ObjectCallback;
 import org.eclipse.jetty.plus.jaas.spi.UserInfo;
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,9 +30,15 @@ import org.junit.Test;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.*;
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.UnsupportedCallbackException;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -192,6 +200,72 @@ public class JettyCachingLdapLoginModuleTest {
             assertThat(actualRoles, is(expectedRoles));
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+
+    private CallbackHandler createCallbacks(final String user1, final String password) {
+        return new CallbackHandler() {
+            @Override
+            public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+                NameCallback name = (NameCallback) callbacks[0];
+                name.setName(user1);
+                ObjectCallback pass = (ObjectCallback) callbacks[1];
+                pass.setObject(password);
+            }
+        };
+    }
+
+    @Test
+    public void testDisallowEmptyPassword() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule();
+        module._debug=true;
+        module.setCallbackHandler( createCallbacks("user1", ""));
+        try {
+            assertFalse(module.login());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+    @Test
+    public void testDisallowNullPasword() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule();
+        module._debug=true;
+        module.setCallbackHandler( createCallbacks("user1", null));
+        try {
+            assertFalse(module.login());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+    @Test
+    public void testDisallowEmptyUsername() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule();
+        module._debug=true;
+        module.setCallbackHandler( createCallbacks("", "xyz"));
+        try {
+            assertFalse(module.login());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+    @Test
+    public void testDisallowNullUsername() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule();
+        module._debug=true;
+        module.setCallbackHandler( createCallbacks(null, "xyz"));
+        try {
+            assertFalse(module.login());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
         }
     }
 
