@@ -68,6 +68,11 @@ public class HostnameVerifyingSSLSocketFactory extends SSLSocketFactory {
 	}
 
 	@Override
+	public Socket createSocket() throws IOException {
+		return realSocketFactory.createSocket();
+	}
+
+	@Override
 	public Socket createSocket(String host, int port) throws IOException, UnknownHostException {
 		return realSocketFactory.createSocket(host, port);
 	}
