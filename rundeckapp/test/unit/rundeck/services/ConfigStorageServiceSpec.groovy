@@ -320,8 +320,8 @@ class ConfigStorageServiceSpec extends Specification {
     void "storage delete test existing resource"(){
         given:
         service.rundeckConfigStorageTree=Stub(StorageTree){
-            hasResource("my-resource") >> true
-            deleteResource("my-resource") >> true
+            hasResource("/my-resource") >> true
+            deleteResource("/my-resource") >> true
         }
 
         when:
@@ -361,7 +361,7 @@ class ConfigStorageServiceSpec extends Specification {
     void "storage delete test missing resource"(){
         given:
         service.rundeckConfigStorageTree=Stub(StorageTree){
-            hasResource("my-resource") >> false
+            hasResource("/my-resource") >> false
         }
 
         when:
