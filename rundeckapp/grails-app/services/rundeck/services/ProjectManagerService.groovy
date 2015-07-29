@@ -48,6 +48,10 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     ApplicationContext applicationContext
     def grailsApplication
     def metricService
+    /**
+     * Scheduled executor for retries
+     */
+    private ExecutorService executor = Executors.newFixedThreadPool(2)
 
     /**
      * Load on demand due to cyclical spring dependency
@@ -93,10 +97,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     IRundeckProject createFrameworkProject(final String projectName) {
         return createFrameworkProject(projectName, new Properties())
     }
-    /**
-     * Scheduled executor for retries
-     */
-    private ExecutorService executor = Executors.newFixedThreadPool(2)
 
     //basic creation, created via spec string in afterPropertiesSet()
     private LoadingCache<String, IRundeckProject> projectCache =
