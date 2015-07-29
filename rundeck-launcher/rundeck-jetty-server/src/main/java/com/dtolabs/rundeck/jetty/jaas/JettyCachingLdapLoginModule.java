@@ -203,6 +203,8 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
     protected boolean _debug;
 
+    protected boolean _ldapsVerifyHostname=true;
+
     /**
      * if the getUserInfo can pull a password off of the user then password
      * comparison is an option for authn, to force binding login checks, set
@@ -852,6 +854,8 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         _roleNameAttribute = getOption(options, "roleNameAttribute", _roleNameAttribute);
         _debug = Boolean.parseBoolean(String.valueOf(getOption(options, "debug", Boolean
                 .toString(_debug))));
+        _ldapsVerifyHostname = Boolean.parseBoolean(String.valueOf(getOption(options, "ldapsVerifyHostname", Boolean
+                .toString(_ldapsVerifyHostname))));
 
         _rolePrefix = (String) options.get("rolePrefix");
 
@@ -952,7 +956,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         env.put("com.sun.jndi.ldap.connect.timeout", Long.toString(_timeoutConnect));
 
         // Set the SSLContextFactory to implementation that validates cert subject
-        if (url != null && url.startsWith("ldaps")) {
+        if (url != null && url.startsWith("ldaps") && _ldapsVerifyHostname) {
             try {
                 URI uri = new URI(url);
                 HostnameVerifyingSSLSocketFactory.setTargetHost(uri.getHost());
