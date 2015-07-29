@@ -62,6 +62,48 @@ public class YamlProvider {
      * Source from a stream
      *
      * @param identity identity
+     * @param content  yaml string
+     * @param modified date the content was last modified, for caching purposes
+     *
+     * @return source
+     */
+    public static CacheableYamlSource sourceFromString(
+            final String identity,
+            final String content,
+            final Date modified
+    )
+    {
+        return new CacheableYamlSource() {
+            @Override
+            public boolean isValid() {
+                return true;
+            }
+
+            @Override
+            public Date getLastModified() {
+                return modified;
+            }
+
+            @Override
+            public String getIdentity() {
+                return identity;
+            }
+
+            @Override
+            public Iterable<Object> loadAll(final Yaml yaml) throws IOException {
+                return yaml.loadAll(content);
+            }
+
+            @Override
+            public void close() throws IOException {
+
+            }
+        };
+    }
+    /**
+     * Source from a stream
+     *
+     * @param identity identity
      * @param stream   stream
      * @param modified date the content was last modified, for caching purposes
      *
