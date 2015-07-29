@@ -3,6 +3,7 @@ package org.grails.plugins.metricsweb
 import com.codahale.metrics.Counter
 import com.codahale.metrics.Metric
 import com.codahale.metrics.MetricRegistry
+import com.codahale.metrics.Timer
 import org.codehaus.groovy.reflection.ReflectionUtils
 
 class MetricService {
