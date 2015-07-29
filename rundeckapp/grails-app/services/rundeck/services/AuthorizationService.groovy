@@ -1,5 +1,10 @@
 package rundeck.services
 
+import com.codahale.metrics.Counter
+import com.codahale.metrics.Gauge
+import com.codahale.metrics.Meter
+import com.codahale.metrics.Timer
+import com.codahale.metrics.MetricRegistry
 import com.dtolabs.rundeck.core.authorization.AclRuleSetSource
 import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.Authorization
@@ -32,6 +37,7 @@ class AuthorizationService implements InitializingBean{
     def configStorageService
     def rundeckFilesystemPolicyAuthorization
     def grailsApplication
+    def metricService
     /**
      * Scheduled executor for retries
      */
@@ -42,9 +48,22 @@ class AuthorizationService implements InitializingBean{
      * @return
      */
     def Authorization getSystemAuthorization() {
-        AclsUtil.append rundeckFilesystemPolicyAuthorization, getStoredAuthorization()
+        if(metricService) {
+            metricService.withTimer(this.class.name, 'getSystemAuthorization') {
+                timedAuthorization(AclsUtil.append(rundeckFilesystemPolicyAuthorization, getStoredAuthorization()))
+            }
+        }else{
+            AclsUtil.append(rundeckFilesystemPolicyAuthorization, getStoredAuthorization())
+        }
     }
 
+    private Authorization timedAuthorization(Authorization auth){
+        Timer timer = metricService.timer(this.class.name + ".systemAuthorization", "evaluateTimer")
+        Timer timerset = metricService.timer(this.class.name + ".systemAuthorization", "evaluateSetTimer")
+        Meter meter= metricService.meter(this.class.name + ".systemAuthorization", "evaluateMeter")
+        Meter meterset= metricService.meter(this.class.name + ".systemAuthorization", "evaluateSetMeter")
+        new TimedAuthorization(auth,timer,timerset,meter,meterset)
+    }
     /**
      * list group/role names used by the policies
      * @return
@@ -188,5 +207,52 @@ class AuthorizationService implements InitializingBean{
         ] as StorageManagerListener)
 
 
+        MetricRegistry registry = metricService?.getMetricRegistry()
+        registry?.register(
+                MetricRegistry.name(this.class.name + ".sourceCache", "hitCount"),
+                new Gauge<Long>() {
+                    @Override
+                    Long getValue() {
+                        sourceCache.stats().hitCount()
+                    }
+                }
+        )
+
+        registry?.register(
+                MetricRegistry.name(this.class.name + ".sourceCache", "evictionCount"),
+                new Gauge<Long>() {
+                    @Override
+                    Long getValue() {
+                        sourceCache.stats().evictionCount()
+                    }
+                }
+        )
+        registry?.register(
+                MetricRegistry.name(this.class.name + ".sourceCache", "missCount"),
+                new Gauge<Long>() {
+                    @Override
+                    Long getValue() {
+                        sourceCache.stats().missCount()
+                    }
+                }
+        )
+        registry?.register(
+                MetricRegistry.name(this.class.name + ".sourceCache", "loadExceptionCount"),
+                new Gauge<Long>() {
+                    @Override
+                    Long getValue() {
+                        sourceCache.stats().loadExceptionCount()
+                    }
+                }
+        )
+        registry?.register(
+                MetricRegistry.name(this.class.name + ".sourceCache", "hitRate"),
+                new Gauge<Double>() {
+                    @Override
+                    Double getValue() {
+                        sourceCache.stats().hitRate()
+                    }
+                }
+        )
     }
 }
