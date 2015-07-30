@@ -90,6 +90,7 @@ class AuthorizationService implements InitializingBean{
      * @return authorization
      */
     private Policies loadStoredPolicies() {
+        //TODO: list of files is always reloaded?
         def paths = configStorageService.listDirPaths(ACL_STORAGE_PATH_BASE, ".*\\.aclpolicy")
 
         def sources = paths.collect { path ->
