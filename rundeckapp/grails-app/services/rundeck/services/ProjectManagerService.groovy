@@ -5,6 +5,7 @@ import com.codahale.metrics.MetricRegistry
 import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.authorization.providers.CacheableYamlSource
 import com.dtolabs.rundeck.core.authorization.providers.Policies
 import com.dtolabs.rundeck.core.authorization.providers.PoliciesCache
 import com.dtolabs.rundeck.core.authorization.providers.YamlProvider
@@ -17,6 +18,7 @@ import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.dtolabs.rundeck.server.projects.RundeckProject
+import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
@@ -32,6 +34,7 @@ import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Project
+import rundeck.Storage
 
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
@@ -146,54 +149,47 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                     }
                 }
         )
-        MetricRegistry registry = metricService?.getMetricRegistry()
-        registry?.register(
-                MetricRegistry.name(this.class.name + ".projectCache", "hitCount"),
-                new Gauge<Long>() {
-                    @Override
-                    Long getValue() {
-                        projectCache.stats().hitCount()
-                    }
-                }
-        )
+        def spec2 = grailsApplication.config.rundeck?.projectManagerService?.aclSourceCache?.spec ?:
+                "refreshAfterWrite=2m"
 
-        registry?.register(
-                MetricRegistry.name(this.class.name + ".projectCache", "evictionCount"),
-                new Gauge<Long>() {
+        log.debug("sourceCache: creating from spec: ${spec2}")
+
+        sourceCache = CacheBuilder.from(spec2)
+                                  .recordStats()
+                                  .build(
+                new CacheLoader<String, CacheableYamlSource>() {
+                    public CacheableYamlSource load(String key) {
+                        log.debug("sourceCache: loading source "+key)
+                        return loadYamlSource(key);
+                    }
+
                     @Override
-                    Long getValue() {
-                        projectCache.stats().evictionCount()
+                    ListenableFuture<CacheableYamlSource> reload(final String key, final CacheableYamlSource oldValue)
+                            throws Exception
+                    {
+                        if (needsReloadAcl(key,oldValue)) {
+                            ListenableFutureTask<CacheableYamlSource> task = ListenableFutureTask.create(
+                                    new Callable<CacheableYamlSource>() {
+                                        public CacheableYamlSource call() {
+
+                                            log.debug("sourceCache: reloading source "+key)
+                                            return loadYamlSource(key);
+                                        }
+                                    }
+                            );
+                            executor.execute(task);
+                            return task;
+                        } else {
+                            return Futures.immediateFuture(oldValue)
+                        }
                     }
                 }
         )
-        registry?.register(
-                MetricRegistry.name(this.class.name + ".projectCache", "missCount"),
-                new Gauge<Long>() {
-                    @Override
-                    Long getValue() {
-                        projectCache.stats().missCount()
-                    }
-                }
-        )
-        registry?.register(
-                MetricRegistry.name(this.class.name + ".projectCache", "loadExceptionCount"),
-                new Gauge<Long>() {
-                    @Override
-                    Long getValue() {
-                        projectCache.stats().loadExceptionCount()
-                    }
-                }
-        )
-        registry?.register(
-                MetricRegistry.name(this.class.name + ".projectCache", "hitRate"),
-                new Gauge<Double>() {
-                    @Override
-                    Double getValue() {
-                        projectCache.stats().hitRate()
-                    }
-                }
-        )
+        MetricRegistry registry = metricService?.getMetricRegistry()
+        Util.addCacheMetrics(this.class.name+".projectCache", registry, projectCache)
+        Util.addCacheMetrics(this.class.name+".sourceCache", registry, sourceCache)
     }
+
 
     boolean existsProjectFileResource(String projectName, String path) {
         def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
@@ -242,8 +238,10 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      */
     Resource<ResourceMeta> updateProjectFileResource(String projectName, String path, InputStream input, Map<String,String> meta) {
         def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
-        getStorage().
+        def res=getStorage().
                 updateResource(storagePath, DataUtil.withStream(input, meta, StorageUtil.factory()))
+        sourceCache.invalidate(projectName+';'+path)
+        res
     }
     /**
      * Create new resource, fails if it exists
@@ -255,8 +253,11 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      */
     Resource<ResourceMeta> createProjectFileResource(String projectName, String path, InputStream input, Map<String,String> meta) {
         def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
-        getStorage().
+
+        def res=getStorage().
                 createResource(storagePath, DataUtil.withStream(input, meta, StorageUtil.factory()))
+        sourceCache.invalidate(projectName+';'+path)
+        res
     }
     /**
      * Write to a resource, create if it does not exist
@@ -282,6 +283,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      */
     boolean deleteProjectFileResource(String projectName, String path) {
         def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
+        sourceCache.invalidate(projectName+';'+path)
         if (!getStorage().hasResource(storagePath)) {
             return true
         }else{
@@ -491,22 +493,58 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         projectCache.invalidate(projectName)
         resource
     }
+    //basic creation, created via spec string in afterPropertiesSet()
+    private LoadingCache<String, CacheableYamlSource> sourceCache =
+            CacheBuilder.newBuilder()
+                        .refreshAfterWrite(2, TimeUnit.MINUTES)
+                        .build(
+                    new CacheLoader<String, CacheableYamlSource>() {
+                        public CacheableYamlSource load(String key) {
+                            return loadYamlSource(key);
+                        }
+                    }
+            );
 
+    private CacheableYamlSource loadYamlSource(String key){
+        def (String project,String path)=key.split(';',2)
+        def exists = existsProjectFileResource(project,path)
+        log.debug("ProjectManagerService.loadYamlSource. path: ${path}, exists: ${exists}")
+        if(!exists){
+            return null
+        }
+        def resource = getProjectFileResource(project,path)
+        def file = resource.contents
+        def text =file.inputStream.getText()
+        YamlProvider.sourceFromString("[project:${project}]${path}", text, file.modificationTime)
+    }
     /**
      * Create Authorization using project-owned aclpolicies
      * @param projectName name of the project
      * @return authorization
      */
     public Authorization getProjectAuthorization(String projectName) {
-        log.debug("getProjectAuthorization for ${projectName}")
+        log.debug("ProjectManagerService.getProjectAuthorization for ${projectName}")
+        //TODO: list of files is always reloaded?
         def paths = listProjectDirPaths(projectName, "acls", ".*\\.aclpolicy")
-        log.debug("getProjectAuthorization. paths= ${paths}")
-        def sources= paths.collect{path->
-            def file = getProjectFileResource(projectName,path).contents
-            YamlProvider.sourceFromStream("[project:${projectName}]${path}",file.inputStream,file.modificationTime)
-        }
+        log.debug("ProjectManagerService.getProjectAuthorization. paths= ${paths}")
+        def sources = paths.collect { path ->
+            sourceCache.get(projectName + ";" + path)
+        }.findAll { it != null }
         def context = AuthorizationUtil.projectContext(projectName)
         return AclsUtil.createAuthorization(new Policies(PoliciesCache.fromSources(sources,context)))
+    }
+    boolean needsReloadAcl(String key,CacheableYamlSource source) {
+        def (String project,String path)=key.split(';',2)
+
+        boolean needsReload=true
+        Storage.withNewSession {
+            def exists=existsProjectFileResource(project,path)
+            def resource=exists?getProjectFileResource(project,path):null
+            needsReload = resource == null ||
+                    source.lastModified == null ||
+                    resource.contents.modificationTime > source.lastModified
+        }
+        needsReload
     }
 
     /**
