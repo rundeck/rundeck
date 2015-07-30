@@ -1,28 +1,20 @@
 package rundeck.services
 
-import com.codahale.metrics.Counter
 import com.codahale.metrics.Gauge
 import com.codahale.metrics.Meter
-import com.codahale.metrics.Timer
 import com.codahale.metrics.MetricRegistry
+import com.codahale.metrics.Timer
 import com.dtolabs.rundeck.core.authorization.AclRuleSetSource
 import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.authorization.RuleEvaluator
-import com.dtolabs.rundeck.core.authorization.providers.CacheableYamlSource
-import com.dtolabs.rundeck.core.authorization.providers.Policies
-import com.dtolabs.rundeck.core.authorization.providers.PoliciesCache
-import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization
-import com.dtolabs.rundeck.core.authorization.providers.YamlProvider
-import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.core.storage.ResourceMeta
+import com.dtolabs.rundeck.core.authorization.providers.*
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
-import org.rundeck.storage.api.Resource
 import org.springframework.beans.factory.InitializingBean
 import rundeck.Storage
 
@@ -192,7 +184,7 @@ class AuthorizationService implements InitializingBean{
                     }
                 }
         )
-        configStorageService.addListener([
+        configStorageService?.addListener([
                 resourceCreated:{String path->
                     log.debug("resourceCreated ${path}")
                 },
@@ -208,51 +200,7 @@ class AuthorizationService implements InitializingBean{
 
 
         MetricRegistry registry = metricService?.getMetricRegistry()
-        registry?.register(
-                MetricRegistry.name(this.class.name + ".sourceCache", "hitCount"),
-                new Gauge<Long>() {
-                    @Override
-                    Long getValue() {
-                        sourceCache.stats().hitCount()
-                    }
-                }
-        )
+        Util.addCacheMetrics(this.class.name + ".sourceCache",registry,sourceCache)
 
-        registry?.register(
-                MetricRegistry.name(this.class.name + ".sourceCache", "evictionCount"),
-                new Gauge<Long>() {
-                    @Override
-                    Long getValue() {
-                        sourceCache.stats().evictionCount()
-                    }
-                }
-        )
-        registry?.register(
-                MetricRegistry.name(this.class.name + ".sourceCache", "missCount"),
-                new Gauge<Long>() {
-                    @Override
-                    Long getValue() {
-                        sourceCache.stats().missCount()
-                    }
-                }
-        )
-        registry?.register(
-                MetricRegistry.name(this.class.name + ".sourceCache", "loadExceptionCount"),
-                new Gauge<Long>() {
-                    @Override
-                    Long getValue() {
-                        sourceCache.stats().loadExceptionCount()
-                    }
-                }
-        )
-        registry?.register(
-                MetricRegistry.name(this.class.name + ".sourceCache", "hitRate"),
-                new Gauge<Double>() {
-                    @Override
-                    Double getValue() {
-                        sourceCache.stats().hitRate()
-                    }
-                }
-        )
     }
 }
