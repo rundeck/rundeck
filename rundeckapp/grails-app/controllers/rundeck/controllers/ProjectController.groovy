@@ -814,7 +814,7 @@ class ProjectController extends ControllerBase{
         }else if(project.existsDirResource(projectFilePath) || projectFilePath==rmprefix){
             //list aclpolicy files in the dir
             def list=project.listDirPaths(projectFilePath).findAll{
-                it ==~ /.*(\.aclpolicy|\/)$/
+                it ==~ /.*\.aclpolicy$/
             }
             withFormat{
                 json{

@@ -2169,7 +2169,7 @@ class FrameworkController extends ControllerBase {
         }else if(configStorageService.existsDirResource(projectFilePath) || projectFilePath==rmprefix){
             //list aclpolicy files in the dir
             def list=configStorageService.listDirPaths(projectFilePath).findAll{
-                it ==~ /.*(\.aclpolicy|\/)$/
+                it ==~ /.*\.aclpolicy$/
             }
             withFormat{
                 xml{

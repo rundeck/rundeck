@@ -213,7 +213,7 @@ class FrameworkControllerSpec extends Specification {
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
-            1 * jsonRenderDirlist('acls/',_,_,['acls/blah.aclpolicy','acls/adir/'],_)>>{args-> args[4].success=true}
+            1 * jsonRenderDirlist('acls/',_,_,['acls/blah.aclpolicy'],_)>>{args-> args[4].success=true}
         }
         when:
         params.path=''
@@ -242,7 +242,7 @@ class FrameworkControllerSpec extends Specification {
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'xml'
-            1 * xmlRenderDirList('acls/',_,_,['acls/blah.aclpolicy','acls/adir/'],_)>>{args-> args[4].success(ok:true)}
+            1 * xmlRenderDirList('acls/',_,_,['acls/blah.aclpolicy'],_)>>{args-> args[4].success(ok:true)}
         }
         when:
         params.path=''

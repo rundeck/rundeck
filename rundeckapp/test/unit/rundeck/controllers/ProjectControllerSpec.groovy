@@ -634,7 +634,7 @@ class ProjectControllerSpec extends Specification{
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
-            1 * jsonRenderDirlist('acls/',_,_,['acls/blah.aclpolicy','acls/adir/'],_) >> {args->
+            1 * jsonRenderDirlist('acls/',_,_,['acls/blah.aclpolicy'],_) >> {args->
                 args[4].success=true
             }
             pathRmPrefix(_,_)>>'x'
@@ -670,7 +670,7 @@ class ProjectControllerSpec extends Specification{
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'xml'
-            1 * xmlRenderDirList('acls/',_,_,['acls/blah.aclpolicy','acls/adir/'],_)
+            1 * xmlRenderDirList('acls/',_,_,['acls/blah.aclpolicy'],_)
         }
         when:
         params.path=''
