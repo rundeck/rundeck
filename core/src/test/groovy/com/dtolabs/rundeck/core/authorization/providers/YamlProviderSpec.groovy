@@ -382,6 +382,26 @@ for:
         "contains" | "allow"     | _
         "contains" | "deny"      | _
     }
+    @Unroll
+    def "validate multi-policy with empty policy is valid"(){
+        when:
+        def validation = validationForString """
+context:
+    project: test
+by:
+    username: elf
+    group: jank
+for:
+    type:
+        - allow: '*'
+description: blah
+id: any string
+---
+"""
 
+        then:
+        validation.valid
+        validation.errors.size()==0
+    }
 
 }

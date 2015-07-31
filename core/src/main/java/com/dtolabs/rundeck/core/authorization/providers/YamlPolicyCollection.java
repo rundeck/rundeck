@@ -68,6 +68,9 @@ public class YamlPolicyCollection implements PolicyCollection {
         try(final YamlSource source1=source) {
             for (Object yamlDoc : source1.loadAll(yaml)) {
                 String ident = source.getIdentity() + "[" + index + "]";
+                if (null==yamlDoc) {
+                    continue;
+                }
                 if (!(yamlDoc instanceof Map)) {
                     String reason = "Expected a policy document Map, but found: " + yamlDoc.getClass().getName();
                     validationError(ident, reason);
