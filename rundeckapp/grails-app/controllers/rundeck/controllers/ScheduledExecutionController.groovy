@@ -1187,7 +1187,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
-        crontab = scheduledExecution.timeAndDateAsBooleanMap()
+        def crontab = scheduledExecution.timeAndDateAsBooleanMap()
         return [ scheduledExecution:scheduledExecution, crontab:crontab,params:params,
                 notificationPlugins: notificationService.listNotificationPlugins(),
                 orchestratorPlugins: orchestratorPluginService.listDescriptions(),
