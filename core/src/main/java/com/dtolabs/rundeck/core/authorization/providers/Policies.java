@@ -32,10 +32,14 @@ import java.util.*;
 public class Policies implements AclRuleSetSource{
 
     private Iterable<PolicyCollection> cache;
+    private ValidationSet validation;
 
-
-    public Policies(final Iterable<PolicyCollection> cache) {
+    public Policies(final Iterable<PolicyCollection> cache, final ValidationSet validationSet) {
+        this.validation=validationSet;
         this.cache = cache;
+    }
+    public Policies(final Iterable<PolicyCollection> cache) {
+        this(cache, null);
     }
 
     public int count() {

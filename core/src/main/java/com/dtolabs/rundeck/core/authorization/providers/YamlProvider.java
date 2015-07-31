@@ -1,17 +1,43 @@
 package com.dtolabs.rundeck.core.authorization.providers;
 
 import com.dtolabs.rundeck.core.authorization.Attribute;
-import com.dtolabs.rundeck.core.utils.cache.FileCache;
+import com.dtolabs.rundeck.core.authorization.Validation;
+import com.dtolabs.rundeck.core.authorization.ValidationSet;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
-import java.util.Date;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by greg on 7/17/15.
  */
 public class YamlProvider {
+    static final FilenameFilter filenameFilter = new FilenameFilter() {
+        public boolean accept(File dir, String name) {
+            return name.endsWith(".aclpolicy");
+        }
+    };
+
+    public static Validation validate(final CacheableYamlSource source) {
+        return validate(Collections.singletonList(source));
+    }
+
+    public static Validation validate(final Iterable<CacheableYamlSource> sources) {
+        return validate(new ValidationSet(), sources);
+    }
+
+    private static Validation validate(ValidationSet validation, final Iterable<CacheableYamlSource> sources) {
+        for (CacheableYamlSource source : sources) {
+            try {
+                YamlPolicyCollection yamlPolicyCollection = YamlProvider.policiesFromSource(source, null, validation);
+            } catch (Exception e1) {
+                validation.addError(source.getIdentity(), e1.getMessage());
+            }
+        }
+        validation.complete();
+        return validation;
+    }
+
     /**
      * Load policies from a source
      *
@@ -28,7 +54,7 @@ public class YamlProvider {
     /**
      * Load policies from a source
      *
-     * @param source source
+     * @param source        source
      * @param forcedContext Context to require for all policies parsed
      *
      * @return policies
@@ -38,7 +64,27 @@ public class YamlProvider {
     public static YamlPolicyCollection policiesFromSource(final YamlSource source, final Set<Attribute> forcedContext)
             throws IOException
     {
-        return new YamlPolicyCollection(source, forcedContext);
+        return new YamlPolicyCollection(source, forcedContext, null);
+    }
+
+    /**
+     * Load policies from a source
+     *
+     * @param source        source
+     * @param forcedContext Context to require for all policies parsed
+     *
+     * @return policies
+     *
+     * @throws IOException
+     */
+    public static YamlPolicyCollection policiesFromSource(
+            final YamlSource source,
+            final Set<Attribute> forcedContext,
+            ValidationSet validation
+    )
+            throws IOException
+    {
+        return new YamlPolicyCollection(source, forcedContext, validation);
     }
 
     /**
@@ -56,6 +102,23 @@ public class YamlProvider {
 
     public static CacheableYamlSource sourceFromFile(final File file) {
         return new CacheableYamlFileSource(file);
+    }
+
+    public static Iterable<CacheableYamlSource> asSources(final File dir) {
+        if (!dir.isDirectory()) {
+            throw new IllegalArgumentException("dir should be a directory");
+        }
+        return asSources(dir.listFiles(filenameFilter));
+    }
+
+    public static Iterable<CacheableYamlSource> asSources(final File[] files) {
+        ArrayList<CacheableYamlSource> list = new ArrayList<>();
+        if (null != files) {
+            for (File file : files) {
+                list.add(YamlProvider.sourceFromFile(file));
+            }
+        }
+        return list;
     }
 
     /**
@@ -100,6 +163,7 @@ public class YamlProvider {
             }
         };
     }
+
     /**
      * Source from a stream
      *
@@ -116,6 +180,14 @@ public class YamlProvider {
     )
     {
         return new CacheableYamlStreamSource(stream, identity, modified);
+    }
+
+    public static SourceProvider getDirProvider(final File rootDir) {
+        return new DirProvider(rootDir);
+    }
+
+    public static SourceProvider getFileProvider(final File singleFile) {
+        return new FileProvider(singleFile);
     }
 
     private static class CacheableYamlFileSource implements CacheableYamlSource {
@@ -236,6 +308,46 @@ public class YamlProvider {
         @Override
         public int hashCode() {
             return identity.hashCode();
+        }
+    }
+
+    static class DirProvider implements SourceProvider {
+        private File rootDir;
+
+        public DirProvider(final File rootDir) {
+            this.rootDir = rootDir;
+        }
+
+        long lastDirListCheckTime = 0;
+        private File[] lastDirList;
+
+        private File[] listDirFiles() {
+            if (System.currentTimeMillis() - lastDirListCheckTime > PoliciesCache.DIR_LIST_CHECK_DELAY) {
+                doListDir();
+            }
+            return lastDirList;
+        }
+
+        private void doListDir() {
+            lastDirList = rootDir.listFiles(filenameFilter);
+            lastDirListCheckTime = System.currentTimeMillis();
+        }
+
+        public Iterator<CacheableYamlSource> getSourceIterator() {
+            return asSources(listDirFiles()).iterator();
+        }
+    }
+
+    static class FileProvider implements SourceProvider {
+        private File file;
+
+        public FileProvider(final File file) {
+            this.file = file;
+        }
+
+        @Override
+        public Iterator<CacheableYamlSource> getSourceIterator() {
+            return asSources(new File[]{file}).iterator();
         }
     }
 }

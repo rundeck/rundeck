@@ -25,7 +25,9 @@ package com.dtolabs.rundeck.core.authorization.providers;
 
 import com.dtolabs.rundeck.core.authentication.Group;
 import com.dtolabs.rundeck.core.authentication.Username;
+import com.dtolabs.rundeck.core.authorization.AclsUtil;
 import com.dtolabs.rundeck.core.authorization.Attribute;
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
 import junit.framework.TestCase;
 
 import javax.security.auth.Subject;
@@ -43,7 +45,7 @@ public class TestYamlPolicyCollection extends TestCase {
     File testdir;
     File test1;
     File test2;
-    private Set<Attribute> environment = new HashSet<Attribute>();
+    private Set<Attribute> environment = AuthorizationUtil.context("application", "rundeck");
 
     public void setUp() throws Exception {
         testdir = new File("src/test/resources/com/dtolabs/rundeck/core/authorization/providers");

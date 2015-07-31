@@ -3,10 +3,7 @@ package com.dtolabs.rundeck.core.cli.acl;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.authentication.Group;
 import com.dtolabs.rundeck.core.authentication.Username;
-import com.dtolabs.rundeck.core.authorization.Attribute;
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
-import com.dtolabs.rundeck.core.authorization.Decision;
-import com.dtolabs.rundeck.core.authorization.Explanation;
+import com.dtolabs.rundeck.core.authorization.*;
 import com.dtolabs.rundeck.core.authorization.providers.*;
 import com.dtolabs.rundeck.core.cli.*;
 import com.dtolabs.rundeck.core.cli.jobs.JobsToolException;
@@ -187,6 +184,7 @@ public class AclTool extends BaseTool {
     public static final String ACTION_TEST = "test";
     public static final String ACTION_CREATE = "create";
     public static final String ACTION_LIST = "list";
+    public static final String ACTION_VALIDATE= "validate";
 
     static enum Actions {
 
@@ -195,7 +193,8 @@ public class AclTool extends BaseTool {
          */
         test(ACTION_TEST),
         create(ACTION_CREATE),
-        list(ACTION_LIST);
+        list(ACTION_LIST),
+        validate(ACTION_VALIDATE);
         private String name;
 
         Actions(final String name) {
@@ -559,6 +558,9 @@ public class AclTool extends BaseTool {
                     break;
                 case create:
                     createAction();
+                    break;
+                case validate:
+                    validateAction();
                     break;
                 default:
                     throw new CLIToolOptionsException("Unrecognized action: " + action);
@@ -1249,6 +1251,41 @@ public class AclTool extends BaseTool {
             }
         }
         return t;
+    }
+    private void validateAction() throws CLIToolOptionsException, IOException, PoliciesParseException {
+        final Validation validation;
+        if (null != argFile) {
+            if(!argFile.isFile()) {
+                throw new CLIToolOptionsException("File: " + argFile + ", does not exist or is not a file");
+            }
+            validation = YamlProvider.validate(YamlProvider.sourceFromFile(argFile));
+        } else if (null != argDir) {
+            if(!argDir.isDirectory()) {
+                throw new CLIToolOptionsException("File: " + argDir + ", does not exist or is not a directory");
+            }
+            validation = YamlProvider.validate(YamlProvider.asSources(argDir));
+        } else if (null != configDir) {
+            log("Using configured Rundeck etc dir: " + configDir);
+            File directory = new File(configDir);
+            if(!directory.isDirectory()) {
+                throw new CLIToolOptionsException("File: " + directory + ", does not exist or is not a directory");
+            }
+            validation = YamlProvider.validate(YamlProvider.asSources(directory));
+        } else {
+            throw new CLIToolOptionsException("-f or -d are required");
+        }
+        for (Map.Entry<String, List<String>> entry : validation.getErrors().entrySet()) {
+            String ident = entry.getKey();
+            List<String> value = entry.getValue();
+            System.err.println(ident + ":");
+            for (String s : value) {
+                System.err.println("\t" + s);
+            }
+        }
+        log("The validation " + (validation.isValid() ? "passed" : "failed"));
+        if (!validation.isValid()) {
+            exit(2);
+        }
     }
 
     private void createAction() throws CLIToolOptionsException, IOException, PoliciesParseException {

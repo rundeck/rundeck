@@ -28,7 +28,6 @@ import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.parser.ParserException;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.util.*;
 
 /**
@@ -40,13 +39,7 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
     static final long DIR_LIST_CHECK_DELAY = Long.getLong(PoliciesCache.class.getName()+".DirListCheckDelay", 60000);
     static final long FILE_CHECK_DELAY = Long.getLong(PoliciesCache.class.getName() + ".FileCheckDelay", 60000);
     private final static Logger logger = Logger.getLogger(PoliciesCache.class);
-    
-    static final FilenameFilter filenameFilter = new FilenameFilter() {
-        public boolean accept(File dir, String name) {
-            return name.endsWith(".aclpolicy");
-        }
-    };
-    
+
     private Set<File> warned = new HashSet<File>();
     private Map<String, CacheItem> cache = new HashMap<>();
     private SourceProvider provider;
@@ -137,7 +130,7 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
      * @return cache
      */
     public static PoliciesCache fromFile(File singleFile) {
-        return fromSourceProvider(new FileProvider(singleFile));
+        return fromSourceProvider(YamlProvider.getFileProvider(singleFile));
     }
 
     /**
@@ -148,7 +141,7 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
      * @return cache
      */
     public static PoliciesCache fromFile(File singleFile, Set<Attribute> forcedContext) {
-        return fromSourceProvider(new FileProvider(singleFile), forcedContext);
+        return fromSourceProvider(YamlProvider.getFileProvider(singleFile), forcedContext);
     }
 
 
@@ -181,15 +174,16 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
      * @return cache
      */
     public static PoliciesCache fromDir(File rootDir) {
-        return fromSourceProvider(new DirProvider(rootDir));
+        return fromSourceProvider(YamlProvider.getDirProvider(rootDir));
     }
+
     /**
      * Create a cache from a directory source
      * @param rootDir base director
      * @return cache
      */
     public static PoliciesCache fromDir(File rootDir, final Set<Attribute> forcedContext) {
-        return fromSourceProvider(new DirProvider(rootDir),forcedContext);
+        return fromSourceProvider(YamlProvider.getDirProvider(rootDir),forcedContext);
     }
     /**
      * Create a cache from cacheable sources
@@ -222,53 +216,7 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
                 context
         );
     }
-    private static class DirProvider implements SourceProvider{
-        private File rootDir;
 
-        public DirProvider(final File rootDir) {
-            this.rootDir = rootDir;
-        }
-
-        long lastDirListCheckTime=0;
-        private File[] lastDirList;
-        private File[] listDirFiles() {
-            if(System.currentTimeMillis()-lastDirListCheckTime > DIR_LIST_CHECK_DELAY) {
-                doListDir();
-            }
-            return lastDirList;
-        }
-
-        private void doListDir() {
-            lastDirList = rootDir.listFiles(filenameFilter);
-            lastDirListCheckTime = System.currentTimeMillis();
-        }
-        public Iterator<CacheableYamlSource> getSourceIterator() {
-            return asSources(listDirFiles());
-        }
-    }
-    private static class FileProvider implements SourceProvider{
-        private File file;
-
-        public FileProvider(final File file) {
-            this.file = file;
-        }
-
-        @Override
-        public Iterator<CacheableYamlSource> getSourceIterator() {
-            return asSources(new File[]{file});
-        }
-    }
-
-
-    private static Iterator<CacheableYamlSource> asSources(final File[] files) {
-        ArrayList<CacheableYamlSource> list = new ArrayList<>();
-        if(null!=files) {
-            for (File file : files) {
-                list.add(YamlProvider.sourceFromFile(file));
-            }
-        }
-        return list.iterator();
-    }
 
     private Map<CacheableYamlSource, Long> cooldownset = Collections.synchronizedMap(new HashMap<CacheableYamlSource, Long>());
     /**

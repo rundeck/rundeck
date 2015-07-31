@@ -20,7 +20,8 @@ class YamlPolicySpec extends Specification {
                         context: [project: 'monkey']
                 ],
                 "test1",
-                1
+                1,
+                null
         )
         def rules=policy.getRuleSet().getRules()
 
@@ -41,7 +42,8 @@ class YamlPolicySpec extends Specification {
                         for: [resource: [[allow: ['action']]]],
                 ],
                 "test1",
-                1
+                1,
+                null
         )
         def rules=policy.getRuleSet().getRules()
 
@@ -64,7 +66,8 @@ class YamlPolicySpec extends Specification {
                         context: [project: 'dolphin']
                 ],
                 "test1",
-                1
+                1,
+                null
         )
 
         then:

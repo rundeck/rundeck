@@ -14,13 +14,9 @@ import javax.security.auth.Subject;
 import com.dtolabs.rundeck.core.authentication.Group;
 import com.dtolabs.rundeck.core.authentication.LdapGroup;
 import com.dtolabs.rundeck.core.authentication.Username;
-import com.dtolabs.rundeck.core.authorization.AclRule;
-import com.dtolabs.rundeck.core.authorization.AclRuleSet;
-import com.dtolabs.rundeck.core.authorization.AclRuleSetImpl;
+import com.dtolabs.rundeck.core.authorization.*;
 import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
-
-import com.dtolabs.rundeck.core.authorization.Attribute;
 
 /**
  * Stores a collection of policies, read in from a source.
@@ -32,6 +28,7 @@ public class YamlPolicyCollection implements PolicyCollection {
     private final Set<AclRule> ruleSet = new HashSet<>();
     YamlSource source;
     private final Set<Attribute> forcedContext;
+    private ValidationSet validation;
 
     /**
      * Create from a source
@@ -48,9 +45,10 @@ public class YamlPolicyCollection implements PolicyCollection {
      * @param source source
      * @throws IOException
      */
-    public YamlPolicyCollection(final YamlSource source, Set<Attribute> forcedContext) throws IOException {
+    public YamlPolicyCollection(final YamlSource source, Set<Attribute> forcedContext,ValidationSet validation) throws IOException {
         this.source=source;
         this.forcedContext=forcedContext;
+        this.validation=validation;
         load(source);
     }
 
@@ -69,33 +67,23 @@ public class YamlPolicyCollection implements PolicyCollection {
         int index = 1;
         try(final YamlSource source1=source) {
             for (Object yamlDoc : source1.loadAll(yaml)) {
+                String ident = source.getIdentity() + "[" + index + "]";
                 if (!(yamlDoc instanceof Map)) {
-                    logger.error(
-                            "ERROR parsing a policy in: " +
-                            source.getIdentity() +
-                            "[" +
-                            index +
-                            "]. Expected a policy document Map, but found: " + yamlDoc.getClass().getName()
-                    );
+                    String reason = "Expected a policy document Map, but found: " + yamlDoc.getClass().getName();
+                    validationError(ident, reason);
                 }
                 try {
                     YamlPolicy yamlPolicy = YamlPolicy.createYamlPolicy(
                             forcedContext,
                             (Map) yamlDoc,
                             source.getIdentity() + "[" + index + "]",
-                            index
+                            index,
+                            validation
                     );
                     all.add(yamlPolicy);
                     ruleSet.addAll(yamlPolicy.getRuleSet().getRules());
                 } catch (YamlPolicy.AclPolicySyntaxException e) {
-                    logger.error(
-                            "ERROR parsing a policy in file: " +
-                            source.getIdentity() +
-                            "[" +
-                            index +
-                            "]. Reason: " +
-                            e.getMessage()
-                    );
+                    validationError(ident, e.getMessage());
                     logger.debug(
                             "ERROR parsing a policy in file: " +
                             source.getIdentity() +
@@ -108,6 +96,16 @@ public class YamlPolicyCollection implements PolicyCollection {
                 index++;
             }
 
+        }
+    }
+
+    private void validationError(final String ident, final String reason) {
+        logger.error(
+                "ERROR parsing a policy in: " +
+                ident + ". " + reason
+        );
+        if(null!=validation) {
+            validation.addError(ident, reason);
         }
     }
 
