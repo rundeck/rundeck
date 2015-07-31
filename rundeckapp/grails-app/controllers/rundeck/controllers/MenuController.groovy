@@ -6,6 +6,8 @@ import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.authorization.Validation
+import com.dtolabs.rundeck.core.authorization.providers.YamlProvider
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
@@ -611,8 +613,13 @@ class MenuController extends ControllerBase{
                 AuthConstants.ACTION_READ, 'System configuration')) {
             return
         }
+        def fwkConfigDir=frameworkService.rundeckFramework.getConfigDir()
+        def list=fwkConfigDir.listFiles().grep{it.name=~/\.aclpolicy$/}.sort()
+        Map<File,Validation> validation=list.collectEntries{
+            [it,YamlProvider.validate(YamlProvider.sourceFromFile(it))]
+        }
 
-        [rundeckFramework: frameworkService.rundeckFramework]
+        [rundeckFramework: frameworkService.rundeckFramework,fwkConfigDir:fwkConfigDir, aclFileList: list, validations: validation]
     }
 
     def systemInfo (){
