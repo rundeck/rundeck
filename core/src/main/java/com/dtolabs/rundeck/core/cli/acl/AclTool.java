@@ -72,6 +72,8 @@ public class AclTool extends BaseTool {
     public static final String DENY_LONG_OPT = "deny";
     public static final String VERBOSE_OPT = "v";
     public static final String VERBOSE_LONG_OPT = "verbose";
+    public static final String VALIDATE_OPT = "V";
+    public static final String VALIDATE_LONG_OPT = "validate";
     public static final String STORAGE_OPT = "s";
     public static final String STORAGE_LONG_OPT = "storage";
     public static final String GENERIC_OPT = "G";
@@ -217,6 +219,7 @@ public class AclTool extends BaseTool {
     }
 
     private boolean argVerbose;
+    private boolean argValidate;
     private boolean argList;
     private File argFile;
     private File argDir;
@@ -253,6 +256,7 @@ public class AclTool extends BaseTool {
         @Override
         public void addOptions(final Options options) {
             options.addOption(VERBOSE_OPT, VERBOSE_LONG_OPT, false, "Verbose output.");
+            options.addOption(VALIDATE_OPT, VALIDATE_LONG_OPT, false, "Validate all input files.");
 
             options.addOption(
                     OptionBuilder.withArgName("file")
@@ -455,6 +459,9 @@ public class AclTool extends BaseTool {
             if (cli.hasOption(VERBOSE_OPT)) {
                 argVerbose = cli.hasOption(VERBOSE_OPT);
             }
+            if (cli.hasOption(VALIDATE_OPT)) {
+                argValidate = cli.hasOption(VALIDATE_OPT);
+            }
             if (cli.hasOption(NODE_OPT)) {
                 argProjectNode = cli.getOptionValue(NODE_OPT);
             }
@@ -572,6 +579,10 @@ public class AclTool extends BaseTool {
 
     private void listAction() throws CLIToolOptionsException, IOException, PoliciesParseException {
 
+        if (applyArgValidate()) {
+            return;
+        }
+
         final SAREAuthorization authorization = createAuthorization();
         Subject subject = createSubject();
         String subjdesc = null != argGroups ? "group " + argGroups : "username " + argUser;
@@ -686,6 +697,26 @@ public class AclTool extends BaseTool {
         }
 
 
+    }
+
+    /**
+     * If argValidate is specified, validate the input, exit 2 if invalid. Print validation report if argVerbose
+     * @return
+     * @throws CLIToolOptionsException
+     */
+    private boolean applyArgValidate() throws CLIToolOptionsException {
+        if(argValidate) {
+            Validation validation = validatePolicies();
+            if(argVerbose && !validation.isValid()) {
+                reportValidation(validation);
+            }
+            if(!validation.isValid()){
+                log("The validation " + (validation.isValid() ? "passed" : "failed"));
+                exit(2);
+                return true;
+            }
+        }
+        return false;
     }
 
     private HashSet<Map<String, String>> resources(final Map<String, Object>... resourceMap) {
@@ -1253,6 +1284,29 @@ public class AclTool extends BaseTool {
         return t;
     }
     private void validateAction() throws CLIToolOptionsException, IOException, PoliciesParseException {
+        if (null == argFile && null == argDir && null != configDir) {
+            log("Using configured Rundeck etc dir: " + configDir);
+        }
+        final Validation validation = validatePolicies();
+        reportValidation(validation);
+        log("The validation " + (validation.isValid() ? "passed" : "failed"));
+        if (!validation.isValid()) {
+            exit(2);
+        }
+    }
+
+    private void reportValidation(final Validation validation) {
+        for (Map.Entry<String, List<String>> entry : validation.getErrors().entrySet()) {
+            String ident = entry.getKey();
+            List<String> value = entry.getValue();
+            System.err.println(ident + ":");
+            for (String s : value) {
+                System.err.println("\t" + s);
+            }
+        }
+    }
+
+    private Validation validatePolicies() throws CLIToolOptionsException {
         final Validation validation;
         if (null != argFile) {
             if(!argFile.isFile()) {
@@ -1265,7 +1319,6 @@ public class AclTool extends BaseTool {
             }
             validation = YamlProvider.validate(YamlProvider.asSources(argDir));
         } else if (null != configDir) {
-            log("Using configured Rundeck etc dir: " + configDir);
             File directory = new File(configDir);
             if(!directory.isDirectory()) {
                 throw new CLIToolOptionsException("File: " + directory + ", does not exist or is not a directory");
@@ -1274,18 +1327,7 @@ public class AclTool extends BaseTool {
         } else {
             throw new CLIToolOptionsException("-f or -d are required");
         }
-        for (Map.Entry<String, List<String>> entry : validation.getErrors().entrySet()) {
-            String ident = entry.getKey();
-            List<String> value = entry.getValue();
-            System.err.println(ident + ":");
-            for (String s : value) {
-                System.err.println("\t" + s);
-            }
-        }
-        log("The validation " + (validation.isValid() ? "passed" : "failed"));
-        if (!validation.isValid()) {
-            exit(2);
-        }
+        return validation;
     }
 
     private void createAction() throws CLIToolOptionsException, IOException, PoliciesParseException {
@@ -1592,6 +1634,9 @@ public class AclTool extends BaseTool {
     }
 
     private void testAction() throws CLIToolOptionsException, IOException, PoliciesParseException {
+        if (applyArgValidate()) {
+            return;
+        }
         final SAREAuthorization authorization = createAuthorization();
         AuthRequest authRequest = createAuthRequestFromArgs();
         HashSet<Map<String, String>> resource = resources(authRequest.resourceMap);
