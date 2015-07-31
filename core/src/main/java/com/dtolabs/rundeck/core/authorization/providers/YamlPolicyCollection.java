@@ -103,10 +103,6 @@ public class YamlPolicyCollection implements PolicyCollection {
     }
 
     private void validationError(final String ident, final String reason) {
-        logger.error(
-                "ERROR parsing a policy in: " +
-                ident + ". " + reason
-        );
         if(null!=validation) {
             validation.addError(ident, reason);
         }
