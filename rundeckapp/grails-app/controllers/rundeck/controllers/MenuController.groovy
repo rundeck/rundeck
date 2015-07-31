@@ -7,7 +7,6 @@ import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.Validation
-import com.dtolabs.rundeck.core.authorization.providers.YamlProvider
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
@@ -29,6 +28,7 @@ import rundeck.codecs.JobsXMLCodec
 import rundeck.codecs.JobsYAMLCodec
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ApiService
+import rundeck.services.AuthorizationService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.LogFileStorageService
@@ -55,6 +55,7 @@ class MenuController extends ControllerBase{
     def configurationService
     def quartzScheduler
     def ApiService apiService
+    def AuthorizationService authorizationService
     static allowedMethods = [
             deleteJobfilter:'POST',
             storeJobfilter:'POST',
@@ -616,7 +617,7 @@ class MenuController extends ControllerBase{
         def fwkConfigDir=frameworkService.rundeckFramework.getConfigDir()
         def list=fwkConfigDir.listFiles().grep{it.name=~/\.aclpolicy$/}.sort()
         Map<File,Validation> validation=list.collectEntries{
-            [it,YamlProvider.validate(YamlProvider.sourceFromFile(it))]
+            [it,authorizationService.validateYamlPolicy(it)]
         }
 
         [rundeckFramework: frameworkService.rundeckFramework,fwkConfigDir:fwkConfigDir, aclFileList: list, validations: validation]

@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.authorization.AclRuleSetSource
 import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.authorization.RuleEvaluator
+import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.authorization.providers.*
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
@@ -71,6 +72,13 @@ class AuthorizationService implements InitializingBean{
         }
     }
 
+    public Validation validateYamlPolicy(String ident, String text){
+        YamlProvider.validate(YamlProvider.sourceFromString(ident,text,new Date()))
+    }
+    
+    public Validation validateYamlPolicy(File file){
+        YamlProvider.validate(YamlProvider.sourceFromFile(file))
+    }
 
     private Policies getStoredPolicies() {
         //TODO: cache

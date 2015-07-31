@@ -3,6 +3,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProviderService
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
@@ -21,6 +22,7 @@ import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
 import rundeck.services.PasswordFieldsService
 
+import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
@@ -63,6 +65,7 @@ class FrameworkController extends ControllerBase {
     def metricService
     def ApiService apiService
     def configStorageService
+    def AuthorizationService authorizationService
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
@@ -2102,6 +2105,26 @@ class FrameworkController extends ControllerBase {
                     message: "No content",
                     format: respFormat
             ])
+        }
+
+        //validate input
+        Validation validation = authorizationService.validateYamlPolicy(params.path, text)
+        if(!validation.valid){
+            response.status==HttpServletResponse.SC_BAD_REQUEST
+            return withFormat{
+                def j={
+                    render(contentType:'application/json'){
+                        return apiService.renderJsonAclpolicyValidation(validation,delegate)
+                    }
+                }
+                xml{
+                    render(contentType: 'application/xml'){
+                        return apiService.renderXmlAclpolicyValidation(validation,delegate)
+                    }
+                }
+                json j
+                '*' j
+            }
         }
 
         configStorageService.writeFileResource(storagePath,new ByteArrayInputStream(text.bytes),[:])

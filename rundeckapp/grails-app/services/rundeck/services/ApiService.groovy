@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.Validation
 import grails.converters.JSON
 import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
@@ -611,6 +612,28 @@ class ApiService {
         path.lastIndexOf('/')>=0?path.substring(path.lastIndexOf('/') + 1):path
     }
 
+    public void renderJsonAclpolicyValidation(Validation validation, builder){
+        builder.valid = validation.valid
+        if(!validation.valid) {
+            builder.'policies' = builder.array {
+                def d=delegate
+                validation.errors.keySet().sort().each { ident ->
+                    builder.'element'(policy: ident, errors: validation.errors[ident])
+                }
+            }
+        }
+    }
+    public void renderXmlAclpolicyValidation(Validation validation, builder){
+        builder.'validation'(valid:validation.valid){
+            validation.errors?.keySet().sort().each{ident->
+                policy(id:ident){
+                    validation.errors[ident].each{
+                        delegate.error(it)
+                    }
+                }
+            }
+        }
+    }
     /**
      * Render execution document for api response
      */
