@@ -1,26 +1,27 @@
 package com.dtolabs.rundeck.core.authorization.providers
 
+import com.dtolabs.rundeck.core.authorization.Validation
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import static com.dtolabs.rundeck.core.authorization.providers.YamlProvider.sourceFromString
-import static com.dtolabs.rundeck.core.authorization.providers.YamlProvider.validate
 
-/**
- * Created by greg on 7/31/15.
- */
 class YamlProviderSpec extends Specification {
+
+    private static Validation validationForString(String string) {
+        YamlProvider.validate(YamlProvider.sourceFromString("test1", string, new Date()))
+    }
+
 
     def "validate empty list"(){
         when:
-        def validation = validate(Arrays.asList())
+        def validation = YamlProvider.validate(Arrays.asList())
 
         then:
         validation.valid
     }
     def "validate basic ok"(){
         when:
-        def validation = validate(sourceFromString("test1",'''
+        def validation = validationForString '''
 context:
     project: test
 by:
@@ -31,21 +32,21 @@ for:
         - allow: '*'
 description: blah
 id: any string
-''',new Date()))
+'''
 
         then:
         validation.valid
     }
     def "validate no context"(){
         when:
-        def validation = validate(sourceFromString("test1",'''
+        def validation = validationForString '''
 by:
     username: elf
 for:
     type:
         - allow: '*'
 description: blah
-''',new Date()))
+'''
 
         then:
         !validation.valid
@@ -54,7 +55,7 @@ description: blah
     }
     def "validate no description"(){
         when:
-        def validation = validate(sourceFromString("test1",'''
+        def validation = validationForString '''
 context:
     project: test
 by:
@@ -62,7 +63,7 @@ by:
 for:
     type:
         - allow: '*'
-''',new Date()))
+'''
 
         then:
         !validation.valid
@@ -71,14 +72,14 @@ for:
     }
     def "validate no by"(){
         when:
-        def validation = validate(sourceFromString("test1",'''
+        def validation = validationForString '''
 context:
     project: test
 description: wat
 for:
     type:
         - allow: '*'
-''',new Date()))
+'''
 
         then:
         !validation.valid
@@ -87,14 +88,14 @@ for:
     }
     def "validate no for"(){
         when:
-        def validation = validate(sourceFromString("test1",'''
+        def validation = validationForString '''
 context:
     project: test
 description: wat
 by:
     username: elf
 
-''',new Date()))
+'''
 
         then:
         !validation.valid
@@ -103,7 +104,7 @@ by:
     }
     def "validate extraneous section"(){
         when:
-        def validation = validate(sourceFromString("test1",'''
+        def validation = validationForString '''
 context:
     project: test
 description: wat
@@ -113,7 +114,7 @@ for:
     type:
         - allow: '*'
 invalid: blah
-''',new Date()))
+'''
 
         then:
         !validation.valid
@@ -122,7 +123,7 @@ invalid: blah
     }
     def "validate context invalid entry"(){
         when:
-        def validation = validate(sourceFromString("test1",'''
+        def validation = validationForString '''
 context:
     blab: test
 description: wat
@@ -131,7 +132,7 @@ by:
 for:
     type:
         - allow: '*'
-''',new Date()))
+'''
 
         then:
         !validation.valid
@@ -140,7 +141,7 @@ for:
     }
     def "validate by invalid entry"(){
         when:
-        def validation = validate(sourceFromString("test1",'''
+        def validation = validationForString '''
 context:
     project: test
 description: wat
@@ -149,7 +150,7 @@ by:
 for:
     type:
         - allow: '*'
-''',new Date()))
+'''
 
         then:
         !validation.valid
@@ -158,14 +159,14 @@ for:
     }
     def "validate for empty"(){
         when:
-        def validation = validate(sourceFromString("test1",'''
+        def validation = validationForString '''
 context:
     project: test
 description: wat
 by:
     username: elf
 for: { }
-''',new Date()))
+'''
 
         then:
         !validation.valid
@@ -174,14 +175,14 @@ for: { }
     }
     def "validate for expect map"(){
         when:
-        def validation = validate(sourceFromString("test1",'''
+        def validation = validationForString '''
 context:
     project: test
 description: wat
 by:
     username: elf
 for: [ ]
-''',new Date()))
+'''
 
         then:
         !validation.valid
@@ -190,7 +191,7 @@ for: [ ]
     }
     def "validate for expect map entry is list"(){
         when:
-        def validation = validate(sourceFromString("test1",'''
+        def validation = validationForString '''
 context:
     project: test
 description: wat
@@ -198,7 +199,7 @@ by:
     username: elf
 for:
     blah: { }
-''',new Date()))
+'''
 
         then:
         !validation.valid
@@ -207,7 +208,7 @@ for:
     }
     def "validate type entry requires non-empty"(){
         when:
-        def validation = validate(sourceFromString("test1",'''
+        def validation = validationForString '''
 context:
     project: test
 description: wat
@@ -215,7 +216,7 @@ by:
     username: elf
 for:
     blah: [ ]
-''',new Date()))
+'''
 
         then:
         !validation.valid
@@ -224,7 +225,7 @@ for:
     }
     def "validate type entry requires map"(){
         when:
-        def validation = validate(sourceFromString("test1",'''
+        def validation = validationForString '''
 context:
     project: test
 description: wat
@@ -233,7 +234,7 @@ by:
 for:
     blah:
         - [ ]
-''',new Date()))
+'''
 
         then:
         !validation.valid
@@ -242,7 +243,7 @@ for:
     }
     def "validate type entry requires non-empty map"(){
         when:
-        def validation = validate(sourceFromString("test1",'''
+        def validation = validationForString '''
 context:
     project: test
 description: wat
@@ -251,7 +252,7 @@ by:
 for:
     blah:
         - { }
-''',new Date()))
+'''
 
         then:
         !validation.valid
@@ -261,7 +262,7 @@ for:
     @Unroll
     def "validate type entry actions expects string or list"(String actionsname,_){
         when:
-        def validation = validate(sourceFromString("test1","""
+        def validation = validationForString """
 context:
     project: test
 description: wat
@@ -270,7 +271,7 @@ by:
 for:
     blah:
         - ${actionsname}: {}
-""",new Date()))
+"""
 
         then:
         !validation.valid
@@ -287,7 +288,7 @@ for:
     @Unroll
     def "validate type entry actions expects non-empty list"(String actionsname,_){
         when:
-        def validation = validate(sourceFromString("test1","""
+        def validation = validationForString """
 context:
     project: test
 description: wat
@@ -296,7 +297,7 @@ by:
 for:
     blah:
         - ${actionsname}: []
-""",new Date()))
+"""
 
         then:
         !validation.valid
@@ -312,7 +313,7 @@ for:
     }
     def "validate type entry match/equals/contains not empty"(String matchname,_){
         when:
-        def validation = validate(sourceFromString("test1","""
+        def validation = validationForString """
 context:
     project: test
 description: wat
@@ -322,7 +323,7 @@ for:
     blah:
         - ${matchname}: {}
           allow: asdf
-""",new Date()))
+"""
 
         then:
         !validation.valid
@@ -340,7 +341,7 @@ for:
     @Unroll
     def "validate type entry match/equals/contains does not contain allow/deny"(String matchname,String actionsname,_){
         when:
-        def validation = validate(sourceFromString("test1","""
+        def validation = validationForString """
 context:
     project: test
 description: wat
@@ -350,7 +351,7 @@ for:
     blah:
         - ${matchname}: { ${actionsname}: asdf }
           allow: asdf
-""",new Date()))
+"""
 
         then:
         !validation.valid
