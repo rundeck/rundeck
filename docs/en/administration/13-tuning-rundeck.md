@@ -110,7 +110,7 @@ that manage a large environment (1000+ nodes), and has
 sufficient system memory, the following sizings might be more suitable:
 
 ~~~~~ {.bash}
-export RDECK_JVM="$RDECK_JVM -Xmx4096m -Xms1024m -XX:MaxPermSize=256m"
+export RDECK_JVM="$RDECK_JVM -Xmx4096m -Xms1024m"
 ~~~~~ 
 
 ### Quartz job threadCount
