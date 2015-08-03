@@ -72,6 +72,6 @@ class YamlPolicySpec extends Specification {
 
         then:
         YamlPolicy.AclPolicySyntaxException e = thrown()
-        e.message.contains('Context section is not valid: {project=dolphin}, it should be empty or match the expected context: [http://dtolabs.com/rundeck/env/project:monkey]')
+        e.message.contains('Context section is not valid: {project=dolphin}, it should be empty or match the expected context: {project=monkey}')
     }
 }

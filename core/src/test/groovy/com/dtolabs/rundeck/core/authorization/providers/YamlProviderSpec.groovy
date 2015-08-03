@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.core.authorization.providers
 
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.Validation
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -9,6 +10,12 @@ class YamlProviderSpec extends Specification {
 
     private static Validation validationForString(String string) {
         YamlProvider.validate(YamlProvider.sourceFromString("test1", string, new Date()))
+    }
+    private static Validation validationForStringWithProject(String string, String project) {
+        YamlProvider.validate(
+                YamlProvider.sourceFromString("test1", string, new Date()),
+                AuthorizationUtil.projectContext(project)
+        )
     }
 
 
@@ -52,6 +59,58 @@ description: blah
         !validation.valid
         validation.errors.size()==1
         validation.errors['test1[1]']==['Required \'context:\' section was not present.']
+    }
+    def "validate required context, wrong project"(){
+        when:
+        def validation = validationForStringWithProject('''
+context:
+    project: test
+by:
+    username: elf
+for:
+    type:
+        - allow: '*'
+description: blah
+''',"testproj")
+
+        then:
+        !validation.valid
+        validation.errors.size()==1
+        validation.errors['test1[1]']==['Context section is not valid: {project=test}, it should be empty or match the expected context: {project=testproj}']
+    }
+    def "validate required context, wrong context"(){
+        when:
+        def validation = validationForStringWithProject('''
+context:
+    application: rundeck
+by:
+    username: elf
+for:
+    type:
+        - allow: '*'
+description: blah
+''',"testproj")
+
+        then:
+        !validation.valid
+        validation.errors.size()==1
+        validation.errors['test1[1]']==['Context section is not valid: {application=rundeck}, it should be empty or match the expected context: {project=testproj}']
+    }
+    def "validate required context, no context ok"(){
+        when:
+        def validation = validationForStringWithProject('''
+by:
+    username: elf
+    group: jank
+for:
+    type:
+        - allow: '*\'
+description: blah
+id: any string
+''',"testproj")
+
+        then:
+        validation.valid
     }
     def "validate no description"(){
         when:
