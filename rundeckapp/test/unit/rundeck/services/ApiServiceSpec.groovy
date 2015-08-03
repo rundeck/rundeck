@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.Validation
 import grails.converters.JSON
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
@@ -99,5 +100,58 @@ class ApiServiceSpec extends Specification {
         parsed.contents.resource[1].'@path'.text()=='adir/'
         parsed.contents.resource[1].'@type'.text()=='directory'
         parsed.contents.resource[1].'@href'.text()=='http://localhost:8080/api/14/project/test/acl/adir/'
+    }
+
+    def "renderJsonAclpolicyValidation"(){
+        given:
+
+        def builder = new JSONBuilder()
+        when:
+        def validation=Stub(Validation){
+            isValid()>>false
+            getErrors()>>['file1[1]':['error1','error2'],'file2[1]':['error3','error4']]
+        }
+        def result=builder.build {
+            service.renderJsonAclpolicyValidation(
+                    validation,
+                    delegate
+            )
+        }
+        def parsed=JSON.parse(result.toString())
+        then:
+        parsed==[valid:false,
+        policies:[
+                [policy:'file1[1]',errors:['error1','error2']],
+                [policy:'file2[1]',errors:['error3','error4']]
+        ]]
+    }
+    def "renderXmlAclpolicyValidation"(){
+        given:
+        def sw = new StringWriter()
+        def builder = new MarkupBuilder(sw)
+        when:
+        def validation=Stub(Validation){
+            isValid()>>false
+            getErrors()>>['file1[1]':['error1','error2'],'file2[1]':['error3','error4']]
+        }
+        service.renderXmlAclpolicyValidation(
+                validation,
+                builder
+        )
+        def parsed=new XmlSlurper().parse(new StringReader(sw.toString()))
+        then:
+        parsed.name()=='validation'
+        parsed.'@valid'.text()=='false'
+        parsed.'policy'.size()==2
+        parsed.'policy'[0].'@id'.text()=='file1[1]'
+        parsed.'policy'[0].'error'.size()==2
+        parsed.'policy'[0].'error'[0].text()=='error1'
+        parsed.'policy'[0].'error'[1].text()=='error2'
+
+        parsed.'policy'[1].'@id'.text()=='file2[1]'
+        parsed.'policy'[1].'error'.size()==2
+        parsed.'policy'[1].'error'[0].text()=='error3'
+        parsed.'policy'[1].'error'[1].text()=='error4'
+
     }
 }
