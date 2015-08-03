@@ -2,6 +2,8 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -19,6 +21,7 @@ class ProjectController extends ControllerBase{
     def frameworkService
     def projectService
     def apiService
+    def authorizationService
     def static allowedMethods = [
             apiProjectConfigKeyDelete:['DELETE'],
             apiProjectConfigKeyPut:['PUT'],
@@ -744,6 +747,26 @@ class ProjectController extends ControllerBase{
                     message: "No content",
                     format: respFormat
             ])
+        }
+
+        //validate input
+        Validation validation = authorizationService.validateYamlPolicy(project.name, params.path, text)
+        if(!validation.valid){
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            return withFormat{
+                def j={
+                    render(contentType:'application/json'){
+                        apiService.renderJsonAclpolicyValidation(validation,delegate)
+                    }
+                }
+                xml{
+                    render(contentType: 'application/xml'){
+                        apiService.renderXmlAclpolicyValidation(validation,delegate)
+                    }
+                }
+                json j
+                '*' j
+            }
         }
 
         project.storeFileResource(projectFilePath,new ByteArrayInputStream(text.bytes))

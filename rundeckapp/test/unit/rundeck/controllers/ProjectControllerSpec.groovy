@@ -1,9 +1,11 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.TestFor
 import rundeck.services.ApiService
+import rundeck.services.AuthorizationService
 import rundeck.services.FrameworkService
 import spock.lang.Specification
 
@@ -707,6 +709,12 @@ class ProjectControllerSpec extends Specification{
             1 * extractResponseFormat(_,_,_,_) >> 'json'
             1 * renderWrappedFileContents('blah','json',_)>>{args->args[2].contents=args[0]}
         }
+
+        controller.authorizationService=Stub(AuthorizationService){
+            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(Validation){
+                isValid()>>true
+            }
+        }
         when:
         params.path='test.aclpolicy'
         params.project="test"
@@ -723,6 +731,93 @@ class ProjectControllerSpec extends Specification{
         response.status==200
         response.contentType.split(';').contains('application/json')
         response.json==[contents:'blah']
+
+
+    }
+    def "project acls POST text, invalid policy, json response"(){
+        setup:
+        controller.frameworkService=Mock(FrameworkService){
+            1 * existsFrameworkProject('test') >> true
+            1 * getAuthContextForSubject(_) >> null
+            1 * authResourceForProject('test') >> null
+            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+
+                getName()>>'test'
+            }
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * requireVersion(_,_,11) >> true
+            1 * extractResponseFormat(_,_,_,_) >> 'json'
+            1 * renderJsonAclpolicyValidation(_,_)>>{args->args[1].contents='blah'}
+        }
+
+        controller.authorizationService=Stub(AuthorizationService){
+            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(Validation){
+                isValid()>>false
+            }
+        }
+        when:
+        params.path='test.aclpolicy'
+        params.project="test"
+        response.format='json'
+        request.method='POST'
+        request.contentType='application/yaml'
+        request.content=('{ description: \'\', \n' +
+                'context: { project: \'test\' }, \n' +
+                'by: { username: \'test\' }, \n' +
+                'for: { resource: [ { allow: \'x\' } ] } }').bytes
+        def result=controller.apiProjectAcls()
+
+        then:
+        response.status==400
+        response.contentType.split(';').contains('application/json')
+        response.json==[contents:'blah']
+
+
+    }
+    def "project acls POST text, invalid policy, xml response"(){
+        setup:
+        controller.frameworkService=Mock(FrameworkService){
+            1 * existsFrameworkProject('test') >> true
+            1 * getAuthContextForSubject(_) >> null
+            1 * authResourceForProject('test') >> null
+            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+
+                getName()>>'test'
+            }
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * requireVersion(_,_,11) >> true
+            1 * extractResponseFormat(_,_,_,_) >> 'xml'
+            1 * renderXmlAclpolicyValidation(_,_)>>{args->args[1].contents('data')}
+        }
+
+        controller.authorizationService=Stub(AuthorizationService){
+            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(Validation){
+                isValid()>>false
+            }
+        }
+        when:
+        params.path='test.aclpolicy'
+        params.project="test"
+        response.format='xml'
+        request.method='POST'
+        request.contentType='application/yaml'
+        request.content=('{ description: \'\', \n' +
+                'context: { project: \'test\' }, \n' +
+                'by: { username: \'test\' }, \n' +
+                'for: { resource: [ { allow: \'x\' } ] } }').bytes
+        def result=controller.apiProjectAcls()
+
+        then:
+        response.status==400
+        response.contentType.split(';').contains('application/xml')
+        response.xml!=null
+        response.xml.text()=='data'
 
 
     }
