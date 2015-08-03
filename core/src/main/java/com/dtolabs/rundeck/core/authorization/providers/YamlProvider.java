@@ -19,17 +19,34 @@ public class YamlProvider {
     };
 
     public static Validation validate(final CacheableYamlSource source) {
-        return validate(Collections.singletonList(source));
+        return validate(source, null);
+    }
+
+    public static Validation validate(final CacheableYamlSource source, final Set<Attribute> forcedContext) {
+        return validate(Collections.singletonList(source), forcedContext);
+    }
+
+    public static Validation validate(final Iterable<CacheableYamlSource> sources, final Set<Attribute> forcedContext) {
+        return validate(new ValidationSet(), sources, forcedContext);
     }
 
     public static Validation validate(final Iterable<CacheableYamlSource> sources) {
-        return validate(new ValidationSet(), sources);
+        return validate(sources, null);
     }
 
-    private static Validation validate(ValidationSet validation, final Iterable<CacheableYamlSource> sources) {
+    private static Validation validate(
+            ValidationSet validation,
+            final Iterable<CacheableYamlSource> sources,
+            final Set<Attribute> forcedContext
+    )
+    {
         for (CacheableYamlSource source : sources) {
             try {
-                YamlPolicyCollection yamlPolicyCollection = YamlProvider.policiesFromSource(source, null, validation);
+                YamlPolicyCollection yamlPolicyCollection = YamlProvider.policiesFromSource(
+                        source,
+                        forcedContext,
+                        validation
+                );
             } catch (Exception e1) {
                 validation.addError(source.getIdentity(), e1.getMessage());
             }
