@@ -31,9 +31,11 @@ class BootStrap {
     def filterInterceptor
     Scheduler quartzScheduler
     MetricRegistry metricRegistry
+    def messageSource
 
      def init = { ServletContext servletContext ->
-         log.info("Starting ${grailsApplication.metadata['main.app.name']?:'Rundeck'} ${grailsApplication.metadata['build.ident']}...")
+         def appname=messageSource.getMessage('main.app.name',null,'',null) ?: messageSource.getMessage('main.app.default.name',null,'',null) ?: 'Rundeck'
+         log.info("Starting ${appname} ${grailsApplication.metadata['build.ident']}...")
          /*filterInterceptor.handlers.sort { FilterToHandlerAdapter handler1,
                                            FilterToHandlerAdapter handler2 ->
              FilterConfig filter1 = handler1.filterConfig

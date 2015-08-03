@@ -98,9 +98,7 @@
     </auth:resourceAllowed>
     <auth:resourceAllowed action="create" kind="project" context="application" has="true">
         <div class="jumbotron">
-            <g:set var="appTitle"
-                   value="${grailsApplication.config.rundeck.gui.title ?: g.message(code: 'main.app.name')}"/>
-            <h1>Welcome to <g:enc>${appTitle}</g:enc></h1>
+            <h1>Welcome to <g:appTitle/></h1>
 
             <p>
                 To get started, create a new project.
