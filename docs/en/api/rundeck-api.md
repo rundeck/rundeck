@@ -1232,8 +1232,53 @@ by:
 
 **Response:**
 
-Based on the `Accept:` header, the same format as returned by [Get an ACL Policy](#get-an-acl-policy).
+If the policy passes validation, then the response is based on the `Accept:` header, the same format as returned by [Get an ACL Policy](#get-an-acl-policy).
 
+If Validation fails, the response will be `400 Bad Request`, and the body will contain a list of validation errors.
+Because each [ACLPOLICY][] document can contain multiple Yaml documents, each will be listed as a separate policy.
+
+    400 Bad Request
+
+`Content-Type: application/json`
+
+~~~~ {.json}
+{
+  "valid": false,
+  "policies": [
+    {
+      "policy": "file1.aclpolicy[1]",
+      "errors": [
+        "reason...",
+        "reason2..."
+      ]
+    },
+
+    {
+      "policy": "file1.aclpolicy[2]",
+      "errors": [
+        "reason...",
+        "reason2..."
+      ]
+    }
+  ]
+}
+
+~~~~
+
+
+`Content-Type: application/xml`
+
+~~~~ {.xml}
+<validation valid="false">
+  <policy id="file1.aclpolicy[1]">
+    <error>reason text...</error>
+    <error>reason2 text...</error>
+  </policy>
+  <policy id="file1.aclpolicy[2]">
+    <error>reason text...</error>
+  </policy>
+</validation>
+~~~~
 
 ### Delete an ACL Policy
 
