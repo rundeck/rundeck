@@ -7,6 +7,7 @@ import com.codahale.metrics.Timer
 import com.dtolabs.rundeck.core.authorization.AclRuleSetSource
 import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.Authorization
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.RuleEvaluator
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.authorization.providers.*
@@ -72,10 +73,23 @@ class AuthorizationService implements InitializingBean{
         }
     }
 
-    public Validation validateYamlPolicy(String ident, String text){
-        YamlProvider.validate(YamlProvider.sourceFromString(ident,text,new Date()))
+    public Validation validateYamlPolicy(String ident, String text) {
+        validateYamlPolicy(null, ident, text)
     }
-    
+    /**
+     * Validate the yaml aclpolicy, optionally within a specific project context
+     * @param project name of project to force the context of all policies, or null to not force a context
+     * @param ident identity string for the sources
+     * @param text yaml aclpolicy text
+     * @return validation
+     */
+    public Validation validateYamlPolicy(String project, String ident, String text) {
+        YamlProvider.validate(
+                YamlProvider.sourceFromString(ident, text, new Date()),
+                project ? AuthorizationUtil.projectContext(project) : null
+        )
+    }
+
     public Validation validateYamlPolicy(File file){
         YamlProvider.validate(YamlProvider.sourceFromFile(file))
     }
