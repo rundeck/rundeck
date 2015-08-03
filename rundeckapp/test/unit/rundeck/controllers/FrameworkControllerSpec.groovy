@@ -1,8 +1,10 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.test.mixin.TestFor
 import rundeck.services.ApiService
+import rundeck.services.AuthorizationService
 import rundeck.services.FrameworkService
 import rundeck.services.StorageManager
 import spock.lang.Specification
@@ -278,6 +280,11 @@ class FrameworkControllerSpec extends Specification {
                 args[2].contents=args[0]
             }
         }
+        controller.authorizationService=Stub(AuthorizationService){
+            validateYamlPolicy('test.aclpolicy',_)>>Stub(Validation){
+                isValid()>>true
+            }
+        }
         when:
         params.path='test.aclpolicy'
         params.project="test"
@@ -295,6 +302,94 @@ class FrameworkControllerSpec extends Specification {
         response.contentType.split(';').contains('application/json')
         response.json==[contents:'blah']
 
+
+    }
+    /**
+     * Policy validation failure
+     * @return
+     */
+    def "system acls POST text invalid (json response)"(){
+        setup:
+        controller.configStorageService=Mock(StorageManager){
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            1 * getAuthContextForSubject(_) >> null
+            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * extractResponseFormat(_,_,_,_) >> 'json'
+
+            1 * renderJsonAclpolicyValidation(_,_)>>{args->
+                args[1].contents='blahz'
+            }
+        }
+        controller.authorizationService=Stub(AuthorizationService){
+            validateYamlPolicy('test.aclpolicy',_)>>Stub(Validation){
+                isValid()>>false
+            }
+        }
+        when:
+        params.path='test.aclpolicy'
+        params.project="test"
+        response.format='json'
+        request.method='POST'
+        request.contentType='application/yaml'
+        request.content=('{ description: \'\', \n' +
+                'context: { project: \'test\' }, \n' +
+                'by: { username: \'test\' }, \n' +
+                'for: { resource: [ { allow: \'x\' } ] } }').bytes
+        def result=controller.apiSystemAcls()
+
+        then:
+        response.status==400
+        response.contentType.split(';').contains('application/json')
+        response.json==[contents:'blahz']
+    }
+    /**
+     * Policy validation failure
+     * @return
+     */
+    def "system acls POST text invalid (xml response)"(){
+        setup:
+        controller.configStorageService=Mock(StorageManager){
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            1 * getAuthContextForSubject(_) >> null
+            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * extractResponseFormat(_,_,_,_) >> 'xml'
+
+            1 * renderXmlAclpolicyValidation(_,_)>>{args->
+                args[1].contents {
+                    'data'('value')
+                }
+            }
+        }
+        controller.authorizationService=Stub(AuthorizationService){
+            validateYamlPolicy('test.aclpolicy',_)>>Stub(Validation){
+                isValid()>>false
+            }
+        }
+        when:
+        params.path='test.aclpolicy'
+        params.project="test"
+        response.format='xml'
+        request.method='POST'
+        request.contentType='application/yaml'
+        request.content=('{ description: \'\', \n' +
+                'context: { project: \'test\' }, \n' +
+                'by: { username: \'test\' }, \n' +
+                'for: { resource: [ { allow: \'x\' } ] } }').bytes
+        def result=controller.apiSystemAcls()
+
+        then:
+        response.status==400
+        response.contentType.split(';').contains('application/xml')
+        response.xml!=null
+        response.xml.data.text()=='value'
 
     }
 }

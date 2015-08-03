@@ -2110,16 +2110,16 @@ class FrameworkController extends ControllerBase {
         //validate input
         Validation validation = authorizationService.validateYamlPolicy(params.path, text)
         if(!validation.valid){
-            response.status==HttpServletResponse.SC_BAD_REQUEST
+            response.status = HttpServletResponse.SC_BAD_REQUEST
             return withFormat{
                 def j={
                     render(contentType:'application/json'){
-                        return apiService.renderJsonAclpolicyValidation(validation,delegate)
+                        apiService.renderJsonAclpolicyValidation(validation,delegate)
                     }
                 }
                 xml{
                     render(contentType: 'application/xml'){
-                        return apiService.renderXmlAclpolicyValidation(validation,delegate)
+                        apiService.renderXmlAclpolicyValidation(validation,delegate)
                     }
                 }
                 json j
