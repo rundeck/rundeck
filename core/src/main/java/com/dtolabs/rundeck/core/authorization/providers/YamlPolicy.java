@@ -205,7 +205,7 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
                         "Context section is not valid: " +
                         ctxClause +
                         ", it should be empty or match the expected context: " +
-                        forcedContext
+                        AuthorizationUtil.contextAsString(forcedContext)
                 );
             }
         }else if (null == forcedContext) {
@@ -220,6 +220,7 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
             environment = new YamlEnvironmentalContext(EnvironmentalContext.URI_BASE, forcedContext);
         }
     }
+
 
     public Set<Pattern> getUsernamePatterns() {
         return usernamePatterns;
