@@ -312,7 +312,7 @@ class FrameworkControllerSpec extends Specification {
         def result=controller.apiSystemAcls()
 
         then:
-        response.status==200
+        response.status==201
         response.contentType!=null
         response.contentType.split(';').contains('application/json')
         response.json==[contents:'blah']
