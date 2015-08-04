@@ -2017,11 +2017,13 @@ class FrameworkController extends ControllerBase {
             return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        def authAction = ApiService.HTTP_METHOD_ACTIONS[request.method]
         if (!frameworkService.authorizeApplicationResourceAny(
                 authContext,
-                AuthConstants.RESOURCE_TYPE_SYSTEM,
+                AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,
                 [
-                        AuthConstants.ACTION_CONFIGURE,//TODO:??
+                        authAction,
                         AuthConstants.ACTION_ADMIN
                 ]
         )) {
@@ -2029,7 +2031,7 @@ class FrameworkController extends ControllerBase {
                                          [
                                                  status: HttpServletResponse.SC_FORBIDDEN,
                                                  code: "api.error.item.unauthorized",
-                                                 args: ['Manage ACLs', "Rundeck", '']
+                                                 args: [authAction,'Rundeck System ACLs','']
                                          ])
             return null
         }
@@ -2048,7 +2050,7 @@ class FrameworkController extends ControllerBase {
         switch (request.method) {
             case 'POST':
             case 'PUT':
-                apiSystemAclsPutResource(storagePath)
+                apiSystemAclsPutResource(storagePath, request.method=='POST')
                 break
             case 'GET':
                 apiSystemAclsGetResource(storagePath, prefix)
@@ -2062,9 +2064,27 @@ class FrameworkController extends ControllerBase {
     private def renderAclHref(String path) {
         createLink(absolute: true, uri: "/api/${ApiRequestFilters.API_CURRENT_VERSION}/system/acl/$path")
     }
-    private def apiSystemAclsPutResource(String storagePath) {
+    private def apiSystemAclsPutResource(String storagePath, boolean create) {
         def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','yaml','text'],request.format)
 
+
+        def exists = configStorageService.existsFileResource(storagePath)
+        if(create && exists){
+            //conflict
+            return apiService.renderErrorFormat(response,[
+                    status:HttpServletResponse.SC_CONFLICT,
+                    code: 'api.error.item.alreadyexists',
+                    args: ['System ACL Policy File', params.path],
+                    format:respFormat
+            ])
+        }else if(!create && !exists){
+            return apiService.renderErrorFormat(response,[
+                    status:HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist',
+                    args: ['System ACL Policy File', params.path],
+                    format:respFormat
+            ])
+        }
         def error = null
         String text = null
         if (request.format in ['yaml','text']) {
@@ -2128,7 +2148,7 @@ class FrameworkController extends ControllerBase {
         }
 
         configStorageService.writeFileResource(storagePath,new ByteArrayInputStream(text.bytes),[:])
-
+        response.status=create ? HttpServletResponse.SC_CREATED : HttpServletResponse.SC_OK
         if(respFormat in ['yaml','text']){
             //write directly
             response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
@@ -2236,6 +2256,15 @@ class FrameworkController extends ControllerBase {
 
     private def apiSystemAclsDeleteResource(projectFilePath) {
         def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','text'],request.format)
+        boolean exists=configStorageService.existsFileResource(projectFilePath)
+        if(!exists){
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code: 'api.error.item.doesnotexist',
+                    args:['System ACL Policy File',params.path],
+                    format: respFormat
+            ])
+        }
         boolean done=configStorageService.deleteFileResource(projectFilePath)
         if(!done){
             return apiService.renderErrorFormat(response, [

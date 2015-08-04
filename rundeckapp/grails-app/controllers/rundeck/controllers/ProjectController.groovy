@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import rundeck.filters.ApiRequestFilters
+import rundeck.services.ApiService
 import rundeck.services.ProjectServiceException
 
 import javax.servlet.http.HttpServletRequest
@@ -642,6 +643,50 @@ class ProjectController extends ControllerBase{
         }
         return frameworkService.getFrameworkProject(project)
     }
+    /**
+     * support project/NAME/config and project/NAME/acl endpoints: validate project and appropriate authorization,
+     * return null if invalid and a response has already been sent.
+     * @param action action to require
+     * @return FrameworkProject for the project
+     */
+    private def validateProjectAclApiRequest(String action){
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V11)) {
+            return
+        }
+        String project = params.project
+        if (!project) {
+            apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code: "api.error.parameter.required",
+                            args: ['project']
+                    ])
+            return null
+        }
+        if (!frameworkService.existsFrameworkProject(project)) {
+            apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_NOT_FOUND,
+                            code: "api.error.item.doesnotexist",
+                            args: ['Project', project]
+                    ])
+            return null
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (!frameworkService.authorizeApplicationResourceAny(authContext,
+                frameworkService.authResourceForProjectAcl(project),
+                [action, AuthConstants.ACTION_ADMIN])) {
+            apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_FORBIDDEN,
+                            code: "api.error.item.unauthorized",
+                            args: [action, "ACL for Project", project]
+                    ])
+            return null
+        }
+        return frameworkService.getFrameworkProject(project)
+    }
     def apiProjectConfigGet(){
         def proj=validateProjectConfigApiRequest(AuthConstants.ACTION_CONFIGURE)
         if(!proj){
@@ -676,7 +721,8 @@ class ProjectController extends ControllerBase{
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V14)) {
             return
         }
-        def project = validateProjectConfigApiRequest(AuthConstants.ACTION_CONFIGURE)
+
+        def project = validateProjectAclApiRequest(ApiService.HTTP_METHOD_ACTIONS[request.method])
         if (!project) {
             return
         }
@@ -690,11 +736,10 @@ class ProjectController extends ControllerBase{
             ])
         }
         def projectFilePath = "acls/${params.path?:''}"
-        log.debug("apiProjectAcls, path: ${params.path}, projectfile: ${projectFilePath}")
         switch (request.method) {
             case 'POST':
             case 'PUT':
-                apiProjectAclsPutResource(project,projectFilePath)
+                apiProjectAclsPutResource(project,projectFilePath,request.method=='POST')
                 break
             case 'GET':
                 apiProjectAclsGetResource(project,projectFilePath,'acls/')
@@ -704,8 +749,29 @@ class ProjectController extends ControllerBase{
                 break
         }
     }
-    private def apiProjectAclsPutResource(IRundeckProject project,String projectFilePath) {
+    private def apiProjectAclsPutResource(IRundeckProject project,String projectFilePath,boolean create) {
         def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','yaml','text'],request.format)
+
+
+        def exists = project.existsFileResource(projectFilePath)
+        if(create && exists) {
+            //conflict
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_CONFLICT,
+                    code  : 'api.error.item.alreadyexists',
+                    args  : ['Project ACL Policy File', params.path + ' for project ' + project.name],
+                    format: respFormat
+            ]
+            )
+        }else if(!create && !exists){
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code  : 'api.error.item.doesnotexist',
+                    args  : ['Project ACL Policy File', params.path + ' for project ' + project.name],
+                    format: respFormat
+            ]
+            )
+        }
 
         def error = null
         String text = null
@@ -771,6 +837,7 @@ class ProjectController extends ControllerBase{
 
         project.storeFileResource(projectFilePath,new ByteArrayInputStream(text.bytes))
 
+        response.status=create ? HttpServletResponse.SC_CREATED : HttpServletResponse.SC_OK
         if(respFormat in ['yaml','text']){
             //write directly
             response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
@@ -877,6 +944,17 @@ class ProjectController extends ControllerBase{
     }
     private def apiProjectAclsDeleteResource(IRundeckProject project,projectFilePath) {
         def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','text'],request.format)
+
+        def exists = project.existsFileResource(projectFilePath)
+        if(!exists){
+
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code  : 'api.error.item.doesnotexist',
+                    args  : ['Project ACL Policy File', params.path + ' for project ' + project.name],
+                    format: respFormat
+            ])
+        }
         boolean done=project.deleteFileResource(projectFilePath)
         if(!done){
             return apiService.renderErrorFormat(response, [

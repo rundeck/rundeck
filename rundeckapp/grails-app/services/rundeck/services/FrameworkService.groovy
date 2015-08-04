@@ -317,6 +317,14 @@ class FrameworkService implements ApplicationContextAware {
     def Map authResourceForProject(String name){
         return AuthorizationUtil.resource(AuthConstants.TYPE_PROJECT, [name: name])
     }
+    /**
+     * Return the resource definition for a project ACL for use by authorization checks
+     * @param name the project name
+     * @return resource map for authorization check
+     */
+    def Map authResourceForProjectAcl(String name){
+        return AuthorizationUtil.resource(AuthConstants.TYPE_PROJECT_ACL, [name: name])
+    }
 
     /**
      * return the decision set for all actions on all resources in the project context

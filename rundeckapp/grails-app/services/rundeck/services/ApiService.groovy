@@ -1,6 +1,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.Validation
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
@@ -25,6 +26,12 @@ class ApiService {
     def messageSource
     def grailsLinkGenerator
 
+    public static final Map<String,String> HTTP_METHOD_ACTIONS = Collections.unmodifiableMap (
+            POST: AuthConstants.ACTION_CREATE,
+            PUT: AuthConstants.ACTION_UPDATE,
+            GET: AuthConstants.ACTION_READ,
+            DELETE: AuthConstants.ACTION_DELETE
+    )
     private String genRandomString() {
         return RandomStringUtils.random(32, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
     }

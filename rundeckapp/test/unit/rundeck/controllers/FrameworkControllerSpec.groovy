@@ -2,6 +2,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.TestFor
 import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
@@ -14,6 +15,10 @@ import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_ADMI
 import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_CONFIGURE
 import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_CONFIGURE
 import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_CONFIGURE
+import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_CREATE
+import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_DELETE
+import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_READ
+import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_UPDATE
 
 /**
  * Created by greg on 7/28/15.
@@ -38,20 +43,28 @@ class FrameworkControllerSpec extends Specification {
         setup:
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
-            1 * renderErrorFormat(_,[status:403,code:'api.error.item.unauthorized',args:['Manage ACLs','Rundeck','']]) >> {args->
+            1 * renderErrorFormat(_,[status:403,code:'api.error.item.unauthorized',args:[action,'Rundeck System ACLs','']]) >> {args->
                 args[0].status=args[1].status
             }
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(null,!null,[ACTION_CONFIGURE,ACTION_ADMIN])>>false
+            1 * authorizeApplicationResourceAny(null,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[action,ACTION_ADMIN])>>false
         }
         when:
         params.project='monkey'
+        request.method=method
         controller.apiSystemAcls()
 
         then:
         response.status==403
+
+        where:
+        method | action
+        'GET' | ACTION_READ
+        'POST' | ACTION_CREATE
+        'PUT' | ACTION_UPDATE
+        'DELETE' | ACTION_DELETE
     }
     def "system acls invalid path"(){
         setup:
@@ -73,7 +86,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(null,!null,[ACTION_CONFIGURE,ACTION_ADMIN])>>true
+            1 * authorizeApplicationResourceAny(null,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN])>>true
         }
         when:
         params.path='elf'
@@ -91,7 +104,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -120,7 +133,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -150,7 +163,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -178,7 +191,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -210,7 +223,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -239,7 +252,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+                         1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -262,6 +275,7 @@ class FrameworkControllerSpec extends Specification {
     def "system acls POST text"(){
         setup:
         controller.configStorageService=Mock(StorageManager){
+            1 * existsFileResource('acls/test.aclpolicy') >> false
             1 * writeFileResource('acls/test.aclpolicy',_,_) >> null
             1 * loadFileResource('acls/test.aclpolicy',_) >> {args->
                 args[1].write('blah'.bytes)
@@ -270,7 +284,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -299,10 +313,183 @@ class FrameworkControllerSpec extends Specification {
 
         then:
         response.status==200
+        response.contentType!=null
         response.contentType.split(';').contains('application/json')
         response.json==[contents:'blah']
+    }
+    def "system acls POST already exists"(){
+        setup:
+        controller.configStorageService=Mock(StorageManager){
+            1 * existsFileResource('acls/test.aclpolicy') >> true
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            1 * getAuthContextForSubject(_) >> null
+            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * extractResponseFormat(_,_,_,_) >> 'json'
 
+            1 * renderErrorFormat(_,[status:409,code:'api.error.item.alreadyexists',args:['System ACL Policy File','test.aclpolicy'],format:'json']) >> {args->
+                args[0].status=args[1].status
+            }
+        }
+        controller.authorizationService=Stub(AuthorizationService){
+            validateYamlPolicy('test.aclpolicy',_)>>Stub(Validation){
+                isValid()>>true
+            }
+        }
+        when:
+        params.path='test.aclpolicy'
+        params.project="test"
+        response.format='json'
+        request.method='POST'
+        request.contentType='application/yaml'
+        request.content=('{ description: \'\', \n' +
+                'context: { project: \'test\' }, \n' +
+                'by: { username: \'test\' }, \n' +
+                'for: { resource: [ { allow: \'x\' } ] } }').bytes
+        def result=controller.apiSystemAcls()
 
+        then:
+        response!=null
+        response.status==409
+    }
+    def "system acls PUT doesn't exist"(){
+        setup:
+        controller.configStorageService=Mock(StorageManager){
+            1 * existsFileResource('acls/test.aclpolicy') >> false
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            1 * getAuthContextForSubject(_) >> null
+            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_UPDATE,ACTION_ADMIN]) >> true
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * extractResponseFormat(_,_,_,_) >> 'json'
+
+            1 * renderErrorFormat(_,[status:404,code:'api.error.item.doesnotexist',args:['System ACL Policy File','test.aclpolicy'],format:'json']) >> {args->
+                args[0].status=args[1].status
+            }
+        }
+        controller.authorizationService=Stub(AuthorizationService){
+            validateYamlPolicy('test.aclpolicy',_)>>Stub(Validation){
+                isValid()>>true
+            }
+        }
+        when:
+        params.path='test.aclpolicy'
+        params.project="test"
+        response.format='json'
+        request.method='PUT'
+        request.contentType='application/yaml'
+        request.content=('{ description: \'\', \n' +
+                'context: { project: \'test\' }, \n' +
+                'by: { username: \'test\' }, \n' +
+                'for: { resource: [ { allow: \'x\' } ] } }').bytes
+        def result=controller.apiSystemAcls()
+
+        then:
+        response!=null
+        response.status==404
+    }
+
+    def "system acls PUT text"(){
+        setup:
+        controller.configStorageService=Mock(StorageManager){
+            1 * existsFileResource('acls/test.aclpolicy') >> true
+            1 * writeFileResource('acls/test.aclpolicy',_,_) >> null
+            1 * loadFileResource('acls/test.aclpolicy',_) >> {args->
+                args[1].write('blah'.bytes)
+                4
+            }
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            1 * getAuthContextForSubject(_) >> null
+            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_UPDATE,ACTION_ADMIN]) >> true
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * extractResponseFormat(_,_,_,_) >> 'json'
+
+            1 * renderWrappedFileContents(_,_,_) >> { args ->
+                args[2].contents=args[0]
+            }
+        }
+        controller.authorizationService=Stub(AuthorizationService){
+            validateYamlPolicy('test.aclpolicy',_)>>Stub(Validation){
+                isValid()>>true
+            }
+        }
+        when:
+        params.path='test.aclpolicy'
+        params.project="test"
+        response.format='json'
+        request.method='PUT'
+        request.contentType='application/yaml'
+        request.content=('{ description: \'\', \n' +
+                'context: { project: \'test\' }, \n' +
+                'by: { username: \'test\' }, \n' +
+                'for: { resource: [ { allow: \'x\' } ] } }').bytes
+        def result=controller.apiSystemAcls()
+
+        then:
+        response.status==200
+        response.contentType!=null
+        response.contentType.split(';').contains('application/json')
+        response.json==[contents:'blah']
+    }
+    def "system acls DELETE not found"(){
+        setup:
+        controller.configStorageService=Mock(StorageManager){
+            1 * existsFileResource('acls/test.aclpolicy') >> false
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            1 * getAuthContextForSubject(_) >> null
+            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_DELETE,ACTION_ADMIN]) >> true
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * extractResponseFormat(_,_,_,_) >> 'json'
+
+            1 * renderErrorFormat(_,[status:404,code:'api.error.item.doesnotexist',args:['System ACL Policy File','test.aclpolicy'],format:'json']) >> {args->
+                args[0].status=args[1].status
+            }
+        }
+        when:
+        params.path='test.aclpolicy'
+        params.project="test"
+        response.format='json'
+        request.method='DELETE'
+        def result=controller.apiSystemAcls()
+
+        then:
+        response.status==404
+    }
+    def "system acls DELETE ok"(){
+        setup:
+        controller.configStorageService=Mock(StorageManager){
+            1 * existsFileResource('acls/test.aclpolicy') >> true
+            1 * deleteFileResource('acls/test.aclpolicy') >> true
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            1 * getAuthContextForSubject(_) >> null
+            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_DELETE,ACTION_ADMIN]) >> true
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * extractResponseFormat(_,_,_,_) >> 'json'
+
+        }
+        when:
+        params.path='test.aclpolicy'
+        params.project="test"
+        response.format='json'
+        request.method='DELETE'
+        def result=controller.apiSystemAcls()
+
+        then:
+        response.status==204
     }
     /**
      * Policy validation failure
@@ -311,10 +498,11 @@ class FrameworkControllerSpec extends Specification {
     def "system acls POST text invalid (json response)"(){
         setup:
         controller.configStorageService=Mock(StorageManager){
+            1 * existsFileResource('acls/test.aclpolicy') >> false
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -353,10 +541,11 @@ class FrameworkControllerSpec extends Specification {
     def "system acls POST text invalid (xml response)"(){
         setup:
         controller.configStorageService=Mock(StorageManager){
+            1 * existsFileResource('acls/test.aclpolicy') >> false
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,_,['configure','admin']) >> true
+                         1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
