@@ -314,12 +314,22 @@ for:
         kind: system
       allow: [read,enable_executions,disable_executions,admin] # allow read of system info, enable/disable all executions
     - equals:
+        kind: system_acl
+      allow: [read,create,update,delete,admin] # allow modifying system ACL files
+    - equals:
         kind: user
       allow: [admin] # allow modify user profiles
   project:
     - match:
         name: '.*'
-      allow: [read,admin,delete,configure,import,export] # allow view/admin of all projects
+      allow: [read,import,export,configure,delete,admin] # allow full access of all projects or use 'admin'
+  project_acl:
+    - match:
+        name: '.*'
+      allow: [read,create,update,delete,admin] # allow modifying project-specific ACL files
+  storage:
+    - allow: [read,create,update,delete] # allow access for /ssh-key/* storage content
+
 by:
   group: admin
 ~~~~~~~~
