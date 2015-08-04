@@ -58,6 +58,8 @@ public class AclTool extends BaseTool {
     public static final String USER_LONG_OPT = "user";
     public static final String PROJECT_OPT = "p";
     public static final String PROJECT_LONG_OPT = "project";
+    public static final String PROJECT_ACL_OPT = "P";
+    public static final String PROJECT_ACL_LONG_OPT = "projectacl";
     public static final String JOB_OPT = "j";
     public static final String JOB_LONG_OPT = "job";
     public static final String CONTEXT_OPT = "c";
@@ -92,6 +94,12 @@ public class AclTool extends BaseTool {
     final CLIToolLogger clilogger;
 
     private Actions action = null;
+    private static Comparator<Decision> comparator = new Comparator<Decision>() {
+        @Override
+        public int compare(final Decision o1, final Decision o2) {
+            return o1.getAction().compareTo(o2.getAction());
+        }
+    };
 
     public AclTool(final CLIToolLogger cliToolLogger)
             throws IOException, PoliciesParseException
@@ -238,6 +246,7 @@ public class AclTool extends BaseTool {
 
     private Context argContext;
     private String argProject;
+    private String argProjectAcl;
     private String argProjectJob;
     private String argProjectNode;
     private String argTags;
@@ -320,6 +329,15 @@ public class AclTool extends BaseTool {
                                          "Name of project, used in project context or for application resource."
                                  )
                                  .create(PROJECT_OPT)
+            );
+            options.addOption(
+                    OptionBuilder.withArgName("projectacl")
+                                 .withLongOpt(PROJECT_ACL_LONG_OPT)
+                                 .hasArg()
+                                 .withDescription(
+                                         "Project name for ACL policy access, used in application context."
+                                 )
+                                 .create(PROJECT_ACL_OPT)
             );
             options.addOption(
                     OptionBuilder.withArgName("group/name")
@@ -446,6 +464,9 @@ public class AclTool extends BaseTool {
             }
             if (cli.hasOption(PROJECT_OPT)) {
                 argProject = cli.getOptionValue(PROJECT_OPT);
+            }
+            if (cli.hasOption(PROJECT_ACL_OPT)) {
+                argProjectAcl = cli.getOptionValue(PROJECT_ACL_OPT);
             }
             if (cli.hasOption(JOB_OPT)) {
                 argProjectJob = cli.getOptionValue(JOB_OPT);
@@ -605,6 +626,22 @@ public class AclTool extends BaseTool {
         }else{
             log("\n(No project (-p) specified, skipping Application context actions for a specific project.)\n");
         }
+        if(null!=argProjectAcl){
+            HashMap<String, Object> res = new HashMap<>();
+            res.put("name", argProjectAcl);
+            Map<String,Object> resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_PROJECT_ACL, res);
+
+            logDecisions(
+                    "project_acl for Project named \"" + argProjectAcl+"\"",
+                    authorization,
+                    subject,
+                    resources(resourceMap),
+                    new HashSet<>(appProjectAclActions),
+                    Framework.RUNDECK_APP_ENV
+            );
+        }else{
+            log("\n(No project_acl (-P) specified, skipping Application context actions for a ACLs for a specific project.)\n");
+        }
         if(null!=argAppStorage){
             Map<String,Object> resourceMap = createStorageResource();
             logDecisions(
@@ -701,7 +738,7 @@ public class AclTool extends BaseTool {
 
     /**
      * If argValidate is specified, validate the input, exit 2 if invalid. Print validation report if argVerbose
-     * @return
+     * @return true if validation check failed
      * @throws CLIToolOptionsException
      */
     private boolean applyArgValidate() throws CLIToolOptionsException {
@@ -736,12 +773,13 @@ public class AclTool extends BaseTool {
             final Set<Attribute> env
     )
     {
-        for (Decision decision : authorization.evaluate(
+        Set<Decision> evaluate = authorization.evaluate(
                 resource,
                 subject,
                 actions,
                 env
-        )) {
+        );
+        for (Decision decision : sortByAction(evaluate)) {
             log(
                     (decision.isAuthorized()
                      ? "+"
@@ -758,6 +796,12 @@ public class AclTool extends BaseTool {
                 );
             }
         }
+    }
+
+    private Set<Decision> sortByAction(final Set<Decision> evaluate) {
+        TreeSet<Decision> sorted = new TreeSet<>(comparator);
+        sorted.addAll(evaluate);
+        return sorted;
     }
 
 
@@ -785,6 +829,7 @@ public class AclTool extends BaseTool {
             Arrays.asList(
                     ACLConstants.TYPE_PROJECT,
                     ACLConstants.TYPE_SYSTEM,
+                    ACLConstants.TYPE_SYSTEM_ACL,
                     ACLConstants.TYPE_USER,
                     ACLConstants.TYPE_JOB
             )
@@ -799,6 +844,14 @@ public class AclTool extends BaseTool {
                     ACLConstants.ACTION_IMPORT,
                     ACLConstants.ACTION_EXPORT,
                     ACLConstants.ACTION_DELETE_EXECUTION
+            );
+    static final List<String> appProjectAclActions =
+            Arrays.asList(
+                    ACLConstants.ACTION_READ,
+                    ACLConstants.ACTION_CREATE,
+                    ACLConstants.ACTION_UPDATE,
+                    ACLConstants.ACTION_DELETE,
+                    ACLConstants.ACTION_ADMIN
             );
     static final List<String> appStorageActions =
             Arrays.asList(
@@ -818,6 +871,14 @@ public class AclTool extends BaseTool {
                     ACLConstants.ACTION_DISABLE_EXECUTIONS,
                     ACLConstants.ACTION_ADMIN
             );
+    static final List<String> appSystemAclKindActions =
+            Arrays.asList(
+                    ACLConstants.ACTION_READ,
+                    ACLConstants.ACTION_CREATE,
+                    ACLConstants.ACTION_UPDATE,
+                    ACLConstants.ACTION_DELETE,
+                    ACLConstants.ACTION_ADMIN
+            );
     static final List<String> appUserKindActions =
             Arrays.asList(
                     ACLConstants.ACTION_ADMIN
@@ -832,12 +893,14 @@ public class AclTool extends BaseTool {
     static {
         appResActionsByType = new HashMap<>();
         appResActionsByType.put(ACLConstants.TYPE_PROJECT, appProjectActions);
+        appResActionsByType.put(ACLConstants.TYPE_PROJECT_ACL, appProjectAclActions);
         appResActionsByType.put(ACLConstants.TYPE_STORAGE, appStorageActions);
     }
 
     static {
         appResAttrsByType = new HashMap<>();
-        appResAttrsByType.put(ACLConstants.TYPE_PROJECT, Arrays.asList("name"));
+        appResAttrsByType.put(ACLConstants.TYPE_PROJECT, Collections.singletonList("name"));
+        appResAttrsByType.put(ACLConstants.TYPE_PROJECT_ACL, Collections.singletonList("name"));
         appResAttrsByType.put(ACLConstants.TYPE_STORAGE, Arrays.asList("path", "name"));
 
     }
@@ -849,6 +912,7 @@ public class AclTool extends BaseTool {
         appKindActionsByType = new HashMap<>();
         appKindActionsByType.put(ACLConstants.TYPE_PROJECT, appProjectKindActions);
         appKindActionsByType.put(ACLConstants.TYPE_SYSTEM, appSystemKindActions);
+        appKindActionsByType.put(ACLConstants.TYPE_SYSTEM_ACL, appSystemAclKindActions);
         appKindActionsByType.put(ACLConstants.TYPE_USER, appUserKindActions);
         appKindActionsByType.put(ACLConstants.TYPE_JOB, appJobKindActions);
     }
@@ -992,6 +1056,10 @@ public class AclTool extends BaseTool {
             HashMap<String, Object> res = new HashMap<>();
             res.put("name", argProject);
             resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_PROJECT, res);
+        } else if (argContext == Context.application && argProjectAcl != null) {
+            HashMap<String, Object> res = new HashMap<>();
+            res.put("name", argProjectAcl);
+            resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_PROJECT_ACL, res);
         } else if (argContext == Context.application && argAppStorage != null) {
             resourceMap = createStorageResource();
         } else if (argContext == Context.project && argProjectJob != null) {
@@ -1094,7 +1162,7 @@ public class AclTool extends BaseTool {
                     "  Generic: " +
                     optionDisplayString(GENERIC_OPT) +
                     "\n" +
-                    "    Create projects, read system info, manage users, change\n" +
+                    "    Create projects, read system info, manage system ACLs, manage users, change\n" +
                     "      execution mode.\n" +
                     "    generic kinds" +
                     " in this context: \n" +
@@ -1133,6 +1201,9 @@ public class AclTool extends BaseTool {
         } else if (argContext == Context.application && argProject != null) {
             //actions for job
             possibleActions.addAll(appProjectActions);
+        }else if (argContext == Context.application && argProjectAcl != null) {
+            //actions for project_acl
+            possibleActions.addAll(appProjectAclActions);
         } else if (argContext == Context.application && argGenericType != null) {
             //actions for job
             possibleActions.addAll(appKindActionsByType.get(argGenericType.toLowerCase()));
@@ -1843,10 +1914,12 @@ public class AclTool extends BaseTool {
         public static final String ACTION_DISABLE_EXECUTIONS = "disable_executions";
 
         public static final String TYPE_SYSTEM = "system";
+        public static final String TYPE_SYSTEM_ACL = "system_acl";
         public static final String TYPE_NODE = "node";
         public static final String TYPE_JOB = "job";
         public static final String TYPE_ADHOC = "adhoc";
         public static final String TYPE_PROJECT = "project";
+        public static final String TYPE_PROJECT_ACL = "project_acl";
         public static final String TYPE_EVENT = "event";
         public static final String TYPE_USER = "user";
         public static final String TYPE_STORAGE = "storage";
