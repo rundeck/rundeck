@@ -1195,15 +1195,14 @@ by:
 ~~~~
 
 
-### Create or update an ACL Policy
+### Create an ACL Policy
 
-Use `POST` or `PUT` to create or update a policy.
+Use `POST` to create a policy.
 
 **Request:**
 
     POST /api/14/system/acl/name.aclpolicy
-    PUT /api/14/system/acl/name.aclpolicy
-
+    
 If the `Content-Type` is `application/yaml` or `text/plain`, then the request body is the ACL policy contents directly.
 
 Otherwise, you can use XML or JSON in the same format as returned by [Get an ACL Policy](#get-an-acl-policy):
@@ -1232,12 +1231,22 @@ by:
 
 **Response:**
 
-If the policy passes validation, then the response is based on the `Accept:` header, the same format as returned by [Get an ACL Policy](#get-an-acl-policy).
+*Successful*
+
+    201 Created
+
+The format the response is based on the `Accept:` header, the same format as returned by [Get an ACL Policy](#get-an-acl-policy).
+
+*Already Exists*
+
+    409 Conflict
+
+*Validation Failure*
+
+    400 Bad Request
 
 If Validation fails, the response will be `400 Bad Request`, and the body will contain a list of validation errors.
 Because each [ACLPOLICY][] document can contain multiple Yaml documents, each will be listed as a separate policy.
-
-    400 Bad Request
 
 `Content-Type: application/json`
 
@@ -1280,6 +1289,30 @@ Because each [ACLPOLICY][] document can contain multiple Yaml documents, each wi
 </validation>
 ~~~~
 
+### Update an ACL Policy
+
+Use `PUT` to update a policy.
+
+**Request:**
+
+    PUT /api/14/system/acl/name.aclpolicy
+
+You can use Yaml, XML or JSON in the same request format as used by [Create an ACL Policy](#create-an-acl-policy).
+
+**Response:**
+
+*Successful*
+
+    200 OK
+
+The same response format as used by [Create an ACL Policy](#create-an-acl-policy).
+
+*Not Found*
+
+    404 Not Found
+
+If the policy does not exist, then a `404 Not Found` response is returned.
+
 ### Delete an ACL Policy
 
 Delete an ACL policy file.
@@ -1290,7 +1323,13 @@ Delete an ACL policy file.
 
 **Response:**
 
+*Successful*
+
     204 No Content
+
+*Not Found*
+
+    404 Not Found
 
 ## Jobs
 
@@ -3543,14 +3582,21 @@ See [List System ACL Policies](#list-system-acl-policies) for request and respon
 
 See [Get an ACL Policy](#get-an-acl-policy) for request and response.
 
-#### Create or update a Project ACL Policy
+#### Create a Project ACL Policy
 
 **Request:**
 
     POST /api/13/project/[PROJECT]/acl/name.aclpolicy
+    
+See [Create an ACL Policy](#create-an-acl-policy) for request and response.
+
+#### Update a Project ACL Policy
+
+**Request:**
+
     PUT /api/13/project/[PROJECT]/acl/name.aclpolicy
 
-See [Create or update an ACL Policy](#create-or-update-an-acl-policy) for request and response.
+See [Update an ACL Policy](#update-an-acl-policy) for request and response.
 
 #### Delete a Project ACL Policy
 
@@ -3558,10 +3604,7 @@ See [Create or update an ACL Policy](#create-or-update-an-acl-policy) for reques
 
     DELETE /api/13/project/[PROJECT]/acl/name.aclpolicy
 
-**Response:**
-
-    204 No Content
-
+See [Delete an ACL Policy](#delete-an-acl-policy)
 
 ## Listing History
 
@@ -3960,7 +4003,8 @@ If request was JSON, then the following JSON:
 
 * `GET` [List Project ACL Policies](#list-project-acl-policies)
 * `GET` [Get a Project ACL Policy](#get-a-project-acl-policy)
-* `PUT`/`POST` [Create or update a Project ACL Policy](#create-or-update-a-project-acl-policy)
+* `POST` [Create a Project ACL Policy](#create-a-project-acl-policy)
+* `PUT` [Update a Project ACL Policy](#update-a-project-acl-policy)
 * `DELETE` [Delete a Project ACL Policy](#delete-a-project-acl-policy)
 
 [/api/V/project/[PROJECT]/config][]
@@ -4058,7 +4102,8 @@ If request was JSON, then the following JSON:
 
 * `GET` [List System ACL Policies](#list-system-acl-policies)
 * `GET` [Get an ACL Policy](#get-an-acl-policy)
-* `POST`/`PUT` [Create or update an ACL Policy](#create-or-update-an-acl-policy)
+* `POST` [Create an ACL Policy](#create-an-acl-policy)
+* `PUT` [Update an ACL Policy](#update-an-acl-policy)
 * `DELETE` [Delete an ACL Policy](#delete-an-acl-policy)
 
 [/api/V/system/info][]
