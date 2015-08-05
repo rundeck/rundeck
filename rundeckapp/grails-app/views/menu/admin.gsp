@@ -384,6 +384,56 @@
             </div>
         </div>
         <div class="list-group-item">
+            <h4 class="list-group-item-heading">Configuration</h4>
+
+            <div class="radio">
+                <label title="">
+                    <input type="radio" name="importConfig" value="true" checked/>
+                    <g:message code="archive.import.importConfig.true.title" />
+                </label>
+                <span class="help-block">
+                    <g:message code="archive.import.importConfig.true.help" />
+                </span>
+            </div>
+
+            <div class="radio">
+                <label title="">
+                    <input type="radio" name="importConfig" value="false"/>
+
+                    <g:message code="archive.import.executionImportBehavior.skip.title" />
+
+                </label>
+                <span class="help-block">
+                    <g:message code="archive.import.importConfig.false.help" />
+                </span>
+            </div>
+        </div>
+        <div class="list-group-item">
+            <h4 class="list-group-item-heading">ACL Policies</h4>
+
+            <div class="radio">
+                <label title="">
+                    <input type="radio" name="importACL" value="true" checked/>
+                    <g:message code="archive.import.importACL.true.title" />
+                </label>
+                <span class="help-block">
+                    <g:message code="archive.import.importACL.true.help" />
+                </span>
+            </div>
+
+            <div class="radio">
+                <label title="">
+                    <input type="radio" name="importACL" value="false"/>
+
+                    <g:message code="archive.import.executionImportBehavior.skip.title" />
+
+                </label>
+                <span class="help-block">
+                    <g:message code="archive.import.importACL.false.help" />
+                </span>
+            </div>
+        </div>
+        <div class="list-group-item">
             <div class="buttons">
                 <div id="uploadFormButtons">
                     <g:actionSubmit id="createFormCancelButton" value="Cancel" class="btn btn-default"/>

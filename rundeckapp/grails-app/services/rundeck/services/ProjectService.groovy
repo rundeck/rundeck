@@ -26,6 +26,8 @@ import java.text.SimpleDateFormat
 import java.util.jar.Attributes
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
@@ -451,7 +453,8 @@ class ProjectService implements InitializingBean{
                 'export',
                 ScheduledExecution.countByProject(projectName)+
                         3 * Execution.countByProject(projectName)+
-                        BaseReport.countByCtxProject(projectName)
+                        BaseReport.countByCtxProject(projectName)+
+                        4 //properties and other files
         )
 
         zip.dir("rundeck-${projectName}/") {
@@ -483,12 +486,100 @@ class ProjectService implements InitializingBean{
                     listener?.inc('export',1)
                 }
             }
+
+            //export config
+            dir('files/'){
+                dir('etc/'){
+                    zip.file('project.properties'){Writer writer->
+                        def map = project.getProjectProperties()
+                        map = replaceRelativePathsForProjectProperties(project,framework,map,'%PROJECT_BASEDIR%')
+                        def projectProps = map as Properties
+                        def sw = new StringWriter()
+                        projectProps.store(sw,"Exported configuration")
+                        def projectPropertiesText = sw.toString().
+                                split(Pattern.quote(System.getProperty("line.separator"))).
+                                sort().
+                                join(System.getProperty("line.separator"))
+                        writer.write(projectPropertiesText)
+
+                        listener?.inc('export',1)
+                    }
+                }
+                ['readme.md','motd.md'].each{filename->
+                    if(project.existsFileResource(filename)){
+                        zip.fileStream(filename){OutputStream stream->
+                            project.loadFileResource(filename,stream)
+                            listener?.inc('export',1)
+                        }
+                    }else{
+                        listener?.inc('export',1)
+                    }
+                }
+                //TODO: check perms
+                //acls
+                def policies=project.listDirPaths('acls/').grep(~/^.*\.aclpolicy$/)
+                if(policies){
+                    def count=policies.size()
+                    dir('acls/'){
+                        policies.each{ path ->
+                            def fname=path.substring('acls/'.length())
+                            zip.fileStream(fname){OutputStream stream->
+                                project.loadFileResource(path,stream)
+                                count--
+                                if(count==0){
+                                    listener?.inc('export',1)
+                                }
+                            }
+                        }
+                    }
+                }else{
+                    listener?.inc('export',1)
+                }
+
+            }
         }
         listener?.done()
 
     }
 
-    /**
+    Map<String, String> replaceRelativePathsForProjectProperties(
+            final IRundeckProject project,
+            final Framework framework,
+            final Map<String, String> projectProperties,
+            String placeholder
+    )
+    {
+        def Map<String, String> newmap = [:]
+        def basepath=new File(framework.getFrameworkProjectsBaseDir(), project.name).absolutePath
+        projectProperties.each{k,v->
+            if(v.startsWith(basepath)){
+                newmap[k]= v.replaceFirst(Pattern.quote(basepath), Matcher.quoteReplacement(placeholder))
+            }else{
+                newmap[k]=v
+            }
+        }
+        newmap
+    }
+
+    Map<String, String> replacePlaceholderForProjectProperties(
+            final IRundeckProject project,
+            final Framework framework,
+            final Map<String, String> projectProperties,
+            String placeholder
+    )
+    {
+        def Map<String, String> newmap = [:]
+        def basepath=new File(framework.getFrameworkProjectsBaseDir(), project.name).absolutePath
+        projectProperties.each{k,v->
+            if(v.startsWith(placeholder)){
+                newmap[k]= v.replaceFirst(Pattern.quote(placeholder), Matcher.quoteReplacement(basepath))
+            }else{
+                newmap[k]=v
+            }
+        }
+        newmap
+    }
+/**
      * Import a zip project archive to the project
      * @param project project
      * @param  user username of job owner
@@ -511,6 +602,11 @@ class ProjectService implements InitializingBean{
         def reportxmlnames=[:]
         def executionImportBehavior = options.executionImportBehavior ?: 'import'
         def importExecutions = executionImportBehavior == 'import'
+        def importConfig = !!options.importConfig //TODO:
+        def importACL = !!options.importACL //TODO:
+        File configtemp=null
+        Map<String,File> mdfilestemp=[:]
+        Map<String,File> aclfilestemp=[:]
         zip.read{
             '*/'{ //rundeck-<projectname>/
                 'jobs/'{
@@ -537,10 +633,30 @@ class ProjectService implements InitializingBean{
                         }
                     }
                 }
+
+                'files/'{
+                    if(importConfig){
+                        'etc/'{
+                            'project.properties'{path,name,inputs->
+                                configtemp=copyToTemp()
+                            }
+                        }
+                        '(readme|motd)\\.md'{path,name,inputs->
+                            mdfilestemp[name]=copyToTemp()
+                        }
+                    }
+                    if(importACL){
+                        'acls/'{
+                            '.*\\.aclpolicy'{path,name,inputs->
+                                aclfilestemp[name]=copyToTemp()
+                            }
+                        }
+                    }
+                }
             }
         }
         //have files in dir
-        (jobxml+execxml+execout.values()+reportxml).each {it.deleteOnExit()}
+        (jobxml + execxml + execout.values() + reportxml + [configtemp] + mdfilestemp.values() + aclfilestemp.values()).each {it.deleteOnExit()}
 
         def loadjobresults=[]
         def loadjoberrors=[]
@@ -610,8 +726,56 @@ class ProjectService implements InitializingBean{
             //load reports
             importReportsToProject(reportxml, jobsByOldId, reportxmlnames, execidmap, projectName,execerrors)
         }
-        (jobxml + execxml + execout.values() + reportxml).each { it.delete() }
+
+        if(importConfig && configtemp){
+
+            importProjectConfig(configtemp, project, framework)
+            log.debug("${project.name}: Loaded project configuration from archive")
+        }
+        if(importConfig && mdfilestemp){
+            importProjectMdFiles(mdfilestemp, project)
+        }
+        if(importACL && aclfilestemp){
+            importProjectACLPolicies(aclfilestemp, project)
+        }
+
+        (jobxml + execxml + execout.values() + reportxml + [configtemp] + mdfilestemp.values() + aclfilestemp.values()).each { it?.delete() }
         return [success:loadjoberrors?false:true,joberrors: loadjoberrors,execerrors: execerrors]
+    }
+
+    private void importProjectACLPolicies(Map<String, File> aclfilestemp, project) {
+        aclfilestemp.each { String k, File v ->
+            v.withInputStream { inputs ->
+                project.storeFileResource('acls/' + k, inputs)
+                log.debug("${project.name}: Loaded project ACLPolicy file acl/${k} from archive")
+            }
+        }
+    }
+
+    private void importProjectMdFiles(Map<String, File> mdfilestemp, project) {
+        mdfilestemp.each { String k, File v ->
+            v.withInputStream { inputs ->
+                project.storeFileResource(k, inputs)
+                log.debug("${project.name}: Loaded project file ${k} from archive")
+            }
+        }
+    }
+
+    /**
+     * Import a config file to the project, loaded from an archive
+     * @param configtemp temp file containing config properties
+     * @param project project
+     * @param framework framework
+     */
+    private void importProjectConfig(File configtemp, IRundeckProject project, Framework framework) {
+        def inputProps = new Properties()
+        configtemp.withReader { Reader reader ->
+            inputProps.load(reader)
+        }
+        def map = replacePlaceholderForProjectProperties(project, framework, inputProps, '%PROJECT_BASEDIR%')
+        def newprops = new Properties()
+        newprops.putAll(map)
+        project.setProjectProperties(newprops)
     }
 
     /**

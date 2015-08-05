@@ -29,10 +29,14 @@ class ProjectArchiveParams {
     String project
     String jobUUIDImportBehavior
     String executionImportBehavior
+    Boolean importConfig
+    Boolean importACL
 
     static constraints={
         project(matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
         jobUUIDImportBehavior(nullable: true,inList: ['preserve','remove'])
         executionImportBehavior(nullable: true,inList: ['import','skip'])
+        importConfig(nullable: true)
+        importACL(nullable: true)
     }
 }

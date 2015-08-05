@@ -224,9 +224,21 @@ class ProjectController extends ControllerBase{
                 return redirect(controller: 'menu', action: 'admin', params: [project: project])
             }
             String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-            def result = projectService.importToProject(project1, session.user, roleList, framework, authContext,
-                    file.getInputStream(), [jobUUIDBehavior: archiveParams.jobUUIDImportBehavior,
-                    executionImportBehavior: archiveParams.executionImportBehavior])
+            def result = projectService.importToProject(
+                    project1,
+                    session.user,
+                    roleList,
+                    framework,
+                    authContext,
+                    file.getInputStream(),
+                    [
+                            jobUUIDBehavior        : archiveParams.jobUUIDImportBehavior,
+                            executionImportBehavior: archiveParams.executionImportBehavior,
+                            importConfig           : archiveParams.importConfig,
+                            importACL              : archiveParams.importACL
+                    ]
+
+            )
 
 
             if(result.success){
