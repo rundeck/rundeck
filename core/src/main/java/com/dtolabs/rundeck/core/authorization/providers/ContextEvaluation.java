@@ -3,7 +3,7 @@ package com.dtolabs.rundeck.core.authorization.providers;
 import com.dtolabs.rundeck.core.authorization.Explanation.Code;
 
 public class ContextEvaluation {
-    ContextEvaluation(Code id, String command) {
+    public ContextEvaluation(Code id, String command) {
         this.id = id;
         this.command = command;
     }

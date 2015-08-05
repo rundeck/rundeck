@@ -24,8 +24,7 @@
 */
 package com.dtolabs.rundeck.core.authorization.providers;
 
-import com.dtolabs.rundeck.core.authorization.Attribute;
-import com.dtolabs.rundeck.core.authorization.Explanation;
+import com.dtolabs.rundeck.core.authorization.*;
 import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.core.utils.PairImpl;
 import org.apache.commons.collections.CollectionUtils;
@@ -38,7 +37,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -47,61 +45,182 @@ import java.util.regex.PatternSyntaxException;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-final class YamlPolicy implements Policy {
+final class YamlPolicy implements Policy,AclRuleSetSource {
     final static Logger logger = Logger.getLogger(YamlPolicy.class.getName());
     public static final String TYPE_PROPERTY = "type";
     public static final String FOR_SECTION = "for";
     public static final String JOB_TYPE = "job";
     public static final String ACTIONS_SECTION = "actions";
     public static final String CONTEXT_SECTION = "context";
+    public static final String BY_SECTION = "by";
+    public static final String ID_SECTION = "id";
+    public static final String USERNAME_KEY = "username";
+    public static final String GROUP_KEY = "group";
+    private static final String DESCRIPTION_KEY = "description";
+    public static final String PROJECT_CONTEXT = "project";
+    public static final String APPLICATION_CONTEXT = "application";
     public Map policyInput;
 
     private Set<String> usernames = new HashSet<String>();
     private Set<String> groups = new HashSet<String>();
     private Set<Pattern> usernamePatterns = new HashSet<Pattern>();
     private Set<Pattern> groupPatterns = new HashSet<Pattern>();
-    AclContext aclContext;
+    YamlAclContext aclContext;
+    private YamlEnvironmentalContext environment;
+    private Set<AclRule> rules = new HashSet<>();
 
-    private File sourceFile;
+    private String sourceIdent;
     private int sourceIndex;
+    private ValidationSet validation;
 
-    YamlPolicy(final Map policyInput, final File sourceFile, final int sourceIndex) {
+    private YamlPolicy(final Set<Attribute> context,final Map policyInput, final String sourceIdent, final int sourceIndex,ValidationSet validation) {
         this.policyInput = policyInput;
-        this.sourceFile = sourceFile;
+        this.sourceIdent = sourceIdent;
         this.sourceIndex = sourceIndex;
+        this.validation = validation;
         parseByClause();
         createAclContext();
-        parseEnvironment();
+        parseEnvironment(context);
+        validate();
+        enumerateRules();
     }
 
-    public YamlPolicy(final Map yamlDoc) {
-        this(yamlDoc, null, -1);
+    private List<String> allowed = Arrays.asList(
+            BY_SECTION,
+            ID_SECTION,
+            FOR_SECTION,
+            CONTEXT_SECTION,
+            DESCRIPTION_KEY
+    );
+    private List<String> allowedContexts = Arrays.asList(
+            PROJECT_CONTEXT,
+            APPLICATION_CONTEXT
+    );
+    @SuppressWarnings("unchecked")
+    private void validate() {
+        HashSet disallowed = new HashSet<>(policyInput.keySet());
+        disallowed.removeAll(allowed);
+        if (disallowed.size() != 0) {
+            throw new AclPolicySyntaxException(
+                    "Policy contains invalid keys: " +
+                    disallowed +
+                    ", allowed keys: " +
+                    allowed
+            );
+        }
+    }
+
+    static YamlPolicy createYamlPolicy(final Map policyInput, final String sourceIdent, final int sourceIndex,ValidationSet validation) {
+        return new YamlPolicy(null, policyInput, sourceIdent, sourceIndex,validation);
+    }
+
+    static YamlPolicy createYamlPolicy(
+            final Set<Attribute> context,
+            final Map policyInput,
+            final String sourceIdent,
+            final int sourceIndex,
+            ValidationSet validation
+    )
+    {
+        return new YamlPolicy(context, policyInput, sourceIdent, sourceIndex,validation);
+    }
+
+    /**
+     * generate list of AclRules
+     */
+    private void enumerateRules() {
+        if(null==environment){
+            return;
+        }
+        String description = policyInput.containsKey(DESCRIPTION_KEY)?policyInput.get(DESCRIPTION_KEY).toString():null;
+        AclRuleBuilder envProto = AclRuleBuilder.builder().environment(
+                environment.toBasic()
+        ).description(description).sourceIdentity(sourceIdent);
+
+        for (String username : usernames) {
+            AclRuleBuilder ruleBuilder = AclRuleBuilder.builder(envProto).username(username);
+            rules.addAll(aclContext.createRules(ruleBuilder));
+        }
+        for (String group : groups) {
+            AclRuleBuilder ruleBuilder = AclRuleBuilder.builder(envProto).group(group);
+            rules.addAll(aclContext.createRules(ruleBuilder));
+        }
+    }
+
+    YamlPolicy(final Map policyInput, final File sourceFile, final int sourceIndex,ValidationSet validation) {
+        this(null, policyInput, sourceFile.getAbsolutePath(), sourceIndex,validation);
     }
 
     String identify() {
         return null != policyInput.get("id") ? policyInput.get("id").toString()
-                : (null != sourceFile ? (sourceFile.getAbsolutePath()) : "(unknown file)")
-                + (sourceIndex >= 0 ? "[" + sourceIndex + "]" : "");
+                : (null != sourceIdent ? (sourceIdent) : "(unknown source)")
+                ;
+    }
+
+    @Override
+    public AclRuleSet getRuleSet() {
+        return new AclRuleSetImpl(rules);
     }
 
     public Set<String> getUsernames() {
         return usernames;
     }
 
-    private EnvironmentalContext environment;
     private boolean envchecked;
 
     public EnvironmentalContext getEnvironment() {
         return environment;
     }
 
-    private void parseEnvironment() {
+    private void parseEnvironment(Set<Attribute> forcedContext) {
         //create
         final Object ctxClause = policyInput.get(CONTEXT_SECTION);
         if (null != ctxClause && ctxClause instanceof Map) {
-            environment = new YamlEnvironmentalContext(EnvironmentalContext.URI_BASE, (Map) ctxClause);
+            Map ctxClause1 = (Map) ctxClause;
+            environment = new YamlEnvironmentalContext(EnvironmentalContext.URI_BASE, ctxClause1);
+            if(!environment.isValid()){
+                throw new AclPolicySyntaxException(
+                        "Context section is not valid: " +
+                        ctxClause +
+                        environment.getValidation()
+                );
+            }
+            if(ctxClause1.size()!=1){
+                throw new AclPolicySyntaxException(
+                        "Context section is not valid: " +
+                        ctxClause +
+                        ", it should have only one entry: 'application:' or 'project:'"
+                );
+            }
+            if (!allowedContexts.containsAll(ctxClause1.keySet())) {
+                throw new AclPolicySyntaxException(
+                        "Context section is not valid: " +
+                        ctxClause +
+                        ", it should contain only 'application:' or 'project:'"
+                );
+            }
+
+            if (forcedContext != null && !environment.evaluateMatches(forcedContext)) {
+                throw new AclPolicySyntaxException(
+                        "Context section is not valid: " +
+                        ctxClause +
+                        ", it should be empty or match the expected context: " +
+                        AuthorizationUtil.contextAsString(forcedContext)
+                );
+            }
+        }else if (null == forcedContext) {
+            throw new AclPolicySyntaxException(
+                    null == ctxClause
+                    ? "Required 'context:' section was not present."
+                    : "Context section is not valid: expected a Map, but it was: " + ctxClause.getClass().getName()
+            );
+        }
+
+        if(forcedContext!=null) {
+            environment = new YamlEnvironmentalContext(EnvironmentalContext.URI_BASE, forcedContext);
         }
     }
+
 
     public Set<Pattern> getUsernamePatterns() {
         return usernamePatterns;
@@ -127,8 +246,64 @@ final class YamlPolicy implements Policy {
                 }
             }
         };
-        ;
+        EnvironmentalContext toBasic() {
+            if (matcherRegex.size() != 1 && matcher.size() != 1) {
+                throw new IllegalStateException("Expected environmental context to contain only one entry");
+            }
+            if (matcherRegex.size() == 1) {
+                URI key;
+                Pattern value;
+                Map.Entry<URI, Pattern> next = matcherRegex.entrySet().iterator().next();
+                key = next.getKey();
+                value = next.getValue();
+                return BasicEnvironmentalContext.patternContextFor(
+                        key.toString().substring(EnvironmentalContext.URI_BASE.length()),
+                        value.toString()
+                );
+            }else {
+                Map.Entry<URI, String> next = matcher.entrySet().iterator().next();
+                URI key=next.getKey();
+                String value=next.getValue();
+                return BasicEnvironmentalContext.staticContextFor(
+                        key.toString().substring(
+                                EnvironmentalContext.URI_BASE.length()
+                        ),
+                        value
+                );
+            }
 
+        }
+
+        /**
+         * Create context from attribute set
+         * @param uriPrefix prefix
+         * @param ctx context
+         */
+        YamlEnvironmentalContext(final String uriPrefix, final Set<Attribute> ctx) {
+            for (Attribute attribute : ctx) {
+                if(attribute.getProperty().toString().startsWith(uriPrefix)) {
+                    URI key = attribute.getProperty();
+                    String value = attribute.getValue();
+                    matcher.put(key, value);
+                    try {
+                        Pattern compile = Pattern.compile(value);
+                        matcherRegex.put(key, compile);
+                    } catch (PatternSyntaxException e) {
+                    }
+                }
+            }
+            valid =  matcher.size() >= 1;
+
+            description = "YamlEnvironmentalContext{" +
+                          (valid ?
+                           ", valid=" + valid +
+                           ", context='" + matcher + '\'' +
+                           '}'
+                                 :
+                           ", valid=" + valid +
+                           ", validation='" + getValidation() + '\'' +
+                           '}');
+        }
         YamlEnvironmentalContext(final String uriPrefix, final Map ctx) {
             boolean invalidentry = false;
             ArrayList<String> errors = new ArrayList<String>();
@@ -252,25 +427,33 @@ final class YamlPolicy implements Policy {
     }
 
     private void createAclContext() {
-        aclContext = new YamlAclContext(policyInput, new TypeContextFactory() {
-            public AclContext createAclContext(List typeSection) {
-                return new TypeContext(createTypeRules(typeSection));
+        aclContext = new YamlAclContext(policyInput, validation, new TypeContextFactory() {
+            public AclContext createAclContext(String type, List typeSection) {
+                return new TypeContext(createTypeRules(type,typeSection));
             }
         }
         );
     }
 
     static interface TypeContextFactory {
-        public AclContext createAclContext(final List typeSection);
+        public AclContext createAclContext(final String type, final List typeSection);
     }
 
 
-    List<ContextMatcher> createTypeRules(final List typeSection) {
+    List<ContextMatcher> createTypeRules(String type, final List typeSection) {
         final ArrayList<ContextMatcher> rules = new ArrayList<ContextMatcher>();
         int i = 1;
         for (final Object o : typeSection) {
+            if(!(o instanceof Map)) {
+                throw new AclPolicySyntaxException(
+                        "Type rule 'for: { " +
+                        type +
+                        ": [...] }'' entry at index [" + (i) + "] expected a Map but saw: " +
+                        o.getClass().getName()
+                );
+            }
             final Map section = (Map) o;
-            rules.add(createTypeRuleContext(section, i));
+            rules.add(createTypeRuleContext(type, section, i));
             i++;
         }
         return rules;
@@ -279,8 +462,8 @@ final class YamlPolicy implements Policy {
     /**
      * Create acl context  for specific rule in a type context
      */
-    ContextMatcher createTypeRuleContext(final Map section, final int i) {
-        return new TypeRuleContextMatcher(section, i, this);
+    ContextMatcher createTypeRuleContext(final String type, final Map section, final int i) {
+        return new TypeRuleContextMatcher(type, section, validation, i, this);
     }
 
 
@@ -288,17 +471,21 @@ final class YamlPolicy implements Policy {
      * parse the by: clause, allow single string or list of strings for username and grop values
      */
     private void parseByClause() {
-        final Object byClause = policyInput.get("by");
+        final Object byClause = policyInput.get(BY_SECTION);
         if (byClause == null) {
-            return;
+            throw new AclPolicySyntaxException(
+                    "Required '"+BY_SECTION+":' section was not present."
+            );
         }
         if (!(byClause instanceof Map)) {
-            return;
+            throw new AclPolicySyntaxException(
+                    "Section '" + BY_SECTION + ":' should be a Map, but it was: " + byClause.getClass().getName()
+            );
         }
         final Map by = (Map) byClause;
 
-        final Object u = by.get("username");
-        final Object g = by.get("group");
+        final Object u = by.get(USERNAME_KEY);
+        final Object g = by.get(GROUP_KEY);
 
         if (null != u) {
             if (u instanceof String) {
@@ -307,8 +494,16 @@ final class YamlPolicy implements Policy {
                 for (final Object o : (Collection) u) {
                     if (o instanceof String) {
                         addUsername((String) o);
+                    }else{
+                        throw new AclPolicySyntaxException(
+                                "Section '" + USERNAME_KEY + ":' should contain only Strings, but saw a: " + o.getClass().getName()
+                        );
                     }
                 }
+            }else{
+                throw new AclPolicySyntaxException(
+                        "Section '" + USERNAME_KEY + ":' should be a list or a String, but it was: " + u.getClass().getName()
+                );
             }
         }
 
@@ -319,8 +514,30 @@ final class YamlPolicy implements Policy {
                 for (final Object o : (Collection) g) {
                     if (o instanceof String) {
                         addGroup((String) o);
+                    }else{
+                        throw new AclPolicySyntaxException(
+                                "Section '" + GROUP_KEY + ":' should contain only Strings, but saw a: " + o.getClass().getName()
+                        );
                     }
                 }
+            }else{
+                throw new AclPolicySyntaxException(
+                        "Section '" + GROUP_KEY + ":' should be a list or a String, but it was: " + g.getClass().getName()
+                );
+            }
+        }
+        if (groups.size() < 1 && usernames.size() < 1) {
+            if(null!=validation) {
+                validation.addError(sourceIdent,
+                                    "Section '"+BY_SECTION +
+                                    ":' is not valid: " +
+                                    by +
+                                    " it must contain '" +
+                                    GROUP_KEY +
+                                    ":' and/or '" +
+                                    USERNAME_KEY +
+                                    ":'"
+                );
             }
         }
 
@@ -372,7 +589,7 @@ final class YamlPolicy implements Policy {
             boolean allowed = false;
             boolean denied = false;
             ContextEvaluation deniedEvaluation;
-            for (final ContextMatcher matcher : typeRules) {
+            for (final ContextMatcher matcher : getTypeRules()) {
                 final MatchedContext matched = matcher.includes(resource, action);
                 if (!matched.isMatched()) {
                     //indicates the section did not match
@@ -401,6 +618,22 @@ final class YamlPolicy implements Policy {
                     allowed && !denied, evaluations);
 
         }
+
+        public List<ContextMatcher> getTypeRules() {
+            return typeRules;
+        }
+
+        @Override
+        public Set<AclRule> createRules(final AclRuleBuilder prototype) {
+            HashSet<AclRule> aclRules = new HashSet<>();
+            for (ContextMatcher typeRule : typeRules) {
+                AclRuleBuilder builder = AclRuleBuilder.builder(
+                        prototype
+                );
+                aclRules.add(typeRule.createRule(builder));
+            }
+            return aclRules;
+        }
     }
 
     /**
@@ -428,6 +661,7 @@ final class YamlPolicy implements Policy {
 
     static interface ContextMatcher {
         public MatchedContext includes(Map<String, String> resource, String action);
+        AclRule createRule(AclRuleBuilder prototype);
     }
 
     /**
@@ -459,26 +693,149 @@ final class YamlPolicy implements Policy {
         Map ruleSection;
         int index;
         YamlPolicy policy;
+        ValidationSet validation;
+        String type;
 
 
-        TypeRuleContextMatcher(final Map ruleSection, final int index) {
-            this(ruleSection, index, null);
-        }
-
-        TypeRuleContextMatcher(final Map ruleSection, final int index, final YamlPolicy policy) {
+        TypeRuleContextMatcher(
+                final String type,
+                final Map ruleSection,
+                ValidationSet validation,
+                final int index,
+                final YamlPolicy policy
+        )
+        {
+            this.type=type;
             this.ruleSection = ruleSection;
             this.index = index;
             this.policy = policy;
+            this.validation = validation;
+            validate(validation);
+        }
+
+        private void validate(ValidationSet validation) {
+            if(null==validation){
+                return;
+            }
+            if(ruleSection.containsKey(DENY_ACTIONS)){
+                final HashSet<String> actions = getDenyActions();
+                if(null==actions) {
+                    validation.addError(
+                            policy.identify(),
+                            identify() +
+                            " Section '" +
+                            DENY_ACTIONS +
+                            ":' expected a String or a sequence of Strings, but was a " +
+                            ruleSection.get(DENY_ACTIONS).getClass().getName()
+                    );
+                }else {
+                    if (0 == actions.size()) {
+                        logger.warn(policy.identify() + ": No actions defined in Deny section");
+
+                        validation.addError(
+                                policy.identify(),
+                                identify() +
+                                " Section '" + DENY_ACTIONS + ":' should not be empty."
+                        );
+                    }
+                }
+            }
+            if(ruleSection.containsKey(ALLOW_ACTIONS)){
+                final HashSet<String> actions = getAllowActions();
+                if(null==actions) {
+                    validation.addError(
+                            policy.identify(),
+                            identify() +
+                            " Section '" + ALLOW_ACTIONS + ":' expected a String or a sequence of Strings, but was a "+
+                            ruleSection.get(ALLOW_ACTIONS).getClass().getName()
+                    );
+                }else {
+                    if (0 == actions.size()) {
+                        logger.warn(policy.identify() + ": No actions defined in Deny section");
+
+                        validation.addError(
+                                policy.identify(),
+                                identify()+
+                                " Section '" + ALLOW_ACTIONS + ":' should not be empty."
+                        );
+                    }
+                }
+            }
+            if (!ruleSection.containsKey(ALLOW_ACTIONS) && !ruleSection.containsKey(DENY_ACTIONS)) {
+
+                validation.addError(
+                        policy.identify(),
+                        identify()+
+                        " One of '" + ALLOW_ACTIONS + ":' or '"+DENY_ACTIONS+":' must be present."
+                );
+            }
+            Map matchBody=null;
+            String sectionName=null;
+            if (isRuleSectionContains()) {
+                sectionName=CONTAINS_SECTION;
+                matchBody = (Map) ruleSection.get(CONTAINS_SECTION);
+            }else if(isRuleSectionMatch()){
+                sectionName=MATCH_SECTION;
+                matchBody = (Map) ruleSection.get(MATCH_SECTION);
+            }else if(isRuleSectionEquals()){
+                sectionName=EQUALS_SECTION;
+                matchBody = (Map) ruleSection.get(EQUALS_SECTION);
+            }
+            if(matchBody!=null){
+                if(matchBody.size()<1){
+
+                    validation.addError(
+                            policy.identify(),
+                            identify()+
+                            " Section '" + sectionName + ":' should not be empty."
+                    );
+                }else if (sectionName.equals(CONTAINS_SECTION) &&
+                          (
+                                  matchBody.size() != 1
+                                  || !matchBody.containsKey( "tags")
+                          )
+                        ) {
+                    validation.addError(
+                            policy.identify(),
+                            identify() +
+                            " Section '" + CONTAINS_SECTION + ":' can only be applied to 'tags'."
+                    );
+                }
+                if (matchBody.containsKey(ALLOW_ACTIONS) || matchBody.containsKey(DENY_ACTIONS)) {
+                    validation.addError(
+                            policy.identify(),
+                            identify()+
+                            " Section '" +
+                            sectionName +
+                            ":' should not contain '" +
+                            ALLOW_ACTIONS +
+                            ":' or '" +
+                            DENY_ACTIONS +
+                            ":'."
+                    );
+                }
+            }
+//            if(!isRuleSectionMatch() && !isRuleSectionContains() && !isRuleSectionEquals()) {
+//                validation.addError(
+//                        identify(),
+//                        "One of '" +
+//                        MATCH_SECTION +
+//                        ":' or '" +
+//                        CONTAINS_SECTION +
+//                        ":' or '" +
+//                        EQUALS_SECTION +
+//                        ":' must be present."
+//                );
+//            }
         }
 
         @Override
         public String toString() {
-            return identify();
+            return (null!=policy?policy.identify()+" ":"")+identify();
         }
 
         private String identify() {
-            return (null != policy ? policy.identify() : "(unknown policy)") + "[rule: " + index + ": " + ruleSection
-                    + "]";
+            return  "Type rule 'for: { "+type+ ": [...] }' entry at index ["+index+"]";
         }
 
         private static ConcurrentHashMap<String, Pattern> patternCache = new ConcurrentHashMap<String, Pattern>();
@@ -508,29 +865,61 @@ final class YamlPolicy implements Policy {
             }
             return new MatchedContext(true, evaluateActions(action, evaluations));
         }
+        public AclRule createRule(AclRuleBuilder prototype) {
+            AclRuleBuilder ruleBuilder = AclRuleBuilder.builder(prototype);
+
+            final HashSet<String> allowActions = ruleSection.containsKey(ALLOW_ACTIONS)
+                                                 ? getAllowActions()
+                                                 : new HashSet<String>();
+            final HashSet<String> denyActions = ruleSection.containsKey(DENY_ACTIONS)
+                                                ? getDenyActions()
+                                                : new HashSet<String>();
+            ruleBuilder.sourceIdentityAppend("[rule: " + index + "]")
+                       .allowActions(allowActions)
+                       .denyActions(denyActions);
+
+            //determine match section
+            Map resourceMap;
+            if(isRuleSectionMatch()) {
+                ruleBuilder.regexMatch(true);
+                resourceMap = (Map)ruleSection.get(MATCH_SECTION);
+            }else if(isRuleSectionContains()) {
+                ruleBuilder.containsMatch(true);
+                resourceMap = (Map)ruleSection.get(CONTAINS_SECTION);
+            }else if(isRuleSectionEquals()){
+                ruleBuilder.equalsMatch(true);
+                resourceMap = (Map)ruleSection.get(EQUALS_SECTION);
+            }else{
+                resourceMap=null;
+            }
+
+            ruleBuilder.resource(resourceMap);
+
+            return ruleBuilder.build();
+        }
 
         ContextDecision evaluateActions(final String action, final List<ContextEvaluation> evaluations) {
             //evaluate actions
             boolean denied = false;
 
             if (ruleSection.containsKey(DENY_ACTIONS)) {
-                final HashSet<String> actions = new HashSet<String>();
-                final Object actionsObj = ruleSection.get(DENY_ACTIONS);
-                if (actionsObj instanceof String) {
-                    final String actionStr = (String) actionsObj;
-                    actions.add(actionStr);
-                } else if (actionsObj instanceof List) {
-                    actions.addAll((List<String>) actionsObj);
-                } else {
-                    evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_CONTEXT_EVALUATION_ERROR,
-                            "Invalid action type."));
-                }
-                if (0 == actions.size()) {
-                    logger.warn(identify() + ": No actions defined in Deny section");
-                } else if (actions.contains("*") || actions.contains(action)) {
-                    evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_DENIED,
-                            this + " for actions: " + actions));
-                    denied = true;
+                final HashSet<String> actions = getDenyActions();
+                if(null==actions){
+                    evaluations.add(new ContextEvaluation(
+                                            Explanation.Code.REJECTED_CONTEXT_EVALUATION_ERROR,
+                                            "Invalid action type."));
+                }else {
+                    if (0 == actions.size()) {
+                        logger.warn(identify() + ": No actions defined in Deny section");
+                    } else if (actions.contains("*") || actions.contains(action)) {
+                        evaluations.add(
+                                new ContextEvaluation(
+                                        Explanation.Code.REJECTED_DENIED,
+                                        this + " for actions: " + actions
+                                )
+                        );
+                        denied = true;
+                    }
                 }
             }
             if (denied) {
@@ -538,23 +927,23 @@ final class YamlPolicy implements Policy {
             }
             boolean allowed = false;
             if (ruleSection.containsKey(ALLOW_ACTIONS)) {
-                final HashSet<String> actions = new HashSet<String>();
-                final Object actionsObj = ruleSection.get(ALLOW_ACTIONS);
-                if (actionsObj instanceof String) {
-                    final String actionStr = (String) actionsObj;
-                    actions.add(actionStr);
-                } else if (actionsObj instanceof List) {
-                    actions.addAll((List<String>) actionsObj);
-                } else {
-                    evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_CONTEXT_EVALUATION_ERROR,
-                            "Invalid action type."));
-                }
-                if (0 == actions.size()) {
-                    logger.warn(identify() + ": No actions defined in Allow section");
-                } else if (actions.contains("*") || actions.contains(action)) {
-                    evaluations.add(new ContextEvaluation(Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED,
-                            this + " for actions: " + actions));
-                    allowed = true;
+                final HashSet<String> actions = getAllowActions();
+                if(null==actions){
+                    evaluations.add(new ContextEvaluation(
+                                            Explanation.Code.REJECTED_CONTEXT_EVALUATION_ERROR,
+                                            "Invalid action type."));
+                }else {
+                    if (0 == actions.size()) {
+                        logger.warn(identify() + ": No actions defined in Allow section");
+                    } else if (actions.contains("*") || actions.contains(action)) {
+                        evaluations.add(
+                                new ContextEvaluation(
+                                        Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED,
+                                        this + " for actions: " + actions
+                                )
+                        );
+                        allowed = true;
+                    }
                 }
             }
 
@@ -565,6 +954,34 @@ final class YamlPolicy implements Policy {
             }
         }
 
+        private HashSet<String> getAllowActions() {
+            final HashSet<String> actions = new HashSet<String>();
+            final Object actionsObj = ruleSection.get(ALLOW_ACTIONS);
+            if (actionsObj instanceof String) {
+                final String actionStr = (String) actionsObj;
+                actions.add(actionStr);
+            } else if (actionsObj instanceof List) {
+                actions.addAll((List<String>) actionsObj);
+            } else {
+                return null;
+            }
+            return actions;
+        }
+
+        private HashSet<String> getDenyActions() {
+            final HashSet<String> actions = new HashSet<String>();
+            final Object actionsObj = ruleSection.get(DENY_ACTIONS);
+            if (actionsObj instanceof String) {
+                final String actionStr = (String) actionsObj;
+                actions.add(actionStr);
+            } else if (actionsObj instanceof List) {
+                actions.addAll((List<String>) actionsObj);
+            } else {
+                return null;
+            }
+            return actions;
+        }
+
         /**
          * Return true if all of the defined rule sections match for the specified resource. If no rule sections exist,
          * then the result is true.
@@ -573,7 +990,7 @@ final class YamlPolicy implements Policy {
             int matchesRequired = 0;
             int matchesMet = 0;
             //evaluate match:
-            if (ruleSection.containsKey(MATCH_SECTION)) {
+            if (isRuleSectionMatch()) {
                 matchesRequired++;
                 if (ruleMatchesMatchSection(resource, this.ruleSection)) {
                     matchesMet++;
@@ -583,7 +1000,7 @@ final class YamlPolicy implements Policy {
                 }
             }
             //evaluate equals:
-            if (ruleSection.containsKey(EQUALS_SECTION)) {
+            if (isRuleSectionEquals()) {
                 matchesRequired++;
                 if (ruleMatchesEqualsSection(resource, this.ruleSection)) {
                     matchesMet++;
@@ -594,7 +1011,7 @@ final class YamlPolicy implements Policy {
             }
 
             //evaluate contains:
-            if (ruleSection.containsKey(CONTAINS_SECTION)) {
+            if (isRuleSectionContains()) {
                 matchesRequired++;
                 if (ruleMatchesContainsSection(resource, this.ruleSection)) {
                     matchesMet++;
@@ -604,6 +1021,18 @@ final class YamlPolicy implements Policy {
                 }
             }
             return matchesMet == matchesRequired;
+        }
+
+        private boolean isRuleSectionContains() {
+            return ruleSection.containsKey(CONTAINS_SECTION);
+        }
+
+        private boolean isRuleSectionEquals() {
+            return ruleSection.containsKey(EQUALS_SECTION);
+        }
+
+        private boolean isRuleSectionMatch() {
+            return ruleSection.containsKey(MATCH_SECTION);
         }
 
         private boolean validRuleSection(final Map section) {
@@ -762,11 +1191,11 @@ final class YamlPolicy implements Policy {
         }
 
         AclPolicySyntaxException(String s) {
-            super("ACLPOLICY FORMAT ERROR: "+s);
+            super(s);
         }
 
         AclPolicySyntaxException(String s, Throwable throwable) {
-            super("ACLPOLICY FORMAT ERROR: " +s, throwable);
+            super(s, throwable);
         }
 
         AclPolicySyntaxException(Throwable throwable) {
@@ -783,10 +1212,12 @@ final class YamlPolicy implements Policy {
         private final ConcurrentHashMap<String, AclContext> typeContexts = new ConcurrentHashMap<String, AclContext>();
         TypeContextFactory typeContextFactory;
         private Map forsection;
+        private ValidationSet validation;
 
-        YamlAclContext(final Map policyDef, final TypeContextFactory typeContextFactory) {
+        YamlAclContext(final Map policyDef, final ValidationSet validation, final TypeContextFactory typeContextFactory) {
             this.policyDef = policyDef;
             this.typeContextFactory = typeContextFactory;
+            this.validation=validation;
             initialize();
         }
 
@@ -794,10 +1225,9 @@ final class YamlPolicy implements Policy {
             final List<ContextEvaluation> evaluations = new ArrayList<ContextEvaluation>();
 
             //require description
-            final Object descriptionValue = policyDef.get("description");
+            final Object descriptionValue = policyDef.get(DESCRIPTION_KEY);
             if (descriptionValue == null || !(descriptionValue instanceof String)) {
-                throw new AclPolicySyntaxException("Policy is missing a description. Context: " + policyDef.get
-                        (CONTEXT_SECTION) + ", by: " + policyDef.get("by"));
+                throw new AclPolicySyntaxException("Policy is missing a description.");
             }
             description = (String) descriptionValue;
 
@@ -805,13 +1235,11 @@ final class YamlPolicy implements Policy {
 
             //require for section is a map
             if (null == forMap) {
-                throw new AclPolicySyntaxException("Required '" + FOR_SECTION + ":' section was not present. context:" +
-                        " " + policyDef.get(CONTEXT_SECTION) + ", by: " + policyDef.get("by"));
+                throw new AclPolicySyntaxException("Required '" + FOR_SECTION + ":' section was not present.");
             }
             if (!(forMap instanceof Map)) {
                 throw new AclPolicySyntaxException("Expected '" + FOR_SECTION + ":' section to contain a map, " +
-                        "but was [" + (forMap.getClass().getName()) + "]. context: " + policyDef.get(CONTEXT_SECTION)
-                        + ", by: " + policyDef.get("by"));
+                        "but was [" + (forMap.getClass().getName()) + "].");
             }
 
             forsection = (Map) forMap;
@@ -821,13 +1249,20 @@ final class YamlPolicy implements Policy {
                     String type = (String) key;
                     Object typeSection = forsection.get(key);
                     if(!(typeSection instanceof List)) {
-                        throw new AclPolicySyntaxException("Expected '" + FOR_SECTION + ": " + key + ":' section to " +
-                                "contain a sequence, but was [" + (forMap.getClass().getName()) + "]. context: " +
-                                policyDef.get(CONTEXT_SECTION) + ", " +
-                                "by: " + policyDef.get("by"));
+                        throw new AclPolicySyntaxException("Expected '" + FOR_SECTION + ": { " + key + ": <...> }' section to " +
+                                "contain a List, but was [" + (forMap.getClass().getName()) + "].");
                     }
-                    typeContexts.putIfAbsent(type, createTypeContext((List) typeSection));
+                    List typeSectionList = (List) typeSection;
+                    if(typeSectionList.size()<1){
+                        throw new AclPolicySyntaxException("Section '" + FOR_SECTION + ": { " + key + ": [...] }' list should not be empty.");
+                    }
+                    typeContexts.putIfAbsent(type, createTypeContext(type, typeSectionList));
+                }else{
+                    throw new AclPolicySyntaxException("Section '" + FOR_SECTION + ":' key '"+key+":' was not a string.");
                 }
+            }
+            if(forsection.size()<1){
+                throw new AclPolicySyntaxException("Section '" + FOR_SECTION + ":' should not be empty.");
             }
         }
 
@@ -835,8 +1270,25 @@ final class YamlPolicy implements Policy {
             return "Context: " + description;
         }
 
-        private AclContext createTypeContext(final List typeSection) {
-            return typeContextFactory.createAclContext(typeSection);
+        private AclContext createTypeContext(final String type,final List typeSection) {
+            return typeContextFactory.createAclContext(type, typeSection);
+        }
+
+        @Override
+        public Set<AclRule> createRules(final AclRuleBuilder prototype) {
+            HashSet<AclRule> aclRules = new HashSet<>();
+            for (Map.Entry<String, AclContext> stringAclContextEntry : typeContexts.entrySet()) {
+                AclRuleBuilder builder = AclRuleBuilder.builder(prototype);
+
+                String key = stringAclContextEntry.getKey();
+                builder.sourceIdentityAppend(
+                        "[type:" + key + "]"
+                );
+                builder.resourceType(key);
+                AclContext value = stringAclContextEntry.getValue();
+                aclRules.addAll(value.createRules(builder));
+            }
+            return aclRules;
         }
 
         static final ContextDecision NO_RESOURCE_TYPE_DECISION = new ContextDecision(

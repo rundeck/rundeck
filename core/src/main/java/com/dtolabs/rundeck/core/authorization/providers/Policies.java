@@ -16,7 +16,7 @@
 
 package com.dtolabs.rundeck.core.authorization.providers;
 
-import com.dtolabs.rundeck.core.authorization.Attribute;
+import com.dtolabs.rundeck.core.authorization.*;
 
 import javax.security.auth.Subject;
 import javax.xml.parsers.ParserConfigurationException;
@@ -29,15 +29,17 @@ import java.util.*;
  *
  * @author noahcampbell
  */
-public class Policies {
-
-    private final List<File> policyFiles = new ArrayList<File>();
+public class Policies implements AclRuleSetSource{
 
     private Iterable<PolicyCollection> cache;
+    private ValidationSet validation;
 
-
-    public Policies(final Iterable<PolicyCollection> cache) {
+    public Policies(final Iterable<PolicyCollection> cache, final ValidationSet validationSet) {
+        this.validation=validationSet;
         this.cache = cache;
+    }
+    public Policies(final Iterable<PolicyCollection> cache) {
+        this(cache, null);
     }
 
     public int count() {
@@ -48,25 +50,35 @@ public class Policies {
         return count;
     }
 
+    @Override
+    public AclRuleSet getRuleSet() {
+        Set<AclRule> set = new HashSet<>();
+        for (final PolicyCollection f : cache) {
+            set.addAll(f.getRuleSet().getRules());
+        }
+        return new AclRuleSetImpl(set);
+    }
+
     /**
      * @return Load the policies contained in the root path.
      *
      * @param rootPath file root path
      *
      *
-     * @throws PoliciesParseException Thrown when there is a problem parsing a file.
-     * @throws IOException  on io error
      */
-    public static Policies load(File rootPath) throws IOException, PoliciesParseException {
+    public static Policies load(File rootPath)  {
+        return new Policies(PoliciesCache.fromDir(rootPath));
+    }
 
-        Policies p = null;
-        try {
-            p = new Policies(new PoliciesCache(rootPath));
-        } catch (ParserConfigurationException e) {
-            throw new PoliciesParseException(e);
-        }
-
-        return p;
+    /**
+     * @return Load the policies contained in the root path.
+     *
+     * @param rootPath file root path
+     *
+     *
+     */
+    public static Policies load(File rootPath, final Set<Attribute> forcedContext)  {
+        return new Policies(PoliciesCache.fromDir(rootPath));
     }
     /**
      * @return Load the policies contained in the root path.
@@ -74,20 +86,9 @@ public class Policies {
      * @param singleFile single file
      *
      *
-     * @throws PoliciesParseException Thrown when there is a problem parsing a file.
-     * @throws IOException  on io error
      */
-    public static Policies loadFile(File singleFile) throws IOException, PoliciesParseException {
-
-        Policies p = null;
-        try {
-            PoliciesCache policyCollections = new PoliciesCache(singleFile,true);
-            p = new Policies(policyCollections);
-        } catch (ParserConfigurationException e) {
-            throw new PoliciesParseException(e);
-        }
-
-        return p;
+    public static Policies loadFile(File singleFile)  {
+        return new Policies(PoliciesCache.fromFile(singleFile));
     }
 
     public List<AclContext> narrowContext(final Subject subject, final Set<Attribute> environment) {
@@ -97,24 +98,6 @@ public class Policies {
             matchedContexts.addAll(f.matchedContexts(subject, environment));
         }
         return matchedContexts;
-    }
-
-
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(getClass().getName());
-        builder.append(" [");
-        Iterator<File> iter = this.policyFiles.iterator();
-        while (iter.hasNext()) {
-            builder.append(iter.next());
-            if (iter.hasNext()) {
-                builder.append(", ");
-            }
-        }
-        builder.append("]");
-
-        return builder.toString();
     }
 
     /**

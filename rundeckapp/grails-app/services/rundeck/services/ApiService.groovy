@@ -1,5 +1,7 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.Validation
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
@@ -24,6 +26,12 @@ class ApiService {
     def messageSource
     def grailsLinkGenerator
 
+    public static final Map<String,String> HTTP_METHOD_ACTIONS = Collections.unmodifiableMap (
+            POST: AuthConstants.ACTION_CREATE,
+            PUT: AuthConstants.ACTION_UPDATE,
+            GET: AuthConstants.ACTION_READ,
+            DELETE: AuthConstants.ACTION_DELETE
+    )
     private String genRandomString() {
         return RandomStringUtils.random(32, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
     }
@@ -520,6 +528,119 @@ class ApiService {
         }
     }
 
+    /**
+     * in Json or XML, render a file as a wrapped strings specified by a 'contents' entry/element
+     * @param contentString
+     * @param request
+     * @param response
+     * @param respFormat
+     * @param delegate
+     * @return
+     */
+    void renderWrappedFileContents(
+            String contentString,
+            String respFormat,
+            delegate
+    )
+    {
+        if (respFormat=='json') {
+            delegate.contents = contentString
+        }else{
+            delegate.'contents' {
+                mkp.yieldUnescaped("<![CDATA[" + contentString.replaceAll(']]>', ']]]]><![CDATA[>') + "]]>")
+            }
+        }
+    }
+
+    /**
+     * Render json response for dir listing
+     * @param path project file path
+     * @param genpath closure called with path string to export the path
+     * @param genhref closure called with path string to generate href
+     * @param builder builder
+     * @return
+     */
+     void jsonRenderDirlist(String path,Closure genpath,Closure genhref,List<String>dirlist,builder){
+        builder.with{
+            delegate.'path'=genpath(path)
+            delegate.'type'='directory'
+            //delegate.'name'= pathName(path)
+            delegate.'href'= genhref(path)
+            delegate.'resources'=array{
+                def builder2=delegate
+                dirlist.each{dirpath->
+                    builder2.element {
+                        delegate.'path'=genpath(dirpath)
+                        delegate.'type'=dirpath.endsWith('/')?'directory':'file'
+                        if(!dirpath.endsWith('/')) {
+                            delegate.'name' = pathName(genpath(dirpath))
+                        }
+                        delegate.'href'= genhref(dirpath)
+                    }
+                }
+            }
+        }
+    }
+    /**
+     * Render xml response for dir listing
+     * @param path project file path
+     * @param genpath closure called with path string to export the path
+     * @param genhref closure called with path string to generate href
+     * @param builder builder
+     * @return
+     */
+     void xmlRenderDirList(String path,Closure genpath,Closure genhref,List<String>dirlist,builder){
+        builder.'resource'(
+                path:genpath(path),
+                type:'directory',
+                href:genhref(path)) {
+
+            delegate.'contents' {
+                def builder2 = delegate
+                dirlist.each { dirpath ->
+                    def resmap = [
+                            path: genpath(dirpath),
+                            type: dirpath.endsWith('/') ? 'directory' : 'file',
+                            href: genhref(dirpath)
+                    ]
+                    if (!dirpath.endsWith('/')) {
+                        resmap.'name' = pathName(genpath(dirpath))
+                    }
+                    builder2.'resource'(resmap)
+                }
+            }
+        }
+    }
+    String pathRmPrefix(String path,String prefix) {
+        prefix&&path.startsWith(prefix)?path.substring(prefix.length()):path
+    }
+
+    String pathName(String path) {
+        path.lastIndexOf('/')>=0?path.substring(path.lastIndexOf('/') + 1):path
+    }
+
+    public void renderJsonAclpolicyValidation(Validation validation, builder){
+        builder.valid = validation.valid
+        if(!validation.valid) {
+            builder.'policies' = builder.array {
+                def d=delegate
+                validation.errors.keySet().sort().each { ident ->
+                    builder.'element'(policy: ident, errors: validation.errors[ident])
+                }
+            }
+        }
+    }
+    public void renderXmlAclpolicyValidation(Validation validation, builder){
+        builder.'validation'(valid:validation.valid){
+            validation.errors?.keySet().sort().each{ident->
+                policy(id:ident){
+                    validation.errors[ident].each{
+                        delegate.error(it)
+                    }
+                }
+            }
+        }
+    }
     /**
      * Render execution document for api response
      */

@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
@@ -27,6 +28,7 @@ import rundeck.codecs.JobsXMLCodec
 import rundeck.codecs.JobsYAMLCodec
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ApiService
+import rundeck.services.AuthorizationService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.LogFileStorageService
@@ -53,6 +55,7 @@ class MenuController extends ControllerBase{
     def configurationService
     def quartzScheduler
     def ApiService apiService
+    def AuthorizationService authorizationService
     static allowedMethods = [
             deleteJobfilter:'POST',
             storeJobfilter:'POST',
@@ -230,7 +233,7 @@ class MenuController extends ControllerBase{
     
     def jobsFragment = {ScheduledExecutionQuery query ->
         long start=System.currentTimeMillis()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext
         def usedFilter=null
         
         if(params.filterName){
@@ -252,8 +255,11 @@ class MenuController extends ControllerBase{
             query=new ScheduledExecutionQuery()
             usedFilter=null
         }
-        if(query && !query.projFilter && params.project){
-            query.projFilter= params.project
+        if(query && !query.projFilter && params.project) {
+            query.projFilter = params.project
+            authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+        } else {
+            authContext = frameworkService.getAuthContextForSubject(session.subject)
         }
         def results=listWorkflows(query,authContext,session.user)
         if(usedFilter){
@@ -271,13 +277,16 @@ class MenuController extends ControllerBase{
     def jobsPicker = {ScheduledExecutionQuery query ->
 
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext
         def usedFilter=null
         if(!query){
             query = new ScheduledExecutionQuery()
         }
-        if(query && !query.projFilter && params.project){
-            query.projFilter= params.project
+        if(query && !query.projFilter && params.project) {
+            query.projFilter = params.project
+            authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+        } else {
+            authContext = frameworkService.getAuthContextForSubject(session.subject)
         }
         def results=listWorkflows(query,authContext,session.user)
         if(usedFilter){
@@ -605,8 +614,13 @@ class MenuController extends ControllerBase{
                 AuthConstants.ACTION_READ, 'System configuration')) {
             return
         }
+        def fwkConfigDir=frameworkService.rundeckFramework.getConfigDir()
+        def list=fwkConfigDir.listFiles().grep{it.name=~/\.aclpolicy$/}.sort()
+        Map<File,Validation> validation=list.collectEntries{
+            [it,authorizationService.validateYamlPolicy(it)]
+        }
 
-        [rundeckFramework: frameworkService.rundeckFramework]
+        [rundeckFramework: frameworkService.rundeckFramework,fwkConfigDir:fwkConfigDir, aclFileList: list, validations: validation]
     }
 
     def systemInfo (){
@@ -856,7 +870,7 @@ class MenuController extends ControllerBase{
                     jobCreate: frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
                             AuthConstants.ACTION_CREATE, project.name),
                     admin: frameworkService.authorizeApplicationResourceAny(authContext,
-                            AuthorizationUtil.resource(AuthConstants.TYPE_PROJECT, [name: project.name]),
+                                                                            frameworkService.authResourceForProject(project.name),
                             [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
                                     AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE]),
             ]

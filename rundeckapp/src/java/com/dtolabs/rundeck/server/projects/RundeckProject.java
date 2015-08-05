@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.server.projects;
 
+import com.dtolabs.rundeck.core.authorization.Authorization;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import rundeck.services.ProjectManagerService;
@@ -16,6 +17,7 @@ public class RundeckProject implements IRundeckProject{
     private String name;
     private ProjectManagerService projectService;
     private IProjectNodes projectNodes;
+    private Authorization projectAuthorization;
     private Date lastModifiedTime;
     private IPropertyLookup lookup;
     private IPropertyLookup projectLookup;
@@ -95,6 +97,16 @@ public class RundeckProject implements IRundeckProject{
     }
 
     @Override
+    public boolean existsDirResource(final String path) {
+        return projectService.existsProjectDirResource(name, path);
+    }
+
+    @Override
+    public List<String> listDirPaths(final String path) {
+        return projectService.listProjectDirPaths(name, path);
+    }
+
+    @Override
     public boolean deleteFileResource(final String path) {
         return projectService.deleteProjectFileResource(name, path);
     }
@@ -171,5 +183,9 @@ public class RundeckProject implements IRundeckProject{
 
     public void setLastModifiedTime(final Date lastModifiedTime) {
         this.lastModifiedTime = lastModifiedTime;
+    }
+
+    public Authorization getProjectAuthorization() {
+        return projectService.getProjectAuthorization(name);
     }
 }

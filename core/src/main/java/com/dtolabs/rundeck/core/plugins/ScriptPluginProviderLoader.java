@@ -354,6 +354,7 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
      */
     private synchronized boolean removeScriptPluginCache() {
         if (null != fileExpandedDir && fileExpandedDir.exists()) {
+            System.err.println("removeScriptPluginCache: " + fileExpandedDir + " for: " + file);
             debug("removeScriptPluginCache: " + fileExpandedDir);
             return FileUtils.deleteDir(fileExpandedDir);
         }

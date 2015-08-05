@@ -25,7 +25,9 @@ package com.dtolabs.rundeck.core.authorization.providers;
 
 import com.dtolabs.rundeck.core.authentication.Group;
 import com.dtolabs.rundeck.core.authentication.Username;
+import com.dtolabs.rundeck.core.authorization.AclsUtil;
 import com.dtolabs.rundeck.core.authorization.Attribute;
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
 import junit.framework.TestCase;
 
 import javax.security.auth.Subject;
@@ -43,7 +45,7 @@ public class TestYamlPolicyCollection extends TestCase {
     File testdir;
     File test1;
     File test2;
-    private Set<Attribute> environment = new HashSet<Attribute>();
+    private Set<Attribute> environment = AuthorizationUtil.context("application", "rundeck");
 
     public void setUp() throws Exception {
         testdir = new File("src/test/resources/com/dtolabs/rundeck/core/authorization/providers");
@@ -58,54 +60,54 @@ public class TestYamlPolicyCollection extends TestCase {
     }
 
     public void testCountPolicies() throws Exception {
-        YamlPolicyCollection policies = new YamlPolicyCollection(test1);
+        YamlPolicyCollection policies = YamlProvider.policiesFromFile(test1);
         assertEquals(6, policies.countPolicies());
     }
     public void testGroupEqualsSingle() throws Exception {
-        YamlPolicyCollection policies = new YamlPolicyCollection(test1);
+        YamlPolicyCollection policies = YamlProvider.policiesFromFile(test1);
         Subject subject = makeSubject("user1", "prod_group");
         Collection<AclContext> aclContexts = policies.matchedContexts(subject,environment);
         assertEquals(1, aclContexts.size());
     }
     public void testGroupEqualsMulti() throws Exception {
-        YamlPolicyCollection policies = new YamlPolicyCollection(test1);
+        YamlPolicyCollection policies = YamlProvider.policiesFromFile(test1);
         Subject subject = makeSubject("user1", "qa_group","prod_group");
         Collection<AclContext> aclContexts = policies.matchedContexts(subject,environment);
         assertEquals(2, aclContexts.size());
     }
     public void testGroupPatternMatch() throws Exception {
-        YamlPolicyCollection policies = new YamlPolicyCollection(test1);
+        YamlPolicyCollection policies = YamlProvider.policiesFromFile(test1);
         Subject subject = makeSubject("user1", "dev_group");
         Collection<AclContext> aclContexts = policies.matchedContexts(subject,environment);
         assertEquals(2, aclContexts.size());
     }
     public void testGroupPatternMatch2() throws Exception {
-        YamlPolicyCollection policies = new YamlPolicyCollection(test1);
+        YamlPolicyCollection policies = YamlProvider.policiesFromFile(test1);
         Subject subject = makeSubject("user1", "dev_test");
         Collection<AclContext> aclContexts = policies.matchedContexts(subject,environment);
         assertEquals(1, aclContexts.size());
     }
 
     public void testUserEqualsSingleNoMatch() throws Exception {
-        YamlPolicyCollection policies = new YamlPolicyCollection(test1);
+        YamlPolicyCollection policies = YamlProvider.policiesFromFile(test1);
         Subject subject = makeSubject("devX", "some_group");
         Collection<AclContext> aclContexts = policies.matchedContexts(subject, environment);
         assertEquals(0, aclContexts.size());
     }
     public void testUserEqualsSingle1Match() throws Exception {
-        YamlPolicyCollection policies = new YamlPolicyCollection(test1);
+        YamlPolicyCollection policies = YamlProvider.policiesFromFile(test1);
         Subject subject = makeSubject("dev2", "some_group");
         Collection<AclContext> aclContexts = policies.matchedContexts(subject, environment);
         assertEquals(1, aclContexts.size());
     }
     public void testUserEqualsSingle2Match() throws Exception {
-        YamlPolicyCollection policies = new YamlPolicyCollection(test1);
+        YamlPolicyCollection policies = YamlProvider.policiesFromFile(test1);
         Subject subject = makeSubject("dev1", "some_group");
         Collection<AclContext> aclContexts = policies.matchedContexts(subject, environment);
         assertEquals(2, aclContexts.size());
     }
     public void testUserRegexMatch() throws Exception {
-        YamlPolicyCollection policies = new YamlPolicyCollection(test1);
+        YamlPolicyCollection policies = YamlProvider.policiesFromFile(test1);
         Subject subject = makeSubject("devA", "some_group");
         Collection<AclContext> aclContexts = policies.matchedContexts(subject, environment);
         assertEquals(1, aclContexts.size());
@@ -122,7 +124,7 @@ public class TestYamlPolicyCollection extends TestCase {
     }
 
     public void testGroupNames() throws Exception {
-        YamlPolicyCollection policies = new YamlPolicyCollection(test1);
+        YamlPolicyCollection policies = YamlProvider.policiesFromFile(test1);
         final Collection<String> strings = policies.groupNames();
         assertEquals(4, strings.size());
         assertTrue(strings.contains("qa_group"));

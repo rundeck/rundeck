@@ -24,6 +24,12 @@ import java.util.Set;
  */
 public interface AuthContext {
 
+    /**
+     * @param authorization additional authorization
+     *
+     * @return new AuthContext combined with the additional authorization
+     */
+    AuthContext combineWith(Authorization authorization);
 
     /**
      * Evaluate the authorization request and return if this request is valid. Make a single resource determination.

@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution.impl.common;
 
 import com.dtolabs.rundeck.core.authorization.AuthContext;
+import com.dtolabs.rundeck.core.authorization.Authorization;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
@@ -118,6 +119,11 @@ public class TestBaseFileCopier extends TestCase {
         }
 
         @Override
+        public Authorization getProjectAuthorization() {
+            return null;
+        }
+
+        @Override
         public boolean updateNodesResourceFile() throws UpdateUtils.UpdateException {
             return false;
         }
@@ -181,6 +187,16 @@ public class TestBaseFileCopier extends TestCase {
         @Override
         public boolean existsFileResource(final String path) {
             return false;
+        }
+
+        @Override
+        public boolean existsDirResource(final String path) {
+            return false;
+        }
+
+        @Override
+        public List<String> listDirPaths(final String path) {
+            return null;
         }
 
         @Override

@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.authorization.Attribute;
+import com.dtolabs.rundeck.core.authorization.Authorization;
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
@@ -87,6 +88,7 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
     private FilesystemFramework filesystemFramework;
     private Framework framework;
     private IProjectNodes projectNodes;
+    private Authorization projectAuthorization;
 
     /**
      * Constructor
@@ -253,7 +255,7 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
         final File propertyFile = getProjectPropertyFile(new File(projectsBaseDir, projectName));
         final Properties projectProps = PropertyLookup.fetchProperties(propertyFile);
 
-        lookup = PropertyLookup.create(projectProps,PropertyLookup.create(ownProps));
+        lookup = PropertyLookup.create(projectProps, PropertyLookup.create(ownProps));
         lookup.expand();
         return lookup;
     }
@@ -301,7 +303,13 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
      */
     public static FrameworkProject create(final String name, final File projectsDir,final FilesystemFramework filesystemFramework, final IFrameworkProjectMgr resourceMgr, final Properties properties) {
 
-        return FrameworkFactory.createFrameworkProject(name,new File(projectsDir, name),filesystemFramework,resourceMgr,properties);
+        return FrameworkFactory.createFrameworkProject(
+                name,
+                new File(projectsDir, name),
+                filesystemFramework,
+                resourceMgr,
+                properties
+        );
     }
 
 
@@ -486,6 +494,31 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
     public boolean existsFileResource(final String path) {
         File result = new File(getBaseDir(), path);
         return result.exists()&& result.isFile();
+    }
+
+    @Override
+    public boolean existsDirResource(final String path) {
+        File result = new File(getBaseDir(), path);
+        return result.exists()&& result.isDirectory();
+    }
+
+    @Override
+    public List<String> listDirPaths(final String path) {
+        if (!existsDirResource(path)) {
+            return Collections.emptyList();
+        }
+        File dir = new File(getBaseDir(), path);
+        File[] list = dir.listFiles();
+        ArrayList<String> result = new ArrayList<>();
+        String prefix=path;
+        if(path.endsWith("/")) {
+            prefix = path.substring(0, path.length() - 1);
+        }
+        assert list != null;
+        for (File s : list) {
+            result.add(prefix + "/" + s.getName() + (s.isDirectory() ? "/" : ""));
+        }
+        return result;
     }
 
     @Override
@@ -680,5 +713,14 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
 
     public void setProjectNodes(final IProjectNodes projectNodes) {
         this.projectNodes = projectNodes;
+    }
+
+    @Override
+    public Authorization getProjectAuthorization() {
+        return projectAuthorization;
+    }
+
+    public void setProjectAuthorization(Authorization projectAuthorization) {
+        this.projectAuthorization = projectAuthorization;
     }
 }

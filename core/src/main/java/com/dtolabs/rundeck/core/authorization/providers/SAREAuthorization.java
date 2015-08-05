@@ -19,16 +19,12 @@
  */
 package com.dtolabs.rundeck.core.authorization.providers;
 
-import com.dtolabs.rundeck.core.authorization.Attribute;
-import com.dtolabs.rundeck.core.authorization.Authorization;
-import com.dtolabs.rundeck.core.authorization.Decision;
-import com.dtolabs.rundeck.core.authorization.Explanation;
+import com.dtolabs.rundeck.core.authorization.*;
 import com.dtolabs.rundeck.core.authorization.Explanation.Code;
 import org.apache.log4j.Logger;
 
 import javax.security.auth.Subject;
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.security.Principal;
 import java.util.*;
@@ -37,7 +33,7 @@ import java.util.*;
  * Given a Subject, Action, Resource and Environment deliver an authorization decision.
  * 
  * @author noahcampbell
- *
+ * @deprecated
  */
 public class SAREAuthorization implements Authorization {
     
@@ -52,10 +48,8 @@ public class SAREAuthorization implements Authorization {
      * 
      * @param directory The directory to ready *.aclpolicy from.
      * 
-     * @throws IOException on io error
-     * @throws PoliciesParseException on parse error
      */
-    public SAREAuthorization(File directory) throws IOException, PoliciesParseException {
+    public SAREAuthorization(File directory)  {
         policies = Policies.load(directory);
         baseDirectory = directory;
     }
@@ -64,10 +58,8 @@ public class SAREAuthorization implements Authorization {
      *
      * @param policies Loaded policies
      *
-     * @throws IOException on io error
-     * @throws PoliciesParseException on parse error
      */
-    public SAREAuthorization(final Policies policies) throws IOException, PoliciesParseException {
+    public SAREAuthorization(final Policies policies)  {
         this.policies=policies;
         baseDirectory = null;
     }
@@ -150,7 +142,7 @@ public class SAREAuthorization implements Authorization {
      */
     public Decision evaluate(Map<String, String> resource, Subject subject, 
             String action, Set<Attribute> environment) {
-        return evaluate(resource, subject, action, environment, policies.narrowContext(subject, environment));
+        return evaluate(resource, subject, action, environment, getPolicies().narrowContext(subject, environment));
     }
     /**
      * Return the evaluation decision for the resource, subject, action, environment and contexts
@@ -171,7 +163,7 @@ public class SAREAuthorization implements Authorization {
         
         Set<Decision> decisions = new HashSet<Decision>();
         long duration=0;
-        List<AclContext> aclContexts = policies.narrowContext(subject, environment);
+        List<AclContext> aclContexts = getPolicies().narrowContext(subject, environment);
         for(Map<String, String> resource: resources) {
             for(String action: actions) {
                 final Decision decision = evaluate(resource, subject, action, environment, aclContexts);
@@ -273,7 +265,7 @@ public class SAREAuthorization implements Authorization {
 
     @Override
     public String toString() {
-        return getClass().getName() + " (" + this.policies.count() + ") [" + this.baseDirectory.toString() + "]";
+        return getClass().getName() + " (" + this.getPolicies().count() + ") [" + this.baseDirectory.toString() + "]";
     }
 
     /**
@@ -282,7 +274,10 @@ public class SAREAuthorization implements Authorization {
      */
     @Deprecated
     public List<String> hackMeSomeRoles() {
-        return policies.listAllRoles();
+        return getPolicies().listAllRoles();
     }
 
+    public Policies getPolicies() {
+        return policies;
+    }
 }
