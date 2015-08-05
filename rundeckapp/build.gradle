@@ -228,12 +228,14 @@ task testGrails(type: Exec, overwrite: true, dependsOn: [ installDependencies, e
     workingDir project.projectDir
     environment 'GRAILS_HOME', grailsHome
     commandLine grailsCommandLine
+    def rdbase=new File(temporaryDir,'rdeck_base')
+    rdbase.mkdirs()
     args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
             "${grailsCentral}",
             "-Dgrails.local.repo=${grailsLocalRepo}",
             "-DRUNDECK_VERSION=${version}",
-            "-Drdeck.base=${project.buildDir}/rdeck_base",
+            "-Drdeck.base=${rdbase}",
             'test-app'
 }
 test.dependsOn testGrails
