@@ -6113,15 +6113,16 @@ class ScheduledExServiceTests {
         def sec = new ScheduledExecutionService()
 
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
-        fwkControl.demand.authorizeProjectJobAll { framework, job, actions, project -> return true }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.authorizeProjectResourceAll { framework, job, actions, project -> return true }
-        sec.frameworkService = fwkControl.createMock()
+
+
+        sec.frameworkService = mockWith(FrameworkService){
+
+            existsFrameworkProject{project->true}
+            getAuthContextWithProject{ctx,project->null}
+            authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+            existsFrameworkProject { project, framework -> return true }
+            authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
+        }
         def ms = mockFor(MessageSource)
         ms.demand.getMessage { key, data, locale -> key }
         ms.demand.getMessage { error, locale -> error.toString() }
@@ -6242,15 +6243,13 @@ class ScheduledExServiceTests {
         def sec = new ScheduledExecutionService()
 
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
-        fwkControl.demand.authorizeProjectJobAll { framework, job, actions, project -> return true }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.authorizeProjectResourceAll { framework, job, actions, project -> return true }
-        sec.frameworkService = fwkControl.createMock()
+        sec.frameworkService = mockWith(FrameworkService){
+            existsFrameworkProject{project -> true}
+            getAuthContextWithProject{ctx,project-> null }
+            authorizeProjectResourceAll { framework, job, actions, project -> return true }
+            existsFrameworkProject { project, framework -> return true }
+            authorizeProjectJobAll { framework, job, actions, project -> return true }
+        }
         def ms = mockFor(MessageSource)
         ms.demand.getMessage { key, data, locale -> key }
         ms.demand.getMessage { error, locale -> error.toString() }
@@ -6300,14 +6299,15 @@ class ScheduledExServiceTests {
         def sec = new ScheduledExecutionService()
 
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
-        fwkControl.demand.authorizeProjectJobAll { framework, job, actions, project -> return true }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        sec.frameworkService = fwkControl.createMock()
+
+        sec.frameworkService = mockWith(FrameworkService){
+
+            existsFrameworkProject{project->true}
+            getAuthContextWithProject{ctx,project->null}
+            authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
+            existsFrameworkProject { project, framework -> return true }
+            authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+        }
 
         //create original job
         final CommandExec exec = new CommandExec(adhocExecution: true, adhocRemoteString: "echo original test")
@@ -6388,11 +6388,15 @@ class ScheduledExServiceTests {
         def sec = new ScheduledExecutionService()
 
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
-        sec.frameworkService = fwkControl.createMock()
+
+        sec.frameworkService = mockWith(FrameworkService){
+
+            existsFrameworkProject{project->true}
+            getAuthContextWithProject{ctx,project->null}
+            authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+            existsFrameworkProject { project, framework -> return true }
+            authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
+        }
         //mock the scheduledExecutionService
 //        def mock2 = mockFor(ScheduledExecutionService, true)
 //        mock2.demand.nextExecutionTimes {joblist -> return [] }
@@ -6455,15 +6459,14 @@ class ScheduledExServiceTests {
     public void testUploadShouldCreateSameNameDupeOptionCreate() {
         def sec = new ScheduledExecutionService()
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
-        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
-        fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        sec.frameworkService = fwkControl.createMock()
+        sec.frameworkService = mockWith(FrameworkService){
+            existsFrameworkProject{project->true}
+
+            getAuthContextWithProject{ctx,project->null}
+            authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+            existsFrameworkProject { project, framework -> return true }
+            authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
+        }
         //mock the scheduledExecutionService
 //        def mock2 = mockFor(ScheduledExecutionService, true)
 //        mock2.demand.nextExecutionTimes {joblist -> return [] }
@@ -6536,15 +6539,15 @@ class ScheduledExServiceTests {
         def sec = new ScheduledExecutionService()
 
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
-        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
-        fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        sec.frameworkService = fwkControl.createMock()
+
+
+        sec.frameworkService = mockWith(FrameworkService){
+            existsFrameworkProject{project->true}
+            getAuthContextWithProject{ctx,project->null}
+            authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+            existsFrameworkProject { project, framework -> return true }
+            authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
+        }
         //mock the scheduledExecutionService
 //        def mock2 = mockFor(ScheduledExecutionService, true)
 //        mock2.demand.nextExecutionTimes {joblist -> return [] }
@@ -6610,15 +6613,15 @@ class ScheduledExServiceTests {
         def sec = new ScheduledExecutionService()
 
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
-        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
-        fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        sec.frameworkService = fwkControl.createMock()
+
+        sec.frameworkService = mockWith(FrameworkService){
+
+            existsFrameworkProject{project->true}
+            getAuthContextWithProject{ctx,project->null}
+            authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+            existsFrameworkProject { project, framework -> return true }
+            authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
+        }
         //mock the scheduledExecutionService
 //        def mock2 = mockFor(ScheduledExecutionService, true)
 //        mock2.demand.nextExecutionTimes {joblist -> return [] }
@@ -6686,15 +6689,15 @@ class ScheduledExServiceTests {
         def sec = new ScheduledExecutionService()
 
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
-        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
-        fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        sec.frameworkService = fwkControl.createMock()
+
+        sec.frameworkService = mockWith(FrameworkService){
+
+            existsFrameworkProject{project->true}
+            getAuthContextWithProject{ctx,project->null}
+            authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+            existsFrameworkProject { project, framework -> return true }
+            authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
+        }
         //mock the scheduledExecutionService
 //        def mock2 = mockFor(ScheduledExecutionService, true)
 //        mock2.demand.nextExecutionTimes {joblist -> return [] }
@@ -6796,14 +6799,14 @@ class ScheduledExServiceTests {
         def sec = new ScheduledExecutionService()
 
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
-        fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        sec.frameworkService = fwkControl.createMock()
+        sec.frameworkService = mockWith(FrameworkService){
+            existsFrameworkProject{project->true}
+
+            getAuthContextWithProject{ctx,project->null}
+            authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
+//            authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+            existsFrameworkProject { project, framework -> return true }
+        }
         //mock the scheduledExecutionService
 //        def mock2 = mockFor(ScheduledExecutionService, true)
 //        mock2.demand.nextExecutionTimes {joblist -> return [] }
@@ -6896,14 +6899,15 @@ class ScheduledExServiceTests {
         def sec = new ScheduledExecutionService()
 
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
-        fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        sec.frameworkService = fwkControl.createMock()
+
+        sec.frameworkService = mockWith(FrameworkService){
+
+            existsFrameworkProject{project->true}
+            getAuthContextWithProject{ctx,project->null}
+            authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
+            existsFrameworkProject { project, framework -> return true }
+            authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+        }
         //mock the scheduledExecutionService
 //        def mock2 = mockFor(ScheduledExecutionService, true)
 //        mock2.demand.nextExecutionTimes {joblist -> return [] }
@@ -6981,14 +6985,15 @@ class ScheduledExServiceTests {
         def sec = new ScheduledExecutionService()
 
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
-        fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        sec.frameworkService = fwkControl.createMock()
+
+        sec.frameworkService = mockWith(FrameworkService){
+
+            existsFrameworkProject{project->true}
+            getAuthContextWithProject{ctx,project->null}
+            authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
+            existsFrameworkProject { project, framework -> return true }
+            authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+        }
         //mock the scheduledExecutionService
 //        def mock2 = mockFor(ScheduledExecutionService, true)
 //        mock2.demand.nextExecutionTimes {joblist -> return [] }
@@ -7059,15 +7064,16 @@ class ScheduledExServiceTests {
         def sec = new ScheduledExecutionService()
 
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
-        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
-        fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        sec.frameworkService = fwkControl.createMock()
+
+
+        sec.frameworkService = mockWith(FrameworkService){
+
+            existsFrameworkProject{project->true}
+            getAuthContextWithProject{ctx,project->null}
+            authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+            existsFrameworkProject { project, framework -> return true }
+            authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
+        }
         def ms = mockFor(MessageSource)
         ms.demand.getMessage { key, data, locale -> key }
         ms.demand.getMessage { error, locale -> error.toString() }

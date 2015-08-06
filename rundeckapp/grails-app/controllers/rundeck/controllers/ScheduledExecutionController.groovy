@@ -2348,7 +2348,8 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def changeinfo = [user: session.user,method:'apiJobsImport']
         def Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        //nb: loadJobs will get correct project auth context
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         def option = params.uuidOption
         if (request.api_version < ApiRequestFilters.V9) {

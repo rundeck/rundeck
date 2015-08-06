@@ -932,6 +932,11 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 i++
                 return
             }
+            if(!frameworkService.existsFrameworkProject(jobdata.project)){
+                errjobs << [scheduledExecution: jobdata, entrynum: i, errmsg: "Project does not exist: ${jobdata.project}"]
+                i++
+                return
+            }
             if (uuidOption == 'remove') {
                 jobdata.uuid = null
                 jobdata.id = null
@@ -949,6 +954,10 @@ class ScheduledExecutionService implements ApplicationContextAware{
                     }
                 }
             }
+
+            def project = scheduledExecution ? scheduledExecution.project : jobdata.project
+
+            def projectAuthContext = frameworkService.getAuthContextWithProject(authContext, project)
             if (option == "skip" && scheduledExecution) {
                 jobdata.id = scheduledExecution.id
                 skipjobs << [scheduledExecution: jobdata, entrynum: i, errmsg: "A Job named '${jobdata.jobName}' already exists"]
@@ -957,19 +966,19 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 def success = false
                 def errmsg
                 jobchange.change = 'modify'
-                if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE], scheduledExecution.project)) {
+                if (!frameworkService.authorizeProjectJobAll(projectAuthContext, scheduledExecution, [AuthConstants.ACTION_UPDATE], scheduledExecution.project)) {
                     errmsg = "Unauthorized: Update Job ${scheduledExecution.id}"
                 } else {
                     try {
                         def result
                         if (jobdata instanceof ScheduledExecution) {
                             //xxx:try/catch the update
-                            result = _doupdateJob(scheduledExecution.id, jobdata,user, roleList, framework, authContext, jobchange)
+                            result = _doupdateJob(scheduledExecution.id, jobdata,user, roleList, framework, projectAuthContext, jobchange)
                             success = result[0]
                             scheduledExecution = result[1]
                         } else {
                             jobdata.id = scheduledExecution.uuid ?: scheduledExecution.id
-                            result = _doupdate(jobdata, user, roleList, framework, authContext, jobchange)
+                            result = _doupdate(jobdata, user, roleList, framework, projectAuthContext, jobchange)
                             success = result.success
                             scheduledExecution = result.scheduledExecution
                         }
@@ -994,14 +1003,14 @@ class ScheduledExecutionService implements ApplicationContextAware{
             } else if (option == "create" || !scheduledExecution) {
                 def errmsg
 
-                if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_JOB,
+                if (!frameworkService.authorizeProjectResourceAll(projectAuthContext, AuthConstants.RESOURCE_TYPE_JOB,
                                                                   [AuthConstants.ACTION_CREATE], jobdata.project)) {
                     errmsg = "Unauthorized: Create Job"
                     errjobs << [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]
                 } else {
                     try {
                         jobchange.change = 'create'
-                        def result = _dosave(jobdata, user, roleList, framework, authContext, jobchange)
+                        def result = _dosave(jobdata, user, roleList, framework, projectAuthContext, jobchange)
                         scheduledExecution = result.scheduledExecution
                         if (!result.success && scheduledExecution && scheduledExecution.hasErrors()) {
                             errmsg = "Validation errors: " + scheduledExecution.errors.allErrors.collect { lookupMessageError(it) }.join("; ")
