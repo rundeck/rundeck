@@ -29,7 +29,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #select id
 
@@ -118,6 +118,6 @@ rm $expectfile $outfile
 
 ##wait for exec to finish...
 rd-queue follow -q -e $execid || fail "Waiting for $execid to finish"
-sh $SRC_DIR/api-expect-exec-success.sh $execid || exit 2
+$SHELL $SRC_DIR/api-expect-exec-success.sh $execid || exit 2
 
 echo "OK"

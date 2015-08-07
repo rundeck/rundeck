@@ -34,7 +34,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 execid=$($XMLSTARLET sel -T -t -v "/result/execution/@id" -n $DIR/curl.out)
 if [ "" == "${execid}" ] ; then
@@ -44,7 +44,7 @@ fi
 
 ##wait for script to execute...
 rd-queue follow -q -e $execid || fail "Waiting for $execid to finish"
-sh $SRC_DIR/api-expect-exec-success.sh $execid || exit 2
+$SHELL $SRC_DIR/api-expect-exec-success.sh $execid || exit 2
 
 if [ ! -f $OUTF ] ; then
     errorMsg "FAIL: Expected script to execute and create script.out file"
@@ -71,7 +71,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 execid=$($XMLSTARLET sel -T -t -v "/result/execution/@id" -n $DIR/curl.out)
 if [ "" == "${execid}" ] ; then
@@ -81,7 +81,7 @@ fi
 
 ##wait for script to execute...
 rd-queue follow -q -e $execid || fail "Waiting for $execid to finish"
-sh $SRC_DIR/api-expect-exec-success.sh $execid || exit 2
+$SHELL $SRC_DIR/api-expect-exec-success.sh $execid || exit 2
 
 if [ ! -f $OUTF ] ; then
     errorMsg "FAIL: Expected script to execute and create script.out file"

@@ -62,7 +62,7 @@ if [ 0 != $? ] ; then
 fi
 
 # expect success result
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 
 #result will contain list of failed and succeeded jobs, in this
@@ -299,6 +299,6 @@ runurl="${APIURL}/job/${jobid}"
 params="format=json"
 
 # get listing
-sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "The format is not valid: json" 415 || exit 2
+$SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "The format is not valid: json" 415 || exit 2
 echo OK
 rm $DIR/curl.out

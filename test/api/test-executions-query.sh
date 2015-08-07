@@ -22,7 +22,7 @@ params="project=${proj}&exec=echo+testing+adhoc+execution+query"
 # get listing
 docurl -X POST ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 execid1=$($XMLSTARLET sel -T -t -v "/result/execution/@id" $DIR/curl.out)
 [ -n "$execid1" ] || fail "Didn't see execid"
 
@@ -34,7 +34,7 @@ params="project=${proj}&exec=echo+testing+adhoc+execution+query+should+fail;fals
 # get listing
 docurl -X POST ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 execid2=$($XMLSTARLET sel -T -t -v "/result/execution/@id" $DIR/curl.out)
 [ -n "$execid2" ] || fail "Didn't see execid"
 

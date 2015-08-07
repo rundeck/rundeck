@@ -60,7 +60,7 @@ echo "OK"
 ##
 echo "TEST: /jobs/import with wrong http Method"
 
-sh $SRC_DIR/api-expect-code.sh 405 "${runurl}" "${params}" || exit 2
+$SHELL $SRC_DIR/api-expect-code.sh 405 "${runurl}" "${params}" || exit 2
 echo "OK"
 
 
@@ -138,7 +138,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 # expect a /result/failed item
 

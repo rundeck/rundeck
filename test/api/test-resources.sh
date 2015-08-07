@@ -109,7 +109,7 @@ echo "TEST: /api/resources, format unsupported"
 
 # get listing
 docurl ${runurl}?${params} > ${file} || fail "failed request"
-sh $SRC_DIR/api-test-error.sh ${file} "The format specified is unsupported: unsupported" || fail "expected error"
+$SHELL $SRC_DIR/api-test-error.sh ${file} "The format specified is unsupported: unsupported" || fail "expected error"
 
 echo "OK"
 
@@ -123,7 +123,7 @@ params="project=${project}&format=other"
 API2URL="${RDURL}/api/2"
 runurl="${API2URL}/resources"
 docurl ${runurl}?${params} > ${file} || fail "failed request"
-sh $SRC_DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: /api/2/resources. Reason: Minimum supported version: 3" || fail "expected error"
+$SHELL $SRC_DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: /api/2/resources. Reason: Minimum supported version: 3" || fail "expected error"
 
 echo "OK"
 
