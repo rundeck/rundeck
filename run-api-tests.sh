@@ -45,7 +45,6 @@ start_rundeck(){
 	# ( bash -c 'sleep 30; echo done; sleep 600' > $outfile 2>&1 ) &
 	local RDPID=$!
 
-	trap "{ kill -9 $RDPID ; exit 255; }" SIGINT SIGTERM ERR
 	echo $RDPID
 }
 stop_rundeck(){
@@ -69,16 +68,23 @@ run_ci_test(){
 	cd $DIR
 	local HOST=$(hostname)
 
+	echo "Start Rundeck"
 	# start rundeck
-	local PID=$( start_rundeck $launcherJar $DIR/rundeck.out )
-
+	local RDPID=$( start_rundeck $launcherJar $DIR/rundeck.out )
+	trap "{ kill -9 $RDPID ; exit 255; }" EXIT SIGINT SIGTERM ERR
+	echo "Rundeck process PID: $RDPID"
 	wait_for $DIR/rundeck.out 'Started SelectChannelConnector@'
 	# wait_for $DIR/rundeck.out 'done'
+	echo "Rundeck started."
 
+	echo "Start tests"
 	RDECK_BASE=$DIR PATH=$PATH:$DIR/tools/bin  \
 		 bash -c  $SRC/test/src/test.sh http://$HOST:4440 admin admin
 
-	stop_rundeck $PID
+	echo "Tests complete."
+	echo "Stop Rundeck"
+	stop_rundeck $RDPID
+	echo "Rundeck stopped."
 }
 
 
