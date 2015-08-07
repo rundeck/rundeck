@@ -14,11 +14,11 @@ echo "TEST: /api/run/script GET should fail with wrong HTTP method"
 $SHELL $SRC_DIR/api-expect-code.sh 405 "${runurl}" "project=" 'parameter "project" is required' && echo "OK" || exit 2
 
 echo "TEST: /api/run/script POST should fail with no project param"
-CURL_REQ_OPTS="-X POST" sh $SRC_DIR/api-expect-error.sh "${runurl}" "project=" 'parameter "project" is required' && echo "OK" || exit 2
+CURL_REQ_OPTS="-X POST" $SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "project=" 'parameter "project" is required' && echo "OK" || exit 2
 
 echo "TEST: /api/run/script POST should fail with no scriptFile param"
 params="project=${proj}"
-CURL_REQ_OPTS="-X POST" sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" 'parameter "scriptFile" is required' && echo "OK" || exit 2
+CURL_REQ_OPTS="-X POST" $SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" 'parameter "scriptFile" is required' && echo "OK" || exit 2
 
 echo "TEST: /api/run/script POST should fail with empty scriptFile content"
 touch $DIR/test.tmp

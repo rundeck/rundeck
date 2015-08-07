@@ -284,7 +284,7 @@ params="format=json"
 # specify the file for upload with curl, named "xmlBatch"
 ulopts="-H Accept:application/json"
 
-CURL_REQ_OPTS=$ulopts sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "The format is not valid: json" 415 || exit 2
+CURL_REQ_OPTS=$ulopts $SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "The format is not valid: json" 415 || exit 2
 echo OK
 rm $DIR/curl.out
 ###

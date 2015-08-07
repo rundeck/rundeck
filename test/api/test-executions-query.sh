@@ -60,7 +60,7 @@ uploadJob(){
         exit 2
     fi
 
-    sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+    $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
     #result will contain list of failed and succeeded jobs, in this
     #case there should only be 1 failed or 1 succeeded since we submit only 1
@@ -163,7 +163,7 @@ runJob(){
     # get listing
     $CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-    sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+    $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
     #get execid
 
@@ -224,7 +224,7 @@ testExecQuery(){
         exit 2
     fi
 
-    sh $SRC_DIR/api-test-success.sh $DIR/curl.out || (echo "${runurl}?${params}"; exit 2)
+    $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || (echo "${runurl}?${params}"; exit 2)
 
     #Check projects list
     itemcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)

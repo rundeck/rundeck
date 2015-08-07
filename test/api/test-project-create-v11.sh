@@ -36,7 +36,7 @@ fi
 assert_http_status 201 $DIR/headers.out
 
 
-API_XML_NO_WRAPPER=true sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+API_XML_NO_WRAPPER=true $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check result
 assert_xml_value "$test_proj" "/project/name" $DIR/curl.out

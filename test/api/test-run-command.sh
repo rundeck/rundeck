@@ -13,7 +13,7 @@ execargs="echo this is a test of /api/run/command"
 runurl="${APIURL}/project/$proj/run/command"
 
 echo "TEST: $runurl should fail with no exec param"
-CURL_REQ_OPTS="-X POST $CURL_REQ_OPTS" sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" 'parameter "exec" is required' && echo "OK" || exit 2
+CURL_REQ_OPTS="-X POST $CURL_REQ_OPTS" $SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" 'parameter "exec" is required' && echo "OK" || exit 2
 
 echo "TEST: $runurl should succeed and return execution id"
 # make api request

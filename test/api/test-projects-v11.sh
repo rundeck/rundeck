@@ -22,7 +22,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-API_XML_NO_WRAPPER=true sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+API_XML_NO_WRAPPER=true $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 
 assert_xml_notblank "/projects/@count" $DIR/curl.out

@@ -52,7 +52,7 @@ params="format=DNEformat"
 # specify the file for upload with curl, named "xmlBatch"
 ulopts="-F xmlBatch=@$DIR/temp.out"
 
-CURL_REQ_OPTS=$ulopts sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "The specified format is not supported: DNEformat" || exit 2
+CURL_REQ_OPTS=$ulopts $SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "The specified format is not supported: DNEformat" || exit 2
 echo "OK"
 
 ##
@@ -71,7 +71,7 @@ echo "OK"
 echo "TEST: /jobs/import without expected file content"
 params="xmlBatch=z"
 
-CURL_REQ_OPTS="-F x=y" sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "No file was uploaded" || exit 2
+CURL_REQ_OPTS="-F x=y" $SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "No file was uploaded" || exit 2
 echo "OK"
 
 ##
@@ -81,7 +81,7 @@ echo "OK"
 echo "TEST: /jobs/import multipart without xmlBatch param"
 params=""
 
-CURL_REQ_OPTS="-F x=y" sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"xmlBatch\" is required" || exit 2
+CURL_REQ_OPTS="-F x=y" $SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"xmlBatch\" is required" || exit 2
 echo "OK"
 
 ##
@@ -91,7 +91,7 @@ echo "OK"
 echo "TEST: /jobs/import form without xmlBatch param"
 params=""
 
-CURL_REQ_OPTS="--data-urlencode x=y" sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"xmlBatch\" is required" || exit 2
+CURL_REQ_OPTS="--data-urlencode x=y" $SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"xmlBatch\" is required" || exit 2
 echo "OK"
 
 ##
