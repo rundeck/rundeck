@@ -16,7 +16,7 @@ PASS=${3:-"admin"}
 myexit=0
 for i in $(ls ./unauthorized-test*.sh)  ; do
     tname=$(basename $i)
-    sh ${i} ${URL} &>$DIR/${tname}.output
+    bash ${i} ${URL} &>$DIR/${tname}.output
     if [ $? != 0 ] ; then
         let myexit=2
         echo "${i}: FAILED"
@@ -30,7 +30,7 @@ done
 
 #perform login
 rm $DIR/cookies
-sh $SRC_DIR/rundecklogin.sh $URL $USER $PASS >/dev/null && echo "Login: OK" || die "Login: FAILED"
+bash $SRC_DIR/rundecklogin.sh $URL $USER $PASS >/dev/null && echo "Login: OK" || die "Login: FAILED"
 
 COLOR=${NO_COLOR:-yes}
 TEST_OK="OK"
@@ -45,7 +45,7 @@ fi
         
 for i in $(ls ./test-*.sh) ; do
     tname=$(basename $i)
-    sh ${i} ${URL} &>$DIR/${tname}.output
+    bash ${i} ${URL} &>$DIR/${tname}.output
     if [ $? != 0 ] ; then
         let myexit=2
         echo "${i}: ${TEST_FAIL}"
