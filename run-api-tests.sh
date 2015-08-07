@@ -123,7 +123,7 @@ run_ci_test(){
 	(java -Xmx1024m -XX:MaxPermSize=256m -jar $launcherJar > $DIR/rundeck.out 2>&1 ) &
 	local RDPID=$!
 
-	trap "{ kill -9 $RDPID ; echo Rundeck Killed ; exit 255; }" EXIT SIGINT SIGTERM ERR
+	trap "{ kill -9 $RDPID ; echo '---Rundeck Killed---' ; cat $DIR/rundeck.out ; exit 255; }" EXIT SIGINT SIGTERM ERR
 
 	echo "Rundeck process PID: $RDPID"
 
