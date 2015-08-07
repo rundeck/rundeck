@@ -37,7 +37,7 @@ if [ 0 != $? ] ; then
 fi
 assert_http_status 201 $DIR/headers.out
 
-API_XML_NO_WRAPPER=true sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+API_XML_NO_WRAPPER=true $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check result
 
@@ -66,7 +66,7 @@ if [ 0 != $? ] ; then
 fi
 assert_http_status 200 $DIR/headers.out
 
-API_XML_NO_WRAPPER=true sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+API_XML_NO_WRAPPER=true $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 assert_xml_value "Btest value" "/config/property[@key='test.property']/@value" $DIR/curl.out
 assert_xml_value "" "/config/property[@key='test.property2']/@value" $DIR/curl.out

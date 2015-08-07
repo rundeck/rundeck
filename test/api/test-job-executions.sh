@@ -62,7 +62,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #result will contain list of failed and succeeded jobs, in this
 #case there should only be 1 failed or 1 succeeded since we submit only 1
@@ -89,7 +89,7 @@ params=""
 # get listing
 docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #verify 0 results
 
@@ -110,7 +110,7 @@ execargs="-opt2 a"
 # get listing
 $CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #get execid
 
@@ -137,7 +137,7 @@ params=""
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #verify 1 results
 
@@ -160,7 +160,7 @@ sleep 6
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #verify 1 results
 
@@ -185,7 +185,7 @@ execargs="-opt2 a"
 # get listing
 $CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #get execid
 
@@ -201,7 +201,7 @@ fi
 
 #wait for execution to finish
 rd-queue follow -q -e $execid || fail "Waiting for execution $execid to finish"
-sh $SRC_DIR/api-expect-exec-success.sh $execid || fail "Wrong exit status for exec $execid"
+$SHELL $SRC_DIR/api-expect-exec-success.sh $execid || fail "Wrong exit status for exec $execid"
 
 ###
 # Test result of /job/ID/executions paging params
@@ -216,7 +216,7 @@ params=""
 # get listing
 docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #verify 1 results
 
@@ -237,7 +237,7 @@ params="max=1"
 # get listing
 docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #verify 1 results
 
@@ -259,7 +259,7 @@ params="max=1&offset=1"
 # get listing
 docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #verify 1 results
 
@@ -284,7 +284,7 @@ params="status=some_status"
 
 docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 
 
@@ -302,7 +302,7 @@ echo "TEST: job/id/executions invalid id param"
 runurl="${APIURL}/job/fake/executions"
 params=""
 
-sh $SRC_DIR/api-expect-error.sh ${runurl} "${params}" "Job ID does not exist: fake" 404 || exit 2
+$SHELL $SRC_DIR/api-expect-error.sh ${runurl} "${params}" "Job ID does not exist: fake" 404 || exit 2
 echo "OK"
 
 ####
@@ -362,7 +362,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #result will contain list of failed and succeeded jobs, in this
 #case there should only be 1 failed or 1 succeeded since we submit only 1
@@ -391,7 +391,7 @@ execargs="-opt2 a"
 # get listing
 $CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #get execid
 
@@ -421,7 +421,7 @@ params="status=failed"
 # get listing
 docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #verify 1 results
 
@@ -493,7 +493,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #result will contain list of failed and succeeded jobs, in this
 #case there should only be 1 failed or 1 succeeded since we submit only 1
@@ -520,7 +520,7 @@ execargs="-opt2 a"
 # get listing
 $CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #get execid
 
@@ -542,7 +542,7 @@ params="status=running"
 # get listing
 docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #verify 1 results
 
@@ -564,7 +564,7 @@ params=""
 # get listing
 docurl -X POST ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 # let pending abort finish
 
@@ -584,7 +584,7 @@ params="status=aborted"
 # get listing
 docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #verify 1 results
 

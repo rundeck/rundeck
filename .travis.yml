@@ -6,8 +6,12 @@ jdk:
   - openjdk7
 #sudo: false
 # can uncomment above after resolution of https://github.com/travis-ci/travis-ci/issues/3120
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y xmlstarlet jq
+  - sudo chsh --shell $(which bash)
 script:
-  - './gradlew clean build && groovy testbuild.groovy -gradle && make TAG=SNAPSHOT BUILD_NUM=$TRAVIS_BUILD_NUMBER rpm deb'
+  - './gradlew clean build && groovy testbuild.groovy -gradle && make TAG=SNAPSHOT BUILD_NUM=$TRAVIS_BUILD_NUMBER rpm deb && bash run-api-tests.sh'
 addons:
   apt:
     packages:
@@ -16,6 +20,8 @@ addons:
     - make
     - zip
     - unzip
+    #- xmlstarlet #once added to whitelist
+    #- jq #once added to whitelist
 # whitelist
 branches:
   only:

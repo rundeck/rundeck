@@ -62,7 +62,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #result will contain list of failed and succeeded jobs, in this
 #case there should only be 1 failed or 1 succeeded since we submit only 1
@@ -105,7 +105,7 @@ fi
 # allow 204 no content response
 if ! grep 'HTTP/1.1 204' $DIR/headers.out ; then
 #test success result
-  sh $SRC_DIR/api-test-success.sh $DIR/curl.out "Job was successfully deleted: [${jobid}] api-test/job-delete/cli job" || exit 2
+  $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out "Job was successfully deleted: [${jobid}] api-test/job-delete/cli job" || exit 2
 fi
 echo "OK"
 rm $DIR/headers.out
@@ -119,7 +119,7 @@ echo "TEST: Get deleted job should fail"
 # now submit req
 runurl="${APIURL}/job/${jobid}"
 params=""
-sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "Job ID does not exist: ${jobid}" 404 || exit 2
+$SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "Job ID does not exist: ${jobid}" 404 || exit 2
 
 echo "OK"
 

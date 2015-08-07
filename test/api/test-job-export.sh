@@ -62,7 +62,7 @@ if [ 0 != $? ] ; then
 fi
 
 # expect success result
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 
 #result will contain list of failed and succeeded jobs, in this
@@ -284,7 +284,7 @@ params="format=json"
 # specify the file for upload with curl, named "xmlBatch"
 ulopts="-H Accept:application/json"
 
-CURL_REQ_OPTS=$ulopts sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "The format is not valid: json" 415 || exit 2
+CURL_REQ_OPTS=$ulopts $SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "The format is not valid: json" 415 || exit 2
 echo OK
 rm $DIR/curl.out
 ###
@@ -299,6 +299,6 @@ runurl="${APIURL}/job/${jobid}"
 params="format=json"
 
 # get listing
-sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "The format is not valid: json" 415 || exit 2
+$SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "The format is not valid: json" 415 || exit 2
 echo OK
 rm $DIR/curl.out

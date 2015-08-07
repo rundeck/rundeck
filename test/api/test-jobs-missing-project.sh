@@ -12,7 +12,7 @@ echo "TEST: require project parameter for /api/jobs..."
 
 params="project="
 
-sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"project\" is required" || exit 2
+$SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"project\" is required" || exit 2
 echo "OK"
 
 

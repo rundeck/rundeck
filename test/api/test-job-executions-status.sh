@@ -67,7 +67,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #result will contain list of failed and succeeded jobs, in this
 #case there should only be 1 failed or 1 succeeded since we submit only 1
@@ -96,7 +96,7 @@ execargs="-opt2 a"
 # get listing
 $CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #get execid
 
@@ -126,7 +126,7 @@ params="status=test+status+code"
 # get listing
 docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #verify 1 results
 

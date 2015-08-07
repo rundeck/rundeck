@@ -9,35 +9,7 @@ file=$DIR/curl.out
 
 RDECK_PROJECTS=${RDECK_PROJECTS:-$RDECK_BASE/projects}
 
-# now submit req
 proj="test"
-
-runurl="${APIURL}/project/${proj}/resources/refresh"
-
-echo "TEST: /api/2/project/${proj}/resources/refresh (no URL defined)"
-params="t=t"
-
-docurl -X POST  ${runurl}?${params} > ${file} || fail "ERROR: failed request"
-
-sh $SRC_DIR/api-test-error.sh ${file} "Resources were not updated because no resource model provider URL is configured for project test" || exit 2
-
-echo "OK"
-
-echo "TEST: /api/2/project/${proj}/resources/refresh (invalid URL)"
-
-#backup project.properties and set invalid resources url
-
-TETC=$RDECK_PROJECTS/test/etc
-TPROPS=$TETC/project.properties
-TRES=$TETC/resources.xml
-
-if [ ! -f $TPROPS.testbackup ] ; then
-    cp $TPROPS $TPROPS.testbackup
-fi
-if [ ! -f $TRES.testbackup -a -f $TRES ] ; then
-    cp $TRES $TRES.testbackup
-fi
-
 proj_config_url="${APIURL}/project/${proj}/config"
 delete_url_config(){
 	prop=$1
@@ -59,13 +31,41 @@ set_url_config(){
 	    errorMsg "ERROR: failed PUT request"
 	    exit 2
 	fi
-	#echo "project.resources.url=http://invaliddomain:1235/resources.xml" >> $TPROPS
+	#echo "project.resources.url=http://invalid.domain:1235/resources.xml" >> $TPROPS
 }
 
-set_url_config "project.resources.url" "http://invaliddomain:1235/resources.xml"
+
+runurl="${APIURL}/project/${proj}/resources/refresh"
+delete_url_config "project.resources.url"
+
+echo "TEST: /api/2/project/${proj}/resources/refresh (no URL defined)"
+params="t=t"
+
 docurl -X POST  ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
-sh $SRC_DIR/api-test-error.sh ${file} "Error updating node resources file for project test: com.dtolabs.rundeck.core.common.FileUpdaterException: java.net.UnknownHostException: invaliddomain" || exit 2
+$SHELL $SRC_DIR/api-test-error.sh ${file} "Resources were not updated because no resource model provider URL is configured for project test" || exit 2
+
+echo "OK"
+
+echo "TEST: /api/2/project/${proj}/resources/refresh (invalid URL)"
+
+#backup project.properties and set invalid resources url
+
+TETC=$RDECK_PROJECTS/test/etc
+TPROPS=$TETC/project.properties
+TRES=$TETC/resources.xml
+
+if [ ! -f $TPROPS.testbackup ] ; then
+    cp $TPROPS $TPROPS.testbackup
+fi
+if [ ! -f $TRES.testbackup -a -f $TRES ] ; then
+    cp $TRES $TRES.testbackup
+fi
+
+set_url_config "project.resources.url" "http://invalid.domain:1235/resources.xml"
+docurl -X POST  ${runurl}?${params} > ${file} || fail "ERROR: failed request"
+
+$SHELL $SRC_DIR/api-test-error.sh ${file} "Error updating node resources file for project test: com.dtolabs.rundeck.core.common.FileUpdaterException: java.net.UnknownHostException: invalid.domain" || exit 2
 
 echo "OK"
 
@@ -93,7 +93,7 @@ set_url_config "project.resources.url" "${TEMPURL}"
 
 docurl -X POST  ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
-sh $SRC_DIR/api-test-success.sh ${file} "Resources were successfully updated for project test" || exit 2
+$SHELL $SRC_DIR/api-test-success.sh ${file} "Resources were successfully updated for project test" || exit 2
 
 echo "OK"
 
@@ -101,31 +101,31 @@ delete_url_config "project.resources.url"
 
 #sleep 1
 # set allowed URL with port 1235
-#echo "project.resources.allowedURL.0=http://invaliddomain:1235/resources.xml" >> $TPROPS
-set_url_config "project.resources.allowedURL.0" "http://invaliddomain:1235/resources.xml"
+#echo "project.resources.allowedURL.0=http://invalid.domain:1235/resources.xml" >> $TPROPS
+set_url_config "project.resources.allowedURL.0" "http://invalid.domain:1235/resources.xml"
 
 echo "TEST: /api/2/project/${proj}/resources/refresh (POST) (not allowed provider URL)"
 
 
 
-data="providerURL=http://invaliddomain:1234/resources.xml"
+data="providerURL=http://invalid.domain:1234/resources.xml"
 
 # post data
 $CURL -H "$AUTHHEADER" -X POST --data-urlencode "${data}" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
-sh $SRC_DIR/api-test-error.sh ${file} "Error updating node resources file for project test: providerURL is not allowed: http://invaliddomain:1234/resources.xml" || exit 2
+$SHELL $SRC_DIR/api-test-error.sh ${file} "Error updating node resources file for project test: providerURL is not allowed: http://invalid.domain:1234/resources.xml" || exit 2
 
 echo "OK"
 
 echo "TEST: /api/2/project/${proj}/resources/refresh (POST) (allowed URL, invalid hostname)"
 
 
-data="providerURL=http://invaliddomain:1235/resources.xml"
+data="providerURL=http://invalid.domain:1235/resources.xml"
 
 # post data
 $CURL -H "$AUTHHEADER" -X POST --data-urlencode "${data}" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
-sh $SRC_DIR/api-test-error.sh ${file} "Error updating node resources file for project test: com.dtolabs.rundeck.core.common.FileUpdaterException: java.net.UnknownHostException: invaliddomain" || exit 2
+$SHELL $SRC_DIR/api-test-error.sh ${file} "Error updating node resources file for project test: com.dtolabs.rundeck.core.common.FileUpdaterException: java.net.UnknownHostException: invalid.domain" || exit 2
 
 echo "OK"
 
@@ -138,7 +138,7 @@ data="providerURL=$TEMPURL"
 # post data
 $CURL -H "$AUTHHEADER" -X POST --data-urlencode "${data}" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
-sh $SRC_DIR/api-test-error.sh ${file} "Error updating node resources file for project test: providerURL is not allowed: file://$TETC/testUpdateResources.xml" || exit 2
+$SHELL $SRC_DIR/api-test-error.sh ${file} "Error updating node resources file for project test: providerURL is not allowed: file://$TETC/testUpdateResources.xml" || exit 2
 
 echo "OK"
 
@@ -157,7 +157,7 @@ data="providerURL=$TEMPURL"
 # post data
 $CURL -H "$AUTHHEADER" -X POST --data-urlencode "${data}" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
-sh $SRC_DIR/api-test-success.sh ${file} "Resources were successfully updated for project test" || exit 2
+$SHELL $SRC_DIR/api-test-success.sh ${file} "Resources were successfully updated for project test" || exit 2
 
 echo "OK"
 

@@ -37,6 +37,9 @@ public class ApiRequestFilters {
     static final Logger logger = Logger.getLogger('org.rundeck.api.requests')
     private static final String METRIC_TIMER = 'ApiRequestFilters._METRIC_TIMER'
     private static final String REQUEST_TIME = 'ApiRequestFilters._TIMER'
+
+    def dependsOn = [AA_TimerFilters]
+
     def MetricRegistry metricRegistry
     def messageSource
     def apiService
