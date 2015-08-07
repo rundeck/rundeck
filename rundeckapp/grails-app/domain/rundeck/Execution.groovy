@@ -126,7 +126,7 @@ class Execution extends ExecutionContext {
     }
 
     public boolean hasExecutionEnabled() {
-        return scheduledExecution.hasExecutionEnabled();
+        return !scheduledExecution || scheduledExecution.hasExecutionEnabled();
     }
 
     public String getCustomStatusString(){
