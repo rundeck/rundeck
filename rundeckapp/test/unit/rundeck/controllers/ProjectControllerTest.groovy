@@ -1,6 +1,7 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.AuthContext
@@ -11,6 +12,7 @@ import grails.test.mixin.TestFor
 
 import org.codehaus.groovy.grails.plugins.codecs.JSONCodec;
 import org.codehaus.groovy.grails.plugins.testing.GrailsMockHttpServletResponse
+import org.junit.Before
 import org.junit.Test
 import org.springframework.context.MessageSource
 
@@ -1625,7 +1627,7 @@ class ProjectControllerTest {
                 [] as Set, [] as Set)
         session.user='user1'
         request.method='PUT'
-        controller.apiProjectImport()
+        controller.apiProjectImport(new ProjectArchiveParams())
         assertEquals HttpServletResponse.SC_OK,response.status
         assertEquals 'failed',response.xml.'@status'.text()
         assertEquals '2',response.xml.errors.'@count'.text()
@@ -1671,7 +1673,7 @@ class ProjectControllerTest {
                              AuthContext authContext,  InputStream stream, Map options->
                 assertEquals('user1',user)
                 assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
-                assertEquals([executionImportBehavior:'import', jobUUIDBehavior:'preserve'],options)
+                assertEquals([importExecutions:true, jobUuidOption:'preserve',importConfig:false, importACL:false],options)
                 [success:true]
             }
         }
@@ -1698,7 +1700,7 @@ class ProjectControllerTest {
                              AuthContext authContext,  InputStream stream, Map options->
                 assertEquals('user1',user)
                 assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
-                assertEquals([executionImportBehavior: 'skip', jobUUIDBehavior: 'preserve'], options)
+                assertEquals([importExecutions: false, jobUuidOption: 'preserve',importConfig:false, importACL:false], options)
                 [success:true]
             }
         }
@@ -1723,7 +1725,7 @@ class ProjectControllerTest {
                              AuthContext authContext,  InputStream stream, Map options->
                 assertEquals('user1',user)
                 assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
-                assertEquals([executionImportBehavior: 'import', jobUUIDBehavior: 'preserve'], options)
+                assertEquals([importExecutions: true, jobUuidOption: 'preserve',importConfig:false, importACL:false], options)
                 [success:true]
             }
         }
@@ -1739,7 +1741,7 @@ class ProjectControllerTest {
         assertEquals HttpServletResponse.SC_OK,response.status
     }
     @Test
-    void apiProjectImport_jobUUIDBehaviorPreserve() {
+    void apiProjectImport_jobUuidOptionPreserve() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
@@ -1748,13 +1750,13 @@ class ProjectControllerTest {
                              AuthContext authContext,  InputStream stream, Map options->
                 assertEquals('user1',user)
                 assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
-                assertEquals([executionImportBehavior: 'import', jobUUIDBehavior: 'preserve'], options)
+                assertEquals([importExecutions: true, jobUuidOption: 'preserve',importConfig:false, importACL:false], options)
                 [success:true]
             }
         }
         request.api_version = 11
         params.project = 'test1'
-        params.jobUUIDBehavior='preserve'
+        params.jobUuidOption='preserve'
         request.format='application/zip'
         request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
                 [] as Set, [] as Set)
@@ -1764,7 +1766,7 @@ class ProjectControllerTest {
         assertEquals HttpServletResponse.SC_OK,response.status
     }
     @Test
-    void apiProjectImport_jobUUIDBehaviorReplace() {
+    void apiProjectImport_jobUuidOptionRemove() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
@@ -1773,20 +1775,53 @@ class ProjectControllerTest {
                              AuthContext authContext,  InputStream stream, Map options->
                 assertEquals('user1',user)
                 assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
-                assertEquals([executionImportBehavior: 'import', jobUUIDBehavior: 'preserve'], options)
+                assertEquals([importExecutions: true, jobUuidOption: 'remove',importConfig:false, importACL:false], options)
                 [success:true]
             }
         }
         request.api_version = 11
         params.project = 'test1'
-        params.jobUUIDBehavior='replace'
+        params.jobUuidOption='remove'
         request.format='application/zip'
         request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
                 [] as Set, [] as Set)
         session.user='user1'
         request.method='PUT'
         controller.apiProjectImport()
-        assertEquals HttpServletResponse.SC_OK,response.status
+        assertEquals ("expected 200, ${response.contentAsString}",HttpServletResponse.SC_OK,response.status)
+    }
+    @Test
+    void apiProjectImport_jobUuidOption_invalidValue() {
+        controller.apiService = new ApiService()
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code+';'+args.join(';') } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
+        controller.projectService=mockWith(ProjectService){
+            importToProject{  project, String user, String roleList,  framework,
+                             AuthContext authContext,  InputStream stream, Map options->
+                assertEquals('user1',user)
+                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+                assertEquals([importExecutions: true, jobUuidOption: 'remove',importConfig:false, importACL:false], options)
+                [success:true]
+            }
+        }
+        request.api_version = 11
+        params.project = 'test1'
+        params.jobUuidOption='blah'
+        request.format='application/zip'
+        response.format='json'
+        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
+                [] as Set, [] as Set)
+        session.user='user1'
+        request.method='PUT'
+        controller.apiProjectImport()
+        assertEquals ("expected 200, ${response.contentAsString}",HttpServletResponse.SC_BAD_REQUEST,response.status)
+        assertEquals(
+                ["message": "api.error.invalid.request;Property [jobUuidOption] of class [class com.dtolabs.rundeck.app.support.ProjectArchiveParams] with value [blah] is not contained within the list [[preserve, remove]]",
+                 "error": true,
+                 "errorCode": "api.error.invalid.request",
+                 "apiversion": 14],
+                response.json
+        )
     }
     @Test
     void apiProjectImport_json_success() {

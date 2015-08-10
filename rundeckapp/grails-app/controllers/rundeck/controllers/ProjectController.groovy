@@ -2,7 +2,6 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -232,10 +231,10 @@ class ProjectController extends ControllerBase{
                     authContext,
                     file.getInputStream(),
                     [
-                            jobUUIDBehavior        : archiveParams.jobUUIDImportBehavior,
-                            executionImportBehavior: archiveParams.executionImportBehavior,
-                            importConfig           : archiveParams.importConfig,
-                            importACL              : archiveParams.importACL
+                            jobUuidOption : archiveParams.jobUuidOption,
+                            importExecutions: archiveParams.importExecutions,
+                            importConfig    : archiveParams.importConfig,
+                            importACL       : archiveParams.importACL
                     ]
 
             )
@@ -1332,7 +1331,7 @@ class ProjectController extends ControllerBase{
         projectService.exportProjectToOutputStream(project, framework,response.outputStream)
     }
 
-    def apiProjectImport(){
+    def apiProjectImport(ProjectArchiveParams archiveParams){
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -1344,6 +1343,14 @@ class ProjectController extends ControllerBase{
             return
         }
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'], 'xml')
+        if(archiveParams.hasErrors()){
+            return apiService.renderErrorFormat(response,[
+                    status:HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.invalid.request',
+                    args: [archiveParams.errors.allErrors.collect{g.message(error: it)}.join("; ")],
+                    format:respFormat
+            ])
+        }
         def framework = frameworkService.rundeckFramework
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         //uploaded file
@@ -1361,8 +1368,10 @@ class ProjectController extends ControllerBase{
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
 
         def importOptions = [
-                executionImportBehavior: Boolean.parseBoolean(params.importExecutions?:'true') ? 'import' : 'skip',
-                jobUUIDBehavior: params.jobUuidOption?:'preserve'
+                jobUuidOption        : archiveParams.jobUuidOption,
+                importExecutions     : archiveParams.importExecutions,
+                importConfig         : archiveParams.importConfig,
+                importACL            : archiveParams.importACL
         ]
         def result = projectService.importToProject(project, session.user, roleList, framework, authContext,
                 stream, importOptions)

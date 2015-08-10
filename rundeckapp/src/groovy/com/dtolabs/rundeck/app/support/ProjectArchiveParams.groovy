@@ -27,15 +27,15 @@ import grails.validation.Validateable
 @Validateable
 class ProjectArchiveParams {
     String project
-    String jobUUIDImportBehavior
-    String executionImportBehavior
-    Boolean importConfig
-    Boolean importACL
+    String jobUuidOption='preserve'
+    Boolean importExecutions=true
+    Boolean importConfig=false
+    Boolean importACL=false
 
     static constraints={
         project(matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
-        jobUUIDImportBehavior(nullable: true,inList: ['preserve','remove'])
-        executionImportBehavior(nullable: true,inList: ['import','skip'])
+        jobUuidOption(nullable: true,inList: ['preserve','remove'])
+        importExecutions(nullable: true)
         importConfig(nullable: true)
         importACL(nullable: true)
     }

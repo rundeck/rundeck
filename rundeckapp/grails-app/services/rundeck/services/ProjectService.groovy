@@ -587,7 +587,7 @@ class ProjectService implements InitializingBean{
      * @param framework framework
      * @param authContext authentication context
      * @param input input stream of zip data
-     * @param options import options, [jobUUIDBehavior: (replace/preserve), executionImportBehavior: (import/skip)]
+     * @param options import options, [jobUUIDBehavior: (replace/preserve), importExecutions: (true/false)]
      */
     def importToProject(IRundeckProject project, String user, String roleList, Framework framework,
                         AuthContext authContext, InputStream input, Map options) throws ProjectServiceException {
@@ -600,8 +600,7 @@ class ProjectService implements InitializingBean{
         def Map<String,File> execout=[:]
         def reportxml=[]
         def reportxmlnames=[:]
-        def executionImportBehavior = options.executionImportBehavior ?: 'import'
-        def importExecutions = executionImportBehavior == 'import'
+        def importExecutions = !!options.importExecutions
         def importConfig = !!options.importConfig //TODO:
         def importACL = !!options.importACL //TODO:
         File configtemp=null

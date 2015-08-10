@@ -346,21 +346,21 @@
 
             <div class="radio">
                     <label title="Original UUIDs will be preserved, conflicting UUIDs will be replaced">
-                        <input type="radio" name="jobUUIDImportBehavior" value="preserve" checked />
-                        <g:message code="project.archive.import.jobUUIDBehavior.preserve.label"/>
+                        <input type="radio" name="jobUuidOption" value="preserve" checked />
+                        <g:message code="project.archive.import.jobUuidOption.preserve.label"/>
                     </label>
 
                 <p class="help-block"><g:message
-                        code="project.archive.import.jobUUIDBehavior.preserve.description"/></p>
+                        code="project.archive.import.jobUuidOption.preserve.description"/></p>
             </div>
             <div class="radio">
                 <label title="New UUIDs will be generated for every imported Job">
-                    <input type="radio" name="jobUUIDImportBehavior" value="remove"/>
-                    <g:message code="project.archive.import.jobUUIDBehavior.remove.label"/>
+                    <input type="radio" name="jobUuidOption" value="remove"/>
+                    <g:message code="project.archive.import.jobUuidOption.remove.label"/>
                 </label>
 
                 <p class="help-block"><g:message
-                        code="project.archive.import.jobUUIDBehavior.remove.description"/></p>
+                        code="project.archive.import.jobUuidOption.remove.description"/></p>
             </div>
         </div>
 
@@ -369,18 +369,18 @@
 
             <div class="radio">
                 <label title="All executions and reports will be imported">
-                    <input type="radio" name="executionImportBehavior" value="import" checked/>
-                    <g:message code="archive.import.executionImportBehavior.import.title" />
+                    <input type="radio" name="importExecutions" value="true" checked/>
+                    <g:message code="archive.import.importExecutions.true.title" />
                 </label>
-                <span class="help-block"><g:message code="archive.import.executionImportBehavior.import.help" /></span>
+                <span class="help-block"><g:message code="archive.import.importExecutions.true.help" /></span>
             </div>
 
             <div class="radio">
                 <label title="No executions or reports will be imported">
-                    <input type="radio" name="executionImportBehavior" value="skip"/>
-                    <g:message code="archive.import.executionImportBehavior.skip.title" />
+                    <input type="radio" name="importExecutions" value="false"/>
+                    <g:message code="archive.import.importExecutions.false.title" />
                 </label>
-                <span class="help-block"><g:message code="archive.import.executionImportBehavior.skip.help" /></span>
+                <span class="help-block"><g:message code="archive.import.importExecutions.false.help" /></span>
             </div>
         </div>
         <div class="list-group-item">
@@ -400,7 +400,7 @@
                 <label title="">
                     <input type="radio" name="importConfig" value="false"/>
 
-                    <g:message code="archive.import.executionImportBehavior.skip.title" />
+                    <g:message code="archive.import.importExecutions.false.title" />
 
                 </label>
                 <span class="help-block">
@@ -425,7 +425,7 @@
                 <label title="">
                     <input type="radio" name="importACL" value="false"/>
 
-                    <g:message code="archive.import.executionImportBehavior.skip.title" />
+                    <g:message code="archive.import.importExecutions.false.title" />
 
                 </label>
                 <span class="help-block">
