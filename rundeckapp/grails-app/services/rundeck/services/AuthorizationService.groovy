@@ -89,6 +89,23 @@ class AuthorizationService implements InitializingBean{
                 project ? AuthorizationUtil.projectContext(project) : null
         )
     }
+    /**
+     * Validate the yaml aclpolicy, optionally within a specific project context
+     * @param project name of project to force the context of all policies, or null to not force a context
+     * @param ident identity string for the sources
+     * @param text yaml aclpolicy text
+     * @return validation
+     */
+    public Validation validateYamlPolicy(String project, String ident, File source) {
+        Validation validation=null
+        source.withInputStream {stream->
+            validation=YamlProvider.validate(
+                    YamlProvider.sourceFromStream(ident, stream, new Date()),
+                    project ? AuthorizationUtil.projectContext(project) : null
+            )
+        }
+        validation
+    }
 
     public Validation validateYamlPolicy(File file){
         YamlProvider.validate(YamlProvider.sourceFromFile(file))

@@ -55,6 +55,17 @@
             </ul>
         </div>
     </g:if>
+    <g:if test="${flash.aclerrors}">
+        <div class="alert alert-warning alert-dismissable">
+            <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+            <g:message code="some.files.in.the.archive.could.not.be.imported" />
+            <ul>
+                <g:each in="${flash.aclerrors}" var="errmsg">
+                    <li><g:enc>${errmsg}</g:enc></li>
+                </g:each>
+            </ul>
+        </div>
+    </g:if>
     </div>
 </div>
 <div class="row">

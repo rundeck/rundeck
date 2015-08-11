@@ -2,6 +2,7 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.util.XmlParserUtil
 import com.dtolabs.rundeck.util.ZipBuilder
@@ -39,6 +40,7 @@ class ProjectService implements InitializingBean{
     def loggingService
     def logFileStorageService
     def workflowService
+    def authorizationService
     static transactional = false
 
     private exportJob(ScheduledExecution job, Writer writer)
@@ -588,7 +590,7 @@ class ProjectService implements InitializingBean{
         }
         newmap
     }
-/**
+    /**
      * Import a zip project archive to the project
      * @param project project
      * @param  user username of job owner
@@ -743,21 +745,31 @@ class ProjectService implements InitializingBean{
         if(importConfig && mdfilestemp){
             importProjectMdFiles(mdfilestemp, project)
         }
+        def aclerrors=[]
         if(importACL && aclfilestemp){
-            importProjectACLPolicies(aclfilestemp, project)
+            aclerrors=importProjectACLPolicies(aclfilestemp, project)
         }
 
         (jobxml + execxml + execout.values() + reportxml + [configtemp] + mdfilestemp.values() + aclfilestemp.values()).each { it?.delete() }
-        return [success:loadjoberrors?false:true,joberrors: loadjoberrors,execerrors: execerrors]
+        return [success:(loadjoberrors)?false:true,joberrors: loadjoberrors,execerrors: execerrors,aclerrors:aclerrors]
     }
 
-    private void importProjectACLPolicies(Map<String, File> aclfilestemp, project) {
+    private List<String> importProjectACLPolicies(Map<String, File> aclfilestemp, project) {
+        def errors=[]
         aclfilestemp.each { String k, File v ->
+
+            Validation validation = authorizationService.validateYamlPolicy(project.name, 'files/acls/'+k, v)
+            if(!validation.valid){
+                errors<<"files/acls/${k}: "+validation.toString()
+                log.debug("${project.name}: Import failed for acls/${k}: "+validation)
+                return
+            }
             v.withInputStream { inputs ->
                 project.storeFileResource('acls/' + k, inputs)
                 log.debug("${project.name}: Loaded project ACLPolicy file acl/${k} from archive")
             }
         }
+        errors
     }
 
     private void importProjectMdFiles(Map<String, File> mdfilestemp, project) {

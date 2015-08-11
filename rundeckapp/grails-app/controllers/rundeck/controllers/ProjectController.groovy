@@ -272,6 +272,9 @@ class ProjectController extends ControllerBase{
             if(result.execerrors){
                 flash.execerrors=result.execerrors
             }
+            if(result.aclerrors){
+                flash.aclerrors=result.aclerrors
+            }
             return redirect(controller: 'menu',action: 'admin',params:[project:project])
         }
         }.invalidToken {
@@ -1433,6 +1436,10 @@ class ProjectController extends ControllerBase{
                     if(result.execerrors){
                         delegate.'execution_errors'=result.execerrors
                     }
+
+                    if(result.aclerrors){
+                        delegate.'acl_errors'=result.aclerrors
+                    }
                 }
                 break;
             case 'xml':
@@ -1449,6 +1456,13 @@ class ProjectController extends ControllerBase{
                         if(result.execerrors){
                             delegate.'executionErrors'(count: result.execerrors.size()){
                                 result.execerrors.each{
+                                    delegate.'error'(it)
+                                }
+                            }
+                        }
+                        if(result.aclerrors){
+                            delegate.'aclErrors'(count: result.aclerrors.size()){
+                                result.aclerrors.each{
                                     delegate.'error'(it)
                                 }
                             }
