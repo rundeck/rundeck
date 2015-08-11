@@ -1,6 +1,7 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
@@ -1633,7 +1634,7 @@ class ProjectControllerTest {
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
-                             AuthContext authContext,  InputStream stream, Map options->
+                             AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
                 assertEquals('user1',user)
                 assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
                 [success:false,joberrors:['error1','error2']]
@@ -1662,7 +1663,7 @@ class ProjectControllerTest {
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
-                             AuthContext authContext,  InputStream stream, Map options->
+                             AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
                 assertEquals('user1',user)
                 assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
                 [success:false,joberrors:['error1','error2']]
@@ -1690,10 +1691,13 @@ class ProjectControllerTest {
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
-                             AuthContext authContext,  InputStream stream, Map options->
+                             AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
                 assertEquals('user1',user)
                 assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
-                assertEquals([importExecutions:true, jobUuidOption:'preserve',importConfig:false, importACL:false],options)
+                assertEquals(true, options.importExecutions)
+                assertEquals('preserve', options.jobUuidOption)
+                assertEquals(false, options.importConfig)
+                assertEquals(false, options.importACL)
                 [success:true]
             }
         }
@@ -1717,10 +1721,13 @@ class ProjectControllerTest {
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
-                             AuthContext authContext,  InputStream stream, Map options->
+                             AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
                 assertEquals('user1',user)
                 assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
-                assertEquals([importExecutions: false, jobUuidOption: 'preserve',importConfig:false, importACL:false], options)
+                assertEquals(false, options.importExecutions)
+                assertEquals('preserve', options.jobUuidOption)
+                assertEquals(false, options.importConfig)
+                assertEquals(false, options.importACL)
                 [success:true]
             }
         }
@@ -1742,10 +1749,13 @@ class ProjectControllerTest {
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
-                             AuthContext authContext,  InputStream stream, Map options->
+                             AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
                 assertEquals('user1',user)
                 assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
-                assertEquals([importExecutions: true, jobUuidOption: 'preserve',importConfig:false, importACL:false], options)
+                assertEquals(true, options.importExecutions)
+                assertEquals('preserve', options.jobUuidOption)
+                assertEquals(false, options.importConfig)
+                assertEquals(false, options.importACL)
                 [success:true]
             }
         }
@@ -1767,10 +1777,13 @@ class ProjectControllerTest {
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
-                             AuthContext authContext,  InputStream stream, Map options->
+                             AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
                 assertEquals('user1',user)
                 assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
-                assertEquals([importExecutions: true, jobUuidOption: 'preserve',importConfig:false, importACL:false], options)
+                assertEquals(true, options.importExecutions)
+                assertEquals('preserve', options.jobUuidOption)
+                assertEquals(false, options.importConfig)
+                assertEquals(false, options.importACL)
                 [success:true]
             }
         }
@@ -1792,10 +1805,13 @@ class ProjectControllerTest {
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
-                             AuthContext authContext,  InputStream stream, Map options->
+                             AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
                 assertEquals('user1',user)
                 assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
-                assertEquals([importExecutions: true, jobUuidOption: 'remove',importConfig:false, importACL:false], options)
+                assertEquals(true, options.importExecutions)
+                assertEquals('remove', options.jobUuidOption)
+                assertEquals(false, options.importConfig)
+                assertEquals(false, options.importACL)
                 [success:true]
             }
         }
@@ -1817,7 +1833,7 @@ class ProjectControllerTest {
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
-                             AuthContext authContext,  InputStream stream, Map options->
+                             AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
                 assertEquals('user1',user)
                 assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
                 assertEquals([importExecutions: true, jobUuidOption: 'remove',importConfig:false, importACL:false], options)
@@ -1850,7 +1866,7 @@ class ProjectControllerTest {
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
-                             AuthContext authContext,  InputStream stream, Map options->
+                             AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
                 assertEquals('user1',user)
                 assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
                 [success:true]
@@ -1878,7 +1894,7 @@ class ProjectControllerTest {
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import',true,false)
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
-                              AuthContext authContext,  InputStream stream, Map options->
+                              AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
                 assertEquals('user1',user)
                 assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
                 [success:true]
@@ -1913,7 +1929,7 @@ class ProjectControllerTest {
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import',true,true)
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
-                              AuthContext authContext,  InputStream stream, Map options->
+                              AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
                 assertEquals('user1',user)
                 assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
                 assertTrue(options.importACL)

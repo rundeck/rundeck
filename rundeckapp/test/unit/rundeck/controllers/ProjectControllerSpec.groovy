@@ -1,5 +1,6 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -1033,12 +1034,12 @@ class ProjectControllerSpec extends Specification{
             0 * _(*_)
         }
         controller.projectService=Mock(ProjectService){
-            1*importToProject(null,null,'test1',null,null,!null,[
-                    jobUuidOption : 'preserve',
-                    importExecutions: true,
-                    importConfig    : false,
-                    importACL       : true
-            ])>>[success:true]
+            1*importToProject(null,null,'test1',null,null,!null, {
+                it.jobUuidOption== 'preserve'
+                it.importExecutions== true
+                it.importConfig== false
+                it.importACL== true
+            })>>[success:true]
 
             0 * _(*_)
         }
@@ -1086,12 +1087,12 @@ class ProjectControllerSpec extends Specification{
             0 * _(*_)
         }
         controller.projectService=Mock(ProjectService){
-            1*importToProject(null,null,'test1',null,null,!null,[
-                    jobUuidOption : 'preserve',
-                    importExecutions: true,
-                    importConfig    : false,
-                    importACL       : false
-            ])>>[success:true]
+            1*importToProject(null,null,'test1',null,null,!null,{
+                it.jobUuidOption== 'preserve'
+                it.importExecutions== true
+                it.importConfig== false
+                it.importACL== false
+            })>>[success:true]
 
             0 * _(*_)
         }

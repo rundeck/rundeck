@@ -1,5 +1,6 @@
 package rundeck.services
 import com.dtolabs.rundeck.app.support.BuilderUtil
+import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.util.XmlParserUtil
@@ -590,7 +591,7 @@ class ProjectService implements InitializingBean{
      * @param options import options, [jobUUIDBehavior: (replace/preserve), importExecutions: (true/false)]
      */
     def importToProject(IRundeckProject project, String user, String roleList, Framework framework,
-                        AuthContext authContext, InputStream input, Map options) throws ProjectServiceException {
+                        AuthContext authContext, InputStream input, ProjectArchiveImportRequest options) throws ProjectServiceException {
         ZipReader zip = new ZipReader(new ZipInputStream(input))
 //        zip.debug=true
         def jobxml=[]
@@ -600,9 +601,9 @@ class ProjectService implements InitializingBean{
         def Map<String,File> execout=[:]
         def reportxml=[]
         def reportxmlnames=[:]
-        def importExecutions = !!options.importExecutions
-        def importConfig = !!options.importConfig
-        def importACL = !!options.importACL
+        boolean importExecutions = options.importExecutions
+        boolean importConfig = options.importConfig
+        boolean importACL = options.importACL
         File configtemp=null
         Map<String,File> mdfilestemp=[:]
         Map<String,File> aclfilestemp=[:]
@@ -687,7 +688,7 @@ class ProjectService implements InitializingBean{
                 //change project name to the current project
                 jobset*.project= projectName
                 //remove uuid to reset it
-                def uuidBehavior=options.jobUUIDBehavior?:'preserve'
+                def uuidBehavior=options.jobUuidOption?:'preserve'
                 switch (uuidBehavior){
                     case 'remove':
                         jobset*.uuid = null

@@ -1,5 +1,6 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
@@ -247,12 +248,7 @@ class ProjectController extends ControllerBase{
                     framework,
                     authContext,
                     file.getInputStream(),
-                    [
-                            jobUuidOption : archiveParams.jobUuidOption,
-                            importExecutions: archiveParams.importExecutions,
-                            importConfig    : archiveParams.importConfig,
-                            importACL       : archiveParams.importACL
-                    ]
+                    archiveParams
 
             )
 
@@ -1406,15 +1402,16 @@ class ProjectController extends ControllerBase{
 
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
 
-        def importOptions = [
-                jobUuidOption        : archiveParams.jobUuidOption,
-                importExecutions     : archiveParams.importExecutions,
-                importConfig         : archiveParams.importConfig,
-                importACL            : archiveParams.importACL
-        ]
-        def result = projectService.importToProject(project, session.user, roleList, framework, authContext,
-                stream, importOptions)
-        switch (respFormat){
+        def result = projectService.importToProject(
+                project,
+                session.user,
+                roleList,
+                framework,
+                authContext,
+                stream,
+                archiveParams
+        )
+        switch (respFormat) {
             case 'json':
                 render(contentType: 'application/json'){
                     import_status=result.success?'successful':'failed'

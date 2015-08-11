@@ -25,7 +25,7 @@ import grails.validation.Validateable
  * @since 2014-08-14
  */
 @Validateable
-class ProjectArchiveParams {
+class ProjectArchiveParams implements ProjectArchiveImportRequest{
     String project
     String jobUuidOption='preserve'
     Boolean importExecutions=true
@@ -38,5 +38,16 @@ class ProjectArchiveParams {
         importExecutions(nullable: true)
         importConfig(nullable: true)
         importACL(nullable: true)
+    }
+
+    @Override
+    public String toString() {
+        return "ProjectArchiveParams{" +
+                "project='" + project + '\'' +
+                ", jobUuidOption='" + jobUuidOption + '\'' +
+                ", importExecutions=" + importExecutions +
+                ", importConfig=" + importConfig +
+                ", importACL=" + importACL +
+                '}';
     }
 }
