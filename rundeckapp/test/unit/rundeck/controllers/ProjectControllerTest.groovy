@@ -1204,6 +1204,60 @@ class ProjectControllerTest {
                 }
                 authorizeApplicationResourceAny(1..1) { ctx, proj, actions ->
                     if (proj == [acl: true]) {
+                        assertTrue(AuthConstants.ACTION_READ in actions)
+                        assertTrue(AuthConstants.ACTION_ADMIN in actions)
+                        aclauth
+                    } else {
+                        assertTrue(action in actions)
+                        assertTrue(AuthConstants.ACTION_ADMIN in actions)
+                        authorized
+                    }
+                }
+            }
+            getAuthContextForSubjectAndProject{subj,proj->
+                null
+            }
+        }
+    }
+    private def mockFrameworkServiceForProjectImport(boolean exists, boolean authorized, String action,boolean isacl=false,boolean aclauth=false){
+        mockWith(FrameworkService){
+            existsFrameworkProject{String name->
+                exists
+            }
+            if(!exists){
+                return
+            }
+            getAuthContextForSubject{subj->
+                null
+            }
+            authResourceForProject(1..1) { name ->
+                assertEquals("test1", name)
+            }
+            authorizeApplicationResourceAny(1..1){ctx,resource,actions->
+                assertTrue(action in actions)
+                assertTrue(AuthConstants.ACTION_ADMIN in actions)
+                authorized
+            }
+            if(!authorized){
+                return
+            }
+            getFrameworkProject{name->
+                assertEquals('test1',name)
+                [name:name]
+            }
+            getRundeckFramework{->
+                null
+            }
+            getAuthContextForSubject{->null}
+
+
+            if(isacl) {
+                authResourceForProjectAcl { name ->
+                    assertEquals("test1", name)
+                    [acl: true]
+                }
+                authorizeApplicationResourceAny(1..1) { ctx, proj, actions ->
+                    if (proj == [acl: true]) {
                         assertTrue(AuthConstants.ACTION_CREATE in actions)
                         assertTrue(AuthConstants.ACTION_ADMIN in actions)
                         aclauth
@@ -1528,10 +1582,31 @@ class ProjectControllerTest {
     void apiProjectExport_success() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export')
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true)
         controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream->
+            exportProjectToOutputStream{project,fwk,stream,l,aclperms->
                 assertEquals 'test1',project.name
+                assertTrue aclperms
+                stream<<'some data'
+            }
+        }
+        request.api_version = 11
+        params.project = 'test1'
+        controller.apiProjectExport()
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertEquals 'application/zip', response.contentType
+        assertEquals 'some data', response.text
+
+    }
+    @Test
+    void apiProjectExport_success_aclpermsfalse() {
+        controller.apiService = new ApiService()
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,false)
+        controller.projectService=mockWith(ProjectService){
+            exportProjectToOutputStream{project,fwk,stream,l,aclperms->
+                assertEquals 'test1',project.name
+                assertFalse aclperms
                 stream<<'some data'
             }
         }
@@ -1547,7 +1622,7 @@ class ProjectControllerTest {
     void apiProjectExport_apiversion() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export')
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true)
         controller.projectService=mockWith(ProjectService){
             exportProjectToOutputStream{project,fwk,stream->
                 assertEquals 'test1',project.name
@@ -1563,7 +1638,7 @@ class ProjectControllerTest {
     void apiProjectExport_notfound() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(false, true, 'export')
+        controller.frameworkService = mockFrameworkServiceForProjectExport(false, true, 'export',true,true)
         controller.projectService=mockWith(ProjectService){
             exportProjectToOutputStream{project,fwk,stream->
                 assertEquals 'test1',project.name
@@ -1579,7 +1654,7 @@ class ProjectControllerTest {
     void apiProjectExport_unauthorized() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, false, 'export')
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, false, 'export',true,true)
         controller.projectService=mockWith(ProjectService){
             exportProjectToOutputStream{project,fwk,stream->
                 assertEquals 'test1',project.name
@@ -1595,7 +1670,7 @@ class ProjectControllerTest {
     void apiProjectImport_notfound() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(false, true, 'import')
+        controller.frameworkService = mockFrameworkServiceForProjectImport(false, true, 'import')
         request.api_version = 11
         params.project = 'test1'
         request.format='blah'
@@ -1607,7 +1682,7 @@ class ProjectControllerTest {
     void apiProjectImport_unauthorized() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, false, 'import')
+        controller.frameworkService = mockFrameworkServiceForProjectImport(true, false, 'import')
         request.api_version = 11
         params.project = 'test1'
         request.format='blah'
@@ -1619,7 +1694,7 @@ class ProjectControllerTest {
     void apiProjectImport_invalidFormat() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
+        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
         request.api_version = 11
         params.project = 'test1'
         request.format='blah'
@@ -1631,7 +1706,7 @@ class ProjectControllerTest {
     void apiProjectImport_xml_failure() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
+        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
                              AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
@@ -1660,7 +1735,7 @@ class ProjectControllerTest {
     void apiProjectImport_json_failure() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
+        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
                              AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
@@ -1688,7 +1763,7 @@ class ProjectControllerTest {
     void apiProjectImport_xml_success() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
+        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
                              AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
@@ -1718,7 +1793,7 @@ class ProjectControllerTest {
     void apiProjectImport_importExecutionsFalse() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
+        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
                              AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
@@ -1746,7 +1821,7 @@ class ProjectControllerTest {
     void apiProjectImport_importExecutionsTrue() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
+        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
                              AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
@@ -1774,7 +1849,7 @@ class ProjectControllerTest {
     void apiProjectImport_jobUuidOptionPreserve() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
+        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
                              AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
@@ -1802,7 +1877,7 @@ class ProjectControllerTest {
     void apiProjectImport_jobUuidOptionRemove() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
+        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
                              AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
@@ -1830,7 +1905,7 @@ class ProjectControllerTest {
     void apiProjectImport_jobUuidOption_invalidValue() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code+';'+args.join(';') } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
+        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
                              AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
@@ -1863,7 +1938,7 @@ class ProjectControllerTest {
     void apiProjectImport_json_success() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import')
+        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
                              AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
@@ -1891,7 +1966,7 @@ class ProjectControllerTest {
     void apiProjectImport_importAcl_unauthorized() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code+';'+args } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import',true,false)
+        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import',true,false)
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
                               AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
@@ -1926,7 +2001,7 @@ class ProjectControllerTest {
     void apiProjectImport_importAcl_authorized() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code+';'+args } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import',true,true)
+        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import',true,true)
         controller.projectService=mockWith(ProjectService){
             importToProject{  project, String user, String roleList,  framework,
                               AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->

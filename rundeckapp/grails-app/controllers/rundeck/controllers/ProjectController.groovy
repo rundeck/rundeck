@@ -66,10 +66,13 @@ class ProjectController extends ControllerBase{
         }
         def project1 = frameworkService.getFrameworkProject(project)
 
+        def aclReadAuth=frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                         frameworkService.authResourceForProjectAcl(project),
+                                                                         [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])
         //temp file
         def outfile
         try {
-            outfile = projectService.exportProjectToFile(project1,framework)
+            outfile = projectService.exportProjectToFile(project1,framework,null,aclReadAuth)
         } catch (ProjectServiceException exc) {
             return renderErrorView(exc.message)
         }
@@ -115,7 +118,10 @@ class ProjectController extends ControllerBase{
         def project1 = frameworkService.getFrameworkProject(project)
 
         //request token
-        def token = projectService.exportProjectToFileAsync(project1,framework,session.user)
+        def aclReadAuth=frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                         frameworkService.authResourceForProjectAcl(project),
+                                                                         [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])
+        def token = projectService.exportProjectToFileAsync(project1, framework, session.user, aclReadAuth)
         return redirect(action:'exportWait',params: [token:token,project:archiveParams.project])
     }
     /**
@@ -1341,7 +1347,11 @@ class ProjectController extends ControllerBase{
         response.setContentType("application/zip")
         response.setHeader("Content-Disposition", "attachment; filename=\"${project}-${dateStamp}.rdproject.jar\"")
 
-        projectService.exportProjectToOutputStream(project, framework,response.outputStream)
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def aclReadAuth=frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                         frameworkService.authResourceForProjectAcl(project.name),
+                                                                         [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])
+        projectService.exportProjectToOutputStream(project, framework,response.outputStream,null,aclReadAuth)
     }
 
     def apiProjectImport(ProjectArchiveParams archiveParams){

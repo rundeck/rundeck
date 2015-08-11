@@ -308,14 +308,14 @@ class ProjectService implements InitializingBean{
      * @param ident username or identify of requestor
      * @return token string to identify the new request
      */
-    def exportProjectToFileAsync(IRundeckProject project, Framework framework, String ident){
+    def exportProjectToFileAsync(IRundeckProject project, Framework framework, String ident, boolean aclReadAuth){
         final def summary=new ArchiveRequestProgress()
         final String token = UUID.randomUUID().toString()
         final def request=new ArchiveRequest(summary:summary,token:token)
 
         Promises.<File>task {
             ScheduledExecution.withNewSession {
-                exportProjectToFile(project,framework,summary)
+                exportProjectToFile(project,framework,summary,aclReadAuth)
             }
         }.onComplete { File file->
             log.debug("Async archive request with token ${token} finished successfully")
@@ -399,10 +399,13 @@ class ProjectService implements InitializingBean{
      * Export the project to a temp file jar
      * @param project
      * @param framework
+     * @param listener a progress listener
+     * @param aclReadAuth true if ACL read access is granted, will include ACLs
      * @return
      * @throws ProjectServiceException
      */
-    def exportProjectToFile(IRundeckProject project, Framework framework, ProgressListener listener=null) throws ProjectServiceException{
+    def exportProjectToFile(IRundeckProject project, Framework framework, ProgressListener listener=null,
+                            boolean aclReadAuth=false) throws ProjectServiceException{
         def outfile
         try {
             outfile = File.createTempFile("export-${project.name}", ".jar")
@@ -410,7 +413,7 @@ class ProjectService implements InitializingBean{
             throw new ProjectServiceException("Could not create temp file for archive: " + exc.message, exc)
         }
         outfile.withOutputStream { output ->
-            exportProjectToOutputStream(project, framework, output, listener)
+            exportProjectToOutputStream(project, framework, output, listener,aclReadAuth)
         }
         outfile.deleteOnExit()
         outfile
@@ -423,7 +426,8 @@ class ProjectService implements InitializingBean{
      * @throws ProjectServiceException
      */
     def exportProjectToOutputStream(IRundeckProject project, Framework framework,
-                                    OutputStream stream, ProgressListener listener=null) throws ProjectServiceException{
+                                    OutputStream stream, ProgressListener listener=null,
+                                    boolean aclReadAuth=false) throws ProjectServiceException{
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
 
@@ -435,7 +439,7 @@ class ProjectService implements InitializingBean{
         manifest.mainAttributes.putValue('Rundeck-Archive-Export-Date', sdf.format(new Date()))
 
         def zip = new JarOutputStream(stream,manifest)
-        exportProjectToStream(project, framework, zip, listener)
+        exportProjectToStream(project, framework, zip, listener, aclReadAuth)
         zip.close()
     }
 
@@ -443,7 +447,8 @@ class ProjectService implements InitializingBean{
             IRundeckProject project,
             Framework framework,
             ZipOutputStream output,
-            ProgressListener listener = null
+            ProgressListener listener = null,
+            boolean aclReadAuth=false
     ) throws ProjectServiceException
     {
         ZipBuilder zip = new ZipBuilder(output)
@@ -516,25 +521,28 @@ class ProjectService implements InitializingBean{
                         listener?.inc('export',1)
                     }
                 }
-                //TODO: check perms
-                //acls
-                def policies=project.listDirPaths('acls/').grep(~/^.*\.aclpolicy$/)
-                if(policies){
-                    def count=policies.size()
-                    dir('acls/'){
-                        policies.each{ path ->
-                            def fname=path.substring('acls/'.length())
-                            zip.fileStream(fname){OutputStream stream->
-                                project.loadFileResource(path,stream)
-                                count--
-                                if(count==0){
-                                    listener?.inc('export',1)
+                if(aclReadAuth) {
+                    //acls
+                    def policies = project.listDirPaths('acls/').grep(~/^.*\.aclpolicy$/)
+                    if (policies) {
+                        def count = policies.size()
+                        dir('acls/') {
+                            policies.each { path ->
+                                def fname = path.substring('acls/'.length())
+                                zip.fileStream(fname) { OutputStream stream ->
+                                    project.loadFileResource(path, stream)
+                                    count--
+                                    if (count == 0) {
+                                        listener?.inc('export', 1)
+                                    }
                                 }
                             }
                         }
+                    } else {
+                        listener?.inc('export', 1)
                     }
-                }else{
-                    listener?.inc('export',1)
+                } else {
+                    listener?.inc('export', 1)
                 }
 
             }
