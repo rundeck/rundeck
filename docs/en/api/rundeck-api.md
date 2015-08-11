@@ -115,6 +115,7 @@ Changes introduced by API Version number:
     - [`/api/14/project/[PROJECT]/history`][/api/V/project/[PROJECT]/history] - added API/GUI href/permalink to XML responses.
     - `/api/14/project/[PROJECT]/run/*` - added API/GUI href/permalink to XML responses for adhoc command/script/url.
     - [`/api/14/system/info`][/api/V/system/info] - added information about Rundeck Execution Mode
+    - [`/api/14/project/[PROJECT]/import`][/api/V/project/[PROJECT]/import] - Added parameters for importing Configuration and ACL Policies from the archive.
 * Endpoints promoted out of "incubator" status:
     - [`/api/14/scheduler/takeover`][/api/V/scheduler/takeover] - Can specify `all` servers, or jobs within a specific `project`. Added API/GUI href/permalink to XML responses for adhoc command/script/url. Note: `href` was modified as mentioned below.
 * Modified `href` meaning for XML responses:
@@ -3350,12 +3351,14 @@ Response content type is `application/zip`
 
 Import a zip archive to the project. Requires `import` authorization for the project.
 
-    PUT /api/11/project/[PROJECT]/import{?jobUuidOption,importExecutions}
+    PUT /api/14/project/[PROJECT]/import{?jobUuidOption,importExecutions,importConfig,importACL}
 
 Parameters:
 
 + `jobUuidOption` (optional, string, `preserve/remove`) ... Option declaring how duplicate Job UUIDs should be handled. If `preserve` (default) then imported job UUIDs will not be modified, and may conflict with jobs in other projects. If `remove` then all job UUIDs will be removed before importing.
-+ `importExecutions` (optional, string, `true/false`) ... If true, import all executions and logs from the archive (default). If false, do not import executions or logs.
++ `importExecutions` (optional, boolean, `true/false`) ... If true, import all executions and logs from the archive (default). If false, do not import executions or logs.
++ `importConfig` (optional,boolean,`true/false`) ... If true, import the project configuration from the archive. If false, do not import the project configuration (default).
++ `importACL` (optional,boolean,`true/false`) ... If true, import all of the ACL Policies from the archive. If false, do not import the ACL Policies (default).
 
 Expected Request Content:
 
