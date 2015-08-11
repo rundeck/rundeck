@@ -408,31 +408,53 @@
                 </span>
             </div>
         </div>
-        <div class="list-group-item">
-            <h4 class="list-group-item-heading">ACL Policies</h4>
+        <auth:resourceAllowed action="${[AuthConstants.ACTION_CREATE,AuthConstants.ACTION_ADMIN]}"
+                              any="true"
+                              context='application'
+                              type="project_acl"
+                              name="${params.project}">
+            <div class="list-group-item">
+                <h4 class="list-group-item-heading">ACL Policies</h4>
 
-            <div class="radio">
-                <label title="">
-                    <input type="radio" name="importACL" value="true" checked/>
-                    <g:message code="archive.import.importACL.true.title" />
-                </label>
+                <div class="radio">
+                    <label title="">
+                        <input type="radio" name="importACL" value="true" checked/>
+                        <g:message code="archive.import.importACL.true.title" />
+                    </label>
+                    <span class="help-block">
+                        <g:message code="archive.import.importACL.true.help" />
+                    </span>
+                </div>
+
+                <div class="radio">
+                    <label title="">
+                        <input type="radio" name="importACL" value="false"/>
+
+                        <g:message code="archive.import.importExecutions.false.title" />
+
+                    </label>
+                    <span class="help-block">
+                        <g:message code="archive.import.importACL.false.help" />
+                    </span>
+                </div>
+            </div>
+        </auth:resourceAllowed>
+        <auth:resourceAllowed action="${[AuthConstants.ACTION_CREATE,AuthConstants.ACTION_ADMIN]}"
+                              any="true"
+                              context='application'
+                              type="project_acl"
+                                has="false"
+                              name="${params.project}">
+            <div class="list-group-item">
+                <h4 class="list-group-item-heading">ACL Policies</h4>
+
+
                 <span class="help-block">
-                    <g:message code="archive.import.importACL.true.help" />
+                    <i class="glyphicon glyphicon-ban-circle"></i>
+                    <g:message code="archive.import.importACL.unauthorized.help" />
                 </span>
             </div>
-
-            <div class="radio">
-                <label title="">
-                    <input type="radio" name="importACL" value="false"/>
-
-                    <g:message code="archive.import.importExecutions.false.title" />
-
-                </label>
-                <span class="help-block">
-                    <g:message code="archive.import.importACL.false.help" />
-                </span>
-            </div>
-        </div>
+        </auth:resourceAllowed>
         <div class="list-group-item">
             <div class="buttons">
                 <div id="uploadFormButtons">
