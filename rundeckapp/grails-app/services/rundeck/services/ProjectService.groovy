@@ -664,7 +664,7 @@ class ProjectService implements InitializingBean{
             }
         }
         //have files in dir
-        (jobxml + execxml + execout.values() + reportxml + [configtemp] + mdfilestemp.values() + aclfilestemp.values()).each {it.deleteOnExit()}
+        (jobxml + execxml + execout.values() + reportxml + [configtemp] + mdfilestemp.values() + aclfilestemp.values()).each {it?.deleteOnExit()}
 
         def loadjobresults=[]
         def loadjoberrors=[]
