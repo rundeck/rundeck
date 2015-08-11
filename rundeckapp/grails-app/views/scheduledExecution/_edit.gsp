@@ -810,59 +810,64 @@ function getCurSEID(){
             </g:javascript>
     </div>
     %{-- scheduleEnabled --}%
-    <div class="form-group">
-        <div class="${labelColSize} control-label text-form-label">
-            <g:message code="scheduledExecution.property.scheduleEnabled.label"/>
+    <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_TOGGLE_SCHEDULE)}">
+        <div class="form-group">
+            <div class="${labelColSize} control-label text-form-label">
+                <g:message code="scheduledExecution.property.scheduleEnabled.label"/>
+            </div>
+
+            <div class="${fieldColSize}">
+                <label class="radio-inline">
+                    <g:radio name="scheduleEnabled"
+                             value="true"
+                             checked="${scheduledExecution.scheduleEnabled}"
+                             id="scheduleEnabledTrue"/>
+                    <g:message code="yes"/>
+                </label>
+
+                <label class="radio-inline">
+                    <g:radio value="false"
+                             name="scheduleEnabled"
+                             checked="${!scheduledExecution.scheduleEnabled}"
+                             id="scheduleEnabledFalse"/>
+                    <g:message code="no"/>
+                </label>
+
+                <span class="help-block">
+                    <g:message code="scheduledExecution.property.scheduleEnabled.description"/>
+                </span>
+            </div>
+
         </div>
-
-        <div class="${fieldColSize}">
-            <label class="radio-inline">
-                <g:radio name="scheduleEnabled"
-                         value="true"
-                         checked="${scheduledExecution.scheduleEnabled}"
-                         id="scheduleEnabledTrue"/>
-                <g:message code="yes"/>
-            </label>
-
-            <label class="radio-inline">
-                <g:radio value="false"
-                         name="scheduleEnabled"
-                         checked="${!scheduledExecution.scheduleEnabled}"
-                         id="scheduleEnabledFalse"/>
-                <g:message code="no"/>
-            </label>
-
-            <span class="help-block">
-                <g:message code="scheduledExecution.property.scheduleEnabled.description"/>
-            </span>
-        </div>
-    </div>
+    </g:if>
     %{-- executionEnabled --}%
-    <div class="form-group">
-        <div class="${labelColSize} control-label text-form-label">
-            <g:message code="scheduledExecution.property.executionEnabled.label"/>
+    <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_TOGGLE_EXECUTION)}">
+        <div class="form-group">
+            <div class="${labelColSize} control-label text-form-label">
+                <g:message code="scheduledExecution.property.executionEnabled.label"/>
+            </div>
+
+            <div class="${fieldColSize}">
+                <label class="radio-inline">
+                    <g:radio name="executionEnabled" value="true"
+                             checked="${scheduledExecution.executionEnabled}"
+                             id="executionEnabledTrue"/>
+                    <g:message code="yes"/>
+                </label>
+
+                <label class="radio-inline">
+                    <g:radio value="false" name="executionEnabled"
+                             checked="${!scheduledExecution.executionEnabled}"
+                             id="executionEnabledFalse"/>
+                    <g:message code="no"/>
+                </label>
+
+                <span class="help-block">
+                    <g:message code="scheduledExecution.property.executionEnabled.description"/>
+                </span>
+            </div>
         </div>
-
-        <div class="${fieldColSize}">
-            <label class="radio-inline">
-                <g:radio name="executionEnabled" value="true"
-                         checked="${scheduledExecution.executionEnabled}"
-                         id="executionEnabledTrue"/>
-                <g:message code="yes"/>
-            </label>
-
-            <label class="radio-inline">
-                <g:radio value="false" name="executionEnabled"
-                         checked="${!scheduledExecution.executionEnabled}"
-                         id="executionEnabledFalse"/>
-                <g:message code="no"/>
-            </label>
-
-            <span class="help-block">
-                <g:message code="scheduledExecution.property.executionEnabled.description"/>
-            </span>
-        </div>
-    </div>
+    </g:if>
 </div>%{--//Schedule--}%
 
 
