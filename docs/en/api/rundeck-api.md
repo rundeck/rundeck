@@ -3349,6 +3349,8 @@ Response content type is `application/zip`
 
 ### Project Archive Import ###
 
+**Request:** 
+
 Import a zip archive to the project. Requires `import` authorization for the project.
 
     PUT /api/14/project/[PROJECT]/import{?jobUuidOption,importExecutions,importConfig,importACL}
@@ -3364,9 +3366,14 @@ Expected Request Content:
 
 `Content-Type: application/zip`
 
+**Response:**
+
+Note: the import status indicates "failed" if any Jobs had failures,
+otherwise it indicates "successful" even if other files in the archive were not imported.
+
 Response will indicate whether the imported contents had any errors:
 
-**All imported jobs successful:**
+*All imported jobs and files were successful:*
 
 `application/xml`
 
@@ -3381,7 +3388,7 @@ Response will indicate whether the imported contents had any errors:
 {"import_status":"successful"}
 ~~~
 
-**Some imported jobs failed:**
+*Some imported files failed:*
 
 `application/xml`
 
@@ -3391,6 +3398,14 @@ Response will indicate whether the imported contents had any errors:
         <error>Job ABC could not be validated: ...</error>
         <error>Job XYZ could not be validated: ...</error>
     </errors>
+    <executionErrors count="[#]">
+        <error>Execution 123 could not be imported: ...</error>
+        <error>Execution 456 could not be imported: ...</error>
+    </executionErrors>
+    <aclErrors count="[#]">
+        <error>file.aclpolicy could not be validated: ...</error>
+        <error>file2.aclpolicy could not be validated: ...</error>
+    </aclErrors>
 </import>
 ~~~
 
@@ -3402,6 +3417,14 @@ Response will indicate whether the imported contents had any errors:
     "errors": [
         "Job ABC could not be validated: ...",
         "Job XYZ could not be validated: ..."
+    ],
+    "execution_errors": [
+        "Execution 123 could not be imported: ...",
+        "Execution 456 could not be imported: ..."
+    ],
+    "acl_errors": [
+        "file.aclpolicy could not be validated: ...",
+        "file2.aclpolicy could not be validated: ..."
     ]
 }
 ~~~
