@@ -1164,7 +1164,7 @@ class ProjectControllerTest {
             }
         }
     }
-    private def mockFrameworkServiceForProjectExport(boolean exists, boolean authorized, String action){
+    private def mockFrameworkServiceForProjectExport(boolean exists, boolean authorized, String action,boolean isacl=false,boolean aclauth=false){
         mockWith(FrameworkService){
             existsFrameworkProject{String name->
                 exists
@@ -1178,7 +1178,7 @@ class ProjectControllerTest {
             authResourceForProject(1..1) { name ->
                 assertEquals("test1", name)
             }
-            authorizeApplicationResourceAny{ctx,resource,actions->
+            authorizeApplicationResourceAny(1..1){ctx,resource,actions->
                 assertTrue(action in actions)
                 assertTrue(AuthConstants.ACTION_ADMIN in actions)
                 authorized
@@ -1192,6 +1192,26 @@ class ProjectControllerTest {
             }
             getRundeckFramework{->
                 null
+            }
+            getAuthContextForSubject{->null}
+
+
+            if(isacl) {
+                authResourceForProjectAcl { name ->
+                    assertEquals("test1", name)
+                    [acl: true]
+                }
+                authorizeApplicationResourceAny(1..1) { ctx, proj, actions ->
+                    if (proj == [acl: true]) {
+                        assertTrue(AuthConstants.ACTION_CREATE in actions)
+                        assertTrue(AuthConstants.ACTION_ADMIN in actions)
+                        aclauth
+                    } else {
+                        assertTrue(action in actions)
+                        assertTrue(AuthConstants.ACTION_ADMIN in actions)
+                        authorized
+                    }
+                }
             }
             getAuthContextForSubjectAndProject{subj,proj->
                 null
@@ -1847,6 +1867,75 @@ class ProjectControllerTest {
         controller.apiProjectImport()
         assertEquals HttpServletResponse.SC_OK,response.status
         assertEquals 'successful',response.json.import_status
+        assertEquals null,response.json.errors
+    }
+
+
+    @Test
+    void apiProjectImport_importAcl_unauthorized() {
+        controller.apiService = new ApiService()
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code+';'+args } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import',true,false)
+        controller.projectService=mockWith(ProjectService){
+            importToProject{  project, String user, String roleList,  framework,
+                              AuthContext authContext,  InputStream stream, Map options->
+                assertEquals('user1',user)
+                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+                [success:true]
+            }
+        }
+        request.api_version = 11
+        params.project = 'test1'
+        params.importACL='true'
+        request.format='application/zip'
+        response.format='json'
+        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
+                                      [] as Set, [] as Set)
+        session.user='user1'
+        request.method='PUT'
+        controller.apiProjectImport()
+        assertEquals HttpServletResponse.SC_FORBIDDEN,response.status
+        assertEquals( [
+                              message:"api.error.item.unauthorized;[create, ACL for Project, [name:test1]]",
+                              error: true,
+                              errorCode : "api.error.item.unauthorized",
+                              apiversion: 14
+                      ],
+                      response.json
+        )
+        assertEquals null,response.json.errors
+    }
+
+    @Test
+    void apiProjectImport_importAcl_authorized() {
+        controller.apiService = new ApiService()
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code+';'+args } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'import',true,true)
+        controller.projectService=mockWith(ProjectService){
+            importToProject{  project, String user, String roleList,  framework,
+                              AuthContext authContext,  InputStream stream, Map options->
+                assertEquals('user1',user)
+                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+                assertTrue(options.importACL)
+                [success:true]
+            }
+        }
+        request.api_version = 11
+        params.project = 'test1'
+        params.importACL='true'
+        request.format='application/zip'
+        response.format='json'
+        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
+                                      [] as Set, [] as Set)
+        session.user='user1'
+        request.method='PUT'
+        controller.apiProjectImport()
+        assertEquals HttpServletResponse.SC_OK,response.status
+        assertEquals( [
+                              import_status: 'successful'
+                      ],
+                      response.json
+        )
         assertEquals null,response.json.errors
     }
 }

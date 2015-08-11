@@ -601,8 +601,8 @@ class ProjectService implements InitializingBean{
         def reportxml=[]
         def reportxmlnames=[:]
         def importExecutions = !!options.importExecutions
-        def importConfig = !!options.importConfig //TODO:
-        def importACL = !!options.importACL //TODO:
+        def importConfig = !!options.importConfig
+        def importACL = !!options.importACL
         File configtemp=null
         Map<String,File> mdfilestemp=[:]
         Map<String,File> aclfilestemp=[:]

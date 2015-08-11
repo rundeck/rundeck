@@ -198,7 +198,7 @@ class ProjectController extends ControllerBase{
         if (!project) {
             return renderErrorView("Project parameter is required")
         }
-        Framework framework = frameworkService.getRundeckFramework()
+
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
@@ -212,6 +212,22 @@ class ProjectController extends ControllerBase{
                 AuthConstants.ACTION_IMPORT, 'Project', project)) {
             return
         }
+        AuthContext appContext = frameworkService.getAuthContextForSubject(session.subject)
+        //verify acl create access requirement
+        if (archiveParams.importACL &&
+                unauthorizedResponse(
+                    frameworkService.authorizeApplicationResourceAny(
+                            appContext,
+                            frameworkService.authResourceForProjectAcl(project),
+                            [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN]
+                    ),
+                    AuthConstants.ACTION_CREATE,
+                    "ACL for Project",
+                    project
+                )
+        ) {
+            return null
+        }
 
         def project1 = frameworkService.getFrameworkProject(project)
 
@@ -222,6 +238,7 @@ class ProjectController extends ControllerBase{
                 flash.error = message(code:"no.file.was.uploaded")
                 return redirect(controller: 'menu', action: 'admin', params: [project: project])
             }
+            Framework framework = frameworkService.getRundeckFramework()
             String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
             def result = projectService.importToProject(
                     project1,
@@ -1352,8 +1369,30 @@ class ProjectController extends ControllerBase{
             ])
         }
         def framework = frameworkService.rundeckFramework
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+
+        AuthContext appContext = frameworkService.getAuthContextForSubject(session.subject)
         //uploaded file
+
+        //verify acl access requirement
+        if (archiveParams.importACL &&
+                !frameworkService.authorizeApplicationResourceAny(
+                        appContext,
+                        frameworkService.authResourceForProjectAcl(project.name),
+                        [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN]
+                )
+        ) {
+
+            apiService.renderErrorFormat(response,
+                                         [
+                                                 status: HttpServletResponse.SC_FORBIDDEN,
+                                                 code  : "api.error.item.unauthorized",
+                                                 args  : [AuthConstants.ACTION_CREATE, "ACL for Project", project]
+                                         ]
+            )
+            return null
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+
         def stream = request.getInputStream()
         def len = request.getContentLength()
         if(0==len){
