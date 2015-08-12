@@ -60,41 +60,30 @@ description: blah
         validation.errors.size()==1
         validation.errors['test1[1]']==['Required \'context:\' section was not present.']
     }
-    def "validate required context, wrong project"(){
+    def "validate required context, any context"(){
         when:
-        def validation = validationForStringWithProject('''
+        def validation = validationForStringWithProject("""
 context:
-    project: test
+    ${ctx}
 by:
     username: elf
 for:
     type:
         - allow: '*'
 description: blah
-''',"testproj")
+""","testproj")
 
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Context section is not valid: {project=test}, it should be empty or match the expected context: {project=testproj}']
-    }
-    def "validate required context, wrong context"(){
-        when:
-        def validation = validationForStringWithProject('''
-context:
-    application: rundeck
-by:
-    username: elf
-for:
-    type:
-        - allow: '*'
-description: blah
-''',"testproj")
+        validation.errors['test1[1]']==['Context section should not be specified, it is already set to: {project=testproj}']
+        where:
+        ctx                    | _
+        'application: rundeck' | _
+        'project: wrong'       | _
+        'project: testproj'    | _
+        'project: \'.*\''      | _
 
-        then:
-        !validation.valid
-        validation.errors.size()==1
-        validation.errors['test1[1]']==['Context section is not valid: {application=rundeck}, it should be empty or match the expected context: {project=testproj}']
     }
     def "validate required context, no context ok"(){
         when:

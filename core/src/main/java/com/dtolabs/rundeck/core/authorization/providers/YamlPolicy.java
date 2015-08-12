@@ -175,17 +175,32 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
     private void parseEnvironment(Set<Attribute> forcedContext) {
         //create
         final Object ctxClause = policyInput.get(CONTEXT_SECTION);
-        if (null != ctxClause && ctxClause instanceof Map) {
+        if (null != forcedContext) {
+            if(null != ctxClause) {
+                throw new AclPolicySyntaxException(
+                        "Context section should not be specified, it is already set to: " +
+                        AuthorizationUtil.contextAsString(forcedContext)
+                );
+            }
+            environment = new YamlEnvironmentalContext(EnvironmentalContext.URI_BASE, forcedContext);
+        }else {
+            if (null == ctxClause || !(ctxClause instanceof Map)) {
+                throw new AclPolicySyntaxException(
+                        null == ctxClause
+                        ? "Required 'context:' section was not present."
+                        : "Context section is not valid: expected a Map, but it was: " + ctxClause.getClass().getName()
+                );
+            }
             Map ctxClause1 = (Map) ctxClause;
             environment = new YamlEnvironmentalContext(EnvironmentalContext.URI_BASE, ctxClause1);
-            if(!environment.isValid()){
+            if (!environment.isValid()) {
                 throw new AclPolicySyntaxException(
                         "Context section is not valid: " +
                         ctxClause +
                         environment.getValidation()
                 );
             }
-            if(ctxClause1.size()!=1){
+            if (ctxClause1.size() != 1) {
                 throw new AclPolicySyntaxException(
                         "Context section is not valid: " +
                         ctxClause +
@@ -199,26 +214,8 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
                         ", it should contain only 'application:' or 'project:'"
                 );
             }
-
-            if (forcedContext != null && !environment.evaluateMatches(forcedContext)) {
-                throw new AclPolicySyntaxException(
-                        "Context section is not valid: " +
-                        ctxClause +
-                        ", it should be empty or match the expected context: " +
-                        AuthorizationUtil.contextAsString(forcedContext)
-                );
-            }
-        }else if (null == forcedContext) {
-            throw new AclPolicySyntaxException(
-                    null == ctxClause
-                    ? "Required 'context:' section was not present."
-                    : "Context section is not valid: expected a Map, but it was: " + ctxClause.getClass().getName()
-            );
         }
 
-        if(forcedContext!=null) {
-            environment = new YamlEnvironmentalContext(EnvironmentalContext.URI_BASE, forcedContext);
-        }
     }
 
 
