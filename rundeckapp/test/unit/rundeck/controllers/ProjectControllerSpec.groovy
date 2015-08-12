@@ -1,19 +1,27 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
+import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.TestFor
+import org.codehaus.groovy.grails.plugins.testing.GrailsMockMultipartFile
+import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
 import rundeck.services.FrameworkService
+import rundeck.services.ProjectService
 import spock.lang.Specification
 import spock.lang.Unroll
+
+import javax.security.auth.Subject
 
 import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_ADMIN
 import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_CONFIGURE
 import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_CREATE
 import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_DELETE
+import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_IMPORT
 import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_READ
 import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_UPDATE
 
@@ -1006,6 +1014,191 @@ class ProjectControllerSpec extends Specification{
 
         then:
         response.status==204
+
+    }
+
+    def "import archive importACL"(){
+        setup:
+        controller.frameworkService=Mock(FrameworkService){
+            1 * existsFrameworkProject('test') >> true
+            1 * getAuthContextForSubjectAndProject(_,'test') >> null
+            1 * getAuthContextForSubject(_) >> null
+            1 * authResourceForProject('test') >> null
+            1 * authResourceForProjectAcl('test') >> null
+            1 * authorizeApplicationResourceAny(_,_,[ACTION_ADMIN,ACTION_IMPORT]) >> true
+            1 * authorizeApplicationResourceAny(_,_,[ACTION_CREATE,ACTION_ADMIN]) >> true
+
+            1 * getFrameworkProject('test') >> null
+            1 * getRundeckFramework() >> null
+
+            0 * _(*_)
+        }
+        controller.projectService=Mock(ProjectService){
+            1*importToProject(null,null,'test1',null,null,!null, {
+                it.jobUuidOption== 'preserve'
+                it.importExecutions== true
+                it.importConfig== false
+                it.importACL== true
+            })>>[success:true]
+
+            0 * _(*_)
+        }
+        request.subject=new Subject(true,[
+                Mock(Group){
+                    getName()>>'test1'
+                }
+        ] as Set,[] as Set,[] as Set)
+
+
+        when:
+
+        def tokenHolder = SynchronizerTokensHolder.store(session)
+
+        params[SynchronizerTokensHolder.TOKEN_URI] = '/controller/handleForm'
+        params[SynchronizerTokensHolder.TOKEN_KEY] = tokenHolder.generateToken(params[SynchronizerTokensHolder.TOKEN_URI])
+
+        params.project="test"
+        params.importACL='true'
+        response.format='json'
+        request.method='POST'
+        def file = new GrailsMockMultipartFile('zipFile', 'data'.bytes)
+        request.addFile file
+        def result=controller.importArchive()
+
+        then:
+        response.redirectedUrl=='/menu/admin?project=test'
+        flash.message=='archive.successfully.imported'
+        response.status==302
+    }
+    def "import archive no importACL"(){
+        setup:
+        controller.frameworkService=Mock(FrameworkService){
+            1 * existsFrameworkProject('test') >> true
+            1 * getAuthContextForSubjectAndProject(_,'test') >> null
+            1 * getAuthContextForSubject(_) >> null
+            1 * authResourceForProject('test') >> null
+            0 * authResourceForProjectAcl('test') >> null
+            1 * authorizeApplicationResourceAny(_,_,[ACTION_ADMIN,ACTION_IMPORT]) >> true
+            0 * authorizeApplicationResourceAny(_,_,[ACTION_CREATE,ACTION_ADMIN]) >> true
+
+            1 * getFrameworkProject('test') >> null
+            1 * getRundeckFramework() >> null
+
+            0 * _(*_)
+        }
+        controller.projectService=Mock(ProjectService){
+            1*importToProject(null,null,'test1',null,null,!null,{
+                it.jobUuidOption== 'preserve'
+                it.importExecutions== true
+                it.importConfig== false
+                it.importACL== false
+            })>>[success:true]
+
+            0 * _(*_)
+        }
+        request.subject=new Subject(true,[
+                Mock(Group){
+                    getName()>>'test1'
+                }
+        ] as Set,[] as Set,[] as Set)
+
+
+        when:
+
+        def tokenHolder = SynchronizerTokensHolder.store(session)
+
+        params[SynchronizerTokensHolder.TOKEN_URI] = '/controller/handleForm'
+        params[SynchronizerTokensHolder.TOKEN_KEY] = tokenHolder.generateToken(params[SynchronizerTokensHolder.TOKEN_URI])
+
+        params.project="test"
+        params.importACL='false'
+        response.format='json'
+        request.method='POST'
+        def file = new GrailsMockMultipartFile('zipFile', 'data'.bytes)
+        request.addFile file
+        def result=controller.importArchive()
+
+        then:
+        response.redirectedUrl=='/menu/admin?project=test'
+        flash.message=='archive.successfully.imported'
+        response.status==302
+    }
+    def "import archive importACL unauthorized"(){
+        setup:
+        controller.frameworkService=Mock(FrameworkService){
+            1 * existsFrameworkProject('test') >> true
+            1 * getAuthContextForSubjectAndProject(_,'test') >> null
+            1 * getAuthContextForSubject(_) >> null
+            1 * authResourceForProject('test') >> null
+            1 * authResourceForProjectAcl('test') >> null
+            1 * authorizeApplicationResourceAny(_,_,[ACTION_ADMIN,ACTION_IMPORT]) >> true
+            1 * authorizeApplicationResourceAny(_,_,[ACTION_CREATE,ACTION_ADMIN]) >> false
+
+//            1 * getFrameworkProject('test') >> null
+//            1 * getRundeckFramework() >> null
+
+            0 * _(*_)
+        }
+        controller.projectService=Mock(ProjectService){
+
+            0 * _(*_)
+        }
+        request.subject=new Subject(true,[
+                Mock(Group){
+                    getName()>>'test1'
+                }
+        ] as Set,[] as Set,[] as Set)
+
+
+        when:
+
+        def tokenHolder = SynchronizerTokensHolder.store(session)
+
+        params[SynchronizerTokensHolder.TOKEN_URI] = '/controller/handleForm'
+        params[SynchronizerTokensHolder.TOKEN_KEY] = tokenHolder.generateToken(params[SynchronizerTokensHolder.TOKEN_URI])
+
+        params.project="test"
+        params.importACL='true'
+        response.format='json'
+        request.method='POST'
+        def file = new GrailsMockMultipartFile('zipFile', 'data'.bytes)
+        request.addFile file
+        def result=controller.importArchive()
+
+        then:
+        view == '/common/error'
+        request.errorCode == 'request.error.unauthorized.message'
+        request.errorArgs == [ACTION_CREATE, 'ACL for Project', 'test']
+
+    }
+    def "import archive token failure"(){
+        setup:
+        controller.frameworkService=Mock(FrameworkService){
+            0 * _(*_)
+        }
+        controller.projectService=Mock(ProjectService){
+
+            0 * _(*_)
+        }
+
+        when:
+
+        def tokenHolder = SynchronizerTokensHolder.store(session)
+
+        params[SynchronizerTokensHolder.TOKEN_URI] = '/controller/handleForm'
+        params[SynchronizerTokensHolder.TOKEN_KEY] = 'xxx'//tokenHolder.generateToken(params[SynchronizerTokensHolder.TOKEN_URI])
+
+        params.project="test"
+        params.importACL='true'
+        response.format='json'
+        request.method='POST'
+        def file = new GrailsMockMultipartFile('zipFile', 'data'.bytes)
+        request.addFile file
+        def result=controller.importArchive()
+
+        then:
+        response.redirectedUrl=='/menu/admin?project=test'
+        flash.error=='request.error.invalidtoken.message'
 
     }
 }

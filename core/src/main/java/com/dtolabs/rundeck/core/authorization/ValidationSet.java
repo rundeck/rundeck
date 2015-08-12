@@ -39,4 +39,9 @@ public class ValidationSet implements Validation {
     public boolean isValid() {
         return valid;
     }
+
+    @Override
+    public String toString() {
+        return valid ? "Validation succeeded" : "Validation failed: " + errors;
+    }
 }

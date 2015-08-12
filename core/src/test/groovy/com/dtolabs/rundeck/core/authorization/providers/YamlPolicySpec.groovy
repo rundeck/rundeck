@@ -8,28 +8,6 @@ import spock.lang.Specification
  */
 class YamlPolicySpec extends Specification {
 
-    def "forced context equivalent rule"(){
-        given:
-        def ctx = AuthorizationUtil.projectContext("monkey")
-        def policy = YamlPolicy.createYamlPolicy(
-                ctx,
-                [
-                        description:'',
-                        by: [username: 'bob'],
-                        for: [resource: [[allow: ['action']]]],
-                        context: [project: 'monkey']
-                ],
-                "test1",
-                1,
-                null
-        )
-        def rules=policy.getRuleSet().getRules()
-
-        expect:
-        rules.size()==1
-        rules.first().environment.key=='project'
-        rules.first().environment.value=='monkey'
-    }
 
     def "forced context missing context"(){
         given:
@@ -52,7 +30,7 @@ class YamlPolicySpec extends Specification {
         rules.first().environment.key=='project'
         rules.first().environment.value=='monkey'
     }
-    def "forced context mismatched context"(){
+    def "forced context any context"(){
         given:
         def ctx = AuthorizationUtil.projectContext("monkey")
 
@@ -63,7 +41,7 @@ class YamlPolicySpec extends Specification {
                         description:'',
                         by: [username: 'bob'],
                         for: [resource: [[allow: ['action']]]],
-                        context: [project: 'dolphin']
+                        context: ctxMap
                 ],
                 "test1",
                 1,
@@ -72,6 +50,13 @@ class YamlPolicySpec extends Specification {
 
         then:
         YamlPolicy.AclPolicySyntaxException e = thrown()
-        e.message.contains('Context section is not valid: {project=dolphin}, it should be empty or match the expected context: {project=monkey}')
+        e.message.contains('Context section should not be specified, it is already set to: {project=monkey}')
+
+        where:
+        ctxMap                   | _
+        [project: 'dolphin']     | _
+        [project: 'test1']       | _
+        [project: '.*']          | _
+        [application: 'rundeck'] | _
     }
 }

@@ -766,7 +766,6 @@ class ProjectManagerServiceSpec extends Specification {
                 getContents() >> Stub(ResourceMeta){
                     getInputStream() >> new ByteArrayInputStream(
                             ('{ description: \'\', \n' +
-                                    'context: { project: \'test1\' }, \n' +
                                     'by: { username: \'test\' }, \n' +
                                     'for: { resource: [ { allow: \'x\' } ] } }').bytes
 //                            ('asdf').bytes

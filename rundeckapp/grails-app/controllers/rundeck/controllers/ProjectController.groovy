@@ -1,8 +1,8 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -66,10 +66,13 @@ class ProjectController extends ControllerBase{
         }
         def project1 = frameworkService.getFrameworkProject(project)
 
+        def aclReadAuth=frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                         frameworkService.authResourceForProjectAcl(project),
+                                                                         [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])
         //temp file
         def outfile
         try {
-            outfile = projectService.exportProjectToFile(project1,framework)
+            outfile = projectService.exportProjectToFile(project1,framework,null,aclReadAuth)
         } catch (ProjectServiceException exc) {
             return renderErrorView(exc.message)
         }
@@ -115,7 +118,10 @@ class ProjectController extends ControllerBase{
         def project1 = frameworkService.getFrameworkProject(project)
 
         //request token
-        def token = projectService.exportProjectToFileAsync(project1,framework,session.user)
+        def aclReadAuth=frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                         frameworkService.authResourceForProjectAcl(project),
+                                                                         [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])
+        def token = projectService.exportProjectToFileAsync(project1, framework, session.user, aclReadAuth)
         return redirect(action:'exportWait',params: [token:token,project:archiveParams.project])
     }
     /**
@@ -199,7 +205,7 @@ class ProjectController extends ControllerBase{
         if (!project) {
             return renderErrorView("Project parameter is required")
         }
-        Framework framework = frameworkService.getRundeckFramework()
+
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
@@ -213,6 +219,22 @@ class ProjectController extends ControllerBase{
                 AuthConstants.ACTION_IMPORT, 'Project', project)) {
             return
         }
+        AuthContext appContext = frameworkService.getAuthContextForSubject(session.subject)
+        //verify acl create access requirement
+        if (archiveParams.importACL &&
+                unauthorizedResponse(
+                    frameworkService.authorizeApplicationResourceAny(
+                            appContext,
+                            frameworkService.authResourceForProjectAcl(project),
+                            [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN]
+                    ),
+                    AuthConstants.ACTION_CREATE,
+                    "ACL for Project",
+                    project
+                )
+        ) {
+            return null
+        }
 
         def project1 = frameworkService.getFrameworkProject(project)
 
@@ -223,10 +245,18 @@ class ProjectController extends ControllerBase{
                 flash.error = message(code:"no.file.was.uploaded")
                 return redirect(controller: 'menu', action: 'admin', params: [project: project])
             }
+            Framework framework = frameworkService.getRundeckFramework()
             String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-            def result = projectService.importToProject(project1, session.user, roleList, framework, authContext,
-                    file.getInputStream(), [jobUUIDBehavior: archiveParams.jobUUIDImportBehavior,
-                    executionImportBehavior: archiveParams.executionImportBehavior])
+            def result = projectService.importToProject(
+                    project1,
+                    session.user,
+                    roleList,
+                    framework,
+                    authContext,
+                    file.getInputStream(),
+                    archiveParams
+
+            )
 
 
             if(result.success){
@@ -241,6 +271,9 @@ class ProjectController extends ControllerBase{
             }
             if(result.execerrors){
                 flash.execerrors=result.execerrors
+            }
+            if(result.aclerrors){
+                flash.aclerrors=result.aclerrors
             }
             return redirect(controller: 'menu',action: 'admin',params:[project:project])
         }
@@ -1317,10 +1350,14 @@ class ProjectController extends ControllerBase{
         response.setContentType("application/zip")
         response.setHeader("Content-Disposition", "attachment; filename=\"${project}-${dateStamp}.rdproject.jar\"")
 
-        projectService.exportProjectToOutputStream(project, framework,response.outputStream)
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def aclReadAuth=frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                         frameworkService.authResourceForProjectAcl(project.name),
+                                                                         [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])
+        projectService.exportProjectToOutputStream(project, framework,response.outputStream,null,aclReadAuth)
     }
 
-    def apiProjectImport(){
+    def apiProjectImport(ProjectArchiveParams archiveParams){
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -1332,9 +1369,39 @@ class ProjectController extends ControllerBase{
             return
         }
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'], 'xml')
+        if(archiveParams.hasErrors()){
+            return apiService.renderErrorFormat(response,[
+                    status:HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.invalid.request',
+                    args: [archiveParams.errors.allErrors.collect{g.message(error: it)}.join("; ")],
+                    format:respFormat
+            ])
+        }
         def framework = frameworkService.rundeckFramework
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+
+        AuthContext appContext = frameworkService.getAuthContextForSubject(session.subject)
         //uploaded file
+
+        //verify acl access requirement
+        if (archiveParams.importACL &&
+                !frameworkService.authorizeApplicationResourceAny(
+                        appContext,
+                        frameworkService.authResourceForProjectAcl(project.name),
+                        [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN]
+                )
+        ) {
+
+            apiService.renderErrorFormat(response,
+                                         [
+                                                 status: HttpServletResponse.SC_FORBIDDEN,
+                                                 code  : "api.error.item.unauthorized",
+                                                 args  : [AuthConstants.ACTION_CREATE, "ACL for Project", project]
+                                         ]
+            )
+            return null
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+
         def stream = request.getInputStream()
         def len = request.getContentLength()
         if(0==len){
@@ -1348,13 +1415,16 @@ class ProjectController extends ControllerBase{
 
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
 
-        def importOptions = [
-                executionImportBehavior: Boolean.parseBoolean(params.importExecutions?:'true') ? 'import' : 'skip',
-                jobUUIDBehavior: params.jobUuidOption?:'preserve'
-        ]
-        def result = projectService.importToProject(project, session.user, roleList, framework, authContext,
-                stream, importOptions)
-        switch (respFormat){
+        def result = projectService.importToProject(
+                project,
+                session.user,
+                roleList,
+                framework,
+                authContext,
+                stream,
+                archiveParams
+        )
+        switch (respFormat) {
             case 'json':
                 render(contentType: 'application/json'){
                     import_status=result.success?'successful':'failed'
@@ -1365,6 +1435,10 @@ class ProjectController extends ControllerBase{
 
                     if(result.execerrors){
                         delegate.'execution_errors'=result.execerrors
+                    }
+
+                    if(result.aclerrors){
+                        delegate.'acl_errors'=result.aclerrors
                     }
                 }
                 break;
@@ -1382,6 +1456,13 @@ class ProjectController extends ControllerBase{
                         if(result.execerrors){
                             delegate.'executionErrors'(count: result.execerrors.size()){
                                 result.execerrors.each{
+                                    delegate.'error'(it)
+                                }
+                            }
+                        }
+                        if(result.aclerrors){
+                            delegate.'aclErrors'(count: result.aclerrors.size()){
+                                result.aclerrors.each{
                                     delegate.'error'(it)
                                 }
                             }

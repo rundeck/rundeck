@@ -115,6 +115,7 @@ Changes introduced by API Version number:
     - [`/api/14/project/[PROJECT]/history`][/api/V/project/[PROJECT]/history] - added API/GUI href/permalink to XML responses.
     - `/api/14/project/[PROJECT]/run/*` - added API/GUI href/permalink to XML responses for adhoc command/script/url.
     - [`/api/14/system/info`][/api/V/system/info] - added information about Rundeck Execution Mode
+    - [`/api/14/project/[PROJECT]/import`][/api/V/project/[PROJECT]/import] - Added parameters for importing Configuration and ACL Policies from the archive.
 * Endpoints promoted out of "incubator" status:
     - [`/api/14/scheduler/takeover`][/api/V/scheduler/takeover] - Can specify `all` servers, or jobs within a specific `project`. Added API/GUI href/permalink to XML responses for adhoc command/script/url. Note: `href` was modified as mentioned below.
 * Modified `href` meaning for XML responses:
@@ -3348,22 +3349,31 @@ Response content type is `application/zip`
 
 ### Project Archive Import ###
 
+**Request:** 
+
 Import a zip archive to the project. Requires `import` authorization for the project.
 
-    PUT /api/11/project/[PROJECT]/import{?jobUuidOption,importExecutions}
+    PUT /api/14/project/[PROJECT]/import{?jobUuidOption,importExecutions,importConfig,importACL}
 
 Parameters:
 
 + `jobUuidOption` (optional, string, `preserve/remove`) ... Option declaring how duplicate Job UUIDs should be handled. If `preserve` (default) then imported job UUIDs will not be modified, and may conflict with jobs in other projects. If `remove` then all job UUIDs will be removed before importing.
-+ `importExecutions` (optional, string, `true/false`) ... If true, import all executions and logs from the archive (default). If false, do not import executions or logs.
++ `importExecutions` (optional, boolean, `true/false`) ... If true, import all executions and logs from the archive (default). If false, do not import executions or logs.
++ `importConfig` (optional,boolean,`true/false`) ... If true, import the project configuration from the archive. If false, do not import the project configuration (default).
++ `importACL` (optional,boolean,`true/false`) ... If true, import all of the ACL Policies from the archive. If false, do not import the ACL Policies (default).
 
 Expected Request Content:
 
 `Content-Type: application/zip`
 
+**Response:**
+
+Note: the import status indicates "failed" if any Jobs had failures,
+otherwise it indicates "successful" even if other files in the archive were not imported.
+
 Response will indicate whether the imported contents had any errors:
 
-**All imported jobs successful:**
+*All imported jobs and files were successful:*
 
 `application/xml`
 
@@ -3378,7 +3388,7 @@ Response will indicate whether the imported contents had any errors:
 {"import_status":"successful"}
 ~~~
 
-**Some imported jobs failed:**
+*Some imported files failed:*
 
 `application/xml`
 
@@ -3388,6 +3398,14 @@ Response will indicate whether the imported contents had any errors:
         <error>Job ABC could not be validated: ...</error>
         <error>Job XYZ could not be validated: ...</error>
     </errors>
+    <executionErrors count="[#]">
+        <error>Execution 123 could not be imported: ...</error>
+        <error>Execution 456 could not be imported: ...</error>
+    </executionErrors>
+    <aclErrors count="[#]">
+        <error>file.aclpolicy could not be validated: ...</error>
+        <error>file2.aclpolicy could not be validated: ...</error>
+    </aclErrors>
 </import>
 ~~~
 
@@ -3399,6 +3417,14 @@ Response will indicate whether the imported contents had any errors:
     "errors": [
         "Job ABC could not be validated: ...",
         "Job XYZ could not be validated: ..."
+    ],
+    "execution_errors": [
+        "Execution 123 could not be imported: ...",
+        "Execution 456 could not be imported: ..."
+    ],
+    "acl_errors": [
+        "file.aclpolicy could not be validated: ...",
+        "file2.aclpolicy could not be validated: ..."
     ]
 }
 ~~~
