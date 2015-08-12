@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.test.mixin.TestFor
@@ -55,7 +56,7 @@ class ProjectServiceSpec extends Specification {
         1 * project.storeFileResource('readme.md',{it.text=='file1'})
         1 * project.storeFileResource('motd.md',{it.text=='file2'})
     }
-    def "importProjectACLPolicies"(){
+    def "importProjectACLPolicies valid"(){
         given:
         def tempfile1 = File.createTempFile("test-importProjectConfig1",".md")
         tempfile1.text='file1'
@@ -70,13 +71,58 @@ class ProjectServiceSpec extends Specification {
         def project = Mock(IRundeckProject){
             getName()>>'myproject'
         }
+        service.authorizationService=Mock(AuthorizationService){
+            1 * validateYamlPolicy('myproject','files/acls/test.aclpolicy',_) >> Mock(Validation){
+                isValid()>>true
+            }
+            1 * validateYamlPolicy('myproject','files/acls/test2.aclpolicy',_) >> Mock(Validation){
+                isValid()>>true
+            }
+            0 * _(*_)
+        }
 
         when:
-        service.importProjectACLPolicies(policyfiles,project)
+        def result=service.importProjectACLPolicies(policyfiles,project)
 
         then:
+        result==[]
         1 * project.storeFileResource('acls/test.aclpolicy',{it.text=='file1'})
         1 * project.storeFileResource('acls/test2.aclpolicy',{it.text=='file2'})
+    }
+    def "importProjectACLPolicies invalid"(){
+        given:
+        def tempfile1 = File.createTempFile("test-importProjectConfig1",".md")
+        tempfile1.text='file1'
+        tempfile1.deleteOnExit()
+        def tempfile2 = File.createTempFile("test-importProjectConfig1",".md")
+        tempfile2.text='file2'
+        tempfile2.deleteOnExit()
+        def policyfiles=[
+                'test.aclpolicy':tempfile1,
+                'test2.aclpolicy':tempfile2
+        ]
+        def project = Mock(IRundeckProject){
+            getName()>>'myproject'
+        }
+        service.authorizationService=Mock(AuthorizationService){
+            1 * validateYamlPolicy('myproject','files/acls/test.aclpolicy',_) >> Mock(Validation){
+                isValid()>>false
+                getErrors()>>['blah':['blah']]
+                toString()>>'test validation failure'
+            }
+            1 * validateYamlPolicy('myproject','files/acls/test2.aclpolicy',_) >> Mock(Validation){
+                isValid()>>true
+            }
+            0 * _(*_)
+        }
+
+        when:
+        def result=service.importProjectACLPolicies(policyfiles,project)
+
+        then:
+        0 * project.storeFileResource('acls/test.aclpolicy',{it.text=='file1'})
+        1 * project.storeFileResource('acls/test2.aclpolicy',{it.text=='file2'})
+        result==['files/acls/test.aclpolicy: test validation failure']
     }
 
     def "replacePlaceholderForProjectProperties"(){
