@@ -2242,9 +2242,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (null != newargs && executionContext.dataContext) {
             newargs = DataContextUtils.replaceDataReferences(
                     newargs,
-                    executionContext.dataContext,
-                    DataContextUtils.replaceMissingOptionsWithBlank,
-                    false
+                    executionContext.dataContext
             )
         }
 
@@ -2258,7 +2256,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         //for secAuthOpts, evaluate each in context of original private data context
         def evalSecAuthOpts = [:]
         secAuthOpts.each { k, v ->
-            def newv = DataContextUtils.replaceDataReferences(v, executionContext.privateDataContext)
+            def newv = DataContextUtils.replaceDataReferences(
+                    v,
+                    executionContext.privateDataContext,
+                    DataContextUtils.replaceMissingOptionsWithBlank,
+                    false
+            )
             if (newv != v || !v.startsWith('${option.')) {
                 evalSecAuthOpts[k] = newv
             }
@@ -2267,7 +2270,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         //for secOpts, evaluate each in context of original secure option data context
         def evalSecOpts = [:]
         secOpts.each { k, v ->
-            def newv = DataContextUtils.replaceDataReferences(v, [option: executionContext.dataContext['secureOption']])
+            def newv = DataContextUtils.replaceDataReferences(
+                    v,
+                    [option: executionContext.dataContext['secureOption']],
+                    DataContextUtils.replaceMissingOptionsWithBlank,
+                    false
+            )
             if (newv != v || !v.startsWith('${option.')) {
                 evalSecOpts[k] = newv
             }
@@ -2280,8 +2288,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def plainOptsContext = executionContext.dataContext['option']?.findAll { !executionContext.dataContext['secureOption'] || null == executionContext.dataContext['secureOption'][it.key] }
         def evalPlainOpts = [:]
         plainOpts.each { k, v ->
-            evalPlainOpts[k] = DataContextUtils.replaceDataReferences(v, [option: plainOptsContext])
-            //XXX: missing option references could be removed instead of passed on
+            evalPlainOpts[k] = DataContextUtils.replaceDataReferences(
+                    v,
+                    [option: plainOptsContext],
+                    DataContextUtils.replaceMissingOptionsWithBlank,
+                    false
+            )
         }
 
         //validate the option values
