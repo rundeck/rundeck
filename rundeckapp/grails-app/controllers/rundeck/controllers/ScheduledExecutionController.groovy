@@ -829,6 +829,110 @@ class ScheduledExecutionController  extends ControllerBase{
         redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
     }
 
+    def apiFlipExecutionEnabled() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+
+        log.debug("ScheduledExecutionController: apiFlipExecutionEnabled" + params)
+
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+
+        def scheduledExecution = ScheduledExecution.getByIdOrUUID(params.id)
+        if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
+            //job does not exist
+            return
+        }
+
+        def Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, scheduledExecution.project)
+
+        /* ACL Pending
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE],
+                scheduledExecution.project)) {
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
+                                                        code  : 'api.error.item.unauthorized', args: ['Update', 'Job ID', params.id]])
+        }
+        */
+
+        def changeinfo = [method: 'update', change: 'modify', user: session.user]
+        String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
+
+        def payload = [id: params.id, executionEnabled: params.status]
+        def result = scheduledExecutionService._doupdate(payload, session.user, roleList, framework, authContext, changeinfo)
+
+        if (result && result.success) {
+            return withFormat {
+                xml {
+                    def writer = new StringWriter()
+                    def xml = new MarkupBuilder(writer)
+                    JobsXMLCodec.encodeWithBuilder([result.scheduledExecution], xml)
+                    writer.flush()
+                    render(text: writer.toString(), contentType: "text/xml", encoding: "UTF-8")
+                }
+                yaml {
+                    render(text: JobsYAMLCodec.encode([result.scheduledExecution] as List), contentType: "text/yaml", encoding: "UTF-8")
+                }
+            }
+        } else {
+            return apiService.renderErrorXml(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response);
+        }
+    }
+
+    def apiFlipScheduleEnabled() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+
+        log.debug("ScheduledExecutionController: apiFlipScheduleEnabled" + params)
+
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+
+        def scheduledExecution = ScheduledExecution.getByIdOrUUID(params.id)
+        if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
+            //job does not exist
+            return
+        }
+
+        def Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, scheduledExecution.project)
+
+        /* ACL Pending
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE],
+                scheduledExecution.project)) {
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
+                                                        code  : 'api.error.item.unauthorized', args: ['Update', 'Job ID', params.id]])
+        }
+        */
+
+        def changeinfo = [method: 'update', change: 'modify', user: session.user]
+        String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
+
+        def payload = [id: params.id, scheduleEnabled: params.status]
+        def result = scheduledExecutionService._doupdate(payload, session.user, roleList, framework, authContext, changeinfo)
+
+        if (result && result.success) {
+            return withFormat {
+                xml {
+                    def writer = new StringWriter()
+                    def xml = new MarkupBuilder(writer)
+                    JobsXMLCodec.encodeWithBuilder([result.scheduledExecution], xml)
+                    writer.flush()
+                    render(text: writer.toString(), contentType: "text/xml", encoding: "UTF-8")
+                }
+                yaml {
+                    render(text: JobsYAMLCodec.encode([result.scheduledExecution] as List), contentType: "text/yaml", encoding: "UTF-8")
+                }
+            }
+        } else {
+            return apiService.renderErrorXml(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response);
+        }
+    }
+
     /**
     */
     def delete(){
