@@ -803,12 +803,7 @@ class UtilityTagLib{
             }
         }
         embedJSON.call([id: id, data: msgs],null)
-        out << '<script>'
-        out << 'if(typeof(window.Messages)!=\'object\'){'
-        out << 'window.Messages={};'
-        out << '}'
-        out << 'jQuery.extend(window.Messages,loadJsonData(\'' + enc(js: id) + '\'));'
-        out << '</script>'
+        out << '<script>_loadMessages(\''+enc(js: id)+'\');</script>'
     }
     def refreshFormTokensHeader = { attrs, body ->
         SynchronizerTokensHolder tokensHolder = tokensHolder()

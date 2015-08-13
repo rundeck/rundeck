@@ -1127,6 +1127,12 @@ var generateId=(function(){
         return id;
     }
 })();
+function _loadMessages(id){
+    if(typeof(window.Messages)!='object') {
+        window.Messages = {};
+    }
+    jQuery.extend(window.Messages,loadJsonData(id));
+}
 /**
  * Returns the i18n message for the given code, or the code itself if message is not found.  Requires
  * calling the "g:jsMessages" tag from the taglib to define messages.
@@ -1134,10 +1140,14 @@ var generateId=(function(){
  * @returns {*}
  */
 function message(code) {
-    if (typeof(window.Messages) != 'object') {
+    if (typeof(window.Messages) == 'object') {
         var msg = Messages[code];
+        if(!msg){
+            if(typeof(_messageMissingError)=='function'){_messageMissingError ("Message not found: "+code);}
+        }
         return msg ? msg : code;
     } else {
+        if(typeof(_messageMissingError)=='function'){_messageMissingError ("Message not found: "+code);}
         return code;
     }
 }

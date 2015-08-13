@@ -1,3 +1,4 @@
+<%@ page import="grails.util.Environment" %>
 <script type="text/javascript">
     <g:set var="currentProject" value="${params.project?:request.project}"/>
     <g:set var="projParams" value="${currentProject?[project:currentProject]:[:]}"/>
@@ -72,4 +73,9 @@
         iconTinyRemoveXGray: '${resource(dir:"images",file:"icon-tiny-removex-gray.png")}',
         iconSmallPrefix:'${resource(dir:"images",file:"icon-small-")}'
     };
+    <g:if test="${Environment.current==Environment.DEVELOPMENT}" >
+    function _messageMissingError(code){
+        throw code;
+    }
+    </g:if>
 </script>
