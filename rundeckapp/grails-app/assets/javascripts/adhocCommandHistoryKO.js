@@ -58,6 +58,10 @@ function AdhocHistory(data,nodefilter) {
     self.loadMax=20;
     self.loaded=ko.observable(false);
     self.links=ko.observableArray([]);
+    self.commandString=ko.observable();
+    self.commandStringDelayed = ko.pureComputed(this.commandString)
+        .extend({ rateLimit: { method: "notifyWhenChangesStop", timeout: 1000 } });
+
     var mapping = {
         'links': {
             create: function (options) {
@@ -68,25 +72,35 @@ function AdhocHistory(data,nodefilter) {
     self.noneFound=ko.pureComputed(function(){
         return self.links().length<1 && self.loaded();
     });
-    self.reload=function(){
-        var requrl=_genUrl(appLinks.adhocHistoryAjax,{max:self.loadMax});
-        jQuery.ajax({
+    self.loadList=function(params){
+        var requrl=_genUrl(appLinks.adhocHistoryAjax,jQuery.extend({max:self.loadMax},params));
+        return jQuery.ajax({
             type:'GET',
             url:requrl,
-            success:function (data,status,xhr) {
-                self.loaded(true);
-                try {
-                    ko.mapping.fromJS(data,mapping,self);
-                } catch (e) {
-                    console.log('Recent commands list: error receiving data',e);
-                    runError('Recent commands list: error receiving data: '+e);
-                }
-            },
+
             error:function(data,jqxhr,err){
                 runError('Recent commands list: request failed for '+requrl+': '+err+", "+jqxhr);
             }
-        })
+        });
     };
+    self.reload=function(){
+        self.loadList({}).done(function (data,status,xhr) {
+            self.loaded(true);
+            try {
+                ko.mapping.fromJS(data,mapping,self);
+            } catch (e) {
+                console.log('Recent commands list: error receiving data',e);
+                runError('Recent commands list: error receiving data: '+e);
+            }
+        });
+    };
+    //self.commandStringDelayed.subscribe(function(newval){
+    //    if(newval && newval.length>3) {
+    //        self.loadList({query: newval}).done(function (data, status, xhr) {
+    //            console.log('new query: ' + newval, data);
+    //        });
+    //    }
+    //});
     if(data){
         ko.mapping.fromJS(data,{},self);
     }

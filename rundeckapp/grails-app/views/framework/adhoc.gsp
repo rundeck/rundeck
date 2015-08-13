@@ -37,7 +37,8 @@
             maxLastLines:params.int('maxlines')?: maxLastLines,
             emptyQuery:emptyQuery?:null,
             ukey:ukey,
-            project:params.project?:request.project
+            project:params.project?:request.project,
+            runCommand:runCommand?:''
     ]}"/>
     <g:jsMessages code="Node,Node.plural"/>
 </head>
@@ -65,9 +66,9 @@
                                     </div>
                                 <div class="form-group ">
                                 <label class="col-sm-2 text-right form-control-static" for="runFormExec">Command:</label>
-                                <div class=" col-sm-10">
+                                <div class=" col-sm-10"  id="adhocInput">
                                     <span class="input-group">
-                                        <span class="input-group-btn" id="adhocHistoryMenu">
+                                        <span class="input-group-btn">
                                             <button type="button"
                                                     class="btn btn-default dropdown-toggle act_adhoc_history_dropdown"
                                                     data-toggle="dropdown">
@@ -105,6 +106,7 @@
                                                  value="${runCommand}"
                                                  id="runFormExec"
                                                  class="form-control"
+                                                 data-bind="value: commandString, valueUpdate: 'keyup'"
                                                  autofocus="true"/>
                                     <g:hiddenField name="doNodedispatch"  value="true"/>
 

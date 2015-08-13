@@ -73,7 +73,7 @@ class ExecutionController extends ControllerBase{
      * @param max maximum results, defaults to 10
      * @return
      */
-    def adhocHistoryAjax(String project, int max){
+    def adhocHistoryAjax(String project, int max, String query){
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,project)
 
         if (unauthorizedResponse(
@@ -105,6 +105,9 @@ class ExecutionController extends ControllerBase{
 
                     def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
                     def str=exec.workflow.commands[0].adhocRemoteString+";"+appliedFilter
+                    if(query && query.size()>4 && !str.contains(query)){
+                        return
+                    }
                     if(!uniques.contains(str)){
                         uniques<<str
                         execs<<exec

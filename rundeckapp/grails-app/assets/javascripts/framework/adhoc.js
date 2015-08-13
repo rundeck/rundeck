@@ -242,8 +242,8 @@ function init() {
     ko.applyBindings(nodeFilter, document.getElementById('nodefilterViewArea'));
     ko.applyBindings(nodeFilter, document.getElementById('nodefiltersHidden'));
 
-    adhocHistory = new AdhocHistory(null, nodeFilter);
-    ko.applyBindings(adhocHistory, document.getElementById('adhocHistoryMenu'));
+    adhocHistory = new AdhocHistory({commandString:pageParams.runCommand}, nodeFilter);
+    ko.applyBindings(adhocHistory, document.getElementById('adhocInput'));
 
     //show selected named filter
     nodeFilter.filterName.subscribe(function (val) {
