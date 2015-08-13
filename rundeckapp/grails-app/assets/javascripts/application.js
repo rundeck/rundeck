@@ -495,7 +495,8 @@ function totalPageCount(max,total){
  * @param offset
  * @param max
  * @param total
- * @param options optional behavior configuration, {maxsteps: 10} the maximum number of page links to show, others will be skipped and a "skipped:true" page will be passed instead
+ * @param options optional behavior configuration, {maxsteps: 10} the maximum number of page links to show, others will
+ *     be skipped and a "skipped:true" page will be passed instead
  * @param func function called with paging parameters: {offset:number,
  *      prevPage: true/false,
  *      nextPage: true/false,
@@ -1126,3 +1127,17 @@ var generateId=(function(){
         return id;
     }
 })();
+/**
+ * Returns the i18n message for the given code, or the code itself if message is not found.  Requires
+ * calling the "g:jsMessages" tag from the taglib to define messages.
+ * @param code
+ * @returns {*}
+ */
+function message(code) {
+    if (typeof(window.Messages) != 'object') {
+        var msg = Messages[code];
+        return msg ? msg : code;
+    } else {
+        return code;
+    }
+}
