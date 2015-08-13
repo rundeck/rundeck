@@ -35,7 +35,7 @@
                 elem.observe('keypress',noenter);
             }
         });
-        var confirm = new PageConfirm(Messages['page.unsaved.changes']);
+        var confirm = new PageConfirm(message('page.unsaved.changes'));
         jQuery('.apply_ace').each(function () {
             _setupAceTextareaEditor(this,confirm.setNeetsConfirm);
         });
