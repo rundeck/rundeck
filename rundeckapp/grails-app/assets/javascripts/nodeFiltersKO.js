@@ -118,6 +118,17 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         self.total(0);
         self.allcount(0);
     };
+    /**
+     * Use a specific filter string and update
+     * @param filter the filter string
+     */
+    self.useFilterString=function(filter){
+        self.filterAll(false);
+        self.filterWithoutAll(filter);
+        self.filterName(null);
+        self.clear();
+        self.updateMatchedNodes();
+    };
     self.selectNodeFilterLink=function(link){
         var oldfilter = self.filter();
         var filterName = jQuery(link).data('node-filter-name');

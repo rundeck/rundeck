@@ -29,6 +29,83 @@
     <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
     <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
     <script type="text/javascript">
+
+        function AdhocLink(data,nodefilter) {
+            var self = this;
+            self.nodefilter=nodefilter;
+            self.href=ko.observable(null);
+            self.title=ko.observable(null);
+            self.execid=ko.observable(null);
+            self.filter=ko.observable(null);
+
+            self.status=ko.observable(null);
+            self.succeeded=ko.observable(null);
+
+            var statusMap={
+                'running':'running',
+                'succeed':'succeed',
+                'succeeded':'succeed',
+                'fail':'fail',
+                'failed':'fail',
+                'cancel':'aborted',
+                'aborted':'aborted',
+                'retry':'failedretry',
+                'timedout':'timedout',
+                'timeout':'timedout'
+            };
+
+            self.statusClass=ko.pureComputed(function(){
+                var css=statusMap[self.status()];
+                return css?css:'other';
+            });
+
+            //set the command and filter strings
+            self.fillCommand=function(){
+                jQuery('#runFormExec').val(self.title());
+                self.nodefilter.useFilterString(self.filter());
+            };
+
+            ko.mapping.fromJS(data,{},self);
+        }
+        function AdhocHistory(data,nodefilter) {
+            var self = this;
+            self.nodefilter=nodefilter;
+            self.loadMax=20;
+            self.loaded=ko.observable(false);
+            self.links=ko.observableArray([]);
+            var mapping = {
+                'links': {
+                    create: function (options) {
+                        return new AdhocLink(options.data,self.nodefilter);
+                    }
+                }
+            };
+            self.noneFound=ko.pureComputed(function(){
+               return self.links().length<1 && self.loaded();
+            });
+            self.reload=function(){
+                var requrl=_genUrl(appLinks.adhocHistoryAjax,{max:self.loadMax});
+                jQuery.ajax({
+                    type:'GET',
+                    url:requrl,
+                    success:function (data,status,xhr) {
+                        self.loaded(true);
+                        try {
+                            ko.mapping.fromJS(data,mapping,self);
+                        } catch (e) {
+                            console.log('Recent commands list: error receiving data',e);
+                            runError('Recent commands list: error receiving data: '+e);
+                        }
+                    },
+                    error:function(data,jqxhr,err){
+                        runError('Recent commands list: request failed for '+requrl+': '+err+", "+jqxhr);
+                    }
+                })
+            };
+            if(data){
+                ko.mapping.fromJS(data,{},self);
+            }
+        }
         function showError(message) {
             appendText($("error"),message);
             $("error").show();
@@ -161,6 +238,7 @@
         }
 
         var nodeFilter;
+        var adhocHistory;
 
         /**
          * Handle embedded content updates
@@ -236,7 +314,12 @@
                         nodesTitleSingular: "${enc(js:g.message(code:'Node',default:'Node'))}",
                         nodesTitlePlural: "${enc(js:g.message(code:'Node.plural',default:'Nodes'))}"
                     }));
-            ko.applyBindings(nodeFilter,document.getElementById('tabsarea'));
+            ko.applyBindings(nodeFilter,document.getElementById('actionButtonArea'));
+            ko.applyBindings(nodeFilter,document.getElementById('nodefilterViewArea'));
+            ko.applyBindings(nodeFilter,document.getElementById('nodefiltersHidden'));
+
+            adhocHistory = new AdhocHistory(null,nodeFilter);
+            ko.applyBindings(adhocHistory,document.getElementById('adhocHistoryMenu'));
 
             //show selected named filter
             nodeFilter.filterName.subscribe(function(val){
@@ -246,24 +329,14 @@
                 }
             });
             nodeFilter.updateMatchedNodes();
+            jQuery('.act_adhoc_history_dropdown').click(function(){
+                adhocHistory.reload();
+            });
         }
         jQuery(document).ready(init);
 
     </script>
     <g:embedJSON id="filterParamsJSON" data="${[filterName: params.filterName, filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
-    <style type="text/css">
-        #runerror{
-            margin:5px 0;
-        }
-
-        .commandcontent{
-            margin:0;
-        }
-
-        table.execoutput {
-            font-size: 100%;
-        }
-    </style>
 </head>
 <body>
 
@@ -283,12 +356,48 @@
                             <div class="form form-horizontal clearfix" id="runbox">
                                 <g:jsonToken id="adhoc_req_tokens" url="${request.forwardURI}"/>
                                 <g:form  action="adhoc" params="[project:params.project]">
+                                    <div id="nodefiltersHidden">
                                 <g:render template="nodeFiltersHidden"
                                           model="${[params: params, query: query]}"/>
+                                    </div>
                                 <div class="form-group ">
                                 <label class="col-sm-2 text-right form-control-static" for="runFormExec">Command:</label>
                                 <div class=" col-sm-10">
                                     <span class="input-group">
+                                        <span class="input-group-btn" id="adhocHistoryMenu">
+                                            <button type="button"
+                                                    class="btn btn-default dropdown-toggle act_adhoc_history_dropdown"
+                                                    data-toggle="dropdown">
+                                                <g:message code="recent" /> <span class="caret"></span>
+                                            </button>
+                                            <ul class="dropdown-menu" >
+
+                                                <!-- ko if: noneFound() -->
+                                                    <li role="presentation" class="dropdown-header"><g:message code="none" /></li>
+                                                <!-- /ko -->
+
+                                                <!-- ko if: !loaded() -->
+                                                    <li role="presentation" class="dropdown-header"><g:message code="loading.text" /></li>
+                                                <!-- /ko -->
+
+                                                <!-- ko if: loaded() && !noneFound() -->
+                                                <li role="presentation" class="dropdown-header">Your recently executed commands</li>
+                                                <!-- /ko -->
+
+                                                <!-- ko foreach: links -->
+                                                <li>
+                                                    <a href="#"
+                                                       data-bind="attr: { href: href, title: filter }, click: fillCommand"
+                                                       class="act_fill_cmd">
+
+                                                        <i class="exec-status icon" data-bind="css: statusClass"></i>
+                                                        <span data-bind="text: title"></span>
+                                                    </a>
+                                                </li>
+                                                <!-- /ko -->
+
+                                            </ul>
+                                        </span>
                                     <g:textField name="exec" size="50" placeholder="Enter a command"
                                                  value="${runCommand}"
                                                  id="runFormExec"
@@ -361,6 +470,7 @@
                             </div>
 
                     </div>
+                    <div id="nodefilterViewArea">
                     <div class="${emptyQuery ? 'active' : ''}" id="nodeFilterInline">
                         <div class="spacing">
                         <div class="">
@@ -425,8 +535,9 @@
                             </span>
                         </div>
                     </div>
+                    </div>
                 </div>
-                <div class="col-sm-2" >
+                <div class="col-sm-2" id="actionButtonArea" >
 
                     <button class="btn btn-success runbutton pull-right"
                             data-bind="attr: { disabled: allcount()<1 || error() } "
