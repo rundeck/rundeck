@@ -420,12 +420,12 @@
                                 <div class="collapse well well-sm inline form-inline" id="runconfig">
                                     <div class="row">
                                         <div class="col-sm-12">
-                                            <div class="form-group text-muted ">Node Dispatch Settings:</div>
+                                            <div class="form-group text-muted "><g:message code="node.dispatch.settings" /></div>
 
                                             <div class="form-group has_tooltip"
                                                  title="Maximum number of parallel threads to use"
                                                  data-placement="bottom">
-                                                Thread count
+                                                <g:message code="thread.count" />
                                             </div>
 
                                             <div class="form-group">
@@ -436,7 +436,7 @@
                                                        class="form-control  input-sm"/>
                                             </div>
 
-                                            <div class="form-group">On node failure:</div>
+                                            <div class="form-group"><g:message code="on.node.failure" /></div>
 
                                             <div class="radio">
                                                 <label class="has_tooltip"
@@ -444,7 +444,7 @@
                                                        data-placement="bottom">
                                                     <input type="radio" name="nodeKeepgoing"
                                                            value="true"
-                                                           checked/> <strong>Continue</strong>
+                                                           checked/> <strong><g:message code="continue" /></strong>
                                                 </label>
                                             </div>
 
@@ -453,7 +453,7 @@
                                                        title="Do not execute on any other nodes"
                                                        data-placement="bottom">
                                                     <input type="radio" name="nodeKeepgoing"
-                                                           value="false"/> <strong>Stop</strong>
+                                                           value="false"/> <strong><g:message code="stop" /></strong>
                                                 </label>
                                             </div>
 
@@ -481,7 +481,7 @@
                         <g:set var="filtvalue" value="${query?.('filter')}"/>
 
                             <div class="form-group">
-                                <label class="col-sm-2 text-right form-control-static" for="schedJobNodeFilter">Nodes:</label>
+                                <label class="col-sm-2 text-right form-control-static" for="schedJobNodeFilter"><g:message code="nodes" /></label>
                                 <div class="col-sm-10">
                                 <span class=" input-group" >
                                     <g:render template="nodeFilterInputGroup"
@@ -507,7 +507,7 @@
                                  style="display: none"
                                  data-bind="visible: !error() && (!allcount() || allcount()==0)">
                                 <span class="errormessage">
-                                    No nodes selected. Match nodes by selecting or entering a filter.
+                                    <g:message code="no.nodes.selected.match.nodes.by.selecting.or.entering.a.filter" />
                                 </span>
                             </div>
                             <div class="spacing text-danger" id="loaderror2"
@@ -525,9 +525,9 @@
                                 </span>
                                 <span data-bind="if: !loading() && !error()">
                                 <span data-bind="text: allcount()">0</span>
-                                <span data-bind="text: nodesTitle">Nodes</span> Matched.
+                                <span data-bind="text: nodesTitle"><g:message code="Node.plural" /></span> <g:message code="matched" />.
                                 <a class="textbtn textbtn-default pull-right" data-bind="click: nodesPageView">
-                                    View in Nodes Page &raquo;
+                                    <g:message code="view.in.nodes.page.prompt" />
                                 </a>
                                 </span>
                             </div>
@@ -542,7 +542,7 @@
                     <button class="btn btn-success runbutton pull-right"
                             data-bind="attr: { disabled: allcount()<1 || error() } "
                             onclick="runFormSubmit('runbox');" data-loading-text="Running…">
-                        Run on <span data-bind="text: allcount">0</span> <span data-bind="text: nodesTitle">Nodes</span> <span class="glyphicon glyphicon-play"></span>
+                        <g:message code="run.on" /> <span data-bind="text: allcount">0</span> <span data-bind="text: nodesTitle"><g:message code="Node.plural" /></span> <span class="glyphicon glyphicon-play"></span>
                     </button>
                 </div>
                 </g:ifExecutionMode>
