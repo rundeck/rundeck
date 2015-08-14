@@ -320,7 +320,6 @@ class FrameworkController extends ControllerBase {
 
         def nodes=params.requireRunAuth=='true'? runnodes.nodes:readnodes.nodes
         total= nodes.size()
-        def tagsummary=[:]
         def page=-1;
         def max=-1;
         def remaining=false;
@@ -338,7 +337,9 @@ class FrameworkController extends ControllerBase {
             }
         }
 
+        def tagsummary=frameworkService.summarizeTags(nodes)
         def count=0;
+        
         nodes.each{INodeEntry nd->
             if(null!=nd){
                 if(page>=0 && (count<(page*max) || count >=((page+1)*max) && !remaining)){
@@ -350,17 +351,7 @@ class FrameworkController extends ControllerBase {
                 if(params.requireRunAuth == 'true'  || runnodes.getNode(nd.nodename)){
                     noderunauthmap[nd.nodename]=true
                 }
-                //summarize tags
-                def tags = nd.getTags()
-                if(tags){
-                    tags.each{ tag->
-                        if(!tagsummary[tag]){
-                            tagsummary[tag]=1
-                        }else{
-                            tagsummary[tag]++
-                        }
-                    }
-                }
+
 
             }
         }
