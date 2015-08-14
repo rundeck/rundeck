@@ -830,13 +830,14 @@ class ScheduledExecutionController  extends ControllerBase{
     }
 
     def apiFlipExecutionEnabled() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V14)) {
             return
         }
 
-        if (!apiService.requireApi(request, response)) {
-            return
-        }
 
         log.debug("ScheduledExecutionController: apiFlipExecutionEnabled" + params)
 
@@ -881,11 +882,11 @@ class ScheduledExecutionController  extends ControllerBase{
     }
 
     def apiFlipScheduleEnabled() {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V14)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
 
-        if (!apiService.requireApi(request, response)) {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V14)) {
             return
         }
 
