@@ -66,6 +66,7 @@ function AdhocCommand(data,nodefilter) {
     self.allowInput = ko.pureComputed(function(){
        return !self.running() && self.canRun();
     });
+    self.followControl=null;
     var mapping = {
         'links': {
             create: function (options) {

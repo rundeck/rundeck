@@ -159,6 +159,11 @@ function continueRunFollow(data) {
         dobind: true
     });
     followControl.beginFollowingOutput(data.id);
+    var oldControl=adhocCommand.followControl;
+    adhocCommand.followControl=followControl;
+    if(oldControl){
+        oldControl.stopFollowingOutput();
+    }
 }
 function onRunComplete() {
     adhocCommand.running(false);
@@ -195,6 +200,14 @@ function _updateBoxInfo(name, data) {
     }
 }
 
+function closeOutputArea(){
+    jQuery('#runcontent').hide();
+    onRunComplete();
+    if(adhocCommand.followControl) {
+        adhocCommand.followControl.stopFollowingOutput();
+    }
+}
+
 
 /**
  * START page init
@@ -207,7 +220,7 @@ function init() {
     });
     jQuery('#nodesContent').on('click', '.closeoutput', function (evt) {
         evt.preventDefault();
-        jQuery('#runcontent').hide();
+        closeOutputArea();
     });
     $$('#runbox input').each(function (elem) {
         if (elem.type == 'text') {
