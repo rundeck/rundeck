@@ -2,6 +2,7 @@
 //= require knockout.min
 //= require knockout-mapping
 //= require knockout-foreachprop
+//= require workflow
 //= require historyKO
 //= require nodeFiltersKO
 //= require adhocCommandKO
@@ -134,7 +135,10 @@ function startRunFollow(data) {
  */
 function continueRunFollow(data) {
     var pageParams = loadJsonData('pageParams');
+    var workflowData=[{exec:adhocCommand.commandString()}];
+    var workflow = new RDWorkflow(workflowData,{});
     var followControl = new FollowControl(data.id, 'runcontent', {
+        workflow:workflow,
         parentElement: 'commandPerform',
         viewoptionsCompleteId: 'viewoptionscomplete',
         cmdOutputErrorId: 'cmdoutputerror',
@@ -144,12 +148,16 @@ function continueRunFollow(data) {
         iconUrl: pageParams.iconUrl,
         lastlines: pageParams.lastlines,
         maxLastLines: pageParams.maxLastLines,
-        showFinalLine: {value: false, changed: false},
+        //showFinalLine: {value: false, changed: false},
         colStep: {value: false},
+        collapseCtx: {value: false, changed: false},
+        groupOutput:{value:false},
         tailmode: true,
-        taildelay: 1,
-        truncateToTail: true,
-        execData: {node: "test"},
+        browsemode: false,
+        nodemode: false,
+        //taildelay: 1,
+        //truncateToTail: false,
+        execData: {},
         appLinks: appLinks,
         onComplete: onRunComplete,
         dobind: true
