@@ -103,7 +103,6 @@
         </g:else>
     </li>
 </g:if>
-<!--TODO: pruebas-->
 
 <g:if test="${authEnableDisableExecution}">
     <li>

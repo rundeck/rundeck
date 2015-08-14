@@ -849,13 +849,11 @@ class ScheduledExecutionController  extends ControllerBase{
         def Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, scheduledExecution.project)
 
-        /* ACL Pending
-        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE],
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_TOGGLE_EXECUTION],
                 scheduledExecution.project)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                                                        code  : 'api.error.item.unauthorized', args: ['Update', 'Job ID', params.id]])
+                                                        code  : 'api.error.item.unauthorized', args: ['Toggle Execution', 'Job ID', params.id]])
         }
-        */
 
         def changeinfo = [method: 'update', change: 'modify', user: session.user]
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
@@ -901,13 +899,11 @@ class ScheduledExecutionController  extends ControllerBase{
         def Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, scheduledExecution.project)
 
-        /* ACL Pending
-        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE],
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_TOGGLE_SCHEDULE],
                 scheduledExecution.project)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                                                        code  : 'api.error.item.unauthorized', args: ['Update', 'Job ID', params.id]])
+                                                        code  : 'api.error.item.unauthorized', args: ['Toggle Schedule', 'Job ID', params.id]])
         }
-        */
 
         def changeinfo = [method: 'update', change: 'modify', user: session.user]
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
