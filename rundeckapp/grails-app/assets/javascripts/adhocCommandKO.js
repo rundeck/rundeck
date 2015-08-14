@@ -52,7 +52,7 @@ function AdhocLink(data,nodefilter) {
 
     ko.mapping.fromJS(data,{},self);
 }
-function AdhocHistory(data,nodefilter) {
+function AdhocCommand(data,nodefilter) {
     var self = this;
     self.nodefilter=nodefilter;
     self.loadMax=20;
@@ -61,7 +61,11 @@ function AdhocHistory(data,nodefilter) {
     self.commandString=ko.observable();
     self.commandStringDelayed = ko.pureComputed(this.commandString)
         .extend({ rateLimit: { method: "notifyWhenChangesStop", timeout: 1000 } });
-
+    self.running=ko.observable(false);
+    self.canRun=ko.observable(false);
+    self.allowInput = ko.pureComputed(function(){
+       return !self.running() && self.canRun();
+    });
     var mapping = {
         'links': {
             create: function (options) {

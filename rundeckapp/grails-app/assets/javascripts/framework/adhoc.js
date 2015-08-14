@@ -4,7 +4,7 @@
 //= require knockout-foreachprop
 //= require historyKO
 //= require nodeFiltersKO
-//= require adhocCommandHistoryKO
+//= require adhocCommandKO
 
 /*
  Manifest for "framework/adhoc.gsp" page
@@ -82,6 +82,7 @@ function runFormSubmit(elem) {
         return false;
     }
     var data = jQuery('#' + elem + " :input").serialize();
+    adhocCommand.running(true);
     disableRunBar(true);
     runStarted();
     $('runcontent').loading('Starting Execution…');
@@ -156,12 +157,13 @@ function continueRunFollow(data) {
     followControl.beginFollowingOutput(data.id);
 }
 function onRunComplete() {
+    adhocCommand.running(false);
     enableRunBar();
     afterRun();
 }
 
 var nodeFilter;
-var adhocHistory;
+var adhocCommand;
 
 /**
  * Handle embedded content updates
@@ -169,8 +171,10 @@ var adhocHistory;
 function _updateBoxInfo(name, data) {
     if (data.total && data.total != "0" && !running) {
         enableRunBar();
+        adhocCommand.canRun(true);
     } else if (!running) {
         disableRunBar(false);
+        adhocCommand.canRun(false);
     }
     if (null != data.total && typeof(nodeFilter) != 'undefined') {
         nodeFilter.total(data.total);
@@ -242,8 +246,8 @@ function init() {
     ko.applyBindings(nodeFilter, document.getElementById('nodefilterViewArea'));
     ko.applyBindings(nodeFilter, document.getElementById('nodefiltersHidden'));
 
-    adhocHistory = new AdhocHistory({commandString:pageParams.runCommand}, nodeFilter);
-    ko.applyBindings(adhocHistory, document.getElementById('adhocInput'));
+    adhocCommand = new AdhocCommand({commandString:pageParams.runCommand}, nodeFilter);
+    ko.applyBindings(adhocCommand, document.getElementById('adhocInput'));
 
     //show selected named filter
     nodeFilter.filterName.subscribe(function (val) {
@@ -254,7 +258,7 @@ function init() {
     });
     nodeFilter.updateMatchedNodes();
     jQuery('.act_adhoc_history_dropdown').click(function () {
-        adhocHistory.reload();
+        adhocCommand.reload();
     });
 }
 jQuery(document).ready(init);
