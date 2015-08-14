@@ -38,18 +38,13 @@ function showError(message) {
 
     function disableRunBar(runnning) {
         var runbox = jQuery('#runbox');
-        runbox.find('input[type="text"]').prop('disabled', true);
-        runbox.find('button.runbutton').prop('disabled', true).addClass('disabled');
         if (runnning) {
             runbox.find('button.runbutton').button('loading');
         }
     }
 function enableRunBar() {
     var runbox = jQuery('#runbox');
-    runbox.find('input[type="text"]').prop('disabled', false);
     runbox.find('button.runbutton')
-        .prop('disabled', false)
-        .removeClass('disabled')
         .button('reset');
 }
 var running = false;

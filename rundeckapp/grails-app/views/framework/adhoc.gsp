@@ -106,7 +106,7 @@
                                                  value="${runCommand}"
                                                  id="runFormExec"
                                                  class="form-control"
-                                                 data-bind="value: commandString, valueUpdate: 'keyup'"
+                                                 data-bind="value: commandString, valueUpdate: 'keyup', enable: allowInput"
                                                  autofocus="true"/>
                                     <g:hiddenField name="doNodedispatch"  value="true"/>
 
