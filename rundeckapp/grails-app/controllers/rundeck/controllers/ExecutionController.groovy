@@ -15,6 +15,7 @@ import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
+import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
@@ -101,7 +102,10 @@ class ExecutionController extends ControllerBase{
 
             offset+=res.size()
             res.each{exec->
-                if(execs.size()<max && exec.workflow.commands.size()==1 && exec.workflow.commands[0].adhocRemoteString){
+                if(execs.size()<max
+                        && exec.workflow.commands.size()==1
+                        && exec.workflow.commands[0] instanceof CommandExec
+                        && exec.workflow.commands[0].adhocRemoteString){
 
                     def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
                     def str=exec.workflow.commands[0].adhocRemoteString+";"+appliedFilter
