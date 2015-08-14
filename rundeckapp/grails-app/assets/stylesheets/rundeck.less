@@ -922,6 +922,12 @@ section{
       padding-top:@navbar-margin-bottom;
       padding-bottom:10px;
       border-bottom: 1px solid @list-group-border;
+      &.panel-heading-affix{
+        background-color: @panel-default-heading-bg;
+        width:auto;
+        margin: 0 15px;//normal col padding
+        padding: @base-item-padding-vertical @base-item-padding-horizontal;
+      }
     }
   }
   .affix .affixed-hidden{

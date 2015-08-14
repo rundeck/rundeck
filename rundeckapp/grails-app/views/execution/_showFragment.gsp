@@ -5,8 +5,8 @@
 </g:if>
 
 <g:if test="${inlineView}">
-    <div class="panel-heading">
-    <div class=" " id="jobInfo_${execution.id}">
+    <div class="panel-heading" data-affix="wrap">
+    <div class="executionshow panel-heading-affix" data-affix="top" data-affix-padding-top="8" id="jobInfo_${execution.id}" >
         <div class="row">
             <div class="col-sm-6">
                 <span class="inline_only ">
@@ -87,6 +87,18 @@
                         iheight: '24px',
                 ]"/>
                 <button class="close closeoutput">&times;</button>
+                <div class="affixed-shown pull-right">
+                    <a class="textbtn textbtn-default textbtn-on-hover btn-xs" href="#top">
+                        <g:message code="scroll.to.top" />
+                        <i class="glyphicon glyphicon-arrow-up"></i>
+                    </a>
+                </div>
+                <div class="affixed-hidden pull-right">
+                    <a class="textbtn textbtn-default textbtn-on-hover btn-xs" href="#bottom">
+                        Scroll to Bottom
+                        <i class="glyphicon glyphicon-arrow-down"></i>
+                    </a>
+                </div>
             </div>
         </div>
     </div>

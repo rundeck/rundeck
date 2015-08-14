@@ -122,6 +122,7 @@ function startRunFollow(data) {
         }), function (resp, status, jqxhr) {
             if (status == 'success') {
                 Element.show('runcontent');
+                _initAffix();
                 continueRunFollow(data);
             } else {
                 requestFailure(jqxhr);
