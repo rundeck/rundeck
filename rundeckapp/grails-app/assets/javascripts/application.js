@@ -744,6 +744,12 @@ function _initAffix(){
         jQuery("html, body").animate({ scrollTop: 0 }, "slow");
         return false;
     });
+    jQuery("a[href='#bottom']").click(function () {
+        //window.scrollTo(0, document.documentElement.scrollHeight || document.body.scrollHeight);
+        var body = jQuery("html, body");
+        body.animate({ scrollTop: body[0].scrollHeight }, "fast");
+        return false;
+    });
     jQuery('[data-affix=top]').each(function (i, e) {
         var padd = jQuery(e).data('affix-padding-top');
         var top= jQuery(e).offset().top - (padd ? padd : 0);
