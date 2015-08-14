@@ -120,7 +120,7 @@ class ExecutionController extends ControllerBase{
         }
 
         render(contentType: 'application/json'){
-            links=array{
+            executions=array{
                 execs.each{Execution exec->
                     if(exec.workflow.commands.size()==1 && exec.workflow.commands[0].adhocRemoteString) {
                         def href=createLink(

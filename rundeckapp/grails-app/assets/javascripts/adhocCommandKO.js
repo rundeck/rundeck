@@ -56,8 +56,8 @@ function AdhocCommand(data,nodefilter) {
     var self = this;
     self.nodefilter=nodefilter;
     self.loadMax=20;
-    self.loaded=ko.observable(false);
-    self.links=ko.observableArray([]);
+    self.recentCommandsLoaded=ko.observable(false);
+    self.recentCommands=ko.observableArray([]);
     self.commandString=ko.observable();
     self.commandStringDelayed = ko.pureComputed(this.commandString)
         .extend({ rateLimit: { method: "notifyWhenChangesStop", timeout: 1000 } });
@@ -68,14 +68,14 @@ function AdhocCommand(data,nodefilter) {
     });
     self.followControl=null;
     var mapping = {
-        'links': {
+        'recentCommands': {
             create: function (options) {
                 return new AdhocLink(options.data,self.nodefilter);
             }
         }
     };
-    self.noneFound=ko.pureComputed(function(){
-        return self.links().length<1 && self.loaded();
+    self.recentCommandsNoneFound=ko.pureComputed(function(){
+        return self.recentCommands().length<1 && self.recentCommandsLoaded();
     });
     self.loadList=function(params){
         var requrl=_genUrl(appLinks.adhocHistoryAjax,jQuery.extend({max:self.loadMax},params));
@@ -88,11 +88,11 @@ function AdhocCommand(data,nodefilter) {
             }
         });
     };
-    self.reload=function(){
+    self.loadRecentCommands=function(){
         self.loadList({}).done(function (data,status,xhr) {
-            self.loaded(true);
+            self.recentCommandsLoaded(true);
             try {
-                ko.mapping.fromJS(data,mapping,self);
+                ko.mapping.fromJS({recentCommands:data.executions},mapping,self);
             } catch (e) {
                 console.log('Recent commands list: error receiving data',e);
                 runError('Recent commands list: error receiving data: '+e);

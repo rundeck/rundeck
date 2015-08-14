@@ -76,19 +76,19 @@
                                             </button>
                                             <ul class="dropdown-menu" >
 
-                                                <!-- ko if: noneFound() -->
+                                                <!-- ko if: recentCommandsNoneFound() -->
                                                     <li role="presentation" class="dropdown-header"><g:message code="none" /></li>
                                                 <!-- /ko -->
 
-                                                <!-- ko if: !loaded() -->
+                                                <!-- ko if: !recentCommandsLoaded() -->
                                                     <li role="presentation" class="dropdown-header"><g:message code="loading.text" /></li>
                                                 <!-- /ko -->
 
-                                                <!-- ko if: loaded() && !noneFound() -->
+                                                <!-- ko if: recentCommandsLoaded() && !recentCommandsNoneFound() -->
                                                 <li role="presentation" class="dropdown-header">Your recently executed commands</li>
                                                 <!-- /ko -->
 
-                                                <!-- ko foreach: links -->
+                                                <!-- ko foreach: recentCommands -->
                                                 <li>
                                                     <a href="#"
                                                        data-bind="attr: { href: href, title: filter }, click: fillCommand"

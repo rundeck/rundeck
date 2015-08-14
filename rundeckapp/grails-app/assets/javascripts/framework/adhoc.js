@@ -275,7 +275,7 @@ function init() {
     });
     nodeFilter.updateMatchedNodes();
     jQuery('.act_adhoc_history_dropdown').click(function () {
-        adhocCommand.reload();
+        adhocCommand.loadRecentCommands();
     });
 }
 jQuery(document).ready(init);
