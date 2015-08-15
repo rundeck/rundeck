@@ -348,6 +348,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     private Map storeProjectConfig(String projectName, Properties properties) {
         def storagePath = ETC_PROJECT_PROPERTIES_PATH
         def baos = new ByteArrayOutputStream()
+        properties['project.name']=projectName
         properties.store(baos, MIME_TYPE_PROJECT_PROPERTIES+";name=" + projectName)
         def bais = new ByteArrayInputStream(baos.toByteArray())
 
