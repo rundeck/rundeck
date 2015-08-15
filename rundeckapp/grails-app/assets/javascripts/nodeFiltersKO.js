@@ -17,6 +17,38 @@
  limitations under the License.
  */
 
+function NodeSummary(data){
+    var self=this;
+    self.error=ko.observable();
+    self.tags=ko.observableArray();
+    self.filters=ko.observableArray();
+    self.defaultFilter=ko.observable();
+    self.totalCount=ko.observable(0);
+    self.baseUrl=data.baseUrl?data.baseUrl:'';
+    
+    self.reload=function(){
+      jQuery.ajax({
+          url:_genUrl(appLinks.frameworkNodeSummaryAjax),
+          type:'GET',
+
+          error:function(data,jqxhr,err){
+              self.error('Recent commands list: request failed for '+requrl+': '+err+", "+jqxhr);
+          }
+      }).success(function(data){
+          ko.mapping.fromJS(data,{},self);
+      });
+    };
+    self.linkForTagFilter=function(tag){
+        return _genUrl(self.baseUrl,{filter: 'tags:'+tag.tag()});
+    };
+    self.linkForFilterName=function(filter){
+        return _genUrl(self.baseUrl,{filterName: filter.name()});
+    };
+    if(data) {
+        ko.mapping.fromJS(data, {}, self);
+    }
+}
+
 function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     var self = this;
     self.baseRunUrl = baseRunUrl;
@@ -42,6 +74,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.emptyMode=ko.observable(data.emptyMode?data.emptyMode:'localnode');
     self.emptyMessage=ko.observable(data.emptyMessage?data.emptyMessage:'No match');
     self.hideAll=ko.observable(data.hideAll!=null?(data.hideAll?true:false):false);
+    self.nodeSummary=ko.observable(data.nodeSummary?data.nodeSummary:null);
 
     self.pageRemaining=ko.computed(function(){
         if(self.total()<=0 || self.page()<0){
