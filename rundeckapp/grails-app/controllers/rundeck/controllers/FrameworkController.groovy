@@ -339,7 +339,7 @@ class FrameworkController extends ControllerBase {
 
         def tagsummary=frameworkService.summarizeTags(nodes)
         def count=0;
-        
+
         nodes.each{INodeEntry nd->
             if(null!=nd){
                 if(page>=0 && (count<(page*max) || count >=((page+1)*max) && !remaining)){
@@ -431,6 +431,40 @@ class FrameworkController extends ControllerBase {
 
 
         return model
+    }
+    def nodeSummaryAjax(String project){
+
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,project)
+        if (unauthorizedResponse(
+                frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+                                                             [AuthConstants.ACTION_READ],
+                                                             project),
+                AuthConstants.ACTION_READ, 'Project', 'nodes',true)) {
+            return
+        }
+        def User u = userService.findOrCreateUser(session.user)
+        def defaultFilter = null
+        Map filterpref = userService.parseKeyValuePref(u.filterPref)
+        if (filterpref['nodes']) {
+            defaultFilter = filterpref['nodes']
+        }
+        def filters=[]
+        //load a named filter and create a query from it
+        if (u) {
+            def filterResults = NodeFilter.findAllByUser(u, [sort: 'name', order: 'desc'])
+            filters = filterResults.collect {
+                [name: it.name, filter: it.asFilter()]
+            }
+        }
+
+        def fwkproject = frameworkService.getFrameworkProject(project)
+        INodeSet nodes1 = fwkproject.getNodeSet()
+        def size=nodes1.nodes.size()
+        def tagsummary = frameworkService.summarizeTags(nodes1.nodes)
+        tagsummary = tagsummary.keySet().sort().collect{
+            [tag:it,count:tagsummary[it]]
+        }
+        render(contentType: 'application/json',text: [tags:tagsummary,totalCount:size,filters:filters,defaultFilter:defaultFilter] as JSON)
     }
     /**
      * nodesFragment renders a set of nodes in HTML snippet, for ajax
