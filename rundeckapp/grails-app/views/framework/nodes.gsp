@@ -138,6 +138,7 @@
          */
         function init() {
             var filterParams =loadJsonData('filterParamsJSON');
+            var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
             nodeFilter = new NodeFilters(
                     appLinks.frameworkAdhoc,
                     appLinks.scheduledExecutionCreate,
@@ -147,7 +148,8 @@
                         project: '${enc(js:params.project?:request.project)}',
                         paging:true,
                         nodesTitleSingular:"${g.message(code:'Node',default:'Node')}",
-                        nodesTitlePlural:"${g.message(code:'Node.plural',default:'Nodes')}"
+                        nodesTitlePlural:"${g.message(code:'Node.plural',default:'Nodes')}",
+                        nodeSummary:nodeSummary
                     }));
             ko.applyBindings(nodeFilter);
             //show selected named filter
@@ -157,11 +159,16 @@
                     jQuery('a[data-node-filter-name=\'' + val + '\']').addClass('active');
                 }
             });
+            nodeFilter.loading.subscribe(function(val){
+                //select filter results tab whenever loading output
+                jQuery('#tab_link_result a').tab('show');
+            });
             jQuery('body').on('click', '.nodefilterlink', function (evt) {
                 evt.preventDefault();
                 nodeFilter.selectNodeFilterLink(this);
             });
-            nodeFilter.updateMatchedNodes();
+            nodeSummary.reload();
+//            nodeFilter.updateMatchedNodes();
         }
         jQuery(document).ready(init);
 
@@ -257,99 +264,180 @@
                           deleteActionSubmit: 'deleteNodeFilter', storeActionSubmit: 'storeNodeFilter']}"/>
     </g:form>
 </div>
-    <div class="row row-space">
-        <div class="col-sm-12">
-            <span class="h4" data-bind="if: !loading() && !error()">
-                <g:if test="${summaryOnly}">
-                    <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
-                    <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span>
-                </g:if>
-                <g:else>
-                    <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
-                    <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> matching filter
-                </g:else>
-            </span>
-            <span data-bind="if: loading()"  class="text-info">
-                <i class="glyphicon glyphicon-time"></i>
-                <g:message code="loading.matched.nodes"/>
-            </span>
-            <span data-bind="if: error()"  class="text-danger">
-                <i class="glyphicon glyphicon-warning-sign"></i>
-                <span data-bind="text: error()"></span>
-            </span>
-            <g:if test="${tagsummary}">
-                <g:render template="tagsummary"
-                          model="${[hidetop:!summaryOnly,tagsummary: tagsummary, link: [action: 'nodes', controller: 'framework', param: 'nodeIncludeTags']]}"/>
-            </g:if>
-            <g:elseif test="${tagsummary?.size() == 0}">
-            %{--<span class="text-muted">no tags</span>--}%
-            </g:elseif>
-            <div class=" btn-group pull-right ">
-                <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                   Node Actions <span class="caret"></span>
-                </button>
-                <ul class="dropdown-menu" role="menu">
-                    <g:if test="${g.executionMode(is:'active')}">
 
-                    <li data-bind="visible: hasNodes()" class="${run_authorized?'':'disabled'}">
-                        <a href="#" data-bind="${run_authorized?'click: runCommand':''}"
-                           title="${run_authorized ? '' : 'Not authorized'}"
-                           class="${run_authorized ? '' : 'has_tooltip'}"
-                           data-placement="left"
-                        >
-                            <i class="glyphicon glyphicon-play"></i>
-                            Run a command on <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
-                            <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
-                        </a>
-                    </li>
+
+    <ul class="nav nav-tabs">
+        <li class="active">
+            <a href="#summary" data-toggle="tab">
+                Browse
+            </a>
+        </li>
+        <li id="tab_link_result">
+            <a href="#result" data-toggle="tab">
+                Filter
+            </a>
+        </li>
+    </ul>
+
+    <div class="row row-space">
+    <div class="col-sm-12">
+        <div class="tab-content">
+            <div class="tab-pane " id="result">
+                <div class="row row-space">
+                    <div class="col-sm-12">
+                        <span class="h4" data-bind="if: !loading() && !error()">
+                            <g:if test="${summaryOnly}">
+                                <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
+                                <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span>
+                            </g:if>
+                            <g:else>
+                                <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
+                                <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> matching filter
+                            </g:else>
+                        </span>
+                        <span data-bind="if: loading()"  class="text-info">
+                            <i class="glyphicon glyphicon-time"></i>
+                            <g:message code="loading.matched.nodes"/>
+                        </span>
+                        <span data-bind="if: error()"  class="text-danger">
+                            <i class="glyphicon glyphicon-warning-sign"></i>
+                            <span data-bind="text: error()"></span>
+                        </span>
+                        <g:if test="${tagsummary}">
+                            <g:render template="tagsummary"
+                                      model="${[hidetop:!summaryOnly,tagsummary: tagsummary, link: [action: 'nodes', controller: 'framework', param: 'nodeIncludeTags']]}"/>
+                        </g:if>
+                        <g:elseif test="${tagsummary?.size() == 0}">
+                        %{--<span class="text-muted">no tags</span>--}%
+                        </g:elseif>
+                        <div class=" btn-group pull-right ">
+                            <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                                Node Actions <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu" role="menu">
+                                <g:if test="${g.executionMode(is:'active')}">
+
+                                    <li data-bind="visible: hasNodes()" class="${run_authorized?'':'disabled'}">
+                                        <a href="#" data-bind="${run_authorized?'click: runCommand':''}"
+                                           title="${run_authorized ? '' : 'Not authorized'}"
+                                           class="${run_authorized ? '' : 'has_tooltip'}"
+                                           data-placement="left"
+                                        >
+                                            <i class="glyphicon glyphicon-play"></i>
+                                            Run a command on <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
+                                            <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
+                                        </a>
+                                    </li>
+                                </g:if>
+                                <g:else>
+
+                                    <li data-bind="visible: hasNodes()" class="disabled">
+                                        <a href="#"
+                                           title="${g.message(code:'disabled.execution.run')}"
+                                           class="has_tooltip"
+                                           data-placement="left"
+                                        >
+                                            <i class="glyphicon glyphicon-play"></i>
+                                            Run a command on <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
+                                            <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
+                                        </a>
+                                    </li>
+                                </g:else>
+
+                                <li class="${job_create_authorized?'':'disabled'}">
+                                    <a href="#" data-bind="${job_create_authorized?'click: saveJob':''}"
+                                       title="${job_create_authorized?'':'Not authorized'}"
+                                       class="${job_create_authorized?'':'has_tooltip'}"
+                                       data-placement="left"
+                                    >
+                                        <i class="glyphicon glyphicon-plus"></i>
+                                        Create a job for <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
+                                        <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <g:form class="form form-inline" action="adhoc" controller="framework" method="get" name="runform">
+                        <g:hiddenField name="project" value="${params.project ?: request.project}"/>
+                        <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
+                    </g:form>
+
+                </div>
+                <div class=" clear matchednodes " id="nodelist" >
+                    <g:if test="${!summaryOnly}">
+                        <g:render template="allnodes" model="${[nodeview:'table', expanddetail: true,allnodes: allnodes, totalexecs: totalexecs, jobs: jobs, params: params, total: total, allcount: allcount, page: page, max: max, nodeauthrun: nodeauthrun, tagsummary: null]}" />
                     </g:if>
-                    <g:else>
+                </div>
+            </div>
+            <div class="tab-pane active" id="summary">
 
-                        <li data-bind="visible: hasNodes()" class="disabled">
+                <div class="row row-space">
+                    <div class="col-sm-2">
+
+                        <span data-bind="text: nodeSummary().totalCount"></span> Nodes in project
+                        <ul>
+                        <li>
                             <a href="#"
-                               title="${g.message(code:'disabled.execution.run')}"
-                               class="has_tooltip"
-                               data-placement="left"
-                            >
-                                <i class="glyphicon glyphicon-play"></i>
-                                Run a command on <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
-                                <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
-                            </a>
+                               class="nodefilterlink " data-node-filter=".*"
+                               data-node-filter-all="true">Show All Nodes</a>
                         </li>
-                    </g:else>
+                    </ul>
 
-                    <li class="${job_create_authorized?'':'disabled'}">
-                        <a href="#" data-bind="${job_create_authorized?'click: saveJob':''}"
-                            title="${job_create_authorized?'':'Not authorized'}"
-                            class="${job_create_authorized?'':'has_tooltip'}"
-                            data-placement="left"
-                        >
-                            <i class="glyphicon glyphicon-plus"></i>
-                            Create a job for <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
-                            <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
-                        </a>
-                    </li>
-                </ul>
+                    </div>
+                    <div class="col-sm-5">
+                        Tags:
+                        <ul data-bind="foreach: nodeSummary().tags">
+                            <li>
+                                <a
+                                        href="#"
+                                        class="nodefilterlink tag "
+                                        data-bind="attr: {
+                             'data-node-filter': 'tags: '+tag(),
+                             'title': 'Filter by tag: '+tag(),
+                            'href': $root.nodeSummary().linkForTagFilter($data)
+                            } ">
+                                    <i class="glyphicon glyphicon-tag text-muted "></i>
+                                    <span data-bind="text: tag"></span>
+                                    (<span data-bind="text: count"></span>)
+                                </a>
+                            </li>
+                        </ul>
+                        <div data-bind="visible: !nodeSummary().tags">
+                            None
+                        </div>
+                    </div>
+
+                    <div class="col-sm-5">
+
+                        Filters:
+                        <ul data-bind="foreach: nodeSummary().filters">
+                            <li>
+                                <a
+                                        href="#"
+                                        class="nodefilterlink "
+                                        data-bind="attr: {
+                        'data-node-filter-name': name(),
+                        'data-node-filter': filter(),
+                        'title': filter(),
+                            'href': $root.nodeSummary().linkForFilterName($data) } "
+                                >
+                                    <i class="glyphicon glyphicon-filter text-muted "></i>
+                                    <span data-bind="text: name"></span>
+                                </a>
+                            </li>
+                        </ul>
+                        <div data-bind="visible: !nodeSummary().filters">
+                            None
+                        </div>
+
+                    </div>
+                </div>
             </div>
         </div>
-        <g:form class="form form-inline" action="adhoc" controller="framework" method="get" name="runform">
-            <g:hiddenField name="project" value="${params.project ?: request.project}"/>
-            <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
-        </g:form>
-
+    </div>
     </div>
 
-    <div class="row row-space">
-        <div class="col-sm-12">
-
-            <div class=" clear matchednodes " id="nodelist" >
-                <g:if test="${!summaryOnly}">
-                    <g:render template="allnodes" model="${[nodeview:'table', expanddetail: true,allnodes: allnodes, totalexecs: totalexecs, jobs: jobs, params: params, total: total, allcount: allcount, page: page, max: max, nodeauthrun: nodeauthrun, tagsummary: null]}" />
-                </g:if>
-            </div>
-
-        </div>
-    </div>
 
 
 </div>
