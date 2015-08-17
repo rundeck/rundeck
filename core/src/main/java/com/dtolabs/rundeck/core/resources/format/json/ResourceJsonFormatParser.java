@@ -155,7 +155,7 @@ public class ResourceJsonFormatParser implements ResourceFormatParser, Describab
     private void addNode(final NodeSetImpl nodeSet, final String nodename, final Map attrs) {
         NodeEntryImpl node = new NodeEntryImpl(nodename);
         Map<String, String> safe = safe(attrs);
-        node.setAttributes(safe);
+        node.getAttributes().putAll(safe);
         if (safe.get("tags") != null && !"".equals(safe.get("tags").trim())) {
             node.setTags(new HashSet<>(Arrays.asList(safe.get("tags").split(", *"))));
         } else if (attrs.get("tags") instanceof Collection) {

@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.core.resources.format.json
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Created by greg on 5/22/15.
@@ -18,12 +19,12 @@ class ResourceJsonFormatParserSpec extends Specification {
     "osArch": "x86_64",
     "description": "Rundeck server node",
     "hostname": "192.168.33.12",
-    "nodename": "test1",
+
     "osName": "Mac OS X",
     "rank":"1",
     "doodad":"false"
   },
-  "test2": {
+  "use-nodename-attribute": {
     "tags": "alphabet, soup",
     "osFamily": "unix",
     "ssh-key-storage-path": "keys/testkey1.pem",
@@ -140,6 +141,7 @@ class ResourceJsonFormatParserSpec extends Specification {
 '''
 
 
+    @Unroll
     def "parse basic"(String json, List nodenames){
         given:
         def parser = new ResourceJsonFormatParser()
