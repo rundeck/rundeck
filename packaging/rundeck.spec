@@ -32,7 +32,17 @@ Rundeck provides a single console for dispatching commands across many resources
 if [ ! -e ~rundeck/.ssh/id_rsa ]; then
 	su -c "ssh-keygen -q -t rsa -C '' -N '' -f ~rundeck/.ssh/id_rsa" rundeck
 fi
-/sbin/chkconfig --add rundeckd
+
+case "$1" in
+    1)
+        # This is an initial install.
+        chkconfig --add rundeckd
+    ;;
+    2)
+        # This is an upgrade.
+        : # Do nothing.
+    ;;
+esac
 
 %preun
 if [ "$1" = 0 ]; then
