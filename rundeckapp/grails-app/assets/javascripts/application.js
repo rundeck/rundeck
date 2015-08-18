@@ -198,11 +198,6 @@ var Expander = {
             var icn = icnh.down('.glyphicon');
             if (icn) {
                 value = icn.hasClassName('glyphicon-chevron-down');
-            } else {
-                icn = icnh.down("img");
-                if(icn){
-                    value=icn.src == AppImages.disclosure;
-                }
             }
         }
         Expander.setOpen(elem,contain,value,expression);
@@ -280,11 +275,6 @@ var Expander = {
                 } else {
                     icn.addClassName('glyphicon-chevron-right');
                     icn.removeClassName('glyphicon-chevron-down');
-                }
-            } else {
-                 icn = icnh.down("img");
-                if(icn){
-                    icn.src = value ? AppImages.disclosureOpen : AppImages.disclosure;
                 }
             }
         }
