@@ -1051,3 +1051,34 @@ function message(code) {
         return code;
     }
 }
+
+/**
+ * jquery highlight
+ */
+jQuery.fn.highlight = function(speed) {
+    jQuery(this).each(function() {
+        var el = jQuery(this);
+        el.before("<div/>");
+        el.prev()
+            .width(el.width())
+            .height(el.height())
+            .css({
+                "position": "absolute",
+                "background-color": "#ffff99",
+                "opacity": ".9"
+            })
+            .fadeOut(speed||500);
+    });
+};
+
+/**
+ * jquery scroll to element
+ */
+jQuery.fn.scrollTo = function(speed) {
+    jQuery(this).each(function() {
+        var el = jQuery(this);
+        jQuery('html, body').animate({
+            scrollTop: el.offset().top
+        }, speed||1000);
+    });
+};
