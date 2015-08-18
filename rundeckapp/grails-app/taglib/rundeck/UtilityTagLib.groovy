@@ -14,7 +14,7 @@ class UtilityTagLib{
     def static  daysofweekkey = [Calendar.SUNDAY,Calendar.MONDAY,Calendar.TUESDAY,Calendar.WEDNESDAY,Calendar.THURSDAY,Calendar.FRIDAY,Calendar.SATURDAY];
     def public static daysofweekord = ScheduledExecution.daysofweeklist;
     def public static monthsofyearord = ScheduledExecution.monthsofyearlist;
-	static returnObjectForTags = ['executionMode','appTitle','rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','helpLinkParams','parseOptsFromString','relativeDateString','enc','textFirstLine','textRemainingLines']
+	static returnObjectForTags = ['nodeStatusColorStyle','nodeStatusColorCss','executionMode','appTitle','rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','helpLinkParams','parseOptsFromString','relativeDateString','enc','textFirstLine','textRemainingLines']
 
     private static Random rand=new java.util.Random()
     def HMacSynchronizerTokensManager hMacSynchronizerTokensManager
@@ -880,6 +880,575 @@ class UtilityTagLib{
     def ifExecutionMode={attrs,body->
         if(executionMode(attrs,body)){
             out<<body()
+        }
+    }
+    static final Set<String> glyphiconSet=Collections.unmodifiableSet(
+            qw('''asterisk
+plus
+euro
+eur
+minus
+cloud
+envelope
+pencil
+glass
+music
+search
+heart
+star
+star-empty
+user
+film
+th-large
+th
+th-list
+ok
+remove
+zoom-in
+zoom-out
+off
+signal
+cog
+trash
+home
+file
+time
+road
+download-alt
+download
+upload
+inbox
+play-circle
+repeat
+refresh
+list-alt
+lock
+flag
+headphones
+volume-off
+volume-down
+volume-up
+qrcode
+barcode
+tag
+tags
+book
+bookmark
+print
+camera
+font
+bold
+italic
+text-height
+text-width
+align-left
+align-center
+align-right
+align-justify
+list
+indent-left
+indent-right
+facetime-video
+picture
+map-marker
+adjust
+tint
+edit
+share
+check
+move
+step-backward
+fast-backward
+backward
+play
+pause
+stop
+forward
+fast-forward
+step-forward
+eject
+chevron-left
+chevron-right
+plus-sign
+minus-sign
+remove-sign
+ok-sign
+question-sign
+info-sign
+screenshot
+remove-circle
+ok-circle
+ban-circle
+arrow-left
+arrow-right
+arrow-up
+arrow-down
+share-alt
+resize-full
+resize-small
+exclamation-sign
+gift
+leaf
+fire
+eye-open
+eye-close
+warning-sign
+plane
+calendar
+random
+comment
+magnet
+chevron-up
+chevron-down
+retweet
+shopping-cart
+folder-close
+folder-open
+resize-vertical
+resize-horizontal
+hdd
+bullhorn
+bell
+certificate
+thumbs-up
+thumbs-down
+hand-right
+hand-left
+hand-up
+hand-down
+circle-arrow-right
+circle-arrow-left
+circle-arrow-up
+circle-arrow-down
+globe
+wrench
+tasks
+filter
+briefcase
+fullscreen
+dashboard
+paperclip
+heart-empty
+link
+phone
+pushpin
+usd
+gbp
+sort
+sort-by-alphabet
+sort-by-alphabet-alt
+sort-by-order
+sort-by-order-alt
+sort-by-attributes
+sort-by-attributes-alt
+unchecked
+expand
+collapse-down
+collapse-up
+log-in
+flash
+log-out
+new-window
+record
+save
+open
+saved
+import
+export
+send
+floppy-disk
+floppy-saved
+floppy-remove
+floppy-save
+floppy-open
+credit-card
+transfer
+cutlery
+header
+compressed
+earphone
+phone-alt
+tower
+stats
+sd-video
+hd-video
+subtitles
+sound-stereo
+sound-dolby
+sound-5-1
+sound-6-1
+sound-7-1
+copyright-mark
+registration-mark
+cloud-download
+cloud-upload
+tree-conifer
+tree-deciduous
+cd
+save-file
+open-file
+level-up
+copy
+paste
+on-door
+on-key
+alert
+equalizer
+king
+queen
+pawn
+bishop
+knight
+baby-formula
+tent
+blackboard
+bed
+apple
+erase
+hourglass
+lamp
+duplicate
+piggy-bank
+scissors
+bitcoin
+yen
+ruble
+scale
+ice-lolly
+ice-lolly-tasted
+education
+option-horizontal
+option-vertical
+menu-hamburger
+modal-window
+oil
+grain
+sunglasses
+text-size
+text-color
+text-background
+object-align-top
+object-align-bottom
+object-align-horizontal
+object-align-left
+object-align-vertical
+object-align-right
+triangle-right
+triangle-left
+triangle-bottom
+triangle-top
+console
+superscript
+subscript
+menu-left
+menu-right
+menu-down
+menu-up''')
+    )
+
+    static final String UI_COLOR = 'ui:color'
+    static final String UI_BGCOLOR = 'ui:bgcolor'
+    static final String UI_ICON_COLOR = 'ui:icon:color'
+    static final String UI_ICON_BGCOLOR = 'ui:icon:bgcolor'
+    static final String UI_ICON_NAME = 'ui:icon:name'
+    static final String UI_BADGES_GLYPHICON = 'ui:badges'
+    static final String glyphiconName(String name){
+        if(name && name.startsWith('glyphicon-')) {
+            String gname = name.substring('glyphicon-'.length())
+            return glyphiconSet.contains(gname)?gname:null
+        }
+        null
+    }
+    def nodeBadgeIcons={attrs,body->
+        String found = attrs.node?.attributes[UI_BADGES_GLYPHICON]
+        if(found){
+            found.split(/,\s+/).collect{
+                glyphiconName(it)
+            }.findAll{it}.each{
+                out<<"<i class='glyphicon glyphicon-${it}'></i>"
+            }
+        }
+    }
+    def nodeStatusIcon={attrs,body->
+        def found=glyphiconName( attrs.node?.attributes[UI_ICON_NAME])
+        if(found){
+            out<<"<i class='glyphicon glyphicon-${found}'></i>"
+        }else{
+            out<<body()
+        }
+    }
+    static final Set<String> cssColors=Collections.unmodifiableSet(
+            qw('''aliceblue
+antiquewhite
+aqua
+aquamarine
+azure
+beige
+bisque
+black
+blanchedalmond
+blue
+blueviolet
+brown
+burlywood
+cadetblue
+chartreuse
+chocolate
+coral
+cornflowerblue
+cornsilk
+crimson
+cyan
+darkblue
+darkcyan
+darkgoldenrod
+darkgray
+darkgreen
+darkkhaki
+darkmagenta
+darkolivegreen
+darkorange
+darkorchid
+darkred
+darksalmon
+darkseagreen
+darkslateblue
+darkslategray
+darkturquoise
+darkviolet
+deeppink
+deepskyblue
+dimgray
+dodgerblue
+firebrick
+floralwhite
+forestgreen
+fuchsia
+gainsboro
+ghostwhite
+gold
+goldenrod
+gray
+green
+greenyellow
+honeydew
+hotpink
+indianred
+indigo
+ivory
+khaki
+lavender
+lavenderblush
+lawngreen
+lemonchiffon
+lightblue
+lightcoral
+lightcyan
+lightgoldenrodyellow
+lightgreen
+lightgrey
+lightpink
+lightsalmon
+lightseagreen
+lightskyblue
+lightslategray
+lightsteelblue
+lightyellow
+lime
+limegreen
+linen
+magenta
+maroon
+mediumaquamarine
+mediumblue
+mediumorchid
+mediumpurple
+mediumseagreen
+mediumslateblue
+mediumspringgreen
+mediumturquoise
+mediumvioletred
+midnightblue
+mintcream
+mistyrose
+moccasin
+navajowhite
+navy
+oldlace
+olive
+olivedrab
+orange
+orangered
+orchid
+palegoldenrod
+palegreen
+paleturquoise
+palevioletred
+papayawhip
+peachpuff
+peru
+pink
+plum
+powderblue
+purple
+red
+rosybrown
+royalblue
+saddlebrown
+salmon
+sandybrown
+seagreen
+seashell
+sienna
+silver
+skyblue
+slateblue
+slategray
+snow
+springgreen
+steelblue
+tan
+teal
+thistle
+tomato
+turquoise
+violet
+wheat
+white
+whitesmoke
+yellow
+yellowgreen'''))
+
+    private static Set<String> qw(String str) {
+        str.split(/\s+/).findAll{it} as Set
+    }
+    static final Set<String> ansiColors=Collections.unmodifiableSet(
+            qw('''ansi-fg-black
+ansi-fg-green
+ansi-fg-red
+ansi-fg-yellow
+ansi-fg-blue
+ansi-fg-magenta
+ansi-fg-cyan
+ansi-fg-white
+ansi-fg-light-black
+ansi-fg-light-green
+ansi-fg-light-red
+ansi-fg-light-yellow
+ansi-fg-light-blue
+ansi-fg-light-magenta
+ansi-fg-light-cyan'''))
+    static final Set<String> ansiBgColors=Collections.unmodifiableSet(
+            qw('''ansi-bg-black
+ansi-bg-green
+ansi-bg-red
+ansi-bg-yellow
+ansi-bg-blue
+ansi-bg-magenta
+ansi-bg-cyan
+ansi-bg-white
+ansi-bg-default'''))
+
+    static final String testAnsiFg(String found) {
+        ansiColors.contains(found) ? found : null
+    }
+    static final String testAnsiBg(String found) {
+        ansiBgColors.contains(found) ? found : null
+    }
+
+    private static boolean cssColor(String bgcol) {
+        cssColors.contains(bgcol?.toLowerCase()) || bgcol =~ /^#[0-9a-fA-F]{3,6}$/
+    }
+    static final Map nodeColors(def node){
+        def map=[:]
+        def iconColor=node?.attributes[UI_ICON_COLOR]
+        def uiColor=node?.attributes[UI_COLOR]
+        def iconBgColor=node?.attributes[UI_ICON_BGCOLOR]
+        def uiBgcolor=node?.attributes[UI_BGCOLOR]
+        if(iconColor) {
+            if (testAnsiFg(iconColor)) {
+                map[UI_ICON_COLOR] = [className: iconColor]
+            } else if (cssColor(iconColor)) {
+                map[UI_ICON_COLOR] = [style: iconColor]
+            }
+        }
+        if(uiColor) {
+            if (testAnsiFg(uiColor)) {
+                map[UI_COLOR] = [className: uiColor]
+            } else if (cssColor(uiColor)) {
+                map[UI_COLOR] = [style: uiColor]
+            }
+        }
+        if(iconBgColor) {
+            if (testAnsiBg(iconBgColor)) {
+                map[UI_ICON_BGCOLOR] = [className: iconBgColor]
+            } else if (cssColor(iconBgColor)) {
+                map[UI_ICON_BGCOLOR] = [style: iconBgColor]
+            }
+        }
+        if(uiBgcolor) {
+            if (testAnsiBg(uiBgcolor)) {
+                map[UI_BGCOLOR] = [className: uiBgcolor]
+            } else if (cssColor(uiBgcolor)) {
+                map[UI_BGCOLOR] = [style: uiBgcolor]
+            }
+        }
+        map
+    }
+    def nodeStatusColor={attrs,body->
+        def colors=nodeColors(attrs.node)
+        boolean isicon=attrs.icon=='true'
+        def found=isicon?(colors[UI_ICON_COLOR]?:colors[UI_COLOR]):colors[UI_COLOR]
+        def bgcol=isicon?(colors[UI_ICON_BGCOLOR]?:colors[UI_BGCOLOR]):colors[UI_BGCOLOR]
+        def dbg=''
+        if(found || bgcol){
+
+            def text=[
+                    (found?.style?'color: '+found.style:''),
+                    (bgcol?.style?'background-color: '+bgcol.style:''),
+            ].findAll{it}.join('; ')
+            def classcol=([found,bgcol].findAll{it}*.className).join(' ')
+            if(classcol||text) {
+                out << "<span class='${classcol}' style='${text}'>"
+                out << body()
+                out << "</span>"
+                return
+            }
+
+        }else{
+            dbg+=' zilch found: '+found+"/"+bgcol
+        }
+        out<<body()
+    }
+    def nodeStatusColorCss={attrs,body->
+        def colors=nodeColors(attrs.node)
+        boolean isicon=attrs.icon=='true'
+        def found=isicon?(colors[UI_ICON_COLOR]?:colors[UI_COLOR]):colors[UI_COLOR]
+        def bgcol=isicon?(colors[UI_ICON_BGCOLOR]?:colors[UI_BGCOLOR]):colors[UI_BGCOLOR]
+        if(found || bgcol){
+
+            def classcol=([found,bgcol].findAll{it}*.className).join(' ')
+            if(classcol){
+                return classcol
+            }
+
+        }
+    }
+    def nodeStatusColorStyle={attrs,body->
+        def colors=nodeColors(attrs.node)
+        boolean isicon=attrs.icon=='true'
+        def found=isicon?(colors[UI_ICON_COLOR]?:colors[UI_COLOR]):colors[UI_COLOR]
+        def bgcol=isicon?(colors[UI_ICON_BGCOLOR]?:colors[UI_BGCOLOR]):colors[UI_BGCOLOR]
+        if(found || bgcol){
+
+            def text=[
+                    (found?.style?'color: '+found.style:''),
+                    (bgcol?.style?'background-color: '+bgcol.style:''),
+            ].findAll{it}.join('; ')
+            if(text){
+                return text
+            }
+
         }
     }
 }

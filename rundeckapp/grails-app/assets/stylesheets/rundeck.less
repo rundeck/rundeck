@@ -510,7 +510,9 @@
       text-decoration: none;
     }
   }
-
+  &.textbtn-plain{
+    text-decoration:none;
+  }
   &.query.textbtn {
     border: 1px solid darken(@color, 12%);
     display: inline-block;
@@ -894,6 +896,35 @@ section{
     }
   }
 
+  /** class matchednodes.embed used when showing an embedded list of matched nodes
+  */
+
+  .matchednodes.embed{
+    .node_entry {
+      display: inline-block;
+      white-space: nowrap;
+      padding: 1px;
+      margin: 1px 2px;
+      border: 1px solid #aaa;
+      border-radius: 3px;
+      -moz-border-radius: 3px;
+      -webkit-border-radius: 3px;
+      /*background:white;*/
+    }
+    &.embed_clean{
+      .node_entry{
+        border:0;
+        padding: 1px 2px;
+        margin: 1px 1px;
+        border-radius: 2px;
+        -moz-border-radius: 2px;
+        -webkit-border-radius: 2px;
+      }
+    }
+    div.info.note {
+      margin-bottom: 10px;
+    }
+  }
   .outputcontrols{
     border-bottom: 1px solid @nav-tabs-border-color;
   }

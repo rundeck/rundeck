@@ -710,7 +710,7 @@ function _initPopoverContentRef(parent){
             return;
         }
         var ref = jQuery(e).data('popover-content-ref');
-        jQuery(e).popover({html: true, content: jQuery(ref).html()}).on('shown.bs.popover',function(){
+        jQuery(e).popover({html: true, content: jQuery(ref).html(),trigger:jQuery(e).data('trigger')||'click'}).on('shown.bs.popover',function(){
             jQuery(e).toggleClass('active');
         }).on('hidden.bs.popover',function(){
                 jQuery(e).toggleClass('active');
@@ -1043,6 +1043,10 @@ var initClicktipForElements = function (selector) {
                 $(elem).setAttribute('data-rdtooltip', 'true');
             };
             Event.observe(elem, 'click', over, true);
+            //var contained=$(elem).down('._clickcontent');
+            //if(contained) {
+            //    Event.observe(contained, 'click', over, true);
+            //}
         }
     });
     if (null == _tooltipElemSelector) {
