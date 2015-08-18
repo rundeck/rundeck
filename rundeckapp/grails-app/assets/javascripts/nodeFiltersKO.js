@@ -44,6 +44,14 @@ function NodeSummary(data){
     self.linkForFilterName=function(filter){
         return _genUrl(self.baseUrl,{filterName: filter.name()});
     };
+    /**
+     * Generate URL for the NodeFilters object
+     * @param nodefilters
+     * @returns {*}
+     */
+    self.linkForNodeFilters=function(nodefilters){
+        return _genUrl(self.baseUrl,nodefilters.getPageParams());
+    };
     if(data) {
         ko.mapping.fromJS(data, {}, self);
     }
@@ -152,6 +160,15 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         self.allcount(0);
     };
     /**
+     * clear filters and results count
+     */
+    self.reset=function(){
+        self.clear();
+        self.filterAll(false);
+        self.filterWithoutAll(null);
+        self.filterName(null);
+    };
+    /**
      * Use a specific filter string and update
      * @param filter the filter string
      */
@@ -159,6 +176,34 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         self.filterAll(false);
         self.filterWithoutAll(filter);
         self.filterName(null);
+        self.clear();
+        self.updateMatchedNodes();
+    };
+    /**
+     * Generate state object for the current filter
+     * @returns {{filter: (*|string), filterName: (*|string), filterAll: (*|string)}}
+     */
+    self.getPageParams=function(){
+        return {
+            filter: self.filter()||'',
+            filterName: self.filterName()||'',
+            filterAll: self.filterAll()||''
+        };
+    };
+    /**
+     * generate URL for the current filters
+     */
+    self.getPageUrl=function(){
+        return self.nodeSummary().linkForNodeFilters(self);
+    };
+    /**
+     * Update to match state parameters
+     * @param data
+     */
+    self.setPageParams=function(data){
+        self.filterAll(data.filterAll);
+        self.filter(data.filter);
+        self.filterName(data.filterName);
         self.clear();
         self.updateMatchedNodes();
     };

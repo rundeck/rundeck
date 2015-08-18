@@ -143,16 +143,56 @@ function _updateBoxInfo(name,data){
         }
     }
 }
+/**
+ * pop history state
+ * @param event
+ */
+window.onpopstate = function(event) {
+    if(event.state){
+        //state should always be set, because we replaceState on firstload
+        if(event.state.start){
+            filterParams={};
+            pageLoad();
+        }else {
+            nodeFilter.setPageParams(event.state);
+            nodeFilter.updateMatchedNodes();
+        }
+    }
+};
+var filterParams={};
+var nodeSummary;
 
+/**
+ * load nodes or summary, depending on request parameters, save first-run state in history
+ */
+function pageLoad(){
+    var pagestate;
+    if(filterParams.filterName || filterParams.filter|| filterParams.filterAll ){
+        nodeFilter.setPageParams(filterParams);
+        nodeFilter.updateMatchedNodes();
+        pagestate=nodeFilter.getPageParams();
 
+    }else{
+        nodeFilter.reset();
+        nodeSummary.reload();
+        jQuery('#tab_link_summary a').tab('show');
+        pagestate={start:true};
+    }
 
+    if(typeof(history.replaceState)=='function') {
+        if (!history.state) {
+            //set first page load state
+            history.replaceState(pagestate, null, document.location);
+        }
+    }
+}
 /**
  * START page init
  */
 function init() {
     pageParams = loadJsonData('pageParams');
-    var filterParams =loadJsonData('filterParamsJSON');
-    var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
+    filterParams =loadJsonData('filterParamsJSON');
+    nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
     nodeFilter = new NodeFilters(
         appLinks.frameworkAdhoc,
         appLinks.scheduledExecutionCreate,
@@ -180,16 +220,19 @@ function init() {
     jQuery('body').on('click', '.nodefilterlink', function (evt) {
         evt.preventDefault();
         nodeFilter.selectNodeFilterLink(this);
+
+        if(typeof(history.pushState)=='function') {
+            //push history state
+            var oldparams=nodeFilter.getPageParams();
+            var href=nodeFilter.getPageUrl();
+            history.pushState(oldparams, document.title, href);
+        }
     });
     jQuery('#tab_link_summary').on('show.bs.tab',function(e){
         nodeSummary.reload();
     });
 
     //start state
-    if(filterParams.filterName || filterParams.filter|| filterParams.filterAll ){
-        nodeFilter.updateMatchedNodes();
-    }else{
-        nodeSummary.reload();
-    }
+    pageLoad();
 }
 jQuery(init);
