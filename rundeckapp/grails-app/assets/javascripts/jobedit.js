@@ -69,7 +69,6 @@ function _wfiedit(key,num,isErrorHandler) {
             }
         });
         liitem.find('textarea.apply_ace').each(function(ndx,elem){_addAceTextarea(elem)});
-        initTooltipForElements('#wfli_' + key + ' .obs_tooltip');
     });
 }
 
@@ -97,7 +96,6 @@ function _wfisave(key,num, formelem,iseh) {
                     _hideWFItemControlsAddEH(num);
                 }
             }
-            initTooltipForElements('#wfli_' + key + ' .obs_tooltip')
         }
     }).success(_ajaxReceiveTokens.curry('job_edit_tokens'));
 }
@@ -143,7 +141,6 @@ function _wfiaddnew(type,nodestep) {
             }
         });
         $(newitemElem).down('input[type=text]').focus();
-        initTooltipForElements('#wfli_' + num + ' .obs_tooltip');
         $(newitemElem).select('textarea.apply_ace').each(_addAceTextarea);
 
     });
@@ -308,7 +305,6 @@ function _wfiaddNewErrorHandler(elem,type,num,nodestep){
             }
         });
         wfiehli.find('textarea.apply_ace').each(function (){_addAceTextarea(this);});
-        initTooltipForElements('#wfli_' + key + ' .obs_tooltip');
     });
 }
 
