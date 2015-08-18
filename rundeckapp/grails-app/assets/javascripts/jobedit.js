@@ -313,11 +313,10 @@ function _doMoveItem(from, to) {
 }
 function _doRemoveItem(key,num,isErrorHandler) {
     var params = {delnum:num,edit:true,key:key,isErrorHandler:isErrorHandler};
-    Effect.Fade($('wfivis_' + key), {duration:0.2,afterFinish:
+    jQuery('#wfivis_' + key).fadeOut('fast',
         function(f) {
             _ajaxWFAction(appLinks.workflowRemove,params);
-        }
-    });
+        });
 }
 function _doUndoWFAction() {
     _ajaxWFAction(appLinks.workflowUndo, {edit: true});
@@ -636,7 +635,7 @@ function _doRemoveOption(name, elem,tokendataid) {
         params['scheduledExecutionId'] = getCurSEID();
     }
     $('optsload').loading();
-    Effect.Fade($(elem), {duration:0.2,afterFinish:
+    jQuery($(elem)).slideUp('fast',
         function(f) {
             jQuery.ajax({
                 type:'POST',
@@ -649,7 +648,7 @@ function _doRemoveOption(name, elem,tokendataid) {
                 }
             });
         }
-    });
+    );
 }
 
 function _doUndoOptsAction() {

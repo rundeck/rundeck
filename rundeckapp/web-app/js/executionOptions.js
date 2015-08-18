@@ -20,7 +20,10 @@ var ExecutionOptions = {
         if ("" == $(check).value && !$(check).checked) {
             //remove it
             var div = $(check.parentNode);
-            $(div).parentNode.removeChild(div);
+            var parent=$(div).parentNode;
+            jQuery(div).fadeTo('fast',0,function(){
+                $(div).parentNode.removeChild(div);
+            });
         }
     },
     multiVarCheckboxChangeWarningHandler: function(optname,evt) {
@@ -91,7 +94,7 @@ var ExecutionOptions = {
         $$('#' + name + '_state span.reqwarning').each(Element.hide);
         Try.these(
             function() {
-                Effect.Appear(div, {duration:0.5});
+                jQuery(div).fadeTo('fast',1);
             },
             function() {
                 $(div).show();

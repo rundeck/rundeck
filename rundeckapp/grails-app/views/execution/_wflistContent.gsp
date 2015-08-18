@@ -55,6 +55,8 @@
 </g:if>
 <g:if test="${workflow && workflow.commands && null!=highlight}">
     <g:javascript>
-        fireWhenReady('wfivis_${enc(js:highlight)}',function(){Effect.Appear('wfivis_${enc(js:highlight)}', { duration: 0.5 });});
+        fireWhenReady('wfivis_${enc(js:highlight)}',function(){
+            jQuery("#wfivis_${enc(js:highlight)}").fadeTo("slow",1);
+        });
     </g:javascript>
 </g:if>
