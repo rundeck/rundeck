@@ -167,8 +167,16 @@
                 evt.preventDefault();
                 nodeFilter.selectNodeFilterLink(this);
             });
-            nodeSummary.reload();
-//            nodeFilter.updateMatchedNodes();
+            jQuery('#tab_link_summary').on('show.bs.tab',function(e){
+                nodeSummary.reload();
+            });
+
+            //start state
+            if(filterParams.filterName || filterParams.filter|| filterParams.filterAll ){
+                nodeFilter.updateMatchedNodes();
+            }else{
+                nodeSummary.reload();
+            }
         }
         jQuery(document).ready(init);
 
@@ -267,7 +275,7 @@
 
 
     <ul class="nav nav-tabs">
-        <li class="active">
+        <li class="active" id="tab_link_summary">
             <a href="#summary" data-toggle="tab">
                 Browse
             </a>

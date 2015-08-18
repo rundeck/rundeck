@@ -127,16 +127,10 @@ class FrameworkController extends ControllerBase {
         }
         if(params.showall=='true'){
             query.filter = '.*'
-
-        }else if (query.nodeFilterIsEmpty() && 'true'!=params.formInput) {
-            query.filter = '.*'
-            params.showall='true'
-//            summaryOnly=true
-            //filter all and summarize
         }
         //in case named filter stored from another project
         query.project = params.project
-        def sortkeys = filterSummaryKeys(query)
+        def sortkeys = query.filter?filterSummaryKeys(query):[]
         def model = [query: query, params: params, showFilter:true,filter:query.filter,colkeys:sortkeys]
 
         if (usedFilter) {
