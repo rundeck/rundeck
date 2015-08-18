@@ -214,9 +214,13 @@ addConfig: function(type) {
 },
 checkForm: function () {
     if ($('configs').down('button.needsSave')) {
+        var p=[];
         $('configs').select('button.needsSave').each(function(e) {
-            new Effect.Highlight($(e).up('div.popout'));
+            jQuery($(e).up('div.panel')).highlight(2000);
+            p.push($(e).up('div.panel'));
         });
+        var panel=p[0];
+        jQuery(panel).scrollTo(500);
         return false;
     }
     return true;
