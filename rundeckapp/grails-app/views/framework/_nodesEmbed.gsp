@@ -30,6 +30,7 @@
                   data-placement="bottom"
                   data-trigger="focus"
                   data-popover-content-ref="#${nkey+'_key_tooltip'}"
+                  data-popover-template-class="popover-wide"
                   style="${nodeStatusColorStyle(node:node)}"
                   data-node="${enc(attr:node.nodename)}"
                   data-key="${enc(attr:nkey)}">
@@ -44,7 +45,6 @@
         </g:each>
         <g:javascript>
             fireWhenReady('embednodeset',function(){
-
                 _initPopoverContentRef('#embednodeset');
             });
 

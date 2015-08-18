@@ -710,7 +710,14 @@ function _initPopoverContentRef(parent){
             return;
         }
         var ref = jQuery(e).data('popover-content-ref');
-        jQuery(e).popover({html: true, content: jQuery(ref).html(),trigger:jQuery(e).data('trigger')||'click'}).on('shown.bs.popover',function(){
+        var opts={html: true, content: jQuery(ref).html(),trigger:jQuery(e).data('trigger')||'click'};
+        if(jQuery(e).data('popover-template-class')){
+            opts.template=jQuery.fn.popover.Constructor.DEFAULTS.template.replace(
+                /class="popover"/,
+                "class=\"popover "+jQuery(e).data('popover-template-class')+"\""
+            );
+        }
+        jQuery(e).popover(opts).on('shown.bs.popover',function(){
             jQuery(e).toggleClass('active');
         }).on('hidden.bs.popover',function(){
                 jQuery(e).toggleClass('active');

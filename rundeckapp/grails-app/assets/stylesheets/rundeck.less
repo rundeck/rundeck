@@ -5,6 +5,8 @@
   @import "bootswatch";
   @import "nav-links";
 
+  @popover-wide-max-width: 500px;
+
   @base-item-padding-vertical: 8px;
   @base-item-padding-horizontal: 10px;
   @list-group-item-padding-vertical: @base-item-padding-vertical;
@@ -909,7 +911,6 @@ section{
       border-radius: 3px;
       -moz-border-radius: 3px;
       -webkit-border-radius: 3px;
-      /*background:white;*/
     }
     &.embed_clean{
       .node_entry{
@@ -1596,5 +1597,12 @@ pre.filtererror{
     &.navbar-text-warning {
       .text-warning();
     }
+  }
+}
+
+//popover variation
+.popover{
+  &.popover-wide{
+    max-width: @popover-wide-max-width;
   }
 }
