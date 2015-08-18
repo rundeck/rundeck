@@ -82,7 +82,12 @@ var ExecutionOptions = {
             inpu2.setAttribute("value", value);
         }
         Event.observe(inpu2, 'change', ExecutionOptions.multiVarInputChangeHandler.curry(inpu));
-        Event.observe(inpu2, 'keydown', ExecutionOptions.multiVarInputKeydownHandler.curry(inpu));
+        Event.observe(inpu2, 'keydown', function(evt){
+            var wasNotEnter=ExecutionOptions.multiVarInputKeydownHandler(inpu,evt);
+            if(!wasNotEnter && jQuery(inpu2).val()){
+                ExecutionOptions.addMultivarValue(name,inputarea,null,handler);
+            }
+        });
         if (handler) {
             handler(name,inpu2);
         }
