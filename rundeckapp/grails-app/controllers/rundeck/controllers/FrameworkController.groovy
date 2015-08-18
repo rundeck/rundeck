@@ -445,7 +445,7 @@ class FrameworkController extends ControllerBase {
         def filters=[]
         //load a named filter and create a query from it
         if (u) {
-            def filterResults = NodeFilter.findAllByUser(u, [sort: 'name', order: 'desc'])
+            def filterResults = NodeFilter.findAllByUserAndProject(u, project, [sort: 'name', order: 'desc'])
             filters = filterResults.collect {
                 [name: it.name, filter: it.asFilter()]
             }
