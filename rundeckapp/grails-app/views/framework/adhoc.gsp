@@ -210,7 +210,7 @@
                         <div class="col-sm-10 col-sm-offset-2">
                             <div class="spacing text-warning" id="emptyerror"
                                  style="display: none"
-                                 data-bind="visible: !error() && (!allcount() || allcount()==0)">
+                                 data-bind="visible: !loading() && !error() && (!allcount() || allcount()==0)">
                                 <span class="errormessage">
                                     <g:message code="no.nodes.selected.match.nodes.by.selecting.or.entering.a.filter" />
                                 </span>
