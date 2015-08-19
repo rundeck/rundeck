@@ -447,7 +447,7 @@ class FrameworkController extends ControllerBase {
         if (u) {
             def filterResults = NodeFilter.findAllByUserAndProject(u, project, [sort: 'name', order: 'desc'])
             filters = filterResults.collect {
-                [name: it.name, filter: it.asFilter()]
+                [name: it.name, filter: it.asFilter(), project: project]
             }
         }
 
@@ -622,6 +622,25 @@ class FrameworkController extends ControllerBase {
         }.invalidToken{
             request.error=g.message(code:'request.error.invalidtoken.message')
             renderErrorView([:])
+        }
+    }
+
+    def deleteNodeFilterAjax(String project, String filtername){
+        withForm{
+            g.refreshFormTokensHeader()
+            def User u = userService.findOrCreateUser(session.user)
+            final def ffilter = NodeFilter.findByNameAndUserAndProject(filtername, u, project)
+            if(ffilter){
+                ffilter.delete(flush:true)
+            }
+            render(contentType: 'application/json'){
+                success=true
+            }
+        }.invalidToken{
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'request.error.invalidtoken.message',
+            ])
         }
     }
 

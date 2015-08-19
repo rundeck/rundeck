@@ -25,6 +25,7 @@ function NodeSummary(data){
     self.defaultFilter=ko.observable();
     self.totalCount=ko.observable(0);
     self.baseUrl=data.baseUrl?data.baseUrl:'';
+    self.filterToDelete=ko.observable();
     
     self.reload=function(){
       jQuery.ajax({
@@ -52,6 +53,52 @@ function NodeSummary(data){
     self.linkForNodeFilters=function(nodefilters){
         return _genUrl(self.baseUrl,nodefilters.getPageParams());
     };
+    self.findFilterByName=function(name){
+        var found=ko.utils.arrayFilter(self.filters(),function(e){return e.name()==name;});
+        if(found && found.length==1){
+            return found[0];
+        }else{
+            return null;
+        }
+    };
+    self.removeDefault=function(){
+        setFilter('nodes','!').success(function(data, status, jqxhr){
+            self.defaultFilter(null);
+        });
+    };
+    self.setDefault=function(filter){
+        if(typeof(filter)=='string'){
+            filter = self.findFilterByName(filter);
+            if(!filter){
+                return;
+            }
+        }
+        setFilter('nodes',filter.name()).success(function(data, status, jqxhr){
+            self.defaultFilter(filter.name());
+        });
+    };
+    self.deleteFilterConfirm=function(filter){
+        if(typeof(filter)=='string'){
+            filter = self.findFilterByName(filter);
+            if(!filter){
+                return;
+            }
+        }
+        self.filterToDelete(filter);
+        jQuery('#deleteFilterKOModal').modal('show');
+    };
+    self.deleteFilter=function(filter){
+        console.log("delete the filter",filter);
+
+        jQuery('#deleteFilterKOModal').modal('hide');
+        jQuery.ajax({
+            url:_genUrl(appLinks.frameworkDeleteNodeFilterAjax,{filtername:filter.name()}),
+            beforeSend: _ajaxSendTokens.curry('ajaxDeleteFilterTokens')
+        }).success(function (resp, status, jqxhr) {
+            self.filterToDelete(null);
+            self.filters.remove(filter);
+        }).success(_ajaxReceiveTokens.curry('ajaxDeleteFilterTokens'));
+    };
     if(data) {
         ko.mapping.fromJS(data, {}, self);
     }
@@ -64,6 +111,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.baseNodesPageUrl = baseNodesPageUrl;
     self.filterName = ko.observable(data.filterName);
     self.filter = ko.observable(data.filter);
+    self.filterAll = ko.observable(data.filterAll);
     self.nodeExcludePrecedence = ko.observable(null== data.nodeExcludePrecedence || data.nodeExcludePrecedence?'true':'false');
     self.nodefilterLinkId=data.nodefilterLinkId;
     self.total = ko.observable(0);
@@ -84,6 +132,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.hideAll=ko.observable(data.hideAll!=null?(data.hideAll?true:false):false);
     self.nodeSummary=ko.observable(data.nodeSummary?data.nodeSummary:null);
 
+
     self.pageRemaining=ko.computed(function(){
         if(self.total()<=0 || self.page()<0){
             return 0;
@@ -101,7 +150,6 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             data.nodesTitleSingular || 'Node' :
             data.nodesTitlePlural || 'Nodes';
     });
-    self.filterAll = ko.observable(data.filterAll);
     self.filterWithoutAll = ko.computed({
         read: function () {
             if (self.filterAll() && self.filter() == '.*' && self.hideAll()) {
