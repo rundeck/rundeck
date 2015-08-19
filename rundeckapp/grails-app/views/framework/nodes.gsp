@@ -139,7 +139,7 @@
                 </span>
 
             </li>
-            <li id="tab_link_result" data-bind="visible: filterIsSet()">
+            <li id="tab_link_result" data-bind="visible: filterIsSet()||allcount()>=0">
                 <a href="#result" data-toggle="tab" data-bind="visible: filterIsSet() ">
                     Result:
                     <span data-bind="visible: allcount()>=0">
