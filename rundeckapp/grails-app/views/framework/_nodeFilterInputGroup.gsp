@@ -41,7 +41,7 @@
     </ul>
 </span>
 <input type='search' name="${filterFieldName?enc(attr:filterFieldName):'filter'}" class="schedJobNodeFilter form-control"
-       data-bind="value: filterWithoutAll, valueUpdate: 'input', executeOnEnter: updateMatchedNodes"
+       data-bind="textInput: filterWithoutAll,  executeOnEnter: updateMatchedNodes"
        placeholder="${queryFieldPlaceholderText?:g.message(code:'enter.a.node.filter')}"
        data-toggle='popover'
        data-popover-content-ref="#${queryFieldHelpId?enc(attr:queryFieldHelpId):'queryFilterHelp'}"
