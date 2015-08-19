@@ -292,6 +292,7 @@
                                         class="nodefilterlink tag textbtn textbtn-default"
                                         data-bind="attr: {
                              'data-node-filter': 'tags: '+tag(),
+                             'data-node-tag': tag(),
                              'title': 'Filter by tag: '+tag(),
                             'href': $root.nodeSummary().linkForTagFilter($data)
                             } ">

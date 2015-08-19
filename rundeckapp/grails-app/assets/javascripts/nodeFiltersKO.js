@@ -292,15 +292,30 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         self.clear();
         self.updateMatchedNodes();
     };
-    self.selectNodeFilterLink=function(link){
+    self.selectNodeFilterLink=function(link,isappend){
         var oldfilter = self.filter();
         var filterName = jQuery(link).data('node-filter-name');
         var filterString = jQuery(link).data('node-filter');
-        if(filterString.indexOf("&")>=0){
+        var filterTag = jQuery(link).data('node-tag');
+        if(filterString && filterString.indexOf("&")>=0){
             filterString = html_unescape(filterString);
         }
         var filterAll = jQuery(link).data('node-filter-all');
-        if (filterString && !filterName && oldfilter && !filterAll && oldfilter != NODE_FILTER_ALL) {
+        var v=oldfilter.indexOf('tags: ');
+        if(isappend && filterTag && v>=0){
+            var first=oldfilter.substring(0, v);
+            var rest=oldfilter.substring(v + 6);
+            var last='';
+            while(rest.indexOf(" ")==0){
+                rest = rest.substring(1);
+            }
+            v = rest.indexOf(" ");
+            if(v>0){
+                last = rest.substring(v);
+                rest = rest.substring(0,v);
+            }
+            filterString = first + 'tags: ' + rest + '+' + filterTag + last ;
+        }else if (filterString && !filterName && oldfilter && !filterAll && oldfilter != NODE_FILTER_ALL) {
             filterString = oldfilter + ' ' + filterString;
         } else if (filterAll) {
             filterString = NODE_FILTER_ALL;

@@ -219,8 +219,9 @@ function init() {
         jQuery('#tab_link_result > a').tab('show');
     });
     jQuery('body').on('click', '.nodefilterlink', function (evt) {
+        var isshift=evt.shiftKey;
         evt.preventDefault();
-        nodeFilter.selectNodeFilterLink(this);
+        nodeFilter.selectNodeFilterLink(this,isshift);
 
         if(typeof(history.pushState)=='function') {
             //push history state
