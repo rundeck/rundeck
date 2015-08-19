@@ -55,7 +55,7 @@
     <a class="btn btn-info" data-toggle='popover-for' data-target="#${filterFieldId ? enc(attr: filterFieldId) : 'schedJobNodeFilter'}">
         <i class="glyphicon glyphicon-question-sign"></i>
     </a>
-    <a class="btn btn-default" data-bind="click: $data.updateMatchedNodes" href="#">
+    <a class="btn btn-default" data-bind="click: $data.updateMatchedNodes, css: {disabled: !filter()}" href="#">
         <g:message code="search" />
     </a>
 </span>
