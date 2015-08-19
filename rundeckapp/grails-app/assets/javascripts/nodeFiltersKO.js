@@ -289,10 +289,17 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         self.updateMatchedNodes();
     };
     self.updateMatchedNodes= function () {
+        if(!self.filter()){
+            return;
+        }
+        var project=self.project();
+        if (!project) {
+            return;
+        }
+        var filterdata = self.filterName() ? {filterName: self.filterName()} : self.filter()?{filter: self.filter()}:{};
         var page = self.page();
         var loadTarget = '#'+self.elem();
         var needsBinding = true;
-        var project=self.project();
         var view = self.view() ? self.view() : 'table';
         var basedata = {view: view, declarenone: true, fullresults: true, expanddetail: true, inlinepaging: false, nodefilterLinkId: self.nodefilterLinkId};
         var clearContent=true;
@@ -317,11 +324,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             jQuery('#' + self.elem()).empty().append(div);
             loadTarget = div;
         }
-        var filterdata = self.filterName() ? {filterName: self.filterName()} : self.filter()?{filter: self.filter()}:{};
-        var i;
-        if (!project) {
-            return;
-        }
+
         var params = Object.extend(basedata, filterdata);
         if(self.emptyMode()=='localnode' && !self.filter()){
             params.localNodeOnly = 'true';
