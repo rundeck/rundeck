@@ -108,7 +108,10 @@ class FrameworkController extends ControllerBase {
         def User u = userService.findOrCreateUser(session.user)
         def usedFilter = null
         def prefs=userService.getFilterPref(u.login)
-        if (params.filterName) {
+        if(params.filterName=='.*'){
+            query.filter='.*'
+            usedFilter='.*'
+        }else if (params.filterName) {
             //load a named filter and create a query from it
             if (u) {
                 NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
@@ -119,8 +122,8 @@ class FrameworkController extends ControllerBase {
                     usedFilter = params.filterName
                 }
             }
-        }else if(prefs['nodes']){
-            return redirect(action:'nodes',params:params+[filterName:prefs['nodes']])
+        } else if (prefs['nodes']) {
+            return redirect(action: 'nodes', params: params + [filterName: prefs['nodes']])
         }
 
         if(params.filterName && !usedFilter){
