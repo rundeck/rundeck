@@ -35,10 +35,8 @@
         </li>
         <li class="divider"></li>
         <li class="dropdown-header"><i class="glyphicon glyphicon-filter"></i> Saved Filters</li>
-        <g:if test="${filterset}">
-            <g:render template="/common/selectFilter"
-                      model="[filterList: true, filterset: filterset, filterName: filterName, prefName: 'nodes', noSelection: filterName ? '-All Nodes-' : null]"/>
-        </g:if>
+        <g:render template="/common/selectFilter"
+                  model="[filterList: true, filterset: filterset, filterName: filterName, prefName: 'nodes', noSelection: filterName ? '-All Nodes-' : null]"/>
     </ul>
 </span>
 <input type='search' name="${filterFieldName?enc(attr:filterFieldName):'filter'}" class="schedJobNodeFilter form-control"
