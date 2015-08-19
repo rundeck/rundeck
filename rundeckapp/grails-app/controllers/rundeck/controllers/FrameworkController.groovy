@@ -107,6 +107,7 @@ class FrameworkController extends ControllerBase {
         }
         def User u = userService.findOrCreateUser(session.user)
         def usedFilter = null
+        def prefs=userService.getFilterPref(u.login)
         if (params.filterName) {
             //load a named filter and create a query from it
             if (u) {
@@ -118,6 +119,13 @@ class FrameworkController extends ControllerBase {
                     usedFilter = params.filterName
                 }
             }
+        }else if(prefs['nodes']){
+            return redirect(action:'nodes',params:params+[filterName:prefs['nodes']])
+        }
+
+        if(params.filterName && !usedFilter){
+            request.warn='Filter not found: '+params.filterName
+            params.remove('filterName')
         }
 
         def summaryOnly = false
