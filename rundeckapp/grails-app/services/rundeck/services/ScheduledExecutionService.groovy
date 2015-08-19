@@ -355,6 +355,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
             log.info("Unscheduled job: ${se.id}")
         }
     }
+
     /**
      * Reschedule all scheduled jobs which match the given serverUUID, or all jobs if it is null.
      * @param serverUUID
@@ -1199,6 +1200,35 @@ class ScheduledExecutionService implements ApplicationContextAware{
         return [failed:false]
     }
 
+    def _doUpdateExecutionFlags(params, user, String roleList, Framework framework, AuthContext authContext, changeinfo = [:]) {
+        log.debug("ScheduledExecutionController: update : attempting to updateExecutionFlags: " + params.id + ". params: " + params)
+
+        def ScheduledExecution scheduledExecution = getByIDorUUID(params.id)
+        if (!scheduledExecution) {
+            return [success: false]
+        }
+
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE], scheduledExecution.project)) {
+            return [success: false, scheduledExecution: scheduledExecution, message: "Update Job ${scheduledExecution.extid}", unauthorized: true]
+        }
+
+        def oldJobName = scheduledExecution.generateJobScheduledName()
+        def oldJobGroup = scheduledExecution.generateJobGroupName()
+        def oldSched = scheduledExecution.scheduled
+
+        if (null != params.scheduleEnabled) {
+            scheduledExecution.properties.scheduleEnabled = params.scheduleEnabled
+        }
+
+        if (null != params.executionEnabled) {
+            scheduledExecution.properties.executionEnabled = params.executionEnabled
+        }
+
+        if (!scheduledExecution.validate()) {
+            return [success: false]
+        }
+    }
+
     def _doupdate ( params, user, String roleList, Framework framework, AuthContext authContext, changeinfo = [:] ){
         log.debug("ScheduledExecutionController: update : attempting to update: " + params.id +
                   ". params: " + params)
@@ -1581,8 +1611,10 @@ class ScheduledExecutionService implements ApplicationContextAware{
             scheduledExecution.discard()
             return [success: false, scheduledExecution: scheduledExecution]
         }
-
     }
+
+
+
     private Map validatePluginNotification(ScheduledExecution scheduledExecution, String trigger,notif,params=null){
         //plugin type
         def failed=false

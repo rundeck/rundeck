@@ -830,6 +830,10 @@ class ScheduledExecutionController  extends ControllerBase{
     }
 
     def apiFlipExecutionEnabled() {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V14)) {
+            return
+        }
+
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -851,8 +855,8 @@ class ScheduledExecutionController  extends ControllerBase{
 
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_TOGGLE_EXECUTION],
                 scheduledExecution.project)) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                                                        code  : 'api.error.item.unauthorized', args: ['Toggle Execution', 'Job ID', params.id]])
+            def error = [status: HttpServletResponse.SC_FORBIDDEN, code  : 'api.error.item.unauthorized', args: ['Toggle Execution', 'Job ID', params.id]]
+            return apiService.renderErrorFormat(response, error)
         }
 
         def changeinfo = [method: 'update', change: 'modify', user: session.user]
@@ -862,24 +866,18 @@ class ScheduledExecutionController  extends ControllerBase{
         def result = scheduledExecutionService._doupdate(payload, session.user, roleList, framework, authContext, changeinfo)
 
         if (result && result.success) {
-            return withFormat {
-                xml {
-                    def writer = new StringWriter()
-                    def xml = new MarkupBuilder(writer)
-                    JobsXMLCodec.encodeWithBuilder([result.scheduledExecution], xml)
-                    writer.flush()
-                    render(text: writer.toString(), contentType: "text/xml", encoding: "UTF-8")
-                }
-                yaml {
-                    render(text: JobsYAMLCodec.encode([result.scheduledExecution] as List), contentType: "text/yaml", encoding: "UTF-8")
-                }
-            }
+            //return 204 no content
+            return render(status: HttpServletResponse.SC_NO_CONTENT)
         } else {
-            return apiService.renderErrorXml(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response);
+            return apiService.renderErrorFormat(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response);
         }
     }
 
     def apiFlipScheduleEnabled() {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V14)) {
+            return
+        }
+
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -901,8 +899,8 @@ class ScheduledExecutionController  extends ControllerBase{
 
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_TOGGLE_SCHEDULE],
                 scheduledExecution.project)) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                                                        code  : 'api.error.item.unauthorized', args: ['Toggle Schedule', 'Job ID', params.id]])
+            def error = [status: HttpServletResponse.SC_FORBIDDEN, code  : 'api.error.item.unauthorized', args: ['Toggle Schedule', 'Job ID', params.id]]
+            return apiService.renderErrorFormat(response, error)
         }
 
         def changeinfo = [method: 'update', change: 'modify', user: session.user]
@@ -912,20 +910,10 @@ class ScheduledExecutionController  extends ControllerBase{
         def result = scheduledExecutionService._doupdate(payload, session.user, roleList, framework, authContext, changeinfo)
 
         if (result && result.success) {
-            return withFormat {
-                xml {
-                    def writer = new StringWriter()
-                    def xml = new MarkupBuilder(writer)
-                    JobsXMLCodec.encodeWithBuilder([result.scheduledExecution], xml)
-                    writer.flush()
-                    render(text: writer.toString(), contentType: "text/xml", encoding: "UTF-8")
-                }
-                yaml {
-                    render(text: JobsYAMLCodec.encode([result.scheduledExecution] as List), contentType: "text/yaml", encoding: "UTF-8")
-                }
-            }
+            //return 204 no content
+            return render(status: HttpServletResponse.SC_NO_CONTENT)
         } else {
-            return apiService.renderErrorXml(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response);
+            return apiService.renderErrorFormat(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response);
         }
     }
 
