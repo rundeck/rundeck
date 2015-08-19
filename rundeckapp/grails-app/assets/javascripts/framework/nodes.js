@@ -175,7 +175,7 @@ function pageLoad(){
     }else{
         nodeFilter.reset();
         nodeSummary.reload();
-        jQuery('#tab_link_summary a').tab('show');
+        jQuery('#tab_link_summary > a').tab('show');
         pagestate={start:true};
     }
 
@@ -215,7 +215,7 @@ function init() {
     });
     nodeFilter.loading.subscribe(function(val){
         //select filter results tab whenever loading output
-        jQuery('#tab_link_result a').tab('show');
+        jQuery('#tab_link_result > a').tab('show');
     });
     jQuery('body').on('click', '.nodefilterlink', function (evt) {
         evt.preventDefault();
