@@ -20,15 +20,16 @@
             class="btn btn-default dropdown-toggle"
         data-bind="css: { 'btn-success': filterName(), 'btn-default': !filterName() }"
             data-toggle="dropdown">
-        <span data-bind="text: filterName() || ''">Filter</span> <span class="caret"></span></button>
+        <span data-bind="text: filterNameDisplay() || ''">Filter</span> <span class="caret"></span></button>
     <ul class="dropdown-menu">
 
         <li>
             <g:link class="nodefilterlink"
                     action="nodes" controller="framework"
+                    data-node-filter-name=".*"
                     data-node-filter=".*"
-                    data-node-filter-all="true"
-                    params="[showall: 'true']">
+                    data-bind="css: { active: '.*'== filterName() }"
+                    params="[filterName: '.*']">
                 Show all nodes
             </g:link>
         </li>
@@ -52,7 +53,7 @@
 
 
 <span class="input-group-btn">
-    <a class="btn btn-info" data-toggle='popover-for' data-target="#${filterFieldId ? enc(attr: filterFieldId) : 'schedJobNodeFilter'}">
+    <a class="btn btn-default" data-toggle='popover-for' data-target="#${filterFieldId ? enc(attr: filterFieldId) : 'schedJobNodeFilter'}">
         <i class="glyphicon glyphicon-question-sign"></i>
     </a>
     <a class="btn btn-default" data-bind="click: $data.updateMatchedNodes, css: {disabled: !filter()}" href="#">
