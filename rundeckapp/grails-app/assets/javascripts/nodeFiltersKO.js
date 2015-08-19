@@ -16,7 +16,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-
+var NODE_FILTER_ALL='.*';
 function NodeSummary(data){
     var self=this;
     self.error=ko.observable();
@@ -66,15 +66,27 @@ function NodeSummary(data){
             self.defaultFilter(null);
         });
     };
+    self.setDefaultAll=function(){
+        self.setDefault(NODE_FILTER_ALL);
+    };
+
     self.setDefault=function(filter){
+        var fname=null;
         if(typeof(filter)=='string'){
-            filter = self.findFilterByName(filter);
-            if(!filter){
-                return;
+            if(filter==NODE_FILTER_ALL){
+                fname=filter;
+            }else {
+                filter = self.findFilterByName(filter);
+                if (!filter) {
+                    return;
+                }
+                fname = filter.name();
             }
+        }else{
+            fname=filter.name();
         }
-        setFilter('nodes',filter.name()).success(function(data, status, jqxhr){
-            self.defaultFilter(filter.name());
+        setFilter('nodes',fname).success(function(data, status, jqxhr){
+            self.defaultFilter(fname);
         });
     };
     self.deleteFilterConfirm=function(filter){
@@ -88,7 +100,6 @@ function NodeSummary(data){
         jQuery('#deleteFilterKOModal').modal('show');
     };
     self.deleteFilter=function(filter){
-        console.log("delete the filter",filter);
 
         jQuery('#deleteFilterKOModal').modal('hide');
         jQuery.ajax({
@@ -132,7 +143,30 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.hideAll=ko.observable(data.hideAll!=null?(data.hideAll?true:false):false);
     self.nodeSummary=ko.observable(data.nodeSummary?data.nodeSummary:null);
 
-
+    self.isFilterNameAll=ko.pureComputed(function(){
+        return self.filterName()==NODE_FILTER_ALL;
+    });
+    self.filterNameDisplay=ko.pureComputed(function(){
+       return self.isFilterNameAll()?'All Nodes':self.filterName();
+    });
+    self.canSaveFilter=ko.pureComputed(function(){
+       return !self.filterName() && self.filterWithoutAll();
+    });
+    self.canDeleteFilter=ko.pureComputed(function(){
+       return self.filterName() && !self.isFilterNameAll();
+    });
+    self.canSetDefaultFilter=ko.pureComputed(function(){
+       return self.filterName() && self.filterName()!=self.nodeSummary().defaultFilter();
+    });
+    self.canRemoveDefaultFilter=ko.pureComputed(function(){
+       return self.filterName() && self.filterName()==self.nodeSummary().defaultFilter();
+    });
+    self.deleteFilter=function(){
+        self.nodeSummary().deleteFilterConfirm(self.filterName());
+    };
+    self.setDefaultFilter=function(){
+        self.nodeSummary().setDefault(self.filterName());
+    };
     self.pageRemaining=ko.computed(function(){
         if(self.total()<=0 || self.page()<0){
             return 0;
@@ -152,7 +186,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     });
     self.filterWithoutAll = ko.computed({
         read: function () {
-            if (self.filterAll() && self.filter() == '.*' && self.hideAll()) {
+            if (self.filterAll() && self.filter() == NODE_FILTER_ALL && self.hideAll()) {
                 return '';
             }
             return self.filter();
@@ -266,10 +300,10 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             filterString = html_unescape(filterString);
         }
         var filterAll = jQuery(link).data('node-filter-all');
-        if (filterString && !filterName && oldfilter && !filterAll && oldfilter != '.*') {
+        if (filterString && !filterName && oldfilter && !filterAll && oldfilter != NODE_FILTER_ALL) {
             filterString = oldfilter + ' ' + filterString;
         } else if (filterAll) {
-            filterString = '.*'
+            filterString = NODE_FILTER_ALL;
         }
         self.filterAll(filterAll);
         self.filter(filterString);
