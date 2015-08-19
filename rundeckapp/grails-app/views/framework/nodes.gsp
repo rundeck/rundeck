@@ -282,36 +282,22 @@
             <div class="tab-pane active" id="summary">
 
                 <div class="row row-space">
-                    <div class="col-sm-4">
 
-                        <span class="text-uppercase text-muted small">
-                        <span data-bind="text: nodeSummary().totalCount"></span> Nodes in project
-                        </span>
-                        <ul class="list-unstyled">
-                        <li>
-                            <a href="#"
-                               class="nodefilterlink " data-node-filter=".*"
-                               data-node-filter-all="true">Show All Nodes</a>
-                        </li>
-                    </ul>
-
-                    </div>
-                    <div class="col-sm-4">
-                        <span class="text-uppercase text-muted small">Tags</span>
+                    <div class="col-sm-5 col-sm-offset-1">
+                        <span class="text-uppercase text-muted small"><i class="glyphicon glyphicon-tags  " ></i> Tags</span>
                         <ul data-bind="foreach: nodeSummary().tags" class="list-unstyled">
                             <li>
                                 <a
                                         href="#"
-                                        class="nodefilterlink tag "
+                                        class="nodefilterlink tag textbtn textbtn-default"
                                         data-bind="attr: {
                              'data-node-filter': 'tags: '+tag(),
                              'title': 'Filter by tag: '+tag(),
                             'href': $root.nodeSummary().linkForTagFilter($data)
                             } ">
-                                    <i class="glyphicon glyphicon-tag text-muted "></i>
-                                    <span data-bind="text: tag"></span>
-                                    (<span data-bind="text: count"></span>)
-                                </a>
+                                    <span data-bind="text: tag"></span></a>
+
+                                <span data-bind="text: count" class="text-muted"></span>
                             </li>
                         </ul>
                         <div data-bind="visible: !nodeSummary().tags">
@@ -319,14 +305,51 @@
                         </div>
                     </div>
 
-                    <div class="col-sm-4">
+                    <div class="col-sm-5">
 
-                        <span class="text-uppercase text-muted small">Saved Filters</span>
-                        <ul data-bind="foreach: nodeSummary().filters" class="list-unstyled">
+                        <span class="text-uppercase text-muted small"><i class="glyphicon glyphicon-filter  " ></i> Filters</span>
+                        <ul class="list-unstyled">
+                            <li>
+                                <a href="#"
+                                   class="nodefilterlink textbtn textbtn-default" data-node-filter=".*"
+                                   data-node-filter-all="true">
+                                    All Nodes</a>
+
+                                <span data-bind="text: nodeSummary().totalCount" class="text-info">...</span>
+
+                                <div class="btn-group">
+                                    <button type="button"
+                                            class="btn btn-default btn-sm btn-link dropdown-toggle"
+                                            title="Filter Actions"
+                                            data-toggle="dropdown"
+                                            aria-expanded="false">
+                                        <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu" role="menu">
+                                        <li data-bind="visible: '.*'!=$root.nodeSummary().defaultFilter()">
+                                            <a href="#"
+                                               data-bind="click: $root.nodeSummary().setDefaultAll">
+
+                                                <i class="glyphicon glyphicon-filter"></i>
+                                                Set All Nodes as Default Filter
+                                            </a>
+                                        </li>
+                                        <li data-bind="visible: '.*'==$root.nodeSummary().defaultFilter()">
+                                            <a href="#"
+                                               data-bind="click: $root.nodeSummary().removeDefault">
+                                                <i class="glyphicon glyphicon-ban-circle"></i>
+                                                Remove All Nodes as Default Filter
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
+
+                            <!-- ko foreach: nodeSummary().filters -->
                             <li>
                                 <a
                                         href="#"
-                                        class=" nodefilterlink "
+                                        class=" nodefilterlink textbtn textbtn-default"
                                         data-bind="attr: {
                                                         'data-node-filter-name': name(),
                                                         'data-node-filter': filter(),
@@ -336,7 +359,6 @@
 
                              "
                                 >
-                                    <i class="glyphicon glyphicon-filter  " data-bind="css: { 'text-success': name()==$root.nodeSummary().defaultFilter() }"></i>
                                     <span data-bind="text: name"></span>
                                 </a>
                                 <div class="btn-group">
@@ -374,6 +396,7 @@
                                 </div>
 
                             </li>
+                            <!-- /ko -->
                         </ul>
                         <div data-bind="visible: !nodeSummary().filters">
                             None
