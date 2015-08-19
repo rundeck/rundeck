@@ -153,7 +153,94 @@
                     Enter a Filter
                 </a>
             </li>
+            <li data-bind="visible: filterIsSet()||allcount()>=0" class="pull-right">
+                <span class="tabs-sibling tabs-sibling-compact ">
+                <div class=" btn-group pull-right ">
+                    <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                        Actions <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu" role="menu">
 
+                        <li class="dropdown-header" data-bind="visible: filterName()">
+                            Filter: <span data-bind="text: filterNameDisplay()"></span>
+                        </li>
+                        <li data-bind="visible: canSaveFilter">
+                            <a href="#"
+                               data-toggle="modal"
+                               data-target="#saveFilterModal">
+                                <i class="glyphicon glyphicon-plus"></i>
+                                Save Filter&hellip;
+                            </a>
+                        </li>
+                        <li data-bind="visible: canDeleteFilter">
+                            <a href="#"
+                               class="textbtn textbtn-danger"
+                               data-bind="click: deleteFilter">
+                                <i class="glyphicon glyphicon-remove"></i>
+                                Delete this Filter &hellip;
+                            </a>
+                        </li>
+                        <li data-bind="visible: canSetDefaultFilter">
+                            <a href="#"
+                               class="textbtn textbtn-success"
+                               data-bind="click: setDefaultFilter">
+                                <i class="glyphicon glyphicon-filter"></i>
+                                Set as Default Filter
+                            </a>
+                        </li>
+                        <li data-bind="visible: canRemoveDefaultFilter">
+                            <a href="#"
+                               class="textbtn textbtn-default"
+                               data-bind="click: nodeSummary().removeDefault">
+                                <i class="glyphicon glyphicon-ban-circle"></i>
+                                Remove Default Filter
+                            </a>
+                        </li>
+                        <li class="divider" ></li>
+                        <g:if test="${g.executionMode(is:'active')}">
+
+                            <li data-bind="visible: hasNodes()" class="${run_authorized?'':'disabled'}">
+                                <a href="#" data-bind="${run_authorized?'click: runCommand':''}"
+                                   title="${run_authorized ? '' : 'Not authorized'}"
+                                   class="${run_authorized ? '' : 'has_tooltip'}"
+                                   data-placement="left"
+                                >
+                                    <i class="glyphicon glyphicon-play"></i>
+                                    Run a command on <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
+                                    <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
+                                </a>
+                            </li>
+                        </g:if>
+                        <g:else>
+
+                            <li data-bind="visible: hasNodes()" class="disabled">
+                                <a href="#"
+                                   title="${g.message(code:'disabled.execution.run')}"
+                                   class="has_tooltip"
+                                   data-placement="left"
+                                >
+                                    <i class="glyphicon glyphicon-play"></i>
+                                    Run a command on <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
+                                    <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
+                                </a>
+                            </li>
+                        </g:else>
+
+                        <li class="${job_create_authorized?'':'disabled'}">
+                            <a href="#" data-bind="${job_create_authorized?'click: saveJob':''}"
+                               title="${job_create_authorized?'':'Not authorized'}"
+                               class="${job_create_authorized?'':'has_tooltip'}"
+                               data-placement="left"
+                            >
+                                <i class="glyphicon glyphicon-plus"></i>
+                                Create a job for <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
+                                <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                </span>
+            </li>
         </ul>
 
         <div class="row row-space">
@@ -178,86 +265,7 @@
                             <g:elseif test="${tagsummary?.size() == 0}">
                             %{--<span class="text-muted">no tags</span>--}%
                         </g:elseif>
-                        <div class=" btn-group pull-right ">
-                            <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                                Actions <span class="caret"></span>
-                            </button>
-                            <ul class="dropdown-menu" role="menu">
-                                <li data-bind="visible: !filterName() && filterWithoutAll()">
-                                    <a href="#"
-                                       data-toggle="modal"
-                                       data-target="#saveFilterModal">
-                                        <i class="glyphicon glyphicon-plus"></i>
-                                        Save Filter&hellip;
-                                    </a>
-                                </li>
-                                <li data-bind="visible: filterName()">
-                                    <a href="#"
-                                       class="textbtn textbtn-danger"
-                                       data-bind="click: function(){$root.nodeSummary().deleteFilterConfirm(filterName());}">
-                                        <i class="glyphicon glyphicon-remove"></i>
-                                        Delete this Filter &hellip;
-                                    </a>
-                                </li>
-                                <li data-bind="visible: filterName() && filterName()!=$root.nodeSummary().defaultFilter()">
-                                    <a href="#"
-                                       class="textbtn textbtn-success"
-                                       data-bind="click: function(){$root.nodeSummary().setDefault(filterName());}">
-                                        <i class="glyphicon glyphicon-filter"></i>
-                                        Set as Default Filter
-                                    </a>
-                                </li>
-                                <li data-bind="visible: filterName() && filterName()==$root.nodeSummary().defaultFilter()">
-                                    <a href="#"
-                                       class="textbtn textbtn-default"
-                                       data-bind="click: $root.nodeSummary().removeDefault">
-                                        <i class="glyphicon glyphicon-ban-circle"></i>
-                                        Remove Default Filter
-                                    </a>
-                                </li>
-                               <li class="divider" ></li>
-                                <g:if test="${g.executionMode(is:'active')}">
 
-                                    <li data-bind="visible: hasNodes()" class="${run_authorized?'':'disabled'}">
-                                        <a href="#" data-bind="${run_authorized?'click: runCommand':''}"
-                                           title="${run_authorized ? '' : 'Not authorized'}"
-                                           class="${run_authorized ? '' : 'has_tooltip'}"
-                                           data-placement="left"
-                                        >
-                                            <i class="glyphicon glyphicon-play"></i>
-                                            Run a command on <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
-                                            <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
-                                        </a>
-                                    </li>
-                                </g:if>
-                                <g:else>
-
-                                    <li data-bind="visible: hasNodes()" class="disabled">
-                                        <a href="#"
-                                           title="${g.message(code:'disabled.execution.run')}"
-                                           class="has_tooltip"
-                                           data-placement="left"
-                                        >
-                                            <i class="glyphicon glyphicon-play"></i>
-                                            Run a command on <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
-                                            <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
-                                        </a>
-                                    </li>
-                                </g:else>
-
-                                <li class="${job_create_authorized?'':'disabled'}">
-                                    <a href="#" data-bind="${job_create_authorized?'click: saveJob':''}"
-                                       title="${job_create_authorized?'':'Not authorized'}"
-                                       class="${job_create_authorized?'':'has_tooltip'}"
-                                       data-placement="left"
-                                    >
-                                        <i class="glyphicon glyphicon-plus"></i>
-                                        Create a job for <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
-                                        <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> …
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
                     </div>
                     <g:form class="form form-inline" action="adhoc" controller="framework" method="get" name="runform">
                         <g:hiddenField name="project" value="${params.project ?: request.project}"/>
