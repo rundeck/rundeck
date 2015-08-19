@@ -997,7 +997,7 @@ function setFilter(name, value, callback) {
         callback = _setFilterSuccess;
     }
     var str = name + "=" + value;
-    jQuery.ajax({
+    return jQuery.ajax({
         type: 'POST',
         url: _genUrl(appLinks.userAddFilterPref, {filterpref: str}),
         beforeSend: _ajaxSendTokens.curry('filter_select_tokens'),
