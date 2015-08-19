@@ -26,6 +26,12 @@
     <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN,project: params.project ?: request.project)}"/>
     <g:set var="job_create_authorized" value="${auth.resourceAllowedTest(kind:'job', action: AuthConstants.ACTION_CREATE,project: params.project ?: request.project)}"/>
     <g:render template="/common/messages"/>
+
+    <div class=" collapse" id="queryFilterHelp">
+        <div class="help-block">
+            <g:render template="/common/nodefilterStringHelp"/>
+        </div>
+    </div>
 %{--
 
 <div class="row ">
@@ -51,11 +57,6 @@
 
         </g:form>
 
-    <div class=" collapse" id="queryFilterHelp">
-        <div class="help-block">
-            <g:render template="/common/nodefilterStringHelp"/>
-        </div>
-    </div>
     </div>
 
 
