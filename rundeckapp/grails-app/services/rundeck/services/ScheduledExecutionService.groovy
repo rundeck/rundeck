@@ -356,6 +356,28 @@ class ScheduledExecutionService implements ApplicationContextAware{
         }
     }
 
+    def rescheduleJob(ScheduledExecution scheduledExecution) {
+        rescheduleJob(scheduledExecution, false, null, null)
+    }
+
+    def rescheduleJob(ScheduledExecution scheduledExecution, wasScheduled, oldJobName, oldJobGroup) {
+        if (scheduledExecution.shouldScheduleExecution()) {
+            def nextdate = null
+            try {
+                nextdate = scheduleJob(scheduledExecution, oldJobName, oldJobGroup);
+            } catch (SchedulerException e) {
+                log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
+            }
+            def newsched = ScheduledExecution.get(scheduledExecution.id)
+            newsched.nextExecution = nextdate
+            if (!newsched.save()) {
+                log.error("Unable to save second change to scheduledExec.")
+            }
+        } else if (wasScheduled && oldJobName && oldJobGroup) {
+            deleteJob(oldJobName, oldJobGroup)
+        }
+    }
+
     /**
      * Reschedule all scheduled jobs which match the given serverUUID, or all jobs if it is null.
      * @param serverUUID
@@ -1212,9 +1234,9 @@ class ScheduledExecutionService implements ApplicationContextAware{
             return [success: false, scheduledExecution: scheduledExecution, message: "Update Job ${scheduledExecution.extid}", unauthorized: true]
         }
 
+        def oldSched = scheduledExecution.scheduled
         def oldJobName = scheduledExecution.generateJobScheduledName()
         def oldJobGroup = scheduledExecution.generateJobGroupName()
-        def oldSched = scheduledExecution.scheduled
 
         if (null != params.scheduleEnabled) {
             scheduledExecution.properties.scheduleEnabled = params.scheduleEnabled
@@ -1227,6 +1249,9 @@ class ScheduledExecutionService implements ApplicationContextAware{
         if (!scheduledExecution.validate()) {
             return [success: false]
         }
+
+        rescheduleJob(scheduledExecution, oldSched, oldJobName, oldJobGroup)
+        return [success: true, scheduledExecution: scheduledExecution]
     }
 
     def _doupdate ( params, user, String roleList, Framework framework, AuthContext authContext, changeinfo = [:] ){
@@ -1587,21 +1612,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
             }
         }
         if (!failed && scheduledExecution.save(true)) {
-            if (scheduledExecution.shouldScheduleExecution()) {
-                def nextdate = null
-                try {
-                    nextdate = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
-                } catch (SchedulerException e) {
-                    log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
-                }
-                def newsched = ScheduledExecution.get(scheduledExecution.id)
-                newsched.nextExecution = nextdate
-                if (!newsched.save()) {
-                    log.error("Unable to save second change to scheduledExec.")
-                }
-            } else if (oldsched && oldjobname && oldjobgroup) {
-                deleteJob(oldjobname, oldjobgroup)
-            }
+            rescheduleJob(scheduledExecution, oldsched, renamed ? oldjobname : null, renamed ? oldjobgroup : null)
             log.debug("update : save operation succeeded. redirecting to show...")
             return [success: true, scheduledExecution: scheduledExecution]
         } else {
@@ -2067,22 +2078,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         }
 
         if (!failed && scheduledExecution.save(true)) {
-            if (scheduledExecution.shouldScheduleExecution()) {
-                def nextdate = null
-                try {
-                    nextdate = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
-                } catch (SchedulerException e) {
-                    log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
-                }
-                def newsched = ScheduledExecution.get(scheduledExecution.id)
-                newsched.nextExecution = nextdate
-                if (!newsched.save()) {
-                    log.error("Unable to save second change to scheduledExec.")
-                }
-            } else if (oldsched && oldjobname && oldjobgroup) {
-                deleteJob(oldjobname, oldjobgroup)
-            }
-
+            rescheduleJob(scheduledExecution, oldsched, renamed ? oldjobname : null, renamed ? oldjobgroup : null)
             return [true, scheduledExecution]
         } else {
             todiscard.each {
@@ -2141,19 +2137,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
             scheduledExecution.uuid = UUID.randomUUID().toString()
         }
         if (!failed && scheduledExecution.save(true)) {
-            if (scheduledExecution.shouldScheduleExecution()) {
-                def nextdate = null
-                try {
-                    nextdate = scheduleJob(scheduledExecution, null, null);
-                } catch (SchedulerException e) {
-                    log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
-                }
-                def newsched = ScheduledExecution.get(scheduledExecution.id)
-                newsched.nextExecution = nextdate
-                if (!newsched.save()) {
-                    log.error("Unable to save second change to scheduledExec.")
-                }
-            }
+            rescheduleJob(scheduledExecution)
             return [success: true, scheduledExecution: scheduledExecution]
 
         } else {

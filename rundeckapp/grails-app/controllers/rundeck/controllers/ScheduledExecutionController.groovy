@@ -12,6 +12,7 @@ import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
+import grails.converters.XML
 import groovy.xml.MarkupBuilder
 import org.apache.commons.collections.list.TreeList
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler
@@ -863,11 +864,18 @@ class ScheduledExecutionController  extends ControllerBase{
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
 
         def payload = [id: params.id, executionEnabled: params.status]
-        def result = scheduledExecutionService._doupdate(payload, session.user, roleList, framework, authContext, changeinfo)
+        def result = scheduledExecutionService._doUpdateExecutionFlags(payload, session.user, roleList, framework, authContext, changeinfo)
 
         if (result && result.success) {
-            //return 204 no content
-            return render(status: HttpServletResponse.SC_NO_CONTENT)
+            return withFormat {
+                xml {
+                    render ([success: true] as XML)
+                }
+
+                json {
+                    render ([success: true] as JSON)
+                }
+            }
         } else {
             return apiService.renderErrorFormat(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response);
         }
@@ -907,11 +915,18 @@ class ScheduledExecutionController  extends ControllerBase{
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
 
         def payload = [id: params.id, scheduleEnabled: params.status]
-        def result = scheduledExecutionService._doupdate(payload, session.user, roleList, framework, authContext, changeinfo)
+        def result = scheduledExecutionService._doUpdateExecutionFlags(payload, session.user, roleList, framework, authContext, changeinfo)
 
         if (result && result.success) {
-            //return 204 no content
-            return render(status: HttpServletResponse.SC_NO_CONTENT)
+            return withFormat {
+                xml {
+                    render ([success: true] as XML)
+                }
+
+                json {
+                    render ([success: true] as JSON)
+                }
+            }
         } else {
             return apiService.renderErrorFormat(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response);
         }
