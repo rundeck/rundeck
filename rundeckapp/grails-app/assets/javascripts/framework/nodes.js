@@ -171,6 +171,7 @@ function pageLoad(){
         nodeFilter.setPageParams(filterParams);
         nodeFilter.updateMatchedNodes();
         pagestate=nodeFilter.getPageParams();
+        nodeSummary.reload();
 
     }else{
         nodeFilter.reset();
