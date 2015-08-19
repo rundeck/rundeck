@@ -2170,19 +2170,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
             scheduledExecution.uuid = UUID.randomUUID().toString()
         }
         if (!failed && scheduledExecution.save(true)) {
-            if (scheduledExecution.shouldScheduleExecution()) {
-                def nextdate = null
-                try {
-                    nextdate = scheduleJob(scheduledExecution, null, null);
-                } catch (SchedulerException e) {
-                    log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
-                }
-                def newsched = ScheduledExecution.get(scheduledExecution.id)
-                newsched.nextExecution = nextdate
-                if (!newsched.save()) {
-                    log.error("Unable to save second change to scheduledExec.")
-                }
-            }
+            rescheduleJob(scheduledExecution)
             return [success: true, scheduledExecution: scheduledExecution]
 
         } else {
