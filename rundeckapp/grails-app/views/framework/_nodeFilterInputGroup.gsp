@@ -16,8 +16,11 @@
 
 %{--Filter navigation/selection dropdown--}%
 <span class="input-group-btn">
-    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Filter <span
-            class="caret"></span></button>
+    <button type="button"
+            class="btn btn-default dropdown-toggle"
+        data-bind="css: { 'btn-success': filterName(), 'btn-default': !filterName() }"
+            data-toggle="dropdown">
+        <span data-bind="text: filterName() || ''">Filter</span> <span class="caret"></span></button>
     <ul class="dropdown-menu">
 
         <li>
