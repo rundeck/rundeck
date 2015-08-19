@@ -162,6 +162,9 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         },
         owner: this
     });
+    self.filterIsSet=ko.pureComputed(function(){
+        return !!self.filterWithoutAll() || !!self.filterName();
+    });
     self.filter.subscribe(function (newValue) {
         if (newValue == '' && self.hideAll()) {
             self.filterAll(true);
@@ -205,7 +208,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.clear=function(){
         self.page(0);
         self.total(0);
-        self.allcount(0);
+        self.allcount(-1);
     };
     /**
      * clear filters and results count

@@ -56,6 +56,6 @@
         <i class="glyphicon glyphicon-question-sign"></i>
     </a>
     <a class="btn btn-default" data-bind="click: $data.updateMatchedNodes" href="#">
-        <g:message code="set.filter"/>
+        <g:message code="search" />
     </a>
 </span>

@@ -26,6 +26,7 @@
     <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN,project: params.project ?: request.project)}"/>
     <g:set var="job_create_authorized" value="${auth.resourceAllowedTest(kind:'job', action: AuthConstants.ACTION_CREATE,project: params.project ?: request.project)}"/>
     <g:render template="/common/messages"/>
+%{--
 
 <div class="row ">
 <div  class="col-sm-9">
@@ -89,7 +90,9 @@
         </div>
     </div>
 
-    %{--Form for saving/deleting node filters--}%
+    --}%
+%{--Form for saving/deleting node filters--}%%{--
+
     <g:form class="form form-horizontal" useToken="true">
         <g:hiddenField name="project" value="${params.project}"/>
         <g:render template="nodeFiltersHidden"/>
@@ -101,57 +104,117 @@
                           deleteActionSubmit: 'deleteNodeFilter', storeActionSubmit: 'storeNodeFilter']}"/>
     </g:form>
 </div>
+--}%
+    %{--Form for saving/deleting node filters--}%
+
+        <g:form class="form form-horizontal" useToken="true">
+            <g:hiddenField name="project" value="${params.project}"/>
+            <g:render template="nodeFiltersHidden"/>
+            <g:render template="/common/queryFilterManagerModal"
+                      model="${[rkey: ukey, filterName: filterName, filterset: filterset,
+                                filterLinks: true,
+                                formId: "${ukey}filter",
+                                ko: true,
+                                deleteActionSubmit: 'deleteNodeFilter', storeActionSubmit: 'storeNodeFilter']}"/>
+        </g:form>
+
+        <ul class="nav nav-tabs">
+            <li class="active" id="tab_link_summary">
+                <a href="#summary" data-toggle="tab">
+                    Browse
+                </a>
+            </li>
+
+            <li>
+                <span class="tabs-sibling tabs-sibling-compact form-inline">
+                    <div class="form-group ">
+                        <span class="input-group" >
+                            <g:render template="nodeFilterInputGroup" model="[filterset: filterset, filtvalue:filtvalue,filterName:filterName]"/>
 
 
-    <ul class="nav nav-tabs">
-        <li class="active" id="tab_link_summary">
-            <a href="#summary" data-toggle="tab">
-                Browse
-            </a>
-        </li>
-        <li id="tab_link_result">
-            <a href="#result" data-toggle="tab">
-                Filter
-            </a>
-        </li>
-    </ul>
+                        </span>
 
-    <div class="row row-space">
-    <div class="col-sm-12">
-        <div class="tab-content">
-            <div class="tab-pane " id="result">
-                <div class="row row-space">
-                    <div class="col-sm-12">
-                        <span class="h4" data-bind="if: !loading() && !error()">
-                            <g:if test="${summaryOnly}">
-                                <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
-                                <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span>
+                    </div>
+                </span>
+
+            </li>
+            <li id="tab_link_result" data-bind="visible: filterIsSet()">
+                <a href="#result" data-toggle="tab" data-bind="visible: filterIsSet() ">
+                    Result:
+                    <span data-bind="visible: allcount()>=0">
+                        <span data-bind="text: allcount" class="text-info">${total}</span>
+                        <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span>
+                    </span>
+                    <span data-bind="visible: allcount()<0" class="text-muted">&hellip;</span>
+
+                </a>
+                <a href="#" data-bind="visible: !filterIsSet() ">
+                    Enter a Filter
+                </a>
+            </li>
+
+        </ul>
+
+        <div class="row row-space">
+        <div class="col-sm-12">
+            <div class="tab-content">
+                <div class="tab-pane " id="result">
+                    <div class="row row-space">
+                        <div class="col-sm-12">
+
+                            <span data-bind="if: loading()"  class="text-info">
+                                <i class="glyphicon glyphicon-time"></i>
+                                <g:message code="loading.matched.nodes"/>
+                            </span>
+                            <span data-bind="if: error()"  class="text-danger">
+                                <i class="glyphicon glyphicon-warning-sign"></i>
+                                <span data-bind="text: error()"></span>
+                            </span>
+                            <g:if test="${tagsummary}">
+                                <g:render template="tagsummary"
+                                          model="${[hidetop:!summaryOnly,tagsummary: tagsummary, link: [action: 'nodes', controller: 'framework', param: 'nodeIncludeTags']]}"/>
                             </g:if>
-                            <g:else>
-                                <span data-bind="text: allcount"><g:enc>${total}</g:enc></span>
-                                <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span> matching filter
-                            </g:else>
-                        </span>
-                        <span data-bind="if: loading()"  class="text-info">
-                            <i class="glyphicon glyphicon-time"></i>
-                            <g:message code="loading.matched.nodes"/>
-                        </span>
-                        <span data-bind="if: error()"  class="text-danger">
-                            <i class="glyphicon glyphicon-warning-sign"></i>
-                            <span data-bind="text: error()"></span>
-                        </span>
-                        <g:if test="${tagsummary}">
-                            <g:render template="tagsummary"
-                                      model="${[hidetop:!summaryOnly,tagsummary: tagsummary, link: [action: 'nodes', controller: 'framework', param: 'nodeIncludeTags']]}"/>
-                        </g:if>
-                        <g:elseif test="${tagsummary?.size() == 0}">
-                        %{--<span class="text-muted">no tags</span>--}%
+                            <g:elseif test="${tagsummary?.size() == 0}">
+                            %{--<span class="text-muted">no tags</span>--}%
                         </g:elseif>
                         <div class=" btn-group pull-right ">
                             <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                                Node Actions <span class="caret"></span>
+                                Actions <span class="caret"></span>
                             </button>
                             <ul class="dropdown-menu" role="menu">
+                                <li data-bind="visible: !filterName() && filterWithoutAll()">
+                                    <a href="#"
+                                       data-toggle="modal"
+                                       data-target="#saveFilterModal">
+                                        <i class="glyphicon glyphicon-plus"></i>
+                                        Save Filter&hellip;
+                                    </a>
+                                </li>
+                                <li data-bind="visible: filterName()">
+                                    <a href="#"
+                                       class="textbtn textbtn-danger"
+                                       data-bind="click: function(){$root.nodeSummary().deleteFilterConfirm(filterName());}">
+                                        <i class="glyphicon glyphicon-remove"></i>
+                                        Delete this Filter &hellip;
+                                    </a>
+                                </li>
+                                <li data-bind="visible: filterName() && filterName()!=$root.nodeSummary().defaultFilter()">
+                                    <a href="#"
+                                       class="textbtn textbtn-success"
+                                       data-bind="click: function(){$root.nodeSummary().setDefault(filterName());}">
+                                        <i class="glyphicon glyphicon-filter"></i>
+                                        Set as Default Filter
+                                    </a>
+                                </li>
+                                <li data-bind="visible: filterName() && filterName()==$root.nodeSummary().defaultFilter()">
+                                    <a href="#"
+                                       class="textbtn textbtn-default"
+                                       data-bind="click: $root.nodeSummary().removeDefault">
+                                        <i class="glyphicon glyphicon-ban-circle"></i>
+                                        Remove Default Filter
+                                    </a>
+                                </li>
+                               <li class="divider" ></li>
                                 <g:if test="${g.executionMode(is:'active')}">
 
                                     <li data-bind="visible: hasNodes()" class="${run_authorized?'':'disabled'}">
@@ -210,10 +273,12 @@
             <div class="tab-pane active" id="summary">
 
                 <div class="row row-space">
-                    <div class="col-sm-2">
+                    <div class="col-sm-4">
 
+                        <span class="text-uppercase text-muted small">
                         <span data-bind="text: nodeSummary().totalCount"></span> Nodes in project
-                        <ul>
+                        </span>
+                        <ul class="list-unstyled">
                         <li>
                             <a href="#"
                                class="nodefilterlink " data-node-filter=".*"
@@ -222,9 +287,9 @@
                     </ul>
 
                     </div>
-                    <div class="col-sm-5">
-                        Tags:
-                        <ul data-bind="foreach: nodeSummary().tags">
+                    <div class="col-sm-4">
+                        <span class="text-uppercase text-muted small">Tags</span>
+                        <ul data-bind="foreach: nodeSummary().tags" class="list-unstyled">
                             <li>
                                 <a
                                         href="#"
@@ -245,23 +310,60 @@
                         </div>
                     </div>
 
-                    <div class="col-sm-5">
+                    <div class="col-sm-4">
 
-                        Filters:
-                        <ul data-bind="foreach: nodeSummary().filters">
+                        <span class="text-uppercase text-muted small">Saved Filters</span>
+                        <ul data-bind="foreach: nodeSummary().filters" class="list-unstyled">
                             <li>
                                 <a
                                         href="#"
-                                        class="nodefilterlink "
+                                        class=" nodefilterlink "
                                         data-bind="attr: {
-                        'data-node-filter-name': name(),
-                        'data-node-filter': filter(),
-                        'title': filter(),
-                            'href': $root.nodeSummary().linkForFilterName($data) } "
+                                                        'data-node-filter-name': name(),
+                                                        'data-node-filter': filter(),
+                                                        'title': filter(),
+                                                        'href': $root.nodeSummary().linkForFilterName($data)
+                                                    },
+
+                             "
                                 >
-                                    <i class="glyphicon glyphicon-filter text-muted "></i>
+                                    <i class="glyphicon glyphicon-filter  " data-bind="css: { 'text-success': name()==$root.nodeSummary().defaultFilter() }"></i>
                                     <span data-bind="text: name"></span>
                                 </a>
+                                <div class="btn-group">
+                                    <button type="button"
+                                            class="btn btn-default btn-sm btn-link dropdown-toggle"
+                                            title="Filter Actions"
+                                            data-toggle="dropdown"
+                                            aria-expanded="false">
+                                        <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu" role="menu">
+                                        <li>
+                                            <a href="#"
+                                               data-bind="click: $root.nodeSummary().deleteFilterConfirm">
+                                                <i class="glyphicon glyphicon-remove"></i>
+                                                Delete this Filter &hellip;
+                                            </a>
+                                        </li>
+                                        <li data-bind="visible: name()!=$root.nodeSummary().defaultFilter()">
+                                            <a href="#"
+                                               data-bind="click: $root.nodeSummary().setDefault">
+
+                                                <i class="glyphicon glyphicon-filter"></i>
+                                                Set as Default Filter
+                                            </a>
+                                        </li>
+                                        <li data-bind="visible: name()==$root.nodeSummary().defaultFilter()">
+                                            <a href="#"
+                                               data-bind="click: $root.nodeSummary().removeDefault">
+                                                <i class="glyphicon glyphicon-ban-circle"></i>
+                                                Remove Default Filter
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+
                             </li>
                         </ul>
                         <div data-bind="visible: !nodeSummary().filters">
