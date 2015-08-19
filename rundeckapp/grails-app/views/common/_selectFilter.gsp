@@ -44,7 +44,7 @@
     %{--</g:each>--}%
     <!-- ko foreach: nodeSummary().filters -->
     <li>
-        <a class="textbtn textbtn-primary nodefilterlink"
+        <a class=" nodefilterlink"
         data-bind="text: name(), attr: { 'data-node-filter-name': name(), 'data-node-filter': filter() }, css: { active: name()==$root.filterName() }"
         ></a>
     </li>
