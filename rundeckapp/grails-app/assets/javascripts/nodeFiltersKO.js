@@ -301,7 +301,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             filterString = html_unescape(filterString);
         }
         var filterAll = jQuery(link).data('node-filter-all');
-        var v=oldfilter.indexOf('tags: ');
+        var v=oldfilter?oldfilter.indexOf('tags: '):-1;
         if(isappend && filterTag && v>=0){
             var first=oldfilter.substring(0, v);
             var rest=oldfilter.substring(v + 6);
