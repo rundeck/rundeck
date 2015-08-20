@@ -5558,7 +5558,7 @@ class JobsXMLCodecTests {
         assertEquals "incorrect context options option 1 name", 'cde', doc.job[0].context[0].options[0].option[2]['@name'].text()
         assertEquals "incorrect context options option 1 name", 'abc', doc.job[0].context[0].options[0].option[3]['@name'].text()
     }
-    void testEncodeOptionNullSortIndexDoesNotPreserveOrder() {
+    void testEncodeOptionAlwaysPreserveOrder() {
         def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
                 new ScheduledExecution(
@@ -5590,7 +5590,7 @@ class JobsXMLCodecTests {
         def doc = parser.parse(new StringReader(xmlstr))
         assertNotNull doc
         assertEquals "incorrect context options size", 4, doc.job[0].context[0].options[0].option.size()
-        assertEquals "incorrect context options/@preserveOrder",0, doc.job[0].context[0].options[0]['@preserveOrder'].size()
+        assertEquals "incorrect context options/@preserveOrder",1, doc.job[0].context[0].options[0]['@preserveOrder'].size()
         assertEquals "incorrect context options option 1 name", 'abc', doc.job[0].context[0].options[0].option[0]['@name'].text()
         assertEquals "incorrect context options option 1 name", 'bcd', doc.job[0].context[0].options[0].option[1]['@name'].text()
         assertEquals "incorrect context options option 1 name", 'cde', doc.job[0].context[0].options[0].option[2]['@name'].text()

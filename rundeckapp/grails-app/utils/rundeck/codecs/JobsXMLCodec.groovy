@@ -44,6 +44,7 @@ class JobsXMLCodec {
     }
     static encodeWithBuilder={ list,xml ->
         BuilderUtil bu = new BuilderUtil()
+        bu.canonical=true
         xml.joblist() {
             list.each{ ScheduledExecution jobi->
                 job{
@@ -365,27 +366,33 @@ class JobsXMLCodec {
      */
     static convertJobMap={Map map->
         map.context=[project:map.remove('project')]
-        final Map opts = map.remove('options')
+        def optdata = map.remove('options')
         boolean preserveOrder=false
         if(map.description.indexOf('\n')>=0 ||map.description.indexOf('\n')>=0){
             map[BuilderUtil.asCDATAName('description')]=map.remove('description')
         }
-        if(null!=opts){
-            preserveOrder=opts.any{it.value.sortIndex!=null}
+        if(null!=optdata){
+            def opts
+            if(optdata instanceof Map){
+                opts=optdata.values().sort{a,b->
+                    if(null != a.sortIndex && null != b.sortIndex){
+                        return a.sortIndex<=>b.sortIndex
+                    }else if (null == a.sortIndex && null == b.sortIndex) {
+                        return a.name <=> b.name
+                    }else{
+                        return a.sortIndex!=null?-1:1
+                    }
+                }
+            }else if(optdata instanceof Collection){
+                preserveOrder=true
+                opts=optdata
+            }
             def optslist=[]
             //options are sorted by (sortIndex, name)
-            opts.sort{a,b->
-                if(null != a.value.sortIndex && null != b.value.sortIndex){
-                    return a.value.sortIndex<=>b.value.sortIndex
-                }else if (null == a.value.sortIndex && null == b.value.sortIndex) {
-                    return a.value.name <=> b.value.name
-                }else{
-                    return a.value.sortIndex!=null?-1:1
-                }
-            }.each{k,x->
+            opts.each{x->
                 x.remove('sortIndex')
                 //add 'name' attribute
-                BuilderUtil.addAttribute(x,'name',k)
+                BuilderUtil.addAttribute(x,'name',x.remove('name'))
                 //convert to attributes: 'value','regex','valuesUrl'
                 BuilderUtil.makeAttribute(x,'value')
                 BuilderUtil.makeAttribute(x,'regex')

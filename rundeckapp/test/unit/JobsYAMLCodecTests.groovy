@@ -1,3 +1,4 @@
+import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin;
 
 import org.yaml.snakeyaml.Yaml
@@ -75,8 +76,6 @@ public class JobsYAMLCodecTests  {
 
             def doc = yaml.load(ymlstr)
             assertNotNull doc
-            System.err.println("yaml: ${ymlstr}");
-            System.err.println("doc: ${doc}");
             assertEquals "wrong number of jobs", 1, doc.size()
             assertEquals "wrong name", "test job 1", doc[0].name
             assertEquals "wrong description", "test descrip", doc[0].description
@@ -100,15 +99,17 @@ public class JobsYAMLCodecTests  {
 
             assertEquals "missing command scriptfile", "http://example.com/blah", doc[0].sequence.commands[4].scripturl
             assertNotNull "missing options", doc[0].options
-            assertNotNull "missing option opt1", doc[0].options.opt1
-            assertEquals "missing option opt1", "an opt", doc[0].options.opt1.description
-            assertEquals "missing option default", "xyz", doc[0].options.opt1.value
-            assertTrue "missing option enforced", doc[0].options.opt1.enforced
-            assertTrue "missing option required", doc[0].options.opt1.required
-            assertNotNull "missing option values", doc[0].options.opt1.values
-            assertEquals "wrong option values size", 2, doc[0].options.opt1.values.size()
-            assertEquals "wrong option values[0]", "a", doc[0].options.opt1.values[0]
-            assertEquals "wrong option values[1]", "b", doc[0].options.opt1.values[1]
+            assertTrue ("wrong type", doc[0].options instanceof Collection)
+            assertNotNull "missing option opt1", doc[0].options[0]
+            assertEquals "wrong name", "opt1", doc[0].options[0].name
+            assertEquals "missing option opt1", "an opt", doc[0].options[0].description
+            assertEquals "missing option default", "xyz", doc[0].options[0].value
+            assertTrue "missing option enforced", doc[0].options[0].enforced
+            assertTrue "missing option required", doc[0].options[0].required
+            assertNotNull "missing option values", doc[0].options[0].values
+            assertEquals "wrong option values size", 2, doc[0].options[0].values.size()
+            assertEquals "wrong option values[0]", "a", doc[0].options[0].values[0]
+            assertEquals "wrong option values[1]", "b", doc[0].options[0].values[1]
 
             assertEquals "incorrect dispatch threadcount", 1, doc[0].nodefilters.dispatch.threadcount
             assertTrue "incorrect dispatch keepgoing", doc[0].nodefilters.dispatch.keepgoing
@@ -465,8 +466,7 @@ public class JobsYAMLCodecTests  {
     }
 
 
-    void testDecodeBasic() {
-        if(true){
+    void testDecodeBasic1() {
         def ymlstr1 = """- id: null
   project: test1
   loglevel: INFO
@@ -574,7 +574,107 @@ public class JobsYAMLCodecTests  {
             assertEquals "wrong option values[1]", 'b', valuesList[1]
 
         }
-        if (true) {
+    /**
+     * Options defined in list format
+     */
+    void testDecodeOptionsList() {
+        def ymlstr2 = """
+-
+  project: zamp
+  loglevel: ERR
+  sequence:
+    keepgoing: true
+    strategy: step-first
+    commands:
+    - exec: test script
+      args: this is redic # IGNORED for exec
+    - script: A Monkey returns
+      args: whatever
+    - scriptfile: /path/to/file
+      args: -whatever something -else
+    - jobref:
+        name: some job
+        group: another group
+        args: yankee doodle
+        nodeStep: true
+    - scripturl: http://example.com/path/to/file
+      args: -blah bloo -blee
+  description: test descrip
+  name: test job 1
+  group: group/1/2/3
+  nodefilters:
+    dispatch:
+      threadcount: 3
+      keepgoing: false
+      excludePrecedence: false
+    include:
+      name: .*
+    exclude:
+      tags: monkey
+      os-family: unix
+      os-name: Linux
+      os-version: 10.5.*
+      os-arch: x86
+      hostname: shampoo.*
+  schedule:
+    time:
+      seconds: '0'
+      hour: '8/2'
+      minute: '0,5,10,35'
+    month: '*'
+    dayofmonth:
+      day: '*'
+    year: '2001,2010,2012'
+  options:
+    - name: opt2
+      enforced: true
+      required: true
+      description: an opt
+      value: xyz
+      values:
+      - a
+      - b
+    - name: opt1
+      enforced: false
+      required: false
+      description: whatever
+      regex: '\\d+'
+      valuesUrl: http://something.com
+"""
+        def list = JobsYAMLCodec.decode(ymlstr2)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+
+        //options
+        assertNotNull "missing options", se.options
+        assertEquals "wrong options size", 2, se.options.size()
+        final Iterator iterator = se.options.iterator()
+        def opt1 = iterator.next()
+        assertEquals "wrong option name", "opt2", opt1.name
+        assertEquals "wrong option description", "an opt", opt1.description
+        assertEquals "wrong option defaultValue", "xyz", opt1.defaultValue
+        assertTrue "wrong option name", opt1.enforced
+        assertTrue "wrong option name", opt1.required
+        assertNotNull "wrong option values", opt1.values
+        assertEquals "wrong option values size", 2, opt1.values.size()
+        ArrayList valuesList = new ArrayList(opt1.values)
+        assertEquals "wrong option values[0]", 'a', valuesList[0]
+        assertEquals "wrong option values[1]", 'b', valuesList[1]
+        def opt2 = iterator.next()
+        assertEquals "wrong option name", "opt1", opt2.name
+        assertEquals "wrong option description", "whatever", opt2.description
+        assertNull "wrong option defaultValue", opt2.defaultValue
+        assertFalse "wrong option name", opt2.enforced != null && opt2.enforced
+        assertFalse "wrong option name", opt2.required != null && opt2.required
+        assertNull "wrong option values", opt2.values
+        assertNotNull "missing valuesUrl ", opt2.realValuesUrl
+        assertEquals "missing valuesUrl ", "http://something.com", opt2.realValuesUrl.toExternalForm()
+        assertEquals "wrong option regex", "\\d+", opt2.regex
+    }
+    void testDecodeBasic2() {
             def ymlstr1 = """- id: null
   project: test1
   loglevel: INFO
@@ -683,7 +783,7 @@ public class JobsYAMLCodecTests  {
 
         }
 
-        if(true){
+    void testDecodeBasic3() {
         def ymlstr2 = """
 -
   project: zamp
@@ -834,8 +934,6 @@ public class JobsYAMLCodecTests  {
         assertEquals "missing valuesUrl ", "http://something.com", opt2.realValuesUrl.toExternalForm()
         assertEquals "wrong option regex", "\\d+", opt2.regex
         }
-
-    }
 
     void testDecodeTimeout() {
             def ymlstr1 = """- id: null
