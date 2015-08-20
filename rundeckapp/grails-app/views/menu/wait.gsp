@@ -61,7 +61,7 @@
             });
             request.ready.subscribe(function(newval){
                 if(newval){
-                    document.title = Messages['archive.request.please.wait.pagetitle.ready'];
+                    document.title = message('archive.request.please.wait.pagetitle.ready');
                 }
             });
             ko.mapping.fromJS(loadJsonData('requestdata'), {}, request);

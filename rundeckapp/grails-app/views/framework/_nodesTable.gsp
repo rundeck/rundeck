@@ -40,11 +40,6 @@
         </div>
         </div>
     </g:if>
-    <g:javascript>
-        if(typeof(initTooltipForElements)=='function'){
-            initTooltipForElements('tr.node_entry span.node_ident');
-        }
-    </g:javascript>
 </g:if>
 <g:render template="/common/boxinfo" model="${[name:'nodetable',model:[total:nodes?.size(),allcount:total,filter:query?.filter]]}"/>
 

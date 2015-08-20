@@ -16,29 +16,31 @@
 
 %{--Filter navigation/selection dropdown--}%
 <span class="input-group-btn">
-    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Filter <span
-            class="caret"></span></button>
+    <button type="button"
+            class="btn btn-default dropdown-toggle"
+        data-bind="css: { 'btn-success': filterName(), 'btn-default': !filterName() }"
+            data-toggle="dropdown">
+        <span data-bind="text: filterNameDisplay() || ''">Filter</span> <span class="caret"></span></button>
     <ul class="dropdown-menu">
 
         <li>
             <g:link class="nodefilterlink"
                     action="nodes" controller="framework"
+                    data-node-filter-name=".*"
                     data-node-filter=".*"
-                    data-node-filter-all="true"
-                    params="[showall: 'true']">
+                    data-bind="css: { active: '.*'== filterName() }"
+                    params="[filterName: '.*']">
                 Show all nodes
             </g:link>
         </li>
         <li class="divider"></li>
         <li class="dropdown-header"><i class="glyphicon glyphicon-filter"></i> Saved Filters</li>
-        <g:if test="${filterset}">
-            <g:render template="/common/selectFilter"
-                      model="[filterList: true, filterset: filterset, filterName: filterName, prefName: 'nodes', noSelection: filterName ? '-All Nodes-' : null]"/>
-        </g:if>
+        <g:render template="/common/selectFilter"
+                  model="[filterList: true, filterset: filterset, filterName: filterName, prefName: 'nodes', noSelection: filterName ? '-All Nodes-' : null]"/>
     </ul>
 </span>
 <input type='search' name="${filterFieldName?enc(attr:filterFieldName):'filter'}" class="schedJobNodeFilter form-control"
-       data-bind="value: filterWithoutAll, valueUpdate: 'input', executeOnEnter: updateMatchedNodes"
+       data-bind="textInput: filterWithoutAll,  executeOnEnter: updateMatchedNodes"
        placeholder="${queryFieldPlaceholderText?:g.message(code:'enter.a.node.filter')}"
        data-toggle='popover'
        data-popover-content-ref="#${queryFieldHelpId?enc(attr:queryFieldHelpId):'queryFilterHelp'}"
@@ -49,10 +51,10 @@
 
 
 <span class="input-group-btn">
-    <a class="btn btn-info" data-toggle='popover-for' data-target="#${filterFieldId ? enc(attr: filterFieldId) : 'schedJobNodeFilter'}">
+    <a class="btn btn-default" data-toggle='popover-for' data-target="#${filterFieldId ? enc(attr: filterFieldId) : 'schedJobNodeFilter'}">
         <i class="glyphicon glyphicon-question-sign"></i>
     </a>
-    <a class="btn btn-default" data-bind="click: $data.updateMatchedNodes" href="#">
-        <g:message code="set.filter"/>
+    <a class="btn btn-default" data-bind="click: $data.updateMatchedNodes, css: {disabled: !filter()}" href="#">
+        <g:message code="search" />
     </a>
 </span>

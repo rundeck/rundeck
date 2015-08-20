@@ -1,3 +1,4 @@
+<%@ page import="grails.util.Environment" %>
 <script type="text/javascript">
     <g:set var="currentProject" value="${params.project?:request.project}"/>
     <g:set var="projParams" value="${currentProject?[project:currentProject]:[:]}"/>
@@ -20,6 +21,8 @@
         frameworkNodesFragment: "${createLink(controller:"framework",action:"nodesFragment",params:projParams)}",
         frameworkAdhoc: "${createLink(controller:"framework",action:"adhoc",params:projParams)}",
         frameworkReloadNodes: "${createLink(controller:"framework",action:"reloadNodes",params:projParams)}",
+        frameworkNodeSummaryAjax: "${createLink(controller:"framework",action:"nodeSummaryAjax",params:projParams)}",
+        frameworkDeleteNodeFilterAjax: "${createLink(controller:"framework",action:"deleteNodeFilterAjax",params:projParams)}",
         reportsEventsAjax: "${g.createLink(controller: 'reports', action: 'eventsAjax',params:projParams)}",
         menuNowrunningAjax: "${g.createLink(controller: 'menu', action: 'nowrunningAjax',params:projParams)}",
         scheduledExecutionRunAdhocInline: "${createLink(controller:'scheduledExecution',action:'runAdhocInline',params:projParams)}",
@@ -29,6 +32,7 @@
         scheduledExecutionRunJobInline: '${createLink(controller:"scheduledExecution",action:"runJobInline",params:projParams)}',
         scheduledExecutionDetailFragment: '${createLink(controller:'scheduledExecution',action:'detailFragment',params: projParams)}',
         executionFollowFragment: "${createLink(controller:'execution',action:'followFragment',params:projParams)}",
+        adhocHistoryAjax: "${createLink(controller:'execution',action:'adhocHistoryAjax',params:projParams)}",
         menuJobs: "${createLink(controller:'menu',action:'jobs',params: projParams)}",
         userAddFilterPref: "${createLink(controller:'user',action:'addFilterPref',params:projParams)}",
         userClearApiToken: "${g.createLink(controller: 'user', action: 'clearApiToken',params:[format:'json'])}",
@@ -62,13 +66,9 @@
         storageKeysDelete: '${createLink(uri:'/storage/delete/keys')}',
         apiExecutionsBulkDelete: '${createLink(controller:'execution',action: 'deleteBulkApi')}'
     } ;
-    //compatibility with WB javascript:
-    var AppImages = {
-        disclosure: appLinks.disclosureIcon,
-        disclosureOpen: appLinks.disclosureIconOpen,
-        disclosureWait: "${resource(dir:'images',file:'icon-tiny-disclosure-waiting.gif')}",
-        iconTinyRemoveX: '${resource(dir:"images",file:"icon-tiny-removex.png")}',
-        iconTinyRemoveXGray: '${resource(dir:"images",file:"icon-tiny-removex-gray.png")}',
-        iconSmallPrefix:'${resource(dir:"images",file:"icon-small-")}'
-    };
+    <g:if test="${Environment.current==Environment.DEVELOPMENT}" >
+    function _messageMissingError(code){
+        throw code;
+    }
+    </g:if>
 </script>

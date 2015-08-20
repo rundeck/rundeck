@@ -30,10 +30,10 @@
                 }
                 _jobExecUnloadHandlers.clear();
             }
-            new Effect.BlindDown('indexMain', {duration: 0.2});
-            new Effect.BlindUp('execDiv', {duration: 0.2, afterFinish:function(e){
-                clearHtml('execDivContent');
-            }});
+
+            jQuery('#execDiv').modal('hide');
+            clearHtml('execDivContent');
+
             $('busy').hide();
         }
         function requestError(item,trans){
@@ -102,8 +102,7 @@
                     return false;
                 },false);
             }
-            new Effect.BlindUp('indexMain', {duration: 0.2});
-            new Effect.BlindDown('execDiv', {duration: 0.2});
+            jQuery('#execDiv').modal('show');
             $('busy').hide();
         }
 
@@ -187,7 +186,9 @@
             if(popvis && $('jobIdDetailHolder')){
                 popvis=false;
                 Try.these(
-//                    function(){Effect.Fade($('jobIdDetailHolder'),{duration:0.5});},
+                    function(){
+                        jQuery('#jobIdDetailHolder').fadeOut('fast');
+                    },
                     function(){$('jobIdDetailHolder').hide();}
                     );
             }
@@ -359,11 +360,22 @@
     <div id="error" class="alert alert-danger" style="display:none;"></div>
     <g:render template="workflowsFull" model="${[jobgroups:jobgroups,wasfiltered:wasfiltered?true:false,nowrunning:nowrunning, clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,rkey:rkey]}"/>
 </div>
-<div id="execDiv" style="display:none">
-    <div id="execDivContent" >
+<div class="modal fade" id="execDiv" role="dialog" aria-labelledby="deleteFilterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="deleteFilterModalLabel">Execute Job</h4>
+            </div>
 
-    </div>
+            <div class="" id="execDivContent">
+
+
+            </div>
 </div>
+</div>
+</div>
+
 
 <div class="row row-space" id="activity_section">
     <div class="col-sm-12 ">

@@ -26,7 +26,7 @@
     <li data-bind="css: { disabled: !nowRunningEnabled() }">
         <g:link controller="reports" action="index" class="running_link"
                 title="All activity for this job"
-                data-auto-refresh="2"
+                data-auto-refresh="5"
                 params="${runningParams + [runningFilter: 'running']}">
             <i class="glyphicon glyphicon-play-circle"></i>
             running

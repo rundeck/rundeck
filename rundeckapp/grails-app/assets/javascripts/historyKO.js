@@ -299,7 +299,7 @@ function loadHistoryLink(history, ajaxBaseUrl, href,reload) {
     var load=function(){
         history.href(href);
         jQuery.getJSON(url, handleResult);
-    }
+    };
     handleResult= function (data) {
         history.selected(true);
         ko.mapping.fromJS(Object.extend(data, { params: params }), binding, history);

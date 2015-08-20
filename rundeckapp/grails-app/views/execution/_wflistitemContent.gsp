@@ -22,7 +22,7 @@
     $Id$
 
 
- --%><div id="wfivis_${enc(attr:i)}" style="${wdgt.styleVisible(unless:i==highlight)}">
+ --%><div id="wfivis_${enc(attr:i)}" style="${i==highlight?'opacity: 0':''}">
     <div class="pflowitem wfctrlholder"><span class="pflow item " id="wfitem_${enc(attr:i)}" >
         <g:if test="${isErrorHandler}">
             <span class="text-muted"><g:message code="Workflow.stepErrorHandler.label.on.error" /></span>

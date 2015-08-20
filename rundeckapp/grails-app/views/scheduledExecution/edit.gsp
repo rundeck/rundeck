@@ -10,7 +10,7 @@
     <g:jsMessages code="page.unsaved.changes"/>
     <g:javascript>
         var workflowEditor = new WorkflowEditor();
-        var confirm = new PageConfirm(Messages['page.unsaved.changes']);
+        var confirm = new PageConfirm(message('page.unsaved.changes'));
         _onJobEdit(confirm.setNeedsConfirm);
     </g:javascript>
 </head>

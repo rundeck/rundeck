@@ -291,6 +291,13 @@ class FrameworkService implements ApplicationContextAware {
         return rundeckFramework.filterAuthorizedNodes(project,actions,unfiltered,authContext)
     }
 
+    public Map<String,Integer> summarizeTags(Collection<INodeEntry> nodes){
+        def tagsummary=[:]
+        nodes.collect{it.tags}.flatten().findAll{it}.each{
+            tagsummary[it]=(tagsummary[it]?:0)+1
+        }
+        tagsummary
+    }
 
     /**
      * Return the resource definition for a job for use by authorization checks

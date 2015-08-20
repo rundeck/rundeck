@@ -25,7 +25,7 @@
 <g:if test="${cols && cols!=['tags'] && page==0}">
     <tr>
         <th>Node</th>
-        <g:each in="${cols}" var="colname">
+        <g:each in="${cols.findAll{!it.startsWith('ui:')}}" var="colname">
             <th><g:enc>${colname}</g:enc></th>
         </g:each>
         <g:if test="${!cols}">
@@ -43,13 +43,20 @@
             <g:set var="resName" value="${node.nodename}"/>
             <g:set var="runnable" value="${null == nodeauthrun || nodeauthrun[node.nodename]}"/>
 
-            <tr class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''} hover-action-holder">
+            <tr class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''} hover-action-holder ansicolor-on">
                 <td class="nodeident" title="${enc(attr:node.description)}" >
                     <g:if test="${expanddetail||params.expanddetail}">
                         <g:expander key="${ukey+'node_detail_'+i}" imgfirst="true">
-                        <span class="node_ident" id="${enc(attr:ukey)}_${enc(attr:node.nodename)}_key">
-                            <i class="rdicon node ${runnable?'node-runnable':''} icon-small"></i>
-                            <g:enc>${resName}</g:enc>
+                        <span class="node_ident ${nodeStatusColorCss(node:node)}"
+                              style="${nodeStatusColorStyle(node:node)}"
+                              id="${enc(attr:ukey)}_${enc(attr:node.nodename)}_key">
+                            <g:nodeStatusColor node="${node}" icon="true"><g:nodeStatusIcon
+                                    node="${node}"
+                            ><i class="rdicon node ${runnable?'node-runnable':''} icon-small">
+
+                                </i></g:nodeStatusIcon></g:nodeStatusColor>
+
+                            ${resName}
                         </span>
                         </g:expander>
                     </g:if>
@@ -62,14 +69,18 @@
                     <tmpl:nodeFilterLink key="name" value="${resName}"
                                          linkicon="glyphicon glyphicon-circle-arrow-right"/>
                     <span class="nodedesc"></span>
+                    <span class="text-muted ">
+                        <g:nodeBadgeIcons node="${node}" css="badge"/>
+                        ${node.description}
+                    </span>
                 </td>
-                <g:each in="${cols.sort()}" var="colname" status="coli">
+                <g:each in="${cols.sort().findAll{!it.startsWith('ui:')}}" var="colname" status="coli">
                     <g:if test="${colname=='tags'}">
                         <td  title="Tags" class="nodetags" >
                             <g:if test="${node.tags}">
                                 <span class="nodetags">
                                     <i class="glyphicon glyphicon-tags text-muted"></i>
-                                    <g:each var="tag" in="${node.tags.sort()}">
+                                    <g:each var="tag" in="${node.tags.sort().findAll{!it.startsWith('ui:')}}">
                                         <tmpl:nodeFilterLink key="tags" value="${tag}" linkclass="textbtn tag"/>
                                     </g:each>
                                 </span>
@@ -95,7 +106,7 @@
                         <g:if test="${node.tags}">
                             <span class="nodetags">
                                 <i class="glyphicon glyphicon-tags text-muted"></i>
-                                <g:each var="tag" in="${node.tags.sort()}">
+                                <g:each var="tag" in="${node.tags.sort().findAll{!it.startsWith('ui:')}}">
                                     <tmpl:nodeFilterLink key="tags" value="${tag}" linkclass="textbtn tag"/>
                                 </g:each>
                             </span>

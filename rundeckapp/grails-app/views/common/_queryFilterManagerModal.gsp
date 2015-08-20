@@ -89,6 +89,47 @@
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 
+%{--tokens used by the ajax call to delete node filter--}%
+<g:jsonToken id="ajaxDeleteFilterTokens" />
+<div class="modal fade" id="deleteFilterKOModal" role="dialog" aria-labelledby="deleteFilterKOModalLabel" aria-hidden="true"
+>
+    <div class="modal-dialog" >
+        <div class="modal-content" data-bind="with: nodeSummary().filterToDelete()">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="deleteFilterKOModalLabel">Delete Saved Filter</h4>
+            </div>
+
+            <div class="modal-body container">
+                <div class="form-group">
+                    <label class="control-label col-sm-2">Name: </label>
+                    <div class="col-sm-10">
+                        <span class="form-control-static"
+                              data-bind="text: name"></span>
+                    </div>
+                </div>
+                <div class="form-group ">
+                    <label class="control-label col-sm-2">
+                        Filter:
+                    </label>
+
+                    <div class="col-sm-10">
+                        <span data-bind="text: filter" class="form-control-static "></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-body">
+                <span class="text-danger">Really delete this filter?</span>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+                <button type="button" class="btn btn-danger" data-bind="click: $root.nodeSummary().deleteFilter">Yes</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
 
 <div class="modal fade" id="saveFilterModal" role="dialog" aria-labelledby="saveFilterModalLabel" aria-hidden="true">
     <div class="modal-dialog">

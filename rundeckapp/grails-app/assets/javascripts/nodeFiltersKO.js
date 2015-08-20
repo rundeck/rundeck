@@ -16,6 +16,104 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+var NODE_FILTER_ALL='.*';
+function NodeSummary(data){
+    var self=this;
+    self.error=ko.observable();
+    self.tags=ko.observableArray();
+    self.filters=ko.observableArray();
+    self.defaultFilter=ko.observable();
+    self.totalCount=ko.observable(0);
+    self.baseUrl=data.baseUrl?data.baseUrl:'';
+    self.filterToDelete=ko.observable();
+    
+    self.reload=function(){
+      jQuery.ajax({
+          url:_genUrl(appLinks.frameworkNodeSummaryAjax),
+          type:'GET',
+
+          error:function(data,jqxhr,err){
+              self.error('Recent commands list: request failed for '+requrl+': '+err+", "+jqxhr);
+          }
+      }).success(function(data){
+          ko.mapping.fromJS(data,{},self);
+      });
+    };
+    self.linkForTagFilter=function(tag){
+        return _genUrl(self.baseUrl,{filter: 'tags:'+tag.tag()});
+    };
+    self.linkForFilterName=function(filter){
+        return _genUrl(self.baseUrl,{filterName: filter.name()});
+    };
+    /**
+     * Generate URL for the NodeFilters object
+     * @param nodefilters
+     * @returns {*}
+     */
+    self.linkForNodeFilters=function(nodefilters){
+        return _genUrl(self.baseUrl,nodefilters.getPageParams());
+    };
+    self.findFilterByName=function(name){
+        var found=ko.utils.arrayFilter(self.filters(),function(e){return e.name()==name;});
+        if(found && found.length==1){
+            return found[0];
+        }else{
+            return null;
+        }
+    };
+    self.removeDefault=function(){
+        setFilter('nodes','!').success(function(data, status, jqxhr){
+            self.defaultFilter(null);
+        });
+    };
+    self.setDefaultAll=function(){
+        self.setDefault(NODE_FILTER_ALL);
+    };
+
+    self.setDefault=function(filter){
+        var fname=null;
+        if(typeof(filter)=='string'){
+            if(filter==NODE_FILTER_ALL){
+                fname=filter;
+            }else {
+                filter = self.findFilterByName(filter);
+                if (!filter) {
+                    return;
+                }
+                fname = filter.name();
+            }
+        }else{
+            fname=filter.name();
+        }
+        setFilter('nodes',fname).success(function(data, status, jqxhr){
+            self.defaultFilter(fname);
+        });
+    };
+    self.deleteFilterConfirm=function(filter){
+        if(typeof(filter)=='string'){
+            filter = self.findFilterByName(filter);
+            if(!filter){
+                return;
+            }
+        }
+        self.filterToDelete(filter);
+        jQuery('#deleteFilterKOModal').modal('show');
+    };
+    self.deleteFilter=function(filter){
+
+        jQuery('#deleteFilterKOModal').modal('hide');
+        jQuery.ajax({
+            url:_genUrl(appLinks.frameworkDeleteNodeFilterAjax,{filtername:filter.name()}),
+            beforeSend: _ajaxSendTokens.curry('ajaxDeleteFilterTokens')
+        }).success(function (resp, status, jqxhr) {
+            self.filterToDelete(null);
+            self.filters.remove(filter);
+        }).success(_ajaxReceiveTokens.curry('ajaxDeleteFilterTokens'));
+    };
+    if(data) {
+        ko.mapping.fromJS(data, {}, self);
+    }
+}
 
 function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     var self = this;
@@ -24,6 +122,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.baseNodesPageUrl = baseNodesPageUrl;
     self.filterName = ko.observable(data.filterName);
     self.filter = ko.observable(data.filter);
+    self.filterAll = ko.observable(data.filterAll);
     self.nodeExcludePrecedence = ko.observable(null== data.nodeExcludePrecedence || data.nodeExcludePrecedence?'true':'false');
     self.nodefilterLinkId=data.nodefilterLinkId;
     self.total = ko.observable(0);
@@ -42,7 +141,32 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.emptyMode=ko.observable(data.emptyMode?data.emptyMode:'localnode');
     self.emptyMessage=ko.observable(data.emptyMessage?data.emptyMessage:'No match');
     self.hideAll=ko.observable(data.hideAll!=null?(data.hideAll?true:false):false);
+    self.nodeSummary=ko.observable(data.nodeSummary?data.nodeSummary:null);
 
+    self.isFilterNameAll=ko.pureComputed(function(){
+        return self.filterName()==NODE_FILTER_ALL;
+    });
+    self.filterNameDisplay=ko.pureComputed(function(){
+       return self.isFilterNameAll()?'All Nodes':self.filterName();
+    });
+    self.canSaveFilter=ko.pureComputed(function(){
+       return !self.filterName() && self.filterWithoutAll();
+    });
+    self.canDeleteFilter=ko.pureComputed(function(){
+       return self.filterName() && !self.isFilterNameAll();
+    });
+    self.canSetDefaultFilter=ko.pureComputed(function(){
+       return self.filterName() && self.filterName()!=self.nodeSummary().defaultFilter();
+    });
+    self.canRemoveDefaultFilter=ko.pureComputed(function(){
+       return self.filterName() && self.filterName()==self.nodeSummary().defaultFilter();
+    });
+    self.deleteFilter=function(){
+        self.nodeSummary().deleteFilterConfirm(self.filterName());
+    };
+    self.setDefaultFilter=function(){
+        self.nodeSummary().setDefault(self.filterName());
+    };
     self.pageRemaining=ko.computed(function(){
         if(self.total()<=0 || self.page()<0){
             return 0;
@@ -60,10 +184,9 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             data.nodesTitleSingular || 'Node' :
             data.nodesTitlePlural || 'Nodes';
     });
-    self.filterAll = ko.observable(data.filterAll);
     self.filterWithoutAll = ko.computed({
         read: function () {
-            if (self.filterAll() && self.filter() == '.*' && self.hideAll()) {
+            if (self.filterAll() && self.filter() == NODE_FILTER_ALL && self.hideAll()) {
                 return '';
             }
             return self.filter();
@@ -72,6 +195,9 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             self.filter(value);
         },
         owner: this
+    });
+    self.filterIsSet=ko.pureComputed(function(){
+        return !!self.filterWithoutAll() || !!self.filterName();
     });
     self.filter.subscribe(function (newValue) {
         if (newValue == '' && self.hideAll()) {
@@ -116,20 +242,83 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.clear=function(){
         self.page(0);
         self.total(0);
-        self.allcount(0);
+        self.allcount(-1);
     };
-    self.selectNodeFilterLink=function(link){
+    /**
+     * clear filters and results count
+     */
+    self.reset=function(){
+        self.clear();
+        self.filterAll(false);
+        self.filterWithoutAll(null);
+        self.filterName(null);
+    };
+    /**
+     * Use a specific filter string and update
+     * @param filter the filter string
+     */
+    self.useFilterString=function(filter){
+        self.filterAll(false);
+        self.filterWithoutAll(filter);
+        self.filterName(null);
+        self.clear();
+        self.updateMatchedNodes();
+    };
+    /**
+     * Generate state object for the current filter
+     * @returns {{filter: (*|string), filterName: (*|string), filterAll: (*|string)}}
+     */
+    self.getPageParams=function(){
+        return {
+            filter: self.filter()||'',
+            filterName: self.filterName()||'',
+            filterAll: self.filterAll()||''
+        };
+    };
+    /**
+     * generate URL for the current filters
+     */
+    self.getPageUrl=function(){
+        return self.nodeSummary().linkForNodeFilters(self);
+    };
+    /**
+     * Update to match state parameters
+     * @param data
+     */
+    self.setPageParams=function(data){
+        self.filterAll(data.filterAll);
+        self.filter(data.filter);
+        self.filterName(data.filterName);
+        self.clear();
+        self.updateMatchedNodes();
+    };
+    self.selectNodeFilterLink=function(link,isappend){
         var oldfilter = self.filter();
         var filterName = jQuery(link).data('node-filter-name');
         var filterString = jQuery(link).data('node-filter');
-        if(filterString.indexOf("&")>=0){
+        var filterTag = jQuery(link).data('node-tag');
+        if(filterString && filterString.indexOf("&")>=0){
             filterString = html_unescape(filterString);
         }
         var filterAll = jQuery(link).data('node-filter-all');
-        if (filterString && !filterName && oldfilter && !filterAll && oldfilter != '.*') {
+        var v=oldfilter.indexOf('tags: ');
+        if(isappend && filterTag && v>=0){
+            var first=oldfilter.substring(0, v);
+            var rest=oldfilter.substring(v + 6);
+            var last='';
+            while(rest.indexOf(" ")==0){
+                rest = rest.substring(1);
+            }
+            v = rest.indexOf(" ");
+            if(v>0){
+                last = rest.substring(v);
+                rest = rest.substring(0,v);
+            }
+            filterString = first + 'tags: ' + rest + '+' + filterTag + last ;
+        }else if (filterString && !filterName && oldfilter && !filterAll && oldfilter != NODE_FILTER_ALL) {
             filterString = oldfilter + ' ' + filterString;
         } else if (filterAll) {
-            filterString = '.*'
+            filterString = NODE_FILTER_ALL;
         }
         self.filterAll(filterAll);
         self.filter(filterString);
@@ -149,10 +338,17 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         self.updateMatchedNodes();
     };
     self.updateMatchedNodes= function () {
+        if(!self.filter()){
+            return;
+        }
+        var project=self.project();
+        if (!project) {
+            return;
+        }
+        var filterdata = self.filterName() ? {filterName: self.filterName()} : self.filter()?{filter: self.filter()}:{};
         var page = self.page();
         var loadTarget = '#'+self.elem();
         var needsBinding = true;
-        var project=self.project();
         var view = self.view() ? self.view() : 'table';
         var basedata = {view: view, declarenone: true, fullresults: true, expanddetail: true, inlinepaging: false, nodefilterLinkId: self.nodefilterLinkId};
         var clearContent=true;
@@ -177,11 +373,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             jQuery('#' + self.elem()).empty().append(div);
             loadTarget = div;
         }
-        var filterdata = self.filterName() ? {filterName: self.filterName()} : self.filter()?{filter: self.filter()}:{};
-        var i;
-        if (!project) {
-            return;
-        }
+
         var params = Object.extend(basedata, filterdata);
         if(self.emptyMode()=='localnode' && !self.filter()){
             params.localNodeOnly = 'true';

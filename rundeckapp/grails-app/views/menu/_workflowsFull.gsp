@@ -243,7 +243,7 @@
 
                                     <div class="modal-footer">
                                         <button type="button"
-                                                class="confirm_decline btn btn-default"
+                                                class="btn btn-default"
                                                 data-dismiss="modal" ><g:message code="no"/></button>
                                         <g:submitButton name="${g.message(code: 'yes')}" class="btn btn-danger"/>
                                     </div>
@@ -326,22 +326,7 @@
             elem.observe('keypress',noenter);
         }
     });
-    $$('.confirm_action').each(function(elem){
-        var el=$(elem.getAttribute('data-confirm'));
-        Event.observe(elem,'click',function(e){
-            new MenuController().showRelativeTo(elem,el);
-//            $(elem).hide();
-        });
-    });
-    $$('.confirm_decline').each(function(elem){
-        var el=$(elem.getAttribute('data-confirm'));
-        var view=$(elem.getAttribute('data-confirm-view'));
-        Event.observe(elem,'click',function(e){
-            $(el).show();
-            $(view).hide();
-            e.preventDefault();
-        });
-    });
+
     $$('.obs_expand_all').each(function(elem){
         Event.observe(elem,'click',function(e){
             $$('.expandComponent').each(Element.show);

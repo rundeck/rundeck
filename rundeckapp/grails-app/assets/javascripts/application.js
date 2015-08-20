@@ -198,11 +198,6 @@ var Expander = {
             var icn = icnh.down('.glyphicon');
             if (icn) {
                 value = icn.hasClassName('glyphicon-chevron-down');
-            } else {
-                icn = icnh.down("img");
-                if(icn){
-                    value=icn.src == AppImages.disclosure;
-                }
             }
         }
         Expander.setOpen(elem,contain,value,expression);
@@ -280,11 +275,6 @@ var Expander = {
                 } else {
                     icn.addClassName('glyphicon-chevron-right');
                     icn.removeClassName('glyphicon-chevron-down');
-                }
-            } else {
-                 icn = icnh.down("img");
-                if(icn){
-                    icn.src = value ? AppImages.disclosureOpen : AppImages.disclosure;
                 }
             }
         }
@@ -495,7 +485,8 @@ function totalPageCount(max,total){
  * @param offset
  * @param max
  * @param total
- * @param options optional behavior configuration, {maxsteps: 10} the maximum number of page links to show, others will be skipped and a "skipped:true" page will be passed instead
+ * @param options optional behavior configuration, {maxsteps: 10} the maximum number of page links to show, others will
+ *     be skipped and a "skipped:true" page will be passed instead
  * @param func function called with paging parameters: {offset:number,
  *      prevPage: true/false,
  *      nextPage: true/false,
@@ -709,7 +700,14 @@ function _initPopoverContentRef(parent){
             return;
         }
         var ref = jQuery(e).data('popover-content-ref');
-        jQuery(e).popover({html: true, content: jQuery(ref).html()}).on('shown.bs.popover',function(){
+        var opts={html: true, content: jQuery(ref).html(),trigger:jQuery(e).data('trigger')||'click'};
+        if(jQuery(e).data('popover-template-class')){
+            opts.template=jQuery.fn.popover.Constructor.DEFAULTS.template.replace(
+                /class="popover"/,
+                "class=\"popover "+jQuery(e).data('popover-template-class')+"\""
+            );
+        }
+        jQuery(e).popover(opts).on('shown.bs.popover',function(){
             jQuery(e).toggleClass('active');
         }).on('hidden.bs.popover',function(){
                 jQuery(e).toggleClass('active');
@@ -741,6 +739,12 @@ function _initAffix(){
     //affixed elements
     jQuery("a[href='#top']").click(function () {
         jQuery("html, body").animate({ scrollTop: 0 }, "slow");
+        return false;
+    });
+    jQuery("a[href='#bottom']").click(function () {
+        //window.scrollTo(0, document.documentElement.scrollHeight || document.body.scrollHeight);
+        var body = jQuery("html, body");
+        body.animate({ scrollTop: body[0].scrollHeight }, "fast");
         return false;
     });
     jQuery('[data-affix=top]').each(function (i, e) {
@@ -947,110 +951,7 @@ var tooltipMouseOut = function () {
         });
     }
 };
-/**
- * initialize a tooltip detail view for the matching elements.
- * The tooltipe element is identified by the 'id' of the matching element
- * with "_tooltip" appended.
- *
- * E.g. if the matched element has id "key" then the element with
- * id "key_tooltip" will be shown when the element is hovered over.
- * @param selector a selector expression to identify a set of elements
- */
-var initTooltipForElements = function (selector) {
-    $$(selector).each(function (elem) {
-        var ident = elem.identify();
-        if ($(ident + '_tooltip')) {
-            var over = function (evt) {
-                if (_tooltiptimer && _tooltipelem == elem) {
-                    return;
-                }
-                if (_tooltiptimer) {
-                    clearTimeout(_tooltiptimer);
-                    tooltipMouseOut();
-                }
 
-                $(elem).addClassName('glow');
-                new MenuController().showRelativeTo(elem, ident + '_tooltip');
-                $(elem).setAttribute('data-rdtooltip', 'true');
-            };
-            var out = function (evt) {
-                if (!_tooltiptimer) {
-                    _tooltiptimer = setTimeout(tooltipMouseOut, 50);
-                    _tooltipelem = elem;
-                }
-            };
-            Event.observe(elem, 'mouseenter', over);
-            Event.observe(elem, 'mouseleave', out);
-        }
-    });
-    if (null == _tooltipElemSelector) {
-        _tooltipElemSelector = selector;
-        Event.observe(document.body, 'click', function (evt) {
-            //click outside of popup bubble hides it
-            if (!evt.element().hasAttribute('data-rdtooltip')) {
-                tooltipMouseOut();
-            }
-        }, false);
-    } else {
-        _tooltipElemSelector = _tooltipElemSelector + ', ' + selector;
-    }
-
-};
-/**
- * initialize a tooltip detail view for the matching elements.
- * The tooltipe element is identified by the 'id' of the matching element
- * with "_tooltip" appended.
- *
- * E.g. if the matched element has id "key" then the element with
- * id "key_tooltip" will be shown when the element is hovered over.
- * @param selector a selector expression to identify a set of elements
- */
-var initClicktipForElements = function (selector) {
-    $$(selector).each(function (elem) {
-        var ident = elem.identify();
-        if ($(ident + '_tooltip')) {
-            var out = function (evt) {
-                if (!_tooltiptimer) {
-                    _tooltiptimer = setTimeout(tooltipMouseOut, 50);
-                    _tooltipelem = null;
-                }
-            };
-            var over = function (evt) {
-                var oldelem = _tooltipelem;
-                if (_tooltipelem && _tooltipelem != elem) {
-                    clearTimeout(_tooltiptimer);
-                    tooltipMouseOut();
-                }
-                if (_tooltipelem == elem || oldelem == elem) {
-                    out(evt);
-                    return;
-                }
-                if (_tooltiptimer) {
-                    clearTimeout(_tooltiptimer);
-                    tooltipMouseOut();
-                }
-
-                $(elem).addClassName('active');
-                new MenuController().showRelativeTo(elem, ident + '_tooltip');
-                _tooltipelem = elem;
-                $(elem).setAttribute('data-rdtooltip', 'true');
-            };
-            Event.observe(elem, 'click', over, true);
-        }
-    });
-    if (null == _tooltipElemSelector) {
-        _tooltipElemSelector = selector;
-        Event.observe(document.body, 'click', function (evt) {
-            //click outside of popup bubble hides it
-            if (!evt.element().hasAttribute('data-rdtooltip')) {
-                tooltipMouseOut();
-            }
-        }, false);
-    } else {
-        _tooltipElemSelector = _tooltipElemSelector + ', ' + selector;
-    }
-
-};
 Element.addMethods({
     loading: _setLoading
 });
@@ -1096,7 +997,7 @@ function setFilter(name, value, callback) {
         callback = _setFilterSuccess;
     }
     var str = name + "=" + value;
-    jQuery.ajax({
+    return jQuery.ajax({
         type: 'POST',
         url: _genUrl(appLinks.userAddFilterPref, {filterpref: str}),
         beforeSend: _ajaxSendTokens.curry('filter_select_tokens'),
@@ -1126,3 +1027,58 @@ var generateId=(function(){
         return id;
     }
 })();
+function _loadMessages(id){
+    if(typeof(window.Messages)!='object') {
+        window.Messages = {};
+    }
+    jQuery.extend(window.Messages,loadJsonData(id));
+}
+/**
+ * Returns the i18n message for the given code, or the code itself if message is not found.  Requires
+ * calling the "g:jsMessages" tag from the taglib to define messages.
+ * @param code
+ * @returns {*}
+ */
+function message(code) {
+    if (typeof(window.Messages) == 'object') {
+        var msg = Messages[code];
+        if(!msg){
+            if(typeof(_messageMissingError)=='function'){_messageMissingError ("Message not found: "+code);}
+        }
+        return msg ? msg : code;
+    } else {
+        if(typeof(_messageMissingError)=='function'){_messageMissingError ("Message not found: "+code);}
+        return code;
+    }
+}
+
+/**
+ * jquery highlight
+ */
+jQuery.fn.highlight = function(speed) {
+    jQuery(this).each(function() {
+        var el = jQuery(this);
+        el.before("<div/>");
+        el.prev()
+            .width(el.width())
+            .height(el.height())
+            .css({
+                "position": "absolute",
+                "background-color": "#ffff99",
+                "opacity": ".9"
+            })
+            .fadeOut(speed||500);
+    });
+};
+
+/**
+ * jquery scroll to element
+ */
+jQuery.fn.scrollTo = function(speed) {
+    jQuery(this).each(function() {
+        var el = jQuery(this);
+        jQuery('html, body').animate({
+            scrollTop: el.offset().top
+        }, speed||1000);
+    });
+};

@@ -11,9 +11,11 @@ import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.app.support.ExecutionQuery
+import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
+import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
@@ -65,6 +67,85 @@ class ExecutionController extends ControllerBase{
     }
     def followFragment ={
         return render(view:'showFragment',model:show())
+    }
+    /**
+     * List recent adhoc executions to fill the recent commands menu on commands page.
+     * @param project project name
+     * @param max maximum results, defaults to 10
+     * @return
+     */
+    def adhocHistoryAjax(String project, int max, String query){
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,project)
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
+                                                          AuthConstants.ACTION_READ, params.project),
+                AuthConstants.ACTION_READ, 'adhoc', 'commands')) {
+            return
+        }
+
+        def execs = []
+        def uniques=new HashSet<String>()
+        def offset=0
+        if(!max){
+            max=10
+        }
+        def notDispatchedFilter = OptsUtil.join("name:", frameworkService.getFrameworkNodeName())
+
+        while(execs.size()<max){
+
+            def res = Execution.findAllByProjectAndUserAndScheduledExecutionIsNull(
+                    project,
+                    session.user,
+                    [sort: 'dateStarted', order: 'desc', max: max,offset:offset]
+            )
+
+            offset+=res.size()
+            res.each{exec->
+                if(execs.size()<max
+                        && exec.workflow.commands.size()==1
+                        && exec.workflow.commands[0] instanceof CommandExec
+                        && exec.workflow.commands[0].adhocRemoteString){
+
+                    def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
+                    def str=exec.workflow.commands[0].adhocRemoteString+";"+appliedFilter
+                    if(query && query.size()>4 && !str.contains(query)){
+                        return
+                    }
+                    if(!uniques.contains(str)){
+                        uniques<<str
+                        execs<<exec
+                    }
+                }
+            }
+            if(res.size()<max){
+                break
+            }
+        }
+
+        render(contentType: 'application/json'){
+            executions=array{
+                execs.each{Execution exec->
+                    if(exec.workflow.commands.size()==1 && exec.workflow.commands[0].adhocRemoteString) {
+                        def href=createLink(
+                                controller: 'framework',
+                                action: 'adhoc',
+                                params: [project: project, fromExecId: exec.id]
+                        )
+
+                        def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
+                        element(
+                                status: exec.getExecutionState(),
+                                succeeded: exec.statusSucceeded(),
+                                href: href,
+                                execid: exec.id,
+                                title: exec.workflow.commands[0].adhocRemoteString,
+                                filter: appliedFilter
+                        )
+                    }
+                }
+            }
+        }
     }
 
     public def show (ExecutionViewParams viewparams){

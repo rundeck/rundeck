@@ -12,7 +12,7 @@
         $(row).style.opacity=0;
         jQuery(row).load(_genUrl('${g.createLink(controller: 'user', action: 'renderApiToken')}',{login:login,token:token}),function(resp,status,jqxhr){
                     addRowBehavior($(row));
-                    Effect.Appear($(row));
+                    jQuery($(row)).fadeTo("slow",1);
         });
     }
     function tokenAjaxError(elem,msg){
@@ -51,7 +51,7 @@
                     tokenAjaxError(elem,data.error);
                 }else if(data.result){
                     //remove row element
-                    Effect.DropOut(elem);
+                    jQuery($(elem)).fadeOut("slow");
                 }
             },
             error:function(jqxhr,status,error){
@@ -72,7 +72,7 @@
         $$(' tr.apitokenform').each(addRowBehavior);
     }
     function highlightNew(elem){
-        $$(' tr.apitokenform.newtoken').each( Effect.Appear);
+        jQuery(' tr.apitokenform.newtoken').fadeTo('slow',1);
     }
     </g:javascript>
 </head>

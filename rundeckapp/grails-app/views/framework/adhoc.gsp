@@ -21,249 +21,26 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="adhoc"/>
-    <title><g:message code="gui.menu.Nodes"/> - <g:enc>${params.project ?: request.project}</g:enc></title>
+    <title><g:message code="gui.menu.Adhoc"/> - <g:enc>${params.project ?: request.project}</g:enc></title>
     <g:javascript library="executionControl"/>
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
-    <asset:javascript src="nodeFilters_HistoryKO.js"/>
+    <asset:javascript src="framework/adhoc.js"/>
     <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
     <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
-    <script type="text/javascript">
-        function showError(message) {
-            appendText($("error"),message);
-            $("error").show();
-        }
-
-        /**
-         * START run execution code
-         */
-        <g:set var="filterParams" value="${query?.properties.findAll{it.key==~/^(node(In|Ex)clude.*|project)$/ &&it.value}}"/>
-
-        function disableRunBar(runnning){
-            var runbox = jQuery('#runbox');
-            runbox.find('input[type="text"]').prop('disabled', true);
-            runbox.find('button.runbutton').prop('disabled', true).addClass('disabled');
-            if(runnning){
-                runbox.find('button.runbutton').button('loading');
-            }
-        }
-        function enableRunBar(){
-            var runbox = jQuery('#runbox');
-            runbox.find('input[type="text"]').prop('disabled',false);
-            runbox.find('button.runbutton')
-                    .prop('disabled', false)
-                    .removeClass('disabled')
-                    .button('reset');
-        }
-        var running = false;
-        function runStarted(){
-            running=true;
-        }
-        function afterRun(){
-            running=false;
-            jQuery('.execRerun').show();
-            jQuery('#runFormExec').focus();
-        }
-        function runError(msg){
-            jQuery('.errormessage').html(msg);
-            jQuery('#runerror').collapse('show');
-            jQuery('#runcontent').hide();
-            onRunComplete();
-        }
-        function requestFailure(trans){
-            runError("Request failed: "+trans.statusText);
-        }
-        /**
-         * Run the command
-         * @param elem
-         */
-        function runFormSubmit(elem){
-            if(running || !$F('runFormExec')){
-                return false;
-            }
-            if(!nodeFilter.filter() && !nodeFilter.filterName()){
-                //no node filter
-                return false;
-            }
-            var data = jQuery('#'+elem+" :input").serialize();
-            disableRunBar(true);
-            runStarted();
-            $('runcontent').loading('Starting Execution…');
-            jQuery.ajax({
-                type:'POST',
-                url:_genUrl(appLinks.scheduledExecutionRunAdhocInline,data),
-                beforeSend:_ajaxSendTokens.curry('adhoc_req_tokens'),
-                success:function (data,status,xhr) {
-                    try {
-                        startRunFollow(data);
-                    } catch (e) {
-                        console.log(e);
-                        runError(e);
-                    }
-                },
-                error:function(data,jqxhr,err){
-                    requestFailure(jqxhr);
-                }
-            }).success(_ajaxReceiveTokens.curry('adhoc_req_tokens'));
-            return false;
-        }
-        /**
-         * Load content view to contain output
-         * @param data
-         */
-        function startRunFollow(data){
-            if(data.error){
-                runError(data.error);
-            }else if(!data.id){
-                runError("Server response was invalid: "+data.toString());
-            }else {
-                $('runcontent').loading('Loading Output…');
-                jQuery('#runcontent').load(_genUrl(appLinks.executionFollowFragment, {id: data.id, mode: 'tail'}),function(resp,status,jqxhr){
-                    if(status=='success'){
-                        Element.show('runcontent');
-                        continueRunFollow(data);
-                    }else{
-                        requestFailure(jqxhr);
-                    }
-                });
-            }
-        }
-        /**
-         * Start following the output
-         * @param data
-         */
-        function continueRunFollow(data){
-             var followControl = new FollowControl(data.id,'runcontent',{
-                 parentElement: 'commandPerform',
-                 viewoptionsCompleteId: 'viewoptionscomplete',
-                 cmdOutputErrorId: 'cmdoutputerror',
-                 outfileSizeId: 'outfilesize',
-                extraParams:"<%="true" == params.boolean('disableMarkdown')? '&disableMarkdown=true' : ''%>",
-                smallIconUrl: "${resource(dir: 'images', file: 'icon-small')}",
-                iconUrl: "${resource(dir: 'images', file: 'icon-small')}",
-                lastlines: ${enc(js:params.int('lastlines')?: defaultLastLines)},
-                maxLastLines: ${enc(js:params.int('maxlines')?: maxLastLines)},
-                 showFinalLine: {value: false, changed: false},
-                 colStep:{value:false},
-                tailmode: true,
-                 taildelay:1,
-                 truncateToTail:true,
-                execData: {node:"test"},
-                appLinks:appLinks,
-                onComplete:onRunComplete,
-                dobind:true
-            });
-            followControl.beginFollowingOutput(data.id);
-        }
-        function onRunComplete(){
-            enableRunBar();
-            afterRun();
-        }
-
-        var nodeFilter;
-
-        /**
-         * Handle embedded content updates
-         */
-        function _updateBoxInfo(name,data){
-            if(data.total && data.total!="0" && !running){
-                enableRunBar();
-            }else if(!running){
-                disableRunBar(false);
-            }
-            if (null != data.total && typeof(nodeFilter) != 'undefined') {
-                nodeFilter.total(data.total);
-            }
-            if (null != data.allcount) {
-                if (typeof(nodeFilter) != 'undefined') {
-                    nodeFilter.allcount(data.allcount);
-                }
-            }
-            if (null != data.filter) {
-                if (typeof(nodeFilter) != 'undefined') {
-                    nodeFilter.filter(data.filter);
-                }
-            }
-        }
-
-
-        /**
-         * START page init
-         */
-        function init() {
-            jQuery('body').on('click', '.nodefilterlink', function (evt) {
-                evt.preventDefault();
-                nodeFilter.selectNodeFilterLink(this);
-            });
-            jQuery('#nodesContent').on('click', '.closeoutput', function (evt) {
-                evt.preventDefault();
-                jQuery('#runcontent').hide();
-            });
-            $$('#runbox input').each(function(elem){
-                if(elem.type=='text'){
-                    elem.observe('keypress',function(evt){
-                        if(!noenter(evt)){
-                            runFormSubmit('runbox');
-                            return false;
-                        }else{
-                            return true;
-                        }
-                    });
-                }
-            });
-
-            //history tabs binding
-            var history = new History(appLinks.reportsEventsAjax,appLinks.menuNowrunningAjax);
-            ko.applyBindings(history, document.getElementById('activity_section'));
-            setupActivityLinks('activity_section', history);
-            //if empty query, automatically load first activity_link
-            if("${enc(js:emptyQuery)}"=='true'){
-                history.activateNowRunningTab();
-            }
-
-            //setup node filters knockout bindings
-            var filterParams =loadJsonData('filterParamsJSON');
-            nodeFilter = new NodeFilters(
-                    appLinks.frameworkAdhoc,
-                    appLinks.scheduledExecutionCreate,
-                    appLinks.frameworkNodes,
-                    Object.extend(filterParams, {
-                        elem: '${ukey}nodeForm',
-                        view: 'embed',
-                        maxShown:20,
-                        emptyMode:'blank',
-                        project: '${enc(js:params.project?:request.project)}',
-                        nodesTitleSingular: "${enc(js:g.message(code:'Node',default:'Node'))}",
-                        nodesTitlePlural: "${enc(js:g.message(code:'Node.plural',default:'Nodes'))}"
-                    }));
-            ko.applyBindings(nodeFilter,document.getElementById('tabsarea'));
-
-            //show selected named filter
-            nodeFilter.filterName.subscribe(function(val){
-                if(val){
-                    jQuery('a[data-node-filter-name]').removeClass('active');
-                    jQuery('a[data-node-filter-name=\'' + val + '\']').addClass('active');
-                }
-            });
-            nodeFilter.updateMatchedNodes();
-        }
-        jQuery(document).ready(init);
-
-    </script>
     <g:embedJSON id="filterParamsJSON" data="${[filterName: params.filterName, filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
-    <style type="text/css">
-        #runerror{
-            margin:5px 0;
-        }
-
-        .commandcontent{
-            margin:0;
-        }
-
-        table.execoutput {
-            font-size: 100%;
-        }
-    </style>
+    <g:embedJSON id="pageParams" data="${[
+            disableMarkdown: params.boolean('disableMarkdown') ? '&disableMarkdown=true' :'',
+            smallIconUrl:resource(dir: 'images', file: 'icon-small'),
+            iconUrl:resource(dir: 'images', file: 'icon-small'),
+            lastlines:params.int('lastlines')?: defaultLastLines,
+            maxLastLines:params.int('maxlines')?: maxLastLines,
+            emptyQuery:emptyQuery?:null,
+            ukey:ukey,
+            project:params.project?:request.project,
+            runCommand:runCommand?:''
+    ]}"/>
+    <g:jsMessages code="Node,Node.plural"/>
 </head>
 <body>
 
@@ -283,16 +60,53 @@
                             <div class="form form-horizontal clearfix" id="runbox">
                                 <g:jsonToken id="adhoc_req_tokens" url="${request.forwardURI}"/>
                                 <g:form  action="adhoc" params="[project:params.project]">
+                                    <div id="nodefiltersHidden">
                                 <g:render template="nodeFiltersHidden"
                                           model="${[params: params, query: query]}"/>
+                                    </div>
                                 <div class="form-group ">
                                 <label class="col-sm-2 text-right form-control-static" for="runFormExec">Command:</label>
-                                <div class=" col-sm-10">
+                                <div class=" col-sm-10"  id="adhocInput">
                                     <span class="input-group">
+                                        <span class="input-group-btn">
+                                            <button type="button"
+                                                    class="btn btn-default dropdown-toggle act_adhoc_history_dropdown"
+                                                    data-toggle="dropdown">
+                                                <g:message code="recent" /> <span class="caret"></span>
+                                            </button>
+                                            <ul class="dropdown-menu" >
+
+                                                <!-- ko if: recentCommandsNoneFound() -->
+                                                    <li role="presentation" class="dropdown-header"><g:message code="none" /></li>
+                                                <!-- /ko -->
+
+                                                <!-- ko if: !recentCommandsLoaded() -->
+                                                    <li role="presentation" class="dropdown-header"><g:message code="loading.text" /></li>
+                                                <!-- /ko -->
+
+                                                <!-- ko if: recentCommandsLoaded() && !recentCommandsNoneFound() -->
+                                                <li role="presentation" class="dropdown-header">Your recently executed commands</li>
+                                                <!-- /ko -->
+
+                                                <!-- ko foreach: recentCommands -->
+                                                <li>
+                                                    <a href="#"
+                                                       data-bind="attr: { href: href, title: filter }, click: fillCommand"
+                                                       class="act_fill_cmd">
+
+                                                        <i class="exec-status icon" data-bind="css: statusClass"></i>
+                                                        <span data-bind="text: title"></span>
+                                                    </a>
+                                                </li>
+                                                <!-- /ko -->
+
+                                            </ul>
+                                        </span>
                                     <g:textField name="exec" size="50" placeholder="Enter a command"
                                                  value="${runCommand}"
                                                  id="runFormExec"
                                                  class="form-control"
+                                                 data-bind="value: commandString, valueUpdate: 'keyup', enable: allowInput"
                                                  autofocus="true"/>
                                     <g:hiddenField name="doNodedispatch"  value="true"/>
 
@@ -311,12 +125,12 @@
                                 <div class="collapse well well-sm inline form-inline" id="runconfig">
                                     <div class="row">
                                         <div class="col-sm-12">
-                                            <div class="form-group text-muted ">Node Dispatch Settings:</div>
+                                            <div class="form-group text-muted "><g:message code="node.dispatch.settings" /></div>
 
                                             <div class="form-group has_tooltip"
                                                  title="Maximum number of parallel threads to use"
                                                  data-placement="bottom">
-                                                Thread count
+                                                <g:message code="thread.count" />
                                             </div>
 
                                             <div class="form-group">
@@ -327,7 +141,7 @@
                                                        class="form-control  input-sm"/>
                                             </div>
 
-                                            <div class="form-group">On node failure:</div>
+                                            <div class="form-group"><g:message code="on.node.failure" /></div>
 
                                             <div class="radio">
                                                 <label class="has_tooltip"
@@ -335,7 +149,7 @@
                                                        data-placement="bottom">
                                                     <input type="radio" name="nodeKeepgoing"
                                                            value="true"
-                                                           checked/> <strong>Continue</strong>
+                                                           checked/> <strong><g:message code="continue" /></strong>
                                                 </label>
                                             </div>
 
@@ -344,7 +158,7 @@
                                                        title="Do not execute on any other nodes"
                                                        data-placement="bottom">
                                                     <input type="radio" name="nodeKeepgoing"
-                                                           value="false"/> <strong>Stop</strong>
+                                                           value="false"/> <strong><g:message code="stop" /></strong>
                                                 </label>
                                             </div>
 
@@ -361,6 +175,7 @@
                             </div>
 
                     </div>
+                    <div id="nodefilterViewArea">
                     <div class="${emptyQuery ? 'active' : ''}" id="nodeFilterInline">
                         <div class="spacing">
                         <div class="">
@@ -371,7 +186,7 @@
                         <g:set var="filtvalue" value="${query?.('filter')}"/>
 
                             <div class="form-group">
-                                <label class="col-sm-2 text-right form-control-static" for="schedJobNodeFilter">Nodes:</label>
+                                <label class="col-sm-2 text-right form-control-static" for="schedJobNodeFilter"><g:message code="nodes" /></label>
                                 <div class="col-sm-10">
                                 <span class=" input-group" >
                                     <g:render template="nodeFilterInputGroup"
@@ -395,9 +210,9 @@
                         <div class="col-sm-10 col-sm-offset-2">
                             <div class="spacing text-warning" id="emptyerror"
                                  style="display: none"
-                                 data-bind="visible: !error() && (!allcount() || allcount()==0)">
+                                 data-bind="visible: !loading() && !error() && (!allcount() || allcount()==0)">
                                 <span class="errormessage">
-                                    No nodes selected. Match nodes by selecting or entering a filter.
+                                    <g:message code="no.nodes.selected.match.nodes.by.selecting.or.entering.a.filter" />
                                 </span>
                             </div>
                             <div class="spacing text-danger" id="loaderror2"
@@ -415,9 +230,9 @@
                                 </span>
                                 <span data-bind="if: !loading() && !error()">
                                 <span data-bind="text: allcount()">0</span>
-                                <span data-bind="text: nodesTitle">Nodes</span> Matched.
+                                <span data-bind="text: nodesTitle"><g:message code="Node.plural" /></span> <g:message code="matched" />.
                                 <a class="textbtn textbtn-default pull-right" data-bind="click: nodesPageView">
-                                    View in Nodes Page &raquo;
+                                    <g:message code="view.in.nodes.page.prompt" />
                                 </a>
                                 </span>
                             </div>
@@ -425,13 +240,14 @@
                             </span>
                         </div>
                     </div>
+                    </div>
                 </div>
-                <div class="col-sm-2" >
+                <div class="col-sm-2" id="actionButtonArea" >
 
                     <button class="btn btn-success runbutton pull-right"
                             data-bind="attr: { disabled: allcount()<1 || error() } "
                             onclick="runFormSubmit('runbox');" data-loading-text="Running…">
-                        Run on <span data-bind="text: allcount">0</span> <span data-bind="text: nodesTitle">Nodes</span> <span class="glyphicon glyphicon-play"></span>
+                        <g:message code="run.on" /> <span data-bind="text: allcount">0</span> <span data-bind="text: nodesTitle"><g:message code="Node.plural" /></span> <span class="glyphicon glyphicon-play"></span>
                     </button>
                 </div>
                 </g:ifExecutionMode>
