@@ -246,11 +246,13 @@ function init() {
 
     //setup node filters knockout bindings
     var filterParams = loadJsonData('filterParamsJSON');
+    var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
     nodeFilter = new NodeFilters(
         appLinks.frameworkAdhoc,
         appLinks.scheduledExecutionCreate,
         appLinks.frameworkNodes,
         Object.extend(filterParams, {
+            nodeSummary:nodeSummary,
             elem: pageParams.ukey+'nodeForm',
             view: 'embed',
             maxShown: 20,
@@ -273,6 +275,7 @@ function init() {
             jQuery('a[data-node-filter-name=\'' + val + '\']').addClass('active');
         }
     });
+    nodeSummary.reload();
     nodeFilter.updateMatchedNodes();
     jQuery('.act_adhoc_history_dropdown').click(function () {
         adhocCommand.loadRecentCommands();
