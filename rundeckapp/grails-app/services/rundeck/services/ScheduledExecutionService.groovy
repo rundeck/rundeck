@@ -1250,8 +1250,13 @@ class ScheduledExecutionService implements ApplicationContextAware{
             return [success: false]
         }
 
-        rescheduleJob(scheduledExecution, oldSched, oldJobName, oldJobGroup)
-        return [success: true, scheduledExecution: scheduledExecution]
+        if (scheduledExecution.save(true)) {
+            rescheduleJob(scheduledExecution, oldSched, oldJobName, oldJobGroup)
+            return [success: true, scheduledExecution: scheduledExecution]
+        } else {
+            scheduledExecution.discard()
+            return [success: false, scheduledExecution: scheduledExecution]
+        }
     }
 
     def _doupdate ( params, user, String roleList, Framework framework, AuthContext authContext, changeinfo = [:] ){
