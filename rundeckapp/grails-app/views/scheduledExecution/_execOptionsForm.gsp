@@ -300,19 +300,21 @@
             <g:if test="${!hideCancel}">
                 <g:actionSubmit id="execFormCancelButton" value="Cancel" class="btn btn-default"/>
             </g:if>
-            <button type="submit"
-                    id="execFormRunButton"
-                    class=" btn btn-success">
-                <i class="glyphicon glyphicon-play"></i>
-                <g:message code="run.job.now" />
-            </button>
-            <label class="checkbox-inline">
-                <g:checkBox id="followoutputcheck"
-                            name="follow"
-                            checked="${defaultFollow || params.follow == 'true'}"
-                            value="true"/>
-                <g:message code="job.run.watch.output"/>
-            </label>
+            <g:if test="${scheduledExecution.hasExecutionEnabled()}">
+                <button type="submit"
+                        id="execFormRunButton"
+                        class=" btn btn-success">
+                    <i class="glyphicon glyphicon-play"></i>
+                    <g:message code="run.job.now" />
+                </button>
+                <label class="checkbox-inline">
+                    <g:checkBox id="followoutputcheck"
+                                name="follow"
+                                checked="${defaultFollow || params.follow == 'true'}"
+                                value="true"/>
+                    <g:message code="job.run.watch.output"/>
+                </label>
+            </g:if>
         </div>
     </div>
 </div>
