@@ -309,8 +309,8 @@ var RemoteOptionControl = Class.create({
         }
         var roc = this;
         //observe field value change and trigger reloads
-        this.observers[name] = new Form.Element.Observer(id, this.observeFreq, function (evt, value) {
-            roc.optionValueChanged(name, value);
+        this.observers[name] = Event.observe(id, 'change', function(evt) {
+            roc.optionValueChanged(name, this.value);
         });
     },
     onStartObserve:function(){
@@ -337,7 +337,8 @@ var RemoteOptionControl = Class.create({
     },
     stopObserving: function(name){
         if (this.observers[name]) {
-            this.observers[name].stop();
+            var id = this.ids[name];
+            Event.stopObserving(id,'change');
             this.observers[name]=null;
         }
     },
