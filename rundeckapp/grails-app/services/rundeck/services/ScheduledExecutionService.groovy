@@ -1617,7 +1617,21 @@ class ScheduledExecutionService implements ApplicationContextAware{
             }
         }
         if (!failed && scheduledExecution.save(true)) {
-            rescheduleJob(scheduledExecution, oldsched, renamed ? oldjobname : null, renamed ? oldjobgroup : null)
+            if (scheduledExecution.shouldScheduleExecution()) {
+                def nextdate = null
+                try {
+                    nextdate = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
+                } catch (SchedulerException e) {
+                    log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
+                }
+                def newsched = ScheduledExecution.get(scheduledExecution.id)
+                newsched.nextExecution = nextdate
+                if (!newsched.save()) {
+                    log.error("Unable to save second change to scheduledExec.")
+                }
+            } else if (oldsched && oldjobname && oldjobgroup) {
+                deleteJob(oldjobname, oldjobgroup)
+            }
             log.debug("update : save operation succeeded. redirecting to show...")
             return [success: true, scheduledExecution: scheduledExecution]
         } else {
@@ -2083,7 +2097,22 @@ class ScheduledExecutionService implements ApplicationContextAware{
         }
 
         if (!failed && scheduledExecution.save(true)) {
-            rescheduleJob(scheduledExecution, oldsched, renamed ? oldjobname : null, renamed ? oldjobgroup : null)
+            if (scheduledExecution.shouldScheduleExecution()) {
+                def nextdate = null
+                try {
+                    nextdate = scheduleJob(scheduledExecution, oldjobname, oldjobgroup);
+                } catch (SchedulerException e) {
+                    log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
+                }
+                def newsched = ScheduledExecution.get(scheduledExecution.id)
+                newsched.nextExecution = nextdate
+                if (!newsched.save()) {
+                    log.error("Unable to save second change to scheduledExec.")
+                }
+            } else if (oldsched && oldjobname && oldjobgroup) {
+                deleteJob(oldjobname, oldjobgroup)
+            }
+
             return [true, scheduledExecution]
         } else {
             todiscard.each {
