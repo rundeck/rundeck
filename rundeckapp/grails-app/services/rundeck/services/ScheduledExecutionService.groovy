@@ -50,6 +50,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
     ApplicationContext applicationContext
 
     def MessageSource messageSource
+    def grailsEvents
 
     /**
      * private getter for executionService that is not auto-injected
@@ -492,7 +493,8 @@ class ScheduledExecutionService implements ApplicationContextAware{
             }
         }
         if(success){
-            event(
+            grailsEvents?.event(
+                    null,
                     'jobChanged',
                     new StoredJobChangeEvent(
                             eventType: JobChangeEvent.JobChangeEventType.DELETE,
@@ -1605,7 +1607,8 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 eventType=JobChangeEvent.JobChangeEventType.MODIFY_RENAME
             }
             def vers = scheduledExecution.version.toString()
-            event(
+            grailsEvents?.event(
+                    null,
                     'jobChanged',
                     new StoredJobChangeEvent(
                             eventType: eventType,
@@ -2109,7 +2112,8 @@ class ScheduledExecutionService implements ApplicationContextAware{
             if(origJobName!=scheduledExecution.jobName || origGroupPath!=scheduledExecution.groupPath){
                 eventType=JobChangeEvent.JobChangeEventType.MODIFY_RENAME
             }
-            event(
+            grailsEvents?.event(
+                    null,
                     'jobChanged',
                     new StoredJobChangeEvent(
                             eventType: eventType,
@@ -2200,7 +2204,8 @@ class ScheduledExecutionService implements ApplicationContextAware{
                     log.error("Unable to save second change to scheduledExec.")
                 }
             }
-            event(
+            grailsEvents?.event(
+                    null,
                     'jobChanged',
                     new StoredJobChangeEvent(
                             eventType: JobChangeEvent.JobChangeEventType.CREATE,
