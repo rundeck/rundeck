@@ -103,11 +103,7 @@ class ScmController {
         }
         def job=ScheduledExecution.getByIdOrUUID(jobId)
         def diffResult=scmService.diff(project,job)
-        System.err.println("type: ${diffResult?.contentType}")
-        System.err.println("content: ${diffResult?.content}")
         if(diffResult){
-            System.err.println("type: ${diffResult.contentType}")
-            System.err.println("content: ${diffResult.content}")
             render(contentType: diffResult.contentType?:'text/plain', text: diffResult.content)
         }
     }
