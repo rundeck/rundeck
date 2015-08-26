@@ -1,20 +1,13 @@
 package rundeck.services
 
-import com.dtolabs.rundeck.core.jobs.JobReference
+import com.dtolabs.rundeck.core.jobs.JobRevReference
 
 /**
- * Created by greg on 2/3/15.
+ * Created by greg on 8/21/15.
  */
-class JobReferenceImpl implements JobReference {
-    String id
-    String project
-    String jobName
-    String groupPath
+class JobRevReferenceImpl extends JobReferenceImpl implements JobRevReference {
+    Long version
 
-    @Override
-    String getJobAndGroup() {
-        null != groupPath ? groupPath + '/' + jobName : jobName
-    }
 
     @Override
     public String toString() {
@@ -23,6 +16,7 @@ class JobReferenceImpl implements JobReference {
                 ", project='" + project + '\'' +
                 ", jobName='" + jobName + '\'' +
                 ", groupPath='" + groupPath + '\'' +
+                ", version='" + version + '\'' +
                 '}';
     }
 }

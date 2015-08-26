@@ -32,6 +32,7 @@ class BootStrap {
     Scheduler quartzScheduler
     MetricRegistry metricRegistry
     def messageSource
+    def scmService
 
      def init = { ServletContext servletContext ->
          def appname=messageSource.getMessage('main.app.name',null,'',null) ?: messageSource.getMessage('main.app.default.name',null,'',null) ?: 'Rundeck'
@@ -189,6 +190,7 @@ class BootStrap {
 
          //initialize manually to avoid circular reference problem with spring
          workflowService.initialize()
+         scmService.initialize()
 
 
          if(grailsApplication.config.loglevel.default){

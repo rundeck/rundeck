@@ -3,6 +3,8 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService
+import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.plugins.quartz.listeners.SessionBinderJobListener
 import org.apache.log4j.Logger
@@ -445,10 +447,13 @@ class ScheduledExecutionService implements ApplicationContextAware{
     def deleteScheduledExecution(ScheduledExecution scheduledExecution, boolean deleteExecutions=false,
                                  AuthContext authContext=null, String username){
         scheduledExecution = ScheduledExecution.get(scheduledExecution.id)
+        def jobuuid = scheduledExecution.extid
         def jobname = scheduledExecution.generateJobScheduledName()
         def groupname = scheduledExecution.generateJobGroupName()
+        def project = scheduledExecution.project
         def errmsg=null
         def success = false
+        def version=scheduledExecution.version
         Execution.withTransaction {
             //find any currently running executions for this job, and if so, throw exception
             def found = Execution.createCriteria().get {
@@ -485,6 +490,28 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 scheduledExecution.discard()
                 errmsg = 'Cannot delete Job "' + scheduledExecution.jobName + '" [' + scheduledExecution.extid + ']: it may have been modified or executed by another user'
             }
+        }
+        if(success){
+            event(
+                    'jobChanged',
+                    new StoredJobChangeEvent(
+                            eventType: JobChangeEvent.JobChangeEventType.DELETE,
+                            originalJobReference: new JobReferenceImpl(
+                                    id: jobuuid,
+                                    jobName: jobname,
+                                    groupPath: groupname,
+                                    project: project
+                            ),
+                            jobReference: new JobRevReferenceImpl(
+                                    id: jobuuid,
+                                    jobName: jobname,
+                                    groupPath: groupname,
+                                    project: project,
+                                    version: version
+                            )
+
+                    )
+            )
         }
         return [success:success,error:errmsg]
     }
@@ -1239,6 +1266,8 @@ class ScheduledExecutionService implements ApplicationContextAware{
         }
         def origJobName=scheduledExecution.jobName
         def origGroupPath=scheduledExecution.groupPath
+        def origId=scheduledExecution.extid
+        def origProject=scheduledExecution.project
 
         scheduledExecution.properties = nonopts
 
@@ -1571,7 +1600,31 @@ class ScheduledExecutionService implements ApplicationContextAware{
             } else if (oldsched && oldjobname && oldjobgroup) {
                 deleteJob(oldjobname, oldjobgroup)
             }
-            log.debug("update : save operation succeeded. redirecting to show...")
+            def eventType=JobChangeEvent.JobChangeEventType.MODIFY
+            if(origJobName!=scheduledExecution.jobName || origGroupPath!=scheduledExecution.groupPath){
+                eventType=JobChangeEvent.JobChangeEventType.MODIFY_RENAME
+            }
+            def vers = scheduledExecution.version.toString()
+            event(
+                    'jobChanged',
+                    new StoredJobChangeEvent(
+                            eventType: eventType,
+                            originalJobReference: new JobReferenceImpl(
+                                    id: origId,
+                                    jobName: origJobName,
+                                    groupPath: origGroupPath,
+                                    project: origProject
+                            ),
+                            jobReference: new JobRevReferenceImpl(
+                                    id: scheduledExecution.extid,
+                                    jobName: scheduledExecution.jobName,
+                                    groupPath: scheduledExecution.groupPath,
+                                    project: scheduledExecution.project,
+                                    version: scheduledExecution.version
+                            )
+
+                    )
+            )
             return [success: true, scheduledExecution: scheduledExecution]
         } else {
             todiscard.each {
@@ -1842,6 +1895,8 @@ class ScheduledExecutionService implements ApplicationContextAware{
         scheduledExecution.clearFilterFields()
         def origGroupPath=scheduledExecution.groupPath
         def origJobName=scheduledExecution.jobName
+        def origId=scheduledExecution.extid
+        def origProject=scheduledExecution.project
 
         scheduledExecution.properties = newprops
 
@@ -2049,6 +2104,31 @@ class ScheduledExecutionService implements ApplicationContextAware{
             } else if (oldsched && oldjobname && oldjobgroup) {
                 deleteJob(oldjobname, oldjobgroup)
             }
+
+            def eventType=JobChangeEvent.JobChangeEventType.MODIFY
+            if(origJobName!=scheduledExecution.jobName || origGroupPath!=scheduledExecution.groupPath){
+                eventType=JobChangeEvent.JobChangeEventType.MODIFY_RENAME
+            }
+            event(
+                    'jobChanged',
+                    new StoredJobChangeEvent(
+                            eventType: eventType,
+                            originalJobReference: new JobReferenceImpl(
+                                    id: origId,
+                                    jobName: origJobName,
+                                    groupPath: origGroupPath,
+                                    project: origProject
+                            ),
+                            jobReference: new JobRevReferenceImpl(
+                                    id: scheduledExecution.extid,
+                                    jobName: scheduledExecution.jobName,
+                                    groupPath: scheduledExecution.groupPath,
+                                    project: scheduledExecution.project,
+                                    version:scheduledExecution.version
+                            )
+
+                    )
+            )
             return [true, scheduledExecution]
         } else {
             todiscard.each {
@@ -2120,6 +2200,26 @@ class ScheduledExecutionService implements ApplicationContextAware{
                     log.error("Unable to save second change to scheduledExec.")
                 }
             }
+            event(
+                    'jobChanged',
+                    new StoredJobChangeEvent(
+                            eventType: JobChangeEvent.JobChangeEventType.CREATE,
+                            originalJobReference: new JobReferenceImpl(
+                                    id: scheduledExecution.extid,
+                                    jobName: scheduledExecution.jobName,
+                                    groupPath: scheduledExecution.groupPath,
+                                    project: scheduledExecution.project
+                            ),
+                            jobReference: new JobRevReferenceImpl(
+                                    id: scheduledExecution.extid,
+                                    jobName: scheduledExecution.jobName,
+                                    groupPath: scheduledExecution.groupPath,
+                                    project: scheduledExecution.project,
+                                    version:scheduledExecution.version
+                            )
+
+                    )
+            )
             return [success: true, scheduledExecution: scheduledExecution]
 
         } else {

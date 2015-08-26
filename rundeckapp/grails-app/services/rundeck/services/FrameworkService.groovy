@@ -138,6 +138,9 @@ class FrameworkService implements ApplicationContextAware {
 /**
      * Return a list of FrameworkProject objects
      */
+    def projectNames () {
+        rundeckFramework.frameworkProjectMgr.listFrameworkProjects()*.name
+    }
     def projects (AuthContext authContext) {
         //authorize the list of projects
         def projMap=[:]

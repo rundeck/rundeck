@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
+import com.dtolabs.rundeck.core.scm.ScmExportService;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import org.apache.log4j.Logger;
@@ -174,6 +175,11 @@ public class FrameworkBase implements IFramework{
     @Override
     public ResourceModelSourceService getResourceModelSourceService() {
         return frameworkServices.getResourceModelSourceService();
+    }
+
+    @Override
+    public ScmExportService getScmExportService() {
+        return frameworkServices.getScmExportService();
     }
 
     @Override

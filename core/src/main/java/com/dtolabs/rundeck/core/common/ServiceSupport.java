@@ -17,6 +17,7 @@ import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
+import com.dtolabs.rundeck.core.scm.ScmExportService;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 
 import java.util.HashMap;
@@ -136,6 +137,12 @@ public class ServiceSupport implements IFrameworkServices {
     public ResourceModelSourceService getResourceModelSourceService() {
         return ResourceModelSourceService.getInstanceForFramework(getFramework());
     }
+
+    @Override
+    public ScmExportService getScmExportService() {
+        return ScmExportService.getInstanceForFramework(getFramework());
+    }
+
     @Override
     public ResourceFormatParserService getResourceFormatParserService() {
         return ResourceFormatParserService.getInstanceForFramework(getFramework());

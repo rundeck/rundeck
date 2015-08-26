@@ -36,6 +36,7 @@ import rundeck.services.LoggingService
 import rundeck.services.NotificationService
 import rundeck.services.PluginService
 import rundeck.services.ScheduledExecutionService
+import rundeck.services.ScmService
 import rundeck.services.UserService
 
 import javax.servlet.http.HttpServletResponse
@@ -53,6 +54,7 @@ class MenuController extends ControllerBase{
     StorageConverterPluginProviderService storageConverterPluginProviderService
     PluginService pluginService
     def configurationService
+    ScmService scmService
     def quartzScheduler
     def ApiService apiService
     def AuthorizationService authorizationService
@@ -262,6 +264,8 @@ class MenuController extends ControllerBase{
             authContext = frameworkService.getAuthContextForSubject(session.subject)
         }
         def results=listWorkflows(query,authContext,session.user)
+        //fill scm status
+        results.scmStatus=scmService.statusForJobs(results.nextScheduled)
         if(usedFilter){
             results.filterName=usedFilter
             results.paginateParams['filterName']=usedFilter
