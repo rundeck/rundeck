@@ -426,8 +426,8 @@ class GitExportPlugin implements ScmExportPlugin {
 
 
     def printDiff(OutputStream out, File file1, byte[] data){
-        RawText rt1 = new RawText(file1);
-        RawText rt2 = new RawText(data);
+        RawText rt1 = new RawText(data);
+        RawText rt2 = new RawText(file1);
         EditList diffList = new EditList();
         DiffAlgorithm differ = DiffAlgorithm.getAlgorithm(DiffAlgorithm.SupportedAlgorithm.HISTOGRAM)
 
