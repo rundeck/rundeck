@@ -108,9 +108,6 @@ grails.project.dependency.resolution = {
         compile "javax.validation:validation-api:1.1.0.Final"
         runtime "org.hibernate:hibernate-validator:5.0.3.Final"
         //END fix for https://jira.grails.org/browse/GPHIB-30
-
-        compile 'org.eclipse.jgit:org.eclipse.jgit:3.7.1.201504261725-r'
-
     }
 }
 grails.war.resources = { stagingDir, args ->
