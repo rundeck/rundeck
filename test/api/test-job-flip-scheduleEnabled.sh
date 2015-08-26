@@ -6,9 +6,14 @@ DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
 args="echo hello there"
 
-projectName="project-$(date -j -f "%a %b %d %T %Z %Y" "`date`" "+%s")"
-jobName="job-$(date -j -f "%a %b %d %T %Z %Y" "`date`" "+%s")"
+projectName=""
+jobName=""
 jobId=""
+
+generate_projectName_and_jobName(){
+    projectName="project-$(date -j -f "%a %b %d %T %Z %Y" "`date`" "+%s")"
+    jobName="job-$(date -j -f "%a %b %d %T %Z %Y" "`date`" "+%s")"
+}
 
 create_proj_and_job(){
     projname=$1
@@ -173,20 +178,40 @@ assert_job_execution_count(){
     assert $expectedcount $(xmlsel "/result/executions/@count" $DIR/curl.out) "Wrong number of executions"
 }
 
+####
+# Test: when schedule is on, job does execute
+####
+echo "TEST: when schedule is on, job does execute"
+generate_projectName_and_jobName
 create_proj_and_job $projectName $jobName
 assert_job_execution_count $jobId "0"
+sleep 10
+assert_job_execution_count $jobId "1"
+delete_proj $projectName
 
-# execute_job $jobId
-# assert_job_execution_count $jobId "1"
-#
-# disable_schedule $jobId
-# execute_job $jobId
-# assert_job_execution_count $jobId "1"
-#
-# enable_schedule $jobId
-# execute_job $jobId
-# assert_job_execution_count $jobId "2"
+####
+# Test: when schedule is off, job doesn't execute
+####
+echo "TEST: when schedule is off, job doesn't execute"
+generate_projectName_and_jobName
+create_proj_and_job $projectName $jobName
+assert_job_execution_count $jobId "0"
+disable_schedule $jobId
+sleep 10
+assert_job_execution_count $jobId "0"
+delete_proj $projectName
 
-# delete_proj $projectName
+####
+# Test: when schedule is turned off and on again, job does execute
+####
+echo "TEST: when schedule is off, job doesn't execute"
+generate_projectName_and_jobName
+create_proj_and_job $projectName $jobName
+assert_job_execution_count $jobId "0"
+disable_schedule $jobId
+enable_schedule $jobId
+sleep 10
+assert_job_execution_count $jobId "1"
+delete_proj $projectName
 
 exit 0
