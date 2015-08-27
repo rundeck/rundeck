@@ -5,7 +5,6 @@ import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -265,7 +264,7 @@ class MenuController extends ControllerBase{
         }
         def results=listWorkflows(query,authContext,session.user)
         //fill scm status
-        results.scmStatus=scmService.statusForJobs(results.nextScheduled)
+        results.scmStatus=scmService.exportStatusForJobs(results.nextScheduled)
         if(usedFilter){
             results.filterName=usedFilter
             results.paginateParams['filterName']=usedFilter

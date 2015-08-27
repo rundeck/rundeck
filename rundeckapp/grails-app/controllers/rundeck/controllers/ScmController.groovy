@@ -1,18 +1,16 @@
 package rundeck.controllers
 
-import com.dtolabs.rundeck.plugins.scm.ScmPlugin
 import rundeck.ScheduledExecution
 
 class ScmController {
     def scmService
     def index(String project) {
         if(scmService.isAlreadySetup(project)) {
-            def type = scmService.hasConfig(project)
-            def plugin = scmService.loadConfig(type, project)
-            def describedPlugin=scmService.getPluginDescriptor(type)
-            return [plugin:describedPlugin,config:plugin,type:type]
+            def pluginConfig = scmService.loadScmConfig(project,'export')
+            def describedPlugin = scmService.getPluginDescriptor(pluginConfig.type)
+            return [plugin:describedPlugin,config:pluginConfig.config,type:pluginConfig.type]
         }
-        def plugins=scmService.listPlugins(project)
+        def plugins=scmService.listPlugins('export')
 
         [plugins: plugins]
     }
@@ -22,12 +20,13 @@ class ScmController {
         }
         [properties:scmService.getSetupProperties(project,type),type:type]
     }
-    def saveSetup(String project, String type){
-        def config=params.config
-        //require type param
-        scmService.initPlugin(project,type,config)
 
-        flash.message="setup complete"
+    def saveSetup(String integration, String project, String type) {
+        def config = params.config
+        //require type param
+        scmService.savePlugin(integration, project, type, config)
+
+        flash.message = "setup complete"
         redirect(action: 'index', params: [project: project])
 
     }
@@ -47,7 +46,7 @@ class ScmController {
         List<ScheduledExecution> jobs = jobIds.collect{
             ScheduledExecution.getByIdOrUUID(it)
         }
-        def scmStatus=scmService.statusForJobs(jobs)
+        def scmStatus=scmService.exportStatusForJobs(jobs)
         def scmFiles=scmService.filePathsMapForJobRefs(scmService.jobRefsForJobs(jobs))
         [
                 properties:scmService.getCommitProperties(project,jobIds),
@@ -70,7 +69,7 @@ class ScmController {
         List<ScheduledExecution> jobs = jobIds.collect{
             ScheduledExecution.getByIdOrUUID(it)
         }
-        def commitid=scmService.commit(project,params.commit,jobs)
+        def commitid=scmService.exportCommit(project,params.commit,jobs)
         flash.message="Committed: ${commitid}"
         redirect(action: 'jobs',controller: 'menu',params: [project:params.project])
     }
@@ -87,7 +86,7 @@ class ScmController {
             return redirect(action:'index',params:[project:project])
         }
         def job=ScheduledExecution.getByIdOrUUID(jobId)
-        def diff=scmService.diff(project,job)
+        def diff=scmService.exportDiff(project,job)
         render(contentType: 'application/json'){
             contentType=diff.contentType
             content=diff.content
@@ -102,7 +101,7 @@ class ScmController {
             return redirect(action:'index',params:[project:project])
         }
         def job=ScheduledExecution.getByIdOrUUID(jobId)
-        def diffResult=scmService.diff(project,job)
+        def diffResult=scmService.exportDiff(project,job)
         if(diffResult){
             render(contentType: diffResult.contentType?:'text/plain', text: diffResult.content)
         }
