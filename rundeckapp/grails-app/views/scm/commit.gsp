@@ -104,8 +104,8 @@
                                         template="/framework/pluginConfigPropertyFormField"
                                         model="${[prop:prop,
                                                   prefix:'test',
-                                                  error:nodeexecreport?.errors && isSelected ?nodeexecreport?.errors[prop.name]:null,
-                                                  values: null,
+                                                  error:report?.errors ? report.errors[prop.name]:null,
+                                                  values: config,
                                                   fieldname:'commit.'+prop.name,
                                                   origfieldname:'orig.'+prop.name
                                         ]}"/>

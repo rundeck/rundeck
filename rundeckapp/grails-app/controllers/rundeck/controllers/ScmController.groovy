@@ -73,8 +73,7 @@ class ScmController extends ControllerBase {
         def report
         if (!result.valid) {
             report = result.report
-            request.error = report.errors ? "Configuration was invalid: " + report.errors :
-                    "Configuration was invalid"
+            request.error = message(code:"some.input.values.were.not.valid")
             log.error("configuration error: " + report)
 
             def describedPlugin = scmService.getExportPluginDescriptor(type)
@@ -198,7 +197,7 @@ class ScmController extends ControllerBase {
         ]
     }
 
-    def saveCommit(String project, String type) {
+    def saveCommit(String project) {
 
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
         if (unauthorizedResponse(
@@ -246,20 +245,18 @@ class ScmController extends ControllerBase {
         def result = scmService.exportCommit(project, params.commit, jobs)
         if (!result.valid) {
             def report = result.report
-            request.error = report.errors ? "Configuration was invalid: " + report.errors :
-                    "Configuration was invalid"
-            log.error("configuration error: " + report)
+            request.error = message(code:"some.input.values.were.not.valid")
+            log.debug("configuration error: " + report)
 
             def scmStatus = scmService.exportStatusForJobs(jobs)
             def scmFiles = scmService.filePathsMapForJobRefs(scmService.jobRefsForJobs(jobs))
-            render view: 'setup',
+            render view: 'commit',
                    model: [
                            properties: scmService.getExportCommitProperties(project, jobIds),
                            jobs      : jobs,
                            scmStatus : scmStatus,
                            selected  : params.jobIds ? jobIds : [],
                            filesMap  : scmFiles,
-                           type      : type,
                            report    : report,
                            config    : params.commit
                    ]
@@ -267,7 +264,8 @@ class ScmController extends ControllerBase {
         }
 
         def commitid = result.commitId
-        flash.message = "Committed: ${commitid}"
+        def code=jobs.size()>1?"scmController.action.commit.multi.succeed.message":"scmController.action.commit.succeed.message"
+        flash.message = message(code: code, args: [commitid,jobs.size(),'{{Job '+jobIds[0]+'}}'])
         redirect(action: 'jobs', controller: 'menu', params: [project: params.project])
     }
 
