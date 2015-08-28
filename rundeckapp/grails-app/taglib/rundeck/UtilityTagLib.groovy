@@ -1452,4 +1452,13 @@ ansi-bg-default'''))
 
         }
     }
+    /**
+     * @emptyTag
+     * @attr name REQUIRED glyphicon name
+     */
+    def icon={attrs,body->
+        if(glyphiconSet.contains(attrs.name)) {
+            out << "<i class=\"glyphicon glyphicon-${attrs.name}\"></i>"
+        }
+    }
 }
