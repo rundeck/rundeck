@@ -7,8 +7,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmDiffResult
  */
 class GitDiffResult implements ScmDiffResult {
     boolean modified;
-    boolean sourceNotFound;
-    boolean targetNotFound
-    String contentType
+    boolean oldNotFound;
+    boolean newNotFound
     String content
 }

@@ -1,7 +1,7 @@
 package com.dtolabs.rundeck.plugins.scm;
 
 /**
- * Created by greg on 8/25/15.
+ * Result of a Diff between old job data and new
  */
 public interface ScmDiffResult {
     /**
@@ -10,19 +10,14 @@ public interface ScmDiffResult {
     boolean getModified();
 
     /**
-     * @return true if the source was not found
+     * @return true if the old file was not found (does not exist)
      */
-    boolean getSourceNotFound();
+    boolean getOldNotFound();
 
     /**
-     * @return true if the target was not found
+     * @return true if the new file was not found (deleted)
      */
-    boolean getTargetNotFound();
-
-    /**
-     * @return content type
-     */
-    String getContentType();
+    boolean getNewNotFound();
 
     /**
      * @return diff contents

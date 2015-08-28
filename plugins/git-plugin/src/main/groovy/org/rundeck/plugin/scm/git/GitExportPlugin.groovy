@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.plugins.scm.*
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
+import org.apache.log4j.Logger
 import org.eclipse.jgit.api.*
 import org.eclipse.jgit.diff.DiffAlgorithm
 import org.eclipse.jgit.diff.DiffFormatter
@@ -22,9 +23,10 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.treewalk.TreeWalk
 
 /**
- * Created by greg on 8/21/15.
+ * Git export plugin
  */
 class GitExportPlugin implements ScmExportPlugin {
+    static final Logger log = Logger.getLogger(GitExportPlugin)
     public static final String SERIALIZE_FORMAT = 'xml'
     String format = SERIALIZE_FORMAT
     boolean inited = false
@@ -56,9 +58,8 @@ class GitExportPlugin implements ScmExportPlugin {
     void setup(final Map<String, ?> input) throws ScmPluginException {
 
         //TODO: using ssh http://stackoverflow.com/questions/23692747/specifying-ssh-key-for-jgit
-        System.err.println("setup: " + input + ", capabilities")
         if (inited) {
-            System.err.println("already inited, not doing setup")
+            log.debug("already inited, not doing setup")
             return
         }
 
@@ -70,6 +71,18 @@ class GitExportPlugin implements ScmExportPlugin {
         if (!input.dir) {
             throw new IllegalStateException("dir cannot be null")
         }
+        //verify input
+        if (!input.branch) {
+            throw new IllegalStateException("branch cannot be null")
+        }
+        //verify input
+        if (!input.committerName) {
+            throw new IllegalStateException("committerName cannot be null")
+        }
+        //verify input
+        if (!input.committerEmail) {
+            throw new IllegalStateException("committerEmail cannot be null")
+        }
         format = input.format ?: 'xml'
 
         File base = new File(input.get("dir").toString())
@@ -78,14 +91,14 @@ class GitExportPlugin implements ScmExportPlugin {
         branch = input.get("branch").toString()
         commitIdent = new PersonIdent(input.committerName.toString(), input.committerEmail.toString())
         if (base.isDirectory() && new File(base, ".git").isDirectory()) {
-            System.err.println("base dir exists, not cloning")
+            log.debug("base dir exists, not cloning")
             repo = new FileRepositoryBuilder().setGitDir(new File(base, ".git")).setWorkTree(base).build()
             git = new Git(repo)
             workingDir = base
             inited = true
             return
         }
-        System.err.println("cloning...")
+        log.debug("cloning...")
         String url = input.get("url").toString()
         git = Git.cloneRepository().setBranch(branch).setRemote("origin").setDirectory(base).setURI(url).call()
         repo = git.getRepository()
@@ -102,22 +115,30 @@ class GitExportPlugin implements ScmExportPlugin {
     @Override
     List<Property> getExportProperties(final Set<JobRevReference> jobs) {
         [
-                PropertyBuilder.builder().string("commitMessage").
-                        title("Commit Message").
-                        description("Enter a commit message. Committing to branch: `" + branch + '`').
-                        required(true).
-                        renderingAsTextarea().
-                        build(),
-                PropertyBuilder.builder().string("tagName").
-                        title("Tag").
-                        description("Enter a tag name to include, will be pushed with the branch.").
-                        required(false).
-                        build(),
-                PropertyBuilder.builder().booleanType("push").
-                        title("Push Remotely?").
-                        description("Check to push to the remote").
-                        required(false).
-                        build(),
+                PropertyBuilder.builder().with {
+                    string "commitMessage"
+                    title "Commit Message"
+                    description "Enter a commit message. Committing to branch: `" + branch + '`'
+                    required true
+                    renderingAsTextarea()
+                    build()
+                },
+
+                PropertyBuilder.builder().with {
+                    string "tagName"
+                    title "Tag"
+                    description "Enter a tag name to include, will be pushed with the branch."
+                    required false
+                    build()
+                },
+
+                PropertyBuilder.builder().with {
+                    booleanType "push"
+                    title "Push Remotely?"
+                    description "Check to push to the remote"
+                    required false
+                    build()
+                },
         ]
     }
 
@@ -163,23 +184,11 @@ class GitExportPlugin implements ScmExportPlugin {
         jobExportReferences.each(this.&serialize)
     }
 
-    JobState getStoredJobStatus(final JobRevReference job) {
-        Map state = storedPluginState.state[job.id]
-        if (state && state[job.version]) {
-            Map revState = state[job.version]
-            return new JobGitState(
-                    synchState: SynchState.valueOf((String) revState.synchState),
-                    stateMeta: revState.meta ?: [:]
-            )
-        }
-        return null
-    }
-
     @Override
     JobState jobChanged(JobChangeEvent event, JobExportReference exportReference) {
         File origfile = mapper.fileForJob(event.originalJobReference)
         File outfile = mapper.fileForJob(event.jobReference)
-        System.err.println("Job event (${event}), writing to path: ${outfile}")
+        log.debug("Job event (${event}), writing to path: ${outfile}")
         switch (event.eventType) {
             case JobChangeEvent.JobChangeEventType.DELETE:
                 origfile.delete()
@@ -193,7 +202,7 @@ class GitExportPlugin implements ScmExportPlugin {
                 }
                 if (!outfile.getParentFile().exists()) {
                     if (!outfile.getParentFile().mkdirs()) {
-                        System.err.println("Failed to create parent dirs for ${outfile}")
+                        log.debug("Failed to create parent dirs for ${outfile}")
                     }
                 }
                 outfile.withOutputStream { out ->
@@ -211,10 +220,10 @@ class GitExportPlugin implements ScmExportPlugin {
         def ident = job.id + ':' + String.valueOf(job.version) + ':' + (commit ? commit.name : '')
 
         if (jobStateMap[job.id] && jobStateMap[job.id].ident == ident) {
-            System.err.println("hasJobStatusCached(${job.id}): FOUND")
+            log.debug("hasJobStatusCached(${job.id}): FOUND")
             return jobStateMap[job.id]
         }
-        System.err.println("hasJobStatusCached(${job.id}): (no)")
+        log.debug("hasJobStatusCached(${job.id}): (no)")
 
         null
     }
@@ -233,7 +242,7 @@ class GitExportPlugin implements ScmExportPlugin {
         serialize(job)
 
         Status status = git.status().addPath(path).call()
-        SynchState synchState = synchStateForStatus(status,commit, path)
+        SynchState synchState = synchStateForStatus(status, commit, path)
         def scmState = scmStateForStatus(status, commit, path)
 
         jobstat['ident'] = ident
@@ -241,11 +250,12 @@ class GitExportPlugin implements ScmExportPlugin {
         jobstat['version'] = job.version
         jobstat['synch'] = synchState
         jobstat['scm'] = scmState
+        jobstat['path'] = path
         if (commit) {
             jobstat['commitId'] = commit.name
             jobstat['commitMeta'] = metaForCommit(commit)
         }
-        System.err.println("refreshJobStatus(${job.id}): ${jobstat}")
+        log.debug("refreshJobStatus(${job.id}): ${jobstat}")
 
         jobStateMap[job.id] = jobstat
 
@@ -255,19 +265,19 @@ class GitExportPlugin implements ScmExportPlugin {
     private SynchState synchStateForStatus(Status status, RevCommit commit, String path) {
         if (status.untracked.contains(path)) {
             SynchState.CREATE_NEEDED
-        }else if (status.uncommittedChanges.contains(path)) {
+        } else if (status.uncommittedChanges.contains(path)) {
             SynchState.EXPORT_NEEDED
-        } else if(commit) {
+        } else if (commit) {
             SynchState.CLEAN
-        }else {
+        } else {
             SynchState.CREATE_NEEDED
         }
     }
 
     def scmStateForStatus(Status status, RevCommit commit, String path) {
-        if(!commit){
+        if (!commit) {
             'NEW'
-        }else if (path in status.added || path in status.untracked) {
+        } else if (path in status.added || path in status.untracked) {
             'NEW'
         } else if (path in status.changed || path in status.modified) {
             //changed== changes in index
@@ -285,7 +295,7 @@ class GitExportPlugin implements ScmExportPlugin {
 
     @Override
     JobState getJobStatus(final JobExportReference job) {
-        System.err.println("getJobStatus(${job.id})")
+        log.debug("getJobStatus(${job.id})")
         if (!inited) {
             return null
         }
@@ -298,60 +308,10 @@ class GitExportPlugin implements ScmExportPlugin {
 
     JobState createJobStatus(final Map map) {
         //TODO: include scm status
-        return new JobGitState(synchState: map['synch'], stateMeta: map.commitMeta ?: [:])
-    }
-
-    JobState getJobStatusx(final JobExportReference job) {
-        if (!inited) {
-            return null
-        }
-
-        def file = getLocalFileForJob(job)
-        def path = relativePath(job)
-        Status status = git.status().addPath(path).call()
-        System.err.println("status for ${file}, workingdir ${workingDir}: " + [
-                conflicting          : status.conflicting,
-                added                : status.added,
-                changed              : status.changed,
-                clean                : status.clean,
-                conflictingStageState: status.conflictingStageState,
-                ignoredNotInIndex    : status.ignoredNotInIndex,
-                missing              : status.missing,
-                modified             : status.modified,
-                removed              : status.removed,
-                uncommittedChanges   : status.uncommittedChanges,
-                untracked            : status.untracked,
-                untrackedFolders     : status.untrackedFolders,
-        ]
+        return new JobGitState(
+                synchState: map['synch'],
+                commit: map.commitMeta ? new GitScmCommit(map.commitMeta) : null
         )
-        if (path in status.added || path in status.untracked) {
-            return new JobGitState(synchState: SynchState.EXPORT_NEEDED, stateMeta: [:])
-        } else if (path in status.changed || path in status.modified) {
-            //changed== changes in index
-            //modified == changes on disk
-            return new JobGitState(synchState: SynchState.EXPORT_NEEDED, stateMeta: [:])
-//            return ScmPlugin.ScmFileStatus.MODIFIED
-        } else if (path in status.removed || path in status.missing) {
-            return new JobGitState(synchState: SynchState.EXPORT_NEEDED, stateMeta: [:])
-//            return ScmPlugin.ScmFileStatus.DELETED
-        } else if (path in status.untracked) {
-            return null
-//            return new JobGitState(synchState: SynchState.EXPORT_NEEDED, stateMeta: [:])
-//            return ScmPlugin.ScmFileStatus.NOT_PRESENT
-        } else if (path in status.conflicting) {
-            return new JobGitState(synchState: SynchState.EXPORT_NEEDED, stateMeta: [:])
-//            return ScmPlugin.ScmFileStatus.CONFLICT
-        }
-        if (status.clean) {
-            //no changes in working dir
-            def commit = lastCommitForPath(path)
-            if (commit) {
-                return new JobGitState(synchState: SynchState.CLEAN, stateMeta: metaForCommit(commit))
-            }
-        }
-
-
-        null
     }
 
     private Map<String, Serializable> metaForCommit(RevCommit commit) {
@@ -398,55 +358,64 @@ class GitExportPlugin implements ScmExportPlugin {
     }
 
     ScmDiffResult getFileDiff(final JobExportReference job) throws ScmPluginException {
-        def file=getLocalFileForJob(job)
-        def path=relativePath(job)
+        def file = getLocalFileForJob(job)
+        def path = relativePath(job)
         serialize(job)
 
-        def id=lookupId(getHead(),path)
-        if(!id) {
-            return new GitDiffResult(sourceNotFound: true)
+        def id = lookupId(getHead(), path)
+        if (!id) {
+            return new GitDiffResult(oldNotFound: true)
         }
-        def bytes=getBytes(id)
+        def bytes = getBytes(id)
         def baos = new ByteArrayOutputStream()
         def diffs = printDiff(baos, file, bytes)
 
 
-        return new GitDiffResult(contentType: 'text/plain', content: baos.toString(), modified: diffs>0)
+        return new GitDiffResult(content: baos.toString(), modified: diffs > 0)
     }
 
-//get blob for HEAD rev of the path
-    def getHead(){
+    /**
+     * get blob for HEAD rev of the path
+     * @return
+     */
+    def getHead() {
 
         final RevWalk walk = new RevWalk(repo);
         walk.setRetainBody(true);
 
-        final RevCommit headCommit =  walk.parseCommit(repo.resolve(Constants.HEAD));
+        final RevCommit headCommit = walk.parseCommit(repo.resolve(Constants.HEAD));
         walk.release()
         headCommit
     }
 
-    def lookupId(RevCommit commit,String path){
+    def lookupId(RevCommit commit, String path) {
         final TreeWalk walk2 = TreeWalk.forPath(repo, path, commit.getTree());
 
-        if (walk2 == null)
-            return null;
-        if ((walk2.getRawMode(0) & FileMode.TYPE_MASK) != FileMode.TYPE_FILE)
-            return null;
-        return walk2.getObjectId(0);
+        if (walk2 == null) {
+            return null
+        };
+        if ((walk2.getRawMode(0) & FileMode.TYPE_MASK) != FileMode.TYPE_FILE) {
+            return null
+        };
+
+        def id = walk2.getObjectId(0)
+        walk2.release()
+        return id;
     }
-    def getBytes(ObjectId id){
+
+    def getBytes(ObjectId id) {
         repo.open(id, Constants.OBJ_BLOB).getCachedBytes(Integer.MAX_VALUE)
     }
 
 
-    def printDiff(OutputStream out, File file1, byte[] data){
+    def printDiff(OutputStream out, File file1, byte[] data) {
         RawText rt1 = new RawText(data);
         RawText rt2 = new RawText(file1);
         EditList diffList = new EditList();
         DiffAlgorithm differ = DiffAlgorithm.getAlgorithm(DiffAlgorithm.SupportedAlgorithm.HISTOGRAM)
 
         diffList.addAll(differ.diff(COMP, rt1, rt2));
-        if(diffList.size()>0) {
+        if (diffList.size() > 0) {
             new DiffFormatter(out).format(diffList, rt1, rt2);
         }
         diffList.size()

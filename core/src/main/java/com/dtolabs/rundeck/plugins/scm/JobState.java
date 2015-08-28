@@ -1,12 +1,16 @@
 package com.dtolabs.rundeck.plugins.scm;
 
-import java.util.Map;
-
 /**
- * Created by greg on 8/21/15.
+ * Synch state of a job
  */
 public interface JobState {
+    /**
+     * @return the synch state
+     */
     SynchState getSynchState();
 
-    Map getStateMeta();//->[id:id,author:...]
+    /**
+     * @return the previous commit info if available
+     */
+    ScmCommitInfo getCommit();
 }
