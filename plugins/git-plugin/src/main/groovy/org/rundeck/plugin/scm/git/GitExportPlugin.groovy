@@ -95,6 +95,11 @@ class GitExportPlugin implements ScmExportPlugin {
     }
 
     @Override
+    void cleanup() {
+        git.close()
+    }
+
+    @Override
     List<Property> getExportProperties(final Set<JobRevReference> jobs) {
         [
                 PropertyBuilder.builder().string("commitMessage").
@@ -140,6 +145,8 @@ class GitExportPlugin implements ScmExportPlugin {
             commit1.setOnly(relativePath(it))
         }
         RevCommit commit = commit1.call()
+
+        //todo: push
 
         return commit.name
     }
@@ -226,8 +233,8 @@ class GitExportPlugin implements ScmExportPlugin {
         serialize(job)
 
         Status status = git.status().addPath(path).call()
-        SynchState synchState = synchStateForStatus(status, path)
-        def scmState = scmStateForStatus(status, path)
+        SynchState synchState = synchStateForStatus(status,commit, path)
+        def scmState = scmStateForStatus(status, commit, path)
 
         jobstat['ident'] = ident
         jobstat['id'] = job.id
@@ -245,16 +252,22 @@ class GitExportPlugin implements ScmExportPlugin {
         jobstat
     }
 
-    private SynchState synchStateForStatus(Status status, String path) {
-        if (status.uncommittedChanges.contains(path)) {
+    private SynchState synchStateForStatus(Status status, RevCommit commit, String path) {
+        if (status.untracked.contains(path)) {
+            SynchState.CREATE_NEEDED
+        }else if (status.uncommittedChanges.contains(path)) {
             SynchState.EXPORT_NEEDED
-        } else {
+        } else if(commit) {
             SynchState.CLEAN
+        }else {
+            SynchState.CREATE_NEEDED
         }
     }
 
-    def scmStateForStatus(Status status, String path) {
-        if (path in status.added || path in status.untracked) {
+    def scmStateForStatus(Status status, RevCommit commit, String path) {
+        if(!commit){
+            'NEW'
+        }else if (path in status.added || path in status.untracked) {
             'NEW'
         } else if (path in status.changed || path in status.modified) {
             //changed== changes in index
@@ -263,7 +276,7 @@ class GitExportPlugin implements ScmExportPlugin {
         } else if (path in status.removed || path in status.missing) {
             'DELETED'
         } else if (path in status.untracked) {
-            'NOT_FOUND'
+            'UNTRACKED'
         } else if (path in status.conflicting) {
             'CONFLICT'
         }
@@ -388,16 +401,17 @@ class GitExportPlugin implements ScmExportPlugin {
         def file=getLocalFileForJob(job)
         def path=relativePath(job)
         serialize(job)
-        def baos = new ByteArrayOutputStream()
 
         def id=lookupId(getHead(),path)
         if(!id) {
-            throw new ScmPluginException("Unable to diff file: not present in repo: " + path)
+            return new GitDiffResult(sourceNotFound: true)
         }
         def bytes=getBytes(id)
-        printDiff(baos, file, bytes)
+        def baos = new ByteArrayOutputStream()
+        def diffs = printDiff(baos, file, bytes)
 
-        return new GitDiffResult(contentType: 'text/plain', content: baos.toString())
+
+        return new GitDiffResult(contentType: 'text/plain', content: baos.toString(), modified: diffs>0)
     }
 
 //get blob for HEAD rev of the path
@@ -432,7 +446,10 @@ class GitExportPlugin implements ScmExportPlugin {
         DiffAlgorithm differ = DiffAlgorithm.getAlgorithm(DiffAlgorithm.SupportedAlgorithm.HISTOGRAM)
 
         diffList.addAll(differ.diff(COMP, rt1, rt2));
-        new DiffFormatter(out).format(diffList, rt1, rt2);
+        if(diffList.size()>0) {
+            new DiffFormatter(out).format(diffList, rt1, rt2);
+        }
+        diffList.size()
     }
 
 }
