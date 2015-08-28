@@ -29,6 +29,25 @@
             <g:enc>${scheduledExecution?.jobName}</g:enc></g:link>
     </span>
 
+    <g:set var="authProjectExport" value="${auth.resourceAllowedTest(
+            context: 'application',
+            type: 'project',
+            action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT],
+            any: true,
+            name: scheduledExecution.project
+    )}"/>
+
+    <g:if test="${authProjectExport && scmExportEnabled && scmStatus?.get(scheduledExecution.extid)}">
+        <g:set var="jobstatus" value="${scmStatus?.get(scheduledExecution.extid)}"/>
+        <g:render template="/scm/statusBadge"
+                  model="[status: jobstatus?.synchState?.toString(),
+                          text  : '',
+                          notext: false,
+                          link:true,
+                          job:scheduledExecution,
+                          commit  : jobstatus?.commit]"/>
+    </g:if>
+
     <g:if test="${jobActionButtons}">
         <g:render template="/scheduledExecution/jobActionButton" model="[scheduledExecution:scheduledExecution]"/>
     </g:if>

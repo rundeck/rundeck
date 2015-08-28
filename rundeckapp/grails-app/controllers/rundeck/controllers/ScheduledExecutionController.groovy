@@ -293,7 +293,15 @@ class ScheduledExecutionController  extends ControllerBase{
                 && scheduledExecution.serverNodeUUID != frameworkService.getServerUUID()) {
             remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
         }
-        def dataMap= [scheduledExecution: scheduledExecution, crontab: crontab, params: params,
+        def scmExportEnabled=scmService.projectHasConfiguredExportPlugin(params.project)
+        def scmStatus=scmExportEnabled?scmService.exportStatusForJobs([scheduledExecution]):[:]
+
+        def dataMap= [
+                scheduledExecution: scheduledExecution,
+                crontab: crontab,
+                params: params,
+                scmExportEnabled: scmExportEnabled,
+                scmStatus:scmStatus,
                 total: total,
                 nextExecution: scheduledExecutionService.nextExecutionTime(scheduledExecution),
                 remoteClusterNodeUUID: remoteClusterNodeUUID,
