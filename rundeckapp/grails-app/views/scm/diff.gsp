@@ -11,7 +11,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="tabpage" content="configure"/>
     <meta name="layout" content="base"/>
-    <title><g:appTitle/> - commit ${params.project}</title>
+    <title><g:appTitle/> - <g:message code="scmController.diff.page.title" args="[params.project]"/></title>
 
 </head>
 
@@ -27,21 +27,21 @@
     <div class="col-sm-12">
         <div class="list-group">
             <div class="list-group-item">
-                <h4 class="list-group-item-heading">SCM Export: Changes</h4>
+                <h4 class="list-group-item-heading"><g:message code="scm.export.changes"/></h4>
             </div>
 
             <div class="list-group-item">
-            <div class="row">
-                <g:render template="/scheduledExecution/showHead" model="[scheduledExecution: job]"/>
-            </div>
+                <div class="row">
+                    <g:render template="/scheduledExecution/showHead" model="[scheduledExecution: job]"/>
+                </div>
             </div>
 
             <div class="list-group-item">
                 <g:set var="jobstatus" value="${scmStatus?.get(job.extid)}"/>
                 <g:render template="/scm/statusBadge" model="[
                         status: jobstatus?.synchState?.toString(),
-                        text:'',
-                        meta: jobstatus?.stateMeta,
+                        text  : '',
+                        meta  : jobstatus?.stateMeta,
                 ]"/>
             </div>
 
@@ -49,7 +49,7 @@
 
                 <div class="list-group-item">
                     <div class="list-group-item-text text-info">
-                        Not Added to SCM
+                        <g:message code="not.added.to.scm"/>
                     </div>
                 </div>
             </g:if>
@@ -57,24 +57,23 @@
 
                 <div class="list-group-item">
                     <div class="list-group-item-text text-muted">
-                        No Changes
+                        <g:message code="no.changes"/>
                     </div>
                 </div>
             </g:elseif>
             <g:elseif test="${diffResult.content}">
 
                 <div id="difftext"
-                        class="list-group-item scriptContent expanded apply_ace"
-                        data-ace-session-mode="diff"
-                >${diffResult.content}</div>
+                     class="list-group-item scriptContent expanded apply_ace"
+                     data-ace-session-mode="diff">${diffResult.content}</div>
             </g:elseif>
             <g:if test="${diffResult.modified || diffResult.sourceNotFound}">
                 <g:link action="commit" controller="scm"
-                    class="list-group-item list-group-item-info"
+                        class="list-group-item list-group-item-info"
                         params="[project: params.project, jobIds: job.extid]">
 
                     <i class="glyphicon glyphicon-circle-arrow-right"></i>
-                    Commit Changes
+                    <g:message code="commit.changes"/>
                 </g:link>
             </g:if>
         </div>
@@ -85,7 +84,7 @@
 <g:javascript>
     fireWhenReady('difftext', function (z) {
         jQuery('.apply_ace').each(function () {
-            _applyAce(this,'400px');
+            _applyAce(this, '400px');
         });
     });
 </g:javascript>
