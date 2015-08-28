@@ -123,7 +123,6 @@
 
     <g:unless test="${exportStateClean}">
         <li><g:link controller="scm"
-                    title="${g.message(code: 'scm.action.export', default: 'Commit changes to SCM')}"
                     params="[project: scheduledExecution.project,jobIds:scheduledExecution.extid]"
                     action="commit"
                     >
@@ -144,7 +143,6 @@
     </g:unless>
     <g:unless test="${exportStateCreate}">
         <li><g:link controller="scm"
-                    title="${g.message(code: 'scm.action.export', default: 'Commit changes to SCM')}"
                     params="[project: scheduledExecution.project,jobId:scheduledExecution.extid]"
                     action="diff"
                     >
