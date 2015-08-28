@@ -16,7 +16,7 @@ class ScmController extends ControllerBase {
         def pluginConfig = scmService.loadScmConfig(project, 'export')
         def plugins = scmService.listPlugins('export')
         def configuredPlugin = null
-        if(pluginConfig?.type){
+        if (pluginConfig?.type) {
             configuredPlugin = scmService.getExportPluginDescriptor(pluginConfig.type)
         }
         return [
@@ -129,6 +129,7 @@ class ScmController extends ControllerBase {
         flash.message = "Plugin disabled for SCM ${integration}: ${type}"
         redirect(action: 'index', params: [project: project])
     }
+
     def enable(String integration, String project, String type) {
 
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
@@ -161,10 +162,10 @@ class ScmController extends ControllerBase {
 
         //require type param
         def result = scmService.enablePlugin(integration, project, type)
-        if(result.valid){
+        if (result.valid) {
             flash.message = "Plugin enabled for SCM ${integration}: ${type}"
 
-        }else {
+        } else {
             flash.warning = "Plugin was not enabled for SCM ${integration}: ${type}: Configuration was not valid.  Please reconfigure and try again."
         }
 

@@ -91,13 +91,6 @@
                                               model="[status: jobstatus?.synchState?.toString(),
                                                       text  : '',
                                                       notext: true,
-                                    %{--
-                                    <g:render template="/scm/scmJobStatus" model="[jobid:scheduledExecution.extid,
-                                                                                   status: jobstatus?.synchState?.toString(),
-                                                                                   text  : jobstatus?.synchState?.toString() ?:
-                                                                                           'Not found',
-                                                                                   meta  : jobstatus?.stateMeta]"/>
---}%
                                                       commit  : jobstatus?.commit]"/>
                                 </g:if>
                                     <g:link action="show"
