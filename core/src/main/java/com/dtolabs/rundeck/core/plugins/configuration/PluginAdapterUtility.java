@@ -300,10 +300,29 @@ public class PluginAdapterUtility {
     public static Map<String, Object> mapDescribedProperties(final PropertyResolver resolver,
             final Description description, final PropertyScope defaultPropertyScope) {
         final List<Property> properties = description.getProperties();
+        return mapProperties(resolver, properties, defaultPropertyScope);
+    }
+
+    /**
+     * Retrieve the Properties mapped to resolved values given the resolver, with a default property
+     * scope
+     * @param resolver property resolver
+     * @param properties properties
+     * @param defaultPropertyScope default scope for unspecified property scopes
+     *
+     * @return All mapped properties by name and value.
+     */
+    public static Map<String, Object> mapProperties(
+            final PropertyResolver resolver,
+            final List<Property> properties, final PropertyScope defaultPropertyScope
+    )
+    {
         final PropertyResolver defaulted =
                 PropertyResolverFactory.withDefaultValues(
-                        PropertyResolverFactory.withDefaultScope(null != defaultPropertyScope ? defaultPropertyScope
-                                : PropertyScope.InstanceOnly, resolver),
+                        PropertyResolverFactory.withDefaultScope(
+                                null != defaultPropertyScope ? defaultPropertyScope
+                                                             : PropertyScope.InstanceOnly, resolver
+                        ),
                         new PropertyDefaultValues(properties)
                 );
 

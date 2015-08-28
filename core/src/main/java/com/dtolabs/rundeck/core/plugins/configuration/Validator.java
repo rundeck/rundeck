@@ -151,6 +151,32 @@ public class Validator {
         return report;
     }
 
+    /**
+     * Validate a set of properties for a description, and return a report.
+     *
+     * @param resolver     property resolver
+     * @param properties   list of properties
+     * @param defaultScope default scope for properties
+     * @param ignoredScope ignore properties at or below this scope, or null to ignore none
+     *
+     * @return the validation report
+     */
+    public static Report validateProperties(
+            final PropertyResolver resolver,
+            final List<Property> properties,
+            PropertyScope defaultScope,
+            PropertyScope ignoredScope
+    )
+    {
+        final Report report = new Report();
+
+        final Map<String, Object> inputConfig = PluginAdapterUtility.mapProperties(
+                resolver, properties, defaultScope
+        );
+        validate(asProperties(inputConfig), report, properties, ignoredScope);
+        return report;
+    }
+
     private static Properties asProperties(Map<String, Object> inputConfig) {
         Properties configuration = new Properties();
         configuration.putAll(inputConfig);
