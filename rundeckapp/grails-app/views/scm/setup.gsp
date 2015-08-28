@@ -60,7 +60,8 @@
             <div class="panel panel-primary" id="createform">
                 <div class="panel-heading">
                     <span class="h3">
-                        <g:message code="plugin.scm.setup.title" default="Setup SCM"/>
+                        <g:message code="plugin.scm.setup.title" default="Setup SCM"/>:
+                        ${plugin.description?.title?:plugin.name}
                     </span>
                 </div>
             <div class="list-group">
@@ -80,8 +81,8 @@
                                     template="/framework/pluginConfigPropertyFormField"
                                     model="${[prop:prop,
                                               prefix:'test',
-                                              error:nodeexecreport?.errors && isSelected ?nodeexecreport?.errors[prop.name]:null,
-                                              values: null,
+                                              error:report?.errors ? report?.errors[prop.name]:null,
+                                              values: config,
                                               fieldname:'config.'+prop.name,
                                               origfieldname:'orig.'+prop.name
                                     ]}"/>
