@@ -3,13 +3,19 @@ package rundeck.services
 import com.dtolabs.rundeck.core.jobs.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.plugins.jobs.JobChangeListener
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
+import com.dtolabs.rundeck.plugins.scm.JobState
 import com.dtolabs.rundeck.plugins.scm.ScmDiffResult
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory
 import com.dtolabs.rundeck.plugins.scm.ScmPlugin
+import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
+import com.dtolabs.rundeck.server.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
 import rundeck.ScheduledExecution
 
@@ -23,6 +29,7 @@ class ScmService {
     ScmExportPluginProviderService scmExportPluginProviderService
     PluginService pluginService
     Map<String, ScmExportPlugin> loadedExportPlugins = Collections.synchronizedMap([:])
+    Map<String, JobChangeListener> loadedExportListeners = Collections.synchronizedMap([:])
 
     def initialize() {
         def projects = frameworkService.projectNames()
@@ -31,10 +38,12 @@ class ScmService {
             //load export plugins
 
             def pluginConfig = loadScmConfig(project, 'export')
-            if (pluginConfig.enabled && pluginConfig.type) {
-                System.err.println("Loading 'export' plugin ${pluginConfig.type} for ${project}...")
-                initPlugin('export', project, pluginConfig.type, pluginConfig.config)
+            if (pluginConfig && pluginConfig.enabled) {
+                log.debug("Loading 'export' plugin ${pluginConfig.type} for ${project}...")
+                initExportPlugin(project, pluginConfig.type, pluginConfig.config)
                 //TODO: refresh status of all jobs in project?
+            } else {
+                log.debug("SCM Export not setup for project: ${project}: ${pluginConfig}")
             }
 
             //TODO: import plugins
@@ -43,31 +52,34 @@ class ScmService {
     }
 
     def listPlugins(String integration) {
-        pluginService.listPlugins(ScmExportPluginFactory, scmExportPluginProviderService)
+        switch (integration) {
+            case 'export':
+                return pluginService.listPlugins(ScmExportPluginFactory, scmExportPluginProviderService)
         //TODO: import
+        }
     }
 
-    def getPluginDescriptor(String type) {
+    def getExportPluginDescriptor(String type) {
         pluginService.getPluginDescriptor(
                 type,
                 scmExportPluginProviderService
         )
     }
 
-    def isAlreadySetup(String project) {
+    def projectHasConfiguredExportPlugin(String project) {
         loadedExportPlugins.containsKey(project)
     }
 
     //todo: turn off/disable plugin
 
-    def getCommitProperties(String project, List<String> jobIds) {
+    def getExportCommitProperties(String project, List<String> jobIds) {
         def refs = jobRefsForIds(jobIds)
         def plugin = loadedExportPlugins[project]
         plugin.getExportProperties(refs as Set)
     }
 
-    def getSetupProperties(String project, String type) {
-        DescribedPlugin<ScmExportPluginFactory> plugin = getPluginDescriptor(type)
+    def getExportSetupProperties(String project, String type) {
+        DescribedPlugin<ScmExportPluginFactory> plugin = getExportPluginDescriptor(type)
         File baseDir = new File(frameworkService.rundeckFramework.frameworkProjectsBaseDir, project)
 
         plugin.instance.getSetupPropertiesForBasedir(baseDir)
@@ -82,7 +94,7 @@ class ScmService {
         }
         def baos = new ByteArrayOutputStream()
         project1.loadFileResource(configPath, baos)
-        ScmPluginConfig.loadFromStream(integration, new ByteArrayInputStream(baos.toByteArray()))
+        return ScmPluginConfig.loadFromStream(integration, new ByteArrayInputStream(baos.toByteArray()))
     }
 
     private String storedConfigFile(String integration) {
@@ -90,27 +102,29 @@ class ScmService {
     }
 
 
-    def storeConfig(String integration, String type, Map config, String project) {
-        def scmPluginConfig = new ScmPluginConfig(new Properties(), integration)
-        scmPluginConfig.config = config
-        scmPluginConfig.type = type
+    def storeConfig(ScmPluginConfig scmPluginConfig, String project) {
 
         //todo: store with server UUID
         def project1 = frameworkService.getFrameworkProject(project)
-        def configPath = storedConfigFile(integration)
+        def configPath = storedConfigFile(scmPluginConfig.integration)
         project1.storeFileResource configPath, scmPluginConfig.asInputStream()
     }
-    /**
-     * Create new plugin config and load it
-     * @param project
-     * @param ndx
-     * @param config
-     * @param capabilities
-     * @return
-     */
-    def validatePluginConfig(String integration, String project, String type, Map config) {
-        //TODO: validate
-//        DescribedPlugin<ScmExportPluginFactory> plugin = getPluginDescriptor(type)
+
+    def ValidatedPlugin validateExportPluginSetup(String project, String name, Map config) {
+        return pluginService.validatePlugin(name, scmExportPluginProviderService,
+                                            frameworkService.getFrameworkPropertyResolver(project, config),
+                                            PropertyScope.Instance,
+                                            PropertyScope.Project
+        )
+    }
+
+    def Validator.Report validateExportPluginConfigProperties(String project, List<Properties> properties, Map config) {
+        Validator.validateProperties(
+                frameworkService.getFrameworkPropertyResolver(project, config),
+                properties,
+                PropertyScope.Instance,
+                PropertyScope.Project
+        )
     }
     /**
      * Create new plugin config and load it
@@ -120,10 +134,23 @@ class ScmService {
      * @param capabilities
      * @return
      */
-    private def initPlugin(String integration, String project, String type, Map config) {
-        validatePluginConfig(integration, project, type, config)
+    private def initExportPlugin(String project, String type, Map config) {
+        def validation = validateExportPluginSetup(project, type, config)
+        if (!validation.valid) {
+            throw new ScmPluginException("Validation failed for ${type} plugin: " + validation.report)
+        }
         def loaded = loadPluginWithConfig(project, type, config)
+
+        //XXX:
+        def changeListener = { JobChangeEvent event, JobSerializer serializer ->
+            log.debug("job change event: " + event)
+            loaded.jobChanged(event, new JobSerializerReferenceImpl(event.jobReference, serializer))
+        } as JobChangeListener
+
         loadedExportPlugins[project] = loaded
+        loadedExportListeners[project] = changeListener
+
+        jobEventsService.addListener changeListener
         loaded
     }
 
@@ -136,9 +163,39 @@ class ScmService {
      * @return
      */
     def savePlugin(String integration, String project, String type, Map config) {
-        validatePluginConfig(integration, project, type, config)
-        storeConfig(integration, type, config, project)
-        return initPlugin(integration, project, type, config)
+        def validation = validateExportPluginSetup(project, type, config)
+        if (!validation.valid) {
+            return [valid: false, report: validation.report]
+        }
+
+        def scmPluginConfig = new ScmPluginConfig(new Properties(), integration)
+        scmPluginConfig.config = config
+        scmPluginConfig.type = type
+        scmPluginConfig.enabled = true
+        storeConfig(scmPluginConfig, project)
+        def plugin = initExportPlugin(project, type, config)
+        return [valid: true, plugin: plugin]
+    }
+
+    /**
+     * Create new plugin config and load it
+     * @param project
+     * @param ndx
+     * @param config
+     * @param capabilities
+     * @return
+     */
+    def disablePlugin(String integration, String project, String type) {
+        ScmPluginConfig scmPluginConfig = loadScmConfig(project, integration)
+
+        scmPluginConfig.enabled = false
+        storeConfig(scmPluginConfig, project)
+
+
+        def loaded = loadedExportPlugins.remove(project)
+        def changeListener = loadedExportListeners.remove(project)
+        jobEventsService.removeListener(changeListener)
+        loaded.cleanup()
     }
 
     def loadPluginWithConfig(String project, String type, Map config) {
@@ -150,11 +207,6 @@ class ScmService {
         )
         def created = plugin.createPlugin(config, project)
 
-        //XXX:
-        jobEventsService.addListener { JobChangeEvent event, JobSerializer serializer ->
-            System.err.println("job change event: " + event)
-            created.jobChanged(event, new JobSerializerReferenceImpl(event.jobReference, serializer))
-        }
 
         return created
     }
@@ -229,7 +281,7 @@ class ScmService {
             def plugin = loadedExportPlugins[jobReference.project]
             if (plugin) {
                 status[jobReference.id] = plugin.getJobStatus(jobReference)
-                System.err.println("Status for job ${jobReference}: ${status[jobReference.id]}")
+                log.debug("Status for job ${jobReference}: ${status[jobReference.id]}")
             }
         }
         status
@@ -237,11 +289,16 @@ class ScmService {
 
     def exportCommit(String project, Map config, List<ScheduledExecution> jobs) {
         //store config
-        def jobrefs = exportjobRefsForJobs(jobs)
         def plugin = loadedExportPlugins[project]
+        def jobrefs = exportjobRefsForJobs(jobs)
+        def properties = plugin.getExportProperties(jobrefs as Set)
+        def report = validateExportPluginConfigProperties(project, properties, config)
+        if (!report.valid) {
+            return [valid: false, report: report]
+        }
         def result = plugin.export(jobrefs as Set, config)
-        System.err.println("Commit id: ${result}")
-        result
+        log.debug("Commit id: ${result}")
+        [valid: true, commitId: result]
     }
 
     ScmDiffResult exportDiff(String project, ScheduledExecution job) {
@@ -274,7 +331,7 @@ class ScmPluginConfig {
     }
 
     void setEnabled(boolean enabled) {
-        properties[prefix + '.enabled'] == Boolean.toString(enabled)
+        properties[prefix + '.enabled'] = Boolean.toString(enabled)
     }
 
     boolean getEnabled() {
@@ -293,6 +350,7 @@ class ScmPluginConfig {
         properties.putAll config.collectEntries { [prefix + '.config.' + it.key, it.value] }
     }
 
+
     def asInputStream() {
         def baos = new ByteArrayOutputStream()
         properties.store(baos, "scm config")
@@ -303,6 +361,17 @@ class ScmPluginConfig {
 
         def props = new Properties()
         props.load(os)
-        new ScmPluginConfig(props, integration)
+        return new ScmPluginConfig(props, integration)
+    }
+
+    @Override
+    public String toString() {
+        return "ScmPluginConfig{" +
+                "integration='" + integration + '\'' +
+                ", prefix='" + prefix + '\'' +
+                ", type='" + getType() + '\'' +
+                ", enabled='" + getEnabled() + '\'' +
+                ", config='" + getConfig() + '\'' +
+                '}';
     }
 }
