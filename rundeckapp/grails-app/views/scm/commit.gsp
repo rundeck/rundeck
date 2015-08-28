@@ -11,7 +11,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="tabpage" content="configure"/>
     <meta name="layout" content="base"/>
-    <title><g:appTitle/> - commit ${params.project}</title>
+    <title><g:appTitle/> - <g:message code="scmController.commit.page.title" args="[params.project]" /></title>
 
 </head>
 
@@ -23,9 +23,6 @@
     </div>
 </div>
 <div class="row">
-    %{--<div class="col-sm-3">--}%
-        %{--<g:render template="/menu/configNav" model="[selected:'project']"/>--}%
-    %{--</div>--}%
     <div class="col-sm-12 col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-2">
         <g:form action="saveCommit"
                 params="${[project:params.project]}"
@@ -34,7 +31,7 @@
             <div class="panel panel-primary" id="createform">
                 <div class="panel-heading">
                     <span class="h3">
-                        <g:message code="plugin.scm.commit.title" default="SCM Export: Commit Changes"/>
+                        <g:message code="scmController.commit.heading" default="SCM Export: Commit Changes"/>
                     </span>
                 </div>
                 <div class="list-group">
@@ -42,7 +39,7 @@
                         <div class="row">
                             <div class="col-sm-12">
                                 <div class="help-block">
-                                    Select jobs to export.
+                                    <g:message code="select.jobs.to.export" />
                                 </div>
                             </div>
                         </div>
@@ -50,7 +47,6 @@
                     <div class="list-group-item">
                         <div class="form-group">
                         <g:each in="${jobs}" var="job">
-                            %{--<g:if test="${scmStatus?.get(job.extid)}">--}%
 
                             <div class="checkbox col-sm-12">
                                 <label>
@@ -63,19 +59,16 @@
                                     </g:else>
 
                                     <g:render template="statusIcon" model="[iscommit:true,status:jobstatus?.synchState?.toString(),notext:true,text:'',meta  : jobstatus?.stateMeta]"/>
-                                    %{--<span class="glyphicon glyphicon-book"></span>--}%
                                     <g:render template="statusIcon" model="[iscommit:true,status:jobstatus?.synchState?.toString(),noicon:true,text:job.jobName,meta  : jobstatus?.stateMeta]"/>
 
                                     <span class="text-muted">
                                         - ${job.groupPath}
                                     </span>
 
-                                    %{--<g:render template="statusIcon" model="[status:scmStatus?.get(job.extid),noicon:true]"/>--}%
 
                                 </label>
                                 <g:link action="diff" class="btn btn-xs btn-info" params="${[project:params.project,jobId:job.extid]}">
-                                    diff…
-                                    %{--<span class="glyphicon glyphicon-arrow-right"></span>--}%
+                                    <g:message code="view.diff" />
                                 </g:link>
                             </div>
                             <g:if test="${filesMap[job.extid]}">
@@ -122,7 +115,7 @@
                 </div>
 
                 <div class="panel-footer">
-                    <g:submitButton name="create" value="${g.message(code: 'button.action.Commit', default: 'Commit')}"
+                    <g:submitButton name="create" value="${g.message(code: 'button.Commit.title', default: 'Commit')}"
                                     class="btn btn-default"/>
                 </div>
             </div>
