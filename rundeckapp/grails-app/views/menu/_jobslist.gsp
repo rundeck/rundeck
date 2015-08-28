@@ -83,7 +83,23 @@
                                             </g:ifExecutionMode>
                                         </g:if>
                                     </span>
+                                <g:if test="${scmExportEnabled && scmStatus?.get(scheduledExecution.extid)}">
 
+                                    <g:set var="jobstatus" value="${scmStatus?.get(scheduledExecution.extid)}"/>
+
+                                    <g:render template="/scm/statusBadge"
+                                              model="[status: jobstatus?.synchState?.toString(),
+                                                      text  : '',
+                                                      notext: true,
+                                                      meta  : jobstatus?.stateMeta]"/>
+                                    %{--
+                                    <g:render template="/scm/scmJobStatus" model="[jobid:scheduledExecution.extid,
+                                                                                   status: jobstatus?.synchState?.toString(),
+                                                                                   text  : jobstatus?.synchState?.toString() ?:
+                                                                                           'Not found',
+                                                                                   meta  : jobstatus?.stateMeta]"/>
+--}%
+                                </g:if>
                                     <g:link action="show"
                                             controller="scheduledExecution"
                                             id="${scheduledExecution.extid}"
@@ -109,15 +125,6 @@
 
                                 <g:render template="/scheduledExecution/description"
                                           model="[description: scheduledExecution?.description,textCss:'text-muted',mode:'collapsed',rkey:g.rkey()]"/>
-                                <g:set var="jobstatus" value="${scmStatus?.get(scheduledExecution.extid)}"/>
-
-                                <g:render template="/scm/scmJobStatus" model="[jobid:scheduledExecution.extid,
-                                                                               status: jobstatus?.synchState?.toString(),
-                                                                             text  : jobstatus?.synchState?.toString() ?:
-                                                                                     'Not found',
-                                                                             meta  : jobstatus?.stateMeta]"/>
-
-
 
                             </td>
                             <td class="scheduletime">

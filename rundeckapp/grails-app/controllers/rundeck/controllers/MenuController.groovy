@@ -264,6 +264,7 @@ class MenuController extends ControllerBase{
         }
         def results=listWorkflows(query,authContext,session.user)
         //fill scm status
+        results.scmExportEnabled=scmService.projectHasConfiguredExportPlugin(params.project)
         results.scmStatus=scmService.exportStatusForJobs(results.nextScheduled)
         if(usedFilter){
             results.filterName=usedFilter

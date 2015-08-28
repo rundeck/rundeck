@@ -50,6 +50,7 @@ import rundeck.services.FrameworkService
 import rundeck.services.NotificationService
 import rundeck.services.OrchestratorPluginService
 import rundeck.services.ScheduledExecutionService
+import rundeck.services.ScmService
 import rundeck.services.UserService
 
 import javax.servlet.http.HttpServletResponse
@@ -94,6 +95,7 @@ class ScheduledExecutionController  extends ControllerBase{
 	def NotificationService notificationService
     def ApiService apiService
     def UserService userService
+    def ScmService scmService
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -211,11 +213,15 @@ class ScheduledExecutionController  extends ControllerBase{
                 params.id
             )
         ) {
+            def scmExportEnabled=scmService.projectHasConfiguredExportPlugin(params.project)
+            def scmStatus=scmService.exportStatusForJobs([scheduledExecution])
              render(template: '/scheduledExecution/jobActionButtonMenuContent',
                           model: [
                                   scheduledExecution: scheduledExecution,
                                   hideJobDelete     : params.hideJobDelete,
-                                  jobDeleteSingle   : params.jobDeleteSingle
+                                  jobDeleteSingle   : params.jobDeleteSingle,
+                                  scmExportEnabled: scmExportEnabled,
+                                  scmStatus: scmStatus
                           ]
             )
         }

@@ -19,6 +19,13 @@
 <g:set var="authDelete" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_DELETE])}"/>
 <g:set var="authJobCreate" value="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_CREATE, project: scheduledExecution.project)}"/>
 <g:set var="authJobDelete" value="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_DELETE, project: scheduledExecution.project)}"/>
+<g:set var="authProjectExport" value="${auth.resourceAllowedTest(
+        context: 'application',
+        type: 'project',
+        action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT],
+        any: true,
+        name: scheduledExecution.project
+)}"/>
 <g:if test="${authUpdate}">
     <li>
         <g:link controller="scheduledExecution"
@@ -100,5 +107,43 @@
                     code="scheduledExecution.action.downloadformat.button.label"
                     args="['YAML']"/>
         </g:link>
+    </li>
+</g:if>
+
+<g:if test="${authProjectExport && scmExportEnabled && scmStatus?.get(scheduledExecution.extid)}">
+    <g:if test="${authRead}">
+        <li class="divider"></li>
+    </g:if>
+    <g:set var="jobstatus" value="${scmStatus?.get(scheduledExecution.extid)}"/>
+
+    <li class="dropdown-header"> SCM Export Plugin</li>
+
+    <li><g:link controller="scm"
+                title="${g.message(code: 'scm.action.export', default: 'Commit changes to SCM')}"
+                params="[project: scheduledExecution.project,jobIds:scheduledExecution.extid]"
+                action="commit"
+                >
+        <g:render template="/scm/statusBadge"
+                  model="[status: jobstatus?.synchState?.toString(),
+                          text  : '',
+                          notext: true,
+                          icon:'glyphicon-circle-arrow-right',
+                          meta  : jobstatus?.stateMeta]"/>
+        <g:message code="scm.action.commit.button.label" default="Commit Changes"/>
+    </g:link>
+    </li>
+    <li><g:link controller="scm"
+                title="${g.message(code: 'scm.action.export', default: 'Commit changes to SCM')}"
+                params="[project: scheduledExecution.project,jobId:scheduledExecution.extid]"
+                action="diff"
+                >
+        <g:render template="/scm/statusBadge"
+                  model="[status: jobstatus?.synchState?.toString(),
+                          text  : '',
+                          notext: true,
+                          icon:'glyphicon-eye-open',
+                          meta  : jobstatus?.stateMeta]"/>
+        <g:message code="scm.action.diff.button.label" default="Diff Changes"/>
+    </g:link>
     </li>
 </g:if>
