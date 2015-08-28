@@ -177,11 +177,10 @@ class ScmService {
     }
 
     /**
-     * Create new plugin config and load it
-     * @param project
-     * @param ndx
-     * @param config
-     * @param capabilities
+     * Disable a previously enabled and configured plugin
+     * @param integration integration name
+     * @param project project name
+     * @param type plugin type
      * @return
      */
     def disablePlugin(String integration, String project, String type) {
@@ -195,6 +194,26 @@ class ScmService {
         def changeListener = loadedExportListeners.remove(project)
         jobEventsService.removeListener(changeListener)
         loaded.cleanup()
+    }
+
+    /**
+     * Enable a disabled plugin
+     * @param project
+     * @param integration integration name
+     * @param type plugin type
+     * @return a map [valid:true/false, report: Report, plugin: instance], will
+     */
+    def enablePlugin(String integration, String project, String type) {
+        ScmPluginConfig scmPluginConfig = loadScmConfig(project, integration)
+        def validation = validateExportPluginSetup(project, type, scmPluginConfig.config)
+        if (!validation.valid) {
+            return [valid: false, report: validation.report]
+        }
+
+        scmPluginConfig.enabled = true
+        storeConfig(scmPluginConfig, project)
+        def plugin = initExportPlugin(project, type, scmPluginConfig.config)
+        return [valid: true, plugin: plugin]
     }
 
     def loadPluginWithConfig(String project, String type, Map config) {
