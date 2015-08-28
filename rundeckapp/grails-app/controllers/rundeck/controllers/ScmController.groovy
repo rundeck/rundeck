@@ -230,8 +230,6 @@ class ScmController extends ControllerBase {
             return
         }
 
-
-
         if (!params.jobIds) {
             flash.message = "No Job Ids Selected"
             return redirect(action: 'index', params: [project: project])
@@ -283,8 +281,10 @@ class ScmController extends ControllerBase {
         def job = ScheduledExecution.getByIdOrUUID(jobId)
         def diff = scmService.exportDiff(project, job)
         render(contentType: 'application/json') {
-            contentType = diff.contentType
-            content = diff.content
+            modified = diff?.modified?:false
+            newNotFound = diff?.newNotFound ?: false
+            oldNotFound = diff?.oldNotFound ?: false
+            content = diff?.content ?: ''
         }
     }
 
@@ -300,14 +300,12 @@ class ScmController extends ControllerBase {
         def scmStatus = scmService.exportStatusForJobs([job])
         def scmFilePaths = scmService.filePathsMapForJobs([job])
         def diffResult = scmService.exportDiff(project, job)
-        if (diffResult) {
-            withFormat {
-                html {
-                    [diffResult: diffResult, scmStatus: scmStatus, job: job, scmFilePaths: scmFilePaths]
-                }
-                text {
-                    render(contentType: diffResult.contentType ?: 'text/plain', text: diffResult.content)
-                }
+        withFormat {
+            html {
+                [diffResult: diffResult, scmStatus: scmStatus, job: job, scmFilePaths: scmFilePaths]
+            }
+            text {
+                render(contentType: 'text/plain', text: diffResult?.content?:'')
             }
         }
     }
