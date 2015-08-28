@@ -19,6 +19,11 @@ public interface ScmExportPlugin {
     void initialize();
 
     /**
+     * perform any cleanup/teardown needed after disabling
+     */
+    void cleanup();
+
+    /**
      * Define any UI properties for export action
      *
      * @param jobs set of jobs to list for commit
