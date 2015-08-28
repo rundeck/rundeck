@@ -15,6 +15,9 @@ class JobEventsService {
     def addListener(JobChangeListener plugin) {
         listeners << plugin
     }
+    def removeListener(JobChangeListener plugin) {
+        listeners.remove(plugin)
+    }
 
     @Listener
     def jobChanged(StoredJobChangeEvent e) {
