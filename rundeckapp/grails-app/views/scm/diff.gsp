@@ -43,7 +43,25 @@
                         text  : '',
                         meta  : jobstatus?.stateMeta,
                 ]"/>
+                <span class="has_tooltip" title="Repo file path">
+                    <i class="glyphicon glyphicon-file"></i>
+                    ${scmFilePaths[job.extid]}
+                </span>
             </div>
+            <g:if test="${jobstatus?.stateMeta}">
+            <div class="list-group-item">
+                <g:expander key="commitInfo">Previous Commit</g:expander>
+                <table class="table table-bordered table-condensed table-striped " id="commitInfo" style="display:none">
+                    <g:each in="${jobstatus?.stateMeta}" var="entry">
+                        <tr>
+                            <td>${entry.key}</td>
+                            <td>${entry.value}</td>
+                        </tr>
+                    </g:each>
+                </table>
+            </div>
+            </g:if>
+
 
             <g:if test="${diffResult.sourceNotFound}">
 
@@ -69,11 +87,16 @@
             </g:elseif>
             <g:if test="${diffResult.modified || diffResult.sourceNotFound}">
                 <g:link action="commit" controller="scm"
-                        class="list-group-item list-group-item-info"
+                        class="list-group-item ${diffResult.sourceNotFound?'list-group-item-success':'list-group-item-info'}"
                         params="[project: params.project, jobIds: job.extid]">
 
                     <i class="glyphicon glyphicon-circle-arrow-right"></i>
-                    <g:message code="button.Commit.Changes.title"/>
+                    <g:if test="${diffResult.sourceNotFound}">
+                        Commit new File
+                    </g:if>
+                    <g:else>
+                        <g:message code="button.Commit.Changes.title"/>
+                    </g:else>
                 </g:link>
             </g:if>
         </div>

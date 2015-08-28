@@ -272,11 +272,12 @@ class ScmController extends ControllerBase{
         }
         def job=ScheduledExecution.getByIdOrUUID(jobId)
         def scmStatus=scmService.exportStatusForJobs([job])
+        def scmFilePaths=scmService.filePathsMapForJobs([job])
         def diffResult=scmService.exportDiff(project,job)
         if(diffResult){
             withFormat {
                 html {
-                    [diffResult: diffResult, scmStatus: scmStatus, job: job]
+                    [diffResult: diffResult, scmStatus: scmStatus, job: job,scmFilePaths:scmFilePaths]
                 }
                 text{
                     render(contentType: diffResult.contentType?:'text/plain', text: diffResult.content)

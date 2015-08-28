@@ -1,14 +1,12 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.jobs.JobExportReference
-import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.jobs.JobChangeListener
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
-import com.dtolabs.rundeck.plugins.scm.JobState
 import com.dtolabs.rundeck.plugins.scm.ScmDiffResult
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory
@@ -98,6 +96,7 @@ class ScmService {
     }
 
     private String storedConfigFile(String integration) {
+        //TODO: store export/import separately?
         "etc/scm.properties"
     }
 
@@ -211,9 +210,20 @@ class ScmService {
         return created
     }
 
-    Map<String, String> filePathsMapForJobRefs(List<JobReference> refs) {
+    /**
+     * @param jobs list of {@link ScheduledExecution} objects
+     * @return map of job ID to file path
+     */
+    Map<String, String> filePathsMapForJobs(List<ScheduledExecution> jobs) {
+        filePathsMapForJobRefs(jobRefsForJobs(jobs))
+    }
+    /**
+     * @param refs list of {@link JobRevReference} objects
+     * @return map of job ID to file path
+     */
+    Map<String, String> filePathsMapForJobRefs(List<JobRevReference> refs) {
         def files = [:]
-        refs.each { jobReference ->
+        refs.each { JobRevReference jobReference ->
             def plugin = loadedExportPlugins[jobReference.project]
             if (plugin) {
                 files[jobReference.id] = plugin.getRelativePathForJob(jobReference)
@@ -236,7 +246,7 @@ class ScmService {
         }
     }
 
-    private JobRevReferenceImpl jobRevReference(ScheduledExecution entry) {
+    private JobRevReference jobRevReference(ScheduledExecution entry) {
         new JobRevReferenceImpl(
                 id: entry.extid,
                 jobName: entry.jobName,
