@@ -1,11 +1,12 @@
 <g:set var="tooltip" value=""/>
 <g:if test="${status=='CLEAN'}">
-    <g:set var="tooltip" value="${message(code:'scm.export.status.clean.description',args:[meta?.commitId6 ?: meta?.commitId, meta.authorName?:'', meta.authorEmail?:''])}"/>
+    <g:set var="tooltip" value="${message(code:'scm.export.status.clean.description',args:[
+            commit?.commitId, commit?.author ?:''])}"/>
 </g:if>
 <g:else>
     <g:set var="tooltip" value="${message(
             code: 'scm.export.status.' + status + '.description',
-            args: [meta?.commitId6 ?: meta?.commitId, meta.authorName ?: '', meta.authorEmail ?: ''],
+            args: [commit?.commitId, commit?.author ?: ''],
             default: 'Export Needed '+status
     )}"/>
 </g:else>
@@ -16,5 +17,5 @@
                       text  : text,
                       icon:icon,
                       notext: notext,
-                      meta  : meta]"/>
+                      commit  : commit]"/>
 </span>

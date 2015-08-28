@@ -58,8 +58,8 @@
                                     <g:else>
                                     </g:else>
 
-                                    <g:render template="statusIcon" model="[iscommit:true,status:jobstatus?.synchState?.toString(),notext:true,text:'',meta  : jobstatus?.stateMeta]"/>
-                                    <g:render template="statusIcon" model="[iscommit:true,status:jobstatus?.synchState?.toString(),noicon:true,text:job.jobName,meta  : jobstatus?.stateMeta]"/>
+                                    <g:render template="statusIcon" model="[iscommit:true,status:jobstatus?.synchState?.toString(),notext:true,text:'',commit  : jobstatus?.commit]"/>
+                                    <g:render template="statusIcon" model="[iscommit:true,status:jobstatus?.synchState?.toString(),noicon:true,text:job.jobName,commit  : jobstatus?.commit]"/>
 
                                     <span class="text-muted">
                                         - ${job.groupPath}

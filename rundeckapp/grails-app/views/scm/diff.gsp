@@ -41,21 +41,22 @@
                 <g:render template="/scm/statusBadge" model="[
                         status: jobstatus?.synchState?.toString(),
                         text  : '',
-                        meta  : jobstatus?.stateMeta,
+                        commit  : jobstatus?.commit,
                 ]"/>
                 <span class="has_tooltip" title="Repo file path">
                     <i class="glyphicon glyphicon-file"></i>
                     ${scmFilePaths[job.extid]}
                 </span>
             </div>
-            <g:if test="${jobstatus?.stateMeta}">
+            <g:if test="${jobstatus?.commit}">
             <div class="list-group-item">
                 <g:expander key="commitInfo">Previous Commit</g:expander>
                 <table class="table table-bordered table-condensed table-striped " id="commitInfo" style="display:none">
-                    <g:each in="${jobstatus?.stateMeta}" var="entry">
+                    <g:set var="map" value="${jobstatus?.commit.asMap()}"/>
+                    <g:each in="${map.keySet().sort()}" var="key">
                         <tr>
-                            <td>${entry.key}</td>
-                            <td>${entry.value}</td>
+                            <td>${key}</td>
+                            <td>${map[key]}</td>
                         </tr>
                     </g:each>
                 </table>
@@ -63,7 +64,7 @@
             </g:if>
 
 
-            <g:if test="${diffResult.sourceNotFound}">
+            <g:if test="${diffResult.oldNotFound}">
 
                 <div class="list-group-item">
                     <div class="list-group-item-text text-info">
@@ -85,13 +86,13 @@
                      class="list-group-item scriptContent expanded apply_ace"
                      data-ace-session-mode="diff">${diffResult.content}</div>
             </g:elseif>
-            <g:if test="${diffResult.modified || diffResult.sourceNotFound}">
+            <g:if test="${diffResult.modified || diffResult.oldNotFound}">
                 <g:link action="commit" controller="scm"
-                        class="list-group-item ${diffResult.sourceNotFound?'list-group-item-success':'list-group-item-info'}"
+                        class="list-group-item ${diffResult.oldNotFound?'list-group-item-success':'list-group-item-info'}"
                         params="[project: params.project, jobIds: job.extid]">
 
                     <i class="glyphicon glyphicon-circle-arrow-right"></i>
-                    <g:if test="${diffResult.sourceNotFound}">
+                    <g:if test="${diffResult.oldNotFound}">
                         Commit new File
                     </g:if>
                     <g:else>
