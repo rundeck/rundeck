@@ -114,36 +114,53 @@
     <g:if test="${authRead}">
         <li class="divider"></li>
     </g:if>
+
+    <li class="dropdown-header"><g:message code="scm.export.plugin" /></li>
+
     <g:set var="jobstatus" value="${scmStatus?.get(scheduledExecution.extid)}"/>
+    <g:set var="exportStateClean" value="${jobstatus?.synchState?.toString()=='CLEAN'}"/>
+    <g:set var="exportStateCreate" value="${'CREATE_NEEDED'==jobstatus?.synchState?.toString()}"/>
 
-    <li class="dropdown-header"> SCM Export Plugin</li>
-
-    <li><g:link controller="scm"
-                title="${g.message(code: 'scm.action.export', default: 'Commit changes to SCM')}"
-                params="[project: scheduledExecution.project,jobIds:scheduledExecution.extid]"
-                action="commit"
-                >
-        <g:render template="/scm/statusBadge"
-                  model="[status: jobstatus?.synchState?.toString(),
-                          text  : '',
-                          notext: true,
-                          icon:'glyphicon-circle-arrow-right',
-                          meta  : jobstatus?.stateMeta]"/>
-        <g:message code="scm.action.commit.button.label" default="Commit Changes"/>
-    </g:link>
-    </li>
-    <li><g:link controller="scm"
-                title="${g.message(code: 'scm.action.export', default: 'Commit changes to SCM')}"
-                params="[project: scheduledExecution.project,jobId:scheduledExecution.extid]"
-                action="diff"
-                >
-        <g:render template="/scm/statusBadge"
-                  model="[status: jobstatus?.synchState?.toString(),
-                          text  : '',
-                          notext: true,
-                          icon:'glyphicon-eye-open',
-                          meta  : jobstatus?.stateMeta]"/>
-        <g:message code="scm.action.diff.button.label" default="Diff Changes"/>
-    </g:link>
-    </li>
+    <g:unless test="${exportStateClean}">
+        <li><g:link controller="scm"
+                    title="${g.message(code: 'scm.action.export', default: 'Commit changes to SCM')}"
+                    params="[project: scheduledExecution.project,jobIds:scheduledExecution.extid]"
+                    action="commit"
+                    >
+            <g:render template="/scm/statusBadge"
+                      model="[status: jobstatus?.synchState?.toString(),
+                              text  : '',
+                              notext: true,
+                              icon:'glyphicon-circle-arrow-right',
+                              commit  : jobstatus?.commit]"/>
+            <g:if test="${exportStateCreate}">
+                <g:message code="scm.action.commit.create.button.label" default="Commit New File"/>
+            </g:if>
+            <g:else>
+                <g:message code="scm.action.commit.button.label" default="Commit Changes"/>
+            </g:else>
+        </g:link>
+        </li>
+    </g:unless>
+    <g:unless test="${exportStateCreate}">
+        <li><g:link controller="scm"
+                    title="${g.message(code: 'scm.action.export', default: 'Commit changes to SCM')}"
+                    params="[project: scheduledExecution.project,jobId:scheduledExecution.extid]"
+                    action="diff"
+                    >
+            <g:render template="/scm/statusBadge"
+                      model="[status: jobstatus?.synchState?.toString(),
+                              text  : '',
+                              notext: true,
+                              icon:'glyphicon-eye-open',
+                              commit  : jobstatus?.commit]"/>
+            <g:if test="${exportStateClean}">
+                <g:message code="scm.action.diff.clean.button.label" default="View Commit Info"/>
+            </g:if>
+            <g:else>
+                <g:message code="scm.action.diff.button.label" default="Diff Changes"/>
+            </g:else>
+        </g:link>
+        </li>
+    </g:unless>
 </g:if>

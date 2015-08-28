@@ -20,7 +20,7 @@
 </g:elseif>
 <g:elseif test="${status.toString()=='CLEAN'}">
     <g:set var="textColor" value="text-muted"/>
-    <g:set var="iconName" value="glyphicon-ok-sign"/>
+    <g:set var="iconName" value="glyphicon-ok"/>
     <g:set var="defaultText" value="No change"/>
 </g:elseif>
 
