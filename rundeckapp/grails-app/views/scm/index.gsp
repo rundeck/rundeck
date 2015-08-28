@@ -11,7 +11,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="tabpage" content="configure"/>
     <meta name="layout" content="base"/>
-    <title><g:appTitle/> - <g:message code="scmController.page.title" args="[params.project]"/></></title>
+    <title><g:appTitle/> - <g:message code="scmController.page.index.title" args="[params.project]"/></></title>
 
 </head>
 
@@ -33,7 +33,7 @@
 
         <div class="well well-sm">
             <div class="text-info">
-                <g:message code="scmController.index.page.description" default="Enable or configure SCM integration."/>
+                <g:message code="scmController.page.index.description" default="Enable or configure SCM integration."/>
             </div>
         </div>
         <h4><g:message code="scm.export.title"/></h4>
@@ -41,7 +41,7 @@
             <h5><g:message code="configured.for.project"/></h5>
             <g:render template="/framework/renderPluginConfig"
                       model="${[values: config, description: configuredPlugin.description, hideTitle: false]}"/>
-            <button class="btn btn-warning"><g:message code="disable"/></button>
+            <button class="btn btn-warning"><g:message code="button.Disable.title"/></button>
         </g:if>
         <g:if test="${plugins}">
             <span class="help-block"><g:message code="choose.a.plugin.to.setup"/></span>
@@ -75,14 +75,14 @@
                                     <g:link action="enable" class="btn  btn-success"
                                             params="[integration      : 'export', type: plugins
                                             [pluginName].name, project: params.project]">
-                                        <g:message code="enable"/>
+                                        <g:message code="button.Enable.title"/>
                                     </g:link>
                                 </g:if>
                                 <g:else>
                                     <g:link action="disable" class="btn  btn-warning"
                                             params="[integration      : 'export', type: plugins
                                             [pluginName].name, project: params.project]">
-                                        <g:message code="disable"/>
+                                        <g:message code="button.Disable.title"/>
                                     </g:link>
                                 </g:else>
                             </g:if>
@@ -96,10 +96,10 @@
                                     params="[type: plugins[pluginName].name, project: params.project]">
                                 <i class="glyphicon glyphicon-cog"></i>
                                 <g:if test="${isConfiguredButDisabled || isConfiguredAndEnabled}">
-                                    <g:message code="Configure.button.title"/>
+                                    <g:message code="button.Configure.title"/>
                                 </g:if>
                                 <g:else>
-                                    <g:message code="Setup.button.title"/>
+                                    <g:message code="button.Setup.title"/>
                                 </g:else>
                             </g:link>
                         </div>

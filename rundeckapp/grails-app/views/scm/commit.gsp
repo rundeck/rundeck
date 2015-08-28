@@ -11,7 +11,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="tabpage" content="configure"/>
     <meta name="layout" content="base"/>
-    <title><g:appTitle/> - <g:message code="scmController.commit.page.title" args="[params.project]" /></title>
+    <title><g:appTitle/> - <g:message code="scmController.page.commit.title" args="[params.project]" /></title>
 
 </head>
 
@@ -31,7 +31,7 @@
             <div class="panel panel-primary" id="createform">
                 <div class="panel-heading">
                     <span class="h3">
-                        <g:message code="scmController.commit.heading" default="SCM Export: Commit Changes"/>
+                        <g:message code="scmController.page.commit.description" default="SCM Export: Commit Changes"/>
                     </span>
                 </div>
                 <div class="list-group">
@@ -68,7 +68,7 @@
 
                                 </label>
                                 <g:link action="diff" class="btn btn-xs btn-info" params="${[project:params.project,jobId:job.extid]}">
-                                    <g:message code="view.diff" />
+                                    <g:message code="button.View.Diff.title" />
                                 </g:link>
                             </div>
                             <g:if test="${filesMap[job.extid]}">

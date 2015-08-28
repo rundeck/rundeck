@@ -11,7 +11,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="tabpage" content="configure"/>
     <meta name="layout" content="base"/>
-    <title><g:appTitle/> - <g:message code="scmController.diff.page.title" args="[params.project]"/></title>
+    <title><g:appTitle/> - <g:message code="scmController.page.diff.title" args="[params.project]"/></title>
 
 </head>
 
@@ -27,7 +27,7 @@
     <div class="col-sm-12">
         <div class="list-group">
             <div class="list-group-item">
-                <h4 class="list-group-item-heading"><g:message code="scm.export.changes"/></h4>
+                <h4 class="list-group-item-heading"><g:message code="scmController.page.diff.description"/></h4>
             </div>
 
             <div class="list-group-item">
@@ -73,7 +73,7 @@
                         params="[project: params.project, jobIds: job.extid]">
 
                     <i class="glyphicon glyphicon-circle-arrow-right"></i>
-                    <g:message code="commit.changes"/>
+                    <g:message code="button.Commit.Changes.title"/>
                 </g:link>
             </g:if>
         </div>

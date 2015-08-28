@@ -11,7 +11,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="tabpage" content="configure"/>
     <meta name="layout" content="base"/>
-    <title><g:appTitle/> - <g:message code="scmController.setup.page.title" args="[params.project]"/></title>
+    <title><g:appTitle/> - <g:message code="scmController.page.setup.title" args="[params.project]"/></title>
     <asset:javascript src="storageBrowseKO.js"/>
     <g:javascript>
 
@@ -54,7 +54,7 @@
             <div class="panel panel-primary" id="createform">
                 <div class="panel-heading">
                     <span class="h3">
-                        <g:message code="scmController.setup.document.title" default="Setup SCM Export"/>:
+                        <g:message code="scmController.page.setup.description" default="Setup SCM Export"/>:
                         ${plugin.description?.title ?: plugin.name}
                     </span>
                 </div>
