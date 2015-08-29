@@ -599,7 +599,6 @@ class ScheduledExecutionService implements ApplicationContextAware{
         jobDetail.getJobDataMap().put("bySchedule", true)
         def Date nextTime
         if(oldJobName && oldGroupName){
-            def oldjob = quartzScheduler.getJobDetail(new JobKey(oldJobName,oldGroupName))
             log.info("job renamed, removing old job and scheduling new one")
             deleteJob(oldJobName,oldGroupName)
         }
