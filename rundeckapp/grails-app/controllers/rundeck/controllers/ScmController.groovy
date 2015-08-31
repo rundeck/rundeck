@@ -23,8 +23,8 @@ class ScmController extends ControllerBase {
                 plugins         : plugins ?: [],
                 configuredPlugin: configuredPlugin,
                 pluginConfig    : pluginConfig,
-                config          : pluginConfig.config,
-                type            : pluginConfig.type
+                config          : pluginConfig?.config,
+                type            : pluginConfig?.type
         ]
     }
 
