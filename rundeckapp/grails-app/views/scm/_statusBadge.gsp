@@ -10,7 +10,7 @@
 </g:else>
 
 <span title="${tooltip}" class="has_tooltip">
-    <g:if test="${link && status != 'CREATE_NEEDED'}">
+    <g:if test="${link}">
         <g:link controller="scm"
                 title="${g.message(
                         code: status == 'CLEAN' ? 'scm.action.diff.clean.button.label' :
