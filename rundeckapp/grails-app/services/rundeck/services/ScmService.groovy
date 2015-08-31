@@ -97,6 +97,9 @@ class ScmService {
 
     private String storedConfigFile(String integration) {
         //TODO: store export/import separately?
+        if(frameworkService.serverUUID) {
+            return "${frameworkService.serverUUID}/etc/scm.properties"
+        }
         "etc/scm.properties"
     }
 
