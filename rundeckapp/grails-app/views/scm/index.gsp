@@ -183,14 +183,14 @@
                                     <g:message code="button.Enable.title"/>
                                 </span>
                             </g:if>
-                            <g:else>
+                            <g:elseif test="${isConfiguredAndEnabled}">
                                 <span
                                         class="btn  btn-warning"
                                         data-toggle="modal"
                                         data-target="#disablePlugin">
                                     <g:message code="button.Disable.title"/>
                                 </span>
-                            </g:else>
+                            </g:elseif>
 
                             <g:link action="setup"
                                     class="btn  ${isConfiguredButDisabled ? 'btn-default' : 'btn-success'}"
