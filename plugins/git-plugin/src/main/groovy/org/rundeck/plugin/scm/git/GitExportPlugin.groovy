@@ -63,48 +63,44 @@ class GitExportPlugin implements ScmExportPlugin {
             return
         }
 
-        //verify input
-        if (!input.pathTemplate) {
-            throw new IllegalStateException("pathTemplate cannot be null")
+        GitExportPluginFactory.requiredProperties.each { key ->
+            //verify input
+            if (!input[key]) {
+                throw new IllegalArgumentException("${key} cannot be null")
+            }
         }
-        //verify input
-        if (!input.dir) {
-            throw new IllegalStateException("dir cannot be null")
-        }
-        //verify input
-        if (!input.branch) {
-            throw new IllegalStateException("branch cannot be null")
-        }
-        //verify input
-        if (!input.committerName) {
-            throw new IllegalStateException("committerName cannot be null")
-        }
-        //verify input
-        if (!input.committerEmail) {
-            throw new IllegalStateException("committerEmail cannot be null")
-        }
+
         format = input.format ?: 'xml'
 
-        File base = new File(input.get("dir").toString())
-        mapper = new TemplateJobFileMapper(input.pathTemplate.toString(), base)
+        if (!(format in ['xml', 'yaml'])) {
+            throw new IllegalArgumentException("format cannot be ${format}, must be one of: xml,yaml")
+        }
 
-        branch = input.get("branch").toString()
-        commitIdent = new PersonIdent(input.committerName.toString(), input.committerEmail.toString())
+        def dir = input.get("dir").toString()
+        def branch = input.get("branch").toString()
+        def pathTemplate = input.pathTemplate.toString()
+        def committerName = input.committerName.toString()
+        def committerEmail = input.committerEmail.toString()
+        def url = input.get("url").toString()
+
+        File base = new File(dir)
+
+        mapper = new TemplateJobFileMapper(pathTemplate, base)
+
+        this.branch = branch
+
+        commitIdent = new PersonIdent(committerName, committerEmail)
         if (base.isDirectory() && new File(base, ".git").isDirectory()) {
             log.debug("base dir exists, not cloning")
             repo = new FileRepositoryBuilder().setGitDir(new File(base, ".git")).setWorkTree(base).build()
             git = new Git(repo)
-            workingDir = base
-            inited = true
-            return
+        } else {
+            log.debug("cloning...")
+            git = Git.cloneRepository().setBranch(this.branch).setRemote("origin").setDirectory(base).setURI(url).call()
+            repo = git.getRepository()
         }
-        log.debug("cloning...")
-        String url = input.get("url").toString()
-        git = Git.cloneRepository().setBranch(branch).setRemote("origin").setDirectory(base).setURI(url).call()
-        repo = git.getRepository()
         workingDir = base
         inited = true
-
     }
 
     @Override
@@ -174,7 +170,13 @@ class GitExportPlugin implements ScmExportPlugin {
 
     def serialize(final JobExportReference job) {
         File outfile = mapper.fileForJob(job)
-
+        if (!outfile.parentFile.exists()) {
+            if (!outfile.parentFile.mkdirs()) {
+                throw new ScmPluginException(
+                        "Cannot create necessary dirs to serialize file to path: ${outfile.absolutePath}"
+                )
+            }
+        }
         outfile.withOutputStream { out ->
             job.jobSerializer.serialize(format, out)
         }
@@ -328,6 +330,10 @@ class GitExportPlugin implements ScmExportPlugin {
     }
 
     RevCommit lastCommitForPath(String path) {
+        def head = getHead()
+        if(!head){
+            return null
+        }
         def log = git.log().addPath(path).call()
         def iter = log.iterator()
         if (iter.hasNext()) {
@@ -375,20 +381,27 @@ class GitExportPlugin implements ScmExportPlugin {
     }
 
     /**
-     * get blob for HEAD rev of the path
-     * @return
+     * get RevCommit for HEAD rev of the path
+     * @return RevCommit or null if HEAD not found (empty git)
      */
     def getHead() {
 
         final RevWalk walk = new RevWalk(repo);
         walk.setRetainBody(true);
 
-        final RevCommit headCommit = walk.parseCommit(repo.resolve(Constants.HEAD));
+        def resolve = repo.resolve(Constants.HEAD)
+        if(!resolve){
+            return null
+        }
+        final RevCommit headCommit = walk.parseCommit(resolve);
         walk.release()
         headCommit
     }
 
     def lookupId(RevCommit commit, String path) {
+        if(!commit){
+            return null
+        }
         final TreeWalk walk2 = TreeWalk.forPath(repo, path, commit.getTree());
 
         if (walk2 == null) {

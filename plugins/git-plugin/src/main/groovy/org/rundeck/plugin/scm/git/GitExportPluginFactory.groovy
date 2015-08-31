@@ -154,6 +154,7 @@ Some examples:
 
         ]
     }
+    static List<String> requiredProperties = ['dir', 'pathTemplate', 'branch', 'committerName', 'committerEmail', 'url']
 
     @Override
     ScmExportPlugin createPlugin(final Map<String, ?> input, final String project) {
