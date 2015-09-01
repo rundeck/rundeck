@@ -29,6 +29,25 @@ class UrlMappings {
         "/api/$api_version/job/$id"(controller: 'scheduledExecution') {
             action = [GET: 'apiJobExport', DELETE: 'apiJobDelete', PUT: 'apiJobUpdateSingle', POST: 'apiJobCreateSingle']
         }
+
+        "/api/$api_version/job/$id/execution/enable"(controller: 'scheduledExecution') {
+            action = [POST: 'apiFlipExecutionEnabled']
+            status = true
+        }
+        "/api/$api_version/job/$id/execution/disable"(controller: 'scheduledExecution') {
+            action = [POST: 'apiFlipExecutionEnabled']
+            status = false
+        }
+
+        "/api/$api_version/job/$id/schedule/enable"(controller: 'scheduledExecution') {
+            action = [POST: 'apiFlipScheduleEnabled']
+            status = true
+        }
+        "/api/$api_version/job/$id/schedule/disable"(controller: 'scheduledExecution') {
+            action = [POST: 'apiFlipScheduleEnabled']
+            status = false
+        }
+
         "/api/$api_version/job/$id/run"(controller: 'scheduledExecution', action: 'apiJobRun')
         "/api/$api_version/job/$id/executions"(controller: 'scheduledExecution') {
             action = [GET: 'apiJobExecutions', DELETE: 'apiJobExecutionsDelete', POST: 'apiJobRun']

@@ -136,6 +136,29 @@
                                     </span>
                                 </g:elseif>
                             </td>
+                            <td>
+                                Schedule:
+                                <span class="text-muted">
+                                    <g:if test="${scheduledExecution.hasScheduleEnabled()}">
+                                        Enabled
+                                    </g:if>
+                                    <g:else>
+                                        Disabled
+                                    </g:else>
+                                </span>
+                            </td>
+                            <td>
+                                Execution:
+                                <span class="text-muted">
+                                    <g:if test="${scheduledExecution.hasExecutionEnabled()}">
+                                        Enabled
+                                    </g:if>
+                                    <g:else>
+                                        Disabled
+                                    </g:else>
+                                </span>
+                            </td>
+                            </td>
                         </tr>
                         </g:else>
                         <% j++ %>

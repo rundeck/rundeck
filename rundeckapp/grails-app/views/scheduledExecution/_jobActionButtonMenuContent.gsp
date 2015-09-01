@@ -17,6 +17,8 @@
 <g:set var="authUpdate" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_UPDATE])}"/>
 <g:set var="authRead" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_READ])}"/>
 <g:set var="authDelete" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_DELETE])}"/>
+<g:set var="authEnableDisableSchedule" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_TOGGLE_SCHEDULE])}"/>
+<g:set var="authEnableDisableExecution" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_TOGGLE_EXECUTION])}"/>
 <g:set var="authJobCreate" value="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_CREATE, project: scheduledExecution.project)}"/>
 <g:set var="authJobDelete" value="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_DELETE, project: scheduledExecution.project)}"/>
 <g:if test="${authUpdate}">
@@ -44,6 +46,7 @@
         </g:link>
     </li>
 </g:if>
+
 <g:unless test="${hideJobDelete}">
     <g:if test="${authJobDelete && authDelete}">
         <g:if test="${authUpdate || authRead&&authJobCreate}">
@@ -75,6 +78,57 @@
         </li>
     </g:if>
 </g:unless>
+
+<g:if test="${authEnableDisableSchedule}">
+    <li>
+        <g:if test="${scheduledExecution.hasScheduleEnabled()}">
+            <g:link controller="scheduledExecution"
+                    action="flipScheduleEnabled"
+                    params="${[id:scheduledExecution.extid,project: scheduledExecution.project, scheduleEnabled: false]}"
+                    data-job-id="${enc(attr: scheduledExecution.extid)}"
+                    title="${g.message(code: 'disable.schedule.this.job')}">
+                <b class="glyphicon glyphicon-unchecked"></b>
+                <g:message code="scheduledExecution.action.disable.schedule.button.label"/>
+            </g:link>
+        </g:if>
+        <g:else>
+            <g:link controller="scheduledExecution"
+                    action="flipScheduleEnabled"
+                    params="${[id:scheduledExecution.extid,project: scheduledExecution.project, scheduleEnabled: true]}"
+                    data-job-id="${enc(attr: scheduledExecution.extid)}"
+                    title="${g.message(code: 'enable.schedule.this.job')}">
+                <b class="glyphicon glyphicon-check"></b>
+                <g:message code="scheduledExecution.action.enable.schedule.button.label"/>
+            </g:link>
+        </g:else>
+    </li>
+</g:if>
+
+<g:if test="${authEnableDisableExecution}">
+    <li>
+        <g:if test="${scheduledExecution.hasExecutionEnabled()}">
+            <g:link controller="scheduledExecution"
+                    action="flipExecutionEnabled"
+                    params="${[id:scheduledExecution.extid,project: scheduledExecution.project, executionEnabled: false]}"
+                    data-job-id="${enc(attr: scheduledExecution.extid)}"
+                    title="${g.message(code: 'disable.execution.this.job')}">
+                <b class="glyphicon glyphicon-unchecked"></b>
+                <g:message code="scheduledExecution.action.disable.execution.button.label"/>
+            </g:link>
+        </g:if>
+        <g:else>
+            <g:link controller="scheduledExecution"
+                    action="flipExecutionEnabled"
+                    params="${[id:scheduledExecution.extid,project: scheduledExecution.project, executionEnabled: true]}"
+                    data-job-id="${enc(attr: scheduledExecution.extid)}"
+                    title="${g.message(code: 'enable.execution.this.job')}">
+                <b class="glyphicon glyphicon-check"></b>
+                <g:message code="scheduledExecution.action.enable.execution.button.label"/>
+            </g:link>
+        </g:else>
+    </li>
+</g:if>
+
 <g:if test="${authRead}">
     <g:if test="${authJobDelete && authDelete || authUpdate || authJobCreate}">
         <li class="divider"></li>

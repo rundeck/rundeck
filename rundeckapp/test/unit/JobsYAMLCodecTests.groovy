@@ -1,14 +1,7 @@
-import grails.test.mixin.support.GrailsUnitTestMixin;
-
+import grails.test.mixin.TestMixin
+import grails.test.mixin.support.GrailsUnitTestMixin
 import org.yaml.snakeyaml.Yaml
-
-import rundeck.Notification
-import rundeck.PluginStep
-import rundeck.ScheduledExecution
-import rundeck.Workflow
-import rundeck.CommandExec
-import rundeck.JobExec
-import rundeck.Option
+import rundeck.*
 import rundeck.codecs.JobsYAMLCodec
 
 /*
@@ -81,6 +74,8 @@ public class JobsYAMLCodecTests  {
             assertEquals "wrong name", "test job 1", doc[0].name
             assertEquals "wrong description", "test descrip", doc[0].description
             assertEquals "wrong loglevel", "INFO", doc[0].loglevel
+            assertEquals "wrong scheduleEnabled", true, doc[0].scheduleEnabled
+            assertEquals "wrong executionEnabled", true, doc[0].executionEnabled
             assertEquals "incorrect context project", 'test1', doc[0].project
             assertNotNull "missing sequence", doc[0].sequence
             assertFalse "wrong wf keepgoing", doc[0].sequence.keepgoing
@@ -128,6 +123,196 @@ public class JobsYAMLCodecTests  {
             assertEquals "not scheduled.time", "2011", doc[0].schedule.year
 
     }
+
+    void testEncodeBasicScheduleEnabled() {
+        def Yaml yaml = new Yaml()
+        ScheduledExecution se = new ScheduledExecution([
+                jobName: 'test job 1',
+                description: 'test descrip',
+                loglevel: 'INFO',
+                project: 'test1',
+                workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [new CommandExec([adhocRemoteString: 'test script',description: 'test1']),
+                                                                                     new CommandExec([adhocLocalString: "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", description: 'test2']),
+                                                                                     new CommandExec([adhocFilepath: 'some file path', description: 'test3']),
+                                                                                     new JobExec([jobName: 'another job', jobGroup: 'agroup', nodeStep:true, description: 'test4']),
+                                                                                     new CommandExec([adhocFilepath: 'http://example.com/blah', description: 'test5']),
+                ]]),
+                options: [new Option(name: 'opt1', description: "an opt", defaultValue: "xyz", enforced: true, required: true, values: new TreeSet(["a", "b"]))] as TreeSet,
+                nodeThreadcount: 1,
+                nodeKeepgoing: true,
+                doNodedispatch: true,
+                nodeInclude: "testhost1",
+                nodeExcludeName: "x1",
+                scheduled: true,
+                seconds: '*',
+                minute: '0',
+                hour: '2',
+                month: '3',
+                dayOfMonth: '?',
+                dayOfWeek: '4',
+                year: '2011',
+                scheduleEnabled: true,
+                executionEnabled: true
+        ])
+        def jobs1 = [se]
+        def  ymlstr = JobsYAMLCodec.encode(jobs1)
+        assertNotNull ymlstr
+        assertTrue ymlstr instanceof String
+
+
+        def doc = yaml.load(ymlstr)
+        assertNotNull doc
+        System.err.println("yaml: ${ymlstr}");
+        System.err.println("doc: ${doc}");
+        assertEquals "wrong number of jobs", 1, doc.size()
+        assertEquals "wrong name", "test job 1", doc[0].name
+        assertEquals "wrong description", "test descrip", doc[0].description
+        assertEquals "wrong loglevel", "INFO", doc[0].loglevel
+        assertEquals "wrong scheduleEnabled", true, doc[0].scheduleEnabled
+        assertEquals "wrong executionEnabled", true, doc[0].executionEnabled
+        assertEquals "incorrect context project", 'test1', doc[0].project
+        assertNotNull "missing sequence", doc[0].sequence
+        assertFalse "wrong wf keepgoing", doc[0].sequence.keepgoing
+        assertEquals "wrong wf strategy", "node-first", doc[0].sequence.strategy
+        assertNotNull "missing commands", doc[0].sequence.commands
+        assertEquals "missing commands", 5, doc[0].sequence.commands.size()
+        doc[0].sequence.commands.eachWithIndex{cmd,i->
+            assertEquals "wrong desc at ${i}", "test${i+1}", cmd.description
+        }
+        assertEquals "missing command exec", "test script", doc[0].sequence.commands[0].exec
+        assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'", doc[0].sequence.commands[1].script
+        assertEquals "missing command scriptfile", "some file path", doc[0].sequence.commands[2].scriptfile
+        assertNotNull "missing command jobref", doc[0].sequence.commands[3].jobref
+        assertEquals "missing command jobref.name", "another job", doc[0].sequence.commands[3].jobref.name
+        assertEquals "missing command jobref.group", "agroup", doc[0].sequence.commands[3].jobref.group
+        assertEquals "missing command jobref.group", 'true', doc[0].sequence.commands[3].jobref.nodeStep
+
+        assertEquals "missing command scriptfile", "http://example.com/blah", doc[0].sequence.commands[4].scripturl
+        assertNotNull "missing options", doc[0].options
+        assertNotNull "missing option opt1", doc[0].options.opt1
+        assertEquals "missing option opt1", "an opt", doc[0].options.opt1.description
+        assertEquals "missing option default", "xyz", doc[0].options.opt1.value
+        assertTrue "missing option enforced", doc[0].options.opt1.enforced
+        assertTrue "missing option required", doc[0].options.opt1.required
+        assertNotNull "missing option values", doc[0].options.opt1.values
+        assertEquals "wrong option values size", 2, doc[0].options.opt1.values.size()
+        assertEquals "wrong option values[0]", "a", doc[0].options.opt1.values[0]
+        assertEquals "wrong option values[1]", "b", doc[0].options.opt1.values[1]
+
+        assertEquals "incorrect dispatch threadcount", 1, doc[0].nodefilters.dispatch.threadcount
+        assertTrue "incorrect dispatch keepgoing", doc[0].nodefilters.dispatch.keepgoing
+        assertTrue "incorrect dispatch excludePrecedence", doc[0].nodefilters.dispatch.excludePrecedence
+        assertNotNull "missing nodefilters include", doc[0].nodefilters.filter
+        assertEquals "wrong nodefilters include hostname", "hostname: testhost1 !name: x1", doc[0].nodefilters.filter
+        assertEquals "missing nodefilters exclude name", null, doc[0].nodefilters.include
+        assertEquals "missing nodefilters exclude name", null, doc[0].nodefilters.exclude
+
+        assertNotNull "not scheduled", doc[0].schedule
+        assertNotNull "not scheduled.time", doc[0].schedule.time
+        assertEquals "not scheduled.time", "*", doc[0].schedule.time.seconds
+        assertEquals "not scheduled.time", "0", doc[0].schedule.time.minute
+        assertEquals "not scheduled.time", "2", doc[0].schedule.time.hour
+        assertEquals "not scheduled.time", "3", doc[0].schedule.month
+        assertEquals "not scheduled.time", "4", doc[0].schedule.weekday.day
+        assertEquals "not scheduled.time", "2011", doc[0].schedule.year
+
+    }
+
+    void testEncodeBasicScheduleDisabled() {
+        def Yaml yaml = new Yaml()
+        ScheduledExecution se = new ScheduledExecution([
+                jobName: 'test job 1',
+                description: 'test descrip',
+                loglevel: 'INFO',
+                project: 'test1',
+                workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [new CommandExec([adhocRemoteString: 'test script',description: 'test1']),
+                                                                                     new CommandExec([adhocLocalString: "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", description: 'test2']),
+                                                                                     new CommandExec([adhocFilepath: 'some file path', description: 'test3']),
+                                                                                     new JobExec([jobName: 'another job', jobGroup: 'agroup', nodeStep:true, description: 'test4']),
+                                                                                     new CommandExec([adhocFilepath: 'http://example.com/blah', description: 'test5']),
+                ]]),
+                options: [new Option(name: 'opt1', description: "an opt", defaultValue: "xyz", enforced: true, required: true, values: new TreeSet(["a", "b"]))] as TreeSet,
+                nodeThreadcount: 1,
+                nodeKeepgoing: true,
+                doNodedispatch: true,
+                nodeInclude: "testhost1",
+                nodeExcludeName: "x1",
+                scheduled: true,
+                seconds: '*',
+                minute: '0',
+                hour: '2',
+                month: '3',
+                dayOfMonth: '?',
+                dayOfWeek: '4',
+                year: '2011',
+                scheduleEnabled: false,
+                executionEnabled: false
+        ])
+        def jobs1 = [se]
+        def  ymlstr = JobsYAMLCodec.encode(jobs1)
+        assertNotNull ymlstr
+        assertTrue ymlstr instanceof String
+
+
+        def doc = yaml.load(ymlstr)
+        assertNotNull doc
+        System.err.println("yaml: ${ymlstr}");
+        System.err.println("doc: ${doc}");
+        assertEquals "wrong number of jobs", 1, doc.size()
+        assertEquals "wrong name", "test job 1", doc[0].name
+        assertEquals "wrong description", "test descrip", doc[0].description
+        assertEquals "wrong loglevel", "INFO", doc[0].loglevel
+        assertEquals "wrong scheduleEnabled", false, doc[0].scheduleEnabled
+        assertEquals "wrong executionEnabled", false, doc[0].executionEnabled
+        assertEquals "incorrect context project", 'test1', doc[0].project
+        assertNotNull "missing sequence", doc[0].sequence
+        assertFalse "wrong wf keepgoing", doc[0].sequence.keepgoing
+        assertEquals "wrong wf strategy", "node-first", doc[0].sequence.strategy
+        assertNotNull "missing commands", doc[0].sequence.commands
+        assertEquals "missing commands", 5, doc[0].sequence.commands.size()
+        doc[0].sequence.commands.eachWithIndex{cmd,i->
+            assertEquals "wrong desc at ${i}", "test${i+1}", cmd.description
+        }
+        assertEquals "missing command exec", "test script", doc[0].sequence.commands[0].exec
+        assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'", doc[0].sequence.commands[1].script
+        assertEquals "missing command scriptfile", "some file path", doc[0].sequence.commands[2].scriptfile
+        assertNotNull "missing command jobref", doc[0].sequence.commands[3].jobref
+        assertEquals "missing command jobref.name", "another job", doc[0].sequence.commands[3].jobref.name
+        assertEquals "missing command jobref.group", "agroup", doc[0].sequence.commands[3].jobref.group
+        assertEquals "missing command jobref.group", 'true', doc[0].sequence.commands[3].jobref.nodeStep
+
+        assertEquals "missing command scriptfile", "http://example.com/blah", doc[0].sequence.commands[4].scripturl
+        assertNotNull "missing options", doc[0].options
+        assertNotNull "missing option opt1", doc[0].options.opt1
+        assertEquals "missing option opt1", "an opt", doc[0].options.opt1.description
+        assertEquals "missing option default", "xyz", doc[0].options.opt1.value
+        assertTrue "missing option enforced", doc[0].options.opt1.enforced
+        assertTrue "missing option required", doc[0].options.opt1.required
+        assertNotNull "missing option values", doc[0].options.opt1.values
+        assertEquals "wrong option values size", 2, doc[0].options.opt1.values.size()
+        assertEquals "wrong option values[0]", "a", doc[0].options.opt1.values[0]
+        assertEquals "wrong option values[1]", "b", doc[0].options.opt1.values[1]
+
+        assertEquals "incorrect dispatch threadcount", 1, doc[0].nodefilters.dispatch.threadcount
+        assertTrue "incorrect dispatch keepgoing", doc[0].nodefilters.dispatch.keepgoing
+        assertTrue "incorrect dispatch excludePrecedence", doc[0].nodefilters.dispatch.excludePrecedence
+        assertNotNull "missing nodefilters include", doc[0].nodefilters.filter
+        assertEquals "wrong nodefilters include hostname", "hostname: testhost1 !name: x1", doc[0].nodefilters.filter
+        assertEquals "missing nodefilters exclude name", null, doc[0].nodefilters.include
+        assertEquals "missing nodefilters exclude name", null, doc[0].nodefilters.exclude
+
+        assertNotNull "not scheduled", doc[0].schedule
+        assertNotNull "not scheduled.time", doc[0].schedule.time
+        assertEquals "not scheduled.time", "*", doc[0].schedule.time.seconds
+        assertEquals "not scheduled.time", "0", doc[0].schedule.time.minute
+        assertEquals "not scheduled.time", "2", doc[0].schedule.time.hour
+        assertEquals "not scheduled.time", "3", doc[0].schedule.month
+        assertEquals "not scheduled.time", "4", doc[0].schedule.weekday.day
+        assertEquals "not scheduled.time", "2011", doc[0].schedule.year
+
+    }
+
+
     void testEncodeTimeout() {
         def Yaml yaml = new Yaml()
         ScheduledExecution se = new ScheduledExecution([
@@ -526,6 +711,10 @@ public class JobsYAMLCodecTests  {
             assertEquals "wrong groupPath", "my group", se.groupPath
             assertEquals "wrong project", "test1", se.project
             assertEquals "wrong loglevel", "INFO", se.loglevel
+
+            assertEquals "wrong scheduleEnabled", true, se.scheduleEnabled
+            assertEquals "wrong executionEnabled", true, se.executionEnabled
+
             assertTrue "wrong doNodedispatch", se.doNodedispatch
             assertEquals "wrong nodeThreadcount", 1, se.nodeThreadcount
             assertTrue "wrong nodeKeepgoing", se.nodeKeepgoing
@@ -578,6 +767,8 @@ public class JobsYAMLCodecTests  {
             def ymlstr1 = """- id: null
   project: test1
   loglevel: INFO
+  scheduleEnabled: true
+  executionEnabled: true
   sequence:
     keepgoing: false
     strategy: node-first
@@ -634,6 +825,10 @@ public class JobsYAMLCodecTests  {
             assertEquals "wrong groupPath", "my group", se.groupPath
             assertEquals "wrong project", "test1", se.project
             assertEquals "wrong loglevel", "INFO", se.loglevel
+
+            assertEquals "wrong scheduleEnabled", true, se.scheduleEnabled
+            assertEquals "wrong executionEnabled", true, se.executionEnabled
+
             assertTrue "wrong doNodedispatch", se.doNodedispatch
             assertEquals "wrong nodeThreadcount", 1, se.nodeThreadcount
             assertTrue "wrong nodeKeepgoing", se.nodeKeepgoing
@@ -688,6 +883,8 @@ public class JobsYAMLCodecTests  {
 -
   project: zamp
   loglevel: ERR
+  scheduleEnabled: false
+  executionEnabled: false
   sequence:
     keepgoing: true
     strategy: step-first
@@ -758,6 +955,10 @@ public class JobsYAMLCodecTests  {
         assertEquals "wrong groupPath", "group/1/2/3", se.groupPath
         assertEquals "wrong project", "zamp", se.project
         assertEquals "wrong loglevel", "ERR", se.loglevel
+
+        assertEquals "wrong scheduleEnabled", false, se.scheduleEnabled
+        assertEquals "wrong executionEnabled", false, se.executionEnabled
+
         assertTrue "wrong doNodedispatch", se.doNodedispatch
         assertEquals "wrong nodeThreadcount", 3, se.nodeThreadcount
         assertFalse "wrong nodeKeepgoing", se.nodeKeepgoing
