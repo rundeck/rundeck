@@ -7,10 +7,10 @@ import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.jobs.JobChangeListener
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
+import com.dtolabs.rundeck.plugins.scm.JobState
 import com.dtolabs.rundeck.plugins.scm.ScmDiffResult
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory
-import com.dtolabs.rundeck.plugins.scm.ScmPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.ValidatedPlugin
@@ -307,7 +307,7 @@ class ScmService {
      * @param jobs
      * @return
      */
-    Map<String, ScmPlugin.ScmFileStatus> exportStatusForJobs(List<ScheduledExecution> jobs) {
+    Map<String, JobState> exportStatusForJobs(List<ScheduledExecution> jobs) {
         def status = [:]
         exportjobRefsForJobs(jobs).each { jobReference ->
             def plugin = loadedExportPlugins[jobReference.project]
