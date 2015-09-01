@@ -189,7 +189,7 @@ class ScmController extends ControllerBase {
             return redirect(action: 'index', params: [project: project])
         }
         List<String> jobIds = []
-        List<String> deletedPaths = []
+        Map deletedPaths = [:]
         List<String> selectedPaths = []
         if (params.jobIds) {
             jobIds = [params.jobIds].flatten()
@@ -267,6 +267,7 @@ class ScmController extends ControllerBase {
         }
         List<String> deletePaths = [params.deletePaths].flatten().findAll { it }
 
+        def deletePathsToJobIds = deletePaths.collectEntries{[it,scmService.deletedJobForPath(project,it).id]}
         def result = scmService.exportCommit(project, params.commit, jobs, deletePaths)
         if (!result.valid) {
             def report = result.report
@@ -293,8 +294,13 @@ class ScmController extends ControllerBase {
 
         def commitid = result.commitId
         def code = "scmController.action.commit.multi.succeed.message"
+        def jobIdent = ''
         if (jobs.size() == 1 && deletePaths.size() == 0) {
             code = "scmController.action.commit.succeed.message"
+            jobIdent = '{{Job ' + jobIds[0] + '}}'
+        } else if (jobs.size() == 0 && deletePaths.size() == 1) {
+            code = "scmController.action.commit.delete.succeed.message"
+            jobIdent = deletePathsToJobIds[deletePaths[0]]
         }
 
         flash.message = message(
@@ -302,7 +308,7 @@ class ScmController extends ControllerBase {
                 args: [
                         commitid,
                         jobs.size() + deletePaths.size(),
-                        '{{Job ' + jobIds[0] + '}}'
+                        jobIdent
                 ]
         )
         redirect(action: 'jobs', controller: 'menu', params: [project: params.project])

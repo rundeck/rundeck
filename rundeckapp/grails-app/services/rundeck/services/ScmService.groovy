@@ -98,7 +98,7 @@ class ScmService {
 
     private String storedConfigFile(String integration) {
         //TODO: store export/import separately?
-        if(frameworkService.serverUUID) {
+        if (frameworkService.serverUUID) {
             return "${frameworkService.serverUUID}/etc/scm.properties"
         }
         "etc/scm.properties"
@@ -129,6 +129,29 @@ class ScmService {
                 PropertyScope.Project
         )
     }
+
+    private Map<String, Map<String, Map<String, String>>> deletedJobsCache = Collections.synchronizedMap([:])
+
+    private recordDeletedJob(String project, String path, Map ident) {
+        if (!deletedJobsCache[project]) {
+            deletedJobsCache[project] = Collections.synchronizedMap([:])
+        }
+        log.debug "Record deleted job ${ident} for ${project}, path: ${path}"
+        deletedJobsCache[project][path] = ident
+    }
+
+    public Map deletedJobForPath(String project, String path) {
+        log.debug "Get deleted job for ${project}, path: ${path}"
+        return deletedJobsCache[project]?.get(path)
+    }
+
+    private void forgetDeletedPaths(String project, Collection<String> paths) {
+        log.debug "Forget deleted jobs for ${project}, paths: ${paths}"
+        if (deletedJobsCache[project]) {
+            paths.each{deletedJobsCache[project].remove(it)}
+        }
+    }
+
     /**
      * Create new plugin config and load it
      * @param project
@@ -147,6 +170,13 @@ class ScmService {
         //XXX:
         def changeListener = { JobChangeEvent event, JobSerializer serializer ->
             log.debug("job change event: " + event)
+            if (event.eventType == JobChangeEvent.JobChangeEventType.DELETE) {
+                //record deleted path
+                recordDeletedJob(project,loaded.getRelativePathForJob(event.jobReference),[
+                        id:event.jobReference.id,
+                        jobNameAndGroup:event.jobReference.getJobName(),
+                ])
+            }
             loaded.jobChanged(event, new JobSerializerReferenceImpl(event.jobReference, serializer))
         } as JobChangeListener
 
@@ -308,7 +338,7 @@ class ScmService {
      * @param project
      * @return
      */
-    ScmExportSynchState exportPluginStatus(String project){
+    ScmExportSynchState exportPluginStatus(String project) {
 
         def plugin = loadedExportPlugins[project]
         if (plugin) {
@@ -338,14 +368,18 @@ class ScmService {
      * @param jobs
      * @return
      */
-    List<String> deletedExportFilesForProject(String project) {
+    Map<String,Map> deletedExportFilesForProject(String project) {
         def deleted = []
         def plugin = loadedExportPlugins[project]
         if (plugin) {
             deleted = plugin.deletedFiles
-            log.debug "Deleted files for ${project}: ${deleted}"
         }
-        deleted
+        //create map of path -> job info
+        def map = deleted.collectEntries {
+            [it, deletedJobForPath(project, it) ?: [:]]
+        }
+        log.debug "Deleted job map for ${project}: ${map}"
+        return map
     }
 
     def exportCommit(String project, Map config, List<ScheduledExecution> jobs, List<String> deletePaths) {
@@ -358,6 +392,7 @@ class ScmService {
             return [valid: false, report: report]
         }
         def result = plugin.export(jobrefs as Set, deletePaths as Set, config)
+        forgetDeletedPaths(project,deletePaths)
         log.debug("Commit id: ${result}")
         [valid: true, commitId: result]
     }

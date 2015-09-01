@@ -111,7 +111,7 @@
 
                         <div class="list-group-item">
                             <div class="form-group">
-                                <g:each in="${deletedPaths}" var="path">
+                                <g:each in="${deletedPaths.keySet().sort()}" var="path">
 
                                     <div class="checkbox col-sm-12">
                                         <label>
@@ -119,10 +119,14 @@
                                             <g:checkBox name="deletePaths" value="${path}"
                                                         checked="${selectedPaths?.contains(path)}"/>
 
+                                            <g:set var="deletedJobText" value="${
+                                                deletedPaths[path].jobNameAndGroup ?: message(code:"deleted.job.label")
+                                            }"/>
+
                                             <g:render template="statusIcon"
                                                       model="[iscommit: true, status: 'DELETED', notext: true, text: '',]"/>
                                             <g:render template="statusIcon"
-                                                      model="[iscommit: true, status: 'DELETED', noicon: true, text: '(Deleted Job)']"/>
+                                                      model="[iscommit: true, status: 'DELETED', noicon: true, text: deletedJobText]"/>
 
                                         </label>
                                     </div>
