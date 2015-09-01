@@ -11,6 +11,7 @@ import com.dtolabs.rundeck.plugins.scm.JobState
 import com.dtolabs.rundeck.plugins.scm.ScmDiffResult
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory
+import com.dtolabs.rundeck.plugins.scm.ScmExportSynchState
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.ValidatedPlugin
@@ -332,8 +333,22 @@ class ScmService {
         }
         status
     }
+    /**
+     * Return a map of status for jobs
+     * @param jobs
+     * @return
+     */
+    List<String> deletedExportFilesForProject(String project) {
+        def deleted = []
+        def plugin = loadedExportPlugins[project]
+        if (plugin) {
+            deleted = plugin.deletedFiles
+            log.debug "Deleted files for ${project}: ${deleted}"
+        }
+        deleted
+    }
 
-    def exportCommit(String project, Map config, List<ScheduledExecution> jobs) {
+    def exportCommit(String project, Map config, List<ScheduledExecution> jobs, List<String> deletePaths) {
         //store config
         def plugin = loadedExportPlugins[project]
         def jobrefs = exportjobRefsForJobs(jobs)
@@ -342,7 +357,7 @@ class ScmService {
         if (!report.valid) {
             return [valid: false, report: report]
         }
-        def result = plugin.export(jobrefs as Set, config)
+        def result = plugin.export(jobrefs as Set, deletePaths as Set, config)
         log.debug("Commit id: ${result}")
         [valid: true, commitId: result]
     }
