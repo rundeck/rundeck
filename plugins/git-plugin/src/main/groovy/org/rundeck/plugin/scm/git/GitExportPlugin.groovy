@@ -156,14 +156,7 @@ class GitExportPlugin implements ScmExportPlugin {
         }
         serializeAll(jobs)
         String commitMessage = input.commitMessage.toString()
-        StatusCommand statusCmd = git.status()
-        jobs.each {
-            statusCmd.addPath(relativePath(it))
-        }
-        pathsToDelete.each {
-            statusCmd.addPath(it)
-        }
-        Status status = statusCmd.call()
+        Status status = git.status().call()
         //add all changes to index
         if(jobs) {
             AddCommand addCommand = git.add()
@@ -173,8 +166,6 @@ class GitExportPlugin implements ScmExportPlugin {
             addCommand.call()
         }
         def rmfiles = new HashSet<String>(status.removed + status.missing)
-
-
         def todelete = pathsToDelete.intersect(rmfiles)
         if(todelete) {
             def rm = git.rm()
@@ -187,6 +178,9 @@ class GitExportPlugin implements ScmExportPlugin {
         CommitCommand commit1 = git.commit().setMessage(commitMessage).setCommitter(commitIdent)
         jobs.each {
             commit1.setOnly(relativePath(it))
+        }
+        pathsToDelete.each {
+            commit1.setOnly(it)
         }
         RevCommit commit = commit1.call()
 
