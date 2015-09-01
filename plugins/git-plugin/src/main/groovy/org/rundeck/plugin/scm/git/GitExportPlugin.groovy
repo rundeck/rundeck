@@ -258,7 +258,8 @@ class GitExportPlugin implements ScmExportPlugin {
                     exportReference.jobSerializer.serialize(format, out)
                 }
         }
-        return getJobStatus(exportReference)
+        def status = refreshJobStatus(exportReference)
+        return createJobStatus(status)
     }
 
     private hasJobStatusCached(final JobExportReference job) {
