@@ -36,3 +36,4 @@ core/src/main/resources/META-INF/com/dtolabs/rundeck/core/application.properties
 /local/
 grails
 out
+scratch
