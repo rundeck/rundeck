@@ -264,8 +264,18 @@ class MenuController extends ControllerBase{
         }
         def results=listWorkflows(query,authContext,session.user)
         //fill scm status
-        results.scmExportEnabled=scmService.projectHasConfiguredExportPlugin(params.project)
-        results.scmStatus=scmService.exportStatusForJobs(results.nextScheduled)
+
+        if (frameworkService.authorizeApplicationResourceAny(authContext,
+                                                             frameworkService.authResourceForProject(params.project),
+                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT])) {
+
+            if(scmService.projectHasConfiguredExportPlugin(params.project)){
+                results.scmExportEnabled=true
+                results.scmStatus=scmService.exportStatusForJobs(results.nextScheduled)
+                results.scmExportStatus=scmService.exportPluginStatus(params.project)
+            }
+        }
+
         if(usedFilter){
             results.filterName=usedFilter
             results.paginateParams['filterName']=usedFilter

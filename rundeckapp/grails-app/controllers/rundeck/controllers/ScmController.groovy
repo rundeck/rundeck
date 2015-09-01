@@ -173,6 +173,17 @@ class ScmController extends ControllerBase {
     }
 
     def commit(String project) {
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                 frameworkService.authResourceForProject(project),
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]
+                ),
+                AuthConstants.ACTION_EXPORT, 'Project', project
+        )) {
+            return
+        }
         if (!scmService.projectHasConfiguredExportPlugin(project)) {
             return redirect(action: 'index', params: [project: project])
         }
@@ -201,13 +212,13 @@ class ScmController extends ControllerBase {
     def saveCommit(String project) {
 
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(
-                        authContext,
-                        frameworkService.authResourceForProject(project),
-                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                 frameworkService.authResourceForProject(project),
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]
                 ),
-                AuthConstants.ACTION_CONFIGURE, 'Project', project
+                AuthConstants.ACTION_EXPORT, 'Project', project
         )) {
             return
         }
@@ -290,6 +301,17 @@ class ScmController extends ControllerBase {
     }
 
     def diff(String project, String jobId) {
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                 frameworkService.authResourceForProject(project),
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]
+                ),
+                AuthConstants.ACTION_EXPORT, 'Project', project
+        )) {
+            return
+        }
         if (!scmService.projectHasConfiguredExportPlugin(project)) {
             return redirect(action: 'index', params: [project: project])
         }

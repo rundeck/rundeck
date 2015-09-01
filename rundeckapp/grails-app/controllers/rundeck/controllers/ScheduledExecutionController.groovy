@@ -213,17 +213,22 @@ class ScheduledExecutionController  extends ControllerBase{
                 params.id
             )
         ) {
-            def scmExportEnabled=scmService.projectHasConfiguredExportPlugin(params.project)
-            def scmStatus=scmService.exportStatusForJobs([scheduledExecution])
-             render(template: '/scheduledExecution/jobActionButtonMenuContent',
-                          model: [
-                                  scheduledExecution: scheduledExecution,
-                                  hideJobDelete     : params.hideJobDelete,
-                                  jobDeleteSingle   : params.jobDeleteSingle,
-                                  scmExportEnabled: scmExportEnabled,
-                                  scmStatus: scmStatus
-                          ]
-            )
+
+            def model=[
+                    scheduledExecution: scheduledExecution,
+                    hideJobDelete     : params.hideJobDelete,
+                    jobDeleteSingle   : params.jobDeleteSingle,
+            ]
+
+            if (frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                 frameworkService.authResourceForProject(params.project),
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT])) {
+                if(scmService.projectHasConfiguredExportPlugin(params.project)) {
+                    model.scmExportEnabled = true
+                    model.scmStatus = scmService.exportStatusForJobs([scheduledExecution])
+                }
+            }
+            render(template: '/scheduledExecution/jobActionButtonMenuContent', model: model)
         }
     }
 
@@ -293,15 +298,12 @@ class ScheduledExecutionController  extends ControllerBase{
                 && scheduledExecution.serverNodeUUID != frameworkService.getServerUUID()) {
             remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
         }
-        def scmExportEnabled=scmService.projectHasConfiguredExportPlugin(params.project)
-        def scmStatus=scmExportEnabled?scmService.exportStatusForJobs([scheduledExecution]):[:]
+
 
         def dataMap= [
                 scheduledExecution: scheduledExecution,
                 crontab: crontab,
                 params: params,
-                scmExportEnabled: scmExportEnabled,
-                scmStatus:scmStatus,
                 total: total,
                 nextExecution: scheduledExecutionService.nextExecutionTime(scheduledExecution),
                 remoteClusterNodeUUID: remoteClusterNodeUUID,
@@ -309,7 +311,16 @@ class ScheduledExecutionController  extends ControllerBase{
 				orchestratorPlugins: orchestratorPluginService.listOrchestratorPlugins(),
                 max: params.int('max') ?: 10,
                 offset: params.int('offset') ?: 0] + _prepareExecute(scheduledExecution, framework,authContext)
-                
+
+        //add scm export status
+        if (frameworkService.authorizeApplicationResourceAny(authContext,
+                                                             frameworkService.authResourceForProject(params.project),
+                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT])) {
+            if(scmService.projectHasConfiguredExportPlugin(params.project)){
+                dataMap.scmExportEnabled = true
+                dataMap.scmStatus = scmService.exportStatusForJobs([scheduledExecution])
+            }
+        }
         withFormat{
             html{
                 dataMap
