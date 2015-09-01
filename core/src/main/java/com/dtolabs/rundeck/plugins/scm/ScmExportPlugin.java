@@ -40,7 +40,12 @@ public interface ScmExportPlugin {
      *
      * @return id of commit
      */
-    String export(Set<JobExportReference> jobs, Map<String, Object> input) throws ScmPluginException;
+    String export(Set<JobExportReference> jobs, Set<String> pathsToDelete, Map<String, Object> input) throws ScmPluginException;
+
+    /**
+     * @return overall status
+     */
+    ScmExportSynchState getStatus();
 
     /**
      * Return the state of the given job
@@ -50,15 +55,21 @@ public interface ScmExportPlugin {
      * @return state
      */
     JobState getJobStatus(JobExportReference job);
+
+    /**
+     * Return a list of tracked files that have been deleted.
+     */
+    List<String> getDeletedFiles();
+
     /**
      * Return the state of the given job
      *
-     * @param event change event
+     * @param event           change event
      * @param exportReference serialize the job
      *
      * @return state
      */
-    JobState jobChanged( JobChangeEvent event, JobExportReference exportReference);
+    JobState jobChanged(JobChangeEvent event, JobExportReference exportReference);
 
     /**
      * Return the File for the given job
