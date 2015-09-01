@@ -192,19 +192,19 @@
             <div class="radio">
                  <label title="Original UUIDs will be preserved, conflicting UUIDs will be replaced">
                     <input type="radio" name="uuidOption" value="preserve" checked/>
-                    <g:message code="project.archive.import.jobUUIDBehavior.preserve.label"/>
+                    <g:message code="project.archive.import.jobUuidOption.preserve.label"/>
                 </label>
                 <div class="help-block"><g:message
-                        code="project.archive.import.jobUUIDBehavior.preserve.description"/></div>
+                        code="project.archive.import.jobUuidOption.preserve.description"/></div>
             </div>
 
             <div class="radio">
                 <label title="New UUIDs will be generated for every imported Job">
                     <input type="radio" name="uuidOption" value="remove"/>
-                    <g:message code="project.archive.import.jobUUIDBehavior.remove.label"/>
+                    <g:message code="project.archive.import.jobUuidOption.remove.label"/>
                 </label>
                 <div class="help-block"><g:message
-                        code="project.archive.import.jobUUIDBehavior.remove.description"/></div>
+                        code="project.archive.import.jobUuidOption.remove.description"/></div>
             </div>
         </div>
 </div>
