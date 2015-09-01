@@ -78,11 +78,28 @@
                                             <g:message code="button.View.Diff.title"/>
                                         </g:link>
                                     </div>
+                                    <g:if test="${renamedJobPaths[job.extid]}">
+                                        <div class="col-sm-11 col-sm-offset-1">
+                                        <span class="text-muted">
+                                            <g:icon name="file"/>
+                                            ${renamedJobPaths[job.extid]}
+
+                                            <g:hiddenField
+                                                    name="renamedPaths.${job.extid}"
+                                                    value="${renamedJobPaths[job.extid]}"
+                                            />
+                                        </span>
+                                        </div>
+                                    </g:if>
                                     <g:if test="${filesMap[job.extid]}">
                                         <div class="col-sm-11 col-sm-offset-1">
                                             <span class="text-muted">
-                                                <span class="glyphicon glyphicon-file"></span>
+                                                <g:if test="${renamedJobPaths[job.extid]}">
+                                                    <g:icon name="arrow-right"/>
+                                                </g:if>
+                                                <g:icon name="file"/>
                                                 ${filesMap[job.extid]}
+
                                             </span>
                                         </div>
                                     </g:if>

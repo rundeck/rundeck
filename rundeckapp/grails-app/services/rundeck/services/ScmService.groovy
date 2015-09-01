@@ -130,8 +130,19 @@ class ScmService {
         )
     }
 
+    /**
+     * Track deleted jobs by repo path
+     * Project->[ repoPath -> [id: jobid, jobAndGroupPath: String] ]
+     */
     private Map<String, Map<String, Map<String, String>>> deletedJobsCache = Collections.synchronizedMap([:])
 
+    /**
+     * cache info about a deleted job for the repo path
+     * @param project project name
+     * @param path repo path
+     * @param ident job info map
+     * @return
+     */
     private recordDeletedJob(String project, String path, Map ident) {
         if (!deletedJobsCache[project]) {
             deletedJobsCache[project] = Collections.synchronizedMap([:])
@@ -140,16 +151,77 @@ class ScmService {
         deletedJobsCache[project][path] = ident
     }
 
+    /**
+     * Return a cached job info map for the deleted path, if present
+     * @param project project
+     * @param path repo path
+     * @return job info map
+     */
     public Map deletedJobForPath(String project, String path) {
         log.debug "Get deleted job for ${project}, path: ${path}"
         return deletedJobsCache[project]?.get(path)
     }
 
+    /**
+     * Remove cache info about deleted jobs
+     * @param project project
+     * @param paths set of repo paths to forget about
+     */
     private void forgetDeletedPaths(String project, Collection<String> paths) {
         log.debug "Forget deleted jobs for ${project}, paths: ${paths}"
         if (deletedJobsCache[project]) {
-            paths.each{deletedJobsCache[project].remove(it)}
+            paths.each { deletedJobsCache[project].remove(it) }
         }
+    }
+    /**
+     * Track renamed jobs by job id and old repoPath
+     *
+     * Project -> [ jobid: repopath]
+     */
+    private Map<String, Map<String, String>> renamedJobsCache = Collections.synchronizedMap([:])
+
+    /**
+     * Cache the old repo path for a renamed job
+     * @param project project
+     * @param jobid job id
+     * @param path old path
+     * @return
+     */
+    private recordRenamedJob(String project, String jobid, String path) {
+        if (!renamedJobsCache[project]) {
+            renamedJobsCache[project] = Collections.synchronizedMap([:])
+        }
+        log.debug "Record renamed job ${jobid} for ${project}, path: ${path}"
+        renamedJobsCache[project][jobid] = path
+    }
+    /**
+     * Return a cached repo path for a job id, if present
+     * @param project project
+     * @param jobid job id
+     * @return repo path for original job name
+     */
+    public String getRenamedPathForJobId(String project, String jobid) {
+        log.debug "Get renamed path for project ${project}, job: ${jobid}"
+        return renamedJobsCache[project]?.get(jobid)
+    }
+    /**
+     * Remove cached repo path about renamed jobs
+     * @param project project
+     * @param jobids set of job ids
+     */
+    private void forgetRenamedJobs(String project, Collection<String> jobids) {
+        log.debug "Forget renamed jobs for ${project}, paths: ${jobids}"
+        if (renamedJobsCache[project]) {
+            jobids.each { renamedJobsCache[project].remove(it) }
+        }
+    }
+    /**
+     * Return a map of status for jobs
+     * @param jobs
+     * @return
+     */
+    Map<String, String> getRenamedJobPathsForProject(String project) {
+        new HashMap<>(renamedJobsCache[project]?:[:])
     }
 
     /**
@@ -172,10 +244,21 @@ class ScmService {
             log.debug("job change event: " + event)
             if (event.eventType == JobChangeEvent.JobChangeEventType.DELETE) {
                 //record deleted path
-                recordDeletedJob(project,loaded.getRelativePathForJob(event.jobReference),[
-                        id:event.jobReference.id,
-                        jobNameAndGroup:event.jobReference.getJobName(),
-                ])
+                recordDeletedJob(
+                        project,
+                        loaded.getRelativePathForJob(event.jobReference),
+                        [
+                                id             : event.jobReference.id,
+                                jobNameAndGroup: event.jobReference.getJobName(),
+                        ]
+                )
+            } else if (event.eventType == JobChangeEvent.JobChangeEventType.MODIFY_RENAME) {
+                //record original path for renamed job, if it is different
+                def origpath = loaded.getRelativePathForJob(event.originalJobReference)
+                def newpath = loaded.getRelativePathForJob(event.jobReference)
+                if (origpath != newpath) {
+                    recordRenamedJob(project, event.jobReference.id, origpath)
+                }
             }
             loaded.jobChanged(event, new JobSerializerReferenceImpl(event.jobReference, serializer))
         } as JobChangeListener
@@ -228,6 +311,10 @@ class ScmService {
         def changeListener = loadedExportListeners.remove(project)
         jobEventsService.removeListener(changeListener)
         loaded.cleanup()
+
+        //clear cached rename/delete info
+        renamedJobsCache.remove(project)
+        deletedJobsCache.remove(project)
     }
 
     /**
@@ -368,7 +455,7 @@ class ScmService {
      * @param jobs
      * @return
      */
-    Map<String,Map> deletedExportFilesForProject(String project) {
+    Map<String, Map> deletedExportFilesForProject(String project) {
         def deleted = []
         def plugin = loadedExportPlugins[project]
         if (plugin) {
@@ -383,6 +470,7 @@ class ScmService {
     }
 
     def exportCommit(String project, Map config, List<ScheduledExecution> jobs, List<String> deletePaths) {
+        log.debug("exportCommit project: ${project}, jobs: ${jobs}, deletePaths: ${deletePaths}")
         //store config
         def plugin = loadedExportPlugins[project]
         def jobrefs = exportjobRefsForJobs(jobs)
@@ -392,7 +480,8 @@ class ScmService {
             return [valid: false, report: report]
         }
         def result = plugin.export(jobrefs as Set, deletePaths as Set, config)
-        forgetDeletedPaths(project,deletePaths)
+        forgetDeletedPaths(project, deletePaths)
+        forgetRenamedJobs(project, jobrefs*.id)
         log.debug("Commit id: ${result}")
         [valid: true, commitId: result]
     }

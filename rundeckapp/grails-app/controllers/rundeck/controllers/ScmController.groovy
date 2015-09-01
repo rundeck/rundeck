@@ -191,6 +191,7 @@ class ScmController extends ControllerBase {
         List<String> jobIds = []
         Map deletedPaths = [:]
         List<String> selectedPaths = []
+        Map<String,String> renamedJobPaths = scmService.getRenamedJobPathsForProject(params.project)
         if (params.jobIds) {
             jobIds = [params.jobIds].flatten()
         } else if (params.allJobs) {
@@ -198,10 +199,12 @@ class ScmController extends ControllerBase {
                 it.extid
             }
             deletedPaths = scmService.deletedExportFilesForProject(params.project)
-        } else if (params.deletedPath) {
-            selectedPaths = [params.deletedPath]
-            deletedPaths = scmService.deletedExportFilesForProject(params.project)
         }
+        //remove deleted paths that are known to be renamed jobs
+        renamedJobPaths.values().each{
+            deletedPaths.remove(it)
+        }
+
         List<ScheduledExecution> jobs = jobIds.collect {
             ScheduledExecution.getByIdOrUUID(it)
         }
@@ -219,7 +222,8 @@ class ScmController extends ControllerBase {
                 selected     : params.jobIds ? jobIds : [],
                 filesMap     : scmFiles,
                 deletedPaths : deletedPaths,
-                selectedPaths: selectedPaths
+                selectedPaths: selectedPaths,
+                renamedJobPaths: renamedJobPaths,
         ]
     }
 
@@ -266,8 +270,14 @@ class ScmController extends ControllerBase {
             ScheduledExecution.getByIdOrUUID(it)
         }
         List<String> deletePaths = [params.deletePaths].flatten().findAll { it }
+        jobIds.each{
+            if(params."renamedPaths.${it}"){
+                deletePaths << params."renamedPaths.${it}"
+            }
+        }
+        System.err.println("add delete paths: "+params.renamedPaths)
 
-        def deletePathsToJobIds = deletePaths.collectEntries{[it,scmService.deletedJobForPath(project,it).id]}
+        def deletePathsToJobIds = deletePaths.collectEntries{[it,scmService.deletedJobForPath(project,it)?.id]}
         def result = scmService.exportCommit(project, params.commit, jobs, deletePaths)
         if (!result.valid) {
             def report = result.report
@@ -300,7 +310,7 @@ class ScmController extends ControllerBase {
             jobIdent = '{{Job ' + jobIds[0] + '}}'
         } else if (jobs.size() == 0 && deletePaths.size() == 1) {
             code = "scmController.action.commit.delete.succeed.message"
-            jobIdent = deletePathsToJobIds[deletePaths[0]]
+            jobIdent = deletePathsToJobIds[deletePaths[0]]?:''
         }
 
         flash.message = message(
