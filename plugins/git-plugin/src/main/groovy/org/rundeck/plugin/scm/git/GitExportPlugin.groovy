@@ -140,22 +140,48 @@ class GitExportPlugin implements ScmExportPlugin {
 
 
     @Override
-    String export(final Set<JobExportReference> jobs, final Map<String, Object> input)
+    String export(
+            final Set<JobExportReference> jobs,
+            final Set<String> pathsToDelete,
+            final Map<String, Object> input
+    )
             throws ScmPluginException
     {
+        if(!jobs && !pathsToDelete) {
+            throw new IllegalArgumentException("A list of jobs or a list paths to delete are required to export")
+        }
+        if(!input.commitMessage){
+            throw new IllegalArgumentException("A commitMessage is required to export")
+        }
         serializeAll(jobs)
         String commitMessage = input.commitMessage.toString()
         StatusCommand statusCmd = git.status()
         jobs.each {
             statusCmd.addPath(relativePath(it))
         }
+        pathsToDelete.each {
+            statusCmd.addPath(it)
+        }
         Status status = statusCmd.call()
         //add all changes to index
-        AddCommand addCommand = git.add()
-        jobs.each {
-            addCommand.addFilepattern(relativePath(it))
+        if(jobs) {
+            AddCommand addCommand = git.add()
+            jobs.each {
+                addCommand.addFilepattern(relativePath(it))
+            }
+            addCommand.call()
         }
-        addCommand.call()
+        def rmfiles = new HashSet<String>(status.removed + status.missing)
+
+
+        def todelete = pathsToDelete.intersect(rmfiles)
+        if(todelete) {
+            def rm = git.rm()
+            todelete.each {
+                rm.addFilepattern(it)
+            }
+            rm.call()
+        }
 
         CommitCommand commit1 = git.commit().setMessage(commitMessage).setCommitter(commitIdent)
         jobs.each {
@@ -187,6 +213,25 @@ class GitExportPlugin implements ScmExportPlugin {
     }
 
     @Override
+    List<String> getDeletedFiles() {
+        Status status = git.status().call()
+        def set = new HashSet<String>(status.removed)
+        set.addAll(status.missing)
+        System.err.println("status: ${status}, removed: ${set}")
+        return set as List
+    }
+
+    @Override
+    ScmExportSynchState getStatus() {
+        def commit = lastCommit()
+
+        Status status = git.status().call()
+        SynchState synchState = synchStateForStatus(status, commit, null)
+
+        return new GitSynchState(state: synchState)
+    }
+
+    @Override
     JobState jobChanged(JobChangeEvent event, JobExportReference exportReference) {
         File origfile = mapper.fileForJob(event.originalJobReference)
         File outfile = mapper.fileForJob(event.jobReference)
@@ -194,6 +239,8 @@ class GitExportPlugin implements ScmExportPlugin {
         switch (event.eventType) {
             case JobChangeEvent.JobChangeEventType.DELETE:
                 origfile.delete()
+                def status = refreshJobStatus(event.jobReference)
+                return createJobStatus(status)
                 break;
 
             case JobChangeEvent.JobChangeEventType.MODIFY_RENAME:
@@ -230,7 +277,7 @@ class GitExportPlugin implements ScmExportPlugin {
         null
     }
 
-    private refreshJobStatus(final JobExportReference job) {
+    private refreshJobStatus(final JobRevReference job) {
 
         def path = relativePath(job)
 
@@ -241,7 +288,10 @@ class GitExportPlugin implements ScmExportPlugin {
 
         def ident = job.id + ':' + String.valueOf(job.version) + ':' + (commit ? commit.name : '')
 
-        serialize(job)
+        if(job instanceof JobExportReference) {
+            serialize(job)
+        }
+
 
         Status status = git.status().addPath(path).call()
         SynchState synchState = synchStateForStatus(status, commit, path)
@@ -265,9 +315,9 @@ class GitExportPlugin implements ScmExportPlugin {
     }
 
     private SynchState synchStateForStatus(Status status, RevCommit commit, String path) {
-        if (status.untracked.contains(path)) {
+        if (path && status.untracked.contains(path) || !path && status.untracked) {
             SynchState.CREATE_NEEDED
-        } else if (status.uncommittedChanges.contains(path)) {
+        } else if (path && status.uncommittedChanges.contains(path) || !path && status.uncommittedChanges) {
             SynchState.EXPORT_NEEDED
         } else if (commit) {
             SynchState.CLEAN
@@ -329,12 +379,20 @@ class GitExportPlugin implements ScmExportPlugin {
         ]
     }
 
+    RevCommit lastCommit() {
+        lastCommitForPath(null)
+    }
+
     RevCommit lastCommitForPath(String path) {
         def head = getHead()
-        if(!head){
+        if (!head) {
             return null
         }
-        def log = git.log().addPath(path).call()
+        def logb = git.log()
+        if (path) {
+            logb.addPath(path)
+        }
+        def log = logb.call()
         def iter = log.iterator()
         if (iter.hasNext()) {
             def commit = iter.next()
@@ -390,7 +448,7 @@ class GitExportPlugin implements ScmExportPlugin {
         walk.setRetainBody(true);
 
         def resolve = repo.resolve(Constants.HEAD)
-        if(!resolve){
+        if (!resolve) {
             return null
         }
         final RevCommit headCommit = walk.parseCommit(resolve);
@@ -399,7 +457,7 @@ class GitExportPlugin implements ScmExportPlugin {
     }
 
     def lookupId(RevCommit commit, String path) {
-        if(!commit){
+        if (!commit) {
             return null
         }
         final TreeWalk walk2 = TreeWalk.forPath(repo, path, commit.getTree());
