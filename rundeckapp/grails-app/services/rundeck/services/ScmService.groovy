@@ -303,6 +303,20 @@ class ScmService {
     }
 
     /**
+     * Get the synch status overall
+     * @param project
+     * @return
+     */
+    ScmExportSynchState exportPluginStatus(String project){
+
+        def plugin = loadedExportPlugins[project]
+        if (plugin) {
+            return plugin.status
+        }
+        null
+    }
+
+    /**
      * Return a map of status for jobs
      * @param jobs
      * @return

@@ -1,19 +1,20 @@
-<g:if test="${status == 'CLEAN'}">
+<g:if test="${status.toString() == 'CLEAN'}">
     <span class="has_tooltip"
-        data-placement="right"
-          title="SCM Status: OK. [${meta?.commitId6 ?: meta?.commitId} by ${meta.authorName?:''}&lt;${meta.authorEmail?:''}&gt;]">
+        data-placement="bottom"
+          title="${message(code:'scm.export.status.clean.description')}">
         <g:render template="/scm/statusIcon" model="[status: status,
                                                      text  : '',
+                                                     notext:true,
                                                      meta  : meta]"/>
     </span>
 </g:if>
 <g:else>
 
     <g:link action="commit" controller="scm"
-            data-placement="right"
-            class="btn btn-link btn-sm has_tooltip"
-            title="Click to commit or add this Job"
-            params="${[project: params.project, jobIds: jobid]}">
+            data-placement="bottom"
+            class="btn btn-sm btn-link has_tooltip"
+            title="${message(code:"scm.export.commit.link.title")}"
+            params="${[project: params.project, allJobs:true]}">
         <g:render template="/scm/statusIcon" model="[status: status,
                                                      text  : text,
                                                      meta  : meta]"/>

@@ -122,6 +122,13 @@
     <g:if test="${!params.compact}">
         <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
         <div class=" pull-right" >
+
+            %{--SCM synch status--}%
+            <g:if test="${scmExportEnabled && scmExportStatus}">
+                <g:render template="/scm/scmExportStatus" model="[status:scmExportStatus.state,text:'',meta:[:]]"/>
+            </g:if>
+
+
             <div class="btn-group">
             <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
                 Create <g:message code="domain.ScheduledExecution.title"/>
