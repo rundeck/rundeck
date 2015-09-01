@@ -26,7 +26,7 @@
 
 <span class="${textColor}">
     <g:if test="${!noicon}">
-        <span class="glyphicon ${icon?:iconName}"></span>
+        <g:icon name="${icon?:iconName}"/>
     </g:if>
     <g:if test="${!notext}">
         ${text?:defaultText}

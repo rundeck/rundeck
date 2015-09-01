@@ -1456,8 +1456,11 @@ ansi-bg-default'''))
      * @emptyTag
      * @attr name REQUIRED glyphicon name
      */
-    def icon={attrs,body->
-        if(glyphiconSet.contains(attrs.name)) {
+    def icon= { attrs, body ->
+        if (attrs.name.startsWith('glyphicon-')) {
+            attrs.name=attrs.name.substring('glyphicon-'.length())
+        }
+        if (glyphiconSet.contains(attrs.name)) {
             out << "<i class=\"glyphicon glyphicon-${attrs.name}\"></i>"
         }
     }
