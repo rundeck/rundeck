@@ -1,6 +1,7 @@
 package org.rundeck.plugin.scm.git
 
 import com.dtolabs.rundeck.core.jobs.JobExportReference
+import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.plugins.scm.*
@@ -405,12 +406,12 @@ class GitExportPlugin implements ScmExportPlugin {
     }
 
     @Override
-    File getLocalFileForJob(final JobRevReference job) {
+    File getLocalFileForJob(final JobReference job) {
         mapper.fileForJob(job)
     }
 
     @Override
-    String getRelativePathForJob(final JobRevReference job) {
+    String getRelativePathForJob(final JobReference job) {
         relativePath(job)
     }
 
@@ -418,7 +419,7 @@ class GitExportPlugin implements ScmExportPlugin {
         reference.absolutePath.substring(workingDir.getAbsolutePath().length() + 1)
     }
 
-    String relativePath(JobRevReference reference) {
+    String relativePath(JobReference reference) {
         relativePath(getLocalFileForJob(reference))
     }
 

@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.plugins.scm;
 
 import com.dtolabs.rundeck.core.jobs.JobExportReference;
+import com.dtolabs.rundeck.core.jobs.JobReference;
 import com.dtolabs.rundeck.core.jobs.JobRevReference;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
 
@@ -78,7 +79,7 @@ public interface ScmExportPlugin {
      *
      * @return state
      */
-    File getLocalFileForJob(JobRevReference job);
+    File getLocalFileForJob(JobReference job);
 
     /**
      * Return the relative path for the job in the repo
@@ -87,7 +88,7 @@ public interface ScmExportPlugin {
      *
      * @return state
      */
-    String getRelativePathForJob(JobRevReference job);
+    String getRelativePathForJob(JobReference job);
 
     /**
      * Get diff for the given job
