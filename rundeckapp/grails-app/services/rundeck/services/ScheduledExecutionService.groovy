@@ -449,6 +449,8 @@ class ScheduledExecutionService implements ApplicationContextAware{
                                  AuthContext authContext=null, String username){
         scheduledExecution = ScheduledExecution.get(scheduledExecution.id)
         def jobuuid = scheduledExecution.extid
+        def origName = scheduledExecution.jobName
+        def origPath = scheduledExecution.groupPath
         def jobname = scheduledExecution.generateJobScheduledName()
         def groupname = scheduledExecution.generateJobGroupName()
         def project = scheduledExecution.project
@@ -500,14 +502,14 @@ class ScheduledExecutionService implements ApplicationContextAware{
                             eventType: JobChangeEvent.JobChangeEventType.DELETE,
                             originalJobReference: new JobReferenceImpl(
                                     id: jobuuid,
-                                    jobName: jobname,
-                                    groupPath: groupname,
+                                    jobName: origName,
+                                    groupPath: origPath,
                                     project: project
                             ),
                             jobReference: new JobRevReferenceImpl(
                                     id: jobuuid,
-                                    jobName: jobname,
-                                    groupPath: groupname,
+                                    jobName: origName,
+                                    groupPath: origPath,
                                     project: project,
                                     version: version
                             )
