@@ -35,6 +35,8 @@ dependencies {
 
     testCompile "org.codehaus.groovy:groovy-all:2.0.8"
     testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
+
+    testCompile( 'org.eclipse.jgit:org.eclipse.jgit:3.7.1.201504261725-r')
 }
 
 
