@@ -386,8 +386,9 @@ class GitExportPlugin implements ScmExportPlugin {
             'UNTRACKED'
         } else if (path in status.conflicting) {
             'CONFLICT'
+        }else{
+            'NOT_FOUND'
         }
-        'NOT_FOUND'
     }
 
     @Override
