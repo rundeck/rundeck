@@ -148,17 +148,17 @@ class GitExportPlugin implements ScmExportPlugin {
     )
             throws ScmPluginException
     {
-        if(!jobs && !pathsToDelete) {
+        if (!jobs && !pathsToDelete) {
             throw new IllegalArgumentException("A list of jobs or a list paths to delete are required to export")
         }
-        if(!input.commitMessage){
+        if (!input.commitMessage) {
             throw new IllegalArgumentException("A commitMessage is required to export")
         }
         serializeAll(jobs)
         String commitMessage = input.commitMessage.toString()
         Status status = git.status().call()
         //add all changes to index
-        if(jobs) {
+        if (jobs) {
             AddCommand addCommand = git.add()
             jobs.each {
                 addCommand.addFilepattern(relativePath(it))
@@ -167,7 +167,7 @@ class GitExportPlugin implements ScmExportPlugin {
         }
         def rmfiles = new HashSet<String>(status.removed + status.missing)
         def todelete = pathsToDelete.intersect(rmfiles)
-        if(todelete) {
+        if (todelete) {
             def rm = git.rm()
             todelete.each {
                 rm.addFilepattern(it)
