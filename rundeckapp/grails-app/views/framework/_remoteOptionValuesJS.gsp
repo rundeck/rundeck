@@ -210,14 +210,14 @@ var RemoteOptionControl = Class.create({
         if(this.dependents[name] && !this.cyclic){
             var formOpts;
             for(var i=0;i<this.dependents[name].length;i++){
-                if(!formOpts) { formOpts = Form.serialize(this.formId,true); }:
-                var dependentName = (this.dependents[name][i];
+                if(!formOpts) { formOpts = Form.serialize(this.formId,true); }
+                var dependentName = this.dependents[name][i];
                 var skip = false;
                 // if any of the dependencies does not have value, and is required, then skip.
                 for(var j=0;j<this.dependencies[dependentName].length;j++){
                     var dependencyName = this.dependencies[dependentName][j];
                     if(! formOpts['extra.option.'+dependencyName]) {
-                        var reqSigns = $$('#'+dependencyName+' .reqwarning');
+                        var reqSigns = $$('#'+dependencyName+'_state .reqwarning');
                         if (reqSigns.length > 0 && reqSigns[0].visible()) {
                             skip = true;
                             break;
