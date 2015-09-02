@@ -12,7 +12,6 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.scm.PluginState;
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin;
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory;
-import com.dtolabs.rundeck.plugins.scm.StoredPluginState;
 
 import java.util.*;
 
@@ -59,7 +58,6 @@ public class ScmExportService extends PluggableProviderRegistryService<ScmExport
     public ScmExportPlugin getPluginForConfiguration(
             final String type,
             final Map<String, String> configuration,
-            final StoredPluginState state,
             final String projectName
     ) throws
             ExecutionServiceException

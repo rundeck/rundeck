@@ -41,7 +41,12 @@ public interface ScmExportPlugin {
      *
      * @return id of commit
      */
-    String export(Set<JobExportReference> jobs, Set<String> pathsToDelete, Map<String, Object> input) throws ScmPluginException;
+    String export(
+            Set<JobExportReference> jobs,
+            Set<String> pathsToDelete,
+            ScmUserInfo userInfo,
+            Map<String, Object> input
+    ) throws ScmPluginException;
 
     /**
      * @return overall status
