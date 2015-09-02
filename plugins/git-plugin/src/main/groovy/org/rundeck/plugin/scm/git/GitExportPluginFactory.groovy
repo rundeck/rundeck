@@ -4,15 +4,17 @@ import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.scm.PluginState
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory
-import com.dtolabs.rundeck.plugins.scm.StoredPluginState
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
+
+import java.util.regex.Pattern
 
 /**
  * Factory for git export plugin
@@ -56,14 +58,18 @@ class GitExportPluginFactory implements ScmExportPluginFactory, Describable {
                 PropertyBuilder.builder().with {
                     string "pathTemplate"
                     title("File Path Template")
-                    description "Path template for storing a Job to a file within the base dir.\n\n" +
-                                        "Available expansion patterns:\n\n" +
-                                        "* `\${job.name}` - the job name\n" +
-                                        "* `\${job.group}` - blank, or `path/`\n" +
-                                        "* `\${job.project} - project name`\n" +
-                                        "* `\${job.id}` - job UUID\n"
+                    description '''Path template for storing a Job to a file within the base dir.
+
+Available expansion patterns:
+
+* `${job.name}` - the job name
+* `${job.group}` - blank, or `path/`
+* `${job.project} - project name`
+* `${job.id}` - job UUID
+'''
                     defaultValue '${job.group}${job.name}-${job.id}.xml'
                     required true
+                    validator({ it ==~ ('^.*'+ Pattern.quote('${job.id}')+'.*$') } as PropertyValidator)
                     build()
                 },
                 PropertyBuilder.builder().with {
@@ -130,14 +136,23 @@ Some examples:
                 PropertyBuilder.builder().with {
                     string "committerName"
                     title "Committer Name"
-                    description "Name of committer/author of changes"
+                    description '''Name of committer/author of changes.
+
+Can be set to `${user.firstName} ${user.lastName}` or
+`${user.fullName}` to expand as the name
+of the committing user.'''
+                    defaultValue '${user.fullName}'
                     required true
                     build()
                 },
                 PropertyBuilder.builder().with {
                     string "committerEmail"
                     title "Committer Email"
-                    description "Email of committer/author of changes"
+                    description '''Email of committer/author of changes.
+
+Can be set to `${user.email}` to expand
+as the email of the committing user'''
+                    defaultValue '${user.email}'
                     required true
                     build()
                 },

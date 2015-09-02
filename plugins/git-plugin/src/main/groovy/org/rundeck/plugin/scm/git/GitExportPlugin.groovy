@@ -23,6 +23,8 @@ import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.treewalk.TreeWalk
 
+import java.util.regex.Pattern
+
 /**
  * Git export plugin
  */
@@ -34,7 +36,8 @@ class GitExportPlugin implements ScmExportPlugin {
     Git git;
     Repository repo;
     File workingDir;
-    PersonIdent commitIdent;
+    String committerName;
+    String committerEmail;
     String branch;
     final Map<String, ?> input
     final String project
@@ -80,8 +83,8 @@ class GitExportPlugin implements ScmExportPlugin {
         def dir = input.get("dir").toString()
         def branch = input.get("branch").toString()
         def pathTemplate = input.pathTemplate.toString()
-        def committerName = input.committerName.toString()
-        def committerEmail = input.committerEmail.toString()
+        committerName = input.committerName.toString()
+        committerEmail = input.committerEmail.toString()
         def url = input.get("url").toString()
 
         File base = new File(dir)
@@ -90,7 +93,6 @@ class GitExportPlugin implements ScmExportPlugin {
 
         this.branch = branch
 
-        commitIdent = new PersonIdent(committerName, committerEmail)
         if (base.isDirectory() && new File(base, ".git").isDirectory()) {
             log.debug("base dir exists, not cloning")
             repo = new FileRepositoryBuilder().setGitDir(new File(base, ".git")).setWorkTree(base).build()
@@ -144,6 +146,7 @@ class GitExportPlugin implements ScmExportPlugin {
     String export(
             final Set<JobExportReference> jobs,
             final Set<String> pathsToDelete,
+            final ScmUserInfo userInfo,
             final Map<String, Object> input
     )
             throws ScmPluginException
@@ -153,6 +156,18 @@ class GitExportPlugin implements ScmExportPlugin {
         }
         if (!input.commitMessage) {
             throw new IllegalArgumentException("A commitMessage is required to export")
+        }
+        def commitIdentName = expand(committerName, userInfo)
+        if (!commitIdentName) {
+            throw new IllegalArgumentException(
+                    "The committerName was empty, does the user profile need to be modified?"
+            )
+        }
+        def commitIdentEmail = expand(committerEmail, userInfo)
+        if (!commitIdentEmail) {
+            throw new IllegalArgumentException(
+                    "The committerEmail was empty, does the user profile need to be modified?"
+            )
         }
         serializeAll(jobs)
         String commitMessage = input.commitMessage.toString()
@@ -175,7 +190,7 @@ class GitExportPlugin implements ScmExportPlugin {
             rm.call()
         }
 
-        CommitCommand commit1 = git.commit().setMessage(commitMessage).setCommitter(commitIdent)
+        CommitCommand commit1 = git.commit().setMessage(commitMessage).setCommitter(commitIdentName, commitIdentEmail)
         jobs.each {
             commit1.setOnly(relativePath(it))
         }
@@ -187,6 +202,12 @@ class GitExportPlugin implements ScmExportPlugin {
         //todo: push
 
         return commit.name
+    }
+
+    static String expand(final String source, final ScmUserInfo scmUserInfo) {
+        ['fullName', 'firstName', 'lastName', 'email', 'userName'].inject(source) { String x, String y ->
+            return x.replaceAll(Pattern.quote('${user.' + y + '}'), scmUserInfo[y] ?: '')
+        }
     }
 
     def serialize(final JobExportReference job) {
@@ -235,7 +256,7 @@ class GitExportPlugin implements ScmExportPlugin {
         switch (event.eventType) {
             case JobChangeEvent.JobChangeEventType.DELETE:
                 origfile.delete()
-                def status = refreshJobStatus(event.jobReference,origPath)
+                def status = refreshJobStatus(event.jobReference, origPath)
                 return createJobStatus(status)
                 break;
 
@@ -255,7 +276,7 @@ class GitExportPlugin implements ScmExportPlugin {
                     exportReference.jobSerializer.serialize(format, out)
                 }
         }
-        def status = refreshJobStatus(exportReference,origPath)
+        def status = refreshJobStatus(exportReference, origPath)
         return createJobStatus(status)
     }
 
@@ -307,7 +328,7 @@ class GitExportPlugin implements ScmExportPlugin {
             SynchState osynchState = synchStateForStatus(status, origCommit, originalPath)
             def oscmState = scmStateForStatus(status, origCommit, originalPath)
             log.debug("for original path: commit ${origCommit}, synch: ${osynchState}, scm: ${oscmState}")
-            if(origCommit && !commit) {
+            if (origCommit && !commit) {
                 commit = origCommit
             }
             if (synchState == SynchState.CREATE_NEEDED && oscmState == 'DELETED') {
@@ -335,7 +356,7 @@ class GitExportPlugin implements ScmExportPlugin {
     }
 
     String debugStatus(final Status status) {
-        def smap=[
+        def smap = [
                 conflicting          : status.conflicting,
                 added                : status.added,
                 changed              : status.changed,
@@ -350,9 +371,9 @@ class GitExportPlugin implements ScmExportPlugin {
                 untrackedFolders     : status.untrackedFolders,
         ]
         def sb = new StringBuilder()
-        smap.each{
+        smap.each {
             sb << "${it.key}:\n"
-            it.value.each{
+            it.value.each {
                 sb << "\t${it}\n"
             }
         }
