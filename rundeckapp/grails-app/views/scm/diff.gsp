@@ -41,26 +41,39 @@
                 <g:render template="/scm/statusBadge" model="[
                         status: jobstatus?.synchState?.toString(),
                         text  : '',
-                        commit  : jobstatus?.commit,
+                        commit: jobstatus?.commit,
                 ]"/>
+                <g:if test="${scmExportRenamedPath}">
+                    <div>
+                        <span class="has_tooltip text-muted" title="Original repo path">
+                            <g:icon name="file"/>
+                            ${scmExportRenamedPath}
+                        </span>
+                    </div>
+                </g:if>
                 <span class="has_tooltip" title="Repo file path">
-                    <i class="glyphicon glyphicon-file"></i>
+                    <g:if test="${scmExportRenamedPath}">
+                        <g:icon name="arrow-right"/>
+                    </g:if>
+
+                    <g:icon name="file"/>
                     ${scmFilePaths[job.extid]}
                 </span>
             </div>
             <g:if test="${jobstatus?.commit}">
-            <div class="list-group-item">
-                <g:expander key="commitInfo">Previous Commit</g:expander>
-                <table class="table table-bordered table-condensed table-striped " id="commitInfo" style="display:none">
-                    <g:set var="map" value="${jobstatus?.commit.asMap()}"/>
-                    <g:each in="${map.keySet().sort()}" var="key">
-                        <tr>
-                            <td>${key}</td>
-                            <td>${map[key]}</td>
-                        </tr>
-                    </g:each>
-                </table>
-            </div>
+                <div class="list-group-item">
+                    <g:expander key="commitInfo">Previous Commit</g:expander>
+                    <table class="table table-bordered table-condensed table-striped " id="commitInfo"
+                           style="display:none">
+                        <g:set var="map" value="${jobstatus?.commit.asMap()}"/>
+                        <g:each in="${map.keySet().sort()}" var="key">
+                            <tr>
+                                <td>${key}</td>
+                                <td>${map[key]}</td>
+                            </tr>
+                        </g:each>
+                    </table>
+                </div>
             </g:if>
 
 
@@ -88,7 +101,8 @@
             </g:elseif>
             <g:if test="${diffResult.modified || diffResult.oldNotFound}">
                 <g:link action="commit" controller="scm"
-                        class="list-group-item ${diffResult.oldNotFound?'list-group-item-success':'list-group-item-info'}"
+                        class="list-group-item ${diffResult.oldNotFound ? 'list-group-item-success' :
+                                'list-group-item-info'}"
                         params="[project: params.project, jobIds: job.extid]">
 
                     <i class="glyphicon glyphicon-circle-arrow-right"></i>

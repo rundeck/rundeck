@@ -273,6 +273,7 @@ class MenuController extends ControllerBase{
                 results.scmExportEnabled=true
                 results.scmStatus=scmService.exportStatusForJobs(results.nextScheduled)
                 results.scmExportStatus=scmService.exportPluginStatus(params.project)
+                results.scmExportRenamed=scmService.getRenamedJobPathsForProject(params.project)
             }
         }
 

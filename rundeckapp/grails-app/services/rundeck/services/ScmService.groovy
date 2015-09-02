@@ -444,8 +444,9 @@ class ScmService {
         exportjobRefsForJobs(jobs).each { jobReference ->
             def plugin = loadedExportPlugins[jobReference.project]
             if (plugin) {
-                status[jobReference.id] = plugin.getJobStatus(jobReference)
-                log.debug("Status for job ${jobReference}: ${status[jobReference.id]}")
+                def originalPath=getRenamedPathForJobId(jobReference.project, jobReference.id)
+                status[jobReference.id] = plugin.getJobStatus(jobReference, originalPath)
+                log.debug("Status for job ${jobReference}: ${status[jobReference.id]}, origpath: ${originalPath}")
             }
         }
         status
@@ -489,7 +490,7 @@ class ScmService {
     ScmDiffResult exportDiff(String project, ScheduledExecution job) {
         def jobref = exportJobRef(job)
         def plugin = loadedExportPlugins[project]
-        plugin.getFileDiff(jobref)
+        plugin.getFileDiff(jobref, getRenamedPathForJobId(project, job.extid))
     }
 }
 

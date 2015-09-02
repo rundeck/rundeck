@@ -368,13 +368,20 @@ class ScmController extends ControllerBase {
         def scmStatus = scmService.exportStatusForJobs([job])
         def scmFilePaths = scmService.filePathsMapForJobs([job])
         def diffResult = scmService.exportDiff(project, job)
-        withFormat {
-            html {
-                [diffResult: diffResult, scmStatus: scmStatus, job: job, scmFilePaths: scmFilePaths]
+        def scmExportRenamedPath = scmService.getRenamedJobPathsForProject(params.project)?.get(job.extid)
+        if (params.download == 'true') {
+            if (params.download) {
+                response.addHeader("Content-Disposition", "attachment; filename=\"${job.extid}.diff\"")
             }
-            text {
-                render(contentType: 'text/plain', text: diffResult?.content ?: '')
-            }
+            render(contentType: 'text/plain', text: diffResult?.content ?: '')
+            return
         }
+        [
+                diffResult          : diffResult,
+                scmStatus           : scmStatus,
+                job                 : job,
+                scmFilePaths        : scmFilePaths,
+                scmExportRenamedPath: scmExportRenamedPath
+        ]
     }
 }

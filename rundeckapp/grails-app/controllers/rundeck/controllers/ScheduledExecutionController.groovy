@@ -226,6 +226,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 if(scmService.projectHasConfiguredExportPlugin(params.project)) {
                     model.scmExportEnabled = true
                     model.scmStatus = scmService.exportStatusForJobs([scheduledExecution])
+                    model.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(params.project)?.get(scheduledExecution.extid)
                 }
             }
             render(template: '/scheduledExecution/jobActionButtonMenuContent', model: model)
@@ -319,6 +320,7 @@ class ScheduledExecutionController  extends ControllerBase{
             if(scmService.projectHasConfiguredExportPlugin(params.project)){
                 dataMap.scmExportEnabled = true
                 dataMap.scmStatus = scmService.exportStatusForJobs([scheduledExecution])
+                dataMap.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(params.project)?.get(scheduledExecution.extid)
             }
         }
         withFormat{
