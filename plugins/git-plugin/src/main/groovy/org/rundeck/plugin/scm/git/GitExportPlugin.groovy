@@ -221,7 +221,7 @@ class GitExportPlugin implements ScmExportPlugin {
         def commit = lastCommit()
 
         Status status = git.status().call()
-        SynchState synchState = synchStateForStatus(status, commit, null)
+        SynchState synchState = status.isClean() ? SynchState.CLEAN : SynchState.EXPORT_NEEDED
 
         return new GitSynchState(state: synchState)
     }
