@@ -94,6 +94,15 @@
                 </div>
             </g:elseif>
             <g:elseif test="${diffResult.content}">
+                <div class="list-group-item">
+                    <g:link action="diff" controller="scm"
+                            class="btn btn-link"
+                            params="[project: params.project, jobId: job.extid, download: true]">
+                        <g:icon name="download"/>
+                        Download Diff
+                    </g:link>
+
+                </div>
 
                 <div id="difftext"
                      class="list-group-item scriptContent expanded apply_ace"
