@@ -703,6 +703,8 @@ class UtilityTagLib{
                 ' data-placement="'+enc(attr:placement)+'" ' +
                 ' data-container="body" ' +
                 ' title="'+enc(attr:g.message(code: code))+ '">\n' +
+                (attrs.text?:'') +
+                body() +
                 ' <i class="glyphicon glyphicon-'+enc(attr:glyph)+'"></i>\n' +
                 '</span>'
     }

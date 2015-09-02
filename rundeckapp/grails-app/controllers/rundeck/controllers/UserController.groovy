@@ -111,7 +111,7 @@ class UserController extends ControllerBase{
         withForm{
         if(user.hasErrors()){
             flash.errors=user.errors
-            return render(view: 'edit', model: [user: user])
+            return render(view: 'edit', model: [user: user,newuser:params.newuser])
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
