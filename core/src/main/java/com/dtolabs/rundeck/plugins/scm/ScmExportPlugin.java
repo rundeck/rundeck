@@ -58,6 +58,16 @@ public interface ScmExportPlugin {
     JobState getJobStatus(JobExportReference job);
 
     /**
+     * Return the state of the given job, with optional original repo path
+     *
+     * @param job job
+     * @param originalPath path of original job, e.g. if the file was renamed
+     *
+     * @return state
+     */
+    JobState getJobStatus(JobExportReference job, String originalPath);
+
+    /**
      * Return a list of tracked files that have been deleted.
      */
     List<String> getDeletedFiles();
@@ -95,7 +105,16 @@ public interface ScmExportPlugin {
      *
      * @param job job
      *
-     * @return TODO: diff result type
      */
     ScmDiffResult getFileDiff(JobExportReference job);
+
+    /**
+     * Get diff for the given job against another path, e.g. the original
+     * path before a rename
+     *
+     * @param job job
+     * @param originalPath original path
+     *
+     */
+    ScmDiffResult getFileDiff(JobExportReference job, String originalPath);
 }

@@ -230,15 +230,17 @@ class GitExportPlugin implements ScmExportPlugin {
     JobState jobChanged(JobChangeEvent event, JobExportReference exportReference) {
         File origfile = mapper.fileForJob(event.originalJobReference)
         File outfile = mapper.fileForJob(event.jobReference)
+        String origPath = null
         log.debug("Job event (${event}), writing to path: ${outfile}")
         switch (event.eventType) {
             case JobChangeEvent.JobChangeEventType.DELETE:
                 origfile.delete()
-                def status = refreshJobStatus(event.jobReference)
+                def status = refreshJobStatus(event.jobReference,origPath)
                 return createJobStatus(status)
                 break;
 
             case JobChangeEvent.JobChangeEventType.MODIFY_RENAME:
+                origPath = relativePath(event.originalJobReference)
             case JobChangeEvent.JobChangeEventType.CREATE:
             case JobChangeEvent.JobChangeEventType.MODIFY:
                 if (!origfile.getAbsolutePath().equals(outfile.getAbsolutePath())) {
@@ -253,11 +255,11 @@ class GitExportPlugin implements ScmExportPlugin {
                     exportReference.jobSerializer.serialize(format, out)
                 }
         }
-        def status = refreshJobStatus(exportReference)
+        def status = refreshJobStatus(exportReference,origPath)
         return createJobStatus(status)
     }
 
-    private hasJobStatusCached(final JobExportReference job) {
+    private hasJobStatusCached(final JobExportReference job, final String originalPath) {
         def path = relativePath(job)
 
         def commit = lastCommitForPath(path)
@@ -273,7 +275,7 @@ class GitExportPlugin implements ScmExportPlugin {
         null
     }
 
-    private refreshJobStatus(final JobRevReference job) {
+    private refreshJobStatus(final JobRevReference job, final String originalPath) {
 
         def path = relativePath(job)
 
@@ -282,16 +284,38 @@ class GitExportPlugin implements ScmExportPlugin {
         def jobstat = Collections.synchronizedMap([:])
         def commit = lastCommitForPath(path)
 
-        def ident = job.id + ':' + String.valueOf(job.version) + ':' + (commit ? commit.name : '')
 
-        if(job instanceof JobExportReference) {
+
+        if (job instanceof JobExportReference) {
             serialize(job)
         }
 
 
-        Status status = git.status().addPath(path).call()
+
+        def statusb = git.status().addPath(path)
+        if (originalPath) {
+            statusb.addPath(originalPath)
+        }
+        Status status = statusb.call()
+        log.debug(debugStatus(status))
         SynchState synchState = synchStateForStatus(status, commit, path)
         def scmState = scmStateForStatus(status, commit, path)
+        log.debug("for new path: commit ${commit}, synch: ${synchState}, scm: ${scmState}")
+
+        if (originalPath) {
+            def origCommit = lastCommitForPath(originalPath)
+            SynchState osynchState = synchStateForStatus(status, origCommit, originalPath)
+            def oscmState = scmStateForStatus(status, origCommit, originalPath)
+            log.debug("for original path: commit ${origCommit}, synch: ${osynchState}, scm: ${oscmState}")
+            if(origCommit && !commit) {
+                commit = origCommit
+            }
+            if (synchState == SynchState.CREATE_NEEDED && oscmState == 'DELETED') {
+                synchState = SynchState.EXPORT_NEEDED
+            }
+        }
+
+        def ident = job.id + ':' + String.valueOf(job.version) + ':' + (commit ? commit.name : '')
 
         jobstat['ident'] = ident
         jobstat['id'] = job.id
@@ -308,6 +332,31 @@ class GitExportPlugin implements ScmExportPlugin {
         jobStateMap[job.id] = jobstat
 
         jobstat
+    }
+
+    String debugStatus(final Status status) {
+        def smap=[
+                conflicting          : status.conflicting,
+                added                : status.added,
+                changed              : status.changed,
+                clean                : status.clean,
+                conflictingStageState: status.conflictingStageState,
+                ignoredNotInIndex    : status.ignoredNotInIndex,
+                missing              : status.missing,
+                modified             : status.modified,
+                removed              : status.removed,
+                uncommittedChanges   : status.uncommittedChanges,
+                untracked            : status.untracked,
+                untrackedFolders     : status.untrackedFolders,
+        ]
+        def sb = new StringBuilder()
+        smap.each{
+            sb << "${it.key}:\n"
+            it.value.each{
+                sb << "\t${it}\n"
+            }
+        }
+        sb.toString()
     }
 
     private SynchState synchStateForStatus(Status status, RevCommit commit, String path) {
@@ -343,13 +392,18 @@ class GitExportPlugin implements ScmExportPlugin {
 
     @Override
     JobState getJobStatus(final JobExportReference job) {
-        log.debug("getJobStatus(${job.id})")
+        getJobStatus(job, null)
+    }
+
+    @Override
+    JobState getJobStatus(final JobExportReference job, final String originalPath) {
+        log.debug("getJobStatus(${job.id},${originalPath})")
         if (!inited) {
             return null
         }
-        def status = hasJobStatusCached(job)
+        def status = hasJobStatusCached(job, originalPath)
         if (!status) {
-            status = refreshJobStatus(job)
+            status = refreshJobStatus(job, originalPath)
         }
         return createJobStatus(status)
     }
@@ -418,8 +472,12 @@ class GitExportPlugin implements ScmExportPlugin {
     }
 
     ScmDiffResult getFileDiff(final JobExportReference job) throws ScmPluginException {
+        return getFileDiff(job, null)
+    }
+
+    ScmDiffResult getFileDiff(final JobExportReference job, final String originalPath) throws ScmPluginException {
         def file = getLocalFileForJob(job)
-        def path = relativePath(job)
+        def path = originalPath ?: relativePath(job)
         serialize(job)
 
         def id = lookupId(getHead(), path)
