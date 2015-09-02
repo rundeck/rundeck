@@ -373,7 +373,7 @@ class GitExportPlugin implements ScmExportPlugin {
 
     def scmStateForStatus(Status status, RevCommit commit, String path) {
         if (!commit) {
-            'NEW'
+            new File(workingDir, path).exists() ? 'NEW' : 'NOT_FOUND'
         } else if (path in status.added || path in status.untracked) {
             'NEW'
         } else if (path in status.changed || path in status.modified) {
@@ -386,7 +386,7 @@ class GitExportPlugin implements ScmExportPlugin {
             'UNTRACKED'
         } else if (path in status.conflicting) {
             'CONFLICT'
-        }else{
+        } else {
             'NOT_FOUND'
         }
     }

@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import com.dtolabs.rundeck.plugins.scm.SynchState
 import org.eclipse.jgit.api.CommitCommand
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.lib.PersonIdent
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.util.FileUtils
@@ -347,5 +348,72 @@ class GitExportPluginSpec extends Specification {
 
     static Git createGit(final File file) {
         Git.init().setDirectory(file).call()
+    }
+
+
+    @Unroll
+    def "scm state for status"(Map data, String scmStatus) {
+        given:
+
+        def ltemp = File.createTempFile("GitExportPluginSpec", "-test")
+        ltemp.delete()
+        def gitdir = new File(ltemp, 'scm')
+        def origindir = new File(ltemp, 'origin')
+        def config = [
+                dir           : gitdir.absolutePath,
+                pathTemplate  : '${job.group}${job.name}-${job.id}.xml',
+                branch        : 'master',
+                committerName : 'test user',
+                committerEmail: 'test@example.com',
+                url           : origindir
+        ]
+
+        //create a git dir
+        createGit(origindir)
+        def plugin = new GitExportPlugin(config, 'test')
+        plugin.initialize()
+
+        def git = Git.open(gitdir)
+        def path = 'testfile'
+        def localfile = new File(gitdir, path)
+
+        def revCommit = null
+
+        if (data.mkcommit) {
+            //commit the file
+            localfile.createNewFile()
+            localfile << 'testout'
+            git.add().addFilepattern(path).call()
+            //println(plugin.debugStatus(git.status().call()))
+            revCommit = git.commit().setOnly(path).setMessage('test1').setCommitter('test', 'test@example.com').call()
+        }
+
+
+        if (data.create) {
+            localfile << 'newdata'
+        } else if (data.remove) {
+            localfile.delete()
+        }
+        def status = git.status().addPath(path).call()
+
+        git.close()
+
+
+        when:
+        def result = plugin.scmStateForStatus(status, revCommit, path)
+        if (ltemp.exists()) {
+            FileUtils.delete(ltemp, FileUtils.RECURSIVE)
+        }
+
+        then:
+        result == scmStatus
+
+
+        where:
+        data                           | scmStatus
+        [:]                            | 'NOT_FOUND'
+        [create: true]                 | 'NEW'
+        [mkcommit: true, create: true] | 'MODIFIED'
+        [mkcommit: true, remove: true] | 'DELETED'
     }
 }
