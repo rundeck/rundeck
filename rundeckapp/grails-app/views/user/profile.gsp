@@ -2,7 +2,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
-    <title><g:appTitle/> - User Profile</title>
+    <title><g:appTitle/> - <g:message code="userController.page.profile.title" />: ${user.login}</title>
     <g:javascript library="prototype/effects"/>
     <g:javascript>
     function addTokenRow(elem,login,token){
@@ -88,8 +88,7 @@
             <g:link action="edit"
                     params="[login: user.login]"
                     class="small btn btn-link btn-sm"
-                title="${message(code:'userController.action.edit.description',args:[user.login])}"
-            >
+                    title="${message(code:'userController.action.edit.description',args:[user.login])}">
                 <g:icon name="edit"/>
                 <g:message code="button.Edit.label" />
             </g:link>
@@ -97,7 +96,7 @@
     </div>
     <div class="col-sm-12">
         <div class="help-block">
-            Email and Name can be used in Job executions, notifications, or by other plugins.
+            <g:message code="userController.page.profile.description" />
         </div>
     </div>
 </div>
