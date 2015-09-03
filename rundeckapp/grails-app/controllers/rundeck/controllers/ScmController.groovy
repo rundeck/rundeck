@@ -30,6 +30,18 @@ class ScmController extends ControllerBase {
     }
 
     def setup(String project, String type) {
+
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAll(
+                        authContext,
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
         if (scmService.projectHasConfiguredExportPlugin(project)) {
             return redirect(action: 'index', params: [project: project])
         }
