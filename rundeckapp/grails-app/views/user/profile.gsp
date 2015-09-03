@@ -82,8 +82,10 @@
 <div class="row">
     <div class="col-sm-12">
         <h3>
-            <g:icon name="user"/>
-            <g:enc>${user.login}</g:enc>
+            <g:link action="profile" params="[login: user.login]">
+                <g:icon name="user"/>
+                ${user.login}
+            </g:link>
 
             <g:link action="edit"
                     params="[login: user.login]"
