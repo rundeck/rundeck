@@ -281,11 +281,6 @@ class ScmController extends ControllerBase {
         if (!valid) {
             return
         }
-
-        if (!params.jobIds && !params.deletePaths) {
-            flash.message = "No Job Ids or Paths Selected"
-            return redirect(action: 'index', params: [project: project])
-        }
         List<String> jobIds = [params.jobIds].flatten().findAll { it }
 
         List<ScheduledExecution> jobs = jobIds.collect {
@@ -297,7 +292,12 @@ class ScmController extends ControllerBase {
                 deletePaths << params."renamedPaths.${it}"
             }
         }
-        System.err.println("add delete paths: " + params.renamedPaths)
+        if (!params.jobIds && !params.deletePaths) {
+            request.error = "No Job Ids or Paths Selected"
+            render view: 'commit', model: commit(project),params:params
+            return
+        }
+
 
         def deletePathsToJobIds = deletePaths.collectEntries { [it, scmService.deletedJobForPath(project, it)?.id] }
         def result = scmService.exportCommit(project, params.commit, jobs, deletePaths)
