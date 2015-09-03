@@ -48,13 +48,23 @@
             </tr>
             <tr>
                 <td>
-                    <g:enc>${user.email}</g:enc>
+                    ${user.email}
+                    <g:if test="${!user.email}">
+                        <span class="text-muted small text-uppercase"><g:message code="not.set" /></span>
+                    </g:if>
                 </td>
                 <td>
                     <g:enc>${user.firstName}</g:enc>
+                    <g:if test="${!user.firstName}">
+                        <span class="text-muted small text-uppercase"><g:message code="not.set" /></span>
+                    </g:if>
                 </td>
                 <td>
                     <g:enc>${user.lastName}</g:enc>
+
+                    <g:if test="${!user.lastName}">
+                        <span class="text-muted small text-uppercase"><g:message code="not.set" /></span>
+                    </g:if>
                 </td>
                 <g:if test="${selfprofile}">
                     <td>
