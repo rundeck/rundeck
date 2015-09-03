@@ -39,7 +39,14 @@ class ScmService {
             def pluginConfig = loadScmConfig(project, 'export')
             if (pluginConfig && pluginConfig.enabled) {
                 log.debug("Loading 'export' plugin ${pluginConfig.type} for ${project}...")
-                initExportPlugin(project, pluginConfig.type, pluginConfig.config)
+                try {
+                    initExportPlugin(project, pluginConfig.type, pluginConfig.config)
+                } catch (ScmPluginException e) {
+                    log.error(
+                            "Failed to initialize SCM Export plugin ${pluginConfig.type} for ${project}: ${e.message}",
+                            e
+                    )
+                }
                 //TODO: refresh status of all jobs in project?
             } else {
                 log.debug("SCM Export not setup for project: ${project}: ${pluginConfig}")
