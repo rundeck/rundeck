@@ -437,14 +437,21 @@ class UtilityTagLib{
         def linkopts=[
                 execution:[
                         pattern: /\{\{(Execution\s+(\d+))\}\}/ ,
-                        linkParams:[action:'show',controller:'execution']
+                        linkParams:[action:'show',controller:'execution'] + xparams
                 ],
                 job:[
                         pattern: /\{\{(Job\s+([0-9a-h]{8}-[0-9a-h]{4}-[0-9a-h]{4}-[0-9a-h]{4}-[0-9a-h]{12}))\}\}/ ,
-                        linkParams:[action:'show',controller:'scheduledExecution'],
+                        linkParams:[action:'show',controller:'scheduledExecution'] + xparams,
                         textValue:{
                             def job= ScheduledExecution.getByIdOrUUID(it)
                             return job?job.generateFullName():it
+                        }
+                ],
+                profile:[
+                        pattern: /\{\{user\/profile(\/.+)?\}\}/,
+                        linkParams:[action: 'profile',controller: 'user'],
+                        textValue: {
+                            return it?"User: ${it}": "Your User Profile"
                         }
                 ]
         ]
@@ -454,7 +461,7 @@ class UtilityTagLib{
                     def lparams= [:]+opts.linkParams
                     lparams.id=it[2]
                     def text = opts.textValue?opts.textValue(it[2]):it[1]
-                    return g.link(lparams + xparams,text)
+                    return g.link(lparams,text)
                 }else{
 
                     return it[0]
