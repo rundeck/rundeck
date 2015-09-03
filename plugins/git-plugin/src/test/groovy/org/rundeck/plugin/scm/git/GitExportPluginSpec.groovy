@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.jobs.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
+import com.dtolabs.rundeck.plugins.scm.ScmUserInfoMissing
 import com.dtolabs.rundeck.plugins.scm.SynchState
 import org.eclipse.jgit.api.CommitCommand
 import org.eclipse.jgit.api.Git
@@ -432,15 +433,16 @@ class GitExportPluginSpec extends Specification {
         GitExportPlugin.expand(input, userinfo) == result
 
         where:
-        input               | result
-        'Blah'              | 'Blah'
-        '${user.userName}'  | 'Z'
-        '${user.fullName}'  | 'A B'
-        '${user.firstName}' | 'A'
-        '${user.lastName}'  | 'B'
-        '${user.email}'     | 'c@d.e'
-        'Bob ${user.firstName} x ${user.lastName} y ${user.email} H ${user.userName} I'     | 'Bob A x B y c@d.e H Z I'
+        input                                                                           | result
+        'Blah'                                                                          | 'Blah'
+        '${user.userName}'                                                              | 'Z'
+        '${user.fullName}'                                                              | 'A B'
+        '${user.firstName}'                                                             | 'A'
+        '${user.lastName}'                                                              | 'B'
+        '${user.email}'                                                                 | 'c@d.e'
+        'Bob ${user.firstName} x ${user.lastName} y ${user.email} H ${user.userName} I' | 'Bob A x B y c@d.e H Z I'
     }
+
     def "expand user missing info"() {
         given:
         def userinfo = Stub(ScmUserInfo) {
@@ -450,13 +452,123 @@ class GitExportPluginSpec extends Specification {
         GitExportPlugin.expand(input, userinfo) == result
 
         where:
-        input               | result
-        'Blah'              | 'Blah'
-        '${user.userName}'  | ''
-        '${user.fullName}'  | ''
-        '${user.firstName}' | ''
-        '${user.lastName}'  | ''
-        '${user.email}'     | ''
-        'Bob ${user.firstName} x ${user.lastName} y ${user.email} H ${user.userName} I'     | 'Bob  x  y  H  I'
+        input                                                                           | result
+        'Blah'                                                                          | 'Blah'
+        '${user.userName}'                                                              | ''
+        '${user.fullName}'                                                              | ''
+        '${user.firstName}'                                                             | ''
+        '${user.lastName}'                                                              | ''
+        '${user.email}'                                                                 | ''
+        'Bob ${user.firstName} x ${user.lastName} y ${user.email} H ${user.userName} I' | 'Bob  x  y  H  I'
+    }
+
+
+    def "export missing commit message"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        def config = [
+                dir           : gitdir.absolutePath,
+                pathTemplate  : '${job.group}${job.name}-${job.id}.xml',
+                branch        : 'master',
+                committerName : '${user.fullName}',
+                committerEmail: '${user.email}',
+                url           : origindir
+        ]
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+        def plugin = new GitExportPlugin(config, 'test')
+        plugin.initialize()
+
+        def jobref = Stub(JobExportReference)
+        def userInfo = Mock(ScmUserInfo)
+        def input = [:]
+        when:
+        def result = plugin.export([jobref] as Set, [] as Set, userInfo, input)
+
+        then:
+        IllegalArgumentException e = thrown()
+        e.message == 'A commitMessage is required to export'
+    }
+
+    def "export missing jobs and paths"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        def config = [
+                dir           : gitdir.absolutePath,
+                pathTemplate  : '${job.group}${job.name}-${job.id}.xml',
+                branch        : 'master',
+                committerName : '${user.fullName}',
+                committerEmail: '${user.email}',
+                url           : origindir
+        ]
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+        def plugin = new GitExportPlugin(config, 'test')
+        plugin.initialize()
+
+
+        def userInfo = Mock(ScmUserInfo)
+        def input = [commitMessage: "test"]
+        when:
+        def result = plugin.export([] as Set, [] as Set, userInfo, input)
+
+        then:
+        IllegalArgumentException e = thrown()
+        e.message == 'A list of jobs or a list paths to delete are required to export'
+    }
+
+    def "export missing user info"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        def config = [
+                dir           : gitdir.absolutePath,
+                pathTemplate  : '${job.group}${job.name}-${job.id}.xml',
+                branch        : 'master',
+                committerName : '${user.fullName}',
+                committerEmail: '${user.email}',
+                url           : origindir
+        ]
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+        def plugin = new GitExportPlugin(config, 'test')
+        plugin.initialize()
+
+        def serializer = Mock(JobSerializer)
+        def jobref = Stub(JobExportReference) {
+            getJobName() >> 'name'
+            getGroupPath() >> 'a/b'
+            getId() >> 'xyz'
+            getVersion() >> 1
+            getJobSerializer() >> serializer
+        }
+        def userInfo = Mock(ScmUserInfo) {
+            getFullName() >> userName
+            getEmail() >> userEmail
+        }
+        def input = [commitMessage: "Test"]
+        when:
+        def result = plugin.export([jobref] as Set, [] as Set, userInfo, input)
+
+        then:
+        ScmUserInfoMissing e = thrown()
+        e.fieldName == expectedMissing
+
+        where:
+        userName | userEmail | expectedMissing
+        null     | null      | 'committerName'
+        'bob'    | null      | 'committerEmail'
+        null     | 'a@b'     | 'committerName'
     }
 }
