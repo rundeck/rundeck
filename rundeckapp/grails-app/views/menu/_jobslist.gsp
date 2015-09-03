@@ -126,6 +126,15 @@
                                         <span class="detail"><g:message code="disabled" /></span>
                                     </span>
                                 </g:elseif>
+                                <g:elseif test="${!scheduledExecution.hasScheduleEnabled() && scheduledExecution.hasExecutionEnabled()}">
+                                    <span class="scheduletime disabled has_tooltip"
+                                          title="${g.message(code: 'scheduleExecution.schedule.disabled')}"
+                                          data-toggle="tooltip"
+                                          data-placement="auto left">
+                                        <i class="glyphicon glyphicon-time"></i>
+                                        <span class="detail"><g:message code="never"/></span>
+                                    </span>
+                                </g:elseif>
                                 <g:elseif test="${scheduledExecution.scheduled && !nextExecution}">
                                     <span class="scheduletime willnotrun has_tooltip"
                                           title="${g.message(code: 'job.schedule.will.never.fire')}"
