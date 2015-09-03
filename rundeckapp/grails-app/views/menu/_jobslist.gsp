@@ -56,7 +56,7 @@
                                     </g:else>
                                 </span>
                                     <span class="inlinebuttons jobbuttons">
-                                        <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_RUN]?.contains(scheduledExecution.id.toString())}">
+                                        <g:if test="${scheduledExecution.hasExecutionEnabled() && jobauthorizations && jobauthorizations[AuthConstants.ACTION_RUN]?.contains(scheduledExecution.id.toString())}">
                                             <g:ifExecutionMode active="true">
                                             <g:link controller="scheduledExecution"
                                                     action="execute"
@@ -146,18 +146,6 @@
                                         Disabled
                                     </g:else>
                                 </span>
-                            </td>
-                            <td>
-                                Execution:
-                                <span class="text-muted">
-                                    <g:if test="${scheduledExecution.hasExecutionEnabled()}">
-                                        Enabled
-                                    </g:if>
-                                    <g:else>
-                                        Disabled
-                                    </g:else>
-                                </span>
-                            </td>
                             </td>
                         </tr>
                         </g:else>
