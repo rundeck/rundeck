@@ -300,12 +300,16 @@ class ScmController extends ControllerBase {
 
 
         def deletePathsToJobIds = deletePaths.collectEntries { [it, scmService.deletedJobForPath(project, it)?.id] }
-        def result = scmService.exportCommit(project, params.commit, jobs, deletePaths)
-        if (!result.valid) {
+        def result = scmService.exportCommit(session.user, project, params.commit, jobs, deletePaths)
+        if (!result.valid || result.error) {
             def report = result.report
-            request.error = message(code: "some.input.values.were.not.valid")
-            log.debug("configuration error: " + report)
-
+            if(result.missingUserInfoField){
+                request.errors=[result.message]
+                request.error = "SCM Export could not be performed"
+                request.errorHelp = "Please update {{user/profile}} and enter the missing values."
+            }else{
+                request.error = result.error ? result.message : message(code: "some.input.values.were.not.valid")
+            }
             def deletedPaths = scmService.deletedExportFilesForProject(project)
             def scmStatus = scmService.exportStatusForJobs(jobs)
             def scmFiles = scmService.filePathsMapForJobRefs(scmService.jobRefsForJobs(jobs))

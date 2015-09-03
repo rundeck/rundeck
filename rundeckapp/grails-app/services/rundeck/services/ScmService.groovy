@@ -13,10 +13,13 @@ import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory
 import com.dtolabs.rundeck.plugins.scm.ScmExportSynchState
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
+import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
+import com.dtolabs.rundeck.plugins.scm.ScmUserInfoMissing
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
 import rundeck.ScheduledExecution
+import rundeck.User
 
 /**
  * Manages scm integration
@@ -477,7 +480,14 @@ class ScmService {
         return map
     }
 
-    def exportCommit(String project, Map config, List<ScheduledExecution> jobs, List<String> deletePaths) {
+    def exportCommit(
+            String username,
+            String project,
+            Map config,
+            List<ScheduledExecution> jobs,
+            List<String> deletePaths
+    )
+    {
         log.debug("exportCommit project: ${project}, jobs: ${jobs}, deletePaths: ${deletePaths}")
         //store config
         def plugin = loadedExportPlugins[project]
@@ -487,11 +497,42 @@ class ScmService {
         if (!report.valid) {
             return [valid: false, report: report]
         }
-        def result = plugin.export(jobrefs as Set, deletePaths as Set, config)
+        def result=null
+        try {
+            result = plugin.export(jobrefs as Set, deletePaths as Set, lookupUserInfo(username), config)
+        } catch (ScmPluginException e) {
+            log.error(e.message)
+            log.debug("export failed ${jobrefs}, ${deletePaths}, ${username}, ${config}", e)
+            if(ScmUserInfoMissing.isFieldMissing(e)) {
+                def fieldReport = new Validator.Report()
+                fieldReport.errors[ScmUserInfoMissing.missingFieldName(e)]=e.message
+                return [
+                        error: true,
+                        message: e.message,
+                        report: fieldReport,
+                        missingUserInfoField: ScmUserInfoMissing.missingFieldName(e)
+                ]
+            }
+            return [error: e.message]
+        }
         forgetDeletedPaths(project, deletePaths)
         forgetRenamedJobs(project, jobrefs*.id)
         log.debug("Commit id: ${result}")
         [valid: true, commitId: result]
+    }
+
+    ScmUserInfo lookupUserInfo(final String username) {
+        def user = User.findByLogin(username)
+        if (user) {
+            return new ScmUser(
+                    userName: username,
+                    email: user.email,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    fullName: (user.firstName ?: '') + (user.lastName ? ' ' + user.lastName : ''),
+                    )
+        }
+        throw new IllegalArgumentException("Could not find a user profile for ${username}")
     }
 
     ScmDiffResult exportDiff(String project, ScheduledExecution job) {
@@ -501,6 +542,13 @@ class ScmService {
     }
 }
 
+class ScmUser implements ScmUserInfo {
+    String email
+    String fullName
+    String firstName
+    String lastName
+    String userName
+}
 /**
  * Wraps stored plugin config data, writes and reads it
  */
