@@ -23,7 +23,7 @@ class User {
         firstName(nullable:true, matches: '^[a-zA-Z0-9\\s\\.,\\(\\)-]+$')
         lastName(nullable:true, matches: '^[a-zA-Z0-9\\s\\.,\\(\\)-]+$')
         email(nullable:true,validator: { val ->
-            new AnyDomainEmailValidator().isValid(val) ? null : 'email.invalid'
+            (!val || new AnyDomainEmailValidator().isValid(val)) ? null : 'email.invalid'
         })
         password(nullable:true)
         dashboardPref(nullable:true)
