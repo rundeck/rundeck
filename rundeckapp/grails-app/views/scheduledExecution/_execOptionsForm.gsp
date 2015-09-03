@@ -268,13 +268,19 @@
             <g:actionSubmit id="execFormCancelButton" value="Cancel" class="btn btn-default"/>
         </g:if>
         <div class="pull-right">
-            <button type="submit"
-                    id="execFormRunButton"
-                    ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
-                    class=" btn btn-success ">
-                <g:message code="run.job.now" />
-                <b class="glyphicon glyphicon-play"></b>
-            </button>
+            <div title="${scheduledExecution.hasExecutionEnabled() ? '':g.message(code: 'disabled.job.run')}"
+                  class="has_tooltip"
+                  data-toggle="tooltip"
+                  data-placement="auto right"
+            >%{--Extra div because attr disabled will cancel tooltip from showing --}%
+                <button type="submit"
+                        id="execFormRunButton"
+                        ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
+                        class=" btn btn-success">
+                    <g:message code="run.job.now" />
+                    <b class="glyphicon glyphicon-play"></b>
+                </button>
+            </div>
         </div>
         <div class="clearfix">
         </div>
@@ -299,13 +305,19 @@
             <g:if test="${!hideCancel}">
                 <g:actionSubmit id="execFormCancelButton" value="Cancel" class="btn btn-default"/>
             </g:if>
-            <button type="submit"
-                    id="execFormRunButton"
-                    ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
-                    class=" btn btn-success">
-                <i class="glyphicon glyphicon-play"></i>
-                <g:message code="run.job.now" />
-            </button>
+            <div title="${scheduledExecution.hasExecutionEnabled() ? '':g.message(code: 'disabled.job.run')}"
+                  class="has_tooltip"
+                  data-toggle="tooltip"
+                  data-placement="auto right"
+            >%{--Extra div because attr disabled will cancel tooltip from showing --}%
+                <button type="submit"
+                        id="execFormRunButton"
+                        ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
+                        class=" btn btn-success">
+                    <i class="glyphicon glyphicon-play"></i>
+                    <g:message code="run.job.now" />
+                </button>
+            </div>
             <label class="checkbox-inline">
                 <g:checkBox id="followoutputcheck"
                             name="follow"
