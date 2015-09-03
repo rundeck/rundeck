@@ -75,7 +75,7 @@
                             </div>
 
                             <div class="modal-body">
-                                <span class="text-danger"><g:message code="plugin.disable.confirm.text" /></span>
+                                <span class="text-danger"><g:message code="plugin.disable.confirm.text"/></span>
                             </div>
 
                             <div class="modal-footer">
@@ -124,7 +124,7 @@
                             </div>
 
                             <div class="modal-body">
-                                <span class="text-danger"><g:message code="plugin.enable.confirm.text" /></span>
+                                <span class="text-danger"><g:message code="plugin.enable.confirm.text"/></span>
                             </div>
 
                             <div class="modal-footer">
@@ -191,20 +191,22 @@
                                     <g:message code="button.Disable.title"/>
                                 </span>
                             </g:elseif>
+                            <g:if test="${!isConfiguredAndEnabled}">
+                                <g:link action="setup"
+                                        class="btn  ${isConfiguredButDisabled ? 'btn-default' : 'btn-success'}"
+                                        params="[type: plugins[pluginName].name, project: params.project]">
 
-                            <g:link action="setup"
-                                    class="btn  ${isConfiguredButDisabled ? 'btn-default' : 'btn-success'}"
-                                    params="[type: plugins[pluginName].name, project: params.project]">
+                                    <g:icon name="cog"/>
+                                    <g:if test="${isConfigured}">
+                                        <g:message code="button.Configure.title"/>
+                                    </g:if>
+                                    <g:else>
+                                        <g:message code="button.Setup.title"/>
+                                    </g:else>
 
-                                <g:icon name="cog"/>
-                                <g:if test="${isConfiguredButDisabled || isConfiguredAndEnabled}">
-                                    <g:message code="button.Configure.title"/>
-                                </g:if>
-                                <g:else>
-                                    <g:message code="button.Setup.title"/>
-                                </g:else>
+                                </g:link>
+                            </g:if>
 
-                            </g:link>
                         </div>
 
                     </div>
