@@ -208,7 +208,7 @@ class ScmService {
      * @return repo path for original job name
      */
     public String getRenamedPathForJobId(String project, String jobid) {
-        log.debug "Get renamed path for project ${project}, job: ${jobid}: "+renamedJobsCache[project]?.get(jobid)
+        log.debug "Get renamed path for project ${project}, job: ${jobid}: " + renamedJobsCache[project]?.get(jobid)
         return renamedJobsCache[project]?.get(jobid)
     }
     /**
@@ -228,7 +228,7 @@ class ScmService {
      * @return
      */
     Map<String, String> getRenamedJobPathsForProject(String project) {
-        new HashMap<>(renamedJobsCache[project]?:[:])
+        new HashMap<>(renamedJobsCache[project] ?: [:])
     }
 
     /**
@@ -451,7 +451,7 @@ class ScmService {
         exportjobRefsForJobs(jobs).each { jobReference ->
             def plugin = loadedExportPlugins[jobReference.project]
             if (plugin) {
-                def originalPath=getRenamedPathForJobId(jobReference.project, jobReference.id)
+                def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
                 status[jobReference.id] = plugin.getJobStatus(jobReference, originalPath)
                 log.debug("Status for job ${jobReference}: ${status[jobReference.id]}, origpath: ${originalPath}")
             }
