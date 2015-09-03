@@ -189,7 +189,7 @@ class ScmController extends ControllerBase {
             flash.message = "Plugin enabled for SCM ${integration}: ${type}"
 
         } else {
-            flash.warning = "Plugin was not enabled for SCM ${integration}: ${type}: Configuration was not valid.  Please reconfigure and try again."
+            flash.warn = "Plugin was not enabled for SCM ${integration}: ${type}: Configuration was not valid.  Please reconfigure and try again."
         }
 
         redirect(action: 'index', params: [project: project])
