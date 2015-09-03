@@ -159,15 +159,11 @@ class GitExportPlugin implements ScmExportPlugin {
         }
         def commitIdentName = expand(committerName, userInfo)
         if (!commitIdentName) {
-            throw new IllegalArgumentException(
-                    "The committerName was empty, does the user profile need to be modified?"
-            )
+            ScmUserInfoMissing.fieldMissing("committerName")
         }
         def commitIdentEmail = expand(committerEmail, userInfo)
         if (!commitIdentEmail) {
-            throw new IllegalArgumentException(
-                    "The committerEmail was empty, does the user profile need to be modified?"
-            )
+            ScmUserInfoMissing.fieldMissing("committerEmail")
         }
         serializeAll(jobs)
         String commitMessage = input.commitMessage.toString()
