@@ -29,6 +29,7 @@
                 params="${[project: params.project]}"
                 useToken="true"
                 method="post" class="form form-horizontal">
+            <g:hiddenField name="allJobs" value="${params.allJobs}"/>
             <div class="panel panel-primary" id="createform">
                 <div class="panel-heading">
                     <span class="h3">
@@ -78,7 +79,7 @@
                                             <g:message code="button.View.Diff.title"/>
                                         </g:link>
                                     </div>
-                                    <g:if test="${renamedJobPaths[job.extid]}">
+                                    <g:if test="${renamedJobPaths?.get(job.extid)}">
                                         <div class="col-sm-11 col-sm-offset-1">
                                         <span class="text-muted">
                                             <g:icon name="file"/>
@@ -91,10 +92,10 @@
                                         </span>
                                         </div>
                                     </g:if>
-                                    <g:if test="${filesMap[job.extid]}">
+                                    <g:if test="${filesMap?.get(job.extid)}">
                                         <div class="col-sm-11 col-sm-offset-1">
                                             <span class="text-muted">
-                                                <g:if test="${renamedJobPaths[job.extid]}">
+                                                <g:if test="${renamedJobPaths?.get(job.extid)}">
                                                     <g:icon name="arrow-right"/>
                                                 </g:if>
                                                 <g:icon name="file"/>
