@@ -46,7 +46,17 @@ class ScmController extends ControllerBase {
             return redirect(action: 'index', params: [project: project])
         }
         def describedPlugin = scmService.getExportPluginDescriptor(type)
-        [properties: scmService.getExportSetupProperties(project, type), type: type, plugin: describedPlugin]
+        def pluginConfig = scmService.loadScmConfig(project, 'export')
+        def config=[:]
+        if(type==pluginConfig?.type){
+            config=pluginConfig.config
+        }
+        [
+                properties: scmService.getExportSetupProperties(project, type),
+                type: type,
+                plugin: describedPlugin,
+                config: config
+        ]
     }
 
     def saveSetup(String integration, String project, String type) {
