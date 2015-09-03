@@ -293,7 +293,7 @@ class ScmController extends ControllerBase {
             }
         }
         if (!params.jobIds && !params.deletePaths) {
-            request.error = "No Job Ids or Paths Selected"
+            request.error = message(code:"scmController.action.saveCommit.jobIdsMissing.message")
             render view: 'commit', model: commit(project),params:params
             return
         }
@@ -305,8 +305,8 @@ class ScmController extends ControllerBase {
             def report = result.report
             if(result.missingUserInfoField){
                 request.errors=[result.message]
-                request.error = "SCM Export could not be performed"
-                request.errorHelp = "Please update {{user/profile}} and enter the missing values."
+                request.error = message(code:"scmController.action.saveCommit.userInfoMissing.message")
+                request.errorHelp = message(code:"scmController.action.saveCommit.userInfoMissing.errorHelp")
             }else{
                 request.error = result.error ? result.message : message(code: "some.input.values.were.not.valid")
             }
