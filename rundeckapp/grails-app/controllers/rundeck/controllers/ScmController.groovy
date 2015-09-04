@@ -20,12 +20,14 @@ class ScmController extends ControllerBase {
         if (pluginConfig?.type) {
             configuredPlugin = scmService.getExportPluginDescriptor(pluginConfig.type)
         }
+        def enabled = pluginConfig?.enabled && scmService.projectHasConfiguredExportPlugin(project)
         return [
                 plugins         : plugins ?: [],
                 configuredPlugin: configuredPlugin,
                 pluginConfig    : pluginConfig,
                 config          : pluginConfig?.config,
-                type            : pluginConfig?.type
+                type            : pluginConfig?.type,
+                enabled         : enabled
         ]
     }
 
@@ -47,15 +49,15 @@ class ScmController extends ControllerBase {
         }
         def describedPlugin = scmService.getExportPluginDescriptor(type)
         def pluginConfig = scmService.loadScmConfig(project, 'export')
-        def config=[:]
-        if(type==pluginConfig?.type){
-            config=pluginConfig.config
+        def config = [:]
+        if (type == pluginConfig?.type) {
+            config = pluginConfig.config
         }
         [
                 properties: scmService.getExportSetupProperties(project, type),
-                type: type,
-                plugin: describedPlugin,
-                config: config
+                type      : type,
+                plugin    : describedPlugin,
+                config    : config
         ]
     }
 
@@ -94,11 +96,9 @@ class ScmController extends ControllerBase {
         //require type param
         def result = scmService.savePlugin(integration, project, type, config)
         def report
-        if (!result.valid) {
+        if (result.error || !result.valid) {
             report = result.report
-            request.error = message(code: "some.input.values.were.not.valid")
-            log.error("configuration error: " + report)
-
+            request.error = result.error ? result.message : message(code: "some.input.values.were.not.valid")
             def describedPlugin = scmService.getExportPluginDescriptor(type)
 
             render view: 'setup',
@@ -111,7 +111,7 @@ class ScmController extends ControllerBase {
                    ]
 
         } else {
-            flash.message = "setup complete"
+            flash.message = message(code: 'scmController.action.setup.success.message')
             redirect(action: 'index', params: [project: project])
         }
     }
@@ -149,7 +149,7 @@ class ScmController extends ControllerBase {
         //require type param
         scmService.disablePlugin(integration, project, type)
 
-        flash.message = "Plugin disabled for SCM ${integration}: ${type}"
+        flash.message = message(code: "scmController.action.disable.success.message", args: [integration, type])
         redirect(action: 'index', params: [project: project])
     }
 
@@ -185,11 +185,19 @@ class ScmController extends ControllerBase {
 
         //require type param
         def result = scmService.enablePlugin(integration, project, type)
-        if (result.valid) {
-            flash.message = "Plugin enabled for SCM ${integration}: ${type}"
+        if (result.error) {
+            flash.warn = message(code: "scmController.action.enable.error.message", args: [integration, type])
+            if (result.message) {
+                flash.error = result.message
+            }
+        } else if (result.valid) {
+            flash.message = message(code: "scmController.action.enable.success.message", args: [integration, type])
 
         } else {
-            flash.warn = "Plugin was not enabled for SCM ${integration}: ${type}: Configuration was not valid.  Please reconfigure and try again."
+            flash.warn = message(code: "scmController.action.enable.invalid.message", args: [integration, type])
+            if (result.message) {
+                flash.error = result.message
+            }
         }
 
         redirect(action: 'index', params: [project: project])
@@ -236,6 +244,7 @@ class ScmController extends ControllerBase {
         jobs = jobs.findAll {
             it.extid in scmStatus.keySet()
         }
+        def scmExportStatus = scmService.exportPluginStatus(params.project)
         def scmFiles = scmService.filePathsMapForJobRefs(scmService.jobRefsForJobs(jobs))
         [
                 properties     : scmService.getExportCommitProperties(project, jobIds),
@@ -246,6 +255,7 @@ class ScmController extends ControllerBase {
                 deletedPaths   : deletedPaths,
                 selectedPaths  : selectedPaths,
                 renamedJobPaths: renamedJobPaths,
+                scmExportStatus: scmExportStatus
         ]
     }
 
@@ -292,61 +302,62 @@ class ScmController extends ControllerBase {
                 deletePaths << params."renamedPaths.${it}"
             }
         }
-        if (!params.jobIds && !params.deletePaths) {
-            request.error = message(code:"scmController.action.saveCommit.jobIdsMissing.message")
-            render view: 'commit', model: commit(project),params:params
-            return
-        }
 
 
         def deletePathsToJobIds = deletePaths.collectEntries { [it, scmService.deletedJobForPath(project, it)?.id] }
         def result = scmService.exportCommit(session.user, project, params.commit, jobs, deletePaths)
         if (!result.valid || result.error) {
             def report = result.report
-            if(result.missingUserInfoField){
-                request.errors=[result.message]
-                request.error = message(code:"scmController.action.saveCommit.userInfoMissing.message")
-                request.errorHelp = message(code:"scmController.action.saveCommit.userInfoMissing.errorHelp")
-            }else{
+            if (result.missingUserInfoField) {
+                request.errors = [result.message]
+                request.error = message(code: "scmController.action.saveCommit.userInfoMissing.message")
+                request.errorHelp = message(code: "scmController.action.saveCommit.userInfoMissing.errorHelp")
+            } else {
                 request.error = result.error ? result.message : message(code: "some.input.values.were.not.valid")
             }
             def deletedPaths = scmService.deletedExportFilesForProject(project)
             def scmStatus = scmService.exportStatusForJobs(jobs)
             def scmFiles = scmService.filePathsMapForJobRefs(scmService.jobRefsForJobs(jobs))
+            def scmExportStatus = scmService.exportPluginStatus(params.project)
             render view: 'commit',
                    model: [
-                           properties   : scmService.getExportCommitProperties(project, jobIds),
-                           jobs         : jobs,
-                           scmStatus    : scmStatus,
-                           selected     : params.jobIds ? jobIds : [],
-                           filesMap     : scmFiles,
-                           report       : report,
-                           config       : params.commit,
-                           deletedPaths : deletedPaths,
-                           selectedPaths: deletePaths
+                           properties     : scmService.getExportCommitProperties(project, jobIds),
+                           jobs           : jobs,
+                           scmStatus      : scmStatus,
+                           selected       : params.jobIds ? jobIds : [],
+                           filesMap       : scmFiles,
+                           report         : report,
+                           config         : params.commit,
+                           deletedPaths   : deletedPaths,
+                           selectedPaths  : deletePaths,
+                           scmExportStatus: scmExportStatus
                    ]
             return
         }
 
         def commitid = result.commitId
-        def code = "scmController.action.commit.multi.succeed.message"
-        def jobIdent = ''
-        if (jobs.size() == 1 && deletePaths.size() == 0) {
-            code = "scmController.action.commit.succeed.message"
-            jobIdent = '{{Job ' + jobIds[0] + '}}'
-        } else if (jobs.size() == 0 && deletePaths.size() == 1) {
-            code = "scmController.action.commit.delete.succeed.message"
-            jobIdent = deletePathsToJobIds[deletePaths[0]] ?: ''
-        }
+        if(result.message) {
+            flash.message = result.message
+        }else {
+            def code = "scmController.action.commit.multi.succeed.message"
+            def jobIdent = ''
+            if (jobs.size() == 1 && deletePaths.size() == 0) {
+                code = "scmController.action.commit.succeed.message"
+                jobIdent = '{{Job ' + jobIds[0] + '}}'
+            } else if (jobs.size() == 0 && deletePaths.size() == 1) {
+                code = "scmController.action.commit.delete.succeed.message"
+                jobIdent = deletePathsToJobIds[deletePaths[0]] ?: ''
+            }
 
-        flash.message = message(
-                code: code,
-                args: [
-                        commitid,
-                        jobs.size() + deletePaths.size(),
-                        jobIdent
-                ]
-        )
+            flash.message = message(
+                    code: code,
+                    args: [
+                            commitid,
+                            jobs.size() + deletePaths.size(),
+                            jobIdent
+                    ]
+            )
+        }
         redirect(action: 'jobs', controller: 'menu', params: [project: params.project])
     }
 

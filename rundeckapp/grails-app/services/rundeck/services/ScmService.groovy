@@ -2,6 +2,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.jobs.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.jobs.JobChangeListener
@@ -78,8 +79,6 @@ class ScmService {
     def projectHasConfiguredExportPlugin(String project) {
         loadedExportPlugins.containsKey(project)
     }
-
-    //todo: turn off/disable plugin
 
     def getExportCommitProperties(String project, List<String> jobIds) {
         def refs = jobRefsForIds(jobIds)
@@ -299,8 +298,12 @@ class ScmService {
         scmPluginConfig.type = type
         scmPluginConfig.enabled = true
         storeConfig(scmPluginConfig, project)
-        def plugin = initExportPlugin(project, type, config)
-        return [valid: true, plugin: plugin]
+        try {
+            def plugin = initExportPlugin(project, type, config)
+            return [valid: true, plugin: plugin]
+        } catch (ScmPluginException e) {
+            return [error:true, message:e.message]
+        }
     }
 
     /**
@@ -320,7 +323,7 @@ class ScmService {
         def loaded = loadedExportPlugins.remove(project)
         def changeListener = loadedExportListeners.remove(project)
         jobEventsService.removeListener(changeListener)
-        loaded.cleanup()
+        loaded?.cleanup()
 
         //clear cached rename/delete info
         renamedJobsCache.remove(project)
@@ -341,10 +344,14 @@ class ScmService {
             return [valid: false, report: validation.report]
         }
 
-        scmPluginConfig.enabled = true
-        storeConfig(scmPluginConfig, project)
-        def plugin = initExportPlugin(project, type, scmPluginConfig.config)
-        return [valid: true, plugin: plugin]
+        try {
+            def plugin = initExportPlugin(project, type, scmPluginConfig.config)
+            scmPluginConfig.enabled = true
+            storeConfig(scmPluginConfig, project)
+            return [valid: true, plugin: plugin]
+        } catch (ScmPluginException e) {
+            return [error: true, message: e.message]
+        }
     }
 
     def loadPluginWithConfig(String project, String type, Map config) {
@@ -354,10 +361,11 @@ class ScmService {
                 type,
                 scmExportPluginProviderService
         )
-        def created = plugin.createPlugin(config, project)
-
-
-        return created
+        try {
+            return plugin.createPlugin(config, project)
+        } catch (ConfigurationException e) {
+            throw new ScmPluginException(e)
+        }
     }
 
     /**
@@ -515,10 +523,13 @@ class ScmService {
             }
             return [error: e.message]
         }
+        if(result.error){
+            return [error: result.message]
+        }
         forgetDeletedPaths(project, deletePaths)
         forgetRenamedJobs(project, jobrefs*.id)
-        log.debug("Commit id: ${result}")
-        [valid: true, commitId: result]
+        log.debug("result: ${result}")
+        [valid: true, commitId: result.id, message: result.message]
     }
 
     ScmUserInfo lookupUserInfo(final String username) {
