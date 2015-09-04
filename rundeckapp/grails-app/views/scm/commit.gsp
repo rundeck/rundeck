@@ -38,15 +38,19 @@
                 </div>
 
                 <div class="list-group">
-                    <div class="list-group-item">
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <div class="help-block">
-                                    <g:message code="select.jobs.to.export"/>
+                    <g:if test="${jobs || deletedPaths}">
+
+                        <div class="list-group-item">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <div class="help-block">
+                                        <g:message code="select.jobs.to.export"/>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+
+                    </g:if>
                     <g:if test="${jobs}">
 
                         <div class="list-group-item">
@@ -175,7 +179,7 @@
                             </g:if>
                         </div>
                     </g:if>
-                    <g:if test="${!jobs && !deletedPaths}">
+                    <g:if test="${!jobs && !deletedPaths && scmExportStatus.state.toString()=='CLEAN'}">
                         <div class="list-group-item">
                             No Changes
                         </div>
@@ -199,7 +203,7 @@
                 </div>
 
                 <div class="panel-footer">
-                    <g:submitButton name="create" value="${g.message(code: 'button.Commit.title', default: 'Commit')}"
+                    <g:submitButton name="create" value="${g.message(code: 'button.Export.title')}"
                                     class="btn btn-default"/>
                 </div>
             </div>
