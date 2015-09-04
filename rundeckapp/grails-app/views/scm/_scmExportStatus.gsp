@@ -11,9 +11,12 @@
 <g:else>
 
     <g:link action="commit" controller="scm"
-            data-placement="bottom"
-            class="btn btn-sm btn-link has_tooltip"
-            title="${message(code:"scm.export.commit.link.title")}"
+            data-placement="left"
+            data-toggle="${popover?'popover':''}"
+            data-content="${popover?:''}"
+            data-trigger="hover"
+            class="btn btn-sm btn-link has_${popover?'popover':'tooltip'}"
+            title="${message(code:"scm.export.status.${status}.title.text")}"
             params="${[project: params.project, allJobs:true]}">
         <g:render template="/scm/statusIcon" model="[status: status,
                                                      text  : text,

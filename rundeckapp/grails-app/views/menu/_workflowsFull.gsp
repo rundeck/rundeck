@@ -125,7 +125,12 @@
 
             %{--SCM synch status--}%
             <g:if test="${scmExportEnabled && scmExportStatus}">
-                <g:render template="/scm/scmExportStatus" model="[status:scmExportStatus.state,text:'',meta:[:]]"/>
+                <g:render template="/scm/scmExportStatus" model="[
+                        status:scmExportStatus.state,
+                        text:'',
+                        popover:scmExportStatus.message?:'',
+                        meta:[:]
+                ]"/>
             </g:if>
 
 
