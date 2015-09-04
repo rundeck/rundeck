@@ -41,7 +41,7 @@
             <g:message code="scm.export.plugins.help"/>
         </span>
 
-        <g:if test="${pluginConfig && pluginConfig.type && pluginConfig.enabled && configuredPlugin}">
+        <g:if test="${pluginConfig && pluginConfig.type && enabled && configuredPlugin && enabled}">
         %{--Disable plugin modal--}%
             <g:form useToken="true">
                 <div class="modal fade" id="disablePlugin" role="dialog" aria-labelledby="disablePluginModalLabel"
@@ -90,7 +90,7 @@
                 </div><!-- /.modal -->
             </g:form>
         </g:if>
-        <g:if test="${pluginConfig && pluginConfig.type && !pluginConfig.enabled && configuredPlugin}">
+        <g:if test="${pluginConfig && pluginConfig.type && !enabled && configuredPlugin}">
         %{--Enable plugin modal--}%
             <g:form useToken="true">
                 <div class="modal fade" id="enablePlugin" role="dialog" aria-labelledby="enablePluginModalLabel"
@@ -145,8 +145,8 @@
 
                 <g:each in="${plugins.keySet().sort()}" var="pluginName">
                     <g:set var="isConfigured" value="${pluginConfig && pluginConfig.type == pluginName}"/>
-                    <g:set var="isConfiguredButDisabled" value="${isConfigured && !pluginConfig.enabled}"/>
-                    <g:set var="isConfiguredAndEnabled" value="${isConfigured && pluginConfig.enabled}"/>
+                    <g:set var="isConfiguredButDisabled" value="${isConfigured && !enabled}"/>
+                    <g:set var="isConfiguredAndEnabled" value="${isConfigured && enabled}"/>
 
                     <div class="list-group-item">
 
