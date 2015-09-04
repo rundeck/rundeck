@@ -881,6 +881,7 @@ function _initTokenRefresh() {
     if(typeof(jQuery)=='function'){
         jQuery(document).ready(function () {
             jQuery('.has_tooltip').tooltip({});
+            jQuery('.has_popover').popover({});
             _initPopoverContentRef();
             _initPopoverContentFor();
             _initAffix();
