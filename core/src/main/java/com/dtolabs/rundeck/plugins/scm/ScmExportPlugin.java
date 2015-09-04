@@ -39,9 +39,9 @@ public interface ScmExportPlugin {
      * @param jobs  jobs to be exported
      * @param input input for the {@link #getExportProperties(Set)}
      *
-     * @return id of commit
+     * @return result of export
      */
-    String export(
+    ScmExportResult export(
             Set<JobExportReference> jobs,
             Set<String> pathsToDelete,
             ScmUserInfo userInfo,
@@ -87,14 +87,6 @@ public interface ScmExportPlugin {
      */
     JobState jobChanged(JobChangeEvent event, JobExportReference exportReference);
 
-    /**
-     * Return the File for the given job
-     *
-     * @param job job
-     *
-     * @return state
-     */
-    File getLocalFileForJob(JobReference job);
 
     /**
      * Return the relative path for the job in the repo

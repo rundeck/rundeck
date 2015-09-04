@@ -5,4 +5,5 @@ package com.dtolabs.rundeck.plugins.scm;
  */
 public interface ScmExportSynchState {
     public SynchState getState();
+    public String getMessage();
 }
