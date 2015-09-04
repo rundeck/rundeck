@@ -65,9 +65,9 @@ apply plugin: 'maven'
 task createPom << {
     pom {
         project {
-            artifactId 'rundeck-jasypt-encryption-plugin'
+            artifactId project.name
             groupId "org.rundeck.plugins"
-            inceptionYear '2014'
+            inceptionYear '2015'
             packaging 'jar'
             version version
             name( 'Rundeck '+pluginName)

@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.jobs.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.plugins.scm.*
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import org.apache.log4j.Logger
@@ -13,6 +14,7 @@ import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.diff.EditList
 import org.eclipse.jgit.diff.RawText
 import org.eclipse.jgit.diff.RawTextComparator
+import org.eclipse.jgit.lib.BranchTrackingStatus
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.FileMode
 import org.eclipse.jgit.lib.ObjectId
@@ -21,6 +23,8 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.eclipse.jgit.transport.RemoteRefUpdate
+import org.eclipse.jgit.transport.TrackingRefUpdate
 import org.eclipse.jgit.treewalk.TreeWalk
 
 import java.util.regex.Pattern
@@ -113,37 +117,121 @@ class GitExportPlugin implements ScmExportPlugin {
 
     @Override
     List<Property> getExportProperties(final Set<JobRevReference> jobs) {
-        [
-                PropertyBuilder.builder().with {
-                    string "commitMessage"
-                    title "Commit Message"
-                    description "Enter a commit message. Committing to branch: `" + branch + '`'
+        def status = getStatusInternal()
+        if (!status.gitStatus.clean) {
+            [
+                    PropertyBuilder.builder().with {
+                        string "commitMessage"
+                        title "Commit Message"
+                        description "Enter a commit message. Committing to branch: `" + branch + '`'
+                        required true
+                        renderingAsTextarea()
+                        build()
+                    },
+
+                    PropertyBuilder.builder().with {
+                        string "tagName"
+                        title "Tag"
+                        description "Enter a tag name to include, will be pushed with the branch."
+                        required false
+                        build()
+                    },
+
+                    PropertyBuilder.builder().with {
+                        booleanType "push"
+                        title "Push Remotely?"
+                        description "Check to push to the remote"
+                        required false
+                        build()
+                    },
+            ]
+        } else if (status.state == SynchState.EXPORT_NEEDED) {
+            //need a push
+            [
+                    PropertyBuilder.builder().with {
+                        string "status"
+                        title "Export Status"
+                        renderingOption StringRenderingConstants.DISPLAY_TYPE_KEY, StringRenderingConstants.DisplayType.STATIC_TEXT
+                        renderingOption StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY, "text/x-markdown"
+                        defaultValue status.message + """
+
+Pushing to remote branch: `${branch}`"""
+                        build()
+                    },
+
+                    PropertyBuilder.builder().with {
+                        booleanType "push"
+                        title "Push Remotely?"
+                        description "Check to push to the remote"
+                        defaultValue "true"
+                        required false
+                        build()
+                    },
+            ]
+        } else if (status.state == SynchState.REFRESH_NEEDED) {
+            //need to fast forward
+            def props = [
+                    PropertyBuilder.builder().with {
+                        string "status"
+                        title "Git Status"
+                        renderingOption StringRenderingConstants.DISPLAY_TYPE_KEY, StringRenderingConstants.DisplayType.STATIC_TEXT
+                        renderingOption StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY, "text/x-markdown"
+                        defaultValue status.message + """
+
+Pulling from remote branch: `${branch}`"""
+                        build()
+                    },
+            ]
+            if (status.branchTrackingStatus?.behindCount > 0 && status.branchTrackingStatus?.aheadCount > 0) {
+                props.addAll([
+                        PropertyBuilder.builder().with {
+                            select "refresh"
+                            title "Refresh Strategy"
+                            description """Method to refresh local repo from remote
+
+* `pull` - pull changes
+* `rebase` - rebase local changes on top of remote
+* `merge` - merge remote changes into local changes"""
+                            values "pull", "rebase", "merge"
+                            defaultValue "pull"
+                            required true
+                            build()
+                        },
+                        PropertyBuilder.builder().with {
+                            select "resolution"
+                            title "Conflict Resolution Strategy"
+                            description """Method to resolve conflicts from remote
+
+* `ours` - apply our changes over theirs
+* `theirs` - apply their changes over ours"""
+                            values "ours", "theirs"
+                            defaultValue "ours"
+                            required true
+                            build()
+                        },
+                ]
+                )
+
+            }else if (status.branchTrackingStatus?.behindCount>0){
+
+                props << PropertyBuilder.builder().with {
+                    booleanType "pull"
+                    title "Pull from Remote"
+                    description "Check to pull changes from the remote"
+                    defaultValue "true"
                     required true
-                    renderingAsTextarea()
                     build()
-                },
-
-                PropertyBuilder.builder().with {
-                    string "tagName"
-                    title "Tag"
-                    description "Enter a tag name to include, will be pushed with the branch."
-                    required false
-                    build()
-                },
-
-                PropertyBuilder.builder().with {
-                    booleanType "push"
-                    title "Push Remotely?"
-                    description "Check to push to the remote"
-                    required false
-                    build()
-                },
-        ]
+                }
+            }
+            props
+        }else{
+            []
+        }
     }
 
 
     @Override
-    String export(
+    ScmExportResult export(
             final Set<JobExportReference> jobs,
             final Set<String> pathsToDelete,
             final ScmUserInfo userInfo,
@@ -151,53 +239,103 @@ class GitExportPlugin implements ScmExportPlugin {
     )
             throws ScmPluginException
     {
-        if (!jobs && !pathsToDelete) {
-            throw new IllegalArgumentException("A list of jobs or a list paths to delete are required to export")
-        }
-        if (!input.commitMessage) {
-            throw new IllegalArgumentException("A commitMessage is required to export")
-        }
-        def commitIdentName = expand(committerName, userInfo)
-        if (!commitIdentName) {
-            ScmUserInfoMissing.fieldMissing("committerName")
-        }
-        def commitIdentEmail = expand(committerEmail, userInfo)
-        if (!commitIdentEmail) {
-            ScmUserInfoMissing.fieldMissing("committerEmail")
-        }
-        serializeAll(jobs)
-        String commitMessage = input.commitMessage.toString()
-        Status status = git.status().call()
-        //add all changes to index
-        if (jobs) {
-            AddCommand addCommand = git.add()
+        //determine action
+        def internal = getStatusInternal()
+        def localGitChanges = !internal.gitStatus.isClean()
+
+        def dopush = input.push == 'true'
+        RevCommit commit
+        def result = new ScmExportResultImpl()
+
+        if (localGitChanges) {
+            if (!jobs && !pathsToDelete) {
+                throw new ScmPluginException("No jobs or were selected")
+            }
+            if (!input.commitMessage) {
+                throw new ScmPluginException("A commitMessage is required")
+            }
+            def commitIdentName = expand(committerName, userInfo)
+            if (!commitIdentName) {
+                ScmUserInfoMissing.fieldMissing("committerName")
+            }
+            def commitIdentEmail = expand(committerEmail, userInfo)
+            if (!commitIdentEmail) {
+                ScmUserInfoMissing.fieldMissing("committerEmail")
+            }
+            serializeAll(jobs)
+            String commitMessage = input.commitMessage.toString()
+            Status status = git.status().call()
+            //add all changes to index
+            if (jobs) {
+                AddCommand addCommand = git.add()
+                jobs.each {
+                    addCommand.addFilepattern(relativePath(it))
+                }
+                addCommand.call()
+            }
+            def rmfiles = new HashSet<String>(status.removed + status.missing)
+            def todelete = pathsToDelete.intersect(rmfiles)
+            if (todelete) {
+                def rm = git.rm()
+                todelete.each {
+                    rm.addFilepattern(it)
+                }
+                rm.call()
+            }
+
+            CommitCommand commit1 = git.commit().
+                    setMessage(commitMessage).
+                    setCommitter(commitIdentName, commitIdentEmail)
             jobs.each {
-                addCommand.addFilepattern(relativePath(it))
+                commit1.setOnly(relativePath(it))
             }
-            addCommand.call()
-        }
-        def rmfiles = new HashSet<String>(status.removed + status.missing)
-        def todelete = pathsToDelete.intersect(rmfiles)
-        if (todelete) {
-            def rm = git.rm()
-            todelete.each {
-                rm.addFilepattern(it)
+            pathsToDelete.each {
+                commit1.setOnly(it)
             }
-            rm.call()
-        }
+            commit = commit1.call()
+            result.success = true
 
-        CommitCommand commit1 = git.commit().setMessage(commitMessage).setCommitter(commitIdentName, commitIdentEmail)
-        jobs.each {
-            commit1.setOnly(relativePath(it))
+        } else if (jobs || deletedFiles) {
+            //no git changes, but some jobs were selected
+            throw new ScmPluginException("No changes to local git repo need to be exported")
+        } else {
+            commit = getHead()
         }
-        pathsToDelete.each {
-            commit1.setOnly(it)
+        result.id = commit?.name
+
+
+        if (dopush) {
+            //todo: tag
+            if (input.tag) {
+                System.err.println("TODO: tag ${input.tag}")
+            }
+            if (input.push == 'true') {
+                def pushb = git.push()
+
+                pushb.setRemote("origin")
+                pushb.add(branch)
+
+//                pushb.add(input.tag) //todo: push tag
+
+                def push = pushb.call()
+                def sb = new StringBuilder()
+                def updates = (push*.remoteUpdates).flatten()
+                updates.each {
+                    sb.append it.toString()
+                }
+                def failedUpdates = updates.findAll { it.status != RemoteRefUpdate.Status.OK }
+                result.success = !failedUpdates
+                if (failedUpdates) {
+                    result.message = "Some updates failed: " + failedUpdates
+                } else {
+                    result.message = "Remote push result: OK"
+                }
+            }
+        } else if (!localGitChanges) {
+            result.success = true
+            result.message = "Nothing happened"
         }
-        RevCommit commit = commit1.call()
-
-        //todo: push
-
-        return commit.name
+        result
     }
 
     static String expand(final String source, final ScmUserInfo scmUserInfo) {
@@ -229,18 +367,51 @@ class GitExportPlugin implements ScmExportPlugin {
         Status status = git.status().call()
         def set = new HashSet<String>(status.removed)
         set.addAll(status.missing)
-        System.err.println("status: ${status}, removed: ${set}")
         return set as List
     }
 
     @Override
     ScmExportSynchState getStatus() {
-        def commit = lastCommit()
+        return getStatusInternal()
+    }
 
+
+    GitSynchState getStatusInternal() {
+        //fetch remote changes
+        def fetchResult = git.fetch().call()
+
+        def update = fetchResult.getTrackingRefUpdate("refs/remotes/origin/master")
+        if(update) {
+            println(update)
+        }
         Status status = git.status().call()
-        SynchState synchState = status.isClean() ? SynchState.CLEAN : SynchState.EXPORT_NEEDED
 
-        return new GitSynchState(state: synchState)
+        def synchState = new GitSynchState()
+        synchState.gitStatus = status
+        synchState.state = status.isClean() ? SynchState.CLEAN : SynchState.EXPORT_NEEDED
+        if (!status.isClean()) {
+            synchState.message = "Some changes have not been committed"
+        }
+
+        //if clean, check remote tracking status
+        if (status.isClean()) {
+            def bstat = BranchTrackingStatus.of(repo, branch)
+            synchState.branchTrackingStatus = bstat
+            if (bstat && bstat.aheadCount > 0 && bstat.behindCount > 0) {
+                synchState.message = "${bstat.aheadCount} ahead and ${bstat.behindCount} behind remote branch"
+                synchState.state = SynchState.REFRESH_NEEDED
+                //TODO: test if merge would fail
+            } else if (bstat && bstat.aheadCount > 0) {
+                synchState.message = "${bstat.aheadCount} changes need to be pushed"
+                synchState.state = SynchState.EXPORT_NEEDED
+            } else if (bstat && bstat.behindCount > 0) {
+                synchState.message = "${bstat.behindCount} changes from remote need to be pulled"
+                synchState.state = SynchState.REFRESH_NEEDED
+            }
+        }
+
+
+        return synchState
     }
 
     @Override
@@ -514,7 +685,7 @@ class GitExportPlugin implements ScmExportPlugin {
      * get RevCommit for HEAD rev of the path
      * @return RevCommit or null if HEAD not found (empty git)
      */
-    def getHead() {
+    RevCommit getHead() {
 
         final RevWalk walk = new RevWalk(repo);
         walk.setRetainBody(true);
@@ -528,7 +699,7 @@ class GitExportPlugin implements ScmExportPlugin {
         headCommit
     }
 
-    def lookupId(RevCommit commit, String path) {
+    ObjectId lookupId(RevCommit commit, String path) {
         if (!commit) {
             return null
         }
@@ -546,12 +717,12 @@ class GitExportPlugin implements ScmExportPlugin {
         return id;
     }
 
-    def getBytes(ObjectId id) {
+    byte[] getBytes(ObjectId id) {
         repo.open(id, Constants.OBJ_BLOB).getCachedBytes(Integer.MAX_VALUE)
     }
 
 
-    def printDiff(OutputStream out, File file1, byte[] data) {
+    int printDiff(OutputStream out, File file1, byte[] data) {
         RawText rt1 = new RawText(data);
         RawText rt2 = new RawText(file1);
         EditList diffList = new EditList();

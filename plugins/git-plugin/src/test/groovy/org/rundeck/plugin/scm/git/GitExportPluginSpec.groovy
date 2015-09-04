@@ -3,6 +3,7 @@ package org.rundeck.plugin.scm.git
 import com.dtolabs.rundeck.core.jobs.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
+import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfoMissing
 import com.dtolabs.rundeck.plugins.scm.SynchState
@@ -115,6 +116,9 @@ class GitExportPluginSpec extends Specification {
         git.close()
         def plugin = new GitExportPlugin(config, 'test')
         plugin.initialize()
+        def path = 'testfile'
+        def localfile = new File(gitdir, path)
+        localfile << 'blah'
 
         when:
         def props = plugin.getExportProperties([] as Set)
@@ -462,8 +466,7 @@ class GitExportPluginSpec extends Specification {
         'Bob ${user.firstName} x ${user.lastName} y ${user.email} H ${user.userName} I' | 'Bob  x  y  H  I'
     }
 
-
-    def "export missing commit message"() {
+    def "export with no changes/push has no result"() {
         given:
 
         def gitdir = new File(tempdir, 'scm')
@@ -487,11 +490,77 @@ class GitExportPluginSpec extends Specification {
         def userInfo = Mock(ScmUserInfo)
         def input = [:]
         when:
+        def result = plugin.export([] as Set, [] as Set, userInfo, input)
+
+        then:
+        result.success
+        !result.error
+        result.message == 'Nothing happened'
+    }
+
+    def "export missing commit message"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        def config = [
+                dir           : gitdir.absolutePath,
+                pathTemplate  : '${job.group}${job.name}-${job.id}.xml',
+                branch        : 'master',
+                committerName : '${user.fullName}',
+                committerEmail: '${user.email}',
+                url           : origindir
+        ]
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+        def plugin = new GitExportPlugin(config, 'test')
+        plugin.initialize()
+        def localfile = new File(gitdir, 'blah')
+        localfile << 'blah'
+
+        def jobref = Stub(JobExportReference)
+        def userInfo = Mock(ScmUserInfo)
+        def input = [:]
+        when:
         def result = plugin.export([jobref] as Set, [] as Set, userInfo, input)
 
         then:
-        IllegalArgumentException e = thrown()
-        e.message == 'A commitMessage is required to export'
+        ScmPluginException e = thrown()
+        e.message == 'A commitMessage is required'
+    }
+
+    def "export job no local changes"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        def config = [
+                dir           : gitdir.absolutePath,
+                pathTemplate  : '${job.group}${job.name}-${job.id}.xml',
+                branch        : 'master',
+                committerName : '${user.fullName}',
+                committerEmail: '${user.email}',
+                url           : origindir
+        ]
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+        def plugin = new GitExportPlugin(config, 'test')
+        plugin.initialize()
+
+
+        def jobref = Stub(JobExportReference)
+        def userInfo = Mock(ScmUserInfo)
+        def input = [:]
+        when:
+        def result = plugin.export([jobref] as Set, [] as Set, userInfo, input)
+
+        then:
+        ScmPluginException e = thrown()
+        e.message == 'No changes to local git repo need to be exported'
     }
 
     def "export missing jobs and paths"() {
@@ -513,6 +582,8 @@ class GitExportPluginSpec extends Specification {
         git.close()
         def plugin = new GitExportPlugin(config, 'test')
         plugin.initialize()
+        def localfile = new File(gitdir, 'blah')
+        localfile << 'blah'
 
 
         def userInfo = Mock(ScmUserInfo)
@@ -521,8 +592,8 @@ class GitExportPluginSpec extends Specification {
         def result = plugin.export([] as Set, [] as Set, userInfo, input)
 
         then:
-        IllegalArgumentException e = thrown()
-        e.message == 'A list of jobs or a list paths to delete are required to export'
+        ScmPluginException e = thrown()
+        e.message == 'No jobs or were selected'
     }
 
     def "export missing user info"() {
@@ -544,6 +615,8 @@ class GitExportPluginSpec extends Specification {
         git.close()
         def plugin = new GitExportPlugin(config, 'test')
         plugin.initialize()
+        def localfile = new File(gitdir, 'blah')
+        localfile << 'blah'
 
         def serializer = Mock(JobSerializer)
         def jobref = Stub(JobExportReference) {
