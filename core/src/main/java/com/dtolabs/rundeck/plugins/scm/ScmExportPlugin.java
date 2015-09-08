@@ -4,6 +4,8 @@ import com.dtolabs.rundeck.core.jobs.JobExportReference;
 import com.dtolabs.rundeck.core.jobs.JobReference;
 import com.dtolabs.rundeck.core.jobs.JobRevReference;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
+import com.dtolabs.rundeck.core.plugins.views.Action;
+import com.dtolabs.rundeck.core.plugins.views.BasicInputView;
 
 import java.io.File;
 import java.util.List;
@@ -24,24 +26,31 @@ public interface ScmExportPlugin {
      */
     void cleanup();
 
+
     /**
-     * Define any UI properties for export action
+     * @param actionId action ID
      *
-     * @param jobs set of jobs to list for commit
-     *
-     * @return list of properties
+     * @return input view for the specified action
      */
-    List<Property> getExportProperties(Set<JobRevReference> jobs);
+    BasicInputView getInputViewForAction(String actionId);
+
+    /**
+     * @param context context map
+     *
+     * @return list of actions available for the context
+     */
+    List<Action> actionsAvailableForContext(final Map<String, String> context);
 
     /**
      * Perform export of the jobs
      *
      * @param jobs  jobs to be exported
-     * @param input input for the {@link #getExportProperties(Set)}
+     * @param input input for the action properties
      *
      * @return result of export
      */
     ScmExportResult export(
+            String actionId,
             Set<JobExportReference> jobs,
             Set<String> pathsToDelete,
             ScmUserInfo userInfo,
@@ -65,7 +74,7 @@ public interface ScmExportPlugin {
     /**
      * Return the state of the given job, with optional original repo path
      *
-     * @param job job
+     * @param job          job
      * @param originalPath path of original job, e.g. if the file was renamed
      *
      * @return state
@@ -101,7 +110,6 @@ public interface ScmExportPlugin {
      * Get diff for the given job
      *
      * @param job job
-     *
      */
     ScmDiffResult getFileDiff(JobExportReference job);
 
@@ -109,9 +117,8 @@ public interface ScmExportPlugin {
      * Get diff for the given job against another path, e.g. the original
      * path before a rename
      *
-     * @param job job
+     * @param job          job
      * @param originalPath original path
-     *
      */
     ScmDiffResult getFileDiff(JobExportReference job, String originalPath);
 }
