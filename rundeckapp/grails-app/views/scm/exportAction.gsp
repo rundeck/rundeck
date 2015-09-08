@@ -25,15 +25,21 @@
 
 <div class="row">
     <div class="col-sm-12 col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-2">
-        <g:form action="saveCommit"
+        <g:form action="exportActionSubmit"
                 params="${[project: params.project]}"
                 useToken="true"
                 method="post" class="form form-horizontal">
             <g:hiddenField name="allJobs" value="${params.allJobs}"/>
+            <g:hiddenField name="actionId" value="${params.actionId}"/>
             <div class="panel panel-primary" id="createform">
                 <div class="panel-heading">
                     <span class="h3">
-                        <g:message code="scmController.page.commit.description" default="SCM Export: Commit Changes"/>
+                        <g:if test="${actionView && actionView.title}">
+                            ${actionView.title}
+                        </g:if>
+                        <g:else>
+                            <g:message code="scmController.page.commit.description" default="SCM Export"/>
+                        </g:else>
                     </span>
                 </div>
 
@@ -185,7 +191,7 @@
                         </div>
                     </g:if>
                     <div class="list-group-item">
-                        <g:each in="${properties}" var="prop">
+                        <g:each in="${actionView.properties}" var="prop">
 
                             <g:if test="${!prop.scope || prop.scope.isProjectLevel() || prop.scope.isUnspecified()}">
                                 <g:render
@@ -203,8 +209,12 @@
                 </div>
 
                 <div class="panel-footer">
-                    <g:submitButton name="create" value="${g.message(code: 'button.Export.title')}"
-                                    class="btn btn-default"/>
+                    <button class="btn btn-default" name="cancel" value="Cancel"><g:message code="button.action.Cancel" /></button>
+                    <g:submitButton
+                            name="create"
+                                    value="${actionView.buttonTitle ?:
+                            g.message(code: 'button.Export.title')}"
+                                    class="btn btn-primary"/>
                 </div>
             </div>
         </g:form>

@@ -5,6 +5,8 @@ import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.core.plugins.views.Action
+import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.jobs.JobChangeListener
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
@@ -80,10 +82,9 @@ class ScmService {
         loadedExportPlugins.containsKey(project)
     }
 
-    def getExportCommitProperties(String project, List<String> jobIds) {
-        def refs = jobRefsForIds(jobIds)
+    BasicInputView getExportInputView(String project, String actionId) {
         def plugin = loadedExportPlugins[project]
-        plugin.getExportProperties(refs as Set)
+        plugin.getInputViewForAction(actionId)
     }
 
     def getExportSetupProperties(String project, String type) {
@@ -451,6 +452,19 @@ class ScmService {
         }
         null
     }
+    /**
+     * Get the actions for the plugin
+     * @param project
+     * @return
+     */
+    List<Action> exportPluginActions(String project) {
+
+        def plugin = loadedExportPlugins[project]
+        if (plugin) {
+            return plugin.actionsAvailableForContext([project:project])
+        }
+        null
+    }
 
     /**
      * Return a map of status for jobs
@@ -488,7 +502,8 @@ class ScmService {
         return map
     }
 
-    def exportCommit(
+    def performExportAction(
+            String actionId,
             String username,
             String project,
             Map config,
@@ -500,14 +515,14 @@ class ScmService {
         //store config
         def plugin = loadedExportPlugins[project]
         def jobrefs = exportjobRefsForJobs(jobs)
-        def properties = plugin.getExportProperties(jobrefs as Set)
-        def report = validateExportPluginConfigProperties(project, properties, config)
+        def view = plugin.getInputViewForAction(actionId)
+        def report = validateExportPluginConfigProperties(project, view.properties, config)
         if (!report.valid) {
             return [valid: false, report: report]
         }
         def result=null
         try {
-            result = plugin.export(jobrefs as Set, deletePaths as Set, lookupUserInfo(username), config)
+            result = plugin.export(actionId, jobrefs as Set, deletePaths as Set, lookupUserInfo(username), config)
         } catch (ScmPluginException e) {
             log.error(e.message)
             log.debug("export failed ${jobrefs}, ${deletePaths}, ${username}, ${config}", e)
@@ -521,10 +536,10 @@ class ScmService {
                         missingUserInfoField: ScmUserInfoMissing.missingFieldName(e)
                 ]
             }
-            return [error: e.message]
+            return [error: true,message:e.message]
         }
         if(result.error){
-            return [error: result.message]
+            return [error: true, message:result.message]
         }
         forgetDeletedPaths(project, deletePaths)
         forgetRenamedJobs(project, jobrefs*.id)

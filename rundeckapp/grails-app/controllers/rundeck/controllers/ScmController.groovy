@@ -203,7 +203,7 @@ class ScmController extends ControllerBase {
         redirect(action: 'index', params: [project: project])
     }
 
-    def commit(String project) {
+    def exportAction(String project, String actionId) {
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
 
         if (unauthorizedResponse(
@@ -247,7 +247,7 @@ class ScmController extends ControllerBase {
         def scmExportStatus = scmService.exportPluginStatus(params.project)
         def scmFiles = scmService.filePathsMapForJobRefs(scmService.jobRefsForJobs(jobs))
         [
-                properties     : scmService.getExportCommitProperties(project, jobIds),
+                actionView     : scmService.getExportInputView(project, actionId),
                 jobs           : jobs,
                 scmStatus      : scmStatus,
                 selected       : params.jobIds ? jobIds : [],
@@ -255,11 +255,12 @@ class ScmController extends ControllerBase {
                 deletedPaths   : deletedPaths,
                 selectedPaths  : selectedPaths,
                 renamedJobPaths: renamedJobPaths,
-                scmExportStatus: scmExportStatus
+                scmExportStatus: scmExportStatus,
+                actionId       : actionId
         ]
     }
 
-    def saveCommit(String project) {
+    def exportActionSubmit(String project, String actionId) {
 
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
 
@@ -305,7 +306,7 @@ class ScmController extends ControllerBase {
 
 
         def deletePathsToJobIds = deletePaths.collectEntries { [it, scmService.deletedJobForPath(project, it)?.id] }
-        def result = scmService.exportCommit(session.user, project, params.commit, jobs, deletePaths)
+        def result = scmService.performExportAction(actionId,session.user, project, params.commit, jobs, deletePaths)
         if (!result.valid || result.error) {
             def report = result.report
             if (result.missingUserInfoField) {
@@ -319,9 +320,9 @@ class ScmController extends ControllerBase {
             def scmStatus = scmService.exportStatusForJobs(jobs)
             def scmFiles = scmService.filePathsMapForJobRefs(scmService.jobRefsForJobs(jobs))
             def scmExportStatus = scmService.exportPluginStatus(params.project)
-            render view: 'commit',
+            render view: 'exportAction',
                    model: [
-                           properties     : scmService.getExportCommitProperties(project, jobIds),
+                           actionView     : scmService.getExportInputView(project, actionId),
                            jobs           : jobs,
                            scmStatus      : scmStatus,
                            selected       : params.jobIds ? jobIds : [],
@@ -330,15 +331,16 @@ class ScmController extends ControllerBase {
                            config         : params.commit,
                            deletedPaths   : deletedPaths,
                            selectedPaths  : deletePaths,
-                           scmExportStatus: scmExportStatus
+                           scmExportStatus: scmExportStatus,
+                           actionId       : actionId
                    ]
             return
         }
 
         def commitid = result.commitId
-        if(result.message) {
+        if (result.message) {
             flash.message = result.message
-        }else {
+        } else {
             def code = "scmController.action.commit.multi.succeed.message"
             def jobIdent = ''
             if (jobs.size() == 1 && deletePaths.size() == 0) {

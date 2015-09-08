@@ -131,6 +131,25 @@
                         popover:scmExportStatus.message?:'',
                         meta:[:]
                 ]"/>
+                <g:if test="${scmExportActions}">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                            Actions
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu pull-right" role="menu">
+                            <g:each in="${scmExportActions}" var="action">
+                                <li>
+                                    <g:link controller="scm" action="exportAction" params="${[
+                                            project:params.project,allJobs:true,actionId:action.id
+                                    ]}"
+                                        title="${action.description?:''}"
+                                    >${action.title?:'Action'}</g:link>
+                                </li>
+                            </g:each>
+                        </ul>
+                    </div>
+                </g:if>
             </g:if>
 
 

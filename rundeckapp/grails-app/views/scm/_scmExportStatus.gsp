@@ -10,7 +10,7 @@
 </g:if>
 <g:else>
 
-    <g:link action="commit" controller="scm"
+    <g:link action="exportAction" controller="scm"
             data-placement="left"
             data-toggle="${popover?'popover':''}"
             data-content="${popover?:''}"

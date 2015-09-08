@@ -124,7 +124,7 @@
     <g:unless test="${exportStateClean}">
         <li><g:link controller="scm"
                     params="[project: scheduledExecution.project,jobIds:scheduledExecution.extid]"
-                    action="commit"
+                    action="exportAction"
                     >
             <g:render template="/scm/statusBadge"
                       model="[status: jobstatus?.synchState?.toString(),

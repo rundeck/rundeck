@@ -109,7 +109,7 @@
                      data-ace-session-mode="diff">${diffResult.content}</div>
             </g:elseif>
             <g:if test="${diffResult.modified || diffResult.oldNotFound}">
-                <g:link action="commit" controller="scm"
+                <g:link action="exportAction" controller="scm"
                         class="list-group-item ${diffResult.oldNotFound ? 'list-group-item-success' :
                                 'list-group-item-info'}"
                         params="[project: params.project, jobIds: job.extid]">
