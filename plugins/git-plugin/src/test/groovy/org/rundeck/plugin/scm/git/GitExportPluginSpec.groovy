@@ -97,7 +97,7 @@ class GitExportPluginSpec extends Specification {
 
     }
 
-    def "get export properties"() {
+    def "get export properties, commit"() {
         given:
 
         def gitdir = new File(tempdir, 'scm')
@@ -121,11 +121,13 @@ class GitExportPluginSpec extends Specification {
         localfile << 'blah'
 
         when:
-        def props = plugin.getExportProperties([] as Set)
+        def view = plugin.getInputViewForAction(GitExportPlugin.JOB_COMMIT_ACTION_ID)
 
         then:
-        props.size() == 3
-        props*.name == [
+        view.title == "Commit Changes to Git"
+        view.actionId == GitExportPlugin.JOB_COMMIT_ACTION_ID
+        view.properties.size() == 3
+        view.properties*.name == [
                 'commitMessage',
                 'tagName',
                 'push'
@@ -466,7 +468,7 @@ class GitExportPluginSpec extends Specification {
         'Bob ${user.firstName} x ${user.lastName} y ${user.email} H ${user.userName} I' | 'Bob  x  y  H  I'
     }
 
-    def "export with no changes/push has no result"() {
+    def "job commit with no changes"() {
         given:
 
         def gitdir = new File(tempdir, 'scm')
@@ -490,15 +492,15 @@ class GitExportPluginSpec extends Specification {
         def userInfo = Mock(ScmUserInfo)
         def input = [:]
         when:
-        def result = plugin.export([] as Set, [] as Set, userInfo, input)
+        def result = plugin.export(GitExportPlugin.JOB_COMMIT_ACTION_ID, [] as Set, [] as Set, userInfo, input)
 
         then:
-        result.success
-        !result.error
-        result.message == 'Nothing happened'
+        ScmPluginException e = thrown()
+        e.message=='No changes to local git repo need to be exported'
+
     }
 
-    def "export missing commit message"() {
+    def "job commit with missing commit message"() {
         given:
 
         def gitdir = new File(tempdir, 'scm')
@@ -524,7 +526,7 @@ class GitExportPluginSpec extends Specification {
         def userInfo = Mock(ScmUserInfo)
         def input = [:]
         when:
-        def result = plugin.export([jobref] as Set, [] as Set, userInfo, input)
+        def result = plugin.export(GitExportPlugin.JOB_COMMIT_ACTION_ID, [jobref] as Set, [] as Set, userInfo, input)
 
         then:
         ScmPluginException e = thrown()
@@ -556,7 +558,7 @@ class GitExportPluginSpec extends Specification {
         def userInfo = Mock(ScmUserInfo)
         def input = [:]
         when:
-        def result = plugin.export([jobref] as Set, [] as Set, userInfo, input)
+        def result = plugin.export(GitExportPlugin.JOB_COMMIT_ACTION_ID, [jobref] as Set, [] as Set, userInfo, input)
 
         then:
         ScmPluginException e = thrown()
@@ -589,11 +591,11 @@ class GitExportPluginSpec extends Specification {
         def userInfo = Mock(ScmUserInfo)
         def input = [commitMessage: "test"]
         when:
-        def result = plugin.export([] as Set, [] as Set, userInfo, input)
+        def result = plugin.export(GitExportPlugin.JOB_COMMIT_ACTION_ID, [] as Set, [] as Set, userInfo, input)
 
         then:
         ScmPluginException e = thrown()
-        e.message == 'No jobs or were selected'
+        e.message == 'No jobs were selected'
     }
 
     def "export missing user info"() {
@@ -632,7 +634,7 @@ class GitExportPluginSpec extends Specification {
         }
         def input = [commitMessage: "Test"]
         when:
-        def result = plugin.export([jobref] as Set, [] as Set, userInfo, input)
+        def result = plugin.export(GitExportPlugin.JOB_COMMIT_ACTION_ID, [jobref] as Set, [] as Set, userInfo, input)
 
         then:
         ScmUserInfoMissing e = thrown()
