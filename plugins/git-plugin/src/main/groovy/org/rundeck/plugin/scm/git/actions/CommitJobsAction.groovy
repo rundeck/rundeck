@@ -20,8 +20,8 @@ import org.rundeck.plugin.scm.git.GitExportPlugin
  * Created by greg on 9/8/15.
  */
 class CommitJobsAction extends BaseGitAction {
-    CommitJobsAction(final String id) {
-        super(id)
+    CommitJobsAction(final String id, final String title, final String description) {
+        super(id, title, description)
     }
 
     BasicInputView getInputView(GitExportPlugin plugin) {

@@ -9,6 +9,8 @@ import com.dtolabs.rundeck.plugins.scm.ScmExportResultImpl
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
+import org.eclipse.jgit.api.PullCommand
+import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.transport.RemoteRefUpdate
 import org.rundeck.plugin.scm.git.BaseGitAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
@@ -17,8 +19,8 @@ import org.rundeck.plugin.scm.git.GitExportPlugin
  * Created by greg on 9/8/15.
  */
 class SynchAction extends BaseGitAction {
-    SynchAction(final String id) {
-        super(id)
+    SynchAction(final String id, final String title, final String description) {
+        super(id, title, description)
     }
 
     @Override
@@ -28,7 +30,6 @@ class SynchAction extends BaseGitAction {
             buttonTitle "Synch"
         }
         def status = plugin.getStatusInternal()
-        //need to fast forward
         def props = [
                 PropertyBuilder.builder().with {
                     string "status"
@@ -45,25 +46,25 @@ Pulling from remote branch: `${plugin.branch}`"""
             props.addAll([
                     PropertyBuilder.builder().with {
                         select "refresh"
-                        title "Refresh Strategy"
-                        description """Method to refresh local repo from remote
+                        title "Synch Method"
+                        description """Choose a method to synch the remote branch changes with local git repository.
 
-* `pull` - pull changes
+* `merge` - merge remote changes into local changes
 * `rebase` - rebase local changes on top of remote
-* `merge` - merge remote changes into local changes"""
-                        values "pull", "rebase", "merge"
-                        defaultValue "pull"
+"""
+                        values "merge", "rebase"
+                        defaultValue "merge"
                         required true
                         build()
                     },
                     PropertyBuilder.builder().with {
                         select "resolution"
                         title "Conflict Resolution Strategy"
-                        description """Method to resolve conflicts from remote
+                        description """Choose a strategy to resolve conflicts in the synched files.
 
 * `ours` - apply our changes over theirs
 * `theirs` - apply their changes over ours"""
-                        values "ours", "theirs"
+                        values(MergeStrategy.get()*.name)
                         defaultValue "ours"
                         required true
                         build()
@@ -73,14 +74,9 @@ Pulling from remote branch: `${plugin.branch}`"""
 
         } else if (status.branchTrackingStatus?.behindCount > 0) {
 
-            props << PropertyBuilder.builder().with {
-                booleanType "pull"
-                title "Pull from Remote"
-                description "Check to pull changes from the remote"
-                defaultValue "true"
-                required true
-                build()
-            }
+            //just need to fast forward, so Pull is the right action
+            builder.buttonTitle("Pull Changes")
+
         }
 
         builder.properties(props).build()
@@ -95,8 +91,61 @@ Pulling from remote branch: `${plugin.branch}`"""
             final Map<String, Object> input
     ) throws ScmPluginException
     {
-        //todo
-        throw new ScmPluginException("todo")
+        def status = plugin.getStatusInternal()
 
+
+        if (status.branchTrackingStatus?.behindCount > 0 && status.branchTrackingStatus?.aheadCount > 0) {
+            gitResolve(plugin,input)
+        }else if (status.branchTrackingStatus?.behindCount > 0) {
+            gitPull(plugin)
+        }else{
+            //no action
+        }
+
+    }
+
+    ScmExportResult gitPull(final GitExportPlugin plugin) {
+        def pullResult = plugin.git.pull().setRemote('master').setRemoteBranchName(plugin.branch).call()
+
+        def result = new ScmExportResultImpl()
+        result.success = pullResult.successful
+        result.message = pullResult.toString()
+        result
+    }
+
+    ScmExportResult gitResolve(final GitExportPlugin plugin,final Map<String, Object> input) {
+
+
+        if (input.refresh == 'rebase') {
+            def pullbuilder = plugin.git.pull().setRemote('origin').setRemoteBranchName(plugin.branch)
+            pullbuilder.setRebase(true)
+            def pullResult = pullbuilder.call()
+
+            def result = new ScmExportResultImpl()
+            result.success = pullResult.successful
+            result.message = pullResult.toString()
+            return result
+        }else{
+            //fetch, then
+            //merge
+
+            def fetchResult = plugin.git.fetch().setRemote('origin').call()
+            def update = fetchResult.getTrackingRefUpdate("refs/remotes/origin/master")
+
+
+            def strategy = MergeStrategy.get(input.resolution)
+            def mergebuild = plugin.git.merge().setStrategy(strategy)
+            def commit = plugin.git.repository.resolve("refs/remotes/origin/master")
+
+            mergebuild.include(commit)
+
+            def mergeresult = mergebuild.call()
+
+            def result = new ScmExportResultImpl()
+            result.success = mergeresult.mergeStatus.successful
+            result.message = mergeresult.toString()
+            return result
+
+        }
     }
 }

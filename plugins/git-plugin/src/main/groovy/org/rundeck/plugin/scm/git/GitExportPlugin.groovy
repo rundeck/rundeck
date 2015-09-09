@@ -1,10 +1,8 @@
 package org.rundeck.plugin.scm.git
-
 import com.dtolabs.rundeck.core.jobs.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.core.plugins.views.Action
-import com.dtolabs.rundeck.core.plugins.views.ActionBuilder
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
@@ -17,47 +15,23 @@ import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.rundeck.plugin.scm.git.actions.CommitJobsAction
+import org.rundeck.plugin.scm.git.actions.FetchAction
 import org.rundeck.plugin.scm.git.actions.PushAction
 import org.rundeck.plugin.scm.git.actions.SynchAction
 
 import java.util.regex.Pattern
-
 /**
  * Git export plugin
  */
 class GitExportPlugin implements ScmExportPlugin {
     static final Logger log = Logger.getLogger(GitExportPlugin)
     public static final String SERIALIZE_FORMAT = 'xml'
-    public static final Action JOB_DIFF_ACTION = ActionBuilder.action(
-            JOB_DIFF_ACTION_ID,
-            "Diff",
-            "View Job changes",
-            )
-    public static final Action JOB_COMMIT_ACTION = ActionBuilder.action(
-            JOB_COMMIT_ACTION_ID,
-            "Commit",
-            "Commit Job changes",
-            )
-    public static final Action PROJECT_COMMIT_ACTION = ActionBuilder.action(
-            PROJECT_COMMIT_ACTION_ID,
-            "Commit",
-            "Commit changes",
-            )
-    public static final Action PROJECT_PUSH_ACTION = ActionBuilder.action(
-            PROJECT_PUSH_ACTION_ID,
-            "Push",
-            "Push changes remotely",
-            )
-    public static final Action PROJECT_SYNCH_ACTION = ActionBuilder.action(
-            PROJECT_SYNCH_ACTION_ID,
-            "Synch",
-            "Synch with remote changes",
-            )
-    public static final String JOB_DIFF_ACTION_ID = "job-diff"
+
     public static final String JOB_COMMIT_ACTION_ID = "job-commit"
     public static final String PROJECT_COMMIT_ACTION_ID = "project-commit"
     public static final String PROJECT_PUSH_ACTION_ID = "project-push"
     public static final String PROJECT_SYNCH_ACTION_ID = "project-synch"
+    public static final String PROJECT_FETCH_ACTION_ID = "project-fetch"
 
     Map<String, GitAction> actions = [:]
 
@@ -83,10 +57,34 @@ class GitExportPlugin implements ScmExportPlugin {
 
     void initialize() {
         setup(input)
-        actions[JOB_COMMIT_ACTION_ID] = new CommitJobsAction(JOB_COMMIT_ACTION_ID)
-        actions[PROJECT_COMMIT_ACTION_ID] = new CommitJobsAction(PROJECT_COMMIT_ACTION_ID)
-        actions[PROJECT_PUSH_ACTION_ID] = new PushAction(PROJECT_PUSH_ACTION_ID)
-        actions[PROJECT_SYNCH_ACTION_ID] = new SynchAction(PROJECT_SYNCH_ACTION_ID)
+        actions = [
+                (JOB_COMMIT_ACTION_ID)    : new CommitJobsAction(
+                        JOB_COMMIT_ACTION_ID,
+                        "Commit Job Changes",
+                        "Commit changes to local git repo."
+                ),
+                (PROJECT_COMMIT_ACTION_ID): new CommitJobsAction(
+                        PROJECT_COMMIT_ACTION_ID,
+                        "Commit Job Changes",
+                        "Commit changes to local git repo."
+                ),
+                (PROJECT_PUSH_ACTION_ID)  : new PushAction(
+                        PROJECT_PUSH_ACTION_ID,
+                        "Push to Remote",
+                        "Push committed changes to the remote branch."
+                ),
+                (PROJECT_SYNCH_ACTION_ID) : new SynchAction(
+                        PROJECT_SYNCH_ACTION_ID,
+                        "Synch with Remote",
+                        "Synch incoming changes from Remote"
+                ),
+                (PROJECT_FETCH_ACTION_ID) : new FetchAction(
+                        PROJECT_FETCH_ACTION_ID,
+                        "Fetch from Remote",
+                        "Fetch incoming changes from Remote"
+                )
+
+        ]
     }
 
     boolean isSetup() {
@@ -206,21 +204,20 @@ class GitExportPlugin implements ScmExportPlugin {
             //actions for a specific Job
 
             [
-                    JOB_DIFF_ACTION,
-                    JOB_COMMIT_ACTION,
+                    actions[JOB_COMMIT_ACTION_ID],
             ]
 
         } else if (context.project) {
             //actions in project view
             def status = getStatusInternal()
             if (!status.gitStatus.clean) {
-                [PROJECT_COMMIT_ACTION]
+                [actions[PROJECT_COMMIT_ACTION_ID], actions[PROJECT_FETCH_ACTION_ID]]
             } else if (status.state == SynchState.EXPORT_NEEDED) {
                 //need a push
-                [PROJECT_PUSH_ACTION]
+                [actions[PROJECT_PUSH_ACTION_ID], actions[PROJECT_FETCH_ACTION_ID]]
             } else if (status.state == SynchState.REFRESH_NEEDED) {
                 //need to fast forward
-                [PROJECT_SYNCH_ACTION]
+                [actions[PROJECT_FETCH_ACTION_ID], actions[PROJECT_SYNCH_ACTION_ID]]
             } else {
                 []
             }
@@ -236,13 +233,6 @@ class GitExportPlugin implements ScmExportPlugin {
 
 
     GitSynchState getStatusInternal() {
-        //fetch remote changes
-        def fetchResult = git.fetch().call()
-
-        def update = fetchResult.getTrackingRefUpdate("refs/remotes/origin/master")
-        if (update) {
-            println(update)
-        }
         Status status = git.status().call()
 
         def synchState = new GitSynchState()

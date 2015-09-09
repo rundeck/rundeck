@@ -5,9 +5,13 @@ package org.rundeck.plugin.scm.git
  */
 abstract class BaseGitAction implements GitAction {
     String id
+    String title
+    String description
 
-    BaseGitAction(String id) {
+    BaseGitAction(String id, String title, String description) {
         this.id = id
+        this.title = title
+        this.description = description
     }
 
 }
