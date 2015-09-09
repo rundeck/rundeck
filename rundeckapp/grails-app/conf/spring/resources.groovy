@@ -13,6 +13,7 @@ import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginPro
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.PluggableStoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
@@ -136,6 +137,10 @@ beans={
     }
 
     scmExportPluginProviderService(ScmExportPluginProviderService) {
+        rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
+    }
+
+    scmImportPluginProviderService(ScmImportPluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
 
