@@ -1,7 +1,7 @@
 
-ext.pluginClassNames='org.rundeck.plugin.scm.git.GitExportPluginFactory'
-ext.pluginName = 'Git Export Plugin'
-ext.pluginDescription = 'Export and synch Jobs to a Git repository'
+ext.pluginClassNames='org.rundeck.plugin.scm.git.GitExportPluginFactory,org.rundeck.plugin.scm.git.GitImportPluginFactory'
+ext.pluginName = 'Git Plugin'
+ext.pluginDescription = 'Export and Import Jobs with a Git repository'
 
 apply plugin: "groovy"
 configurations{
