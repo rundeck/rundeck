@@ -40,7 +40,6 @@ import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
-import com.dtolabs.rundeck.core.scm.ScmExportService;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import junit.framework.TestCase;
@@ -348,11 +347,6 @@ public class TestBaseFileCopier extends TestCase {
 
         @Override
         public StepExecutionService getStepExecutionService() {
-            return null;
-        }
-
-        @Override
-        public ScmExportService getScmExportService() {
             return null;
         }
 

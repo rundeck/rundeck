@@ -14,7 +14,6 @@ import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
-import com.dtolabs.rundeck.core.scm.ScmExportService;
 
 /**
  * Created by greg on 2/20/15.
@@ -55,8 +54,6 @@ public interface IFrameworkServices {
     NodeDispatcher getNodeDispatcherForContext(ExecutionContext context) throws ExecutionServiceException;
 
     ResourceModelSourceService getResourceModelSourceService();
-
-    ScmExportService getScmExportService();
 
     ResourceFormatParserService getResourceFormatParserService();
 
