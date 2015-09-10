@@ -1,6 +1,5 @@
 package rundeck.services
 
-import com.dtolabs.rundeck.core.jobs.JobExportReference
 import com.dtolabs.rundeck.plugins.jobs.JobChangeListener
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobSerializer

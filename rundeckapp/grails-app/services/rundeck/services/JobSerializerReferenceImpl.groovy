@@ -1,7 +1,6 @@
 package rundeck.services
 
-import com.dtolabs.rundeck.core.jobs.JobExportReference
-import com.dtolabs.rundeck.core.jobs.JobReference
+import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
 

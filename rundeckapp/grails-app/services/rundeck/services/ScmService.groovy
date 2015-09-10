@@ -1,6 +1,7 @@
 package rundeck.services
 
-import com.dtolabs.rundeck.core.jobs.JobExportReference
+import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
@@ -15,12 +16,16 @@ import com.dtolabs.rundeck.plugins.scm.ScmDiffResult
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory
 import com.dtolabs.rundeck.plugins.scm.ScmExportSynchState
+import com.dtolabs.rundeck.plugins.scm.ScmImportPlugin
+import com.dtolabs.rundeck.plugins.scm.ScmImportPluginFactory
+import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItem
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfoMissing
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
 import rundeck.ScheduledExecution
 import rundeck.User
 
@@ -32,9 +37,12 @@ class ScmService {
     def grailsApplication
     def frameworkService
     ScmExportPluginProviderService scmExportPluginProviderService
+    ScmImportPluginProviderService scmImportPluginProviderService
     PluginService pluginService
     Map<String, ScmExportPlugin> loadedExportPlugins = Collections.synchronizedMap([:])
+    Map<String, ScmImportPlugin> loadedImportPlugins = Collections.synchronizedMap([:])
     Map<String, JobChangeListener> loadedExportListeners = Collections.synchronizedMap([:])
+    Map<String, JobChangeListener> loadedImportListeners = Collections.synchronizedMap([:])
 
     def initialize() {
         def projects = frameworkService.projectNames()
@@ -46,7 +54,7 @@ class ScmService {
             if (pluginConfig && pluginConfig.enabled) {
                 log.debug("Loading 'export' plugin ${pluginConfig.type} for ${project}...")
                 try {
-                    initExportPlugin(project, pluginConfig.type, pluginConfig.config)
+                    initPlugin('export', project, pluginConfig.type, pluginConfig.config)
                 } catch (ScmPluginException e) {
                     log.error(
                             "Failed to initialize SCM Export plugin ${pluginConfig.type} for ${project}: ${e.message}",
@@ -58,8 +66,22 @@ class ScmService {
                 log.debug("SCM Export not setup for project: ${project}: ${pluginConfig}")
             }
 
-            //TODO: import plugins
 
+            def importPluginConfig = loadScmConfig(project, 'import')
+            if (importPluginConfig && importPluginConfig.enabled) {
+                log.debug("Loading 'import' plugin ${importPluginConfig.type} for ${project}...")
+                try {
+                    initPlugin('import', project, importPluginConfig.type, importPluginConfig.config)
+                } catch (ScmPluginException e) {
+                    log.error(
+                            "Failed to initialize SCM Import plugin ${importPluginConfig.type} for ${project}: ${e.message}",
+                            e
+                    )
+                }
+                //TODO: refresh status of all jobs in project?
+            } else {
+                log.debug("SCM Import not setup for project: ${project}: ${importPluginConfig}")
+            }
         }
     }
 
@@ -67,7 +89,17 @@ class ScmService {
         switch (integration) {
             case 'export':
                 return pluginService.listPlugins(ScmExportPluginFactory, scmExportPluginProviderService)
-        //TODO: import
+            case 'import':
+                return pluginService.listPlugins(ScmImportPluginFactory, scmImportPluginProviderService)
+        }
+    }
+
+    def getPluginDescriptor(String integration, String type) {
+        switch (integration) {
+            case 'export':
+                return getExportPluginDescriptor(type)
+            case 'import':
+                return getImportPluginDescriptor(type)
         }
     }
 
@@ -78,8 +110,38 @@ class ScmService {
         )
     }
 
+    def getImportPluginDescriptor(String type) {
+        pluginService.getPluginDescriptor(
+                type,
+                scmImportPluginProviderService
+        )
+    }
+
+    def projectHasConfiguredPlugin(String integration, String project) {
+        switch (integration) {
+            case 'import':
+                return projectHasConfiguredImportPlugin(project)
+            case 'export':
+                return projectHasConfiguredExportPlugin(project)
+        }
+    }
+
     def projectHasConfiguredExportPlugin(String project) {
         loadedExportPlugins.containsKey(project)
+    }
+
+    def projectHasConfiguredImportPlugin(String project) {
+        loadedImportPlugins.containsKey(project)
+    }
+
+    BasicInputView getInputView(String integration, String project, String actionId) {
+        switch (integration) {
+            case 'export':
+                return getExportInputView(project, actionId)
+            case 'import':
+                return getImportInputView(project, actionId)
+        }
+
     }
 
     BasicInputView getExportInputView(String project, String actionId) {
@@ -87,8 +149,29 @@ class ScmService {
         plugin.getInputViewForAction(actionId)
     }
 
-    def getExportSetupProperties(String project, String type) {
+    BasicInputView getImportInputView(String project, String actionId) {
+        def plugin = loadedImportPlugins[project]
+        plugin.getInputViewForAction(actionId)
+    }
+
+    def getSetupProperties(String integration, String project, String type) {
+        switch (integration) {
+            case 'import':
+                return getImportSetupProperties(project, type)
+            case 'export':
+                return getExportSetupProperties(project, type)
+        }
+    }
+
+    private def getExportSetupProperties(String project, String type) {
         DescribedPlugin<ScmExportPluginFactory> plugin = getExportPluginDescriptor(type)
+        File baseDir = new File(frameworkService.rundeckFramework.frameworkProjectsBaseDir, project)
+
+        plugin.instance.getSetupPropertiesForBasedir(baseDir)
+    }
+
+    private def getImportSetupProperties(String project, String type) {
+        DescribedPlugin<ScmImportPluginFactory> plugin = getImportPluginDescriptor(type)
         File baseDir = new File(frameworkService.rundeckFramework.frameworkProjectsBaseDir, project)
 
         plugin.instance.getSetupPropertiesForBasedir(baseDir)
@@ -109,9 +192,9 @@ class ScmService {
     private String storedConfigFile(String integration) {
         //TODO: store export/import separately?
         if (frameworkService.serverUUID) {
-            return "${frameworkService.serverUUID}/etc/scm.properties"
+            return "${frameworkService.serverUUID}/etc/scm-${integration}.properties"
         }
-        "etc/scm.properties"
+        "etc/scm-${integration}.properties"
     }
 
 
@@ -123,6 +206,16 @@ class ScmService {
         project1.storeFileResource configPath, scmPluginConfig.asInputStream()
     }
 
+    def ValidatedPlugin validatePluginSetup(String integration, String project, String name, Map config) {
+        switch (integration) {
+            case 'export':
+                return validateExportPluginSetup(project, name, config)
+            case 'import':
+                return validateImportPluginSetup(project, name, config)
+
+        }
+    }
+
     def ValidatedPlugin validateExportPluginSetup(String project, String name, Map config) {
         return pluginService.validatePlugin(name, scmExportPluginProviderService,
                                             frameworkService.getFrameworkPropertyResolver(project, config),
@@ -131,7 +224,15 @@ class ScmService {
         )
     }
 
-    def Validator.Report validateExportPluginConfigProperties(String project, List<Properties> properties, Map config) {
+    def ValidatedPlugin validateImportPluginSetup(String project, String name, Map config) {
+        return pluginService.validatePlugin(name, scmImportPluginProviderService,
+                                            frameworkService.getFrameworkPropertyResolver(project, config),
+                                            PropertyScope.Instance,
+                                            PropertyScope.Project
+        )
+    }
+
+    def Validator.Report validatePluginConfigProperties(String project, List<Property> properties, Map config) {
         Validator.validateProperties(
                 frameworkService.getFrameworkPropertyResolver(project, config),
                 properties,
@@ -242,41 +343,45 @@ class ScmService {
      * @param capabilities
      * @return
      */
-    private def initExportPlugin(String project, String type, Map config) {
-        def validation = validateExportPluginSetup(project, type, config)
+    private def initPlugin(String integration, String project, String type, Map config) {
+        def validation = validatePluginSetup(integration, project, type, config)
         if (!validation.valid) {
             throw new ScmPluginException("Validation failed for ${type} plugin: " + validation.report)
         }
-        def loaded = loadPluginWithConfig(project, type, config)
+        def loaded = loadPluginWithConfig(integration, project, type, config)
 
-        //XXX:
-        def changeListener = { JobChangeEvent event, JobSerializer serializer ->
-            log.debug("job change event: " + event)
-            if (event.eventType == JobChangeEvent.JobChangeEventType.DELETE) {
-                //record deleted path
-                recordDeletedJob(
-                        project,
-                        loaded.getRelativePathForJob(event.jobReference),
-                        [
-                                id             : event.jobReference.id,
-                                jobNameAndGroup: event.jobReference.getJobName(),
-                        ]
-                )
-            } else if (event.eventType == JobChangeEvent.JobChangeEventType.MODIFY_RENAME) {
-                //record original path for renamed job, if it is different
-                def origpath = loaded.getRelativePathForJob(event.originalJobReference)
-                def newpath = loaded.getRelativePathForJob(event.jobReference)
-                if (origpath != newpath) {
-                    recordRenamedJob(project, event.jobReference.id, origpath)
+        if (integration == 'export') {
+            def changeListener = { JobChangeEvent event, JobSerializer serializer ->
+                log.debug("job change event: " + event)
+                if (event.eventType == JobChangeEvent.JobChangeEventType.DELETE) {
+                    //record deleted path
+                    recordDeletedJob(
+                            project,
+                            loaded.getRelativePathForJob(event.jobReference),
+                            [
+                                    id             : event.jobReference.id,
+                                    jobNameAndGroup: event.jobReference.getJobName(),
+                            ]
+                    )
+                } else if (event.eventType == JobChangeEvent.JobChangeEventType.MODIFY_RENAME) {
+                    //record original path for renamed job, if it is different
+                    def origpath = loaded.getRelativePathForJob(event.originalJobReference)
+                    def newpath = loaded.getRelativePathForJob(event.jobReference)
+                    if (origpath != newpath) {
+                        recordRenamedJob(project, event.jobReference.id, origpath)
+                    }
                 }
-            }
-            loaded.jobChanged(event, new JobSerializerReferenceImpl(event.jobReference, serializer))
-        } as JobChangeListener
+                loaded.jobChanged(event, new JobSerializerReferenceImpl(event.jobReference, serializer))
+            } as JobChangeListener
 
-        loadedExportPlugins[project] = loaded
-        loadedExportListeners[project] = changeListener
+            loadedExportPlugins[project] = loaded
+            loadedExportListeners[project] = changeListener
 
-        jobEventsService.addListener changeListener
+            jobEventsService.addListener changeListener
+        } else {
+
+            loadedImportPlugins[project] = loaded
+        }
         loaded
     }
 
@@ -289,9 +394,9 @@ class ScmService {
      * @return
      */
     def savePlugin(String integration, String project, String type, Map config) {
-        def validation = validateExportPluginSetup(project, type, config)
-        if (!validation.valid) {
-            return [valid: false, report: validation.report]
+        def validation = validatePluginSetup(integration, project, type, config)
+        if (!validation || !validation.valid) {
+            return [valid: false, report: validation?.report]
         }
 
         def scmPluginConfig = new ScmPluginConfig(new Properties(), integration)
@@ -300,10 +405,10 @@ class ScmService {
         scmPluginConfig.enabled = true
         storeConfig(scmPluginConfig, project)
         try {
-            def plugin = initExportPlugin(project, type, config)
+            def plugin = initPlugin(integration, project, type, config)
             return [valid: true, plugin: plugin]
         } catch (ScmPluginException e) {
-            return [error:true, message:e.message]
+            return [error: true, message: e.message]
         }
     }
 
@@ -340,13 +445,13 @@ class ScmService {
      */
     def enablePlugin(String integration, String project, String type) {
         ScmPluginConfig scmPluginConfig = loadScmConfig(project, integration)
-        def validation = validateExportPluginSetup(project, type, scmPluginConfig.config)
+        def validation = validatePluginSetup(integration,project, type, scmPluginConfig.config)
         if (!validation.valid) {
             return [valid: false, report: validation.report]
         }
 
         try {
-            def plugin = initExportPlugin(project, type, scmPluginConfig.config)
+            def plugin = initPlugin(integration, project, type, scmPluginConfig.config)
             scmPluginConfig.enabled = true
             storeConfig(scmPluginConfig, project)
             return [valid: true, plugin: plugin]
@@ -355,12 +460,32 @@ class ScmService {
         }
     }
 
-    def loadPluginWithConfig(String project, String type, Map config) {
+    def loadPluginWithConfig(String integration, String project, String type, Map config) {
+        switch (integration) {
+            case 'export':
+                return loadExportPluginWithConfig(project, type, config)
+            case 'import':
+                return loadImportPluginWithConfig(project, type, config)
+        }
 
+    }
 
+    ScmExportPlugin loadExportPluginWithConfig(String project, String type, Map config) {
         ScmExportPluginFactory plugin = pluginService.getPlugin(
                 type,
                 scmExportPluginProviderService
+        )
+        try {
+            return plugin.createPlugin(config, project)
+        } catch (ConfigurationException e) {
+            throw new ScmPluginException(e)
+        }
+    }
+
+    ScmImportPlugin loadImportPluginWithConfig(String project, String type, Map config) {
+        ScmImportPluginFactory plugin = pluginService.getPlugin(
+                type,
+                scmImportPluginProviderService
         )
         try {
             return plugin.createPlugin(config, project)
@@ -373,14 +498,14 @@ class ScmService {
      * @param jobs list of {@link ScheduledExecution} objects
      * @return map of job ID to file path
      */
-    Map<String, String> filePathsMapForJobs(List<ScheduledExecution> jobs) {
-        filePathsMapForJobRefs(jobRefsForJobs(jobs))
+    Map<String, String> exportFilePathsMapForJobs(List<ScheduledExecution> jobs) {
+        exportFilePathsMapForJobRefs(jobRefsForJobs(jobs))
     }
     /**
      * @param refs list of {@link JobRevReference} objects
      * @return map of job ID to file path
      */
-    Map<String, String> filePathsMapForJobRefs(List<JobRevReference> refs) {
+    Map<String, String> exportFilePathsMapForJobRefs(List<JobRevReference> refs) {
         def files = [:]
         refs.each { JobRevReference jobReference ->
             def plugin = loadedExportPlugins[jobReference.project]
@@ -440,6 +565,32 @@ class ScmService {
     }
 
     /**
+     * List of tracked items for the action
+     * @param project
+     * @param actionId
+     * @return
+     */
+    List<ScmImportTrackedItem> getTrackingItemsForAction(String project, String actionId) {
+        def plugin = loadedImportPlugins[project]
+        if (plugin) {
+            return plugin.getTrackedItemsForAction(actionId)
+        }
+        null
+    }
+    /**
+     * Get the synch status overall
+     * @param project
+     * @return
+     */
+    ScmExportSynchState getPluginStatus(String integration, String project) {
+        switch (integration) {
+            case 'export':
+                return exportPluginStatus(project)
+            case 'import':
+                return importPluginStatus(project)
+        }
+    }
+    /**
      * Get the synch status overall
      * @param project
      * @return
@@ -447,6 +598,19 @@ class ScmService {
     ScmExportSynchState exportPluginStatus(String project) {
 
         def plugin = loadedExportPlugins[project]
+        if (plugin) {
+            return plugin.status
+        }
+        null
+    }
+    /**
+     * Get the synch status overall
+     * @param project
+     * @return
+     */
+    ScmExportSynchState importPluginStatus(String project) {
+        //TODO
+        def plugin = loadedImportPlugins[project]
         if (plugin) {
             return plugin.status
         }
@@ -461,7 +625,21 @@ class ScmService {
 
         def plugin = loadedExportPlugins[project]
         if (plugin) {
-            return plugin.actionsAvailableForContext([project:project])
+            return plugin.actionsAvailableForContext([project: project])
+        }
+        null
+    }
+
+    /**
+     * Get the actions for the plugin
+     * @param project
+     * @return
+     */
+    List<Action> importPluginActions(String project) {
+
+        def plugin = loadedImportPlugins[project]
+        if (plugin) {
+            return plugin.actionsAvailableForContext([project: project])
         }
         null
     }
@@ -516,30 +694,30 @@ class ScmService {
         def plugin = loadedExportPlugins[project]
         def jobrefs = exportjobRefsForJobs(jobs)
         def view = plugin.getInputViewForAction(actionId)
-        def report = validateExportPluginConfigProperties(project, view.properties, config)
+        def report = validatePluginConfigProperties(project, view.properties, config)
         if (!report.valid) {
             return [valid: false, report: report]
         }
-        def result=null
+        def result = null
         try {
             result = plugin.export(actionId, jobrefs as Set, deletePaths as Set, lookupUserInfo(username), config)
         } catch (ScmPluginException e) {
             log.error(e.message)
             log.debug("export failed ${jobrefs}, ${deletePaths}, ${username}, ${config}", e)
-            if(ScmUserInfoMissing.isFieldMissing(e)) {
+            if (ScmUserInfoMissing.isFieldMissing(e)) {
                 def fieldReport = new Validator.Report()
-                fieldReport.errors[ScmUserInfoMissing.missingFieldName(e)]=e.message
+                fieldReport.errors[ScmUserInfoMissing.missingFieldName(e)] = e.message
                 return [
-                        error: true,
-                        message: e.message,
-                        report: fieldReport,
+                        error               : true,
+                        message             : e.message,
+                        report              : fieldReport,
                         missingUserInfoField: ScmUserInfoMissing.missingFieldName(e)
                 ]
             }
-            return [error: true,message:e.message]
+            return [error: true, message: e.message]
         }
-        if(result.error){
-            return [error: true, message:result.message]
+        if (result.error) {
+            return [error: true, message: result.message]
         }
         forgetDeletedPaths(project, deletePaths)
         forgetRenamedJobs(project, jobrefs*.id)
@@ -565,6 +743,51 @@ class ScmService {
         def jobref = exportJobRef(job)
         def plugin = loadedExportPlugins[project]
         plugin.getFileDiff(jobref, getRenamedPathForJobId(project, job.extid))
+    }
+
+
+    def performImportAction(
+            String actionId,
+            String username,
+            String project,
+            Map config,
+            List<String> chosenTrackedItems
+    )
+    {
+        log.debug("performImportAction project: ${project}, items: ${chosenTrackedItems}")
+        //store config
+        def plugin = loadedImportPlugins[project]
+//        def jobrefs = exportjobRefsForJobs(jobs)
+        def view = plugin.getInputViewForAction(actionId)
+        def report = validatePluginConfigProperties(project, view.properties, config)
+        if (!report.valid) {
+            return [valid: false, report: report]
+        }
+        def result = null
+        try {
+            result = plugin.scmImport(actionId, null, chosenTrackedItems, config)
+        } catch (ScmPluginException e) {
+            log.error(e.message)
+            log.debug("import failed ${chosenTrackedItems}, ${config}", e)
+            if (ScmUserInfoMissing.isFieldMissing(e)) {
+                def fieldReport = new Validator.Report()
+                fieldReport.errors[ScmUserInfoMissing.missingFieldName(e)] = e.message
+                return [
+                        error               : true,
+                        message             : e.message,
+                        report              : fieldReport,
+                        missingUserInfoField: ScmUserInfoMissing.missingFieldName(e)
+                ]
+            }
+            return [error: true, message: e.message]
+        }
+        if (result.error) {
+            return [error: true, message: result.message]
+        }
+//        forgetDeletedPaths(project, deletePaths)
+//        forgetRenamedJobs(project, jobrefs*.id)
+        log.debug("result: ${result}")
+        [valid: true, commitId: result.id, message: result.message]
     }
 }
 

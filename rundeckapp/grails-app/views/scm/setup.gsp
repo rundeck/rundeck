@@ -48,13 +48,13 @@
 <div class="row">
     <div class="col-sm-12 col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-2">
         <g:form action="saveSetup"
-                params="${[project: params.project, type: type, integration: 'export']}"
+                params="${[project: params.project, type: type, integration: integration]}"
                 useToken="true"
                 method="post" class="form form-horizontal">
             <div class="panel panel-primary" id="createform">
                 <div class="panel-heading">
                     <span class="h3">
-                        <g:message code="scmController.page.setup.description" default="Setup SCM Export"/>:
+                        <g:message code="scmController.page.setup.description" />:
                         ${plugin.description?.title ?: plugin.name}
                     </span>
                 </div>

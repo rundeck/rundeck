@@ -277,6 +277,18 @@ class MenuController extends ControllerBase{
                 results.scmExportRenamed=scmService.getRenamedJobPathsForProject(params.project)
             }
         }
+        if (frameworkService.authorizeApplicationResourceAny(authContext,
+                                                             frameworkService.authResourceForProject(params.project),
+                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT])) {
+
+            if(scmService.projectHasConfiguredImportPlugin(params.project)){
+                results.scmImportEnabled=true
+//                results.scmImportJobStatus=scmService.exportStatusForJobs(results.nextScheduled)
+//                results.scmImportStatus=scmService.importPluginStatus(params.project)
+                results.scmImportActions=scmService.importPluginActions(params.project)
+//                results.scmImportRenamed=scmService.getRenamedJobPathsForProject(params.project)
+            }
+        }
 
         if(usedFilter){
             results.filterName=usedFilter

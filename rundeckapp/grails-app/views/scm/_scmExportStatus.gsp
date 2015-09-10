@@ -9,17 +9,23 @@
     </span>
 </g:if>
 <g:else>
-
-    <g:link action="exportAction" controller="scm"
+    <span class="has_${popover?'popover':'tooltip'}"
             data-placement="left"
             data-toggle="${popover?'popover':''}"
             data-content="${popover?:''}"
             data-trigger="hover"
-            class="btn btn-sm btn-link has_${popover?'popover':'tooltip'}"
-            title="${message(code:"scm.export.status.${status}.title.text")}"
-            params="${[project: params.project, allJobs:true]}">
+              title="${message(code:"scm.export.status.${status}.title.text")}">
+    %{--<g:link action="exportAction" controller="scm"--}%
+            %{--data-placement="left"--}%
+            %{--data-toggle="${popover?'popover':''}"--}%
+            %{--data-content="${popover?:''}"--}%
+            %{--data-trigger="hover"--}%
+            %{--class="btn btn-sm btn-link has_${popover?'popover':'tooltip'}"--}%
+            %{--title="${message(code:"scm.export.status.${status}.title.text")}"--}%
+            %{--params="${[project: params.project, allJobs:true]}">--}%
         <g:render template="/scm/statusIcon" model="[status: status,
                                                      text  : text,
                                                      meta  : meta]"/>
-    </g:link>
+    </span>
+    %{--</g:link>--}%
 </g:else>
