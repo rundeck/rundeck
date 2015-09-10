@@ -1,13 +1,9 @@
 package com.dtolabs.rundeck.plugins.scm;
 
-import com.dtolabs.rundeck.core.jobs.JobExportReference;
 import com.dtolabs.rundeck.core.jobs.JobReference;
-import com.dtolabs.rundeck.core.jobs.JobRevReference;
-import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.plugins.views.Action;
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,10 +12,6 @@ import java.util.Set;
  * Export plugin
  */
 public interface ScmExportPlugin {
-    /**
-     * perform any setup/refresh needed after creation
-     */
-    void initialize();
 
     /**
      * perform any cleanup/teardown needed after disabling

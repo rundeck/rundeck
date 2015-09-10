@@ -5,7 +5,7 @@ package com.dtolabs.rundeck.core.plugins.views;
  */
 public interface Action {
     /**
-     * @return action ID
+     * @return action ID, or '-' to result in a divider among a list
      */
     public String getId();
 
@@ -18,4 +18,9 @@ public interface Action {
      * @return description
      */
     public String getDescription();
+
+    /**
+     * @return name of an icon to use, or null
+     */
+    public String getIconName();
 }

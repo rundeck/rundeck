@@ -3,9 +3,13 @@ package com.dtolabs.rundeck.plugins.scm;
 import java.io.OutputStream;
 
 /**
- * Created by greg on 8/21/15.
+ * Can serialize a job to an outputstream in a format
  */
 public interface JobSerializer {
 
+    /**
+     * @param format       format name: 'xml' or 'yaml'
+     * @param outputStream destination
+     */
     void serialize(String format, OutputStream outputStream);
 }

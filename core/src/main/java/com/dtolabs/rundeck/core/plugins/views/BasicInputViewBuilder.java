@@ -5,12 +5,10 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import java.util.List;
 
 public class BasicInputViewBuilder {
-    private String title;
-    private String actionId;
-    private List<Property> properties;
-    private String buttonTitle;
+    private BasicInputViewImpl impl;
 
     private BasicInputViewBuilder() {
+        impl = new BasicInputViewImpl();
     }
 
     public static BasicInputViewBuilder forActionId(String actionId) {
@@ -18,26 +16,32 @@ public class BasicInputViewBuilder {
     }
 
     public BasicInputViewBuilder title(final String title) {
-        this.title = title;
+        impl.setTitle(title);
         return this;
     }
 
     public BasicInputViewBuilder actionId(final String actionId) {
-        this.actionId = actionId;
+        impl.setActionId(actionId);
         return this;
     }
 
     public BasicInputViewBuilder properties(final List<Property> properties) {
-        this.properties = properties;
+        impl.setProperties(properties);
         return this;
     }
 
     public BasicInputViewBuilder buttonTitle(final String buttonTitle) {
-        this.buttonTitle = buttonTitle;
+        impl.setButtonTitle(buttonTitle);
+        return this;
+    }
+
+    public BasicInputViewBuilder description(final String description) {
+        impl.setDescription(description);
         return this;
     }
 
     public BasicInputView build() {
-        return new BasicInputViewImpl(title, actionId, properties, buttonTitle);
+        return impl;
     }
+
 }

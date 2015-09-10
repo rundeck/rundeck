@@ -1,18 +1,16 @@
-package com.dtolabs.rundeck.core.plugins.views;
+package com.dtolabs.rundeck.plugins.scm;
 
 /**
- * Created by greg on 9/8/15.
+ * Created by greg on 9/10/15.
  */
-public class ActionImpl implements Action {
+public class ScmImportTrackedItemImpl implements ScmImportTrackedItem {
     private String id;
     private String title;
-    private String description;
     private String iconName;
 
-    public ActionImpl(final String id, final String title, final String description, final String iconName) {
+    public ScmImportTrackedItemImpl(final String id, final String title, final String iconName) {
         this.id = id;
         this.title = title;
-        this.description = description;
         this.iconName = iconName;
     }
 
@@ -32,15 +30,6 @@ public class ActionImpl implements Action {
 
     public void setTitle(String title) {
         this.title = title;
-    }
-
-    @Override
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     @Override

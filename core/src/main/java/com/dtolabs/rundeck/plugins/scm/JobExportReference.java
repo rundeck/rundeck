@@ -1,5 +1,6 @@
-package com.dtolabs.rundeck.core.jobs;
+package com.dtolabs.rundeck.plugins.scm;
 
+import com.dtolabs.rundeck.core.jobs.JobRevReference;
 import com.dtolabs.rundeck.plugins.scm.JobSerializer;
 
 /**

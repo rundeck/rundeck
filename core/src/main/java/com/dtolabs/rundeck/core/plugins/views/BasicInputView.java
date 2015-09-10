@@ -14,6 +14,11 @@ public interface BasicInputView {
     public String getTitle();
 
     /**
+     * @return Description of the action
+     */
+    public String getDescription();
+
+    /**
      * @return action ID
      */
     public String getActionId();

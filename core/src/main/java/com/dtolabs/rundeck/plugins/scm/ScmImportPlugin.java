@@ -1,14 +1,11 @@
 package com.dtolabs.rundeck.plugins.scm;
 
-import com.dtolabs.rundeck.core.jobs.JobExportReference;
 import com.dtolabs.rundeck.core.jobs.JobReference;
-import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.plugins.views.Action;
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Plugin for importing job definitions from a Source control repository
@@ -21,9 +18,9 @@ public interface ScmImportPlugin {
      * @param input    result of GUI input
      * @param importer TODO can import files as jobs
      */
-    void scmImport(
+    ScmExportResult scmImport(
             String actionId,
-            Object importer,
+            JobImporter importer,
             List<String> selectedPaths,
             Map<String, Object> input
     ) throws ScmPluginException;
@@ -40,7 +37,7 @@ public interface ScmImportPlugin {
      *
      * @return state
      */
-    JobState getJobStatus(JobExportReference job);
+    JobState getJobStatus(JobImportReference job);
 
     /**
      * Return the state of the given job, with optional original repo path
@@ -50,12 +47,8 @@ public interface ScmImportPlugin {
      *
      * @return state
      */
-    JobState getJobStatus(JobExportReference job, String originalPath);
+    JobState getJobStatus(JobImportReference job, String originalPath);
 
-    /**
-     * perform any setup/refresh needed after creation
-     */
-    void initialize();
 
     /**
      * perform any cleanup/teardown needed after disabling
@@ -77,6 +70,14 @@ public interface ScmImportPlugin {
      */
     List<Action> actionsAvailableForContext(final Map<String, String> context);
 
+
+
+    /**
+     * list any known items that can be tracked, such as: all files found in the
+     * selected source repository branch, can be an empty list (no items found
+     * to track) or null (item tracking is not used)
+     */
+    List<ScmImportTrackedItem> getTrackedItemsForAction(String actionId);
 
     /**
      * Return the relative path for the job in the repo

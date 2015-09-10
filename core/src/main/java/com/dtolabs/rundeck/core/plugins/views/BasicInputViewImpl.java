@@ -9,9 +9,14 @@ import java.util.List;
  */
 public class BasicInputViewImpl implements BasicInputView {
     private String title;
+    private String description;
     private String actionId;
     private List<Property> properties;
     private String buttonTitle;
+
+    public BasicInputViewImpl() {
+
+    }
 
     public BasicInputViewImpl(
             final String title,
@@ -60,5 +65,14 @@ public class BasicInputViewImpl implements BasicInputView {
 
     public void setButtonTitle(String buttonTitle) {
         this.buttonTitle = buttonTitle;
+    }
+
+    @Override
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 }
