@@ -1,27 +1,26 @@
-package org.rundeck.plugin.scm.git.actions
+package org.rundeck.plugin.scm.git.imp.actions
 
-import com.dtolabs.rundeck.core.jobs.JobExportReference
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.core.plugins.views.BasicInputViewBuilder
-import com.dtolabs.rundeck.plugins.scm.ScmExportResult
-import com.dtolabs.rundeck.plugins.scm.ScmExportResultImpl
-import com.dtolabs.rundeck.plugins.scm.ScmPluginException
-import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
+import com.dtolabs.rundeck.plugins.scm.*
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
-import org.rundeck.plugin.scm.git.BaseGitAction
+import org.rundeck.plugin.scm.git.BaseAction
+import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
+import org.rundeck.plugin.scm.git.GitImportAction
+import org.rundeck.plugin.scm.git.GitImportPlugin
 
 /**
  * Created by greg on 9/8/15.
  */
-class FetchAction extends BaseGitAction {
+class FetchAction extends BaseAction implements GitImportAction {
     FetchAction(final String id, final String title, final String description) {
         super(id, title, description)
     }
 
     @Override
-    BasicInputView getInputView(final GitExportPlugin plugin) {
+    BasicInputView getInputView(final GitImportPlugin plugin) {
         def builder = BasicInputViewBuilder.forActionId(id).with {
             title "Fetch remote changes"
             buttonTitle "Fetch"
@@ -42,15 +41,13 @@ class FetchAction extends BaseGitAction {
     }
 
     @Override
-    ScmExportResult perform(
-            final GitExportPlugin plugin,
-            final Set<JobExportReference> jobs,
-            final Set<String> pathsToDelete,
-            final ScmUserInfo userInfo,
+    ScmExportResult performAction(
+            final GitImportPlugin plugin,
+            final JobImporter importer,
+            final List<String> selectedPaths,
             final Map<String, Object> input
-    ) throws ScmPluginException
+    )
     {
-
         //fetch remote changes
         def fetchResult = plugin.git.fetch().call()
 
@@ -58,7 +55,7 @@ class FetchAction extends BaseGitAction {
 
         def result = new ScmExportResultImpl()
         result.success = true
-        result.message = update?update.toString():"No changes were found"
+        result.message = update ? update.toString() : "No changes were found"
         result
     }
 }

@@ -1,8 +1,10 @@
 package org.rundeck.plugin.scm.git
-import com.dtolabs.rundeck.core.jobs.JobExportReference
+
+import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.core.plugins.views.Action
+import com.dtolabs.rundeck.core.plugins.views.ActionBuilder
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
@@ -11,15 +13,14 @@ import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.diff.*
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.revwalk.RevCommit
-import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import org.eclipse.jgit.treewalk.TreeWalk
-import org.rundeck.plugin.scm.git.actions.CommitJobsAction
-import org.rundeck.plugin.scm.git.actions.FetchAction
-import org.rundeck.plugin.scm.git.actions.PushAction
-import org.rundeck.plugin.scm.git.actions.SynchAction
+import org.rundeck.plugin.scm.git.exp.actions.CommitJobsAction
+import org.rundeck.plugin.scm.git.exp.actions.FetchAction
+import org.rundeck.plugin.scm.git.exp.actions.PushAction
+import org.rundeck.plugin.scm.git.exp.actions.SynchAction
 
 import java.util.regex.Pattern
+
 /**
  * Git export plugin
  */
@@ -33,7 +34,7 @@ class GitExportPlugin implements ScmExportPlugin {
     public static final String PROJECT_SYNCH_ACTION_ID = "project-synch"
     public static final String PROJECT_FETCH_ACTION_ID = "project-fetch"
 
-    Map<String, GitAction> actions = [:]
+    Map<String, GitExportAction> actions = [:]
 
     String format = SERIALIZE_FORMAT
     boolean inited = false
@@ -85,10 +86,6 @@ class GitExportPlugin implements ScmExportPlugin {
                 )
 
         ]
-    }
-
-    boolean isSetup() {
-        return inited
     }
 
     void setup(final Map<String, ?> input) throws ScmPluginException {
@@ -202,28 +199,31 @@ class GitExportPlugin implements ScmExportPlugin {
     List<Action> actionsAvailableForContext(final Map<String, String> context) {
         if (context.jobId) {
             //actions for a specific Job
-
-            [
-                    actions[JOB_COMMIT_ACTION_ID],
-            ]
-
+            actionRefs JOB_COMMIT_ACTION_ID
         } else if (context.project) {
             //actions in project view
             def status = getStatusInternal()
             if (!status.gitStatus.clean) {
-                [actions[PROJECT_COMMIT_ACTION_ID], actions[PROJECT_FETCH_ACTION_ID]]
+                actionRefs PROJECT_COMMIT_ACTION_ID,
+                           PROJECT_FETCH_ACTION_ID
             } else if (status.state == SynchState.EXPORT_NEEDED) {
                 //need a push
-                [actions[PROJECT_PUSH_ACTION_ID], actions[PROJECT_FETCH_ACTION_ID]]
+                actionRefs PROJECT_PUSH_ACTION_ID,
+                           PROJECT_FETCH_ACTION_ID
             } else if (status.state == SynchState.REFRESH_NEEDED) {
                 //need to fast forward
-                [actions[PROJECT_FETCH_ACTION_ID], actions[PROJECT_SYNCH_ACTION_ID]]
+                actionRefs PROJECT_FETCH_ACTION_ID,
+                           PROJECT_SYNCH_ACTION_ID
             } else {
                 []
             }
         } else {
             null
         }
+    }
+
+    private List<Action> actionRefs(String... ids) {
+        actions.subMap(Arrays.asList(ids)).values().collect { ActionBuilder.from(it) }
     }
 
     @Override
@@ -362,7 +362,7 @@ class GitExportPlugin implements ScmExportPlugin {
         jobstat['path'] = path
         if (commit) {
             jobstat['commitId'] = commit.name
-            jobstat['commitMeta'] = metaForCommit(commit)
+            jobstat['commitMeta'] = GitUtil.metaForCommit(commit)
         }
         log.debug("refreshJobStatus(${job.id}): ${jobstat}")
 
@@ -454,42 +454,6 @@ class GitExportPlugin implements ScmExportPlugin {
         )
     }
 
-    private Map<String, Serializable> metaForCommit(RevCommit commit) {
-        [
-                commitId      : commit.name,
-                commitId6     : commit.abbreviate(6).name(),
-                date          : new Date(commit.commitTime * 1000L),
-                authorName    : commit.authorIdent.name,
-                authorEmail   : commit.authorIdent.emailAddress,
-                authorTime    : commit.authorIdent.when,
-                authorTimeZone: commit.authorIdent.timeZone.displayName,
-                message       : commit.shortMessage
-        ]
-    }
-
-    RevCommit lastCommit() {
-        lastCommitForPath(null)
-    }
-
-    RevCommit lastCommitForPath(String path) {
-        def head = getHead()
-        if (!head) {
-            return null
-        }
-        def logb = git.log()
-        if (path) {
-            logb.addPath(path)
-        }
-        def log = logb.call()
-        def iter = log.iterator()
-        if (iter.hasNext()) {
-            def commit = iter.next()
-            if (commit) {
-                return commit
-            }
-        }
-        null
-    }
 
     File getLocalFileForJob(final JobReference job) {
         mapper.fileForJob(job)
@@ -534,53 +498,27 @@ class GitExportPlugin implements ScmExportPlugin {
      * @return RevCommit or null if HEAD not found (empty git)
      */
     RevCommit getHead() {
-
-        final RevWalk walk = new RevWalk(repo);
-        walk.setRetainBody(true);
-
-        def resolve = repo.resolve(Constants.HEAD)
-        if (!resolve) {
-            return null
-        }
-        final RevCommit headCommit = walk.parseCommit(resolve);
-        walk.release()
-        headCommit
+        GitUtil.getHead repo
     }
 
     ObjectId lookupId(RevCommit commit, String path) {
-        if (!commit) {
-            return null
-        }
-        final TreeWalk walk2 = TreeWalk.forPath(repo, path, commit.getTree());
-
-        if (walk2 == null) {
-            return null
-        };
-        if ((walk2.getRawMode(0) & FileMode.TYPE_MASK) != FileMode.TYPE_FILE) {
-            return null
-        };
-
-        def id = walk2.getObjectId(0)
-        walk2.release()
-        return id;
+        GitUtil.lookupId repo, commit, path
     }
 
     byte[] getBytes(ObjectId id) {
-        repo.open(id, Constants.OBJ_BLOB).getCachedBytes(Integer.MAX_VALUE)
+        GitUtil.getBytes repo, id
     }
 
 
     int printDiff(OutputStream out, File file1, byte[] data) {
-        RawText rt1 = new RawText(data);
-        RawText rt2 = new RawText(file1);
-        EditList diffList = new EditList();
-        DiffAlgorithm differ = DiffAlgorithm.getAlgorithm(DiffAlgorithm.SupportedAlgorithm.HISTOGRAM)
-
-        diffList.addAll(differ.diff(COMP, rt1, rt2));
-        if (diffList.size() > 0) {
-            new DiffFormatter(out).format(diffList, rt1, rt2);
-        }
-        diffList.size()
+        GitUtil.printDiff out, file1, data, COMP
     }
 
+    RevCommit lastCommit() {
+        GitUtil.lastCommit repo, git
+    }
+
+    RevCommit lastCommitForPath(String path) {
+        GitUtil.lastCommitForPath repo, git, path
+    }
 }

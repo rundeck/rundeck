@@ -1,6 +1,6 @@
-package org.rundeck.plugin.scm.git.actions
+package org.rundeck.plugin.scm.git.exp.actions
 
-import com.dtolabs.rundeck.core.jobs.JobExportReference
+import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.core.plugins.views.BasicInputViewBuilder
@@ -10,13 +10,14 @@ import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import org.eclipse.jgit.transport.RemoteRefUpdate
-import org.rundeck.plugin.scm.git.BaseGitAction
+import org.rundeck.plugin.scm.git.BaseAction
+import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
 
 /**
  * Created by greg on 9/8/15.
  */
-class PushAction extends BaseGitAction {
+class PushAction extends BaseAction  implements GitExportAction{
     PushAction(final String id, final String title, final String description) {
         super(id, title, description)
     }

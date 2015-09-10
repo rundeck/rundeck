@@ -1,6 +1,6 @@
-package org.rundeck.plugin.scm.git.actions
+package org.rundeck.plugin.scm.git.exp.actions
 
-import com.dtolabs.rundeck.core.jobs.JobExportReference
+import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.core.plugins.views.BasicInputViewBuilder
@@ -9,16 +9,15 @@ import com.dtolabs.rundeck.plugins.scm.ScmExportResultImpl
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
-import org.eclipse.jgit.api.PullCommand
 import org.eclipse.jgit.merge.MergeStrategy
-import org.eclipse.jgit.transport.RemoteRefUpdate
-import org.rundeck.plugin.scm.git.BaseGitAction
+import org.rundeck.plugin.scm.git.BaseAction
+import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
 
 /**
  * Created by greg on 9/8/15.
  */
-class SynchAction extends BaseGitAction {
+class SynchAction extends BaseAction implements GitExportAction {
     SynchAction(final String id, final String title, final String description) {
         super(id, title, description)
     }
@@ -95,10 +94,10 @@ Pulling from remote branch: `${plugin.branch}`"""
 
 
         if (status.branchTrackingStatus?.behindCount > 0 && status.branchTrackingStatus?.aheadCount > 0) {
-            gitResolve(plugin,input)
-        }else if (status.branchTrackingStatus?.behindCount > 0) {
+            gitResolve(plugin, input)
+        } else if (status.branchTrackingStatus?.behindCount > 0) {
             gitPull(plugin)
-        }else{
+        } else {
             //no action
         }
 
@@ -113,7 +112,7 @@ Pulling from remote branch: `${plugin.branch}`"""
         result
     }
 
-    ScmExportResult gitResolve(final GitExportPlugin plugin,final Map<String, Object> input) {
+    ScmExportResult gitResolve(final GitExportPlugin plugin, final Map<String, Object> input) {
 
 
         if (input.refresh == 'rebase') {
@@ -125,7 +124,7 @@ Pulling from remote branch: `${plugin.branch}`"""
             result.success = pullResult.successful
             result.message = pullResult.toString()
             return result
-        }else{
+        } else {
             //fetch, then
             //merge
 

@@ -1,6 +1,6 @@
 package org.rundeck.plugin.scm.git
 
-import com.dtolabs.rundeck.core.jobs.JobExportReference
+import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
@@ -9,7 +9,6 @@ import com.dtolabs.rundeck.plugins.scm.ScmUserInfoMissing
 import com.dtolabs.rundeck.plugins.scm.SynchState
 import org.eclipse.jgit.api.CommitCommand
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.lib.PersonIdent
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.util.FileUtils

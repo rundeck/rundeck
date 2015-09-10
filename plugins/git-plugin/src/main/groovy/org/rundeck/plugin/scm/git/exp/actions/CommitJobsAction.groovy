@@ -1,6 +1,6 @@
-package org.rundeck.plugin.scm.git.actions
+package org.rundeck.plugin.scm.git.exp.actions
 
-import com.dtolabs.rundeck.core.jobs.JobExportReference
+import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.core.plugins.views.BasicInputViewBuilder
 import com.dtolabs.rundeck.plugins.scm.ScmExportResult
@@ -13,13 +13,14 @@ import org.eclipse.jgit.api.AddCommand
 import org.eclipse.jgit.api.CommitCommand
 import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.revwalk.RevCommit
-import org.rundeck.plugin.scm.git.BaseGitAction
+import org.rundeck.plugin.scm.git.BaseAction
+import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
 
 /**
  * Created by greg on 9/8/15.
  */
-class CommitJobsAction extends BaseGitAction {
+class CommitJobsAction extends BaseAction  implements GitExportAction{
     CommitJobsAction(final String id, final String title, final String description) {
         super(id, title, description)
     }

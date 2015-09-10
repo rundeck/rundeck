@@ -112,7 +112,7 @@ Some examples:
 
         ]
     }
-    static List<String> requiredProperties = ['dir', 'pathTemplate', 'branch', 'committerName', 'committerEmail', 'url']
+    static List<String> requiredProperties = ['dir', 'pathTemplate', 'branch', 'url']
 
     @Override
     ScmImportPlugin createPlugin(final Map<String, ?> input, final String project) {

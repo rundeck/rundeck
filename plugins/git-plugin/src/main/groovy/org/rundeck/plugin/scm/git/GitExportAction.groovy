@@ -1,6 +1,6 @@
 package org.rundeck.plugin.scm.git
 
-import com.dtolabs.rundeck.core.jobs.JobExportReference
+import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.ScmExportResult
@@ -10,7 +10,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 /**
  * Created by greg on 9/8/15.
  */
-interface GitAction extends Action {
+interface GitExportAction extends Action {
 
     BasicInputView getInputView(final GitExportPlugin plugin)
 
