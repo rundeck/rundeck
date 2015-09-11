@@ -43,7 +43,7 @@ class GitImportPlugin implements ScmImportPlugin {
     File workingDir
     JobFileMapper mapper
     Map<String, GitImportAction> actions = [:]
-    boolean trackedItemsSelected = false
+    boolean trackedItemsSelected = true //TODO need to initialize
     boolean useTrackingRegex = false
     String trackingRegex
     List<String> trackedItems = null
@@ -77,7 +77,7 @@ class GitImportPlugin implements ScmImportPlugin {
                 ),
                 (ACTION_IMPORT_ALL)         : new ImportJobs(
                         ACTION_IMPORT_ALL,
-                        "Import",
+                        "Import Remote Changes",
                         "Import Changes",
                         null
 

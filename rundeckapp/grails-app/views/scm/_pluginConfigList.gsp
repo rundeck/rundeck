@@ -7,15 +7,15 @@
 <g:if test="${pluginConfig && pluginConfig.type && enabled && configuredPlugin && enabled}">
 %{--Disable plugin modal--}%
     <g:form useToken="true">
-        <div class="modal fade" id="disablePlugin" role="dialog" aria-labelledby="disablePluginModalLabel"
+        <div class="modal fade" id="disablePlugin${integration}" role="dialog" aria-labelledby="disablePlugin${integration}ModalLabel"
              aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal"
                                 aria-hidden="true">&times;</button>
-                        <h4 class="modal-title" id="disablePluginModalLabel">
-                            <g:message code="scmController.action.disable.confirm.title"/>
+                        <h4 class="modal-title" id="disablePlugin${integration}ModalLabel">
+                            <g:message code="scmController.action.disable.${integration}.confirm.title"/>
                         </h4>
                     </div>
 
@@ -56,15 +56,15 @@
 <g:if test="${pluginConfig && pluginConfig.type && !enabled && configuredPlugin}">
 %{--Enable plugin modal--}%
     <g:form useToken="true">
-        <div class="modal fade" id="enablePlugin" role="dialog" aria-labelledby="enablePluginModalLabel"
+        <div class="modal fade" id="enablePlugin${integration}" role="dialog" aria-labelledby="enablePlugin${integration}ModalLabel"
              aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal"
                                 aria-hidden="true">&times;</button>
-                        <h4 class="modal-title" id="enablePluginModalLabel">
-                            <g:message code="scmController.action.enable.confirm.title"/>
+                        <h4 class="modal-title" id="enablePlugin${integration}ModalLabel">
+                            <g:message code="scmController.action.enable.${integration}.confirm.title"/>
                         </h4>
                     </div>
 
@@ -142,7 +142,7 @@
                         <span
                                 class="btn  btn-success"
                                 data-toggle="modal"
-                                data-target="#enablePlugin">
+                                data-target="#enablePlugin${integration}">
                             <g:message code="button.Enable.title"/>
                         </span>
                     </g:if>
@@ -150,7 +150,7 @@
                         <span
                                 class="btn  btn-warning"
                                 data-toggle="modal"
-                                data-target="#disablePlugin">
+                                data-target="#disablePlugin${integration}">
                             <g:message code="button.Disable.title"/>
                         </span>
                     </g:elseif>

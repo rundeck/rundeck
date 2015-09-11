@@ -11,6 +11,10 @@
     <g:set var="textColor" value="text-success"/>
     <g:set var="iconName" value="glyphicon-exclamation-sign"/>
 </g:elseif>
+<g:elseif test="${status.toString()=='REFRESH_NEEDED'}">
+    <g:set var="textColor" value="text-warning"/>
+    <g:set var="iconName" value="glyphicon-exclamation-sign"/>
+</g:elseif>
 <g:elseif test="${status.toString()=='DELETED'}">
     <g:set var="textColor" value="text-danger"/>
     <g:set var="iconName" value="glyphicon-minus-sign"/>

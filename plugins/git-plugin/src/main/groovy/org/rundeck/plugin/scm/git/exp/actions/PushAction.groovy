@@ -24,6 +24,7 @@ class PushAction extends BaseAction  implements GitExportAction{
 
     @Override
     BasicInputView getInputView(GitExportPlugin plugin) {
+        def status = plugin.getStatusInternal()
         BasicInputViewBuilder.forActionId(id).with {
             title "Push remote Git changes"
             buttonTitle "Push"

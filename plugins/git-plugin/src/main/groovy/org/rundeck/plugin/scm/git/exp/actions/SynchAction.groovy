@@ -104,7 +104,7 @@ Pulling from remote branch: `${plugin.branch}`"""
     }
 
     ScmExportResult gitPull(final GitExportPlugin plugin) {
-        def pullResult = plugin.git.pull().setRemote('master').setRemoteBranchName(plugin.branch).call()
+        def pullResult = plugin.git.pull().setRemote('origin').setRemoteBranchName(plugin.branch).call()
 
         def result = new ScmExportResultImpl()
         result.success = pullResult.successful

@@ -215,7 +215,7 @@ class GitExportPlugin implements ScmExportPlugin {
                 actionRefs PROJECT_FETCH_ACTION_ID,
                            PROJECT_SYNCH_ACTION_ID
             } else {
-                []
+                actionRefs PROJECT_FETCH_ACTION_ID
             }
         } else {
             null
@@ -334,7 +334,7 @@ class GitExportPlugin implements ScmExportPlugin {
             statusb.addPath(originalPath)
         }
         Status status = statusb.call()
-        log.debug(debugStatus(status))
+//        log.debug(debugStatus(status))
         SynchState synchState = synchStateForStatus(status, commit, path)
         def scmState = scmStateForStatus(status, commit, path)
         log.debug("for new path: commit ${commit}, synch: ${synchState}, scm: ${scmState}")

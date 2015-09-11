@@ -1,6 +1,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.plugins.scm.SynchState
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import rundeck.ScheduledExecution
@@ -286,7 +287,7 @@ class ScmController extends ControllerBase {
 
     def exportActionSubmit(String integration, String project, String actionId) {
 
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
         def requiredAction = integration == 'export' ? AuthConstants.ACTION_EXPORT :
                 AuthConstants.ACTION_IMPORT
         if (unauthorizedResponse(
@@ -345,7 +346,7 @@ class ScmController extends ControllerBase {
         } else {
             result = scmService.performImportAction(
                     actionId,
-                    session.user,
+                    authContext,
                     project,
                     params.pluginProperties,
                     chosenTrackedItems

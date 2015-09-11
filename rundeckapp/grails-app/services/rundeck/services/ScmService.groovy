@@ -1,6 +1,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.plugins.scm.ImportResult
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
@@ -432,14 +433,19 @@ class ScmService {
         storeConfig(scmPluginConfig, project)
 
 
-        def loaded = loadedExportPlugins.remove(project)
-        def changeListener = loadedExportListeners.remove(project)
-        jobEventsService.removeListener(changeListener)
+        def loaded
+        if (integration == 'export') {
+            loaded = loadedExportPlugins.remove(project)
+            def changeListener = loadedExportListeners.remove(project)
+            jobEventsService.removeListener(changeListener)
+            //clear cached rename/delete info
+            renamedJobsCache.remove(project)
+            deletedJobsCache.remove(project)
+        }else {
+            loaded = loadedImportPlugins.remove(project)
+        }
         loaded?.cleanup()
 
-        //clear cached rename/delete info
-        renamedJobsCache.remove(project)
-        deletedJobsCache.remove(project)
     }
 
     /**
@@ -754,7 +760,7 @@ class ScmService {
 
     def performImportAction(
             String actionId,
-            String username,
+            UserAndRolesAuthContext authContext,
             String project,
             Map config,
             List<String> chosenTrackedItems
@@ -770,7 +776,7 @@ class ScmService {
             return [valid: false, report: report]
         }
         def result = null
-        def jobImporter = createImporter(project, username)
+        def jobImporter = createImporter(project, authContext)
         try {
             result = plugin.scmImport(actionId, jobImporter, chosenTrackedItems, config)
         } catch (ScmPluginException e) {
@@ -797,21 +803,24 @@ class ScmService {
         [valid: true, commitId: result.id, message: result.message]
     }
 
-    JobImporter createImporter(final String project, final String username) {
-        return new Importer(project, username, scheduledExecutionService)
+    JobImporter createImporter(final String project, final UserAndRolesAuthContext authContext) {
+        return new Importer(project, authContext, scheduledExecutionService)
     }
 }
 
 class Importer implements JobImporter {
     String project
-    String username
-    String roleList
+    UserAndRolesAuthContext authContext
     ScheduledExecutionService scheduledExecutionService
 
-    Importer(final String project, final String username, String roleList, final ScheduledExecutionService scheduledExecutionService) {
+    Importer(
+            final String project,
+            final UserAndRolesAuthContext authContext,
+            final ScheduledExecutionService scheduledExecutionService
+    )
+    {
         this.project = project
-        this.username = username
-        this.roleList=roleList
+        this.authContext = authContext
         this.scheduledExecutionService = scheduledExecutionService
     }
 
@@ -827,28 +836,40 @@ class Importer implements JobImporter {
                                 parseresult.args,
                                 null
                         )
-                return ImporterResult.fail("Could not parse job definition: " + format)
+                return ImporterResult.fail(message)
             }
 
         }catch (Throwable e){
             return ImporterResult.fail("Failed to load job definition from input stream: "+e.message)
         }
 
-        def jobset=parseresult.jobset
-        jobset*.project=project
-        def changeinfo = [user: username, method: 'scm-import']
-        def loadresults = scheduledExecutionService.loadJobs(jobset, 'update', 'preserve',
-                                                             username, roleList, changeinfo,authContext)
+        importJobset(parseresult.jobset,importMetadata)
+    }
+
+    private ImportResult importJobset(List jobset,final Map importMetadata) {
+
+        jobset*.project = project
+        def changeinfo = [user: authContext.username, method: 'scm-import']
+        //TODO: attach import metadata
+        def loadresults = scheduledExecutionService.loadJobs(jobset, 'update', 'preserve', changeinfo, authContext)
+        def result = new ImporterResult()
+        if (loadresults.errjobs) {
+            result = ImporterResult.fail(loadresults.errjobs.collect { it.value.errmsg }.join(", "))
+        } else {
+            result.successful = true
+        }
+        result
     }
 
     @Override
     ImportResult importFromMap(final Map input, final Map importMetadata) {
-        def joblist=[]
+        def jobset=[]
         try{
-            joblist = JobsYAMLCodec.createJobs([input])
+            jobset = JobsYAMLCodec.createJobs([input])
         }catch (Throwable e){
             return ImporterResult.fail("Failed to construct job definition map: "+e.message)
         }
+        importJobset(jobset,importMetadata)
     }
 }
 
