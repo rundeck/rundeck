@@ -600,8 +600,14 @@ class ProjectService implements InitializingBean{
      * @param input input stream of zip data
      * @param options import options, [jobUUIDBehavior: (replace/preserve), importExecutions: (true/false)]
      */
-    def importToProject(IRundeckProject project, String user, String roleList, Framework framework,
-                        AuthContext authContext, InputStream input, ProjectArchiveImportRequest options) throws ProjectServiceException {
+    def importToProject(
+            IRundeckProject project,
+            Framework framework,
+            UserAndRolesAuthContext authContext,
+            InputStream input,
+            ProjectArchiveImportRequest options
+    ) throws ProjectServiceException
+    {
         ZipReader zip = new ZipReader(new ZipInputStream(input))
 //        zip.debug=true
         def jobxml=[]
@@ -708,9 +714,19 @@ class ProjectService implements InitializingBean{
                         break;
                     break;
                 }
-                def results=scheduledExecutionService.loadJobs(jobset,'update',null,user,roleList,[:],authContext)
-                if(results.errjobs){
-                    log.error("Failed loading (${results.errjobs.size()}) jobs from XML at archive path: ${path}${name}")
+                def results = scheduledExecutionService.loadJobs(
+                        jobset,
+                        'update',
+                        null,
+                        authContext.username,
+                        authContext.roles.join(","),
+                        [:],
+                        authContext
+                )
+                if (results.errjobs) {
+                    log.error(
+                            "Failed loading (${results.errjobs.size()}) jobs from XML at archive path: ${path}${name}"
+                    )
                     results.errjobs.each {
                         loadjoberrors<< "Job at index [${it.entrynum}] at archive path: ${path}${name} had errors: ${it.errmsg}"
                         log.error("Job at index [${it.entrynum}] had errors: ${it.errmsg}")
