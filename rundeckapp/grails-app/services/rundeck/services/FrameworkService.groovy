@@ -618,7 +618,7 @@ class FrameworkService implements ApplicationContextAware {
      * @param project project name
      * @return new AuthContext with project-specific authorization added
      */
-    public AuthContext getAuthContextWithProject(AuthContext orig, String project) {
+    public UserAndRolesAuthContext getAuthContextWithProject(UserAndRolesAuthContext orig, String project) {
         if (!orig) {
             throw new RuntimeException("getAuthContextWithProject: Cannot get AuthContext without orig")
         }

@@ -2,6 +2,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
@@ -940,7 +941,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
      * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.
      * @return map of load results, [jobs: List of ScheduledExecutions, jobsi: list of maps [scheduledExecution: (job), entrynum: (index)], errjobs: List of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg], skipjobs: list of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]]
      */
-    def loadJobs ( jobset, option, user, String roleList, changeinfo = [:], AuthContext authContext ) {
+    def loadJobs ( jobset, option, user, String roleList, changeinfo = [:], UserAndRolesAuthContext authContext ) {
         return loadJobs(jobset, option, null, user, roleList, changeinfo, authContext)
     }
 
@@ -955,7 +956,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
             String user,
             String roleList,
             Map changeinfo = [:],
-            AuthContext authContext
+            UserAndRolesAuthContext authContext
     ){
         def jobs = []
         def jobsi = []
@@ -1012,7 +1013,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
                         def result
                         if (jobdata instanceof ScheduledExecution) {
                             //xxx:try/catch the update
-                            result = _doupdateJob(scheduledExecution.id, jobdata,user, roleList, projectAuthContext, jobchange)
+                            result = _doupdateJob(scheduledExecution.id, jobdata, projectAuthContext, jobchange)
                             success = result[0]
                             scheduledExecution = result[1]
                         } else {
@@ -1869,7 +1870,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         }
         return [failed:failed,modified:addedNotifications]
     }
-    public List _doupdateJob(id, ScheduledExecution params, user, String roleList, AuthContext authContext, changeinfo = [:]) {
+    public List _doupdateJob(id, ScheduledExecution params, UserAndRolesAuthContext authContext, changeinfo = [:]) {
         log.debug("ScheduledExecutionController: update : attempting to update: " + id +
                   ". params: " + params)
         if (params.groupPath) {
@@ -1931,8 +1932,8 @@ class ScheduledExecutionService implements ApplicationContextAware{
             }
         }
         if (scheduledExecution.scheduled) {
-            scheduledExecution.user = user
-            scheduledExecution.userRoleList = roleList
+            scheduledExecution.user = authContext.username
+            scheduledExecution.userRoleList = authContext.roles.join(",")
             if (frameworkService.isClusterModeEnabled()) {
                 scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
             } else {
