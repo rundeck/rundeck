@@ -56,7 +56,7 @@ public class SubjectAuthContext implements UserAndRolesAuthContext {
     }
 
     @Override
-    public AuthContext combineWith(final Authorization authorization) {
+    public UserAndRolesAuthContext combineWith(final Authorization authorization) {
         return new SubjectAuthContext(subject, AclsUtil.append(this.authorization, authorization));
     }
 
