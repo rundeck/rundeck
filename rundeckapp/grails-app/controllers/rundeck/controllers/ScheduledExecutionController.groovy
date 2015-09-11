@@ -1241,7 +1241,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
             AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,found.project)
-        def result = scheduledExecutionService._doupdate(params,session.user, roleList, authContext, changeinfo)
+        def result = scheduledExecutionService._doupdate(params, authContext, changeinfo)
         def scheduledExecution=result.scheduledExecution
         def success = result.success
         if(!scheduledExecution){

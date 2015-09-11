@@ -2181,7 +2181,7 @@ class ScheduledExServiceTests {
                     _workflow_data: true,
                     workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
             ]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -2244,7 +2244,7 @@ class ScheduledExServiceTests {
 //            sec.scheduledExecutionService = sesControl.createMock()
 
             def params = [id: se.id.toString(), jobName: 'test/monkey2', project: 'testProject2', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -2760,7 +2760,7 @@ class ScheduledExServiceTests {
                       options: ["options[0]": [name: 'test', required:true, enforced: false, ]],
                       crontabString: '0 21 */4 */4 */6 ? 2010-2040', useCrontabString: 'true'
         ]
-        def results = sec._doupdate(params, 'test', 'userrole,test', null)
+        def results = sec._doupdate(params, testUserAndRolesContext('test', 'userrole,test'))
 
         def succeeded = results.success
         def scheduledExecution = results.scheduledExecution
@@ -2832,7 +2832,7 @@ class ScheduledExServiceTests {
                       options: ["options[0]": [name: 'test', required:true, enforced: false,defaultValue:'abc' ]],
                       crontabString: '0 21 */4 */4 */6 ? 2010-2040', useCrontabString: 'true'
         ]
-        def results = sec._doupdate(params, 'test', 'userrole,test', null)
+        def results = sec._doupdate(params, testUserAndRolesContext('test', 'userrole,test'))
 
         def succeeded = results.success
         def scheduledExecution = results.scheduledExecution
@@ -2890,7 +2890,7 @@ class ScheduledExServiceTests {
                       _workflow_data: true,
                       scheduled: true,
                       crontabString: '0 21 */4 */4 */6 ? 2010-2040', useCrontabString: 'true']
-        def results = sec._doupdate(params, 'test', 'userrole,test', null)
+        def results = sec._doupdate(params, testUserAndRolesContext('test', 'userrole,test'))
 
         def succeeded = results.success
         def scheduledExecution = results.scheduledExecution
@@ -3061,7 +3061,7 @@ class ScheduledExServiceTests {
                 _workflow_data: true,
                 scheduled: true,
                 crontabString: crontabString, useCrontabString: 'true']
-        def results = sec._doupdate(params, 'test', 'userrole,test', null)
+        def results = sec._doupdate(params, testUserAndRolesContext('test', 'userrole,test'))
         def succeeded = results.success
         def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -3111,7 +3111,7 @@ class ScheduledExServiceTests {
         }
 
         def params = [id: se.id.toString(), scheduled: true, crontabString: crontabString, useCrontabString: 'true', jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false,]
-        def results = sec._doupdate(params + (extraParams ?: [:]), 'test', 'test', null)
+        def results = sec._doupdate(params + (extraParams ?: [:]), testUserAndRolesContext('test', 'test'))
 
         def succeeded = results.success
         def scheduledExecution = results.scheduledExecution
@@ -3166,7 +3166,7 @@ class ScheduledExServiceTests {
 
         def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
                 scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040', useCrontabString: 'true']
-        def results = sec._doupdate(params, 'test', 'userrole,test', null)
+        def results = sec._doupdate(params, testUserAndRolesContext('test', 'userrole,test'))
         def succeeded = results.success
         def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -3228,7 +3228,7 @@ class ScheduledExServiceTests {
 
         def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
                 scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040', useCrontabString: 'true']
-        def results = sec._doupdate(params, 'test', 'userrole,test', null)
+        def results = sec._doupdate(params, testUserAndRolesContext('test', 'userrole,test'))
         def succeeded = results.success
         def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -3384,8 +3384,8 @@ class ScheduledExServiceTests {
         assertEquals null, execution.serverNodeUUID
     }
 
-    private UserAndRolesAuthContext testUserAndRolesContext() {
-        [getUsername: { 'bob' }, getRoles: { ['test'] as Set }] as UserAndRolesAuthContext
+    private UserAndRolesAuthContext testUserAndRolesContext(String user='test',String roleset='test') {
+        [getUsername: { user }, getRoles: { roleset.split(',') as Set }] as UserAndRolesAuthContext
     }
 
     public void testDoUpdateJobClusterModeIsEnabledShouldSetServerUUID() {
@@ -4061,7 +4061,7 @@ class ScheduledExServiceTests {
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: '']],
                     _workflow_data: true,
                     ]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -4122,7 +4122,7 @@ class ScheduledExServiceTests {
                     workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocLocalString: 'test local']],
                     _workflow_data: true,
             ]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -4303,7 +4303,7 @@ class ScheduledExServiceTests {
                 (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true',
                 (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'spaghetti@nowhere.com',
         ]
-        def results = sec._doupdate(params, 'test', 'test', null)
+        def results = sec._doupdate(params, testUserAndRolesContext())
         def succeeded = results.success
         def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -4444,7 +4444,7 @@ class ScheduledExServiceTests {
                            "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
                 _workflow_data: true,
         ] + inputParams
-        def results = sec._doupdate(params, 'test', 'test', null)
+        def results = sec._doupdate(params, testUserAndRolesContext())
         def succeeded = results.success
         def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -4518,7 +4518,7 @@ class ScheduledExServiceTests {
                     (ScheduledExecutionController.NOTIFY_ONSUCCESS_URL): 'true', (ScheduledExecutionController.NOTIFY_SUCCESS_URL): 'http://example.com',
                     (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'milk@store.com',
             ]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -4607,7 +4607,7 @@ class ScheduledExServiceTests {
                     (ScheduledExecutionController.NOTIFY_ONSUCCESS_URL): 'true', (ScheduledExecutionController.NOTIFY_SUCCESS_URL): 'http://example.com',
                     (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'milk@store.com',
             ]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -4684,7 +4684,7 @@ class ScheduledExServiceTests {
                     (ScheduledExecutionController.NOTIFY_SUCCESS_URL): 'http://example.com',
                     (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'milk@store.com',
             ]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -4758,7 +4758,7 @@ class ScheduledExServiceTests {
                     _workflow_data: true,
                     notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'spaghetti@nowhere.com'], [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'milk@store.com']]
             ]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -4845,7 +4845,7 @@ class ScheduledExServiceTests {
                     (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true', (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'spaghetti@nowhere.com',
                     (ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL): 'true', (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'milk@store.com',
             ]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -4927,7 +4927,7 @@ class ScheduledExServiceTests {
                     (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true', (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'spaghetti@ nowhere.com',
                     (ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL): 'true', (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): 'milkstore.com',
             ]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -5165,7 +5165,7 @@ class ScheduledExServiceTests {
 //            sec.scheduledExecutionService = sesControl.createMock()
 
             def params = [id: se.id.toString(), description: 'changed description', workflow: ['commands[0]': [adhocExecution: true, adhocRemoteString: 'test command2',], strategy:'node-first'], '_workflow_data': true]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -5240,7 +5240,7 @@ class ScheduledExServiceTests {
                                   keepgoing: 'false'
                           ],
                           '_workflow_data': true]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -5314,7 +5314,7 @@ class ScheduledExServiceTests {
                                   keepgoing: 'false'
                           ]
             ]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -5386,7 +5386,7 @@ class ScheduledExServiceTests {
                                   keepgoing: 'false'
                           ]
             ]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -5458,7 +5458,7 @@ class ScheduledExServiceTests {
                     //set nodeThreadcount to blank
                     nodeThreadcount: '',
                     workflow: [ strategy:'node-first','commands[0]': [adhocExecution: true, adhocRemoteString: 'test command2',]], '_workflow_data': true]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -5530,7 +5530,7 @@ class ScheduledExServiceTests {
             def params = [id: se.id.toString(), description: 'changed description',
                     options: ["options[0]": [name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]
             ]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -5597,7 +5597,7 @@ class ScheduledExServiceTests {
 //            sec.scheduledExecutionService = sesControl.createMock()
 
             def params = [id: se.id.toString(), description: 'changed description', _nooptions: true]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -5658,7 +5658,7 @@ class ScheduledExServiceTests {
                     workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
                     _workflow_data: true,
             ]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -5736,7 +5736,7 @@ class ScheduledExServiceTests {
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah2',
                     workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]),
                     _nooptions: true]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -5794,7 +5794,7 @@ class ScheduledExServiceTests {
                     workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]),
                     options: ["options[0]": [name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]
             ]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -5863,7 +5863,7 @@ class ScheduledExServiceTests {
                     options: ["options[0]": [name: 'test1', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"],
                             "options[1]": [name: 'test2', defaultValue: 'd', enforced: true, values: ['a', 'b', 'c', 'd']]]
             ]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -5941,7 +5941,7 @@ class ScheduledExServiceTests {
                     options: ["options[0]": [name: 'test1', defaultValue: 'val3', enforced: false, multivalued: true],
                             "options[1]": [name: 'test2', defaultValue: 'val2', enforced: false, values: ['a', 'b', 'c', 'd'], multivalued: true, delimiter: "testdelim"]]
             ]
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -6062,7 +6062,7 @@ class ScheduledExServiceTests {
                     _sessionEditOPTSObject: [:] //empty map to clear options
             ]
 
-            def results = sec._doupdate(params, 'test', 'test', null)
+            def results = sec._doupdate(params, testUserAndRolesContext())
             def succeeded = results.success
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {

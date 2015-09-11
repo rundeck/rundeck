@@ -1018,7 +1018,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
                             scheduledExecution = result[1]
                         } else {
                             jobdata.id = scheduledExecution.uuid ?: scheduledExecution.id
-                            result = _doupdate(jobdata, user, roleList, projectAuthContext, jobchange)
+                            result = _doupdate(jobdata, projectAuthContext, jobchange)
                             success = result.success
                             scheduledExecution = result.scheduledExecution
                         }
@@ -1237,7 +1237,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
     
     
 
-    def _doupdate ( params, user, String roleList, AuthContext authContext, changeinfo = [:] ){
+    def _doupdate ( params, UserAndRolesAuthContext authContext, changeinfo = [:] ){
         log.debug("ScheduledExecutionController: update : attempting to update: " + params.id +
                   ". params: " + params)
         /**
@@ -1307,8 +1307,8 @@ class ScheduledExecutionService implements ApplicationContextAware{
         }
         if (scheduledExecution.scheduled) {
             scheduledExecution.populateTimeDateFields(params)
-            scheduledExecution.user = user
-            scheduledExecution.userRoleList = roleList
+            scheduledExecution.user = authContext.username
+            scheduledExecution.userRoleList = authContext.roles.join(',')
             if (frameworkService.isClusterModeEnabled()) {
                 scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
             } else {

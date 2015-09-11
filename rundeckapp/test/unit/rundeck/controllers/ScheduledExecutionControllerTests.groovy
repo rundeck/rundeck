@@ -367,7 +367,7 @@ class ScheduledExecutionControllerTests  {
             def seServiceControl = mockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
-            seServiceControl.demand._doupdate {params, user, roleList, authctx, changeinfo = [:] ->
+            seServiceControl.demand._doupdate {params, authctx, changeinfo = [:] ->
                 assertNotNull(params['_sessionEditOPTSObject'])
                 assertEquals([],params['_sessionEditOPTSObject'])
                 [success: true, scheduledExecution: se]
@@ -432,7 +432,7 @@ class ScheduledExecutionControllerTests  {
             def seServiceControl = mockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
-            seServiceControl.demand._doupdate {params, user, roleList, authctx, changeinfo = [:] ->
+            seServiceControl.demand._doupdate {params, authctx, changeinfo = [:] ->
                 assertNotNull(params['_sessionEditOPTSObject'])
                 assertEquals([],params['_sessionEditOPTSObject'])
                 [success: true, scheduledExecution: se]
@@ -497,7 +497,7 @@ class ScheduledExecutionControllerTests  {
             def seServiceControl = mockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
-        seServiceControl.demand._doupdate { params, user, roleList, authctx, changeinfo = [:] ->
+        seServiceControl.demand._doupdate { params, authctx, changeinfo = [:] ->
                 assertNotNull(params['_sessionEditWFObject'])
                 assertEquals([],params['_sessionEditWFObject'])
                 [success: true, scheduledExecution: se]
