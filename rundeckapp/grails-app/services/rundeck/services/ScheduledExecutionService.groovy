@@ -2,6 +2,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService
@@ -1050,7 +1051,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 } else {
                     try {
                         jobchange.change = 'create'
-                        def result = _dosave(jobdata, user, roleList, projectAuthContext, jobchange)
+                        def result = _dosave(jobdata, projectAuthContext, jobchange)
                         scheduledExecution = result.scheduledExecution
                         if (!result.success && scheduledExecution && scheduledExecution.hasErrors()) {
                             errmsg = "Validation errors: " + scheduledExecution.errors.allErrors.collect { lookupMessageError(it) }.join("; ")
@@ -2155,7 +2156,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
 
     }
 
-    public Map _dosave(params, user, String roleList, AuthContext authContext, changeinfo = [:]) {
+    public Map _dosave(params, UserAndRolesAuthContext authContext, changeinfo = [:]) {
         log.debug("ScheduledExecutionController: save : params: " + params)
         boolean failed = false;
         if (params.groupPath) {
@@ -2178,7 +2179,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         } else{
             map=params
         }
-        def result = _dovalidate(map, user,roleList)
+        def result = _dovalidate(map, authContext)
         def scheduledExecution = result.scheduledExecution
         failed = result.failed
         //try to save workflow
@@ -2306,7 +2307,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         return valid
     }
 
-    def _dovalidate (Map params, user, String roleList ){
+    def _dovalidate (Map params, UserAndRoles userAndRoles ){
         log.debug("ScheduledExecutionController: save : params: " + params)
         boolean failed = false;
         def scheduledExecution = new ScheduledExecution()
@@ -2324,8 +2325,8 @@ class ScheduledExecutionService implements ApplicationContextAware{
 
         def valid = scheduledExecution.validate()
         if (scheduledExecution.scheduled) {
-            scheduledExecution.user = user
-            scheduledExecution.userRoleList = roleList
+            scheduledExecution.user = userAndRoles.username
+            scheduledExecution.userRoleList = userAndRoles.roles.join(',')
             if (frameworkService.isClusterModeEnabled()) {
                 scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
             }else{

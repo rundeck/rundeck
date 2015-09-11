@@ -174,7 +174,7 @@ class ScheduledExServiceTests {
             service.frameworkService = fwkControl.createMock()
 
             def params = [:]
-            def results = service._dovalidate(params, 'test', 'test')
+            def results = service._dovalidate(params, testUserAndRolesContext('test', 'test'))
             if (results.scheduledExecution.errors.hasErrors()) {
                 results.scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -214,7 +214,7 @@ class ScheduledExServiceTests {
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a command']]
             ]
-            def results = service._dovalidate(params, 'test', 'test')
+            def results = service._dovalidate(params, testUserAndRolesContext('test', 'test'))
             assertFalse(results.failed)
             assertNotNull(results.scheduledExecution)
             assertTrue(results.scheduledExecution instanceof ScheduledExecution)
@@ -252,7 +252,7 @@ class ScheduledExServiceTests {
         service.frameworkService = fwkControl.createMock()
 
             def params = [jobName: 'test/monkey', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'a command']
-            def results = service._dovalidate(params, 'test', 'test')
+            def results = service._dovalidate(params, testUserAndRolesContext('test', 'test'))
             assertTrue(results.failed)
             def sce = results.scheduledExecution
 
@@ -279,7 +279,7 @@ class ScheduledExServiceTests {
                     nodeIncludeName: "bongo",
             nodeExcludeOsFamily: "windows",
             nodeIncludeTags: "spaghetti"]
-            def results = service._dovalidate(params, 'test', 'test')
+            def results = service._dovalidate(params, testUserAndRolesContext('test', 'test'))
             assertFalse(results.failed)
             def sce = results.scheduledExecution
 
@@ -309,7 +309,7 @@ class ScheduledExServiceTests {
         def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
                 workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
                 doNodedispatch: 'true', nodeInclude: 'blah', nodeThreadcount: ""]
-        def results = testService._dovalidate(params, 'test', 'test')
+        def results = testService._dovalidate(params, testUserAndRolesContext('test', 'test'))
         assertFalse(results.failed)
         assertNotNull(results.scheduledExecution)
         assertTrue(results.scheduledExecution instanceof ScheduledExecution)
@@ -337,7 +337,7 @@ class ScheduledExServiceTests {
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']]
             ]
-            def results = testService._dovalidate(params, 'test', 'test')
+            def results = testService._dovalidate(params, testUserAndRolesContext('test', 'test'))
             if (results.scheduledExecution.errors.hasErrors()) {
                 results.scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -377,7 +377,7 @@ class ScheduledExServiceTests {
                             "commands[2]": [jobName: 'test1', jobGroup: 'a/test'],
                     ]
             ]
-            def results = testService._dovalidate(params, 'test', 'test')
+            def results = testService._dovalidate(params, testUserAndRolesContext('test', 'test'))
             if (results.scheduledExecution.errors.hasErrors()) {
                 results.scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -436,7 +436,7 @@ class ScheduledExServiceTests {
                                 new JobExec(jobGroup: 'test1', jobName: 'blah4')),
                 ])
         ]
-        def results = testService._dovalidate(params, 'test', 'test')
+        def results = testService._dovalidate(params, testUserAndRolesContext('test', 'test'))
         if (results.scheduledExecution.errors.hasErrors()) {
             results.scheduledExecution.errors.allErrors.each {
                 System.err.println(it);
@@ -473,7 +473,7 @@ class ScheduledExServiceTests {
                                 new JobExec(jobGroup: 'test1', jobName: 'blah4')),
                 ])
         ]
-        def results = testService._dovalidate(params, 'test', 'test')
+        def results = testService._dovalidate(params, testUserAndRolesContext('test', 'test'))
         results.scheduledExecution.workflow.commands.each { cmd ->
             if (cmd.errors.hasErrors()) {
                 cmd.errors.allErrors.each {
@@ -512,7 +512,7 @@ class ScheduledExServiceTests {
                     ],
                     options: ["options[0]": [name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]
             ]
-            def results = testService._dovalidate(params, 'test', 'test')
+            def results = testService._dovalidate(params, testUserAndRolesContext('test', 'test'))
             if (results.scheduledExecution.errors.hasErrors()) {
                 results.scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -580,7 +580,7 @@ class ScheduledExServiceTests {
                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'asdf')]),
                 notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com']]
         ]
-        def results = testService._dovalidate(params, 'test', 'test')
+        def results = testService._dovalidate(params, testUserAndRolesContext('test', 'test'))
 
         assertTrue(results.failed)
         assertNotNull(results.scheduledExecution)
@@ -613,7 +613,7 @@ class ScheduledExServiceTests {
                 scheduled: true, crontabString: crontabString, useCrontabString:'true',
                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'asdf')]),
         ]
-        def results = testService._dovalidate(params, 'test', 'test')
+        def results = testService._dovalidate(params, testUserAndRolesContext('test', 'test'))
 
         assertFalse(results.failed)
         assertNotNull(results.scheduledExecution)
@@ -666,7 +666,7 @@ class ScheduledExServiceTests {
         def params = new HashMap(job.properties)
         params.crontabString=job.generateCrontabExression()
         params.useCrontabString='true'
-        def results = testService._dovalidate(params, 'test', 'test')
+        def results = testService._dovalidate(params, testUserAndRolesContext('test', 'test'))
 
         assertFalse(results.scheduledExecution.errors.allErrors.collect{it.toString()}.join('; '),results.failed)
         assertNotNull(results.scheduledExecution)
@@ -728,7 +728,7 @@ class ScheduledExServiceTests {
         params.options=[
                 new Option(name: 'test2', required: true, enforced: false),
         ]
-        def results = testService._dovalidate(params, 'test', 'test')
+        def results = testService._dovalidate(params, testUserAndRolesContext('test', 'test'))
 
         assertTrue(results.scheduledExecution.errors.allErrors.collect{it.toString()}.join('; '),results.failed)
         assertNotNull(results.scheduledExecution)
@@ -757,7 +757,7 @@ class ScheduledExServiceTests {
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true]],
             ]
-            def results = testService._dovalidate(params, 'test', 'test')
+            def results = testService._dovalidate(params, testUserAndRolesContext('test', 'test'))
 
             assertTrue(results.failed)
             assertNotNull(results.scheduledExecution)
@@ -798,7 +798,7 @@ class ScheduledExServiceTests {
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test1', adhocLocalString: 'test2']],
             ]
-            def results = testService._dovalidate(params, 'test', 'test')
+            def results = testService._dovalidate(params, testUserAndRolesContext('test', 'test'))
 
             if (results.scheduledExecution.errors.hasErrors()) {
                 results.scheduledExecution.errors.allErrors.each {
@@ -844,7 +844,7 @@ class ScheduledExServiceTests {
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test what']],
             ]
-            def results = testService._dovalidate(params, 'test', 'test')
+            def results = testService._dovalidate(params, testUserAndRolesContext('test', 'test'))
             assertFalse(results.failed)
             assertNotNull(results.scheduledExecution)
             assertTrue(results.scheduledExecution instanceof ScheduledExecution)
@@ -892,7 +892,7 @@ class ScheduledExServiceTests {
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocLocalString: 'test what']],
             ]
-            def results = testService._dovalidate(params, 'test', 'test')
+            def results = testService._dovalidate(params, testUserAndRolesContext('test', 'test'))
             assertFalse(results.failed)
             assertNotNull(results.scheduledExecution)
             assertTrue(results.scheduledExecution instanceof ScheduledExecution)
@@ -939,7 +939,7 @@ class ScheduledExServiceTests {
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocFilepath: 'test what']],
                     ]
-            def results = testService._dovalidate(params, 'test', 'test')
+            def results = testService._dovalidate(params, testUserAndRolesContext('test', 'test'))
             assertFalse(results.failed)
             assertNotNull(results.scheduledExecution)
             assertTrue(results.scheduledExecution instanceof ScheduledExecution)
@@ -991,7 +991,7 @@ class ScheduledExServiceTests {
                             argString: 'test args']],
 
             ]
-            def results = testService._dovalidate(params, 'test', 'test')
+            def results = testService._dovalidate(params, testUserAndRolesContext('test', 'test'))
             assertFalse(results.failed)
             assertNotNull(results.scheduledExecution)
             assertTrue(results.scheduledExecution instanceof ScheduledExecution)
@@ -1044,7 +1044,7 @@ class ScheduledExServiceTests {
                     ]],
 
             ]
-            def results = testService._dovalidate(params, 'test', 'test')
+            def results = testService._dovalidate(params, testUserAndRolesContext('test', 'test'))
             assertFalse(results.failed)
             assertNotNull(results.scheduledExecution)
             assertTrue(results.scheduledExecution instanceof ScheduledExecution)
@@ -1098,7 +1098,7 @@ class ScheduledExServiceTests {
                     ],
 
             ]
-            def results = testService._dovalidate(params, 'test', 'test')
+            def results = testService._dovalidate(params, testUserAndRolesContext('test', 'test'))
             assertFalse(results.failed)
             assertNotNull(results.scheduledExecution)
             assertTrue(results.scheduledExecution instanceof ScheduledExecution)
@@ -1153,7 +1153,7 @@ class ScheduledExServiceTests {
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
                     notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com']]
             ]
-            def results = sec._dovalidate(params, 'test', 'test')
+            def results = sec._dovalidate(params, testUserAndRolesContext('test', 'test'))
             if (results.scheduledExecution.errors.hasErrors()) {
                 results.scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -1209,7 +1209,7 @@ class ScheduledExServiceTests {
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'test command']],
                     notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com'], [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com']]
             ]
-            def results = sec._dovalidate(params, 'test', 'test')
+            def results = sec._dovalidate(params, testUserAndRolesContext('test', 'test'))
             if (results.scheduledExecution.errors.hasErrors()) {
                 results.scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -1280,7 +1280,7 @@ class ScheduledExServiceTests {
 
 //                notifications:[onsuccess:[email:'c@example.com,d@example.com'],onfailure:[email:'monkey@example.com']]
             ]
-            def results = sec._dovalidate(params, 'test', 'test')
+            def results = sec._dovalidate(params, testUserAndRolesContext('test', 'test'))
             if (results.scheduledExecution.errors.hasErrors()) {
                 results.scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -1345,7 +1345,7 @@ class ScheduledExServiceTests {
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand',
                     (ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true', (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'c@example.',
             ]
-            def results = sec._dovalidate(params, 'test', 'test')
+            def results = sec._dovalidate(params, testUserAndRolesContext('test', 'test'))
             if (results.scheduledExecution.errors.hasErrors()) {
                 results.scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -1382,7 +1382,7 @@ class ScheduledExServiceTests {
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand',
                     (ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL): 'true', (ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS): '@example.com',
             ]
-            def results = sec._dovalidate(params, 'test', 'test')
+            def results = sec._dovalidate(params, testUserAndRolesContext('test', 'test'))
             if (results.scheduledExecution.errors.hasErrors()) {
                 results.scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -1422,7 +1422,7 @@ class ScheduledExServiceTests {
                                     [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email',
                                      content: 'monkey@ example.com']]
             ]
-            def results = sec._dovalidate(params, 'test', 'test')
+            def results = sec._dovalidate(params, testUserAndRolesContext('test', 'test'))
             if (results.scheduledExecution.errors.hasErrors()) {
                 results.scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -1463,7 +1463,7 @@ class ScheduledExServiceTests {
                                     [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email',
                                      content: 'monkey@internal']]
             ]
-            def results = sec._dovalidate(params, 'test', 'test')
+            def results = sec._dovalidate(params, testUserAndRolesContext('test', 'test'))
             if (results.scheduledExecution.errors.hasErrors()) {
                 results.scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -1501,7 +1501,7 @@ class ScheduledExServiceTests {
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah2', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand',
                     notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'url', content: 'c@example.comd@example.com'], [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'url', content: 'monkey@ example.com']]
             ]
-            def results = sec._dovalidate(params, 'test', 'test')
+            def results = sec._dovalidate(params, testUserAndRolesContext('test', 'test'))
             if (results.scheduledExecution.errors.hasErrors()) {
                 results.scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -1541,7 +1541,7 @@ class ScheduledExServiceTests {
                 notifications: [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, type: 'email', content: '${job.user.name}@something.org'],
                         [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: '${job.user.email}']]
         ]
-        def results = sec._dovalidate(params, 'test', 'test')
+        def results = sec._dovalidate(params, testUserAndRolesContext('test', 'test'))
         if (results.scheduledExecution.errors.hasErrors()) {
             results.scheduledExecution.errors.allErrors.each {
                 System.err.println(it);
@@ -1594,7 +1594,7 @@ class ScheduledExServiceTests {
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
                     options: ["options[0]": [name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]
             ]
-            def results = sec._dovalidate(params, 'test', 'test')
+            def results = sec._dovalidate(params, testUserAndRolesContext('test', 'test'))
             if (results.scheduledExecution.errors.hasErrors()) {
                 results.scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -1645,7 +1645,7 @@ class ScheduledExServiceTests {
                     ]],
                     'option.test3': 'val3', options: ["options[0]": [name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]
             ]
-            def results = sec._dovalidate(params, 'test', 'test')
+            def results = sec._dovalidate(params, testUserAndRolesContext('test', 'test'))
             if (results.scheduledExecution.errors.hasErrors()) {
                 results.scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -1712,7 +1712,7 @@ class ScheduledExServiceTests {
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand',
                     options: ["options[0]": [defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]
             ]
-            def results = sec._dovalidate(params, 'test', 'test')
+            def results = sec._dovalidate(params, testUserAndRolesContext('test', 'test'))
             if (results.scheduledExecution.errors.hasErrors()) {
                 results.scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -1764,7 +1764,7 @@ class ScheduledExServiceTests {
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
                     options: ["options[0]": [name: 'opt3', defaultValue: 'val3', enforced: false, valuesUrl: "hzttp://test.com/test3"]]
             ]
-            def results = sec._dovalidate(params, 'test', 'test')
+            def results = sec._dovalidate(params, testUserAndRolesContext('test', 'test'))
             if (results.scheduledExecution.errors.hasErrors()) {
                 results.scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -1811,7 +1811,7 @@ class ScheduledExServiceTests {
                     workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
                     options: ["options[0]": [name: 'opt3', defaultValue: 'val3', enforced: false, multivalued: true, delimiter: ' ']]
             ]
-            def results = sec._dovalidate(params, 'test', 'test')
+            def results = sec._dovalidate(params, testUserAndRolesContext('test', 'test'))
             if (results.scheduledExecution.errors.hasErrors()) {
                 results.scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -1866,7 +1866,7 @@ class ScheduledExServiceTests {
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand',
                     options: ["options[0]": [name: 'opt3', defaultValue: 'val3', enforced: false, multivalued: true]]
             ]
-            def results = sec._dovalidate(params, 'test', 'test')
+            def results = sec._dovalidate(params, testUserAndRolesContext('test', 'test'))
             if (results.scheduledExecution.errors.hasErrors()) {
                 results.scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -1931,7 +1931,7 @@ class ScheduledExServiceTests {
                 ],
                 options: ["options[0]": optDef]
         ]
-        def results = sec._dovalidate(params, 'test', 'test')
+        def results = sec._dovalidate(params, testUserAndRolesContext('test', 'test'))
         if (results.scheduledExecution.errors.hasErrors()) {
             results.scheduledExecution.errors.allErrors.each {
                 System.err.println(it);
@@ -1994,7 +1994,7 @@ class ScheduledExServiceTests {
                 ],
                 options: ["options[0]": optDef]
         ]
-        def results = sec._dovalidate(params, 'test', 'test')
+        def results = sec._dovalidate(params, testUserAndRolesContext('test', 'test'))
         if (results.scheduledExecution.errors.hasErrors()) {
             results.scheduledExecution.errors.allErrors.each {
                 System.err.println(it);
@@ -2048,7 +2048,7 @@ class ScheduledExServiceTests {
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand',
                     options: ["options[0]": [name: 'opt3', defaultValue: 'val3', enforced: false, multivalued: true, secureInput: true]]
             ]
-            def results = sec._dovalidate(params, 'test', 'test')
+            def results = sec._dovalidate(params, testUserAndRolesContext('test', 'test'))
             if (results.scheduledExecution.errors.hasErrors()) {
                 results.scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -2097,7 +2097,7 @@ class ScheduledExServiceTests {
                 scheduled: true,
                 crontabString: '0 21 */4 */4 */6 ? 2010-2040'
         ]
-        def results = testService._dovalidate(params, 'test', 'test')
+        def results = testService._dovalidate(params, testUserAndRolesContext('test', 'test'))
         assertFalse(results.failed)
         assertNotNull(results.scheduledExecution)
         assertTrue(results.scheduledExecution instanceof ScheduledExecution)
@@ -2137,7 +2137,7 @@ class ScheduledExServiceTests {
                 scheduled: true,
                 crontabString: '0 21 */4 */4 */6 ? 2010-2040'
         ]
-        def results = testService._dovalidate(params, 'test', 'test')
+        def results = testService._dovalidate(params, testUserAndRolesContext('test', 'test'))
         assertFalse(results.failed)
         assertNotNull(results.scheduledExecution)
         assertTrue(results.scheduledExecution instanceof ScheduledExecution)

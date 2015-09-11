@@ -1233,7 +1233,6 @@ class ScheduledExecutionController  extends ControllerBase{
 
         //pass session-stored edit state in params map
         transferSessionEditState(session, params,params.id)
-        def roleList=request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         def found = scheduledExecutionService.getByIDorUUID( params.id )
         if(!found) {
             flash.message = "ScheduledExecution not found with id ${params.id}"
@@ -1415,7 +1414,7 @@ class ScheduledExecutionController  extends ControllerBase{
     }
     def create = {
 
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         //authorize
         if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext,
                 AuthConstants.RESOURCE_TYPE_JOB, [AuthConstants.ACTION_CREATE],
@@ -1424,7 +1423,6 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
 
-        def user = (session?.user) ? session.user : "anonymous"
         log.debug("ScheduledExecutionController: create : params: " + params)
         def scheduledExecution = new ScheduledExecution()
         scheduledExecution.loglevel = servletContext.getAttribute("LOGLEVEL_DEFAULT")?servletContext.getAttribute("LOGLEVEL_DEFAULT"):"WARN"
@@ -1434,8 +1432,8 @@ class ScheduledExecutionController  extends ControllerBase{
         def cal = java.util.Calendar.getInstance()
         scheduledExecution.minute = String.valueOf(cal.get(java.util.Calendar.MINUTE))
         scheduledExecution.hour = String.valueOf(cal.get(java.util.Calendar.HOUR_OF_DAY))
-        scheduledExecution.user = user
-        scheduledExecution.userRoleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
+        scheduledExecution.user = authContext.username
+        scheduledExecution.userRoleList = authContext.roles.join(",")
         if(params.project ){
 
             if(!frameworkService.existsFrameworkProject(params.project) ) {
@@ -1445,7 +1443,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         if(params.filterName){
             if (params.filterName) {
-                def User u = userService.findOrCreateUser(session.user)
+                def User u = userService.findOrCreateUser(authContext.username)
                 //load a named filter and create a query from it
                 if (u) {
                     NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
@@ -1480,7 +1478,6 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
-        def framework = frameworkService.getRundeckFramework()
         log.debug("ScheduledExecutionController: create : now returning model data to view...")
         return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],
                 nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes,
@@ -1542,9 +1539,8 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
     private def runAdhoc(ApiRunAdhocRequest runAdhocRequest){
-        Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,runAdhocRequest.project)
-        params["user"] = (session?.user) ? session.user : "anonymous"
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,runAdhocRequest.project)
+        params["user"] = authContext.username
         params.request = request
         params.jobName='Temporary_Job'
         params.groupPath='adhoc'
@@ -1584,7 +1580,7 @@ class ScheduledExecutionController  extends ControllerBase{
         params.nodeThreadcount= runAdhocRequest.nodeThreadcount?:1
         params.description = runAdhocRequest.description ?: ""
         if (params.filterName) {
-            def User u = userService.findOrCreateUser(session.user)
+            def User u = userService.findOrCreateUser(authContext.username)
             //load a named filter and create a query from it
             if (u) {
                 NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
@@ -1597,8 +1593,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         //pass session-stored edit state in params map
         transferSessionEditState(session, params,'_new')
-        String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-        def result= scheduledExecutionService._dovalidate(params,session.user,roleList)
+        def result= scheduledExecutionService._dovalidate(params,authContext)
         def ScheduledExecution scheduledExecution=result.scheduledExecution
         def failed=result.failed
         if(!failed){
@@ -1648,8 +1643,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         //pass session-stored edit state in params map
         transferSessionEditState(session, params,'_new')
-        String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-        def result = scheduledExecutionService._dosave(params,session.user,roleList, authContext, changeinfo)
+        def result = scheduledExecutionService._dosave(params, authContext, changeinfo)
         def scheduledExecution = result.scheduledExecution
         if(result.success && scheduledExecution.id){
             clearEditSession()
