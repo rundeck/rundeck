@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.RoleListAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 
 import com.dtolabs.rundeck.core.common.INodeEntry
@@ -984,7 +985,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def changeinfo = [user: session.user, method: 'apiJobCreateSingle']
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
         def loadresults = scheduledExecutionService.loadJobs(jobset, 'create', 'preserve', session.user, roleList,
-                changeinfo, framework,authContext)
+                changeinfo,authContext)
 
         def jobs = loadresults.jobs
         def jobsi = loadresults.jobsi
@@ -1057,7 +1058,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def changeinfo = [user: session.user, method: 'apiJobUpdateSingle']
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
         def loadresults = scheduledExecutionService.loadJobs(jobset, 'update', 'preserve', session.user, roleList,
-                changeinfo, framework,authContext)
+                changeinfo,authContext)
 
         def jobs = loadresults.jobs
         def jobsi = loadresults.jobsi
@@ -1241,7 +1242,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
             AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,found.project)
-        def result = scheduledExecutionService._doupdate(params,session.user, roleList, framework, authContext, changeinfo)
+        def result = scheduledExecutionService._doupdate(params,session.user, roleList, authContext, changeinfo)
         def scheduledExecution=result.scheduledExecution
         def success = result.success
         if(!scheduledExecution){
@@ -1598,7 +1599,7 @@ class ScheduledExecutionController  extends ControllerBase{
         //pass session-stored edit state in params map
         transferSessionEditState(session, params,'_new')
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-        def result= scheduledExecutionService._dovalidate(params,session.user,roleList,framework)
+        def result= scheduledExecutionService._dovalidate(params,session.user,roleList)
         def ScheduledExecution scheduledExecution=result.scheduledExecution
         def failed=result.failed
         if(!failed){
@@ -1643,14 +1644,13 @@ class ScheduledExecutionController  extends ControllerBase{
 
     def save = {
         withForm{
-        Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        RoleListAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         def changeinfo=[user:session.user,change:'create',method:'save']
 
         //pass session-stored edit state in params map
         transferSessionEditState(session, params,'_new')
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-        def result = scheduledExecutionService._dosave(params,session.user,roleList,framework, authContext, changeinfo)
+        def result = scheduledExecutionService._dosave(params,session.user,roleList, authContext, changeinfo)
         def scheduledExecution = result.scheduledExecution
         if(result.success && scheduledExecution.id){
             clearEditSession()
@@ -1731,7 +1731,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def changeinfo = [user: session.user,method:'upload']
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         def loadresults = scheduledExecutionService.loadJobs(jobset, params.dupeOption, params.uuidOption,
-                session.user, roleList, changeinfo, framework,authContext)
+                session.user, roleList, changeinfo,authContext)
 
 
         def jobs = loadresults.jobs
@@ -2383,7 +2383,7 @@ class ScheduledExecutionController  extends ControllerBase{
             option = null
         }
         def loadresults = scheduledExecutionService.loadJobs(jobset,params.dupeOption, option,session.user, roleList,
-                changeinfo,framework,authContext)
+                changeinfo,authContext)
 
         def jobs = loadresults.jobs
         def jobsi = loadresults.jobsi

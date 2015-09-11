@@ -708,7 +708,7 @@ class ProjectService implements InitializingBean{
                         break;
                     break;
                 }
-                def results=scheduledExecutionService.loadJobs(jobset,'update',null,user,roleList,[:],framework,authContext)
+                def results=scheduledExecutionService.loadJobs(jobset,'update',null,user,roleList,[:],authContext)
                 if(results.errjobs){
                     log.error("Failed loading (${results.errjobs.size()}) jobs from XML at archive path: ${path}${name}")
                     results.errjobs.each {

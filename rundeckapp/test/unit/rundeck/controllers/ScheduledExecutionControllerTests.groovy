@@ -206,7 +206,7 @@ class ScheduledExecutionControllerTests  {
             def seServiceControl = mockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
-            seServiceControl.demand._dosave {params, user, rolelist, framework, authctx, changeinfo ->
+            seServiceControl.demand._dosave {params, user, rolelist, authctx, changeinfo ->
                 [success: true, scheduledExecution: se]
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
@@ -262,7 +262,7 @@ class ScheduledExecutionControllerTests  {
             def seServiceControl = mockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
-            seServiceControl.demand._dosave {params, user, rolelist, framework, authctx, changeinfo ->
+            seServiceControl.demand._dosave {params, user, rolelist, authctx, changeinfo ->
                 [success: true, scheduledExecution: se]
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
@@ -367,7 +367,7 @@ class ScheduledExecutionControllerTests  {
             def seServiceControl = mockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
-            seServiceControl.demand._doupdate {params, user, roleList, framework, authctx, changeinfo = [:] ->
+            seServiceControl.demand._doupdate {params, user, roleList, authctx, changeinfo = [:] ->
                 assertNotNull(params['_sessionEditOPTSObject'])
                 assertEquals([],params['_sessionEditOPTSObject'])
                 [success: true, scheduledExecution: se]
@@ -432,7 +432,7 @@ class ScheduledExecutionControllerTests  {
             def seServiceControl = mockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
-            seServiceControl.demand._doupdate {params, user, roleList, framework, authctx, changeinfo = [:] ->
+            seServiceControl.demand._doupdate {params, user, roleList, authctx, changeinfo = [:] ->
                 assertNotNull(params['_sessionEditOPTSObject'])
                 assertEquals([],params['_sessionEditOPTSObject'])
                 [success: true, scheduledExecution: se]
@@ -497,7 +497,7 @@ class ScheduledExecutionControllerTests  {
             def seServiceControl = mockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
-        seServiceControl.demand._doupdate { params, user, roleList, framework, authctx, changeinfo = [:] ->
+        seServiceControl.demand._doupdate { params, user, roleList, authctx, changeinfo = [:] ->
                 assertNotNull(params['_sessionEditWFObject'])
                 assertEquals([],params['_sessionEditWFObject'])
                 [success: true, scheduledExecution: se]
@@ -563,7 +563,7 @@ class ScheduledExecutionControllerTests  {
             def seServiceControl = mockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
-        seServiceControl.demand._dosave { params, user, rolelist, framework, authctx, changeinfo ->
+        seServiceControl.demand._dosave { params, user, rolelist, authctx, changeinfo ->
                 [success: false]
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
@@ -625,7 +625,7 @@ class ScheduledExecutionControllerTests  {
             def seServiceControl = mockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
-        seServiceControl.demand._dosave { params, user, rolelist, framework, authctx, changeinfo ->
+        seServiceControl.demand._dosave { params, user, rolelist, authctx, changeinfo ->
                 [success: false,unauthorized:true,error:'unauthorizedMessage']
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
@@ -680,7 +680,7 @@ class ScheduledExecutionControllerTests  {
         controller.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getByIDorUUID { id -> return se }
             userAuthorizedForAdhoc { request, scheduledExecution, framework -> return true }
-            _dovalidate { params, user, rolelist, framework ->
+            _dovalidate { params, user, rolelist ->
                 assertEquals('Temporary_Job', params.jobName)
                 assertEquals('adhoc', params.groupPath)
                 [failed: false, scheduledExecution: se]
@@ -818,7 +818,7 @@ class ScheduledExecutionControllerTests  {
         controller.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getByIDorUUID { id -> return se }
             userAuthorizedForAdhoc { request, scheduledExecution, framework -> return true }
-            _dovalidate { params, user, rolelist, framework ->
+            _dovalidate { params, user, rolelist ->
                 assertEquals('Temporary_Job', params.jobName)
                 assertEquals('adhoc', params.groupPath)
                 [failed: false, scheduledExecution: se]
@@ -881,7 +881,7 @@ class ScheduledExecutionControllerTests  {
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
             seServiceControl.demand.userAuthorizedForAdhoc {request, scheduledExecution, framework -> return true }
-            seServiceControl.demand._dovalidate {params, user, rolelist, framework ->
+            seServiceControl.demand._dovalidate {params, user, rolelist ->
                 assertEquals('Temporary_Job',params.jobName)
                 assertEquals('adhoc',params.groupPath)
                 [failed: false, scheduledExecution: se]
@@ -950,7 +950,7 @@ class ScheduledExecutionControllerTests  {
 
         seServiceControl.demand.getByIDorUUID { id -> return se }
         seServiceControl.demand.userAuthorizedForAdhoc { request, scheduledExecution, framework -> return true }
-        seServiceControl.demand._dovalidate { params, user, rolelist, framework ->
+        seServiceControl.demand._dovalidate { params, user, rolelist ->
             assertEquals('Temporary_Job', params.jobName)
             assertEquals('adhoc', params.groupPath)
             [failed: false, scheduledExecution: se]
@@ -1029,7 +1029,7 @@ class ScheduledExecutionControllerTests  {
         def seServiceControl = mockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand.userAuthorizedForAdhoc {request, scheduledExecution, framework -> return true }
-        seServiceControl.demand._dovalidate {params, user, rolelist, framework ->
+        seServiceControl.demand._dovalidate {params, user, rolelist ->
             assertEquals('Temporary_Job',params.jobName)
             assertEquals('adhoc',params.groupPath)
             [failed: false, scheduledExecution: se]
@@ -1103,7 +1103,7 @@ class ScheduledExecutionControllerTests  {
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
             seServiceControl.demand.userAuthorizedForAdhoc {request, scheduledExecution, framework -> return true }
-            seServiceControl.demand._dovalidate {params, user, rolelist, framework ->
+            seServiceControl.demand._dovalidate {params, user, rolelist ->
                 assertEquals('Temporary_Job',params.jobName)
                 assertEquals('adhoc',params.groupPath)
                 [failed: true, scheduledExecution: se]
@@ -1469,7 +1469,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.createMock()
         def seServiceControl = mockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1) { params, user, roleList, framework ->
+        seServiceControl.demand._dovalidate(1..1) { params, user, roleList ->
             assert 'testuser' == user
             new ScheduledExecution()
         }
@@ -1616,7 +1616,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.createMock()
         def seServiceControl = mockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, user, roleList, framework->
+        seServiceControl.demand._dovalidate(1..1){params, user, roleList->
             assert null==user
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
@@ -1707,7 +1707,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.createMock()
         def seServiceControl = mockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, user, roleList, framework->
+        seServiceControl.demand._dovalidate(1..1){params, user, roleList->
             assert null==user
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
@@ -1789,7 +1789,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.createMock()
         def seServiceControl = mockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, user, roleList, framework->
+        seServiceControl.demand._dovalidate(1..1){params, user, roleList->
             assert null==user
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
@@ -1866,7 +1866,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.createMock()
         def seServiceControl = mockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, user, roleList, framework->
+        seServiceControl.demand._dovalidate(1..1){params, user, roleList->
             assert null==user
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
@@ -1943,7 +1943,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.createMock()
         def seServiceControl = mockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, user, roleList, framework->
+        seServiceControl.demand._dovalidate(1..1){params, user, roleList->
             assert null==user
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
@@ -2024,7 +2024,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.createMock()
         def seServiceControl = mockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, user, roleList, framework->
+        seServiceControl.demand._dovalidate(1..1){params, user, roleList->
             assert null==user
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
@@ -2098,7 +2098,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.createMock()
         def seServiceControl = mockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1) { params, user, roleList, framework ->
+        seServiceControl.demand._dovalidate(1..1) { params, user, roleList ->
             assert null == user
             [scheduledExecution: new ScheduledExecution(), failed: false]
         }
@@ -2642,7 +2642,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input,format ->
             [jobset:[expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, framework, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, authctx ->
             assert jobset==[expectedJob]
             [
                     jobs: [expectedJob],
@@ -2730,7 +2730,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input,format ->
             [jobset:[expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, framework, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, authctx ->
             assert jobset==[expectedJob]
             [
                     jobs: [expectedJob],
@@ -2806,7 +2806,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input,format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, framework, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, authctx ->
             assertEquals('BProject', jobset[0].project)
             [
                     jobs: [expectedJob],
@@ -2890,7 +2890,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input, format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, framework, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, authctx ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
@@ -2984,7 +2984,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input, format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, framework, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, authctx ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
@@ -3079,7 +3079,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input, format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, framework, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, authctx ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],

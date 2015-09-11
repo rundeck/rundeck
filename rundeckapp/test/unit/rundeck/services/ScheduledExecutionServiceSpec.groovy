@@ -44,7 +44,7 @@ class ScheduledExecutionServiceSpec extends Specification {
                               ]
                       ]
         ]
-        def results = service._dovalidate(params, 'test', 'test', null)
+        def results = service._dovalidate(params, 'test', 'test')
         def ScheduledExecution scheduledExecution = results.scheduledExecution
 
         then:
@@ -83,7 +83,7 @@ class ScheduledExecutionServiceSpec extends Specification {
                               ]
                       ]
         ]
-        def results = service._dovalidate(params, 'test', 'test', null)
+        def results = service._dovalidate(params, 'test', 'test')
         def ScheduledExecution scheduledExecution = results.scheduledExecution
 
         then:

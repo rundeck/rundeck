@@ -1,6 +1,8 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.plugins.scm.ImportResult
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
@@ -10,6 +12,7 @@ import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.jobs.JobChangeListener
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
+import com.dtolabs.rundeck.plugins.scm.JobImporter
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import com.dtolabs.rundeck.plugins.scm.JobState
 import com.dtolabs.rundeck.plugins.scm.ScmDiffResult
@@ -28,6 +31,8 @@ import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderServic
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
 import rundeck.ScheduledExecution
 import rundeck.User
+import rundeck.codecs.JobsXMLCodec
+import rundeck.codecs.JobsYAMLCodec
 
 /**
  * Manages scm integration
@@ -39,6 +44,7 @@ class ScmService {
     ScmExportPluginProviderService scmExportPluginProviderService
     ScmImportPluginProviderService scmImportPluginProviderService
     PluginService pluginService
+    ScheduledExecutionService scheduledExecutionService
     Map<String, ScmExportPlugin> loadedExportPlugins = Collections.synchronizedMap([:])
     Map<String, ScmImportPlugin> loadedImportPlugins = Collections.synchronizedMap([:])
     Map<String, JobChangeListener> loadedExportListeners = Collections.synchronizedMap([:])
@@ -445,7 +451,7 @@ class ScmService {
      */
     def enablePlugin(String integration, String project, String type) {
         ScmPluginConfig scmPluginConfig = loadScmConfig(project, integration)
-        def validation = validatePluginSetup(integration,project, type, scmPluginConfig.config)
+        def validation = validatePluginSetup(integration, project, type, scmPluginConfig.config)
         if (!validation.valid) {
             return [valid: false, report: validation.report]
         }
@@ -764,8 +770,9 @@ class ScmService {
             return [valid: false, report: report]
         }
         def result = null
+        def jobImporter = createImporter(project, username)
         try {
-            result = plugin.scmImport(actionId, null, chosenTrackedItems, config)
+            result = plugin.scmImport(actionId, jobImporter, chosenTrackedItems, config)
         } catch (ScmPluginException e) {
             log.error(e.message)
             log.debug("import failed ${chosenTrackedItems}, ${config}", e)
@@ -788,6 +795,74 @@ class ScmService {
 //        forgetRenamedJobs(project, jobrefs*.id)
         log.debug("result: ${result}")
         [valid: true, commitId: result.id, message: result.message]
+    }
+
+    JobImporter createImporter(final String project, final String username) {
+        return new Importer(project, username, scheduledExecutionService)
+    }
+}
+
+class Importer implements JobImporter {
+    String project
+    String username
+    String roleList
+    ScheduledExecutionService scheduledExecutionService
+
+    Importer(final String project, final String username, String roleList, final ScheduledExecutionService scheduledExecutionService) {
+        this.project = project
+        this.username = username
+        this.roleList=roleList
+        this.scheduledExecutionService = scheduledExecutionService
+    }
+
+    @Override
+    ImportResult importFromStream(final String format, final InputStream input, final Map importMetadata) {
+        def parseresult=null
+        try{
+            parseresult = scheduledExecutionService.parseUploadedFile(input,format)
+            if(parseresult.error || parseresult.errorCode) {
+                def message = parseresult.error ?:
+                        scheduledExecutionService.messageSource.getMessage(
+                                parseresult.errorCode,
+                                parseresult.args,
+                                null
+                        )
+                return ImporterResult.fail("Could not parse job definition: " + format)
+            }
+
+        }catch (Throwable e){
+            return ImporterResult.fail("Failed to load job definition from input stream: "+e.message)
+        }
+
+        def jobset=parseresult.jobset
+        jobset*.project=project
+        def changeinfo = [user: username, method: 'scm-import']
+        def loadresults = scheduledExecutionService.loadJobs(jobset, 'update', 'preserve',
+                                                             username, roleList, changeinfo,authContext)
+    }
+
+    @Override
+    ImportResult importFromMap(final Map input, final Map importMetadata) {
+        def joblist=[]
+        try{
+            joblist = JobsYAMLCodec.createJobs([input])
+        }catch (Throwable e){
+            return ImporterResult.fail("Failed to construct job definition map: "+e.message)
+        }
+    }
+}
+
+class ImporterResult implements ImportResult {
+    boolean successful
+    String errorMessage
+    JobRevReference job
+    boolean created
+    boolean modified
+    static ImportResult fail(String message) {
+        def result = new ImporterResult()
+        result.successful=false
+        result.errorMessage=message
+        return result
     }
 }
 

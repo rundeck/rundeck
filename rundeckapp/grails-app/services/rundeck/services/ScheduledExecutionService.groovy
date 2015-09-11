@@ -940,15 +940,23 @@ class ScheduledExecutionService implements ApplicationContextAware{
      * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.
      * @return map of load results, [jobs: List of ScheduledExecutions, jobsi: list of maps [scheduledExecution: (job), entrynum: (index)], errjobs: List of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg], skipjobs: list of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]]
      */
-    def loadJobs ( jobset, option, user, String roleList, changeinfo = [:], Framework framework, AuthContext authContext ) {
-        return loadJobs(jobset, option, null, user, roleList, changeinfo, framework,authContext)
+    def loadJobs ( jobset, option, user, String roleList, changeinfo = [:], AuthContext authContext ) {
+        return loadJobs(jobset, option, null, user, roleList, changeinfo, authContext)
     }
 
     /**
      * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.
      * @return map of load results, [jobs: List of ScheduledExecutions, jobsi: list of maps [scheduledExecution: (job), entrynum: (index)], errjobs: List of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg], skipjobs: list of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]]
      */
-    def loadJobs ( jobset, option, String uuidOption, user, String roleList, changeinfo = [:], Framework framework, AuthContext authContext ){
+    def loadJobs (
+            List jobset,
+            String option,
+            String uuidOption,
+            String user,
+            String roleList,
+            Map changeinfo = [:],
+            AuthContext authContext
+    ){
         def jobs = []
         def jobsi = []
         def i = 1
@@ -1004,12 +1012,12 @@ class ScheduledExecutionService implements ApplicationContextAware{
                         def result
                         if (jobdata instanceof ScheduledExecution) {
                             //xxx:try/catch the update
-                            result = _doupdateJob(scheduledExecution.id, jobdata,user, roleList, framework, projectAuthContext, jobchange)
+                            result = _doupdateJob(scheduledExecution.id, jobdata,user, roleList, projectAuthContext, jobchange)
                             success = result[0]
                             scheduledExecution = result[1]
                         } else {
                             jobdata.id = scheduledExecution.uuid ?: scheduledExecution.id
-                            result = _doupdate(jobdata, user, roleList, framework, projectAuthContext, jobchange)
+                            result = _doupdate(jobdata, user, roleList, projectAuthContext, jobchange)
                             success = result.success
                             scheduledExecution = result.scheduledExecution
                         }
@@ -1041,7 +1049,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 } else {
                     try {
                         jobchange.change = 'create'
-                        def result = _dosave(jobdata, user, roleList, framework, projectAuthContext, jobchange)
+                        def result = _dosave(jobdata, user, roleList, projectAuthContext, jobchange)
                         scheduledExecution = result.scheduledExecution
                         if (!result.success && scheduledExecution && scheduledExecution.hasErrors()) {
                             errmsg = "Validation errors: " + scheduledExecution.errors.allErrors.collect { lookupMessageError(it) }.join("; ")
@@ -1228,7 +1236,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
     
     
 
-    def _doupdate ( params, user, String roleList, Framework framework, AuthContext authContext, changeinfo = [:] ){
+    def _doupdate ( params, user, String roleList, AuthContext authContext, changeinfo = [:] ){
         log.debug("ScheduledExecutionController: update : attempting to update: " + params.id +
                   ". params: " + params)
         /**
@@ -1861,7 +1869,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         }
         return [failed:failed,modified:addedNotifications]
     }
-    public List _doupdateJob(id, ScheduledExecution params, user, String roleList, Framework framework, AuthContext authContext, changeinfo = [:]) {
+    public List _doupdateJob(id, ScheduledExecution params, user, String roleList, AuthContext authContext, changeinfo = [:]) {
         log.debug("ScheduledExecutionController: update : attempting to update: " + id +
                   ". params: " + params)
         if (params.groupPath) {
@@ -2146,7 +2154,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
 
     }
 
-    public Map _dosave(params, user, String roleList, Framework framework, AuthContext authContext, changeinfo = [:]) {
+    public Map _dosave(params, user, String roleList, AuthContext authContext, changeinfo = [:]) {
         log.debug("ScheduledExecutionController: save : params: " + params)
         boolean failed = false;
         if (params.groupPath) {
@@ -2169,7 +2177,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         } else{
             map=params
         }
-        def result = _dovalidate(map, user,roleList,framework)
+        def result = _dovalidate(map, user,roleList)
         def scheduledExecution = result.scheduledExecution
         failed = result.failed
         //try to save workflow
@@ -2297,7 +2305,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         return valid
     }
 
-    def _dovalidate (Map params, user, String roleList, Framework framework ){
+    def _dovalidate (Map params, user, String roleList ){
         log.debug("ScheduledExecutionController: save : params: " + params)
         boolean failed = false;
         def scheduledExecution = new ScheduledExecution()
