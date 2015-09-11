@@ -2105,7 +2105,7 @@ class ScheduledExecutionControllerTests  {
         def seServiceControl = mockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidate(1..1) { params, auth ->
-            
+
             [scheduledExecution: new ScheduledExecution(), failed: false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1) { request, scheduledExecution, framework ->
@@ -2656,7 +2656,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input,format ->
             [jobset:[expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx ->
             assert jobset==[expectedJob]
             [
                     jobs: [expectedJob],
@@ -2744,7 +2744,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input,format ->
             [jobset:[expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx ->
             assert jobset==[expectedJob]
             [
                     jobs: [expectedJob],
@@ -2820,7 +2820,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input,format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx ->
             assertEquals('BProject', jobset[0].project)
             [
                     jobs: [expectedJob],
@@ -2904,7 +2904,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input, format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
@@ -2998,7 +2998,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input, format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
@@ -3093,7 +3093,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input, format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],

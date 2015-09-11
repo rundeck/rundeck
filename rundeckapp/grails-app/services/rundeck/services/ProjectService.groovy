@@ -720,8 +720,6 @@ class ProjectService implements InitializingBean{
                         jobset,
                         'update',
                         null,
-                        authContext.username,
-                        authContext.roles.join(","),
                         [:],
                         authContext
                 )

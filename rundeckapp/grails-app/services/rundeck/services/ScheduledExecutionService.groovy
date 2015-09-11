@@ -942,8 +942,8 @@ class ScheduledExecutionService implements ApplicationContextAware{
      * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.
      * @return map of load results, [jobs: List of ScheduledExecutions, jobsi: list of maps [scheduledExecution: (job), entrynum: (index)], errjobs: List of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg], skipjobs: list of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]]
      */
-    def loadJobs ( jobset, option, user, String roleList, changeinfo = [:], UserAndRolesAuthContext authContext ) {
-        return loadJobs(jobset, option, null, user, roleList, changeinfo, authContext)
+    def loadJobs ( jobset, option, changeinfo = [:], UserAndRolesAuthContext authContext ) {
+        return loadJobs(jobset, option, null, changeinfo, authContext)
     }
 
     /**
@@ -954,8 +954,6 @@ class ScheduledExecutionService implements ApplicationContextAware{
             List jobset,
             String option,
             String uuidOption,
-            String user,
-            String roleList,
             Map changeinfo = [:],
             UserAndRolesAuthContext authContext
     ){
