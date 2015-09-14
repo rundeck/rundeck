@@ -1,17 +1,13 @@
 package org.rundeck.plugin.scm.git
-
-import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.core.plugins.views.Action
-import com.dtolabs.rundeck.core.plugins.views.ActionBuilder
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.Status
-import org.eclipse.jgit.diff.*
-import org.eclipse.jgit.lib.*
+import org.eclipse.jgit.lib.BranchTrackingStatus
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.rundeck.plugin.scm.git.exp.actions.CommitJobsAction
@@ -20,11 +16,10 @@ import org.rundeck.plugin.scm.git.exp.actions.PushAction
 import org.rundeck.plugin.scm.git.exp.actions.SynchAction
 
 import java.util.regex.Pattern
-
 /**
  * Git export plugin
  */
-class GitExportPlugin implements ScmExportPlugin {
+class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     static final Logger log = Logger.getLogger(GitExportPlugin)
     public static final String SERIALIZE_FORMAT = 'xml'
 
@@ -34,22 +29,13 @@ class GitExportPlugin implements ScmExportPlugin {
     public static final String PROJECT_SYNCH_ACTION_ID = "project-synch"
     public static final String PROJECT_FETCH_ACTION_ID = "project-fetch"
 
-    Map<String, GitExportAction> actions = [:]
 
     String format = SERIALIZE_FORMAT
     boolean inited = false
-    Git git;
-    Repository repo;
-    File workingDir;
     String committerName;
     String committerEmail;
-    String branch;
-    final Map<String, ?> input
-    final String project
-    JobFileMapper mapper;
-    Map<String, Map> jobStateMap = Collections.synchronizedMap([:])
+    protected Map<String, GitExportAction> actions = [:]
 
-    RawTextComparator COMP = RawTextComparator.DEFAULT
 
     GitExportPlugin(final Map<String, ?> input, final String project) {
         this.input = input
@@ -169,23 +155,6 @@ class GitExportPlugin implements ScmExportPlugin {
         }
     }
 
-    def serialize(final JobExportReference job) {
-        File outfile = mapper.fileForJob(job)
-        if (!outfile.parentFile.exists()) {
-            if (!outfile.parentFile.mkdirs()) {
-                throw new ScmPluginException(
-                        "Cannot create necessary dirs to serialize file to path: ${outfile.absolutePath}"
-                )
-            }
-        }
-        outfile.withOutputStream { out ->
-            job.jobSerializer.serialize(format, out)
-        }
-    }
-
-    def serializeAll(final Set<JobExportReference> jobExportReferences) {
-        jobExportReferences.each(this.&serialize)
-    }
 
     @Override
     List<String> getDeletedFiles() {
@@ -222,9 +191,6 @@ class GitExportPlugin implements ScmExportPlugin {
         }
     }
 
-    private List<Action> actionRefs(String... ids) {
-        actions.subMap(Arrays.asList(ids)).values().collect { ActionBuilder.from(it) }
-    }
 
     @Override
     ScmExportSynchState getStatus() {
@@ -371,30 +337,6 @@ class GitExportPlugin implements ScmExportPlugin {
         jobstat
     }
 
-    String debugStatus(final Status status) {
-        def smap = [
-                conflicting          : status.conflicting,
-                added                : status.added,
-                changed              : status.changed,
-                clean                : status.clean,
-                conflictingStageState: status.conflictingStageState,
-                ignoredNotInIndex    : status.ignoredNotInIndex,
-                missing              : status.missing,
-                modified             : status.modified,
-                removed              : status.removed,
-                uncommittedChanges   : status.uncommittedChanges,
-                untracked            : status.untracked,
-                untrackedFolders     : status.untrackedFolders,
-        ]
-        def sb = new StringBuilder()
-        smap.each {
-            sb << "${it.key}:\n"
-            it.value.each {
-                sb << "\t${it}\n"
-            }
-        }
-        sb.toString()
-    }
 
     private SynchState synchStateForStatus(Status status, RevCommit commit, String path) {
         if (path && status.untracked.contains(path) || !path && status.untracked) {
@@ -446,31 +388,11 @@ class GitExportPlugin implements ScmExportPlugin {
         return createJobStatus(status)
     }
 
-    JobState createJobStatus(final Map map) {
-        //TODO: include scm status
-        return new JobGitState(
-                synchState: map['synch'],
-                commit: map.commitMeta ? new GitScmCommit(map.commitMeta) : null
-        )
-    }
-
-
-    File getLocalFileForJob(final JobReference job) {
-        mapper.fileForJob(job)
-    }
-
     @Override
     String getRelativePathForJob(final JobReference job) {
         relativePath(job)
     }
 
-    String relativePath(File reference) {
-        reference.absolutePath.substring(workingDir.getAbsolutePath().length() + 1)
-    }
-
-    String relativePath(JobReference reference) {
-        relativePath(getLocalFileForJob(reference))
-    }
 
     ScmDiffResult getFileDiff(final JobExportReference job) throws ScmPluginException {
         return getFileDiff(job, null)
@@ -493,32 +415,5 @@ class GitExportPlugin implements ScmExportPlugin {
         return new GitDiffResult(content: baos.toString(), modified: diffs > 0)
     }
 
-    /**
-     * get RevCommit for HEAD rev of the path
-     * @return RevCommit or null if HEAD not found (empty git)
-     */
-    RevCommit getHead() {
-        GitUtil.getHead repo
-    }
 
-    ObjectId lookupId(RevCommit commit, String path) {
-        GitUtil.lookupId repo, commit, path
-    }
-
-    byte[] getBytes(ObjectId id) {
-        GitUtil.getBytes repo, id
-    }
-
-
-    int printDiff(OutputStream out, File file1, byte[] data) {
-        GitUtil.printDiff out, file1, data, COMP
-    }
-
-    RevCommit lastCommit() {
-        GitUtil.lastCommit repo, git
-    }
-
-    RevCommit lastCommitForPath(String path) {
-        GitUtil.lastCommitForPath repo, git, path
-    }
 }

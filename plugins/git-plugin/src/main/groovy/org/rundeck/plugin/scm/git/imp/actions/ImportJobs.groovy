@@ -49,13 +49,17 @@ class ImportJobs extends BaseAction implements GitImportAction {
 
         //walk the repo files and look for possible candidates
         plugin.walkTreePaths('HEAD^{tree}') { TreeWalk walk ->
+            def path = walk.getPathString()
+            if(!(plugin.isTrackedPath(path) && path in selectedPaths)){
+                plugin.log.debug("skipping path ${path}")
+                return
+            }
             def objectId = walk.getObjectId(0)
-
             def size = plugin.repo.open(objectId, Constants.OBJ_BLOB).getSize()
             plugin.log.debug("import data: ${size} = ${objectId.name}")
             def bytes = plugin.repo.open(objectId, Constants.OBJ_BLOB).getBytes(Integer.MAX_VALUE)
 
-            plugin.log.debug("import data: "+new String(bytes))
+            //plugin.log.debug("import data: "+new String(bytes))
 
             def importResult = importer.importFromStream(
                     walk.getNameString().endsWith(".xml") ? 'xml' : 'yaml',
