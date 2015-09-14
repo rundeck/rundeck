@@ -41,6 +41,7 @@
                 <g:render template="/scm/statusBadge" model="[
                         status: jobstatus?.synchState?.toString(),
                         text  : '',
+                        integration:'export',
                         commit: jobstatus?.commit,
                 ]"/>
                 <g:if test="${scmExportRenamedPath}">
@@ -62,7 +63,20 @@
             </div>
             <g:if test="${jobstatus?.commit}">
                 <div class="list-group-item">
-                    <g:expander key="commitInfo">Previous Commit</g:expander>
+                    <blockquote>
+                        ${jobstatus.commit.message}
+                        <footer>
+                        ${jobstatus.commit.author}
+                        <g:relativeDate elapsed="${jobstatus.commit.date}"/>
+                        in
+                            <g:expander key="commitInfo" classnames="textbtn-info">
+                                <cite>
+                                    ${jobstatus.commit.commitId}
+                                </cite>
+                            </g:expander>
+                        </footer>
+                    </blockquote>
+
                     <table class="table table-bordered table-condensed table-striped " id="commitInfo"
                            style="display:none">
                         <g:set var="map" value="${jobstatus?.commit.asMap()}"/>

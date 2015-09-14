@@ -91,6 +91,17 @@
                                               model="[status: jobstatus?.synchState?.toString(),
                                                       text  : '',
                                                       notext: true,
+                                                      integration:'export',
+                                                      commit  : jobstatus?.commit]"/>
+                                </g:if>
+                                <g:if test="${scmImportEnabled && scmImportJobStatus?.get(scheduledExecution.extid)}">
+
+                                    <g:set var="jobstatus" value="${scmImportJobStatus?.get(scheduledExecution.extid)}"/>
+                                    <g:render template="/scm/statusBadge"
+                                              model="[status: jobstatus?.synchState?.toString(),
+                                                      text  : '',
+                                                      notext: true,
+                                                      integration:'import',
                                                       commit  : jobstatus?.commit]"/>
                                 </g:if>
                                     <g:link action="show"

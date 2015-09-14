@@ -85,10 +85,12 @@
 
                                                 <g:render template="statusIcon"
                                                           model="[iscommit          : true, status: jobstatus?.synchState?.
-                                                                  toString(), notext: true, text: '', commit: jobstatus?.commit]"/>
+                                                                  toString(), notext: true,
+                                                                  integration:'export', text: '', commit: jobstatus?.commit]"/>
                                                 <g:render template="statusIcon"
                                                           model="[iscommit          : true, status: jobstatus?.synchState?.
-                                                                  toString(), noicon: true, text: job.jobName, commit: jobstatus?.commit]"/>
+                                                                  toString(), noicon: true,
+                                                                              integration:'export', text: job.jobName, commit: jobstatus?.commit]"/>
 
                                                 <span class="text-muted">
                                                     - ${job.groupPath}
@@ -163,9 +165,11 @@
                                                 }"/>
 
                                                 <g:render template="statusIcon"
-                                                          model="[iscommit: true, status: 'DELETED', notext: true, text: '',]"/>
+                                                          model="[iscommit: true, status: 'DELETED', notext: true,
+                                                                                                     integration:'export', text: '',]"/>
                                                 <g:render template="statusIcon"
-                                                          model="[iscommit: true, status: 'DELETED', noicon: true, text: deletedJobText]"/>
+                                                          model="[iscommit: true, status: 'DELETED', noicon: true,
+                                                                                                     integration:'export', text: deletedJobText]"/>
 
                                             </label>
                                         </div>

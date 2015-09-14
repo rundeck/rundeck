@@ -130,6 +130,7 @@
                       model="[status: jobstatus?.synchState?.toString(),
                               text  : '',
                               notext: true,
+                              integration:'export',
                               icon:'glyphicon-circle-arrow-right',
                               commit  : jobstatus?.commit]"/>
             <g:if test="${exportStateCreate}">
@@ -150,6 +151,7 @@
                       model="[status: jobstatus?.synchState?.toString(),
                               text  : '',
                               notext: true,
+                              integration: 'export',
                               icon:'glyphicon-eye-open',
                               commit  : jobstatus?.commit]"/>
             <g:if test="${exportStateClean}">

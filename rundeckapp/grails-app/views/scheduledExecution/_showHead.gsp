@@ -36,6 +36,13 @@
             any: true,
             name: scheduledExecution.project
     )}"/>
+    <g:set var="authProjectImport" value="${auth.resourceAllowedTest(
+            context: 'application',
+            type: 'project',
+            action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT],
+            any: true,
+            name: scheduledExecution.project
+    )}"/>
 
     <g:if test="${authProjectExport && scmExportEnabled && scmStatus?.get(scheduledExecution.extid)}">
         <g:set var="jobstatus" value="${scmStatus?.get(scheduledExecution.extid)}"/>
@@ -44,6 +51,20 @@
                           text  : '',
                           notext: false,
                           link:true,
+                          integration:'export',
+                          job:scheduledExecution,
+                          commit  : jobstatus?.commit]"/>
+    </g:if>
+    <g:if test="${authProjectImport && scmImportEnabled && scmImportJobStatus?.get(scheduledExecution.extid)}">
+
+        <g:set var="jobstatus" value="${scmImportJobStatus?.get(scheduledExecution.extid)}"/>
+
+        <g:render template="/scm/statusBadge"
+                  model="[status: jobstatus?.synchState?.toString(),
+                          text  : '',
+                          notext: true,
+                          link:true,
+                          integration:'import',
                           job:scheduledExecution,
                           commit  : jobstatus?.commit]"/>
     </g:if>

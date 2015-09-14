@@ -13,6 +13,8 @@ import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.jobs.JobChangeListener
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
+import com.dtolabs.rundeck.plugins.scm.JobImportReference
+import com.dtolabs.rundeck.plugins.scm.JobImportState
 import com.dtolabs.rundeck.plugins.scm.JobImporter
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import com.dtolabs.rundeck.plugins.scm.JobState
@@ -575,6 +577,17 @@ class ScmService {
                 }
         )
     }
+    List<JobImportReference> importJobRefsForJobs(List<ScheduledExecution> jobs) {
+        jobs.collect { ScheduledExecution job ->
+            importJobRef(job)
+        }
+    }
+    private JobImportReference importJobRef(ScheduledExecution job) {
+        new JobImportReferenceImpl(
+                jobRevReference(job),
+                [:] //TODO load scm import metadata
+        )
+    }
 
     /**
      * List of tracked items for the action
@@ -669,6 +682,24 @@ class ScmService {
                 def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
                 status[jobReference.id] = plugin.getJobStatus(jobReference, originalPath)
                 log.debug("Status for job ${jobReference}: ${status[jobReference.id]}, origpath: ${originalPath}")
+            }
+        }
+        status
+    }
+    /**
+     * Return a map of status for jobs
+     * @param jobs
+     * @return
+     */
+    Map<String, JobImportState> importStatusForJobs(List<ScheduledExecution> jobs) {
+        def status = [:]
+        importJobRefsForJobs(jobs).each { jobReference ->
+            def plugin = loadedImportPlugins[jobReference.project]
+            if (plugin) {
+                //TODO: deleted job paths?
+//                def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
+                status[jobReference.id] = plugin.getJobStatus(jobReference)
+                log.debug("Status for job ${jobReference}: ${status[jobReference.id]},")
             }
         }
         status

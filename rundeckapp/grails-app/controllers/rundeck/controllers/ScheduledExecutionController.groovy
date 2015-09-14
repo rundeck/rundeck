@@ -230,6 +230,14 @@ class ScheduledExecutionController  extends ControllerBase{
                     model.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(params.project)?.get(scheduledExecution.extid)
                 }
             }
+            if (frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                 frameworkService.authResourceForProject(params.project),
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT])) {
+                if(scmService.projectHasConfiguredPlugin('import',params.project)) {
+                    model.scmImportEnabled = true
+                    model.scmJobImportStatus = scmService.importStatusForJobs([scheduledExecution])
+                }
+            }
             render(template: '/scheduledExecution/jobActionButtonMenuContent', model: model)
         }
     }
@@ -322,6 +330,14 @@ class ScheduledExecutionController  extends ControllerBase{
                 dataMap.scmExportEnabled = true
                 dataMap.scmStatus = scmService.exportStatusForJobs([scheduledExecution])
                 dataMap.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(params.project)?.get(scheduledExecution.extid)
+            }
+        }
+        if (frameworkService.authorizeApplicationResourceAny(authContext,
+                                                             frameworkService.authResourceForProject(params.project),
+                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT])) {
+            if(scmService.projectHasConfiguredPlugin('import',params.project)) {
+                dataMap.scmImportEnabled = true
+                dataMap.scmJobImportStatus = scmService.importStatusForJobs([scheduledExecution])
             }
         }
         withFormat{

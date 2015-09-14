@@ -1,13 +1,9 @@
 <g:set var="tooltip" value=""/>
-<g:if test="${status=='CLEAN'}">
-    <g:set var="tooltip" value="${message(code:'scm.export.status.clean.description')}"/>
-</g:if>
-<g:else>
-    <g:set var="tooltip" value="${message(
-            code: 'scm.export.status.' + status + '.description',
-            default: 'Export Needed '+status
-    )}"/>
-</g:else>
+<g:set var="tooltipCode" value="scm.${integration}.status.${status}.description"/>
+<g:set var="tooltip" value="${message(
+        code: tooltipCode,
+        default: tooltipCode
+)}"/>
 
 <span title="${tooltip}" class="has_tooltip">
     <g:if test="${link}">
@@ -23,6 +19,7 @@
                       model="[status: status,
                               text  : text,
                               icon  : icon,
+                              integration:integration,
                               notext: notext,
                               commit: commit]"/>
         </g:link>
@@ -32,6 +29,7 @@
                   model="[status: status,
                           text  : text,
                           icon  : icon,
+                          integration:integration,
                           notext: notext,
                           commit: commit]"/>
     </g:else>

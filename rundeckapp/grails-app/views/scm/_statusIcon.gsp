@@ -1,7 +1,7 @@
 
 <g:set var="textColor" value="text-info"/>
 <g:set var="iconName" value="${iscommit?'glyphicon-plus':'glyphicon-question-sign'}"/>
-<g:set var="defaultText" value="${message(code: "scm.export.status.${status}.display.text", default: status.toString())}"/>
+<g:set var="defaultText" value="${message(code: "scm.${integration}.status.${status}.display.text", default: status.toString())}"/>
 
 <g:if test="${status.toString()=='EXPORT_NEEDED'}">
     <g:set var="textColor" value="text-info"/>
@@ -9,6 +9,14 @@
 </g:if>
 <g:elseif test="${status.toString()=='CREATE_NEEDED'}">
     <g:set var="textColor" value="text-success"/>
+    <g:set var="iconName" value="glyphicon-exclamation-sign"/>
+</g:elseif>
+<g:elseif test="${status.toString()=='UNKNOWN'}">
+    <g:set var="textColor" value="text-muted"/>
+    <g:set var="iconName" value="glyphicon-question-sign"/>
+</g:elseif>
+<g:elseif test="${status.toString()=='IMPORT_NEEDED'}">
+    <g:set var="textColor" value="text-warning"/>
     <g:set var="iconName" value="glyphicon-exclamation-sign"/>
 </g:elseif>
 <g:elseif test="${status.toString()=='REFRESH_NEEDED'}">

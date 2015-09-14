@@ -1,9 +1,10 @@
 <g:if test="${status.toString() == 'CLEAN'}">
     <span class="has_tooltip"
         data-placement="bottom"
-          title="${message(code:'scm.export.status.clean.description')}">
+          title="${message(code:'scm.export.status.CLEAN.description')}">
         <g:render template="/scm/statusIcon" model="[status: status,
                                                      text  : '',
+                                                     integration:'export',
                                                      notext:true,
                                                      meta  : meta]"/>
     </span>
@@ -25,6 +26,7 @@
             %{--params="${[project: params.project, allJobs:true]}">--}%
         <g:render template="/scm/statusIcon" model="[status: status,
                                                      text  : text,
+                                                     integration:'export',
                                                      meta  : meta]"/>
     </span>
     %{--</g:link>--}%
