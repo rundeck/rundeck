@@ -28,7 +28,7 @@ public interface ScmImportPlugin {
     /**
      * @return overall status
      */
-    ScmExportSynchState getStatus();
+    ScmImportSynchState getStatus();
 
     /**
      * Return the state of the given job
@@ -37,7 +37,7 @@ public interface ScmImportPlugin {
      *
      * @return state
      */
-    JobState getJobStatus(JobImportReference job);
+    JobImportState getJobStatus(JobImportReference job);
 
     /**
      * Return the state of the given job, with optional original repo path
@@ -47,7 +47,7 @@ public interface ScmImportPlugin {
      *
      * @return state
      */
-    JobState getJobStatus(JobImportReference job, String originalPath);
+    JobImportState getJobStatus(JobImportReference job, String originalPath);
 
 
     /**
@@ -93,7 +93,7 @@ public interface ScmImportPlugin {
      *
      * @param job job
      */
-    ScmDiffResult getFileDiff(JobExportReference job);
+    ScmDiffResult getFileDiff(JobScmReference job);
 
     /**
      * Get diff for the given job against another path, e.g. the original
@@ -102,5 +102,5 @@ public interface ScmImportPlugin {
      * @param job          job
      * @param originalPath original path
      */
-    ScmDiffResult getFileDiff(JobExportReference job, String originalPath);
+    ScmDiffResult getFileDiff(JobScmReference job, String originalPath);
 }
