@@ -198,10 +198,10 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     }
 
 
-    GitSynchState getStatusInternal() {
+    GitExportSynchState getStatusInternal() {
         Status status = git.status().call()
 
-        def synchState = new GitSynchState()
+        def synchState = new GitExportSynchState()
         synchState.gitStatus = status
         synchState.state = status.isClean() ? SynchState.CLEAN : SynchState.EXPORT_NEEDED
         if (!status.isClean()) {
