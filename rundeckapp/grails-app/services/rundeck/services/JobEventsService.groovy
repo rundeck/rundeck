@@ -27,47 +27,38 @@ class JobEventsService {
         JobSerializer serializer = null
         log.debug("job change: ${e.eventType} ${e.jobReference}")
         if (e.eventType != JobChangeEvent.JobChangeEventType.DELETE) {
-            ScheduledExecution job
-            def xmlbytes
-            def yamlbytes
-            boolean  done=false
-            while (!done) {
+            ScheduledExecution job = null
+            String xmlString = null
+            String yamlString = null
+            int retry = 10
+            while (retry > 0) {
                 ScheduledExecution.withNewSession {
                     job = ScheduledExecution.getByIdOrUUID(e.jobReference.id)
 
                     if (!job) {
-                        done=true
+                        retry = 0
                         return
                     }
                     if (job?.version < e.jobReference.version) {
-                        log.error("did not receive updated job yet, waiting")
-                    }else{
-                        done=true
-                        xmlbytes = job.encodeAsJobsXML().getBytes("UTF-8")
-                        yamlbytes = job.encodeAsJobsYAML().getBytes("UTF-8")
+                        log.debug("did not receive updated job yet, waiting")
+                    } else {
+                        retry = 0
+                        //add line end char
+                        xmlString = job.encodeAsJobsXML() + '\n'
+                        yamlString = job.encodeAsJobsYAML() + '\n'
                     }
                 }
-                if(done) {
+                if (retry >= 0) {
+
                     break
-                }else{
+                } else {
                     Thread.sleep(500)
                 }
             }
             if (!job) {
-                return
+                log.warn("JobChanged event: failed to load expected job changes, job data may be out of date")
             }
-            serializer = { String format, OutputStream os ->
-                switch (format) {
-                    case 'xml':
-                        os.write(xmlbytes)
-                        break;
-                    case 'yaml':
-                        os.write(yamlbytes)
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Format not supported: " + format)
-                }
-            }
+            serializer = new FromStringSerializer([xml: xmlString, yaml: yamlString])
         }
         listeners?.each { listener ->
             listener.jobChangeEvent(e, serializer)

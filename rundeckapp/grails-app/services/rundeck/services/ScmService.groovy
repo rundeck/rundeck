@@ -569,10 +569,12 @@ class ScmService {
                 { String format, OutputStream os ->
                     switch (format) {
                         case 'xml':
-                            os.write(job.encodeAsJobsXML().getBytes("UTF-8"))
+                            def str = job.encodeAsJobsXML() + '\n'
+                            os.write(str.getBytes("UTF-8"))
                             break;
                         case 'yaml':
-                            os.write(job.encodeAsJobsYAML().getBytes("UTF-8"))
+                            def str = job.encodeAsJobsYAML() + '\n'
+                            os.write(str.getBytes("UTF-8"))
                             break;
                         default:
                             throw new IllegalArgumentException("Format not supported: " + format)
