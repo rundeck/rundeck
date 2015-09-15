@@ -2,6 +2,7 @@ package org.rundeck.plugin.scm.git
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.core.plugins.views.Action
+import com.dtolabs.rundeck.core.plugins.views.ActionBuilder
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
@@ -164,6 +165,10 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         return set as List
     }
 
+    protected List<Action> actionRefs(String... ids) {
+        actions.subMap(Arrays.asList(ids)).values().collect { ActionBuilder.from(it) }
+    }
+
     @Override
     List<Action> actionsAvailableForContext(final Map<String, String> context) {
         if (context.jobId) {
@@ -290,7 +295,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
 
         if (job instanceof JobExportReference) {
-            serialize(job)
+            serialize(job, format)
         }
 
 
@@ -401,7 +406,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     ScmDiffResult getFileDiff(final JobExportReference job, final String originalPath) throws ScmPluginException {
         def file = getLocalFileForJob(job)
         def path = originalPath ?: relativePath(job)
-        serialize(job)
+        serialize(job, format)
 
         def id = lookupId(getHead(), path)
         if (!id) {

@@ -29,7 +29,7 @@ class BaseGitPlugin {
     RawTextComparator COMP = RawTextComparator.DEFAULT
     Map<String, Map> jobStateMap = Collections.synchronizedMap([:])
 
-    def serialize(final JobExportReference job) {
+    def serialize(final JobExportReference job, format) {
         File outfile = mapper.fileForJob(job)
         if (!outfile.parentFile.exists()) {
             if (!outfile.parentFile.mkdirs()) {
@@ -43,12 +43,8 @@ class BaseGitPlugin {
         }
     }
 
-    def serializeAll(final Set<JobExportReference> jobExportReferences) {
-        jobExportReferences.each(this.&serialize)
-    }
-
-    protected List<Action> actionRefs(String... ids) {
-        actions.subMap(Arrays.asList(ids)).values().collect { ActionBuilder.from(it) }
+    def serializeAll(final Set<JobExportReference> jobExportReferences, String format) {
+        jobExportReferences.each{serialize(it,format)}
     }
 
     String debugStatus(final Status status) {

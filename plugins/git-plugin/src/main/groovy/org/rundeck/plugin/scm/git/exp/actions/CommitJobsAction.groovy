@@ -91,7 +91,7 @@ class CommitJobsAction extends BaseAction  implements GitExportAction{
             if (!commitIdentEmail) {
                 ScmUserInfoMissing.fieldMissing("committerEmail")
             }
-            plugin.serializeAll(jobs)
+            plugin.serializeAll(jobs,plugin.format)
             String commitMessage = input.commitMessage.toString()
             Status status = plugin.git.status().call()
             //add all changes to index
