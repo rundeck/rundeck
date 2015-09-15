@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory
 import com.dtolabs.rundeck.plugins.scm.ScmExportSynchState
 import com.dtolabs.rundeck.plugins.scm.ScmImportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmImportPluginFactory
+import com.dtolabs.rundeck.plugins.scm.ScmImportSynchState
 import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItem
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
@@ -445,7 +446,7 @@ class ScmService {
             //clear cached rename/delete info
             renamedJobsCache.remove(project)
             deletedJobsCache.remove(project)
-        }else {
+        } else {
             loaded = loadedImportPlugins.remove(project)
         }
         loaded?.cleanup()
@@ -579,6 +580,7 @@ class ScmService {
                 }
         )
     }
+
     List<JobImportReference> importJobRefsForJobs(List<ScheduledExecution> jobs) {
         jobs.collect { ScheduledExecution job ->
             importJobRef(job)
@@ -612,7 +614,7 @@ class ScmService {
      * @param project
      * @return
      */
-    ScmExportSynchState getPluginStatus(String integration, String project) {
+    def getPluginStatus(String integration, String project) {
         switch (integration) {
             case 'export':
                 return exportPluginStatus(project)
@@ -638,8 +640,7 @@ class ScmService {
      * @param project
      * @return
      */
-    ScmExportSynchState importPluginStatus(String project) {
-        //TODO
+    ScmImportSynchState importPluginStatus(String project) {
         def plugin = loadedImportPlugins[project]
         if (plugin) {
             return plugin.status
@@ -842,6 +843,7 @@ class ScmService {
     JobImporter createImporter(final String project, final UserAndRolesAuthContext authContext) {
         return new Importer(project, authContext, scheduledExecutionService, jobMetadataService)
     }
+
 }
 
 class Importer implements JobImporter {
