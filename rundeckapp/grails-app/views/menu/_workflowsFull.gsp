@@ -128,13 +128,20 @@
                 <g:render template="/scm/scmExportStatus" model="[
                         status:scmExportStatus.state,
                         text:'',
+                        integration:'export',
                         popover:scmExportStatus.message?:'',
                         meta:[:]
                 ]"/>
             </g:if>
             <g:if test="${scmImportEnabled && scmImportStatus}">
             %{--SCM synch status--}%
-                    xxx
+                <g:render template="/scm/scmExportStatus" model="[
+                        status:scmImportStatus.state,
+                        text:'',
+                        integration:'import',
+                        popover:scmImportStatus.message?:'',
+                        meta:[:]
+                ]"/>
             </g:if>
             <g:if test="${(scmExportEnabled && scmExportActions) || (scmImportEnabled && scmImportActions)}">
                 <div class="btn-group">

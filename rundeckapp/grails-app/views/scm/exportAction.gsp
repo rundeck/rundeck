@@ -218,7 +218,7 @@
 
                                                 <g:checkBox name="chosenTrackedItem"
                                                             value="${trackedItem.id}"
-                                                            checked="${selectedItems?.contains(trackedItem.id)}"/>
+                                                            checked="${selectedItems?.contains(trackedItem.id)||trackedItem.selected}"/>
                                                 <span class="">
                                                     <g:if test="${trackedItem.iconName}">
                                                         <g:icon name="${trackedItem.iconName}"/>

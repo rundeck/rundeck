@@ -1,10 +1,10 @@
 <g:if test="${status.toString() == 'CLEAN'}">
     <span class="has_tooltip"
         data-placement="bottom"
-          title="${message(code:'scm.export.status.CLEAN.description')}">
+          title="${message(code:"scm.${integration}.status.CLEAN.description")}">
         <g:render template="/scm/statusIcon" model="[status: status,
                                                      text  : '',
-                                                     integration:'export',
+                                                     integration:integration,
                                                      notext:true,
                                                      meta  : meta]"/>
     </span>
@@ -15,7 +15,7 @@
             data-toggle="${popover?'popover':''}"
             data-content="${popover?:''}"
             data-trigger="hover"
-              title="${message(code:"scm.export.status.${status}.title.text")}">
+              title="${message(code:"scm.${integration}.status.${status}.title.text")}">
     %{--<g:link action="exportAction" controller="scm"--}%
             %{--data-placement="left"--}%
             %{--data-toggle="${popover?'popover':''}"--}%
@@ -26,7 +26,7 @@
             %{--params="${[project: params.project, allJobs:true]}">--}%
         <g:render template="/scm/statusIcon" model="[status: status,
                                                      text  : text,
-                                                     integration:'export',
+                                                     integration:integration,
                                                      meta  : meta]"/>
     </span>
     %{--</g:link>--}%
