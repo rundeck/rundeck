@@ -43,23 +43,20 @@ class ImportJobs extends BaseAction implements GitImportAction {
         StringBuilder sb = new StringBuilder()
         boolean success=true
 
-        //get head commit info
-        def revCommit = GitUtil.getHead(plugin.repo)
-        def meta = GitUtil.metaForCommit(revCommit)
-
         //walk the repo files and look for possible candidates
-        plugin.walkTreePaths('HEAD^{tree}') { TreeWalk walk ->
+        plugin.walkTreePaths('HEAD^{tree}',true) { TreeWalk walk ->
             def path = walk.getPathString()
-            if(!(plugin.isTrackedPath(path) && path in selectedPaths)){
-                plugin.log.debug("skipping path ${path}")
+            if(!(path in selectedPaths)){
+                plugin.log.debug("not selected, skipping path ${path}")
                 return
             }
             def objectId = walk.getObjectId(0)
             def size = plugin.repo.open(objectId, Constants.OBJ_BLOB).getSize()
-            plugin.log.debug("import data: ${size} = ${objectId.name}")
+            plugin.log.debug("import data: ${size} = ${path}")
             def bytes = plugin.repo.open(objectId, Constants.OBJ_BLOB).getBytes(Integer.MAX_VALUE)
 
-            //plugin.log.debug("import data: "+new String(bytes))
+            def commit = GitUtil.lastCommitForPath plugin.repo, plugin.git, path
+            def meta = GitUtil.metaForCommit(commit)
 
             def importResult = importer.importFromStream(
                     walk.getNameString().endsWith(".xml") ? 'xml' : 'yaml',
@@ -70,7 +67,7 @@ class ImportJobs extends BaseAction implements GitImportAction {
                 success=false
                 sb << ("Failed importing: ${walk.getPathString()}: " + importResult.errorMessage)
             }else{
-
+                plugin.trackedImportedItems[(walk.getPathString())] = commit.name
                 sb << ("Succeeded importing ${walk.getPathString()}: ${importResult}")
             }
         }
