@@ -19,4 +19,9 @@ public interface ScmImportTrackedItem {
      * @return e.g. glyphicon-file
      */
     String getIconName();
+
+    /**
+     * @return true if the item is selected
+     */
+    boolean isSelected();
 }

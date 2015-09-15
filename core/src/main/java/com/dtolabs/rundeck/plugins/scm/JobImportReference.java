@@ -12,4 +12,8 @@ public interface JobImportReference extends JobRevReference {
      * @return metadata about tracked job
      */
     Map getScmImportMetadata();
+    /**
+     * @return the version of the job associated with the import metadata
+     */
+    public Long getImportVersion();
 }

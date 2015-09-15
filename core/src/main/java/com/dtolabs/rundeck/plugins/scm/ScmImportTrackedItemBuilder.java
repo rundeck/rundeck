@@ -4,6 +4,7 @@ public class ScmImportTrackedItemBuilder {
     private String id;
     private String title;
     private String iconName;
+    private boolean selected;
 
     private ScmImportTrackedItemBuilder() {
     }
@@ -27,7 +28,13 @@ public class ScmImportTrackedItemBuilder {
         return this;
     }
 
+
+    public ScmImportTrackedItemBuilder selected(final boolean selected) {
+        this.selected = selected;
+        return this;
+    }
+
     public ScmImportTrackedItem build() {
-        return new ScmImportTrackedItemImpl(id, title, iconName);
+        return new ScmImportTrackedItemImpl(id, title, iconName, selected);
     }
 }

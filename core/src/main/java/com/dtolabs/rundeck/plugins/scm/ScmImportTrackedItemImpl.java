@@ -7,11 +7,19 @@ public class ScmImportTrackedItemImpl implements ScmImportTrackedItem {
     private String id;
     private String title;
     private String iconName;
+    private boolean selected;
 
-    public ScmImportTrackedItemImpl(final String id, final String title, final String iconName) {
+    public ScmImportTrackedItemImpl(
+            final String id,
+            final String title,
+            final String iconName,
+            final boolean selected
+    )
+    {
         this.id = id;
         this.title = title;
         this.iconName = iconName;
+        this.selected = selected;
     }
 
     @Override
@@ -39,5 +47,14 @@ public class ScmImportTrackedItemImpl implements ScmImportTrackedItem {
 
     public void setIconName(String iconName) {
         this.iconName = iconName;
+    }
+
+    @Override
+    public boolean isSelected() {
+        return selected;
+    }
+
+    public void setSelected(boolean selected) {
+        this.selected = selected;
     }
 }

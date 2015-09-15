@@ -16,7 +16,7 @@ public interface ScmImportPlugin {
      * Perform import with the input
      *
      * @param input    result of GUI input
-     * @param importer TODO can import files as jobs
+     * @param importer can import files as jobs
      */
     ScmExportResult scmImport(
             String actionId,
