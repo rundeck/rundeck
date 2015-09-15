@@ -16,6 +16,7 @@ import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobImportReference
 import com.dtolabs.rundeck.plugins.scm.JobImportState
 import com.dtolabs.rundeck.plugins.scm.JobImporter
+import com.dtolabs.rundeck.plugins.scm.JobScmReference
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import com.dtolabs.rundeck.plugins.scm.JobState
 import com.dtolabs.rundeck.plugins.scm.ScmDiffResult
@@ -588,6 +589,11 @@ class ScmService {
             importJobRef(job)
         }
     }
+    List<JobScmReference> scmJobRefsForJobs(List<ScheduledExecution> jobs) {
+        jobs.collect { ScheduledExecution job ->
+            scmJobRef(job)
+        }
+    }
 
     private JobImportReference importJobRef(ScheduledExecution job) {
         def metadata = jobMetadataService.getJobPluginMeta(job, 'scm-import')
@@ -596,6 +602,30 @@ class ScmService {
                 metadata?.version != null ? metadata.version : -1L,
                 metadata?.pluginMeta ?: metadata
         )
+    }
+
+    private JobScmReference scmJobRef(ScheduledExecution job) {
+        def metadata = jobMetadataService.getJobPluginMeta(job, 'scm-import')
+        def impl = new JobImportReferenceImpl(
+                jobRevReference(job),
+                metadata?.version != null ? metadata.version : -1L,
+                metadata?.pluginMeta ?: metadata
+        )
+        impl.jobSerializer={ String format, OutputStream os ->
+            switch (format) {
+                case 'xml':
+                    def str = job.encodeAsJobsXML() + '\n'
+                    os.write(str.getBytes("UTF-8"))
+                    break;
+                case 'yaml':
+                    def str = job.encodeAsJobsYAML() + '\n'
+                    os.write(str.getBytes("UTF-8"))
+                    break;
+                default:
+                    throw new IllegalArgumentException("Format not supported: " + format)
+            }
+        }
+        impl
     }
 
     /**
@@ -701,7 +731,7 @@ class ScmService {
      */
     Map<String, JobImportState> importStatusForJobs(List<ScheduledExecution> jobs) {
         def status = [:]
-        importJobRefsForJobs(jobs).each { jobReference ->
+        scmJobRefsForJobs(jobs).each { JobScmReference jobReference ->
             def plugin = loadedImportPlugins[jobReference.project]
             if (plugin) {
                 //TODO: deleted job paths?

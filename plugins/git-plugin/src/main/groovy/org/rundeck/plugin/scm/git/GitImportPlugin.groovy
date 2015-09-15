@@ -10,8 +10,6 @@ import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.treewalk.TreeWalk
-import org.eclipse.jgit.treewalk.filter.OrTreeFilter
-import org.eclipse.jgit.treewalk.filter.PathFilter
 import org.eclipse.jgit.treewalk.filter.PathFilterGroup
 import org.rundeck.plugin.scm.git.imp.actions.FetchAction
 import org.rundeck.plugin.scm.git.imp.actions.ImportJobs
@@ -158,7 +156,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         return state
     }
 
-    private hasJobStatusCached(final JobImportReference job, final String originalPath) {
+    private hasJobStatusCached(final JobScmReference job, final String originalPath) {
 //        def path = relativePath(job)
 //
 //        def commit = GitUtil.lastCommitForPath repo, git, path
@@ -174,7 +172,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         null
     }
 
-    private refreshJobStatus(final JobImportReference job, final String originalPath) {
+    private refreshJobStatus(final JobScmReference job, final String originalPath) {
 
         def path = relativePath(job)
 
@@ -185,6 +183,10 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
 //        log.debug(debugStatus(status))
         ImportSynchState synchState = importSynchStateForStatus(job, commit, path)
+        if(synchState==ImportSynchState.CLEAN && commit){
+            //update tracked commit info
+            trackedImportedItems[path] = commit.name
+        }
         log.debug("import job status: ${synchState} with meta ${job.scmImportMetadata}, version ${job.importVersion}/${job.version} commit ${commit?.name}")
 
 //        if (originalPath) {
@@ -220,7 +222,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
 
     private ImportSynchState importSynchStateForStatus(
-            JobImportReference job,
+            JobScmReference job,
             RevCommit commit,
             String path
     )
@@ -229,21 +231,43 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             //not tracked
             return ImportSynchState.UNKNOWN
         }
-        if (job.scmImportMetadata && job.scmImportMetadata.commitId == commit.name && job.importVersion == job.version) {
-            return ImportSynchState.CLEAN
+        if (job.scmImportMetadata && job.scmImportMetadata.commitId == commit.name) {
+            if (job.importVersion == job.version){
+                return ImportSynchState.CLEAN
+            }else {
+                log.debug("job version differs, fall back to content diff")
+                //serialize job and determine if there is a difference
+                if (contentDiffers(job, commit, path)) {
+                    return ImportSynchState.IMPORT_NEEDED
+                } else {
+                    return ImportSynchState.CLEAN
+                }
+            }
         } else {
             //different commit was imported previously, or job has been modified
             return ImportSynchState.IMPORT_NEEDED
         }
     }
 
+    boolean contentDiffers(final JobScmReference job, RevCommit commit, final String path) {
+        def currentJob = new ByteArrayOutputStream()
+        job.jobSerializer.serialize(path.endsWith('.xml') ? 'xml' : 'yaml', currentJob)
+        def id = lookupId(commit, path)
+        if (!id) {
+            return true
+        }
+        def diffCount = diffContent(null, currentJob.toByteArray(), getBytes(id))
+        log.debug("diffContent: found ${diffCount} changes for ${path}")
+        return diffCount > 0
+    }
+
     @Override
-    JobImportState getJobStatus(final JobImportReference job) {
+    JobImportState getJobStatus(final JobScmReference job) {
         return getJobStatus(job, null)
     }
 
     @Override
-    JobImportState getJobStatus(final JobImportReference job, final String originalPath) {
+    JobImportState getJobStatus(final JobScmReference job, final String originalPath) {
         log.debug("getJobStatus(${job.id},${originalPath})")
         def status = hasJobStatusCached(job, originalPath)
         if (!status) {
@@ -287,7 +311,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     ScmDiffResult getFileDiff(final JobScmReference job, final String originalPath) {
         def file = getLocalFileForJob(job)
         def path = originalPath ?: relativePath(job)
-        serialize(job)
+        serialize(job, 'xml')
 
         def id = lookupId(getHead(), path)
         if (!id) {
