@@ -60,22 +60,67 @@ class GitUtil {
         repo.open(id, Constants.OBJ_BLOB).getCachedBytes(Integer.MAX_VALUE)
     }
 
-
-    static int printDiff(
+    /**
+     * print diff to output stream
+     * @param out stream, or null to simply return count of differences
+     * @param leftSide
+     * @param rightSide
+     * @param COMP
+     * @return
+     */
+    static int diffContent(
             OutputStream out,
-            File file1,
-            byte[] data,
+            byte[] leftSide,
+            File rightSide,
             RawTextComparator COMP = RawTextComparator.DEFAULT
     )
     {
-        RawText rt1 = new RawText(data);
-        RawText rt2 = new RawText(file1);
+        RawText rt1 = new RawText(leftSide);
+        RawText rt2 = new RawText(rightSide);
+        return diffContent(out, rt1, rt2, COMP)
+    }
+
+    /**
+     * print diff to output stream
+     * @param out stream, or null to simply return count of differences
+     * @param leftSide
+     * @param rightSide
+     * @param COMP
+     * @return
+     */
+    static int diffContent(
+            OutputStream out,
+            byte[] leftSide,
+            byte[] rightSide,
+            RawTextComparator COMP = RawTextComparator.DEFAULT
+    )
+    {
+        RawText rt1 = new RawText(leftSide)
+        RawText rt2 = new RawText(rightSide)
+        return diffContent(out, rt1, rt2, COMP)
+    }
+
+    /**
+     * print diff to output stream
+     * @param out stream, or null to simply return count of differences
+     * @param leftSide
+     * @param rightSide
+     * @param COMP
+     * @return
+     */
+    static int diffContent(
+            OutputStream out,
+            RawText leftSide,
+            RawText rightSide,
+            RawTextComparator COMP = RawTextComparator.DEFAULT
+    )
+    {
         EditList diffList = new EditList();
         DiffAlgorithm differ = DiffAlgorithm.getAlgorithm(DiffAlgorithm.SupportedAlgorithm.HISTOGRAM)
 
-        diffList.addAll(differ.diff(COMP, rt1, rt2));
-        if (diffList.size() > 0) {
-            new DiffFormatter(out).format(diffList, rt1, rt2);
+        diffList.addAll(differ.diff(COMP, leftSide, rightSide));
+        if (diffList.size() > 0 && out != null) {
+            new DiffFormatter(out).format(diffList, leftSide, rightSide);
         }
         diffList.size()
     }

@@ -295,7 +295,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         }
         def bytes = getBytes(id)
         def baos = new ByteArrayOutputStream()
-        def diffs = printDiff(baos, file, bytes)
+        def diffs = diffContent(baos, bytes, file)
 
 
         return new GitDiffResult(content: baos.toString(), modified: diffs > 0)

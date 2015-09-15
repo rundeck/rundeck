@@ -103,8 +103,11 @@ class BaseGitPlugin {
         GitUtil.getBytes repo, id
     }
 
-    int printDiff(OutputStream out, File file1, byte[] data) {
-        GitUtil.printDiff out, file1, data, COMP
+    int diffContent(OutputStream out, byte[] left, File right) {
+        GitUtil.diffContent out,  left, right, COMP
+    }
+    int diffContent(OutputStream out, byte[] left, byte[] right) {
+        GitUtil.diffContent out,  left, right, COMP
     }
 
     RevCommit lastCommit() {
