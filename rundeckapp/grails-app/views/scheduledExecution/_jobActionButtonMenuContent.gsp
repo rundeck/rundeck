@@ -110,14 +110,14 @@
     </li>
 </g:if>
 
-<g:if test="${authProjectExport && scmExportEnabled && scmStatus?.get(scheduledExecution.extid)}">
+<g:if test="${authProjectExport && scmExportEnabled && scmExportStatus?.get(scheduledExecution.extid)}">
     <g:if test="${authRead}">
         <li class="divider"></li>
     </g:if>
 
     <li class="dropdown-header"><g:message code="scm.export.plugin" /></li>
 
-    <g:set var="jobstatus" value="${scmStatus?.get(scheduledExecution.extid)}"/>
+    <g:set var="jobstatus" value="${scmExportStatus?.get(scheduledExecution.extid)}"/>
     <g:set var="exportStateClean" value="${jobstatus?.synchState?.toString()=='CLEAN'}"/>
     <g:set var="exportStateCreate" value="${'CREATE_NEEDED'==jobstatus?.synchState?.toString()}"/>
 
@@ -127,12 +127,12 @@
                     action="exportAction"
                     >
             <g:render template="/scm/statusBadge"
-                      model="[status: jobstatus?.synchState?.toString(),
+                      model="[exportStatus: jobstatus?.synchState?.toString(),
                               text  : '',
                               notext: true,
                               integration:'export',
                               icon:'glyphicon-circle-arrow-right',
-                              commit  : jobstatus?.commit]"/>
+                              exportCommit  : jobstatus?.commit]"/>
             <g:if test="${exportStateCreate}">
                 <g:message code="scm.action.commit.create.button.label" default="Commit New File"/>
             </g:if>
@@ -148,12 +148,12 @@
                     action="diff"
                     >
             <g:render template="/scm/statusBadge"
-                      model="[status: jobstatus?.synchState?.toString(),
+                      model="[exportStatus: jobstatus?.synchState?.toString(),
                               text  : '',
                               notext: true,
                               integration: 'export',
                               icon:'glyphicon-eye-open',
-                              commit  : jobstatus?.commit]"/>
+                              exportCommit  : jobstatus?.commit]"/>
             <g:if test="${exportStateClean}">
                 <g:message code="scm.action.diff.clean.button.label" default="View Commit Info"/>
             </g:if>

@@ -83,26 +83,19 @@
                                             </g:ifExecutionMode>
                                         </g:if>
                                     </span>
-                                <g:if test="${scmExportEnabled && scmStatus?.get(scheduledExecution.extid)}">
 
-                                    <g:set var="jobstatus" value="${scmStatus?.get(scheduledExecution.extid)}"/>
+                                <g:set var="exportstatus" value="${scmExportEnabled ? scmStatus?.get(scheduledExecution.extid):null}"/>
+                                <g:set var="importStatus" value="${scmImportEnabled ? scmImportJobStatus?.get(scheduledExecution.extid): null}"/>
+                                <g:if test="${exportstatus || importStatus}">
 
                                     <g:render template="/scm/statusBadge"
-                                              model="[status: jobstatus?.synchState?.toString(),
+                                              model="[exportStatus: exportstatus?.synchState?.toString(),
+                                                      importStatus: importStatus?.synchState?.toString(),
                                                       text  : '',
                                                       notext: true,
-                                                      integration:'export',
-                                                      commit  : jobstatus?.commit]"/>
-                                </g:if>
-                                <g:if test="${scmImportEnabled && scmImportJobStatus?.get(scheduledExecution.extid)}">
-
-                                    <g:set var="jobstatus" value="${scmImportJobStatus?.get(scheduledExecution.extid)}"/>
-                                    <g:render template="/scm/statusBadge"
-                                              model="[status: jobstatus?.synchState?.toString(),
-                                                      text  : '',
-                                                      notext: true,
-                                                      integration:'import',
-                                                      commit  : jobstatus?.commit]"/>
+                                                      exportCommit  : exportstatus?.commit,
+                                                      importCommit  : importStatus?.commit,
+                                              ]"/>
                                 </g:if>
                                     <g:link action="show"
                                             controller="scheduledExecution"

@@ -77,7 +77,7 @@
                         filterset:filterset,update:rkey+'wffilterform',
                         deleteActionSubmit:'deleteJobfilter',
                         storeActionSubmit:'storeJobfilter']}"/>
-                
+
                 <div class="filter">
 
                             <g:hiddenField name="max" value="${max}"/>
@@ -123,96 +123,24 @@
         <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
         <div class=" pull-right" >
 
-            <g:if test="${scmExportEnabled && scmExportStatus}">
+            <g:if test="${scmExportEnabled && scmExportStatus || scmImportEnabled  && scmImportStatus}">
             %{--SCM synch status--}%
+                <g:set var="projectExportStatus" value="${scmExportEnabled ?scmExportStatus :null}"/>
+                <g:set var="projectImportStatus" value="${scmImportEnabled ?scmImportStatus :null}"/>
                 <g:render template="/scm/scmExportStatus" model="[
-                        status:scmExportStatus.state,
+                        exportStatus:projectExportStatus?.state,
+                        importStatus:projectImportStatus?.state,
                         text:'',
-                        integration:'export',
-                        popover:scmExportStatus.message?:'',
+                        exportMessage:projectExportStatus?.message?:'',
+                        importMessage:projectImportStatus?.message?:'',
                         meta:[:]
                 ]"/>
             </g:if>
-            <g:if test="${scmImportEnabled && scmImportStatus}">
-            %{--SCM synch status--}%
-                <g:render template="/scm/scmExportStatus" model="[
-                        status:scmImportStatus.state,
-                        text:'',
-                        integration:'import',
-                        popover:scmImportStatus.message?:'',
-                        meta:[:]
-                ]"/>
-            </g:if>
-            <g:if test="${(scmExportEnabled && scmExportActions) || (scmImportEnabled && scmImportActions)}">
-                <div class="btn-group">
-                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-                        Actions
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu pull-right" role="menu">
-                        <g:if test="${scmExportEnabled && scmExportActions}">
 
-                            <li role="presentation" class="dropdown-header">
-                                <g:icon name="circle-arrow-right"/>
-                                SCM Export Actions
-                            </li>
-                            <g:each in="${scmExportActions}" var="action">
-                                <g:if test="${action.id == '-'}">
-                                    <li class="divider"></li>
-                                </g:if>
-                                <g:else>
-                                <li>
-                                    <g:link controller="scm" action="exportAction" params="${[
-                                            project    : params.project, allJobs: true, actionId: action.id,
-                                            integration: 'export'
-                                    ]}"
-                                            title="${action.description ?: ''}">
-                                        <g:if test="${action.iconName}">
-                                            <g:icon name="${action.iconName}"/>
-                                        </g:if>
-                                        ${action.title ?: 'Action'}</g:link>
-                                </li>
-                                </g:else>
-                            </g:each>
-
-                        </g:if>
-                        <g:if test="${scmImportEnabled && scmImportActions}">
-                            <g:if test="${scmExportEnabled && scmExportActions}">
-
-                                <li class="divider"></li>
-
-                            </g:if>
-                            <li role="presentation" class="dropdown-header">
-                                <g:icon name="circle-arrow-left"/>
-                                SCM Import Actions
-                            </li>
-                            <g:each in="${scmImportActions}" var="action">
-                                <g:if test="${action.id == '-'}">
-                                    <li class="divider"></li>
-                                </g:if>
-                                <g:else>
-                                    <li>
-                                        <g:link controller="scm" action="exportAction" params="${[
-                                                project    : params.project, allJobs: true, actionId: action.id,
-                                                integration: 'import'
-                                        ]}"
-                                                title="${action.description ?: ''}">
-                                            <g:if test="${action.iconName}">
-                                                <g:icon name="${action.iconName}"/>
-                                            </g:if>
-                                            ${action.title ?: 'Action'}</g:link>
-                                    </li>
-                                </g:else>
-                            </g:each>
-
-                        </g:if>
-                    </ul>
-                </div>
-            </g:if>
 
             <div class="btn-group">
             <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-                Create <g:message code="domain.ScheduledExecution.title"/>
+                Job Actions
                 <span class="caret"></span>
             </button>
             <ul class="dropdown-menu pull-right" role="menu">
@@ -232,6 +160,63 @@
                         Upload Definition&hellip;
                     </g:link>
                 </li>
+            <g:if test="${(scmExportEnabled && scmExportActions) || (scmImportEnabled && scmImportActions)}">
+                <g:if test="${scmExportEnabled && scmExportActions}">
+                    <li class="divider">
+                    </li>
+
+                    <li role="presentation" class="dropdown-header">
+                        <g:icon name="circle-arrow-right"/>
+                        SCM Export Actions
+                    </li>
+                    <g:each in="${scmExportActions}" var="action">
+                        <g:if test="${action.id == '-'}">
+                            <li class="divider"></li>
+                        </g:if>
+                        <g:else>
+                            <li>
+                                <g:link controller="scm" action="exportAction" params="${[
+                                        project    : params.project, allJobs: true, actionId: action.id,
+                                        integration: 'export'
+                                ]}"
+                                        title="${action.description ?: ''}">
+                                    <g:if test="${action.iconName}">
+                                        <g:icon name="${action.iconName}"/>
+                                    </g:if>
+                                    ${action.title ?: 'Action'}</g:link>
+                            </li>
+                        </g:else>
+                    </g:each>
+
+                </g:if>
+                <g:if test="${scmImportEnabled && scmImportActions}">
+
+                    <li class="divider"></li>
+                    <li role="presentation" class="dropdown-header">
+                        <g:icon name="circle-arrow-left"/>
+                        SCM Import Actions
+                    </li>
+                    <g:each in="${scmImportActions}" var="action">
+                        <g:if test="${action.id == '-'}">
+                            <li class="divider"></li>
+                        </g:if>
+                        <g:else>
+                            <li>
+                                <g:link controller="scm" action="exportAction" params="${[
+                                        project    : params.project, allJobs: true, actionId: action.id,
+                                        integration: 'import'
+                                ]}"
+                                        title="${action.description ?: ''}">
+                                    <g:if test="${action.iconName}">
+                                        <g:icon name="${action.iconName}"/>
+                                    </g:if>
+                                    ${action.title ?: 'Action'}</g:link>
+                            </li>
+                        </g:else>
+                    </g:each>
+
+                </g:if>
+                </g:if>
             </ul>
             </div>
         </div>

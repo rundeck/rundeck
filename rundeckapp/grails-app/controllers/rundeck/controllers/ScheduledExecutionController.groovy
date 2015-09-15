@@ -226,7 +226,7 @@ class ScheduledExecutionController  extends ControllerBase{
                                                                  [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT])) {
                 if(scmService.projectHasConfiguredExportPlugin(params.project)) {
                     model.scmExportEnabled = true
-                    model.scmStatus = scmService.exportStatusForJobs([scheduledExecution])
+                    model.scmExportStatus = scmService.exportStatusForJobs([scheduledExecution])
                     model.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(params.project)?.get(scheduledExecution.extid)
                 }
             }
@@ -235,7 +235,7 @@ class ScheduledExecutionController  extends ControllerBase{
                                                                  [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT])) {
                 if(scmService.projectHasConfiguredPlugin('import',params.project)) {
                     model.scmImportEnabled = true
-                    model.scmJobImportStatus = scmService.importStatusForJobs([scheduledExecution])
+                    model.scmImportStatus = scmService.importStatusForJobs([scheduledExecution])
                 }
             }
             render(template: '/scheduledExecution/jobActionButtonMenuContent', model: model)
@@ -328,7 +328,7 @@ class ScheduledExecutionController  extends ControllerBase{
                                                              [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT])) {
             if(scmService.projectHasConfiguredExportPlugin(params.project)){
                 dataMap.scmExportEnabled = true
-                dataMap.scmStatus = scmService.exportStatusForJobs([scheduledExecution])
+                dataMap.scmExportStatus = scmService.exportStatusForJobs([scheduledExecution])
                 dataMap.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(params.project)?.get(scheduledExecution.extid)
             }
         }
@@ -337,7 +337,7 @@ class ScheduledExecutionController  extends ControllerBase{
                                                              [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT])) {
             if(scmService.projectHasConfiguredPlugin('import',params.project)) {
                 dataMap.scmImportEnabled = true
-                dataMap.scmJobImportStatus = scmService.importStatusForJobs([scheduledExecution])
+                dataMap.scmImportStatus = scmService.importStatusForJobs([scheduledExecution])
             }
         }
         withFormat{

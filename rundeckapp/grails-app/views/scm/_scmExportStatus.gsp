@@ -1,33 +1,30 @@
-<g:if test="${status.toString() == 'CLEAN'}">
-    <span class="has_tooltip"
-        data-placement="bottom"
-          title="${message(code:"scm.${integration}.status.CLEAN.description")}">
-        <g:render template="/scm/statusIcon" model="[status: status,
-                                                     text  : '',
-                                                     integration:integration,
-                                                     notext:true,
-                                                     meta  : meta]"/>
+<%-- statuses are present and not both CLEAN --%>
+<g:if test="${(exportStatus || importStatus) &&
+        !(importStatus.toString() == 'CLEAN' && exportStatus.toString() == 'CLEAN')}">
+    <g:set var="messages" value="${[export:exportMessage, import:importMessage].findAll { it.value }}"/>
+    <span class=""
+          data-placement="left"
+          data-toggle="${messages ? 'popover' : ''}"
+          data-popover-content-ref="#scmStatusPopover"
+          data-trigger="hover"
+          title="Project Import/Export Status">
+
+        <g:render template="/scm/statusIcon" model="[exportStatus: exportStatus,
+                                                     importStatus: importStatus,
+                                                     text        : text,
+                                                     meta        : meta]"/>
     </span>
+    <div id="scmStatusPopover" style="display: none;">
+        <dl>
+        <g:each in="${messages}" var="msg">
+            <g:if test="${msg.value}">
+
+                <dt><g:message code="scm.${msg.key}.title"/></dt>
+                <dd>
+                    ${msg.value}
+                </dd>
+            </g:if>
+        </g:each>
+        </dl>
+    </div>
 </g:if>
-<g:else>
-    <span class="has_${popover?'popover':'tooltip'}"
-            data-placement="left"
-            data-toggle="${popover?'popover':''}"
-            data-content="${popover?:''}"
-            data-trigger="hover"
-              title="${message(code:"scm.${integration}.status.${status}.title.text")}">
-    %{--<g:link action="exportAction" controller="scm"--}%
-            %{--data-placement="left"--}%
-            %{--data-toggle="${popover?'popover':''}"--}%
-            %{--data-content="${popover?:''}"--}%
-            %{--data-trigger="hover"--}%
-            %{--class="btn btn-sm btn-link has_${popover?'popover':'tooltip'}"--}%
-            %{--title="${message(code:"scm.export.status.${status}.title.text")}"--}%
-            %{--params="${[project: params.project, allJobs:true]}">--}%
-        <g:render template="/scm/statusIcon" model="[status: status,
-                                                     text  : text,
-                                                     integration:integration,
-                                                     meta  : meta]"/>
-    </span>
-    %{--</g:link>--}%
-</g:else>

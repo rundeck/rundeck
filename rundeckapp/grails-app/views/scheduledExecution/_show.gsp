@@ -6,7 +6,9 @@
                       jobDescriptionMode:'expanded',
                       jobActionButtons:true,
                       scmExportEnabled:scmExportEnabled,
-                      scmStatus:scmStatus
+                      scmExportStatus:scmExportStatus,
+                      scmImportEnabled:scmImportEnabled,
+                      scmImportStatus:scmImportStatus
               ]"/>
 </div>
 <g:set var="runAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_RUN)}"/>
