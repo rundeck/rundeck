@@ -11,6 +11,9 @@ import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.treewalk.TreeWalk
+import org.eclipse.jgit.treewalk.filter.OrTreeFilter
+import org.eclipse.jgit.treewalk.filter.PathFilter
+import org.eclipse.jgit.treewalk.filter.PathFilterGroup
 import org.rundeck.plugin.scm.git.imp.actions.FetchAction
 import org.rundeck.plugin.scm.git.imp.actions.ImportJobs
 import org.rundeck.plugin.scm.git.imp.actions.SetupTracking
@@ -28,6 +31,11 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     boolean useTrackingRegex = false
     String trackingRegex
     List<String> trackedItems = null
+    /**
+     * path -> commitId, tracks which commits were imported, if path has a newer commit ID, then
+     * it needs to be imported.
+     */
+    Map<String,String> trackedImportedItems = Collections.synchronizedMap([:])
 
     protected Map<String, GitImportAction> actions = [:]
 
@@ -121,7 +129,34 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     ScmImportSynchState getStatus() {
-        return null
+        //look for any unimported paths
+        if(!trackedItemsSelected){
+            return null
+        }
+        int importNeeded=0
+        int notFound=0
+        walkTreePaths('HEAD^{tree}',true) { TreeWalk walk ->
+            if(trackedItemNeedsImport(walk.getPathString())){
+                importNeeded++
+            }else if(trackedItemIsUnknown(walk.getPathString())){
+                notFound++
+            }
+        }
+        def state = new GitImportSynchState()
+        state.state = importNeeded ? ImportSynchState.IMPORT_NEEDED :
+                notFound ? ImportSynchState.UNKNOWN : ImportSynchState.CLEAN
+        StringBuilder sb = new StringBuilder()
+        if(importNeeded){
+            sb<<"${importNeeded} items need to be imported"
+        }
+        if(notFound){
+            if(sb.length()>0) {
+                sb << ", "
+            }
+            sb << "${notFound} unimported files found"
+        }
+        state.message = sb.toString()
+        return state
     }
 
     private hasJobStatusCached(final JobImportReference job, final String originalPath) {
@@ -303,16 +338,40 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         null
     }
 
-    ScmImportTrackedItem trackPath(final String path) {
-        ScmImportTrackedItemBuilder.builder().id(path).iconName('glyphicon-file').build()
+    /**
+     * Return true if the path last imported commit does not match the latest commit
+     * @param path
+     * @return true if changes need to be imported
+     */
+    private boolean trackedItemNeedsImport(String path) {
+        def commit = lastCommitForPath(path)
+        commit.name != trackedImportedItems[path]
+    }
+    /**
+     * Return true if the path has not been imported
+     * @param path
+     * @return true if path is not imported
+     */
+    private boolean trackedItemIsUnknown(String path) {
+        !trackedImportedItems[path]
     }
 
-    void walkTreePaths(String ref, Closure callback) {
+    ScmImportTrackedItem trackPath(final String path, final boolean selected=false) {
+        ScmImportTrackedItemBuilder.builder().id(path).iconName('glyphicon-file').selected(selected).build()
+    }
 
+    void walkTreePaths(String ref, boolean useFilter=false, Closure callback) {
         ObjectId head = repo.resolve ref
         def tree = new TreeWalk(repo)
         tree.addTree(head)
         tree.setRecursive(true)
+        if(useFilter){
+            if(isUseTrackingRegex()){
+                tree.setFilter(PathRegexFilter.create(trackingRegex))
+            }else{
+                tree.setFilter(PathFilterGroup.createFromStrings(trackedItems))
+            }
+        }
 
         while (tree.next()) {
             callback(tree)
