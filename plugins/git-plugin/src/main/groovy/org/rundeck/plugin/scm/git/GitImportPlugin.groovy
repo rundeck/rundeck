@@ -6,7 +6,6 @@ import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
@@ -186,7 +185,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
 //        log.debug(debugStatus(status))
         ImportSynchState synchState = importSynchStateForStatus(job, commit, path)
-        log.debug("import job status: ${synchState} with meta ${job.scmImportMetadata}, commit ${commit?.name}")
+        log.debug("import job status: ${synchState} with meta ${job.scmImportMetadata}, version ${job.importVersion}/${job.version} commit ${commit?.name}")
 
 //        if (originalPath) {
 //            def origCommit = GitUtil.lastCommitForPath repo, git, originalPath
@@ -230,10 +229,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             //not tracked
             return ImportSynchState.UNKNOWN
         }
-        if (job.scmImportMetadata && job.scmImportMetadata.commitId ==
-                commit.name &&
-                job.scmImportMetadata.version ==
-                job.version) {
+        if (job.scmImportMetadata && job.scmImportMetadata.commitId == commit.name && job.importVersion == job.version) {
             return ImportSynchState.CLEAN
         } else {
             //different commit was imported previously, or job has been modified
@@ -319,7 +315,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             } else {
                 //list
                 return trackedItems.collect {
-                    ScmImportTrackedItemBuilder.builder().id(it).iconName('glyphicon-file').build()
+                    trackPath(it)
                 }
             }
         } else if (actionId == ACTION_IMPORT_ALL) {
@@ -327,11 +323,10 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             List<ScmImportTrackedItem> found = []
 
             //walk the repo files and look for possible candidates
-            //TODO: modified items only
-            walkTreePaths('HEAD^{tree}') { TreeWalk walk ->
-                if (isTrackedPath(walk.getPathString())) {
-                    found << trackPath(walk.getPathString())
-                }
+            walkTreePaths('HEAD^{tree}',true) { TreeWalk walk ->
+//                if (isTrackedPath(walk.getPathString())) {
+                    found << trackPath(walk.getPathString(), trackedItemNeedsImport(walk.getPathString()))
+//                }
             }
             return found
         }
