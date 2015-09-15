@@ -37,7 +37,7 @@ public interface ScmImportPlugin {
      *
      * @return state
      */
-    JobImportState getJobStatus(JobImportReference job);
+    JobImportState getJobStatus(JobScmReference job);
 
     /**
      * Return the state of the given job, with optional original repo path
@@ -47,7 +47,7 @@ public interface ScmImportPlugin {
      *
      * @return state
      */
-    JobImportState getJobStatus(JobImportReference job, String originalPath);
+    JobImportState getJobStatus(JobScmReference job, String originalPath);
 
 
     /**
