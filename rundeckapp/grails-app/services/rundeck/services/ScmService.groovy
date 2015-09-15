@@ -590,11 +590,11 @@ class ScmService {
     }
 
     private JobImportReference importJobRef(ScheduledExecution job) {
-        def metadata = jobMetadataService.getJobPluginMeta(job,'scm-import')
+        def metadata = jobMetadataService.getJobPluginMeta(job, 'scm-import')
         new JobImportReferenceImpl(
                 jobRevReference(job),
-                metadata?.version !=null ? metadata.version : -1L,
-                metadata?.pluginMeta?:metadata
+                metadata?.version != null ? metadata.version : -1L,
+                metadata?.pluginMeta ?: metadata
         )
     }
 
@@ -895,7 +895,7 @@ class Importer implements JobImporter {
         def changeinfo = [user: authContext.username, method: 'scm-import']
         def loadresults = scheduledExecutionService.loadJobs(jobset, 'update', 'preserve', changeinfo, authContext)
         loadresults.jobs.each { ScheduledExecution job ->
-            jobMetadataService.setJobPluginMeta(job, 'scm-import', [version:job.version,pluginMeta:importMetadata])
+            jobMetadataService.setJobPluginMeta(job, 'scm-import', [version: job.version, pluginMeta: importMetadata])
         }
         def result = new ImporterResult()
         if (loadresults.errjobs) {
