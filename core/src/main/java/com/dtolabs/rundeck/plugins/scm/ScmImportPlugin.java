@@ -57,6 +57,8 @@ public interface ScmImportPlugin {
 
 
     /**
+     * Provide the input view for an action.
+     *
      * @param actionId action ID
      *
      * @return input view for the specified action
@@ -69,7 +71,6 @@ public interface ScmImportPlugin {
      * @return list of actions available for the context
      */
     List<Action> actionsAvailableForContext(final Map<String, String> context);
-
 
 
     /**

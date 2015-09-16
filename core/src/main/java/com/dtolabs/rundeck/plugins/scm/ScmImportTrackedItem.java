@@ -1,7 +1,7 @@
 package com.dtolabs.rundeck.plugins.scm;
 
 /**
- * an item tracked by import plugin
+ * an item tracked by import plugin, such as a path in a repository.
  */
 public interface ScmImportTrackedItem {
 

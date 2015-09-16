@@ -1,7 +1,7 @@
 package com.dtolabs.rundeck.core.plugins.views;
 
 /**
- * A reference to an action
+ * A reference to an action provided by a plugin
  */
 public interface Action {
     /**
