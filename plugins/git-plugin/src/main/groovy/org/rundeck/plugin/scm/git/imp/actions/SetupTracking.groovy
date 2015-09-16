@@ -32,7 +32,7 @@ class SetupTracking extends BaseAction implements GitImportAction {
 
 
     BasicInputView getInputView(GitImportPlugin plugin) {
-        inputView(id){
+        inputView(id) {
             title "Setup Tracking"
             description '''Select a static list of Files found in the Repository to be tracked for Job Import.
 

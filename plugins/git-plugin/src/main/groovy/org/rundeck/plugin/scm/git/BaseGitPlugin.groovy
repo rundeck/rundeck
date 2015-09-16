@@ -15,7 +15,7 @@ class BaseGitPlugin {
     Repository repo
     File workingDir
     String branch
-    Map<String, ?> input
+    Map<String, String> input
     String project
     JobFileMapper mapper
     RawTextComparator COMP = RawTextComparator.DEFAULT

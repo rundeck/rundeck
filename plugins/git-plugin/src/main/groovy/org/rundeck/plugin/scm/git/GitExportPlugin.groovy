@@ -38,7 +38,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     protected Map<String, GitExportAction> actions = [:]
 
 
-    GitExportPlugin(final Map<String, ?> input, final String project) {
+    GitExportPlugin(final Map<String, String> input, final String project) {
         this.input = input
         this.project = project
     }

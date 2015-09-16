@@ -12,7 +12,7 @@ import com.dtolabs.rundeck.plugins.util.PropertyBuilder
  */
 class BuilderUtil {
 
-    static Description description(@DelegatesTo(DescriptionBuilder) Closure clos) {
+    static Description pluginDescription(@DelegatesTo(DescriptionBuilder) Closure clos) {
         def builder = DescriptionBuilder.builder()
         clos.delegate = builder
         clos.resolveStrategy = Closure.DELEGATE_FIRST

@@ -12,7 +12,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmImportPluginFactory
 
 import java.util.regex.Pattern
 
-import static BuilderUtil.description
+import static BuilderUtil.pluginDescription
 import static BuilderUtil.property
 
 /**
@@ -28,12 +28,13 @@ class GitImportPluginFactory implements ScmImportPluginFactory, Describable {
 
     @Override
     Description getDescription() {
-        description {
+        pluginDescription {
             name PROVIDER_NAME
             title TITLE
             description DESC
+            def del=delegate
             setupProperties.each {
-                property it
+                del.property it
             }
         }
     }

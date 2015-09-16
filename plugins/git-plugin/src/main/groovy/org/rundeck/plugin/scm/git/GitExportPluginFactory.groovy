@@ -12,7 +12,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory
 
 import java.util.regex.Pattern
 
-import static BuilderUtil.description
+import static BuilderUtil.pluginDescription
 import static BuilderUtil.property
 
 /**
@@ -27,12 +27,13 @@ class GitExportPluginFactory implements ScmExportPluginFactory, Describable {
 
     @Override
     Description getDescription() {
-        description {
+        pluginDescription {
             name PROVIDER_NAME
             title TITLE
             description DESC
+            def del=delegate
             setupProperties.each {
-                property it
+                del.property it
             }
         }
     }
@@ -169,7 +170,7 @@ as the email of the committing user'''
     static List<String> requiredProperties = ['dir', 'pathTemplate', 'branch', 'committerName', 'committerEmail', 'url']
 
     @Override
-    ScmExportPlugin createPlugin(final Map<String, ?> input, final String project) {
+    ScmExportPlugin createPlugin(final Map<String, String> input, final String project) {
         def plugin = new GitExportPlugin(input, project)
         plugin.initialize()
         return plugin
