@@ -300,7 +300,10 @@ class ScmController extends ControllerBase {
 
     def exportActionSubmit(String integration, String project, String actionId) {
 
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                session.subject,
+                project
+        )
         def requiredAction = integration == 'export' ? AuthConstants.ACTION_EXPORT :
                 AuthConstants.ACTION_IMPORT
         if (unauthorizedResponse(
@@ -385,13 +388,13 @@ class ScmController extends ControllerBase {
 
             render view: 'exportAction',
                    model: [
-                           actionView      : scmService.getInputView(integration,project, actionId),
+                           actionView      : scmService.getInputView(integration, project, actionId),
                            jobs            : jobs,
                            scmStatus       : scmStatus,
                            selected        : params.jobIds ? jobIds : [],
                            filesMap        : scmFiles,
                            trackingItems   : trackingItems,
-                           selectedItems: chosenTrackedItems,
+                           selectedItems   : chosenTrackedItems,
                            report          : report,
                            config          : params.pluginProperties,
                            deletedPaths    : deletedPaths,
@@ -402,7 +405,7 @@ class ScmController extends ControllerBase {
                    ]
             return
         }
-        if(integration=='export') {
+        if (integration == 'export') {
             def commitid = result.commitId
             if (result.message) {
                 flash.message = result.message
@@ -426,10 +429,10 @@ class ScmController extends ControllerBase {
                         ]
                 )
             }
-        }else{
+        } else {
             if (result.message) {
                 flash.message = result.message
-            }else{
+            } else {
                 flash.message = message(
                         code: 'scmController.action.import.success',
                         args: [],
