@@ -66,6 +66,27 @@ Or, you can also choose to enter a Regular expression to match potential new rep
         }
     }
 
+    /**
+     * Add config values for inputs
+     * @param plugin
+     * @param selectedPaths
+     * @param input
+     */
+    static void setupWithInput(
+            final GitImportPlugin plugin,
+            final List<String> selectedPaths,
+            final Map<String, Object> input
+    )
+    {
+        GitImportPlugin.log.debug("SetupTracking: ${selectedPaths}, ${input}")
+        if (input[USE_FILE_PATTERN] != null && selectedPaths != null) {
+            plugin.trackedItems = selectedPaths
+            plugin.useTrackingRegex = 'true' == input[USE_FILE_PATTERN]
+            plugin.trackingRegex = plugin.useTrackingRegex ? input[FILE_PATTERN] : null
+            plugin.trackedItemsSelected = true
+        }
+    }
+
     @Override
     ScmExportResult performAction(
             final GitImportPlugin plugin,
@@ -74,11 +95,23 @@ Or, you can also choose to enter a Regular expression to match potential new rep
             final Map<String, Object> input
     )
     {
-        GitImportPlugin.log.debug("SetupTracking: ${selectedPaths}, ${input}")
-        plugin.trackedItems = selectedPaths
-        plugin.useTrackingRegex = 'true' == input.useFilePattern
-        plugin.trackingRegex = plugin.useTrackingRegex ? input.filePattern : null
-        plugin.trackedItemsSelected = true
+        if (input[USE_FILE_PATTERN] != 'true' && !selectedPaths) {
+            throw new ScmPluginInvalidInput(
+                    Validator.errorReport(
+                            USE_FILE_PATTERN,
+                            "If no static paths are selected, then you must enter a regular expression."
+                    )
+            )
+        }
+        if (input[USE_FILE_PATTERN] == 'true' && !input[FILE_PATTERN]) {
+            throw new ScmPluginInvalidInput(
+                    Validator.errorReport(
+                            FILE_PATTERN,
+                            "If no static paths are selected, then you must enter a regular expression."
+                    )
+            )
+        }
+        setupWithInput(plugin, selectedPaths, input)
 
         def result = new ScmExportResultImpl()
         result.success = true
