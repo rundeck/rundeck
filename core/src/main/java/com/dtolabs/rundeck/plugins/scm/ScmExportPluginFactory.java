@@ -12,7 +12,19 @@ import java.util.Map;
  */
 public interface ScmExportPluginFactory {
 
-    ScmExportPlugin createPlugin(Map<String, ?> input, String project) throws ConfigurationException;
+    /**
+     * Create a plugin instance
+     * @param input input properties
+     * @param project project name
+     * @return instance
+     * @throws ConfigurationException
+     */
+    ScmExportPlugin createPlugin(Map<String, String> input, String project) throws ConfigurationException;
 
+    /**
+     * Return the list of setup properties
+     * @param basedir base dir
+     * @return property list
+     */
     List<Property> getSetupPropertiesForBasedir(File basedir) ;
 }
