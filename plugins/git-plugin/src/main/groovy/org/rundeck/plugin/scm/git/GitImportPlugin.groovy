@@ -183,9 +183,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
 //        log.debug(debugStatus(status))
         ImportSynchState synchState = importSynchStateForStatus(job, commit, path)
-        if(synchState==ImportSynchState.CLEAN && commit){
+        if(job.scmImportMetadata?.commitId){
             //update tracked commit info
-            trackedImportedItems[path] = commit.name
+            trackedImportedItems[path] = job.scmImportMetadata?.commitId
         }
         log.debug("import job status: ${synchState} with meta ${job.scmImportMetadata}, version ${job.importVersion}/${job.version} commit ${commit?.name}")
 
