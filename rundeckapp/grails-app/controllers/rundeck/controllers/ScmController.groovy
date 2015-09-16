@@ -102,7 +102,7 @@ class ScmController extends ControllerBase {
         }
 
         //require type param
-        def result = scmService.savePlugin(integration, project, type, config)
+        def result = scmService.savePluginSetup(integration, project, type, config)
         def report
         if (result.error || !result.valid) {
             report = result.report

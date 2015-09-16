@@ -407,7 +407,7 @@ class ScmService {
      * @param capabilities
      * @return
      */
-    def savePlugin(String integration, String project, String type, Map config) {
+    def savePluginSetup(String integration, String project, String type, Map config) {
         def validation = validatePluginSetup(integration, project, type, config)
         if (!validation || !validation.valid) {
             return [valid: false, report: validation?.report]
@@ -420,9 +420,9 @@ class ScmService {
         storeConfig(scmPluginConfig, project)
         try {
             def plugin = initPlugin(integration, project, type, config)
-            if(integration=='import'){
-                def nextAction = plugin.getSetupAction([project:project])
-                if(nextAction) {
+            if (integration == 'import') {
+                def nextAction = plugin.getSetupAction([project: project])
+                if (nextAction) {
                     return [valid: true, plugin: plugin, nextAction: nextAction]
                 }
             }
@@ -479,10 +479,10 @@ class ScmService {
             def plugin = initPlugin(integration, project, type, scmPluginConfig.config)
             scmPluginConfig.enabled = true
             storeConfig(scmPluginConfig, project)
-            if(integration=='import'){
-                def nextAction = plugin.getSetupAction([project:project])
-                if(nextAction){
-                    return [valid:true, plugin: plugin, nextAction: nextAction]
+            if (integration == 'import') {
+                def nextAction = plugin.getSetupAction([project: project])
+                if (nextAction) {
+                    return [valid: true, plugin: plugin, nextAction: nextAction]
                 }
             }
             return [valid: true, plugin: plugin]
@@ -518,8 +518,9 @@ class ScmService {
                 type,
                 scmImportPluginProviderService
         )
+        def list = loadInputTrackingItems(project)
         try {
-            return plugin.createPlugin(config, project)
+            return plugin.createPlugin(config, list, project)
         } catch (ConfigurationException e) {
             throw new ScmPluginException(e)
         }
@@ -602,6 +603,7 @@ class ScmService {
             importJobRef(job)
         }
     }
+
     List<JobScmReference> scmJobRefsForJobs(List<ScheduledExecution> jobs) {
         jobs.collect { ScheduledExecution job ->
             scmJobRef(job)
@@ -624,7 +626,7 @@ class ScmService {
                 metadata?.version != null ? metadata.version : -1L,
                 metadata?.pluginMeta ?: metadata
         )
-        impl.jobSerializer={ String format, OutputStream os ->
+        impl.jobSerializer = { String format, OutputStream os ->
             switch (format) {
                 case 'xml':
                     def str = job.encodeAsJobsXML() + '\n'
@@ -851,12 +853,13 @@ class ScmService {
         log.debug("performImportAction project: ${project}, items: ${chosenTrackedItems}")
         //store config
         def plugin = loadedImportPlugins[project]
-//        def jobrefs = exportjobRefsForJobs(jobs)
         def view = plugin.getInputViewForAction(actionId)
         def report = validatePluginConfigProperties(project, view.properties, config)
         if (!report.valid) {
             return [valid: false, report: report]
         }
+        def isSetupAction = plugin.getSetupAction([project: project]) == actionId
+
         def result = null
         def jobImporter = createImporter(project, authContext)
         try {
@@ -881,10 +884,28 @@ class ScmService {
         if (result.error) {
             return [error: true, message: result.message]
         }
-//        forgetDeletedPaths(project, deletePaths)
-//        forgetRenamedJobs(project, jobrefs*.id)
-        log.debug("result: ${result}")
+
+        if (isSetupAction) {
+            //merge config with stored config
+            saveInputTrackingSetupConfig(project, config, chosenTrackedItems)
+        }
+
+
+        log.debug("performInputAction: ${result}")
         [valid: true, commitId: result.id, message: result.message]
+    }
+
+    private void saveInputTrackingSetupConfig(String project, Map config, List<String> chosenTrackedItems) {
+        def pluginConfig = loadScmConfig(project, 'import')
+        pluginConfig.setConfig(config)
+        pluginConfig.setSetting('trackedItems', chosenTrackedItems)
+        storeConfig(pluginConfig, project)
+    }
+
+    private List<String> loadInputTrackingItems(String project) {
+        def pluginConfig = loadScmConfig(project, 'import')
+
+        return pluginConfig.getSettingList('trackedItems')
     }
 
     JobImporter createImporter(final String project, final UserAndRolesAuthContext authContext) {
@@ -999,20 +1020,62 @@ class ScmPluginConfig {
         prefix = 'scm.' + integration
     }
 
+    String getSetting(String name) {
+        properties?.getProperty(prefix + '.' + name)
+    }
+
+    List<String> getSettingList(String name) {
+        def val = getSetting(name + '.count')
+        if (val) {
+            int size = 0
+            try {
+                size = Integer.parseInt(val)
+            } catch (NumberFormatException e) {
+                return null
+            }
+            def items = []
+            def count = 0
+            while (count < size) {
+                items << getSetting(name + '.' + count)
+                count++
+            }
+            return items
+        }
+        return null
+    }
+    void setSetting(String name, List<String> value) {
+        if (value!=null) {
+            setSetting(name + '.count', Integer.toString(value.size()))
+            value.eachWithIndex { String entry, int i ->
+                setSetting(name + '.' + i, entry)
+            }
+        }else{
+            setSetting(name + '.count', null)
+        }
+    }
+
+    void setSetting(String name, String value) {
+        if(value!=null){
+            properties?.setProperty(prefix + '.' + name, value)
+        }else{
+            properties?.remove(prefix + '.' + name)
+        }
+    }
+
     String getType() {
-        properties[prefix + '.type']
+        getSetting('type')
     }
 
     void setType(String type) {
-        properties[prefix + '.type'] = type
+        setSetting('type', type)
     }
 
     void setEnabled(boolean enabled) {
-        properties[prefix + '.enabled'] = Boolean.toString(enabled)
+        setSetting('enabled', Boolean.toString(enabled))
     }
 
     boolean getEnabled() {
-        properties && Boolean.parseBoolean(properties.getProperty(prefix + '.enabled'))
+        Boolean.parseBoolean(getSetting('enabled'))
     }
 
     Map getConfig() {
@@ -1023,8 +1086,12 @@ class ScmPluginConfig {
         }
     }
 
+    /**
+     * Add properties to the config
+     * @param config map of config key/value
+     */
     void setConfig(Map config) {
-        properties.putAll config.collectEntries { [prefix + '.config.' + it.key, it.value] }
+        config.each { setSetting 'config.' + it.key, it.value }
     }
 
 
