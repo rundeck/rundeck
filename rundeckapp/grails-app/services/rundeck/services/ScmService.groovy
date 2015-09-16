@@ -858,7 +858,7 @@ class ScmService {
         if (!report.valid) {
             return [valid: false, report: report]
         }
-        def isSetupAction = plugin.getSetupAction([project: project]) == actionId
+        def isSetupAction = plugin.getSetupAction([project: project]).id == actionId
 
         def result = null
         def jobImporter = createImporter(project, authContext)
@@ -1050,7 +1050,7 @@ class ScmPluginConfig {
                 setSetting(name + '.' + i, entry)
             }
         }else{
-            setSetting(name + '.count', null)
+            setSetting(name + '.count', (String)null)
         }
     }
 
