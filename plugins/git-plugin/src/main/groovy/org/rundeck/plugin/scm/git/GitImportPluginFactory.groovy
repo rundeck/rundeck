@@ -109,8 +109,8 @@ Some examples:
     static List<String> requiredProperties = ['dir', 'pathTemplate', 'branch', 'url']
 
     @Override
-    ScmImportPlugin createPlugin(final Map<String, ?> input, final String project) {
-        def plugin = new GitImportPlugin(input, project)
+    ScmImportPlugin createPlugin(final Map<String, String> input, List<String> trackedItems, final String project) {
+        def plugin = new GitImportPlugin(input, trackedItems, project)
         plugin.initialize()
         return plugin
     }

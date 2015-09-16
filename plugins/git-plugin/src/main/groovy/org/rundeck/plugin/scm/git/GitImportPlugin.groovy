@@ -37,9 +37,10 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     protected Map<String, GitImportAction> actions = [:]
 
-    GitImportPlugin(final Map<String, ?> input, final String project) {
+    GitImportPlugin(final Map<String, String> input, List<String> trackedItems, final String project) {
         this.input = input
         this.project = project
+        this.trackedItems=trackedItems
     }
 
     @Override
@@ -116,6 +117,10 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             repo = git.getRepository()
         }
         workingDir = base
+
+        //todo store tracked items list
+        SetupTracking.setupWithInput(this, this.trackedItems, input)
+
         inited = true
     }
 
