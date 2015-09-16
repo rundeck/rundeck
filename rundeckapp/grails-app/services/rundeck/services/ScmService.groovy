@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmImportPluginFactory
 import com.dtolabs.rundeck.plugins.scm.ScmImportSynchState
 import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItem
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
+import com.dtolabs.rundeck.plugins.scm.ScmPluginInvalidInput
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfoMissing
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
@@ -419,6 +420,12 @@ class ScmService {
         storeConfig(scmPluginConfig, project)
         try {
             def plugin = initPlugin(integration, project, type, config)
+            if(integration=='import'){
+                def nextAction = plugin.getSetupAction([project:project])
+                if(nextAction) {
+                    return [valid: true, plugin: plugin, nextAction: nextAction]
+                }
+            }
             return [valid: true, plugin: plugin]
         } catch (ScmPluginException e) {
             return [error: true, message: e.message]
@@ -472,6 +479,12 @@ class ScmService {
             def plugin = initPlugin(integration, project, type, scmPluginConfig.config)
             scmPluginConfig.enabled = true
             storeConfig(scmPluginConfig, project)
+            if(integration=='import'){
+                def nextAction = plugin.getSetupAction([project:project])
+                if(nextAction){
+                    return [valid:true, plugin: plugin, nextAction: nextAction]
+                }
+            }
             return [valid: true, plugin: plugin]
         } catch (ScmPluginException e) {
             return [error: true, message: e.message]
@@ -848,6 +861,8 @@ class ScmService {
         def jobImporter = createImporter(project, authContext)
         try {
             result = plugin.scmImport(actionId, jobImporter, chosenTrackedItems, config)
+        } catch (ScmPluginInvalidInput e) {
+            return [valid: false, report: e.report]
         } catch (ScmPluginException e) {
             log.error(e.message)
             log.debug("import failed ${chosenTrackedItems}, ${config}", e)

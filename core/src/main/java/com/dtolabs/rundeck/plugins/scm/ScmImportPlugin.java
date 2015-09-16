@@ -66,6 +66,16 @@ public interface ScmImportPlugin {
     BasicInputView getInputViewForAction(String actionId);
 
     /**
+     * Return any action that is needed for post-create setup.  If not null,
+     * then the user will be forwarded to this action after plugin is configured.
+     *
+     * @param context context map
+     *
+     * @return action used for post-create setup, if necessary
+     */
+    Action getSetupAction(final Map<String, String> context);
+
+    /**
      * @param context context map
      *
      * @return list of actions available for the context

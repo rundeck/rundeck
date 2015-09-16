@@ -79,7 +79,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         ]
     }
 
-    void setup(final Map<String, ?> input) throws ScmPluginException {
+    void setup(final Map<String, Object> input) throws ScmPluginException {
 
         //TODO: using ssh http://stackoverflow.com/questions/23692747/specifying-ssh-key-for-jgit
         if (inited) {
@@ -321,6 +321,14 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     @Override
     BasicInputView getInputViewForAction(final String actionId) {
         return actions[actionId]?.getInputView(this)
+    }
+
+    @Override
+    Action getSetupAction(final Map<String, String> context) {
+        if (!trackedItemsSelected) {
+            return actions[ACTION_INITIALIZE_TRACKING]
+        }
+        return null
     }
 
     @Override

@@ -118,7 +118,13 @@ class ScmController extends ControllerBase {
                            config     : config,
                            integration: integration,
                    ]
-
+        } else if (result.nextAction) {
+            //redirect to next action
+            flash.message = message(code: 'scmController.action.setup.success.message')
+            redirect(
+                    action: 'exportAction',
+                    params: [project: project, integration: integration, actionId: result.nextAction.id]
+            )
         } else {
             flash.message = message(code: 'scmController.action.setup.success.message')
             redirect(action: 'index', params: [project: project])
@@ -199,6 +205,13 @@ class ScmController extends ControllerBase {
             if (result.message) {
                 flash.error = result.message
             }
+        } else if (result.valid && result.nextAction) {
+            //redirect to next action
+            flash.message = message(code: "scmController.action.enable.success.message", args: [integration, type])
+            return redirect(
+                    action: 'exportAction',
+                    params: [project: project, integration: integration, actionId: result.nextAction.id]
+            )
         } else if (result.valid) {
             flash.message = message(code: "scmController.action.enable.success.message", args: [integration, type])
 
