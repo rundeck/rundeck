@@ -84,6 +84,8 @@ Or, you can also choose to enter a Regular expression to match potential new rep
             plugin.useTrackingRegex = 'true' == input[USE_FILE_PATTERN]
             plugin.trackingRegex = plugin.useTrackingRegex ? input[FILE_PATTERN] : null
             plugin.trackedItemsSelected = true
+        } else {
+            plugin.trackedItemsSelected = false
         }
     }
 
