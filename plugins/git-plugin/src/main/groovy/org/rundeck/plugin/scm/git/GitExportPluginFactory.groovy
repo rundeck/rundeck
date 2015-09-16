@@ -5,16 +5,15 @@ import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
-import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
-import com.dtolabs.rundeck.plugins.scm.PluginState
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory
-import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
-import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 
 import java.util.regex.Pattern
+
+import static BuilderUtil.description
+import static BuilderUtil.property
 
 /**
  * Factory for git export plugin
@@ -28,34 +27,32 @@ class GitExportPluginFactory implements ScmExportPluginFactory, Describable {
 
     @Override
     Description getDescription() {
-        def builder = DescriptionBuilder.builder().
-                name(PROVIDER_NAME).
-                title(TITLE).
-                description(DESC)
-        getSetupProperties().each {
-            builder.property(it)
+        description {
+            name PROVIDER_NAME
+            title TITLE
+            description DESC
+            setupProperties.each {
+                property it
+            }
         }
-
-        return builder.build()
     }
 
     List<Property> getSetupPropertiesForBasedir(File basedir) {
 
         [
-                PropertyBuilder.builder().with {
+                property {
                     string "dir"
                     title "Base Directory"
                     description "Directory for checkout"
                     required true
                     defaultValue null != basedir ? new File(basedir, 'scm').absolutePath : 'scm'
-                    build()
                 }
         ] + getSetupProperties()
     }
 
     List<Property> getSetupProperties() {
         [
-                PropertyBuilder.builder().with {
+                property {
                     string "pathTemplate"
                     title("File Path Template")
                     description '''Path template for storing a Job to a file within the base dir.
@@ -69,10 +66,10 @@ Available expansion patterns:
 '''
                     defaultValue '${job.group}${job.name}-${job.id}.xml'
                     required true
-                    validator({ it ==~ ('^.*'+ Pattern.quote('${job.id}')+'.*$') } as PropertyValidator)
+                    validator({ it ==~ ('^.*' + Pattern.quote('${job.id}') + '.*$') } as PropertyValidator)
                     build()
                 },
-                PropertyBuilder.builder().with {
+                property {
                     string "url"
                     title "Git URL"
                     description '''Checkout url.
@@ -90,7 +87,7 @@ Some examples:
                     required true
                     build()
                 },
-                PropertyBuilder.builder().with {
+                property {
                     string "branch"
                     title "Branch"
                     description "Checkout branch"
@@ -99,7 +96,7 @@ Some examples:
                     build()
                 },
                 //TODO: enable SSH
-//                PropertyBuilder.builder().with {
+//                ViewUtil.property {
 //                    string "sshPrivateKeyPath"
 //                    title "SSH Key Storage Path"
 //                    description '''Path can include variable references
@@ -116,7 +113,7 @@ Some examples:
 //                    )
 //                    build()
 //                },
-//                PropertyBuilder.builder().with {
+//                ViewUtil.property {
 //                    string "sshPasswordPath"
 //                    title "SSH Password Storage Path"
 //                    description '''Path can include variable references
@@ -133,7 +130,7 @@ Some examples:
 //                    )
 //                    build()
 //                },
-                PropertyBuilder.builder().with {
+                property {
                     string "committerName"
                     title "Committer Name"
                     description '''Name of committer/author of changes.
@@ -145,7 +142,7 @@ of the committing user.'''
                     required true
                     build()
                 },
-                PropertyBuilder.builder().with {
+                property {
                     string "committerEmail"
                     title "Committer Email"
                     description '''Email of committer/author of changes.
@@ -157,7 +154,7 @@ as the email of the committing user'''
                     build()
                 },
 
-                PropertyBuilder.builder().with {
+                property {
                     select "format"
                     title "Format"
                     description "Format for serializing Job definitions"

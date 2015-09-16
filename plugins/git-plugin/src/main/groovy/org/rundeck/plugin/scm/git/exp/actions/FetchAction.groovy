@@ -1,45 +1,37 @@
 package org.rundeck.plugin.scm.git.exp.actions
-
-import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
-import com.dtolabs.rundeck.core.plugins.views.BasicInputViewBuilder
-import com.dtolabs.rundeck.plugins.scm.ScmExportResult
-import com.dtolabs.rundeck.plugins.scm.ScmExportResultImpl
-import com.dtolabs.rundeck.plugins.scm.ScmPluginException
-import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
-import com.dtolabs.rundeck.plugins.util.PropertyBuilder
+import com.dtolabs.rundeck.plugins.scm.*
 import org.rundeck.plugin.scm.git.BaseAction
 import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
 
+import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
+import static org.rundeck.plugin.scm.git.BuilderUtil.property
 /**
  * Created by greg on 9/8/15.
  */
-class FetchAction extends BaseAction  implements GitExportAction{
+class FetchAction extends BaseAction implements GitExportAction {
     FetchAction(final String id, final String title, final String description) {
         super(id, title, description)
     }
 
     @Override
     BasicInputView getInputView(final GitExportPlugin plugin) {
-        def builder = BasicInputViewBuilder.forActionId(id).with {
+        inputView(id) {
             title "Fetch remote changes"
             buttonTitle "Fetch"
+            properties([
+                    property {
+                        string "status"
+                        title "Git Status"
+                        renderingOption StringRenderingConstants.DISPLAY_TYPE_KEY, StringRenderingConstants.DisplayType.STATIC_TEXT
+                        renderingOption StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY, "text/x-markdown"
+                        defaultValue "Fetching from remote branch: `${plugin.branch}`"
+                    }
+            ]
+            )
         }
-        //need to fast forward
-        def props = [
-                PropertyBuilder.builder().with {
-                    string "status"
-                    title "Git Status"
-                    renderingOption StringRenderingConstants.DISPLAY_TYPE_KEY, StringRenderingConstants.DisplayType.STATIC_TEXT
-                    renderingOption StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY, "text/x-markdown"
-                    defaultValue "Fetching from remote branch: `${plugin.branch}`"
-                    build()
-                },
-        ]
-
-        builder.properties(props).build()
     }
 
     @Override
@@ -59,7 +51,7 @@ class FetchAction extends BaseAction  implements GitExportAction{
 
         def result = new ScmExportResultImpl()
         result.success = true
-        result.message = update?update.toString():"No changes were found"
+        result.message = update ? update.toString() : "No changes were found"
         result
     }
 }

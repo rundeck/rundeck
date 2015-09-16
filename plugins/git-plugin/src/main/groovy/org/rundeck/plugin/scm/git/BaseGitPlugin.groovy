@@ -1,20 +1,12 @@
 package org.rundeck.plugin.scm.git
-
 import com.dtolabs.rundeck.core.jobs.JobReference
-import com.dtolabs.rundeck.core.plugins.views.Action
-import com.dtolabs.rundeck.core.plugins.views.ActionBuilder
-import com.dtolabs.rundeck.plugins.scm.JobExportReference
-import com.dtolabs.rundeck.plugins.scm.JobFileMapper
-import com.dtolabs.rundeck.plugins.scm.JobImportState
-import com.dtolabs.rundeck.plugins.scm.JobState
-import com.dtolabs.rundeck.plugins.scm.ScmPluginException
+import com.dtolabs.rundeck.plugins.scm.*
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.diff.RawTextComparator
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
-
 /**
  * Common features of the import and export plugins
  */

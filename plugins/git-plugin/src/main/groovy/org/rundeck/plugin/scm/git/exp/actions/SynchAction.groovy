@@ -1,19 +1,14 @@
 package org.rundeck.plugin.scm.git.exp.actions
-
-import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
-import com.dtolabs.rundeck.core.plugins.views.BasicInputViewBuilder
-import com.dtolabs.rundeck.plugins.scm.ScmExportResult
-import com.dtolabs.rundeck.plugins.scm.ScmExportResultImpl
-import com.dtolabs.rundeck.plugins.scm.ScmPluginException
-import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
-import com.dtolabs.rundeck.plugins.util.PropertyBuilder
+import com.dtolabs.rundeck.plugins.scm.*
 import org.eclipse.jgit.merge.MergeStrategy
 import org.rundeck.plugin.scm.git.BaseAction
 import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
 
+import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
+import static org.rundeck.plugin.scm.git.BuilderUtil.property
 /**
  * Created by greg on 9/8/15.
  */
@@ -24,13 +19,10 @@ class SynchAction extends BaseAction implements GitExportAction {
 
     @Override
     BasicInputView getInputView(GitExportPlugin plugin) {
-        def builder = BasicInputViewBuilder.forActionId(id).with {
-            title "Synch remote changes to Git"
-            buttonTitle "Synch"
-        }
+
         def status = plugin.getStatusInternal()
         def props = [
-                PropertyBuilder.builder().with {
+                property {
                     string "status"
                     title "Git Status"
                     renderingOption StringRenderingConstants.DISPLAY_TYPE_KEY, StringRenderingConstants.DisplayType.STATIC_TEXT
@@ -38,12 +30,11 @@ class SynchAction extends BaseAction implements GitExportAction {
                     defaultValue status.message + """
 
 Pulling from remote branch: `${plugin.branch}`"""
-                    build()
                 },
         ]
         if (status.branchTrackingStatus?.behindCount > 0 && status.branchTrackingStatus?.aheadCount > 0) {
             props.addAll([
-                    PropertyBuilder.builder().with {
+                    property {
                         select "refresh"
                         title "Synch Method"
                         description """Choose a method to synch the remote branch changes with local git repository.
@@ -54,9 +45,8 @@ Pulling from remote branch: `${plugin.branch}`"""
                         values "merge", "rebase"
                         defaultValue "merge"
                         required true
-                        build()
                     },
-                    PropertyBuilder.builder().with {
+                    property {
                         select "resolution"
                         title "Conflict Resolution Strategy"
                         description """Choose a strategy to resolve conflicts in the synched files.
@@ -66,19 +56,19 @@ Pulling from remote branch: `${plugin.branch}`"""
                         values(MergeStrategy.get()*.name)
                         defaultValue "ours"
                         required true
-                        build()
                     },
             ]
             )
-
-        } else if (status.branchTrackingStatus?.behindCount > 0) {
-
-            //just need to fast forward, so Pull is the right action
-            builder.buttonTitle("Pull Changes")
-
         }
-
-        builder.properties(props).build()
+        inputView(id) {
+            title "Synch remote changes to Git"
+            if (status.branchTrackingStatus?.behindCount > 0) {
+                buttonTitle("Pull Changes")
+            } else {
+                buttonTitle "Synch"
+            }
+            properties props
+        }
     }
 
     @Override

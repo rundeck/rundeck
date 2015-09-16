@@ -1,16 +1,15 @@
 package org.rundeck.plugin.scm.git.imp.actions
-
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
-import com.dtolabs.rundeck.core.plugins.views.BasicInputViewBuilder
-import com.dtolabs.rundeck.plugins.scm.*
-import com.dtolabs.rundeck.plugins.util.PropertyBuilder
+import com.dtolabs.rundeck.plugins.scm.JobImporter
+import com.dtolabs.rundeck.plugins.scm.ScmExportResult
+import com.dtolabs.rundeck.plugins.scm.ScmExportResultImpl
 import org.rundeck.plugin.scm.git.BaseAction
-import org.rundeck.plugin.scm.git.GitExportAction
-import org.rundeck.plugin.scm.git.GitExportPlugin
 import org.rundeck.plugin.scm.git.GitImportAction
 import org.rundeck.plugin.scm.git.GitImportPlugin
 
+import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
+import static org.rundeck.plugin.scm.git.BuilderUtil.property
 /**
  * Created by greg on 9/8/15.
  */
@@ -21,23 +20,19 @@ class FetchAction extends BaseAction implements GitImportAction {
 
     @Override
     BasicInputView getInputView(final GitImportPlugin plugin) {
-        def builder = BasicInputViewBuilder.forActionId(id).with {
+        inputView(id) {
             title "Fetch remote changes"
             buttonTitle "Fetch"
+            properties[
+                    property {
+                        string "status"
+                        title "Git Status"
+                        renderingOption StringRenderingConstants.DISPLAY_TYPE_KEY, StringRenderingConstants.DisplayType.STATIC_TEXT
+                        renderingOption StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY, "text/x-markdown"
+                        defaultValue "Fetching from remote branch: `${plugin.branch}`"
+                    },
+                    ]
         }
-        //need to fast forward
-        def props = [
-                PropertyBuilder.builder().with {
-                    string "status"
-                    title "Git Status"
-                    renderingOption StringRenderingConstants.DISPLAY_TYPE_KEY, StringRenderingConstants.DisplayType.STATIC_TEXT
-                    renderingOption StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY, "text/x-markdown"
-                    defaultValue "Fetching from remote branch: `${plugin.branch}`"
-                    build()
-                },
-        ]
-
-        builder.properties(props).build()
     }
 
     @Override

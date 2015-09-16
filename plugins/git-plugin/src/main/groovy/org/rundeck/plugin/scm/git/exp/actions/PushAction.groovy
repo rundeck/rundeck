@@ -1,23 +1,18 @@
 package org.rundeck.plugin.scm.git.exp.actions
-
-import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
-import com.dtolabs.rundeck.core.plugins.views.BasicInputViewBuilder
-import com.dtolabs.rundeck.plugins.scm.ScmExportResult
-import com.dtolabs.rundeck.plugins.scm.ScmExportResultImpl
-import com.dtolabs.rundeck.plugins.scm.ScmPluginException
-import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
-import com.dtolabs.rundeck.plugins.util.PropertyBuilder
+import com.dtolabs.rundeck.plugins.scm.*
 import org.eclipse.jgit.transport.RemoteRefUpdate
 import org.rundeck.plugin.scm.git.BaseAction
 import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
 
+import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
+import static org.rundeck.plugin.scm.git.BuilderUtil.property
 /**
  * Created by greg on 9/8/15.
  */
-class PushAction extends BaseAction  implements GitExportAction{
+class PushAction extends BaseAction implements GitExportAction {
     PushAction(final String id, final String title, final String description) {
         super(id, title, description)
     }
@@ -25,11 +20,11 @@ class PushAction extends BaseAction  implements GitExportAction{
     @Override
     BasicInputView getInputView(GitExportPlugin plugin) {
         def status = plugin.getStatusInternal()
-        BasicInputViewBuilder.forActionId(id).with {
+        inputView(id) {
             title "Push remote Git changes"
             buttonTitle "Push"
             properties([
-                    PropertyBuilder.builder().with {
+                    property {
                         string "status"
                         title "Export Status"
                         renderingOption StringRenderingConstants.DISPLAY_TYPE_KEY, StringRenderingConstants.DisplayType.STATIC_TEXT
@@ -37,20 +32,17 @@ class PushAction extends BaseAction  implements GitExportAction{
                         defaultValue status.message + """
 
 Pushing to remote branch: `${plugin.branch}`"""
-                        build()
                     },
 
-                    PropertyBuilder.builder().with {
+                    property {
                         booleanType "push"
                         title "Push Remotely?"
                         description "Check to push to the remote"
                         defaultValue "true"
                         required false
-                        build()
                     },
             ]
             )
-            build()
         }
 
     }

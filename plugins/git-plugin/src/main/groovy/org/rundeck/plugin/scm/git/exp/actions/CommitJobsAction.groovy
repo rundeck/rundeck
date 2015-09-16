@@ -1,14 +1,6 @@
 package org.rundeck.plugin.scm.git.exp.actions
-
-import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
-import com.dtolabs.rundeck.core.plugins.views.BasicInputViewBuilder
-import com.dtolabs.rundeck.plugins.scm.ScmExportResult
-import com.dtolabs.rundeck.plugins.scm.ScmExportResultImpl
-import com.dtolabs.rundeck.plugins.scm.ScmPluginException
-import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
-import com.dtolabs.rundeck.plugins.scm.ScmUserInfoMissing
-import com.dtolabs.rundeck.plugins.util.PropertyBuilder
+import com.dtolabs.rundeck.plugins.scm.*
 import org.eclipse.jgit.api.AddCommand
 import org.eclipse.jgit.api.CommitCommand
 import org.eclipse.jgit.api.Status
@@ -17,6 +9,8 @@ import org.rundeck.plugin.scm.git.BaseAction
 import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
 
+import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
+import static org.rundeck.plugin.scm.git.BuilderUtil.property
 /**
  * Created by greg on 9/8/15.
  */
@@ -26,37 +20,33 @@ class CommitJobsAction extends BaseAction  implements GitExportAction{
     }
 
     BasicInputView getInputView(GitExportPlugin plugin) {
-        BasicInputViewBuilder.forActionId(id).with {
+        inputView(id){
             title "Commit Changes to Git"
             buttonTitle "Commit"
             properties([
-                    PropertyBuilder.builder().with {
+                    property {
                         string "commitMessage"
                         title "Commit Message"
                         description "Enter a commit message. Committing to branch: `" + plugin.branch + '`'
                         required true
                         renderingAsTextarea()
-                        build()
                     },
 
-                    PropertyBuilder.builder().with {
+                    property {
                         string "tagName"
                         title "Tag"
                         description "Enter a tag name to include, will be pushed with the branch."
                         required false
-                        build()
                     },
 
-                    PropertyBuilder.builder().with {
+                    property {
                         booleanType "push"
                         title "Push Remotely?"
                         description "Check to push to the remote"
                         required false
-                        build()
                     },
             ]
             )
-            build()
         }
     }
 

@@ -7,13 +7,13 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
-import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmImportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmImportPluginFactory
-import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
-import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 
 import java.util.regex.Pattern
+
+import static BuilderUtil.description
+import static BuilderUtil.property
 
 /**
  * Created by greg on 9/9/15.
@@ -28,34 +28,32 @@ class GitImportPluginFactory implements ScmImportPluginFactory, Describable {
 
     @Override
     Description getDescription() {
-        def builder = DescriptionBuilder.builder().
-                name(PROVIDER_NAME).
-                title(TITLE).
-                description(DESC)
-        getSetupProperties().each {
-            builder.property(it)
+        description {
+            name PROVIDER_NAME
+            title TITLE
+            description DESC
+            setupProperties.each {
+                property it
+            }
         }
-
-        return builder.build()
     }
 
     List<Property> getSetupPropertiesForBasedir(File basedir) {
 
         [
-                PropertyBuilder.builder().with {
+                property {
                     string "dir"
                     title "Base Directory"
                     description "Directory for checkout"
                     required true
                     defaultValue null != basedir ? new File(basedir, 'scm').absolutePath : 'scm'
-                    build()
                 }
         ] + getSetupProperties()
     }
 
     List<Property> getSetupProperties() {
         [
-                PropertyBuilder.builder().with {
+                property {
                     string "pathTemplate"
                     title("File Path Template")
                     description '''Path template for storing a Job to a file within the base dir.
@@ -70,9 +68,8 @@ Available expansion patterns:
                     defaultValue '${job.group}${job.name}-${job.id}.xml'
                     required true
                     validator({ it ==~ ('^.*' + Pattern.quote('${job.id}') + '.*$') } as PropertyValidator)
-                    build()
                 },
-                PropertyBuilder.builder().with {
+                property {
                     string "url"
                     title "Git URL"
                     description '''Checkout url.
@@ -88,26 +85,23 @@ Some examples:
 * `ftp[s]://host.xz[:port]/path/to/repo.git/`
 * `rsync://host.xz/path/to/repo.git/`'''
                     required true
-                    build()
                 },
-                PropertyBuilder.builder().with {
+                property {
                     string "branch"
                     title "Branch"
                     description "Checkout branch"
                     required true
                     defaultValue "master"
-                    build()
                 },
                 //TODO: enable SSH
 
-                PropertyBuilder.builder().with {
+                property {
                     select "format"
                     title "Format"
                     description "Format for serializing Job definitions"
                     values 'xml', 'yaml'
                     defaultValue 'xml'
                     required true
-                    build()
                 },
 
         ]

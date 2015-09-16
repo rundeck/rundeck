@@ -27,7 +27,7 @@ dependencies {
         exclude module: 'jsch'
         exclude module: 'commons-logging'
     }
-    compile 'org.codehaus.groovy:groovy-all:2.0.8'
+    compile 'org.codehaus.groovy:groovy-all:2.3.11'
     compile 'log4j:log4j:1.2.17'
 
     testCompile 'junit:junit:4.8.1',
