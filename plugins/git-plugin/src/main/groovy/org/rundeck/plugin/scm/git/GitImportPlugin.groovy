@@ -33,7 +33,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
      * path -> commitId, tracks which commits were imported, if path has a newer commit ID, then
      * it needs to be imported.
      */
-    Map<String,String> trackedImportedItems = Collections.synchronizedMap([:])
+    Map<String, String> trackedImportedItems = Collections.synchronizedMap([:])
 
     protected Map<String, GitImportAction> actions = [:]
 
@@ -128,28 +128,28 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     @Override
     ScmImportSynchState getStatus() {
         //look for any unimported paths
-        if(!trackedItemsSelected){
+        if (!trackedItemsSelected) {
             return null
         }
-        int importNeeded=0
-        int notFound=0
-        int deleted=0
-        Set<String> expected=new HashSet(trackedImportedItems.keySet())
-        Set<String> newitems=new HashSet()
-        walkTreePaths('HEAD^{tree}',true) { TreeWalk walk ->
-            if(expected.contains(walk.getPathString())){
+        int importNeeded = 0
+        int notFound = 0
+        int deleted = 0
+        Set<String> expected = new HashSet(trackedImportedItems.keySet())
+        Set<String> newitems = new HashSet()
+        walkTreePaths('HEAD^{tree}', true) { TreeWalk walk ->
+            if (expected.contains(walk.getPathString())) {
                 expected.remove(walk.getPathString())
-            }else{
+            } else {
                 newitems.add(walk.getPathString())
             }
-            if(trackedItemNeedsImport(walk.getPathString())){
+            if (trackedItemNeedsImport(walk.getPathString())) {
                 importNeeded++
-            }else if(trackedItemIsUnknown(walk.getPathString())){
+            } else if (trackedItemIsUnknown(walk.getPathString())) {
                 notFound++
             }
         }
         //find any paths we are tracking that are no longer present
-        if(expected){
+        if (expected) {
             //deleted paths
             deleted = expected.size()
         }
@@ -159,17 +159,17 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 notFound ? ImportSynchState.UNKNOWN : deleted ? ImportSynchState.DELETE_NEEDED : ImportSynchState.CLEAN
 
         StringBuilder sb = new StringBuilder()
-        if(importNeeded){
-            sb<<"${importNeeded} file(s) need to be imported"
+        if (importNeeded) {
+            sb << "${importNeeded} file(s) need to be imported"
         }
-        if(notFound){
-            if(sb.length()>0) {
+        if (notFound) {
+            if (sb.length() > 0) {
                 sb << ", "
             }
             sb << "${notFound} unimported file(s) found"
         }
-        if(deleted){
-            if(sb.length()>0) {
+        if (deleted) {
+            if (sb.length() > 0) {
                 sb << ", "
             }
             sb << "${deleted} tracked file(s) were deleted"
@@ -205,11 +205,13 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
 //        log.debug(debugStatus(status))
         ImportSynchState synchState = importSynchStateForStatus(job, commit, path)
-        if(job.scmImportMetadata?.commitId){
+        if (job.scmImportMetadata?.commitId) {
             //update tracked commit info
             trackedImportedItems[path] = job.scmImportMetadata?.commitId
         }
-        log.debug("import job status: ${synchState} with meta ${job.scmImportMetadata}, version ${job.importVersion}/${job.version} commit ${commit?.name}")
+        log.debug(
+                "import job status: ${synchState} with meta ${job.scmImportMetadata}, version ${job.importVersion}/${job.version} commit ${commit?.name}"
+        )
 
 //        if (originalPath) {
 //            def origCommit = GitUtil.lastCommitForPath repo, git, originalPath
@@ -254,9 +256,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             return ImportSynchState.UNKNOWN
         }
         if (job.scmImportMetadata && job.scmImportMetadata.commitId == commit.name) {
-            if (job.importVersion == job.version){
+            if (job.importVersion == job.version) {
                 return ImportSynchState.CLEAN
-            }else {
+            } else {
                 log.debug("job version differs, fall back to content diff")
                 //serialize job and determine if there is a difference
                 if (contentDiffers(job, commit, path)) {
@@ -266,21 +268,22 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 }
             }
         } else {
-            if(job.scmImportMetadata && job.scmImportMetadata.commitId && commit){
+            if (job.scmImportMetadata && job.scmImportMetadata.commitId && commit) {
                 //determine change between tracked commit ID and head commit, if available
                 //i.e. detect if path was deleted
                 def oldCommit = GitUtil.getCommit repo, job.scmImportMetadata.commitId
                 def changes = GitUtil.listChanges(git, oldCommit.tree.name, commit.tree.name)
                 def pathChanges = changes.findAll { it.oldPath == path || it.newPath == path }
-                log.debug("Found changes for ${path}: "+pathChanges.collect{entry->
+                log.debug("Found changes for ${path}: " + pathChanges.collect { entry ->
                     "${entry.changeType} ${entry.oldPath}->${entry.newPath}"
-                }.join("\n"))
+                }.join("\n")
+                )
                 def found = pathChanges.find { it.oldPath == path }
-                if(found && found.changeType == DiffEntry.ChangeType.DELETE){
+                if (found && found.changeType == DiffEntry.ChangeType.DELETE) {
                     return ImportSynchState.DELETE_NEEDED
-                }else if(found && found.changeType == DiffEntry.ChangeType.MODIFY){
+                } else if (found && found.changeType == DiffEntry.ChangeType.MODIFY) {
                     return ImportSynchState.IMPORT_NEEDED
-                }else if(found && found.changeType == DiffEntry.ChangeType.RENAME){
+                } else if (found && found.changeType == DiffEntry.ChangeType.RENAME) {
                     log.error("Rename detected from ${found.oldPath} to ${found.newPath}")
                     return ImportSynchState.IMPORT_NEEDED
                 }
@@ -396,10 +399,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             List<ScmImportTrackedItem> found = []
 
             //walk the repo files and look for possible candidates
-            walkTreePaths('HEAD^{tree}',true) { TreeWalk walk ->
-//                if (isTrackedPath(walk.getPathString())) {
-                    found << trackPath(walk.getPathString(), trackedItemNeedsImport(walk.getPathString()))
-//                }
+            walkTreePaths('HEAD^{tree}', true) { TreeWalk walk ->
+                found << trackPath(walk.getPathString(), trackedItemNeedsImport(walk.getPathString()))
             }
             return found
         }
@@ -424,19 +425,19 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         !trackedImportedItems[path]
     }
 
-    ScmImportTrackedItem trackPath(final String path, final boolean selected=false) {
+    ScmImportTrackedItem trackPath(final String path, final boolean selected = false) {
         ScmImportTrackedItemBuilder.builder().id(path).iconName('glyphicon-file').selected(selected).build()
     }
 
-    void walkTreePaths(String ref, boolean useFilter=false, Closure callback) {
+    void walkTreePaths(String ref, boolean useFilter = false, Closure callback) {
         ObjectId head = repo.resolve ref
         def tree = new TreeWalk(repo)
         tree.addTree(head)
         tree.setRecursive(true)
-        if(useFilter){
-            if(isUseTrackingRegex()){
+        if (useFilter) {
+            if (isUseTrackingRegex()) {
                 tree.setFilter(PathRegexFilter.create(trackingRegex))
-            }else{
+            } else {
                 tree.setFilter(PathFilterGroup.createFromStrings(trackedItems))
             }
         }
