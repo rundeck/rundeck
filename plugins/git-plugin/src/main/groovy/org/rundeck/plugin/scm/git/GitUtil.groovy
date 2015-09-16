@@ -2,6 +2,7 @@ package org.rundeck.plugin.scm.git
 
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.diff.DiffAlgorithm
+import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.diff.EditList
 import org.eclipse.jgit.diff.RawText
@@ -9,10 +10,13 @@ import org.eclipse.jgit.diff.RawTextComparator
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.FileMode
 import org.eclipse.jgit.lib.ObjectId
+import org.eclipse.jgit.lib.ObjectReader
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
+import org.eclipse.jgit.treewalk.CanonicalTreeParser
 import org.eclipse.jgit.treewalk.TreeWalk
+import org.eclipse.jgit.util.io.DisabledOutputStream
 
 /**
  * Created by greg on 9/10/15.
@@ -24,18 +28,23 @@ class GitUtil {
      * @return RevCommit or null if HEAD not found (empty git)
      */
     static RevCommit getHead(Repository repo) {
-
-
+        getCommit(repo,Constants.HEAD)
+    }
+    /**
+     * get RevCommit for HEAD rev of the path
+     * @return RevCommit or null if HEAD not found (empty git)
+     */
+    static RevCommit getCommit(Repository repo, String commitId) {
         final RevWalk walk = new RevWalk(repo);
         walk.setRetainBody(true);
 
-        def resolve = repo.resolve(Constants.HEAD)
+        def resolve = repo.resolve(commitId)
         if (!resolve) {
             return null
         }
-        final RevCommit headCommit = walk.parseCommit(resolve);
+        final RevCommit revCommit = walk.parseCommit(resolve);
         walk.release()
-        headCommit
+        revCommit
     }
 
     static ObjectId lookupId(Repository repo, RevCommit commit, String path) {
@@ -147,6 +156,21 @@ class GitUtil {
             }
         }
         null
+    }
+    static List<DiffEntry> listChanges(Git git,String oldRef, String newRef){
+        ObjectReader reader = git.getRepository().newObjectReader();
+
+        CanonicalTreeParser oldTreeIter = new CanonicalTreeParser();
+        ObjectId oldTree = git.getRepository().resolve( oldRef );
+        oldTreeIter.reset( reader, oldTree );
+
+        CanonicalTreeParser newTreeIter = new CanonicalTreeParser();
+        ObjectId newTree = git.getRepository().resolve( newRef );
+        newTreeIter.reset( reader, newTree );
+
+        DiffFormatter diffFormatter = new DiffFormatter( DisabledOutputStream.INSTANCE );
+        diffFormatter.setRepository( git.getRepository() );
+        diffFormatter.scan( oldTreeIter, newTreeIter );
     }
 
     static Map<String, Serializable> metaForCommit(RevCommit commit) {

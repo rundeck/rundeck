@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
@@ -132,25 +133,46 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         }
         int importNeeded=0
         int notFound=0
+        int deleted=0
+        Set<String> expected=new HashSet(trackedImportedItems.keySet())
+        Set<String> newitems=new HashSet()
         walkTreePaths('HEAD^{tree}',true) { TreeWalk walk ->
+            if(expected.contains(walk.getPathString())){
+                expected.remove(walk.getPathString())
+            }else{
+                newitems.add(walk.getPathString())
+            }
             if(trackedItemNeedsImport(walk.getPathString())){
                 importNeeded++
             }else if(trackedItemIsUnknown(walk.getPathString())){
                 notFound++
             }
         }
+        //find any paths we are tracking that are no longer present
+        if(expected){
+            //deleted paths
+            deleted = expected.size()
+        }
+
         def state = new GitImportSynchState()
         state.state = importNeeded ? ImportSynchState.IMPORT_NEEDED :
-                notFound ? ImportSynchState.UNKNOWN : ImportSynchState.CLEAN
+                notFound ? ImportSynchState.UNKNOWN : deleted ? ImportSynchState.DELETE_NEEDED : ImportSynchState.CLEAN
+
         StringBuilder sb = new StringBuilder()
         if(importNeeded){
-            sb<<"${importNeeded} items need to be imported"
+            sb<<"${importNeeded} file(s) need to be imported"
         }
         if(notFound){
             if(sb.length()>0) {
                 sb << ", "
             }
-            sb << "${notFound} unimported files found"
+            sb << "${notFound} unimported file(s) found"
+        }
+        if(deleted){
+            if(sb.length()>0) {
+                sb << ", "
+            }
+            sb << "${deleted} tracked file(s) were deleted"
         }
         state.message = sb.toString()
         return state
@@ -244,6 +266,25 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 }
             }
         } else {
+            if(job.scmImportMetadata && job.scmImportMetadata.commitId && commit){
+                //determine change between tracked commit ID and head commit, if available
+                //i.e. detect if path was deleted
+                def oldCommit = GitUtil.getCommit repo, job.scmImportMetadata.commitId
+                def changes = GitUtil.listChanges(git, oldCommit.tree.name, commit.tree.name)
+                def pathChanges = changes.findAll { it.oldPath == path || it.newPath == path }
+                log.debug("Found changes for ${path}: "+pathChanges.collect{entry->
+                    "${entry.changeType} ${entry.oldPath}->${entry.newPath}"
+                }.join("\n"))
+                def found = pathChanges.find { it.oldPath == path }
+                if(found && found.changeType == DiffEntry.ChangeType.DELETE){
+                    return ImportSynchState.DELETE_NEEDED
+                }else if(found && found.changeType == DiffEntry.ChangeType.MODIFY){
+                    return ImportSynchState.IMPORT_NEEDED
+                }else if(found && found.changeType == DiffEntry.ChangeType.RENAME){
+                    log.error("Rename detected from ${found.oldPath} to ${found.newPath}")
+                    return ImportSynchState.IMPORT_NEEDED
+                }
+            }
             //different commit was imported previously, or job has been modified
             return ImportSynchState.IMPORT_NEEDED
         }
