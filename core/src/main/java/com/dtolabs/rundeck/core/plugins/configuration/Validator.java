@@ -33,6 +33,37 @@ import java.util.*;
  */
 public class Validator {
     /**
+     * Return a report for a single error item
+     * @param key key
+     * @param message message
+     * @return report
+     */
+    public static Report errorReport(String key, String message) {
+        return buildReport().error(key, message).build();
+    }
+    /**
+     *
+     * @return new Builder for Report
+     */
+    public static ReportBuilder buildReport() {
+        return new ReportBuilder();
+    }
+    /**
+     * Builder for {@link com.dtolabs.rundeck.core.plugins.configuration.Validator.Report}
+     */
+    public static class ReportBuilder {
+        Report report = new Report();
+
+        public ReportBuilder error(String key, String message) {
+            report.errors.put(key, message);
+            return this;
+        }
+
+        public Report build() {
+            return report;
+        }
+    }
+    /**
      * A validation report
      */
     public static class Report {
