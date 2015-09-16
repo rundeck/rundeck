@@ -8,10 +8,29 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by greg on 9/9/15.
+ * Factory for {@link ScmImportPlugin}, interface for SCMImport plugins.
  */
 public interface ScmImportPluginFactory {
-    ScmImportPlugin createPlugin(Map<String, ?> input, String project) throws ConfigurationException;
+    /**
+     * Create the plugin
+     *
+     * @param input        setup config
+     * @param trackedItems tracked items list
+     * @param project      project name
+     *
+     * @return plugin instance
+     *
+     * @throws ConfigurationException if an error occurs
+     */
+    ScmImportPlugin createPlugin(Map<String, String> input, List<String> trackedItems, String project)
+            throws ConfigurationException;
 
-    List<Property> getSetupPropertiesForBasedir(File basedir) ;
+    /**
+     * Setup properties for the base directory
+     *
+     * @param basedir project base directory
+     *
+     * @return setup properties
+     */
+    List<Property> getSetupPropertiesForBasedir(File basedir);
 }
