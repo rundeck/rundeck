@@ -605,6 +605,23 @@ class ScheduledExecutionTest  {
         assertEquals "Incorrect months", 12, ScheduledExecution.monthsofyearlist.size()
         assertEquals "Incorrect weekdays", 7, ScheduledExecution.daysofweeklist.size()
     }
+    void testparseLogOutputThreshold(){
+        assertEquals(null,ScheduledExecution.parseLogOutputThreshold(null))
+        assertEquals([maxLines:123L,perNode:false],ScheduledExecution.parseLogOutputThreshold("123"))
+        assertEquals([maxLines:123L,perNode:true],ScheduledExecution.parseLogOutputThreshold("123/node"))
+        assertEquals([maxSizeBytes:123L],ScheduledExecution.parseLogOutputThreshold("123b"))
+        assertEquals([maxSizeBytes:123L],ScheduledExecution.parseLogOutputThreshold("123B"))
+        assertEquals([maxSizeBytes:123L],ScheduledExecution.parseLogOutputThreshold("123B/node"))
+        assertEquals([maxSizeBytes:123L*1024],ScheduledExecution.parseLogOutputThreshold("123kb"))
+        assertEquals([maxSizeBytes:123L*1024],ScheduledExecution.parseLogOutputThreshold("123k"))
+        assertEquals([maxSizeBytes:123L*1024],ScheduledExecution.parseLogOutputThreshold("123Kb"))
+        assertEquals([maxSizeBytes:123L*1024*1024],ScheduledExecution.parseLogOutputThreshold("123mb"))
+        assertEquals([maxSizeBytes:123L*1024*1024],ScheduledExecution.parseLogOutputThreshold("123m"))
+        assertEquals([maxSizeBytes:123L*1024*1024],ScheduledExecution.parseLogOutputThreshold("123MB"))
+        assertEquals([maxSizeBytes:123L*1024*1024*1024],ScheduledExecution.parseLogOutputThreshold("123gb"))
+        assertEquals([maxSizeBytes:123L*1024*1024*1024],ScheduledExecution.parseLogOutputThreshold("123g"))
+        assertEquals([maxSizeBytes:123L*1024*1024*1024],ScheduledExecution.parseLogOutputThreshold("123GB"))
+    }
 
     void testParseCheckboxFieldFromParams() {
         def ScheduledExecution se = new ScheduledExecution()
