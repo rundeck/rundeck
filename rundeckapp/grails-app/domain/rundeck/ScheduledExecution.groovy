@@ -1,5 +1,5 @@
 package rundeck
-import com.dtolabs.rundeck.app.support.BaseNodeFilters
+
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
 
@@ -21,6 +21,8 @@ class ScheduledExecution extends ExecutionContext {
     String year = "*"
     String crontabString
     String uuid;
+    String logOutputThreshold;
+    String logOutputThresholdAction;
 
     Workflow workflow
 
@@ -93,6 +95,8 @@ class ScheduledExecution extends ExecutionContext {
         timeout(maxSize: 256, blank: true, nullable: true,)
         retry(maxSize: 256, blank: true, nullable: true,)
         crontabString(bindable: true,nullable: true)
+        logOutputThreshold(maxSize: 256, blank:true, nullable: true)
+        logOutputThresholdAction(maxSize: 256, blank:true, nullable: true,inList: ['abort','fail','truncate'])
     }
 
     static mapping = {
@@ -142,6 +146,10 @@ class ScheduledExecution extends ExecutionContext {
         }
         map.description=description
         map.loglevel=loglevel
+        if(logOutputThreshold){
+            map.loglimit=logOutputThreshold
+            map.loglimitAction=logOutputThresholdAction
+        }
         map.project=project
         if(timeout){
             map.timeout=timeout
@@ -213,6 +221,11 @@ class ScheduledExecution extends ExecutionContext {
         se.groupPath=data['group']?data['group']:null
         se.description=data.description
         se.loglevel=data.loglevel?data.loglevel:'INFO'
+
+        if(data.loglimit){
+            se.logOutputThreshold=data.loglimit
+            se.logOutputThresholdAction=data.loglimitAction
+        }
         se.project=data.project
         if (data.uuid) {
             se.uuid = data.uuid

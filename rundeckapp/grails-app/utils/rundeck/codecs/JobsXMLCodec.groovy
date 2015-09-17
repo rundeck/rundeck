@@ -127,6 +127,11 @@ class JobsXMLCodec {
                 map.remove('group')
             }
         }
+        if(map.logging){
+            map.loglimit = map.logging.remove('limit')
+            map.loglimitAction=map.logging.remove('limitAction')?:'fail'
+            map.remove('logging')
+        }
         //convert options:[option:[]] into options:[]
         if(map.context?.options && !(map.context?.options instanceof Map)){
             throw new JobXMLException("'context/options' element is not valid")
@@ -417,6 +422,10 @@ class JobsXMLCodec {
         }
         if(map.nodefilters?.dispatch){
             map.dispatch=map.nodefilters.remove('dispatch')
+        }
+        if(map.loglimit){
+            map.logging=BuilderUtil.toAttrMap('limit',map.remove('loglimit'))
+            BuilderUtil.addAttribute(map.logging,'limitAction',map.remove('loglimitAction')?:'fail')
         }
         if(map.schedule){
             BuilderUtil.makeAttribute(map.schedule.time,'seconds')

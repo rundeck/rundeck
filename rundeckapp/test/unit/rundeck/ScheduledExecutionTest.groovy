@@ -36,6 +36,32 @@ class ScheduledExecutionTest  {
         assertNotNull(jobMap.retry)
         assertEquals('${option.retry}',jobMap.retry)
     }
+    void testToMapLoglimit() {
+        ScheduledExecution se = createBasicScheduledExecution()
+        se.logOutputThreshold = '20MB'
+        se.logOutputThresholdAction = 'fail'
+
+        def jobMap = se.toMap()
+        assertNotNull(jobMap)
+        assertNotNull(jobMap.loglimit)
+        assertEquals('20MB',jobMap.loglimit)
+        assertNotNull(jobMap.loglimitAction)
+        assertEquals('fail',jobMap.loglimitAction)
+    }
+    void testFromMapLoglimit() {
+        ScheduledExecution se = ScheduledExecution.fromMap(
+                [
+                        jobName: 'abc',
+                        loglimit:'20MB',
+                        loglimitAction:'fail'
+                ]
+        )
+        assertNotNull(se)
+        assertNotNull(se.logOutputThreshold)
+        assertEquals('20MB', se.logOutputThreshold)
+        assertNotNull(se.logOutputThresholdAction)
+        assertEquals('fail', se.logOutputThresholdAction)
+    }
 
     void testFromMapScheduleCrontabString() {
         ScheduledExecution se = ScheduledExecution.fromMap(
