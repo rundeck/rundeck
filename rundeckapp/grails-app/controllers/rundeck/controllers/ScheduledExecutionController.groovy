@@ -323,8 +323,9 @@ class ScheduledExecutionController  extends ControllerBase{
                 offset: params.int('offset') ?: 0] + _prepareExecute(scheduledExecution, framework,authContext)
 
         //add scm export status
+        def projectResource = frameworkService.authResourceForProject(params.project)
         if (frameworkService.authorizeApplicationResourceAny(authContext,
-                                                             frameworkService.authResourceForProject(params.project),
+                                                             projectResource,
                                                              [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT])) {
             if(scmService.projectHasConfiguredExportPlugin(params.project)){
                 dataMap.scmExportEnabled = true
@@ -333,7 +334,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
         if (frameworkService.authorizeApplicationResourceAny(authContext,
-                                                             frameworkService.authResourceForProject(params.project),
+                                                             projectResource,
                                                              [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT])) {
             if(scmService.projectHasConfiguredPlugin('import',params.project)) {
                 dataMap.scmImportEnabled = true

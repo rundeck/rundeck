@@ -744,7 +744,7 @@ class ScheduledExecutionControllerTests  {
                 return true
             }
             authResourceForProject{p->null}
-            authorizeApplicationResourceAny{AuthContext authContext, Map resource, List actions->false}
+            authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
             projects { return [] }
             authorizeProjectResourceAll { framework, resource, actions, project -> return true }
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
@@ -2261,7 +2261,7 @@ class ScheduledExecutionControllerTests  {
                 return true
             }
             authResourceForProject{p->null}
-            authorizeApplicationResourceAny{AuthContext authContext, Map resource, List actions->false}
+            authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
             projects { return [] }
             authorizeProjectResourceAll { framework, resource, actions, project -> return true }
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
@@ -2358,7 +2358,7 @@ class ScheduledExecutionControllerTests  {
                 testNodeSet
             }
             authResourceForProject{p->null}
-            authorizeApplicationResourceAny{AuthContext authContext, Map resource, List actions->false}
+            authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
             projects { return [] }
             authorizeProjectResourceAll { framework, resource, actions, project -> return true }
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
@@ -2453,7 +2453,7 @@ class ScheduledExecutionControllerTests  {
                 testNodeSet
             }
             authResourceForProject{p->null}
-            authorizeApplicationResourceAny{AuthContext authContext, Map resource, List actions->false}
+            authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
             projects { return [] }
             authorizeProjectResourceAll { framework, resource, actions, project -> return true }
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
@@ -2575,7 +2575,7 @@ class ScheduledExecutionControllerTests  {
                 unfiltered
             }
             authResourceForProject{p->null}
-            authorizeApplicationResourceAny{AuthContext authContext, Map resource, List actions->false}
+            authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
             projects { return [] }
             authorizeProjectResourceAll { framework, resource, actions, project -> return true }
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
