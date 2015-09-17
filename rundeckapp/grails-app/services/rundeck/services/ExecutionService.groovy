@@ -708,6 +708,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         //TODO: method can be transactional readonly
         metricService.markMeter(this.class.name,'executionStartMeter')
         execution.refresh()
+        //set up log output threshold
+        def threshold = ScheduledExecution.parseLogOutputThreshold(scheduledExecution.logOutputThreshold)
+
         def ExecutionLogWriter loghandler= loggingService.openLogWriter(
                 execution,
                 logLevelForString(execution.loglevel),
