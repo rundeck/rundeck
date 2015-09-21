@@ -9,24 +9,9 @@ import junit.framework.Assert
  * Created by greg on 9/21/15.
  */
 class LineCountingLogWriterTest extends GroovyTestCase {
-    class testWriter implements StreamingLogWriter{
-        @Override
-        void openStream() throws IOException {
 
-        }
-
-        @Override
-        void addEvent(final LogEvent event) {
-
-        }
-
-        @Override
-        void close() {
-
-        }
-    }
     public testCounter() {
-        def counter = new LineCountingLogWriter(new testWriter())
+        def counter = new LineCountingLogWriter(new NoopLogWriter())
         Assert.assertEquals(0, counter.value)
         counter.addEvent(LogUtil.logError(""))
         Assert.assertEquals(1, counter.value)
