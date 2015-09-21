@@ -47,6 +47,7 @@ import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
 import rundeck.controllers.ExecutionController
 import rundeck.services.logging.ExecutionLogWriter
+import rundeck.services.logging.LoggingThreshold
 
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
@@ -700,7 +701,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * starts an execution in a separate thread, returning a map of [thread:Thread, loghandler:LogHandler]
+     * starts an execution in a separate thread, returning a map of [thread:Thread, loghandler:LogHandler, threshold:Threshold]
      */
     def Map executeAsyncBegin(Framework framework, AuthContext authContext, Execution execution,
                               ScheduledExecution scheduledExecution=null, Map extraParams = null,
@@ -709,12 +710,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         metricService.markMeter(this.class.name,'executionStartMeter')
         execution.refresh()
         //set up log output threshold
-        def threshold = ScheduledExecution.parseLogOutputThreshold(scheduledExecution.logOutputThreshold)
+        def thresholdMap = ScheduledExecution.parseLogOutputThreshold(scheduledExecution?.logOutputThreshold)
+        def threshold = LoggingThreshold.fromMap(thresholdMap,scheduledExecution?.logOutputThresholdAction)
 
         def ExecutionLogWriter loghandler= loggingService.openLogWriter(
                 execution,
                 logLevelForString(execution.loglevel),
-                [user:execution.user, node: framework.getFrameworkNodeName()]
+                [user:execution.user, node: framework.getFrameworkNodeName()],
+                threshold
         )
         execution.outputfilepath = loghandler.filepath?.getAbsolutePath()
         execution.save(flush:true)
@@ -767,7 +770,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //create service object for the framework and listener
             Thread thread = new WorkflowExecutionServiceThread(framework.getWorkflowExecutionService(),item, executioncontext)
             thread.start()
-            return [thread:thread, loghandler:loghandler, noderecorder:recorder, execution: execution, scheduledExecution:scheduledExecution]
+            return [thread:thread, loghandler:loghandler, noderecorder:recorder, execution: execution, scheduledExecution:scheduledExecution,threshold:threshold]
         }catch(Exception e) {
             log.error('Failed to start execution', e)
             loghandler.logError('Failed to start execution: ' + e.getClass().getName() + ": " + e.message)
