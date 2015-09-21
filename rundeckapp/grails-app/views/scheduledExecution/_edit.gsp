@@ -18,6 +18,7 @@
 <g:set var="labelColClass" value="${labelColSize}  control-label"/>
 <g:set var="fieldColSize" value="col-sm-10"/>
 <g:set var="fieldColHalfSize" value="col-sm-5"/>
+<g:set var="fieldColShortSize" value="col-sm-4"/>
 <g:set var="offsetColSize" value="col-sm-10 col-sm-offset-2"/>
 
 <g:set var="editSchedExecId" value="${scheduledExecution?.id? scheduledExecution.extid:null}"/>
@@ -872,6 +873,50 @@ function getCurSEID(){
 
             <span class="help-block">
                 <g:message code="scheduledExecution.property.retry.description"/>
+            </span>
+        </div>
+    </div>
+    %{--log limit--}%
+    <div class="form-group">
+        <label class="${labelColSize} control-label text-form-label" for="schedJobLogOutputThreshold">
+            <g:message code="scheduledExecution.property.logOutputThreshold.label" default="Output Limit"/>
+        </label>
+
+        <div class="${fieldColShortSize}">
+
+            <input type='text' name="logOutputThreshold" value="${enc(attr: scheduledExecution?.logOutputThreshold)}"
+                   id="schedJobLogOutputThreshold" class="form-control"
+                   placeholder="${message(code:"scheduledExecution.property.logOutputThreshold.placeholder")}"/>
+
+            <span class="help-block">
+                <g:message code="scheduledExecution.property.logOutputThreshold.description" default=""/>
+            </span>
+        </div>
+        <label class="${labelColSize} control-label text-form-label" for="logOutputThresholdAction">
+            <g:message code="scheduledExecution.property.logOutputThresholdAction.label" default="Action"/>
+        </label>
+
+        <div class="${fieldColShortSize}">
+            <g:set var="outputThresholdActionsKeys"
+                   value="${["fail","abort","truncate"]}"/>
+            <g:set var="outputThresholdActionsIcons" value="${[fail: 'minus-sign',abort:'remove-circle',truncate:'play-circle']}"/>
+            <g:set var="outputThresholdActionsColor" value="${[fail: 'text-danger',abort:'text-muted',truncate:'text-success']}"/>
+            <g:set var="outputThresholdActions"
+                   value="${outputThresholdActionsKeys.collect{
+                       message(code:'scheduledExecution.property.logOutputThresholdAction.'+it+'.label',default:it)
+                   }}"/>
+
+            <g:each in="${outputThresholdActionsKeys}" var="actionName">
+                <label class="radio" title="${message(code: "scheduledExecution.property.logOutputThresholdAction.${actionName}.description")}">
+                    <g:radio name="logOutputThresholdAction" value="${actionName}" checked="${scheduledExecution?.logOutputThresholdAction==actionName}"/>
+
+                    <g:message code="scheduledExecution.property.logOutputThresholdAction.${actionName}.label"/>
+                    <i class="glyphicon glyphicon-${outputThresholdActionsIcons[actionName]} ${outputThresholdActionsColor[actionName]}"></i>
+                </label>
+            </g:each>
+
+            <span class="help-block">
+                <g:message code="scheduledExecution.property.logOutputThresholdAction.description" default=""/>
             </span>
         </div>
     </div>
