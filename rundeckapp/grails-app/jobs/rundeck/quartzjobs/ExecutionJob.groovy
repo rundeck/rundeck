@@ -286,7 +286,7 @@ class ExecutionJob implements InterruptableJob {
                 wasTimeout=true
                 interrupt()
                 success=false
-            }else if(threshold && threshold.thresholdWasMet()){
+            }else if(threshold && threshold.isThresholdExceeded()){
                 if(threshold.action in ['abort','fail']) {
                     wasThreshold = true
                     success = false

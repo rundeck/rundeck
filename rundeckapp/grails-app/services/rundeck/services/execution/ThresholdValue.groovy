@@ -5,14 +5,14 @@ package rundeck.services.execution
  */
 interface ThresholdValue<T> {
     /**
-     * @return true whenever the threshold is met
+     * @return true whenever the threshold is exceeded
      */
-    boolean thresholdWasMet()
+    boolean isThresholdExceeded()
 
     /**
-     * @return value met
+     * @return current value
      */
-    T getThresholdValue()
+    T getValue()
 
     /**
      * @return reason string

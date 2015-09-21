@@ -179,11 +179,11 @@ class ExecutionJobTest  {
         Assert.assertEquals(testExecmap,result.execmap)
     }
     class testThreshold implements ThresholdValue{
-        Long thresholdValue
-        String thresholdReason
+        Long value
+        String description
         String action
         boolean wasMet
-        boolean thresholdWasMet(){
+        boolean isThresholdExceeded(){
             return wasMet
         }
     }
