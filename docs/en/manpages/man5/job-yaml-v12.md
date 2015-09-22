@@ -133,6 +133,25 @@ In addition, these optional entries can be present:
     * An integer number indicating the maximum retries
     * `${option.retry}` reference to a job option value
     
+`loglimit`
+
+:    An optional logging limit.
+(See [Jobs - Log Limit](../manual/jobs.html#log-limit)). Allowed values:
+
+    * `###` If you specify a number, that is treated as the "Maximum total number of log lines"
+    * `###/node` If you specify a number followed by `/node`, the number is treated as the "Maximum number of log lines for a single node"
+    * `###[GMK]B` If you specify a number followed by a filesize suffix, that is treated as the "total log file size".  The file size suffixes allowed are "GB" (gigabyte), "MB" (megabyte), "KB" (kilobyte) and "B" (byte).
+    
+`loglimitAction`
+
+:    The action to perform if the `loglimit` value is exceeded.
+     If `loglimit` is sepcified, but no `loglimitAction` is set, it will default to a 
+     value of `fail`. Allowed values:
+
+    * `fail` - halt and fail the job (default)
+    * `abort` - halt and abort the job
+    * `truncate` - do not halt the job, and truncate all further output
+    
 [`options`](#options)
 
 :    Set of Options for the Job
@@ -814,7 +833,7 @@ Defines a plugin notification section, can contain a single Map, or a Sequence o
 
 # SEE ALSO
 
-`[rd-jobs](../man1/rd-jobs.html)`
+[rd-jobs](../man1/rd-jobs.html)
 
 <http://yaml.org/>
 

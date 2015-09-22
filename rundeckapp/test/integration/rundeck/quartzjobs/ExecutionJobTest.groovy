@@ -31,6 +31,7 @@ import rundeck.Workflow
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
+import rundeck.services.execution.ThresholdValue
 
 /**
  * $INTERFACE is ...
@@ -180,6 +181,131 @@ class ExecutionJobTest extends GroovyTestCase{
         def result=job.executeCommand(es,eus,execution,null, null, null, 0, [:], [:])
         Assert.assertEquals(true,result.success)
         Assert.assertEquals(testExecmap,result.execmap)
+    }
+    class testThreshold implements ThresholdValue{
+        Long value
+        String description
+        String action
+        boolean wasMet
+        boolean isThresholdExceeded(){
+            return wasMet
+        }
+    }
+    /**
+     * executeAsyncBegin succeeds,threshold is not met
+     */
+    @Test
+    void testExecuteCommandThresholdNotMet(){
+        ScheduledExecution se = setupJob()
+        Execution execution = setupExecution(se, new Date(), new Date())
+        Assert.assertNotNull(execution)
+        ExecutionJob job = new ExecutionJob()
+        def mockes = new GrailsMock(ExecutionService)
+        def mockeus = new GrailsMock(ExecutionUtilService)
+        FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
+            'fakeFramework'
+        }
+        ServiceThreadBase stb=new ServiceThreadBase()
+        stb.success=true
+        def threshold=new testThreshold()
+        def testExecmap = [thread: stb, testExecuteAsyncBegin: true, threshold:threshold]
+        mockes.demand.executeAsyncBegin(1..1) { Framework framework, AuthContext authContext, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
+            Assert.assertEquals(execution,execution1)
+            testExecmap
+        }
+        mockeus.demand.finishExecution(1..1){ Map datamap->
+            Assert.assertTrue(datamap.testExecuteAsyncBegin)
+        }
+        ExecutionService es = mockes.createMock()
+        ExecutionUtilService eus = mockeus.createMock()
+
+        def result=job.executeCommand(es,eus,execution,null, null, null, 0, [:], [:])
+        Assert.assertEquals(true,result.success)
+        Assert.assertEquals(testExecmap,result.execmap)
+        Assert.assertFalse(job.wasThreshold)
+    }
+    class testServiceThreadBase extends ServiceThreadBase{
+        long sleepTime
+        volatile boolean success = false;
+
+        testServiceThreadBase(final long sleepTime) {
+            this.sleepTime = sleepTime
+        }
+
+        @Override
+        void run() {
+            Thread.sleep(sleepTime)
+        }
+    }
+    /**
+     * executeAsyncBegin succeeds,threshold is  met, action 'fail'
+     */
+    @Test
+    void testExecuteCommandThresholdWasMetActionFail(){
+        ScheduledExecution se = setupJob()
+        Execution execution = setupExecution(se, new Date(), new Date())
+        Assert.assertNotNull(execution)
+        ExecutionJob job = new ExecutionJob()
+        def mockes = new GrailsMock(ExecutionService)
+        def mockeus = new GrailsMock(ExecutionUtilService)
+        FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
+            'fakeFramework'
+        }
+        ServiceThreadBase stb=new testServiceThreadBase(1500)
+        stb.success=true
+        def threshold=new testThreshold()
+        threshold.wasMet=true
+        threshold.action='fail'
+        def testExecmap = [thread: stb, testExecuteAsyncBegin: true, threshold:threshold]
+        mockes.demand.executeAsyncBegin(1..1) { Framework framework, AuthContext authContext, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
+            Assert.assertEquals(execution,execution1)
+            stb.start()
+            testExecmap
+        }
+        mockeus.demand.finishExecution(1..1){ Map datamap->
+            Assert.assertTrue(datamap.testExecuteAsyncBegin)
+        }
+        ExecutionService es = mockes.createMock()
+        ExecutionUtilService eus = mockeus.createMock()
+
+        def result=job.executeCommand(es,eus,execution,null, null, null, 0, [:], [:])
+        Assert.assertEquals(false,result.success)
+        Assert.assertTrue(job.wasThreshold)
+    }
+    /**
+     * executeAsyncBegin succeeds,threshold is  met, action 'abort'
+     */
+    @Test
+    void testExecuteCommandThresholdWasMetActionAbort(){
+        ScheduledExecution se = setupJob()
+        Execution execution = setupExecution(se, new Date(), new Date())
+        Assert.assertNotNull(execution)
+        ExecutionJob job = new ExecutionJob()
+        def mockes = new GrailsMock(ExecutionService)
+        def mockeus = new GrailsMock(ExecutionUtilService)
+        FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
+            'fakeFramework'
+        }
+        ServiceThreadBase stb=new testServiceThreadBase(1500)
+        stb.success=true
+        def threshold=new testThreshold()
+        threshold.wasMet=true
+        threshold.action='abort'
+        def testExecmap = [thread: stb, testExecuteAsyncBegin: true, threshold:threshold]
+        mockes.demand.executeAsyncBegin(1..1) { Framework framework, AuthContext authContext, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
+            Assert.assertEquals(execution,execution1)
+            stb.start()
+            testExecmap
+        }
+        mockeus.demand.finishExecution(1..1){ Map datamap->
+            Assert.assertTrue(datamap.testExecuteAsyncBegin)
+        }
+        ExecutionService es = mockes.createMock()
+        ExecutionUtilService eus = mockeus.createMock()
+
+        def result=job.executeCommand(es,eus,execution,null, null, null, 0, [:], [:])
+        Assert.assertEquals(false,result.success)
+        Assert.assertTrue(job.wasThreshold)
     }
 
     Execution setupExecution(ScheduledExecution se, Date startDate, Date finishDate) {
