@@ -2,12 +2,17 @@ package rundeck.services.logging
 
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogUtil
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 import rundeck.services.execution.ValueHolder
+import org.junit.Assert
 
 /**
  * Created by greg on 9/21/15.
  */
-class ThresholdLogWriterTest extends GroovyTestCase {
+@RunWith(JUnit4)
+class ThresholdLogWriterTest  {
     class testLogWriter extends NoopLogWriter {
         List<String> messages = []
 
@@ -22,7 +27,8 @@ class ThresholdLogWriterTest extends GroovyTestCase {
     }
 
 
-    public testLogOutputOnThresholdReached() {
+    @Test
+    void testLogOutputOnThresholdReached() {
         def t = new LoggingThreshold()
         t.description = 'thresholddesc'
         t.maxValue = 1
@@ -39,15 +45,15 @@ class ThresholdLogWriterTest extends GroovyTestCase {
         w.addEvent(LogUtil.logNormal("message4"))
         w.addEvent(LogUtil.logNormal("message5"))
 
-        assertEquals(6, logger.messages.size())
+        Assert.assertEquals(6, logger.messages.size())
 
-        assertEquals(
+        Assert.assertEquals(
                 ["message1", "message2", "Log output limit exceeded: thresholddesc", "message3", "message4", "message5"],
                 logger.messages
         )
     }
-
-    public testTruncate() {
+    @Test
+    void testTruncate() {
         def t = new LoggingThreshold()
         t.description = 'thresholddesc'
         t.maxValue = 1
@@ -65,8 +71,8 @@ class ThresholdLogWriterTest extends GroovyTestCase {
         w.addEvent(LogUtil.logNormal("message4"))
         w.addEvent(LogUtil.logNormal("message5"))
 
-        assertEquals(3, logger.messages.size())
-        assertEquals(["message1", "message2", "Log output limit exceeded: thresholddesc"], logger.messages)
+        Assert.assertEquals(3, logger.messages.size())
+        Assert.assertEquals(["message1", "message2", "Log output limit exceeded: thresholddesc"], logger.messages)
 
     }
 }

@@ -1,12 +1,16 @@
 package rundeck.services.logging
 
-import junit.framework.Assert
+import org.junit.Assert
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
 /**
  * Created by greg on 9/21/15.
  */
+@RunWith(JUnit4)
 class LargestNodeLinesCounterTest extends GroovyTestCase {
-    public testMax() {
+    @Test void testMax() {
         def test = new LargestNodeLinesCounter()
         Assert.assertEquals 0, test.value
 
@@ -43,7 +47,7 @@ class LargestNodeLinesCounterTest extends GroovyTestCase {
         t
     }
 
-    public testMaxParallel() {
+    @Test void testMaxParallel() {
         def test = new LargestNodeLinesCounter()
         Assert.assertEquals 0, test.value
 

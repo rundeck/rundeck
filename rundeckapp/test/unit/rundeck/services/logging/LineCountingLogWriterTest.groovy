@@ -3,14 +3,19 @@ package rundeck.services.logging
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
-import junit.framework.Assert
+import org.junit.Assert
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
 /**
  * Created by greg on 9/21/15.
  */
+@RunWith(JUnit4)
 class LineCountingLogWriterTest extends GroovyTestCase {
 
-    public testCounter() {
+    @Test
+    void testCounter() {
         def counter = new LineCountingLogWriter(new NoopLogWriter())
         Assert.assertEquals(0, counter.value)
         counter.addEvent(LogUtil.logError(""))

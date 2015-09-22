@@ -18,6 +18,7 @@ package rundeck.quartzjobs
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import grails.test.GrailsMock
 import org.junit.Assert
@@ -182,15 +183,6 @@ class ExecutionJobTest extends GroovyTestCase{
         Assert.assertEquals(true,result.success)
         Assert.assertEquals(testExecmap,result.execmap)
     }
-    class testThreshold implements ThresholdValue{
-        Long value
-        String description
-        String action
-        boolean wasMet
-        boolean isThresholdExceeded(){
-            return wasMet
-        }
-    }
     /**
      * executeAsyncBegin succeeds,threshold is not met
      */
@@ -205,8 +197,8 @@ class ExecutionJobTest extends GroovyTestCase{
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
-        ServiceThreadBase stb=new ServiceThreadBase()
-        stb.success=true
+        WorkflowExecutionServiceThread stb=new TestWEServiceThread(null,null,null)
+        stb.successful=true
         def threshold=new testThreshold()
         def testExecmap = [thread: stb, testExecuteAsyncBegin: true, threshold:threshold]
         mockes.demand.executeAsyncBegin(1..1) { Framework framework, AuthContext authContext, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
@@ -224,19 +216,6 @@ class ExecutionJobTest extends GroovyTestCase{
         Assert.assertEquals(testExecmap,result.execmap)
         Assert.assertFalse(job.wasThreshold)
     }
-    class testServiceThreadBase extends ServiceThreadBase{
-        long sleepTime
-        volatile boolean success = false;
-
-        testServiceThreadBase(final long sleepTime) {
-            this.sleepTime = sleepTime
-        }
-
-        @Override
-        void run() {
-            Thread.sleep(sleepTime)
-        }
-    }
     /**
      * executeAsyncBegin succeeds,threshold is  met, action 'fail'
      */
@@ -251,8 +230,8 @@ class ExecutionJobTest extends GroovyTestCase{
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
-        ServiceThreadBase stb=new testServiceThreadBase(1500)
-        stb.success=true
+        WorkflowExecutionServiceThread stb=new TestWEServiceThread(null,null,null)
+        stb.successful=true
         def threshold=new testThreshold()
         threshold.wasMet=true
         threshold.action='fail'
@@ -286,8 +265,8 @@ class ExecutionJobTest extends GroovyTestCase{
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
-        ServiceThreadBase stb=new testServiceThreadBase(1500)
-        stb.success=true
+        WorkflowExecutionServiceThread stb=new TestWEServiceThread(null,null,null)
+        stb.successful=true
         def threshold=new testThreshold()
         threshold.wasMet=true
         threshold.action='abort'

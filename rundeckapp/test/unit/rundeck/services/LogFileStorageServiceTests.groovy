@@ -221,6 +221,14 @@ class LogFileStorageServiceTests  {
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
+
+        ExecutionService.metaClass.static.generateServerURL = { LinkGenerator grailsLinkGenerator ->
+            ''
+        }
+
+        ExecutionService.metaClass.static.generateExecutionURL= { Execution execution, LinkGenerator grailsLinkGenerator ->
+            ''
+        }
         service.frameworkService=fmock.createMock()
         def test = new LoggingThreshold()
         assertNull(test.valueHolder)
