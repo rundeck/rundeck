@@ -1,5 +1,5 @@
 package rundeck
-import com.dtolabs.rundeck.app.support.BaseNodeFilters
+
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
 
@@ -21,6 +21,8 @@ class ScheduledExecution extends ExecutionContext {
     String year = "*"
     String crontabString
     String uuid;
+    String logOutputThreshold;
+    String logOutputThresholdAction;
 
     Workflow workflow
 
@@ -93,6 +95,8 @@ class ScheduledExecution extends ExecutionContext {
         timeout(maxSize: 256, blank: true, nullable: true,)
         retry(maxSize: 256, blank: true, nullable: true,)
         crontabString(bindable: true,nullable: true)
+        logOutputThreshold(maxSize: 256, blank:true, nullable: true)
+        logOutputThresholdAction(maxSize: 256, blank:true, nullable: true,inList: ['abort','fail','truncate'])
     }
 
     static mapping = {
@@ -142,6 +146,10 @@ class ScheduledExecution extends ExecutionContext {
         }
         map.description=description
         map.loglevel=loglevel
+        if(logOutputThreshold){
+            map.loglimit=logOutputThreshold
+            map.loglimitAction=logOutputThresholdAction
+        }
         map.project=project
         if(timeout){
             map.timeout=timeout
@@ -213,6 +221,11 @@ class ScheduledExecution extends ExecutionContext {
         se.groupPath=data['group']?data['group']:null
         se.description=data.description
         se.loglevel=data.loglevel?data.loglevel:'INFO'
+
+        if(data.loglimit){
+            se.logOutputThreshold=data.loglimit
+            se.logOutputThresholdAction=data.loglimitAction
+        }
         se.project=data.project
         if (data.uuid) {
             se.uuid = data.uuid
@@ -347,6 +360,42 @@ class ScheduledExecution extends ExecutionContext {
             se.notifications=nots
         }
         return se
+    }
+
+    /**
+     * Parse the logOutputThreshold setting
+     * @return map indicating the threshold values: [perNode:true/false, maxLines:Long, maxSizeBytes:Long]
+     */
+    public static Map parseLogOutputThreshold(String logOutputThreshold){
+        def map = null
+        def units = [g: 1024 * 1024 * 1024, k: 1024, m: 1024 * 1024, b: 1]
+        if (logOutputThreshold) {
+            def m = logOutputThreshold =~ /(\d+)((?i)[gmk]?b?)?(\/node)?/
+            if (m.matches()) {
+                def count = m.group(1)
+                def unit = m.group(2)
+                def node = m.group(3)
+                def multi = unit ? units[unit[0]?.toLowerCase()] ?: 1 : 1
+                def value = 0
+                try {
+                    value = Long.parseLong(count) * multi
+                } catch (NumberFormatException e) {
+                    return null
+                }
+                if (unit) {
+
+                    map = [
+                            maxSizeBytes: value
+                    ]
+                } else {
+                    map = [
+                            perNode : node == '/node',
+                            maxLines: value
+                    ]
+                }
+            }
+        }
+        map
     }
 
     public clearFilterFields(){
@@ -484,7 +533,7 @@ class ScheduledExecution extends ExecutionContext {
         if(params.crontabString && 'true'==params.useCrontabString){
             //parse the crontabString
             if(parseCrontabString(params.crontabString)){
-                return 
+                return
             }
         }
         def everyDay = params['everyDayOfWeek']
@@ -550,7 +599,7 @@ class ScheduledExecution extends ExecutionContext {
                     if(val instanceof List){
                         result[crontabname] = val[0] // val seems to be a one element list
                     }else if(val instanceof String){
-                        result[crontabname] = val 
+                        result[crontabname] = val
                     }
                 }
             }
@@ -615,7 +664,7 @@ class ScheduledExecution extends ExecutionContext {
             }
             return aprop
         }
-    
+
   def Map timeAndDateAsBooleanMap() {
       def result = [ : ]
       if (!this.month.equals("*") && !crontabSpecialValue(this.month.replaceAll(/-/,''))) {

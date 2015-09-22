@@ -23,6 +23,7 @@ rundeckapp/target-eclipse
 rundeckapp/var/logs/*
 rundeckapp/var/tmp/*
 packaging/dist
+packaging/rpmdist
 docs/*/manpages/man*/*.gz
 docs/*/manpages/man*/*.1
 docs/*/manpages/man*/*.5
@@ -32,3 +33,5 @@ tmp/**
 test/api/*.output
 core/src/main/resources/META-INF/com/dtolabs/rundeck/core/application.properties
 /local/
+grails
+scratch

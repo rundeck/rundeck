@@ -14,6 +14,7 @@ import rundeck.ScheduledExecution
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
+import rundeck.services.execution.ThresholdValue
 
 class ExecutionJob implements InterruptableJob {
 
@@ -42,6 +43,7 @@ class ExecutionJob implements InterruptableJob {
      */
     long finalizeRetryDelay = DEFAULT_FINALIZE_RETRY_DELAY
     def boolean wasInterrupted
+    def boolean wasThreshold
     def boolean wasTimeout
     def grailsApplication
     static triggers = {
@@ -118,7 +120,7 @@ class ExecutionJob implements InterruptableJob {
             log.error("Failed execution ${initMap.execution.id} : ${t.message?t.message:'no message'}",t)
         }
         saveState(context.jobDetail.jobDataMap,initMap.executionService, initMap.execution ? initMap.execution : (Execution) null, success,
-            wasInterrupted, wasTimeout, initMap.isTemp,
+            wasInterrupted, wasTimeout,initMap.isTemp,
                 initMap.scheduledExecutionId ? initMap.scheduledExecutionId : -1L,initMap,
                 result?.execmap)
     }
@@ -250,7 +252,7 @@ class ExecutionJob implements InterruptableJob {
                        ScheduledExecution scheduledExecution , long timeout, Map secureOpts ,
                        Map secureOptsExposed , int retryAttempt=0) {
 
-        def success = false
+        def success = true
         def Map execmap
         try {
             execmap = executionService.executeAsyncBegin(framework, authContext, execution, scheduledExecution,
@@ -270,6 +272,8 @@ class ExecutionJob implements InterruptableJob {
         int killcount = 0;
         def killLimit = 100
         def ServiceThreadBase thread = execmap.thread
+        def ThresholdValue threshold = execmap.threshold
+        def boolean stop=false
         while (thread.isAlive()) {
             try {
                 thread.join(1000)
@@ -281,8 +285,15 @@ class ExecutionJob implements InterruptableJob {
                     && (System.currentTimeMillis() - startTime) > timeoutms) {
                 wasTimeout=true
                 interrupt()
+                success=false
+            }else if(threshold && threshold.isThresholdExceeded()){
+                if(threshold.action in ['abort','fail']) {
+                    wasThreshold = true
+                    success = false
+                    stop = true
+                }
             }
-            if (wasInterrupted) {
+            if (wasInterrupted || stop) {
                 if (killcount < killLimit) {
                     //send wave after wave
                     thread.abort()
@@ -307,9 +318,9 @@ class ExecutionJob implements InterruptableJob {
         }
 
         log.debug("ExecutionJob: execution successful? " + success + ", interrupted? " + wasInterrupted+", " +
-                "timeout? "+wasTimeout)
+                "timeout? "+wasTimeout +" threshold? "+threshold)
 
-        return [success: thread.isSuccessful(), execmap: execmap]
+        return [success: success && thread.isSuccessful(), execmap: execmap]
 
     }
     /**
@@ -362,7 +373,17 @@ class ExecutionJob implements InterruptableJob {
                   boolean isTemp, long scheduledExecutionId=-1, Map initMap, Map execmap) {
         Map<String,Object> failedNodes=extractFailedNodes(execmap)
         Set<String> succeededNodes=extractSucceededNodes(execmap)
-
+        if(wasThreshold){
+            if(execmap.threshold?.action=='abort'){
+                //mark as aborted
+                _interrupted=true
+                success=false
+            }else if(execmap.threshold?.action=='fail'){
+                //don't mark as aborted
+                _interrupted=false
+                success=false
+            }
+        }
         //save Execution state
         def dateCompleted = new Date()
         def resultMap = [

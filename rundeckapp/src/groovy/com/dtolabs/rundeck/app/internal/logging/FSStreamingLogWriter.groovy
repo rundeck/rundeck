@@ -1,7 +1,6 @@
 package com.dtolabs.rundeck.app.internal.logging
 
 import com.dtolabs.rundeck.core.logging.LogEvent
-import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 
 /*
@@ -30,6 +29,11 @@ class FSStreamingLogWriter implements StreamingLogWriter {
     private Map<String, String> defaultMeta
     private OutputLogFormat formatter
     private boolean started
+    private volatile long bytesWritten
+
+    public long getBytesWritten(){
+        return bytesWritten
+    }
 
     /**
      * Create a FSStreamingLogWriter
@@ -44,14 +48,19 @@ class FSStreamingLogWriter implements StreamingLogWriter {
         this.defaultMeta = defaultMeta
         this.formatter = formatter
         started = false
+        bytesWritten = 0
     }
-
+    private write(String val) {
+        def bytes = val.bytes
+        output.write(bytes)
+        bytesWritten += bytes.length
+    }
     @Override
     void openStream() throws IOException{
         synchronized (this) {
             if (!started) {
-                output << formatter.outputBegin()
-                output << lineSep
+                write(formatter.outputBegin())
+                write(lineSep)
                 started = true
             }
         }
@@ -64,16 +73,16 @@ class FSStreamingLogWriter implements StreamingLogWriter {
                 throw new IllegalStateException("output was closed")
             }
             def event1 = formatter.outputEvent(new DefaultLogEvent(event, defaultMeta))
-            output << event1
-            output << lineSep
+            write(event1)
+            write(lineSep)
         }
     }
 
     void close() {
         synchronized (this) {
             if (null != output) {
-                output << formatter.outputFinish()
-                output << lineSep
+                write(formatter.outputFinish())
+                write(lineSep)
                 output.flush()
                 output.close()
                 output = null

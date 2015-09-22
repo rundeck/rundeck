@@ -270,6 +270,27 @@
         </tr>
     </g:if>
     <g:if test="${execdata instanceof rundeck.ScheduledExecution}">
+
+        <g:if test="${execdata.logOutputThreshold}">
+            <tr>
+                <td>
+                    <g:message code="scheduledExecution.property.logOutputThreshold.label" />
+                </td>
+                <td>
+                    <span title="${message(code:'scheduledExecution.property.logOutputThreshold.description')}">
+                        <code><g:enc>${execdata.logOutputThreshold}</g:enc></code>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <g:message code="scheduledExecution.property.logOutputThresholdAction.label" />
+                </td>
+                <td>
+                    <g:enc><g:message code="scheduledExecution.property.logOutputThresholdAction.${execdata.logOutputThresholdAction}.label"/></g:enc>
+                </td>
+            </tr>
+        </g:if>
         <tr>
             <td>
                 <span class="jobuuid desc">UUID:</span>
