@@ -142,7 +142,10 @@ class JobsXMLCodec {
         }
         if(map.logging){
             map.loglimit = map.logging.remove('limit')
-            map.loglimitAction=map.logging.remove('limitAction')?:'fail'
+            map.loglimitAction=map.logging.remove('limitAction')?:'halt'
+            if(map.logging.status){
+                map.loglimitStatus=map.logging.remove('status')
+            }
             map.remove('logging')
         }
         //convert options:[option:[]] into options:[]
@@ -450,7 +453,10 @@ class JobsXMLCodec {
         }
         if(map.loglimit){
             map.logging=BuilderUtil.toAttrMap('limit',map.remove('loglimit'))
-            BuilderUtil.addAttribute(map.logging,'limitAction',map.remove('loglimitAction')?:'fail')
+            BuilderUtil.addAttribute(map.logging,'limitAction',map.remove('loglimitAction')?:'halt')
+            if(map.loglimitStatus){
+                BuilderUtil.addAttribute(map.logging,'status',map.remove('loglimitStatus'))
+            }
         }
         if(map.schedule){
             BuilderUtil.makeAttribute(map.schedule.time,'seconds')

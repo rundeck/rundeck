@@ -7,7 +7,7 @@ class ScheduledExecution extends ExecutionContext {
     Long id
     SortedSet<Option> options
     static hasMany = [executions:Execution,options:Option,notifications:Notification]
-    
+
     String groupPath
     String userRoleList
     String jobName
@@ -23,6 +23,7 @@ class ScheduledExecution extends ExecutionContext {
     String uuid;
     String logOutputThreshold;
     String logOutputThresholdAction;
+    String logOutputThresholdStatus;
 
     Workflow workflow
 
@@ -116,7 +117,8 @@ class ScheduledExecution extends ExecutionContext {
         scheduleEnabled(nullable: true)
         executionEnabled(nullable: true)
         logOutputThreshold(maxSize: 256, blank:true, nullable: true)
-        logOutputThresholdAction(maxSize: 256, blank:true, nullable: true,inList: ['abort','fail','truncate'])
+        logOutputThresholdAction(maxSize: 256, blank:true, nullable: true,inList: ['halt','truncate'])
+        logOutputThresholdStatus(maxSize: 256, blank:true, nullable: true)
     }
 
     static mapping = {
@@ -173,6 +175,9 @@ class ScheduledExecution extends ExecutionContext {
         if(logOutputThreshold){
             map.loglimit=logOutputThreshold
             map.loglimitAction=logOutputThresholdAction
+            if(logOutputThresholdStatus){
+                map.loglimitStatus=logOutputThresholdStatus
+            }
         }
         map.project=project
         if(timeout){
@@ -259,7 +264,8 @@ class ScheduledExecution extends ExecutionContext {
 
         if(data.loglimit){
             se.logOutputThreshold=data.loglimit
-            se.logOutputThresholdAction=data.loglimitAction
+            se.logOutputThresholdAction = data.loglimitAction
+            se.logOutputThresholdStatus = data.loglimitStatus?:'fail'
         }
         se.project=data.project
         if (data.uuid) {
