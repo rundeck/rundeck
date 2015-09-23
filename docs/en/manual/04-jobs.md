@@ -300,8 +300,7 @@ The syntax of the value you enter determines the type of limit:
 
 And one of three actions can be performed if the limit is exceeded:
 
-* Fail - the job will halt with Failure status
-* Abort - the job will halt with Aborted status
+* Halt - the job will halt with Failure or Aborted status
 * Truncate and Continue - the job will not halt, but no more log output will be produced.
 
 ![Job Log limit action](../figures/jobs-loglimit-action.png)
