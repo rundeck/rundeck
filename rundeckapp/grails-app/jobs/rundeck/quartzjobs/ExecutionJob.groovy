@@ -15,6 +15,7 @@ import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
 import rundeck.services.execution.ThresholdValue
+import rundeck.services.logging.LoggingThreshold
 
 class ExecutionJob implements InterruptableJob {
 
@@ -287,7 +288,7 @@ class ExecutionJob implements InterruptableJob {
                 interrupt()
                 success=false
             }else if(threshold && threshold.isThresholdExceeded()){
-                if(threshold.action in ['abort','fail']) {
+                if(threshold.action == LoggingThreshold.ACTION_HALT) {
                     wasThreshold = true
                     success = false
                     stop = true
@@ -374,11 +375,11 @@ class ExecutionJob implements InterruptableJob {
         Map<String,Object> failedNodes=extractFailedNodes(execmap)
         Set<String> succeededNodes=extractSucceededNodes(execmap)
         if(wasThreshold){
-            if(execmap.threshold?.action=='abort'){
+            if(initMap.scheduledExecution?.logOutputThresholdStatus=='aborted'){
                 //mark as aborted
                 _interrupted=true
                 success=false
-            }else if(execmap.threshold?.action=='fail'){
+            }else {
                 //don't mark as aborted
                 _interrupted=false
                 success=false

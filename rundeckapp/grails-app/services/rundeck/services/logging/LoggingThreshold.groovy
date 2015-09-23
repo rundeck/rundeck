@@ -11,8 +11,7 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
     public static final String TOTAL_LINES = "lines"
     public static final String LINES_PER_NODE = "linesPerNode"
     public static final String TOTAL_FILE_SIZE = "size"
-    public static final String ACTION_FAIL = "fail"
-    public static final String ACTION_ABORT = "abort"
+    public static final String ACTION_HALT = "halt"
     public static final String ACTION_TRUNCATE = "truncate"
     Long maxValue
     ValueHolder<Long> valueHolder
@@ -79,15 +78,8 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
     /**
      * @return true if abort action is set
      */
-    boolean isAbortOnLimitReached() {
-        action == ACTION_ABORT
-    }
-
-    /**
-     * @return true if fail action is set
-     */
-    boolean isFailOnLimitReached() {
-        action == ACTION_FAIL
+    boolean isHaltOnLimitReached() {
+        action == ACTION_HALT
     }
 
     /**
