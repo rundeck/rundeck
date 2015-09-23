@@ -897,23 +897,26 @@ function getCurSEID(){
         </label>
 
         <div class="${fieldColShortSize}">
-            <g:set var="outputThresholdActionsKeys"
-                   value="${["fail","abort","truncate"]}"/>
-            <g:set var="outputThresholdActionsIcons" value="${[fail: 'minus-sign',abort:'remove-circle',truncate:'play-circle']}"/>
-            <g:set var="outputThresholdActionsColor" value="${[fail: 'text-danger',abort:'text-muted',truncate:'text-success']}"/>
-            <g:set var="outputThresholdActions"
-                   value="${outputThresholdActionsKeys.collect{
-                       message(code:'scheduledExecution.property.logOutputThresholdAction.'+it+'.label',default:it)
-                   }}"/>
+            <label class="radio" title="${message(code: "scheduledExecution.property.logOutputThresholdAction.halt.description")}">
+                <g:radio name="logOutputThresholdAction" value="halt" checked="${!scheduledExecution?.logOutputThresholdAction || scheduledExecution?.logOutputThresholdAction=='halt'}"/>
 
-            <g:each in="${outputThresholdActionsKeys}" var="actionName">
-                <label class="radio" title="${message(code: "scheduledExecution.property.logOutputThresholdAction.${actionName}.description")}">
-                    <g:radio name="logOutputThresholdAction" value="${actionName}" checked="${scheduledExecution?.logOutputThresholdAction==actionName}"/>
+                <g:message code="scheduledExecution.property.logOutputThresholdAction.halt.label"/>
+            </label>
+            <div class="input-group">
+                <g:select
+                    class="form-control"
+                        name="logOutputThresholdStatus" keys="['failed','aborted']" from="['Failed','Aborted']"
+                          value="${scheduledExecution?.logOutputThresholdStatus?:'failed'}"/>
+                <g:helpTooltip code="scheduledExecution.property.logOutputThresholdAction.halt.description" placement="left"/>
 
-                    <g:message code="scheduledExecution.property.logOutputThresholdAction.${actionName}.label"/>
-                    <i class="glyphicon glyphicon-${outputThresholdActionsIcons[actionName]} ${outputThresholdActionsColor[actionName]}"></i>
-                </label>
-            </g:each>
+            </div>
+
+            <label class="radio" title="${message(code: "scheduledExecution.property.logOutputThresholdAction.truncate.description")}">
+                <g:radio name="logOutputThresholdAction" value="truncate" checked="${scheduledExecution?.logOutputThresholdAction=='truncate'}"/>
+
+                <g:message code="scheduledExecution.property.logOutputThresholdAction.truncate.label"/>
+            </label>
+
 
             <span class="help-block">
                 <g:message code="scheduledExecution.property.logOutputThresholdAction.description" default=""/>
