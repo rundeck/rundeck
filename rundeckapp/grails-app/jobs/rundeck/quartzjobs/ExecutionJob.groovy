@@ -17,6 +17,7 @@ import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
 import rundeck.services.execution.ThresholdValue
+import rundeck.services.logging.LoggingThreshold
 
 class ExecutionJob implements InterruptableJob {
 
@@ -327,7 +328,7 @@ class ExecutionJob implements InterruptableJob {
                 interrupt()
                 success=false
             }else if(threshold && threshold.isThresholdExceeded()){
-                if(threshold.action in ['abort','fail']) {
+                if(threshold.action == LoggingThreshold.ACTION_HALT) {
                     wasThreshold = true
                     success = false
                     stop = true
@@ -435,23 +436,17 @@ class ExecutionJob implements InterruptableJob {
         Map<String, Object> failedNodes = extractFailedNodes(execmap)
         Set<String> succeededNodes = extractSucceededNodes(execmap)
 
-        if(wasThreshold){
-            if(execmap.threshold?.action=='abort'){
-                //mark as aborted
-                _interrupted=true
-                success=false
-            }else if(execmap.threshold?.action=='fail'){
-                //don't mark as aborted
-                _interrupted=false
-                success=false
-            }
+        if(wasThreshold && execmap.threshold?.action==LoggingThreshold.ACTION_HALT){
+            //use custom status or fail
+            success=false
+            statusString = initMap.scheduledExecution?.logOutputThresholdStatus?:'failed'
         }
         //save Execution state
         def dateCompleted = new Date()
         def resultMap = [
                 status        : statusString?: success? ExecutionState.succeeded.toString():ExecutionState.failed.toString(),
                 dateCompleted : dateCompleted,
-                cancelled     : _interrupted && !timedOut,
+                cancelled     : _interrupted && !timedOut && !wasThreshold,
                 timedOut      : timedOut,
                 failedNodes   : failedNodes?.keySet(),
                 failedNodesMap: failedNodes,
