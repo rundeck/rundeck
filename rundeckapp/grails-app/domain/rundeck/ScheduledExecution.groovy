@@ -98,7 +98,7 @@ class ScheduledExecution extends ExecutionContext {
         crontabString(bindable: true,nullable: true)
         logOutputThreshold(maxSize: 256, blank:true, nullable: true)
         logOutputThresholdAction(maxSize: 256, blank:true, nullable: true,inList: ['halt','truncate'])
-        logOutputThresholdStatus(maxSize: 256, blank:true, nullable: true)
+        logOutputThresholdStatus(maxSize: 256, blank:true, nullable: true, inList: ['failed','aborted'])
     }
 
     static mapping = {
@@ -230,7 +230,7 @@ class ScheduledExecution extends ExecutionContext {
         if(data.loglimit){
             se.logOutputThreshold=data.loglimit
             se.logOutputThresholdAction = data.loglimitAction
-            se.logOutputThresholdStatus = data.loglimitStatus?:'fail'
+            se.logOutputThresholdStatus = data.loglimitStatus?:'failed'
         }
         se.project=data.project
         if (data.uuid) {
