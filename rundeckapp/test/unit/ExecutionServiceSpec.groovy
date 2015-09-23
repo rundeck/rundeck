@@ -13,6 +13,7 @@ import rundeck.services.JobStateService
 import rundeck.services.ReportService
 import rundeck.services.StorageService
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Created by greg on 2/17/15.
@@ -89,6 +90,7 @@ class ExecutionServiceSpec extends Specification {
         e2!=null
     }
 
+    @Unroll
     def "log execution state"(String statusString, String resultStatus, boolean issuccess,boolean iscancelled,boolean istimedout,boolean willretry) {
         given:
         def params = [:]
@@ -131,16 +133,16 @@ class ExecutionServiceSpec extends Specification {
         params.dateCompleted != null
 
         where:
-        statusString   | resultStatus | issuccess | iscancelled | istimedout | willretry
-        'succeeded'    | 'succeed'    | true      | false       | false      | false
-        'true'         | 'succeed'    | true      | false       | false      | false
-        'custom'       | 'other'      | false     | false       | false      | false
-        'other status' | 'other'      | false     | false       | false      | false
-        'false'        | 'fail'       | false     | false       | false      | false
-        'failed'       | 'fail'       | false     | false       | false      | false
-        'failed'       | 'cancel'     | false     | true        | false      | false
-        'failed'       | 'timeout'    | false     | false       | true       | false
-        'failed'       | 'retry'      | false     | false       | false      | true
+        statusString        | resultStatus | issuccess | iscancelled | istimedout | willretry
+        'succeeded'         | 'succeed'    | true      | false       | false      | false
+        'true'              | 'succeed'    | true      | false       | false      | false
+        'custom'            | 'other'      | false     | false       | false      | false
+        'other status'      | 'other'      | false     | false       | false      | false
+        'false'             | 'fail'       | false     | false       | false      | false
+        'failed'            | 'fail'       | false     | false       | false      | false
+        'aborted'           | 'cancel'     | false     | true        | false      | false
+        'timedout'          | 'timeout'    | false     | false       | true       | false
+        'failed-with-retry' | 'retry'      | false     | false       | false      | true
     }
 
     def "createJobReferenceContext secure opts blank values"(){

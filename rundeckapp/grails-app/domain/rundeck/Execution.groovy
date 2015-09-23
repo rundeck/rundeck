@@ -122,7 +122,7 @@ class Execution extends ExecutionContext {
                                 willRetry ? ExecutionService.EXECUTION_FAILED_WITH_RETRY :
                                         timedOut ? ExecutionService.EXECUTION_TIMEDOUT :
                                                 (status in ['false', 'failed']) ? ExecutionService.EXECUTION_FAILED :
-                                                        ExecutionService.EXECUTION_STATE_OTHER
+                                                        isCustomStatusString(status)? ExecutionService.EXECUTION_STATE_OTHER : status.toLowerCase()
     }
 
     public boolean hasExecutionEnabled() {
