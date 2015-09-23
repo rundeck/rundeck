@@ -153,7 +153,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals "wrong name", "test job 1", doc[0].name
         assertEquals "wrong timeout value", "120m", doc[0].timeout
     }
-    void testEncodeLoglimit() {
+    void testEncodeLoglimitNoStatus() {
         def Yaml yaml = new Yaml()
         ScheduledExecution se = new ScheduledExecution([
             jobName: 'test job 1',
@@ -164,7 +164,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
                 new CommandExec([adhocLocalString: "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", description: 'test2']),
             ]]),
                 logOutputThreshold:'20MB',
-                logOutputThresholdAction:'fail'
+                logOutputThresholdAction:'halt',
         ])
         def jobs1 = [se]
         def  ymlstr = JobsYAMLCodec.encode(jobs1)
@@ -176,7 +176,35 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertNotNull doc
         assertEquals "wrong number of jobs", 1, doc.size()
         assertEquals "wrong loglimit", "20MB", doc[0].loglimit
-        assertEquals "wrong loglimitAction", "fail", doc[0].loglimitAction
+        assertEquals "wrong loglimitAction", "halt", doc[0].loglimitAction
+        assertEquals "wrong loglimitAction", null, doc[0].loglimitStatus
+    }
+    void testEncodeLoglimitWithStatus() {
+        def Yaml yaml = new Yaml()
+        ScheduledExecution se = new ScheduledExecution([
+            jobName: 'test job 1',
+            description: 'test descrip',
+            loglevel: 'INFO',
+            project: 'test1',
+            workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [new CommandExec([adhocRemoteString: 'test script',description: 'test1']),
+                new CommandExec([adhocLocalString: "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", description: 'test2']),
+            ]]),
+                logOutputThreshold:'20MB',
+                logOutputThresholdAction:'halt',
+                logOutputThresholdStatus:'mystatus',
+        ])
+        def jobs1 = [se]
+        def  ymlstr = JobsYAMLCodec.encode(jobs1)
+        assertNotNull ymlstr
+        assertTrue ymlstr instanceof String
+
+
+        def doc = yaml.load(ymlstr)
+        assertNotNull doc
+        assertEquals "wrong number of jobs", 1, doc.size()
+        assertEquals "wrong loglimit", "20MB", doc[0].loglimit
+        assertEquals "wrong loglimitAction", "halt", doc[0].loglimitAction
+        assertEquals "wrong loglimitAction", "mystatus", doc[0].loglimitStatus
     }
     void testEncodeNotificationPlugin() {
         def Yaml yaml = new Yaml()
@@ -872,7 +900,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
   name: test job 1
   group: my group
   loglimit: '20MB'
-  loglimitAction: 'fail'
+  loglimitAction: 'halt'
 """
         def list = JobsYAMLCodec.decode(ymlstr1)
         assertNotNull list
@@ -881,7 +909,36 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertTrue(obj instanceof ScheduledExecution)
         ScheduledExecution se = (ScheduledExecution) list[0]
         assertEquals "wrong logOutputThreshold", "20MB", se.logOutputThreshold
-        assertEquals "wrong logOutputThresholdAction", "fail", se.logOutputThresholdAction
+        assertEquals "wrong logOutputThresholdAction", "halt", se.logOutputThresholdAction
+        assertEquals "wrong logOutputThresholdAction", "failed", se.logOutputThresholdStatus
+
+    }
+    void testDecodeLoglimitCustomStatus() {
+        def ymlstr1 = """- id: null
+  project: test1
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - exec: test script
+      description: test1
+  description: ''
+  name: test job 1
+  group: my group
+  loglimit: '20MB'
+  loglimitAction: 'halt'
+  loglimitStatus: 'astatus'
+"""
+        def list = JobsYAMLCodec.decode(ymlstr1)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+        assertEquals "wrong logOutputThreshold", "20MB", se.logOutputThreshold
+        assertEquals "wrong logOutputThresholdAction", "halt", se.logOutputThresholdAction
+        assertEquals "wrong logOutputThresholdAction", "astatus", se.logOutputThresholdStatus
 
     }
     void testDecodeTimeout() {

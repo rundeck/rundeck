@@ -1,6 +1,6 @@
 package rundeck.services.logging
 
-import junit.framework.Assert
+import org.junit.Assert
 import rundeck.services.execution.ValueHolder
 
 /**
@@ -48,28 +48,18 @@ class LoggingThresholdTest extends GroovyTestCase {
         Assert.assertEquals(1, t.maxValue)
     }
 
-    void testActionAbort() {
-        def t = LoggingThreshold.fromMap([maxLines: 1, perNode: true], "abort")
+    void testActionHalt() {
+        def t = LoggingThreshold.fromMap([maxLines: 1, perNode: true], "halt")
         Assert.assertNotNull t
-        Assert.assertTrue(t.abortOnLimitReached)
         Assert.assertFalse(t.truncateOnLimitReached)
-        Assert.assertFalse(t.failOnLimitReached)
-    }
-
-    void testActionFail() {
-        def t = LoggingThreshold.fromMap([maxLines: 1, perNode: true], "fail")
-        Assert.assertNotNull t
-        Assert.assertFalse(t.abortOnLimitReached)
-        Assert.assertFalse(t.truncateOnLimitReached)
-        Assert.assertTrue(t.failOnLimitReached)
+        Assert.assertTrue(t.haltOnLimitReached)
     }
 
     void testActionTruncate() {
         def t = LoggingThreshold.fromMap([maxLines: 1, perNode: true], "truncate")
         Assert.assertNotNull t
-        Assert.assertFalse(t.abortOnLimitReached)
+        Assert.assertFalse(t.haltOnLimitReached)
         Assert.assertTrue(t.truncateOnLimitReached)
-        Assert.assertFalse(t.failOnLimitReached)
     }
 
     void testWatcherForTypeLinesPerNode() {

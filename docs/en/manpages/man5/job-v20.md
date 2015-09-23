@@ -305,10 +305,10 @@ An optional logging limit, and the action to perform if the limit is reached.
 (See [Jobs - Log Limit](../manual/jobs.html#log-limit)).
 
 ~~~~ {.xml}
-<logging limit='1KB' limitAction='abort' />
+<logging limit='1KB' limitAction='halt' status='aborted' />
 ~~~~
 
-If no `limitAction` is set, it will default to a value of `fail`.
+If no `limitAction` is set, it will default to a value of `halt` and a status of `failed`.
 
 The syntax for `limit` is:
 
@@ -318,9 +318,13 @@ The syntax for `limit` is:
 
 The allowed values for `limitAction` are:
 
-* `fail` - halt and fail the job
-* `abort` - halt and abort the job
+* `halt` - halt the job with an optional `status`
 * `truncate` - do not halt the job, and truncate all further output
+
+The allowed values for `status` are:
+
+* `failed` - halt and fail the job
+* `aborted` - halt and abort the job
 
 
 ## schedule

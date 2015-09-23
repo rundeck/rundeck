@@ -117,11 +117,18 @@ In addition, these optional entries can be present:
 
 :    The action to perform if the `loglimit` value is exceeded.
      If `loglimit` is sepcified, but no `loglimitAction` is set, it will default to a 
-     value of `fail`. Allowed values:
+     value of `halt`. Allowed values:
 
-    * `fail` - halt and fail the job (default)
-    * `abort` - halt and abort the job
+    * `halt` - halt and fail the job (default)
     * `truncate` - do not halt the job, and truncate all further output
+
+`loglimitStatus`
+
+:    The status for the Job when halted. If no `loglimitStatus` is set, it will default to a 
+     value of `failed`. Allowed values:
+
+    * `failed`
+    * `aborted`
     
 [`options`](#options)
 

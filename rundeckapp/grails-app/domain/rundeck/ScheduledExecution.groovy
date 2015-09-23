@@ -23,6 +23,7 @@ class ScheduledExecution extends ExecutionContext {
     String uuid;
     String logOutputThreshold;
     String logOutputThresholdAction;
+    String logOutputThresholdStatus;
 
     Workflow workflow
 
@@ -96,7 +97,8 @@ class ScheduledExecution extends ExecutionContext {
         retry(maxSize: 256, blank: true, nullable: true,)
         crontabString(bindable: true,nullable: true)
         logOutputThreshold(maxSize: 256, blank:true, nullable: true)
-        logOutputThresholdAction(maxSize: 256, blank:true, nullable: true,inList: ['abort','fail','truncate'])
+        logOutputThresholdAction(maxSize: 256, blank:true, nullable: true,inList: ['halt','truncate'])
+        logOutputThresholdStatus(maxSize: 256, blank:true, nullable: true, inList: ['failed','aborted'])
     }
 
     static mapping = {
@@ -149,6 +151,9 @@ class ScheduledExecution extends ExecutionContext {
         if(logOutputThreshold){
             map.loglimit=logOutputThreshold
             map.loglimitAction=logOutputThresholdAction
+            if(logOutputThresholdStatus){
+                map.loglimitStatus=logOutputThresholdStatus
+            }
         }
         map.project=project
         if(timeout){
@@ -224,7 +229,8 @@ class ScheduledExecution extends ExecutionContext {
 
         if(data.loglimit){
             se.logOutputThreshold=data.loglimit
-            se.logOutputThresholdAction=data.loglimitAction
+            se.logOutputThresholdAction = data.loglimitAction
+            se.logOutputThresholdStatus = data.loglimitStatus?:'failed'
         }
         se.project=data.project
         if (data.uuid) {
