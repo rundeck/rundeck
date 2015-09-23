@@ -471,7 +471,7 @@ class ExecutionJobTest  {
     }
 
     @Test
-    void testSaveStateThresholdCustomStatus(){
+    void testSaveStateThresholdFailedStatus(){
         def job = new ExecutionJob()
         job.finalizeRetryMax=1
         job.finalizeRetryDelay=0
@@ -479,7 +479,7 @@ class ExecutionJobTest  {
         def mockes = new GrailsMock(ExecutionService)
 
         def expectresult= [
-                status: 'custom',
+                status: 'false',
                 cancelled: false,
                 failedNodes: null,
                 failedNodesMap: null,
@@ -504,13 +504,53 @@ class ExecutionJobTest  {
         def es = mockes.createMock()
 
         job.wasThreshold=true
-        def initMap = [scheduledExecution: [logOutputThresholdStatus:'custom']]
+        def initMap = [scheduledExecution: [logOutputThresholdStatus:'failed']]
 
-        job.saveState(null,es,execution,true,false,false,true,null,-1, initMap,execMap)
+        job.saveState(null,es,execution,true,false,false,true,-1, initMap,execMap)
         Assert.assertEquals(true,saveStateCalled)
         Assert.assertEquals(true,testPass)
     }
 
+    @Test
+    void testSaveStateThresholdAbortedStatus(){
+        def job = new ExecutionJob()
+        job.finalizeRetryMax=1
+        job.finalizeRetryDelay=0
+        def execution = setupExecution(null, new Date(), new Date())
+        def mockes = new GrailsMock(ExecutionService)
+
+        def expectresult= [
+                status: 'false',
+                cancelled: true,
+                failedNodes: null,
+                failedNodesMap: null,
+        ]
+        def execMap=[
+                failedNodes: null,
+                threshold: [action:'halt']
+        ]
+
+        boolean saveStateCalled=false
+        boolean testPass=false
+        mockes.demand.saveExecutionState(1..1){ schedId, exId, Map props, Map execmap, Map retryContext->
+            saveStateCalled=true
+            Assert.assertNull(schedId)
+            Assert.assertEquals(execution.id,exId)
+            expectresult.each {k,v->
+                Assert.assertEquals("result property ${k} expected: ${v} was ${props[k]}",v,props[k])
+            }
+            testPass=true
+        }
+
+        def es = mockes.createMock()
+
+        job.wasThreshold=true
+        def initMap = [scheduledExecution: [logOutputThresholdStatus:'aborted']]
+
+        job.saveState(null,es,execution,true,false,false,true,-1, initMap,execMap)
+        Assert.assertEquals(true,saveStateCalled)
+        Assert.assertEquals(true,testPass)
+    }
     @Test
     void testSaveStateWithJob(){
         def job = new ExecutionJob()

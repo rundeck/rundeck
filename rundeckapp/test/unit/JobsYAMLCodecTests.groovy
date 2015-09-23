@@ -910,7 +910,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         ScheduledExecution se = (ScheduledExecution) list[0]
         assertEquals "wrong logOutputThreshold", "20MB", se.logOutputThreshold
         assertEquals "wrong logOutputThresholdAction", "halt", se.logOutputThresholdAction
-        assertEquals "wrong logOutputThresholdAction", "fail", se.logOutputThresholdStatus
+        assertEquals "wrong logOutputThresholdAction", "failed", se.logOutputThresholdStatus
 
     }
     void testDecodeLoglimitCustomStatus() {
