@@ -158,6 +158,7 @@ In addition, these optional entries can be present:
 
     * `failed`
     * `aborted`
+    * (any string)
     
 [`options`](#options)
 

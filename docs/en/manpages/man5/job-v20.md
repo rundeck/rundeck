@@ -352,10 +352,11 @@ The allowed values for `limitAction` are:
 * `halt` - halt the job with an optional `status`
 * `truncate` - do not halt the job, and truncate all further output
 
-The allowed values for `status` are:
+The allowed values for `status` are any status string:
 
 * `failed` - halt and fail the job
 * `aborted` - halt and abort the job
+* `<anything>` - a custom status string
 
 
 ## schedule
