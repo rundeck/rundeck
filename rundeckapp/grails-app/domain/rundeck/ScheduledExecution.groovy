@@ -265,7 +265,7 @@ class ScheduledExecution extends ExecutionContext {
         if(data.loglimit){
             se.logOutputThreshold=data.loglimit
             se.logOutputThresholdAction = data.loglimitAction
-            se.logOutputThresholdStatus = data.loglimitStatus?:'fail'
+            se.logOutputThresholdStatus = data.loglimitStatus?:'failed'
         }
         se.project=data.project
         if (data.uuid) {

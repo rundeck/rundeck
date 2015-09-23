@@ -637,7 +637,7 @@ class JobsXMLCodecTests {
         assertNotNull jobs
         assertEquals '20MB', jobs[0].logOutputThreshold
         assertEquals 'halt', jobs[0].logOutputThresholdAction
-        assertEquals 'fail', jobs[0].logOutputThresholdStatus
+        assertEquals 'failed', jobs[0].logOutputThresholdStatus
     }
     public void testDecodeLoglimitCustomStatus(){
 
@@ -4459,7 +4459,7 @@ class JobsXMLCodecTests {
                         nodeKeepgoing: true,
                         logOutputThreshold: '20MB',
                         logOutputThresholdAction: 'halt',
-                        logOutputThresholdStatus: 'fail',
+                        logOutputThresholdStatus: 'failed',
                 )
         ]
 
@@ -4473,7 +4473,7 @@ class JobsXMLCodecTests {
         assertEquals "missing logging", 1, doc.job[0].logging.size()
         assertEquals "missing logging/@limit", '20MB', doc.job[0].logging[0].'@limit'
         assertEquals "missing logging/@limitAction", 'halt', doc.job[0].logging[0].'@limitAction'
-        assertEquals "missing logging/@status", 'fail', doc.job[0].logging[0].'@status'
+        assertEquals "missing logging/@status", 'failed', doc.job[0].logging[0].'@status'
     }
     void testEncodeLoglimitCustomStatus() {
         def XmlParser parser = new XmlParser()
