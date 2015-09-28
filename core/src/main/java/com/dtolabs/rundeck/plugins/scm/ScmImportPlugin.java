@@ -67,7 +67,9 @@ public interface ScmImportPlugin {
 
     /**
      * Return any action that is needed for post-create setup.  If not null,
-     * then the user will be forwarded to this action after plugin is configured.
+     * then the user will be forwarded to this action after plugin is configured, this should
+     * always return the setup action even if setup has already been performed, as
+     * the user may disable/reconfigure the plugin.
      *
      * @param context context map
      *

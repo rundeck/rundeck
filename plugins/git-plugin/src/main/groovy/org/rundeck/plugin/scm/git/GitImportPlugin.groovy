@@ -368,10 +368,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     Action getSetupAction(final Map<String, String> context) {
-        if (!trackedItemsSelected) {
-            return actions[ACTION_INITIALIZE_TRACKING]
-        }
-        return null
+        return actions[ACTION_INITIALIZE_TRACKING]
     }
 
     @Override
