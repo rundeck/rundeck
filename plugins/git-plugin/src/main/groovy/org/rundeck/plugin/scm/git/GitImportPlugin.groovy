@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.diff.DiffEntry
+import org.eclipse.jgit.lib.BranchTrackingStatus
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
@@ -14,6 +15,7 @@ import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.treewalk.filter.PathFilterGroup
 import org.rundeck.plugin.scm.git.imp.actions.FetchAction
 import org.rundeck.plugin.scm.git.imp.actions.ImportJobs
+import org.rundeck.plugin.scm.git.imp.actions.PullAction
 import org.rundeck.plugin.scm.git.imp.actions.SetupTracking
 
 /**
@@ -23,6 +25,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     static final Logger log = Logger.getLogger(GitImportPlugin)
     public static final String ACTION_INITIALIZE_TRACKING = 'initialize_tracking'
     public static final String ACTION_IMPORT_ALL = 'import-all'
+    public static final String ACTION_PULL = 'remote-pull'
     boolean inited
     boolean trackedItemsSelected = false
     boolean useTrackingRegex = false
@@ -69,6 +72,12 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                         "Import Changes",
                         null
 
+                ),
+
+                (ACTION_PULL) : new PullAction(
+                        ACTION_PULL,
+                        "Pull Remote Changes",
+                        "Synch incoming changes from Remote"
                 ),
 
         ]
@@ -163,11 +172,34 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             deleted = expected.size()
         }
         def state = new GitImportSynchState()
-        state.state = importNeeded ? ImportSynchState.IMPORT_NEEDED :
-                notFound ? ImportSynchState.UNKNOWN : deleted ? ImportSynchState.DELETE_NEEDED : ImportSynchState.CLEAN
+        state.importNeeded = importNeeded
+        state.notFound = notFound
+        state.deleted = deleted
 
         StringBuilder sb = new StringBuilder()
+
+        //compare to tracked branch
+        def bstat = BranchTrackingStatus.of(repo, branch)
+        state.branchTrackingStatus = bstat
+        if (bstat && bstat.behindCount > 0) {
+            state.state = ImportSynchState.REFRESH_NEEDED
+        } else if (importNeeded) {
+            state.state = ImportSynchState.IMPORT_NEEDED
+        } else if (notFound) {
+            state.state = ImportSynchState.UNKNOWN
+        } else if (deleted) {
+            state.state = ImportSynchState.DELETE_NEEDED
+        } else {
+            state.state = ImportSynchState.CLEAN
+        }
+
+        if (bstat && bstat.behindCount > 0) {
+            sb << "${bstat.behindCount} changes from remote need to be pulled"
+        }
         if (importNeeded) {
+            if (sb.length() > 0) {
+                sb << ", "
+            }
             sb << "${importNeeded} file(s) need to be imported"
         }
         if (notFound) {
@@ -349,7 +381,16 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             if (!trackedItemsSelected) {
                 return [actions[ACTION_INITIALIZE_TRACKING]]
             } else {
-                return [actions[ACTION_GIT_FETCH], actions[ACTION_IMPORT_ALL]]
+
+                def avail = []
+                def status = getStatusInternal(false)
+                if( status.state == ImportSynchState.REFRESH_NEEDED){
+                    avail << actions[ACTION_PULL]
+                }
+                if (status.state != ImportSynchState.CLEAN) {
+                    avail << actions[ACTION_IMPORT_ALL]
+                }
+                return avail
             }
         }
         return null
