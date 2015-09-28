@@ -23,7 +23,7 @@ class FetchAction extends BaseAction implements GitImportAction {
         inputView(id) {
             title "Fetch remote changes"
             buttonTitle "Fetch"
-            properties[
+            properties([
                     property {
                         string "status"
                         title "Git Status"
@@ -31,7 +31,7 @@ class FetchAction extends BaseAction implements GitImportAction {
                         renderingOption StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY, "text/x-markdown"
                         defaultValue "Fetching from remote branch: `${plugin.branch}`"
                     },
-                    ]
+                    ])
         }
     }
 
