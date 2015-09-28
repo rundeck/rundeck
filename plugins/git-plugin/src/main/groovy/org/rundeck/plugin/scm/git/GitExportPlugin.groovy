@@ -28,7 +28,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     public static final String PROJECT_COMMIT_ACTION_ID = "project-commit"
     public static final String PROJECT_PUSH_ACTION_ID = "project-push"
     public static final String PROJECT_SYNCH_ACTION_ID = "project-synch"
-    public static final String PROJECT_FETCH_ACTION_ID = "project-fetch"
 
 
     String format = SERIALIZE_FORMAT
@@ -66,11 +65,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                         "Synch with Remote",
                         "Synch incoming changes from Remote"
                 ),
-                (PROJECT_FETCH_ACTION_ID) : new FetchAction(
-                        PROJECT_FETCH_ACTION_ID,
-                        "Fetch from Remote",
-                        "Fetch incoming changes from Remote"
-                )
 
         ]
     }
@@ -176,20 +170,17 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             actionRefs JOB_COMMIT_ACTION_ID
         } else if (context.project) {
             //actions in project view
-            def status = getStatusInternal()
+            def status = getStatusInternal(false)
             if (!status.gitStatus.clean) {
-                actionRefs PROJECT_COMMIT_ACTION_ID,
-                           PROJECT_FETCH_ACTION_ID
+                actionRefs PROJECT_COMMIT_ACTION_ID
             } else if (status.state == SynchState.EXPORT_NEEDED) {
                 //need a push
-                actionRefs PROJECT_PUSH_ACTION_ID,
-                           PROJECT_FETCH_ACTION_ID
+                actionRefs PROJECT_PUSH_ACTION_ID
             } else if (status.state == SynchState.REFRESH_NEEDED) {
                 //need to fast forward
-                actionRefs PROJECT_FETCH_ACTION_ID,
-                           PROJECT_SYNCH_ACTION_ID
+                actionRefs PROJECT_SYNCH_ACTION_ID
             } else {
-                actionRefs PROJECT_FETCH_ACTION_ID
+                null
             }
         } else {
             null
@@ -199,11 +190,16 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     @Override
     ScmExportSynchState getStatus() {
-        return getStatusInternal()
+        return getStatusInternal(true)
     }
 
 
-    GitExportSynchState getStatusInternal() {
+    GitExportSynchState getStatusInternal(Boolean performFetch) {
+        //perform fetch
+        if(performFetch){
+            fetchFromRemote()
+        }
+
         Status status = git.status().call()
 
         def synchState = new GitExportSynchState()

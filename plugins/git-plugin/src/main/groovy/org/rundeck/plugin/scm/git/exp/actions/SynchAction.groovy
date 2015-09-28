@@ -20,7 +20,7 @@ class SynchAction extends BaseAction implements GitExportAction {
     @Override
     BasicInputView getInputView(GitExportPlugin plugin) {
 
-        def status = plugin.getStatusInternal()
+        def status = plugin.getStatusInternal(false)
         def props = [
                 property {
                     string "status"
@@ -80,7 +80,7 @@ Pulling from remote branch: `${plugin.branch}`"""
             final Map<String, Object> input
     ) throws ScmPluginException
     {
-        def status = plugin.getStatusInternal()
+        def status = plugin.getStatusInternal(false)
 
 
         if (status.branchTrackingStatus?.behindCount > 0 && status.branchTrackingStatus?.aheadCount > 0) {

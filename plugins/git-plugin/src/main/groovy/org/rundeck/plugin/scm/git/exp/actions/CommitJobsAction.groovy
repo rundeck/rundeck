@@ -60,7 +60,7 @@ class CommitJobsAction extends BaseAction  implements GitExportAction{
     ) throws ScmPluginException
     {
         //determine action
-        def internal = plugin.getStatusInternal()
+        def internal = plugin.getStatusInternal(false)
         def localGitChanges = !internal.gitStatus.isClean()
 
         RevCommit commit

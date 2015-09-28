@@ -1,6 +1,7 @@
 package org.rundeck.plugin.scm.git
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.plugins.scm.*
+import org.apache.log4j.Logger
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.diff.RawTextComparator
@@ -37,6 +38,15 @@ class BaseGitPlugin {
 
     def serializeAll(final Set<JobExportReference> jobExportReferences, String format) {
         jobExportReferences.each{serialize(it,format)}
+    }
+
+    def fetchFromRemote(){
+        def fetchResult = git.fetch().call()
+
+        def update = fetchResult.getTrackingRefUpdate("refs/remotes/origin/${branch}")
+
+        def fetchMessage = update ? update.toString() : "No changes were found"
+        Logger.getLogger(this.class).debug("fetchFromRemote: ${fetchMessage}")
     }
 
     String debugStatus(final Status status) {

@@ -23,7 +23,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     static final Logger log = Logger.getLogger(GitImportPlugin)
     public static final String ACTION_INITIALIZE_TRACKING = 'initialize_tracking'
     public static final String ACTION_IMPORT_ALL = 'import-all'
-    public static final String ACTION_GIT_FETCH = 'git-fetch'
     boolean inited
     boolean trackedItemsSelected = false
     boolean useTrackingRegex = false
@@ -71,11 +70,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                         null
 
                 ),
-                (ACTION_GIT_FETCH)          : new FetchAction(
-                        ACTION_GIT_FETCH,
-                        "Fetch from Remote",
-                        "Fetch incoming changes from Remote"
-                )
 
         ]
     }
@@ -132,10 +126,20 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     ScmImportSynchState getStatus() {
+        return getStatusInternal(true)
+    }
+
+
+    GitImportSynchState getStatusInternal(Boolean performFetch) {
         //look for any unimported paths
         if (!trackedItemsSelected) {
             return null
         }
+
+        if(performFetch){
+            fetchFromRemote()
+        }
+
         int importNeeded = 0
         int notFound = 0
         int deleted = 0
@@ -158,7 +162,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             //deleted paths
             deleted = expected.size()
         }
-
         def state = new GitImportSynchState()
         state.state = importNeeded ? ImportSynchState.IMPORT_NEEDED :
                 notFound ? ImportSynchState.UNKNOWN : deleted ? ImportSynchState.DELETE_NEEDED : ImportSynchState.CLEAN
