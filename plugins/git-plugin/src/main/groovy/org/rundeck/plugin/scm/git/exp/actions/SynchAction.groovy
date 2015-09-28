@@ -61,7 +61,8 @@ Pulling from remote branch: `${plugin.branch}`"""
             )
         }
         inputView(id) {
-            title "Synch remote changes to Git"
+            title this.title
+            description this.description
             if (status.branchTrackingStatus?.behindCount > 0) {
                 buttonTitle("Pull Changes")
             } else {
@@ -119,12 +120,12 @@ Pulling from remote branch: `${plugin.branch}`"""
             //merge
 
             def fetchResult = plugin.git.fetch().setRemote('origin').call()
-            def update = fetchResult.getTrackingRefUpdate("refs/remotes/origin/master")
+            def update = fetchResult.getTrackingRefUpdate("refs/remotes/origin/${plugin.branch}")
 
 
             def strategy = MergeStrategy.get(input.resolution)
             def mergebuild = plugin.git.merge().setStrategy(strategy)
-            def commit = plugin.git.repository.resolve("refs/remotes/origin/master")
+            def commit = plugin.git.repository.resolve("refs/remotes/origin/${plugin.branch}")
 
             mergebuild.include(commit)
 
