@@ -23,7 +23,7 @@ import org.rundeck.plugin.scm.git.imp.actions.SetupTracking
  */
 class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     static final Logger log = Logger.getLogger(GitImportPlugin)
-    public static final String ACTION_INITIALIZE_TRACKING = 'initialize_tracking'
+    public static final String ACTION_INITIALIZE_TRACKING = 'initialize-tracking'
     public static final String ACTION_IMPORT_ALL = 'import-all'
     public static final String ACTION_PULL = 'remote-pull'
     boolean inited
@@ -42,7 +42,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     GitImportPlugin(final Map<String, String> input, List<String> trackedItems, final String project) {
         this.input = input
         this.project = project
-        this.trackedItems=trackedItems
+        this.trackedItems = trackedItems
     }
 
     @Override
