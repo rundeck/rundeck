@@ -1,6 +1,5 @@
 <%-- statuses are present and not both CLEAN --%>
-<g:if test="${(exportStatus || importStatus) &&
-        !(importStatus.toString() == 'CLEAN' && exportStatus.toString() == 'CLEAN')}">
+<g:if test="${(exportStatus && exportStatus.toString() != 'CLEAN' || importStatus && importStatus.toString() != 'CLEAN')}">
     <g:set var="messages" value="${[export:exportMessage, import:importMessage].findAll { it.value }}"/>
     <span class=""
           data-placement="left"
