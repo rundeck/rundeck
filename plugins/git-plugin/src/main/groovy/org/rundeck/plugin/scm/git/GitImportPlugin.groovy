@@ -236,21 +236,27 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     private refreshJobStatus(final JobScmReference job, final String originalPath) {
 
+        def previousImportCommit = job.scmImportMetadata?.commitId ? GitUtil.getCommit(
+                repo,
+                job.scmImportMetadata.commitId
+        ) : null
+
         def path = relativePath(job)
 
         jobStateMap.remove(job.id)
 
         def jobstat = Collections.synchronizedMap([:])
-        def commit = GitUtil.lastCommitForPath repo, git, path
+        def latestCommit = GitUtil.lastCommitForPath repo, git, path
 
 //        log.debug(debugStatus(status))
-        ImportSynchState synchState = importSynchStateForStatus(job, commit, path)
+        ImportSynchState synchState = importSynchStateForStatus(job, latestCommit, path)
         if (job.scmImportMetadata?.commitId) {
             //update tracked commit info
             trackedImportedItems[path] = job.scmImportMetadata?.commitId
         }
+
         log.debug(
-                "import job status: ${synchState} with meta ${job.scmImportMetadata}, version ${job.importVersion}/${job.version} commit ${commit?.name}"
+                "import job status: ${synchState} with meta ${job.scmImportMetadata}, version ${job.importVersion}/${job.version} commit ${latestCommit?.name}"
         )
 
 //        if (originalPath) {
@@ -266,16 +272,16 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 //            }
 //        }
 
-        def ident = job.id + ':' + String.valueOf(job.version) + ':' + (commit ? commit.name : '')
+        def ident = job.id + ':' + String.valueOf(job.version) + ':' + (latestCommit ? latestCommit.name : '')
 
         jobstat['ident'] = ident
         jobstat['id'] = job.id
         jobstat['version'] = job.version
         jobstat['synch'] = synchState
         jobstat['path'] = path
-        if (commit) {
-            jobstat['commitId'] = commit.name
-            jobstat['commitMeta'] = GitUtil.metaForCommit(commit)
+        if (previousImportCommit) {
+            jobstat['commitId'] = previousImportCommit.name
+            jobstat['commitMeta'] = GitUtil.metaForCommit(previousImportCommit)
         }
         log.debug("refreshJobStatus(${job.id}): ${jobstat}")
 
@@ -400,27 +406,30 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
 
     @Override
-    ScmDiffResult getFileDiff(final JobScmReference job) {
+    ScmImportDiffResult getFileDiff(final JobScmReference job) {
         return getFileDiff(job, null)
 
     }
 
     @Override
-    ScmDiffResult getFileDiff(final JobScmReference job, final String originalPath) {
-        def file = getLocalFileForJob(job)
+    ScmImportDiffResult getFileDiff(final JobScmReference job, final String originalPath) {
         def path = originalPath ?: relativePath(job)
-        serialize(job, 'xml')
-
-        def id = lookupId(getHead(), path)
-        if (!id) {
-            return new GitDiffResult(oldNotFound: true)
+        def temp=serializeTemp(job, 'xml')
+        def latestCommit = GitUtil.lastCommitForPath repo, git, path
+        def id = latestCommit ? lookupId(latestCommit, path) : null
+        if (!latestCommit || !id) {
+            return new GitDiffResult(newNotFound: true)
         }
         def bytes = getBytes(id)
         def baos = new ByteArrayOutputStream()
-        def diffs = diffContent(baos, bytes, file)
+        def diffs = diffContent(baos, temp, bytes)
+        temp.delete()
 
-
-        return new GitDiffResult(content: baos.toString(), modified: diffs > 0)
+        return new GitDiffResult(
+                content: baos.toString(),
+                modified: diffs > 0,
+                incomingCommit: new GitScmCommit(GitUtil.metaForCommit(latestCommit))
+        )
     }
 
     @Override

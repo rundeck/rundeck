@@ -1,13 +1,16 @@
 package org.rundeck.plugin.scm.git
 
-import com.dtolabs.rundeck.plugins.scm.ScmDiffResult
+import com.dtolabs.rundeck.plugins.scm.ScmCommitInfo
+import com.dtolabs.rundeck.plugins.scm.ScmImportDiffResult
 
 /**
  * Created by greg on 8/25/15.
  */
-class GitDiffResult implements ScmDiffResult {
+class GitDiffResult implements ScmImportDiffResult {
     boolean modified;
     boolean oldNotFound;
     boolean newNotFound
     String content
+
+    ScmCommitInfo incomingCommit
 }

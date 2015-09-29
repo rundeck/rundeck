@@ -99,6 +99,26 @@ class GitUtil {
      */
     static int diffContent(
             OutputStream out,
+            File leftSide,
+            byte[] rightSide,
+            RawTextComparator COMP = RawTextComparator.DEFAULT
+    )
+    {
+        RawText rt1 = new RawText(leftSide);
+        RawText rt2 = new RawText(rightSide);
+        return diffContent(out, rt1, rt2, COMP)
+    }
+
+    /**
+     * print diff to output stream
+     * @param out stream, or null to simply return count of differences
+     * @param leftSide
+     * @param rightSide
+     * @param COMP
+     * @return
+     */
+    static int diffContent(
+            OutputStream out,
             byte[] leftSide,
             byte[] rightSide,
             RawTextComparator COMP = RawTextComparator.DEFAULT
