@@ -106,7 +106,7 @@ public interface ScmImportPlugin {
      *
      * @param job job
      */
-    ScmDiffResult getFileDiff(JobScmReference job);
+    ScmImportDiffResult getFileDiff(JobScmReference job);
 
     /**
      * Get diff for the given job against another path, e.g. the original
@@ -115,5 +115,5 @@ public interface ScmImportPlugin {
      * @param job          job
      * @param originalPath original path
      */
-    ScmDiffResult getFileDiff(JobScmReference job, String originalPath);
+    ScmImportDiffResult getFileDiff(JobScmReference job, String originalPath);
 }
