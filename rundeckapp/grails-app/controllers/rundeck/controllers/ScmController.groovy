@@ -464,19 +464,23 @@ class ScmController extends ControllerBase {
         }
     }
 
-    def diff(String project, String jobId) {
+    def diff(String project, String jobId, String integration) {
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
 
+
+
+        def isExport = integration == 'export'
+        def diffAction = isExport ?AuthConstants.ACTION_EXPORT:AuthConstants.ACTION_IMPORT
         if (unauthorizedResponse(
                 frameworkService.authorizeApplicationResourceAny(authContext,
                                                                  frameworkService.authResourceForProject(project),
-                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]
+                                                                 [AuthConstants.ACTION_ADMIN, diffAction]
                 ),
-                AuthConstants.ACTION_EXPORT, 'Project', project
+                diffAction, 'Project', project
         )) {
             return
         }
-        if (!scmService.projectHasConfiguredExportPlugin(project)) {
+        if (!scmService.projectHasConfiguredPlugin(integration,project)) {
             return redirect(action: 'index', params: [project: project])
         }
         if (!jobId) {
@@ -484,10 +488,11 @@ class ScmController extends ControllerBase {
             return redirect(action: 'index', params: [project: project])
         }
         def job = ScheduledExecution.getByIdOrUUID(jobId)
-        def scmStatus = scmService.exportStatusForJobs([job])
-        def scmFilePaths = scmService.exportFilePathsMapForJobs([job])
-        def diffResult = scmService.exportDiff(project, job)
-        def scmExportRenamedPath = scmService.getRenamedJobPathsForProject(params.project)?.get(job.extid)
+        def exportStatus = isExport ? scmService.exportStatusForJobs([job]) : null
+        def importStatus = isExport ? null : scmService.importStatusForJobs([job])
+        def scmFilePaths = isExport ? scmService.exportFilePathsMapForJobs([job]) : null
+        def diffResult = isExport ? scmService.exportDiff(project, job) : scmService.importDiff(project, job)
+        def scmExportRenamedPath = isExport ?  scmService.getRenamedJobPathsForProject(params.project)?.get(job.extid) : null
         if (params.download == 'true') {
             if (params.download) {
                 response.addHeader("Content-Disposition", "attachment; filename=\"${job.extid}.diff\"")
@@ -497,10 +502,12 @@ class ScmController extends ControllerBase {
         }
         [
                 diffResult          : diffResult,
-                scmStatus           : scmStatus,
+                scmExportStatus     : exportStatus,
+                scmImportStatus     : importStatus,
                 job                 : job,
                 scmFilePaths        : scmFilePaths,
-                scmExportRenamedPath: scmExportRenamedPath
+                scmExportRenamedPath: scmExportRenamedPath,
+                integration         : integration
         ]
     }
 }

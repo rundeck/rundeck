@@ -5,8 +5,9 @@
 <g:set var="defaultImportText"
        value="${message(code: "scm.import.status.${importStatus}.display.text", default: importStatus.toString())}"/>
 
-<g:set var="showStatus" value="${exportStatus.toString() != 'CLEAN' ? exportStatus : importStatus}"/>
-<g:if test="${exportStatus && exportStatus &&
+<g:set var="showStatus" value="${ exportStatus && (showClean || exportStatus.toString() != 'CLEAN') ? exportStatus : importStatus}"/>
+<g:set var="defaultText" value="${ exportStatus && (showClean || exportStatus.toString() != 'CLEAN') ? defaultExportText : defaultImportText}"/>
+<g:if test="${exportStatus && importStatus &&
         (exportStatus.toString() != 'CLEAN' && importStatus.toString() != 'CLEAN')}">
 %{--combined status--}%
     <g:set var="textColor" value="text-warning"/>

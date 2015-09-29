@@ -841,6 +841,12 @@ class ScmService {
         plugin.getFileDiff(jobref, getRenamedPathForJobId(project, job.extid))
     }
 
+    ScmDiffResult importDiff(String project, ScheduledExecution job) {
+        def jobref = scmJobRef(job)
+        def plugin = loadedImportPlugins[project]
+        plugin.getFileDiff(jobref, getRenamedPathForJobId(project, job.extid))
+    }
+
 
     def performImportAction(
             String actionId,

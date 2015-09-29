@@ -123,7 +123,7 @@
 
     <g:unless test="${exportStateClean}">
         <li><g:link controller="scm"
-                    params="[project: scheduledExecution.project,jobIds:scheduledExecution.extid]"
+                    params="[project: scheduledExecution.project,jobIds:scheduledExecution.extid,integration: 'export']"
                     action="exportAction"
                     >
             <g:render template="/scm/statusBadge"
@@ -144,7 +144,7 @@
     </g:unless>
     <g:unless test="${exportStateCreate}">
         <li><g:link controller="scm"
-                    params="[project: scheduledExecution.project,jobId:scheduledExecution.extid]"
+                    params="[project: scheduledExecution.project,jobId:scheduledExecution.extid,integration: 'export']"
                     action="diff"
                     >
             <g:render template="/scm/statusBadge"
@@ -163,4 +163,35 @@
         </g:link>
         </li>
     </g:unless>
+</g:if>
+
+<g:if test="${scmImportEnabled && scmImportStatus?.get(scheduledExecution.extid)}">
+    <g:if test="${authRead}">
+        <li class="divider"></li>
+    </g:if>
+
+    <li class="dropdown-header"><g:message code="scm.import.plugin" /></li>
+
+    <g:set var="jobstatus" value="${scmImportStatus?.get(scheduledExecution.extid)}"/>
+    <g:set var="importStateClean" value="${jobstatus?.synchState?.toString()=='CLEAN'}"/>
+
+    <li>
+        <g:link controller="scm"
+                params="[project: scheduledExecution.project,jobId:scheduledExecution.extid,integration: 'import']"
+                action="diff">
+            <g:render template="/scm/statusBadge"
+                  model="[importStatus: jobstatus?.synchState?.toString(),
+                          text  : '',
+                          notext: true,
+                          integration: 'import',
+                          icon:'glyphicon-eye-open',
+                          exportCommit  : jobstatus?.commit]"/>
+            <g:if test="${importStateClean}">
+                <g:message code="scm.action.diff.clean.button.label" default="View Commit Info"/>
+            </g:if>
+            <g:else>
+                <g:message code="scm.action.diff.button.label" default="Diff Changes"/>
+            </g:else>
+        </g:link>
+    </li>
 </g:if>

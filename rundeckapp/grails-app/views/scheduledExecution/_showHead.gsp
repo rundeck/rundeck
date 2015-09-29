@@ -48,6 +48,8 @@
     <g:set var="importStatus" value="${authProjectImport && scmImportEnabled ? scmImportStatus?.get(scheduledExecution.extid):null}"/>
         <g:render template="/scm/statusBadge"
                   model="[
+                          showClean:true,
+                          linkClean:true,
                           exportStatus: exportStatus?.synchState?.toString(),
                           importStatus: importStatus?.synchState?.toString(),
                           text  : '',

@@ -1,18 +1,18 @@
-
-<g:if test="${exportStatus && exportStatus?.toString() != 'CLEAN' ||
-              importStatus && importStatus?.toString() != 'CLEAN'}">
+<g:if test="${showClean && (exportStatus || importStatus) ||
+        exportStatus && exportStatus?.toString() != 'CLEAN' ||
+        importStatus && importStatus?.toString() != 'CLEAN'}">
     <g:set var="tooltips" value="${[]}"/>
-    <g:if test="${exportStatus && exportStatus?.toString()!='CLEAN'}">
+    <g:if test="${exportStatus}">
         %{
-            tooltips<<message(
+            tooltips << message(
                     code: "scm.export.status.${exportStatus}.description",
                     default: exportStatus.toString()
             )
         }%
     </g:if>
-    <g:if test="${importStatus && importStatus?.toString()!='CLEAN'}">
+    <g:if test="${importStatus}">
         %{
-            tooltips<<message(
+            tooltips << message(
                     code: "scm.import.status.${importStatus}.description",
                     default: importStatus.toString()
             )
@@ -22,6 +22,7 @@
         <g:render template="/scm/statusIcon"
                   model="[exportStatus: exportStatus,
                           importStatus: importStatus,
+                          showClean   : showClean,
                           text        : text,
                           icon        : icon,
                           notext      : notext,
