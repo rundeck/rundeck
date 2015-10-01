@@ -69,7 +69,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     void setup(ScmOperationContext context, final Map<String, ?> input) throws ScmPluginException {
 
-        //TODO: using ssh http://stackoverflow.com/questions/23692747/specifying-ssh-key-for-jgit
         if (inited) {
             log.debug("already inited, not doing setup")
             return
@@ -109,7 +108,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     @Override
     void cleanup() {
-        git.close()
+        git?.close()
     }
 
 
@@ -135,11 +134,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         actions[actionId].perform(this, jobs, pathsToDelete, context, input)
     }
 
-    static String expand(final String source, final ScmUserInfo scmUserInfo) {
-        ['fullName', 'firstName', 'lastName', 'email', 'userName'].inject(source) { String x, String y ->
-            return x.replaceAll(Pattern.quote('${user.' + y + '}'), scmUserInfo[y] ?: '')
-        }
-    }
 
 
     @Override

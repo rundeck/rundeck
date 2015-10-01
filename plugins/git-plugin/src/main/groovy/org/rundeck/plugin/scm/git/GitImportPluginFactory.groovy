@@ -34,7 +34,7 @@ class GitImportPluginFactory implements ScmImportPluginFactory, Describable {
             name PROVIDER_NAME
             title TITLE
             description DESC
-            def del=delegate
+            def del = delegate
             setupProperties.each {
                 del.property it
             }

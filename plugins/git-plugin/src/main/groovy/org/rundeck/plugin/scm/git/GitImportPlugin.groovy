@@ -1,23 +1,18 @@
 package org.rundeck.plugin.scm.git
-
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
-import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.lib.BranchTrackingStatus
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.revwalk.RevCommit
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.treewalk.filter.PathFilterGroup
-import org.rundeck.plugin.scm.git.imp.actions.FetchAction
 import org.rundeck.plugin.scm.git.imp.actions.ImportJobs
 import org.rundeck.plugin.scm.git.imp.actions.PullAction
 import org.rundeck.plugin.scm.git.imp.actions.SetupTracking
-
 /**
  * Import jobs via git
  */
@@ -74,7 +69,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
                 ),
 
-                (ACTION_PULL) : new PullAction(
+                (ACTION_PULL)               : new PullAction(
                         ACTION_PULL,
                         "Pull Remote Changes",
                         "Synch incoming changes from Remote"
@@ -85,7 +80,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     void setup(final ScmOperationContext context, final Map<String, String> input) throws ScmPluginException {
 
-        //TODO: using ssh http://stackoverflow.com/questions/23692747/specifying-ssh-key-for-jgit
         if (inited) {
             log.debug("already inited, not doing setup")
             return
@@ -119,6 +113,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
         inited = true
     }
+
 
     @Override
     void cleanup() {
@@ -379,8 +374,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             } else {
 
                 def avail = []
-                def status = getStatusInternal(false)
-                if( status.state == ImportSynchState.REFRESH_NEEDED){
+                def status = getStatusInternal(context,false)
+                if (status.state == ImportSynchState.REFRESH_NEEDED) {
                     avail << actions[ACTION_PULL]
                 }
                 if (status.state != ImportSynchState.CLEAN) {
@@ -407,7 +402,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     @Override
     ScmImportDiffResult getFileDiff(final JobScmReference job, final String originalPath) {
         def path = originalPath ?: relativePath(job)
-        def temp=serializeTemp(job, 'xml')
+        def temp = serializeTemp(job, 'xml')
         def latestCommit = GitUtil.lastCommitForPath repo, git, path
         def id = latestCommit ? lookupId(latestCommit, path) : null
         if (!latestCommit || !id) {
