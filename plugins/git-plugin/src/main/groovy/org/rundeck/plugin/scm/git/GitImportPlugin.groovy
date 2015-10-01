@@ -40,8 +40,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     protected Map<String, GitImportAction> actions = [:]
 
     GitImportPlugin(final Map<String, String> input, List<String> trackedItems, final String project) {
-        this.input = input
-        this.project = project
+        super(input, project)
         this.trackedItems = trackedItems
     }
 

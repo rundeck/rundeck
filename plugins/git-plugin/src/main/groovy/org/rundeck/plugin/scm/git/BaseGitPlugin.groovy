@@ -22,6 +22,11 @@ class BaseGitPlugin {
     RawTextComparator COMP = RawTextComparator.DEFAULT
     Map<String, Map> jobStateMap = Collections.synchronizedMap([:])
 
+    BaseGitPlugin(final Map<String, String> input, final String project) {
+        this.input = input
+        this.project = project
+    }
+
     def serialize(final JobExportReference job, format) {
         File outfile = mapper.fileForJob(job)
         if (!outfile.parentFile.exists()) {
