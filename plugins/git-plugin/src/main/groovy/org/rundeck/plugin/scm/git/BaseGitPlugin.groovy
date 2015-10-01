@@ -40,8 +40,9 @@ class BaseGitPlugin {
             job.jobSerializer.serialize(format, out)
         }
     }
+
     def serializeTemp(final JobExportReference job, format) {
-        File outfile = File.createTempFile("${this.class.name}-serializeTemp",".${format}")
+        File outfile = File.createTempFile("${this.class.name}-serializeTemp", ".${format}")
         outfile.deleteOnExit()
         outfile.withOutputStream { out ->
             job.jobSerializer.serialize(format, out)
@@ -50,7 +51,7 @@ class BaseGitPlugin {
     }
 
     def serializeAll(final Set<JobExportReference> jobExportReferences, String format) {
-        jobExportReferences.each{serialize(it,format)}
+        jobExportReferences.each { serialize(it, format) }
     }
 
     def fetchFromRemote(){
@@ -115,13 +116,15 @@ class BaseGitPlugin {
     }
 
     int diffContent(OutputStream out, byte[] left, File right) {
-        GitUtil.diffContent out,  left, right, COMP
+        GitUtil.diffContent out, left, right, COMP
     }
+
     int diffContent(OutputStream out, File left, byte[] right) {
-        GitUtil.diffContent out,  left, right, COMP
+        GitUtil.diffContent out, left, right, COMP
     }
+
     int diffContent(OutputStream out, byte[] left, byte[] right) {
-        GitUtil.diffContent out,  left, right, COMP
+        GitUtil.diffContent out, left, right, COMP
     }
 
     RevCommit lastCommit() {
