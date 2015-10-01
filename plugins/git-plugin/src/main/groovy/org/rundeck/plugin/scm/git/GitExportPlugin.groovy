@@ -40,8 +40,8 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         super(input, project)
     }
 
-    void initialize() {
-        setup(input)
+    void initialize(ScmOperationContext context) {
+        setup(context, input)
         actions = [
                 (JOB_COMMIT_ACTION_ID)    : new CommitJobsAction(
                         JOB_COMMIT_ACTION_ID,
@@ -67,7 +67,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         ]
     }
 
-    void setup(final Map<String, ?> input) throws ScmPluginException {
+    void setup(ScmOperationContext context, final Map<String, ?> input) throws ScmPluginException {
 
         //TODO: using ssh http://stackoverflow.com/questions/23692747/specifying-ssh-key-for-jgit
         if (inited) {
@@ -121,25 +121,25 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
 
     @Override
-    BasicInputView getInputViewForAction(String actionId) {
-        actions[actionId]?.getInputView(this)
+    BasicInputView getInputViewForAction(final ScmOperationContext context,String actionId) {
+        actions[actionId]?.getInputView(context,this)
     }
 
 
     @Override
     ScmExportResult export(
+            final ScmOperationContext context,
             final String actionId,
             final Set<JobExportReference> jobs,
             final Set<String> pathsToDelete,
-            final ScmUserInfo userInfo,
-            final Map<String, Object> input
+            final Map<String, String> input
     )
             throws ScmPluginException
     {
         if (!actions[actionId]) {
             throw new ScmPluginException("Unexpected action ID: " + actionId)
         }
-        actions[actionId].perform(this, jobs, pathsToDelete, userInfo, input)
+        actions[actionId].perform(this, jobs, pathsToDelete, context, input)
     }
 
     static String expand(final String source, final ScmUserInfo scmUserInfo) {
@@ -162,13 +162,13 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     }
 
     @Override
-    List<Action> actionsAvailableForContext(final Map<String, String> context) {
+    List<Action> actionsAvailableForContext(ScmOperationContext context) {
         if (context.jobId) {
             //actions for a specific Job
             actionRefs JOB_COMMIT_ACTION_ID
-        } else if (context.project) {
+        } else if (context.frameworkProject) {
             //actions in project view
-            def status = getStatusInternal(false)
+            def status = getStatusInternal(context,false)
             if (!status.gitStatus.clean) {
                 actionRefs PROJECT_COMMIT_ACTION_ID
             } else if (status.state == SynchState.EXPORT_NEEDED) {
@@ -187,12 +187,12 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
 
     @Override
-    ScmExportSynchState getStatus() {
-        return getStatusInternal(true)
+    ScmExportSynchState getStatus(ScmOperationContext context) {
+        return getStatusInternal(context,true)
     }
 
 
-    GitExportSynchState getStatusInternal(Boolean performFetch) {
+    GitExportSynchState getStatusInternal(ScmOperationContext context,boolean performFetch) {
         //perform fetch
         if(performFetch){
             fetchFromRemote()

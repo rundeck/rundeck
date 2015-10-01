@@ -46,17 +46,18 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     ScmExportResult scmImport(
+            final ScmOperationContext context,
             final String actionId,
             final JobImporter importer,
             final List<String> selectedPaths,
-            final Map<String, Object> input
+            final Map<String, String> input
     ) throws ScmPluginException
     {
-        return actions[actionId]?.performAction(this, importer, selectedPaths, input)
+        return actions[actionId]?.performAction(context, this, importer, selectedPaths, input)
     }
 
-    void initialize() {
-        setup(input)
+    void initialize(final ScmOperationContext context) {
+        setup(context, input)
         actions = [
                 (ACTION_INITIALIZE_TRACKING): new SetupTracking(
                         ACTION_INITIALIZE_TRACKING,
@@ -82,7 +83,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         ]
     }
 
-    void setup(final Map<String, Object> input) throws ScmPluginException {
+    void setup(final ScmOperationContext context, final Map<String, String> input) throws ScmPluginException {
 
         //TODO: using ssh http://stackoverflow.com/questions/23692747/specifying-ssh-key-for-jgit
         if (inited) {
@@ -133,12 +134,12 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
 
     @Override
-    ScmImportSynchState getStatus() {
-        return getStatusInternal(true)
+    ScmImportSynchState getStatus(ScmOperationContext context) {
+        return getStatusInternal(context,true)
     }
 
 
-    GitImportSynchState getStatusInternal(Boolean performFetch) {
+    GitImportSynchState getStatusInternal(ScmOperationContext context,boolean performFetch) {
         //look for any unimported paths
         if (!trackedItemsSelected) {
             return null
@@ -367,18 +368,18 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
 
     @Override
-    BasicInputView getInputViewForAction(final String actionId) {
-        return actions[actionId]?.getInputView(this)
+    BasicInputView getInputViewForAction(final ScmOperationContext context,final String actionId) {
+        return actions[actionId]?.getInputView(context, this)
     }
 
     @Override
-    Action getSetupAction(final Map<String, String> context) {
+    Action getSetupAction(ScmOperationContext context) {
         return actions[ACTION_INITIALIZE_TRACKING]
     }
 
     @Override
-    List<Action> actionsAvailableForContext(final Map<String, String> context) {
-        if (context.project) {
+    List<Action> actionsAvailableForContext(ScmOperationContext context) {
+        if (context.frameworkProject) {
             //project-level actions
             if (!trackedItemsSelected) {
                 return [actions[ACTION_INITIALIZE_TRACKING]]

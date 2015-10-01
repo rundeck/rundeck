@@ -9,6 +9,7 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory
+import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 
 import java.util.regex.Pattern
 
@@ -170,9 +171,9 @@ as the email of the committing user'''
     static List<String> requiredProperties = ['dir', 'pathTemplate', 'branch', 'committerName', 'committerEmail', 'url']
 
     @Override
-    ScmExportPlugin createPlugin(final Map<String, String> input, final String project) {
-        def plugin = new GitExportPlugin(input, project)
-        plugin.initialize()
+    ScmExportPlugin createPlugin(final ScmOperationContext context, final Map<String, String> input) {
+        def plugin = new GitExportPlugin(input, context.frameworkProject)
+        plugin.initialize(context)
         return plugin
     }
 }

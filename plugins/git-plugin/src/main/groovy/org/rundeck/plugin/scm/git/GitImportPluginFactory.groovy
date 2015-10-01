@@ -9,6 +9,7 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.scm.ScmImportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmImportPluginFactory
+import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 
 import java.util.regex.Pattern
 
@@ -110,9 +111,14 @@ Some examples:
     static List<String> requiredProperties = ['dir', 'pathTemplate', 'branch', 'url']
 
     @Override
-    ScmImportPlugin createPlugin(final Map<String, String> input, List<String> trackedItems, final String project) {
-        def plugin = new GitImportPlugin(input, trackedItems, project)
-        plugin.initialize()
+    ScmImportPlugin createPlugin(
+            final ScmOperationContext context,
+            final Map<String, String> input,
+            final List<String> trackedItems
+    )
+    {
+        def plugin = new GitImportPlugin(input, trackedItems, context.frameworkProject)
+        plugin.initialize(context)
         return plugin
     }
 }
