@@ -46,8 +46,7 @@ public interface ScmExportPlugin {
             String actionId,
             Set<JobExportReference> jobs,
             Set<String> pathsToDelete,
-            ScmUserInfo userInfo,
-            Map<String, Object> input
+            Map<String, String> input
     ) throws ScmPluginException;
 
     /**

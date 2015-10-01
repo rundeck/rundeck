@@ -19,10 +19,11 @@ public interface ScmImportPlugin {
      * @param importer can import files as jobs
      */
     ScmExportResult scmImport(
+            ScmOperationContext context,
             String actionId,
             JobImporter importer,
             List<String> selectedPaths,
-            Map<String, Object> input
+            Map<String, String> input
     ) throws ScmPluginException;
 
     /**
