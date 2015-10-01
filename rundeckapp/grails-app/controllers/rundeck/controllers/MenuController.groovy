@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -234,7 +235,7 @@ class MenuController extends ControllerBase{
     
     def jobsFragment = {ScheduledExecutionQuery query ->
         long start=System.currentTimeMillis()
-        AuthContext authContext
+        UserAndRolesAuthContext authContext
         def usedFilter=null
         
         if(params.filterName){
@@ -272,8 +273,8 @@ class MenuController extends ControllerBase{
             if(scmService.projectHasConfiguredExportPlugin(params.project)){
                 results.scmExportEnabled=true
                 results.scmStatus=scmService.exportStatusForJobs(results.nextScheduled)
-                results.scmExportStatus=scmService.exportPluginStatus(params.project)
-                results.scmExportActions=scmService.exportPluginActions(params.project)
+                results.scmExportStatus=scmService.exportPluginStatus(authContext,params.project)
+                results.scmExportActions=scmService.exportPluginActions(authContext,params.project)
                 results.scmExportRenamed=scmService.getRenamedJobPathsForProject(params.project)
             }
         }
@@ -284,8 +285,8 @@ class MenuController extends ControllerBase{
             if(scmService.projectHasConfiguredImportPlugin(params.project)){
                 results.scmImportEnabled=true
                 results.scmImportJobStatus=scmService.importStatusForJobs(results.nextScheduled)
-                results.scmImportStatus=scmService.importPluginStatus(params.project)
-                results.scmImportActions=scmService.importPluginActions(params.project)
+                results.scmImportStatus=scmService.importPluginStatus(authContext,params.project)
+                results.scmImportActions=scmService.importPluginActions(authContext,params.project)
 //                results.scmImportRenamed=scmService.getRenamedJobPathsForProject(params.project)
             }
         }
