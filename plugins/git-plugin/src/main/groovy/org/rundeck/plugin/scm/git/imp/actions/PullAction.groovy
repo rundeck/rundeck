@@ -26,7 +26,7 @@ class PullAction extends BaseAction implements GitImportAction {
     @Override
     BasicInputView getInputView(final ScmOperationContext context,GitImportPlugin plugin) {
 
-        def status = plugin.getStatusInternal(false)
+        def status = plugin.getStatusInternal(context,false)
         def props = [
                 property {
                     string "status"
@@ -87,7 +87,7 @@ Pulling from remote branch: `${plugin.branch}`"""
             final Map<String, String> input
     ) throws ScmPluginException
     {
-        def status = plugin.getStatusInternal(false)
+        def status = plugin.getStatusInternal(context,false)
 
 
         if (status.branchTrackingStatus?.behindCount > 0 && status.branchTrackingStatus?.aheadCount > 0) {
