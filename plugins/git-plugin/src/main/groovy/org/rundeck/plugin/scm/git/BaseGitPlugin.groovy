@@ -87,6 +87,46 @@ class BaseGitPlugin {
 
         return update
     }
+
+    PullResult gitPull(ScmOperationContext context,Git git1=null) {
+        def pullCommand = (git1?:git).pull().setRemote('origin').setRemoteBranchName(branch)
+        pullCommand.call()
+    }
+
+    ScmExportResult gitResolve(
+            final ScmOperationContext context,
+            boolean rebase,
+            String mergeResolutionStrategy
+    )
+    {
+        if (rebase) {
+            def pullCommand = git.pull().setRemote('origin').setRemoteBranchName(branch)
+            pullCommand.setRebase(true)
+            def pullResult = pullCommand.call()
+
+            def result = new ScmExportResultImpl()
+            result.success = pullResult.successful
+            result.message = pullResult.toString()
+            return result
+        } else {
+            //fetch, then
+            //merge
+            fetchFromRemote(context)
+
+            def strategy = MergeStrategy.get(resolutionStrategy)
+            def mergebuild = git.merge().setStrategy(strategy)
+            def commit = git.repository.resolve("refs/remotes/origin/${branch}")
+
+            mergebuild.include(commit)
+
+            def mergeresult = mergebuild.call()
+
+            def result = new ScmExportResultImpl()
+            result.success = mergeresult.mergeStatus.successful
+            result.message = mergeresult.toString()
+            return result
+
+        }
     }
 
     String debugStatus(final Status status) {

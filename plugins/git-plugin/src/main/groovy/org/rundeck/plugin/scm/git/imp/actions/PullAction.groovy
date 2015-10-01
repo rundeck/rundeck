@@ -91,57 +91,21 @@ Pulling from remote branch: `${plugin.branch}`"""
 
 
         if (status.branchTrackingStatus?.behindCount > 0 && status.branchTrackingStatus?.aheadCount > 0) {
-            gitResolve(plugin, input)
+            plugin.gitResolve(context,input.refresh == 'rebase', input.resolution)
         } else if (status.branchTrackingStatus?.behindCount > 0) {
-            gitPull(plugin)
+            gitPull(context,plugin)
         } else {
             //no action
         }
 
     }
 
-    ScmExportResult gitPull(final GitImportPlugin plugin) {
-        def pullResult = plugin.git.pull().setRemote('origin').setRemoteBranchName(plugin.branch).call()
-
+    ScmExportResult gitPull(final ScmOperationContext context,final GitImportPlugin plugin) {
+        def pullResult = plugin.gitPull(context)
         def result = new ScmExportResultImpl()
         result.success = pullResult.successful
         result.message = pullResult.toString()
         result
     }
 
-    ScmExportResult gitResolve(final GitImportPlugin plugin, final Map<String, Object> input) {
-
-
-        if (input.refresh == 'rebase') {
-            def pullbuilder = plugin.git.pull().setRemote('origin').setRemoteBranchName(plugin.branch)
-            pullbuilder.setRebase(true)
-            def pullResult = pullbuilder.call()
-
-            def result = new ScmExportResultImpl()
-            result.success = pullResult.successful
-            result.message = pullResult.toString()
-            return result
-        } else {
-            //fetch, then
-            //merge
-
-            def fetchResult = plugin.git.fetch().setRemote('origin').call()
-            def update = fetchResult.getTrackingRefUpdate("refs/remotes/origin/${plugin.branch}")
-
-
-            def strategy = MergeStrategy.get(input.resolution)
-            def mergebuild = plugin.git.merge().setStrategy(strategy)
-            def commit = plugin.git.repository.resolve("refs/remotes/origin/${plugin.branch}")
-
-            mergebuild.include(commit)
-
-            def mergeresult = mergebuild.call()
-
-            def result = new ScmExportResultImpl()
-            result.success = mergeresult.mergeStatus.successful
-            result.message = mergeresult.toString()
-            return result
-
-        }
-    }
 }

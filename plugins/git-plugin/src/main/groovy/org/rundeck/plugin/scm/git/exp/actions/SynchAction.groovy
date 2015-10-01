@@ -1,7 +1,10 @@
 package org.rundeck.plugin.scm.git.exp.actions
+
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
+import org.eclipse.jgit.api.FetchCommand
+import org.eclipse.jgit.api.PullCommand
 import org.eclipse.jgit.merge.MergeStrategy
 import org.rundeck.plugin.scm.git.BaseAction
 import org.rundeck.plugin.scm.git.GitExportAction
@@ -9,6 +12,7 @@ import org.rundeck.plugin.scm.git.GitExportPlugin
 
 import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
 import static org.rundeck.plugin.scm.git.BuilderUtil.property
+
 /**
  * Created by greg on 9/8/15.
  */
@@ -84,57 +88,20 @@ Pulling from remote branch: `${plugin.branch}`"""
 
 
         if (status.branchTrackingStatus?.behindCount > 0 && status.branchTrackingStatus?.aheadCount > 0) {
-            gitResolve(plugin, input)
+            plugin.gitResolve(context, input.refresh == 'rebase', input.resolution)
         } else if (status.branchTrackingStatus?.behindCount > 0) {
-            gitPull(plugin)
+            gitPull(context,plugin)
         } else {
             //no action
         }
 
     }
 
-    ScmExportResult gitPull(final GitExportPlugin plugin) {
-        def pullResult = plugin.git.pull().setRemote('origin').setRemoteBranchName(plugin.branch).call()
-
+    ScmExportResult gitPull(final ScmOperationContext context,final GitExportPlugin plugin) {
+        def pullResult = plugin.gitPull(context)
         def result = new ScmExportResultImpl()
         result.success = pullResult.successful
         result.message = pullResult.toString()
         result
-    }
-
-    ScmExportResult gitResolve(final GitExportPlugin plugin, final Map<String, Object> input) {
-
-
-        if (input.refresh == 'rebase') {
-            def pullbuilder = plugin.git.pull().setRemote('origin').setRemoteBranchName(plugin.branch)
-            pullbuilder.setRebase(true)
-            def pullResult = pullbuilder.call()
-
-            def result = new ScmExportResultImpl()
-            result.success = pullResult.successful
-            result.message = pullResult.toString()
-            return result
-        } else {
-            //fetch, then
-            //merge
-
-            def fetchResult = plugin.git.fetch().setRemote('origin').call()
-            def update = fetchResult.getTrackingRefUpdate("refs/remotes/origin/${plugin.branch}")
-
-
-            def strategy = MergeStrategy.get(input.resolution)
-            def mergebuild = plugin.git.merge().setStrategy(strategy)
-            def commit = plugin.git.repository.resolve("refs/remotes/origin/${plugin.branch}")
-
-            mergebuild.include(commit)
-
-            def mergeresult = mergebuild.call()
-
-            def result = new ScmExportResultImpl()
-            result.success = mergeresult.mergeStatus.successful
-            result.message = mergeresult.toString()
-            return result
-
-        }
     }
 }
