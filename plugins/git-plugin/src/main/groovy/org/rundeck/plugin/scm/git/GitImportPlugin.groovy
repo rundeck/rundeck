@@ -110,15 +110,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
         this.branch = branch
 
-        if (base.isDirectory() && new File(base, ".git").isDirectory()) {
-            log.debug("base dir exists, not cloning")
-            repo = new FileRepositoryBuilder().setGitDir(new File(base, ".git")).setWorkTree(base).build()
-            git = new Git(repo)
-        } else {
-            log.debug("cloning...")
-            git = Git.cloneRepository().setBranch(this.branch).setRemote("origin").setDirectory(base).setURI(url).call()
-            repo = git.getRepository()
-        }
+        cloneOrCreate(context, base, url)
+
         workingDir = base
 
         //todo store tracked items list

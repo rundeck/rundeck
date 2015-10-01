@@ -215,4 +215,59 @@ class BaseGitPlugin {
                 commit: map.commitMeta ? new GitScmCommit(map.commitMeta) : null
         )
     }
+    protected void cloneOrCreate(final ScmOperationContext context, File base, String url) throws ScmPluginException {
+        if (base.isDirectory() && new File(base, ".git").isDirectory()) {
+            def arepo = new FileRepositoryBuilder().setGitDir(new File(base, ".git")).setWorkTree(base).build()
+            def agit = new Git(arepo)
+
+            //test url matches origin
+            def config = agit.getRepository().getConfig()
+            def found = config.getString("remote", "origin", "url")
+
+            if (found != url) {
+
+                logger.debug("url differs, re-cloning")
+                //need to reconfigured
+                removeWorkdir(base)
+                performClone(base, url, context)
+            }else if (null == arepo.resolve("refs/remotes/origin/${branch}")) {
+                logger.debug("pulling from remote")
+
+                try {
+                    fetchFromRemote(context, agit)
+                } catch (Exception e) {
+                    logger.debug("Failed fetch from the repository from ${url}: ${e.message}",e)
+                    throw new ScmPluginException("Failed fetch from the repository from ${url}: ${e.message}: ${e.cause?.message}", e)
+                }
+
+
+                git=agit
+                repo=arepo
+
+            }else{
+                git=agit
+                repo=arepo
+                logger.debug("not cloning")
+            }
+
+        }else{
+            performClone(base, url, context)
+        }
+    }
+
+    private void performClone(File base, String url, ScmOperationContext context) {
+        logger.debug("cloning...");
+        def cloneCommand = Git.cloneRepository().
+                setBranch(this.branch).
+                setRemote("origin").
+                setDirectory(base).
+                setURI(url)
+        try {
+            git = cloneCommand.call()
+        } catch (Exception e) {
+            logger.debug("Failed cloning the repository from ${url}: ${e.message}", e)
+            throw new ScmPluginException("Failed cloning the repository from ${url}: ${e.message}", e)
+        }
+        repo = git.getRepository()
+    }
 }
