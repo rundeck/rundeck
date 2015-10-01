@@ -14,15 +14,15 @@ public interface ScmImportPluginFactory {
     /**
      * Create the plugin
      *
+     * @param context      context
      * @param input        setup config
      * @param trackedItems tracked items list
-     * @param project      project name
      *
      * @return plugin instance
      *
      * @throws ConfigurationException if an error occurs
      */
-    ScmImportPlugin createPlugin(Map<String, String> input, List<String> trackedItems, String project)
+    ScmImportPlugin createPlugin(ScmOperationContext context, Map<String, String> input, List<String> trackedItems)
             throws ConfigurationException;
 
     /**

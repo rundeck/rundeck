@@ -14,12 +14,12 @@ public interface ScmExportPluginFactory {
 
     /**
      * Create a plugin instance
+     * @param context context
      * @param input input properties
-     * @param project project name
      * @return instance
      * @throws ConfigurationException
      */
-    ScmExportPlugin createPlugin(Map<String, String> input, String project) throws ConfigurationException;
+    ScmExportPlugin createPlugin(ScmOperationContext context, Map<String, String> input) throws ConfigurationException;
 
     /**
      * Return the list of setup properties

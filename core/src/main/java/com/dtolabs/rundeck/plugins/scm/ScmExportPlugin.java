@@ -24,14 +24,14 @@ public interface ScmExportPlugin {
      *
      * @return input view for the specified action
      */
-    BasicInputView getInputViewForAction(String actionId);
+    BasicInputView getInputViewForAction(final ScmOperationContext context,String actionId);
 
     /**
      * @param context context map
      *
      * @return list of actions available for the context
      */
-    List<Action> actionsAvailableForContext(final Map<String, String> context);
+    List<Action> actionsAvailableForContext(ScmOperationContext context);
 
     /**
      * Perform export of the jobs
@@ -42,6 +42,7 @@ public interface ScmExportPlugin {
      * @return result of export
      */
     ScmExportResult export(
+            ScmOperationContext context,
             String actionId,
             Set<JobExportReference> jobs,
             Set<String> pathsToDelete,
@@ -52,7 +53,7 @@ public interface ScmExportPlugin {
     /**
      * @return overall status
      */
-    ScmExportSynchState getStatus();
+    ScmExportSynchState getStatus(ScmOperationContext context);
 
     /**
      * Return the state of the given job

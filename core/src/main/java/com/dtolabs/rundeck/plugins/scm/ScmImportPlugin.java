@@ -28,7 +28,7 @@ public interface ScmImportPlugin {
     /**
      * @return overall status
      */
-    ScmImportSynchState getStatus();
+    ScmImportSynchState getStatus(ScmOperationContext context);
 
     /**
      * Return the state of the given job
@@ -63,7 +63,7 @@ public interface ScmImportPlugin {
      *
      * @return input view for the specified action
      */
-    BasicInputView getInputViewForAction(String actionId);
+    BasicInputView getInputViewForAction(final ScmOperationContext context,String actionId);
 
     /**
      * Return any action that is needed for post-create setup.  If not null,
@@ -75,14 +75,14 @@ public interface ScmImportPlugin {
      *
      * @return action used for post-create setup, if necessary
      */
-    Action getSetupAction(final Map<String, String> context);
+    Action getSetupAction(ScmOperationContext context);
 
     /**
      * @param context context map
      *
      * @return list of actions available for the context
      */
-    List<Action> actionsAvailableForContext(final Map<String, String> context);
+    List<Action> actionsAvailableForContext(ScmOperationContext context);
 
 
     /**
