@@ -3,6 +3,7 @@ package org.rundeck.plugin.scm.git
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
+import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfoMissing
@@ -96,12 +97,12 @@ class GitExportPluginSpec extends Specification {
 
     }
 
-    def "get export properties, commit"() {
+    def "get input view for commit action"() {
         given:
 
         def gitdir = new File(tempdir, 'scm')
         def origindir = new File(tempdir, 'origin')
-        def config = [
+        Map<String,String> config = [
                 dir           : gitdir.absolutePath,
                 pathTemplate  : '${job.group}${job.name}-${job.id}.xml',
                 branch        : 'master',
@@ -113,14 +114,15 @@ class GitExportPluginSpec extends Specification {
         //create a git dir
         def git = createGit(origindir)
         git.close()
+        def context = Mock(ScmOperationContext)
         def plugin = new GitExportPlugin(config, 'test')
-        plugin.initialize()
+        plugin.initialize(context)
         def path = 'testfile'
         def localfile = new File(gitdir, path)
         localfile << 'blah'
 
         when:
-        def view = plugin.getInputViewForAction(GitExportPlugin.JOB_COMMIT_ACTION_ID)
+        def view = plugin.getInputViewForAction(context,GitExportPlugin.JOB_COMMIT_ACTION_ID)
 
         then:
         view.title == "Commit Changes to Git"
@@ -472,7 +474,7 @@ class GitExportPluginSpec extends Specification {
 
         def gitdir = new File(tempdir, 'scm')
         def origindir = new File(tempdir, 'origin')
-        def config = [
+        Map<String,String> config = [
                 dir           : gitdir.absolutePath,
                 pathTemplate  : '${job.group}${job.name}-${job.id}.xml',
                 branch        : 'master',
@@ -484,14 +486,18 @@ class GitExportPluginSpec extends Specification {
         //create a git dir
         def git = createGit(origindir)
         git.close()
+        def userInfo = Mock(ScmUserInfo)
+        def ctxt = Mock(ScmOperationContext){
+            getUserInfo() >> userInfo
+        }
         def plugin = new GitExportPlugin(config, 'test')
-        plugin.initialize()
+        plugin.initialize(ctxt)
 
         def jobref = Stub(JobExportReference)
-        def userInfo = Mock(ScmUserInfo)
+
         def input = [:]
         when:
-        def result = plugin.export(GitExportPlugin.JOB_COMMIT_ACTION_ID, [] as Set, [] as Set, userInfo, input)
+        def result = plugin.export(ctxt,GitExportPlugin.JOB_COMMIT_ACTION_ID, [] as Set, [] as Set, input)
 
         then:
         ScmPluginException e = thrown()
@@ -504,7 +510,7 @@ class GitExportPluginSpec extends Specification {
 
         def gitdir = new File(tempdir, 'scm')
         def origindir = new File(tempdir, 'origin')
-        def config = [
+        Map<String,String> config = [
                 dir           : gitdir.absolutePath,
                 pathTemplate  : '${job.group}${job.name}-${job.id}.xml',
                 branch        : 'master',
@@ -516,16 +522,19 @@ class GitExportPluginSpec extends Specification {
         //create a git dir
         def git = createGit(origindir)
         git.close()
+        def userInfo = Mock(ScmUserInfo)
+        def ctxt = Mock(ScmOperationContext){
+            getUserInfo() >> userInfo
+        }
         def plugin = new GitExportPlugin(config, 'test')
-        plugin.initialize()
+        plugin.initialize(ctxt)
         def localfile = new File(gitdir, 'blah')
         localfile << 'blah'
 
         def jobref = Stub(JobExportReference)
-        def userInfo = Mock(ScmUserInfo)
         def input = [:]
         when:
-        def result = plugin.export(GitExportPlugin.JOB_COMMIT_ACTION_ID, [jobref] as Set, [] as Set, userInfo, input)
+        def result = plugin.export(ctxt,GitExportPlugin.JOB_COMMIT_ACTION_ID, [jobref] as Set, [] as Set, input)
 
         then:
         ScmPluginException e = thrown()
@@ -537,7 +546,7 @@ class GitExportPluginSpec extends Specification {
 
         def gitdir = new File(tempdir, 'scm')
         def origindir = new File(tempdir, 'origin')
-        def config = [
+        Map<String,String> config = [
                 dir           : gitdir.absolutePath,
                 pathTemplate  : '${job.group}${job.name}-${job.id}.xml',
                 branch        : 'master',
@@ -549,15 +558,20 @@ class GitExportPluginSpec extends Specification {
         //create a git dir
         def git = createGit(origindir)
         git.close()
+
+        def userInfo = Mock(ScmUserInfo)
+        def ctxt = Mock(ScmOperationContext){
+            getUserInfo() >> userInfo
+        }
+
         def plugin = new GitExportPlugin(config, 'test')
-        plugin.initialize()
+        plugin.initialize(ctxt)
 
 
         def jobref = Stub(JobExportReference)
-        def userInfo = Mock(ScmUserInfo)
         def input = [:]
         when:
-        def result = plugin.export(GitExportPlugin.JOB_COMMIT_ACTION_ID, [jobref] as Set, [] as Set, userInfo, input)
+        def result = plugin.export(ctxt,GitExportPlugin.JOB_COMMIT_ACTION_ID, [jobref] as Set, [] as Set, input)
 
         then:
         ScmPluginException e = thrown()
@@ -569,7 +583,7 @@ class GitExportPluginSpec extends Specification {
 
         def gitdir = new File(tempdir, 'scm')
         def origindir = new File(tempdir, 'origin')
-        def config = [
+        Map<String,String> config = [
                 dir           : gitdir.absolutePath,
                 pathTemplate  : '${job.group}${job.name}-${job.id}.xml',
                 branch        : 'master',
@@ -581,16 +595,21 @@ class GitExportPluginSpec extends Specification {
         //create a git dir
         def git = createGit(origindir)
         git.close()
+
+        def userInfo = Mock(ScmUserInfo)
+        def ctxt = Mock(ScmOperationContext){
+            getUserInfo() >> userInfo
+        }
+
         def plugin = new GitExportPlugin(config, 'test')
-        plugin.initialize()
+        plugin.initialize(ctxt)
         def localfile = new File(gitdir, 'blah')
         localfile << 'blah'
 
 
-        def userInfo = Mock(ScmUserInfo)
         def input = [commitMessage: "test"]
         when:
-        def result = plugin.export(GitExportPlugin.JOB_COMMIT_ACTION_ID, [] as Set, [] as Set, userInfo, input)
+        def result = plugin.export(ctxt,GitExportPlugin.JOB_COMMIT_ACTION_ID, [] as Set, [] as Set, input)
 
         then:
         ScmPluginException e = thrown()
@@ -602,7 +621,7 @@ class GitExportPluginSpec extends Specification {
 
         def gitdir = new File(tempdir, 'scm')
         def origindir = new File(tempdir, 'origin')
-        def config = [
+        Map<String,String> config = [
                 dir           : gitdir.absolutePath,
                 pathTemplate  : '${job.group}${job.name}-${job.id}.xml',
                 branch        : 'master',
@@ -614,8 +633,17 @@ class GitExportPluginSpec extends Specification {
         //create a git dir
         def git = createGit(origindir)
         git.close()
+
+        def userInfo = Mock(ScmUserInfo) {
+            getFullName() >> userName
+            getEmail() >> userEmail
+        }
+        def ctxt = Mock(ScmOperationContext){
+            getUserInfo() >> userInfo
+        }
+
         def plugin = new GitExportPlugin(config, 'test')
-        plugin.initialize()
+        plugin.initialize(ctxt)
         def localfile = new File(gitdir, 'blah')
         localfile << 'blah'
 
@@ -627,13 +655,9 @@ class GitExportPluginSpec extends Specification {
             getVersion() >> 1
             getJobSerializer() >> serializer
         }
-        def userInfo = Mock(ScmUserInfo) {
-            getFullName() >> userName
-            getEmail() >> userEmail
-        }
         def input = [commitMessage: "Test"]
         when:
-        def result = plugin.export(GitExportPlugin.JOB_COMMIT_ACTION_ID, [jobref] as Set, [] as Set, userInfo, input)
+        def result = plugin.export(ctxt,GitExportPlugin.JOB_COMMIT_ACTION_ID, [jobref] as Set, [] as Set, input)
 
         then:
         ScmUserInfoMissing e = thrown()

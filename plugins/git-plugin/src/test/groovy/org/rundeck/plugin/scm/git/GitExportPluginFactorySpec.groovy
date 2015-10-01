@@ -1,5 +1,6 @@
 package org.rundeck.plugin.scm.git
 
+import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import org.eclipse.jgit.util.FileUtils
 import spock.lang.Specification
 
@@ -29,7 +30,7 @@ class GitExportPluginFactorySpec extends Specification {
         expect:
         desc.title == 'Git Export'
         desc.name == 'git-export'
-        desc.properties.size() == 6
+        desc.properties.size() == 8
     }
 
     def "base description properties"() {
@@ -42,6 +43,8 @@ class GitExportPluginFactorySpec extends Specification {
                 'pathTemplate',
                 'url',
                 'branch',
+                'sshPrivateKeyPath',
+                'gitPasswordPath',
                 'committerName',
                 'committerEmail',
                 'format'
@@ -58,6 +61,8 @@ class GitExportPluginFactorySpec extends Specification {
                 'pathTemplate',
                 'url',
                 'branch',
+                'sshPrivateKeyPath',
+                'gitPasswordPath',
                 'committerName',
                 'committerEmail',
                 'format'
@@ -78,6 +83,8 @@ class GitExportPluginFactorySpec extends Specification {
                 'pathTemplate',
                 'url',
                 'branch',
+                'sshPrivateKeyPath',
+                'gitPasswordPath',
                 'committerName',
                 'committerEmail',
                 'format'
@@ -104,9 +111,11 @@ class GitExportPluginFactorySpec extends Specification {
         def git = GitExportPluginSpec.createGit(origindir)
 
         git.close()
+        def ctxt = Mock(ScmOperationContext){
 
+        }
         when:
-        def plugin = factory.createPlugin(config, 'testproject')
+        def plugin = factory.createPlugin(ctxt,config)
 
         then:
         null!=plugin
