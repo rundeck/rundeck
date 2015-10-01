@@ -1104,21 +1104,22 @@ class ScmPluginConfig {
         }
         return null
     }
+
     void setSetting(String name, List<String> value) {
-        if (value!=null) {
+        if (value != null) {
             setSetting(name + '.count', Integer.toString(value.size()))
             value.eachWithIndex { String entry, int i ->
                 setSetting(name + '.' + i, entry)
             }
-        }else{
-            setSetting(name + '.count', (String)null)
+        } else {
+            setSetting(name + '.count', (String) null)
         }
     }
 
     void setSetting(String name, String value) {
-        if(value!=null){
+        if (value != null) {
             properties?.setProperty(prefix + '.' + name, value)
-        }else{
+        } else {
             properties?.remove(prefix + '.' + name)
         }
     }
