@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.scm.ScmImportPlugin
@@ -95,8 +96,41 @@ Some examples:
                     required true
                     defaultValue "master"
                 },
-                //TODO: enable SSH
 
+                property {
+                    string BaseGitPlugin.SSH_PRIVATE_KEY_PATH
+                    title "SSH Key Storage Path"
+                    description '''Path can include variable references
+
+* `${user.login}` login name of logged in user
+* `${project}` current project name'''
+                    renderingOptions(
+                            [
+                                    (StringRenderingConstants.SELECTION_ACCESSOR_KEY)      : StringRenderingConstants.SelectionAccessor.STORAGE_PATH,
+                                    (StringRenderingConstants.STORAGE_PATH_ROOT_KEY)       : "keys",
+                                    (StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY): "Rundeck-key-type=private",
+
+                            ]
+                    )
+                },
+                property {
+                    string BaseGitPlugin.GIT_PASSWORD_PATH
+                    title "Password Storage Path"
+                    description '''Password to authenticate remotely (e.g. for SSH or HTTPS URLs).
+
+Path can include variable references
+
+* `${user.login}` login name of logged in user
+* `${project}` current project name'''
+                    renderingOptions(
+                            [
+                                    (StringRenderingConstants.SELECTION_ACCESSOR_KEY)      : StringRenderingConstants.SelectionAccessor.STORAGE_PATH,
+                                    (StringRenderingConstants.STORAGE_PATH_ROOT_KEY)       : "keys",
+                                    (StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY): "Rundeck-data-type=password",
+
+                            ]
+                    )
+                },
                 property {
                     select "format"
                     title "Format"

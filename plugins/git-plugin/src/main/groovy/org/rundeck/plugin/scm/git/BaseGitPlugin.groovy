@@ -12,6 +12,8 @@ import org.eclipse.jgit.revwalk.RevCommit
  * Common features of the import and export plugins
  */
 class BaseGitPlugin {
+    public static final String GIT_PASSWORD_PATH = "gitPasswordPath"
+    public static final String SSH_PRIVATE_KEY_PATH = "sshPrivateKeyPath"
     Git git
     Repository repo
     File workingDir

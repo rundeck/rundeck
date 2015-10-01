@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
@@ -32,7 +33,7 @@ class GitExportPluginFactory implements ScmExportPluginFactory, Describable {
             name PROVIDER_NAME
             title TITLE
             description DESC
-            def del=delegate
+            def del = delegate
             setupProperties.each {
                 del.property it
             }
@@ -97,41 +98,41 @@ Some examples:
                     defaultValue "master"
                     build()
                 },
-                //TODO: enable SSH
-//                ViewUtil.property {
-//                    string "sshPrivateKeyPath"
-//                    title "SSH Key Storage Path"
-//                    description '''Path can include variable references
-//
-//* `${username}` login name of logged in user
-//* `${project}` current project name'''
-//                    renderingOptions(
-//                            [
-//                                    (StringRenderingConstants.SELECTION_ACCESSOR_KEY)      : StringRenderingConstants.SelectionAccessor.STORAGE_PATH,
-//                                    (StringRenderingConstants.STORAGE_PATH_ROOT_KEY)       : "keys",
-//                                    (StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY): "Rundeck-key-type=private",
-//
-//                            ]
-//                    )
-//                    build()
-//                },
-//                ViewUtil.property {
-//                    string "sshPasswordPath"
-//                    title "SSH Password Storage Path"
-//                    description '''Path can include variable references
-//
-//* `${username}` login name of logged in user
-//* `${project}` current project name'''
-//                    renderingOptions(
-//                            [
-//                                    (StringRenderingConstants.SELECTION_ACCESSOR_KEY)      : StringRenderingConstants.SelectionAccessor.STORAGE_PATH,
-//                                    (StringRenderingConstants.STORAGE_PATH_ROOT_KEY)       : "keys",
-//                                    (StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY): "Rundeck-data-type=password",
-//
-//                            ]
-//                    )
-//                    build()
-//                },
+
+                property {
+                    string BaseGitPlugin.SSH_PRIVATE_KEY_PATH
+                    title "SSH Key Storage Path"
+                    description '''Path can include variable references
+
+* `${user.login}` login name of logged in user
+* `${project}` current project name'''
+                    renderingOptions(
+                            [
+                                    (StringRenderingConstants.SELECTION_ACCESSOR_KEY)      : StringRenderingConstants.SelectionAccessor.STORAGE_PATH,
+                                    (StringRenderingConstants.STORAGE_PATH_ROOT_KEY)       : "keys",
+                                    (StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY): "Rundeck-key-type=private",
+
+                            ]
+                    )
+                },
+                property {
+                    string BaseGitPlugin.GIT_PASSWORD_PATH
+                    title "Password Storage Path"
+                    description '''Password to authenticate remotely (e.g. for SSH or HTTPS URLs).
+
+Path can include variable references
+
+* `${user.login}` login name of logged in user
+* `${project}` current project name'''
+                    renderingOptions(
+                            [
+                                    (StringRenderingConstants.SELECTION_ACCESSOR_KEY)      : StringRenderingConstants.SelectionAccessor.STORAGE_PATH,
+                                    (StringRenderingConstants.STORAGE_PATH_ROOT_KEY)       : "keys",
+                                    (StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY): "Rundeck-data-type=password",
+
+                            ]
+                    )
+                },
                 property {
                     string "committerName"
                     title "Committer Name"
