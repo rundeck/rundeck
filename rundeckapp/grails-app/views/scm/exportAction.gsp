@@ -98,7 +98,7 @@
 
                                             </label>
                                             <g:link action="diff" class="btn btn-xs btn-info"
-                                                    params="${[project: params.project, jobId: job.extid]}">
+                                                    params="${[project: params.project, jobId: job.extid, integration: 'export']}">
                                                 <g:message code="button.View.Diff.title"/>
                                             </g:link>
                                         </div>

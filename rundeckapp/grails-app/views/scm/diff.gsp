@@ -125,7 +125,7 @@
                 <g:link action="exportAction" controller="scm"
                         class="list-group-item ${diffResult.oldNotFound ? 'list-group-item-success' :
                                 'list-group-item-info'}"
-                        params="[project: params.project, jobIds: job.extid]">
+                        params="[project: params.project, jobIds: job.extid,integration:integration]">
 
                     <i class="glyphicon glyphicon-circle-arrow-right"></i>
                     <g:if test="${diffResult.oldNotFound}">
