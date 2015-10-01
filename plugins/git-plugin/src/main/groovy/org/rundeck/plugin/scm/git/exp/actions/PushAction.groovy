@@ -70,7 +70,12 @@ Pushing to remote branch: `${plugin.branch}`"""
 
 //                pushb.add(input.tag) //todo: push tag
 
-        def push = pushb.call()
+        try {
+            def push = pushb.call()
+        } catch (Exception e) {
+            plugin.logger.debug("Failed push to remote: ${e.message}",e)
+            throw new ScmPluginException("Failed push to remote: ${e.message}", e)
+        }
         def sb = new StringBuilder()
         def updates = (push*.remoteUpdates).flatten()
         updates.each {
@@ -81,7 +86,7 @@ Pushing to remote branch: `${plugin.branch}`"""
         if (failedUpdates) {
             result.message = "Some updates failed: " + failedUpdates
         } else {
-            result.message = "Remote push result: OK"
+            result.message = "Remote push result: OK. (Commit: ${commit.name})"
         }
         result.id = commit?.name
         return result
