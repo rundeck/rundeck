@@ -1,13 +1,35 @@
 package org.rundeck.plugin.scm.git
+
 import com.dtolabs.rundeck.core.jobs.JobReference
+import com.dtolabs.rundeck.core.storage.ResourceMeta
+import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
+import org.eclipse.jgit.api.FetchCommand
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.PullCommand
+
+import org.eclipse.jgit.api.PullResult
 import org.eclipse.jgit.api.Status
+import org.eclipse.jgit.api.TransportCommand
 import org.eclipse.jgit.diff.RawTextComparator
+import org.eclipse.jgit.lib.BranchConfig
+import org.eclipse.jgit.lib.ConfigConstants
+import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.ObjectId
+import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.lib.Repository
+import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.eclipse.jgit.transport.URIish
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
+import org.eclipse.jgit.util.FileUtils
+import org.rundeck.storage.api.StorageException
+
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
 /**
  * Common features of the import and export plugins
  */
@@ -58,6 +80,7 @@ class BaseGitPlugin {
 
     def fetchFromRemote(ScmOperationContext context,Git git1=null) {
         def fetchCommand = (git1?:git).fetch()
+        setupTransportAuthentication(input["url"], context, fetchCommand)
         def fetchResult = fetchCommand.call()
 
         def update = fetchResult.getTrackingRefUpdate("refs/remotes/origin/${this.branch}")
@@ -92,6 +115,7 @@ class BaseGitPlugin {
 
     PullResult gitPull(ScmOperationContext context,Git git1=null) {
         def pullCommand = (git1?:git).pull().setRemote('origin').setRemoteBranchName(branch)
+        setupTransportAuthentication(input.url, context, pullCommand)
         pullCommand.call()
     }
 
@@ -104,6 +128,7 @@ class BaseGitPlugin {
         if (rebase) {
             def pullCommand = git.pull().setRemote('origin').setRemoteBranchName(branch)
             pullCommand.setRebase(true)
+            setupTransportAuthentication(this.input.url, context, pullCommand)
             def pullResult = pullCommand.call()
 
             def result = new ScmExportResultImpl()
@@ -203,6 +228,21 @@ class BaseGitPlugin {
         GitUtil.lastCommitForPath repo, git, path
     }
 
+    static String expand(final String source, final ScmUserInfo scmUserInfo) {
+        def userInfoProps = ['fullName', 'firstName', 'lastName', 'email', 'userName']
+        def map = userInfoProps.collectEntries { [it, scmUserInfo[it]] }
+        expand(source, map, 'user')
+    }
+
+    static String expand(final String source, final Map<String, String> data, String prefix = '') {
+        data.keySet().inject(source) { String x, String y ->
+            return x.replaceAll(
+                    Pattern.quote('${' + (prefix ? prefix + '.' : '') + y + '}'),
+                    Matcher.quoteReplacement(data[y] ?: '')
+            )
+        }
+    }
+
     JobState createJobStatus(final Map map) {
         //TODO: include scm status
         return new JobGitState(
@@ -210,6 +250,7 @@ class BaseGitPlugin {
                 commit: map.commitMeta ? new GitScmCommit(map.commitMeta) : null
         )
     }
+
     JobImportState createJobImportStatus(final Map map) {
         //TODO: include scm status
         return new JobImportGitState(
@@ -217,6 +258,54 @@ class BaseGitPlugin {
                 commit: map.commitMeta ? new GitScmCommit(map.commitMeta) : null
         )
     }
+
+    Logger getLogger() {
+        Logger.getLogger(this.class)
+    }
+
+    private InputStream getStoragePathStream(final ScmOperationContext context, String path) throws IOException {
+        if (null == path) {
+            return null;
+        }
+        def tree = context.getStorageTree()
+        if(!tree.hasResource(path)){
+            throw new ScmPluginException("Path does not exist: ${path}")
+        }
+        ResourceMeta contents
+        try {
+            contents = tree.getResource(path).getContents()
+        } catch (StorageException e) {
+            logger.debug("getStoragePathStream",e)
+            throw new ScmPluginException(e)
+        }
+        return contents.getInputStream()
+    }
+
+    private byte[] loadStoragePathData(final ScmOperationContext context, String path) throws IOException,ScmPluginException {
+        if (null == path) {
+            return null;
+        }
+
+        def tree = context.getStorageTree()
+        if(!tree.hasResource(path)){
+            throw new ScmPluginException("Path does not exist: ${path}")
+        }
+        ResourceMeta contents
+        try {
+            contents = tree.getResource(path).getContents()
+        } catch (StorageException e) {
+            logger.debug("loadStoragePathData",e)
+            throw new ScmPluginException(e)
+        }
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        contents.writeContent(byteArrayOutputStream);
+        return byteArrayOutputStream.toByteArray();
+    }
+    private void removeWorkdir(File base){
+        //remove the dir
+        FileUtils.delete(base,FileUtils.RECURSIVE)
+    }
+
     protected void cloneOrCreate(final ScmOperationContext context, File base, String url) throws ScmPluginException {
         if (base.isDirectory() && new File(base, ".git").isDirectory()) {
             def arepo = new FileRepositoryBuilder().setGitDir(new File(base, ".git")).setWorkTree(base).build()
@@ -264,6 +353,7 @@ class BaseGitPlugin {
                 setRemote("origin").
                 setDirectory(base).
                 setURI(url)
+        setupTransportAuthentication(url, context, cloneCommand)
         try {
             git = cloneCommand.call()
         } catch (Exception e) {
@@ -271,5 +361,53 @@ class BaseGitPlugin {
             throw new ScmPluginException("Failed cloning the repository from ${url}: ${e.message}", e)
         }
         repo = git.getRepository()
+    }
+
+    /**
+     * Configure authentication for the git command depending on the configured ssh private Key storage path, or password
+     *
+     * @param u
+     * @param context
+     * @param command
+     */
+    void setupTransportAuthentication(
+            String url,
+            ScmOperationContext context,
+            TransportCommand command
+    )
+            throws ScmPluginException
+    {
+
+        URIish u = new URIish(url);
+        logger.debug("transport url ${u}, scheme ${u.scheme}, user ${u.user}")
+        if ((u.scheme == null || u.scheme == 'ssh') && u.user && input[SSH_PRIVATE_KEY_PATH]) {
+            logger.debug("using ssh private key path ${input[SSH_PRIVATE_KEY_PATH]}")
+            //setup ssh key authentication
+            def expandedPath = expandContextVarsInPath(context, input[SSH_PRIVATE_KEY_PATH])
+            def keyData = loadStoragePathData(context, expandedPath)
+            def factory = new PluginSshSessionFactory(keyData)
+            command.setTransportConfigCallback(factory)
+        } else if (u.user && input[GIT_PASSWORD_PATH]) {
+            //setup password authentication
+            logger.debug("using password path ${input[GIT_PASSWORD_PATH]}")
+            def expandedPath = expandContextVarsInPath(context, input[GIT_PASSWORD_PATH])
+
+            def data = loadStoragePathData(context, expandedPath)
+
+            if (null != data && data.length > 0) {
+
+                def pass = new String(data)
+                command.setCredentialsProvider(new UsernamePasswordCredentialsProvider(u.user, pass))
+            }
+        }
+    }
+
+    /**
+     * Expand variable references in the storage path, such as ${user.name} and ${project}* @param context
+     * @param path
+     * @return
+     */
+    private String expandContextVarsInPath(ScmOperationContext context, String path) {
+        expand(expand(path, context.userInfo), [project: context.frameworkProject])
     }
 }

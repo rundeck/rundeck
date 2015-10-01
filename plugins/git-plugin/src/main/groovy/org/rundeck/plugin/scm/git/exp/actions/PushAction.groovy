@@ -67,6 +67,7 @@ Pushing to remote branch: `${plugin.branch}`"""
         def pushb = plugin.git.push()
         pushb.setRemote("origin")
         pushb.add(plugin.branch)
+        plugin.setupTransportAuthentication(plugin.input.url, context, pushb)
 
 //                pushb.add(input.tag) //todo: push tag
 
