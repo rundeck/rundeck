@@ -54,13 +54,39 @@ class BaseGitPlugin {
         jobExportReferences.each { serialize(it, format) }
     }
 
-    def fetchFromRemote(){
-        def fetchResult = git.fetch().call()
+    def fetchFromRemote(ScmOperationContext context,Git git1=null) {
+        def fetchCommand = (git1?:git).fetch()
+        def fetchResult = fetchCommand.call()
 
-        def update = fetchResult.getTrackingRefUpdate("refs/remotes/origin/${branch}")
+        def update = fetchResult.getTrackingRefUpdate("refs/remotes/origin/${this.branch}")
 
         def fetchMessage = update ? update.toString() : "No changes were found"
         Logger.getLogger(this.class).debug("fetchFromRemote: ${fetchMessage}")
+        //make sure tracking is configured for the branch
+        def branchConfig = new BranchConfig(repo.getConfig(), branch)
+        def trackingBranch = branchConfig.getTrackingBranch()
+        if(null==trackingBranch) {
+            (git1 ?: git).repository.config.setString(
+                    ConfigConstants.CONFIG_BRANCH_SECTION,
+                    branch,
+                    ConfigConstants.CONFIG_KEY_REMOTE,
+                    'origin'
+            );
+            //if remote branch name exists, track it for merging
+            def remoteRef = fetchResult.getAdvertisedRef(branch) ?: fetchResult.getAdvertisedRef(Constants.R_HEADS + branch)
+
+            (git1 ?: git).repository.config.setString(
+                    ConfigConstants.CONFIG_BRANCH_SECTION,
+                    branch,
+                    ConfigConstants.CONFIG_KEY_MERGE,
+                    remoteRef.name
+            );
+
+            (git1 ?: git).repository.config.save()
+        }
+
+        return update
+    }
     }
 
     String debugStatus(final Status status) {

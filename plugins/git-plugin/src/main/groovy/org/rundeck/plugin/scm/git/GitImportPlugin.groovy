@@ -145,8 +145,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             return null
         }
 
-        if(performFetch){
-            fetchFromRemote()
+        if (performFetch) {
+            fetchFromRemote(context)
         }
 
         int importNeeded = 0

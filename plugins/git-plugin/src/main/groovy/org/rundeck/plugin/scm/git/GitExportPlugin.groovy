@@ -195,7 +195,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     GitExportSynchState getStatusInternal(ScmOperationContext context,boolean performFetch) {
         //perform fetch
         if(performFetch){
-            fetchFromRemote()
+            fetchFromRemote(context)
         }
 
         Status status = git.status().call()

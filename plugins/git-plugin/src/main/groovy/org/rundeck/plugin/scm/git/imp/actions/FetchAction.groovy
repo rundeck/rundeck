@@ -46,9 +46,7 @@ class FetchAction extends BaseAction implements GitImportAction {
     )
     {
         //fetch remote changes
-        def fetchResult = plugin.git.fetch().call()
-
-        def update = fetchResult.getTrackingRefUpdate("refs/remotes/origin/master")
+        def update = plugin.fetchFromRemote(context)
 
         def result = new ScmExportResultImpl()
         result.success = true
