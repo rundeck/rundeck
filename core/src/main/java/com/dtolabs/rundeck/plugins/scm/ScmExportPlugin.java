@@ -52,7 +52,7 @@ public interface ScmExportPlugin {
     /**
      * @return overall status
      */
-    ScmExportSynchState getStatus(ScmOperationContext context);
+    ScmExportSynchState getStatus(ScmOperationContext context) throws ScmPluginException;
 
     /**
      * Return the state of the given job

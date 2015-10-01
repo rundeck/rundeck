@@ -29,7 +29,7 @@ public interface ScmImportPlugin {
     /**
      * @return overall status
      */
-    ScmImportSynchState getStatus(ScmOperationContext context);
+    ScmImportSynchState getStatus(ScmOperationContext context) throws ScmPluginException;
 
     /**
      * Return the state of the given job
