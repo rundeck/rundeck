@@ -17,7 +17,7 @@ class FetchAction extends BaseAction implements GitExportAction {
     }
 
     @Override
-    BasicInputView getInputView(final GitExportPlugin plugin) {
+    BasicInputView getInputView(final ScmOperationContext context,final GitExportPlugin plugin) {
         inputView(id) {
             title "Fetch remote changes"
             buttonTitle "Fetch"
@@ -39,8 +39,8 @@ class FetchAction extends BaseAction implements GitExportAction {
             final GitExportPlugin plugin,
             final Set<JobExportReference> jobs,
             final Set<String> pathsToDelete,
-            final ScmUserInfo userInfo,
-            final Map<String, Object> input
+            final ScmOperationContext context,
+            final Map<String, String> input
     ) throws ScmPluginException
     {
 

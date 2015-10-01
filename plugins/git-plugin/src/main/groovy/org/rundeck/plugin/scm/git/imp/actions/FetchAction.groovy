@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.JobImporter
 import com.dtolabs.rundeck.plugins.scm.ScmExportResult
 import com.dtolabs.rundeck.plugins.scm.ScmExportResultImpl
+import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import org.rundeck.plugin.scm.git.BaseAction
 import org.rundeck.plugin.scm.git.GitImportAction
 import org.rundeck.plugin.scm.git.GitImportPlugin
@@ -19,7 +20,7 @@ class FetchAction extends BaseAction implements GitImportAction {
     }
 
     @Override
-    BasicInputView getInputView(final GitImportPlugin plugin) {
+    BasicInputView getInputView(final ScmOperationContext context,final GitImportPlugin plugin) {
         inputView(id) {
             title "Fetch remote changes"
             buttonTitle "Fetch"
@@ -37,10 +38,11 @@ class FetchAction extends BaseAction implements GitImportAction {
 
     @Override
     ScmExportResult performAction(
+            final ScmOperationContext context,
             final GitImportPlugin plugin,
             final JobImporter importer,
             final List<String> selectedPaths,
-            final Map<String, Object> input
+            final Map<String, String> input
     )
     {
         //fetch remote changes

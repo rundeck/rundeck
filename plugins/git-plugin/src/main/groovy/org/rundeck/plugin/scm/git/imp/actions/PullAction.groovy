@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.JobImporter
 import com.dtolabs.rundeck.plugins.scm.ScmExportResult
 import com.dtolabs.rundeck.plugins.scm.ScmExportResultImpl
+import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import org.eclipse.jgit.merge.MergeStrategy
 import org.rundeck.plugin.scm.git.BaseAction
@@ -23,7 +24,7 @@ class PullAction extends BaseAction implements GitImportAction {
     }
 
     @Override
-    BasicInputView getInputView(GitImportPlugin plugin) {
+    BasicInputView getInputView(final ScmOperationContext context,GitImportPlugin plugin) {
 
         def status = plugin.getStatusInternal(false)
         def props = [
@@ -79,10 +80,11 @@ Pulling from remote branch: `${plugin.branch}`"""
 
     @Override
     ScmExportResult performAction(
+            final ScmOperationContext context,
             final GitImportPlugin plugin,
             final JobImporter importer,
             final List<String> selectedPaths,
-            final Map<String, Object> input
+            final Map<String, String> input
     ) throws ScmPluginException
     {
         def status = plugin.getStatusInternal(false)

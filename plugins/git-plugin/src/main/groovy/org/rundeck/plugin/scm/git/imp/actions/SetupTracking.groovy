@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.JobImporter
 import com.dtolabs.rundeck.plugins.scm.ScmExportResult
 import com.dtolabs.rundeck.plugins.scm.ScmExportResultImpl
+import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import com.dtolabs.rundeck.plugins.scm.ScmPluginInvalidInput
 import org.rundeck.plugin.scm.git.BaseAction
 import org.rundeck.plugin.scm.git.GitImportAction
@@ -31,7 +32,7 @@ class SetupTracking extends BaseAction implements GitImportAction {
     }
 
 
-    BasicInputView getInputView(GitImportPlugin plugin) {
+    BasicInputView getInputView(final ScmOperationContext context, GitImportPlugin plugin) {
         inputView(id) {
             title "Setup Tracking"
             description '''Select a static list of Files found in the Repository to be tracked for Job Import.
@@ -75,7 +76,7 @@ Or, you can also choose to enter a Regular expression to match potential new rep
     static void setupWithInput(
             final GitImportPlugin plugin,
             final List<String> selectedPaths,
-            final Map<String, Object> input
+            final Map<String, String> input
     )
     {
         GitImportPlugin.log.debug("SetupTracking: ${selectedPaths}, ${input}")
@@ -91,10 +92,11 @@ Or, you can also choose to enter a Regular expression to match potential new rep
 
     @Override
     ScmExportResult performAction(
+            final ScmOperationContext context,
             final GitImportPlugin plugin,
             final JobImporter importer,
             final List<String> selectedPaths,
-            final Map<String, Object> input
+            final Map<String, String> input
     )
     {
         if (input[USE_FILE_PATTERN] != 'true' && !selectedPaths) {

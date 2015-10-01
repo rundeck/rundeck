@@ -19,7 +19,7 @@ class CommitJobsAction extends BaseAction  implements GitExportAction{
         super(id, title, description)
     }
 
-    BasicInputView getInputView(GitExportPlugin plugin) {
+    BasicInputView getInputView(final ScmOperationContext context,GitExportPlugin plugin) {
         inputView(id){
             title "Commit Changes to Git"
             buttonTitle "Commit"
@@ -55,12 +55,12 @@ class CommitJobsAction extends BaseAction  implements GitExportAction{
             final GitExportPlugin plugin,
             final Set<JobExportReference> jobs,
             final Set<String> pathsToDelete,
-            final ScmUserInfo userInfo,
-            final Map<String, Object> input
+            final ScmOperationContext context,
+            final Map<String, String> input
     ) throws ScmPluginException
     {
         //determine action
-        def internal = plugin.getStatusInternal(false)
+        def internal = plugin.getStatusInternal(context,false)
         def localGitChanges = !internal.gitStatus.isClean()
 
         RevCommit commit
@@ -73,11 +73,11 @@ class CommitJobsAction extends BaseAction  implements GitExportAction{
             if (!input.commitMessage) {
                 throw new ScmPluginException("A commitMessage is required")
             }
-            def commitIdentName = plugin.expand(plugin.committerName, userInfo)
+            def commitIdentName = plugin.expand(plugin.committerName, context.userInfo)
             if (!commitIdentName) {
                 ScmUserInfoMissing.fieldMissing("committerName")
             }
-            def commitIdentEmail = plugin.expand(plugin.committerEmail, userInfo)
+            def commitIdentEmail = plugin.expand(plugin.committerEmail, context.userInfo)
             if (!commitIdentEmail) {
                 ScmUserInfoMissing.fieldMissing("committerEmail")
             }

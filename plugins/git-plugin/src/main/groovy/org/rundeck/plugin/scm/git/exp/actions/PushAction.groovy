@@ -18,8 +18,8 @@ class PushAction extends BaseAction implements GitExportAction {
     }
 
     @Override
-    BasicInputView getInputView(GitExportPlugin plugin) {
-        def status = plugin.getStatusInternal(false)
+    BasicInputView getInputView(final ScmOperationContext context,GitExportPlugin plugin) {
+        def status = plugin.getStatusInternal(context,false)
         inputView(id) {
             title "Push remote Git changes"
             buttonTitle "Push"
@@ -52,8 +52,8 @@ Pushing to remote branch: `${plugin.branch}`"""
             final GitExportPlugin plugin,
             final Set<JobExportReference> jobs,
             final Set<String> pathsToDelete,
-            final ScmUserInfo userInfo,
-            final Map<String, Object> input
+            final ScmOperationContext context,
+            final Map<String, String> input
     ) throws ScmPluginException
     {
         def result = new ScmExportResultImpl()
