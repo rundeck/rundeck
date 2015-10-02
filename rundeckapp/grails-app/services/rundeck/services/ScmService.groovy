@@ -1058,6 +1058,14 @@ class ImporterResult implements ImportResult {
         result.errorMessage = message
         return result
     }
+
+    @Override
+    public String toString() {
+        if(!successful) {
+            return "Failed: " + errorMessage
+        }
+        return (created ? "Created " : "Modified ") + "Job: " + job;
+    }
 }
 
 class ScmUser implements ScmUserInfo {
