@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.eclipse.jgit.transport.RemoteRefUpdate
 import org.rundeck.plugin.scm.git.BaseAction
+import org.rundeck.plugin.scm.git.BaseGitPlugin
 import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
 
@@ -67,7 +68,7 @@ Pushing to remote branch: `${plugin.branch}`"""
 
         def commit = plugin.getHead()
         def pushb = plugin.git.push()
-        pushb.setRemote("origin")
+        pushb.setRemote(BaseGitPlugin.REMOTE_NAME)
         pushb.add(plugin.branch)
         plugin.setupTransportAuthentication(plugin.input.url, context, pushb)
 

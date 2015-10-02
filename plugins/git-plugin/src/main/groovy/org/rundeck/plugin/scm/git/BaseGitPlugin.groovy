@@ -27,6 +27,7 @@ import java.util.regex.Pattern
 class BaseGitPlugin {
     public static final String GIT_PASSWORD_PATH = "gitPasswordPath"
     public static final String SSH_PRIVATE_KEY_PATH = "sshPrivateKeyPath"
+    public static final String REMOTE_NAME = "origin"
     Git git
     Repository repo
     File workingDir
@@ -72,11 +73,11 @@ class BaseGitPlugin {
     def fetchFromRemote(ScmOperationContext context, Git git1 = null) {
         def agit = git1 ?: git
         def fetchCommand = agit.fetch()
-        fetchCommand.setRemote("origin")
+        fetchCommand.setRemote(REMOTE_NAME)
         setupTransportAuthentication(input["url"], context, fetchCommand)
         def fetchResult = fetchCommand.call()
 
-        def update = fetchResult.getTrackingRefUpdate("refs/remotes/origin/${this.branch}")
+        def update = fetchResult.getTrackingRefUpdate("refs/remotes/${REMOTE_NAME}/${this.branch}")
 
         def fetchMessage = update ? update.toString() : "No changes were found"
         Logger.getLogger(this.class).debug("fetchFromRemote: ${fetchMessage}")
@@ -86,7 +87,7 @@ class BaseGitPlugin {
                     ConfigConstants.CONFIG_BRANCH_SECTION,
                     branch,
                     ConfigConstants.CONFIG_KEY_REMOTE,
-                    'origin'
+                    REMOTE_NAME
             );
             //if remote branch name exists, track it for merging
             def remoteRef = fetchResult.getAdvertisedRef(branch) ?:
@@ -117,7 +118,7 @@ class BaseGitPlugin {
     }
 
     PullResult gitPull(ScmOperationContext context, Git git1 = null) {
-        def pullCommand = (git1 ?: git).pull().setRemote('origin').setRemoteBranchName(branch)
+        def pullCommand = (git1 ?: git).pull().setRemote(REMOTE_NAME).setRemoteBranchName(branch)
         setupTransportAuthentication(input.url, context, pullCommand)
         pullCommand.call()
     }
@@ -129,7 +130,7 @@ class BaseGitPlugin {
     )
     {
         if (rebase) {
-            def pullCommand = git.pull().setRemote('origin').setRemoteBranchName(branch)
+            def pullCommand = git.pull().setRemote(REMOTE_NAME).setRemoteBranchName(branch)
             pullCommand.setRebase(true)
             setupTransportAuthentication(this.input.url, context, pullCommand)
             def pullResult = pullCommand.call()
@@ -145,7 +146,7 @@ class BaseGitPlugin {
 
             def strategy = MergeStrategy.get(resolutionStrategy)
             def mergebuild = git.merge().setStrategy(strategy)
-            def commit = git.repository.resolve("refs/remotes/origin/${branch}")
+            def commit = git.repository.resolve("refs/remotes/${REMOTE_NAME}/${branch}")
 
             mergebuild.include(commit)
 
@@ -319,7 +320,7 @@ class BaseGitPlugin {
 
             //test url matches origin
             def config = agit.getRepository().getConfig()
-            def found = config.getString("remote", "origin", "url")
+            def found = config.getString("remote", REMOTE_NAME, "url")
 
             if (found != url) {
 
@@ -353,7 +354,7 @@ class BaseGitPlugin {
         logger.debug("cloning...");
         def cloneCommand = Git.cloneRepository().
                 setBranch(this.branch).
-                setRemote("origin").
+                setRemote(REMOTE_NAME).
                 setDirectory(base).
                 setURI(url)
         setupTransportAuthentication(url, context, cloneCommand)
