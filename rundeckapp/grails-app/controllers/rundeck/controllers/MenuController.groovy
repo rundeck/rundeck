@@ -13,6 +13,7 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -213,6 +214,9 @@ class MenuController extends ControllerBase{
         def results = jobsFragment(query)
         results.execQueryParams=query.asExecQueryParams()
         results.reportQueryParams=query.asReportQueryParams()
+        if(results.warning){
+            request.warn=results.warning
+        }
 
         withFormat{
             html {
@@ -269,25 +273,37 @@ class MenuController extends ControllerBase{
         if (frameworkService.authorizeApplicationResourceAny(authContext,
                                                              frameworkService.authResourceForProject(params.project),
                                                              [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT])) {
-
-            if(scmService.projectHasConfiguredExportPlugin(params.project)){
-                results.scmExportEnabled=true
-                results.scmStatus=scmService.exportStatusForJobs(results.nextScheduled)
-                results.scmExportStatus=scmService.exportPluginStatus(authContext,params.project)
-                results.scmExportActions=scmService.exportPluginActions(authContext,params.project)
-                results.scmExportRenamed=scmService.getRenamedJobPathsForProject(params.project)
+            def pluginData=[:]
+            try {
+                if (scmService.projectHasConfiguredExportPlugin(params.project)) {
+                    pluginData.scmExportEnabled = true
+                    pluginData.scmStatus = scmService.exportStatusForJobs(results.nextScheduled)
+                    pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
+                    pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
+                    pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
+                    results.putAll(pluginData)
+                }
+            }catch (ScmPluginException e){
+                results.warning="Failed to update SCM Export status: ${e.message}"
             }
         }
         if (frameworkService.authorizeApplicationResourceAny(authContext,
                                                              frameworkService.authResourceForProject(params.project),
                                                              [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT])) {
 
-            if(scmService.projectHasConfiguredImportPlugin(params.project)){
-                results.scmImportEnabled=true
-                results.scmImportJobStatus=scmService.importStatusForJobs(results.nextScheduled)
-                results.scmImportStatus=scmService.importPluginStatus(authContext,params.project)
-                results.scmImportActions=scmService.importPluginActions(authContext,params.project)
-//                results.scmImportRenamed=scmService.getRenamedJobPathsForProject(params.project)
+            def pluginData=[:]
+            try{
+                if(scmService.projectHasConfiguredImportPlugin(params.project)){
+                    pluginData.scmImportEnabled=true
+                    pluginData.scmImportJobStatus=scmService.importStatusForJobs(results.nextScheduled)
+                    pluginData.scmImportStatus=scmService.importPluginStatus(authContext,params.project)
+                    pluginData.scmImportActions=scmService.importPluginActions(authContext,params.project)
+    //                results.scmImportRenamed=scmService.getRenamedJobPathsForProject(params.project)
+                    results.putAll(pluginData)
+                }
+
+            }catch (ScmPluginException e){
+                results.warning="Failed to update SCM Import status: ${e.message}"
             }
         }
 

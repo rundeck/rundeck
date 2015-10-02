@@ -717,7 +717,7 @@ class ScmService {
      * @param project
      * @return
      */
-    ScmExportSynchState exportPluginStatus(UserAndRolesAuthContext auth,String project) {
+    ScmExportSynchState exportPluginStatus(UserAndRolesAuthContext auth,String project) throws ScmPluginException {
 
         def plugin = loadedExportPlugins[project]
         if (plugin) {
@@ -730,7 +730,7 @@ class ScmService {
      * @param project
      * @return
      */
-    ScmImportSynchState importPluginStatus(UserAndRolesAuthContext auth,String project) {
+    ScmImportSynchState importPluginStatus(UserAndRolesAuthContext auth,String project) throws ScmPluginException {
         def plugin = loadedImportPlugins[project]
         if (plugin) {
             return plugin.getStatus(scmOperationContext(auth,project))
