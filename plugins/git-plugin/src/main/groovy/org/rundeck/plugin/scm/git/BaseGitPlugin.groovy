@@ -321,24 +321,21 @@ class BaseGitPlugin {
                 //need to reconfigured
                 removeWorkdir(base)
                 performClone(base, url, context)
-            }else if (null == arepo.resolve("refs/remotes/origin/${branch}")) {
-                logger.debug("pulling from remote")
-
+            }else{
                 try {
                     fetchFromRemote(context, agit)
                 } catch (Exception e) {
-                    logger.debug("Failed fetch from the repository from ${url}: ${e.message}",e)
-                    throw new ScmPluginException("Failed fetch from the repository from ${url}: ${e.message}: ${e.cause?.message}", e)
+                    logger.debug("Failed fetch from the repository: ${e.message}",e)
+                    def msg = e.message
+                    def cause = e.cause
+                    while(cause){
+                        msg+=": "+cause.message
+                        cause=cause.cause
+                    }
+                    throw new ScmPluginException("Failed fetch from the repository: ${msg}", e)
                 }
-
-
                 git=agit
                 repo=arepo
-
-            }else{
-                git=agit
-                repo=arepo
-                logger.debug("not cloning")
             }
 
         }else{
