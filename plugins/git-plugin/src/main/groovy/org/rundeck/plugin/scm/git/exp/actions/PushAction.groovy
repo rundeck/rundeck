@@ -71,8 +71,9 @@ Pushing to remote branch: `${plugin.branch}`"""
 
 //                pushb.add(input.tag) //todo: push tag
 
+        def push
         try {
-            def push = pushb.call()
+            push = pushb.call()
         } catch (Exception e) {
             plugin.logger.debug("Failed push to remote: ${e.message}",e)
             throw new ScmPluginException("Failed push to remote: ${e.message}", e)
