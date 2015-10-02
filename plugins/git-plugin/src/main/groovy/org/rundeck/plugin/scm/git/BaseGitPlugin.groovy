@@ -2,23 +2,14 @@ package org.rundeck.plugin.scm.git
 
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.storage.ResourceMeta
-import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
-import org.eclipse.jgit.api.FetchCommand
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.api.PullCommand
-
 import org.eclipse.jgit.api.PullResult
 import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.api.TransportCommand
 import org.eclipse.jgit.diff.RawTextComparator
-import org.eclipse.jgit.lib.BranchConfig
-import org.eclipse.jgit.lib.ConfigConstants
-import org.eclipse.jgit.lib.Constants
-import org.eclipse.jgit.lib.ObjectId
-import org.eclipse.jgit.lib.Ref
-import org.eclipse.jgit.lib.Repository
+import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
@@ -78,7 +69,7 @@ class BaseGitPlugin {
         jobExportReferences.each { serialize(it, format) }
     }
 
-    def fetchFromRemote(ScmOperationContext context,Git git1=null) {
+    def fetchFromRemote(ScmOperationContext context, Git git1 = null) {
         def agit = git1 ?: git
         def fetchCommand = agit.fetch()
         fetchCommand.setRemote("origin")
@@ -118,15 +109,15 @@ class BaseGitPlugin {
      * @param git1
      * @return remote tracking branch name, or null if tracking has not be set up
      */
-    def remoteTrackingBranch(Git git1=null){
+    def remoteTrackingBranch(Git git1 = null) {
         def agit = git1 ?: git
 
         def branchConfig = new BranchConfig(agit.repository.config, branch)
         return branchConfig.getRemoteTrackingBranch()
     }
 
-    PullResult gitPull(ScmOperationContext context,Git git1=null) {
-        def pullCommand = (git1?:git).pull().setRemote('origin').setRemoteBranchName(branch)
+    PullResult gitPull(ScmOperationContext context, Git git1 = null) {
+        def pullCommand = (git1 ?: git).pull().setRemote('origin').setRemoteBranchName(branch)
         setupTransportAuthentication(input.url, context, pullCommand)
         pullCommand.call()
     }
@@ -280,42 +271,45 @@ class BaseGitPlugin {
             return null;
         }
         def tree = context.getStorageTree()
-        if(!tree.hasResource(path)){
+        if (!tree.hasResource(path)) {
             throw new ScmPluginException("Path does not exist: ${path}")
         }
         ResourceMeta contents
         try {
             contents = tree.getResource(path).getContents()
         } catch (StorageException e) {
-            logger.debug("getStoragePathStream",e)
+            logger.debug("getStoragePathStream", e)
             throw new ScmPluginException(e)
         }
         return contents.getInputStream()
     }
 
-    private byte[] loadStoragePathData(final ScmOperationContext context, String path) throws IOException,ScmPluginException {
+    private byte[] loadStoragePathData(final ScmOperationContext context, String path)
+            throws IOException, ScmPluginException
+    {
         if (null == path) {
             return null;
         }
 
         def tree = context.getStorageTree()
-        if(!tree.hasResource(path)){
+        if (!tree.hasResource(path)) {
             throw new ScmPluginException("Path does not exist: ${path}")
         }
         ResourceMeta contents
         try {
             contents = tree.getResource(path).getContents()
         } catch (StorageException e) {
-            logger.debug("loadStoragePathData",e)
+            logger.debug("loadStoragePathData", e)
             throw new ScmPluginException(e)
         }
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         contents.writeContent(byteArrayOutputStream);
         return byteArrayOutputStream.toByteArray();
     }
-    private void removeWorkdir(File base){
+
+    private void removeWorkdir(File base) {
         //remove the dir
-        FileUtils.delete(base,FileUtils.RECURSIVE)
+        FileUtils.delete(base, FileUtils.RECURSIVE)
     }
 
     protected void cloneOrCreate(final ScmOperationContext context, File base, String url) throws ScmPluginException {
@@ -333,24 +327,24 @@ class BaseGitPlugin {
                 //need to reconfigured
                 removeWorkdir(base)
                 performClone(base, url, context)
-            }else{
+            } else {
                 try {
                     fetchFromRemote(context, agit)
                 } catch (Exception e) {
-                    logger.debug("Failed fetch from the repository: ${e.message}",e)
+                    logger.debug("Failed fetch from the repository: ${e.message}", e)
                     def msg = e.message
                     def cause = e.cause
-                    while(cause){
-                        msg+=": "+cause.message
-                        cause=cause.cause
+                    while (cause) {
+                        msg += ": " + cause.message
+                        cause = cause.cause
                     }
                     throw new ScmPluginException("Failed fetch from the repository: ${msg}", e)
                 }
-                git=agit
-                repo=arepo
+                git = agit
+                repo = arepo
             }
 
-        }else{
+        } else {
             performClone(base, url, context)
         }
     }

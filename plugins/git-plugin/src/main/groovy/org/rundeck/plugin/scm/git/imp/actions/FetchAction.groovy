@@ -1,4 +1,5 @@
 package org.rundeck.plugin.scm.git.imp.actions
+
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.JobImporter
@@ -11,6 +12,7 @@ import org.rundeck.plugin.scm.git.GitImportPlugin
 
 import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
 import static org.rundeck.plugin.scm.git.BuilderUtil.property
+
 /**
  * Created by greg on 9/8/15.
  */
@@ -20,7 +22,7 @@ class FetchAction extends BaseAction implements GitImportAction {
     }
 
     @Override
-    BasicInputView getInputView(final ScmOperationContext context,final GitImportPlugin plugin) {
+    BasicInputView getInputView(final ScmOperationContext context, final GitImportPlugin plugin) {
         inputView(id) {
             title "Fetch remote changes"
             buttonTitle "Fetch"
@@ -32,7 +34,8 @@ class FetchAction extends BaseAction implements GitImportAction {
                         renderingOption StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY, "text/x-markdown"
                         defaultValue "Fetching from remote branch: `${plugin.branch}`"
                     },
-                    ])
+            ]
+            )
         }
     }
 

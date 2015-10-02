@@ -22,8 +22,8 @@ class SynchAction extends BaseAction implements GitExportAction {
     }
 
     @Override
-    BasicInputView getInputView(final ScmOperationContext context,GitExportPlugin plugin) {
-        def status = plugin.getStatusInternal(context,false)
+    BasicInputView getInputView(final ScmOperationContext context, GitExportPlugin plugin) {
+        def status = plugin.getStatusInternal(context, false)
         def props = [
                 property {
                     string "status"
@@ -90,14 +90,14 @@ Pulling from remote branch: `${plugin.branch}`"""
         if (status.branchTrackingStatus?.behindCount > 0 && status.branchTrackingStatus?.aheadCount > 0) {
             plugin.gitResolve(context, input.refresh == 'rebase', input.resolution)
         } else if (status.branchTrackingStatus?.behindCount > 0) {
-            gitPull(context,plugin)
+            gitPull(context, plugin)
         } else {
             //no action
         }
 
     }
 
-    ScmExportResult gitPull(final ScmOperationContext context,final GitExportPlugin plugin) {
+    ScmExportResult gitPull(final ScmOperationContext context, final GitExportPlugin plugin) {
         def pullResult = plugin.gitPull(context)
         def result = new ScmExportResultImpl()
         result.success = pullResult.successful

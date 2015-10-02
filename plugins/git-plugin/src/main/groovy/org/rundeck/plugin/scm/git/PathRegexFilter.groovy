@@ -15,20 +15,22 @@ class PathRegexFilter extends TreeFilter {
     String regex
     Pattern pattern
 
-    public static PathRegexFilter create(String regex){
+    public static PathRegexFilter create(String regex) {
         return new PathRegexFilter(regex)
     }
+
     private PathRegexFilter(final String regex) {
         this.regex = regex
-        this.pattern=Pattern.compile(regex)
+        this.pattern = Pattern.compile(regex)
     }
 
     @Override
     boolean include(final TreeWalk walker) throws MissingObjectException, IncorrectObjectTypeException, IOException {
-        if (walker.isSubtree())
-            return true;
-        else
-            return walker.getPathString().matches(pattern);
+        if (walker.isSubtree()) {
+            return true
+        } else {
+            return walker.getPathString().matches(pattern)
+        };
     }
 
     @Override

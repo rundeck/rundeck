@@ -28,7 +28,7 @@ class GitUtil {
      * @return RevCommit or null if HEAD not found (empty git)
      */
     static RevCommit getHead(Repository repo) {
-        getCommit(repo,Constants.HEAD)
+        getCommit(repo, Constants.HEAD)
     }
     /**
      * get RevCommit for HEAD rev of the path
@@ -177,20 +177,21 @@ class GitUtil {
         }
         null
     }
-    static List<DiffEntry> listChanges(Git git,String oldRef, String newRef){
+
+    static List<DiffEntry> listChanges(Git git, String oldRef, String newRef) {
         ObjectReader reader = git.getRepository().newObjectReader();
 
         CanonicalTreeParser oldTreeIter = new CanonicalTreeParser();
-        ObjectId oldTree = git.getRepository().resolve( oldRef );
-        oldTreeIter.reset( reader, oldTree );
+        ObjectId oldTree = git.getRepository().resolve(oldRef);
+        oldTreeIter.reset(reader, oldTree);
 
         CanonicalTreeParser newTreeIter = new CanonicalTreeParser();
-        ObjectId newTree = git.getRepository().resolve( newRef );
-        newTreeIter.reset( reader, newTree );
+        ObjectId newTree = git.getRepository().resolve(newRef);
+        newTreeIter.reset(reader, newTree);
 
-        DiffFormatter diffFormatter = new DiffFormatter( DisabledOutputStream.INSTANCE );
-        diffFormatter.setRepository( git.getRepository() );
-        diffFormatter.scan( oldTreeIter, newTreeIter );
+        DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE);
+        diffFormatter.setRepository(git.getRepository());
+        diffFormatter.scan(oldTreeIter, newTreeIter);
     }
 
     static Map<String, Serializable> metaForCommit(RevCommit commit) {

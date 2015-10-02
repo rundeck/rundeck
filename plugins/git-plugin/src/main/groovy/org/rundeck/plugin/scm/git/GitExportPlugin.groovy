@@ -1,4 +1,5 @@
 package org.rundeck.plugin.scm.git
+
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.core.plugins.views.Action
@@ -17,6 +18,7 @@ import org.rundeck.plugin.scm.git.exp.actions.PushAction
 import org.rundeck.plugin.scm.git.exp.actions.SynchAction
 
 import java.util.regex.Pattern
+
 /**
  * Git export plugin
  */
@@ -113,8 +115,8 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
 
     @Override
-    BasicInputView getInputViewForAction(final ScmOperationContext context,String actionId) {
-        actions[actionId]?.getInputView(context,this)
+    BasicInputView getInputViewForAction(final ScmOperationContext context, String actionId) {
+        actions[actionId]?.getInputView(context, this)
     }
 
 
@@ -133,7 +135,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
         actions[actionId].perform(this, jobs, pathsToDelete, context, input)
     }
-
 
 
     @Override
@@ -155,7 +156,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             actionRefs JOB_COMMIT_ACTION_ID
         } else if (context.frameworkProject) {
             //actions in project view
-            def status = getStatusInternal(context,false)
+            def status = getStatusInternal(context, false)
             if (!status.gitStatus.clean) {
                 actionRefs PROJECT_COMMIT_ACTION_ID
             } else if (status.state == SynchState.EXPORT_NEEDED) {
@@ -175,13 +176,13 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     @Override
     ScmExportSynchState getStatus(ScmOperationContext context) {
-        return getStatusInternal(context,true)
+        return getStatusInternal(context, true)
     }
 
 
-    GitExportSynchState getStatusInternal(ScmOperationContext context,boolean performFetch) {
+    GitExportSynchState getStatusInternal(ScmOperationContext context, boolean performFetch) {
         //perform fetch
-        if(performFetch){
+        if (performFetch) {
             fetchFromRemote(context)
         }
 
@@ -197,7 +198,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         //if clean, check remote tracking status
         if (status.isClean()) {
             def bstat = BranchTrackingStatus.of(repo, branch)
-            if(bstat) {
+            if (bstat) {
                 synchState.branchTrackingStatus = bstat
                 if (bstat && bstat.aheadCount > 0 && bstat.behindCount > 0) {
                     synchState.message = "${bstat.aheadCount} ahead and ${bstat.behindCount} behind remote branch"
@@ -210,10 +211,10 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                     synchState.message = "${bstat.behindCount} changes from remote need to be pulled"
                     synchState.state = SynchState.REFRESH_NEEDED
                 }
-            }else if (!remoteTrackingBranch()){
+            } else if (!remoteTrackingBranch()) {
                 //if no remote branch exists, i.e. bare repo, need to push
                 synchState.message = "Changes need to be pushed"
-                synchState.state=SynchState.EXPORT_NEEDED
+                synchState.state = SynchState.EXPORT_NEEDED
             }
         }
 

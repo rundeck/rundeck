@@ -1,4 +1,5 @@
 package org.rundeck.plugin.scm.git.imp.actions
+
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.JobImporter
 import com.dtolabs.rundeck.plugins.scm.ScmExportResult
@@ -12,6 +13,7 @@ import org.rundeck.plugin.scm.git.GitImportPlugin
 import org.rundeck.plugin.scm.git.GitUtil
 
 import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
+
 /**
  * Action to import selected jobs from git HEAD commit
  */
@@ -21,8 +23,8 @@ class ImportJobs extends BaseAction implements GitImportAction {
     }
 
 
-    BasicInputView getInputView(final ScmOperationContext context,GitImportPlugin plugin) {
-        inputView(id){
+    BasicInputView getInputView(final ScmOperationContext context, GitImportPlugin plugin) {
+        inputView(id) {
             title "Import remote Changes"
             description '''Import the modifications to Rundeck'''
             buttonTitle "Import"
@@ -41,12 +43,12 @@ class ImportJobs extends BaseAction implements GitImportAction {
     {
         //perform git
         StringBuilder sb = new StringBuilder()
-        boolean success=true
+        boolean success = true
 
         //walk the repo files and look for possible candidates
-        plugin.walkTreePaths('HEAD^{tree}',true) { TreeWalk walk ->
+        plugin.walkTreePaths('HEAD^{tree}', true) { TreeWalk walk ->
             def path = walk.getPathString()
-            if(!(path in selectedPaths)){
+            if (!(path in selectedPaths)) {
                 plugin.log.debug("not selected, skipping path ${path}")
                 return
             }
@@ -63,10 +65,10 @@ class ImportJobs extends BaseAction implements GitImportAction {
                     new ByteArrayInputStream(bytes),
                     meta
             )
-            if(!importResult.successful){
-                success=false
+            if (!importResult.successful) {
+                success = false
                 sb << ("Failed importing: ${walk.getPathString()}: " + importResult.errorMessage)
-            }else{
+            } else {
                 plugin.trackedImportedItems[(walk.getPathString())] = commit.name
                 sb << ("Succeeded importing ${walk.getPathString()}: ${importResult}")
             }

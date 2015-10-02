@@ -7,7 +7,7 @@ import org.eclipse.jgit.lib.BranchTrackingStatus
 /**
  * Created by greg on 9/15/15.
  */
-class GitImportSynchState implements ScmImportSynchState{
+class GitImportSynchState implements ScmImportSynchState {
     int importNeeded
     int notFound
     int deleted

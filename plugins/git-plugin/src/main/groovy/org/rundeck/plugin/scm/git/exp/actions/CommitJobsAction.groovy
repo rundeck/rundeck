@@ -1,4 +1,5 @@
 package org.rundeck.plugin.scm.git.exp.actions
+
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.eclipse.jgit.api.AddCommand
@@ -11,16 +12,17 @@ import org.rundeck.plugin.scm.git.GitExportPlugin
 
 import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
 import static org.rundeck.plugin.scm.git.BuilderUtil.property
+
 /**
  * Created by greg on 9/8/15.
  */
-class CommitJobsAction extends BaseAction  implements GitExportAction{
+class CommitJobsAction extends BaseAction implements GitExportAction {
     CommitJobsAction(final String id, final String title, final String description) {
         super(id, title, description)
     }
 
-    BasicInputView getInputView(final ScmOperationContext context,GitExportPlugin plugin) {
-        inputView(id){
+    BasicInputView getInputView(final ScmOperationContext context, GitExportPlugin plugin) {
+        inputView(id) {
             title "Commit Changes to Git"
             buttonTitle "Commit"
             properties([
@@ -60,7 +62,7 @@ class CommitJobsAction extends BaseAction  implements GitExportAction{
     ) throws ScmPluginException
     {
         //determine action
-        def internal = plugin.getStatusInternal(context,false)
+        def internal = plugin.getStatusInternal(context, false)
         def localGitChanges = !internal.gitStatus.isClean()
 
         RevCommit commit
@@ -81,7 +83,7 @@ class CommitJobsAction extends BaseAction  implements GitExportAction{
             if (!commitIdentEmail) {
                 ScmUserInfoMissing.fieldMissing("committerEmail")
             }
-            plugin.serializeAll(jobs,plugin.format)
+            plugin.serializeAll(jobs, plugin.format)
             String commitMessage = input.commitMessage.toString()
             Status status = plugin.git.status().call()
             //add all changes to index
@@ -118,7 +120,7 @@ class CommitJobsAction extends BaseAction  implements GitExportAction{
             //no git changes, but some jobs were selected
             throw new ScmPluginException("No changes to local git repo need to be exported")
         }
-        if(result.success && input.push=='true') {
+        if (result.success && input.push == 'true') {
             return plugin.export(context, GitExportPlugin.PROJECT_PUSH_ACTION_ID, jobs, pathsToDelete, input)
         }
         result.id = commit?.name

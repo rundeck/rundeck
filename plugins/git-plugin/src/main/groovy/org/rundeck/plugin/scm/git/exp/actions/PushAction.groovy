@@ -1,4 +1,5 @@
 package org.rundeck.plugin.scm.git.exp.actions
+
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
@@ -9,6 +10,7 @@ import org.rundeck.plugin.scm.git.GitExportPlugin
 
 import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
 import static org.rundeck.plugin.scm.git.BuilderUtil.property
+
 /**
  * Created by greg on 9/8/15.
  */
@@ -18,8 +20,8 @@ class PushAction extends BaseAction implements GitExportAction {
     }
 
     @Override
-    BasicInputView getInputView(final ScmOperationContext context,GitExportPlugin plugin) {
-        def status = plugin.getStatusInternal(context,false)
+    BasicInputView getInputView(final ScmOperationContext context, GitExportPlugin plugin) {
+        def status = plugin.getStatusInternal(context, false)
         inputView(id) {
             title "Push remote Git changes"
             buttonTitle "Push"
@@ -75,7 +77,7 @@ Pushing to remote branch: `${plugin.branch}`"""
         try {
             push = pushb.call()
         } catch (Exception e) {
-            plugin.logger.debug("Failed push to remote: ${e.message}",e)
+            plugin.logger.debug("Failed push to remote: ${e.message}", e)
             throw new ScmPluginException("Failed push to remote: ${e.message}", e)
         }
         def sb = new StringBuilder()

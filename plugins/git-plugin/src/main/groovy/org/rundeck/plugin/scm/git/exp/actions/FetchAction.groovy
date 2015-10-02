@@ -1,4 +1,5 @@
 package org.rundeck.plugin.scm.git.exp.actions
+
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
@@ -8,6 +9,7 @@ import org.rundeck.plugin.scm.git.GitExportPlugin
 
 import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
 import static org.rundeck.plugin.scm.git.BuilderUtil.property
+
 /**
  * Created by greg on 9/8/15.
  */
@@ -17,7 +19,7 @@ class FetchAction extends BaseAction implements GitExportAction {
     }
 
     @Override
-    BasicInputView getInputView(final ScmOperationContext context,final GitExportPlugin plugin) {
+    BasicInputView getInputView(final ScmOperationContext context, final GitExportPlugin plugin) {
         inputView(id) {
             title "Fetch remote changes"
             buttonTitle "Fetch"

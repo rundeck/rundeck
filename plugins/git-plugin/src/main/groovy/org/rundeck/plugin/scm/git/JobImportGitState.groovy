@@ -1,7 +1,9 @@
 package org.rundeck.plugin.scm.git
+
 import com.dtolabs.rundeck.plugins.scm.ImportSynchState
 import com.dtolabs.rundeck.plugins.scm.JobImportState
 import com.dtolabs.rundeck.plugins.scm.ScmCommitInfo
+
 /**
  * Created by greg on 9/14/15.
  */

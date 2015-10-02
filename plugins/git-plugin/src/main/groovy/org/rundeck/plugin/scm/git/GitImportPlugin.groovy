@@ -1,4 +1,5 @@
 package org.rundeck.plugin.scm.git
+
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
@@ -13,6 +14,7 @@ import org.eclipse.jgit.treewalk.filter.PathFilterGroup
 import org.rundeck.plugin.scm.git.imp.actions.ImportJobs
 import org.rundeck.plugin.scm.git.imp.actions.PullAction
 import org.rundeck.plugin.scm.git.imp.actions.SetupTracking
+
 /**
  * Import jobs via git
  */
@@ -123,11 +125,11 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     ScmImportSynchState getStatus(ScmOperationContext context) {
-        return getStatusInternal(context,true)
+        return getStatusInternal(context, true)
     }
 
 
-    GitImportSynchState getStatusInternal(ScmOperationContext context,boolean performFetch) {
+    GitImportSynchState getStatusInternal(ScmOperationContext context, boolean performFetch) {
         //look for any unimported paths
         if (!trackedItemsSelected) {
             return null
@@ -356,7 +358,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
 
     @Override
-    BasicInputView getInputViewForAction(final ScmOperationContext context,final String actionId) {
+    BasicInputView getInputViewForAction(final ScmOperationContext context, final String actionId) {
         return actions[actionId]?.getInputView(context, this)
     }
 
@@ -374,7 +376,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             } else {
 
                 def avail = []
-                def status = getStatusInternal(context,false)
+                def status = getStatusInternal(context, false)
                 if (status.state == ImportSynchState.REFRESH_NEEDED) {
                     avail << actions[ACTION_PULL]
                 }

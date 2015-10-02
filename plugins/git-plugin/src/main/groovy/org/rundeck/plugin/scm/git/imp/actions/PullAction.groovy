@@ -24,9 +24,9 @@ class PullAction extends BaseAction implements GitImportAction {
     }
 
     @Override
-    BasicInputView getInputView(final ScmOperationContext context,GitImportPlugin plugin) {
+    BasicInputView getInputView(final ScmOperationContext context, GitImportPlugin plugin) {
 
-        def status = plugin.getStatusInternal(context,false)
+        def status = plugin.getStatusInternal(context, false)
         def props = [
                 property {
                     string "status"
@@ -87,20 +87,20 @@ Pulling from remote branch: `${plugin.branch}`"""
             final Map<String, String> input
     ) throws ScmPluginException
     {
-        def status = plugin.getStatusInternal(context,false)
+        def status = plugin.getStatusInternal(context, false)
 
 
         if (status.branchTrackingStatus?.behindCount > 0 && status.branchTrackingStatus?.aheadCount > 0) {
-            plugin.gitResolve(context,input.refresh == 'rebase', input.resolution)
+            plugin.gitResolve(context, input.refresh == 'rebase', input.resolution)
         } else if (status.branchTrackingStatus?.behindCount > 0) {
-            gitPull(context,plugin)
+            gitPull(context, plugin)
         } else {
             //no action
         }
 
     }
 
-    ScmExportResult gitPull(final ScmOperationContext context,final GitImportPlugin plugin) {
+    ScmExportResult gitPull(final ScmOperationContext context, final GitImportPlugin plugin) {
         def pullResult = plugin.gitPull(context)
         def result = new ScmExportResultImpl()
         result.success = pullResult.successful

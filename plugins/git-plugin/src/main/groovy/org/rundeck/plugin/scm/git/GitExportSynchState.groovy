@@ -8,7 +8,7 @@ import org.eclipse.jgit.lib.BranchTrackingStatus
 /**
  *
  */
-class GitExportSynchState implements ScmExportSynchState{
+class GitExportSynchState implements ScmExportSynchState {
     SynchState state
     String message
     Status gitStatus
