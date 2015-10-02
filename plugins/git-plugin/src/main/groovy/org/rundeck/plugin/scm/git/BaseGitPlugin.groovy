@@ -79,7 +79,9 @@ class BaseGitPlugin {
     }
 
     def fetchFromRemote(ScmOperationContext context,Git git1=null) {
-        def fetchCommand = (git1?:git).fetch()
+        def agit = git1 ?: git
+        def fetchCommand = agit.fetch()
+        fetchCommand.setRemote("origin")
         setupTransportAuthentication(input["url"], context, fetchCommand)
         def fetchResult = fetchCommand.call()
 
@@ -88,29 +90,39 @@ class BaseGitPlugin {
         def fetchMessage = update ? update.toString() : "No changes were found"
         Logger.getLogger(this.class).debug("fetchFromRemote: ${fetchMessage}")
         //make sure tracking is configured for the branch
-        def branchConfig = new BranchConfig(repo.getConfig(), branch)
-        def trackingBranch = branchConfig.getTrackingBranch()
-        if(null==trackingBranch) {
-            (git1 ?: git).repository.config.setString(
+        if (!remoteTrackingBranch(agit)) {
+            agit.repository.config.setString(
                     ConfigConstants.CONFIG_BRANCH_SECTION,
                     branch,
                     ConfigConstants.CONFIG_KEY_REMOTE,
                     'origin'
             );
             //if remote branch name exists, track it for merging
-            def remoteRef = fetchResult.getAdvertisedRef(branch) ?: fetchResult.getAdvertisedRef(Constants.R_HEADS + branch)
+            def remoteRef = fetchResult.getAdvertisedRef(branch) ?:
+                    fetchResult.getAdvertisedRef(Constants.R_HEADS + branch)
+            if (remoteRef) {
+                agit.repository.config.setString(
+                        ConfigConstants.CONFIG_BRANCH_SECTION,
+                        branch,
+                        ConfigConstants.CONFIG_KEY_MERGE,
+                        remoteRef.name
+                );
+            }
 
-            (git1 ?: git).repository.config.setString(
-                    ConfigConstants.CONFIG_BRANCH_SECTION,
-                    branch,
-                    ConfigConstants.CONFIG_KEY_MERGE,
-                    remoteRef.name
-            );
-
-            (git1 ?: git).repository.config.save()
+            agit.repository.config.save()
         }
 
         return update
+    }
+    /**
+     * @param git1
+     * @return remote tracking branch name, or null if tracking has not be set up
+     */
+    def remoteTrackingBranch(Git git1=null){
+        def agit = git1 ?: git
+
+        def branchConfig = new BranchConfig(agit.repository.config, branch)
+        return branchConfig.getRemoteTrackingBranch()
     }
 
     PullResult gitPull(ScmOperationContext context,Git git1=null) {
