@@ -197,17 +197,23 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         //if clean, check remote tracking status
         if (status.isClean()) {
             def bstat = BranchTrackingStatus.of(repo, branch)
-            synchState.branchTrackingStatus = bstat
-            if (bstat && bstat.aheadCount > 0 && bstat.behindCount > 0) {
-                synchState.message = "${bstat.aheadCount} ahead and ${bstat.behindCount} behind remote branch"
-                synchState.state = SynchState.REFRESH_NEEDED
-                //TODO: test if merge would fail
-            } else if (bstat && bstat.aheadCount > 0) {
-                synchState.message = "${bstat.aheadCount} changes need to be pushed"
-                synchState.state = SynchState.EXPORT_NEEDED
-            } else if (bstat && bstat.behindCount > 0) {
-                synchState.message = "${bstat.behindCount} changes from remote need to be pulled"
-                synchState.state = SynchState.REFRESH_NEEDED
+            if(bstat) {
+                synchState.branchTrackingStatus = bstat
+                if (bstat && bstat.aheadCount > 0 && bstat.behindCount > 0) {
+                    synchState.message = "${bstat.aheadCount} ahead and ${bstat.behindCount} behind remote branch"
+                    synchState.state = SynchState.REFRESH_NEEDED
+                    //TODO: test if merge would fail
+                } else if (bstat && bstat.aheadCount > 0) {
+                    synchState.message = "${bstat.aheadCount} changes need to be pushed"
+                    synchState.state = SynchState.EXPORT_NEEDED
+                } else if (bstat && bstat.behindCount > 0) {
+                    synchState.message = "${bstat.behindCount} changes from remote need to be pulled"
+                    synchState.state = SynchState.REFRESH_NEEDED
+                }
+            }else if (!remoteTrackingBranch()){
+                //if no remote branch exists, i.e. bare repo, need to push
+                synchState.message = "Changes need to be pushed"
+                synchState.state=SynchState.EXPORT_NEEDED
             }
         }
 
