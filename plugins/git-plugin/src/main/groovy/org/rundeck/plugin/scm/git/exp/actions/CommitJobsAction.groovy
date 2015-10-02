@@ -118,6 +118,9 @@ class CommitJobsAction extends BaseAction  implements GitExportAction{
             //no git changes, but some jobs were selected
             throw new ScmPluginException("No changes to local git repo need to be exported")
         }
+        if(result.success && input.push=='true') {
+            return plugin.export(context, GitExportPlugin.PROJECT_PUSH_ACTION_ID, jobs, pathsToDelete, input)
+        }
         result.id = commit?.name
 
 
