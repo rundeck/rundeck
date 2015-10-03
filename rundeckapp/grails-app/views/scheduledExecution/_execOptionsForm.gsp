@@ -63,8 +63,8 @@
                   .*\D(\d+)
                   (\d+)\D.*
                 --%>
-                <g:if test="${namegroups}">
-                    <div class=" group_select_control" style="${wdgt.styleVisible(if: selectedNodes !=null)}">
+		<!--
+                    <div class=" group_select_control" style="${wdgt.styleVisible(if: selectedNodes !=null)}" style="display:none;">
                         Select:
                         <span class="textbtn textbtn-default textbtn-on-hover selectall">All</span>
                         <span class="textbtn textbtn-default textbtn-on-hover selectnone">None</span>
@@ -73,84 +73,27 @@
                                       model="${[tagsummary:tagsummary,action:[classnames:'tag active textbtn obs_tag_group',onclick:'']]}"/>
                         </g:if>
                     </div>
-                    <g:each in="${namegroups.keySet().sort()}" var="group">
-                        <div class="panel panel-default">
-                      <div class="panel-heading">
-                          <g:set var="expkey" value="${g.rkey()}"/>
-                            <g:expander key="${expkey}" open="${selectedNodes!=null?'true':'false'}">
-                                <g:if test="${group!='other'}">
-                                    <span class="prompt">
-                                    <g:enc>${namegroups[group][0]}</g:enc></span>
-                                    to
-                                    <span class="prompt">
-                                <g:enc>${namegroups[group][-1]}</g:enc>
-                                    </span>
-                                </g:if>
-                                <g:else>
-                                    <span class="prompt"><g:enc>${namegroups.size()>1?'Other ':''}</g:enc>Matched Nodes</span>
-                                </g:else>
-                                <g:enc>(${namegroups[group].size()})</g:enc>
-                            </g:expander>
-                        </div>
-                        <div id="${enc(attr:expkey)}" style="${wdgt.styleVisible(if: selectedNodes!=null)}" class="group_section panel-body">
-                                <g:if test="${namegroups.size()>1}">
-                                <div class="group_select_control" style="display:none">
-                                    Select:
-                                    <span class="textbtn textbtn-default textbtn-on-hover selectall" >All</span>
-                                    <span class="textbtn textbtn-default textbtn-on-hover selectnone" >None</span>
-                                    <g:if test="${grouptags && grouptags[group]}">
-                                        <g:render template="/framework/tagsummary" model="${[tagsummary:grouptags[group],action:[classnames:'tag active textbtn  obs_tag_group',onclick:'']]}"/>
-                                    </g:if>
-                                </div>
-                                </g:if>
-                                    <g:each var="node" in="${nodemap.subMap(namegroups[group]).values()}" status="index">
-                                        <g:set var="nkey" value="${g.rkey()}"/>
-                                        <div>
-                                            <label for="${enc(attr:nkey)}"
-                                                   class=" ${localNodeName && localNodeName == node.nodename ? 'server' : ''} node_ident  checkbox-inline"
-                                                   id="${enc(attr:nkey)}_key">
-                                            <input id="${enc(attr:nkey)}"
-                                                   type="checkbox"
-                                                   name="extra.nodeIncludeName"
-                                                   value="${enc(attr:node.nodename)}"
-                                                   ${selectedNodes!=null ? '':'disabled' }
-                                                   data-tag="${enc(attr:node.tags?.join(' '))}"
-                                                    ${(null== selectedNodes||selectedNodes.contains(node.nodename))?'checked':''}
-                                                   /><g:enc>${node.nodename}</g:enc></label>
-
-                                        </div>
-                                    </g:each>
-                            </div>
-                        </div>
-                    </g:each>
-                </g:if>
-                <g:else>
-                    <g:each var="node" in="${nodes}" status="index">
-                        <g:set var="nkey" value="${g.rkey()}"/>
-                        <div>
-                            <label for="${enc(attr:nkey)}"
-                                   class=" ${localNodeName && localNodeName == node.nodename ? 'server' : ''} node_ident  checkbox-inline"
-                                   id="${enc(attr:nkey)}_key">
-                                <input id="${enc(attr:nkey)}"
-                                       type="checkbox"
-                                       name="extra.nodeIncludeName"
-                                       value="${enc(attr:node.nodename)}"
-                                       disabled="true"
-                                       data-tag="${enc(attr:node.tags?.join(' '))}"
-                                       checked="true"/><g:enc>${node.nodename}</g:enc></label>
-
-                        </div>
-                    </g:each>
-                </g:else>
+		 -->
+		    <select multiple="multiple" name="extra.nodeIncludeName">
+			<g:each var="node" in="${nodes}" status="index">
+				<g:set var="nkey" value="${g.rkey()}"/>
+				<option
+					id="${enc(attr:nkey)}"
+					value="${enc(attr:node.nodename)}"
+					 ${(null== selectedNodes||selectedNodes.contains(node.nodename))?'selected':''}
+					data-tag="${enc(attr:node.tags?.join(' '))}"
+				>${enc(attr:node.nodename)}</option>
+			</g:each>
+		    </select>
             </div>
             <g:javascript>
+                jQuery('select[name="extra.nodeIncludeName"]').bootstrapDualListbox({
+                    nonSelectedListLabel:'Available',
+                    selectedListLabel:'Selected'
+                });
                 var updateSelectCount = function (evt) {
-                    var count = 0;
-                    $$('.node_ident input[type=checkbox]').each(function (e2) {
-                        if (e2.checked) {
-                            count++;
-                        }
-                    });
+                    var selected = jQuery('select[name="extra.nodeIncludeName"]').val();
+                    var count = selected ? selected.length : 0;
                     $$('.nodeselectcount').each(function (e2) {
                         setText($(e2), count + '');
                         $(e2).removeClassName('text-info');
@@ -158,8 +101,18 @@
                         $(e2).addClassName(count>0?'text-info':'text-danger');
                     });
                 };
-                $$('.node_ident input[type=checkbox]').each(function (e) {
-                    Event.observe(e, 'change', function (evt) {
+                $$('select[name="extra.nodeIncludeName_helper1"]').each(function(e) {
+                    Event.observe(e, 'change', function(evt) {
+                      Event.fire($('nodeSelect'), 'nodeset:change');
+                    });
+                });
+                $$('select[name="extra.nodeIncludeName_helper2"]').each(function(e) {
+                    Event.observe(e, 'change', function(evt) {
+                      Event.fire($('nodeSelect'), 'nodeset:change');
+                    });
+                });
+                $$('.bootstrap-duallistbox-container .btn').each(function(e) {
+                    Event.observe(e, 'click', function(evt) {
                       Event.fire($('nodeSelect'), 'nodeset:change');
                     });
                 });
