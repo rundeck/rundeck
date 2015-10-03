@@ -89,7 +89,8 @@
             <g:javascript>
                 jQuery('select[name="extra.nodeIncludeName"]').bootstrapDualListbox({
                     nonSelectedListLabel:'Available',
-                    selectedListLabel:'Selected'
+                    selectedListLabel:'Selected',
+                    moveOnSelect:true
                 });
                 var updateSelectCount = function (evt) {
                     var selected = jQuery('select[name="extra.nodeIncludeName"]').val();
