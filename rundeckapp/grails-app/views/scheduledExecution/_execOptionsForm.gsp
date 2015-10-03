@@ -58,13 +58,7 @@
             </div>
             </div>
             <div class=" matchednodes embed jobmatchednodes group_section collapse ${selectedNodes!=null? 'in' : ''}" id="nodeSelect">
-                <%--
-                 split node names into groups, in several patterns
-                  .*\D(\d+)
-                  (\d+)\D.*
-                --%>
-		<!--
-                    <div class=" group_select_control" style="${wdgt.styleVisible(if: selectedNodes !=null)}" style="display:none;">
+                    <div class=" group_select_control" style="${wdgt.styleVisible(if: selectedNodes !=null)}">
                         Select:
                         <span class="textbtn textbtn-default textbtn-on-hover selectall">All</span>
                         <span class="textbtn textbtn-default textbtn-on-hover selectnone">None</span>
@@ -73,7 +67,6 @@
                                       model="${[tagsummary:tagsummary,action:[classnames:'tag active textbtn obs_tag_group',onclick:'']]}"/>
                         </g:if>
                     </div>
-		 -->
 		    <select multiple="multiple" name="extra.nodeIncludeName">
 			<g:each var="node" in="${nodes}" status="index">
 				<g:set var="nkey" value="${g.rkey()}"/>
@@ -81,8 +74,9 @@
 					id="${enc(attr:nkey)}"
 					value="${enc(attr:node.nodename)}"
 					 ${(null== selectedNodes||selectedNodes.contains(node.nodename))?'selected':''}
-					data-tag="${enc(attr:node.tags?.join(' '))}"
-				>${enc(attr:node.nodename)}</option>
+					data-tag="${enc(attr:node.tags?.join(' '))}">
+                                        ${enc(attr:node.nodename)}
+                                </option>
 			</g:each>
 		    </select>
             </div>
@@ -90,7 +84,7 @@
                 jQuery('select[name="extra.nodeIncludeName"]').bootstrapDualListbox({
                     nonSelectedListLabel:'Available',
                     selectedListLabel:'Selected',
-                    moveOnSelect:true
+                    moveOnSelect:false
                 });
                 var updateSelectCount = function (evt) {
                     var selected = jQuery('select[name="extra.nodeIncludeName"]').val();
@@ -120,29 +114,27 @@
                 Event.observe($('nodeSelect'), 'nodeset:change', updateSelectCount);
                 $$('div.jobmatchednodes span.textbtn.selectall').each(function (e) {
                     Event.observe(e, 'click', function (evt) {
-                        $(e).up('.group_section').select('input').each(function (el) {
-                            if (el.type == 'checkbox') {
-                                el.checked = true;
-                            }
+                        $(e).up('.group_section').select('select[name="extra.nodeIncludeName"] option').each(function (el) {
+                            el.selected = true;
                         });
                         $(e).up('.group_section').select('span.textbtn.obs_tag_group').each(function (e) {
                             $(e).setAttribute('data-tagselected', 'true');
                             $(e).addClassName('active');
                         });
+                        jQuery('select[name="extra.nodeIncludeName"]').bootstrapDualListbox('refresh', true);
                         Event.fire($('nodeSelect'), 'nodeset:change');
                     });
                 });
                 $$('div.jobmatchednodes span.textbtn.selectnone').each(function (e) {
                     Event.observe(e, 'click', function (evt) {
-                        $(e).up('.group_section').select('input').each(function (el) {
-                            if (el.type == 'checkbox') {
-                                el.checked = false;
-                            }
+                        $(e).up('.group_section').select('select[name="extra.nodeIncludeName"] option').each(function (el) {
+                            el.selected = false;
                         });
                         $(e).up('.group_section').select('span.textbtn.obs_tag_group').each(function (e) {
                             $(e).setAttribute('data-tagselected', 'false');
                             $(e).removeClassName('active');
                         });
+                        jQuery('select[name="extra.nodeIncludeName"]').bootstrapDualListbox('refresh', true);
                         Event.fire($('nodeSelect'), 'nodeset:change');
                     });
                 });
@@ -155,10 +147,8 @@
                         } else {
                             $(e).removeClassName('active');
                         }
-                        $(e).up('.group_section').select('input[data-tag~="' + e.getAttribute('data-tag') + '"]').each(function (el) {
-                            if (el.type == 'checkbox') {
-                                el.checked = !ischecked;
-                            }
+                        $(e).up('.group_section').select('select[name="extra.nodeIncludeName"] option[data-tag~="' + e.getAttribute('data-tag') + '"]').each(function (el) {
+                            el.selected = !ischecked;
                         });
                         $(e).up('.group_section').select('span.textbtn.obs_tag_group[data-tag="' + e.getAttribute('data-tag') + '"]').each(function (el) {
                             el.setAttribute('data-tagselected', ischecked ? 'false' : 'true');
@@ -168,23 +158,23 @@
                                 $(el).removeClassName('active');
                             }
                         });
+                        jQuery('select[name="extra.nodeIncludeName"]').bootstrapDualListbox('refresh', true);
                         Event.fire($('nodeSelect'), 'nodeset:change');
                     });
                 });
 
                 Event.observe($('doReplaceFilters'), 'change', function (evt) {
                     var e = evt.element();
-                    $$('div.jobmatchednodes input').each(function (cb) {
-                        if (cb.type == 'checkbox') {
-                            [cb].each(e.checked ? Field.enable : Field.disable);
-                            if (!e.checked) {
-                                $$('.group_select_control').each(Element.hide);
-                                cb.checked = true;
-                            } else {
-                                $$('.group_select_control').each(Element.show);
-                            }
+                    $$('select[name="extra.nodeIncludeName"] option').each(function (cb) {
+                        [cb].each(e.selected ? Field.enable : Field.disable);
+                        if (!e.checked) {
+                            $$('.group_select_control').each(Element.hide);
+                            cb.selected = true;
+                        } else {
+                            $$('.group_select_control').each(Element.show);
                         }
                     });
+                    jQuery('select[name="extra.nodeIncludeName"]').bootstrapDualListbox('refresh', true);
                     Event.fire($('nodeSelect'), 'nodeset:change');
                     if(!e.checked){
                         $$('.nodeselectcount').each(function (e2) {
