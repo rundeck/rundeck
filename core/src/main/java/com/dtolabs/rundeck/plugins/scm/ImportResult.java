@@ -20,7 +20,7 @@ public interface ImportResult {
     /**
      * @return imported job
      */
-    JobRevReference getJob();
+    JobScmReference getJob();
 
     /**
      * @return true if a new job was created
