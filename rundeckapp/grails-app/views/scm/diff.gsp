@@ -121,20 +121,17 @@
                      class="list-group-item scriptContent expanded apply_ace"
                      data-ace-session-mode="diff">${diffResult.content}</div>
             </g:elseif>
-            <g:if test="${diffResult && (diffResult.modified || diffResult.oldNotFound)}">
-                <g:link action="exportAction" controller="scm"
-                        class="list-group-item ${diffResult.oldNotFound ? 'list-group-item-success' :
-                                'list-group-item-info'}"
-                        params="[project: params.project, jobIds: job.extid,integration:integration]">
+            <g:if test="${diffResult && (diffResult.modified || diffResult.oldNotFound) && diffResult.actions}">
+                <g:each in="${diffResult.actions}" var="action">
 
-                    <i class="glyphicon glyphicon-circle-arrow-right"></i>
-                    <g:if test="${diffResult.oldNotFound}">
-                        <g:message code="commit.new.file" />
-                    </g:if>
-                    <g:else>
-                        <g:message code="button.Commit.Changes.title"/>
-                    </g:else>
-                </g:link>
+                    <g:render template="/scm/actionLink"
+                              model="${[action:action,
+                                      integration:integration,
+                                      project:params.project,
+                                      classes:"list-group-item "+(diffResult.oldNotFound ? 'list-group-item-success' : 'list-group-item-info')]}"
+                    />
+                </g:each>
+
             </g:if>
         </div>
     </div>
