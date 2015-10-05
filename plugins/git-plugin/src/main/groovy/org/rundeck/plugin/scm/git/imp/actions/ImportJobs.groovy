@@ -69,7 +69,7 @@ class ImportJobs extends BaseAction implements GitImportAction {
                 success = false
                 sb << ("Failed importing: ${walk.getPathString()}: " + importResult.errorMessage)
             } else {
-                plugin.trackedImportedItems[(walk.getPathString())] = commit.name
+                plugin.importTracker.trackJobAtPath(importResult.job,walk.getPathString())
                 sb << ("Succeeded importing ${walk.getPathString()}: ${importResult}")
             }
         }

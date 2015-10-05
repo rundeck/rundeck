@@ -60,6 +60,7 @@ class ScmService {
     Map<String, ScmExportPlugin> loadedExportPlugins = Collections.synchronizedMap([:])
     Map<String, ScmImportPlugin> loadedImportPlugins = Collections.synchronizedMap([:])
     Map<String, JobChangeListener> loadedExportListeners = Collections.synchronizedMap([:])
+    Map<String, JobChangeListener> loadedImportListeners = Collections.synchronizedMap([:])
 
     def initialize() {
         def projects = frameworkService.projectNames()
@@ -381,14 +382,16 @@ class ScmService {
         }
         def loaded = loadPluginWithConfig(integration, context, type, config)
 
+        JobChangeListener changeListener
         if (integration == 'export') {
-            def changeListener = { JobChangeEvent event, JobSerializer serializer ->
+            ScmExportPlugin plugin = loaded
+            changeListener = { JobChangeEvent event, JobSerializer serializer ->
                 log.debug("job change event: " + event)
                 if (event.eventType == JobChangeEvent.JobChangeEventType.DELETE) {
                     //record deleted path
                     recordDeletedJob(
                             context.frameworkProject,
-                            loaded.getRelativePathForJob(event.jobReference),
+                            plugin.getRelativePathForJob(event.jobReference),
                             [
                                     id             : event.jobReference.id,
                                     jobNameAndGroup: event.jobReference.getJobName(),
@@ -396,23 +399,29 @@ class ScmService {
                     )
                 } else if (event.eventType == JobChangeEvent.JobChangeEventType.MODIFY_RENAME) {
                     //record original path for renamed job, if it is different
-                    def origpath = loaded.getRelativePathForJob(event.originalJobReference)
-                    def newpath = loaded.getRelativePathForJob(event.jobReference)
+                    def origpath = plugin.getRelativePathForJob(event.originalJobReference)
+                    def newpath = plugin.getRelativePathForJob(event.jobReference)
                     if (origpath != newpath) {
                         recordRenamedJob(context.frameworkProject, event.jobReference.id, origpath)
                     }
                 }
-                loaded.jobChanged(event, new JobSerializerReferenceImpl(event.jobReference, serializer))
+                plugin.jobChanged(event, scmJobRef(event.jobReference, serializer))
             } as JobChangeListener
-
+        } else {
+            ScmImportPlugin plugin = loaded
+            changeListener = { JobChangeEvent event, JobSerializer serializer ->
+                log.debug("job change event: " + event)
+                plugin.jobChanged(event, scmJobRef(event.jobReference, serializer))
+            } as JobChangeListener
+        }
+        if (integration == 'export') {
             loadedExportPlugins[context.frameworkProject] = loaded
             loadedExportListeners[context.frameworkProject] = changeListener
-
-            jobEventsService.addListener changeListener
         } else {
-
             loadedImportPlugins[context.frameworkProject] = loaded
+            loadedImportListeners[context.frameworkProject] = changeListener
         }
+        jobEventsService.addListener changeListener
         loaded
     }
 
@@ -502,6 +511,8 @@ class ScmService {
             deletedJobsCache.remove(project)
         } else {
             loaded = loadedImportPlugins.remove(project)
+            def changeListener = loadedImportListeners.remove(project)
+            jobEventsService.removeListener(changeListener)
         }
         loaded?.cleanup()
 

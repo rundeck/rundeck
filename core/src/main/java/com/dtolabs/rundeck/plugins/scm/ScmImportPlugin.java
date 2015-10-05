@@ -50,6 +50,16 @@ public interface ScmImportPlugin {
      */
     JobImportState getJobStatus(JobScmReference job, String originalPath);
 
+    /**
+     * Return the state of the given job
+     *
+     * @param event     change event
+     * @param reference job
+     *
+     * @return state
+     */
+    JobImportState jobChanged(JobChangeEvent event, JobScmReference reference);
+
 
     /**
      * perform any cleanup/teardown needed after disabling
