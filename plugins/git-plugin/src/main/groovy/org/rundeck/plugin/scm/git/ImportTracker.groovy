@@ -38,7 +38,7 @@ class ImportTracker {
     void jobRenamed(JobScmReference job, String oldpath, String newpath) {
         untrackPath(oldpath)
         trackJobAtPath(job, newpath)
-        renamedTrackedItems.trackItemReverted(oldpath, newpath)
+        renamedTrackedItems.trackItem(oldpath, newpath)
     }
 
     void trackJobAtPath(JobScmReference job, String path) {
@@ -56,7 +56,7 @@ class ImportTracker {
     }
 
     String trackedJob(String path) {
-        trackedCommits[path]
+        trackedJobIds[path]
     }
 
     Map<String, String> trackedDetail(String path) {

@@ -32,30 +32,20 @@ class RenameTracker<A> {
     }
 
     /**
-     *
-     * @param oldval
-     * @param newval
+     * Item was renamed, will remove the mapping if it was a revert
+     * @param oldval old
+     * @param newval new
      */
     void trackItem(A oldval, A newval) {
-        renamedTrackedItems[oldval] = newval
-    }
-
-    /**
-     *
-     * @param oldval
-     * @param newval
-     * @return
-     */
-    boolean trackItemReverted(A oldval, A newval) {
         if (renamedTrackedItems[newval] == oldval) {
             //reverted name change
             renamedTrackedItems.remove(newval)
-            return false
         } else {
-            trackItem(oldval, newval)
-            return true
+            renamedTrackedItems[oldval] = newval
         }
     }
+
+
 
     @Override
     public String toString() {
