@@ -16,6 +16,7 @@ import org.rundeck.plugin.scm.git.exp.actions.CommitJobsAction
 import org.rundeck.plugin.scm.git.exp.actions.FetchAction
 import org.rundeck.plugin.scm.git.exp.actions.PushAction
 import org.rundeck.plugin.scm.git.exp.actions.SynchAction
+import org.rundeck.plugin.scm.git.exp.actions.TagAction
 
 import java.util.regex.Pattern
 
@@ -29,6 +30,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     public static final String JOB_COMMIT_ACTION_ID = "job-commit"
     public static final String PROJECT_COMMIT_ACTION_ID = "project-commit"
     public static final String PROJECT_PUSH_ACTION_ID = "project-push"
+    public static final String PROJECT_TAG_ACTION_ID = "tag-commit"
     public static final String PROJECT_SYNCH_ACTION_ID = "project-synch"
 
 
@@ -36,7 +38,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     boolean inited = false
     String committerName;
     String committerEmail;
-    protected Map<String, GitExportAction> actions = [:]
+    Map<String, GitExportAction> actions = [:]
 
     GitExportPlugin(final Map<String, String> input, final String project) {
         super(input, project)
@@ -64,6 +66,11 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                         PROJECT_SYNCH_ACTION_ID,
                         "Synch with Remote",
                         "Synch incoming changes from Remote"
+                ),
+                (PROJECT_TAG_ACTION_ID) : new TagAction(
+                        PROJECT_TAG_ACTION_ID,
+                        "Create Tag",
+                        "Tag commit"
                 ),
 
         ]
