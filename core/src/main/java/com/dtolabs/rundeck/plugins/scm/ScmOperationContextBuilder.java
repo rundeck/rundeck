@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.plugins.scm;
 
 import com.dtolabs.rundeck.core.authorization.AuthContext;
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
 import com.dtolabs.rundeck.core.storage.StorageTree;
 
 /**
@@ -62,7 +63,7 @@ public class ScmOperationContextBuilder {
      *
      * @return this
      */
-    public ScmOperationContextBuilder authContext(final AuthContext authContext) {
+    public ScmOperationContextBuilder authContext(final UserAndRolesAuthContext authContext) {
         impl.authContext = authContext;
         return this;
     }
@@ -103,7 +104,7 @@ public class ScmOperationContextBuilder {
      */
     static class ScmOperationContextImpl implements ScmOperationContext {
         private String frameworkProject;
-        private AuthContext authContext;
+        private UserAndRolesAuthContext authContext;
         private StorageTree storageTree;
         private ScmUserInfo userInfo;
         private String jobId;
@@ -125,7 +126,7 @@ public class ScmOperationContextBuilder {
         }
 
         @Override
-        public AuthContext getAuthContext() {
+        public UserAndRolesAuthContext getAuthContext() {
             return authContext;
         }
 

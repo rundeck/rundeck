@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.plugins.scm;
 
 import com.dtolabs.rundeck.core.authorization.AuthContext;
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.storage.StorageTree;
@@ -27,7 +28,7 @@ public interface ScmOperationContext {
     /**
      * @return the authorization context
      */
-    public AuthContext getAuthContext();
+    public UserAndRolesAuthContext getAuthContext();
 
     /**
      * @return the storage service
