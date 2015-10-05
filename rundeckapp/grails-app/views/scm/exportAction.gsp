@@ -80,17 +80,21 @@
                                                     <g:checkBox name="jobIds" value="${job.extid}"
                                                                 checked="${selected?.contains(job.extid)}"/>
                                                 </g:if>
-                                                <g:else>
-                                                </g:else>
 
                                                 <g:render template="statusIcon"
-                                                          model="[iscommit          : true, status: jobstatus?.synchState?.
-                                                                  toString(), notext: true,
-                                                                  integration:'export', text: '', commit: jobstatus?.commit]"/>
+                                                          model="[iscommit          : true,
+                                                                  exportStatus: jobstatus?.synchState?.toString(),
+                                                                  notext: true,
+                                                                  integration:integration,
+                                                                  text: '',
+                                                                  commit: jobstatus?.commit]"/>
                                                 <g:render template="statusIcon"
-                                                          model="[iscommit          : true, status: jobstatus?.synchState?.
-                                                                  toString(), noicon: true,
-                                                                              integration:'export', text: job.jobName, commit: jobstatus?.commit]"/>
+                                                          model="[iscommit          : true,
+                                                                  exportStatus: jobstatus?.synchState?.toString(),
+                                                                  noicon: true,
+                                                                  integration:integration,
+                                                                  text: job.jobName,
+                                                                  commit: jobstatus?.commit]"/>
 
                                                 <span class="text-muted">
                                                     - ${job.groupPath}
@@ -212,27 +216,68 @@
                             <div class="list-group-item overflowy">
                                 <div class="form-group">
                                     <g:each in="${trackingItems}" var="trackedItem">
-
+                                        <g:set var="job" value="${trackedItem.jobId?jobMap[trackedItem.jobId]:null}"/>
                                         <div class="checkbox col-sm-12">
                                             <label title="${trackedItem.id}">
-
                                                 <g:checkBox name="chosenTrackedItem"
                                                             value="${trackedItem.id}"
                                                             checked="${selectedItems?.contains(trackedItem.id)||trackedItem.selected}"/>
-                                                <span class="">
-                                                    <g:if test="${trackedItem.iconName}">
-                                                        <g:icon name="${trackedItem.iconName}"/>
-                                                    </g:if>
-                                                    ${trackedItem.title ?: trackedItem.id}
-                                                </span>
+
+                                                <g:if test="${job}">
+
+                                                    <g:set var="jobstatus" value="${scmStatus?.get(job.extid)}"/>
+
+                                                    <g:render template="statusIcon"
+                                                              model="[iscommit          : true,
+                                                                      importStatus: jobstatus?.synchState?.toString(),
+                                                                      notext: true,
+                                                                      integration:integration,
+                                                                      text: '',
+                                                                      commit: jobstatus?.commit]"/>
+                                                    <g:render template="statusIcon"
+                                                              model="[iscommit          : true,
+                                                                      importStatus: jobstatus?.synchState?.toString(),
+                                                                      noicon: true,
+                                                                      integration:integration,
+                                                                      text: job.jobName,
+                                                                      commit: jobstatus?.commit]"/>
+
+                                                    <span class="text-muted">
+                                                        - ${job.groupPath}
+                                                    </span>
+                                                </g:if>
+                                                <g:else>
+
+                                                    <span class="">
+                                                        <g:if test="${trackedItem.iconName}">
+                                                            <g:icon name="${trackedItem.iconName}"/>
+                                                        </g:if>
+                                                        ${trackedItem.title ?: trackedItem.id}
+                                                    </span>
+                                                </g:else>
 
                                             </label>
-                                            %{--<g:link action="diff"--}%
-                                                    %{--class="btn btn-xs btn-info"--}%
-                                                    %{--params="${[project: params.project,]}">--}%
-                                                %{--<g:message code="button.View.Diff.title"/> ??--}%
-                                            %{--</g:link>--}%
+                                            <g:if test="${job}">
+
+                                                <g:link action="diff" class="btn btn-xs btn-info"
+                                                        params="${[project: params.project, jobId: job.extid, integration: 'import']}">
+                                                    <g:message code="button.View.Diff.title"/>
+                                                </g:link>
+                                            </g:if>
                                         </div>
+                                        <g:if test="${job}">
+                                            <div class="col-sm-11 col-sm-offset-1">
+                                                <span class="text-muted">
+                                                    <span class="">
+                                                        <g:if test="${trackedItem.iconName}">
+                                                            <g:icon name="${trackedItem.iconName}"/>
+                                                        </g:if>
+                                                        ${trackedItem.title ?: trackedItem.id}
+                                                    </span>
+                                                </span>
+                                            </div>
+                                        </g:if>
+
                                     </g:each>
                                 </div>
                                 <g:if test="${trackingItems.size() > 1}">

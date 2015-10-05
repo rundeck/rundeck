@@ -263,28 +263,39 @@ class ScmController extends ControllerBase {
         renamedJobPaths.values().each {
             deletedPaths.remove(it)
         }
-
-        List<ScheduledExecution> jobs = jobIds.collect {
-            ScheduledExecution.getByIdOrUUID(it)
-        }
+        def trackingItems = integration == 'import' ? scmService.getTrackingItemsForAction(project, actionId) : null
+        List<ScheduledExecution> jobs=[]
+        def jobMap=[:]
         def scmStatus = []
-        scmStatus = scmService.exportStatusForJobs(jobs).findAll {
-            it.value.synchState != SynchState.CLEAN
+        if( integration=='export'){
+            jobs = jobIds.collect {
+                ScheduledExecution.getByIdOrUUID(it)
+            }
+            scmStatus = scmService.exportStatusForJobs(jobs).findAll {
+                it.value.synchState != SynchState.CLEAN
+            }
+            jobs = jobs.findAll {
+                it.extid in scmStatus.keySet()
+            }
+        }else{
+            (trackingItems*.jobId).each {
+                jobMap[it]=ScheduledExecution.getByIdOrUUID(it)
+            }
+            jobs = (jobMap.values() as List).findAll{it!=null}
+            scmStatus = scmService.importStatusForJobs(jobs)
         }
-        jobs = jobs.findAll {
-            it.extid in scmStatus.keySet()
-        }
+
         def scmProjectStatus = scmService.getPluginStatus(authContext,integration, project)
         def scmFiles = integration == 'export' ? scmService.exportFilePathsMapForJobRefs(
                 scmService.jobRefsForJobs(jobs)
         ) : null
 
-        def trackingItems = integration == 'import' ? scmService.getTrackingItemsForAction(project, actionId) : null
 
 
         [
                 actionView      : scmService.getInputView(authContext,integration, project, actionId),
                 jobs            : jobs,
+                jobMap          : jobMap,
                 scmStatus       : scmStatus,
                 selected        : params.jobIds ? jobIds : [],
                 filesMap        : scmFiles,
