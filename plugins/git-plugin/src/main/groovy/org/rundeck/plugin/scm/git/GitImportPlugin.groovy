@@ -467,7 +467,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             } else {
                 //list
                 return trackedItems.collect {
-                    trackPath(it)
+                    trackPath(it, false, importTracker.trackedJob(it))
                 }
             }
         } else if (actionId == ACTION_IMPORT_ALL) {
@@ -476,7 +476,11 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
             //walk the repo files and look for possible candidates
             walkTreePaths('HEAD^{tree}', true) { TreeWalk walk ->
-                found << trackPath(walk.getPathString(), trackedItemNeedsImport(walk.getPathString()))
+                found << trackPath(
+                        walk.getPathString(),
+                        trackedItemNeedsImport(walk.getPathString()),
+                        importTracker.trackedJob(walk.getPathString())
+                )
             }
             return found
         }
@@ -494,8 +498,13 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
 
-    ScmImportTrackedItem trackPath(final String path, final boolean selected = false) {
-        ScmImportTrackedItemBuilder.builder().id(path).iconName('glyphicon-file').selected(selected).build()
+    ScmImportTrackedItem trackPath(final String path, final boolean selected = false, String jobId = null) {
+        ScmImportTrackedItemBuilder.builder().
+                id(path).
+                iconName('glyphicon-file').
+                selected(selected).
+                jobId(jobId).
+                build()
     }
 
     void walkTreePaths(String ref, boolean useFilter = false, Closure callback) {
