@@ -4,7 +4,7 @@
 
 # NAME
 
-job-v20 - The 'job' XML file declares job entries for Rundeck.
+job-v21 - The 'job' XML file declares job entries for Rundeck.
 
 This is a demonstration document using all possible elements in the
 current Rundeck "jobs" XML.
@@ -456,10 +456,6 @@ The [job](#job) context.
 
 *Nested elements*
 
-[project](#project)
-
-:    the project name (optional)
-
 [options](#options)
 
 :    job options. specifies one or more option elements
@@ -467,7 +463,7 @@ The [job](#job) context.
 
 ### project 
 
-The [context](#context) project name.  Optional. If a project is not specified at import time, this value will be used.
+The [context](#context) project name. Ignored. Project name must be specified at import time.
 
 ### options
      

@@ -156,7 +156,7 @@ class ScheduledExecution extends ExecutionContext {
         }
         map.description=description
         map.loglevel=loglevel
-        map.project=project
+        //don't include project
         if(timeout){
             map.timeout=timeout
         }
@@ -237,7 +237,7 @@ class ScheduledExecution extends ExecutionContext {
             se.orchestrator=Orchestrator.fromMap(data.orchestrator);
         }
         se.loglevel=data.loglevel?data.loglevel:'INFO'
-        se.project=data.project
+        //no project
         if (data.uuid) {
             se.uuid = data.uuid
         }

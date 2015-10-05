@@ -118,7 +118,9 @@ class JobsXMLCodec {
 
         //perform structure conversions for expected input for populating ScheduledExecution
 
-        map.project=map.context?.remove('project')
+        if(map.context instanceof Map) {
+            map.project = map.context?.remove('project')
+        }
         if(!map.name){
             throw new JobXMLException("'name' element not found")
         }
@@ -139,34 +141,37 @@ class JobsXMLCodec {
             }
         }
         //convert options:[option:[]] into options:[]
-        if(map.context?.options && !(map.context?.options instanceof Map)){
-            throw new JobXMLException("'context/options' element is not valid")
-        }
-        if(map.context?.options && map.context?.options?.option){
-            final def opts = map.context.options.remove('option')
-            def ndx = map.context.options.preserveOrder ? 0 : -1;
-            map.remove('context')
-            map.options=[:]
-            if (opts && opts instanceof Map){
-                opts=[opts]
+
+        if(map.context instanceof Map) {
+            if (map.context?.options && !(map.context?.options instanceof Map)) {
+                throw new JobXMLException("'context/options' element is not valid")
             }
-            //if preserveOrder is true, include sortIndex information
-            if(opts && opts instanceof Collection){
-                opts.each{optm->
-                    map.options[optm.name.toString()]=optm
-                    if (optm.values instanceof String) {
-                        optm.values = optm.values.split(",") as List
-                    } else if (optm.values) {
-                        optm.values = [optm.values.toString()]
-                    }
-                    if(null!=optm.enforcedvalues) {
-                        optm.enforced = XmlParserUtil.stringToBool(optm.remove('enforcedvalues'),false)
-                    }
-                    if(null!=optm.required) {
-                        optm.required = XmlParserUtil.stringToBool(optm.remove('required'),false)
-                    }
-                    if(ndx>-1){
-                        optm.sortIndex=ndx++;
+            if (map.context?.options && map.context?.options?.option) {
+                final def opts = map.context.options.remove('option')
+                def ndx = map.context.options.preserveOrder ? 0 : -1;
+                map.remove('context')
+                map.options = [:]
+                if (opts && opts instanceof Map) {
+                    opts = [opts]
+                }
+                //if preserveOrder is true, include sortIndex information
+                if (opts && opts instanceof Collection) {
+                    opts.each { optm ->
+                        map.options[optm.name.toString()] = optm
+                        if (optm.values instanceof String) {
+                            optm.values = optm.values.split(",") as List
+                        } else if (optm.values) {
+                            optm.values = [optm.values.toString()]
+                        }
+                        if (null != optm.enforcedvalues) {
+                            optm.enforced = XmlParserUtil.stringToBool(optm.remove('enforcedvalues'), false)
+                        }
+                        if (null != optm.required) {
+                            optm.required = XmlParserUtil.stringToBool(optm.remove('required'), false)
+                        }
+                        if (ndx > -1) {
+                            optm.sortIndex = ndx++;
+                        }
                     }
                 }
             }
@@ -365,13 +370,15 @@ class JobsXMLCodec {
      * Convert structure returned by job.toMap into correct structure for jobs xml
      */
     static convertJobMap={Map map->
-        map.context=[project:map.remove('project')]
+        map.remove('project')
+
         def optdata = map.remove('options')
         boolean preserveOrder=false
         if(map.description.indexOf('\n')>=0 ||map.description.indexOf('\n')>=0){
             map[BuilderUtil.asCDATAName('description')]=map.remove('description')
         }
         if(null!=optdata){
+            map.context=[:]
             def opts
             if(optdata instanceof Map){
                 opts=optdata.values().sort{a,b->

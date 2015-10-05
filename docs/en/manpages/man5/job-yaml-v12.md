@@ -102,10 +102,6 @@ Extended description using yaml 'literal' scalar string format (beginning with a
 
 In addition, these optional entries can be present:
 
-`project`
-
-:    the Project name
-
 `uuid`
 
 :    Unique UUID
