@@ -1,5 +1,8 @@
 package org.rundeck.plugin.scm.git
 
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.plugins.scm.ScmPluginException
+import com.dtolabs.rundeck.plugins.scm.ScmPluginInvalidInput
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.diff.DiffAlgorithm
 import org.eclipse.jgit.diff.DiffEntry
@@ -11,6 +14,7 @@ import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.FileMode
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.ObjectReader
+import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
@@ -205,5 +209,30 @@ class GitUtil {
                 authorTimeZone: commit.authorIdent.timeZone.displayName,
                 message       : commit.shortMessage
         ]
+    }
+
+    static Ref createTag(Git git, String tag, String message, RevCommit commit) {
+        def tagb = git.tag().
+                setAnnotated(true).
+                setName(tag).
+                setObjectId(commit).
+                setMessage(message)
+
+        return tagb.call()
+
+    }
+
+    /**
+     * Find a tag ref by name
+     * @param tag tag name
+     * @param git git
+     * @return tag ref or null
+     */
+    static Ref findTag(String tag, Git git) {
+        def tagrefs = git.tagList().call()
+        def found = tagrefs.find { Ref ref ->
+            ref.name == Constants.R_TAGS + tag
+        }
+        return found
     }
 }
