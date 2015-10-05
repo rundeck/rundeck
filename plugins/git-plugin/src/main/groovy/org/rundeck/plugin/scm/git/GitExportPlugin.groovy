@@ -405,7 +405,12 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         def diffs = diffContent(baos, bytes, file)
 
 
-        return new GitDiffResult(content: baos.toString(), modified: diffs > 0)
+
+        def availableActions = diffs > 0 ? [actions[JOB_COMMIT_ACTION_ID]]:null
+        return new GitDiffResult(content: baos.toString(),
+                                 modified: diffs > 0,
+                                 actions: availableActions
+        )
     }
 
 

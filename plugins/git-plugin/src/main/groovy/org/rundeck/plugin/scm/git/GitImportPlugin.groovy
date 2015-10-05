@@ -443,10 +443,13 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         def diffs = diffContent(baos, temp, bytes)
         temp.delete()
 
+
+        def availableActions = diffs > 0 ? [actions[ACTION_IMPORT_ALL]] : null
         return new GitDiffResult(
                 content: baos.toString(),
                 modified: diffs > 0,
-                incomingCommit: new GitScmCommit(GitUtil.metaForCommit(latestCommit))
+                incomingCommit: new GitScmCommit(GitUtil.metaForCommit(latestCommit)),
+                actions: availableActions
         )
     }
 
