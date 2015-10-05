@@ -152,7 +152,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 if (trackedItemNeedsImport(walk.getPathString())) {
                     importNeeded++
                 }
-            } else if(importTracker.wasRenamed(walk.getPathString())) {
+            } else if (importTracker.wasRenamed(walk.getPathString())) {
                 //item is tracked to a job which was renamed
                 expected.remove(importTracker.renamedValue(walk.getPathString()))
                 renamed.add(walk.getPathString())
@@ -173,7 +173,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         state.notFound = notFound
         state.deleted = deleted
 
-
         //compare to tracked branch
         def bstat = BranchTrackingStatus.of(repo, branch)
         state.branchTrackingStatus = bstat
@@ -186,7 +185,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         } else {
             state.state = ImportSynchState.CLEAN
         }
-        def msgs=[]
+        def msgs = []
 
         if (bstat && bstat.behindCount > 0) {
             msgs << "${bstat.behindCount} changes from remote need to be pulled"
@@ -244,9 +243,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         if (originalPath && synchState == ImportSynchState.UNKNOWN) {
             //job was renamed but not file
             synchState = ImportSynchState.IMPORT_NEEDED
-        }else if (job.scmImportMetadata?.commitId) {
+        } else if (job.scmImportMetadata?.commitId) {
             //update tracked commit info
-            importTracker.trackJobAtPath(job,path)
+            importTracker.trackJobAtPath(job, path)
         }
         log.debug(
                 "import job status: ${synchState} with meta ${job.scmImportMetadata}, version ${job.importVersion}/${job.version} commit ${latestCommit?.name}"
@@ -366,8 +365,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 break;
 
             case JobChangeEvent.JobChangeEventType.MODIFY_RENAME:
-                importTracker.jobRenamed(reference,path,newpath)
-                //TODO
+                importTracker.jobRenamed(reference, path, newpath)
+        //TODO
 //            case JobChangeEvent.JobChangeEventType.CREATE:
 //            case JobChangeEvent.JobChangeEventType.MODIFY:
 
@@ -426,9 +425,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
     @Override
-    ScmImportDiffResult getFileDiff(final JobScmReference job,  String originalPath) {
-        def path=relativePath(job)
-        if(!originalPath){
+    ScmImportDiffResult getFileDiff(final JobScmReference job, String originalPath) {
+        def path = relativePath(job)
+        if (!originalPath) {
             originalPath = importTracker.originalValue(path)
         }
         path = originalPath ?: relativePath(job)
