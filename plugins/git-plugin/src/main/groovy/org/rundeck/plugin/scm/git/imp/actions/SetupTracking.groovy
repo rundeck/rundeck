@@ -79,13 +79,14 @@ Or, you can also choose to enter a Regular expression to match potential new rep
             final Map<String, String> input
     )
     {
-        GitImportPlugin.log.debug("SetupTracking: ${selectedPaths}, ${input}")
         if (input[USE_FILE_PATTERN] != null && selectedPaths != null) {
+            GitImportPlugin.log.debug("SetupTracking: ${selectedPaths}, ${input} (true)")
             plugin.trackedItems = selectedPaths
             plugin.useTrackingRegex = 'true' == input[USE_FILE_PATTERN]
             plugin.trackingRegex = plugin.useTrackingRegex ? input[FILE_PATTERN] : null
             plugin.trackedItemsSelected = true
         } else {
+            GitImportPlugin.log.debug("SetupTracking: ${selectedPaths}, ${input} (false)")
             plugin.trackedItemsSelected = false
         }
     }
