@@ -27,6 +27,7 @@ import groovy.io.FileType
 import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import rundeck.services.PasswordFieldsService
+import rundeck.services.scm.ScmJobImporter
 
 beans={
     log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
@@ -143,6 +144,8 @@ beans={
     scmImportPluginProviderService(ScmImportPluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
+
+    scmJobImporter(ScmJobImporter)
 
     containerPrincipalRoleSource(ContainerPrincipalRoleSource){
         enabled=grailsApplication.config.rundeck?.security?.authorization?.containerPrincipal?.enabled in [true,'true']

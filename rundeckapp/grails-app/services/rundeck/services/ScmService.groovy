@@ -2,7 +2,6 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.configuration.Property
-import com.dtolabs.rundeck.plugins.scm.ImportResult
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
@@ -38,13 +37,18 @@ import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderServic
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
 import rundeck.ScheduledExecution
 import rundeck.User
-import rundeck.codecs.JobsYAMLCodec
+import rundeck.services.scm.ContextJobImporter
+import rundeck.services.scm.ResolvedJobImporter
+import rundeck.services.scm.ScmJobImporter
+import rundeck.services.scm.ScmPluginConfig
+import rundeck.services.scm.ScmUser
 
 /**
  * Manages scm integration
  */
 class ScmService {
     def JobEventsService jobEventsService
+    def ContextJobImporter scmJobImporter
     def grailsApplication
     def frameworkService
     ScmExportPluginProviderService scmExportPluginProviderService
@@ -605,7 +609,7 @@ class ScmService {
         }
     }
 
-    private JobRevReference jobRevReference(ScheduledExecution entry) {
+    static JobRevReference jobRevReference(ScheduledExecution entry) {
         new JobRevReferenceImpl(
                 id: entry.extid,
                 jobName: entry.jobName,
@@ -624,21 +628,25 @@ class ScmService {
     private JobExportReference exportJobRef(ScheduledExecution job) {
         new JobSerializerReferenceImpl(
                 jobRevReference(job),
-                { String format, OutputStream os ->
-                    switch (format) {
-                        case 'xml':
-                            def str = job.encodeAsJobsXML() + '\n'
-                            os.write(str.getBytes("UTF-8"))
-                            break;
-                        case 'yaml':
-                            def str = job.encodeAsJobsYAML() + '\n'
-                            os.write(str.getBytes("UTF-8"))
-                            break;
-                        default:
-                            throw new IllegalArgumentException("Format not supported: " + format)
-                    }
-                }
+                lazySerializerForJob(job)
         )
+    }
+
+    private JobSerializer lazySerializerForJob(ScheduledExecution job) {
+        { String format, OutputStream os ->
+            switch (format) {
+                case 'xml':
+                    def str = job.encodeAsJobsXML() + '\n'
+                    os.write(str.getBytes("UTF-8"))
+                    break;
+                case 'yaml':
+                    def str = job.encodeAsJobsYAML() + '\n'
+                    os.write(str.getBytes("UTF-8"))
+                    break;
+                default:
+                    throw new IllegalArgumentException("Format not supported: " + format)
+            }
+        } as JobSerializer
     }
 
     List<JobImportReference> importJobRefsForJobs(List<ScheduledExecution> jobs) {
@@ -653,36 +661,67 @@ class ScmService {
         }
     }
 
+    /**
+     * Create iport ref with import metadata
+     * @param job
+     * @return
+     */
     private JobImportReference importJobRef(ScheduledExecution job) {
         def metadata = jobMetadataService.getJobPluginMeta(job, 'scm-import')
         new JobImportReferenceImpl(
                 jobRevReference(job),
                 metadata?.version != null ? metadata.version : -1L,
-                metadata?.pluginMeta ?: metadata
+                metadata?.pluginMeta
         )
     }
 
-    private JobScmReference scmJobRef(ScheduledExecution job) {
+    /**
+     * Create reference for job with scm import metadata and serializer
+     * @param job job
+     * @param serializer predefined serializer, or null to create lazy serializer
+     * @return JobScmReference
+     */
+     JobScmReference scmJobRef(ScheduledExecution job, JobSerializer serializer = null) {
         def metadata = jobMetadataService.getJobPluginMeta(job, 'scm-import')
         def impl = new JobImportReferenceImpl(
                 jobRevReference(job),
                 metadata?.version != null ? metadata.version : -1L,
-                metadata?.pluginMeta ?: metadata
+                metadata?.pluginMeta
         )
-        impl.jobSerializer = { String format, OutputStream os ->
-            switch (format) {
-                case 'xml':
-                    def str = job.encodeAsJobsXML() + '\n'
-                    os.write(str.getBytes("UTF-8"))
-                    break;
-                case 'yaml':
-                    def str = job.encodeAsJobsYAML() + '\n'
-                    os.write(str.getBytes("UTF-8"))
-                    break;
-                default:
-                    throw new IllegalArgumentException("Format not supported: " + format)
-            }
-        }
+        impl.jobSerializer = serializer ?: lazySerializerForJob(job)
+        impl
+    }
+    /**
+     * Create reference for job with scm import metadata and serializer
+     * @param job job
+     * @param serializer predefined serializer, or null to create lazy serializer
+     * @return JobScmReference
+     */
+    JobScmReference scmJobRef(JobRevReference reference, JobSerializer serializer) {
+        def metadata = jobMetadataService.getJobPluginMeta(reference.project, reference.id, 'scm-import')
+        def impl = new JobImportReferenceImpl(
+                reference,
+                metadata?.version != null ? metadata.version : -1L,
+                metadata?.pluginMeta
+        )
+        impl.jobSerializer = serializer
+        impl
+    }
+    /**
+     * Create reference for job with scm import metadata and serializer
+     * @param job job
+     * @param serializer predefined serializer, or null to create lazy serializer
+     * @return JobScmReference
+     */
+    static JobScmReference scmJobRef(JobRevReference reference, Map metadata, JobSerializer serializer=null
+    ) {
+//        def metadata = jobMetadataService.getJobPluginMeta(reference.project, reference.id, 'scm-import')
+        def impl = new JobImportReferenceImpl(
+                reference,
+                metadata?.version != null ? metadata.version : -1L,
+                metadata?.pluginMeta
+        )
+        impl.jobSerializer = serializer
         impl
     }
 
@@ -921,7 +960,7 @@ class ScmService {
         def isSetupAction = plugin.getSetupAction(context)?.id == actionId
 
         def result = null
-        def jobImporter = createImporter(project, auth)
+        def jobImporter = new ResolvedJobImporter(context, scmJobImporter)
 
         try {
             result = plugin.scmImport(context, actionId, jobImporter, chosenTrackedItems, config)
@@ -969,223 +1008,9 @@ class ScmService {
         return pluginConfig.getSettingList('trackedItems')
     }
 
-    JobImporter createImporter(final String project, final UserAndRolesAuthContext authContext) {
-        return new Importer(project, authContext, scheduledExecutionService, jobMetadataService)
-    }
 
 }
 
-class Importer implements JobImporter {
-    String project
-    UserAndRolesAuthContext authContext
-    ScheduledExecutionService scheduledExecutionService
-    JobMetadataService jobMetadataService
-
-    Importer(
-            final String project,
-            final UserAndRolesAuthContext authContext,
-            final ScheduledExecutionService scheduledExecutionService,
-            final JobMetadataService jobMetadataService
-    )
-    {
-        this.project = project
-        this.authContext = authContext
-        this.scheduledExecutionService = scheduledExecutionService
-        this.jobMetadataService = jobMetadataService
-    }
-
-    @Override
-    ImportResult importFromStream(final String format, final InputStream input, final Map importMetadata) {
-        def parseresult = null
-        try {
-            parseresult = scheduledExecutionService.parseUploadedFile(input, format)
-            if (parseresult.error || parseresult.errorCode) {
-                def message = parseresult.error ?:
-                        scheduledExecutionService.messageSource.getMessage(
-                                parseresult.errorCode,
-                                parseresult.args,
-                                null
-                        )
-                return ImporterResult.fail(message)
-            }
-
-        } catch (Throwable e) {
-            return ImporterResult.fail("Failed to load job definition from input stream: " + e.message)
-        }
-
-        importJobset(parseresult.jobset, importMetadata)
-    }
-
-    private ImportResult importJobset(List jobset, final Map importMetadata) {
-
-        jobset*.project = project
-        def changeinfo = [user: authContext.username, method: 'scm-import']
-        def loadresults = scheduledExecutionService.loadJobs(jobset, 'update', 'preserve', changeinfo, authContext)
-        loadresults.jobs.each { ScheduledExecution job ->
-            jobMetadataService.setJobPluginMeta(job, 'scm-import', [version: job.version, pluginMeta: importMetadata])
-        }
-        def result = new ImporterResult()
-        if (loadresults.errjobs) {
-            result = ImporterResult.fail(loadresults.errjobs.collect { it.value.errmsg }.join(", "))
-        } else {
-            result.successful = true
-        }
-        result
-    }
-
-    @Override
-    ImportResult importFromMap(final Map input, final Map importMetadata) {
-        def jobset = []
-        try {
-            jobset = JobsYAMLCodec.createJobs([input])
-        } catch (Throwable e) {
-            return ImporterResult.fail("Failed to construct job definition map: " + e.message)
-        }
-        importJobset(jobset, importMetadata)
-    }
-}
-
-class ImporterResult implements ImportResult {
-    boolean successful
-    String errorMessage
-    JobRevReference job
-    boolean created
-    boolean modified
-
-    static ImportResult fail(String message) {
-        def result = new ImporterResult()
-        result.successful = false
-        result.errorMessage = message
-        return result
-    }
-
-    @Override
-    public String toString() {
-        if(!successful) {
-            return "Failed: " + errorMessage
-        }
-        return (created ? "Created " : "Modified ") + "Job: " + job;
-    }
-}
-
-class ScmUser implements ScmUserInfo {
-    String email
-    String fullName
-    String firstName
-    String lastName
-    String userName
-}
-/**
- * Wraps stored plugin config data, writes and reads it
- */
-class ScmPluginConfig {
-    Properties properties
-    String integration//export or import
-    private String prefix
-
-    ScmPluginConfig(final Properties properties, String integration) {
-        this.properties = properties ?: new Properties()
-        this.integration = integration
-        prefix = 'scm.' + integration
-    }
-
-    String getSetting(String name) {
-        properties?.getProperty(prefix + '.' + name)
-    }
-
-    List<String> getSettingList(String name) {
-        def val = getSetting(name + '.count')
-        if (val) {
-            int size = 0
-            try {
-                size = Integer.parseInt(val)
-            } catch (NumberFormatException e) {
-                return null
-            }
-            def items = []
-            def count = 0
-            while (count < size) {
-                items << getSetting(name + '.' + count)
-                count++
-            }
-            return items
-        }
-        return null
-    }
-
-    void setSetting(String name, List<String> value) {
-        if (value != null) {
-            setSetting(name + '.count', Integer.toString(value.size()))
-            value.eachWithIndex { String entry, int i ->
-                setSetting(name + '.' + i, entry)
-            }
-        } else {
-            setSetting(name + '.count', (String) null)
-        }
-    }
-
-    void setSetting(String name, String value) {
-        if (value != null) {
-            properties?.setProperty(prefix + '.' + name, value)
-        } else {
-            properties?.remove(prefix + '.' + name)
-        }
-    }
-
-    String getType() {
-        getSetting('type')
-    }
-
-    void setType(String type) {
-        setSetting('type', type)
-    }
-
-    void setEnabled(boolean enabled) {
-        setSetting('enabled', Boolean.toString(enabled))
-    }
-
-    boolean getEnabled() {
-        Boolean.parseBoolean(getSetting('enabled'))
-    }
-
-    Map getConfig() {
-        return properties.findAll {
-            it.key.startsWith(prefix + '.config.')
-        }.collectEntries {
-            [it.key.substring((prefix + '.config.').length()), it.value]
-        }
-    }
-
-    /**
-     * Add properties to the config
-     * @param config map of config key/value
-     */
-    void setConfig(Map config) {
-        config.each { setSetting 'config.' + it.key, it.value }
-    }
 
 
-    def asInputStream() {
-        def baos = new ByteArrayOutputStream()
-        properties.store(baos, "scm config")
-        new ByteArrayInputStream(baos.toByteArray())
-    }
 
-    static ScmPluginConfig loadFromStream(String integration, InputStream os) {
-
-        def props = new Properties()
-        props.load(os)
-        return new ScmPluginConfig(props, integration)
-    }
-
-    @Override
-    public String toString() {
-        return "ScmPluginConfig{" +
-                "integration='" + integration + '\'' +
-                ", prefix='" + prefix + '\'' +
-                ", type='" + getType() + '\'' +
-                ", enabled='" + getEnabled() + '\'' +
-                ", config='" + getConfig() + '\'' +
-                '}';
-    }
-}
