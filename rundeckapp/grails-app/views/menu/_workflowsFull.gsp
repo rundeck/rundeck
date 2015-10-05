@@ -184,15 +184,10 @@
                         </g:if>
                         <g:else>
                             <li>
-                                <g:link controller="scm" action="exportAction" params="${[
-                                        project    : params.project, allJobs: true, actionId: action.id,
-                                        integration: 'export'
-                                ]}"
-                                        title="${action.description ?: ''}">
-                                    <g:if test="${action.iconName}">
-                                        <g:icon name="${action.iconName}"/>
-                                    </g:if>
-                                    ${action.title ?: 'Action'}</g:link>
+                                <g:render template="/scm/actionLink"
+                                    model="[action:action,integration:'export',project:params.project]"
+                                />
+
                             </li>
                         </g:else>
                     </g:each>
@@ -211,15 +206,11 @@
                         </g:if>
                         <g:else>
                             <li>
-                                <g:link controller="scm" action="exportAction" params="${[
-                                        project    : params.project, allJobs: true, actionId: action.id,
-                                        integration: 'import'
-                                ]}"
-                                        title="${action.description ?: ''}">
-                                    <g:if test="${action.iconName}">
-                                        <g:icon name="${action.iconName}"/>
-                                    </g:if>
-                                    ${action.title ?: 'Action'}</g:link>
+
+                                <g:render template="/scm/actionLink"
+                                          model="[action:action,integration:'import',project:params.project]"
+                                />
+
                             </li>
                         </g:else>
                     </g:each>
