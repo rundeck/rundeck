@@ -40,6 +40,7 @@ public interface ScmImportPlugin {
      */
     JobImportState getJobStatus(JobScmReference job);
 
+
     /**
      * Return the state of the given job, with optional original repo path
      *
@@ -74,7 +75,7 @@ public interface ScmImportPlugin {
      *
      * @return input view for the specified action
      */
-    BasicInputView getInputViewForAction(final ScmOperationContext context,String actionId);
+    BasicInputView getInputViewForAction(final ScmOperationContext context, String actionId);
 
     /**
      * Return any action that is needed for post-create setup.  If not null,

@@ -73,9 +73,11 @@ class ScmService {
                 log.debug("Loading 'export' plugin ${pluginConfig.type} for ${project}...")
                 def username = pluginConfig.getSetting("username")
                 def roles = pluginConfig.getSettingList("roles")
-                if(!username || !roles){
-                    log.error("SCM Export not valid (missing username or roles) for project: ${project}: ${pluginConfig}")
-                }else {
+                if (!username || !roles) {
+                    log.error(
+                            "SCM Export not valid (missing username or roles) for project: ${project}: ${pluginConfig}"
+                    )
+                } else {
                     try {
                         def context = scmOperationContext(username, roles, project)
                         initPlugin('export', context, pluginConfig.type, pluginConfig.config)
@@ -97,9 +99,11 @@ class ScmService {
                 log.debug("Loading 'import' plugin ${importPluginConfig.type} for ${project}...")
                 def username = importPluginConfig.getSetting("username")
                 def roles = importPluginConfig.getSettingList("roles")
-                if(!username || !roles){
-                    log.error("SCM Import not valid (missing username or roles) for project: ${project}: ${pluginConfig}")
-                }else {
+                if (!username || !roles) {
+                    log.error(
+                            "SCM Import not valid (missing username or roles) for project: ${project}: ${pluginConfig}"
+                    )
+                } else {
                     try {
                         def context = scmOperationContext(username, roles, project)
                         initPlugin('import', context, importPluginConfig.type, importPluginConfig.config)
@@ -166,29 +170,29 @@ class ScmService {
         loadedImportPlugins.containsKey(project)
     }
 
-    BasicInputView getInputView(UserAndRolesAuthContext auth,String integration, String project, String actionId) {
+    BasicInputView getInputView(UserAndRolesAuthContext auth, String integration, String project, String actionId) {
         switch (integration) {
             case 'export':
-                return getExportInputView(auth,project, actionId)
+                return getExportInputView(auth, project, actionId)
             case 'import':
-                return getImportInputView(auth,project, actionId)
+                return getImportInputView(auth, project, actionId)
         }
 
     }
 
-    BasicInputView getExportInputView(UserAndRolesAuthContext auth,String project, String actionId) {
+    BasicInputView getExportInputView(UserAndRolesAuthContext auth, String project, String actionId) {
         def plugin = loadedExportPlugins[project]
-        if(plugin) {
+        if (plugin) {
             def context = scmOperationContext(auth, project)
-            plugin.getInputViewForAction(context,actionId)
+            plugin.getInputViewForAction(context, actionId)
         }
     }
 
-    BasicInputView getImportInputView(UserAndRolesAuthContext auth,String project, String actionId) {
+    BasicInputView getImportInputView(UserAndRolesAuthContext auth, String project, String actionId) {
         def plugin = loadedImportPlugins[project]
-        if(plugin){
+        if (plugin) {
             def context = scmOperationContext(auth, project)
-            plugin.getInputViewForAction(context,actionId)
+            plugin.getInputViewForAction(context, actionId)
         }
     }
 
@@ -754,12 +758,12 @@ class ScmService {
      * @param project
      * @return
      */
-    def getPluginStatus(UserAndRolesAuthContext auth,String integration, String project) {
+    def getPluginStatus(UserAndRolesAuthContext auth, String integration, String project) {
         switch (integration) {
             case 'export':
-                return exportPluginStatus(auth,project)
+                return exportPluginStatus(auth, project)
             case 'import':
-                return importPluginStatus(auth,project)
+                return importPluginStatus(auth, project)
         }
     }
     /**
@@ -767,11 +771,11 @@ class ScmService {
      * @param project
      * @return
      */
-    ScmExportSynchState exportPluginStatus(UserAndRolesAuthContext auth,String project) throws ScmPluginException {
+    ScmExportSynchState exportPluginStatus(UserAndRolesAuthContext auth, String project) throws ScmPluginException {
 
         def plugin = loadedExportPlugins[project]
         if (plugin) {
-            return plugin.getStatus(scmOperationContext(auth,project))
+            return plugin.getStatus(scmOperationContext(auth, project))
         }
         null
     }
@@ -780,10 +784,10 @@ class ScmService {
      * @param project
      * @return
      */
-    ScmImportSynchState importPluginStatus(UserAndRolesAuthContext auth,String project) throws ScmPluginException {
+    ScmImportSynchState importPluginStatus(UserAndRolesAuthContext auth, String project) throws ScmPluginException {
         def plugin = loadedImportPlugins[project]
         if (plugin) {
-            return plugin.getStatus(scmOperationContext(auth,project))
+            return plugin.getStatus(scmOperationContext(auth, project))
         }
         null
     }
@@ -792,11 +796,11 @@ class ScmService {
      * @param project
      * @return
      */
-    List<Action> exportPluginActions(UserAndRolesAuthContext auth,String project) {
+    List<Action> exportPluginActions(UserAndRolesAuthContext auth, String project) {
 
         def plugin = loadedExportPlugins[project]
         if (plugin) {
-            def context = scmOperationContext(auth,project)
+            def context = scmOperationContext(auth, project)
             return plugin.actionsAvailableForContext(context)
         }
         null
@@ -807,11 +811,11 @@ class ScmService {
      * @param project
      * @return
      */
-    List<Action> importPluginActions(UserAndRolesAuthContext auth,String project) {
+    List<Action> importPluginActions(UserAndRolesAuthContext auth, String project) {
 
         def plugin = loadedImportPlugins[project]
         if (plugin) {
-            def context = scmOperationContext(auth,project)
+            def context = scmOperationContext(auth, project)
             return plugin.actionsAvailableForContext(context)
         }
         null
@@ -884,7 +888,7 @@ class ScmService {
         //store config
         def plugin = loadedExportPlugins[project]
         def jobrefs = exportjobRefsForJobs(jobs)
-        def context = scmOperationContext(auth,project)
+        def context = scmOperationContext(auth, project)
         def view = plugin.getInputViewForAction(context, actionId)
         def report = validatePluginConfigProperties(project, view.properties, config)
         if (!report.valid) {
@@ -962,8 +966,8 @@ class ScmService {
         log.debug("performImportAction project: ${project}, items: ${chosenTrackedItems}")
         //store config
         def plugin = loadedImportPlugins[project]
-        def context = scmOperationContext(auth,project)
-        def view = plugin.getInputViewForAction(context,actionId)
+        def context = scmOperationContext(auth, project)
+        def view = plugin.getInputViewForAction(context, actionId)
         def report = validatePluginConfigProperties(project, view.properties, config)
         if (!report.valid) {
             return [valid: false, report: report]
