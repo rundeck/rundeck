@@ -538,7 +538,7 @@ class ScmService {
             scmPluginConfig.enabled = true
             storeConfig(scmPluginConfig, project)
             if (integration == 'import') {
-                def nextAction = plugin.getSetupAction([project: project])
+                def nextAction = plugin.getSetupAction(context)
                 if (nextAction) {
                     return [valid: true, plugin: plugin, nextAction: nextAction]
                 }
