@@ -1,5 +1,9 @@
 package com.dtolabs.rundeck.plugins.scm;
 
+import com.dtolabs.rundeck.core.plugins.views.Action;
+
+import java.util.List;
+
 /**
  * Result of a Diff between old job data and new
  */
@@ -23,4 +27,9 @@ public interface ScmDiffResult {
      * @return diff contents
      */
     String getContent();
+
+    /**
+     * @return list of actions that can be taken
+     */
+    List<Action> getActions();
 }
