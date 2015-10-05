@@ -48,7 +48,7 @@ class JobEventsService {
                         yamlString = job.encodeAsJobsYAML() + '\n'
                     }
                 }
-                if (retry >= 0) {
+                if (retry <= 0) {
 
                     break
                 } else {
