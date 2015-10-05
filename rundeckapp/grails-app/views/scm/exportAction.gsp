@@ -299,7 +299,7 @@
                         </g:if>
                     </g:elseif>
                     <div class="list-group-item">
-                        <g:each in="${actionView.properties}" var="prop">
+                        <g:each in="${actionView?.properties}" var="prop">
 
                             <g:if test="${!prop.scope || prop.scope.isProjectLevel() || prop.scope.isUnspecified()}">
                                 <g:render
