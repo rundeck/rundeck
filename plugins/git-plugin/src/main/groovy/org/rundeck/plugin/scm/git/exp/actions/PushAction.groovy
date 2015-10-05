@@ -1,13 +1,16 @@
 package org.rundeck.plugin.scm.git.exp.actions
 
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
+import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.transport.RemoteRefUpdate
 import org.rundeck.plugin.scm.git.BaseAction
 import org.rundeck.plugin.scm.git.BaseGitPlugin
 import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
+import org.rundeck.plugin.scm.git.GitUtil
 
 import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
 import static org.rundeck.plugin.scm.git.BuilderUtil.property
@@ -16,6 +19,7 @@ import static org.rundeck.plugin.scm.git.BuilderUtil.property
  * Created by greg on 9/8/15.
  */
 class PushAction extends BaseAction implements GitExportAction {
+
     PushAction(final String id, final String title, final String description) {
         super(id, title, description)
     }
@@ -36,14 +40,19 @@ class PushAction extends BaseAction implements GitExportAction {
 
 Pushing to remote branch: `${plugin.branch}`"""
                     },
-
                     property {
-                        booleanType "push"
-                        title "Push Remotely?"
-                        description "Check to push to the remote"
-                        defaultValue "true"
+                        string TagAction.P_TAG_NAME
+                        title "Tag"
+                        description "Enter a tag name to include, will be pushed with the branch. The tag will be created if it does not exist."
                         required false
                     },
+                    property {
+                        string TagAction.P_MESSAGE
+                        title "Tag Message"
+                        description "Enter a message for the annotated Tag."
+                        required false
+                    },
+
             ]
             )
         }
@@ -61,18 +70,34 @@ Pushing to remote branch: `${plugin.branch}`"""
     {
         def result = new ScmExportResultImpl()
 
-        //todo: tag
-        if (input.tag) {
-            System.err.println("TODO: tag ${input.tag}")
+        Ref tagref
+        if (input[TagAction.P_TAG_NAME]) {
+            tagref = GitUtil.findTag(input[TagAction.P_TAG_NAME], plugin.git)
+            if (!tagref) {
+                def tagResult = plugin.export(
+                        context,
+                        GitExportPlugin.PROJECT_TAG_ACTION_ID,
+                        jobs,
+                        pathsToDelete,
+                        input
+                )
+                if (!tagResult.success) {
+                    return tagResult
+                }
+                tagref = GitUtil.findTag(input[TagAction.P_TAG_NAME], plugin.git)
+            }
         }
 
         def commit = plugin.getHead()
+
         def pushb = plugin.git.push()
         pushb.setRemote(BaseGitPlugin.REMOTE_NAME)
         pushb.add(plugin.branch)
         plugin.setupTransportAuthentication(plugin.input.url, context, pushb)
 
-//                pushb.add(input.tag) //todo: push tag
+        if (tagref) {
+            pushb.add(tagref)
+        }
 
         def push
         try {
