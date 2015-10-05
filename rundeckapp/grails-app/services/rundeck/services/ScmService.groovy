@@ -897,6 +897,8 @@ class ScmService {
         def result = null
         try {
             result = plugin.export(context, actionId, jobrefs as Set, deletePaths as Set, config)
+        } catch (ScmPluginInvalidInput e) {
+            return [valid: false, report: e.report]
         } catch (ScmPluginException e) {
             log.error(e.message)
             log.debug("export failed ${jobrefs}, ${deletePaths}, ${auth.username}, ${config}", e)
