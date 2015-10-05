@@ -13,6 +13,8 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.PersonIdent
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.util.FileUtils
+import org.rundeck.plugin.scm.git.exp.actions.CommitJobsAction
+import org.rundeck.plugin.scm.git.exp.actions.TagAction
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -129,9 +131,9 @@ class GitExportPluginSpec extends Specification {
         view.actionId == GitExportPlugin.JOB_COMMIT_ACTION_ID
         view.properties.size() == 3
         view.properties*.name == [
-                'commitMessage',
-                'tagName',
-                'push'
+                CommitJobsAction.P_MESSAGE,
+                TagAction.P_TAG_NAME,
+                CommitJobsAction.P_PUSH
         ]
 
     }
@@ -538,7 +540,7 @@ class GitExportPluginSpec extends Specification {
 
         then:
         ScmPluginException e = thrown()
-        e.message == 'A commitMessage is required'
+        e.message == "A ${CommitJobsAction.P_MESSAGE} is required".toString()
     }
 
     def "export job no local changes"() {
@@ -655,7 +657,7 @@ class GitExportPluginSpec extends Specification {
             getVersion() >> 1
             getJobSerializer() >> serializer
         }
-        def input = [commitMessage: "Test"]
+        def input = [message: "Test"]
         when:
         def result = plugin.export(ctxt,GitExportPlugin.JOB_COMMIT_ACTION_ID, [jobref] as Set, [] as Set, input)
 
