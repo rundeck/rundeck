@@ -2,9 +2,12 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.SynchState
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import rundeck.ScheduledExecution
+
+import javax.servlet.http.HttpServletResponse
 
 class ScmController extends ControllerBase {
     def scmService
@@ -243,7 +246,13 @@ class ScmController extends ControllerBase {
             return
         }
         if (!scmService.projectHasConfiguredPlugin(integration, project)) {
+            flash.message="No plugin for SCM ${integration} configured for project ${project}"
             return redirect(action: 'index', params: [project: project])
+        }
+        def view = scmService.getInputView(authContext, integration, project, actionId)
+        if(!view){
+            response.status=HttpServletResponse.SC_NOT_FOUND
+            renderErrorView("Not a valid action: ${actionId}")
         }
         List<String> jobIds = []
         Map deletedPaths = [:]
@@ -251,7 +260,7 @@ class ScmController extends ControllerBase {
         Map<String, String> renamedJobPaths = scmService.getRenamedJobPathsForProject(params.project)
         if (params.jobIds) {
             jobIds = [params.jobIds].flatten()
-        } else if (params.allJobs) {
+        } else {
             jobIds = ScheduledExecution.findAllByProject(params.project).collect {
                 it.extid
             }
@@ -293,7 +302,7 @@ class ScmController extends ControllerBase {
 
 
         [
-                actionView      : scmService.getInputView(authContext,integration, project, actionId),
+                actionView      : view,
                 jobs            : jobs,
                 jobMap          : jobMap,
                 scmStatus       : scmStatus,
