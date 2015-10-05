@@ -21,6 +21,12 @@ public interface ScmImportTrackedItem {
     String getIconName();
 
     /**
+     * @return associated Job ID if known
+     */
+    String getJobId();
+
+
+    /**
      * @return true if the item is selected
      */
     boolean isSelected();
