@@ -3784,6 +3784,49 @@ class JobsXMLCodecTests {
 
 
     }
+    void testEncodeNullDescription(){
+         def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        loglevel: 'INFO',
+                        project:'test1',
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                        options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
+                        nodeThreadcount:1,
+                        nodeKeepgoing:true,
+                        doNodedispatch:true
+                )
+        ]
+        def  xmlstr = JobsXMLCodec.encode(jobs1)
+            assertNotNull xmlstr
+            assertTrue xmlstr instanceof String
+
+            def doc = parser.parse(new StringReader(xmlstr))
+            assertNotNull doc
+            assertEquals "wrong root node name",'joblist',doc.name()
+            assertEquals "wrong number of jobs",1,doc.job.size()
+            assertEquals "wrong name","test job 1",doc.job[0].name[0].text()
+            assertEquals "wrong description","",doc.job[0].description[0].text()
+            assertEquals "wrong loglevel","INFO",doc.job[0].loglevel[0].text()
+            assertEquals "wrong scheduleEnabled", "true", doc.job[0].scheduleEnabled[0].text()
+            assertEquals "wrong executionEnabled", "true", doc.job[0].executionEnabled[0].text()
+            assertNotNull "missing context",doc.job[0].context
+            assertEquals "incorrect context size",1,doc.job[0].context.size()
+            assertEquals "incorrect context project",'test1',doc.job[0].context[0].project[0].text()
+            assertEquals "incorrect context options size",3,doc.job[0].context[0].options[0].option.size()
+            assertEquals "incorrect context options option 1 name",'delay',doc.job[0].context[0].options[0].option[0]['@name'].text()
+            assertEquals "incorrect context options option 1 value",'12',doc.job[0].context[0].options[0].option[0]['@value'].text()
+            assertEquals "incorrect context options option 2 name",'monkey',doc.job[0].context[0].options[0].option[1]['@name'].text()
+            assertEquals "incorrect context options option 2 value",'cheese',doc.job[0].context[0].options[0].option[1]['@value'].text()
+            assertEquals "incorrect context options option 3 name",'particle',doc.job[0].context[0].options[0].option[2]['@name'].text()
+            assertEquals "incorrect context options option 3 value",'true',doc.job[0].context[0].options[0].option[2]['@value'].text()
+
+            assertEquals "incorrect dispatch threadcount",'1',doc.job[0].dispatch[0].threadcount[0].text()
+            assertEquals "incorrect dispatch keepgoing",'true',doc.job[0].dispatch[0].keepgoing[0].text()
+
+
+    }
 
     void testScheduleAndExecutionDisabled(){
         def XmlSlurper parser = new XmlSlurper()
