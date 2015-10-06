@@ -21,7 +21,9 @@ public final class BasicSource implements PasswordSource{
 
     @Override
     public void clear() {
-        Arrays.fill(password, (byte) 0);
+        if(password!=null) {
+            Arrays.fill(password, (byte) 0);
+        }
         password=null;
     }
 }
