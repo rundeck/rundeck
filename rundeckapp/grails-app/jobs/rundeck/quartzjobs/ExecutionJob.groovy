@@ -218,7 +218,7 @@ class ExecutionJob implements InterruptableJob {
             initMap.executionId=jobDataMap.get("executionId")
             initMap.secureOpts=jobDataMap.get("secureOpts")
             initMap.secureOptsExposed=jobDataMap.get("secureOptsExposed")
-            initMap.execution = fetchExecution(initMap.executionId)
+            initMap.execution = Execution.get(initMap.executionId)
             //NOTE: Oracle/hibernate bug workaround: if session has not flushed we may have to wait until Execution.get
             //can return the right entity
             int retry=30
@@ -227,7 +227,7 @@ class ExecutionJob implements InterruptableJob {
             }
             while(!initMap.execution && retry>0){
                 Thread.sleep(2000)
-                initMap.execution = fetchExecution(initMap.executionId)
+                initMap.execution = Execution.get(initMap.executionId)
                 retry--;
             }
             if (!initMap.execution) {
@@ -236,6 +236,10 @@ class ExecutionJob implements InterruptableJob {
             if(retry<30){
                 log.info("ExecutionJob: Execution found with ID [${initMap.executionId}] retried (${30-retry})")
             }
+            if (! initMap.execution instanceof Execution) {
+                throw new RuntimeException("JobDataMap contained invalid Execution type: " + initMap.execution.getClass().getName())
+            }
+            initMap.execution.refresh()
             FrameworkService frameworkService = initMap.frameworkService
             initMap.framework = frameworkService.rundeckFramework
             initMap.authContext = jobDataMap.get('authContext')
@@ -261,15 +265,6 @@ class ExecutionJob implements InterruptableJob {
             throw new RuntimeException("authContext could not be determined")
         }
         return initMap
-    }
-
-    private Execution fetchExecution(executionId) {
-        Execution.get(executionId)
-        def Execution execution=null
-        Execution.withNewSession {
-            execution = Execution.get(executionId)
-        }
-        execution
     }
 
     def executeCommand(
