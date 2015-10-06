@@ -524,7 +524,7 @@ public class JobsYAMLCodecTests  {
             assertEquals "wrong name", "test job 1", se.jobName
             assertEquals "wrong description", "", se.description
             assertEquals "wrong groupPath", "my group", se.groupPath
-            assertEquals "wrong project", null, se.project
+            assertEquals "wrong project", 'test1', se.project
             assertEquals "wrong loglevel", "INFO", se.loglevel
             assertTrue "wrong doNodedispatch", se.doNodedispatch
             assertEquals "wrong nodeThreadcount", 1, se.nodeThreadcount
@@ -732,7 +732,7 @@ public class JobsYAMLCodecTests  {
             assertEquals "wrong name", "test job 1", se.jobName
             assertEquals "wrong description", "", se.description
             assertEquals "wrong groupPath", "my group", se.groupPath
-            assertEquals "wrong project", null, se.project
+            assertEquals "wrong project", 'test1', se.project
             assertEquals "wrong loglevel", "INFO", se.loglevel
             assertTrue "wrong doNodedispatch", se.doNodedispatch
             assertEquals "wrong nodeThreadcount", 1, se.nodeThreadcount
@@ -856,7 +856,7 @@ public class JobsYAMLCodecTests  {
         assertEquals "wrong name", "test job 1", se.jobName
         assertEquals "wrong description", "test descrip", se.description
         assertEquals "wrong groupPath", "group/1/2/3", se.groupPath
-        assertEquals "wrong project", null, se.project
+        assertEquals "wrong project", 'zamp', se.project
         assertEquals "wrong loglevel", "ERR", se.loglevel
         assertTrue "wrong doNodedispatch", se.doNodedispatch
         assertEquals "wrong nodeThreadcount", 3, se.nodeThreadcount

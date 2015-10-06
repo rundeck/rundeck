@@ -237,7 +237,7 @@ class ScheduledExecution extends ExecutionContext {
             se.orchestrator=Orchestrator.fromMap(data.orchestrator);
         }
         se.loglevel=data.loglevel?data.loglevel:'INFO'
-        //no project
+        se.project=data.project
         if (data.uuid) {
             se.uuid = data.uuid
         }

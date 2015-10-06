@@ -208,7 +208,7 @@ class JobsXMLCodecTests {
         assertEquals "incorrect jobName", "wait1", jobs[0].jobName
         assertEquals "incorrect description", "", jobs[0].description
         assertEquals "incorrect loglevel", "INFO", jobs[0].loglevel
-        assertEquals "incorrect project", null, jobs[0].project
+        assertEquals "incorrect project", 'test1', jobs[0].project
         assertNotNull jobs[0].options
         assertEquals 2, jobs[0].options.size()
         def iter = jobs[0].options.iterator()
@@ -261,7 +261,7 @@ class JobsXMLCodecTests {
             assertEquals "incorrect jobName","punch2",jobs[0].jobName
             assertEquals "incorrect description","dig it potato",jobs[0].description
             assertEquals "incorrect loglevel","WARN",jobs[0].loglevel
-            assertEquals "incorrect project",null,jobs[0].project
+            assertEquals "incorrect project",'zig',jobs[0].project
             assertNotNull "incorrect command.option.clip",jobs[0].options
             assertEquals "incorrect command.option.clip",1,jobs[0].options.size()
             final def opt1opt3 = jobs[0].options.iterator().next()
@@ -534,7 +534,7 @@ void testDecodeBasic__no_group(){
         assertEquals 'false', jobs[0].workflow.commands[7].jobGroup
         assertEquals '123', jobs[0].workflow.commands[7].argString
     }
-    public void testDecodeWithoutProject(){
+    public void testDecodeWithoutProject() {
 
         def xml = """<joblist>
   <job>
@@ -578,14 +578,15 @@ void testDecodeBasic__no_group(){
         assertNull "incorrect groupPath", jobs[0].groupPath
 
         assertEquals "incorrect scheduled", "false", jobs[0].scheduled.toString()
-
-        jobs = JobsXMLCodec.decode(okxml1)
+    }
+    public void testDecodeWithProject(){
+        def jobs = JobsXMLCodec.decode(okxml1)
         assertNotNull jobs
         assertEquals "incorrect size", 1, jobs.size()
         assertEquals "incorrect jobName", "wait1", jobs[0].jobName
         assertEquals "incorrect description", "a simple desc", jobs[0].description
         assertEquals "incorrect loglevel", "INFO", jobs[0].loglevel
-        assertEquals "incorrect project", null, jobs[0].project
+        assertEquals "incorrect project", 'test1', jobs[0].project
         assertNotNull jobs[0].options
         assertEquals 2, jobs[0].options.size()
         def iter2 = jobs[0].options.iterator()
@@ -973,7 +974,7 @@ void testDecodeBasic__no_group(){
             assertEquals "incorrect nodeExcludePrecedence","true",jobs[0].nodeExcludePrecedence.toString()
             assertEquals "incorrect nodeInclude",null,jobs[0].nodeInclude
             assertEquals "incorrect nodeInclude","hostname: cypress.hill.com",jobs[0].filter
-            assertEquals "incorrect project",null,jobs[0].project
+            assertEquals "incorrect project",'demo',jobs[0].project
     }
 
     void testDecodeStringsShouldNotBeBoolean() {
@@ -985,7 +986,7 @@ void testDecodeBasic__no_group(){
     <loglevel>VERBOSE</loglevel>
     <group>false</group>
     <context>
-      <project>false</project>
+      <project>proj1</project>
       <options>
         <option name="false" enforcedvalues="false"/>
         <option required="false" name="x" value="9000636026"/>
@@ -1027,7 +1028,7 @@ void testDecodeBasic__no_group(){
         assertEquals  false, jobs[0].nodeKeepgoing
         assertEquals  null, jobs[0].nodeInclude
         assertEquals  "hostname: false", jobs[0].filter
-        assertEquals  null,jobs[0].project
+        assertEquals  'proj1',jobs[0].project
         assertEquals  1, jobs[0].workflow.commands.size()
         assertEquals  "false", jobs[0].workflow.commands[0].adhocRemoteString
         assertEquals  "false", jobs[0].workflow.commands[0].errorHandler.adhocLocalString
