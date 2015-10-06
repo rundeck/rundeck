@@ -11,6 +11,9 @@ readonly ARGS=("$@")
 TESTS=yes
 WAIT=no
 CLEAN=yes
+SINGLE=no
+TEST_NAME=""
+START=yes
 
 usage() {
       grep '^#/' <"$0" | cut -c4- # prints the #/ lines above as usage info
@@ -29,11 +32,18 @@ check_args(){
 			-notest)
 				TESTS=no
 				;;
+			-nostart)
+				START=no
+				;;
 			-wait)
 				WAIT=yes
 				;;
 			-noclean)
 				CLEAN=no
+				;;
+			test-*)
+				SINGLE=yes
+				TEST_NAME="$arg"
 				;;
 			esac
 	   done
@@ -101,6 +111,9 @@ run_tests(){
 	local SRC=${FARGS[1]}
 
 	local HOST=$(hostname)
+	if [ $SINGLE == "yes" ] ; then
+		export TEST_NAME=$TEST_NAME
+	fi
 	RDECK_BASE=$DIR PATH=$PATH:$DIR/tools/bin  \
 		 bash -c  $SRC/test/src/test.sh http://$HOST:4440 admin admin
 }
@@ -117,15 +130,18 @@ run_ci_test(){
 	cd $DIR
 
 	echo "Start Rundeck"
+	local RDPID
+	if [ $START == "yes" ] ; then
 
-	# start rundeck
+		# start rundeck
 
-	(java -Xmx1024m -XX:MaxPermSize=256m -jar $launcherJar > $DIR/rundeck.out 2>&1 ) &
-	local RDPID=$!
+		(java -Xmx1024m -XX:MaxPermSize=256m -jar $launcherJar > $DIR/rundeck.out 2>&1 ) &
+		RDPID=$!
 
-	trap "{ kill -9 $RDPID ; echo '---Rundeck Killed---' ; cat $DIR/rundeck.out ; exit 255; }" EXIT SIGINT SIGTERM ERR
+		trap "{ kill -9 $RDPID ; echo '---Rundeck Killed---' ; cat $DIR/rundeck.out ; exit 255; }" EXIT SIGINT SIGTERM ERR
 
-	echo "Rundeck process PID: $RDPID"
+		echo "Rundeck process PID: $RDPID"
+	fi
 
 	wait_for $DIR/rundeck.out 'Started SelectChannelConnector@'
 

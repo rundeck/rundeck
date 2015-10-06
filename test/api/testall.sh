@@ -48,8 +48,11 @@ done
 rm $DIR/cookies
 $SHELL $SRC_DIR/rundecklogin.sh $URL $USER $PASS >/dev/null && test_ok "Login" || die "Login: ${TEST_FAIL}"
 
-        
-for i in $(ls ./test-*.sh) ; do
+TESTS=$(ls ./test-*.sh)
+if [ -n "$TEST_NAME" ] ; then
+    TESTS=$(ls $TEST_NAME)
+fi
+for i in $TESTS ; do
     tname=$(basename $i)
     $SHELL ${i} ${URL} &>$DIR/${tname}.output
     if [ $? != 0 ] ; then
