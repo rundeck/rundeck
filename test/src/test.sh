@@ -75,8 +75,9 @@ rm $DIR/test.jobs.expanded.xml
 #
 #copy jobs file to replace template
 
+# Jobs should fail due to missing project
 #load jobs
-rd-jobs load -p test -f $SRC_DIR/test.jobs2.xml > $DIR/load.out
+rd-jobs load -p thisProjectDNE -f $SRC_DIR/test.jobs2.xml > $DIR/load.out
 if [ 1 != $? ] ; then
 	echo Should have failed to load a job: $!
 	exit 2
