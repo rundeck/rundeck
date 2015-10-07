@@ -2570,7 +2570,6 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: Run a job immediately: /job/{id}/run, version 1
      */
     def apiJobRun() {
-        println 0
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -2579,7 +2578,6 @@ class ScheduledExecutionController  extends ControllerBase{
             response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED)
             return
         }
-        println 1
         def jobid=params.id
         def jobAsUser,jobArgString,jobLoglevel,jobFilter
         if(request.format=='json' ){
@@ -2593,7 +2591,6 @@ class ScheduledExecutionController  extends ControllerBase{
             jobArgString=params.argString
             jobLoglevel=params.loglevel
         }
-        println 2
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', jobid])) {
             return
@@ -2616,7 +2613,6 @@ class ScheduledExecutionController  extends ControllerBase{
             username= jobAsUser
         }
         def inputOpts = [:]
-        println 3
 
         if (jobArgString) {
             inputOpts["argString"] = jobArgString
@@ -2637,7 +2633,6 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
 
-        println 4
 
         if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorXml(response,[
