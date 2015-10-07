@@ -20,6 +20,7 @@ import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.treewalk.CanonicalTreeParser
 import org.eclipse.jgit.treewalk.TreeWalk
+import org.eclipse.jgit.treewalk.filter.PathFilterGroup
 import org.eclipse.jgit.util.io.DisabledOutputStream
 
 /**
@@ -234,5 +235,28 @@ class GitUtil {
             ref.name == Constants.R_TAGS + tag
         }
         return found
+    }
+    static List<String> listPaths(Git git, String ref, List<String> trackedItems=null, String trackingRegex=null){
+        ObjectId head = git.repository.resolve ref
+        if(!head){
+            return null
+        }
+        def tree = new TreeWalk(git.repository)
+        tree.addTree(head)
+        tree.setRecursive(true)
+        if (trackedItems || trackingRegex) {
+            if (trackingRegex) {
+                tree.setFilter(PathRegexFilter.create(trackingRegex))
+            } else {
+                tree.setFilter(PathFilterGroup.createFromStrings(trackedItems))
+            }
+        }
+        List<String> list= []
+
+        while (tree.next()) {
+            list.add(tree.getPathString())
+        }
+        tree.release();
+        list
     }
 }
