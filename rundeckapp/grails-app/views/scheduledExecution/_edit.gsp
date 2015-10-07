@@ -18,6 +18,7 @@
 <g:set var="labelColClass" value="${labelColSize}  control-label"/>
 <g:set var="fieldColSize" value="col-sm-10"/>
 <g:set var="fieldColHalfSize" value="col-sm-5"/>
+<g:set var="fieldColShortSize" value="col-sm-4"/>
 <g:set var="offsetColSize" value="col-sm-10 col-sm-offset-2"/>
 
 <g:set var="editSchedExecId" value="${scheduledExecution?.id? scheduledExecution.extid:null}"/>
@@ -950,6 +951,51 @@ function getCurSEID(){
             </g:hasErrors>
             <span class="help-block">
                 <g:message code="scheduledExecution.property.retry.description"/>
+            </span>
+        </div>
+    </div>
+    %{--log limit--}%
+    <div class="form-group">
+        <label class="${labelColSize} control-label text-form-label" for="schedJobLogOutputThreshold">
+            <g:message code="scheduledExecution.property.logOutputThreshold.label" default="Output Limit"/>
+        </label>
+
+        <div class="${fieldColShortSize}">
+
+            <input type='text' name="logOutputThreshold" value="${enc(attr: scheduledExecution?.logOutputThreshold)}"
+                   id="schedJobLogOutputThreshold" class="form-control"
+                   placeholder="${message(code:"scheduledExecution.property.logOutputThreshold.placeholder")}"/>
+
+            <span class="help-block">
+                <g:message code="scheduledExecution.property.logOutputThreshold.description" default=""/>
+            </span>
+        </div>
+        <label class="${labelColSize} control-label text-form-label" for="logOutputThresholdAction">
+            <g:message code="scheduledExecution.property.logOutputThresholdAction.label" default="Action"/>
+        </label>
+
+        <div class="${fieldColShortSize}">
+            <label class="radio" title="${message(code: "scheduledExecution.property.logOutputThresholdAction.halt.description")}">
+                <g:radio name="logOutputThresholdAction" value="halt" checked="${!scheduledExecution?.logOutputThresholdAction || scheduledExecution?.logOutputThresholdAction=='halt'}"/>
+
+                <g:message code="scheduledExecution.property.logOutputThresholdAction.halt.label"/>
+            </label>
+            <div class="input-group">
+                <g:helpTooltip code="scheduledExecution.property.logOutputThresholdAction.halt.description" placement="left"/>
+            <input type='text' name="logOutputThresholdStatus" value="${enc(attr: scheduledExecution?.logOutputThresholdStatus)}"
+                       id="schedJobLogOutputThresholdStatus" class="form-control"
+                       placeholder="${message(code:"scheduledExecution.property.logOutputThresholdStatus.placeholder")}"/>
+            </div>
+
+            <label class="radio" title="${message(code: "scheduledExecution.property.logOutputThresholdAction.truncate.description")}">
+                <g:radio name="logOutputThresholdAction" value="truncate" checked="${scheduledExecution?.logOutputThresholdAction=='truncate'}"/>
+
+                <g:message code="scheduledExecution.property.logOutputThresholdAction.truncate.label"/>
+            </label>
+
+
+            <span class="help-block">
+                <g:message code="scheduledExecution.property.logOutputThresholdAction.description" default=""/>
             </span>
         </div>
     </div>

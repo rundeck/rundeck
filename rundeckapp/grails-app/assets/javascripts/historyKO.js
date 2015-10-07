@@ -49,7 +49,7 @@ function Report(data) {
     self.endTimeSimple = ko.computed(function () {
         return MomentUtil.formatTimeSimple(self.dateCompleted());
     });
-    self.statusList=['running','succeed','succeeded','failed','cancel','retry','timedout','timeout','fail'];
+    self.statusList=['running','succeed','succeeded','failed','cancel','aborted','retry','timedout','timeout','fail'];
 
     self.isCustomStatus = ko.computed(function () {
         return self.statusList.indexOf(self.status()) < 0 ;

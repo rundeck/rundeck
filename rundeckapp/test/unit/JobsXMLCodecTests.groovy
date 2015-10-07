@@ -603,6 +603,78 @@ class JobsXMLCodecTests {
         assertEquals 'false', jobs[0].workflow.commands[7].jobGroup
         assertEquals '123', jobs[0].workflow.commands[7].argString
     }
+    public void testDecodeLoglimitNoStatus(){
+
+        def xml = """<joblist>
+  <job>
+    <id>8</id>
+    <name>punch2</name>
+    <description>dig it potato</description>
+    <loglevel>WARN</loglevel>
+
+    <!-- test logging -->
+    <logging limit="20MB" limitAction="halt"/>
+
+    <context>
+      <project>zig</project>
+      <options>
+        <option name='clip' value='true' />
+      </options>
+    </context>
+    <sequence>
+        <command>
+        <exec>true</exec>
+        </command>
+    </sequence>
+    <dispatch>
+      <threadcount>2</threadcount>
+      <keepgoing>true</keepgoing>
+    </dispatch>
+  </job>
+</joblist>
+"""
+        def jobs = JobsXMLCodec.decode(xml)
+        assertNotNull jobs
+        assertEquals '20MB', jobs[0].logOutputThreshold
+        assertEquals 'halt', jobs[0].logOutputThresholdAction
+        assertEquals 'failed', jobs[0].logOutputThresholdStatus
+    }
+    public void testDecodeLoglimitCustomStatus(){
+
+        def xml = """<joblist>
+  <job>
+    <id>8</id>
+    <name>punch2</name>
+    <description>dig it potato</description>
+    <loglevel>WARN</loglevel>
+
+    <!-- test logging -->
+    <logging limit="20MB" limitAction="halt" status="mystatus"/>
+
+    <context>
+      <project>zig</project>
+      <options>
+        <option name='clip' value='true' />
+      </options>
+    </context>
+    <sequence>
+        <command>
+        <exec>true</exec>
+        </command>
+    </sequence>
+    <dispatch>
+      <threadcount>2</threadcount>
+      <keepgoing>true</keepgoing>
+    </dispatch>
+  </job>
+</joblist>
+"""
+        def jobs = JobsXMLCodec.decode(xml)
+        assertNotNull jobs
+        assertEquals '20MB', jobs[0].logOutputThreshold
+        assertEquals 'halt', jobs[0].logOutputThresholdAction
+        assertEquals 'mystatus', jobs[0].logOutputThresholdStatus
+    }
     public void testDecodeWithoutProject(){
 
         def xml = """<joblist>
@@ -4412,7 +4484,75 @@ class JobsXMLCodecTests {
             
     }
 
-    void testEncodeNodefilter() {
+    void testEncodeLoglimit() {
+        def XmlParser parser = new XmlParser()
+
+        //set node dispatch to false, and assert no nodefilters are generated
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+                        workflow: new Workflow(
+                                keepgoing: true,
+                                commands: [new CommandExec(adhocExecution: true, adhocLocalString: 'test',)]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        logOutputThreshold: '20MB',
+                        logOutputThresholdAction: 'halt',
+                        logOutputThresholdStatus: 'failed',
+                )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing logging", 1, doc.job[0].logging.size()
+        assertEquals "missing logging/@limit", '20MB', doc.job[0].logging[0].'@limit'
+        assertEquals "missing logging/@limitAction", 'halt', doc.job[0].logging[0].'@limitAction'
+        assertEquals "missing logging/@status", 'failed', doc.job[0].logging[0].'@status'
+    }
+    void testEncodeLoglimitCustomStatus() {
+        def XmlParser parser = new XmlParser()
+
+        //set node dispatch to false, and assert no nodefilters are generated
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+                        workflow: new Workflow(
+                                keepgoing: true,
+                                commands: [new CommandExec(adhocExecution: true, adhocLocalString: 'test',)]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        logOutputThreshold: '20MB',
+                        logOutputThresholdAction: 'halt',
+                        logOutputThresholdStatus: 'mystatus',
+                )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing logging", 1, doc.job[0].logging.size()
+        assertEquals "missing logging/@limit", '20MB', doc.job[0].logging[0].'@limit'
+        assertEquals "missing logging/@limitAction", 'halt', doc.job[0].logging[0].'@limitAction'
+        assertEquals "missing logging/@status", 'mystatus', doc.job[0].logging[0].'@status'
+    }
+    void testEncodeNodefilter(){
         def XmlParser parser = new XmlParser()
 
         //set node dispatch to false, and assert no nodefilters are generated

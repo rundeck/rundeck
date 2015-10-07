@@ -18,6 +18,7 @@ package rundeck.quartzjobs
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import grails.test.GrailsMock
 import org.junit.Assert
@@ -31,6 +32,7 @@ import rundeck.Workflow
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
+import rundeck.services.execution.ThresholdValue
 
 /**
  * $INTERFACE is ...
@@ -180,6 +182,74 @@ class ExecutionJobTest extends GroovyTestCase{
         def result=job.executeCommand(es,eus,execution,null, null, null, 0, [:], [:])
         Assert.assertEquals(true,result.success)
         Assert.assertEquals(testExecmap,result.execmap)
+    }
+    /**
+     * executeAsyncBegin succeeds,threshold is not met
+     */
+    @Test
+    void testExecuteCommandThresholdNotMet(){
+        ScheduledExecution se = setupJob()
+        Execution execution = setupExecution(se, new Date(), new Date())
+        Assert.assertNotNull(execution)
+        ExecutionJob job = new ExecutionJob()
+        def mockes = new GrailsMock(ExecutionService)
+        def mockeus = new GrailsMock(ExecutionUtilService)
+        FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
+            'fakeFramework'
+        }
+        WorkflowExecutionServiceThread stb=new TestWEServiceThread(null,null,null)
+        stb.successful=true
+        def threshold=new testThreshold()
+        def testExecmap = [thread: stb, testExecuteAsyncBegin: true, threshold:threshold]
+        mockes.demand.executeAsyncBegin(1..1) { Framework framework, AuthContext authContext, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
+            Assert.assertEquals(execution,execution1)
+            testExecmap
+        }
+        mockeus.demand.finishExecution(1..1){ Map datamap->
+            Assert.assertTrue(datamap.testExecuteAsyncBegin)
+        }
+        ExecutionService es = mockes.createMock()
+        ExecutionUtilService eus = mockeus.createMock()
+
+        def result=job.executeCommand(es,eus,execution,null, null, null, 0, [:], [:])
+        Assert.assertEquals(true,result.success)
+        Assert.assertEquals(testExecmap,result.execmap)
+        Assert.assertFalse(job.wasThreshold)
+    }
+    /**
+     * executeAsyncBegin succeeds,threshold is  met, action 'fail'
+     */
+    @Test
+    void testExecuteCommandThresholdWasMetActionHalt(){
+        ScheduledExecution se = setupJob()
+        Execution execution = setupExecution(se, new Date(), new Date())
+        Assert.assertNotNull(execution)
+        ExecutionJob job = new ExecutionJob()
+        def mockes = new GrailsMock(ExecutionService)
+        def mockeus = new GrailsMock(ExecutionUtilService)
+        FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
+            'fakeFramework'
+        }
+        WorkflowExecutionServiceThread stb=new TestWEServiceThread(null,null,null)
+        stb.successful=true
+        def threshold=new testThreshold()
+        threshold.wasMet=true
+        threshold.action='halt'
+        def testExecmap = [thread: stb, testExecuteAsyncBegin: true, threshold:threshold]
+        mockes.demand.executeAsyncBegin(1..1) { Framework framework, AuthContext authContext, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
+            Assert.assertEquals(execution,execution1)
+            stb.start()
+            testExecmap
+        }
+        mockeus.demand.finishExecution(1..1){ Map datamap->
+            Assert.assertTrue(datamap.testExecuteAsyncBegin)
+        }
+        ExecutionService es = mockes.createMock()
+        ExecutionUtilService eus = mockeus.createMock()
+
+        def result=job.executeCommand(es,eus,execution,null, null, null, 0, [:], [:])
+        Assert.assertEquals(false,result.success)
+        Assert.assertTrue(job.wasThreshold)
     }
 
     Execution setupExecution(ScheduledExecution se, Date startDate, Date finishDate) {
@@ -395,6 +465,47 @@ class ExecutionJobTest extends GroovyTestCase{
 
         def es = mockes.createMock()
         job.saveState(null,es,execution,true,false,false,true,null,-1,null,execMap)
+        Assert.assertEquals(true,saveStateCalled)
+        Assert.assertEquals(true,testPass)
+    }
+
+    @Test
+    void testSaveStateThresholdCustomStatus(){
+        def job = new ExecutionJob()
+        job.finalizeRetryMax=1
+        job.finalizeRetryDelay=0
+        def execution = setupExecution(null, new Date(), new Date())
+        def mockes = new GrailsMock(ExecutionService)
+
+        def expectresult= [
+                status: 'custom',
+                cancelled: false,
+                failedNodes: null,
+                failedNodesMap: null,
+        ]
+        def execMap=[
+                failedNodes: null,
+                threshold: [action:'halt']
+        ]
+
+        boolean saveStateCalled=false
+        boolean testPass=false
+        mockes.demand.saveExecutionState(1..1){ schedId, exId, Map props, Map execmap, Map retryContext->
+            saveStateCalled=true
+            Assert.assertNull(schedId)
+            Assert.assertEquals(execution.id,exId)
+            expectresult.each {k,v->
+                Assert.assertEquals("result property ${k} expected: ${v} was ${props[k]}",v,props[k])
+            }
+            testPass=true
+        }
+
+        def es = mockes.createMock()
+
+        job.wasThreshold=true
+        def initMap = [scheduledExecution: [logOutputThresholdStatus:'custom']]
+
+        job.saveState(null,es,execution,true,false,false,true,null,-1, initMap,execMap)
         Assert.assertEquals(true,saveStateCalled)
         Assert.assertEquals(true,testPass)
     }

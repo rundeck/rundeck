@@ -31,7 +31,7 @@
         </g:if>
         <g:if test="${rpt?.jcExecId}">
             <g:set var="execution" value="${Execution.get(it.jcExecId)}"/>
-            <g:set var="status" value="${execution.status == 'true' ? 'succeeded' : null == execution.dateCompleted ? 'running' : execution.cancelled ? 'killed' : 'failed'}"/>
+            <g:set var="status" value="${execution.executionState}"/>
         </g:if>
         <tr class="link autoclick ${it?.status != 'succeed' ? 'fail' : ''}  ${!it.dateCompleted ? 'nowrunning' : ''} ${sincetime && it.dateCompleted.time>sincetime?'newitem':''}  " >
             <g:if test="${!hideEdit}">
@@ -42,6 +42,7 @@
             <g:set var="statusIcon" value="${!execution.dateCompleted ? 'running' : execution.statusSucceeded() ?
                     'succeed' : execution.cancelled ? 'aborted' :execution.willRetry ? 'failedretry' :execution.timedOut ? 'timedout' :
                     execution.status in ['false','failed']?'fail':'other'}"/>
+            <g:set var="statusIcon" value="${[succeeded:'succeed','failed-with-retry':'failedretry',failed:'fail'].get(status)?:status}"/>
             <td class="eventicon autoclickable">
                 <i class="exec-status icon ${statusIcon}"></i>
             </td>

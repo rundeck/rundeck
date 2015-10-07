@@ -36,6 +36,32 @@ class ScheduledExecutionTest  {
         assertNotNull(jobMap.retry)
         assertEquals('${option.retry}',jobMap.retry)
     }
+    void testToMapLoglimit() {
+        ScheduledExecution se = createBasicScheduledExecution()
+        se.logOutputThreshold = '20MB'
+        se.logOutputThresholdAction = 'fail'
+
+        def jobMap = se.toMap()
+        assertNotNull(jobMap)
+        assertNotNull(jobMap.loglimit)
+        assertEquals('20MB',jobMap.loglimit)
+        assertNotNull(jobMap.loglimitAction)
+        assertEquals('fail',jobMap.loglimitAction)
+    }
+    void testFromMapLoglimit() {
+        ScheduledExecution se = ScheduledExecution.fromMap(
+                [
+                        jobName: 'abc',
+                        loglimit:'20MB',
+                        loglimitAction:'fail'
+                ]
+        )
+        assertNotNull(se)
+        assertNotNull(se.logOutputThreshold)
+        assertEquals('20MB', se.logOutputThreshold)
+        assertNotNull(se.logOutputThresholdAction)
+        assertEquals('fail', se.logOutputThresholdAction)
+    }
 
     void testToMapNodesSelectedByDefault_default() {
         ScheduledExecution se = createBasicScheduledExecution()
@@ -659,6 +685,23 @@ class ScheduledExecutionTest  {
     void testConstants() {
         assertEquals "Incorrect months", 12, ScheduledExecution.monthsofyearlist.size()
         assertEquals "Incorrect weekdays", 7, ScheduledExecution.daysofweeklist.size()
+    }
+    void testparseLogOutputThreshold(){
+        assertEquals(null,ScheduledExecution.parseLogOutputThreshold(null))
+        assertEquals([maxLines:123L,perNode:false],ScheduledExecution.parseLogOutputThreshold("123"))
+        assertEquals([maxLines:123L,perNode:true],ScheduledExecution.parseLogOutputThreshold("123/node"))
+        assertEquals([maxSizeBytes:123L],ScheduledExecution.parseLogOutputThreshold("123b"))
+        assertEquals([maxSizeBytes:123L],ScheduledExecution.parseLogOutputThreshold("123B"))
+        assertEquals([maxSizeBytes:123L],ScheduledExecution.parseLogOutputThreshold("123B/node"))
+        assertEquals([maxSizeBytes:123L*1024],ScheduledExecution.parseLogOutputThreshold("123kb"))
+        assertEquals([maxSizeBytes:123L*1024],ScheduledExecution.parseLogOutputThreshold("123k"))
+        assertEquals([maxSizeBytes:123L*1024],ScheduledExecution.parseLogOutputThreshold("123Kb"))
+        assertEquals([maxSizeBytes:123L*1024*1024],ScheduledExecution.parseLogOutputThreshold("123mb"))
+        assertEquals([maxSizeBytes:123L*1024*1024],ScheduledExecution.parseLogOutputThreshold("123m"))
+        assertEquals([maxSizeBytes:123L*1024*1024],ScheduledExecution.parseLogOutputThreshold("123MB"))
+        assertEquals([maxSizeBytes:123L*1024*1024*1024],ScheduledExecution.parseLogOutputThreshold("123gb"))
+        assertEquals([maxSizeBytes:123L*1024*1024*1024],ScheduledExecution.parseLogOutputThreshold("123g"))
+        assertEquals([maxSizeBytes:123L*1024*1024*1024],ScheduledExecution.parseLogOutputThreshold("123GB"))
     }
 
     void testParseCheckboxFieldFromParams() {
