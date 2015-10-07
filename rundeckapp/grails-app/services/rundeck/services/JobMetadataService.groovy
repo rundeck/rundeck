@@ -26,7 +26,7 @@ class JobMetadataService {
         def key = id + '/' + type
         def found = PluginMeta.findByProjectAndKey(project, key)
         if (found) {
-            log.error("found job metadata for ${id}: ${found.pluginData}")
+            log.debug("found job metadata for ${id}: ${found.pluginData}")
             return found.pluginData
         }
         return null
@@ -85,7 +85,7 @@ class JobMetadataService {
             found.project = project
             found.key = key
         }
-        log.error("setJobPluginMeta(${project},${id},${type}) to ${metadata}")
+        log.debug("setJobPluginMeta(${project},${id},${type}) to ${metadata}")
         found.setPluginData(metadata)
         found.save(flush: true)
     }
