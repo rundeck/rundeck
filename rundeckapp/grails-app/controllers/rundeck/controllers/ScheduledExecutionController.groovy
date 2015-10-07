@@ -98,7 +98,7 @@ class ScheduledExecutionController  extends ControllerBase{
             upload: 'GET',
             uploadPost: ['POST'],
             apiJobCreateSingle: 'POST',
-            apiJobRun: ['POST'],
+            apiJobRun: ['POST','GET'],
             apiJobsImport: 'POST',
             apiJobsImportv14: 'POST',
             apiJobDelete: 'DELETE',
@@ -2572,6 +2572,11 @@ class ScheduledExecutionController  extends ControllerBase{
     def apiJobRun() {
         println 0
         if (!apiService.requireApi(request, response)) {
+            return
+        }
+        //require POST for api v14
+        if (request.method == 'GET' && request.api_version >= ApiRequestFilters.V14) {
+            response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED)
             return
         }
         println 1

@@ -105,7 +105,7 @@ Changes introduced by API Version number:
 * TODO json support:
     - [`/api/14/project/[PROJECT]/jobs/export`][/api/V/project/[PROJECT]/jobs/export]
 * Updated endpoints:
-    - [`/api/14/job/[ID]/run`][/api/V/job/[ID]/run] action `GET` is no longer allowed, `POST` is required. For POST, this endpoint is now equivalent to `/api/14/job/[ID]/executions`. JSON request content is now supported.
+    - [`/api/14/job/[ID]/run`][/api/V/job/[ID]/run] action `GET` is no longer allowed (v14+), `POST` is required. For POST, this endpoint is now equivalent to `/api/14/job/[ID]/executions`. JSON request content is now supported.
     - [`/api/14/project/[PROJECT]/jobs/import`][/api/V/project/[PROJECT]/jobs/import]
         * Both XML and YAML job definitions can now be posted directly using the appropriate MIME type
         * Add API `href` and GUI `permalink` values into XML response
