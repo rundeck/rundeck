@@ -1188,7 +1188,7 @@ public class JobsYAMLCodecTests  {
         assertEquals "wrong option regex", "\\d+", opt2.regex
         }
 
-    }
+
 
     void testDecodeLoglimit() {
         def ymlstr1 = """- id: null
