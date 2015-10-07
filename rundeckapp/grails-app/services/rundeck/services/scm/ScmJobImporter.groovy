@@ -71,7 +71,7 @@ class ScmJobImporter implements ContextJobImporter {
         }
         def result = new ImporterResult()
         if (loadresults.errjobs) {
-            result = ImporterResult.fail(loadresults.errjobs.collect { it.value.errmsg }.join(", "))
+            result = ImporterResult.fail(loadresults.errjobs.collect { it.errmsg }.join(", "))
         } else {
             ScheduledExecution job = loadresults.jobs[0]
             result.job = ScmService.scmJobRef(ScmService.jobRevReference(job),[version: job.version, pluginMeta: importMetadata])
