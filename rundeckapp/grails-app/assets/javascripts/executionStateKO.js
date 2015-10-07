@@ -667,18 +667,19 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl){
     };
 
     self.loadStateForNode=function(node){
+        var obj=self;
         return jQuery.ajax({
             url:_genUrl(self.nodeStateUpdateUrl,{node:node.name}),
             dataType:'json',
             success: function (data,status,jqxhr) {
                 if(data.error){
-                    state.updateError( "Failed to load state: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err),jqxhr.responseJSON);
+                    obj.errorMessage( "Failed to load state: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err),jqxhr.responseJSON);
                 }else{
                     node.loadData(data);
                 }
             },
             error: function (jqxhr,status,err) {
-                state.updateError( "Failed to load state: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err),jqxhr.responseJSON);
+                obj.errorMessage( "Failed to load state: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err),jqxhr.responseJSON);
             }
         });
     };
