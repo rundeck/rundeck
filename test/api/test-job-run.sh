@@ -83,7 +83,7 @@ fi
 # Run the chosen id, expect success message
 ###
 
-echo "TEST: job/id/run should succeed"
+echo "TEST: POST job/id/run should succeed"
 
 
 # now submit req
@@ -92,7 +92,7 @@ params=""
 execargs="-opt2 a"
 
 # get listing
-$CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+$CURL -H "$AUTHHEADER" -X POST --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
@@ -135,11 +135,36 @@ assert "succeeded" "$status" "execution status should be succeeded"
 
 echo "OK"
 
+echo "TEST: GET job/id/run should fail 405"
+
+
+# now submit req
+runurl="${APIURL}/job/${jobid}/run"
+params=""
+execargs="-opt2 a"
+
+# let job finish executing
+sleep 2
+
+# get listing
+$CURL -H "$AUTHHEADER" -D $DIR/headers.out -G --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+
+ecode=405
+
+#expect header code
+grep "HTTP/1.1 ${ecode}" -q $DIR/headers.out 
+if [ 0 != $? ] ; then
+    errorMsg "FAIL: expected ${ecode} message, but was:"
+    grep 'HTTP/1.1' $DIR/headers.out     
+    exit 2
+fi
+
+echo "OK"
 ###
 # Run the chosen id, leave off required option value
 ###
 
-echo "TEST: job/id/run without required opt should fail"
+echo "TEST: POST job/id/run without required opt should fail"
 
 
 # now submit req
@@ -151,7 +176,7 @@ execargs=""
 sleep 2
 
 # get listing
-$CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+$CURL -H "$AUTHHEADER" -X POST --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 $SHELL $SRC_DIR/api-test-error.sh $DIR/curl.out "Job options were not valid: Option 'opt2' is required." || exit 2
 

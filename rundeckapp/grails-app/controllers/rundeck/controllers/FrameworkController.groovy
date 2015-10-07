@@ -1083,6 +1083,8 @@ class FrameworkController extends ControllerBase {
             def Properties projProps = new Properties()
             if(params.description){
                 projProps['project.description']=params.description
+            }else{
+                projProps['project.description']=''
             }
             def Set<String> removePrefixes=[]
             removePrefixes<< FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY

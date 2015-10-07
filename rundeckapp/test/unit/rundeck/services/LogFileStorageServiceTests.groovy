@@ -21,6 +21,7 @@ import rundeck.Workflow
 import rundeck.services.logging.EventStreamingLogWriter
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogState
+import rundeck.services.logging.LoggingThreshold
 
 @TestFor(LogFileStorageService)
 @Mock([LogFileStorageRequest,Execution,ScheduledExecution,Workflow])
@@ -203,6 +204,37 @@ class LogFileStorageServiceTests  {
         service.frameworkService=fmock.createMock()
 
         def writer = service.getLogFileWriterForExecution(e, [:])
+        assertNotNull(writer)
+        assert writer instanceof EventStreamingLogWriter
+    }
+    void testgetLogFileWriterWithFilesizeWatcher(){
+        grailsApplication.config.clear()
+        Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
+        assertNotNull(e.save())
+        def fmock = mockFor(FrameworkService)
+        fmock.demand.getFrameworkProperties() {->
+            PropertyResolverFactory.instanceRetriever('framework.logs.dir': '/tmp/logs')
+        }
+        fmock.demand.getFrameworkPropertyResolver() { project ->
+            assert project == "testproj"
+        }
+        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
+            [:]
+        }
+
+        ExecutionService.metaClass.static.generateServerURL = { LinkGenerator grailsLinkGenerator ->
+            ''
+        }
+
+        ExecutionService.metaClass.static.generateExecutionURL= { Execution execution, LinkGenerator grailsLinkGenerator ->
+            ''
+        }
+        service.frameworkService=fmock.createMock()
+        def test = new LoggingThreshold()
+        assertNull(test.valueHolder)
+        def writer = service.getLogFileWriterForExecution(e, [:],test)
+        assertNotNull(test.valueHolder)
+        assertEquals(0,test.valueHolder.value)
         assertNotNull(writer)
         assert writer instanceof EventStreamingLogWriter
     }

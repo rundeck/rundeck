@@ -1,4 +1,11 @@
 package rundeck.codecs
+
+import com.dtolabs.rundeck.app.support.BuilderUtil
+import com.dtolabs.rundeck.util.XmlParserUtil
+import groovy.xml.MarkupBuilder
+import rundeck.ScheduledExecution
+import rundeck.controllers.JobXMLException
+
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *
@@ -14,13 +21,6 @@ package rundeck.codecs
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import groovy.xml.MarkupBuilder
-import com.dtolabs.rundeck.app.support.BuilderUtil
-import com.dtolabs.rundeck.util.XmlParserUtil
-import rundeck.ScheduledExecution
-import rundeck.controllers.JobXMLException
-
 /*
 * JobsXMLCodec encapsulates encoding and decoding of the Jobs XML format.
 *
@@ -110,11 +110,14 @@ class JobsXMLCodec {
      *
      */
     static convertToJobMap={ data->
-        final Object object = XmlParserUtil.toObject(data,false)
+        final Object object = XmlParserUtil.toObject(data, false)
         if(!(object instanceof Map)){
             throw new JobXMLException("Expected map data")
         }
         Map map = (Map)object
+
+        map.scheduleEnabled = XmlParserUtil.stringToBool(map.scheduleEnabled, true)
+        map.executionEnabled = XmlParserUtil.stringToBool(map.executionEnabled, true)
 
         //perform structure conversions for expected input for populating ScheduledExecution
 
@@ -139,6 +142,14 @@ class JobsXMLCodec {
             if(!map.group){
                 map.remove('group')
             }
+        }
+        if(map.logging){
+            map.loglimit = map.logging.remove('limit')
+            map.loglimitAction=map.logging.remove('limitAction')?:'halt'
+            if(map.logging.status){
+                map.loglimitStatus=map.logging.remove('status')
+            }
+            map.remove('logging')
         }
         //convert options:[option:[]] into options:[]
 
@@ -374,8 +385,8 @@ class JobsXMLCodec {
 
         def optdata = map.remove('options')
         boolean preserveOrder=false
-        if(map.description.indexOf('\n')>=0 ||map.description.indexOf('\n')>=0){
-            map[BuilderUtil.asCDATAName('description')]=map.remove('description')
+        if (map.description && map.description.indexOf('\n') >= 0) {
+            map[BuilderUtil.asCDATAName('description')] = map.remove('description')
         }
         if(null!=optdata){
             map.context=[:]
@@ -453,6 +464,13 @@ class JobsXMLCodec {
         }
         if(map.nodefilters?.dispatch){
             map.dispatch=map.nodefilters.remove('dispatch')
+        }
+        if(map.loglimit){
+            map.logging=BuilderUtil.toAttrMap('limit',map.remove('loglimit'))
+            BuilderUtil.addAttribute(map.logging,'limitAction',map.remove('loglimitAction')?:'halt')
+            if(map.loglimitStatus){
+                BuilderUtil.addAttribute(map.logging,'status',map.remove('loglimitStatus'))
+            }
         }
         if(map.schedule){
             BuilderUtil.makeAttribute(map.schedule.time,'seconds')

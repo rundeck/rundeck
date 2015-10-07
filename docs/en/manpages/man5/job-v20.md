@@ -101,6 +101,10 @@ element is allowed.
 
 :    the logging level
 
+[logging](#logging)
+
+:    limit on the amount of log output
+
 *Job command modes*
      
 Jobs execute a sequence of commands. Commands come in several styles:
@@ -325,6 +329,35 @@ Allowed values:
     <retry>${option.retry}</retry>
 </job>
 ~~~~~~~~ 
+
+## logging
+
+An optional logging limit, and the action to perform if the limit is reached.
+(See [Jobs - Log Limit](../manual/jobs.html#log-limit)).
+
+~~~~ {.xml}
+<logging limit='1KB' limitAction='halt' status='aborted' />
+~~~~
+
+If no `limitAction` is set, it will default to a value of `halt` and a status of `failed`.
+
+The syntax for `limit` is:
+
+* `###` If you specify a number, that is treated as the "Maximum total number of log lines"
+* `###/node` If you specify a number followed by `/node`, the number is treated as the "Maximum number of log lines for a single node"
+* `###[GMK]B` If you specify a number followed by a filesize suffix, that is treated as the "total log file size".  The file size suffixes allowed are "GB" (gigabyte), "MB" (megabyte), "KB" (kilobyte) and "B" (byte).
+
+The allowed values for `limitAction` are:
+
+* `halt` - halt the job with an optional `status`
+* `truncate` - do not halt the job, and truncate all further output
+
+The allowed values for `status` are any status string:
+
+* `failed` - halt and fail the job
+* `aborted` - halt and abort the job
+* `<anything>` - a custom status string
+
 
 ## schedule
      

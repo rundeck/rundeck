@@ -1,35 +1,22 @@
 package rundeck.services
 
-import com.dtolabs.rundeck.app.support.ExecutionContext
-import com.dtolabs.rundeck.app.support.ExecutionQuery
-import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
+import com.dtolabs.rundeck.app.support.*
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.common.INodeEntry
-import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
-import com.dtolabs.rundeck.core.utils.OptsUtil
-import com.dtolabs.rundeck.app.support.BaseNodeFilters
-import com.dtolabs.rundeck.app.support.QueueQuery
-import com.dtolabs.rundeck.core.logging.ContextLogWriter
-import com.dtolabs.rundeck.core.logging.LogLevel
-import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.INodeSet
-import com.dtolabs.rundeck.core.common.OrchestratorConfig
-import com.dtolabs.rundeck.core.common.NodesSelector
-import com.dtolabs.rundeck.core.common.SelectorUtils
+import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.*
 import com.dtolabs.rundeck.core.execution.workflow.steps.*
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.*
+import com.dtolabs.rundeck.core.logging.ContextLogWriter
+import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.utils.NodeSet
+import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.execution.JobExecutionItem
@@ -40,7 +27,6 @@ import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import org.hibernate.StaleObjectStateException
-import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
@@ -48,9 +34,9 @@ import org.springframework.validation.ObjectError
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
-import rundeck.controllers.ExecutionController
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.logging.ExecutionLogWriter
+import rundeck.services.logging.LoggingThreshold
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -709,7 +695,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         reportMap.author=user
         reportMap.title= jobSummary?jobSummary:"Rundeck Job Execution"
-        reportMap.status= (statusString in ['true', 'succeeded'] && issuccess) ? "succeed":iscancelled?"cancel": willretry?'retry':istimedout?"timeout": (statusString in ['failed','false']) ? "fail" : "other"
+
+        def statusMap =[
+                true:'succeed',
+                (EXECUTION_SUCCEEDED):'succeed',
+                (EXECUTION_ABORTED):'cancel',
+                (EXECUTION_FAILED_WITH_RETRY):'retry',
+                (EXECUTION_TIMEDOUT):'timeout',
+                (EXECUTION_FAILED):'fail',
+                false:'fail',
+        ]
+        reportMap.status= statusMap[statusString]?:'other'
         reportMap.node= null!=nodesummary?nodesummary: frameworkService.getFrameworkNodeName()
 
         reportMap.message=(statusString? "Job status ${statusString}" : issuccess?'Job completed successfully':iscancelled?('Job killed by: '+(abortedby?:user)):
@@ -750,7 +746,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * starts an execution in a separate thread, returning a map of [thread:Thread, loghandler:LogHandler]
+     * starts an execution in a separate thread, returning a map of [thread:Thread, loghandler:LogHandler, threshold:Threshold]
      */
     def Map executeAsyncBegin(Framework framework, AuthContext authContext, Execution execution,
                               ScheduledExecution scheduledExecution=null, Map extraParams = null,
@@ -758,10 +754,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         //TODO: method can be transactional readonly
         metricService.markMeter(this.class.name,'executionStartMeter')
         execution.refresh()
+        //set up log output threshold
+        def thresholdMap = ScheduledExecution.parseLogOutputThreshold(scheduledExecution?.logOutputThreshold)
+        def threshold = LoggingThreshold.fromMap(thresholdMap,scheduledExecution?.logOutputThresholdAction)
+
         def ExecutionLogWriter loghandler= loggingService.openLogWriter(
                 execution,
                 logLevelForString(execution.loglevel),
-                [user:execution.user, node: framework.getFrameworkNodeName()]
+                [user:execution.user, node: framework.getFrameworkNodeName()],
+                threshold
         )
         execution.outputfilepath = loghandler.filepath?.getAbsolutePath()
         execution.save(flush:true)
@@ -814,7 +815,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //create service object for the framework and listener
             Thread thread = new WorkflowExecutionServiceThread(framework.getWorkflowExecutionService(),item, executioncontext)
             thread.start()
-            return [thread:thread, loghandler:loghandler, noderecorder:recorder, execution: execution, scheduledExecution:scheduledExecution]
+            return [thread:thread, loghandler:loghandler, noderecorder:recorder, execution: execution, scheduledExecution:scheduledExecution,threshold:threshold]
         }catch(Exception e) {
             log.error('Failed to start execution', e)
             loghandler.logError('Failed to start execution: ' + e.getClass().getName() + ": " + e.message)
@@ -1453,9 +1454,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 scheduledExecution.project)) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
+
         if(!getExecutionsAreActive()){
             return [success:false,failed:true,error:'disabled',message:lookupMessage('disabled.execution.run',null)]
         }
+
+        if (!scheduledExecution.hasExecutionEnabled()) {
+            return [success:false,failed:true,error:'disabled',message:lookupMessage('scheduleExecution.execution.disabled',null)]
+        }
+
         input.retryAttempt = attempt
         try {
 

@@ -9,9 +9,7 @@ import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
-
 import com.dtolabs.rundeck.core.common.INodeEntry
-
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
@@ -34,25 +32,11 @@ import org.quartz.CronExpression
 import org.quartz.Scheduler
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.multipart.commons.CommonsMultipartFile
-import rundeck.CommandExec
-import rundeck.Execution
-import rundeck.NodeFilter
-import rundeck.Option
-import rundeck.ScheduledExecution
-import rundeck.User
-import rundeck.Workflow
+import rundeck.*
 import rundeck.codecs.JobsXMLCodec
 import rundeck.codecs.JobsYAMLCodec
 import rundeck.filters.ApiRequestFilters
-import rundeck.services.ApiService
-import rundeck.services.ExecutionService
-import rundeck.services.ExecutionServiceException
-import rundeck.services.FrameworkService
-import rundeck.services.NotificationService
-import rundeck.services.OrchestratorPluginService
-import rundeck.services.ScheduledExecutionService
-import rundeck.services.ScmService
-import rundeck.services.UserService
+import rundeck.services.*
 
 import javax.servlet.http.HttpServletResponse
 import java.util.regex.Pattern
@@ -88,6 +72,7 @@ class ScheduledExecutionController  extends ControllerBase{
             NOTIFY_ONSTART_EMAIL,
             NOTIFY_ONSTART_URL
     ]
+
     def Scheduler quartzScheduler
     def ExecutionService executionService
     def FrameworkService frameworkService
@@ -115,7 +100,7 @@ class ScheduledExecutionController  extends ControllerBase{
             upload: 'GET',
             uploadPost: ['POST'],
             apiJobCreateSingle: 'POST',
-            apiJobRun: ['POST'],
+            apiJobRun: ['POST','GET'],
             apiJobsImport: 'POST',
             apiJobsImportv14: 'POST',
             apiJobDelete: 'DELETE',
@@ -836,6 +821,159 @@ class ScheduledExecutionController  extends ControllerBase{
             size = read.read(chars, 0, chars.length)
         }
         return len;
+    }
+
+    def flipScheduleEnabled() {
+        if (!params.id) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorView(g.message(code: 'api.error.parameter.required', args: ['id']))
+        }
+
+        def jobid = params.id
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
+        if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
+            return
+        }
+
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def changeinfo = [method: 'update', change: 'modify', user: session.user]
+
+        //pass session-stored edit state in params map
+        transferSessionEditState(session, params, params.id)
+
+        def roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
+        def result = scheduledExecutionService._doupdate(params, session.user, roleList, framework, authContext, changeinfo)
+
+        redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
+    }
+
+    def flipExecutionEnabled() {
+        if (!params.id) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorView(g.message(code: 'api.error.parameter.required', args: ['id']))
+        }
+
+        def jobid = params.id
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
+        if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
+            return
+        }
+
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def changeinfo = [method: 'update', change: 'modify', user: session.user]
+
+        //pass session-stored edit state in params map
+        transferSessionEditState(session, params, params.id)
+
+        def roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
+        def result = scheduledExecutionService._doupdate(params, session.user, roleList, framework, authContext, changeinfo)
+
+        redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
+    }
+
+    def apiFlipExecutionEnabled() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V14)) {
+            return
+        }
+
+
+        log.debug("ScheduledExecutionController: apiFlipExecutionEnabled" + params)
+
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+
+        def scheduledExecution = ScheduledExecution.getByIdOrUUID(params.id)
+        if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
+            //job does not exist
+            return
+        }
+
+        def Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, scheduledExecution.project)
+
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_TOGGLE_EXECUTION],
+                scheduledExecution.project)) {
+            def error = [status: HttpServletResponse.SC_FORBIDDEN, code  : 'api.error.item.unauthorized', args: ['Toggle Execution', 'Job ID', params.id]]
+            return apiService.renderErrorFormat(response, error)
+        }
+
+        def changeinfo = [method: 'update', change: 'modify', user: session.user]
+        String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
+
+        def payload = [id: params.id, executionEnabled: params.status]
+        def result = scheduledExecutionService._doUpdateExecutionFlags(payload, session.user, roleList, framework, authContext, changeinfo)
+
+        if (result && result.success) {
+            return withFormat {
+                xml {
+                    render(text: "<success>true</success>",contentType:"text/xml",encoding:"UTF-8")
+                }
+
+                json {
+                    render ([success: true] as JSON)
+                }
+            }
+        } else {
+            return apiService.renderErrorFormat(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response);
+        }
+    }
+
+    def apiFlipScheduleEnabled() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V14)) {
+            return
+        }
+
+        log.debug("ScheduledExecutionController: apiFlipScheduleEnabled" + params)
+
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+
+        def scheduledExecution = ScheduledExecution.getByIdOrUUID(params.id)
+        if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
+            //job does not exist
+            return
+        }
+
+        def Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, scheduledExecution.project)
+
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_TOGGLE_SCHEDULE],
+                scheduledExecution.project)) {
+            def error = [status: HttpServletResponse.SC_FORBIDDEN, code  : 'api.error.item.unauthorized', args: ['Toggle Schedule', 'Job ID', params.id]]
+            return apiService.renderErrorFormat(response, error)
+        }
+
+        def changeinfo = [method: 'update', change: 'modify', user: session.user]
+        String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
+
+        def payload = [id: params.id, scheduleEnabled: params.status]
+        def result = scheduledExecutionService._doUpdateExecutionFlags(payload, session.user, roleList, framework, authContext, changeinfo)
+
+        if (result && result.success) {
+            return withFormat {
+                xml {
+                    render(text: "<success>true</success>", contentType:"text/xml", encoding:"UTF-8")
+                }
+
+                json {
+                    render ([success: true] as JSON)
+                }
+            }
+        } else {
+            return apiService.renderErrorFormat(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response);
+        }
     }
 
     /**
@@ -1634,6 +1772,12 @@ class ScheduledExecutionController  extends ControllerBase{
             def msg=g.message(code:'disabled.execution.run')
             return [success:false,failed:true,error:'disabled',message:msg]
         }
+
+        if (!scheduledExecution.hasExecutionEnabled()) {
+            def msg=g.message(code:'scheduleExecution.execution.disabled')
+            return [success:false,failed:true,error:'disabled',message:msg]
+        }
+
         params.workflow=new Workflow(scheduledExecution.workflow)
         params.argString=scheduledExecution.argString
         params.doNodedispatch=scheduledExecution.doNodedispatch
@@ -1768,7 +1912,6 @@ class ScheduledExecutionController  extends ControllerBase{
             render(view: 'upload',params: [project:params.project])
         }
     }
-
 
     def execute = {
         return redirect(action: 'show',params:params)
@@ -2147,10 +2290,17 @@ class ScheduledExecutionController  extends ControllerBase{
             scheduledExecution.project)) {
             return [success:false,failed:true,error:'unauthorized',message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
+
         if(!executionService.executionsAreActive){
             def msg=g.message(code:'disabled.execution.run')
             return [success:false,failed:true,error:'disabled',message: msg]
         }
+
+        if (!scheduledExecution.hasExecutionEnabled()) {
+            def msg=g.message(code:'scheduleExecution.execution.disabled')
+            return [success:false,failed:true,error:'disabled',message:msg]
+        }
+
         if(params.extra?.debug=='true'){
             params.extra.loglevel='DEBUG'
         }
@@ -2456,6 +2606,11 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireApi(request, response)) {
             return
         }
+        //require POST for api v14
+        if (request.method == 'GET' && request.api_version >= ApiRequestFilters.V14) {
+            response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED)
+            return
+        }
         def jobid=params.id
         def jobAsUser,jobArgString,jobLoglevel,jobFilter
         if(request.format=='json' ){
@@ -2510,6 +2665,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 inputOpts['nodeExcludePrecedence'] = true
             }
         }
+
 
         if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorXml(response,[

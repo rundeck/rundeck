@@ -14,8 +14,12 @@ import rundeck.services.logging.DisablingLogWriter
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.ExecutionLogState
+import rundeck.services.logging.LineCountingLogWriter
+import rundeck.services.logging.LoggingThreshold
 import rundeck.services.logging.LoglevelThresholdLogWriter
 import rundeck.services.logging.MultiLogWriter
+import rundeck.services.logging.NodeCountingLogWriter
+import rundeck.services.logging.ThresholdLogWriter
 
 class LoggingService {
 
@@ -34,8 +38,22 @@ class LoggingService {
         return !(fileDisabled && readerPluginConfigured)
     }
 
-    public ExecutionLogWriter openLogWriter(Execution execution, LogLevel level, Map<String, String> defaultMeta) {
-        List<StreamingLogWriter> plugins=[]
+    /**
+     * Create an ExecutionLogWriter
+     * @param execution execution
+     * @param level log level
+     * @param defaultMeta default metadata
+     * @param threshold optional logging threshold
+     * @return ExecutionLogWriter
+     */
+    public ExecutionLogWriter openLogWriter(
+            Execution execution,
+            LogLevel level,
+            Map<String, String> defaultMeta,
+            LoggingThreshold threshold = null
+    )
+    {
+        List<StreamingLogWriter> plugins = []
         def names = listConfiguredStreamingWriterPluginNames()
         if (names) {
             HashMap<String, String> jobcontext = ExecutionService.exportContextForExecution(execution,grailsLinkGenerator)
@@ -60,16 +78,36 @@ class LoggingService {
         }
         def outfilepath=null
         if (plugins.size() < 1 || isLocalFileStorageEnabled()) {
-            plugins << logFileStorageService.getLogFileWriterForExecution(execution, defaultMeta)
+            plugins << logFileStorageService.getLogFileWriterForExecution(
+                    execution,
+                    defaultMeta,
+                    threshold?.watcherForType(LoggingThreshold.TOTAL_FILE_SIZE)
+            )
             outfilepath = logFileStorageService.getFileForExecutionFiletype(execution, LOG_FILE_FILETYPE, false)
         }else{
             log.debug("File log writer disabled for execution ${execution.id}")
         }
 
         def multiWriter = new MultiLogWriter(plugins)
-        def thresholdWriter = new LoglevelThresholdLogWriter(multiWriter, level)
-        def writer = new ExecutionLogWriter(thresholdWriter)
-        if(outfilepath){
+        //add watchers for thresholds if present
+        def nodeWatcher = threshold?.watcherForType(LoggingThreshold.LINES_PER_NODE)
+        if (nodeWatcher) {
+            def countLogger = new NodeCountingLogWriter(multiWriter)
+            nodeWatcher.watch(countLogger)
+            multiWriter = countLogger
+        }
+        def linesWatcher = threshold?.watcherForType(LoggingThreshold.TOTAL_LINES)
+        if(linesWatcher){
+            def countLogger = new LineCountingLogWriter(multiWriter)
+            linesWatcher.watch(countLogger)
+            multiWriter = countLogger
+        }
+        def loglevelWriter = new LoglevelThresholdLogWriter(multiWriter, level)
+        if(threshold){
+            loglevelWriter = new ThresholdLogWriter(loglevelWriter,threshold)
+        }
+        def writer = new ExecutionLogWriter(loglevelWriter)
+        if (outfilepath) {
             //file path support
             writer.filepath = outfilepath
         }

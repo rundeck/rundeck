@@ -111,8 +111,8 @@ not in plaintext:
 
 Run the jetty "Password" utility:
 
-    $ java -cp server/lib/jetty-6.1.21.jar:server/lib/jetty-util-6.1.21.jar org.mortbay.jetty.security.Password <password>
-    
+    $ java -cp server/lib/jetty-all-7.6.0.v20120127.jar org.eclipse.jetty.util.security.Password [username] [password]
+
 This will produce two lines, one starting with "OBF:"
 
 Use the entire OBF: output as the password in the ssl.properties file, eg:

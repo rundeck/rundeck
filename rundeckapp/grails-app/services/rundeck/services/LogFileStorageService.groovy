@@ -16,6 +16,8 @@ import org.springframework.beans.factory.InitializingBean
 import org.springframework.core.task.AsyncTaskExecutor
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
+import rundeck.services.execution.ValueHolder
+import rundeck.services.execution.ValueWatcher
 import rundeck.services.logging.EventStreamingLogWriter
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogState
@@ -226,9 +228,14 @@ class LogFileStorageService implements InitializingBean{
      * @param defaultMeta default metadata for logging
      * @param resolver @return
      */
-    StreamingLogWriter getLogFileWriterForExecution(Execution e, Map<String, String> defaultMeta) {
+    StreamingLogWriter getLogFileWriterForExecution(
+            Execution e,
+            Map<String, String> defaultMeta,
+            ValueWatcher<Long> filesizeWatcher = null
+    )
+    {
         def filetype = LoggingService.LOG_FILE_FILETYPE
-        File file = getFileForExecutionFiletype(e, filetype,false)
+        File file = getFileForExecutionFiletype(e, filetype, false)
 
         if (!file.getParentFile().isDirectory()) {
             if (!file.getParentFile().mkdirs()) {
@@ -236,8 +243,15 @@ class LogFileStorageService implements InitializingBean{
             }
         }
         //stream log events to file, and when closed submit asynch request to store file if needed
-        def fsWriter = new EventStreamingLogWriter(new FSStreamingLogWriter(new FileOutputStream(file), defaultMeta, rundeckLogFormat))
-        fsWriter.onClose(prepareForFileStorage(e,filetype,file))
+        def writer = new FSStreamingLogWriter(new FileOutputStream(file), defaultMeta, rundeckLogFormat)
+        if(filesizeWatcher!=null){
+            ValueHolder value={->
+                writer.bytesWritten
+            } as ValueHolder
+            filesizeWatcher.watch(value)
+        }
+        def fsWriter = new EventStreamingLogWriter(writer)
+        fsWriter.onClose(prepareForFileStorage(e, filetype, file))
         return fsWriter
     }
 

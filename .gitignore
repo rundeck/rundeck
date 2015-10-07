@@ -5,6 +5,8 @@
 *.iws
 *.ipr
 *.iml
+db
+lib
 bin
 build
 cobertura.ser
@@ -12,6 +14,7 @@ gradle-cache
 rundeckapp/stacktrace.log
 rundeckapp/grails-app/i18n/messages.properties.orig
 rundeckapp/lib/rundeck-core-*.jar
+rundeckapp/classes/*
 core/target
 core/out
 **/target

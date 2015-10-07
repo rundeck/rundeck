@@ -49,6 +49,8 @@ public class AuthConstants {
     public static final String ACTION_DELETE_EXECUTION = "delete_execution";
     public static final String ACTION_ENABLE_EXECUTIONS = "enable_executions";
     public static final String ACTION_DISABLE_EXECUTIONS = "disable_executions";
+    public static final String ACTION_TOGGLE_SCHEDULE = "toggle_schedule";
+    public static final String ACTION_TOGGLE_EXECUTION = "toggle_execution";
 
     public static final String TYPE_SYSTEM = "system";
     public static final String TYPE_SYSTEM_ACL = "system_acl";
