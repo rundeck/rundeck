@@ -837,14 +837,17 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                session.subject,
+                scheduledExecution.project
+        )
         def changeinfo = [method: 'update', change: 'modify', user: session.user]
 
         //pass session-stored edit state in params map
         transferSessionEditState(session, params, params.id)
 
-        def roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
-        def result = scheduledExecutionService._doupdate(params, session.user, roleList, framework, authContext, changeinfo)
+
+        def result = scheduledExecutionService._doupdate(params, authContext, changeinfo)
 
         redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
     }
@@ -862,14 +865,16 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        def changeinfo = [method: 'update', change: 'modify', user: session.user]
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                session.subject,
+                scheduledExecution.project
+        )
+        def changeinfo = [method: 'update', change: 'modify', user: authContext.username]
 
         //pass session-stored edit state in params map
         transferSessionEditState(session, params, params.id)
 
-        def roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
-        def result = scheduledExecutionService._doupdate(params, session.user, roleList, framework, authContext, changeinfo)
+        def result = scheduledExecutionService._doupdate(params, authContext, changeinfo)
 
         redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
     }
@@ -1393,7 +1398,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return redirect(action:index, params:params)
         }
 
-            AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,found.project)
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,found.project)
         def result = scheduledExecutionService._doupdate(params, authContext, changeinfo)
         def scheduledExecution=result.scheduledExecution
         def success = result.success
