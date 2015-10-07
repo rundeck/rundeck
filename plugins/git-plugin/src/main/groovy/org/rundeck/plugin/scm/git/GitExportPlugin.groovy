@@ -159,8 +159,9 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     @Override
     List<Action> actionsAvailableForContext(ScmOperationContext context) {
         if (context.jobId) {
-            //actions for a specific Job
-            actionRefs JOB_COMMIT_ACTION_ID
+            //todo: get job status to determine actions
+//            actionRefs JOB_COMMIT_ACTION_ID
+            null
         } else if (context.frameworkProject) {
             //actions in project view
             def status = getStatusInternal(context, false)

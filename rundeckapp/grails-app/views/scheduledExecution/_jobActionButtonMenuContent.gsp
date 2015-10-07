@@ -174,28 +174,22 @@
     <g:set var="jobstatus" value="${scmExportStatus?.get(scheduledExecution.extid)}"/>
     <g:set var="exportStateClean" value="${jobstatus?.synchState?.toString()=='CLEAN'}"/>
     <g:set var="exportStateCreate" value="${'CREATE_NEEDED'==jobstatus?.synchState?.toString()}"/>
+        <g:each in="${scmExportJobActions}" var="action">
+        <g:if test="${action.id == '-'}">
+            <li class="divider"></li>
+        </g:if>
+        <g:else>
+            <li>
+                <g:render template="/scm/actionLink"
+                          model="[action:action,
+                                  integration:'export',
+                                  project:params.project,
+                                  linkparams:[jobIds: scheduledExecution.extid]]"
+                />
 
-    <g:unless test="${exportStateClean}">
-        <li><g:link controller="scm"
-                    params="[project: scheduledExecution.project,jobIds:scheduledExecution.extid,integration: 'export']"
-                    action="exportAction"
-                    >
-            <g:render template="/scm/statusBadge"
-                      model="[exportStatus: jobstatus?.synchState?.toString(),
-                              text  : '',
-                              notext: true,
-                              integration:'export',
-                              icon:'glyphicon-circle-arrow-right',
-                              exportCommit  : jobstatus?.commit]"/>
-            <g:if test="${exportStateCreate}">
-                <g:message code="scm.action.commit.create.button.label" default="Commit New File"/>
-            </g:if>
-            <g:else>
-                <g:message code="scm.action.commit.button.label" default="Commit Changes"/>
-            </g:else>
-        </g:link>
-        </li>
-    </g:unless>
+            </li>
+        </g:else>
+    </g:each>
     <g:unless test="${exportStateCreate}">
         <li><g:link controller="scm"
                     params="[project: scheduledExecution.project,jobId:scheduledExecution.extid,integration: 'export']"

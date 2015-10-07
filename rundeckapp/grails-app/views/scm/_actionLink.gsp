@@ -2,7 +2,7 @@
         project    : project,
         actionId: action.id,
         integration: integration
-]}"
+]+(linkparams?:[:])}"
         class="${classes?:''}"
         title="${action.description ?: ''}">
     <g:if test="${action.iconName}">

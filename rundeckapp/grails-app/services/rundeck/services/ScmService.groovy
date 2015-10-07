@@ -471,12 +471,13 @@ class ScmService {
      * @param project project
      * @return
      */
-    ScmOperationContext scmOperationContext(UserAndRolesAuthContext auth, String project) {
+    ScmOperationContext scmOperationContext(UserAndRolesAuthContext auth, String project, String job=null) {
         scmOperationContext {
             authContext auth
             frameworkProject project
             userInfo lookupUserInfo(auth.username)
             storageTree(storageService.storageTreeWithContext(auth))
+            jobId job
         }
     }
 
@@ -801,6 +802,20 @@ class ScmService {
         def plugin = loadedExportPlugins[project]
         if (plugin) {
             def context = scmOperationContext(auth, project)
+            return plugin.actionsAvailableForContext(context)
+        }
+        null
+    }
+    /**
+     * Get the actions for the plugin
+     * @param project
+     * @return
+     */
+    List<Action> exportPluginActionsForJob(UserAndRolesAuthContext auth, ScheduledExecution job) {
+
+        def plugin = loadedExportPlugins[job.project]
+        if (plugin) {
+            def context = scmOperationContext(auth, job.project, job.extid)
             return plugin.actionsAvailableForContext(context)
         }
         null
