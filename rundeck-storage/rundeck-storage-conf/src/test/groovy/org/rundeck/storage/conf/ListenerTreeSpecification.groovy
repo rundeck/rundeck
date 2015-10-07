@@ -47,12 +47,10 @@ class ListenerTreeSpecification extends Specification {
             events << 'didDeleteResource:' + path + ":" + success
         }
 
-        @Override
         void didCreateResource(Path path, ContentMeta content, Resource contents) {
             events << 'didCreateResource:' + path + ":" + (null != content)
         }
 
-        @Override
         void didUpdateResource(Path path, ContentMeta content, Resource contents) {
             events << 'didUpdateResource:' + path + ":" + (null != content)
         }
