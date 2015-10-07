@@ -3807,7 +3807,7 @@ void testDecodeBasic__no_group(){
             assertEquals "wrong executionEnabled", "true", doc.job[0].executionEnabled[0].text()
             assertNotNull "missing context",doc.job[0].context
             assertEquals "incorrect context size",1,doc.job[0].context.size()
-            assertEquals "incorrect context project",'test1',doc.job[0].context[0].project[0].text()
+            assertEquals "incorrect context project",0,doc.job[0].context[0].project.size()
             assertEquals "incorrect context options size",3,doc.job[0].context[0].options[0].option.size()
             assertEquals "incorrect context options option 1 name",'delay',doc.job[0].context[0].options[0].option[0]['@name'].text()
             assertEquals "incorrect context options option 1 value",'12',doc.job[0].context[0].options[0].option[0]['@value'].text()
@@ -3854,7 +3854,7 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong executionEnabled", "false", doc.job[0].executionEnabled[0].text()
         assertNotNull "missing context",doc.job[0].context
         assertEquals "incorrect context size",1,doc.job[0].context.size()
-        assertEquals "incorrect context project",'test1',doc.job[0].context[0].project[0].text()
+        assertEquals "incorrect context project",0,doc.job[0].context[0].project.size()
         assertEquals "incorrect context options size",3,doc.job[0].context[0].options[0].option.size()
         assertEquals "incorrect context options option 1 name",'delay',doc.job[0].context[0].options[0].option[0]['@name'].text()
         assertEquals "incorrect context options option 1 value",'12',doc.job[0].context[0].options[0].option[0]['@value'].text()
@@ -3901,7 +3901,7 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong executionEnabled", "true", doc.job[0].executionEnabled[0].text()
         assertNotNull "missing context",doc.job[0].context
         assertEquals "incorrect context size",1,doc.job[0].context.size()
-        assertEquals "incorrect context project",'test1',doc.job[0].context[0].project[0].text()
+        assertEquals "incorrect context project",0,doc.job[0].context[0].project.size()
         assertEquals "incorrect context options size",3,doc.job[0].context[0].options[0].option.size()
         assertEquals "incorrect context options option 1 name",'delay',doc.job[0].context[0].options[0].option[0]['@name'].text()
         assertEquals "incorrect context options option 1 value",'12',doc.job[0].context[0].options[0].option[0]['@value'].text()
