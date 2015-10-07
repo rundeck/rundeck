@@ -77,10 +77,11 @@
 
             <g:if test="${diffResult && integration=='import' && diffResult.hasProperty("incomingCommit") && diffResult.incomingCommit}">
                 <g:set var="commit" value="${diffResult.incomingCommit}"/>
-                <div class="list-group-item">
-
-                    <g:render template="commitInfo" model="[commit:commit,title:'Incoming Commit']"/>
-                </div>
+                <g:if test="${jobstatus?.commit?.commitId != commit.commitId}">
+                    <div class="list-group-item">
+                        <g:render template="commitInfo" model="[commit:commit,title:'Incoming Commit']"/>
+                    </div>
+                </g:if>
             </g:if>
             <g:if test="${diffResult?.oldNotFound}">
 
