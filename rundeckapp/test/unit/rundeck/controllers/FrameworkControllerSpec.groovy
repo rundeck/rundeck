@@ -4,10 +4,13 @@ import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.TestFor
+import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
 import rundeck.services.FrameworkService
+import rundeck.services.PasswordFieldsService
 import rundeck.services.StorageManager
+import rundeck.services.UserService
 import spock.lang.Specification
 
 import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_ADMIN
@@ -580,5 +583,73 @@ class FrameworkControllerSpec extends Specification {
         response.xml!=null
         response.xml.data.text()=='value'
 
+    }
+
+    def "save project with description"(){
+        setup:
+        def fwkService=Mock(FrameworkService)
+        controller.frameworkService = fwkService
+        controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.userService = Mock(UserService)
+
+        params.project = "TestSaveProject"
+        params.description='abc'
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.saveProject()
+
+        then:
+        response.status==302
+        request.errors == null
+        1 * fwkService.authResourceForProject(_)
+        1 * fwkService.getAuthContextForSubject(_)
+        1 * fwkService.authorizeApplicationResourceAll(null,null,['admin']) >> true
+        1 * fwkService.listDescriptions() >> [null,null,null]
+        1 * fwkService.updateFrameworkProjectConfig(_,{
+            it['project.description'] == 'abc'
+        },_) >> [success:true]
+        1 * fwkService.getFrameworkProject(_)>>[name:'TestSaveProject']
+
+        1 * controller.userService.storeFilterPref(_,_)
+    }
+    def "save project with out description"(){
+        setup:
+        def fwkService=Mock(FrameworkService)
+        controller.frameworkService = fwkService
+        controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.userService = Mock(UserService)
+
+        params.project = "TestSaveProject"
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.saveProject()
+
+        then:
+        response.status==302
+        request.errors == null
+        1 * fwkService.authResourceForProject(_)
+        1 * fwkService.getAuthContextForSubject(_)
+        1 * fwkService.authorizeApplicationResourceAll(null,null,['admin']) >> true
+        1 * fwkService.listDescriptions() >> [null,null,null]
+        1 * fwkService.updateFrameworkProjectConfig(_,{
+            it['project.description'] == ''
+        },_) >> [success:true]
+        1 * fwkService.getFrameworkProject(_)>>[name:'TestSaveProject']
+
+        1 * controller.userService.storeFilterPref(_,_)
+    }
+
+    protected void setupFormTokens(params) {
+        def token = SynchronizerTokensHolder.store(session)
+        params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
+        params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
     }
 }
