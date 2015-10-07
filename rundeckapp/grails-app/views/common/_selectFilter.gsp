@@ -42,12 +42,14 @@
             %{--${filter.name}<g:if test="${filter.project!=projectName}"> [${filter.project}]</g:if></g:link>--}%
         %{--</li>--}%
     %{--</g:each>--}%
+    <!-- ko if: nodeSummary() -->
     <!-- ko foreach: nodeSummary().filters -->
     <li>
         <a class=" nodefilterlink"
         data-bind="text: name(), attr: { 'data-node-filter-name': name(), 'data-node-filter': filter() }, css: { active: name()==$root.filterName() }"
         ></a>
     </li>
+    <!-- /ko -->
     <!-- /ko -->
 </g:if>
 <g:elseif test="${filterLinks && filterset}">
