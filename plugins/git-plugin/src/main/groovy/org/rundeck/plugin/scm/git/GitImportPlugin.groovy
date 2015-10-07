@@ -508,6 +508,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     void walkTreePaths(String ref, boolean useFilter = false, Closure callback) {
         ObjectId head = repo.resolve ref
+        if(!head){
+            return
+        }
         def tree = new TreeWalk(repo)
         tree.addTree(head)
         tree.setRecursive(true)
