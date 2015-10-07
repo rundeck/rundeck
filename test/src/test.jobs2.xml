@@ -11,9 +11,7 @@ Jobs should fail due to missing project
     <additional/>
     <loglevel>INFO</loglevel>
     <group>test</group>
-    <context>
-      <project>thisProjectDNE</project>
-    </context>
+    
     <sequence threadcount="1" keepgoing="false" strategy="node-first">
       <command>
         <exec>uptime</exec>

@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.CommandExec
@@ -44,7 +45,7 @@ class ScheduledExecutionServiceSpec extends Specification {
                               ]
                       ]
         ]
-        def results = service._dovalidate(params, 'test', 'test', null)
+        def results = service._dovalidate(params, Mock(UserAndRoles))
         def ScheduledExecution scheduledExecution = results.scheduledExecution
 
         then:
@@ -83,7 +84,7 @@ class ScheduledExecutionServiceSpec extends Specification {
                               ]
                       ]
         ]
-        def results = service._dovalidate(params, 'test', 'test', null)
+        def results = service._dovalidate(params, Mock(UserAndRoles))
         def ScheduledExecution scheduledExecution = results.scheduledExecution
 
         then:

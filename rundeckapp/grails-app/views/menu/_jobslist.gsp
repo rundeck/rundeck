@@ -84,6 +84,19 @@
                                         </g:if>
                                     </span>
 
+                                <g:set var="exportstatus" value="${scmExportEnabled ? scmStatus?.get(scheduledExecution.extid):null}"/>
+                                <g:set var="importStatus" value="${scmImportEnabled ? scmImportJobStatus?.get(scheduledExecution.extid): null}"/>
+                                <g:if test="${exportstatus || importStatus}">
+
+                                    <g:render template="/scm/statusBadge"
+                                              model="[exportStatus: exportstatus?.synchState?.toString(),
+                                                      importStatus: importStatus?.synchState?.toString(),
+                                                      text  : '',
+                                                      notext: true,
+                                                      exportCommit  : exportstatus?.commit,
+                                                      importCommit  : importStatus?.commit,
+                                              ]"/>
+                                </g:if>
                                     <g:link action="show"
                                             controller="scheduledExecution"
                                             id="${scheduledExecution.extid}"

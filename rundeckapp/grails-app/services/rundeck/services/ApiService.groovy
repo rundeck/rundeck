@@ -72,6 +72,7 @@ class ApiService {
         def xml = new MarkupBuilder(writer)
         xml.with {
             recall.delegate = delegate
+            recall.resolveStrategy=Closure.DELEGATE_FIRST
             recall()
         }
         return writer.toString()
@@ -161,15 +162,13 @@ class ApiService {
        return renderSuccessXml (status,false,null,response,recall)
     }
     def renderSuccessXmlUnwrapped(Closure recall){
-        return renderXml {
-            recall.delegate = delegate
-            recall()
-        }
+        return renderXml(recall)
     }
     def renderSuccessXml(Closure recall){
         return renderSuccessXmlUnwrapped {
             result(success: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
                 recall.delegate = delegate
+                recall.resolveStrategy=Closure.DELEGATE_FIRST
                 recall()
             }
         }

@@ -77,7 +77,7 @@
                         filterset:filterset,update:rkey+'wffilterform',
                         deleteActionSubmit:'deleteJobfilter',
                         storeActionSubmit:'storeJobfilter']}"/>
-                
+
                 <div class="filter">
 
                             <g:hiddenField name="max" value="${max}"/>
@@ -122,9 +122,25 @@
     <g:if test="${!params.compact}">
         <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
         <div class=" pull-right" >
+
+            <g:if test="${scmExportEnabled && scmExportStatus || scmImportEnabled  && scmImportStatus}">
+            %{--SCM synch status--}%
+                <g:set var="projectExportStatus" value="${scmExportEnabled ?scmExportStatus :null}"/>
+                <g:set var="projectImportStatus" value="${scmImportEnabled ?scmImportStatus :null}"/>
+                <g:render template="/scm/scmExportStatus" model="[
+                        exportStatus:projectExportStatus?.state,
+                        importStatus:projectImportStatus?.state,
+                        text:'',
+                        exportMessage:projectExportStatus?.message?:'',
+                        importMessage:projectImportStatus?.message?:'',
+                        meta:[:]
+                ]"/>
+            </g:if>
+
+
             <div class="btn-group">
             <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-                Create <g:message code="domain.ScheduledExecution.title"/>
+                <g:message code="job.actions" />
                 <span class="caret"></span>
             </button>
             <ul class="dropdown-menu pull-right" role="menu">
@@ -132,8 +148,8 @@
                     params="[project: params.project ?: request.project]"
                             class="">
                     <i class="glyphicon glyphicon-plus"></i>
-                    New <g:message
-                            code="domain.ScheduledExecution.title"/>&hellip;</g:link></li>
+                    <g:message code="new.job.button.label" />
+                </g:link></li>
                 <li class="divider">
                 </li>
                 <li>
@@ -141,9 +157,66 @@
                             params="[project: params.project ?: request.project]"
                             class="">
                         <i class="glyphicon glyphicon-upload"></i>
-                        Upload Definition&hellip;
+                        <g:message code="upload.definition.button.label" />
                     </g:link>
                 </li>
+                <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE  }" project="${params.project ?: request.project}">
+                    <li class="divider"></li>
+                    <li>
+                        <a href="#" class="job_bulk_edit bulk_edit_invoke">
+                            <g:icon name="remove"/>
+                            <g:message code="bulk.delete" />
+                        </a>
+                    </li>
+                </auth:resourceAllowed>
+            <g:if test="${(scmExportEnabled && scmExportActions) || (scmImportEnabled && scmImportActions)}">
+                <g:if test="${scmExportEnabled && scmExportActions}">
+                    <li class="divider">
+                    </li>
+
+                    <li role="presentation" class="dropdown-header">
+                        <g:icon name="circle-arrow-right"/>
+                        <g:message code="scm.export.actions.title" />
+                    </li>
+                    <g:each in="${scmExportActions}" var="action">
+                        <g:if test="${action.id == '-'}">
+                            <li class="divider"></li>
+                        </g:if>
+                        <g:else>
+                            <li>
+                                <g:render template="/scm/actionLink"
+                                    model="[action:action,integration:'export',project:params.project]"
+                                />
+
+                            </li>
+                        </g:else>
+                    </g:each>
+
+                </g:if>
+                <g:if test="${scmImportEnabled && scmImportActions}">
+
+                    <li class="divider"></li>
+                    <li role="presentation" class="dropdown-header">
+                        <g:icon name="circle-arrow-left"/>
+                        <g:message code="scm.import.actions.title" />
+                    </li>
+                    <g:each in="${scmImportActions}" var="action">
+                        <g:if test="${action.id == '-'}">
+                            <li class="divider"></li>
+                        </g:if>
+                        <g:else>
+                            <li>
+
+                                <g:render template="/scm/actionLink"
+                                          model="[action:action,integration:'import',project:params.project]"
+                                />
+
+                            </li>
+                        </g:else>
+                    </g:each>
+
+                </g:if>
+                </g:if>
             </ul>
             </div>
         </div>
@@ -251,9 +324,6 @@
                             </div><!-- /.modal-dialog -->
                         </div><!-- /.modal -->
                     <div class="floatr" style="margin-top: 10px;">
-                        <div>
-                            <span class="btn btn-warning btn-xs job_bulk_edit bulk_edit_invoke"><g:message code="bulk.delete" /></span>
-                        </div>
                         <div class="bulk_edit_controls panel panel-warning" style="display: none">
                             <div class="bulk_edit_controls panel-heading">
                                 <button type="button" class="close job_bulk_edit_hide "

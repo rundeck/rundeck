@@ -4,7 +4,7 @@
 
 # NAME
 
-job-yaml-v12 - The 'job' YAML file declares job entries for Rundeck.
+job-yaml-v13 - The 'job' YAML file declares job entries for Rundeck.
 
 ## Loading and unloading
 
@@ -101,10 +101,6 @@ Extended description using yaml 'literal' scalar string format (beginning with a
 ~~~~~~~~ 
 
 In addition, these optional entries can be present:
-
-`project`
-
-:    the Project name
 
 `uuid`
 
@@ -487,21 +483,32 @@ Example:
 
 ### Options
 
-Options for a job can be specified with a map. Each map key is the name of the option, and the content is a map defining the [Option](#option).
+Options for a job can be specified with a list of Maps. Each map contains a `name` key with the name of the option, and the content is a map defining the [Option](#option).
+
+~~~~~~~~ {.yaml}
+  options:
+  - {definition..}
+  - {definition..}
+~~~~~~~~ 
+
+Note: for backwards compatibility, a Map format is also accepted on import:
 
 ~~~~~~~~ {.yaml}
   options:
     optname1:
-      [definition..]
+      {definition..}
     optname2:
-      [definition..]
+      {definition..}
 ~~~~~~~~ 
 
 ### Option
 
-An option definition has no required entries, so it could be empty:
+An option definition requires at least a `name` key to identify it:
 
-    myoption: {}
+~~~ {.yaml}
+  options:
+  - name: myoption
+~~~
 
 Optional map entries are:
 
@@ -549,11 +556,11 @@ Optional map entries are:
 
 :   "true/false" - whether a secure input option value is exposed to scripts or not. `false` means the option will be used only as a Secure Remote Authentication option.  default: `false`.
 
-`sortIndex`
+`sortIndex` (deprecated)
 
 :   *integer* - A number indicating the order this option should appear in the GUI.  If specified this
-    option will be arranged in order with other options with a `sortIndex` value. Any options without
-    a value will be arranged in alphabetical order below the other options.
+    option will be arranged in order with other options with a `sortIndex` value.
+    If the [Options](#options) are defined in a list, the order specified will be preserved.
 
 The `description` for an Option will be rendered with Markdown in the GUI.
 

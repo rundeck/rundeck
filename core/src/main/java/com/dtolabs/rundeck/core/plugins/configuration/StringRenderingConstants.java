@@ -34,6 +34,7 @@ public class StringRenderingConstants {
      * Rendering option key to set the display type of a String property
      */
     public static final String DISPLAY_TYPE_KEY = "displayType";
+    public static final String STATIC_TEXT_CONTENT_TYPE_KEY = "staticTextContentType";
 
     /**
      * Values that can be specified for a key of {@link #DISPLAY_TYPE_KEY}
@@ -41,6 +42,7 @@ public class StringRenderingConstants {
     public enum DisplayType {
         SINGLE_LINE,
         MULTI_LINE,
+        STATIC_TEXT,
         PASSWORD;
         public boolean equalsOrString(Object o) {
             return this == o || toString().equals(o);

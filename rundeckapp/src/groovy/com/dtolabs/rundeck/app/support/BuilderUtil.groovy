@@ -47,13 +47,14 @@ class BuilderUtil{
     public static CDATA_SUFFIX="<cdata>"
     Map<Class,Closure> converters=[:]
     ArrayList context
+    boolean canonical=false
     public BuilderUtil(){
         context=new ArrayList()
     }
     
     public mapToDom( Map map, builder){
         //generate a builder strucure using the map components
-        for(Object o: map.keySet()){
+        for(Object o: canonical?map.keySet().sort():map.keySet()){
             final Object val = map.get(o)
             this.objToDom(o,val,builder)
         }
@@ -63,24 +64,26 @@ class BuilderUtil{
             builder."${key}"()
         }else if (obj instanceof Collection){
             //iterate
+            def cobj = (Collection) obj
             if(key instanceof String && ((String)key).length()>1 && ((String)key).endsWith(PLURAL_SUFFIX)){
                 String keys=(String)key
                 String name=keys.substring(0,keys.size()-PLURAL_SUFFIX.size());
                 String rekey=name+PLURAL_REPL;
                 builder."${rekey}"(){
-                    for(Object o: (Collection)obj){
+                    for(Object o: cobj){
                         this.objToDom(name,o,builder)
                     }
                 }
             }else{
-                for(Object o: (Collection)obj){
+                for(Object o: cobj){
                     this.objToDom(key,o,builder)
                 }
             }
         }else if(obj instanceof Map){
             //try to collect '@' prefixed keys to apply as attributes
             Map map = (Map)obj
-            def attrs = map.keySet().findAll{it=~/^${ATTR_PREFIX}/}
+            def keys = canonical?map.keySet().sort():map.keySet()
+            def attrs = keys.findAll{it=~/^${ATTR_PREFIX}/}
             def attrmap=[:]
             if(attrs){
                 attrs.each{String s->

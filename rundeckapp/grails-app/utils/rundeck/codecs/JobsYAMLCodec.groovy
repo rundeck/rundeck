@@ -9,13 +9,24 @@ import rundeck.controllers.JobXMLException
 
 class JobsYAMLCodec {
 
+    static Map canonicalMap(Map input) {
+        def result = [:]//linked hash map has ordered keys
+        input.keySet().sort().each{
+            def val = input[it]
+            if(val instanceof Map){
+                val = canonicalMap(val)
+            }
+            result[it]=val
+        }
+        result
+    }
     static encode = {list ->
         def writer = new StringWriter()
         final DumperOptions dumperOptions = new ForceMultilineLiteralOptions();
         dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         Yaml yaml = new Yaml(dumperOptions)
 
-        yaml.dump(list.collect {it.toMap()}, writer)
+        yaml.dump(list.collect {canonicalMap it.toMap()}, writer)
 
         return writer.toString()
     }

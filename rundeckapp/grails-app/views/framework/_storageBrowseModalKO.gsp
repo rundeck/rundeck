@@ -8,7 +8,7 @@
             </div>
 
             <div class="modal-body" style="max-height: 500px; overflow-y: scroll">
-                <g:render template="storageBrowser"/>
+                <g:render template="/framework/storageBrowser"/>
             </div>
 
             <div class="modal-footer">

@@ -33,6 +33,14 @@
             <g:message code="request.error.invalidtoken.message"/>
         </g:if>
     </div>
+    <g:if test="${request.errorHelp || flash.errorHelp}">
+        <div class="alert alert-info alert-dismissable">
+                <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+
+            <g:icon name="question-sign"/>
+            <g:autoLink><g:enc>${flash.errorHelp?.toString()}${request.errorHelp?.toString()}</g:enc></g:autoLink>
+        </div>
+    </g:if>
 </g:if>
 <g:if test="${flash.warn || request.warn}">
     <div class="alert alert-warning alert-dismissable">

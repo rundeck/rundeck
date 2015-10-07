@@ -437,14 +437,21 @@ class UtilityTagLib{
         def linkopts=[
                 execution:[
                         pattern: /\{\{(Execution\s+(\d+))\}\}/ ,
-                        linkParams:[action:'show',controller:'execution']
+                        linkParams:[action:'show',controller:'execution'] + xparams
                 ],
                 job:[
                         pattern: /\{\{(Job\s+([0-9a-h]{8}-[0-9a-h]{4}-[0-9a-h]{4}-[0-9a-h]{4}-[0-9a-h]{12}))\}\}/ ,
-                        linkParams:[action:'show',controller:'scheduledExecution'],
+                        linkParams:[action:'show',controller:'scheduledExecution'] + xparams,
                         textValue:{
                             def job= ScheduledExecution.getByIdOrUUID(it)
                             return job?job.generateFullName():it
+                        }
+                ],
+                profile:[
+                        pattern: /\{\{user\/profile(\/.+)?\}\}/,
+                        linkParams:[action: 'profile',controller: 'user'],
+                        textValue: {
+                            return it?"User: ${it}": "Your User Profile"
                         }
                 ]
         ]
@@ -454,7 +461,7 @@ class UtilityTagLib{
                     def lparams= [:]+opts.linkParams
                     lparams.id=it[2]
                     def text = opts.textValue?opts.textValue(it[2]):it[1]
-                    return g.link(lparams + xparams,text)
+                    return g.link(lparams,text)
                 }else{
 
                     return it[0]
@@ -703,6 +710,8 @@ class UtilityTagLib{
                 ' data-placement="'+enc(attr:placement)+'" ' +
                 ' data-container="body" ' +
                 ' title="'+enc(attr:g.message(code: code))+ '">\n' +
+                (attrs.text?:'') +
+                body() +
                 ' <i class="glyphicon glyphicon-'+enc(attr:glyph)+'"></i>\n' +
                 '</span>'
     }
@@ -1450,6 +1459,18 @@ ansi-bg-default'''))
                 return text
             }
 
+        }
+    }
+    /**
+     * @emptyTag
+     * @attr name REQUIRED glyphicon name
+     */
+    def icon= { attrs, body ->
+        if (attrs.name.startsWith('glyphicon-')) {
+            attrs.name=attrs.name.substring('glyphicon-'.length())
+        }
+        if (glyphiconSet.contains(attrs.name)) {
+            out << "<i class=\"glyphicon glyphicon-${attrs.name}\"></i>"
         }
     }
 }

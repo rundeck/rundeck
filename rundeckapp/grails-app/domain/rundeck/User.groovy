@@ -1,5 +1,7 @@
 package rundeck
 
+import rundeck.services.AnyDomainEmailValidator
+
 
 class User {
     String login
@@ -20,7 +22,9 @@ class User {
         login(matches: '^[a-zA-Z0-9\\.,@\\(\\)\\s_\\\\/-]+$')
         firstName(nullable:true, matches: '^[a-zA-Z0-9\\s\\.,\\(\\)-]+$')
         lastName(nullable:true, matches: '^[a-zA-Z0-9\\s\\.,\\(\\)-]+$')
-        email(nullable:true,email: true)
+        email(nullable:true,validator: { val ->
+            (!val || new AnyDomainEmailValidator().isValid(val)) ? null : 'email.invalid'
+        })
         password(nullable:true)
         dashboardPref(nullable:true)
         filterPref(nullable:true)

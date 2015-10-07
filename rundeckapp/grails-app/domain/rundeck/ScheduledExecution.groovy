@@ -179,7 +179,7 @@ class ScheduledExecution extends ExecutionContext {
                 map.loglimitStatus=logOutputThresholdStatus
             }
         }
-        map.project=project
+        //don't include project
         if(timeout){
             map.timeout=timeout
         }
@@ -191,9 +191,12 @@ class ScheduledExecution extends ExecutionContext {
         }
 
         if(options){
-            map.options=[:]
-            options.each{Option option->
-                map.options[option.name]=option.toMap()
+            map.options = []
+            options.sort().each{Option option->
+
+                def map1 = option.toMap()
+                map1.remove('sortIndex')
+                map.options.add(map1 + [name: option.name])
             }
         }
 
@@ -275,9 +278,18 @@ class ScheduledExecution extends ExecutionContext {
         se.retry = data.retry?data.retry.toString():null
         if(data.options){
             TreeSet options=new TreeSet()
-            data.options.keySet().each{optname->
-                Option opt = Option.fromMap(optname,data.options[optname])
-                options<<opt
+            if(data.options instanceof Map) {
+                data.options.keySet().each { optname ->
+                    Option opt = Option.fromMap(optname, data.options[optname])
+                    options << opt
+                }
+            }else if(data.options instanceof Collection){
+                int sortIndex=0
+                data.options.each { optdata ->
+                    Option opt = Option.fromMap(optdata.name, optdata)
+                    opt.sortIndex=sortIndex++
+                    options << opt
+                }
             }
             se.options=options
         }

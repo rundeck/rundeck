@@ -5,7 +5,7 @@ import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -13,6 +13,7 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -36,6 +37,7 @@ import rundeck.services.LoggingService
 import rundeck.services.NotificationService
 import rundeck.services.PluginService
 import rundeck.services.ScheduledExecutionService
+import rundeck.services.ScmService
 import rundeck.services.UserService
 
 import javax.servlet.http.HttpServletResponse
@@ -53,6 +55,7 @@ class MenuController extends ControllerBase{
     StorageConverterPluginProviderService storageConverterPluginProviderService
     PluginService pluginService
     def configurationService
+    ScmService scmService
     def quartzScheduler
     def ApiService apiService
     def AuthorizationService authorizationService
@@ -211,6 +214,9 @@ class MenuController extends ControllerBase{
         def results = jobsFragment(query)
         results.execQueryParams=query.asExecQueryParams()
         results.reportQueryParams=query.asReportQueryParams()
+        if(results.warning){
+            request.warn=results.warning
+        }
 
         withFormat{
             html {
@@ -233,7 +239,7 @@ class MenuController extends ControllerBase{
     
     def jobsFragment = {ScheduledExecutionQuery query ->
         long start=System.currentTimeMillis()
-        AuthContext authContext
+        UserAndRolesAuthContext authContext
         def usedFilter=null
         
         if(params.filterName){
@@ -262,6 +268,45 @@ class MenuController extends ControllerBase{
             authContext = frameworkService.getAuthContextForSubject(session.subject)
         }
         def results=listWorkflows(query,authContext,session.user)
+        //fill scm status
+
+        if (frameworkService.authorizeApplicationResourceAny(authContext,
+                                                             frameworkService.authResourceForProject(params.project),
+                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT])) {
+            def pluginData=[:]
+            try {
+                if (scmService.projectHasConfiguredExportPlugin(params.project)) {
+                    pluginData.scmExportEnabled = true
+                    pluginData.scmStatus = scmService.exportStatusForJobs(results.nextScheduled)
+                    pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
+                    pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
+                    pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
+                    results.putAll(pluginData)
+                }
+            }catch (ScmPluginException e){
+                results.warning="Failed to update SCM Export status: ${e.message}"
+            }
+        }
+        if (frameworkService.authorizeApplicationResourceAny(authContext,
+                                                             frameworkService.authResourceForProject(params.project),
+                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT])) {
+
+            def pluginData=[:]
+            try{
+                if(scmService.projectHasConfiguredImportPlugin(params.project)){
+                    pluginData.scmImportEnabled=true
+                    pluginData.scmImportJobStatus=scmService.importStatusForJobs(results.nextScheduled)
+                    pluginData.scmImportStatus=scmService.importPluginStatus(authContext,params.project)
+                    pluginData.scmImportActions=scmService.importPluginActions(authContext,params.project)
+    //                results.scmImportRenamed=scmService.getRenamedJobPathsForProject(params.project)
+                    results.putAll(pluginData)
+                }
+
+            }catch (ScmPluginException e){
+                results.warning="Failed to update SCM Import status: ${e.message}"
+            }
+        }
+
         if(usedFilter){
             results.filterName=usedFilter
             results.paginateParams['filterName']=usedFilter

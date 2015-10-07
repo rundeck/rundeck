@@ -136,6 +136,7 @@ public class ServiceSupport implements IFrameworkServices {
     public ResourceModelSourceService getResourceModelSourceService() {
         return ResourceModelSourceService.getInstanceForFramework(getFramework());
     }
+
     @Override
     public ResourceFormatParserService getResourceFormatParserService() {
         return ResourceFormatParserService.getInstanceForFramework(getFramework());

@@ -2,10 +2,8 @@ import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.authorization.AuthorizationFactory
-import com.dtolabs.rundeck.core.common.FilesystemFramework
 import com.dtolabs.rundeck.core.common.FrameworkFactory
 import com.dtolabs.rundeck.core.common.NodeSupport
-import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
@@ -14,6 +12,8 @@ import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.PluggableStoragePluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
@@ -27,6 +27,7 @@ import groovy.io.FileType
 import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import rundeck.services.PasswordFieldsService
+import rundeck.services.scm.ScmJobImporter
 
 beans={
     log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
@@ -135,6 +136,17 @@ beans={
     storageConverterPluginProviderService(StorageConverterPluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
+
+    scmExportPluginProviderService(ScmExportPluginProviderService) {
+        rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
+    }
+
+    scmImportPluginProviderService(ScmImportPluginProviderService) {
+        rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
+    }
+
+    scmJobImporter(ScmJobImporter)
+
     containerPrincipalRoleSource(ContainerPrincipalRoleSource){
         enabled=grailsApplication.config.rundeck?.security?.authorization?.containerPrincipal?.enabled in [true,'true']
     }

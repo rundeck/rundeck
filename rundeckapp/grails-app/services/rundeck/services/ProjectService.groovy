@@ -2,6 +2,7 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.util.XmlParserUtil
@@ -600,65 +601,71 @@ class ProjectService implements InitializingBean{
      * @param input input stream of zip data
      * @param options import options, [jobUUIDBehavior: (replace/preserve), importExecutions: (true/false)]
      */
-    def importToProject(IRundeckProject project, String user, String roleList, Framework framework,
-                        AuthContext authContext, InputStream input, ProjectArchiveImportRequest options) throws ProjectServiceException {
+    def importToProject(
+            IRundeckProject project,
+            Framework framework,
+            UserAndRolesAuthContext authContext,
+            InputStream input,
+            ProjectArchiveImportRequest options
+    ) throws ProjectServiceException
+    {
         ZipReader zip = new ZipReader(new ZipInputStream(input))
 //        zip.debug=true
-        def jobxml=[]
-        def jobxmlmap=[:]
-        def execxml=[]
-        def execxmlmap=[:]
-        def Map<String,File> execout=[:]
-        def reportxml=[]
-        def reportxmlnames=[:]
+        def jobxml = []
+        def jobxmlmap = [:]
+        def execxml = []
+        def execxmlmap = [:]
+        def Map<String, File> execout = [:]
+        def reportxml = []
+        def reportxmlnames = [:]
         boolean importExecutions = options.importExecutions
         boolean importConfig = options.importConfig
         boolean importACL = options.importACL
-        File configtemp=null
-        Map<String,File> mdfilestemp=[:]
-        Map<String,File> aclfilestemp=[:]
-        zip.read{
-            '*/'{ //rundeck-<projectname>/
-                'jobs/'{
-                    'job-.*\\.xml'{path,name,inputs->
+        File configtemp = null
+        Map<String, File> mdfilestemp = [:]
+        Map<String, File> aclfilestemp = [:]
+        zip.read {
+            '*/' { //rundeck-<projectname>/
+                'jobs/' {
+                    'job-.*\\.xml' { path, name, inputs ->
                         def tempfile = copyToTemp()
-                        jobxml<< tempfile
-                        jobxmlmap[tempfile]=[path:path,name:name]
+                        jobxml << tempfile
+                        jobxmlmap[tempfile] = [path: path, name: name]
                     }
                 }
-                if(importExecutions){
-                    'executions/'{
-                        'execution-.*\\.xml' {path, name, inputs ->
+                if (importExecutions) {
+                    'executions/' {
+                        'execution-.*\\.xml' { path, name, inputs ->
                             execxml << copyToTemp()
-                            execxmlmap[execxml[-1]]=name
+                            execxmlmap[execxml[-1]] = name
                         }
-                        'output-.*\\.(txt|rdlog)|state-.*\\.state.json' {path, name, inputs ->
-                            execout[name]= copyToTemp()
+                        'output-.*\\.(txt|rdlog)|state-.*\\.state.json' { path, name, inputs ->
+                            execout[name] = copyToTemp()
                         }
                     }
-                    'reports/'{
-                        'report-.*\\.xml' {path, name, inputs ->
-                            reportxml<< copyToTemp()
-                            reportxmlnames[reportxml[-1]]=name
+                    'reports/' {
+                        'report-.*\\.xml' { path, name, inputs ->
+                            reportxml << copyToTemp()
+                            reportxmlnames[reportxml[-1]] = name
                         }
                     }
                 }
 
-                'files/'{
-                    if(importConfig){
-                        'etc/'{
-                            'project.properties'{path,name,inputs->
-                                configtemp=copyToTemp()
+                'files/' {
+                    if (importConfig) {
+                        'etc/' {
+                            'project.properties' { path, name, inputs ->
+                                configtemp = copyToTemp()
                             }
                         }
-                        '(readme|motd)\\.md'{path,name,inputs->
-                            mdfilestemp[name]=copyToTemp()
+                        '(readme|motd)\\.md' { path, name, inputs ->
+                            mdfilestemp[name] = copyToTemp()
                         }
                     }
-                    if(importACL){
-                        'acls/'{
-                            '.*\\.aclpolicy'{path,name,inputs->
-                                aclfilestemp[name]=copyToTemp()
+                    if (importACL) {
+                        'acls/' {
+                            '.*\\.aclpolicy' { path, name, inputs ->
+                                aclfilestemp[name] = copyToTemp()
                             }
                         }
                     }
@@ -666,23 +673,24 @@ class ProjectService implements InitializingBean{
             }
         }
         //have files in dir
-        (jobxml + execxml + execout.values() + reportxml + [configtemp] + mdfilestemp.values() + aclfilestemp.values()).each {it?.deleteOnExit()}
+        (jobxml + execxml + execout.values() + reportxml + [configtemp] + mdfilestemp.values() + aclfilestemp.values()).
+                each { it?.deleteOnExit() }
 
-        def loadjobresults=[]
-        def loadjoberrors=[]
-        def execerrors=[]
-        def jobIdMap=[:]
-        def jobsByOldId=[:]
-        def skipJobIds=[]
-        def projectName= project.name
+        def loadjobresults = []
+        def loadjoberrors = []
+        def execerrors = []
+        def jobIdMap = [:]
+        def jobsByOldId = [:]
+        def skipJobIds = []
+        def projectName = project.name
         //load jobs
-        jobxml.each { File jxml->
-            def path=jobxmlmap[jxml].path
-            def name=jobxmlmap[jxml].name
+        jobxml.each { File jxml ->
+            def path = jobxmlmap[jxml].path
+            def name = jobxmlmap[jxml].name
             def jobset
             jxml.withInputStream {
                 try {
-                    def reader = new InputStreamReader(it,"UTF-8")
+                    def reader = new InputStreamReader(it, "UTF-8")
                     jobset = reader.decodeJobsXML()
                 } catch (JobXMLException e) {
                     log.error("Failed parsing jobs from XML at archive path: ${path}${name}")
@@ -694,36 +702,44 @@ class ProjectService implements InitializingBean{
                     return [errorCode: 'api.error.jobs.import.empty']
                 }
                 //contains list of old extids in input order
-                def oldids=jobset.collect{it.extid}
+                def oldids = jobset.collect { it.extid }
                 //change project name to the current project
-                jobset*.project= projectName
+                jobset*.project = projectName
                 //remove uuid to reset it
-                def uuidBehavior=options.jobUuidOption?:'preserve'
-                switch (uuidBehavior){
+                def uuidBehavior = options.jobUuidOption ?: 'preserve'
+                switch (uuidBehavior) {
                     case 'remove':
                         jobset*.uuid = null
                         break;
                     case 'preserve':
                         //no-op, leave UUIDs and attempt to import
                         break;
-                    break;
+                        break;
                 }
-                def results=scheduledExecutionService.loadJobs(jobset,'update',null,user,roleList,[:],framework,authContext)
-                if(results.errjobs){
-                    log.error("Failed loading (${results.errjobs.size()}) jobs from XML at archive path: ${path}${name}")
+                def results = scheduledExecutionService.loadJobs(
+                        jobset,
+                        'update',
+                        null,
+                        [:],
+                        authContext
+                )
+                if (results.errjobs) {
+                    log.error(
+                            "Failed loading (${results.errjobs.size()}) jobs from XML at archive path: ${path}${name}"
+                    )
                     results.errjobs.each {
-                        loadjoberrors<< "Job at index [${it.entrynum}] at archive path: ${path}${name} had errors: ${it.errmsg}"
+                        loadjoberrors << "Job at index [${it.entrynum}] at archive path: ${path}${name} had errors: ${it.errmsg}"
                         log.error("Job at index [${it.entrynum}] had errors: ${it.errmsg}")
-                        if(it.entrynum!=null && oldids[it.entrynum-1]){
-                            skipJobIds<< oldids[it.entrynum - 1]
+                        if (it.entrynum != null && oldids[it.entrynum - 1]) {
+                            skipJobIds << oldids[it.entrynum - 1]
                         }
                     }
                 }
                 loadjobresults.addAll(results.jobs)
-                results.jobsi.each{jobi->
-                    if(jobi.entrynum!=null && oldids[jobi.entrynum-1]){
-                        jobIdMap[oldids[jobi.entrynum-1]]=jobi.scheduledExecution.extid
-                        jobsByOldId[oldids[jobi.entrynum - 1]]= jobi.scheduledExecution
+                results.jobsi.each { jobi ->
+                    if (jobi.entrynum != null && oldids[jobi.entrynum - 1]) {
+                        jobIdMap[oldids[jobi.entrynum - 1]] = jobi.scheduledExecution.extid
+                        jobsByOldId[oldids[jobi.entrynum - 1]] = jobi.scheduledExecution
                     }
                 }
             }
@@ -731,27 +747,38 @@ class ProjectService implements InitializingBean{
 
         log.info("Loaded ${loadjobresults.size()} jobs")
 
-        if(importExecutions){
-            Map execidmap = importExecutionsToProject(execxml, execout, projectName, framework, jobIdMap,skipJobIds,execxmlmap,execerrors)
+        if (importExecutions) {
+            Map execidmap = importExecutionsToProject(
+                    execxml,
+                    execout,
+                    projectName,
+                    framework,
+                    jobIdMap,
+                    skipJobIds,
+                    execxmlmap,
+                    execerrors
+            )
             //load reports
-            importReportsToProject(reportxml, jobsByOldId, reportxmlnames, execidmap, projectName,execerrors)
+            importReportsToProject(reportxml, jobsByOldId, reportxmlnames, execidmap, projectName, execerrors)
         }
 
-        if(importConfig && configtemp){
+        if (importConfig && configtemp) {
 
             importProjectConfig(configtemp, project, framework)
             log.debug("${project.name}: Loaded project configuration from archive")
         }
-        if(importConfig && mdfilestemp){
+        if (importConfig && mdfilestemp) {
             importProjectMdFiles(mdfilestemp, project)
         }
-        def aclerrors=[]
-        if(importACL && aclfilestemp){
-            aclerrors=importProjectACLPolicies(aclfilestemp, project)
+        def aclerrors = []
+        if (importACL && aclfilestemp) {
+            aclerrors = importProjectACLPolicies(aclfilestemp, project)
         }
 
-        (jobxml + execxml + execout.values() + reportxml + [configtemp] + mdfilestemp.values() + aclfilestemp.values()).each { it?.delete() }
-        return [success:(loadjoberrors)?false:true,joberrors: loadjoberrors,execerrors: execerrors,aclerrors:aclerrors]
+        (jobxml + execxml + execout.values() + reportxml + [configtemp] + mdfilestemp.values() + aclfilestemp.values()).
+                each { it?.delete() }
+        return [success: (loadjoberrors) ? false :
+                true, joberrors: loadjoberrors, execerrors: execerrors, aclerrors: aclerrors]
     }
 
     private List<String> importProjectACLPolicies(Map<String, File> aclfilestemp, project) {

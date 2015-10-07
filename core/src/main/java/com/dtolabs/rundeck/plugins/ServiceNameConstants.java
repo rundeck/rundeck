@@ -57,4 +57,6 @@ public class ServiceNameConstants {
     public static final String StorageConverter = "StorageConverter";
     public static final String Storage = "Storage";
     public static final String Orchestrator = "Orchestrator";
+    public static final String ScmExport = "ScmExport";
+    public static final String ScmImport = "ScmImport";
 }

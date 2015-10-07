@@ -6,6 +6,13 @@
             <g:message code="gui.menu.ProjectConfiguration" default="Project Configuration" args="${[params.project]}"/>
         </g:link>
        </li>
+        <li class="${selected == 'scm' ? 'active' : ''}">
+            <g:link controller="scm" action="index"
+                    params="[project: params.project ?: request.project]">
+                <g:message code="gui.menu.SCM" default="SCM"/>
+            </g:link>
+        </li>
+
     </g:if>
     <g:else>
     <g:if test="${session.frameworkProjects}">
@@ -62,4 +69,4 @@
     </li>
 </ul>
 
-<g:render template="configExecutionMode"/>
+<g:render template="/menu/configExecutionMode"/>

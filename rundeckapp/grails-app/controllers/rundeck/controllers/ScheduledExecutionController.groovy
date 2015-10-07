@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.utils.NodeSet
@@ -80,6 +81,7 @@ class ScheduledExecutionController  extends ControllerBase{
 	def NotificationService notificationService
     def ApiService apiService
     def UserService userService
+    def ScmService scmService
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -197,13 +199,32 @@ class ScheduledExecutionController  extends ControllerBase{
                 params.id
             )
         ) {
-             render(template: '/scheduledExecution/jobActionButtonMenuContent',
-                          model: [
-                                  scheduledExecution: scheduledExecution,
-                                  hideJobDelete     : params.hideJobDelete,
-                                  jobDeleteSingle   : params.jobDeleteSingle
-                          ]
-            )
+
+            def model=[
+                    scheduledExecution: scheduledExecution,
+                    hideJobDelete     : params.hideJobDelete,
+                    jobDeleteSingle   : params.jobDeleteSingle,
+            ]
+
+            if (frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                 frameworkService.authResourceForProject(params.project),
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT])) {
+                if(scmService.projectHasConfiguredExportPlugin(params.project)) {
+                    model.scmExportEnabled = true
+                    model.scmExportStatus = scmService.exportStatusForJobs([scheduledExecution])
+                    model.scmExportJobActions = scmService.exportPluginActionsForJob(authContext,scheduledExecution)
+                    model.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(params.project)?.get(scheduledExecution.extid)
+                }
+            }
+            if (frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                 frameworkService.authResourceForProject(params.project),
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT])) {
+                if(scmService.projectHasConfiguredPlugin('import',params.project)) {
+                    model.scmImportEnabled = true
+                    model.scmImportStatus = scmService.importStatusForJobs([scheduledExecution])
+                }
+            }
+            render(template: '/scheduledExecution/jobActionButtonMenuContent', model: model)
         }
     }
 
@@ -273,7 +294,12 @@ class ScheduledExecutionController  extends ControllerBase{
                 && scheduledExecution.serverNodeUUID != frameworkService.getServerUUID()) {
             remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
         }
-        def dataMap= [scheduledExecution: scheduledExecution, crontab: crontab, params: params,
+
+
+        def dataMap= [
+                scheduledExecution: scheduledExecution,
+                crontab: crontab,
+                params: params,
                 total: total,
                 nextExecution: scheduledExecutionService.nextExecutionTime(scheduledExecution),
                 remoteClusterNodeUUID: remoteClusterNodeUUID,
@@ -281,7 +307,26 @@ class ScheduledExecutionController  extends ControllerBase{
 				orchestratorPlugins: orchestratorPluginService.listOrchestratorPlugins(),
                 max: params.int('max') ?: 10,
                 offset: params.int('offset') ?: 0] + _prepareExecute(scheduledExecution, framework,authContext)
-                
+
+        //add scm export status
+        def projectResource = frameworkService.authResourceForProject(params.project)
+        if (frameworkService.authorizeApplicationResourceAny(authContext,
+                                                             projectResource,
+                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT])) {
+            if(scmService.projectHasConfiguredExportPlugin(params.project)){
+                dataMap.scmExportEnabled = true
+                dataMap.scmExportStatus = scmService.exportStatusForJobs([scheduledExecution])
+                dataMap.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(params.project)?.get(scheduledExecution.extid)
+            }
+        }
+        if (frameworkService.authorizeApplicationResourceAny(authContext,
+                                                             projectResource,
+                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT])) {
+            if(scmService.projectHasConfiguredPlugin('import',params.project)) {
+                dataMap.scmImportEnabled = true
+                dataMap.scmImportStatus = scmService.importStatusForJobs([scheduledExecution])
+            }
+        }
         withFormat{
             html{
                 dataMap
@@ -1082,8 +1127,7 @@ class ScheduledExecutionController  extends ControllerBase{
         if (params.project) {
             jobset*.project = params.project
         }
-        def Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_JOB,
                 [AuthConstants.ACTION_CREATE], jobset[0].project)) {
@@ -1095,8 +1139,7 @@ class ScheduledExecutionController  extends ControllerBase{
         jobset*.uuid = params.id
         def changeinfo = [user: session.user, method: 'apiJobCreateSingle']
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
-        def loadresults = scheduledExecutionService.loadJobs(jobset, 'create', 'preserve', session.user, roleList,
-                changeinfo, framework,authContext)
+        def loadresults = scheduledExecutionService.loadJobs(jobset, 'create', 'preserve', changeinfo, authContext)
 
         def jobs = loadresults.jobs
         def jobsi = loadresults.jobsi
@@ -1135,7 +1178,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         def Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE],
                 scheduledExecution.project)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
@@ -1168,8 +1211,7 @@ class ScheduledExecutionController  extends ControllerBase{
         jobset*.uuid=params.id
         def changeinfo = [user: session.user, method: 'apiJobUpdateSingle']
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
-        def loadresults = scheduledExecutionService.loadJobs(jobset, 'update', 'preserve', session.user, roleList,
-                changeinfo, framework,authContext)
+        def loadresults = scheduledExecutionService.loadJobs(jobset, 'update', 'preserve', changeinfo, authContext)
 
         def jobs = loadresults.jobs
         def jobsi = loadresults.jobsi
@@ -1345,7 +1387,6 @@ class ScheduledExecutionController  extends ControllerBase{
 
         //pass session-stored edit state in params map
         transferSessionEditState(session, params,params.id)
-        def roleList=request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         def found = scheduledExecutionService.getByIDorUUID( params.id )
         if(!found) {
             flash.message = "ScheduledExecution not found with id ${params.id}"
@@ -1353,7 +1394,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
             AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,found.project)
-        def result = scheduledExecutionService._doupdate(params,session.user, roleList, framework, authContext, changeinfo)
+        def result = scheduledExecutionService._doupdate(params, authContext, changeinfo)
         def scheduledExecution=result.scheduledExecution
         def success = result.success
         if(!scheduledExecution){
@@ -1527,7 +1568,7 @@ class ScheduledExecutionController  extends ControllerBase{
     }
     def create = {
 
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         //authorize
         if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext,
                 AuthConstants.RESOURCE_TYPE_JOB, [AuthConstants.ACTION_CREATE],
@@ -1536,7 +1577,6 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
 
-        def user = (session?.user) ? session.user : "anonymous"
         log.debug("ScheduledExecutionController: create : params: " + params)
         def scheduledExecution = new ScheduledExecution()
         scheduledExecution.loglevel = servletContext.getAttribute("LOGLEVEL_DEFAULT")?servletContext.getAttribute("LOGLEVEL_DEFAULT"):"WARN"
@@ -1546,8 +1586,8 @@ class ScheduledExecutionController  extends ControllerBase{
         def cal = java.util.Calendar.getInstance()
         scheduledExecution.minute = String.valueOf(cal.get(java.util.Calendar.MINUTE))
         scheduledExecution.hour = String.valueOf(cal.get(java.util.Calendar.HOUR_OF_DAY))
-        scheduledExecution.user = user
-        scheduledExecution.userRoleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
+        scheduledExecution.user = authContext.username
+        scheduledExecution.userRoleList = authContext.roles.join(",")
         if(params.project ){
 
             if(!frameworkService.existsFrameworkProject(params.project) ) {
@@ -1557,7 +1597,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         if(params.filterName){
             if (params.filterName) {
-                def User u = userService.findOrCreateUser(session.user)
+                def User u = userService.findOrCreateUser(authContext.username)
                 //load a named filter and create a query from it
                 if (u) {
                     NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
@@ -1592,7 +1632,6 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
-        def framework = frameworkService.getRundeckFramework()
         log.debug("ScheduledExecutionController: create : now returning model data to view...")
         return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],
                 nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes,
@@ -1654,9 +1693,8 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
     private def runAdhoc(ApiRunAdhocRequest runAdhocRequest){
-        Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,runAdhocRequest.project)
-        params["user"] = (session?.user) ? session.user : "anonymous"
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,runAdhocRequest.project)
+        params["user"] = authContext.username
         params.request = request
         params.jobName='Temporary_Job'
         params.groupPath='adhoc'
@@ -1696,7 +1734,7 @@ class ScheduledExecutionController  extends ControllerBase{
         params.nodeThreadcount= runAdhocRequest.nodeThreadcount?:1
         params.description = runAdhocRequest.description ?: ""
         if (params.filterName) {
-            def User u = userService.findOrCreateUser(session.user)
+            def User u = userService.findOrCreateUser(authContext.username)
             //load a named filter and create a query from it
             if (u) {
                 NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
@@ -1709,8 +1747,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         //pass session-stored edit state in params map
         transferSessionEditState(session, params,'_new')
-        String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-        def result= scheduledExecutionService._dovalidate(params,session.user,roleList,framework)
+        def result= scheduledExecutionService._dovalidate(params,authContext)
         def ScheduledExecution scheduledExecution=result.scheduledExecution
         def failed=result.failed
         if(!failed){
@@ -1761,14 +1798,12 @@ class ScheduledExecutionController  extends ControllerBase{
 
     def save = {
         withForm{
-        Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         def changeinfo=[user:session.user,change:'create',method:'save']
 
         //pass session-stored edit state in params map
         transferSessionEditState(session, params,'_new')
-        String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
-        def result = scheduledExecutionService._dosave(params,session.user,roleList,framework, authContext, changeinfo)
+        def result = scheduledExecutionService._dosave(params, authContext, changeinfo)
         def scheduledExecution = result.scheduledExecution
         if(result.success && scheduledExecution.id){
             clearEditSession()
@@ -1810,7 +1845,7 @@ class ScheduledExecutionController  extends ControllerBase{
         log.debug("ScheduledExecutionController: upload " + params)
         withForm{
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+            UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         
         def fileformat = params.fileformat ?: 'xml'
         def parseresult
@@ -1849,7 +1884,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def changeinfo = [user: session.user,method:'upload']
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         def loadresults = scheduledExecutionService.loadJobs(jobset, params.dupeOption, params.uuidOption,
-                session.user, roleList, changeinfo, framework,authContext)
+                 changeinfo,authContext)
 
 
         def jobs = loadresults.jobs
@@ -2500,14 +2535,13 @@ class ScheduledExecutionController  extends ControllerBase{
         def changeinfo = [user: session.user,method:'apiJobsImport']
         def Framework framework = frameworkService.getRundeckFramework()
         //nb: loadJobs will get correct project auth context
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         def option = params.uuidOption
         if (request.api_version < ApiRequestFilters.V9) {
             option = null
         }
-        def loadresults = scheduledExecutionService.loadJobs(jobset,params.dupeOption, option,session.user, roleList,
-                changeinfo,framework,authContext)
+        def loadresults = scheduledExecutionService.loadJobs(jobset,params.dupeOption, option, changeinfo, authContext)
 
         def jobs = loadresults.jobs
         def jobsi = loadresults.jobsi
