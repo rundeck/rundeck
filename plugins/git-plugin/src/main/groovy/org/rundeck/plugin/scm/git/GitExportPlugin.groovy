@@ -219,9 +219,13 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                     synchState.state = SynchState.REFRESH_NEEDED
                 }
             } else if (!remoteTrackingBranch()) {
-                //if no remote branch exists, i.e. bare repo, need to push
-                synchState.message = "Changes need to be pushed"
-                synchState.state = SynchState.EXPORT_NEEDED
+                //if any paths exist, need to export
+                def head=GitUtil.getHead(git.repository)
+                if(head) {
+                    //if no remote branch exists, i.e. bare repo, need to push local files
+                    synchState.message = "Changes need to be pushed"
+                    synchState.state = SynchState.EXPORT_NEEDED
+                }
             }
         }
 
