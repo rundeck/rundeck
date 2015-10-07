@@ -6,9 +6,9 @@ import spock.lang.Specification
  * Created by greg on 10/6/15.
  */
 class BasicSourceSpec extends Specification {
-    def "clear"() {
+    def "clear"(String password,_) {
         given:
-        def basic = new BasicSource(password)
+        def basic = new BasicSource((String)password)
         when:
         basic.clear()
         then:
@@ -19,6 +19,5 @@ class BasicSourceSpec extends Specification {
         password         | _
         null             | _
         "abc"            | _
-        'xyz'.getBytes() | _
     }
 }
