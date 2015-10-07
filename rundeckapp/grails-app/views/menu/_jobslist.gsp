@@ -124,6 +124,7 @@
                                           model="[description: scheduledExecution?.description,textCss:'text-muted',mode:'collapsed',rkey:g.rkey()]"/>
 
                             </td>
+                            <g:if test="${scheduledExecution.scheduled}">
                             <td class="scheduletime">
                                 <g:if test="${scheduledExecution.scheduled && nextExecution}">
                                     <i class="glyphicon glyphicon-time"></i>
@@ -158,6 +159,7 @@
                                     </span>
                                 </g:elseif>
                             </td>
+                            </g:if>
                         </tr>
                         </g:else>
                         <% j++ %>

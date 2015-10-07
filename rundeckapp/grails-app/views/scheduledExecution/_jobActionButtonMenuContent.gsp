@@ -86,7 +86,10 @@
     </g:if>
 </g:unless>
 
-<g:if test="${authEnableDisableSchedule}">
+<g:if test="${authEnableDisableSchedule && scheduledExecution.scheduled || authEnableDisableExecution}">
+    <li class="divider"></li>
+</g:if>
+<g:if test="${authEnableDisableSchedule && scheduledExecution.scheduled}">
     <li>
         <g:if test="${scheduledExecution.hasScheduleEnabled()}">
             <g:link controller="scheduledExecution"
