@@ -416,6 +416,9 @@ class ScmService {
             changeListener = { JobChangeEvent event, JobSerializer serializer ->
                 log.debug("job change event: " + event)
                 plugin.jobChanged(event, scmJobRef(event.jobReference, serializer))
+                if(event.eventType==JobChangeEvent.JobChangeEventType.DELETE){
+                    jobMetadataService.removeJobPluginMetaAll(event.jobReference.project,event.jobReference.id)
+                }
             } as JobChangeListener
         }
         if (integration == 'export') {
