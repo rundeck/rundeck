@@ -144,7 +144,7 @@ class BaseGitPlugin {
             //merge
             fetchFromRemote(context)
 
-            def strategy = MergeStrategy.get(resolutionStrategy)
+            def strategy = MergeStrategy.get(mergeResolutionStrategy)
             def mergebuild = git.merge().setStrategy(strategy)
             def commit = git.repository.resolve("refs/remotes/${REMOTE_NAME}/${branch}")
 
