@@ -214,15 +214,17 @@
 </g:if>
 
 <g:if test="${scmImportEnabled && scmImportStatus?.get(scheduledExecution.extid)}">
-    <g:if test="${authRead}">
-        <li class="divider"></li>
-    </g:if>
 
-    <li class="dropdown-header"><g:message code="scm.import.plugin" /></li>
 
     <g:set var="jobstatus" value="${scmImportStatus?.get(scheduledExecution.extid)}"/>
     <g:set var="importStateClean" value="${jobstatus?.synchState?.toString()=='CLEAN'}"/>
 
+    <g:set var="importStateUnknown" value="${'UNKNOWN'==jobstatus?.synchState?.toString()}"/>
+        <g:if test="${authRead}">
+            <li class="divider"></li>
+        </g:if>
+        <li class="dropdown-header"><g:message code="scm.import.plugin" /></li>
+    <g:unless test="${importStateUnknown}">
     <li>
         <g:link controller="scm"
                 params="[project: scheduledExecution.project,jobId:scheduledExecution.extid,integration: 'import']"
@@ -242,4 +244,16 @@
             </g:else>
         </g:link>
     </li>
+    </g:unless>
+    <g:if test="${importStateUnknown}">
+        <li class="dropdown-header">
+            <g:render template="/scm/statusBadge"
+                      model="[importStatus: jobstatus?.synchState?.toString(),
+                              text: '',
+                              notext: false,
+                              integration: 'import',
+                              exportCommit: jobstatus?.commit]"
+            />
+        </li>
+    </g:if>
 </g:if>
