@@ -5,7 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 class PluginMeta {
 
     static constraints = {
-        jsonData(nullable: true, blank:true, maxSize: 4096)
+        jsonData(nullable: true, blank: true, maxSize: 8192)
+    }
+    static mapping = {
+        key column: 'data_key'
     }
     Long id
     String key
@@ -32,8 +35,9 @@ class PluginMeta {
      * store data under a key
      */
     public void storePluginData(String key, Object obj) {
-        setPluginData(getPluginData().put(key,obj))
+        setPluginData(getPluginData().put(key, obj))
     }
+
     public void setPluginData(Map obj) {
         //serialize json and store into field
         if (null != obj) {
