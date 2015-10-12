@@ -30,7 +30,7 @@ class GitExportPluginFactorySpec extends Specification {
         expect:
         desc.title == 'Git Export'
         desc.name == 'git-export'
-        desc.properties.size() == 8
+        desc.properties.size() == 9
     }
 
     def "base description properties"() {
@@ -43,6 +43,7 @@ class GitExportPluginFactorySpec extends Specification {
                 'pathTemplate',
                 'url',
                 'branch',
+                'StrictHostKeyChecking',
                 'sshPrivateKeyPath',
                 'gitPasswordPath',
                 'committerName',
@@ -61,6 +62,7 @@ class GitExportPluginFactorySpec extends Specification {
                 'pathTemplate',
                 'url',
                 'branch',
+                'StrictHostKeyChecking',
                 'sshPrivateKeyPath',
                 'gitPasswordPath',
                 'committerName',
@@ -83,6 +85,7 @@ class GitExportPluginFactorySpec extends Specification {
                 'pathTemplate',
                 'url',
                 'branch',
+                'StrictHostKeyChecking',
                 'sshPrivateKeyPath',
                 'gitPasswordPath',
                 'committerName',
