@@ -1222,13 +1222,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         Map result
         try {
             if (e.dateCompleted == null && e.dateStarted != null) {
-                throw new Exception("The execution is currently running")
+                return [error: 'running', message: "Failed to delete execution {{Execution ${e.id}}}: The execution is currently running", success: false]
             }
                 //delete all reports
             ExecReport.findAllByJcExecId(e.id.toString()).each { rpt ->
                 rpt.delete(flush: true)
             }
-            def files = []
+            List<File> files = []
             def execs = []
             //aggregate all files to delete
             execs << e
@@ -1249,8 +1249,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //delete all files
             def deletedfiles = 0
             files.each { file ->
-                if (null != file && file.exists() && !FileUtils.deleteQuietly(file)) {
-                    log.warn("Failed to delete file while deleting project ${project.name}: ${file.absolutePath}")
+                if (!FileUtils.deleteQuietly(file)) {
+                    log.warn("Failed to delete file while deleting execution ${e.id}: ${file.absolutePath}")
                 } else {
                     deletedfiles++
                 }
@@ -1259,7 +1259,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             result = [success: true]
         } catch (Exception ex) {
             log.error("Failed to delete execution ${e.id}", ex)
-            result = [error: "Failed to delete execution {{Execution ${e.id}}}: ${ex.message}", success: false]
+            result = [error:'failure',message: "Failed to delete execution {{Execution ${e.id}}}: ${ex.message}", success: false]
         }
         return result
     }

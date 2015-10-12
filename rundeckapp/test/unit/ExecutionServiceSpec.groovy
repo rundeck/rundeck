@@ -1,7 +1,10 @@
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.CommandExec
+import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.Option
 import rundeck.ScheduledExecution
@@ -10,6 +13,7 @@ import rundeck.services.ExecutionService
 import rundeck.services.ExecutionServiceException
 import rundeck.services.FrameworkService
 import rundeck.services.JobStateService
+import rundeck.services.LogFileStorageService
 import rundeck.services.ReportService
 import rundeck.services.StorageService
 import spock.lang.Specification
@@ -19,7 +23,7 @@ import spock.lang.Unroll
  * Created by greg on 2/17/15.
  */
 @TestFor(ExecutionService)
-@Mock([Execution,ScheduledExecution,Workflow,CommandExec,Option])
+@Mock([Execution,ScheduledExecution,Workflow,CommandExec,Option,ExecReport])
 class ExecutionServiceSpec extends Specification {
 
     void "retry execution otherwise running"() {
@@ -241,5 +245,132 @@ class ExecutionServiceSpec extends Specification {
         newCtxt.dataContext['secureOption'] == ['test2': 'zimbo']
         newCtxt.dataContext['option'] == ['test2': 'zimbo']
         newCtxt.privateDataContext['option'] == ['test1': 'phoenix']
+    }
+
+    def "delete execution unauthorized"(){
+        given:
+
+        service.frameworkService=Mock(FrameworkService)
+        def auth=Mock(AuthContext)
+        def execution = new Execution()
+
+        when:
+        def result=service.deleteExecution(execution,auth,'bob')
+
+        then:
+        1 * service.frameworkService.authResourceForProject(_)
+        1 * service.frameworkService.authorizeApplicationResourceAny(
+                auth,
+                _,
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]
+        ) >> false
+        !result.success
+        result.error=='unauthorized'
+
+    }
+    def "delete execution running"(){
+        given:
+
+        service.frameworkService=Mock(FrameworkService)
+        def auth=Mock(AuthContext)
+        def execution = new Execution()
+        execution.dateStarted = new Date()
+
+        when:
+        def result=service.deleteExecution(execution,auth,'bob')
+
+        then:
+        1 * service.frameworkService.authResourceForProject(_)
+        1 * service.frameworkService.authorizeApplicationResourceAny(
+                auth,
+                _,
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]
+        ) >> true
+
+        !result.success
+        result.error=='running'
+    }
+    def "delete execution files"(){
+        given:
+
+        service.frameworkService=Mock(FrameworkService)
+        def auth=Mock(AuthContext)
+        def execution = new Execution(
+                user:'userB',
+                project: 'AProject',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+        )
+        execution.dateStarted = new Date()
+        execution.dateCompleted = new Date()
+        execution.status='succeeded'
+
+        def file1 = File.createTempFile("ExecutionServiceSpec-test", "file")
+        file1.deleteOnExit()
+        def file2 = File.createTempFile("ExecutionServiceSpec-test", "file")
+        file2.deleteOnExit()
+
+
+        service.logFileStorageService=Mock(LogFileStorageService){
+            1 * getFileForExecutionFiletype(execution, 'rdlog', true) >> file1
+            1 * getFileForExecutionFiletype(execution, 'state.json', true) >> file2
+            0 * _(*_)
+        }
+
+
+        when:
+        def result=service.deleteExecution(execution,auth,'bob')
+
+        then:
+        1 * service.frameworkService.authResourceForProject(_)
+        1 * service.frameworkService.authorizeApplicationResourceAny(
+                auth,
+                _,
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]
+        ) >> true
+
+        result.success
+
+        !file1.exists()
+        !file2.exists()
+    }
+    def "delete execution files failure"(){
+        given:
+
+        service.frameworkService=Mock(FrameworkService)
+        def auth=Mock(AuthContext)
+        def execution = new Execution(
+                user:'userB',
+                project: 'AProject',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+        )
+        execution.dateStarted = new Date()
+        execution.dateCompleted = new Date()
+        execution.status='succeeded'
+
+        def file1 = Mock(File){
+            exists()>>true
+            delete()>>false
+            isDirectory() >> false
+        }
+
+        service.logFileStorageService=Mock(LogFileStorageService){
+            1 * getFileForExecutionFiletype(execution, 'rdlog', true) >> file1
+            1 * getFileForExecutionFiletype(execution, 'state.json', true)
+            0 * _(*_)
+        }
+
+
+        when:
+        def result=service.deleteExecution(execution,auth,'bob')
+
+        then:
+        1 * service.frameworkService.authResourceForProject(_)
+        1 * service.frameworkService.authorizeApplicationResourceAny(
+                auth,
+                _,
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]
+        ) >> true
+
+        result.success
     }
 }
