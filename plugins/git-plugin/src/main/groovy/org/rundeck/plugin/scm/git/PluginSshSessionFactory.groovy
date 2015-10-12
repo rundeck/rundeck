@@ -15,6 +15,7 @@ import org.eclipse.jgit.util.FS
  */
 class PluginSshSessionFactory extends JschConfigSessionFactory implements TransportConfigCallback {
     private byte[] privateKey
+    Map<String, String> sshConfig
 
     PluginSshSessionFactory(final byte[] privateKey) {
         this.privateKey = privateKey
@@ -22,7 +23,11 @@ class PluginSshSessionFactory extends JschConfigSessionFactory implements Transp
 
     @Override
     protected void configure(final OpenSshConfig.Host hc, final Session session) {
-
+        if (sshConfig) {
+            sshConfig.each { k, v ->
+                session.setConfig(k, v)
+            }
+        }
     }
 
     @Override
@@ -30,6 +35,7 @@ class PluginSshSessionFactory extends JschConfigSessionFactory implements Transp
         JSch jsch = super.createDefaultJSch(fs)
         jsch.removeAllIdentity()
         jsch.addIdentity("private", privateKey, null, null)
+        //todo: explicitly set known host keys?
         return jsch
     }
 
