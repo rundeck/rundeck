@@ -42,12 +42,14 @@ class BaseGitPlugin {
         this.input = input
         this.project = project
     }
-    String getUrl(){
+
+    String getUrl() {
         return input.url
     }
-    Map<String,String> getSshConfig(){
-        def config=[:]
-        
+
+    Map<String, String> getSshConfig() {
+        def config = [:]
+
         if (input['StrictHostKeyChecking'] in ['yes', 'no', 'ask']) {
             config['StrictHostKeyChecking'] = input['StrictHostKeyChecking']
         }
@@ -85,7 +87,7 @@ class BaseGitPlugin {
         def agit = git1 ?: git
         def fetchCommand = agit.fetch()
         fetchCommand.setRemote(REMOTE_NAME)
-        setupTransportAuthentication(sshConfig,context, fetchCommand)
+        setupTransportAuthentication(sshConfig, context, fetchCommand)
         def fetchResult = fetchCommand.call()
 
         def update = fetchResult.getTrackingRefUpdate("refs/remotes/${REMOTE_NAME}/${this.branch}")
@@ -350,7 +352,6 @@ class BaseGitPlugin {
                 git = agit
                 repo = arepo
             }
-
         } else {
             performClone(base, url, context)
         }
@@ -393,14 +394,14 @@ class BaseGitPlugin {
      * @param command
      */
     void setupTransportAuthentication(
-            Map<String,String> sshConfig,
+            Map<String, String> sshConfig,
             ScmOperationContext context,
             TransportCommand command,
-            String url=null
+            String url = null
     )
             throws ScmPluginException
     {
-        if(!url){
+        if (!url) {
             url = command.repository.config.getString('remote', REMOTE_NAME, 'url')
         }
 
