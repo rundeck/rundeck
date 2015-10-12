@@ -93,7 +93,7 @@ Pushing to remote branch: `${plugin.branch}`"""
         def pushb = plugin.git.push()
         pushb.setRemote(BaseGitPlugin.REMOTE_NAME)
         pushb.add(plugin.branch)
-        plugin.setupTransportAuthentication(plugin.input.url, context, pushb)
+        plugin.setupTransportAuthentication(plugin.sshConfig, context, pushb)
 
         if (tagref) {
             pushb.add(tagref)
