@@ -344,12 +344,7 @@ class BaseGitPlugin {
                     fetchFromRemote(context, agit)
                 } catch (Exception e) {
                     logger.debug("Failed fetch from the repository: ${e.message}", e)
-                    def msg = e.message
-                    def cause = e.cause
-                    while (cause) {
-                        msg += ": " + cause.message
-                        cause = cause.cause
-                    }
+                    String msg = collectCauseMessages(e)
                     throw new ScmPluginException("Failed fetch from the repository: ${msg}", e)
                 }
                 git = agit
@@ -359,6 +354,18 @@ class BaseGitPlugin {
         } else {
             performClone(base, url, context)
         }
+    }
+
+    private static String collectCauseMessages(Exception e) {
+        List<String> msgs = [e.message]
+        def cause = e.cause
+        while (cause) {
+            if (cause.message != msgs.last() && !msgs.last().endsWith(cause.message)) {
+                msgs << cause.message
+            }
+            cause = cause.cause
+        }
+        return msgs.join("; ")
     }
 
     private void performClone(File base, String url, ScmOperationContext context) {
