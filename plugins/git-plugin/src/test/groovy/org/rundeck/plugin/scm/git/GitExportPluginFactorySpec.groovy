@@ -30,7 +30,7 @@ class GitExportPluginFactorySpec extends Specification {
         expect:
         desc.title == 'Git Export'
         desc.name == 'git-export'
-        desc.properties.size() == 9
+        desc.properties.size() == 10
     }
 
     def "base description properties"() {
@@ -39,17 +39,18 @@ class GitExportPluginFactorySpec extends Specification {
         def desc = factory.description
 
         expect:
-        desc.properties*.name == [
+        desc.properties*.name as Set == [
+                'dir',
                 'pathTemplate',
                 'url',
                 'branch',
-                'StrictHostKeyChecking',
+                'strictHostKeyChecking',
                 'sshPrivateKeyPath',
                 'gitPasswordPath',
+                'format',
                 'committerName',
                 'committerEmail',
-                'format'
-        ]
+        ] as Set
     }
 
     def "setup properties without basedir"() {
@@ -58,17 +59,21 @@ class GitExportPluginFactorySpec extends Specification {
         def properties = factory.getSetupProperties()
 
         expect:
-        properties*.name == [
+        properties*.name as Set == [
+                'dir',
                 'pathTemplate',
                 'url',
                 'branch',
-                'StrictHostKeyChecking',
+                'strictHostKeyChecking',
                 'sshPrivateKeyPath',
                 'gitPasswordPath',
+                'format',
                 'committerName',
                 'committerEmail',
-                'format'
-        ]
+        ] as Set
+        def dirprop = properties.find { it.name == 'dir' }
+        dirprop.defaultValue == null
+
     }
 
     def "setup properties with basedir"() {
@@ -80,48 +85,50 @@ class GitExportPluginFactorySpec extends Specification {
         def properties = factory.getSetupPropertiesForBasedir(tempdir)
 
         expect:
-        properties*.name == [
+        properties*.name  as Set == [
                 'dir',
                 'pathTemplate',
                 'url',
                 'branch',
-                'StrictHostKeyChecking',
+                'strictHostKeyChecking',
                 'sshPrivateKeyPath',
                 'gitPasswordPath',
+                'format',
                 'committerName',
                 'committerEmail',
-                'format'
-        ]
+        ] as Set
         properties.find { it.name == 'dir' }.defaultValue == new File(tempdir.absolutePath, 'scm').absolutePath
     }
 
-    def "create plugin"(){
+    def "create plugin"() {
         given:
 
         def factory = new GitExportPluginFactory()
         def gitdir = new File(tempdir, 'scm')
         def origindir = new File(tempdir, 'origin')
-        def config = [
-                dir           : gitdir.absolutePath,
-                pathTemplate  : '${job.group}${job.name}-${job.id}.xml',
-                branch        : 'master',
-                committerName : 'test user',
-                committerEmail: 'test@example.com',
-                url           : origindir
+        Map<String,String> config = [
+                dir                  : gitdir.absolutePath,
+                pathTemplate         : '${job.group}${job.name}-${job.id}.xml',
+                branch               : 'master',
+                committerName        : 'test user',
+                committerEmail       : 'test@example.com',
+                strictHostKeyChecking: 'yes',
+                format               : 'xml',
+                url                  : origindir.absolutePath
         ]
 
         //create a git dir
         def git = GitExportPluginSpec.createGit(origindir)
 
         git.close()
-        def ctxt = Mock(ScmOperationContext){
+        def ctxt = Mock(ScmOperationContext) {
 
         }
         when:
-        def plugin = factory.createPlugin(ctxt,config)
+        def plugin = factory.createPlugin(ctxt, config)
 
         then:
-        null!=plugin
+        null != plugin
 
         gitdir.isDirectory()
         new File(gitdir, '.git').isDirectory()

@@ -7,18 +7,14 @@ import com.dtolabs.rundeck.core.plugins.views.ActionBuilder
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
-import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.lib.BranchTrackingStatus
 import org.eclipse.jgit.revwalk.RevCommit
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.rundeck.plugin.scm.git.config.Export
 import org.rundeck.plugin.scm.git.exp.actions.CommitJobsAction
-import org.rundeck.plugin.scm.git.exp.actions.FetchAction
 import org.rundeck.plugin.scm.git.exp.actions.PushAction
 import org.rundeck.plugin.scm.git.exp.actions.SynchAction
 import org.rundeck.plugin.scm.git.exp.actions.TagAction
-
-import java.util.regex.Pattern
 
 /**
  * Git export plugin
@@ -39,13 +35,15 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     String committerName;
     String committerEmail;
     Map<String, GitExportAction> actions = [:]
+    Export config
 
-    GitExportPlugin(final Map<String, String> input, final String project) {
-        super(input, project)
+    GitExportPlugin(Export config) {
+        super(config)
+        this.config = config
     }
 
     void initialize(ScmOperationContext context) {
-        setup(context, input)
+        setup(context, config)
         actions = [
                 (JOB_COMMIT_ACTION_ID)    : new CommitJobsAction(
                         JOB_COMMIT_ACTION_ID,
@@ -76,40 +74,25 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         ]
     }
 
-    void setup(ScmOperationContext context, final Map<String, ?> input) throws ScmPluginException {
+    void setup(ScmOperationContext context, Export config) throws ScmPluginException {
 
         if (inited) {
             log.debug("already inited, not doing setup")
             return
         }
 
-        GitExportPluginFactory.requiredProperties.each { key ->
-            //verify input
-            if (!input[key]) {
-                throw new IllegalArgumentException("${key} cannot be null")
-            }
-        }
-
-        format = input.format ?: 'xml'
+        format = config.format ?: 'xml'
 
         if (!(format in ['xml', 'yaml'])) {
             throw new IllegalArgumentException("format cannot be ${format}, must be one of: xml,yaml")
         }
 
-        def dir = input.get("dir").toString()
-        def branch = input.get("branch").toString()
-        def pathTemplate = input.pathTemplate.toString()
-        committerName = input.committerName.toString()
-        committerEmail = input.committerEmail.toString()
-        def url = input.get("url").toString()
-
-        File base = new File(dir)
-
-        mapper = new TemplateJobFileMapper(pathTemplate, base)
-
-        this.branch = branch
-
-        cloneOrCreate(context, base, url)
+        branch = config.branch
+        committerName = config.committerName
+        committerEmail = config.committerEmail
+        File base = new File(config.dir)
+        mapper = new TemplateJobFileMapper(config.pathTemplate, base)
+        cloneOrCreate(context, base, config.url)
 
         workingDir = base
         inited = true

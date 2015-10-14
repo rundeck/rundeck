@@ -9,13 +9,18 @@ import org.eclipse.jgit.api.PullResult
 import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.api.TransportCommand
 import org.eclipse.jgit.diff.RawTextComparator
-import org.eclipse.jgit.lib.*
+import org.eclipse.jgit.lib.BranchConfig
+import org.eclipse.jgit.lib.ConfigConstants
+import org.eclipse.jgit.lib.Constants
+import org.eclipse.jgit.lib.ObjectId
+import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.eclipse.jgit.util.FileUtils
+import org.rundeck.plugin.scm.git.config.Common
 import org.rundeck.storage.api.StorageException
 
 import java.util.regex.Matcher
@@ -25,33 +30,27 @@ import java.util.regex.Pattern
  * Common features of the import and export plugins
  */
 class BaseGitPlugin {
-    public static final String GIT_PASSWORD_PATH = "gitPasswordPath"
-    public static final String SSH_PRIVATE_KEY_PATH = "sshPrivateKeyPath"
     public static final String REMOTE_NAME = "origin"
     Git git
     Repository repo
     File workingDir
     String branch
     Map<String, String> input
-    String project
+    Common commonConfig
     JobFileMapper mapper
     RawTextComparator COMP = RawTextComparator.DEFAULT
     Map<String, Map> jobStateMap = Collections.synchronizedMap([:])
 
-    BaseGitPlugin(final Map<String, String> input, final String project) {
-        this.input = input
-        this.project = project
-    }
-
-    String getUrl() {
-        return input.url
+    BaseGitPlugin(Common commonConfig) {
+        this.input = commonConfig.rawInput
+        this.commonConfig=commonConfig
     }
 
     Map<String, String> getSshConfig() {
         def config = [:]
 
-        if (input['StrictHostKeyChecking'] in ['yes', 'no', 'ask']) {
-            config['StrictHostKeyChecking'] = input['StrictHostKeyChecking']
+        if (commonConfig.strictHostKeyChecking in ['yes', 'no', 'ask']) {
+            config['StrictHostKeyChecking'] = commonConfig.strictHostKeyChecking
         }
         config
     }
@@ -407,18 +406,18 @@ class BaseGitPlugin {
 
         URIish u = new URIish(url);
         logger.debug("transport url ${u}, scheme ${u.scheme}, user ${u.user}")
-        if ((u.scheme == null || u.scheme == 'ssh') && u.user && input[SSH_PRIVATE_KEY_PATH]) {
-            logger.debug("using ssh private key path ${input[SSH_PRIVATE_KEY_PATH]}")
+        if ((u.scheme == null || u.scheme == 'ssh') && u.user && commonConfig.sshPrivateKeyPath) {
+            logger.debug("using ssh private key path ${commonConfig.sshPrivateKeyPath}")
             //setup ssh key authentication
-            def expandedPath = expandContextVarsInPath(context, input[SSH_PRIVATE_KEY_PATH])
+            def expandedPath = expandContextVarsInPath(context, commonConfig.sshPrivateKeyPath)
             def keyData = loadStoragePathData(context, expandedPath)
             def factory = new PluginSshSessionFactory(keyData)
             factory.sshConfig = sshConfig
             command.setTransportConfigCallback(factory)
-        } else if (u.user && input[GIT_PASSWORD_PATH]) {
+        } else if (u.user && commonConfig.gitPasswordPath) {
             //setup password authentication
-            logger.debug("using password path ${input[GIT_PASSWORD_PATH]}")
-            def expandedPath = expandContextVarsInPath(context, input[GIT_PASSWORD_PATH])
+            logger.debug("using password path ${commonConfig.gitPasswordPath}")
+            def expandedPath = expandContextVarsInPath(context, commonConfig.gitPasswordPath)
 
             def data = loadStoragePathData(context, expandedPath)
 

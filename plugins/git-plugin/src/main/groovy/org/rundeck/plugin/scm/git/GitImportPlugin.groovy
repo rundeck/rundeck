@@ -11,6 +11,7 @@ import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.treewalk.filter.PathFilterGroup
+import org.rundeck.plugin.scm.git.config.Import
 import org.rundeck.plugin.scm.git.imp.actions.ImportJobs
 import org.rundeck.plugin.scm.git.imp.actions.PullAction
 import org.rundeck.plugin.scm.git.imp.actions.SetupTracking
@@ -28,6 +29,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     boolean useTrackingRegex = false
     String trackingRegex
     List<String> trackedItems = null
+    Import config
     /**
      * path -> commitId, tracks which commits were imported, if path has a newer commit ID, then
      * it needs to be imported.
@@ -36,8 +38,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     protected Map<String, GitImportAction> actions = [:]
 
-    GitImportPlugin(final Map<String, String> input, List<String> trackedItems, final String project) {
-        super(input, project)
+    GitImportPlugin(final Import config, List<String> trackedItems) {
+        super(config)
+        this.config=config
         this.trackedItems = trackedItems
     }
 
@@ -54,7 +57,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
     void initialize(final ScmOperationContext context) {
-        setup(context, input)
+        setup(context)
         actions = [
                 (ACTION_INITIALIZE_TRACKING): new SetupTracking(
                         ACTION_INITIALIZE_TRACKING,
@@ -80,37 +83,21 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         ]
     }
 
-    void setup(final ScmOperationContext context, final Map<String, String> input) throws ScmPluginException {
+    void setup(final ScmOperationContext context) throws ScmPluginException {
 
         if (inited) {
             log.debug("already inited, not doing setup")
             return
         }
 
-        GitImportPluginFactory.requiredProperties.each { key ->
-            //verify input
-            if (!input[key]) {
-                throw new IllegalArgumentException("${key} cannot be null")
-            }
-        }
-
-
-        def dir = input.get("dir").toString()
-        def branch = input.get("branch").toString()
-        def pathTemplate = input.pathTemplate.toString()
-        def url = input.get("url").toString()
-
-        File base = new File(dir)
-
-        mapper = new TemplateJobFileMapper(pathTemplate, base)
-
-        this.branch = branch
-
-        cloneOrCreate(context, base, url)
+        File base = new File(config.dir)
+        mapper = new TemplateJobFileMapper(config.pathTemplate, base)
+        this.branch = config.branch
+        cloneOrCreate(context, base, config.url)
 
         workingDir = base
 
-        SetupTracking.setupWithInput(this, this.trackedItems, input)
+        SetupTracking.setupWithInput(this, this.trackedItems, config.rawInput)
 
         inited = true
     }
