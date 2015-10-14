@@ -49,7 +49,7 @@ class BaseGitPlugin {
     Map<String, String> getSshConfig() {
         def config = [:]
 
-        if (commonConfig.strictHostKeyChecking in ['yes', 'no', 'ask']) {
+        if (commonConfig.strictHostKeyChecking in ['yes', 'no']) {
             config['StrictHostKeyChecking'] = commonConfig.strictHostKeyChecking
         }
         config
