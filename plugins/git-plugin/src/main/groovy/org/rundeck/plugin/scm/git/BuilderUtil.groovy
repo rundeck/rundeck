@@ -35,4 +35,11 @@ class BuilderUtil {
         clos.call()
         return builder.build()
     }
+    static Property property(Property orig,@DelegatesTo(PropertyBuilder) Closure clos) {
+        def builder = PropertyBuilder.builder(orig)
+        clos.delegate = builder
+        clos.resolveStrategy = Closure.DELEGATE_FIRST
+        clos.call()
+        return builder.build()
+    }
 }
