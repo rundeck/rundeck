@@ -317,7 +317,7 @@ public class DescriptionBuilder {
             throw new IllegalStateException("name is not set");
         }
         final String title1 = null != title ? title : name;
-        final List<Property> properties1 = Collections.unmodifiableList(properties);
+        final List<Property> properties1 = buildProperties();
         final Map<String, String> mapping1 = Collections.unmodifiableMap(mapping);
         final Map<String, String> mapping2 = Collections.unmodifiableMap(fwkmapping);
         return new Description() {
@@ -363,6 +363,13 @@ public class DescriptionBuilder {
                         "}";
             }
         };
+    }
+
+    /**
+     * @return the list of properties
+     */
+    public List<Property> buildProperties() {
+        return Collections.unmodifiableList(properties);
     }
 
     /**
