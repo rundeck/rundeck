@@ -200,6 +200,7 @@
                     >
             <g:render template="/scm/statusBadge"
                       model="[exportStatus: jobstatus?.synchState?.toString(),
+                              importStatus: null,
                               text  : '',
                               notext: true,
                               integration: 'export',
@@ -252,10 +253,11 @@
         <li class="dropdown-header">
             <g:render template="/scm/statusBadge"
                       model="[importStatus: jobstatus?.synchState?.toString(),
+                              exportStatus:null,
                               text: '',
                               notext: false,
                               integration: 'import',
-                              exportCommit: jobstatus?.commit]"
+                              importCommit: jobstatus?.commit]"
             />
         </li>
     </g:if>
