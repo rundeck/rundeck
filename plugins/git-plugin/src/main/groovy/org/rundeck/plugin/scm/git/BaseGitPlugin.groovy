@@ -42,6 +42,17 @@ class BaseGitPlugin {
         this.input = input
         this.project = project
     }
+    String getUrl(){
+        return input.url
+    }
+    Map<String,String> getSshConfig(){
+        def config=[:]
+        
+        if (input['StrictHostKeyChecking'] in ['yes', 'no', 'ask']) {
+            config['StrictHostKeyChecking'] = input['StrictHostKeyChecking']
+        }
+        config
+    }
 
     def serialize(final JobExportReference job, format) {
         File outfile = mapper.fileForJob(job)
@@ -74,7 +85,7 @@ class BaseGitPlugin {
         def agit = git1 ?: git
         def fetchCommand = agit.fetch()
         fetchCommand.setRemote(REMOTE_NAME)
-        setupTransportAuthentication(input["url"], context, fetchCommand)
+        setupTransportAuthentication(sshConfig,context, fetchCommand)
         def fetchResult = fetchCommand.call()
 
         def update = fetchResult.getTrackingRefUpdate("refs/remotes/${REMOTE_NAME}/${this.branch}")
@@ -119,7 +130,7 @@ class BaseGitPlugin {
 
     PullResult gitPull(ScmOperationContext context, Git git1 = null) {
         def pullCommand = (git1 ?: git).pull().setRemote(REMOTE_NAME).setRemoteBranchName(branch)
-        setupTransportAuthentication(input.url, context, pullCommand)
+        setupTransportAuthentication(sshConfig, context, pullCommand)
         pullCommand.call()
     }
 
@@ -132,7 +143,7 @@ class BaseGitPlugin {
         if (rebase) {
             def pullCommand = git.pull().setRemote(REMOTE_NAME).setRemoteBranchName(branch)
             pullCommand.setRebase(true)
-            setupTransportAuthentication(this.input.url, context, pullCommand)
+            setupTransportAuthentication(sshConfig, context, pullCommand)
             def pullResult = pullCommand.call()
 
             def result = new ScmExportResultImpl()
@@ -357,7 +368,7 @@ class BaseGitPlugin {
                 setRemote(REMOTE_NAME).
                 setDirectory(base).
                 setURI(url)
-        setupTransportAuthentication(url, context, cloneCommand)
+        setupTransportAuthentication(sshConfig, context, cloneCommand, url)
         try {
             git = cloneCommand.call()
         } catch (Exception e) {
@@ -375,12 +386,16 @@ class BaseGitPlugin {
      * @param command
      */
     void setupTransportAuthentication(
-            String url,
+            Map<String,String> sshConfig,
             ScmOperationContext context,
-            TransportCommand command
+            TransportCommand command,
+            String url=null
     )
             throws ScmPluginException
     {
+        if(!url){
+            url = command.repository.config.getString('remote', REMOTE_NAME, 'url')
+        }
 
         URIish u = new URIish(url);
         logger.debug("transport url ${u}, scheme ${u.scheme}, user ${u.user}")
@@ -390,6 +405,7 @@ class BaseGitPlugin {
             def expandedPath = expandContextVarsInPath(context, input[SSH_PRIVATE_KEY_PATH])
             def keyData = loadStoragePathData(context, expandedPath)
             def factory = new PluginSshSessionFactory(keyData)
+            factory.sshConfig = sshConfig
             command.setTransportConfigCallback(factory)
         } else if (u.user && input[GIT_PASSWORD_PATH]) {
             //setup password authentication

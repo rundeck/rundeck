@@ -100,6 +100,16 @@ Some examples:
                 },
 
                 property {
+                    select "StrictHostKeyChecking"
+                    title "SSH: Strict Host Key Checking"
+                    description "Use strict host key checking.\n\nIf `yes`, require remote host SSH key is defined in the `~/.ssh/known_hosts` file, otherwise do not verify."
+                    required true
+                    values 'yes','no'
+                    defaultValue 'yes'
+                    build()
+                },
+
+                property {
                     string BaseGitPlugin.SSH_PRIVATE_KEY_PATH
                     title "SSH Key Storage Path"
                     description '''Path can include variable references
