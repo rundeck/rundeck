@@ -24,7 +24,10 @@
 */
 package com.dtolabs.rundeck.core.plugins.configuration;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
@@ -93,20 +96,58 @@ public class PluginAdapterUtility {
         }
 
         if (includeAnnotatedFieldProperties) {
-            for (final Field field : collectFields(object)) {
-                final PluginProperty annotation = field.getAnnotation(PluginProperty.class);
-                if (null == annotation) {
-                    continue;
-                }
-                final Property pbuild = propertyFromField(field, annotation);
-                if (null == pbuild) {
-                    continue;
-                }
-                builder.property(pbuild);
-            }
+            buildFieldProperties(object, builder);
         }
         builder.collaborate(object);
         return builder.build();
+    }
+
+    /**
+     * Return the list of properties by introspecting the annotated fields for {@link PluginProperty}
+     * @param object object
+     * @return list of properties, may be empty
+     */
+    public static List<Property> buildFieldProperties(final Object object) {
+        return buildFieldProperties(object.getClass());
+    }
+
+    /**
+     * Return the list of properties by introspecting the annotated fields for {@link PluginProperty}
+     * @param aClass class
+     * @return list of properties, may be empty
+     */
+    public static List<Property> buildFieldProperties(final Class<?> aClass) {
+        DescriptionBuilder builder = DescriptionBuilder.builder();
+        buildFieldProperties(aClass, builder);
+        return builder.buildProperties();
+    }
+
+    /**
+     * Add properties based on introspection of the object
+     * @param object object
+     * @param builder builder
+     */
+    public static void buildFieldProperties(final Object object, final DescriptionBuilder builder) {
+        buildFieldProperties(object.getClass(), builder);
+    }
+
+    /**
+     * Add properties based on introspection of a class
+     * @param aClass class
+     * @param builder builder
+     */
+    public static void buildFieldProperties(final Class<?> aClass, final DescriptionBuilder builder) {
+        for (final Field field : collectClassFields(aClass)) {
+            final PluginProperty annotation = field.getAnnotation(PluginProperty.class);
+            if (null == annotation) {
+                continue;
+            }
+            final Property pbuild = propertyFromField(field, annotation);
+            if (null == pbuild) {
+                continue;
+            }
+            builder.property(pbuild);
+        }
     }
 
     private static Field fieldForPropertyName(final String name, final Object object) {
@@ -125,8 +166,12 @@ public class PluginAdapterUtility {
     }
 
     private static Collection<Field> collectFields(final Object object){
+        return collectClassFields(object.getClass());
+    }
+
+    private static Collection<Field> collectClassFields(final Class<?> aClass) {
         ArrayList<Field> fields = new ArrayList<Field>();
-        Class<?> clazz = object.getClass();
+        Class<?> clazz = aClass;
         do{
           fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
           clazz = clazz.getSuperclass();
@@ -164,7 +209,7 @@ public class PluginAdapterUtility {
                 pbuild.type(selectAnnotation.freeSelect() ? Property.Type.FreeSelect : Property.Type.Select);
                 pbuild.values(selectAnnotation.values());
             }
-            
+
             if (field.getAnnotation(TextArea.class) != null) {
                 renderBehaviour = StringRenderingConstants.DisplayType.MULTI_LINE;
             }
@@ -174,6 +219,18 @@ public class PluginAdapterUtility {
             }
 
             pbuild.renderingOption(StringRenderingConstants.DISPLAY_TYPE_KEY, renderBehaviour);
+
+
+            RenderingOption option = field.getAnnotation(RenderingOption.class);
+            if(option!=null) {
+                pbuild.renderingOption(option.key(), option.value());
+            }
+            RenderingOptions options = field.getAnnotation(RenderingOptions.class);
+            if(options!=null) {
+                for (RenderingOption renderingOption : options.value()) {
+                    pbuild.renderingOption(renderingOption.key(), renderingOption.value());
+                }
+            }
         }
 
         String name = annotation.name();
@@ -182,7 +239,7 @@ public class PluginAdapterUtility {
         }
         pbuild.name(name);
 
-        if (null != annotation.title() && !"".equals(annotation.title())) {
+        if (notBlank(annotation.title())) {
             pbuild.title(annotation.title());
         } else {
             pbuild.title(name);
@@ -190,14 +247,41 @@ public class PluginAdapterUtility {
 
         pbuild.description(annotation.description());
 
-        if (null != annotation.defaultValue() && !"".equals(annotation.defaultValue())) {
+        if (notBlank(annotation.defaultValue())) {
             pbuild.defaultValue(annotation.defaultValue());
         }
         pbuild.required(annotation.required());
 
         pbuild.scope(annotation.scope());
 
+        if (notBlank(annotation.validatorClassName()) || !Object.class.equals(annotation.validatorClass())) {
+            //attempt to create a validator
+            Class<?> validatorClass = annotation.validatorClass();
+            String validatorClassName = annotation.validatorClassName();
+            if (notBlank(validatorClassName)) {
+                try {
+                    validatorClass = Class.forName(validatorClassName);
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+            try {
+                if (PropertyValidator.class.isAssignableFrom(validatorClass)) {
+                    PropertyValidator validator = (PropertyValidator) validatorClass.getDeclaredConstructor()
+                                                                                    .newInstance();
+                    pbuild.validator(validator);
+                }
+            } catch (NoSuchMethodException | InvocationTargetException |
+                    IllegalAccessException | InstantiationException e) {
+                e.printStackTrace();
+            }
+        }
+
         return pbuild.build();
+    }
+
+    private static boolean notBlank(final String string) {
+        return null != string && !"".equals(string);
     }
 
     private static final List<PropertyScope> instanceScopes = Arrays.asList(PropertyScope.Instance,
@@ -234,7 +318,7 @@ public class PluginAdapterUtility {
     public static Map<String, Object> configureProperties(final PropertyResolver resolver,
             final Description description,
             final Object object, PropertyScope defaultScope) {
-        final Map<String, Object> inputConfig = mapDescribedProperties(resolver, description, defaultScope);
+        Map<String, Object> inputConfig = mapDescribedProperties(resolver, description, defaultScope);
         if (object instanceof Configurable) {
             Configurable configObject = (Configurable) object;
             Properties configuration = new Properties();
@@ -245,15 +329,47 @@ public class PluginAdapterUtility {
 
             }
         } else {
-            for (final Property property : description.getProperties()) {
-                if (null != inputConfig.get(property.getName())) {
-                    if (setValueForProperty(property, inputConfig.get(property.getName()), object)) {
-                        inputConfig.remove(property.getName());
-                    }
+            inputConfig = configureObjectFieldsWithProperties(object, description.getProperties(), inputConfig);
+        }
+        return inputConfig;
+    }
+
+    /**
+     * Set field values on an object using introspection and input values for those properties
+     * @param object object
+     * @param inputConfig input
+     * @return Map of resolved properties that were not configured in the object's fields
+     */
+    public static Map<String, Object> configureObjectFieldsWithProperties(
+            final Object object,
+            final Map<String, Object> inputConfig
+    )
+    {
+        return configureObjectFieldsWithProperties(object, buildFieldProperties(object), inputConfig);
+    }
+
+    /**
+     * Set field values on an object given a list of properties and input values for those properties
+     * @param object object
+     * @param properties properties
+     * @param inputConfig input
+     * @return Map of resolved properties that were not configured in the object's fields
+     */
+    public static Map<String, Object> configureObjectFieldsWithProperties(
+            final Object object,
+            final List<Property> properties,
+            final Map<String, Object> inputConfig
+    )
+    {
+        HashMap<String, Object> modified = new HashMap<>(inputConfig);
+        for (final Property property : properties) {
+            if (null != modified.get(property.getName())) {
+                if (setValueForProperty(property, modified.get(property.getName()), object)) {
+                    modified.remove(property.getName());
                 }
             }
         }
-        return inputConfig;
+        return modified;
     }
 
     private static class PropertyDefaultValues implements PropertyRetriever {

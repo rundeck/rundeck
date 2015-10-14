@@ -81,7 +81,7 @@ class ScmService {
                     try {
                         def context = scmOperationContext(username, roles, project)
                         initPlugin('export', context, pluginConfig.type, pluginConfig.config)
-                    } catch (ScmPluginException e) {
+                    } catch (Throwable e) {
                         log.error(
                                 "Failed to initialize SCM Export plugin ${pluginConfig.type} for ${project}: ${e.message}",
                                 e
@@ -107,7 +107,7 @@ class ScmService {
                     try {
                         def context = scmOperationContext(username, roles, project)
                         initPlugin('import', context, importPluginConfig.type, importPluginConfig.config)
-                    } catch (ScmPluginException e) {
+                    } catch (Throwable e) {
                         log.error(
                                 "Failed to initialize SCM Import plugin ${importPluginConfig.type} for ${project}: ${e.message}",
                                 e
