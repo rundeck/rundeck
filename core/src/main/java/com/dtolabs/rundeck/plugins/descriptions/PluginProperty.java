@@ -67,4 +67,14 @@ public @interface PluginProperty {
      * @return The scope for resolving the property value at runtime
      */
     PropertyScope scope() default PropertyScope.Unspecified;
+
+    /**
+     * @return class name of a validator to use
+     */
+    String validatorClassName() default "";
+
+    /**
+     * @return class of a validator to use
+     */
+    Class<?> validatorClass() default Object.class;
 }
