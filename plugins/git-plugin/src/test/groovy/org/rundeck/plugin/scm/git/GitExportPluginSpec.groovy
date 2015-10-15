@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
+import com.dtolabs.rundeck.plugins.scm.ScmPluginInvalidInput
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfoMissing
 import com.dtolabs.rundeck.plugins.scm.SynchState
@@ -60,8 +61,10 @@ class GitExportPluginSpec extends Specification {
         def config = Config.create(Export, input)
 
         then:
-        ConfigurationException e = thrown()
+        ScmPluginInvalidInput e = thrown()
         e.message == requiredInputName + ' cannot be null'
+        e.report.errors[requiredInputName] == 'cannot be null'
+
 
 
         where:
@@ -278,7 +281,7 @@ class GitExportPluginSpec extends Specification {
     }
 
 
-    RevCommit addCommitFile(final File gitdir, final Git git, final String path, final String content) {
+    static RevCommit addCommitFile(final File gitdir, final Git git, final String path, final String content) {
         def outfile = new File(gitdir, path)
         outfile.parentFile.mkdirs()
         outfile.withOutputStream {

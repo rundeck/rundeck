@@ -1,9 +1,11 @@
 package org.rundeck.plugin.scm.git.config
 
-import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.plugins.scm.ScmPluginException
+import com.dtolabs.rundeck.plugins.scm.ScmPluginInvalidInput
 import org.rundeck.plugin.scm.git.BuilderUtil
 
 /**
@@ -27,14 +29,14 @@ class Config {
      * Configure a config object given the input
      * @param config config option
      * @param input input values
-     * @throws ConfigurationException
+     * @throws ScmPluginInvalidInput
      */
-    static void configure(Config config, final Map<String, String> input) throws ConfigurationException {
+    static void configure(Config config, final Map<String, String> input) throws ScmPluginInvalidInput {
         def unused = PluginAdapterUtility.configureObjectFieldsWithProperties(config, input)
         listProperties(config.class).findAll { it.required }.each { prop ->
             //verify required input
             if (!input[prop.name]) {
-                throw new ConfigurationException("${prop.name} cannot be null")
+                throw new ScmPluginInvalidInput("${prop.name} cannot be null", Validator.errorReport(prop.name,"cannot be null"))
             }
         }
         config.otherInput = unused
@@ -46,9 +48,9 @@ class Config {
      * @param clazz config object class
      * @param input input values
      * @return new instance configured with the input
-     * @throws ConfigurationException
+     * @throws ScmPluginInvalidInput
      */
-    static <T extends Config> T create(Class<T> clazz, final Map<String, String> input) throws ConfigurationException {
+    static <T extends Config> T create(Class<T> clazz, final Map<String, String> input) throws ScmPluginInvalidInput {
         T object = clazz.getDeclaredConstructor().newInstance()
         configure(object, input)
         object
