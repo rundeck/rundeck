@@ -404,6 +404,9 @@ class BaseGitPlugin {
         if (!url) {
             url = command.repository.config.getString('remote', REMOTE_NAME, 'url')
         }
+        if(!url){
+            throw new NullPointerException("url for remote was not set")
+        }
 
         URIish u = new URIish(url);
         logger.debug("transport url ${u}, scheme ${u.scheme}, user ${u.user}")
