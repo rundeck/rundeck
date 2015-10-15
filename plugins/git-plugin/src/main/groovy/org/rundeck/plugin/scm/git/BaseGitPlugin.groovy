@@ -17,6 +17,7 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.eclipse.jgit.transport.TrackingRefUpdate
 import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.eclipse.jgit.util.FileUtils
@@ -57,7 +58,7 @@ class BaseGitPlugin {
 
     def serialize(final JobExportReference job, format) {
         File outfile = mapper.fileForJob(job)
-        if (!outfile.parentFile.exists()) {
+        if (!outfile.parentFile.isDirectory()) {
             if (!outfile.parentFile.mkdirs()) {
                 throw new ScmPluginException(
                         "Cannot create necessary dirs to serialize file to path: ${outfile.absolutePath}"
@@ -82,7 +83,7 @@ class BaseGitPlugin {
         jobExportReferences.each { serialize(it, format) }
     }
 
-    def fetchFromRemote(ScmOperationContext context, Git git1 = null) {
+    TrackingRefUpdate fetchFromRemote(ScmOperationContext context, Git git1 = null) {
         def agit = git1 ?: git
         def fetchCommand = agit.fetch()
         fetchCommand.setRemote(REMOTE_NAME)
