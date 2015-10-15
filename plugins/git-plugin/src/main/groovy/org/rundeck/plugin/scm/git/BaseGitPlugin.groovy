@@ -1,6 +1,7 @@
 package org.rundeck.plugin.scm.git
 
 import com.dtolabs.rundeck.core.jobs.JobReference
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
@@ -334,7 +335,16 @@ class BaseGitPlugin {
             //test url matches origin
             def config = agit.getRepository().getConfig()
             def found = config.getString("remote", REMOTE_NAME, "url")
-
+            def projectName = config.getString("rundeck", "scm-plugin", "project-name")
+            if(projectName && !projectName.equals(context.frameworkProject)){
+                throw new ScmPluginInvalidInput(
+                        "The base directory is already in use by another project: ${projectName}",
+                        Validator.errorReport('dir', "The base directory is already in use by another project: ${projectName}")
+                )
+            }else if(!projectName) {
+                config.setString("rundeck", "scm-plugin", "project-name", context.frameworkProject)
+                config.save()
+            }
             if (found != url) {
 
                 logger.debug("url differs, re-cloning")
