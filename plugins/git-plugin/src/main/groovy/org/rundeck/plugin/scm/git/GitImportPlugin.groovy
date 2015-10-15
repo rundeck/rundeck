@@ -418,7 +418,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             originalPath = importTracker.originalValue(path)
         }
         path = originalPath ?: relativePath(job)
-        def temp = serializeTemp(job, 'xml')
+        def temp = serializeTemp(job, config.format)
         def latestCommit = GitUtil.lastCommitForPath repo, git, path
         def id = latestCommit ? lookupId(latestCommit, path) : null
         if (!latestCommit || !id) {
