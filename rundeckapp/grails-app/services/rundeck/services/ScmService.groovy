@@ -4,7 +4,6 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
-import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.plugins.views.Action
@@ -13,7 +12,6 @@ import com.dtolabs.rundeck.plugins.jobs.JobChangeListener
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobImportReference
 import com.dtolabs.rundeck.plugins.scm.JobImportState
-import com.dtolabs.rundeck.plugins.scm.JobImporter
 import com.dtolabs.rundeck.plugins.scm.JobScmReference
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import com.dtolabs.rundeck.plugins.scm.JobState
@@ -39,7 +37,6 @@ import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.services.scm.ContextJobImporter
 import rundeck.services.scm.ResolvedJobImporter
-import rundeck.services.scm.ScmJobImporter
 import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmUser
 
@@ -382,7 +379,10 @@ class ScmService {
     private def initPlugin(String integration, ScmOperationContext context, String type, Map config) {
         def validation = validatePluginSetup(integration, context.frameworkProject, type, config)
         if (!validation.valid) {
-            throw new ScmPluginException("Validation failed for ${type} plugin: " + validation.report)
+            throw new ScmPluginInvalidInput(
+                    "Validation failed for ${type} plugin: " + validation.report,
+                    validation.report
+            )
         }
         def loaded = loadPluginWithConfig(integration, context, type, config)
 
@@ -463,6 +463,8 @@ class ScmService {
                 }
             }
             return [valid: true, plugin: plugin]
+        } catch (ScmPluginInvalidInput e) {
+            return [valid: false, report: e.report]
         } catch (ScmPluginException e) {
             return [error: true, message: e.message]
         }
@@ -552,6 +554,8 @@ class ScmService {
                 }
             }
             return [valid: true, plugin: plugin]
+        } catch (ScmPluginInvalidInput e) {
+            return [valid: false, report: e.report]
         } catch (ScmPluginException e) {
             return [error: true, message: e.message]
         }
@@ -572,11 +576,7 @@ class ScmService {
                 type,
                 scmExportPluginProviderService
         )
-        try {
-            return plugin.createPlugin(context, config)
-        } catch (ConfigurationException e) {
-            throw new ScmPluginException(e)
-        }
+        return plugin.createPlugin(context, config)
     }
 
     ScmImportPlugin loadImportPluginWithConfig(ScmOperationContext context, String type, Map config) {
@@ -585,11 +585,7 @@ class ScmService {
                 scmImportPluginProviderService
         )
         def list = loadInputTrackingItems(context.frameworkProject)
-        try {
-            return plugin.createPlugin(context, config, list)
-        } catch (ConfigurationException e) {
-            throw new ScmPluginException(e)
-        }
+        return plugin.createPlugin(context, config, list)
     }
 
     /**
