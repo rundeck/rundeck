@@ -204,7 +204,10 @@ class ScmController extends ControllerBase {
         //require type param
         def result = scmService.enablePlugin(authContext,integration, project, type)
         if (result.error) {
-            flash.warn = message(code: "scmController.action.enable.error.message", args: [integration, type])
+            flash.warn = message(
+                    code: "scmController.action.enable.error.message",
+                    args: [integration, type, result.message ?: 'unknown']
+            )
             if (result.message) {
                 flash.error = result.message
             }
