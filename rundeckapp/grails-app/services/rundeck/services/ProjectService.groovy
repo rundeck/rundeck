@@ -1015,7 +1015,7 @@ class ProjectService implements InitializingBean{
                 def other=allexecs.size()
                 executionService.deleteBulkExecutionIds(allexecs*.id, authContext, username)
 
-                log.error("${other} other executions deleted")
+                log.debug("${other} other executions deleted")
                 //delete all files
                 def deletedfiles=0
                 files.each{file->
@@ -1025,7 +1025,7 @@ class ProjectService implements InitializingBean{
                         deletedfiles++
                     }
                 }
-                log.error("${deletedfiles} files removed")
+                log.debug("${deletedfiles} files removed")
                 result = [success: true]
             } catch (Exception e) {
                 status.setRollbackOnly()
