@@ -510,7 +510,7 @@ class ScmService {
                 PREFIXES[integration]
         )
 
-        if(scmPluginConfig) {
+        if (scmPluginConfig) {
             scmPluginConfig.enabled = false
             storeConfig(scmPluginConfig, project, integration)
         }
@@ -947,7 +947,11 @@ class ScmService {
             if (result && result.success && result.commit) {
                 //synch import commit info to exported commit data
                 jobs.each { job ->
-                    jobMetadataService.setJobPluginMeta(job, 'scm-import', [version:job.version,pluginMeta:result.commit.asMap()])
+                    jobMetadataService.setJobPluginMeta(
+                            job,
+                            'scm-import',
+                            [version: job.version, pluginMeta: result.commit.asMap()]
+                    )
                 }
             }
         } catch (ScmPluginInvalidInput e) {
