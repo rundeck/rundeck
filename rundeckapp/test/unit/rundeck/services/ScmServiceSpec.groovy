@@ -71,6 +71,50 @@ class ScmServiceSpec extends Specification {
         ScmService.EXPORT | _
         ScmService.IMPORT | _
     }
+    def "disablePlugin not enabled"() {
+        given:
+        service.frameworkService = Mock(FrameworkService)
+        service.pluginConfigService = Mock(PluginConfigService)
+        service.jobEventsService = Mock(JobEventsService)
+        ScmExportPlugin exportPlugin = Mock(ScmExportPlugin)
+        ScmImportPlugin importPlugin = Mock(ScmImportPlugin)
+        service.loadedExportPlugins['test1']= exportPlugin
+        service.loadedImportPlugins['test1']= importPlugin
+        def dummyListener = Mock(JobChangeListener)
+        service.loadedExportListeners['test1'] = dummyListener
+        service.loadedImportListeners['test1'] = dummyListener
+        service.renamedJobsCache['test1'] = [:]
+        service.deletedJobsCache['test1'] = [:]
+
+        when:
+        service.disablePlugin(integration, 'test1', null)
+
+        then:
+        1 * service.pluginConfigService.loadScmConfig(
+                'test1',
+                "etc/scm-${integration}.properties",
+                'scm.' + integration
+        ) >> null
+        1 * service.jobEventsService.removeListener(dummyListener)
+
+        if (integration == ScmService.EXPORT) {
+            service.loadedExportPlugins['test1'] == null
+            service.loadedExportListeners['test1'] == null
+            service.renamedJobsCache['test1'] == null
+            service.deletedJobsCache['test1'] == null
+            1 * exportPlugin.cleanup()
+        } else {
+            service.loadedImportPlugins['test1'] == null
+            service.loadedImportListeners['test1'] == null
+            1 * importPlugin.cleanup()
+        }
+
+
+        where:
+        integration       | _
+        ScmService.EXPORT | _
+        ScmService.IMPORT | _
+    }
 
     def "removePluginConfiguration"() {
         given:

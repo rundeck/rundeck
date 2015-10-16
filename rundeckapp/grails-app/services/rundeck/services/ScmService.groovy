@@ -528,9 +528,10 @@ class ScmService {
                 PREFIXES[integration]
         )
 
-        scmPluginConfig.enabled = false
-        storeConfig(scmPluginConfig, project, integration)
-
+        if(scmPluginConfig) {
+            scmPluginConfig.enabled = false
+            storeConfig(scmPluginConfig, project, integration)
+        }
 
         def loaded
         if (integration == EXPORT) {
