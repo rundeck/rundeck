@@ -38,11 +38,10 @@ Available expansion patterns:
 * `${job.name}` - the job name
 * `${job.group}` - blank, or `path/`
 * `${job.project} - project name`
-* `${job.id}` - job UUID (this value must be included in the template)
+* `${job.id}` - job UUID (this value *should* be included in the template to guarantee a unique path for each job.)
 ''',
             defaultValue = '${job.group}${job.name}-${job.id}.xml',
-            required = true,
-            validatorClass = PathTemplateValidator
+            required = true
     )
     String pathTemplate
 
