@@ -44,6 +44,9 @@ class JobsXMLCodec {
     }
     static encodeWithBuilder={ list,xml ->
         BuilderUtil bu = new BuilderUtil()
+        bu.forceLineEndings=true
+        bu.lineEndingChars='\n'
+        //todo: set line ending from config?
         bu.canonical=true
         xml.joblist() {
             list.each{ ScheduledExecution jobi->
