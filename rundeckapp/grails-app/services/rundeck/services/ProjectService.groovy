@@ -1002,7 +1002,6 @@ class ProjectService implements InitializingBean{
                 ExecReport.findAllByCtxProject(project.name).each { e ->
                     e.delete(flush: true)
                 }
-                def files=[]
                 //delete all jobs with their executions
                 ScheduledExecution.findAllByProject(project.name).each{ se->
                     def sedresult=scheduledExecutionService.deleteScheduledExecution(se, true, authContext,username)
@@ -1016,16 +1015,7 @@ class ProjectService implements InitializingBean{
                 executionService.deleteBulkExecutionIds(allexecs*.id, authContext, username)
 
                 log.debug("${other} other executions deleted")
-                //delete all files
-                def deletedfiles=0
-                files.each{file->
-                    if (null != file && file.exists() && !FileUtils.deleteQuietly(file)) {
-                        log.warn("Failed to delete file while deleting project ${project.name}: ${file.absolutePath}")
-                    }else{
-                        deletedfiles++
-                    }
-                }
-                log.debug("${deletedfiles} files removed")
+
                 result = [success: true]
             } catch (Exception e) {
                 status.setRollbackOnly()
