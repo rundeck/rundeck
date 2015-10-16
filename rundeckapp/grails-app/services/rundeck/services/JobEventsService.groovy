@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import grails.events.Listener
 import grails.transaction.Transactional
 import rundeck.ScheduledExecution
+import rundeck.services.scm.ProjectJobChangeListener
 
 @Transactional
 class JobEventsService {
@@ -13,6 +14,17 @@ class JobEventsService {
 
     def addListener(JobChangeListener plugin) {
         listeners << plugin
+    }
+    /**
+     * Adds a listener that only receives events for the given project
+     * @param listener listener
+     * @param project project
+     * @return the instance of the listener that was added, can be used to call {@link #removeListener(com.dtolabs.rundeck.plugins.jobs.JobChangeListener)}
+     */
+    JobChangeListener addListenerForProject(JobChangeListener listener, String project) {
+        def listener1 = new ProjectJobChangeListener(listener, project)
+        listeners << listener1
+        listener1
     }
 
     def removeListener(JobChangeListener plugin) {
