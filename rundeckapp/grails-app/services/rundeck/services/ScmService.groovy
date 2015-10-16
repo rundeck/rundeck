@@ -18,6 +18,7 @@ import com.dtolabs.rundeck.plugins.scm.JobState
 import com.dtolabs.rundeck.plugins.scm.ScmDiffResult
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory
+import com.dtolabs.rundeck.plugins.scm.ScmExportResult
 import com.dtolabs.rundeck.plugins.scm.ScmExportSynchState
 import com.dtolabs.rundeck.plugins.scm.ScmImportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmImportPluginFactory
@@ -958,9 +959,16 @@ class ScmService {
         if (!report.valid) {
             return [valid: false, report: report]
         }
-        def result = null
+        ScmExportResult result = null
         try {
             result = plugin.export(context, actionId, jobrefs as Set, deletePaths as Set, config)
+
+            if (result && result.success && result.commit) {
+                //synch import commit info to exported commit data
+                jobs.each { job ->
+                    jobMetadataService.setJobPluginMeta(job, 'scm-import', [version:job.version,pluginMeta:result.commit.asMap()])
+                }
+            }
         } catch (ScmPluginInvalidInput e) {
             return [valid: false, report: e.report]
         } catch (ScmPluginException e) {

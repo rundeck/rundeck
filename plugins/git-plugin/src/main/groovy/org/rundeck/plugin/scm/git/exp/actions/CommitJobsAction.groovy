@@ -11,6 +11,7 @@ import org.eclipse.jgit.revwalk.RevCommit
 import org.rundeck.plugin.scm.git.BaseAction
 import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
+import org.rundeck.plugin.scm.git.GitScmCommit
 import org.rundeck.plugin.scm.git.GitUtil
 
 import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
@@ -130,6 +131,7 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
         }
         commit = commit1.call()
         result.success = true
+        result.commit=new GitScmCommit(GitUtil.metaForCommit(commit))
 
         if (result.success && input[TagAction.P_TAG_NAME]) {
             def tagResult = plugin.export(context, GitExportPlugin.PROJECT_TAG_ACTION_ID, jobs, pathsToDelete, input)

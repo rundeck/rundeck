@@ -1,11 +1,15 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.jobs.JobChangeListener
+import com.dtolabs.rundeck.plugins.scm.ScmCommitInfo
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory
+import com.dtolabs.rundeck.plugins.scm.ScmExportResult
 import com.dtolabs.rundeck.plugins.scm.ScmImportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmImportPluginFactory
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
@@ -13,7 +17,10 @@ import com.dtolabs.rundeck.plugins.scm.ScmPluginInvalidInput
 import com.dtolabs.rundeck.server.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
+import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import rundeck.ScheduledExecution
+import rundeck.User
 import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Specification
 
@@ -21,6 +28,7 @@ import spock.lang.Specification
  * Created by greg on 10/15/15.
  */
 @TestFor(ScmService)
+@Mock([ScheduledExecution, User])
 class ScmServiceSpec extends Specification {
 
 
@@ -308,5 +316,51 @@ class ScmServiceSpec extends Specification {
         where:
         integration       | _
         ScmService.EXPORT | _
+    }
+
+    def "perform export plugin action should store commit metadata into job import metadata"() {
+        given:
+        service.jobMetadataService = Mock(JobMetadataService)
+        service.storageService = Mock(StorageService)
+        service.frameworkService = Mock(FrameworkService)
+
+        ScmExportPlugin plugin = Mock(ScmExportPlugin)
+        service.loadedExportPlugins['test1'] = plugin
+
+        def input = [:]
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'bob'
+        }
+        def job = new ScheduledExecution()
+        job.version = 1
+        def bobuser = new User(login: 'bob').save()
+
+        //returned by export result, should be stored in job metadata
+        def commitMetadata = [commit: 'data']
+
+
+        when:
+        def result = service.performExportAction('actionId', auth, 'test1', input, [job], [])
+
+        then:
+        1 * plugin.getInputViewForAction(_, 'actionId') >> Mock(BasicInputView) {
+            getProperties() >> []
+        }
+        1 * service.frameworkService.getFrameworkPropertyResolver('test1', input)
+        1 * plugin.export(_, 'actionId', _, _, input) >> Mock(ScmExportResult) {
+            isSuccess() >> true
+            getCommit() >> Mock(ScmCommitInfo) {
+                asMap() >> commitMetadata
+                getCommitId() >> 'a-commit-id'
+            }
+            getId() >> 'a-commit-id'
+
+        }
+
+        //store metadata about commit
+        1 * service.jobMetadataService.setJobPluginMeta(job, 'scm-import', [version: 1, pluginMeta: commitMetadata])
+
+        result.valid
+        result.commitId == 'a-commit-id'
     }
 }

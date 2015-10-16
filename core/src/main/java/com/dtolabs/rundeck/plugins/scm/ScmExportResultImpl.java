@@ -8,6 +8,7 @@ public class ScmExportResultImpl implements ScmExportResult {
     private boolean error;
     private String message;
     private String id;
+    private ScmCommitInfo commit;
 
     public boolean isSuccess() {
         return success;
@@ -41,5 +42,14 @@ public class ScmExportResultImpl implements ScmExportResult {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    @Override
+    public ScmCommitInfo getCommit() {
+        return commit;
+    }
+
+    public void setCommit(ScmCommitInfo commit) {
+        this.commit = commit;
     }
 }

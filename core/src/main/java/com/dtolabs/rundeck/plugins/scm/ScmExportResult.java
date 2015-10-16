@@ -23,4 +23,8 @@ public interface ScmExportResult {
      * @return Id associated with export, if any
      */
     public String getId();
+    /**
+     * @return info for the exported commit, to synch with import status
+     */
+    ScmCommitInfo getCommit();
 }
