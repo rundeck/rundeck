@@ -42,6 +42,7 @@ class ProjectService implements InitializingBean{
     def logFileStorageService
     def workflowService
     def authorizationService
+    def scmService
     static transactional = false
 
     private exportJob(ScheduledExecution job, Writer writer)
@@ -987,6 +988,10 @@ class ProjectService implements InitializingBean{
      */
     def deleteProject(IRundeckProject project, Framework framework, AuthContext authContext, String username){
         def result = [success: false]
+
+        //disable scm
+        scmService.removeAllPluginConfiguration(project.name, null)
+
         BaseReport.withTransaction { TransactionStatus status ->
 
             try {

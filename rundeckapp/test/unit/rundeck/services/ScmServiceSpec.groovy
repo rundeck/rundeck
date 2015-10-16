@@ -3,6 +3,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.plugins.jobs.JobChangeListener
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory
 import com.dtolabs.rundeck.plugins.scm.ScmImportPlugin
@@ -29,6 +30,15 @@ class ScmServiceSpec extends Specification {
         service.pluginConfigService = Mock(PluginConfigService)
         service.jobEventsService = Mock(JobEventsService)
         ScmPluginConfigData config = Mock(ScmPluginConfigData)
+        ScmExportPlugin exportPlugin = Mock(ScmExportPlugin)
+        ScmImportPlugin importPlugin = Mock(ScmImportPlugin)
+        service.loadedExportPlugins['test1']= exportPlugin
+        service.loadedImportPlugins['test1']= importPlugin
+        def dummyListener = Mock(JobChangeListener)
+        service.loadedExportListeners['test1'] = dummyListener
+        service.loadedImportListeners['test1'] = dummyListener
+        service.renamedJobsCache['test1'] = [:]
+        service.deletedJobsCache['test1'] = [:]
 
         when:
         service.disablePlugin(integration, 'test1', null)
@@ -41,7 +51,19 @@ class ScmServiceSpec extends Specification {
         ) >> config
         1 * config.setEnabled(false)
         1 * service.pluginConfigService.storeConfig(config, 'test1', "etc/scm-${integration}.properties")
-        1 * service.jobEventsService.removeListener(_)
+        1 * service.jobEventsService.removeListener(dummyListener)
+
+        if (integration == ScmService.EXPORT) {
+            service.loadedExportPlugins['test1'] == null
+            service.loadedExportListeners['test1'] == null
+            service.renamedJobsCache['test1'] == null
+            service.deletedJobsCache['test1'] == null
+            1 * exportPlugin.cleanup()
+        } else {
+            service.loadedImportPlugins['test1'] == null
+            service.loadedImportListeners['test1'] == null
+            1 * importPlugin.cleanup()
+        }
 
 
         where:
