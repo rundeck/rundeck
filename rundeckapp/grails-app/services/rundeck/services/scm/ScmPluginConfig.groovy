@@ -3,21 +3,21 @@ package rundeck.services.scm
 /**
  * Wraps stored plugin config data, writes and reads it
  */
-class ScmPluginConfig {
+class ScmPluginConfig implements ScmPluginConfigData {
     Properties properties
-    String integration//export or import
-    private String prefix
+    String prefix
 
-    ScmPluginConfig(final Properties properties, String integration) {
+    ScmPluginConfig(final Properties properties, String prefix) {
         this.properties = properties ?: new Properties()
-        this.integration = integration
-        prefix = 'scm.' + integration
+        this.prefix = prefix
     }
 
+    @Override
     String getSetting(String name) {
         properties?.getProperty(prefix + '.' + name)
     }
 
+    @Override
     List<String> getSettingList(String name) {
         def val = getSetting(name + '.count')
         if (val) {
@@ -38,6 +38,7 @@ class ScmPluginConfig {
         return null
     }
 
+    @Override
     void setSetting(String name, List<String> value) {
         if (value != null) {
             setSetting(name + '.count', Integer.toString(value.size()))
@@ -49,6 +50,7 @@ class ScmPluginConfig {
         }
     }
 
+    @Override
     void setSetting(String name, String value) {
         if (value != null) {
             properties?.setProperty(prefix + '.' + name, value)
@@ -57,22 +59,27 @@ class ScmPluginConfig {
         }
     }
 
+    @Override
     String getType() {
         getSetting('type')
     }
 
+    @Override
     void setType(String type) {
         setSetting('type', type)
     }
 
+    @Override
     void setEnabled(boolean enabled) {
         setSetting('enabled', Boolean.toString(enabled))
     }
 
+    @Override
     boolean getEnabled() {
         Boolean.parseBoolean(getSetting('enabled'))
     }
 
+    @Override
     Map getConfig() {
         return properties.findAll {
             it.key.startsWith(prefix + '.config.')
@@ -85,28 +92,36 @@ class ScmPluginConfig {
      * Add properties to the config
      * @param config map of config key/value
      */
+    @Override
     void setConfig(Map config) {
         config.each { setSetting 'config.' + it.key, it.value }
     }
 
 
-    def asInputStream() {
+    @Override
+    InputStream asInputStream() {
         def baos = new ByteArrayOutputStream()
-        properties.store(baos, "scm config")
+        properties.store(baos, "stored config")
         new ByteArrayInputStream(baos.toByteArray())
     }
 
-    static ScmPluginConfig loadFromStream(String integration, InputStream os) {
+    void load(String prefix, InputStream os) {
+        def props = new Properties()
+        props.load(os)
+        this.properties = props
+        this.prefix =  prefix
+    }
+
+    static ScmPluginConfig loadFromStream(String prefix, InputStream os) {
 
         def props = new Properties()
         props.load(os)
-        return new ScmPluginConfig(props, integration)
+        return new ScmPluginConfig(props, prefix)
     }
 
     @Override
     public String toString() {
         return "ScmPluginConfig{" +
-                "integration='" + integration + '\'' +
                 ", prefix='" + prefix + '\'' +
                 ", type='" + getType() + '\'' +
                 ", enabled='" + getEnabled() + '\'' +

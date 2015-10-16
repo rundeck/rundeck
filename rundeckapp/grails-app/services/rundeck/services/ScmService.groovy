@@ -38,12 +38,20 @@ import rundeck.User
 import rundeck.services.scm.ContextJobImporter
 import rundeck.services.scm.ResolvedJobImporter
 import rundeck.services.scm.ScmPluginConfig
+import rundeck.services.scm.ScmPluginConfigData
 import rundeck.services.scm.ScmUser
 
 /**
  * Manages scm integration
  */
 class ScmService {
+    public static final String EXPORT = 'export'
+    public static final String IMPORT = 'import'
+    public static final String IMPORT_PREF = 'scm.import'
+    public static final String EXPORT_PREF = 'scm.export'
+    public static final Map<String, String> PREFIXES = [export: EXPORT_PREF, import: IMPORT_PREF]
+
+
     def JobEventsService jobEventsService
     def ContextJobImporter scmJobImporter
     def grailsApplication
@@ -53,6 +61,7 @@ class ScmService {
     PluginService pluginService
     ScheduledExecutionService scheduledExecutionService
     JobMetadataService jobMetadataService
+    PluginConfigService pluginConfigService
     def StorageService storageService
     Map<String, ScmExportPlugin> loadedExportPlugins = Collections.synchronizedMap([:])
     Map<String, ScmImportPlugin> loadedImportPlugins = Collections.synchronizedMap([:])
@@ -65,7 +74,7 @@ class ScmService {
 
             //load export plugins
 
-            def pluginConfig = loadScmConfig(project, 'export')
+            def pluginConfig = pluginConfigService.loadScmConfig(project, pathForConfigFile(EXPORT), EXPORT_PREF)
             if (pluginConfig && pluginConfig.enabled) {
                 log.debug("Loading 'export' plugin ${pluginConfig.type} for ${project}...")
                 def username = pluginConfig.getSetting("username")
@@ -77,7 +86,7 @@ class ScmService {
                 } else {
                     try {
                         def context = scmOperationContext(username, roles, project)
-                        initPlugin('export', context, pluginConfig.type, pluginConfig.config)
+                        initPlugin(EXPORT, context, pluginConfig.type, pluginConfig.config)
                     } catch (Throwable e) {
                         log.error(
                                 "Failed to initialize SCM Export plugin ${pluginConfig.type} for ${project}: ${e.message}",
@@ -91,7 +100,7 @@ class ScmService {
             }
 
 
-            def importPluginConfig = loadScmConfig(project, 'import')
+            def importPluginConfig = pluginConfigService.loadScmConfig(project, pathForConfigFile(IMPORT), EXPORT_PREF)
             if (importPluginConfig && importPluginConfig.enabled) {
                 log.debug("Loading 'import' plugin ${importPluginConfig.type} for ${project}...")
                 def username = importPluginConfig.getSetting("username")
@@ -103,7 +112,7 @@ class ScmService {
                 } else {
                     try {
                         def context = scmOperationContext(username, roles, project)
-                        initPlugin('import', context, importPluginConfig.type, importPluginConfig.config)
+                        initPlugin(IMPORT, context, importPluginConfig.type, importPluginConfig.config)
                     } catch (Throwable e) {
                         log.error(
                                 "Failed to initialize SCM Import plugin ${importPluginConfig.type} for ${project}: ${e.message}",
@@ -120,18 +129,18 @@ class ScmService {
 
     def listPlugins(String integration) {
         switch (integration) {
-            case 'export':
+            case EXPORT:
                 return pluginService.listPlugins(ScmExportPluginFactory, scmExportPluginProviderService)
-            case 'import':
+            case IMPORT:
                 return pluginService.listPlugins(ScmImportPluginFactory, scmImportPluginProviderService)
         }
     }
 
     def getPluginDescriptor(String integration, String type) {
         switch (integration) {
-            case 'export':
+            case EXPORT:
                 return getExportPluginDescriptor(type)
-            case 'import':
+            case IMPORT:
                 return getImportPluginDescriptor(type)
         }
     }
@@ -152,9 +161,9 @@ class ScmService {
 
     def projectHasConfiguredPlugin(String integration, String project) {
         switch (integration) {
-            case 'import':
+            case IMPORT:
                 return projectHasConfiguredImportPlugin(project)
-            case 'export':
+            case EXPORT:
                 return projectHasConfiguredExportPlugin(project)
         }
     }
@@ -169,9 +178,9 @@ class ScmService {
 
     BasicInputView getInputView(UserAndRolesAuthContext auth, String integration, String project, String actionId) {
         switch (integration) {
-            case 'export':
+            case EXPORT:
                 return getExportInputView(auth, project, actionId)
-            case 'import':
+            case IMPORT:
                 return getImportInputView(auth, project, actionId)
         }
 
@@ -195,9 +204,9 @@ class ScmService {
 
     def getSetupProperties(String integration, String project, String type) {
         switch (integration) {
-            case 'import':
+            case IMPORT:
                 return getImportSetupProperties(project, type)
-            case 'export':
+            case EXPORT:
                 return getExportSetupProperties(project, type)
         }
     }
@@ -216,18 +225,11 @@ class ScmService {
         plugin.instance.getSetupPropertiesForBasedir(baseDir)
     }
 
-    ScmPluginConfig loadScmConfig(String project, String integration) {
-        def project1 = frameworkService.getFrameworkProject(project)
-        def configPath = storedConfigFile(integration)
-        if (!project1.existsFileResource(configPath)) {
-            return null
-        }
-        def baos = new ByteArrayOutputStream()
-        project1.loadFileResource(configPath, baos)
-        return ScmPluginConfig.loadFromStream(integration, new ByteArrayInputStream(baos.toByteArray()))
+    ScmPluginConfigData loadScmConfig(String project, String integration) {
+        pluginConfigService.loadScmConfig(project, pathForConfigFile(integration), PREFIXES[integration])
     }
 
-    private String storedConfigFile(String integration) {
+    private String pathForConfigFile(String integration) {
         if (frameworkService.serverUUID) {
             return "${frameworkService.serverUUID}/etc/scm-${integration}.properties"
         }
@@ -235,17 +237,15 @@ class ScmService {
     }
 
 
-    def storeConfig(ScmPluginConfig scmPluginConfig, String project) {
-        def project1 = frameworkService.getFrameworkProject(project)
-        def configPath = storedConfigFile(scmPluginConfig.integration)
-        project1.storeFileResource configPath, scmPluginConfig.asInputStream()
+    def storeConfig(ScmPluginConfigData scmPluginConfig, String project, String integration) {
+        pluginConfigService.storeConfig(scmPluginConfig, project, pathForConfigFile(integration))
     }
 
     def ValidatedPlugin validatePluginSetup(String integration, String project, String name, Map config) {
         switch (integration) {
-            case 'export':
+            case EXPORT:
                 return validateExportPluginSetup(project, name, config)
-            case 'import':
+            case IMPORT:
                 return validateImportPluginSetup(project, name, config)
 
         }
@@ -387,7 +387,7 @@ class ScmService {
         def loaded = loadPluginWithConfig(integration, context, type, config)
 
         JobChangeListener changeListener
-        if (integration == 'export') {
+        if (integration == EXPORT) {
             ScmExportPlugin plugin = loaded
             changeListener = { JobChangeEvent event, JobSerializer serializer ->
                 log.debug("job change event: " + event)
@@ -421,7 +421,7 @@ class ScmService {
                 }
             } as JobChangeListener
         }
-        if (integration == 'export') {
+        if (integration == EXPORT) {
             loadedExportPlugins[context.frameworkProject] = loaded
             loadedExportListeners[context.frameworkProject] = changeListener
         } else {
@@ -446,17 +446,17 @@ class ScmService {
             return [valid: false, report: validation?.report]
         }
 
-        def scmPluginConfig = new ScmPluginConfig(new Properties(), integration)
+        def scmPluginConfig = new ScmPluginConfig(new Properties(), PREFIXES[integration])
         scmPluginConfig.config = config
         scmPluginConfig.type = type
         scmPluginConfig.enabled = true
         scmPluginConfig.setSetting("username", auth.username)
         scmPluginConfig.setSetting("roles", auth.roles as List)
-        storeConfig(scmPluginConfig, project)
+        storeConfig(scmPluginConfig, project, integration)
         try {
             def context = scmOperationContext(auth, project)
             def plugin = initPlugin(integration, context, type, config)
-            if (integration == 'import') {
+            if (integration == IMPORT) {
                 def nextAction = plugin.getSetupAction(context)
                 if (nextAction) {
                     return [valid: true, plugin: plugin, nextAction: nextAction]
@@ -505,14 +505,18 @@ class ScmService {
      * @return
      */
     def disablePlugin(String integration, String project, String type) {
-        ScmPluginConfig scmPluginConfig = loadScmConfig(project, integration)
+        ScmPluginConfigData scmPluginConfig = pluginConfigService.loadScmConfig(
+                project,
+                pathForConfigFile(integration),
+                PREFIXES[integration]
+        )
 
         scmPluginConfig.enabled = false
-        storeConfig(scmPluginConfig, project)
+        storeConfig(scmPluginConfig, project, integration)
 
 
         def loaded
-        if (integration == 'export') {
+        if (integration == EXPORT) {
             loaded = loadedExportPlugins.remove(project)
             def changeListener = loadedExportListeners.remove(project)
             jobEventsService.removeListener(changeListener)
@@ -536,7 +540,11 @@ class ScmService {
      * @return a map [valid:true/false, report: Report, plugin: instance], will
      */
     def enablePlugin(UserAndRolesAuthContext auth, String integration, String project, String type) {
-        ScmPluginConfig scmPluginConfig = loadScmConfig(project, integration)
+        ScmPluginConfigData scmPluginConfig = pluginConfigService.loadScmConfig(
+                project,
+                pathForConfigFile(integration),
+                PREFIXES[integration]
+        )
         def validation = validatePluginSetup(integration, project, type, scmPluginConfig.config)
         if (!validation.valid) {
             return [valid: false, report: validation.report]
@@ -546,8 +554,8 @@ class ScmService {
             def context = scmOperationContext(auth, project)
             def plugin = initPlugin(integration, context, type, scmPluginConfig.config)
             scmPluginConfig.enabled = true
-            storeConfig(scmPluginConfig, project)
-            if (integration == 'import') {
+            storeConfig(scmPluginConfig, project, integration)
+            if (integration == IMPORT) {
                 def nextAction = plugin.getSetupAction(context)
                 if (nextAction) {
                     return [valid: true, plugin: plugin, nextAction: nextAction]
@@ -563,9 +571,9 @@ class ScmService {
 
     def loadPluginWithConfig(String integration, ScmOperationContext context, String type, Map config) {
         switch (integration) {
-            case 'export':
+            case EXPORT:
                 return loadExportPluginWithConfig(context, type, config)
-            case 'import':
+            case IMPORT:
                 return loadImportPluginWithConfig(context, type, config)
         }
 
@@ -760,9 +768,9 @@ class ScmService {
      */
     def getPluginStatus(UserAndRolesAuthContext auth, String integration, String project) {
         switch (integration) {
-            case 'export':
+            case EXPORT:
                 return exportPluginStatus(auth, project)
-            case 'import':
+            case IMPORT:
                 return importPluginStatus(auth, project)
         }
     }
@@ -1027,14 +1035,14 @@ class ScmService {
     }
 
     private void saveInputTrackingSetupConfig(String project, Map config, List<String> chosenTrackedItems) {
-        def pluginConfig = loadScmConfig(project, 'import')
+        def pluginConfig = pluginConfigService.loadScmConfig(project, pathForConfigFile(IMPORT), IMPORT_PREF)
         pluginConfig.setConfig(config)
         pluginConfig.setSetting('trackedItems', chosenTrackedItems)
-        storeConfig(pluginConfig, project)
+        storeConfig(pluginConfig, project, IMPORT)
     }
 
     private List<String> loadInputTrackingItems(String project) {
-        def pluginConfig = loadScmConfig(project, 'import')
+        def pluginConfig = pluginConfigService.loadScmConfig(project, pathForConfigFile(IMPORT), IMPORT_PREF)
 
         return pluginConfig.getSettingList('trackedItems')
     }
