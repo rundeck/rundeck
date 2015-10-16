@@ -533,6 +533,28 @@ class ScmService {
     }
 
     /**
+     * Disable and remove all plugins for a project
+     * @param project project
+     * @param type type
+     * @return
+     */
+    def removeAllPluginConfiguration(String project, String type) {
+        removePluginConfiguration(IMPORT, project, type)
+        removePluginConfiguration(EXPORT, project, type)
+    }
+
+    /**
+     * Disable and remove configuration for a plugin
+     * @param integration integration
+     * @param project project
+     * @param type type
+     * @return
+     */
+    def removePluginConfiguration(String integration, String project, String type) {
+        disablePlugin(integration, project, type)
+        pluginConfigService.removePluginConfiguration(project, pathForConfigFile(integration))
+    }
+    /**
      * Enable a disabled plugin
      * @param project
      * @param integration integration name
