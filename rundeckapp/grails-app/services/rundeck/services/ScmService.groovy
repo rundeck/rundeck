@@ -51,6 +51,7 @@ class ScmService {
     public static final String IMPORT_PREF = 'scm.import'
     public static final String EXPORT_PREF = 'scm.export'
     public static final Map<String, String> PREFIXES = [export: EXPORT_PREF, import: IMPORT_PREF]
+    public static final ArrayList<String> INTEGRATIONS = [EXPORT, IMPORT]
 
 
     def JobEventsService jobEventsService
@@ -70,60 +71,40 @@ class ScmService {
     Map<String, JobChangeListener> loadedImportListeners = Collections.synchronizedMap([:])
 
     def initialize() {
-        def projects = frameworkService.projectNames()
-        projects.each { String project ->
+        for (String project : frameworkService.projectNames()) {
+            for (String integration : INTEGRATIONS) {
+                def pluginConfig = pluginConfigService.loadScmConfig(
+                        project,
+                        pathForConfigFile(integration),
+                        PREFIXES[integration]
+                )
+                if (!pluginConfig?.enabled) {
+                    log.debug("SCM ${integration} not setup for project: ${project}: ${pluginConfig}")
+                    continue
+                }
+                log.debug("Loading '${integration}' plugin ${pluginConfig.type} for ${project}...")
 
-            //load export plugins
-
-            def pluginConfig = pluginConfigService.loadScmConfig(project, pathForConfigFile(EXPORT), EXPORT_PREF)
-            if (pluginConfig && pluginConfig.enabled) {
-                log.debug("Loading 'export' plugin ${pluginConfig.type} for ${project}...")
                 def username = pluginConfig.getSetting("username")
                 def roles = pluginConfig.getSettingList("roles")
+
                 if (!username || !roles) {
                     log.error(
-                            "SCM Export not valid (missing username or roles) for project: ${project}: ${pluginConfig}"
+                            "SCM ${integration} config not valid (missing username or roles) for project: ${project}: ${pluginConfig}"
                     )
-                } else {
-                    try {
-                        def context = scmOperationContext(username, roles, project)
-                        initPlugin(EXPORT, context, pluginConfig.type, pluginConfig.config)
-                    } catch (Throwable e) {
-                        log.error(
-                                "Failed to initialize SCM Export plugin ${pluginConfig.type} for ${project}: ${e.message}",
-                                e
-                        )
-                    }
+                    continue
                 }
-                //TODO: refresh status of all jobs in project?
-            } else {
-                log.debug("SCM Export not setup for project: ${project}: ${pluginConfig}")
-            }
 
-
-            def importPluginConfig = pluginConfigService.loadScmConfig(project, pathForConfigFile(IMPORT), EXPORT_PREF)
-            if (importPluginConfig && importPluginConfig.enabled) {
-                log.debug("Loading 'import' plugin ${importPluginConfig.type} for ${project}...")
-                def username = importPluginConfig.getSetting("username")
-                def roles = importPluginConfig.getSettingList("roles")
-                if (!username || !roles) {
+                try {
+                    def context = scmOperationContext(username, roles, project)
+                    initPlugin(integration, context, pluginConfig.type, pluginConfig.config)
+                } catch (Throwable e) {
                     log.error(
-                            "SCM Import not valid (missing username or roles) for project: ${project}: ${pluginConfig}"
+                            "Failed to initialize SCM ${integration} plugin ${pluginConfig.type} for ${project}: ${e.message}",
+                            e
                     )
-                } else {
-                    try {
-                        def context = scmOperationContext(username, roles, project)
-                        initPlugin(IMPORT, context, importPluginConfig.type, importPluginConfig.config)
-                    } catch (Throwable e) {
-                        log.error(
-                                "Failed to initialize SCM Import plugin ${importPluginConfig.type} for ${project}: ${e.message}",
-                                e
-                        )
-                    }
                 }
+
                 //TODO: refresh status of all jobs in project?
-            } else {
-                log.debug("SCM Import not setup for project: ${project}: ${importPluginConfig}")
             }
         }
     }

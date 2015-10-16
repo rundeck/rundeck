@@ -366,4 +366,58 @@ class ScmServiceSpec extends Specification {
         result.valid
         result.commitId == 'a-commit-id'
     }
+
+    def "initialize should read correct configs"() {
+        given:
+        service.pluginConfigService = Mock(PluginConfigService)
+        service.frameworkService = Mock(FrameworkService)
+        when:
+        service.initialize()
+        then:
+        1 * service.frameworkService.projectNames() >> ['projectA']
+        1 * service.pluginConfigService.loadScmConfig('projectA', 'etc/scm-import.properties', 'scm.import')
+        1 * service.pluginConfigService.loadScmConfig('projectA', 'etc/scm-export.properties', 'scm.export')
+    }
+
+    def "initialize loads import plugins if enabled"() {
+        given:
+        service.pluginConfigService = Mock(PluginConfigService)
+        service.frameworkService = Mock(FrameworkService)
+        service.storageService = Mock(StorageService)
+        def config1 = Mock(ScmPluginConfigData) {
+            1 * getEnabled() >> true
+            1 * getSetting("username") >> 'bob'
+            1 * getSettingList("roles") >> ['arole']
+            _ * getType() >> 'pluginType'
+            1 * getConfig() >> [plugin: 'config']
+            1 * getSettingList('trackedItems') >> ['a', 'b']
+        }
+        def bobuser = new User(login: 'bob').save()
+
+        //init plugin mocks
+
+        ScmImportPluginFactory importFactory = Mock(ScmImportPluginFactory)
+        ScmImportPlugin plugin = Mock(ScmImportPlugin)
+
+        service.pluginService = Mock(PluginService)
+        service.jobEventsService = Mock(JobEventsService)
+        def validated = new ValidatedPlugin(valid: true)
+
+        when:
+        service.initialize()
+        then:
+        1 * service.frameworkService.projectNames() >> ['projectA']
+        2 * service.pluginConfigService.loadScmConfig('projectA', 'etc/scm-import.properties', 'scm.import') >> config1
+
+        1 * service.frameworkService.getAuthContextForUserAndRoles('bob', ['arole']) >> Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'bob'
+        }
+        1 * service.frameworkService.getFrameworkPropertyResolver(*_)
+        1 * service.pluginService.validatePlugin(*_) >> validated
+        1 * service.pluginService.getPlugin('pluginType', _) >> importFactory
+        1 * importFactory.createPlugin(_, [plugin: 'config'], ['a', 'b']) >> plugin
+        1 * service.jobEventsService.addListenerForProject(_, 'projectA')
+
+        1 * service.pluginConfigService.loadScmConfig('projectA', 'etc/scm-export.properties', 'scm.export') >> null
+    }
 }
