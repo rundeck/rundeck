@@ -376,7 +376,7 @@ class ScmService {
      * @param config
      * @return
      */
-    private def initPlugin(String integration, ScmOperationContext context, String type, Map config) {
+    def initPlugin(String integration, ScmOperationContext context, String type, Map config) {
         def validation = validatePluginSetup(integration, context.frameworkProject, type, config)
         if (!validation.valid) {
             throw new ScmPluginInvalidInput(
@@ -389,38 +389,13 @@ class ScmService {
         JobChangeListener changeListener
         if (integration == EXPORT) {
             ScmExportPlugin plugin = loaded
-            changeListener = { JobChangeEvent event, JobSerializer serializer ->
-                log.debug("job change event: " + event)
-                if (event.eventType == JobChangeEvent.JobChangeEventType.DELETE) {
-                    //record deleted path
-                    recordDeletedJob(
-                            context.frameworkProject,
-                            plugin.getRelativePathForJob(event.jobReference),
-                            [
-                                    id             : event.jobReference.id,
-                                    jobNameAndGroup: event.jobReference.getJobName(),
-                            ]
-                    )
-                } else if (event.eventType == JobChangeEvent.JobChangeEventType.MODIFY_RENAME) {
-                    //record original path for renamed job, if it is different
-                    def origpath = plugin.getRelativePathForJob(event.originalJobReference)
-                    def newpath = plugin.getRelativePathForJob(event.jobReference)
-                    if (origpath != newpath) {
-                        recordRenamedJob(context.frameworkProject, event.jobReference.id, origpath)
-                    }
-                }
-                plugin.jobChanged(event, scmJobRef(event.jobReference, serializer))
-            } as JobChangeListener
+            changeListener = listenerForExportPlugin(plugin, context)
         } else {
             ScmImportPlugin plugin = loaded
-            changeListener = { JobChangeEvent event, JobSerializer serializer ->
-                log.debug("job change event: " + event)
-                plugin.jobChanged(event, scmJobRef(event.jobReference, serializer))
-                if(event.eventType==JobChangeEvent.JobChangeEventType.DELETE){
-                    jobMetadataService.removeJobPluginMetaAll(event.jobReference.project,event.jobReference.id)
-                }
-            } as JobChangeListener
+            changeListener = listenerForImportPlugin(plugin)
         }
+        changeListener = jobEventsService.addListenerForProject changeListener, context.frameworkProject
+
         if (integration == EXPORT) {
             loadedExportPlugins[context.frameworkProject] = loaded
             loadedExportListeners[context.frameworkProject] = changeListener
@@ -428,8 +403,50 @@ class ScmService {
             loadedImportPlugins[context.frameworkProject] = loaded
             loadedImportListeners[context.frameworkProject] = changeListener
         }
-        jobEventsService.addListener changeListener
         loaded
+    }
+
+    private JobChangeListener listenerForImportPlugin(
+            ScmImportPlugin plugin
+    )
+    {
+        { JobChangeEvent event, JobSerializer serializer ->
+            log.debug("job change event: " + event)
+            plugin.jobChanged(event, scmJobRef(event.jobReference, serializer))
+            if (event.eventType == JobChangeEvent.JobChangeEventType.DELETE) {
+                jobMetadataService.removeJobPluginMetaAll(event.jobReference.project, event.jobReference.id)
+            }
+        } as JobChangeListener
+
+    }
+
+    private JobChangeListener listenerForExportPlugin(
+            ScmExportPlugin plugin,
+            ScmOperationContext context
+    )
+    {
+        { JobChangeEvent event, JobSerializer serializer ->
+            log.debug("job change event: " + event)
+            if (event.eventType == JobChangeEvent.JobChangeEventType.DELETE) {
+                //record deleted path
+                recordDeletedJob(
+                        context.frameworkProject,
+                        plugin.getRelativePathForJob(event.jobReference),
+                        [
+                                id             : event.jobReference.id,
+                                jobNameAndGroup: event.jobReference.getJobName(),
+                        ]
+                )
+            } else if (event.eventType == JobChangeEvent.JobChangeEventType.MODIFY_RENAME) {
+                //record original path for renamed job, if it is different
+                def origpath = plugin.getRelativePathForJob(event.originalJobReference)
+                def newpath = plugin.getRelativePathForJob(event.jobReference)
+                if (origpath != newpath) {
+                    recordRenamedJob(context.frameworkProject, event.jobReference.id, origpath)
+                }
+            }
+            plugin.jobChanged(event, scmJobRef(event.jobReference, serializer))
+        } as JobChangeListener
     }
 
     /**
@@ -476,7 +493,7 @@ class ScmService {
      * @param project project
      * @return
      */
-    ScmOperationContext scmOperationContext(UserAndRolesAuthContext auth, String project, String job=null) {
+    ScmOperationContext scmOperationContext(UserAndRolesAuthContext auth, String project, String job = null) {
         scmOperationContext {
             authContext auth
             frameworkProject project
@@ -726,7 +743,7 @@ class ScmService {
      * @param serializer predefined serializer, or null to create lazy serializer
      * @return JobScmReference
      */
-     JobScmReference scmJobRef(ScheduledExecution job, JobSerializer serializer = null) {
+    JobScmReference scmJobRef(ScheduledExecution job, JobSerializer serializer = null) {
         def metadata = jobMetadataService.getJobPluginMeta(job, 'scm-import')
         def impl = new JobImportReferenceImpl(
                 jobRevReference(job),
@@ -758,8 +775,10 @@ class ScmService {
      * @param serializer predefined serializer, or null to create lazy serializer
      * @return JobScmReference
      */
-    static JobScmReference scmJobRef(JobRevReference reference, Map metadata, JobSerializer serializer=null
-    ) {
+    static JobScmReference scmJobRef(
+            JobRevReference reference, Map metadata, JobSerializer serializer = null
+    )
+    {
 //        def metadata = jobMetadataService.getJobPluginMeta(reference.project, reference.id, 'scm-import')
         def impl = new JobImportReferenceImpl(
                 reference,

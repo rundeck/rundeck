@@ -142,4 +142,105 @@ class ScmServiceSpec extends Specification {
         ScmService.IMPORT | _
 
     }
+
+    def "init plugin invalid"() {
+        given:
+        def ctx = Mock(ScmOperationContext)
+        def config = [:]
+        service.pluginService = Mock(PluginService)
+        service.frameworkService = Mock(FrameworkService)
+        def resolver = Mock(PropertyResolver)
+
+
+        def report = Validator.errorReport('a', 'b')
+        def validated = new ValidatedPlugin(valid: false, report: report)
+        when:
+        def result = service.initPlugin(integration, ctx, 'atype', config)
+
+        then:
+        1 * service.frameworkService.getFrameworkPropertyResolver(*_)
+        1 * service.pluginService.validatePlugin(*_) >> validated
+
+        ScmPluginInvalidInput err = thrown()
+        err.report == report
+
+
+        where:
+        integration       | _
+        ScmService.EXPORT | _
+        ScmService.IMPORT | _
+    }
+    def "init import plugin valid"() {
+        given:
+        def ctx = Mock(ScmOperationContext){
+            getFrameworkProject()>>'testProject'
+        }
+        def config = [:]
+        def configobj = Mock(ScmPluginConfigData)
+
+        ScmImportPluginFactory importFactory = Mock(ScmImportPluginFactory)
+        ScmImportPlugin plugin = Mock(ScmImportPlugin)
+
+        service.pluginService = Mock(PluginService)
+        service.pluginConfigService = Mock(PluginConfigService)
+        service.jobEventsService = Mock(JobEventsService)
+        service.frameworkService = Mock(FrameworkService)
+
+        def validated = new ValidatedPlugin(valid: true)
+
+        when:
+        def result = service.initPlugin(integration, ctx, 'atype', config)
+
+        then:
+        1 * service.frameworkService.getFrameworkPropertyResolver(*_)
+        1 * service.pluginService.validatePlugin(*_) >> validated
+        1 * service.pluginService.getPlugin('atype',_) >> importFactory
+        1 * service.pluginConfigService.loadScmConfig(*_) >> configobj
+        1 * configobj.getSettingList('trackedItems') >> ['a','b']
+        1 * importFactory.createPlugin(ctx,config,['a','b']) >> plugin
+        1 * service.jobEventsService.addListenerForProject(_, 'testProject')
+
+        result == plugin
+
+
+
+        where:
+        integration       | _
+        ScmService.IMPORT | _
+    }
+    def "init export plugin valid"() {
+        given:
+        def ctx = Mock(ScmOperationContext){
+            getFrameworkProject()>>'testProject'
+        }
+        def config = [:]
+
+        ScmExportPluginFactory exportFactory = Mock(ScmExportPluginFactory)
+        ScmExportPlugin plugin = Mock(ScmExportPlugin)
+
+        service.pluginService = Mock(PluginService)
+        service.pluginConfigService = Mock(PluginConfigService)
+        service.jobEventsService = Mock(JobEventsService)
+        service.frameworkService = Mock(FrameworkService)
+
+        def validated = new ValidatedPlugin(valid: true)
+
+        when:
+        def result = service.initPlugin(integration, ctx, 'atype', config)
+
+        then:
+        1 * service.frameworkService.getFrameworkPropertyResolver(*_)
+        1 * service.pluginService.validatePlugin(*_) >> validated
+        1 * service.pluginService.getPlugin('atype',_) >> exportFactory
+        1 * exportFactory.createPlugin(ctx,config) >> plugin
+        1 * service.jobEventsService.addListenerForProject(_, 'testProject')
+
+        result == plugin
+
+
+
+        where:
+        integration       | _
+        ScmService.EXPORT | _
+    }
 }
