@@ -40,8 +40,8 @@ class ScmServiceSpec extends Specification {
         ScmPluginConfigData config = Mock(ScmPluginConfigData)
         ScmExportPlugin exportPlugin = Mock(ScmExportPlugin)
         ScmImportPlugin importPlugin = Mock(ScmImportPlugin)
-        service.loadedExportPlugins['test1']= exportPlugin
-        service.loadedImportPlugins['test1']= importPlugin
+        service.loadedExportPlugins['test1'] = exportPlugin
+        service.loadedImportPlugins['test1'] = importPlugin
         def dummyListener = Mock(JobChangeListener)
         service.loadedExportListeners['test1'] = dummyListener
         service.loadedImportListeners['test1'] = dummyListener
@@ -79,6 +79,7 @@ class ScmServiceSpec extends Specification {
         ScmService.EXPORT | _
         ScmService.IMPORT | _
     }
+
     def "disablePlugin not enabled"() {
         given:
         service.frameworkService = Mock(FrameworkService)
@@ -86,8 +87,8 @@ class ScmServiceSpec extends Specification {
         service.jobEventsService = Mock(JobEventsService)
         ScmExportPlugin exportPlugin = Mock(ScmExportPlugin)
         ScmImportPlugin importPlugin = Mock(ScmImportPlugin)
-        service.loadedExportPlugins['test1']= exportPlugin
-        service.loadedImportPlugins['test1']= importPlugin
+        service.loadedExportPlugins['test1'] = exportPlugin
+        service.loadedImportPlugins['test1'] = importPlugin
         def dummyListener = Mock(JobChangeListener)
         service.loadedExportListeners['test1'] = dummyListener
         service.loadedImportListeners['test1'] = dummyListener
@@ -244,10 +245,11 @@ class ScmServiceSpec extends Specification {
         ScmService.EXPORT | _
         ScmService.IMPORT | _
     }
+
     def "init import plugin valid"() {
         given:
-        def ctx = Mock(ScmOperationContext){
-            getFrameworkProject()>>'testProject'
+        def ctx = Mock(ScmOperationContext) {
+            getFrameworkProject() >> 'testProject'
         }
         def config = [:]
         def configobj = Mock(ScmPluginConfigData)
@@ -268,10 +270,10 @@ class ScmServiceSpec extends Specification {
         then:
         1 * service.frameworkService.getFrameworkPropertyResolver(*_)
         1 * service.pluginService.validatePlugin(*_) >> validated
-        1 * service.pluginService.getPlugin('atype',_) >> importFactory
+        1 * service.pluginService.getPlugin('atype', _) >> importFactory
         1 * service.pluginConfigService.loadScmConfig(*_) >> configobj
-        1 * configobj.getSettingList('trackedItems') >> ['a','b']
-        1 * importFactory.createPlugin(ctx,config,['a','b']) >> plugin
+        1 * configobj.getSettingList('trackedItems') >> ['a', 'b']
+        1 * importFactory.createPlugin(ctx, config, ['a', 'b']) >> plugin
         1 * service.jobEventsService.addListenerForProject(_, 'testProject')
 
         result == plugin
@@ -282,10 +284,11 @@ class ScmServiceSpec extends Specification {
         integration       | _
         ScmService.IMPORT | _
     }
+
     def "init export plugin valid"() {
         given:
-        def ctx = Mock(ScmOperationContext){
-            getFrameworkProject()>>'testProject'
+        def ctx = Mock(ScmOperationContext) {
+            getFrameworkProject() >> 'testProject'
         }
         def config = [:]
 
@@ -305,8 +308,8 @@ class ScmServiceSpec extends Specification {
         then:
         1 * service.frameworkService.getFrameworkPropertyResolver(*_)
         1 * service.pluginService.validatePlugin(*_) >> validated
-        1 * service.pluginService.getPlugin('atype',_) >> exportFactory
-        1 * exportFactory.createPlugin(ctx,config) >> plugin
+        1 * service.pluginService.getPlugin('atype', _) >> exportFactory
+        1 * exportFactory.createPlugin(ctx, config) >> plugin
         1 * service.jobEventsService.addListenerForProject(_, 'testProject')
 
         result == plugin
