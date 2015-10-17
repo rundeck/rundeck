@@ -5,7 +5,6 @@ package com.dtolabs.rundeck.plugins.scm;
  */
 public class ScmExportResultImpl implements ScmExportResult {
     private boolean success;
-    private boolean error;
     private String message;
     private String extendedMessage;
     private String id;
@@ -20,12 +19,9 @@ public class ScmExportResultImpl implements ScmExportResult {
     }
 
     public boolean isError() {
-        return error;
+        return !success;
     }
 
-    public void setError(boolean error) {
-        this.error = error;
-    }
 
     @Override
     public String getMessage() {
