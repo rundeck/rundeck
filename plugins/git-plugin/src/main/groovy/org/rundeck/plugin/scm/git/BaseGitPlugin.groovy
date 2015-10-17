@@ -151,7 +151,8 @@ class BaseGitPlugin {
 
             def result = new ScmExportResultImpl()
             result.success = pullResult.successful
-            result.message = pullResult.toString()
+            result.message = result.success?"Rebase was successful":"Rebase failed"
+            result.extendedMessage = pullResult.toString()
             return result
         } else {
             //fetch, then
@@ -168,7 +169,8 @@ class BaseGitPlugin {
 
             def result = new ScmExportResultImpl()
             result.success = mergeresult.mergeStatus.successful
-            result.message = mergeresult.toString()
+            result.message = result.success?"Merge was successful":"Merge failed"
+            result.extendedMessage = mergeresult.toString()
             return result
 
         }

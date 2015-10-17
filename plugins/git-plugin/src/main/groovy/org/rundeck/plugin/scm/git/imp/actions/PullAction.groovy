@@ -104,7 +104,8 @@ Pulling from remote branch: `${plugin.branch}`"""
         def pullResult = plugin.gitPull(context)
         def result = new ScmExportResultImpl()
         result.success = pullResult.successful
-        result.message = pullResult.toString()
+        result.message = "Git Pull "+(result.success?'succeeded':'failed')
+        result.extendedMessage = pullResult.mergeResult?.toString()?:null
         result
     }
 

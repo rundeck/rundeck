@@ -4,6 +4,13 @@
             <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
         </g:unless>
         <g:autoLink><g:enc>${flash.message}${request.message}</g:enc></g:autoLink>
+        <g:if test="${flash.extendedMessage||request.extendedMessage}">
+            <g:set var="ekey" value="${g.rkey()}"/>
+            <g:expander key="${ekey}"><g:message code="more.info" /></g:expander>
+            <div id="${ekey}" style="display:none">
+                <g:autoLink><g:enc>${flash.extendedMessage}${request.extendedMessage}</g:enc></g:autoLink>
+            </div>
+        </g:if>
     </div>
 </g:if>
 <g:if test="${flash.invalidToken||flash.error||flash.errors!=null||request.error||( ((request.errors instanceof org.springframework.validation.Errors && request.errors.hasErrors())|| request.errors instanceof java.util.Collection))||flash.errorCode||request.errorCode}">

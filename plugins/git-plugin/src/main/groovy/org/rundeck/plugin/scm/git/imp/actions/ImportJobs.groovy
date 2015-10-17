@@ -75,7 +75,8 @@ class ImportJobs extends BaseAction implements GitImportAction {
         }
         def result = new ScmExportResultImpl()
         result.success = success
-        result.message = sb.toString()
+        result.message = "Git Import " + (success ? "successful" : "failed")
+        result.extendedMessage = sb.toString()
         return result
 
     }

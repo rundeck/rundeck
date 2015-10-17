@@ -7,6 +7,7 @@ public class ScmExportResultImpl implements ScmExportResult {
     private boolean success;
     private boolean error;
     private String message;
+    private String extendedMessage;
     private String id;
     private ScmCommitInfo commit;
 
@@ -51,5 +52,14 @@ public class ScmExportResultImpl implements ScmExportResult {
 
     public void setCommit(ScmCommitInfo commit) {
         this.commit = commit;
+    }
+
+    @Override
+    public String getExtendedMessage() {
+        return extendedMessage;
+    }
+
+    public void setExtendedMessage(String extendedMessage) {
+        this.extendedMessage = extendedMessage;
     }
 }

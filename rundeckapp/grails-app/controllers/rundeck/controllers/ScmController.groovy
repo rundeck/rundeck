@@ -399,6 +399,10 @@ class ScmController extends ControllerBase {
                 request.errorHelp = message(code: "scmController.action.saveCommit.userInfoMissing.errorHelp")
             } else {
                 request.error = result.error ? result.message : message(code: "some.input.values.were.not.valid")
+
+                if (result.extendedMessage) {
+                    request.errorHelp = result.extendedMessage
+                }
             }
             def deletedPaths = scmService.deletedExportFilesForProject(project)
             def scmStatus = scmService.exportStatusForJobs(jobs)
@@ -432,6 +436,9 @@ class ScmController extends ControllerBase {
             def commitid = result.commitId
             if (result.message) {
                 flash.message = result.message
+                if (result.extendedMessage) {
+                    flash.extendedMessage = result.extendedMessage
+                }
             } else {
                 def code = "scmController.action.export.multi.succeed.message"
                 def jobIdent = ''
@@ -455,6 +462,9 @@ class ScmController extends ControllerBase {
         } else {
             if (result.message) {
                 flash.message = result.message
+                if (result.extendedMessage) {
+                    flash.extendedMessage = result.extendedMessage
+                }
             } else {
                 flash.message = message(
                         code: 'scmController.action.import.success',

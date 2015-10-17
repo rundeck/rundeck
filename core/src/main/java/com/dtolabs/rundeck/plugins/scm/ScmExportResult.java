@@ -15,9 +15,14 @@ public interface ScmExportResult {
     public boolean isError();
 
     /**
-     * @return result message
+     * @return basic result message
      */
     public String getMessage();
+
+    /**
+     * @return extended result message
+     */
+    public String getExtendedMessage();
 
     /**
      * @return Id associated with export, if any
