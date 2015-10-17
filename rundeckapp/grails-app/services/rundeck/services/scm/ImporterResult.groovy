@@ -30,6 +30,6 @@ class ImporterResult implements ImportResult {
     }
 
     private String formatJob() {
-        '[' + job.id + '] ' + job.jobAndGroup
+        '{{Job ' + job.id + '}}'
     }
 }
