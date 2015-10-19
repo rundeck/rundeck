@@ -177,7 +177,7 @@
     <g:set var="jobstatus" value="${scmExportStatus?.get(scheduledExecution.extid)}"/>
     <g:set var="exportStateClean" value="${jobstatus?.synchState?.toString()=='CLEAN'}"/>
     <g:set var="exportStateCreate" value="${'CREATE_NEEDED'==jobstatus?.synchState?.toString()}"/>
-        <g:each in="${scmExportJobActions}" var="action">
+    <g:each in="${jobstatus?.actions}" var="action">
         <g:if test="${action.id == '-'}">
             <li class="divider"></li>
         </g:if>
