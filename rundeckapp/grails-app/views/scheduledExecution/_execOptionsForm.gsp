@@ -81,10 +81,19 @@
 		    </select>
             </div>
             <g:javascript>
+                var nodeLength = jQuery('select[name="extra.nodeIncludeName"]').get(0).options.length;
+                var selectorHeight = nodeLength / 2;
+                if (selectorHeight < 100) {
+                    selectorHeight = 100;
+                }
+                if (selectorHeight > 480) {
+                    selectorHeight = 480;
+                }
                 jQuery('select[name="extra.nodeIncludeName"]').bootstrapDualListbox({
                     nonSelectedListLabel:'Available',
                     selectedListLabel:'Selected',
-                    moveOnSelect:false
+                    moveOnSelect:false,
+                    selectorMinimalHeight: selectorHeight
                 });
                 var updateSelectCount = function (evt) {
                     var selected = jQuery('select[name="extra.nodeIncludeName"]').val();
