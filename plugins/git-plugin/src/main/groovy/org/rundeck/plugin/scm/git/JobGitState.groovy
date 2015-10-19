@@ -1,5 +1,6 @@
 package org.rundeck.plugin.scm.git
 
+import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.plugins.scm.JobState
 import com.dtolabs.rundeck.plugins.scm.ScmCommitInfo
 import com.dtolabs.rundeck.plugins.scm.SynchState
@@ -10,6 +11,7 @@ import com.dtolabs.rundeck.plugins.scm.SynchState
 class JobGitState implements JobState {
     SynchState synchState
     ScmCommitInfo commit
+    List<Action> actions
 
     @Override
     public String toString() {
