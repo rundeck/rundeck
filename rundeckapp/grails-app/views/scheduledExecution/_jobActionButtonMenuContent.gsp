@@ -187,7 +187,7 @@
                           model="[action:action,
                                   integration:'export',
                                   project:params.project,
-                                  linkparams:[jobIds: scheduledExecution.extid]]"
+                                  linkparams:[id: scheduledExecution.extid]]"
                 />
 
             </li>

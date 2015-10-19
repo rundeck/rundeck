@@ -77,7 +77,7 @@
                                                 <g:set var="jobstatus" value="${scmStatus?.get(job.extid)}"/>
                                                 <g:if test="${jobstatus?.synchState?.toString() != 'CLEAN'}">
 
-                                                    <g:checkBox name="jobIds" value="${job.extid}"
+                                                    <g:checkBox name="id" value="${job.extid}"
                                                                 checked="${selected?.contains(job.extid)}"/>
                                                 </g:if>
 
@@ -137,12 +137,12 @@
                                     <div class=" row row-spacing">
                                         <div class=" col-sm-12">
                                             <span class="textbtn textbtn-default"
-                                                  onclick="jQuery('input[name=jobIds]').prop('checked', true)">
+                                                  onclick="jQuery('input[name=id]').prop('checked', true)">
                                                 <g:message code="select.all"/>
                                             </span>
                                         &bull;
                                             <span class="textbtn textbtn-default"
-                                                  onclick="jQuery('input[name=jobIds]').prop('checked', false)">
+                                                  onclick="jQuery('input[name=id]').prop('checked', false)">
                                                 <g:message code="select.none"/>
                                             </span>
                                         </div>

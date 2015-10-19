@@ -1,4 +1,4 @@
-<g:link controller="scm" action="exportAction" params="${[
+<g:link controller="scm" action="performAction" params="${[
         project    : project,
         actionId: action.id,
         integration: integration

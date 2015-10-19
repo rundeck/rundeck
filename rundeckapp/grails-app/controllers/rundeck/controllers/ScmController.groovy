@@ -127,7 +127,7 @@ class ScmController extends ControllerBase {
             //redirect to next action
             flash.message = message(code: 'scmController.action.setup.success.message')
             redirect(
-                    action: 'exportAction',
+                    action: 'performAction',
                     params: [project: project, integration: integration, actionId: result.nextAction.id]
             )
         } else {
@@ -220,7 +220,7 @@ class ScmController extends ControllerBase {
             //redirect to next action
             flash.message = message(code: "scmController.action.enable.success.message", args: [integration, type])
             return redirect(
-                    action: 'exportAction',
+                    action: 'performAction',
                     params: [project: project, integration: integration, actionId: result.nextAction.id]
             )
         } else if (result.valid) {
@@ -236,7 +236,7 @@ class ScmController extends ControllerBase {
         redirect(action: 'index', params: [project: project])
     }
 
-    def exportAction(String integration, String project, String actionId) {
+    def performAction(String integration, String project, String actionId) {
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
 
 
@@ -266,8 +266,8 @@ class ScmController extends ControllerBase {
         Map deletedPaths = [:]
         List<String> selectedPaths = []
         Map<String, String> renamedJobPaths = scmService.getRenamedJobPathsForProject(params.project)
-        if (params.jobIds) {
-            jobIds = [params.jobIds].flatten()
+        if (params.id) {
+            jobIds = [params.id].flatten()
         } else {
             jobIds = ScheduledExecution.findAllByProject(params.project).collect {
                 it.extid
@@ -314,7 +314,7 @@ class ScmController extends ControllerBase {
                 jobs            : jobs,
                 jobMap          : jobMap,
                 scmStatus       : scmStatus,
-                selected        : params.jobIds ? jobIds : [],
+                selected        : params.id ? jobIds : [],
                 filesMap        : scmFiles,
                 trackingItems   : trackingItems,
                 deletedPaths    : deletedPaths,
@@ -362,7 +362,7 @@ class ScmController extends ControllerBase {
         if (!valid) {
             return
         }
-        List<String> jobIds = [params.jobIds].flatten().findAll { it }
+        List<String> jobIds = [params.id].flatten().findAll { it }
 
         List<ScheduledExecution> jobs = jobIds.collect {
             ScheduledExecution.getByIdOrUUID(it)
@@ -418,12 +418,12 @@ class ScmController extends ControllerBase {
             def scmProjectStatus = scmService.getPluginStatus(authContext, integration, params.project)
             def trackingItems = integration == 'import' ? scmService.getTrackingItemsForAction(project, actionId) : null
 
-            render view: 'exportAction',
+            render view: 'performAction',
                    model: [
                            actionView      : scmService.getInputView(authContext, integration, project, actionId),
                            jobs            : jobs,
                            scmStatus       : scmStatus,
-                           selected        : params.jobIds ? jobIds : [],
+                           selected        : params.id ? jobIds : [],
                            filesMap        : scmFiles,
                            trackingItems   : trackingItems,
                            selectedItems   : chosenTrackedItems,

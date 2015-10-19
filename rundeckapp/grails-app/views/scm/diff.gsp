@@ -123,16 +123,18 @@
                      data-ace-session-mode="diff">${diffResult.content}</div>
             </g:elseif>
             <g:if test="${diffResult && (diffResult.modified || diffResult.oldNotFound) && diffResult.actions}">
+                <div class="list-group-item">
                 <g:each in="${diffResult.actions}" var="action">
 
                     <g:render template="/scm/actionLink"
                               model="${[action:action,
                                       integration:integration,
                                       project:params.project,
-                                      classes:"list-group-item "+(diffResult.oldNotFound ? 'list-group-item-success' : 'list-group-item-info')]}"
+                                      linkparams:[id:job.extid],
+                                      classes:"btn "+(diffResult.oldNotFound ? 'btn-success' : 'btn-info')]}"
                     />
                 </g:each>
-
+                </div>
             </g:if>
         </div>
     </div>
