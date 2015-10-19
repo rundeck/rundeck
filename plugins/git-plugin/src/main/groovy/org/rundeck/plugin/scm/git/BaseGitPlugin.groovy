@@ -8,6 +8,8 @@ import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.PullResult
+import org.eclipse.jgit.api.RebaseCommand
+import org.eclipse.jgit.api.RebaseResult
 import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.api.TransportCommand
 import org.eclipse.jgit.diff.RawTextComparator
@@ -152,8 +154,32 @@ class BaseGitPlugin {
 
             def result = new ScmExportResultImpl()
             result.success = pullResult.successful
-            result.message = result.success?"Rebase was successful":"Rebase failed"
-            result.extendedMessage = pullResult.toString()
+            result.message = result.success?"Rebase was successful":"Rebase did not succeed"
+            if(pullResult.rebaseResult){
+                result.extendedMessage = "Rebase result was: "+pullResult.rebaseResult.status?.toString()
+                //get status
+                boolean rebasestat=false
+                if(pullResult.rebaseResult.conflicts) {
+                    rebasestat = true
+
+                    result.extendedMessage = result.extendedMessage + " Conflicts: " + pullResult.rebaseResult.conflicts
+                }
+                if(pullResult.rebaseResult.failingPaths){
+                    rebasestat = true
+                    result.extendedMessage = result.extendedMessage+" Failures: "+pullResult.rebaseResult.failingPaths
+                }
+                if(pullResult.rebaseResult.uncommittedChanges){
+                    rebasestat = true
+                    result.extendedMessage = result.extendedMessage+" Uncommitted changes: "+pullResult.rebaseResult.uncommittedChanges
+                }
+                if(!rebasestat) {
+                    //rebase does not seem to actually include conflict info in result
+                    def status = git.status().call()
+                    if (status.conflicting || status.conflictingStageState) {
+                        result.extendedMessage = result.extendedMessage + " Conflicts: " + status.conflictingStageState
+                    }
+                }
+            }
             return result
         } else {
             //fetch, then
