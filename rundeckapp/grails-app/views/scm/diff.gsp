@@ -111,7 +111,7 @@
                 <div class="list-group-item">
                     <g:link action="diff" controller="scm"
                             class="btn btn-link"
-                            params="[project: params.project, jobId: job.extid, download: true, integration:integration]">
+                            params="[project: params.project, id: job.extid, download: true, integration:integration]">
                         <g:icon name="download"/>
                         <g:message code="download.diff" />
                     </g:link>

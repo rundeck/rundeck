@@ -143,6 +143,7 @@ class UrlMappings {
         //simplified url mappings for link generation
         "/project/$project/nodes/"(controller: 'framework', action: 'nodes')
         "/project/$project/run/"(controller: 'framework', action: 'nodes')
+        "/project/$project/scm/$integration?/$action?"(controller: 'scm')
         "/project/$project/command/run"(controller: 'framework',action: 'adhoc')
         "/project/$project/activity"(controller: 'reports', action: 'index')
         "/project/$project/history"(controller: 'reports', action: 'index')
@@ -151,6 +152,7 @@ class UrlMappings {
         "/project/$project/job/upload"(controller: 'scheduledExecution'){
             action = [GET: 'upload', POST: 'uploadPost']
         }
+        "/project/$project/job/$id/scm/$integration/$action"(controller: 'scm')
         "/project/$project/job/$action?/$id?"(controller: 'scheduledExecution')
         "/resources/createProject"(controller: 'framework') {
             action = [GET: 'createProject', POST: 'createProjectPost']

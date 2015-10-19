@@ -195,7 +195,7 @@
     </g:each>
     <g:unless test="${exportStateCreate}">
         <li><g:link controller="scm"
-                    params="[project: scheduledExecution.project,jobId:scheduledExecution.extid,integration: 'export']"
+                    params="[project: scheduledExecution.project,id:scheduledExecution.extid,integration: 'export']"
                     action="diff"
                     >
             <g:render template="/scm/statusBadge"
@@ -231,7 +231,7 @@
     <g:unless test="${importStateUnknown}">
     <li>
         <g:link controller="scm"
-                params="[project: scheduledExecution.project,jobId:scheduledExecution.extid,integration: 'import']"
+                params="[project: scheduledExecution.project,id:scheduledExecution.extid,integration: 'import']"
                 action="diff">
             <g:render template="/scm/statusBadge"
                   model="[importStatus: jobstatus?.synchState?.toString(),

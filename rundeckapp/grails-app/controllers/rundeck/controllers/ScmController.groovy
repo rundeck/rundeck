@@ -2,7 +2,6 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.SynchState
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import rundeck.ScheduledExecution
@@ -503,7 +502,7 @@ class ScmController extends ControllerBase {
         }
     }
 
-    def diff(String project, String jobId, String integration) {
+    def diff(String project, String id, String integration) {
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
 
 
@@ -522,11 +521,11 @@ class ScmController extends ControllerBase {
         if (!scmService.projectHasConfiguredPlugin(integration, project)) {
             return redirect(action: 'index', params: [project: project])
         }
-        if (!jobId) {
+        if (!id) {
             flash.message = "No jobId Selected"
             return redirect(action: 'index', params: [project: project])
         }
-        def job = ScheduledExecution.getByIdOrUUID(jobId)
+        def job = ScheduledExecution.getByIdOrUUID(id)
         def exportStatus = isExport ? scmService.exportStatusForJobs([job]) : null
         def importStatus = isExport ? null : scmService.importStatusForJobs([job])
         def scmFilePaths = isExport ? scmService.exportFilePathsMapForJobs([job]) : null
