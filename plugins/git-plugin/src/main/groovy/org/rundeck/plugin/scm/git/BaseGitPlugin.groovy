@@ -180,6 +180,19 @@ class BaseGitPlugin {
                     }
                 }
             }
+            if(!result.success) {
+                //abort rebase
+                def abortResult = git.rebase().setOperation(RebaseCommand.Operation.ABORT).call()
+                if (abortResult.status == RebaseResult.Status.ABORTED) {
+                    result.message = result.message + ". Rebase automatically aborted."
+                    result.extendedMessage = result.extendedMessage +
+                            ". Note: local rebase was automatically aborted and restored to previous state."
+                } else {
+                    result.message = result.message + ". Rebase WAS NOT automatically aborted ${abortResult.status}."
+                    result.extendedMessage = result.extendedMessage +
+                            ". Warning: local rebase WAS NOT automatically aborted."
+                }
+            }
             return result
         } else {
             //fetch, then
