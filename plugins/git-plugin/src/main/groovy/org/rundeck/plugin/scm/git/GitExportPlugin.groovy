@@ -227,7 +227,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             case JobChangeEvent.JobChangeEventType.DELETE:
                 origfile.delete()
                 def status = refreshJobStatus(event.jobReference, origPath)
-                return createJobStatus(status)
+                return createJobStatus(status,jobActionsForStatus(status))
                 break;
 
             case JobChangeEvent.JobChangeEventType.MODIFY_RENAME:
@@ -247,7 +247,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 }
         }
         def status = refreshJobStatus(exportReference, origPath)
-        return createJobStatus(status)
+        return createJobStatus(status,jobActionsForStatus(status))
     }
 
     private hasJobStatusCached(final JobExportReference job, final String originalPath) {
@@ -373,9 +373,16 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         if (!status) {
             status = refreshJobStatus(job, originalPath)
         }
-        return createJobStatus(status)
+        return createJobStatus(status,jobActionsForStatus(status))
     }
 
+    List<Action> jobActionsForStatus(Map status){
+        if(status.synch != SynchState.CLEAN){
+            actionRefs(JOB_COMMIT_ACTION_ID)
+        }else{
+            []
+        }
+    }
     @Override
     String getRelativePathForJob(final JobReference job) {
         relativePath(job)

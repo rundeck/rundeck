@@ -2,6 +2,7 @@ package org.rundeck.plugin.scm.git
 
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
@@ -263,11 +264,12 @@ class BaseGitPlugin {
         }
     }
 
-    JobState createJobStatus(final Map map) {
+    JobState createJobStatus(final Map map,final List<Action> actions=[]) {
         //TODO: include scm status
         return new JobGitState(
                 synchState: map['synch'],
-                commit: map.commitMeta ? new GitScmCommit(map.commitMeta) : null
+                commit: map.commitMeta ? new GitScmCommit(map.commitMeta) : null,
+                actions:actions
         )
     }
 
