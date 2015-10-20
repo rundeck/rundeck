@@ -1,6 +1,7 @@
 package org.rundeck.plugin.scm.git
 
 import com.dtolabs.rundeck.core.jobs.JobReference
+import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
@@ -646,5 +647,266 @@ class GitExportPluginSpec extends Specification {
         null     | null      | 'committerName'
         'bob'    | null      | 'committerEmail'
         null     | 'a@b'     | 'committerName'
+    }
+
+    def "job change delete removes file"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+
+        def ctxt = Mock(ScmOperationContext) {
+        }
+
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+        def commit = addCommitFile(gitdir, plugin.git, 'blah-xyz.xml', 'blah')
+        def localfile = new File(gitdir, 'blah-xyz.xml')
+
+        def serializer = Mock(JobSerializer)
+        def jobref = Stub(JobExportReference) {
+            getJobName() >> 'blah'
+            getGroupPath() >> ''
+            getId() >> 'xyz'
+            getVersion() >> 1
+            getJobSerializer() >> serializer
+        }
+        JobChangeEvent event = Mock(JobChangeEvent) {
+            getOriginalJobReference() >> jobref
+            getJobReference() >> jobref
+            getEventType() >> JobChangeEvent.JobChangeEventType.DELETE
+        }
+
+        when:
+        def result = plugin.jobChanged(event, jobref)
+
+        then:
+        !localfile.exists()
+        plugin.jobStateMap['xyz'] == null
+        result != null
+        result.synchState == SynchState.EXPORT_NEEDED
+    }
+
+    def "job change modify overwrites file"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+
+        def ctxt = Mock(ScmOperationContext) {
+        }
+
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+        def commit = addCommitFile(gitdir, plugin.git, 'blah-xyz.xml', 'blah')
+        def localfile = new File(gitdir, 'blah-xyz.xml')
+
+        def serializer = Mock(JobSerializer) {
+            1 * serialize('xml', _) >> { args ->
+                args[1].write('newcontent'.bytes)
+                return 10
+            }
+        }
+        def jobref = Stub(JobExportReference) {
+            getJobName() >> 'blah'
+            getGroupPath() >> ''
+            getId() >> 'xyz'
+            getVersion() >> 1
+            getJobSerializer() >> serializer
+        }
+        JobChangeEvent event = Mock(JobChangeEvent) {
+            getOriginalJobReference() >> jobref
+            getJobReference() >> jobref
+            getEventType() >> theEventType
+        }
+
+        when:
+        def result = plugin.jobChanged(event, jobref)
+
+        then:
+        localfile.exists()
+        localfile.text == 'newcontent'
+        plugin.jobStateMap['xyz'] != null
+        result != null
+        result.synchState == SynchState.EXPORT_NEEDED
+
+        where:
+        theEventType                             | _
+        JobChangeEvent.JobChangeEventType.MODIFY | _
+    }
+    def "job change serializer fails does not overwrite file"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+
+        def ctxt = Mock(ScmOperationContext) {
+        }
+
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+        def commit = addCommitFile(gitdir, plugin.git, 'blah-xyz.xml', 'blah')
+        def localfile = new File(gitdir, 'blah-xyz.xml')
+
+        def serializer = Mock(JobSerializer) {
+            1 * serialize('xml', _) >> { args ->
+                throw new IllegalArgumentException('failure')
+            }
+        }
+        def jobref = Stub(JobExportReference) {
+            getJobName() >> 'blah'
+            getGroupPath() >> ''
+            getId() >> 'xyz'
+            getVersion() >> 1
+            getJobSerializer() >> serializer
+        }
+        JobChangeEvent event = Mock(JobChangeEvent) {
+            getOriginalJobReference() >> jobref
+            getJobReference() >> jobref
+            getEventType() >> theEventType
+        }
+
+        when:
+        def result = plugin.jobChanged(event, jobref)
+
+        then:
+        localfile.exists()
+        localfile.text == 'blah'
+        plugin.jobStateMap['xyz'] != null
+        result != null
+        result.synchState == SynchState.CLEAN
+
+        where:
+        theEventType                             | _
+        JobChangeEvent.JobChangeEventType.MODIFY | _
+    }
+
+    def "job change create creates file"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+
+        def ctxt = Mock(ScmOperationContext) {
+        }
+
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+        def localfile = new File(gitdir, 'blah-xyz.xml')
+
+        def serializer = Mock(JobSerializer) {
+            1 * serialize('xml', _) >> { args ->
+                args[1].write('newcontent'.bytes)
+                return 10
+            }
+        }
+        def jobref = Stub(JobExportReference) {
+            getJobName() >> 'blah'
+            getGroupPath() >> ''
+            getId() >> 'xyz'
+            getVersion() >> 1
+            getJobSerializer() >> serializer
+        }
+        JobChangeEvent event = Mock(JobChangeEvent) {
+            getOriginalJobReference() >> jobref
+            getJobReference() >> jobref
+            getEventType() >> theEventType
+        }
+
+        when:
+        def result = plugin.jobChanged(event, jobref)
+
+        then:
+        localfile.exists()
+        localfile.text == 'newcontent'
+        plugin.jobStateMap['xyz'] != null
+        result != null
+        result.synchState == SynchState.CREATE_NEEDED
+
+        where:
+        theEventType                             | _
+        JobChangeEvent.JobChangeEventType.CREATE | _
+    }
+
+    def "job change modify-rename removes old and writes new file"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+
+        def ctxt = Mock(ScmOperationContext) {
+        }
+
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+        def commit = addCommitFile(gitdir, plugin.git, 'blah-xyz.xml', 'blah')
+        def localfile = new File(gitdir, 'blah-xyz.xml')
+        def localnewfile = new File(gitdir, 'blah2-xyz.xml')
+
+        def serializer = Mock(JobSerializer) {
+            1 * serialize('xml', _) >> { args ->
+                args[1].write('newcontent'.bytes)
+                return 10
+            }
+        }
+        def origref = Stub(JobExportReference) {
+            getJobName() >> 'blah'
+            getGroupPath() >> ''
+            getId() >> 'xyz'
+            getVersion() >> 1
+            getJobSerializer() >> serializer
+        }
+        def jobref = Stub(JobExportReference) {
+            getJobName() >> 'blah2'
+            getGroupPath() >> ''
+            getId() >> 'xyz'
+            getVersion() >> 1
+            getJobSerializer() >> serializer
+        }
+        JobChangeEvent event = Mock(JobChangeEvent) {
+            getOriginalJobReference() >> origref
+            getJobReference() >> jobref
+            getEventType() >> theEventType
+        }
+
+        when:
+        def result = plugin.jobChanged(event, jobref)
+
+        then:
+        !localfile.exists()
+        localnewfile.exists()
+        localnewfile.text == 'newcontent'
+        plugin.jobStateMap['xyz'] != null
+        result != null
+        result.synchState == SynchState.EXPORT_NEEDED
+
+        where:
+        theEventType                                    | _
+        JobChangeEvent.JobChangeEventType.MODIFY_RENAME | _
     }
 }

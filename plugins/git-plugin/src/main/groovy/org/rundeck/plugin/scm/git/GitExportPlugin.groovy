@@ -226,28 +226,26 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         switch (event.eventType) {
             case JobChangeEvent.JobChangeEventType.DELETE:
                 origfile.delete()
-                def status = refreshJobStatus(event.jobReference, origPath)
-                return createJobStatus(status,jobActionsForStatus(status))
+                def status = refreshJobStatus(event.jobReference, origPath, false)
+                jobStateMap.remove(event.jobReference.id)
+                return createJobStatus(status, jobActionsForStatus(status))
                 break;
 
             case JobChangeEvent.JobChangeEventType.MODIFY_RENAME:
                 origPath = relativePath(event.originalJobReference)
             case JobChangeEvent.JobChangeEventType.CREATE:
             case JobChangeEvent.JobChangeEventType.MODIFY:
-                if (!origfile.getAbsolutePath().equals(outfile.getAbsolutePath())) {
+                if (origfile != outfile) {
                     origfile.delete()
                 }
-                if (!outfile.getParentFile().exists()) {
-                    if (!outfile.getParentFile().mkdirs()) {
-                        log.debug("Failed to create parent dirs for ${outfile}")
-                    }
-                }
-                outfile.withOutputStream { out ->
-                    exportReference.jobSerializer.serialize(format, out)
+                try {
+                    serialize(exportReference, format, outfile)
+                } catch (Throwable t) {
+                    getLogger().warn("Could not serialize job: ${t}", t)
                 }
         }
-        def status = refreshJobStatus(exportReference, origPath)
-        return createJobStatus(status,jobActionsForStatus(status))
+        def status = refreshJobStatus(exportReference, origPath, false)
+        return createJobStatus(status, jobActionsForStatus(status))
     }
 
     private hasJobStatusCached(final JobExportReference job, final String originalPath) {
@@ -255,18 +253,28 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
         def commit = lastCommitForPath(path)
 
-        def ident = job.id + ':' + String.valueOf(job.version) + ':' + (commit ? commit.name : '')
+        String ident = createStatusCacheIdent(job, commit)
 
         if (jobStateMap[job.id] && jobStateMap[job.id].ident == ident) {
-            log.debug("hasJobStatusCached(${job.id}): FOUND")
+            log.debug("hasJobStatusCached(${ident}): FOUND")
             return jobStateMap[job.id]
         }
-        log.debug("hasJobStatusCached(${job.id}): (no)")
+        log.debug("hasJobStatusCached(${ident}): (no)")
 
         null
     }
 
-    private refreshJobStatus(final JobRevReference job, final String originalPath) {
+    private String createStatusCacheIdent(JobRevReference job, RevCommit commit) {
+        def ident = job.id + ':' +
+                String.valueOf(job.version) +
+                ':' +
+                (commit ? commit.name : '') +
+                ":" +
+                (getLocalFileForJob(job)?.exists())
+        ident
+    }
+
+    private refreshJobStatus(final JobRevReference job, final String originalPath, boolean doSerialize = true) {
 
         def path = relativePath(job)
 
@@ -277,7 +285,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
 
 
-        if (job instanceof JobExportReference) {
+        if (job instanceof JobExportReference && doSerialize) {
             serialize(job, format)
         }
 
@@ -306,7 +314,8 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             }
         }
 
-        def ident = job.id + ':' + String.valueOf(job.version) + ':' + (commit ? commit.name : '')
+        def ident = createStatusCacheIdent(job, commit)
+//job.id + ':' + String.valueOf(job.version) + ':' + (commit ? commit.name : '')
 
         jobstat['ident'] = ident
         jobstat['id'] = job.id
@@ -373,16 +382,17 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         if (!status) {
             status = refreshJobStatus(job, originalPath)
         }
-        return createJobStatus(status,jobActionsForStatus(status))
+        return createJobStatus(status, jobActionsForStatus(status))
     }
 
-    List<Action> jobActionsForStatus(Map status){
-        if(status.synch != SynchState.CLEAN){
+    List<Action> jobActionsForStatus(Map status) {
+        if (status.synch != SynchState.CLEAN) {
             actionRefs(JOB_COMMIT_ACTION_ID)
-        }else{
+        } else {
             []
         }
     }
+
     @Override
     String getRelativePathForJob(final JobReference job) {
         relativePath(job)
@@ -408,7 +418,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
 
 
-        def availableActions = diffs > 0 ? [actions[JOB_COMMIT_ACTION_ID]]:null
+        def availableActions = diffs > 0 ? [actions[JOB_COMMIT_ACTION_ID]] : null
         return new GitDiffResult(content: baos.toString(),
                                  modified: diffs > 0,
                                  actions: availableActions

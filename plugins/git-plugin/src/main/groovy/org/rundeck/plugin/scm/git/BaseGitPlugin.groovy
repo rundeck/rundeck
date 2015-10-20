@@ -28,6 +28,8 @@ import org.eclipse.jgit.util.FileUtils
 import org.rundeck.plugin.scm.git.config.Common
 import org.rundeck.storage.api.StorageException
 
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -60,8 +62,10 @@ class BaseGitPlugin {
         config
     }
 
-    def serialize(final JobExportReference job, format) {
-        File outfile = mapper.fileForJob(job)
+    def serialize(final JobExportReference job, format, File outfile = null) {
+        if(!outfile){
+            outfile = mapper.fileForJob(job)
+        }
         if (!outfile.parentFile.isDirectory()) {
             if (!outfile.parentFile.mkdirs()) {
                 throw new ScmPluginException(
@@ -69,9 +73,11 @@ class BaseGitPlugin {
                 )
             }
         }
-        outfile.withOutputStream { out ->
+        File temp = new File(outfile.getAbsolutePath() + ".tmp")
+        temp.withOutputStream { out ->
             job.jobSerializer.serialize(format, out)
         }
+        Files.move(temp.toPath(), outfile.toPath(), StandardCopyOption.REPLACE_EXISTING)
     }
 
     def serializeTemp(final JobExportReference job, format) {

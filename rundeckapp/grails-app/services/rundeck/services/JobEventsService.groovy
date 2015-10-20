@@ -46,25 +46,20 @@ class JobEventsService {
             while (retry > 0) {
                 ScheduledExecution.withNewSession {
                     job = ScheduledExecution.getByIdOrUUID(e.jobReference.id)
-
-                    if (!job) {
-                        retry = 0
-                        return
-                    }
-                    if (job?.version < e.jobReference.version) {
-                        log.debug("did not receive updated job yet, waiting")
-                    } else {
+                    if (job && job.version >= e.jobReference.version) {
                         retry = 0
                         //add line end char
                         xmlString = job.encodeAsJobsXML() + '\n'
                         yamlString = job.encodeAsJobsYAML() + '\n'
+                    } else {
+                        log.debug("did not receive updated job yet, waiting")
                     }
                 }
                 if (retry <= 0) {
-
                     break
                 } else {
                     Thread.sleep(500)
+                    retry--
                 }
             }
             if (!job) {
