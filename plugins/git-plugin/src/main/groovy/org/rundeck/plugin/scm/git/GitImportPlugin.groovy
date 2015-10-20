@@ -91,7 +91,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         }
 
         File base = new File(config.dir)
-        mapper = new TemplateJobFileMapper(config.pathTemplate, base)
+        mapper = new TemplateJobFileMapper(expand(config.pathTemplate, [format: config.format], "config"), base)
+
         this.branch = config.branch
         cloneOrCreate(context, base, config.url)
 

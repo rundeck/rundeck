@@ -39,8 +39,9 @@ Available expansion patterns:
 * `${job.group}` - blank, or `path/`
 * `${job.project} - project name`
 * `${job.id}` - job UUID (this value *should* be included in the template to guarantee a unique path for each job.)
+* `${config.format}` - Serialization format chosen below.
 ''',
-            defaultValue = '${job.group}${job.name}-${job.id}.xml',
+            defaultValue = '${job.group}${job.name}-${job.id}.${config.format}',
             required = true
     )
     String pathTemplate

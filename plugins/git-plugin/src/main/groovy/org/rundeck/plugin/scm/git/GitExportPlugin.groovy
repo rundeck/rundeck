@@ -91,7 +91,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         committerName = config.committerName
         committerEmail = config.committerEmail
         File base = new File(config.dir)
-        mapper = new TemplateJobFileMapper(config.pathTemplate, base)
+        mapper = new TemplateJobFileMapper(expand(config.pathTemplate, [format: config.format], "config"), base)
         cloneOrCreate(context, base, config.url)
 
         workingDir = base

@@ -1,6 +1,6 @@
 package org.rundeck.plugin.scm.git
 
-import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
+import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
@@ -99,6 +99,38 @@ class GitExportPluginSpec extends Specification {
         gitdir.isDirectory()
         new File(gitdir, '.git').isDirectory()
 
+    }
+
+    def "create plugin, using config.format in the path template"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(
+                gitdir,
+                origindir,
+                [
+                        pathTemplate: 'blah.${config.format}',
+                        format      : format
+                ]
+        )
+        //create a git dir
+        createGit(origindir).close()
+
+        //create plugin
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(Mock(ScmOperationContext))
+
+        when:
+        def path = plugin.mapper.fileForJob(Mock(JobReference))
+
+        then:
+        path == new File(gitdir, 'blah.' + format)
+
+        where:
+        format | _
+        'xml'  | _
+        'yaml' | _
     }
 
     def "get input view for commit action"() {
