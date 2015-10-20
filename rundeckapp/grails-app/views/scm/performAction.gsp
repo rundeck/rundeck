@@ -25,7 +25,7 @@
 
 <div class="row">
     <div class="col-sm-12 col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-2">
-        <g:form action="exportActionSubmit"
+        <g:form action="performActionSubmit"
                 params="${[project: params.project, integration: integration]}"
                 useToken="true"
                 method="post" class="form form-horizontal">

@@ -14,6 +14,8 @@ class ScmController extends ControllerBase {
 
     def static allowedMethods = [
             disable: ['POST'],
+            enable: ['POST'],
+            performActionSubmit: ['POST'],
     ]
 
     def index(String project) {
@@ -326,7 +328,7 @@ class ScmController extends ControllerBase {
         ]
     }
 
-    def exportActionSubmit(String integration, String project, String actionId) {
+    def performActionSubmit(String integration, String project, String actionId) {
 
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
                 session.subject,
