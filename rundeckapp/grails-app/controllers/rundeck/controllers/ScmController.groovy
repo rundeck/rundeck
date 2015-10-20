@@ -352,7 +352,7 @@ class ScmController extends ControllerBase {
         boolean valid = false
         //cancel modification
         if (params.cancel == 'Cancel') {
-            return redirect(controller: 'scm', action: 'index', params: [project: project])
+            return redirect(controller: 'scheduledExecution', action: 'index', params: [project: project])
         }
 
         withForm {
