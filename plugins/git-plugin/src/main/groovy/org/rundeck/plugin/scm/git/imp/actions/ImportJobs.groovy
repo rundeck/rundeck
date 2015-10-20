@@ -61,7 +61,7 @@ class ImportJobs extends BaseAction implements GitImportAction {
             def meta = GitUtil.metaForCommit(commit)
 
             def importResult = importer.importFromStream(
-                    walk.getNameString().endsWith(".xml") ? 'xml' : 'yaml',
+                    plugin.config.format,
                     new ByteArrayInputStream(bytes),
                     meta
             )
