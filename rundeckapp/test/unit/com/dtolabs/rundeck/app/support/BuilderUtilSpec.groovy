@@ -65,4 +65,30 @@ class BuilderUtilSpec extends Specification {
         false | '\n'   | 'data'        | 'abc\ndef\nghi'     | '<test><data>abc\ndef\nghi</data></test>'
         false | '\n'   | 'data'        | 'abc\r\ndef\r\nghi' | '<test><data>abc\r\ndef\r\nghi</data></test>'
     }
+    def "replace line endings"() {
+
+        when:
+        def result = BuilderUtil.replaceLineEndings(string,chars)
+
+        then:
+        result == expected
+
+        where:
+         chars  | string              | expected
+         '\n'   | 'abc def ghi'       | 'abc def ghi'
+         '\n'   | 'abc\rdef\rghi'     | 'abc\ndef\nghi'
+         '\n'   | 'abc\ndef\nghi'     | 'abc\ndef\nghi'
+         '\n'   | 'abc\r\ndef\r\nghi' | 'abc\ndef\nghi'
+
+         '\r'   | 'abc def ghi'       | 'abc def ghi'
+         '\r'   | 'abc\rdef\rghi'     | 'abc\rdef\rghi'
+         '\r'   | 'abc\ndef\nghi'     | 'abc\rdef\rghi'
+         '\r'   | 'abc\r\ndef\r\nghi' | 'abc\rdef\rghi'
+
+         '\r\n' | 'abc def ghi'       | 'abc def ghi'
+         '\r\n' | 'abc\rdef\rghi'     | 'abc\r\ndef\r\nghi'
+         '\r\n' | 'abc\ndef\nghi'     | 'abc\r\ndef\r\nghi'
+         '\r\n' | 'abc\r\ndef\r\nghi' | 'abc\r\ndef\r\nghi'
+
+    }
 }

@@ -117,7 +117,7 @@ class BuilderUtil{
                 os=obj.toString()
             }
             if(forceLineEndings) {
-                os = os.replaceAll('(\r\n|\r|\n)', lineEndingChars)
+                os = replaceLineEndings(os,lineEndingChars)
             }
             if(key.endsWith(CDATA_SUFFIX)){
                 builder."${key-CDATA_SUFFIX}"(){
@@ -129,6 +129,15 @@ class BuilderUtil{
         }
     }
 
+    /**
+     * Replace all line endings with the given string
+     * @param os input string
+     * @param lineEnding line ending string to use
+     * @return new string
+     */
+    public static String replaceLineEndings(String os, String lineEnding) {
+        os.replaceAll('(\r\n|\r|\n)', lineEnding)
+    }
 
     /**
      * Add entry to the map for the given key, converting the key into an
