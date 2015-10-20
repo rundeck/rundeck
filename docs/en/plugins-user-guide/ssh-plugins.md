@@ -23,6 +23,25 @@ See below for more configuration options.
 
 The SSH plugin also includes support for a secondary Sudo Password Authentication. This simulates a user writing a password to the terminal into a password prompt when invoking a "sudo" command that requires password authentication.
 
+### Using Key Storage for SSH
+
+Passwords, Passphrases and Private Keys can all be stored in the [Key Storage Facility](../administration/key-storage.html) and used with the built-in SSH plugins for Node Execution and File Copying.
+
+For specific usage, see below.
+
+The storage facility can be configured to store the keys on disk, or in the database, and can use plugins to provide encryption of the data.
+
+When uploaded, private keys and passwords are identified by a *path* which locates them in the storage facility.  The *path* looks similar to a unix filesystem path.
+
+All SSH Keys and Passwords are stored under the `keys/` top-level path.
+
+**Note:** In general if a "key storage path" and another configuration option are both specified, the "key storage path" will be used.
+
+You can embed context property references within the key storage path such as `${job.project}`. See [Context Variables][].
+
+[Context Variables]: ../manual/jobs.html#context-variables
+
+
 ### SCP File Copier
 
 In addition to the general SSH configuration mentioned for in this section, some additional configuration can be done for SCP. 
@@ -79,7 +98,16 @@ SSH config options can be specified by setting the following properties:
 2. **Project level**: `project.ssh-config-KEY` property in `project.properties`.  Applies to any project node by default.
 3. **Rundeck level**: `framework.ssh-config-KEY` property in `framework.properties`. Applies to all projects by default.
 
-### SSH private keys on disk
+### SSH Private Keys
+
+Choose either:
+
+* [SSH Private Keys On Disk](#ssh-private-keys-on-disk)
+* [SSH Private Key Storage](#ssh-private-key-storage)
+
+If the Private Key is encrypted with a passphrase, see: [SSH Private Key Passphrase](#ssh-private-key-passphrase).
+
+#### SSH Private Keys On Disk
 
 The default authentication mechanism is public/private key using a **private key file** stored locally on disk.
 
@@ -97,15 +125,9 @@ You can embed context property references within the keypath such as `${job.proj
 
 [Context Variables]: ../manual/jobs.html#context-variables
 
-### SSH private key storage
+#### SSH Private Key Storage
 
-An alternate method allows you to use a private key file you have uploaded via the Rundeck [SSH Key Storage API](../administration/ssh-key-storage.html) or the GUI. The storage facility can be configured to store the keys on disk, or in the database, and can use plugins to provide encryption of the data.
-
-When uploaded, private keys are identified by a *path* which locates them in the storage facility.  The *path* looks similar to a unix filesystem path.
-
-All SSH Keys are stored under the `keys/` top-level path.
-
-You can configure the built-in SSH connector to load the private key file from the storage facility.  You can configure it per-node, per-project, or per-Rundeck instance.
+**Note:** See [Using Key Storage for SSH](#using-key-storage-for-ssh).
 
 When connecting to the remote node, Rundeck will look for a property/attribute specifying the location of the **private key storage path**, in this order, with the first match having precedence:
 
@@ -113,33 +135,26 @@ When connecting to the remote node, Rundeck will look for a property/attribute s
 2. **Project level**: `project.ssh-key-storage-path` property in `project.properties`.  Applies to any project node by default.
 3. **Rundeck level**: `framework.ssh-key-storage-path` property in `framework.properties`. Applies to all projects by default.
 
-If you private key is encrypted with a passphrase, then you can use a "Secure Remote Authentication Option" to prompt the user to enter the passphrase when executing on the Node.  See below.
-
-**Note:** If both `ssh-key-storage-path` and `ssh-keypath` resolve to a value, then the `ssh-key-storage-path` will be used.
-
-You can embed context property references within the key storage path such as `${job.project}`. See [Context Variables][].
-
-[Context Variables]: ../manual/jobs.html#context-variables
+If you private key is encrypted with a passphrase, see [SSH Private Key Passphrase](#ssh-private-key-passphrase) below.
 
 ### SSH Private Key Passphrase
 
-Using a passphrase for privateKey authentication works in the following way:
+To enable SSH Private Key authentication, first make sure the `ssh-authentication` value is set ([#authentication-types](#authentication-types).  Second, configure the path to the private key file ([#ssh-private-keys](#ssh-private-keys)).
 
-* A Job must be defined specifying a Secure Remote Authentication Option to prompt the user for the key's passphrase.
-* Target nodes must be configured to use privateKey authentication.
-* When the user executes the Job, they are prompted for the key's passphrase.  The Secure Remote Authentication Option value for the passphrase is not stored in the database, and is used only for that execution.
+Choose a method to provide a passphrase:
 
-Therefore Private Key Passphrase authentication has several requirements and some limitations:
+* [SSH Private Key Passphrase with a Job Option](#ssh-private-key-passphrase-with-a-job-option)
+* [SSH Private Key Passphrase Storage](#ssh-private-key-passphrase-storage)
 
-1. Private Key-authenticated nodes requiring passphrases can only be executed on via a defined Job, not via Ad-hoc commands (yet).
-2. Each Job that will execute on such Nodes must define a Secure Remote Authentication Option to prompt the user for the key's passphrase before execution.
-3. All Nodes using passphrase protected private keys for a Job must have a matching Secure Remote Authentication Option defined, or may use the same option name (or the default) if they share the key's passphrase (e.g. using the same private key).
+#### SSH Private Key Passphrase with a Job Option
+
+You can use a Job Option for a passphrase for privateKey authentication. When the user executes the Job, they are prompted for the key's passphrase.  The Secure Remote Authentication Option value for the passphrase is not stored in the database, and is used only for that execution.
 
 Passphrases are input either via the GUI or arguments to the job if executed via CLI or API.
 
-To enable SSH Private Key authentication, first make sure the `ssh-authentication` value is set ([#authentication-types](#authentication-types).  Second, configure the path to the private key file ([#ssh-private-keys](#ssh-private-keys)).
-
-Next, configure a Job, and include an Option definition where `secureInput` is set to `true`.  The name of this option can be anything you want, but the default value of `sshKeyPassphrase` assumed by the node configuration is easiest.
+First, configure a Job, and include an Option definition where `secureInput` is set to `true`.
+The name of this option can be anything you want,
+but the default value of `sshKeyPassphrase` assumed by the node configuration is easiest.
 
 If the value is not `sshKeyPassphrase`, then make sure to set the following attribute on each Node for password authentication:
 
@@ -153,7 +168,7 @@ An example Node and Job option configuration are below:
     hostname="egon"
     ssh-keypath="/path/to/privatekey_rsa"
     ssh-authentication="privateKey"
-    ssh-password-option="option.sshKeyPassphrase" />
+    ssh-key-passphrase-option="option.sshKeyPassphrase" />
 ~~~~~~~~~~
 
 
@@ -175,12 +190,37 @@ Job:
 </joblist>
 ~~~~~~~~~
 
+#### SSH Private Key Passphrase Storage
+
+**Note:** See [Using Key Storage for SSH](#using-key-storage-for-ssh).
+
+When connecting to the remote node with a private key,
+Rundeck will look for a property/attribute
+specifying the location of the **private key passphrase storage path**,
+in this order, with the first match having precedence:
+
+1. **Node level**: `ssh-key-passphrase-storage-path` attribute on the Node. Applies only to the target node.
+2. **Project level**: `project.ssh-key-passphrase-storage-path` property in `project.properties`.  Applies to any project node by default.
+3. **Rundeck level**: `framework.ssh-key-passphrase-storage-path` property in `framework.properties`. Applies to all projects by default.
+
+
+An example Node using private key passphrase storage:
+
+~~~~~~~~~ {.xml .numberLines}
+<node name="egon" description="egon" osFamily="unix"
+    username="rundeck"
+    hostname="egon"
+    ssh-authentication="privateKey"
+    ssh-key-storage-path="keys/nodes/${node.name}.key"
+    ssh-key-passphrase-storage-path="keys/nodes/${node.name}.key.password" />
+~~~~~~~~~
+
 ### SSH Password Authentication
 
 Password authentication works in one of two ways:
 
-(1)  Using a Job defined with a Secure Remote Authentication Option to prompt the user for the password
-(2)  **OR** Using a password stored using [SSH Password Storage](#ssh-password-storage).
+* [SSH Password with a Job Option](#ssh-password-with-a-job-option)
+* [SSH Password Storage](#ssh-password-storage).
 
 In both cases, to enable SSH Password authentication, first make sure the `ssh-authentication` value is set as described in [Authentication types](#authentication-types).
 
@@ -228,8 +268,7 @@ Job:
 
 #### SSH Password Storage
 
-Just like the [SSH Private Key Storage](#ssh-private-key-storage),
-passwords can also be stored in the Key Storage Facility and used for authentication.
+**Note:** See [Using Key Storage for SSH](#using-key-storage-for-ssh).
 
 When connecting to the remote node, Rundeck will look for a property/attribute specifying the location of the **password storage path**, in this order, with the first match having precedence:
 
@@ -238,10 +277,6 @@ When connecting to the remote node, Rundeck will look for a property/attribute s
 3. **Rundeck level**: `framework.ssh-password-storage-path` property in `framework.properties`. Applies to all projects by default.
 
 **Note:** If both `ssh-password-storage-path` and `ssh-password-option` resolve to a value, then the `ssh-password-storage-path` will be used.
-
-You can embed context property references within the password storage path such as `${job.project}` or `${node.name}`. See [Context Variables][].
-
-[Context Variables]: ../manual/jobs.html#context-variables
 
 
 An example Node using password storage:
@@ -260,25 +295,15 @@ The SSH provider supports a secondary authentication mechanism: Sudo password au
 
 This works in the following way:
 
-* On Job execution, the user is prompted to enter a Sudo password
 * After connecting to the remote node via SSH, a command requiring "sudo" authentication is issued, such as "sudo -u otheruser /sbin/some-command"
 * The remote node will prompt for a sudo password, expecting user input
 * The SSH Provider will write the password to the remote node
 * The sudo command will execute as if a user had entered the command
 
-Similarly to SSH Password authentication, Sudo Password Authentication requires:
+The Sudo password(s) can be provided in two ways:
 
-* A Job must be defined specifying a Secure Remote Authentication Option to prompt the user for the password
-* Target nodes must be configured for Sudo authentication
-* When the user executes the Job, they are prompted for the password.  The Secure Remote Authentication Option value for the password is not stored in the database, and is used only for that execution.
-
-Therefore Sudo Password Authentication has several requirements and some limitations:
-
-1. Sudo Password authenticated nodes can only be executed on via a defined Job, not via Ad-hoc commands (yet).
-2. Each Job that will execute on Sudo Password Authenticated Nodes must define a Secure Remote Authentication Option to prompt the user for the Sudo password before execution.
-3. All Nodes using Sudo password authentication for a Job must have an equivalent Secure Remote Authentication Option defined, or may use the same option name (or the default) if they share sudo authentication passwords.
-
-Passwords for the nodes are input either via the GUI or arguments to the job if executed via CLI or API.
+* [Sudo Password as a Job Option](#sudo-password-as-a-job-option)
+* [Sudo Password Storage](#sudo-password-storage)
 
 To enable Sudo Password Authentication, set the `sudo-command-enabled` property/attribute to `true`.
 
@@ -287,6 +312,7 @@ You can configure the way the Sudo Password Authentication works by setting thes
 * `sudo-command-enabled` - set to "true" to enable Sudo Password Authentication.
 * `sudo-command-pattern` - a regular expression to detect when a command execution should expect to require Sudo authentication. Default pattern is `^sudo$`.
 * `sudo-password-option` - an option reference ("option.NAME") to define which secure remote authentication option value to use as password.  The default is `option.sudoPassword`.
+* `sudo-password-storage-path` - Path in the Key Storage facility for the password.
 * `sudo-prompt-pattern` - a regular expression to detect the password prompt for the Sudo authentication. The default pattern is `^\[sudo\] password for .+: .*`
 * `sudo-failure-pattern` - a regular expression to detect the password failure response.  The default pattern is `^.*try again.*`.
 * `sudo-prompt-max-lines` - maximum lines to read when expecting the password prompt. (default: `12`).
@@ -300,7 +326,11 @@ You can configure the way the Sudo Password Authentication works by setting thes
 
 Note: the default values have been set for the unix "sudo" command, but can be overridden if you need to customize the interaction.
 
-Next, configure a Job, and include an Option definition where `secureInput` is set to `true`.  The name of this option can be anything you want, but the default value of `sudoPassword` recognized by the plugin can be used.
+#### Sudo Password as a Job Option
+
+Job Option Passwords for the nodes are input either via the GUI or arguments to the job if executed via CLI or API.
+
+Configure a Job, and include an Option definition where `secureInput` is set to `true`.  The name of this option can be anything you want, but the default value of `sudoPassword` recognized by the plugin can be used.
 
 If the value is not `sudoPassword`, then make sure to set the following attribute on each Node for password authentication:
 
@@ -339,6 +369,24 @@ Job:
 </joblist>
 ~~~~~~~~~~
 
+#### Sudo Password Storage
+
+**Note:** See [Using Key Storage for SSH](#using-key-storage-for-ssh).
+
+Define a `sudo-password-storage-path` node attribute specifying the path in the Key Storage Facility for the password.
+
+
+See example Node configuration below:
+
+~~~~~~~~ {.xml .numberLines}
+<node name="egon" description="egon" osFamily="unix"
+    username="rundeck"
+    hostname="egon"
+    sudo-command-enabled="true"
+    sudo-password-storage-path="keys/nodes/${node.name}/sudo.password" />
+~~~~~~~~~~~~
+
+
 ### Multiple Sudo Password Authentication
 
 You can enable a further level of sudo password support for a node.  If you have
@@ -348,8 +396,7 @@ sudo.  This is possible by configuring a secondary set of properties for your
 node/project/framework.
 
 The configuration properties are the same as those for the first-level of sudo
-password authentication described in [Configuring Secondary Sudo Password
-Authentication](#secondary-sudo-password-authentication), but with a
+password authentication described in [Configuring Secondary Sudo Password Authentication](#secondary-sudo-password-authentication), but with a
 prefix of "sudo2-" instead of "sudo-", such as:
 
     sudo2-command-enabled="true"
