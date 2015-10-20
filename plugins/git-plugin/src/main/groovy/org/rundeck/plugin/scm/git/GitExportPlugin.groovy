@@ -65,7 +65,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                         "Synch with Remote",
                         "Synch incoming changes from Remote"
                 ),
-                (PROJECT_TAG_ACTION_ID) : new TagAction(
+                (PROJECT_TAG_ACTION_ID)   : new TagAction(
                         PROJECT_TAG_ACTION_ID,
                         "Create Tag",
                         "Tag commit"
@@ -204,8 +204,8 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 }
             } else if (!remoteTrackingBranch()) {
                 //if any paths exist, need to export
-                def head=GitUtil.getHead(git.repository)
-                if(head) {
+                def head = GitUtil.getHead(git.repository)
+                if (head) {
                     //if no remote branch exists, i.e. bare repo, need to push local files
                     synchState.message = "Changes need to be pushed"
                     synchState.state = SynchState.EXPORT_NEEDED
