@@ -340,6 +340,79 @@ public class JobsYAMLCodecTests  {
         assertEquals([type:'test1', configuration:['blah':'blee']],doc[0].notification.onsuccess.plugin)
 
     }
+
+    /**
+     * Multiline string line endings converted to unix style
+     */
+    void testMultilineWhitespaceEncode() {
+        def out = JobsYAMLCodec.encode([
+                [
+                        toMap: {
+                            [a: 'b\nc\r\nd\re']
+                        }
+                ]
+        ]
+        )
+
+        assertEquals(
+                '- a: |-\n' +
+                        '    b\n' +
+                        '    c\n' +
+                        '    d\n' +
+                        '    e\n',
+                out
+        )
+    }
+
+    /**
+     * Multiline string in an array line endings converted to unix style
+     */
+    void testMultilineWhitespaceEncodeArray() {
+        def out = JobsYAMLCodec.encode([
+                [
+                        toMap: {
+                            [
+                                    a: ['b\nc\r\nd\re']
+                            ]
+                        }
+                ]
+        ]
+        )
+
+        assertEquals(
+                '- a:\n' +
+                        '  - |-\n' +
+                        '    b\n' +
+                        '    c\n' +
+                        '    d\n' +
+                        '    e\n',
+                out
+        )
+    }
+    void testEncodeScript() {
+        def Yaml yaml = new Yaml()
+        ScheduledExecution se = new ScheduledExecution([
+            jobName: 'test job 1',
+            description: 'test descrip',
+            loglevel: 'INFO',
+            project: 'test1',
+            workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [
+                new CommandExec(
+                    adhocRemoteString: 'abc\n123\rdef\r\nomg'
+                )
+            ]]),
+        ])
+        def jobs1 = [se]
+        def  ymlstr = JobsYAMLCodec.encode(jobs1)
+        assertNotNull ymlstr
+        assertTrue ymlstr instanceof String
+
+
+        def doc = yaml.load(ymlstr)
+        assertNotNull doc
+        assertEquals(1,doc[0].sequence.commands.size())
+        assertEquals([exec:'abc\n' + '123\n' + 'def\n' + 'omg'], doc[0].sequence.commands[0])
+    }
     void testEncodeStepPlugin() {
         def Yaml yaml = new Yaml()
         ScheduledExecution se = new ScheduledExecution([
