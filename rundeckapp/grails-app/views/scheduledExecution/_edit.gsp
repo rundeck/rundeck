@@ -821,7 +821,7 @@ function getCurSEID(){
                 <label class="radio-inline">
                     <g:radio name="scheduleEnabled"
                              value="true"
-                             checked="${scheduledExecution.scheduleEnabled}"
+                             checked="${scheduledExecution.hasScheduleEnabled()}"
                              id="scheduleEnabledTrue"/>
                     <g:message code="yes"/>
                 </label>
@@ -829,7 +829,7 @@ function getCurSEID(){
                 <label class="radio-inline">
                     <g:radio value="false"
                              name="scheduleEnabled"
-                             checked="${!scheduledExecution.scheduleEnabled}"
+                             checked="${!scheduledExecution.hasScheduleEnabled()}"
                              id="scheduleEnabledFalse"/>
                     <g:message code="no"/>
                 </label>
@@ -851,14 +851,14 @@ function getCurSEID(){
             <div class="${fieldColSize}">
                 <label class="radio-inline">
                     <g:radio name="executionEnabled" value="true"
-                             checked="${scheduledExecution.executionEnabled}"
+                             checked="${scheduledExecution.hasExecutionEnabled()}"
                              id="executionEnabledTrue"/>
                     <g:message code="yes"/>
                 </label>
 
                 <label class="radio-inline">
                     <g:radio value="false" name="executionEnabled"
-                             checked="${!scheduledExecution.executionEnabled}"
+                             checked="${!scheduledExecution.hasExecutionEnabled()}"
                              id="executionEnabledFalse"/>
                     <g:message code="no"/>
                 </label>
