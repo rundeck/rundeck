@@ -1958,7 +1958,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 model.nodemap=[:]
                 model.tagsummary=[:]
                 model.grouptags=[:]
-                model.nodesSelectedByDefault=scheduledExecution.nodesSelectedByDefault
+                model.nodesSelectedByDefault=scheduledExecution.hasNodesSelectedByDefault()
                 if (!model.nodesSelectedByDefault) {
                     model.selectedNodes = ""
                 }

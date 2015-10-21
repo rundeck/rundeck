@@ -214,7 +214,7 @@ class ScheduledExecution extends ExecutionContext {
             map.multipleExecutions=true
         }
         if(doNodedispatch){
-            map.nodesSelectedByDefault = nodesSelectedByDefault == null || nodesSelectedByDefault
+            map.nodesSelectedByDefault = hasNodesSelectedByDefault()
             map.nodefilters=[dispatch:[threadcount:null!=nodeThreadcount?nodeThreadcount:1,keepgoing:nodeKeepgoing?true:false,excludePrecedence:nodeExcludePrecedence?true:false]]
             if(nodeRankAttribute){
                 map.nodefilters.dispatch.rankAttribute= nodeRankAttribute
@@ -416,6 +416,13 @@ class ScheduledExecution extends ExecutionContext {
             se.notifications=nots
         }
         return se
+    }
+
+    /**
+     * @return boolean value for nodesSelectedByDefault, defaults to true if null
+     */
+    public boolean hasNodesSelectedByDefault() {
+        null == nodesSelectedByDefault || nodesSelectedByDefault
     }
 
     /**

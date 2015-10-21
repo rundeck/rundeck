@@ -2320,6 +2320,101 @@ class ScheduledExecutionControllerTests  {
                 project: 'project1',
                 groupPath: 'testgroup',
                 doNodedispatch: true,
+                filter:'name: nodea,nodeb',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        )
+
+        se.save()
+
+
+        assertNotNull se.id
+
+        NodeSetImpl testNodeSet = new NodeSetImpl()
+        testNodeSet.putNode(new NodeEntryImpl("nodea"))
+        testNodeSet.putNode(new NodeEntryImpl("nodeb"))
+
+        //try to do update of the ScheduledExecution
+        sec.frameworkService = mockWith(FrameworkService){
+
+            getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
+            getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+            authorizeProjectJobAll { AuthContext authContext, ScheduledExecution job, Collection actions, String project ->
+                return true
+            }
+            filterNodeSet{NodesSelector selector, String project->
+                null
+            }
+            filterAuthorizedNodes{final String project, final Set<String> actions, final INodeSet unfiltered,
+                                                                                                  AuthContext authContext->
+                testNodeSet
+            }
+            authResourceForProject{p->null}
+            authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
+            projects { return [] }
+            authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+            authorizeProjectJobAll { framework, resource, actions, project -> return true }
+            getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
+            getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
+            getNodeStepPluginDescriptions { [] }
+            getStepPluginDescriptions { [] }
+        }
+
+        sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getByIDorUUID { id -> return se }
+            nextExecutionTime { job -> null }
+            userAuthorizedForJob { user, schedexec, framework -> return true }
+        }
+
+        sec.notificationService = mockWith(NotificationService){
+            listNotificationPlugins() {->
+                []
+            }
+        }
+        sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
+            listOrchestratorPlugins(){->null}
+        }
+
+        def params = [id: se.id.toString(),project:'project1']
+        sec.params.putAll(params)
+        def model = sec.show()
+        assertNull sec.response.redirectedUrl
+        assertNotNull model
+        assertNotNull(model.scheduledExecution)
+        assertEquals(null, model.selectedNodes)
+        assertEquals('fwnode',model.localNodeName)
+        assertEquals('name: nodea,nodeb',model.nodefilter)
+        assertEquals(null,model.nodesetvariables)
+        assertEquals(null,model.failedNodes)
+        assertEquals(null,model.nodesetempty)
+        assertEquals(true,model.nodesSelectedByDefault)
+        assertEquals(testNodeSet.nodes,model.nodes)
+        assertEquals([:],model.grouptags)
+        assertEquals(null,model.selectedoptsmap)
+        assertEquals([:],model.dependentoptions)
+        assertEquals([:],model.optiondependencies)
+        assertEquals(null,model.optionordering)
+        assertEquals([:],model.remoteOptionData)
+    }
+    /**
+     * nodes not selected by default
+     */
+    public void testShowNodeDispatchSelectedFalse() {
+        def sec = controller
+
+        def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
                 nodesSelectedByDefault: false,
                 filter:'name: nodea,nodeb',
                 workflow: new Workflow(
@@ -2396,6 +2491,102 @@ class ScheduledExecutionControllerTests  {
         assertEquals(null,model.failedNodes)
         assertEquals(null,model.nodesetempty)
         assertEquals(false,model.nodesSelectedByDefault)
+        assertEquals(testNodeSet.nodes,model.nodes)
+        assertEquals([:],model.grouptags)
+        assertEquals(null,model.selectedoptsmap)
+        assertEquals([:],model.dependentoptions)
+        assertEquals([:],model.optiondependencies)
+        assertEquals(null,model.optionordering)
+        assertEquals([:],model.remoteOptionData)
+    }
+    /**
+     * select nodes by default
+     */
+    public void testShowNodeDispatchSelectedTrue() {
+        def sec = controller
+
+        def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                nodesSelectedByDefault: true,
+                filter:'name: nodea,nodeb',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        )
+
+        se.save()
+
+
+        assertNotNull se.id
+
+        NodeSetImpl testNodeSet = new NodeSetImpl()
+        testNodeSet.putNode(new NodeEntryImpl("nodea"))
+        testNodeSet.putNode(new NodeEntryImpl("nodeb"))
+
+        //try to do update of the ScheduledExecution
+        sec.frameworkService = mockWith(FrameworkService){
+
+            getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
+            getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+            authorizeProjectJobAll { AuthContext authContext, ScheduledExecution job, Collection actions, String project ->
+                return true
+            }
+            filterNodeSet{NodesSelector selector, String project->
+                null
+            }
+            filterAuthorizedNodes{final String project, final Set<String> actions, final INodeSet unfiltered,
+                                                                                                  AuthContext authContext->
+                testNodeSet
+            }
+            authResourceForProject{p->null}
+            authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
+            projects { return [] }
+            authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+            authorizeProjectJobAll { framework, resource, actions, project -> return true }
+            getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
+            getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
+            getNodeStepPluginDescriptions { [] }
+            getStepPluginDescriptions { [] }
+        }
+
+        sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getByIDorUUID { id -> return se }
+            nextExecutionTime { job -> null }
+            userAuthorizedForJob { user, schedexec, framework -> return true }
+        }
+
+        sec.notificationService = mockWith(NotificationService){
+            listNotificationPlugins() {->
+                []
+            }
+        }
+        sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
+            listOrchestratorPlugins(){->null}
+        }
+
+        def params = [id: se.id.toString(),project:'project1']
+        sec.params.putAll(params)
+        def model = sec.show()
+        assertNull sec.response.redirectedUrl
+        assertNotNull model
+        assertNotNull(model.scheduledExecution)
+        assertEquals(null, model.selectedNodes)
+        assertEquals('fwnode',model.localNodeName)
+        assertEquals('name: nodea,nodeb',model.nodefilter)
+        assertEquals(null,model.nodesetvariables)
+        assertEquals(null,model.failedNodes)
+        assertEquals(null,model.nodesetempty)
+        assertEquals(true,model.nodesSelectedByDefault)
         assertEquals(testNodeSet.nodes,model.nodes)
         assertEquals([:],model.grouptags)
         assertEquals(null,model.selectedoptsmap)

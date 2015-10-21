@@ -248,7 +248,7 @@
                 });
 
             </g:javascript>
-            <g:if test="${nodesSelectedByDefault != null && !nodesSelectedByDefault}">
+            <g:if test="${scheduledExecution.hasNodesSelectedByDefault()}">
                 <g:javascript>
                     Event.fire($('nodeSelect'), 'nodeset:change');
                 </g:javascript>

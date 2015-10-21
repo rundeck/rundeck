@@ -168,7 +168,7 @@
                             <g:message code="scheduledExecution.property.nodesSelectedByDefault.label" />:
                             <strong>
                                 <g:message
-                                        code="scheduledExecution.property.nodesSelectedByDefault.${!!execdata?.nodesSelectedByDefault}.description"/>
+                                        code="scheduledExecution.property.nodesSelectedByDefault.${execdata.hasNodesSelectedByDefault()}.description"/>
                             </strong>
                         </span>
                     </div>
