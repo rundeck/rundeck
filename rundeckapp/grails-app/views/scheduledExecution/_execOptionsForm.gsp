@@ -3,7 +3,7 @@
 <div class="col-sm-12 ">
 <g:form controller="scheduledExecution" method="post" action="runJobNow" useToken="true"
         params="[project:scheduledExecution.project]" class="form-horizontal" role="form">
-<div class="panel panel-default panel-tab-content">
+<div class="panel panel-default panel-tab-content panel-modal-content">
 <g:if test="${!hideHead}">
     <div class="panel-heading">
         <div class="row">
@@ -301,12 +301,12 @@
 <g:if test="${!hideHead}">
 <div class="panel-footer">
     <div class="row" >
-        <div class="col-sm-12" id="formbuttons">
+        <div class="col-sm-12 form-inline" id="formbuttons">
             <g:if test="${!hideCancel}">
                 <g:actionSubmit id="execFormCancelButton" value="Cancel" class="btn btn-default"/>
             </g:if>
             <div title="${scheduledExecution.hasExecutionEnabled() ? '':g.message(code: 'disabled.job.run')}"
-                  class="has_tooltip"
+                  class="form-group has_tooltip"
                   data-toggle="tooltip"
                   data-placement="auto right"
             >%{--Extra div because attr disabled will cancel tooltip from showing --}%
@@ -318,13 +318,15 @@
                     <g:message code="run.job.now" />
                 </button>
             </div>
-            <label class="checkbox-inline">
-                <g:checkBox id="followoutputcheck"
-                            name="follow"
-                            checked="${defaultFollow || params.follow == 'true'}"
-                            value="true"/>
-                <g:message code="job.run.watch.output"/>
-            </label>
+            <div class="checkbox-inline">
+                <label>
+                    <g:checkBox id="followoutputcheck"
+                                name="follow"
+                                checked="${defaultFollow || params.follow == 'true'}"
+                                value="true"/>
+                    <g:message code="job.run.watch.output"/>
+                </label>
+            </div>
         </div>
     </div>
 </div>
