@@ -345,8 +345,8 @@ function _applyAce(e,height){
     });
     $(e).addClassName('ace_editor');
     var editor = ace.edit(e.identify());
-    editor.setTheme("ace/theme/chrome");
-    editor.getSession().setMode("ace/mode/" + (jQuery(e).data('aceSessionMode') ? jQuery(e).data('aceSessionMode') : 'sh'));
+    editor.setTheme("ace/theme/"+(jQuery(e).data('aceSessionTheme')||'chrome'));
+    editor.getSession().setMode("ace/mode/" + (jQuery(e).data('aceSessionMode') || 'sh'));
     editor.setReadOnly(true);
 }
 function _setupAceTextareaEditor(textarea,callback){
@@ -881,6 +881,7 @@ function _initTokenRefresh() {
     if(typeof(jQuery)=='function'){
         jQuery(document).ready(function () {
             jQuery('.has_tooltip').tooltip({});
+            jQuery('.has_popover').popover({});
             _initPopoverContentRef();
             _initPopoverContentFor();
             _initAffix();

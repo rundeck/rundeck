@@ -1034,7 +1034,7 @@ class ProjectControllerSpec extends Specification{
             0 * _(*_)
         }
         controller.projectService=Mock(ProjectService){
-            1*importToProject(null,null,'test1',null,null,!null, {
+            1*importToProject(null,null,null,!null, {
                 it.jobUuidOption== 'preserve'
                 it.importExecutions== true
                 it.importConfig== false
@@ -1087,7 +1087,7 @@ class ProjectControllerSpec extends Specification{
             0 * _(*_)
         }
         controller.projectService=Mock(ProjectService){
-            1*importToProject(null,null,'test1',null,null,!null,{
+            1*importToProject(null,null,null,!null,{
                 it.jobUuidOption== 'preserve'
                 it.importExecutions== true
                 it.importConfig== false

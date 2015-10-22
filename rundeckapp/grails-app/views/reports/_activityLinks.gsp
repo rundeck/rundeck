@@ -89,7 +89,7 @@
             </td>
             <td class="eventicon autoclickable" data-bind="attr: { 'title': status() } ">
                 <i class="exec-status icon"
-                   data-bind="css: { 'succeed': status()=='succeed' || status()=='succeeded', 'fail': status()=='fail' || status()=='failed', 'aborted': status()=='cancel', 'running': status()=='running', 'timedout': status()=='timedout', 'failedretry': status()=='retry', 'other': isCustomStatus() }"></i>
+                   data-bind="css: { 'succeed': status()=='succeed' || status()=='succeeded', 'fail': status()=='fail' || status()=='failed', 'aborted': status()=='cancel' || status()=='aborted', 'running': status()=='running', 'timedout': status()=='timedout', 'failedretry': status()=='retry', 'other': isCustomStatus() }"></i>
             </td>
             <td class="eventtitle autoclickable" data-bind="css: { job: isJob(), adhoc: isAdhoc() }">
                 <a href="#" data-bind="text: '#'+executionId(), attr: { href: executionHref() }" class="_defaultAction"></a>

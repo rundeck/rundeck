@@ -1,14 +1,7 @@
-import grails.test.mixin.support.GrailsUnitTestMixin;
-
+import grails.test.mixin.TestMixin
+import grails.test.mixin.support.GrailsUnitTestMixin
 import org.yaml.snakeyaml.Yaml
-
-import rundeck.Notification
-import rundeck.PluginStep
-import rundeck.ScheduledExecution
-import rundeck.Workflow
-import rundeck.CommandExec
-import rundeck.JobExec
-import rundeck.Option
+import rundeck.*
 import rundeck.codecs.JobsYAMLCodec
 
 /*
@@ -75,13 +68,13 @@ public class JobsYAMLCodecTests  {
 
             def doc = yaml.load(ymlstr)
             assertNotNull doc
-            System.err.println("yaml: ${ymlstr}");
-            System.err.println("doc: ${doc}");
             assertEquals "wrong number of jobs", 1, doc.size()
             assertEquals "wrong name", "test job 1", doc[0].name
             assertEquals "wrong description", "test descrip", doc[0].description
             assertEquals "wrong loglevel", "INFO", doc[0].loglevel
-            assertEquals "incorrect context project", 'test1', doc[0].project
+            assertEquals "wrong scheduleEnabled", true, doc[0].scheduleEnabled
+            assertEquals "wrong executionEnabled", true, doc[0].executionEnabled
+            assertEquals "incorrect context project", null, doc[0].project
             assertNotNull "missing sequence", doc[0].sequence
             assertFalse "wrong wf keepgoing", doc[0].sequence.keepgoing
             assertEquals "wrong wf strategy", "node-first", doc[0].sequence.strategy
@@ -100,15 +93,17 @@ public class JobsYAMLCodecTests  {
 
             assertEquals "missing command scriptfile", "http://example.com/blah", doc[0].sequence.commands[4].scripturl
             assertNotNull "missing options", doc[0].options
-            assertNotNull "missing option opt1", doc[0].options.opt1
-            assertEquals "missing option opt1", "an opt", doc[0].options.opt1.description
-            assertEquals "missing option default", "xyz", doc[0].options.opt1.value
-            assertTrue "missing option enforced", doc[0].options.opt1.enforced
-            assertTrue "missing option required", doc[0].options.opt1.required
-            assertNotNull "missing option values", doc[0].options.opt1.values
-            assertEquals "wrong option values size", 2, doc[0].options.opt1.values.size()
-            assertEquals "wrong option values[0]", "a", doc[0].options.opt1.values[0]
-            assertEquals "wrong option values[1]", "b", doc[0].options.opt1.values[1]
+            assertTrue ("wrong type", doc[0].options instanceof Collection)
+            assertNotNull "missing option opt1", doc[0].options[0]
+            assertEquals "wrong name", "opt1", doc[0].options[0].name
+            assertEquals "missing option opt1", "an opt", doc[0].options[0].description
+            assertEquals "missing option default", "xyz", doc[0].options[0].value
+            assertTrue "missing option enforced", doc[0].options[0].enforced
+            assertTrue "missing option required", doc[0].options[0].required
+            assertNotNull "missing option values", doc[0].options[0].values
+            assertEquals "wrong option values size", 2, doc[0].options[0].values.size()
+            assertEquals "wrong option values[0]", "a", doc[0].options[0].values[0]
+            assertEquals "wrong option values[1]", "b", doc[0].options[0].values[1]
 
             assertEquals "incorrect dispatch threadcount", 1, doc[0].nodefilters.dispatch.threadcount
             assertTrue "incorrect dispatch keepgoing", doc[0].nodefilters.dispatch.keepgoing
@@ -128,6 +123,99 @@ public class JobsYAMLCodecTests  {
             assertEquals "not scheduled.time", "2011", doc[0].schedule.year
 
     }
+
+    void testEncodeBasicScheduleEnabled() {
+        def Yaml yaml = new Yaml()
+        ScheduledExecution se = new ScheduledExecution([
+                jobName: 'test job 1',
+                description: 'test descrip',
+                loglevel: 'INFO',
+                project: 'test1',
+                workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [new CommandExec([adhocRemoteString: 'test script',description: 'test1']),
+                                                                                     new CommandExec([adhocLocalString: "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", description: 'test2']),
+                                                                                     new CommandExec([adhocFilepath: 'some file path', description: 'test3']),
+                                                                                     new JobExec([jobName: 'another job', jobGroup: 'agroup', nodeStep:true, description: 'test4']),
+                                                                                     new CommandExec([adhocFilepath: 'http://example.com/blah', description: 'test5']),
+                ]]),
+                options: [new Option(name: 'opt1', description: "an opt", defaultValue: "xyz", enforced: true, required: true, values: new TreeSet(["a", "b"]))] as TreeSet,
+                nodeThreadcount: 1,
+                nodeKeepgoing: true,
+                doNodedispatch: true,
+                nodeInclude: "testhost1",
+                nodeExcludeName: "x1",
+                scheduled: true,
+                seconds: '*',
+                minute: '0',
+                hour: '2',
+                month: '3',
+                dayOfMonth: '?',
+                dayOfWeek: '4',
+                year: '2011',
+                scheduleEnabled: true,
+                executionEnabled: true
+        ])
+        def jobs1 = [se]
+        def  ymlstr = JobsYAMLCodec.encode(jobs1)
+        assertNotNull ymlstr
+        assertTrue ymlstr instanceof String
+
+
+        def doc = yaml.load(ymlstr)
+        assertNotNull doc
+        assertEquals "wrong number of jobs", 1, doc.size()
+        assertEquals "wrong name", "test job 1", doc[0].name
+
+        assertEquals "wrong scheduleEnabled", true, doc[0].scheduleEnabled
+        assertEquals "wrong executionEnabled", true, doc[0].executionEnabled
+
+    }
+
+    void testEncodeBasicScheduleDisabled() {
+        def Yaml yaml = new Yaml()
+        ScheduledExecution se = new ScheduledExecution([
+                jobName: 'test job 1',
+                description: 'test descrip',
+                loglevel: 'INFO',
+                project: 'test1',
+                workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [new CommandExec([adhocRemoteString: 'test script',description: 'test1']),
+                                                                                     new CommandExec([adhocLocalString: "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", description: 'test2']),
+                                                                                     new CommandExec([adhocFilepath: 'some file path', description: 'test3']),
+                                                                                     new JobExec([jobName: 'another job', jobGroup: 'agroup', nodeStep:true, description: 'test4']),
+                                                                                     new CommandExec([adhocFilepath: 'http://example.com/blah', description: 'test5']),
+                ]]),
+                options: [new Option(name: 'opt1', description: "an opt", defaultValue: "xyz", enforced: true, required: true, values: new TreeSet(["a", "b"]))] as TreeSet,
+                nodeThreadcount: 1,
+                nodeKeepgoing: true,
+                doNodedispatch: true,
+                nodeInclude: "testhost1",
+                nodeExcludeName: "x1",
+                scheduled: true,
+                seconds: '*',
+                minute: '0',
+                hour: '2',
+                month: '3',
+                dayOfMonth: '?',
+                dayOfWeek: '4',
+                year: '2011',
+                scheduleEnabled: false,
+                executionEnabled: false
+        ])
+        def jobs1 = [se]
+        def  ymlstr = JobsYAMLCodec.encode(jobs1)
+        assertNotNull ymlstr
+        assertTrue ymlstr instanceof String
+
+
+        def doc = yaml.load(ymlstr)
+        assertNotNull doc
+        assertEquals "wrong number of jobs", 1, doc.size()
+        assertEquals "wrong name", "test job 1", doc[0].name
+        assertEquals "wrong scheduleEnabled", false, doc[0].scheduleEnabled
+        assertEquals "wrong executionEnabled", false, doc[0].executionEnabled
+
+    }
+
+
     void testEncodeTimeout() {
         def Yaml yaml = new Yaml()
         ScheduledExecution se = new ScheduledExecution([
@@ -156,6 +244,59 @@ public class JobsYAMLCodecTests  {
         assertEquals "wrong number of jobs", 1, doc.size()
         assertEquals "wrong name", "test job 1", doc[0].name
         assertEquals "wrong timeout value", "120m", doc[0].timeout
+    }
+    void testEncodeLoglimitNoStatus() {
+        def Yaml yaml = new Yaml()
+        ScheduledExecution se = new ScheduledExecution([
+            jobName: 'test job 1',
+            description: 'test descrip',
+            loglevel: 'INFO',
+            project: 'test1',
+            workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [new CommandExec([adhocRemoteString: 'test script',description: 'test1']),
+                new CommandExec([adhocLocalString: "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", description: 'test2']),
+            ]]),
+                logOutputThreshold:'20MB',
+                logOutputThresholdAction:'halt',
+        ])
+        def jobs1 = [se]
+        def  ymlstr = JobsYAMLCodec.encode(jobs1)
+        assertNotNull ymlstr
+        assertTrue ymlstr instanceof String
+
+
+        def doc = yaml.load(ymlstr)
+        assertNotNull doc
+        assertEquals "wrong number of jobs", 1, doc.size()
+        assertEquals "wrong loglimit", "20MB", doc[0].loglimit
+        assertEquals "wrong loglimitAction", "halt", doc[0].loglimitAction
+        assertEquals "wrong loglimitAction", null, doc[0].loglimitStatus
+    }
+    void testEncodeLoglimitWithStatus() {
+        def Yaml yaml = new Yaml()
+        ScheduledExecution se = new ScheduledExecution([
+            jobName: 'test job 1',
+            description: 'test descrip',
+            loglevel: 'INFO',
+            project: 'test1',
+            workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [new CommandExec([adhocRemoteString: 'test script',description: 'test1']),
+                new CommandExec([adhocLocalString: "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", description: 'test2']),
+            ]]),
+                logOutputThreshold:'20MB',
+                logOutputThresholdAction:'halt',
+                logOutputThresholdStatus:'mystatus',
+        ])
+        def jobs1 = [se]
+        def  ymlstr = JobsYAMLCodec.encode(jobs1)
+        assertNotNull ymlstr
+        assertTrue ymlstr instanceof String
+
+
+        def doc = yaml.load(ymlstr)
+        assertNotNull doc
+        assertEquals "wrong number of jobs", 1, doc.size()
+        assertEquals "wrong loglimit", "20MB", doc[0].loglimit
+        assertEquals "wrong loglimitAction", "halt", doc[0].loglimitAction
+        assertEquals "wrong loglimitAction", "mystatus", doc[0].loglimitStatus
     }
     void testEncodeNotificationPlugin() {
         def Yaml yaml = new Yaml()
@@ -198,6 +339,79 @@ public class JobsYAMLCodecTests  {
         assertEquals(1,doc[0].notification.onsuccess.size())
         assertEquals([type:'test1', configuration:['blah':'blee']],doc[0].notification.onsuccess.plugin)
 
+    }
+
+    /**
+     * Multiline string line endings converted to unix style
+     */
+    void testMultilineWhitespaceEncode() {
+        def out = JobsYAMLCodec.encode([
+                [
+                        toMap: {
+                            [a: 'b\nc\r\nd\re']
+                        }
+                ]
+        ]
+        )
+
+        assertEquals(
+                '- a: |-\n' +
+                        '    b\n' +
+                        '    c\n' +
+                        '    d\n' +
+                        '    e\n',
+                out
+        )
+    }
+
+    /**
+     * Multiline string in an array line endings converted to unix style
+     */
+    void testMultilineWhitespaceEncodeArray() {
+        def out = JobsYAMLCodec.encode([
+                [
+                        toMap: {
+                            [
+                                    a: ['b\nc\r\nd\re']
+                            ]
+                        }
+                ]
+        ]
+        )
+
+        assertEquals(
+                '- a:\n' +
+                        '  - |-\n' +
+                        '    b\n' +
+                        '    c\n' +
+                        '    d\n' +
+                        '    e\n',
+                out
+        )
+    }
+    void testEncodeScript() {
+        def Yaml yaml = new Yaml()
+        ScheduledExecution se = new ScheduledExecution([
+            jobName: 'test job 1',
+            description: 'test descrip',
+            loglevel: 'INFO',
+            project: 'test1',
+            workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [
+                new CommandExec(
+                    adhocRemoteString: 'abc\n123\rdef\r\nomg'
+                )
+            ]]),
+        ])
+        def jobs1 = [se]
+        def  ymlstr = JobsYAMLCodec.encode(jobs1)
+        assertNotNull ymlstr
+        assertTrue ymlstr instanceof String
+
+
+        def doc = yaml.load(ymlstr)
+        assertNotNull doc
+        assertEquals(1,doc[0].sequence.commands.size())
+        assertEquals([exec:'abc\n' + '123\n' + 'def\n' + 'omg'], doc[0].sequence.commands[0])
     }
     void testEncodeStepPlugin() {
         def Yaml yaml = new Yaml()
@@ -465,8 +679,7 @@ public class JobsYAMLCodecTests  {
     }
 
 
-    void testDecodeBasic() {
-        if(true){
+    void testDecodeBasic1() {
         def ymlstr1 = """- id: null
   project: test1
   loglevel: INFO
@@ -524,8 +737,12 @@ public class JobsYAMLCodecTests  {
             assertEquals "wrong name", "test job 1", se.jobName
             assertEquals "wrong description", "", se.description
             assertEquals "wrong groupPath", "my group", se.groupPath
-            assertEquals "wrong project", "test1", se.project
+            assertEquals "wrong project", 'test1', se.project
             assertEquals "wrong loglevel", "INFO", se.loglevel
+
+            assertEquals "wrong scheduleEnabled", true, se.scheduleEnabled
+            assertEquals "wrong executionEnabled", true, se.executionEnabled
+
             assertTrue "wrong doNodedispatch", se.doNodedispatch
             assertEquals "wrong nodeThreadcount", 1, se.nodeThreadcount
             assertTrue "wrong nodeKeepgoing", se.nodeKeepgoing
@@ -574,10 +791,112 @@ public class JobsYAMLCodecTests  {
             assertEquals "wrong option values[1]", 'b', valuesList[1]
 
         }
-        if (true) {
+    /**
+     * Options defined in list format
+     */
+    void testDecodeOptionsList() {
+        def ymlstr2 = """
+-
+  project: zamp
+  loglevel: ERR
+  sequence:
+    keepgoing: true
+    strategy: step-first
+    commands:
+    - exec: test script
+      args: this is redic # IGNORED for exec
+    - script: A Monkey returns
+      args: whatever
+    - scriptfile: /path/to/file
+      args: -whatever something -else
+    - jobref:
+        name: some job
+        group: another group
+        args: yankee doodle
+        nodeStep: true
+    - scripturl: http://example.com/path/to/file
+      args: -blah bloo -blee
+  description: test descrip
+  name: test job 1
+  group: group/1/2/3
+  nodefilters:
+    dispatch:
+      threadcount: 3
+      keepgoing: false
+      excludePrecedence: false
+    include:
+      name: .*
+    exclude:
+      tags: monkey
+      os-family: unix
+      os-name: Linux
+      os-version: 10.5.*
+      os-arch: x86
+      hostname: shampoo.*
+  schedule:
+    time:
+      seconds: '0'
+      hour: '8/2'
+      minute: '0,5,10,35'
+    month: '*'
+    dayofmonth:
+      day: '*'
+    year: '2001,2010,2012'
+  options:
+    - name: opt2
+      enforced: true
+      required: true
+      description: an opt
+      value: xyz
+      values:
+      - a
+      - b
+    - name: opt1
+      enforced: false
+      required: false
+      description: whatever
+      regex: '\\d+'
+      valuesUrl: http://something.com
+"""
+        def list = JobsYAMLCodec.decode(ymlstr2)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+
+        //options
+        assertNotNull "missing options", se.options
+        assertEquals "wrong options size", 2, se.options.size()
+        final Iterator iterator = se.options.iterator()
+        def opt1 = iterator.next()
+        assertEquals "wrong option name", "opt2", opt1.name
+        assertEquals "wrong option description", "an opt", opt1.description
+        assertEquals "wrong option defaultValue", "xyz", opt1.defaultValue
+        assertTrue "wrong option name", opt1.enforced
+        assertTrue "wrong option name", opt1.required
+        assertNotNull "wrong option values", opt1.values
+        assertEquals "wrong option values size", 2, opt1.values.size()
+        ArrayList valuesList = new ArrayList(opt1.values)
+        assertEquals "wrong option values[0]", 'a', valuesList[0]
+        assertEquals "wrong option values[1]", 'b', valuesList[1]
+        def opt2 = iterator.next()
+        assertEquals "wrong option name", "opt1", opt2.name
+        assertEquals "wrong option description", "whatever", opt2.description
+        assertNull "wrong option defaultValue", opt2.defaultValue
+        assertFalse "wrong option name", opt2.enforced != null && opt2.enforced
+        assertFalse "wrong option name", opt2.required != null && opt2.required
+        assertNull "wrong option values", opt2.values
+        assertNotNull "missing valuesUrl ", opt2.realValuesUrl
+        assertEquals "missing valuesUrl ", "http://something.com", opt2.realValuesUrl.toExternalForm()
+        assertEquals "wrong option regex", "\\d+", opt2.regex
+    }
+    void testDecodeBasic2() {
             def ymlstr1 = """- id: null
   project: test1
   loglevel: INFO
+  scheduleEnabled: true
+  executionEnabled: true
   sequence:
     keepgoing: false
     strategy: node-first
@@ -632,8 +951,12 @@ public class JobsYAMLCodecTests  {
             assertEquals "wrong name", "test job 1", se.jobName
             assertEquals "wrong description", "", se.description
             assertEquals "wrong groupPath", "my group", se.groupPath
-            assertEquals "wrong project", "test1", se.project
+            assertEquals "wrong project", 'test1', se.project
             assertEquals "wrong loglevel", "INFO", se.loglevel
+
+            assertEquals "wrong scheduleEnabled", true, se.scheduleEnabled
+            assertEquals "wrong executionEnabled", true, se.executionEnabled
+
             assertTrue "wrong doNodedispatch", se.doNodedispatch
             assertEquals "wrong nodeThreadcount", 1, se.nodeThreadcount
             assertTrue "wrong nodeKeepgoing", se.nodeKeepgoing
@@ -683,11 +1006,13 @@ public class JobsYAMLCodecTests  {
 
         }
 
-        if(true){
+    void testDecodeBasic3() {
         def ymlstr2 = """
 -
   project: zamp
   loglevel: ERR
+  scheduleEnabled: false
+  executionEnabled: false
   sequence:
     keepgoing: true
     strategy: step-first
@@ -756,8 +1081,12 @@ public class JobsYAMLCodecTests  {
         assertEquals "wrong name", "test job 1", se.jobName
         assertEquals "wrong description", "test descrip", se.description
         assertEquals "wrong groupPath", "group/1/2/3", se.groupPath
-        assertEquals "wrong project", "zamp", se.project
+        assertEquals "wrong project", 'zamp', se.project
         assertEquals "wrong loglevel", "ERR", se.loglevel
+
+        assertEquals "wrong scheduleEnabled", false, se.scheduleEnabled
+        assertEquals "wrong executionEnabled", false, se.executionEnabled
+
         assertTrue "wrong doNodedispatch", se.doNodedispatch
         assertEquals "wrong nodeThreadcount", 3, se.nodeThreadcount
         assertFalse "wrong nodeKeepgoing", se.nodeKeepgoing
@@ -835,8 +1164,63 @@ public class JobsYAMLCodecTests  {
         assertEquals "wrong option regex", "\\d+", opt2.regex
         }
 
-    }
 
+
+    void testDecodeLoglimit() {
+        def ymlstr1 = """- id: null
+  project: test1
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - exec: test script
+      description: test1
+  description: ''
+  name: test job 1
+  group: my group
+  loglimit: '20MB'
+  loglimitAction: 'halt'
+"""
+        def list = JobsYAMLCodec.decode(ymlstr1)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+        assertEquals "wrong logOutputThreshold", "20MB", se.logOutputThreshold
+        assertEquals "wrong logOutputThresholdAction", "halt", se.logOutputThresholdAction
+        assertEquals "wrong logOutputThresholdAction", "failed", se.logOutputThresholdStatus
+
+    }
+    void testDecodeLoglimitCustomStatus() {
+        def ymlstr1 = """- id: null
+  project: test1
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - exec: test script
+      description: test1
+  description: ''
+  name: test job 1
+  group: my group
+  loglimit: '20MB'
+  loglimitAction: 'halt'
+  loglimitStatus: 'astatus'
+"""
+        def list = JobsYAMLCodec.decode(ymlstr1)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+        assertEquals "wrong logOutputThreshold", "20MB", se.logOutputThreshold
+        assertEquals "wrong logOutputThresholdAction", "halt", se.logOutputThresholdAction
+        assertEquals "wrong logOutputThresholdAction", "astatus", se.logOutputThresholdStatus
+
+    }
     void testDecodeTimeout() {
             def ymlstr1 = """- id: null
   project: test1
@@ -1590,6 +1974,5 @@ public class JobsYAMLCodecTests  {
         assertEquals "wrong crontabstring", "0 0,5,10,35 8/2 * * ? 2001,2010,2012", se.crontabString
 
     }
-
 
 }

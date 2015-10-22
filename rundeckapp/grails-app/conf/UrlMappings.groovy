@@ -29,6 +29,25 @@ class UrlMappings {
         "/api/$api_version/job/$id"(controller: 'scheduledExecution') {
             action = [GET: 'apiJobExport', DELETE: 'apiJobDelete', PUT: 'apiJobUpdateSingle', POST: 'apiJobCreateSingle']
         }
+
+        "/api/$api_version/job/$id/execution/enable"(controller: 'scheduledExecution') {
+            action = [POST: 'apiFlipExecutionEnabled']
+            status = true
+        }
+        "/api/$api_version/job/$id/execution/disable"(controller: 'scheduledExecution') {
+            action = [POST: 'apiFlipExecutionEnabled']
+            status = false
+        }
+
+        "/api/$api_version/job/$id/schedule/enable"(controller: 'scheduledExecution') {
+            action = [POST: 'apiFlipScheduleEnabled']
+            status = true
+        }
+        "/api/$api_version/job/$id/schedule/disable"(controller: 'scheduledExecution') {
+            action = [POST: 'apiFlipScheduleEnabled']
+            status = false
+        }
+
         "/api/$api_version/job/$id/run"(controller: 'scheduledExecution', action: 'apiJobRun')
         "/api/$api_version/job/$id/executions"(controller: 'scheduledExecution') {
             action = [GET: 'apiJobExecutions', DELETE: 'apiJobExecutionsDelete', POST: 'apiJobRun']
@@ -124,6 +143,7 @@ class UrlMappings {
         //simplified url mappings for link generation
         "/project/$project/nodes/"(controller: 'framework', action: 'nodes')
         "/project/$project/run/"(controller: 'framework', action: 'nodes')
+        "/project/$project/scm/$integration?/$action?"(controller: 'scm')
         "/project/$project/command/run"(controller: 'framework',action: 'adhoc')
         "/project/$project/activity"(controller: 'reports', action: 'index')
         "/project/$project/history"(controller: 'reports', action: 'index')
@@ -132,6 +152,7 @@ class UrlMappings {
         "/project/$project/job/upload"(controller: 'scheduledExecution'){
             action = [GET: 'upload', POST: 'uploadPost']
         }
+        "/project/$project/job/$id/scm/$integration/$action"(controller: 'scm')
         "/project/$project/job/$action?/$id?"(controller: 'scheduledExecution')
         "/resources/createProject"(controller: 'framework') {
             action = [GET: 'createProject', POST: 'createProjectPost']

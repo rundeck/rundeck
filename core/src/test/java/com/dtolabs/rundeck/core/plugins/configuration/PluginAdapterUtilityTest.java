@@ -44,6 +44,7 @@ import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class PluginAdapterUtilityTest extends TestCase {
+    public static final String TEST_VALIDATOR_CLASSNAME = TestValidator.class.toString();
     //test reflection of property values
 
     /**
@@ -144,6 +145,102 @@ public class PluginAdapterUtilityTest extends TestCase {
         assertTrue(map.containsKey("testString5"));
     }
 
+
+    static class TestValidator implements PropertyValidator{
+        @Override
+        public boolean isValid(final String value) throws ValidationException {
+            return "monkey".equalsIgnoreCase(value);
+        }
+    }
+    /**
+     * validator class test
+     */
+    @Plugin(name = "validatorTest", service = "x")
+    static class validatorTest  {
+        @PluginProperty(validatorClass = TestValidator.class)
+        private String testString;
+    }
+    /**
+     * validator class name test
+     */
+    @Plugin(name = "validatorTest2", service = "x")
+    static class validatorTest2  {
+        @PluginProperty(validatorClassName = "com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtilityTest$TestValidator")
+        private String testString;
+    }
+    public void testValidatorClass() {
+        validatorTest test1 = new validatorTest();
+        Description description = PluginAdapterUtility.buildDescription(test1, DescriptionBuilder.builder());;
+        assertNotNull(description);
+        assertEquals("validatorTest", description.getName());
+        assertNotNull(description.getProperties());
+        assertEquals(1, description.getProperties().size());
+        HashMap<String, Property> map = mapOfProperties(description);
+        assertTrue(map.containsKey("testString"));
+        Property property = map.get("testString");
+        assertNotNull(property.getValidator());
+        assertTrue(property.getValidator() instanceof TestValidator);
+
+    }
+    public void testValidatorClassname() {
+        validatorTest2 test1 = new validatorTest2();
+        Description description = PluginAdapterUtility.buildDescription(test1, DescriptionBuilder.builder());;
+        System.out.println(TestValidator.class.getName());
+        assertNotNull(description);
+        assertEquals("validatorTest2", description.getName());
+        assertNotNull(description.getProperties());
+        assertEquals(1, description.getProperties().size());
+        HashMap<String, Property> map = mapOfProperties(description);
+        assertTrue(map.containsKey("testString"));
+        Property property = map.get("testString");
+        assertNotNull(property.getValidator());
+        assertTrue(property.getValidator() instanceof TestValidator);
+
+    }
+
+    /**
+     * validator class name test
+     */
+    @Plugin(name = "validatorTest2", service = "x")
+    static class renderingOptionTest  {
+        @PluginProperty
+        @RenderingOptions(
+                {
+                        @RenderingOption(key = "abc", value = "monkey"),
+                        @RenderingOption(key = "xyz", value = "donkey")
+                }
+        )
+        private String testMultiple;
+
+        @PluginProperty
+        @RenderingOption(key = "def", value = "cookie")
+        private String testSingle;
+    }
+    /**
+     * rendering option values
+     */
+    public void testRenderingOptionSingle() {
+        renderingOptionTest test1 = new renderingOptionTest();
+        Description description = PluginAdapterUtility.buildDescription(test1, DescriptionBuilder.builder());;
+        HashMap<String, Property> map = mapOfProperties(description);
+
+        Property p1 = map.get("testSingle");
+        assertEquals(Property.Type.String, p1.getType());
+        assertEquals("cookie", p1.getRenderingOptions().get("def"));
+    }
+    /**
+     * rendering option values
+     */
+    public void testRenderingOptionMultiple() {
+        renderingOptionTest test1 = new renderingOptionTest();
+        Description description = PluginAdapterUtility.buildDescription(test1, DescriptionBuilder.builder());;
+        HashMap<String, Property> map = mapOfProperties(description);
+
+        Property p1 = map.get("testMultiple");
+        assertEquals(Property.Type.String, p1.getType());
+        assertEquals("monkey", p1.getRenderingOptions().get("abc"));
+        assertEquals("donkey", p1.getRenderingOptions().get("xyz"));
+    }
     /**
      * Default annotation values
      */

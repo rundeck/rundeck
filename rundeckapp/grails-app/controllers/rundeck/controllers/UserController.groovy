@@ -1,21 +1,22 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import grails.converters.JSON
-import org.apache.commons.lang.RandomStringUtils
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import rundeck.User
+import grails.converters.JSON
 import rundeck.AuthToken
+import rundeck.User
 import rundeck.services.FrameworkService
 import rundeck.services.UserService
 
 import javax.servlet.http.HttpServletResponse
 
 class UserController extends ControllerBase{
+
     UserService userService
     FrameworkService frameworkService
     def grailsApplication
     def apiService
+
     static allowedMethods = [
             addFilterPref:'POST',
             store:'POST',
@@ -23,17 +24,21 @@ class UserController extends ControllerBase{
             clearApiToken:'POST',
             generateApiToken:'POST',
     ]
+
     def index = {
         redirect(action:"login")
     }
+
     def error = {
         flash.error="Invalid username and password."
         return render(view:'login')
     }
+
     def logout = {
         session.invalidate()
         return redirect(action: 'loggedout')
     }
+
     def loggedout(){
 
     }
@@ -111,7 +116,7 @@ class UserController extends ControllerBase{
         withForm{
         if(user.hasErrors()){
             flash.errors=user.errors
-            return render(view: 'edit', model: [user: user])
+            return render(view: 'edit', model: [user: user,newuser:params.newuser])
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 

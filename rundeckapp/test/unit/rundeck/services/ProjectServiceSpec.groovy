@@ -2,14 +2,24 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.FrameworkProjectMgr
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.common.ProjectManager
+import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import groovy.mock.interceptor.MockFor
+import rundeck.BaseReport
+import rundeck.ExecReport
+import rundeck.Execution
+import rundeck.Project
+import rundeck.ScheduledExecution
 import spock.lang.Specification
 
 /**
  * Created by greg on 8/5/15.
  */
 @TestFor(ProjectService)
+@Mock([Project,BaseReport,ExecReport,ScheduledExecution,Execution])
 class ProjectServiceSpec extends Specification {
     def "importProjectConfig"(){
         given:
@@ -174,5 +184,28 @@ class ProjectServiceSpec extends Specification {
         '%PROJECT_BASEDIR%' | '/a/dir' | '/sub/path/file.txt'                 | '/sub/path/file.txt'
         '%PROJECT_BASEDIR%' | '/a/dir' | '/a/dir/myproject/sub/path/file.txt' | '%PROJECT_BASEDIR%/sub/path/file.txt'
         '%PROJECT_BASEDIR%' | '/a/dir' | '/b/a/dir/sub/path/file.txt'         | '/b/a/dir/sub/path/file.txt'
+    }
+
+    def "delete project disables scm plugins"() {
+        given:
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        def fwk = Mock(Framework)
+
+        when:
+        def result = service.deleteProject(project, fwk, null, null)
+
+
+        then:
+        1 * service.scmService.removeAllPluginConfiguration('myproject', _)
+        1 * service.executionService.deleteBulkExecutionIds(*_)
+        1 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
+            1 * removeFrameworkProject('myproject')
+        }
+        result.success
+
     }
 }

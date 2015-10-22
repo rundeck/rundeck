@@ -15,7 +15,7 @@
 - limitations under the License.
 --}%
 <div class="btn-group">
-    <g:if test="${includeRun}">
+    <g:if test="${includeRun && scheduledExecution.hasExecutionEnabled()}">
         <g:link controller="scheduledExecution"
                 action="execute"
                 id="${scheduledExecution.extid}"

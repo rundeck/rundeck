@@ -4,7 +4,7 @@
 
 # NAME
 
-job-yaml-v12 - The 'job' YAML file declares job entries for Rundeck.
+job-yaml-v13 - The 'job' YAML file declares job entries for Rundeck.
 
 ## Loading and unloading
 
@@ -102,10 +102,6 @@ Extended description using yaml 'literal' scalar string format (beginning with a
 
 In addition, these optional entries can be present:
 
-`project`
-
-:    the Project name
-
 `uuid`
 
 :    Unique UUID
@@ -132,6 +128,33 @@ In addition, these optional entries can be present:
 
     * An integer number indicating the maximum retries
     * `${option.retry}` reference to a job option value
+    
+`loglimit`
+
+:    An optional logging limit.
+(See [Jobs - Log Limit](../manual/jobs.html#log-limit)). Allowed values:
+
+    * `###` If you specify a number, that is treated as the "Maximum total number of log lines"
+    * `###/node` If you specify a number followed by `/node`, the number is treated as the "Maximum number of log lines for a single node"
+    * `###[GMK]B` If you specify a number followed by a filesize suffix, that is treated as the "total log file size".  The file size suffixes allowed are "GB" (gigabyte), "MB" (megabyte), "KB" (kilobyte) and "B" (byte).
+    
+`loglimitAction`
+
+:    The action to perform if the `loglimit` value is exceeded.
+     If `loglimit` is sepcified, but no `loglimitAction` is set, it will default to a 
+     value of `halt`. Allowed values:
+
+    * `halt` - halt and fail the job (default)
+    * `truncate` - do not halt the job, and truncate all further output
+
+`loglimitStatus`
+
+:    The status for the Job when halted. If no `loglimitStatus` is set, it will default to a 
+     value of `failed`. Allowed values:
+
+    * `failed`
+    * `aborted`
+    * (any string)
     
 [`options`](#options)
 
@@ -460,21 +483,32 @@ Example:
 
 ### Options
 
-Options for a job can be specified with a map. Each map key is the name of the option, and the content is a map defining the [Option](#option).
+Options for a job can be specified with a list of Maps. Each map contains a `name` key with the name of the option, and the content is a map defining the [Option](#option).
+
+~~~~~~~~ {.yaml}
+  options:
+  - {definition..}
+  - {definition..}
+~~~~~~~~ 
+
+Note: for backwards compatibility, a Map format is also accepted on import:
 
 ~~~~~~~~ {.yaml}
   options:
     optname1:
-      [definition..]
+      {definition..}
     optname2:
-      [definition..]
+      {definition..}
 ~~~~~~~~ 
 
 ### Option
 
-An option definition has no required entries, so it could be empty:
+An option definition requires at least a `name` key to identify it:
 
-    myoption: {}
+~~~ {.yaml}
+  options:
+  - name: myoption
+~~~
 
 Optional map entries are:
 
@@ -522,11 +556,11 @@ Optional map entries are:
 
 :   "true/false" - whether a secure input option value is exposed to scripts or not. `false` means the option will be used only as a Secure Remote Authentication option.  default: `false`.
 
-`sortIndex`
+`sortIndex` (deprecated)
 
 :   *integer* - A number indicating the order this option should appear in the GUI.  If specified this
-    option will be arranged in order with other options with a `sortIndex` value. Any options without
-    a value will be arranged in alphabetical order below the other options.
+    option will be arranged in order with other options with a `sortIndex` value.
+    If the [Options](#options) are defined in a list, the order specified will be preserved.
 
 The `description` for an Option will be rendered with Markdown in the GUI.
 
@@ -814,7 +848,7 @@ Defines a plugin notification section, can contain a single Map, or a Sequence o
 
 # SEE ALSO
 
-`[rd-jobs](../man1/rd-jobs.html)`
+[rd-jobs](../man1/rd-jobs.html)
 
 <http://yaml.org/>
 

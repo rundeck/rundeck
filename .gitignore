@@ -5,6 +5,8 @@
 *.iws
 *.ipr
 *.iml
+db
+lib
 bin
 build
 cobertura.ser
@@ -12,6 +14,7 @@ gradle-cache
 rundeckapp/stacktrace.log
 rundeckapp/grails-app/i18n/messages.properties.orig
 rundeckapp/lib/rundeck-core-*.jar
+rundeckapp/classes/*
 core/target
 core/out
 **/target
@@ -24,6 +27,7 @@ rundeckapp/target-eclipse
 rundeckapp/var/logs/*
 rundeckapp/var/tmp/*
 packaging/dist
+packaging/rpmdist
 docs/*/manpages/man*/*.gz
 docs/*/manpages/man*/*.1
 docs/*/manpages/man*/*.5
@@ -33,3 +37,6 @@ tmp/**
 test/api/*.output
 core/src/main/resources/META-INF/com/dtolabs/rundeck/core/application.properties
 /local/
+grails
+out
+scratch

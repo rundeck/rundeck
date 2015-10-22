@@ -100,16 +100,32 @@
            for="${enc(attr:fieldid)}" ><g:enc>${prop.title ?: prop.name}</g:enc></label>
     <div class="${hasStorageSelector? valueColTypeSplit80: valueColType}">
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
+    <g:set var="valueText" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"/>
     <g:if test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.MULTI_LINE, 'MULTI_LINE']}">
-        <g:textArea name="${fieldname}" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
+        <g:textArea name="${fieldname}" value="${valueText}"
                  id="${fieldid}" rows="10" cols="100" class="${formControlType}"/>
     </g:if>
     <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.PASSWORD, 'PASSWORD']}">
-       <g:passwordField name="${fieldname}" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
+       <g:passwordField name="${fieldname}" value="${valueText}"
                     id="${fieldid}" cols="100" class="${formControlType}"/>
     </g:elseif>
+    <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.STATIC_TEXT, 'STATIC_TEXT']}">
+        %{--display value/defaultValue as static text in some format--}%
+        %{--text/html--}%
+        <g:if test="${prop.renderingOptions?.(StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY) in ['text/html']}">
+            <g:enc sanitize="${valueText}"/>
+        </g:if>
+        <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY) in ['text/x-markdown']}">
+            %{--markdown--}%
+            <g:markdown>${valueText}</g:markdown>
+        </g:elseif>
+        <g:else>
+            %{--plain--}%
+            <g:enc>${valueText}</g:enc>
+        </g:else>
+    </g:elseif>
     <g:else>
-        <g:textField name="${fieldname}" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
+        <g:textField name="${fieldname}" value="${valueText}"
                  id="${fieldid}" size="100" class="${formControlType}"/>
     </g:else>
     </div>

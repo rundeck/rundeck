@@ -1,0 +1,26 @@
+ext.pluginClassNames='org.rundeck.plugin.example.MaxPercentageOrchestatorPlugin,org.rundeck.plugin.example.RankTieredOrchestatorPlugin,org.rundeck.plugin.example.RandomSubsetOrchestratorPlugin'
+ext.pluginName = 'Orchestrator Plugin'
+ext.pluginDescription = 'Utility Orchestrator plugins'
+
+repositories {
+    mavenLocal()
+    maven{ //snapshot dependency
+        url='https://oss.sonatype.org/content/repositories/snapshots/'
+    }
+    mavenCentral()
+}
+
+dependencies {
+    compile project(":core")
+    testCompile('junit:junit:4.8.1')
+}
+
+
+jar {
+    manifest {
+        attributes 'Rundeck-Plugin-Classnames': pluginClassNames
+        attributes 'Rundeck-Plugin-File-Version': version
+        attributes 'Rundeck-Plugin-Version': rundeckPluginVersion, 'Rundeck-Plugin-Archive': 'true'
+    }
+}
+

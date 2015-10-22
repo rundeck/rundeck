@@ -1,22 +1,10 @@
-
-
-
-
-import org.codehaus.groovy.grails.plugins.databinding.DataBindingGrailsPlugin;
-import org.junit.Before;
-
-import grails.test.mixin.TestFor;
-import grails.test.mixin.support.GrailsUnitTestMixin;
-import grails.test.mixin.web.ControllerUnitTestMixin;
-import rundeck.ScheduledExecution
-import rundeck.JobExec
-import rundeck.Workflow
-import rundeck.CommandExec
-import rundeck.Option
-import rundeck.Notification
-import rundeck.controllers.JobXMLException
-import rundeck.PluginStep
+import grails.test.mixin.TestFor
+import grails.test.mixin.web.ControllerUnitTestMixin
+import org.codehaus.groovy.grails.plugins.databinding.DataBindingGrailsPlugin
+import org.junit.Before
+import rundeck.*
 import rundeck.codecs.JobsXMLCodec
+import rundeck.controllers.JobXMLException
 
 /*
 * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -107,21 +95,6 @@ class JobsXMLCodecTests {
   </wrong>
 </joblist>
 """
-    /** should fail job 1. no sequence*/
-    def fail1 = """<joblist>
-  <job>
-    <id>5</id>
-    <name>wait1</name>
-    <description>a simple desc</description>
-    <loglevel>INFO</loglevel>
-    <!-- no sequence -->
-    <dispatch>
-      <threadcount>1</threadcount>
-      <keepgoing>false</keepgoing>
-    </dispatch>
-  </job>
-</joblist>
-"""
     /** should fail job 2 missing: sequence */
     def fail2 = """<joblist>
   <job>
@@ -172,6 +145,8 @@ class JobsXMLCodecTests {
     <name>wait1</name>
     <description>a simple desc</description>
     <loglevel>INFO</loglevel>
+    <scheduleEnabled>false</scheduleEnabled>
+    <executionEnabled>false</executionEnabled>
     <group>some/group</group>
     <context>
       <project>test1</project>
@@ -189,82 +164,66 @@ class JobsXMLCodecTests {
 </joblist>
 """
 
-    void testDecodeBasic(){
+    void testDecodeBasic_InvalidJoblist() {
 
-        try{
+        try {
             JobsXMLCodec.decode(badxml1)
             fail "Parsing shouldn't complete"
-        }catch(JobXMLException e){
+        } catch (JobXMLException e) {
             assertNotNull e
         }
-        try{
+    }
+    void testDecodeBasic_invalid_no_job() {
+        try {
             JobsXMLCodec.decode(badxml2)
             fail "Parsing shouldn't complete"
-        }catch(JobXMLException e){
+        } catch (JobXMLException e) {
             assertNotNull e
         }
-        try{
-            JobsXMLCodec.decode(fail1)
-            fail "Parsing shouldn't complete"
-        }catch(JobXMLException e){
-            assertNotNull e
-            e.printStackTrace(System.err)
-            assertEquals "failed: ${e.getMessage()}","'sequence' element not found",e.getMessage()
-        }
-        try{
+    }
+    void testDecodeBasic_invalid_job_no_sequence() {
+        try {
             JobsXMLCodec.decode(fail2)
             fail "Parsing shouldn't complete"
-        }catch(JobXMLException e){
+        } catch (JobXMLException e) {
             assertNotNull e
             e.printStackTrace(System.err)
-            assertEquals "failed: ${e.getMessage()}","'sequence' element not found",e.getMessage()
+            assertEquals "failed: ${e.getMessage()}", "'sequence' element not found", e.getMessage()
         }
-            def jobs = JobsXMLCodec.decode(okxml0)
-            assertNotNull jobs
-            assertEquals "incorrect size",1,jobs.size()
-            assertEquals "incorrect jobName","wait1",jobs[0].jobName
-            assertEquals "incorrect description","",jobs[0].description
-            assertEquals "incorrect loglevel","INFO",jobs[0].loglevel
-            assertEquals "incorrect project","test1",jobs[0].project
-            assertNotNull jobs[0].options
-            assertEquals 2,jobs[0].options.size()
-            def iter = jobs[0].options.iterator()
-            def opt1=iter.next()
-            assertEquals 'delay',opt1.name
-            assertEquals '60',opt1.defaultValue
-            def opt2=iter.next()
-            assertEquals 'monkey',opt2.name
-            assertEquals 'bluefish',opt2.defaultValue
-            assertFalse "incorrect doNodedispatch: ${jobs[0].doNodedispatch}",jobs[0].doNodedispatch
-            assertEquals "incorrect nodeThreadcount",1,jobs[0].nodeThreadcount
-            assertFalse "incorrect nodeKeepgoing",jobs[0].nodeKeepgoing
-            assertNull "incorrect groupPath",jobs[0].groupPath
-
-            assertEquals "incorrect scheduled","false",jobs[0].scheduled.toString()
-
-            jobs = JobsXMLCodec.decode(okxml1)
-            assertNotNull jobs
-            assertEquals "incorrect size",1,jobs.size()
-            assertEquals "incorrect jobName","wait1",jobs[0].jobName
-            assertEquals "incorrect description","a simple desc",jobs[0].description
-            assertEquals "incorrect loglevel","INFO",jobs[0].loglevel
-            assertEquals "incorrect project","test1",jobs[0].project
+    }
+    void testDecodeBasic() {
+        def jobs = JobsXMLCodec.decode(okxml0)
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+        assertEquals "incorrect jobName", "wait1", jobs[0].jobName
+        assertEquals "incorrect description", "", jobs[0].description
+        assertEquals "incorrect loglevel", "INFO", jobs[0].loglevel
+        assertEquals "incorrect project", 'test1', jobs[0].project
         assertNotNull jobs[0].options
-                    assertEquals 2,jobs[0].options.size()
-                    def iter2 = jobs[0].options.iterator()
-                    def opt1_1=iter2.next()
-                    assertEquals 'delay',opt1_1.name
-                    assertEquals '60',opt1_1.defaultValue
-                    def opt2_2=iter2.next()
-                    assertEquals 'monkey',opt2_2.name
-                    assertEquals 'bluefish',opt2_2.defaultValue
-            assertFalse "incorrect doNodedispatch: ${jobs[0].doNodedispatch}",jobs[0].doNodedispatch
-            assertEquals "incorrect nodeThreadcount",1,jobs[0].nodeThreadcount
-            assertFalse "incorrect nodeKeepgoing",jobs[0].nodeKeepgoing
-            assertEquals "incorrect groupPath","some/group",jobs[0].groupPath
+        assertEquals 2, jobs[0].options.size()
+        def iter = jobs[0].options.iterator()
+        def opt1 = iter.next()
+        assertEquals 'delay', opt1.name
+        assertEquals '60', opt1.defaultValue
+        def opt2 = iter.next()
+        assertEquals 'monkey', opt2.name
+        assertEquals 'bluefish', opt2.defaultValue
+        assertFalse "incorrect doNodedispatch: ${jobs[0].doNodedispatch}", jobs[0].doNodedispatch
+        assertEquals "incorrect nodeThreadcount", 1, jobs[0].nodeThreadcount
+        assertFalse "incorrect nodeKeepgoing", jobs[0].nodeKeepgoing
+        assertNull "incorrect groupPath", jobs[0].groupPath
 
-            assertFalse "incorrect scheduled",jobs[0].scheduled
-    /** basic job */
+        assertEquals "incorrect scheduled", "false", jobs[0].scheduled.toString()
+
+    }
+    void testDecodeBasic_group() {
+        def jobs = JobsXMLCodec.decode(okxml1)
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+        assertEquals "incorrect groupPath", "some/group", jobs[0].groupPath
+    }
+    void testDecodeBasicOk1(){
+        /** basic job */
     def basic2 = """<joblist>
   <job>
     <id>8</id>
@@ -286,13 +245,13 @@ class JobsXMLCodecTests {
   </job>
 </joblist>
 """
-            jobs = JobsXMLCodec.decode(basic2)
+            def jobs = JobsXMLCodec.decode(basic2)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
             assertEquals "incorrect jobName","punch2",jobs[0].jobName
             assertEquals "incorrect description","dig it potato",jobs[0].description
             assertEquals "incorrect loglevel","WARN",jobs[0].loglevel
-            assertEquals "incorrect project","zig",jobs[0].project
+            assertEquals "incorrect project",'zig',jobs[0].project
             assertNotNull "incorrect command.option.clip",jobs[0].options
             assertEquals "incorrect command.option.clip",1,jobs[0].options.size()
             final def opt1opt3 = jobs[0].options.iterator().next()
@@ -305,6 +264,8 @@ class JobsXMLCodecTests {
 
             assertFalse "incorrect scheduled",jobs[0].scheduled
 
+    }
+    void testDecodeBasic_normalized_group(){
 
     /** basic job  - make group value have leading/trailing "/" characters, assert they are normalized. */
     def basic3 = """<joblist>
@@ -328,9 +289,12 @@ class JobsXMLCodecTests {
   </job>
 </joblist>
 """
-            jobs = JobsXMLCodec.decode(basic3)
+            def jobs = JobsXMLCodec.decode(basic3)
             assertNotNull jobs
             assertEquals "incorrect groupPath","simple",jobs[0].groupPath
+
+    }
+    void testDecodeBasic_normalized_group2(){
     /** basic job  - make group value have leading/trailing "/" characters, assert they are normalized. */
     def basic4 = """<joblist>
   <job>
@@ -353,12 +317,14 @@ class JobsXMLCodecTests {
   </job>
 </joblist>
 """
-            jobs = JobsXMLCodec.decode(basic4)
+            def jobs = JobsXMLCodec.decode(basic4)
             assertNotNull jobs
             assertEquals "incorrect groupPath","simple",jobs[0].groupPath
 
+    }
+    void testDecodeBasic_normalized_group3() {
         /** basic job  - make group value have leading/trailing "/" characters, assert they are normalized. */
-    def basic5 = """<joblist>
+        def basic5 = """<joblist>
   <job>
     <id>8</id>
     <name>punch2</name>
@@ -379,12 +345,13 @@ class JobsXMLCodecTests {
   </job>
 </joblist>
 """
-            jobs = JobsXMLCodec.decode(basic5)
-            assertNotNull jobs
-            assertEquals "incorrect groupPath","this/is/a/simple/path",jobs[0].groupPath
-
+        def jobs = JobsXMLCodec.decode(basic5)
+        assertNotNull jobs
+        assertEquals "incorrect groupPath", "this/is/a/simple/path", jobs[0].groupPath
+    }
+    void testDecodeBasic_normalized_group4() {
         /** basic job  - make group value have leading/trailing "/" characters, assert they are normalized. */
-    def basic6 = """<joblist>
+        def basic6 = """<joblist>
   <job>
     <id>8</id>
     <name>punch2</name>
@@ -405,10 +372,11 @@ class JobsXMLCodecTests {
   </job>
 </joblist>
 """
-             jobs = JobsXMLCodec.decode(basic6)
-            assertNotNull jobs
-            assertNull "incorrect groupPath",jobs[0].groupPath
-
+        def jobs = JobsXMLCodec.decode(basic6)
+        assertNotNull jobs
+        assertNull "incorrect groupPath", jobs[0].groupPath
+    }
+void testDecodeBasic__no_group(){
         def basic7 = """<joblist>
   <job>
     <id>8</id>
@@ -429,7 +397,7 @@ class JobsXMLCodecTests {
   </job>
 </joblist>
 """
-            jobs = JobsXMLCodec.decode(basic7)
+            def jobs = JobsXMLCodec.decode(basic7)
             assertNotNull jobs
             assertNull "incorrect groupPath",jobs[0].groupPath
     }
@@ -556,6 +524,78 @@ class JobsXMLCodecTests {
         assertEquals 'false', jobs[0].workflow.commands[7].jobGroup
         assertEquals '123', jobs[0].workflow.commands[7].argString
     }
+    public void testDecodeLoglimitNoStatus(){
+
+        def xml = """<joblist>
+  <job>
+    <id>8</id>
+    <name>punch2</name>
+    <description>dig it potato</description>
+    <loglevel>WARN</loglevel>
+
+    <!-- test logging -->
+    <logging limit="20MB" limitAction="halt"/>
+
+    <context>
+      <project>zig</project>
+      <options>
+        <option name='clip' value='true' />
+      </options>
+    </context>
+    <sequence>
+        <command>
+        <exec>true</exec>
+        </command>
+    </sequence>
+    <dispatch>
+      <threadcount>2</threadcount>
+      <keepgoing>true</keepgoing>
+    </dispatch>
+  </job>
+</joblist>
+"""
+        def jobs = JobsXMLCodec.decode(xml)
+        assertNotNull jobs
+        assertEquals '20MB', jobs[0].logOutputThreshold
+        assertEquals 'halt', jobs[0].logOutputThresholdAction
+        assertEquals 'failed', jobs[0].logOutputThresholdStatus
+    }
+    public void testDecodeLoglimitCustomStatus(){
+
+        def xml = """<joblist>
+  <job>
+    <id>8</id>
+    <name>punch2</name>
+    <description>dig it potato</description>
+    <loglevel>WARN</loglevel>
+
+    <!-- test logging -->
+    <logging limit="20MB" limitAction="halt" status="mystatus"/>
+
+    <context>
+      <project>zig</project>
+      <options>
+        <option name='clip' value='true' />
+      </options>
+    </context>
+    <sequence>
+        <command>
+        <exec>true</exec>
+        </command>
+    </sequence>
+    <dispatch>
+      <threadcount>2</threadcount>
+      <keepgoing>true</keepgoing>
+    </dispatch>
+  </job>
+</joblist>
+"""
+        def jobs = JobsXMLCodec.decode(xml)
+        assertNotNull jobs
+        assertEquals '20MB', jobs[0].logOutputThreshold
+        assertEquals 'halt', jobs[0].logOutputThresholdAction
+        assertEquals 'mystatus', jobs[0].logOutputThresholdStatus
+    }
     public void testDecodeWithoutProject(){
 
         def xml = """<joblist>
@@ -600,14 +640,15 @@ class JobsXMLCodecTests {
         assertNull "incorrect groupPath", jobs[0].groupPath
 
         assertEquals "incorrect scheduled", "false", jobs[0].scheduled.toString()
-
-        jobs = JobsXMLCodec.decode(okxml1)
+    }
+    public void testDecodeWithProject(){
+        def jobs = JobsXMLCodec.decode(okxml1)
         assertNotNull jobs
         assertEquals "incorrect size", 1, jobs.size()
         assertEquals "incorrect jobName", "wait1", jobs[0].jobName
         assertEquals "incorrect description", "a simple desc", jobs[0].description
         assertEquals "incorrect loglevel", "INFO", jobs[0].loglevel
-        assertEquals "incorrect project", "test1", jobs[0].project
+        assertEquals "incorrect project", 'test1', jobs[0].project
         assertNotNull jobs[0].options
         assertEquals 2, jobs[0].options.size()
         def iter2 = jobs[0].options.iterator()
@@ -995,7 +1036,7 @@ class JobsXMLCodecTests {
             assertEquals "incorrect nodeExcludePrecedence","true",jobs[0].nodeExcludePrecedence.toString()
             assertEquals "incorrect nodeInclude",null,jobs[0].nodeInclude
             assertEquals "incorrect nodeInclude","hostname: cypress.hill.com",jobs[0].filter
-            assertEquals "incorrect project","demo",jobs[0].project
+            assertEquals "incorrect project",'demo',jobs[0].project
     }
 
     void testDecodeStringsShouldNotBeBoolean() {
@@ -1007,7 +1048,7 @@ class JobsXMLCodecTests {
     <loglevel>VERBOSE</loglevel>
     <group>false</group>
     <context>
-      <project>false</project>
+      <project>proj1</project>
       <options>
         <option name="false" enforcedvalues="false"/>
         <option required="false" name="x" value="9000636026"/>
@@ -1049,7 +1090,7 @@ class JobsXMLCodecTests {
         assertEquals  false, jobs[0].nodeKeepgoing
         assertEquals  null, jobs[0].nodeInclude
         assertEquals  "hostname: false", jobs[0].filter
-        assertEquals  "false",jobs[0].project
+        assertEquals  'proj1',jobs[0].project
         assertEquals  1, jobs[0].workflow.commands.size()
         assertEquals  "false", jobs[0].workflow.commands[0].adhocRemoteString
         assertEquals  "false", jobs[0].workflow.commands[0].errorHandler.adhocLocalString
@@ -3719,9 +3760,11 @@ class JobsXMLCodecTests {
             assertEquals "wrong name","test job 1",doc.job[0].name[0].text()
             assertEquals "wrong description","test descrip",doc.job[0].description[0].text()
             assertEquals "wrong loglevel","INFO",doc.job[0].loglevel[0].text()
+            assertEquals "wrong scheduleEnabled", "true", doc.job[0].scheduleEnabled[0].text()
+            assertEquals "wrong executionEnabled", "true", doc.job[0].executionEnabled[0].text()
             assertNotNull "missing context",doc.job[0].context
             assertEquals "incorrect context size",1,doc.job[0].context.size()
-            assertEquals "incorrect context project",'test1',doc.job[0].context[0].project[0].text()
+            assertEquals "incorrect context project",0,doc.job[0].context[0].project.size()
             assertEquals "incorrect context options size",3,doc.job[0].context[0].options[0].option.size()
             assertEquals "incorrect context options option 1 name",'delay',doc.job[0].context[0].options[0].option[0]['@name'].text()
             assertEquals "incorrect context options option 1 value",'12',doc.job[0].context[0].options[0].option[0]['@value'].text()
@@ -3732,6 +3775,143 @@ class JobsXMLCodecTests {
 
             assertEquals "incorrect dispatch threadcount",'1',doc.job[0].dispatch[0].threadcount[0].text()
             assertEquals "incorrect dispatch keepgoing",'true',doc.job[0].dispatch[0].keepgoing[0].text()
+
+
+    }
+    void testEncodeNullDescription(){
+         def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        loglevel: 'INFO',
+                        project:'test1',
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                        options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
+                        nodeThreadcount:1,
+                        nodeKeepgoing:true,
+                        doNodedispatch:true
+                )
+        ]
+        def  xmlstr = JobsXMLCodec.encode(jobs1)
+            assertNotNull xmlstr
+            assertTrue xmlstr instanceof String
+
+            def doc = parser.parse(new StringReader(xmlstr))
+            assertNotNull doc
+            assertEquals "wrong root node name",'joblist',doc.name()
+            assertEquals "wrong number of jobs",1,doc.job.size()
+            assertEquals "wrong name","test job 1",doc.job[0].name[0].text()
+            assertEquals "wrong description","",doc.job[0].description[0].text()
+            assertEquals "wrong loglevel","INFO",doc.job[0].loglevel[0].text()
+            assertEquals "wrong scheduleEnabled", "true", doc.job[0].scheduleEnabled[0].text()
+            assertEquals "wrong executionEnabled", "true", doc.job[0].executionEnabled[0].text()
+            assertNotNull "missing context",doc.job[0].context
+            assertEquals "incorrect context size",1,doc.job[0].context.size()
+            assertEquals "incorrect context project",0,doc.job[0].context[0].project.size()
+            assertEquals "incorrect context options size",3,doc.job[0].context[0].options[0].option.size()
+            assertEquals "incorrect context options option 1 name",'delay',doc.job[0].context[0].options[0].option[0]['@name'].text()
+            assertEquals "incorrect context options option 1 value",'12',doc.job[0].context[0].options[0].option[0]['@value'].text()
+            assertEquals "incorrect context options option 2 name",'monkey',doc.job[0].context[0].options[0].option[1]['@name'].text()
+            assertEquals "incorrect context options option 2 value",'cheese',doc.job[0].context[0].options[0].option[1]['@value'].text()
+            assertEquals "incorrect context options option 3 name",'particle',doc.job[0].context[0].options[0].option[2]['@name'].text()
+            assertEquals "incorrect context options option 3 value",'true',doc.job[0].context[0].options[0].option[2]['@value'].text()
+
+            assertEquals "incorrect dispatch threadcount",'1',doc.job[0].dispatch[0].threadcount[0].text()
+            assertEquals "incorrect dispatch keepgoing",'true',doc.job[0].dispatch[0].keepgoing[0].text()
+
+
+    }
+
+    void testScheduleAndExecutionDisabled(){
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        description:'test descrip',
+                        loglevel: 'INFO',
+                        project:'test1',
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                        options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
+                        nodeThreadcount:1,
+                        nodeKeepgoing:true,
+                        doNodedispatch:true,
+                        scheduleEnabled: false,
+                        executionEnabled: false
+                )
+        ]
+        def  xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "wrong root node name",'joblist',doc.name()
+        assertEquals "wrong number of jobs",1,doc.job.size()
+        assertEquals "wrong name","test job 1",doc.job[0].name[0].text()
+        assertEquals "wrong description","test descrip",doc.job[0].description[0].text()
+        assertEquals "wrong loglevel","INFO",doc.job[0].loglevel[0].text()
+        assertEquals "wrong scheduleEnabled", "false", doc.job[0].scheduleEnabled[0].text()
+        assertEquals "wrong executionEnabled", "false", doc.job[0].executionEnabled[0].text()
+        assertNotNull "missing context",doc.job[0].context
+        assertEquals "incorrect context size",1,doc.job[0].context.size()
+        assertEquals "incorrect context project",0,doc.job[0].context[0].project.size()
+        assertEquals "incorrect context options size",3,doc.job[0].context[0].options[0].option.size()
+        assertEquals "incorrect context options option 1 name",'delay',doc.job[0].context[0].options[0].option[0]['@name'].text()
+        assertEquals "incorrect context options option 1 value",'12',doc.job[0].context[0].options[0].option[0]['@value'].text()
+        assertEquals "incorrect context options option 2 name",'monkey',doc.job[0].context[0].options[0].option[1]['@name'].text()
+        assertEquals "incorrect context options option 2 value",'cheese',doc.job[0].context[0].options[0].option[1]['@value'].text()
+        assertEquals "incorrect context options option 3 name",'particle',doc.job[0].context[0].options[0].option[2]['@name'].text()
+        assertEquals "incorrect context options option 3 value",'true',doc.job[0].context[0].options[0].option[2]['@value'].text()
+
+        assertEquals "incorrect dispatch threadcount",'1',doc.job[0].dispatch[0].threadcount[0].text()
+        assertEquals "incorrect dispatch keepgoing",'true',doc.job[0].dispatch[0].keepgoing[0].text()
+
+
+    }
+
+    void testScheduleAndExecutionEnabled(){
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        description:'test descrip',
+                        loglevel: 'INFO',
+                        project:'test1',
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                        options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
+                        nodeThreadcount:1,
+                        nodeKeepgoing:true,
+                        doNodedispatch:true,
+                        scheduleEnabled: true,
+                        executionEnabled: true
+                )
+        ]
+        def  xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "wrong root node name",'joblist',doc.name()
+        assertEquals "wrong number of jobs",1,doc.job.size()
+        assertEquals "wrong name","test job 1",doc.job[0].name[0].text()
+        assertEquals "wrong description","test descrip",doc.job[0].description[0].text()
+        assertEquals "wrong loglevel","INFO",doc.job[0].loglevel[0].text()
+        assertEquals "wrong scheduleEnabled", "true", doc.job[0].scheduleEnabled[0].text()
+        assertEquals "wrong executionEnabled", "true", doc.job[0].executionEnabled[0].text()
+        assertNotNull "missing context",doc.job[0].context
+        assertEquals "incorrect context size",1,doc.job[0].context.size()
+        assertEquals "incorrect context project",0,doc.job[0].context[0].project.size()
+        assertEquals "incorrect context options size",3,doc.job[0].context[0].options[0].option.size()
+        assertEquals "incorrect context options option 1 name",'delay',doc.job[0].context[0].options[0].option[0]['@name'].text()
+        assertEquals "incorrect context options option 1 value",'12',doc.job[0].context[0].options[0].option[0]['@value'].text()
+        assertEquals "incorrect context options option 2 name",'monkey',doc.job[0].context[0].options[0].option[1]['@name'].text()
+        assertEquals "incorrect context options option 2 value",'cheese',doc.job[0].context[0].options[0].option[1]['@value'].text()
+        assertEquals "incorrect context options option 3 name",'particle',doc.job[0].context[0].options[0].option[2]['@name'].text()
+        assertEquals "incorrect context options option 3 value",'true',doc.job[0].context[0].options[0].option[2]['@value'].text()
+
+        assertEquals "incorrect dispatch threadcount",'1',doc.job[0].dispatch[0].threadcount[0].text()
+        assertEquals "incorrect dispatch keepgoing",'true',doc.job[0].dispatch[0].keepgoing[0].text()
 
 
     }
@@ -3773,7 +3953,7 @@ class JobsXMLCodecTests {
             assertEquals "wrong loglevel","INFO",doc.job[0].loglevel[0].text()
             assertNotNull "missing context",doc.job[0].context
             assertEquals "incorrect context size",1,doc.job[0].context.size()
-            assertEquals "incorrect context project",'test1',doc.job[0].context[0].project[0].text()
+            assertEquals "incorrect context project",0,doc.job[0].context[0].project.size()
             assertEquals "incorrect context options size",3,doc.job[0].context[0].options[0].option.size()
             assertEquals "incorrect context options option 1 name",'delay',doc.job[0].context[0].options[0].option[0]['@name'].text()
             assertEquals "incorrect context options option 1 value",'12',doc.job[0].context[0].options[0].option[0]['@value'].text()
@@ -4226,7 +4406,75 @@ class JobsXMLCodecTests {
             
     }
 
-    void testEncodeNodefilter() {
+    void testEncodeLoglimit() {
+        def XmlParser parser = new XmlParser()
+
+        //set node dispatch to false, and assert no nodefilters are generated
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+                        workflow: new Workflow(
+                                keepgoing: true,
+                                commands: [new CommandExec(adhocExecution: true, adhocLocalString: 'test',)]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        logOutputThreshold: '20MB',
+                        logOutputThresholdAction: 'halt',
+                        logOutputThresholdStatus: 'failed',
+                )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing logging", 1, doc.job[0].logging.size()
+        assertEquals "missing logging/@limit", '20MB', doc.job[0].logging[0].'@limit'
+        assertEquals "missing logging/@limitAction", 'halt', doc.job[0].logging[0].'@limitAction'
+        assertEquals "missing logging/@status", 'failed', doc.job[0].logging[0].'@status'
+    }
+    void testEncodeLoglimitCustomStatus() {
+        def XmlParser parser = new XmlParser()
+
+        //set node dispatch to false, and assert no nodefilters are generated
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+                        workflow: new Workflow(
+                                keepgoing: true,
+                                commands: [new CommandExec(adhocExecution: true, adhocLocalString: 'test',)]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        logOutputThreshold: '20MB',
+                        logOutputThresholdAction: 'halt',
+                        logOutputThresholdStatus: 'mystatus',
+                )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing logging", 1, doc.job[0].logging.size()
+        assertEquals "missing logging/@limit", '20MB', doc.job[0].logging[0].'@limit'
+        assertEquals "missing logging/@limitAction", 'halt', doc.job[0].logging[0].'@limitAction'
+        assertEquals "missing logging/@status", 'mystatus', doc.job[0].logging[0].'@status'
+    }
+    void testEncodeNodefilter(){
         def XmlParser parser = new XmlParser()
 
         //set node dispatch to false, and assert no nodefilters are generated
@@ -4535,16 +4783,14 @@ class JobsXMLCodecTests {
             def doc = parser.parse(new StringReader(xmlstr))
             assertNotNull doc
             assertEquals "missing job", 1, doc.job.size()
-            assertEquals "missing context", 1, doc.job[0].context.size()
-            assertEquals "missing context/project", 1, doc.job[0].context[0].project.size()
-            assertEquals "wrong project", 'test1', doc.job[0].context[0].project[0].text()
+            assertEquals "missing context", 0, doc.job[0].context.size()
             assertEquals "missing sequence", 1, doc.job.sequence.size()
             assertEquals "wrong command count", 3, doc.job[0].sequence[0].command.size()
             doc.job[0].sequence[0].command.eachWithIndex{cmd,i->
                 assertEquals "wrong description", "test${i+1}", cmd.description.text()
             }
     }
-    void testEncodeWorkflow(){
+    void testEncodeWorkflowBasic_onecommand(){
         def XmlParser parser = new XmlParser()
         //encode basic workflow with one command call
         def jobs1 = [
@@ -4565,7 +4811,6 @@ class JobsXMLCodecTests {
                 )
         ]
 
-        if(true){
             def xmlstr
                 xmlstr = JobsXMLCodec.encode(jobs1)
             assertNotNull xmlstr
@@ -4575,9 +4820,7 @@ class JobsXMLCodecTests {
             def doc = parser.parse(new StringReader(xmlstr))
             assertNotNull doc
             assertEquals "missing job",1,doc.job.size()
-            assertEquals "missing context",1,doc.job[0].context.size()
-            assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
-            assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
+            assertEquals "missing context",0,doc.job[0].context.size()
             assertEquals "missing sequence",1,doc.job.sequence.size()
             assertEquals "wrong keepgoing","true",doc.job[0].sequence[0]['@keepgoing']
             assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
@@ -4590,6 +4833,8 @@ class JobsXMLCodecTests {
             assertNull "wrong command @equals",doc.job[0].sequence[0].command[0]['@equals']
         }
 
+    void testEncodeWorkflow_threadcount(){
+        def XmlParser parser = new XmlParser()
         //encode basic workflow with one command call, change threadcount
         def jobs1b = [
                 new ScheduledExecution(
@@ -4610,7 +4855,6 @@ class JobsXMLCodecTests {
 
         ]
 
-        if(true){
             def xmlstr
                 xmlstr= JobsXMLCodec.encode(jobs1b)
 
@@ -4621,9 +4865,7 @@ class JobsXMLCodecTests {
             def doc = parser.parse(new StringReader(xmlstr))
             assertNotNull doc
             assertEquals "missing job",1,doc.job.size()
-            assertEquals "missing context",1,doc.job[0].context.size()
-            assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
-            assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
+            assertEquals "missing context",0,doc.job[0].context.size()
             assertEquals "missing sequence",1,doc.job.sequence.size()
             assertEquals "wrong keepgoing","false",doc.job[0].sequence[0]['@keepgoing']
             assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
@@ -4636,452 +4878,461 @@ class JobsXMLCodecTests {
             assertNull "wrong command @equals",doc.job[0].sequence[0].command[0]['@equals']
 
         }
+    void testEncodeWorkflow_attributes() {
+        def XmlParser parser = new XmlParser()
         //add conditional attributes
         def jobs2 = [
                 new ScheduledExecution(
-                        jobName:'test job 1',
-                        description:'test descrip',
+                        jobName: 'test job 1',
+                        description: 'test descrip',
                         loglevel: 'INFO',
-                        project:'test1',
-                        argString:'',
-                        nodeThreadcount:1,
-                        nodeKeepgoing:true,
-                        doNodedispatch:true,
+                        project: 'test1',
+                        argString: '',
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true,
 
                         workflow: new Workflow(keepgoing: true, commands: [new CommandExec(
-                                    adhocExecution:true,
-                                    adhocRemoteString:'aname',
-                            )]
-                            )
+                                adhocExecution: true,
+                                adhocRemoteString: 'aname',
+                                )]
+                        )
                 )
         ]
 
-            def xmlstr = JobsXMLCodec.encode(jobs2)
-            assertNotNull xmlstr
-            assertTrue xmlstr instanceof String
+        def xmlstr = JobsXMLCodec.encode(jobs2)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
 
 
-            def doc = parser.parse(new StringReader(xmlstr))
-            assertNotNull doc
-            assertEquals "missing job",1,doc.job.size()
-            assertEquals "missing context",1,doc.job[0].context.size()
-            assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
-            assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
-            assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
-            assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
-            assertEquals "wrong command/exec size",1, doc.job[0].sequence[0].command[0].exec.size()
-            assertEquals "wrong command/exec","aname", doc.job[0].sequence[0].command[0].exec[0].text()
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing job", 1, doc.job.size()
+        assertEquals "missing context", 0, doc.job[0].context.size()
+        assertEquals "missing sequence", 1, doc.job.sequence.size()
+        assertEquals "wrong keepgoing", "node-first", doc.job[0].sequence[0]['@strategy']
+        assertEquals "wrong command count", 1, doc.job[0].sequence[0].command.size()
+        assertEquals "wrong command/exec size", 1, doc.job[0].sequence[0].command[0].exec.size()
+        assertEquals "wrong command/exec", "aname", doc.job[0].sequence[0].command[0].exec[0].text()
 
-            //XXX: conditionals not yet supported, so expect null
-            /*
+        //XXX: conditionals not yet supported, so expect null
+        /*
             assertEquals "wrong command @return",'returnproptest',doc.job[0].sequence[0].command[0]['@return']
             assertEquals "wrong command @if",'ifstringtest',doc.job[0].sequence[0].command[0]['@if']
             assertEquals "wrong command @unless",'unlessstringtest',doc.job[0].sequence[0].command[0]['@unless']
             assertEquals "wrong command @equals",'equalsstringtest',doc.job[0].sequence[0].command[0]['@equals']
             */
-            assertNull "wrong command @return",doc.job[0].sequence[0].command[0]['@return']
-            assertNull "wrong command @if",doc.job[0].sequence[0].command[0]['@if']
-            assertNull "wrong command @unless",doc.job[0].sequence[0].command[0]['@unless']
-            assertNull "wrong command @equals",doc.job[0].sequence[0].command[0]['@equals']
+        assertNull "wrong command @return", doc.job[0].sequence[0].command[0]['@return']
+        assertNull "wrong command @if", doc.job[0].sequence[0].command[0]['@if']
+        assertNull "wrong command @unless", doc.job[0].sequence[0].command[0]['@unless']
+        assertNull "wrong command @equals", doc.job[0].sequence[0].command[0]['@equals']
 
 
-
+    }
+    void testEncodeWorkflow_command() {
+        def XmlParser parser = new XmlParser()
 
         //test simple exec/script/scriptfile commands
         def jobs3 = [
                 new ScheduledExecution(
-                        jobName:'test job 1',
-                        description:'test descrip',
+                        jobName: 'test job 1',
+                        description: 'test descrip',
                         loglevel: 'INFO',
-                        project:'test1',
-                        argString:'',
-                        nodeThreadcount:1,
-                        nodeKeepgoing:true,
-                        doNodedispatch:true,
+                        project: 'test1',
+                        argString: '',
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true,
 
                         workflow: new Workflow(keepgoing: true, commands: [new CommandExec(
-                                    adhocExecution:true,
-                                    adhocRemoteString:'a remote command',
-                                    argString:'test string'
-                                )]
-                            )
+                                adhocExecution: true,
+                                adhocRemoteString: 'a remote command',
+                                argString: 'test string'
+                        )]
+                        )
                 )
         ]
 
-            xmlstr = JobsXMLCodec.encode(jobs3)
-            assertNotNull xmlstr
-            assertTrue xmlstr instanceof String
+        def xmlstr = JobsXMLCodec.encode(jobs3)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
 
 
-            doc = parser.parse(new StringReader(xmlstr))
-            assertNotNull doc
-            assertEquals "missing job",1,doc.job.size()
-            assertEquals "missing context",1,doc.job[0].context.size()
-            assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
-            assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
-            assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
-            assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
-            assertNull "wrong command @resource",doc.job[0].sequence[0].command[0]['@resource']
-            assertNull "wrong command @name",doc.job[0].sequence[0].command[0]['@name']
-            assertNull "wrong command @module",doc.job[0].sequence[0].command[0]['@module']
-            assertEquals "missing command/exec",1,doc.job[0].sequence[0].command[0].exec.size()
-            assertEquals "wrong command/exec",'a remote command',doc.job[0].sequence[0].command[0].exec[0].text()
-            assertEquals "wrong command/exec",0,doc.job[0].sequence[0].command[0].script.size()
-            assertEquals "wrong command/exec",0,doc.job[0].sequence[0].command[0].scriptfile.size()
-            assertEquals "wrong command/exec",0,doc.job[0].sequence[0].command[0].scriptargs.size()
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing job", 1, doc.job.size()
+        assertEquals "missing context", 0, doc.job[0].context.size()
+        assertEquals "missing sequence", 1, doc.job.sequence.size()
+        assertEquals "wrong keepgoing", "node-first", doc.job[0].sequence[0]['@strategy']
+        assertEquals "wrong command count", 1, doc.job[0].sequence[0].command.size()
+        assertNull "wrong command @resource", doc.job[0].sequence[0].command[0]['@resource']
+        assertNull "wrong command @name", doc.job[0].sequence[0].command[0]['@name']
+        assertNull "wrong command @module", doc.job[0].sequence[0].command[0]['@module']
+        assertEquals "missing command/exec", 1, doc.job[0].sequence[0].command[0].exec.size()
+        assertEquals "wrong command/exec", 'a remote command', doc.job[0].sequence[0].command[0].exec[0].text()
+        assertEquals "wrong command/exec", 0, doc.job[0].sequence[0].command[0].script.size()
+        assertEquals "wrong command/exec", 0, doc.job[0].sequence[0].command[0].scriptfile.size()
+        assertEquals "wrong command/exec", 0, doc.job[0].sequence[0].command[0].scriptargs.size()
 
-
+    }
+    void testEncodeWorkflow_script() {
+        def XmlParser parser = new XmlParser()
 
         //test simple exec/script/scriptfile commands
         def jobs4 = [
                 new ScheduledExecution(
-                        jobName:'test job 1',
-                        description:'test descrip',
+                        jobName: 'test job 1',
+                        description: 'test descrip',
                         loglevel: 'INFO',
-                        project:'test1',
-                        argString:'',
-                        nodeThreadcount:1,
-                        nodeKeepgoing:true,
-                        doNodedispatch:true,
+                        project: 'test1',
+                        argString: '',
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true,
 
                         workflow: new Workflow(keepgoing: true, commands: [new CommandExec(
-                                    adhocExecution:true,
-                                    adhocLocalString:'a local script command',
-                                    argString:'test string'
-                                )]
-                            )
+                                adhocExecution: true,
+                                adhocLocalString: 'a local script command',
+                                argString: 'test string'
+                        )]
+                        )
                 )
         ]
 
-            xmlstr = JobsXMLCodec.encode(jobs4)
-            assertNotNull xmlstr
-            assertTrue xmlstr instanceof String
-                System.err.println("xmlstr: "+xmlstr);
+        def xmlstr = JobsXMLCodec.encode(jobs4)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+        System.err.println("xmlstr: " + xmlstr);
 
 
-            doc = parser.parse(new StringReader(xmlstr))
-            assertNotNull doc
-            assertEquals "missing job",1,doc.job.size()
-            assertEquals "missing context",1,doc.job[0].context.size()
-            assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
-            assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
-            assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
-            assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
-            assertNull "wrong command @resource",doc.job[0].sequence[0].command[0]['@resource']
-            assertNull "wrong command @name",doc.job[0].sequence[0].command[0]['@name']
-            assertNull "wrong command @module",doc.job[0].sequence[0].command[0]['@module']
-            assertEquals "missing command/script",1,doc.job[0].sequence[0].command[0].script.size()
-            assertEquals "wrong command/script",'a local script command',doc.job[0].sequence[0].command[0].script[0].text()
-            assertEquals "wrong command/exec",0,doc.job[0].sequence[0].command[0].exec.size()
-            assertEquals "wrong command/scriptfile",0,doc.job[0].sequence[0].command[0].scriptfile.size()
-            assertEquals "wrong command/exec",1,doc.job[0].sequence[0].command[0].scriptargs.size()
-            assertEquals "wrong command/exec","test string",doc.job[0].sequence[0].command[0].scriptargs[0].text()
-
-
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing job", 1, doc.job.size()
+        assertEquals "missing context", 0, doc.job[0].context.size()
+        assertEquals "missing sequence", 1, doc.job.sequence.size()
+        assertEquals "wrong keepgoing", "node-first", doc.job[0].sequence[0]['@strategy']
+        assertEquals "wrong command count", 1, doc.job[0].sequence[0].command.size()
+        assertNull "wrong command @resource", doc.job[0].sequence[0].command[0]['@resource']
+        assertNull "wrong command @name", doc.job[0].sequence[0].command[0]['@name']
+        assertNull "wrong command @module", doc.job[0].sequence[0].command[0]['@module']
+        assertEquals "missing command/script", 1, doc.job[0].sequence[0].command[0].script.size()
+        assertEquals "wrong command/script", 'a local script command',
+                     doc.job[0].sequence[0].command[0].script[0].text()
+        assertEquals "wrong command/exec", 0, doc.job[0].sequence[0].command[0].exec.size()
+        assertEquals "wrong command/scriptfile", 0, doc.job[0].sequence[0].command[0].scriptfile.size()
+        assertEquals "wrong command/exec", 1, doc.job[0].sequence[0].command[0].scriptargs.size()
+        assertEquals "wrong command/exec", "test string", doc.job[0].sequence[0].command[0].scriptargs[0].text()
+    }
+    void testEncodeWorkflow_scriptfile() {
+        def XmlParser parser = new XmlParser()
 
         //test simple exec/script/scriptfile commands
         def jobs5 = [
                 new ScheduledExecution(
-                        jobName:'test job 1',
-                        description:'test descrip',
+                        jobName: 'test job 1',
+                        description: 'test descrip',
                         loglevel: 'INFO',
-                        project:'test1',
-                        argString:'',
-                        nodeThreadcount:1,
-                        nodeKeepgoing:true,
-                        doNodedispatch:true,
+                        project: 'test1',
+                        argString: '',
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true,
                         workflow: new Workflow(keepgoing: true, commands: [new CommandExec(
-                                    adhocExecution:true,
-                                    adhocFilepath:'/path/to/a/file',
-                                    argString:'test string'
-                                )]
+                                adhocExecution: true,
+                                adhocFilepath: '/path/to/a/file',
+                                argString: 'test string'
+                        )]
                         )
                 )
         ]
 
-            xmlstr = JobsXMLCodec.encode(jobs5)
-            assertNotNull xmlstr
-            assertTrue xmlstr instanceof String
+        def xmlstr = JobsXMLCodec.encode(jobs5)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
 
 
-            doc = parser.parse(new StringReader(xmlstr))
-            assertNotNull doc
-            assertEquals "missing job",1,doc.job.size()
-            assertEquals "missing context",1,doc.job[0].context.size()
-            assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
-            assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
-            assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
-            assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
-            assertNull "wrong command @resource",doc.job[0].sequence[0].command[0]['@resource']
-            assertNull "wrong command @name",doc.job[0].sequence[0].command[0]['@name']
-            assertNull "wrong command @module",doc.job[0].sequence[0].command[0]['@module']
-            assertEquals "missing command/scriptfile",1,doc.job[0].sequence[0].command[0].scriptfile.size()
-            assertEquals "wrong command/scriptfile",'/path/to/a/file',doc.job[0].sequence[0].command[0].scriptfile[0].text()
-            assertEquals "wrong command/exec",0,doc.job[0].sequence[0].command[0].exec.size()
-            assertEquals "wrong command/script",0,doc.job[0].sequence[0].command[0].script.size()
-            assertEquals "wrong command/exec",1,doc.job[0].sequence[0].command[0].scriptargs.size()
-            assertEquals "wrong command/exec","test string",doc.job[0].sequence[0].command[0].scriptargs[0].text()
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing job", 1, doc.job.size()
+        assertEquals "missing context", 0, doc.job[0].context.size()
+        assertEquals "missing sequence", 1, doc.job.sequence.size()
+        assertEquals "wrong keepgoing", "node-first", doc.job[0].sequence[0]['@strategy']
+        assertEquals "wrong command count", 1, doc.job[0].sequence[0].command.size()
+        assertNull "wrong command @resource", doc.job[0].sequence[0].command[0]['@resource']
+        assertNull "wrong command @name", doc.job[0].sequence[0].command[0]['@name']
+        assertNull "wrong command @module", doc.job[0].sequence[0].command[0]['@module']
+        assertEquals "missing command/scriptfile", 1, doc.job[0].sequence[0].command[0].scriptfile.size()
+        assertEquals "wrong command/scriptfile", '/path/to/a/file',
+                     doc.job[0].sequence[0].command[0].scriptfile[0].text()
+        assertEquals "wrong command/exec", 0, doc.job[0].sequence[0].command[0].exec.size()
+        assertEquals "wrong command/script", 0, doc.job[0].sequence[0].command[0].script.size()
+        assertEquals "wrong command/exec", 1, doc.job[0].sequence[0].command[0].scriptargs.size()
+        assertEquals "wrong command/exec", "test string", doc.job[0].sequence[0].command[0].scriptargs[0].text()
 
-
+    }
+    void testEncodeWorkflow_scriptfile_args() {
+        def XmlParser parser = new XmlParser()
 
         //test simple exec/script/scriptfile commands
         def jobs6 = [
                 new ScheduledExecution(
-                        jobName:'test job 1',
-                        description:'test descrip',
+                        jobName: 'test job 1',
+                        description: 'test descrip',
                         loglevel: 'INFO',
-                        project:'test1',
-                        argString:'',
-                        nodeThreadcount:1,
-                        nodeKeepgoing:true,
-                        doNodedispatch:true,
+                        project: 'test1',
+                        argString: '',
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true,
                         workflow: new Workflow(keepgoing: true, commands: [new CommandExec(
-                                    adhocExecution:true,
-                                    adhocFilepath:'/path/to/a/file',
-                                    argString:'-some script -args'
-                                )]
+                                adhocExecution: true,
+                                adhocFilepath: '/path/to/a/file',
+                                argString: '-some script -args'
+                        )]
                         )
                 )
         ]
 
-            xmlstr = JobsXMLCodec.encode(jobs6)
-            assertNotNull xmlstr
-            assertTrue xmlstr instanceof String
+        def xmlstr = JobsXMLCodec.encode(jobs6)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
 
 
-            doc = parser.parse(new StringReader(xmlstr))
-            assertNotNull doc
-            assertEquals "missing job",1,doc.job.size()
-            assertEquals "missing context",1,doc.job[0].context.size()
-            assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
-            assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
-            assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
-            assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
-            assertNull "wrong command @resource",doc.job[0].sequence[0].command[0]['@resource']
-            assertNull "wrong command @name",doc.job[0].sequence[0].command[0]['@name']
-            assertNull "wrong command @module",doc.job[0].sequence[0].command[0]['@module']
-            assertEquals "missing command/scriptfile",1,doc.job[0].sequence[0].command[0].scriptfile.size()
-            assertEquals "missing command/scriptargs",1,doc.job[0].sequence[0].command[0].scriptargs.size()
-            assertEquals "wrong command/scriptfile",'/path/to/a/file',doc.job[0].sequence[0].command[0].scriptfile[0].text()
-            assertEquals "wrong command/scriptargs","-some script -args",doc.job[0].sequence[0].command[0].scriptargs[0].text()
-            assertEquals "wrong command/exec",0,doc.job[0].sequence[0].command[0].exec.size()
-            assertEquals "wrong command/script",0,doc.job[0].sequence[0].command[0].script.size()
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing job", 1, doc.job.size()
+        assertEquals "missing context", 0, doc.job[0].context.size()
+        assertEquals "missing sequence", 1, doc.job.sequence.size()
+        assertEquals "wrong keepgoing", "node-first", doc.job[0].sequence[0]['@strategy']
+        assertEquals "wrong command count", 1, doc.job[0].sequence[0].command.size()
+        assertNull "wrong command @resource", doc.job[0].sequence[0].command[0]['@resource']
+        assertNull "wrong command @name", doc.job[0].sequence[0].command[0]['@name']
+        assertNull "wrong command @module", doc.job[0].sequence[0].command[0]['@module']
+        assertEquals "missing command/scriptfile", 1, doc.job[0].sequence[0].command[0].scriptfile.size()
+        assertEquals "missing command/scriptargs", 1, doc.job[0].sequence[0].command[0].scriptargs.size()
+        assertEquals "wrong command/scriptfile", '/path/to/a/file',
+                     doc.job[0].sequence[0].command[0].scriptfile[0].text()
+        assertEquals "wrong command/scriptargs", "-some script -args",
+                     doc.job[0].sequence[0].command[0].scriptargs[0].text()
+        assertEquals "wrong command/exec", 0, doc.job[0].sequence[0].command[0].exec.size()
+        assertEquals "wrong command/script", 0, doc.job[0].sequence[0].command[0].script.size()
 
-
+    }
+    void testEncodeWorkflow_jobref() {
+        def XmlParser parser = new XmlParser()
 
         //test simple job ref workflow item
         def jobs7 = [
                 new ScheduledExecution(
-                        jobName:'test job 1',
-                        description:'test descrip',
+                        jobName: 'test job 1',
+                        description: 'test descrip',
                         loglevel: 'INFO',
-                        project:'test1',
-                        argString:'',
-                        nodeThreadcount:1,
-                        nodeKeepgoing:true,
-                        doNodedispatch:true,
+                        project: 'test1',
+                        argString: '',
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true,
                         workflow: new Workflow(keepgoing: true, commands: [new JobExec(
-                                    jobName:'a Job'
-                                )]
+                                jobName: 'a Job'
+                        )]
                         )
                 )
         ]
 
-            xmlstr = JobsXMLCodec.encode(jobs7)
-            assertNotNull xmlstr
-            assertTrue xmlstr instanceof String
+        def xmlstr = JobsXMLCodec.encode(jobs7)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
 
 
-            doc = parser.parse(new StringReader(xmlstr))
-            assertNotNull doc
-            assertEquals "missing job",1,doc.job.size()
-            assertEquals "missing context",1,doc.job[0].context.size()
-            assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
-            assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
-            assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
-            assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
-            assertNull "wrong command @resource",doc.job[0].sequence[0].command[0]['@resource']
-            assertNull "wrong command @name",doc.job[0].sequence[0].command[0]['@name']
-            assertNull "wrong command @module",doc.job[0].sequence[0].command[0]['@module']
-            assertEquals "missing command/jobref",1,doc.job[0].sequence[0].command[0].jobref.size()
-            assertEquals "wrong command/jobref/@name",'a Job',doc.job[0].sequence[0].command[0].jobref[0]['@name']
-            assertNull "wrong command/jobref/@group: "+doc.job[0].sequence[0].command[0].jobref[0]['@group'],doc.job[0].sequence[0].command[0].jobref[0]['@group']
-
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing job", 1, doc.job.size()
+        assertEquals "missing context", 0, doc.job[0].context.size()
+        assertEquals "missing sequence", 1, doc.job.sequence.size()
+        assertEquals "wrong keepgoing", "node-first", doc.job[0].sequence[0]['@strategy']
+        assertEquals "wrong command count", 1, doc.job[0].sequence[0].command.size()
+        assertNull "wrong command @resource", doc.job[0].sequence[0].command[0]['@resource']
+        assertNull "wrong command @name", doc.job[0].sequence[0].command[0]['@name']
+        assertNull "wrong command @module", doc.job[0].sequence[0].command[0]['@module']
+        assertEquals "missing command/jobref", 1, doc.job[0].sequence[0].command[0].jobref.size()
+        assertEquals "wrong command/jobref/@name", 'a Job', doc.job[0].sequence[0].command[0].jobref[0]['@name']
+        assertNull "wrong command/jobref/@group: " + doc.job[0].sequence[0].command[0].jobref[0]['@group'], doc.job[0].sequence[0].command[0].jobref[0]['@group']
+    }
+    void testEncodeWorkflow_jobref_group() {
+        def XmlParser parser = new XmlParser()
         //test simple job ref workflow item, with a group
         def jobs8 = [
                 new ScheduledExecution(
-                        jobName:'test job 1',
-                        description:'test descrip',
+                        jobName: 'test job 1',
+                        description: 'test descrip',
                         loglevel: 'INFO',
-                        project:'test1',
-                        argString:'',
-                        nodeThreadcount:1,
-                        nodeKeepgoing:true,
-                        doNodedispatch:true,
+                        project: 'test1',
+                        argString: '',
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true,
                         workflow: new Workflow(keepgoing: true, commands: [new JobExec(
-                                    jobName:'a Job',
-                                    jobGroup:'/some/path'
-                                )]
+                                jobName: 'a Job',
+                                jobGroup: '/some/path'
+                        )]
                         )
                 )
         ]
 
-            xmlstr = JobsXMLCodec.encode(jobs8)
-            assertNotNull xmlstr
-            assertTrue xmlstr instanceof String
+        def xmlstr = JobsXMLCodec.encode(jobs8)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
 
 
-            doc = parser.parse(new StringReader(xmlstr))
-            assertNotNull doc
-            assertEquals "missing job",1,doc.job.size()
-            assertEquals "missing context",1,doc.job[0].context.size()
-            assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
-            assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
-            assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
-            assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
-            assertNull "wrong command @resource",doc.job[0].sequence[0].command[0]['@resource']
-            assertNull "wrong command @name",doc.job[0].sequence[0].command[0]['@name']
-            assertNull "wrong command @module",doc.job[0].sequence[0].command[0]['@module']
-            assertEquals "missing command/jobref",1,doc.job[0].sequence[0].command[0].jobref.size()
-            assertEquals "wrong command/jobref/@name",'a Job',doc.job[0].sequence[0].command[0].jobref[0]['@name']
-            assertEquals "wrong command/jobref/@group",'/some/path',doc.job[0].sequence[0].command[0].jobref[0]['@group']
-
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing job", 1, doc.job.size()
+        assertEquals "missing context", 0, doc.job[0].context.size()
+        assertEquals "missing sequence", 1, doc.job.sequence.size()
+        assertEquals "wrong keepgoing", "node-first", doc.job[0].sequence[0]['@strategy']
+        assertEquals "wrong command count", 1, doc.job[0].sequence[0].command.size()
+        assertNull "wrong command @resource", doc.job[0].sequence[0].command[0]['@resource']
+        assertNull "wrong command @name", doc.job[0].sequence[0].command[0]['@name']
+        assertNull "wrong command @module", doc.job[0].sequence[0].command[0]['@module']
+        assertEquals "missing command/jobref", 1, doc.job[0].sequence[0].command[0].jobref.size()
+        assertEquals "wrong command/jobref/@name", 'a Job', doc.job[0].sequence[0].command[0].jobref[0]['@name']
+        assertEquals "wrong command/jobref/@group", '/some/path', doc.job[0].sequence[0].command[0].jobref[0]['@group']
+    }
+    void testEncodeWorkflow_strategy() {
+        def XmlParser parser = new XmlParser()
         //test step-first workflow strategy
         def jobs9 = [
                 new ScheduledExecution(
-                        jobName:'test job 1',
-                        description:'test descrip',
+                        jobName: 'test job 1',
+                        description: 'test descrip',
                         loglevel: 'INFO',
-                        project:'test1',
-                        argString:'',
-                        nodeThreadcount:1,
-                        nodeKeepgoing:true,
-                        doNodedispatch:true,
-                        workflow: new Workflow(threadcount:1,strategy:'step-first',keepgoing: true, commands: [new JobExec(
+                        project: 'test1',
+                        argString: '',
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true,
+                        workflow: new Workflow(
+                                threadcount: 1,
+                                strategy: 'step-first',
+                                keepgoing: true,
+                                commands: [new JobExec(
 
-                                    jobName:'a Job',
-                                    jobGroup:'/some/path'
+                                        jobName: 'a Job',
+                                        jobGroup: '/some/path'
                                 )]
-                    )
+                        )
                 )
         ]
 
-            xmlstr = JobsXMLCodec.encode(jobs9)
-            assertNotNull xmlstr
-            assertTrue xmlstr instanceof String
+        def xmlstr = JobsXMLCodec.encode(jobs9)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
 
 
-            doc = parser.parse(new StringReader(xmlstr))
-            assertNotNull doc
-            assertEquals "missing job",1,doc.job.size()
-            assertEquals "missing context",1,doc.job[0].context.size()
-            assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
-            assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
-            assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong keepgoing","step-first",doc.job[0].sequence[0]['@strategy']
-            assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
-            assertNull "wrong command @resource",doc.job[0].sequence[0].command[0]['@resource']
-            assertNull "wrong command @name",doc.job[0].sequence[0].command[0]['@name']
-            assertNull "wrong command @module",doc.job[0].sequence[0].command[0]['@module']
-            assertEquals "missing command/jobref",1,doc.job[0].sequence[0].command[0].jobref.size()
-            assertEquals "wrong command/jobref/@name",'a Job',doc.job[0].sequence[0].command[0].jobref[0]['@name']
-            assertEquals "wrong command/jobref/@group",'/some/path',doc.job[0].sequence[0].command[0].jobref[0]['@group']
-
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing job", 1, doc.job.size()
+        assertEquals "missing context", 0, doc.job[0].context.size()
+        assertEquals "missing sequence", 1, doc.job.sequence.size()
+        assertEquals "wrong keepgoing", "step-first", doc.job[0].sequence[0]['@strategy']
+        assertEquals "wrong command count", 1, doc.job[0].sequence[0].command.size()
+        assertNull "wrong command @resource", doc.job[0].sequence[0].command[0]['@resource']
+        assertNull "wrong command @name", doc.job[0].sequence[0].command[0]['@name']
+        assertNull "wrong command @module", doc.job[0].sequence[0].command[0]['@module']
+        assertEquals "missing command/jobref", 1, doc.job[0].sequence[0].command[0].jobref.size()
+        assertEquals "wrong command/jobref/@name", 'a Job', doc.job[0].sequence[0].command[0].jobref[0]['@name']
+        assertEquals "wrong command/jobref/@group", '/some/path', doc.job[0].sequence[0].command[0].jobref[0]['@group']
+    }
+    void testEncodeWorkflow_jobref_argstring() {
+        def XmlParser parser = new XmlParser()
         //test simple job ref workflow item, with a group, with argString
         def job10 = [
                 new ScheduledExecution(
-                        jobName:'test job 1',
-                        description:'test descrip',
+                        jobName: 'test job 1',
+                        description: 'test descrip',
                         loglevel: 'INFO',
-                        project:'test1',
-                        argString:'',
-                        nodeThreadcount:1,
-                        nodeKeepgoing:true,
-                        doNodedispatch:true,
+                        project: 'test1',
+                        argString: '',
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true,
                         workflow: new Workflow(keepgoing: true, commands: [new JobExec(
-                                    jobName:'a Job',
-                                    jobGroup:'/some/path',
-                                    argString:'-test1 1 -test2 2'
-                                )]
+                                jobName: 'a Job',
+                                jobGroup: '/some/path',
+                                argString: '-test1 1 -test2 2'
+                        )]
                         )
                 )
         ]
 
-            xmlstr = JobsXMLCodec.encode(job10)
-            assertNotNull xmlstr
-            assertTrue xmlstr instanceof String
+        def xmlstr = JobsXMLCodec.encode(job10)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
 
 
-            doc = parser.parse(new StringReader(xmlstr))
-            assertNotNull doc
-            assertEquals "missing job",1,doc.job.size()
-            assertEquals "missing context",1,doc.job[0].context.size()
-            assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
-            assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
-            assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
-            assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
-            assertNull "wrong command @resource",doc.job[0].sequence[0].command[0]['@resource']
-            assertNull "wrong command @name",doc.job[0].sequence[0].command[0]['@name']
-            assertNull "wrong command @module",doc.job[0].sequence[0].command[0]['@module']
-            assertEquals "missing command/jobref",1,doc.job[0].sequence[0].command[0].jobref.size()
-            assertEquals "wrong command/jobref/@name",'a Job',doc.job[0].sequence[0].command[0].jobref[0]['@name']
-            assertEquals "wrong command/jobref/@group",'/some/path',doc.job[0].sequence[0].command[0].jobref[0]['@group']
-            assertEquals "wrong arg count",1,doc.job[0].sequence[0].command.jobref.arg.size()
-            assertEquals "wrong arg @line",'-test1 1 -test2 2',doc.job[0].sequence[0].command[0].jobref[0].arg[0]['@line']
-
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing job", 1, doc.job.size()
+        assertEquals "missing context", 0, doc.job[0].context.size()
+        assertEquals "missing sequence", 1, doc.job.sequence.size()
+        assertEquals "wrong keepgoing", "node-first", doc.job[0].sequence[0]['@strategy']
+        assertEquals "wrong command count", 1, doc.job[0].sequence[0].command.size()
+        assertNull "wrong command @resource", doc.job[0].sequence[0].command[0]['@resource']
+        assertNull "wrong command @name", doc.job[0].sequence[0].command[0]['@name']
+        assertNull "wrong command @module", doc.job[0].sequence[0].command[0]['@module']
+        assertEquals "missing command/jobref", 1, doc.job[0].sequence[0].command[0].jobref.size()
+        assertEquals "wrong command/jobref/@name", 'a Job', doc.job[0].sequence[0].command[0].jobref[0]['@name']
+        assertEquals "wrong command/jobref/@group", '/some/path', doc.job[0].sequence[0].command[0].jobref[0]['@group']
+        assertEquals "wrong arg count", 1, doc.job[0].sequence[0].command.jobref.arg.size()
+        assertEquals "wrong arg @line", '-test1 1 -test2 2', doc.job[0].sequence[0].command[0].jobref[0].arg[0]['@line']
+    }
+    void testEncodeWorkflow_jobref_nodestep() {
+        def XmlParser parser = new XmlParser()
         //test simple job ref workflow item, with a group, with argString, nodeStep=true
         def jobref10 = [
                 new ScheduledExecution(
-                        jobName:'test job 1',
-                        description:'test descrip',
+                        jobName: 'test job 1',
+                        description: 'test descrip',
                         loglevel: 'INFO',
-                        project:'test1',
-                        argString:'',
-                        nodeThreadcount:1,
-                        nodeKeepgoing:true,
-                        doNodedispatch:true,
+                        project: 'test1',
+                        argString: '',
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true,
                         workflow: new Workflow(keepgoing: true, commands: [new JobExec(
-                                    jobName:'a Job',
-                                    jobGroup:'/some/path',
-                                    argString:'-test1 1 -test2 2',
-                                    nodeStep: true
-                                )]
+                                jobName: 'a Job',
+                                jobGroup: '/some/path',
+                                argString: '-test1 1 -test2 2',
+                                nodeStep: true
+                        )]
                         )
                 )
         ]
 
-            xmlstr = JobsXMLCodec.encode(jobref10)
-            assertNotNull xmlstr
-            assertTrue xmlstr instanceof String
+        def xmlstr = JobsXMLCodec.encode(jobref10)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
 
 
-            doc = parser.parse(new StringReader(xmlstr))
-            assertNotNull doc
-            assertEquals "missing job",1,doc.job.size()
-            assertEquals "missing context",1,doc.job[0].context.size()
-            assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
-            assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
-            assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
-            assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
-            assertNull "wrong command @resource",doc.job[0].sequence[0].command[0]['@resource']
-            assertNull "wrong command @name",doc.job[0].sequence[0].command[0]['@name']
-            assertNull "wrong command @module",doc.job[0].sequence[0].command[0]['@module']
-            assertEquals "missing command/jobref",1,doc.job[0].sequence[0].command[0].jobref.size()
-            assertEquals "wrong command/jobref/@name",'a Job',doc.job[0].sequence[0].command[0].jobref[0]['@name']
-            assertEquals "wrong command/jobref/@group",'/some/path',doc.job[0].sequence[0].command[0].jobref[0]['@group']
-            assertEquals "wrong command/jobref/@nodeStep",'true',doc.job[0].sequence[0].command[0].jobref[0]['@nodeStep']
-            assertEquals "wrong arg count",1,doc.job[0].sequence[0].command.jobref.arg.size()
-            assertEquals "wrong arg @line",'-test1 1 -test2 2',doc.job[0].sequence[0].command[0].jobref[0].arg[0]['@line']
-
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing job", 1, doc.job.size()
+        assertEquals "missing context", 0, doc.job[0].context.size()
+        assertEquals "missing sequence", 1, doc.job.sequence.size()
+        assertEquals "wrong keepgoing", "node-first", doc.job[0].sequence[0]['@strategy']
+        assertEquals "wrong command count", 1, doc.job[0].sequence[0].command.size()
+        assertNull "wrong command @resource", doc.job[0].sequence[0].command[0]['@resource']
+        assertNull "wrong command @name", doc.job[0].sequence[0].command[0]['@name']
+        assertNull "wrong command @module", doc.job[0].sequence[0].command[0]['@module']
+        assertEquals "missing command/jobref", 1, doc.job[0].sequence[0].command[0].jobref.size()
+        assertEquals "wrong command/jobref/@name", 'a Job', doc.job[0].sequence[0].command[0].jobref[0]['@name']
+        assertEquals "wrong command/jobref/@group", '/some/path', doc.job[0].sequence[0].command[0].jobref[0]['@group']
+        assertEquals "wrong command/jobref/@nodeStep", 'true', doc.job[0].sequence[0].command[0].jobref[0]['@nodeStep']
+        assertEquals "wrong arg count", 1, doc.job[0].sequence[0].command.jobref.arg.size()
+        assertEquals "wrong arg @line", '-test1 1 -test2 2', doc.job[0].sequence[0].command[0].jobref[0].arg[0]['@line']
+    }
+    void testEncodeWorkflow_scriptfile_url(){
+        def XmlParser parser = new XmlParser()
         //test simple exec/script/scripturl commands
         def jobs11 = [
             new ScheduledExecution(
@@ -5102,17 +5353,15 @@ class JobsXMLCodecTests {
             )
         ]
 
-        xmlstr = JobsXMLCodec.encode(jobs11)
+        def xmlstr = JobsXMLCodec.encode(jobs11)
         assertNotNull xmlstr
         assertTrue xmlstr instanceof String
 
 
-        doc = parser.parse(new StringReader(xmlstr))
+        def doc = parser.parse(new StringReader(xmlstr))
         assertNotNull doc
         assertEquals "missing job", 1, doc.job.size()
-        assertEquals "missing context", 1, doc.job[0].context.size()
-        assertEquals "missing context/project", 1, doc.job[0].context[0].project.size()
-        assertEquals "wrong project", 'test1', doc.job[0].context[0].project[0].text()
+        assertEquals "missing context", 0, doc.job[0].context.size()
         assertEquals "missing sequence", 1, doc.job.sequence.size()
         assertEquals "wrong keepgoing", "node-first", doc.job[0].sequence[0]['@strategy']
         assertEquals "wrong command count", 1, doc.job[0].sequence[0].command.size()
@@ -5558,7 +5807,7 @@ class JobsXMLCodecTests {
         assertEquals "incorrect context options option 1 name", 'cde', doc.job[0].context[0].options[0].option[2]['@name'].text()
         assertEquals "incorrect context options option 1 name", 'abc', doc.job[0].context[0].options[0].option[3]['@name'].text()
     }
-    void testEncodeOptionNullSortIndexDoesNotPreserveOrder() {
+    void testEncodeOptionAlwaysPreserveOrder() {
         def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
                 new ScheduledExecution(
@@ -5590,7 +5839,7 @@ class JobsXMLCodecTests {
         def doc = parser.parse(new StringReader(xmlstr))
         assertNotNull doc
         assertEquals "incorrect context options size", 4, doc.job[0].context[0].options[0].option.size()
-        assertEquals "incorrect context options/@preserveOrder",0, doc.job[0].context[0].options[0]['@preserveOrder'].size()
+        assertEquals "incorrect context options/@preserveOrder",1, doc.job[0].context[0].options[0]['@preserveOrder'].size()
         assertEquals "incorrect context options option 1 name", 'abc', doc.job[0].context[0].options[0].option[0]['@name'].text()
         assertEquals "incorrect context options option 1 name", 'bcd', doc.job[0].context[0].options[0].option[1]['@name'].text()
         assertEquals "incorrect context options option 1 name", 'cde', doc.job[0].context[0].options[0].option[2]['@name'].text()

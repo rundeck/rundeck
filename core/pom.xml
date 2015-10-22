@@ -9,7 +9,7 @@
   </parent>
   <groupId>org.rundeck</groupId>
   <artifactId>rundeck-core</artifactId>
-  <version>2.6.0-SNAPSHOT</version>
+  <version>2.6.1-SNAPSHOT</version>
   <name>Rundeck Core</name>
   <description>Core library for the Rundeck web console for command dispatching and job scheduling</description>
   <url>http://rundeck.org</url>
@@ -110,8 +110,8 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Rundeck-Version>2.6.0-SNAPSHOT</Rundeck-Version>
-              <Rundeck-Tools-Dependencies>rundeck-storage-api-2.6.0-SNAPSHOT.jar rundeck-storage-conf-2.6.0-SNAPSHOT.jar jaxen-1.1.jar ant-1.8.3.jar log4j-1.2.17.jar commons-codec-1.5.jar commons-beanutils-1.8.3.jar commons-collections-3.2.1.jar commons-logging-1.1.1.jar commons-lang-2.6.jar dom4j-1.6.1.jar commons-cli-1.0.jar ant-jsch-1.8.3.jar jsch-0.1.52.jar jsch.agentproxy.jsch-0.0.9.jar jsch.agentproxy.sshagent-0.0.9.jar jsch.agentproxy.usocket-jna-0.0.9.jar jsch.agentproxy.usocket-nc-0.0.9.jar jsch.agentproxy.connector-factory-0.0.9.jar jsch.agentproxy.core-0.0.9.jar snakeyaml-1.9.jar xercesImpl-2.11.0.jar xml-apis-1.4.01.jar commons-httpclient-3.0.1.jar rundeck-storage-data-2.6.0-SNAPSHOT.jar jdom-1.0.jar xom-1.0.jar ant-launcher-1.8.3.jar jna-4.1.0.jar jna-platform-4.1.0.jar jsch.agentproxy.pageant-0.0.9.jar icu4j-2.6.1.jar</Rundeck-Tools-Dependencies>
+              <Rundeck-Version>2.6.1-SNAPSHOT</Rundeck-Version>
+              <Rundeck-Tools-Dependencies>rundeck-storage-api-2.6.1-SNAPSHOT.jar rundeck-storage-conf-2.6.1-SNAPSHOT.jar jaxen-1.1.jar ant-1.8.3.jar log4j-1.2.17.jar commons-codec-1.5.jar commons-beanutils-1.8.3.jar commons-collections-3.2.1.jar commons-logging-1.1.1.jar commons-lang-2.6.jar dom4j-1.6.1.jar commons-cli-1.0.jar ant-jsch-1.8.3.jar jsch-0.1.52.jar jsch.agentproxy.jsch-0.0.9.jar jsch.agentproxy.sshagent-0.0.9.jar jsch.agentproxy.usocket-jna-0.0.9.jar jsch.agentproxy.usocket-nc-0.0.9.jar jsch.agentproxy.connector-factory-0.0.9.jar jsch.agentproxy.core-0.0.9.jar jackson-databind-2.5.3.jar jackson-core-2.5.3.jar jackson-annotations-2.5.3.jar snakeyaml-1.9.jar xercesImpl-2.11.0.jar xml-apis-1.4.01.jar commons-httpclient-3.0.1.jar rundeck-storage-data-2.6.1-SNAPSHOT.jar jdom-1.0.jar xom-1.0.jar ant-launcher-1.8.3.jar jna-4.1.0.jar jna-platform-4.1.0.jar jsch.agentproxy.pageant-0.0.9.jar icu4j-2.6.1.jar</Rundeck-Tools-Dependencies>
             </manifestEntries>
           </archive>
         </configuration>
@@ -120,99 +120,21 @@
   </build>
   <dependencies>
     <dependency>
-      <groupId>com.jcraft</groupId>
-      <artifactId>jsch.agentproxy.jsch</artifactId>
-      <version>0.0.9</version>
+      <groupId>commons-httpclient</groupId>
+      <artifactId>commons-httpclient</artifactId>
+      <version>3.0.1</version>
       <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>
-      <version>1.5</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.rundeck</groupId>
-      <artifactId>rundeck-storage-api</artifactId>
-      <version>2.6.0-SNAPSHOT</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>commons-cli</groupId>
-      <artifactId>commons-cli</artifactId>
-      <version>1.0</version>
-      <scope>compile</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>junit</artifactId>
+          <groupId>junit</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>commons-collections</groupId>
       <artifactId>commons-collections</artifactId>
       <version>3.2.1</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>dom4j</groupId>
-      <artifactId>dom4j</artifactId>
-      <version>1.6.1</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.spockframework</groupId>
-      <artifactId>spock-core</artifactId>
-      <version>0.7-groovy-2.0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.rundeck</groupId>
-      <artifactId>rundeck-storage-conf</artifactId>
-      <version>2.6.0-SNAPSHOT</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.yaml</groupId>
-      <artifactId>snakeyaml</artifactId>
-      <version>1.9</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.jcraft</groupId>
-      <artifactId>jsch</artifactId>
-      <version>0.1.52</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.jcraft</groupId>
-      <artifactId>jsch.agentproxy.usocket-jna</artifactId>
-      <version>0.0.9</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>xerces</groupId>
-      <artifactId>xercesImpl</artifactId>
-      <version>2.11.0</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.17</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.jcraft</groupId>
-      <artifactId>jsch.agentproxy.sshagent</artifactId>
-      <version>0.0.9</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.jcraft</groupId>
-      <artifactId>jsch.agentproxy.core</artifactId>
-      <version>0.0.9</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.ant</groupId>
-      <artifactId>ant-jsch</artifactId>
-      <version>1.8.3</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -232,27 +154,15 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>commons-beanutils</groupId>
-      <artifactId>commons-beanutils</artifactId>
-      <version>1.8.3</version>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>1.5</version>
       <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.codehaus.groovy</groupId>
-      <artifactId>groovy-all</artifactId>
-      <version>2.0.8</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>xml-apis</groupId>
       <artifactId>xml-apis</artifactId>
       <version>1.4.01</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.jcraft</groupId>
-      <artifactId>jsch.agentproxy.usocket-nc</artifactId>
-      <version>0.0.9</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -262,15 +172,45 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>org.rundeck</groupId>
+      <artifactId>rundeck-storage-conf</artifactId>
+      <version>2.6.1-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.8.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>commons-lang</groupId>
-      <artifactId>commons-lang</artifactId>
-      <version>2.6</version>
+      <groupId>org.apache.ant</groupId>
+      <artifactId>ant</artifactId>
+      <version>1.8.3</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.17</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.jcraft</groupId>
+      <artifactId>jsch.agentproxy.jsch</artifactId>
+      <version>0.0.9</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+      <version>2.5.3</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>xerces</groupId>
+      <artifactId>xercesImpl</artifactId>
+      <version>2.11.0</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -280,21 +220,87 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>commons-httpclient</groupId>
-      <artifactId>commons-httpclient</artifactId>
-      <version>3.0.1</version>
+      <groupId>org.rundeck</groupId>
+      <artifactId>rundeck-storage-api</artifactId>
+      <version>2.6.1-SNAPSHOT</version>
       <scope>compile</scope>
-      <exclusions>
-        <exclusion>
-          <artifactId>junit</artifactId>
-          <groupId>junit</groupId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.apache.ant</groupId>
-      <artifactId>ant</artifactId>
+      <groupId>dom4j</groupId>
+      <artifactId>dom4j</artifactId>
+      <version>1.6.1</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>commons-cli</groupId>
+      <artifactId>commons-cli</artifactId>
+      <version>1.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.groovy</groupId>
+      <artifactId>groovy-all</artifactId>
+      <version>2.3.7</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.jcraft</groupId>
+      <artifactId>jsch.agentproxy.sshagent</artifactId>
+      <version>0.0.9</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>commons-beanutils</groupId>
+      <artifactId>commons-beanutils</artifactId>
       <version>1.8.3</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.spockframework</groupId>
+      <artifactId>spock-core</artifactId>
+      <version>0.7-groovy-2.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.jcraft</groupId>
+      <artifactId>jsch.agentproxy.usocket-nc</artifactId>
+      <version>0.0.9</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.jcraft</groupId>
+      <artifactId>jsch.agentproxy.usocket-jna</artifactId>
+      <version>0.0.9</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.jcraft</groupId>
+      <artifactId>jsch.agentproxy.core</artifactId>
+      <version>0.0.9</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.5.3</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <version>2.5.3</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+      <version>1.9</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+      <version>2.6</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -303,10 +309,22 @@
       <version>1.8.5</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.jcraft</groupId>
+      <artifactId>jsch</artifactId>
+      <version>0.1.52</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.ant</groupId>
+      <artifactId>ant-jsch</artifactId>
+      <version>1.8.3</version>
+      <scope>compile</scope>
+    </dependency>
   </dependencies>
   <properties>
-    <version_ident>2.6.0-SNAPSHOT-0</version_ident>
-    <version>2.6.0-SNAPSHOT</version>
+    <version_ident>2.6.1-SNAPSHOT-0</version_ident>
+    <version>2.6.1-SNAPSHOT</version>
     <version_build>0</version_build>
   </properties>
 </project>

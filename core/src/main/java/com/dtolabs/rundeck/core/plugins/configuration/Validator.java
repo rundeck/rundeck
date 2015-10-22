@@ -33,6 +33,37 @@ import java.util.*;
  */
 public class Validator {
     /**
+     * Return a report for a single error item
+     * @param key key
+     * @param message message
+     * @return report
+     */
+    public static Report errorReport(String key, String message) {
+        return buildReport().error(key, message).build();
+    }
+    /**
+     *
+     * @return new Builder for Report
+     */
+    public static ReportBuilder buildReport() {
+        return new ReportBuilder();
+    }
+    /**
+     * Builder for {@link com.dtolabs.rundeck.core.plugins.configuration.Validator.Report}
+     */
+    public static class ReportBuilder {
+        Report report = new Report();
+
+        public ReportBuilder error(String key, String message) {
+            report.errors.put(key, message);
+            return this;
+        }
+
+        public Report build() {
+            return report;
+        }
+    }
+    /**
      * A validation report
      */
     public static class Report {
@@ -147,6 +178,32 @@ public class Validator {
 
         final Map<String, Object> inputConfig = PluginAdapterUtility.mapDescribedProperties(resolver, description,
                 defaultScope);
+        validate(asProperties(inputConfig), report, properties, ignoredScope);
+        return report;
+    }
+
+    /**
+     * Validate a set of properties for a description, and return a report.
+     *
+     * @param resolver     property resolver
+     * @param properties   list of properties
+     * @param defaultScope default scope for properties
+     * @param ignoredScope ignore properties at or below this scope, or null to ignore none
+     *
+     * @return the validation report
+     */
+    public static Report validateProperties(
+            final PropertyResolver resolver,
+            final List<Property> properties,
+            PropertyScope defaultScope,
+            PropertyScope ignoredScope
+    )
+    {
+        final Report report = new Report();
+
+        final Map<String, Object> inputConfig = PluginAdapterUtility.mapProperties(
+                resolver, properties, defaultScope
+        );
         validate(asProperties(inputConfig), report, properties, ignoredScope);
         return report;
     }

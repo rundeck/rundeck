@@ -372,7 +372,7 @@ The [PAM](#pam) section is a useful comparison as it uses the same method to com
 
 ### Active Directory
 
-Here is an example configuration for Active Directory
+Here is an example configuration for Active Directory. The string *sAMAccountName* refers to the short user name and is valid in a default Active Directory installation, but may vary in some environments.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.c .numberLines}
 activedirectory {
@@ -385,8 +385,8 @@ activedirectory {
     authenticationMethod="simple"
     forceBindingLogin="true"
     userBaseDn="ou=users,dc=rundeck,dc=com"
-    userRdnAttribute="cn"
-    userIdAttribute="cn"
+    userRdnAttribute="sAMAccountName"
+    userIdAttribute="sAMAccountName"
     userPasswordAttribute="unicodePwd"
     userObjectClass="user"
     roleBaseDn="ou=roles,dc=rundeck,dc=com"

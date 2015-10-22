@@ -1,4 +1,11 @@
 package rundeck.codecs
+
+import com.dtolabs.rundeck.app.support.BuilderUtil
+import com.dtolabs.rundeck.util.XmlParserUtil
+import groovy.xml.MarkupBuilder
+import rundeck.ScheduledExecution
+import rundeck.controllers.JobXMLException
+
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *
@@ -14,13 +21,6 @@ package rundeck.codecs
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import groovy.xml.MarkupBuilder
-import com.dtolabs.rundeck.app.support.BuilderUtil
-import com.dtolabs.rundeck.util.XmlParserUtil
-import rundeck.ScheduledExecution
-import rundeck.controllers.JobXMLException
-
 /*
 * JobsXMLCodec encapsulates encoding and decoding of the Jobs XML format.
 *
@@ -44,6 +44,10 @@ class JobsXMLCodec {
     }
     static encodeWithBuilder={ list,xml ->
         BuilderUtil bu = new BuilderUtil()
+        bu.forceLineEndings=true
+        bu.lineEndingChars='\n'
+        //todo: set line ending from config?
+        bu.canonical=true
         xml.joblist() {
             list.each{ ScheduledExecution jobi->
                 job{
@@ -109,15 +113,20 @@ class JobsXMLCodec {
      *
      */
     static convertToJobMap={ data->
-        final Object object = XmlParserUtil.toObject(data,false)
+        final Object object = XmlParserUtil.toObject(data, false)
         if(!(object instanceof Map)){
             throw new JobXMLException("Expected map data")
         }
         Map map = (Map)object
 
+        map.scheduleEnabled = XmlParserUtil.stringToBool(map.scheduleEnabled, true)
+        map.executionEnabled = XmlParserUtil.stringToBool(map.executionEnabled, true)
+
         //perform structure conversions for expected input for populating ScheduledExecution
 
-        map.project=map.context?.remove('project')
+        if(map.context instanceof Map) {
+            map.project = map.context?.remove('project')
+        }
         if(!map.name){
             throw new JobXMLException("'name' element not found")
         }
@@ -137,35 +146,46 @@ class JobsXMLCodec {
                 map.remove('group')
             }
         }
-        //convert options:[option:[]] into options:[]
-        if(map.context?.options && !(map.context?.options instanceof Map)){
-            throw new JobXMLException("'context/options' element is not valid")
-        }
-        if(map.context?.options && map.context?.options?.option){
-            final def opts = map.context.options.remove('option')
-            def ndx = map.context.options.preserveOrder ? 0 : -1;
-            map.remove('context')
-            map.options=[:]
-            if (opts && opts instanceof Map){
-                opts=[opts]
+        if(map.logging){
+            map.loglimit = map.logging.remove('limit')
+            map.loglimitAction=map.logging.remove('limitAction')?:'halt'
+            if(map.logging.status){
+                map.loglimitStatus=map.logging.remove('status')
             }
-            //if preserveOrder is true, include sortIndex information
-            if(opts && opts instanceof Collection){
-                opts.each{optm->
-                    map.options[optm.name.toString()]=optm
-                    if (optm.values instanceof String) {
-                        optm.values = optm.values.split(",") as List
-                    } else if (optm.values) {
-                        optm.values = [optm.values.toString()]
-                    }
-                    if(null!=optm.enforcedvalues) {
-                        optm.enforced = XmlParserUtil.stringToBool(optm.remove('enforcedvalues'),false)
-                    }
-                    if(null!=optm.required) {
-                        optm.required = XmlParserUtil.stringToBool(optm.remove('required'),false)
-                    }
-                    if(ndx>-1){
-                        optm.sortIndex=ndx++;
+            map.remove('logging')
+        }
+        //convert options:[option:[]] into options:[]
+
+        if(map.context instanceof Map) {
+            if (map.context?.options && !(map.context?.options instanceof Map)) {
+                throw new JobXMLException("'context/options' element is not valid")
+            }
+            if (map.context?.options && map.context?.options?.option) {
+                final def opts = map.context.options.remove('option')
+                def ndx = map.context.options.preserveOrder ? 0 : -1;
+                map.remove('context')
+                map.options = [:]
+                if (opts && opts instanceof Map) {
+                    opts = [opts]
+                }
+                //if preserveOrder is true, include sortIndex information
+                if (opts && opts instanceof Collection) {
+                    opts.each { optm ->
+                        map.options[optm.name.toString()] = optm
+                        if (optm.values instanceof String) {
+                            optm.values = optm.values.split(",") as List
+                        } else if (optm.values) {
+                            optm.values = [optm.values.toString()]
+                        }
+                        if (null != optm.enforcedvalues) {
+                            optm.enforced = XmlParserUtil.stringToBool(optm.remove('enforcedvalues'), false)
+                        }
+                        if (null != optm.required) {
+                            optm.required = XmlParserUtil.stringToBool(optm.remove('required'), false)
+                        }
+                        if (ndx > -1) {
+                            optm.sortIndex = ndx++;
+                        }
                     }
                 }
             }
@@ -364,28 +384,36 @@ class JobsXMLCodec {
      * Convert structure returned by job.toMap into correct structure for jobs xml
      */
     static convertJobMap={Map map->
-        map.context=[project:map.remove('project')]
-        final Map opts = map.remove('options')
+        map.remove('project')
+
+        def optdata = map.remove('options')
         boolean preserveOrder=false
-        if(map.description.indexOf('\n')>=0 ||map.description.indexOf('\n')>=0){
-            map[BuilderUtil.asCDATAName('description')]=map.remove('description')
+        if (map.description && map.description.indexOf('\n') >= 0) {
+            map[BuilderUtil.asCDATAName('description')] = map.remove('description')
         }
-        if(null!=opts){
-            preserveOrder=opts.any{it.value.sortIndex!=null}
+        if(null!=optdata){
+            map.context=[:]
+            def opts
+            if(optdata instanceof Map){
+                opts=optdata.values().sort{a,b->
+                    if(null != a.sortIndex && null != b.sortIndex){
+                        return a.sortIndex<=>b.sortIndex
+                    }else if (null == a.sortIndex && null == b.sortIndex) {
+                        return a.name <=> b.name
+                    }else{
+                        return a.sortIndex!=null?-1:1
+                    }
+                }
+            }else if(optdata instanceof Collection){
+                preserveOrder=true
+                opts=optdata
+            }
             def optslist=[]
             //options are sorted by (sortIndex, name)
-            opts.sort{a,b->
-                if(null != a.value.sortIndex && null != b.value.sortIndex){
-                    return a.value.sortIndex<=>b.value.sortIndex
-                }else if (null == a.value.sortIndex && null == b.value.sortIndex) {
-                    return a.value.name <=> b.value.name
-                }else{
-                    return a.value.sortIndex!=null?-1:1
-                }
-            }.each{k,x->
+            opts.each{x->
                 x.remove('sortIndex')
                 //add 'name' attribute
-                BuilderUtil.addAttribute(x,'name',k)
+                BuilderUtil.addAttribute(x,'name',x.remove('name'))
                 //convert to attributes: 'value','regex','valuesUrl'
                 BuilderUtil.makeAttribute(x,'value')
                 BuilderUtil.makeAttribute(x,'regex')
@@ -439,6 +467,13 @@ class JobsXMLCodec {
         }
         if(map.nodefilters?.dispatch){
             map.dispatch=map.nodefilters.remove('dispatch')
+        }
+        if(map.loglimit){
+            map.logging=BuilderUtil.toAttrMap('limit',map.remove('loglimit'))
+            BuilderUtil.addAttribute(map.logging,'limitAction',map.remove('loglimitAction')?:'halt')
+            if(map.loglimitStatus){
+                BuilderUtil.addAttribute(map.logging,'status',map.remove('loglimitStatus'))
+            }
         }
         if(map.schedule){
             BuilderUtil.makeAttribute(map.schedule.time,'seconds')

@@ -2,12 +2,13 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
-    <title><g:appTitle/> - User Profile</title>
+    <title><g:appTitle/> - <g:message code="userController.page.profile.title" />: ${user.login}</title>
     <g:javascript library="prototype/effects"/>
     <g:javascript>
     function addTokenRow(elem,login,token){
-        var table=$(elem).down('table.apitokentable');
-        var row=table.insertRow(-1);
+        var table=$(elem).down('.apitokentable');
+        var row=new Element('li');
+        table.insert(row);
         $(row).addClassName('apitokenform');
         $(row).style.opacity=0;
         jQuery(row).load(_genUrl('${g.createLink(controller: 'user', action: 'renderApiToken')}',{login:login,token:token}),function(resp,status,jqxhr){
@@ -69,22 +70,36 @@
     }
     function addBehavior(elem,login){
         Event.observe($(elem).down('.gentokenbtn'),'click',mkhndlr(generateToken.curry(login,elem)));
-        $$(' tr.apitokenform').each(addRowBehavior);
+        $$(' .apitokenform').each(addRowBehavior);
     }
     function highlightNew(elem){
-        jQuery(' tr.apitokenform.newtoken').fadeTo('slow',1);
+        jQuery(' .apitokenform.newtoken').fadeTo('slow',1);
     }
     </g:javascript>
 </head>
 <body>
 
 <div class="row">
-    <div class="col-sm-10">
-        <h3>User: <g:enc>${user.login}</g:enc>
+    <div class="col-sm-12">
+        <h3>
+            <g:link action="profile" params="[login: user.login]">
+                <g:icon name="user"/>
+                ${user.login}
+            </g:link>
+
+            <g:link action="edit"
+                    params="[login: user.login]"
+                    class="small btn btn-link btn-sm"
+                    title="${message(code:'userController.action.edit.description',args:[user.login])}">
+                <g:icon name="edit"/>
+                <g:message code="button.Edit.label" />
+            </g:link>
         </h3>
     </div>
-    <div class="col-sm-2">
-
+    <div class="col-sm-12">
+        <div class="help-block">
+            <g:message code="userController.page.profile.description" />
+        </div>
     </div>
 </div>
 

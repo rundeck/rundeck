@@ -277,6 +277,36 @@ Each execution will be started with context variables
 indicating the current retry attempt and whether it was a retry.  
 See [Context Variables](#context-variables).
 
+### Log Limit
+
+You can specify a log limit, which can perform an action depending on how much log output
+the Job produces.
+
+The limit can be set in one of three ways:
+
+* Maximum total number of log lines
+* Maximum total log file size
+* Maximum number of log lines for a single node
+
+![Job Log limit](../figures/jobs-loglimit-field.png)
+
+Enter a value in the "Log Output Limit" field. 
+The syntax of the value you enter determines the type of limit:
+
+* `###` If you specify a number, that is treated as the "Maximum total number of log lines"
+* `###/node` If you specify a number followed by `/node`, the number is treated as the "Maximum number of log lines for a single node"
+* `###[GMK]B` If you specify a number followed by a filesize suffix, that is treated as the "total log file size".  The file size suffixes allowed are "GB" (gigabyte), "MB" (megabyte), "KB" (kilobyte) and "B" (byte).
+
+
+And one of three actions can be performed if the limit is exceeded:
+
+* Halt - the job will halt with a certain status
+	* Enter a status string in the field, such as "failed" or "aborted", or any custom status
+* Truncate and Continue - the job will not halt, but no more log output will be produced.
+
+![Job Log limit action](../figures/jobs-loglimit-action.png)
+
+
 ### Node dispatching and filtering
 
 When you create a job you can choose between either running the job only locally (on the Rundeck server), or dispatching it to multiple nodes (including the Rundeck server if you want).

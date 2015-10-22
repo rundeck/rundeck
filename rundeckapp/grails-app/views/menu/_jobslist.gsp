@@ -56,7 +56,7 @@
                                     </g:else>
                                 </span>
                                     <span class="inlinebuttons jobbuttons">
-                                        <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_RUN]?.contains(scheduledExecution.id.toString())}">
+                                        <g:if test="${scheduledExecution.hasExecutionEnabled() && jobauthorizations && jobauthorizations[AuthConstants.ACTION_RUN]?.contains(scheduledExecution.id.toString())}">
                                             <g:ifExecutionMode active="true">
                                             <g:link controller="scheduledExecution"
                                                     action="execute"
@@ -84,6 +84,19 @@
                                         </g:if>
                                     </span>
 
+                                <g:set var="exportstatus" value="${scmExportEnabled ? scmStatus?.get(scheduledExecution.extid):null}"/>
+                                <g:set var="importStatus" value="${scmImportEnabled ? scmImportJobStatus?.get(scheduledExecution.extid): null}"/>
+                                <g:if test="${exportstatus || importStatus}">
+
+                                    <g:render template="/scm/statusBadge"
+                                              model="[exportStatus: exportstatus?.synchState?.toString(),
+                                                      importStatus: importStatus?.synchState?.toString(),
+                                                      text  : '',
+                                                      notext: true,
+                                                      exportCommit  : exportstatus?.commit,
+                                                      importCommit  : importStatus?.commit,
+                                              ]"/>
+                                </g:if>
                                     <g:link action="show"
                                             controller="scheduledExecution"
                                             id="${scheduledExecution.extid}"
@@ -111,6 +124,7 @@
                                           model="[description: scheduledExecution?.description,textCss:'text-muted',mode:'collapsed',rkey:g.rkey()]"/>
 
                             </td>
+                            <g:if test="${scheduledExecution.scheduled}">
                             <td class="scheduletime">
                                 <g:if test="${scheduledExecution.scheduled && nextExecution}">
                                     <i class="glyphicon glyphicon-time"></i>
@@ -126,6 +140,15 @@
                                         <span class="detail"><g:message code="disabled" /></span>
                                     </span>
                                 </g:elseif>
+                                <g:elseif test="${!scheduledExecution.hasScheduleEnabled() && scheduledExecution.hasExecutionEnabled()}">
+                                    <span class="scheduletime disabled has_tooltip"
+                                          title="${g.message(code: 'scheduleExecution.schedule.disabled')}"
+                                          data-toggle="tooltip"
+                                          data-placement="auto left">
+                                        <i class="glyphicon glyphicon-time"></i>
+                                        <span class="detail"><g:message code="never"/></span>
+                                    </span>
+                                </g:elseif>
                                 <g:elseif test="${scheduledExecution.scheduled && !nextExecution}">
                                     <span class="scheduletime willnotrun has_tooltip"
                                           title="${g.message(code: 'job.schedule.will.never.fire')}"
@@ -136,6 +159,7 @@
                                     </span>
                                 </g:elseif>
                             </td>
+                            </g:if>
                         </tr>
                         </g:else>
                         <% j++ %>

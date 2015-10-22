@@ -4,12 +4,11 @@ import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.MultiAuthorization
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
-import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization
 import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
@@ -138,6 +137,9 @@ class FrameworkService implements ApplicationContextAware {
 /**
      * Return a list of FrameworkProject objects
      */
+    def projectNames () {
+        rundeckFramework.frameworkProjectMgr.listFrameworkProjects()*.name
+    }
     def projects (AuthContext authContext) {
         //authorize the list of projects
         def projMap=[:]
@@ -604,7 +606,7 @@ class FrameworkService implements ApplicationContextAware {
         return rundeckFramework;
     }
 
-    public AuthContext getAuthContextForSubject(Subject subject) {
+    public UserAndRolesAuthContext getAuthContextForSubject(Subject subject) {
         if (!subject) {
             throw new RuntimeException("getAuthContextForSubject: Cannot get AuthContext without subject")
         }
@@ -616,7 +618,7 @@ class FrameworkService implements ApplicationContextAware {
      * @param project project name
      * @return new AuthContext with project-specific authorization added
      */
-    public AuthContext getAuthContextWithProject(AuthContext orig, String project) {
+    public UserAndRolesAuthContext getAuthContextWithProject(UserAndRolesAuthContext orig, String project) {
         if (!orig) {
             throw new RuntimeException("getAuthContextWithProject: Cannot get AuthContext without orig")
         }
@@ -628,7 +630,7 @@ class FrameworkService implements ApplicationContextAware {
         log.debug("getAuthContextWithProject ${project}, orig: ${orig}, project auth ${projectAuth}")
         return orig.combineWith(projectAuth)
     }
-    public AuthContext getAuthContextForSubjectAndProject(Subject subject, String project) {
+    public UserAndRolesAuthContext getAuthContextForSubjectAndProject(Subject subject, String project) {
         if (!subject) {
             throw new RuntimeException("getAuthContextForSubjectAndProject: Cannot get AuthContext without subject")
         }
@@ -643,7 +645,7 @@ class FrameworkService implements ApplicationContextAware {
         log.debug("getAuthContextForSubjectAndProject ${project}, authorization: ${authorization}, project auth ${projectAuth}")
         return new SubjectAuthContext(subject, authorization)
     }
-    public AuthContext getAuthContextForUserAndRoles(String user, List rolelist) {
+    public UserAndRolesAuthContext getAuthContextForUserAndRoles(String user, List rolelist) {
         if (!(null != user && null != rolelist)) {
             throw new RuntimeException("getAuthContextForUserAndRoles: Cannot get AuthContext without user, roles: ${user}, ${rolelist}")
         }

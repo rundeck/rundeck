@@ -3,6 +3,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -206,7 +207,7 @@ class ProjectController extends ControllerBase{
             return renderErrorView("Project parameter is required")
         }
 
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
             return
@@ -246,11 +247,8 @@ class ProjectController extends ControllerBase{
                 return redirect(controller: 'menu', action: 'admin', params: [project: project])
             }
             Framework framework = frameworkService.getRundeckFramework()
-            String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
             def result = projectService.importToProject(
                     project1,
-                    session.user,
-                    roleList,
                     framework,
                     authContext,
                     file.getInputStream(),
@@ -1400,7 +1398,7 @@ class ProjectController extends ControllerBase{
             )
             return null
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         def stream = request.getInputStream()
         def len = request.getContentLength()
@@ -1413,12 +1411,9 @@ class ProjectController extends ControllerBase{
             ])
         }
 
-        String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
 
         def result = projectService.importToProject(
                 project,
-                session.user,
-                roleList,
                 framework,
                 authContext,
                 stream,

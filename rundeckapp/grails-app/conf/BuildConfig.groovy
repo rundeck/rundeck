@@ -78,6 +78,7 @@ grails.project.dependency.resolution = {
         compile ':twitter-bootstrap:3.3.2.1'
         compile (':asset-pipeline:2.0.8')
         compile ':cache:1.1.8'
+        compile ":platform-core:1.0.0"
         runtime (':hibernate4:4.3.6.1')
         runtime ':mail:1.0.7', ':quartz:1.0.2', ':executor:0.3'
         provided ':codenarc:0.22'
@@ -107,7 +108,6 @@ grails.project.dependency.resolution = {
         compile "javax.validation:validation-api:1.1.0.Final"
         runtime "org.hibernate:hibernate-validator:5.0.3.Final"
         //END fix for https://jira.grails.org/browse/GPHIB-30
-
     }
 }
 grails.war.resources = { stagingDir, args ->

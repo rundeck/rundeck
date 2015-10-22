@@ -105,4 +105,18 @@ abstract class PropertyBase implements Property {
     public Map<String, Object> getRenderingOptions() {
         return renderingOptions;
     }
+
+    @Override
+    public String toString() {
+        return "PropertyBase{" +
+               "name='" + name + '\'' +
+               (title != null ? ", title='" + title + '\'' : "") +
+               (description != null ? ", description='" + description + '\'' : "") +
+               ", required=" + required +
+               (defaultValue != null ? ", defaultValue='" + defaultValue + '\'' : "") +
+               (validator != null ? ", validator=" + validator : "") +
+               (scope != null ? ", scope=" + scope : "") +
+               (renderingOptions != null ? ", renderingOptions=" + renderingOptions : "") +
+               '}';
+    }
 }

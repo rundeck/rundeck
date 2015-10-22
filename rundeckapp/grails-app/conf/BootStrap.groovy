@@ -32,6 +32,7 @@ class BootStrap {
     Scheduler quartzScheduler
     MetricRegistry metricRegistry
     def messageSource
+    def scmService
 
      def init = { ServletContext servletContext ->
          def appname=messageSource.getMessage('main.app.name',null,'',null) ?: messageSource.getMessage('main.app.default.name',null,'',null) ?: 'Rundeck'
@@ -180,15 +181,14 @@ class BootStrap {
 
             //import filesystem projects if using DB storage
             if((grailsApplication.config.rundeck?.projectsStorageType?:'db') == 'db'){
-                log.error("importing existing filesystem projects")
+                log.debug("importing existing filesystem projects")
                 projectManagerService.importProjectsFromProjectManager(filesystemProjectManager)
-            }else{
-                log.error("NOT importing existing filesystem projects ${grailsApplication.config.rundeck?.projectsStorageType}")
             }
          }
 
          //initialize manually to avoid circular reference problem with spring
          workflowService.initialize()
+         scmService.initialize()
 
 
          if(grailsApplication.config.loglevel.default){

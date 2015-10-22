@@ -31,7 +31,7 @@ fi
 sed "s#@DIRNAME@#$DIR#" $SRC_DIR/test.jobs.xml > $DIR/test.jobs.expanded.xml
 
 #load jobs
-rd-jobs load -f $DIR/test.jobs.expanded.xml > $DIR/load.out
+rd-jobs load -p test -f $DIR/test.jobs.expanded.xml > $DIR/load.out
 if [ 0 != $? ] ; then
 	echo Failed to load jobs: $!
 	exit 2
@@ -54,7 +54,7 @@ cat $DIR/load.out
 
 
 
-rd-jobs load -f $DIR/test.jobs.expanded.xml > $DIR/load.out
+rd-jobs load -p test -f $DIR/test.jobs.expanded.xml > $DIR/load.out
 if [ 0 != $? ] ; then
 	echo Failed to load jobs: $!
 	exit 2
@@ -75,8 +75,9 @@ rm $DIR/test.jobs.expanded.xml
 #
 #copy jobs file to replace template
 
+# Jobs should fail due to missing project
 #load jobs
-rd-jobs load -f $SRC_DIR/test.jobs2.xml > $DIR/load.out
+rd-jobs load -p thisProjectDNE -f $SRC_DIR/test.jobs2.xml > $DIR/load.out
 if [ 1 != $? ] ; then
 	echo Should have failed to load a job: $!
 	exit 2
@@ -282,7 +283,7 @@ rm $DIR/exec.out
 echo "Loading some jobs via yaml"
 sed "s#@DIRNAME@#$DIR#" $SRC_DIR/test.jobs.yaml > $DIR/test.jobs.expanded.yaml
 
-rd-jobs load -F yaml -f $DIR/test.jobs.expanded.yaml > $DIR/load.out
+rd-jobs load -p test -F yaml -f $DIR/test.jobs.expanded.yaml > $DIR/load.out
 if [ 0 != $? ] ; then
 	echo Failed to load jobs: $!
 	exit 2
