@@ -1,14 +1,19 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
+import grails.events.Listener
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import org.quartz.ListenerManager
+import org.quartz.Scheduler
 import rundeck.CommandExec
 import rundeck.Notification
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.controllers.ScheduledExecutionController
+import spock.lang.Issue
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Created by greg on 6/24/15.
@@ -155,5 +160,75 @@ class ScheduledExecutionServiceSpec extends Specification {
         targetProject | targetServerUUID| serverUUID1|dataList | resultList
         'AProject'    | TEST_UUID1 | TEST_UUID2 |[[uuid:'job1',serverNodeUUID: TEST_UUID2],[project:'AProject2',uuid:'job2']]       | ['job1']
         'AProject2'   | TEST_UUID1 | TEST_UUID2 |[[uuid:'job1',serverNodeUUID: TEST_UUID2],[project:'AProject2',uuid:'job2']]       | ['job2']
+    }
+
+    @Unroll
+    def "should scheduleJob"() {
+        given:
+        service.executionServiceBean = Mock(ExecutionService)
+        service.quartzScheduler = Mock(Scheduler){
+            getListenerManager()>>Mock(ListenerManager)
+        }
+        service.frameworkService = Mock(FrameworkService){
+            getRundeckBase()>>''
+        }
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: hasSchedule,
+                        scheduleEnabled: scheduleEnabled,
+                        executionEnabled: executionEnabled,
+                        userRoleList: 'a,b'
+                )
+        ).save()
+        def scheduleDate = new Date()
+
+        when:
+        def result = service.scheduleJob(job, null, null)
+
+        then:
+        1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
+        1 * service.quartzScheduler.scheduleJob(_, _) >> scheduleDate
+        result == scheduleDate
+
+        where:
+        executionsAreActive | scheduleEnabled | executionEnabled | hasSchedule | expectScheduled
+        true                | true            | true             | true        | true
+    }
+
+    @Issue('https://github.com/rundeck/rundeck/issues/1475')
+    @Unroll
+    def "should not scheduleJob when executionsAreActive=#executionsAreActive scheduleEnabled=#scheduleEnabled executionEnabled=#executionEnabled and hasSchedule=#hasSchedule"() {
+        given:
+        service.executionServiceBean = Mock(ExecutionService)
+        service.quartzScheduler = Mock(Scheduler){
+            getListenerManager()>>Mock(ListenerManager)
+        }
+        service.frameworkService = Mock(FrameworkService){
+            getRundeckBase()>>''
+        }
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: hasSchedule,
+                        scheduleEnabled: scheduleEnabled,
+                        executionEnabled: executionEnabled,
+                        userRoleList: 'a,b'
+                )
+        ).save()
+        def scheduleDate = new Date()
+
+        when:
+        def result = service.scheduleJob(job, null, null)
+
+        then:
+        1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
+        0 * service.quartzScheduler.scheduleJob(_, _)
+        result == null
+
+        where:
+        executionsAreActive | scheduleEnabled | executionEnabled | hasSchedule
+        false               | true            | true             | true
+        true                | false           | true             | true
+        true                | true            | false            | true
+        true                | true            | true             | false
     }
 }
