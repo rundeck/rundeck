@@ -8,6 +8,7 @@ CSS = style.css
 DIST = dist
 DATE = $(shell date "+%Y-%m-%dT%H:%M:%S%Z")
 HRDATE = $(shell date "+%B %e %Y, %H:%M %Z")
+DATE_YEAR = $(shell date "+%Y")
 ifndef VERSION
 VERSION=$(shell grep version.number= ../../version.properties | cut -d= -f 2)
 endif
@@ -37,7 +38,7 @@ man :
 
 html: 
 	mkdir -p $(DIST)/html
-	$(EDAM) -o $(DIST)/html  -r -O 'recurseDirPatternIgnore=(dist|figures|temp)' -V "VERSION=$(RVERSION)" -V "APIVERS=$(APIVERS)" -V "DATE=$(DATE)" -V "HRDATE=$(HRDATE)"
+	$(EDAM) -o $(DIST)/html  -r -O 'recurseDirPatternIgnore=(dist|figures|temp)' -V "VERSION=$(RVERSION)" -V "APIVERS=$(APIVERS)" -V "DATE=$(DATE)" -V "HRDATE=$(HRDATE)" -V "DATE_YEAR=$(DATE_YEAR)"
 
 
 resources :  $(CSS) ../figures/*.png
