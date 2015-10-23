@@ -3,17 +3,14 @@ package com.dtolabs.rundeck.core.common;
 import com.dtolabs.client.services.DispatcherConfig;
 import com.dtolabs.client.services.RundeckAPICentralDispatcher;
 import com.dtolabs.rundeck.core.authorization.AclsUtil;
-import com.dtolabs.rundeck.core.authorization.Authorization;
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
 import com.dtolabs.rundeck.core.authorization.providers.Policies;
-import com.dtolabs.rundeck.core.authorization.providers.PoliciesParseException;
-import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcher;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 
 import java.io.File;
-import java.io.IOException;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -72,7 +69,7 @@ public class FrameworkFactory {
                 filesystemFramework
         );
 
-        return createFramework(lookup, filesystemFramework, projectManager);
+        return createFramework(lookup, filesystemFramework, projectManager, null);
     }
 
     private static File determineProjectsBasedir(final File baseDir, final File propertyFile) {
@@ -91,13 +88,21 @@ public class FrameworkFactory {
         return projectsBase;
     }
 
+    /**
+     * Create framework
+     * @param lookup1 properties
+     * @param filesystemFramework filessystem
+     * @param projectManager project
+     * @param services preloaded services
+     * @return framework
+     */
     public static Framework createFramework(
             final IPropertyLookup lookup1,
             final FilesystemFramework filesystemFramework,
-            final ProjectManager projectManager
+            final ProjectManager projectManager,
+            Map<String,FrameworkSupportService> services
     )
     {
-
 
         ServiceSupport serviceSupport = new ServiceSupport();
 
@@ -113,6 +118,12 @@ public class FrameworkFactory {
                 serviceSupport,
                 iFrameworkNodes
         );
+        if(null!=services) {
+            //load predefined services
+            for (String s : services.keySet()) {
+                framework.setService(s, services.get(s));
+            }
+        }
         serviceSupport.initialize(framework);
 
         return framework;

@@ -39,8 +39,19 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class FilePluginCache implements PluginCache {
+public class FilePluginCache implements PluginCache {
     static Logger log = Logger.getLogger(FilePluginCache.class.getName());
+
+    /**
+     * Scanners to use
+     */
+    public List<PluginScanner> getScanners() {
+        return scanners;
+    }
+
+    public void setScanners(List<PluginScanner> scanners) {
+        this.scanners = scanners;
+    }
 
     /**
      * Cache item is a File, PluginDirScanner pair
@@ -60,10 +71,7 @@ class FilePluginCache implements PluginCache {
      * the filecache of loaders associated with files
      */
     final private FileCache<ProviderLoader> filecache;
-    /**
-     * Scanners to use
-     */
-    final List<PluginScanner> scanners;
+    private List<PluginScanner> scanners;
 
     FilePluginCache(final FileCache<ProviderLoader> filecache) {
         this.filecache = filecache;
@@ -74,7 +82,7 @@ class FilePluginCache implements PluginCache {
      * Add a new scanner
      */
     public void addScanner(final PluginScanner scanner) {
-        scanners.add(scanner);
+        getScanners().add(scanner);
     }
 
     /**
@@ -115,15 +123,15 @@ class FilePluginCache implements PluginCache {
 
     public List<ProviderIdent> listProviders() {
         final ArrayList<ProviderIdent> providerIdents = new ArrayList<ProviderIdent>();
-        for (final PluginScanner scanner : scanners) {
+        for (final PluginScanner scanner : getScanners()) {
             providerIdents.addAll(scanner.listProviders());
         }
         return providerIdents;
     }
 
     private boolean shouldRescan() {
-        for (final PluginScanner scanner : scanners) {
-            if(scanner.shouldRescan()){
+        for (final PluginScanner scanner : getScanners()) {
+            if (scanner.shouldRescan()) {
                 return true;
             }
         }
@@ -147,14 +155,14 @@ class FilePluginCache implements PluginCache {
         log.debug("rescanForItem: " + ident);
         File candidate = null;
         PluginScanner cscanner = null;
-        for (final PluginScanner scanner : scanners) {
+        for (final PluginScanner scanner : getScanners()) {
             final File file = scanner.scanForFile(ident);
             if (null != file) {
                 log.debug("saw file: " + file);
                 if (null != candidate) {
                     throw new ProviderLoaderException(
-                        "More than one plugin file matched: " + file + ", and " + candidate,
-                        ident.getService(), ident.getProviderName()
+                            "More than one plugin file matched: " + file + ", and " + candidate,
+                            ident.getService(), ident.getProviderName()
                     );
                 }
                 candidate = file;

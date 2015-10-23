@@ -116,7 +116,11 @@ abstract class DirPluginScanner implements PluginScanner {
     }
 
     public List<ProviderIdent> listProviders() {
-
+        try {
+            doScanAll();
+        } catch (PluginScannerException e) {
+            //ignore conflict
+        }
         final HashSet<ProviderIdent> providerIdentsHash = new HashSet<ProviderIdent>();
         final List<ProviderIdent> providerIdents = new ArrayList<ProviderIdent>();
         if(null!=extdir && extdir.isDirectory() ){
@@ -146,6 +150,21 @@ abstract class DirPluginScanner implements PluginScanner {
      */
     public boolean shouldRescan() {
         return shouldScanAll(extdir.listFiles(getFileFilter()));
+    }
+
+    /**
+     * scan all found files to cache them
+     * @throws PluginScannerException
+     */
+    public void doScanAll() throws PluginScannerException {
+        File[] files = extdir.listFiles(getFileFilter());
+        if(null==files) {
+            files = new File[0];
+        }
+        if(shouldScanAll(files)) {
+            log.debug("shouldScanAll true: doScanAll");
+            scanAll(null, files);
+        }
     }
 
     /**
@@ -256,7 +275,7 @@ abstract class DirPluginScanner implements PluginScanner {
                 }
             }
         }
-        if (candidates.size() > 1) {
+        if (null!=ident && candidates.size() > 1) {
             clearCache(files);
             final File resolved = resolveProviderConflict(candidates);
             if(null==resolved){
