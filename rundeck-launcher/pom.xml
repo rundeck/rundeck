@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.rundeck</groupId>
   <artifactId>rundeck-launcher-parent</artifactId>
-  <version>2.6.1-SNAPSHOT</version>
+  <version>2.6.1</version>
   <packaging>pom</packaging>
   <name>RunDeck Launcher Parent</name>
   <url>http://rundeck.org</url>

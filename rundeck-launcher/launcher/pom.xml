@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.rundeck</groupId>
   <artifactId>rundeck-launcher</artifactId>
-  <version>2.6.1-SNAPSHOT</version>
+  <version>2.6.1</version>
   <name>Rundeck Launcher</name>
   <url>http://rundeck.org</url>
   <inceptionYear>2011</inceptionYear>
@@ -66,13 +66,13 @@
     <dependency>
       <groupId>org.rundeck</groupId>
       <artifactId>rundeck</artifactId>
-      <version>2.6.1-SNAPSHOT</version>
+      <version>2.6.1</version>
       <type>war</type>
     </dependency>
     <dependency>
       <groupId>org.rundeck</groupId>
       <artifactId>rundeck-jetty-server</artifactId>
-      <version>2.6.1-SNAPSHOT</version>
+      <version>2.6.1</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
