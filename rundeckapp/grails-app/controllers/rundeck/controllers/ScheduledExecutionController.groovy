@@ -845,8 +845,10 @@ class ScheduledExecutionController  extends ControllerBase{
         //pass session-stored edit state in params map
         transferSessionEditState(session, params, params.id)
 
+        String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
 
-        def result = scheduledExecutionService._doupdate(params, authContext, changeinfo)
+        def payload = [id: params.id, scheduleEnabled: params.scheduleEnabled]
+        def result = scheduledExecutionService._doUpdateExecutionFlags(payload, session.user, roleList, framework, authContext, changeinfo)
 
         redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
     }
@@ -873,7 +875,10 @@ class ScheduledExecutionController  extends ControllerBase{
         //pass session-stored edit state in params map
         transferSessionEditState(session, params, params.id)
 
-        def result = scheduledExecutionService._doupdate(params, authContext, changeinfo)
+        String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
+
+        def payload = [id: params.id, executionEnabled: params.executionEnabled]
+        def result = scheduledExecutionService._doUpdateExecutionFlags(payload, session.user, roleList, framework, authContext, changeinfo)
 
         redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
     }

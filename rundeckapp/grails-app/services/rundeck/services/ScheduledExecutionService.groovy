@@ -5,7 +5,6 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.plugins.quartz.listeners.SessionBinderJobListener
@@ -622,7 +621,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
             return null
         }
 
-        if (!se.hasExecutionEnabled()) {
+        if (!se.shouldScheduleExecution()) {
             log.warn("Attempt to schedule job ${se}, but job execution is disabled.")
             return null;
         }
