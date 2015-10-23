@@ -143,7 +143,7 @@ class BaseGitPluginSpec extends Specification {
         given:
         Common config = new Common()
         def base = new BaseGitPlugin(config)
-        base.branch='master'
+        base.branch = 'master'
 
         def tempdir = File.createTempFile("BaseGitPluginSpec", "-test")
         tempdir.delete()
@@ -194,7 +194,6 @@ class BaseGitPluginSpec extends Specification {
     static Git createGit(final File file) {
         Git.init().setDirectory(file).call()
     }
-
 
 
     def "expand user string"() {
