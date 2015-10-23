@@ -1,5 +1,6 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.CommandExec
@@ -9,6 +10,8 @@ import rundeck.services.ApiService
 import rundeck.services.FrameworkService
 import rundeck.services.ScheduledExecutionService
 import spock.lang.Specification
+
+import javax.security.auth.Subject
 
 /**
  * Created by greg on 7/14/15.
@@ -33,6 +36,86 @@ class ScheduledExecutionControllerSpec extends Specification {
         ]+overrides
     }
 
+    def "flip execution enabled"() {
+        given:
+        def job1 = new ScheduledExecution(createJobParams())
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        params.id = 'dummy'
+        params.executionEnabled = isEnabled
+        request.subject=new Subject()
+
+        when:
+        def result = controller.flipExecutionEnabled()
+
+        then:
+        1 * controller.frameworkService.getAuthContextForSubjectAndProject(*_) >> auth
+        1 * controller.frameworkService.getRundeckFramework()
+        0 * controller.frameworkService._(*_)
+        1 * controller.scheduledExecutionService.getByIDorUUID('dummy') >> job1
+        1 * controller.scheduledExecutionService._doUpdateExecutionFlags(
+                [id: 'dummy', executionEnabled: isEnabled],
+                _,
+                _,
+                _,
+                _,
+                _
+        )
+        0 * controller.scheduledExecutionService._(*_)
+
+        response.status == 302
+        response.redirectedUrl=='/menu/jobs?project='
+
+        where:
+        isEnabled | _
+        true      | _
+        false     | _
+    }
+    def "flip schedule enabled"() {
+        given:
+        def job1 = new ScheduledExecution(createJobParams())
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername() >> 'bob'
+        }
+
+        params.id = 'dummy'
+        params.scheduleEnabled = isEnabled
+        request.subject=new Subject()
+
+        when:
+        def result = controller.flipScheduleEnabled()
+
+        then:
+        1 * controller.frameworkService.getAuthContextForSubjectAndProject(*_) >> auth
+        1 * controller.frameworkService.getRundeckFramework()
+        0 * controller.frameworkService._(*_)
+        1 * controller.scheduledExecutionService.getByIDorUUID('dummy') >> job1
+        1 * controller.scheduledExecutionService._doUpdateExecutionFlags(
+                [id: 'dummy', scheduleEnabled: isEnabled],
+                _,
+                _,
+                _,
+                _,
+                _
+        )
+        0 * controller.scheduledExecutionService._(*_)
+
+        response.status == 302
+        response.redirectedUrl=='/menu/jobs?project='
+
+        where:
+        isEnabled | _
+        true      | _
+        false     | _
+    }
     def "api scheduler takeover cluster mode disabled"(){
         given:
         def serverUUID1 = TEST_UUID1
