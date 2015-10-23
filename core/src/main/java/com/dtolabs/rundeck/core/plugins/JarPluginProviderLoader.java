@@ -23,6 +23,7 @@
  */
 package com.dtolabs.rundeck.core.plugins;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -182,13 +183,9 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         debug("getJarMainAttributes: " + file);
 
         try {
-            final JarInputStream jarInputStream;
-            final Attributes mainAttributes;
-            jarInputStream = new JarInputStream(new FileInputStream(file));
-            final Manifest manifest = jarInputStream.getManifest();
-            mainAttributes = manifest.getMainAttributes();
-            jarInputStream.close();
-            return mainAttributes;
+            try(final JarInputStream jarInputStream = new JarInputStream(new FileInputStream(file))){
+                return jarInputStream.getManifest().getMainAttributes();
+            }
         } catch (IOException e) {
             return null;
         }
@@ -246,6 +243,10 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
     }
 
     private Map<String, Class<?>> classCache = new HashMap<String, Class<?>>();
+    /**
+     * opened classloaders that need to be closed upon expiration of this loader
+     */
+    private Map<File, Closeable> classLoaders = new HashMap<>();
 
     /**
      * @return true if the other jar is a copy of the pluginJar based on names returned by generateCachedJarName
@@ -318,9 +319,23 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         File cachedJar = createCachedJar();
         debug("loadClass! " + classname + ": " + cachedJar);
 
-        final ClassLoader parent = JarPluginProviderLoader.class.getClassLoader();
         final Class<?> cls;
 
+        final URLClassLoader urlClassLoader = getClassLoader(cachedJar);
+        try {
+            cls = Class.forName(classname, true, urlClassLoader);
+            classCache.put(classname, cls);
+        } catch (ClassNotFoundException e) {
+            throw new PluginException("Class not found: " + classname, e);
+        } catch (Throwable t) {
+            throw new PluginException("Error loading class: " + classname, t);
+        }
+        return cls;
+    }
+
+    private URLClassLoader getClassLoader(final File cachedJar) throws PluginException
+    {
+        ClassLoader parent = JarPluginProviderLoader.class.getClassLoader();
         // if jar manifest declares secondary lib deps, expand lib into cachedir, and setup classloader to use the libs
         Collection<File> extlibs = null;
         try {
@@ -328,7 +343,6 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         } catch (IOException e) {
             throw new PluginException("Unable to expand plugin libs: " + e.getMessage(), e);
         }
-
         try {
             final URL url = cachedJar.toURI().toURL();
             final URL[] urlarray;
@@ -340,20 +354,16 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
                 }
                 urlarray = urls.toArray(new URL[urls.size()]);
             } else {
-                urlarray = new URL[] { url };
+                urlarray = new URL[]{url};
             }
-            final URLClassLoader urlClassLoader = loadLibsFirst ? LocalFirstClassLoader.newInstance(urlarray,
-                    parent) : URLClassLoader.newInstance(urlarray, parent);
-            cls = Class.forName(classname, true, urlClassLoader);
-            classCache.put(classname, cls);
-        } catch (ClassNotFoundException e) {
-            throw new PluginException("Class not found: " + classname, e);
+            URLClassLoader loaded = loadLibsFirst
+                                    ? LocalFirstClassLoader.newInstance(urlarray, parent)
+                                    : URLClassLoader.newInstance(urlarray, parent);
+            classLoaders.put(cachedJar, loaded);
+            return loaded;
         } catch (MalformedURLException e) {
-            throw new PluginException("Error loading class: " + classname, e);
-        } catch (Throwable t) {
-            throw new PluginException("Error loading class: " + classname, t);
+            throw new PluginException("Error creating classloader for " + cachedJar, e);
         }
-        return cls;
     }
 
     /**
@@ -477,7 +487,18 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
      * Expire the loader cache item
      */
     public void expire() {
+        debug("expire jar provider loader for: " + pluginJar);
         removeScriptPluginCache();
+        classCache.clear();
+        //close loaders
+        for (File file : classLoaders.keySet()) {
+            try {
+                debug("expire classLoaders for: " + file);
+                classLoaders.remove(file).close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
@@ -522,20 +543,16 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
      */
     public static boolean isValidJarPlugin(final File file) {
         try {
-            final JarInputStream jarInputStream = new JarInputStream(new FileInputStream(file));
-            final Manifest manifest = jarInputStream.getManifest();
-            if (null == manifest) {
-                jarInputStream.close();
-                return false;
+            try (final JarInputStream jarInputStream = new JarInputStream(new FileInputStream(file))) {
+                final Manifest manifest = jarInputStream.getManifest();
+                if (null == manifest) {
+                    return false;
+                }
+                final Attributes mainAttributes = manifest.getMainAttributes();
+                validateJarManifest(mainAttributes);
             }
-            final Attributes mainAttributes = manifest.getMainAttributes();
-            validateJarManifest(mainAttributes);
-            jarInputStream.close();
             return true;
-        } catch (IOException e) {
-            log.error(file.getAbsolutePath() + ": " + e.getMessage());
-            return false;
-        } catch (InvalidManifestException e) {
+        } catch (IOException | InvalidManifestException e) {
             log.error(file.getAbsolutePath() + ": " + e.getMessage());
             return false;
         }
@@ -607,14 +624,11 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
     private static Attributes loadMainAttributes(final File file) {
         Attributes mainAttributes = null;
         try {
-            final JarInputStream jarInputStream = new JarInputStream(new FileInputStream(file));
-            try {
+            try(final JarInputStream jarInputStream = new JarInputStream(new FileInputStream(file))) {
                 final Manifest manifest = jarInputStream.getManifest();
                 if (null != manifest) {
                     mainAttributes = manifest.getMainAttributes();
                 }
-            } finally {
-                jarInputStream.close();
             }
         } catch (IOException e) {
             e.printStackTrace(System.err);
