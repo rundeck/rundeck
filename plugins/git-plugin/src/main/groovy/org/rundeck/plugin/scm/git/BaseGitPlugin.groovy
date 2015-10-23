@@ -297,6 +297,7 @@ class BaseGitPlugin {
     static String expand(final String source, final ScmUserInfo scmUserInfo) {
         def userInfoProps = ['fullName', 'firstName', 'lastName', 'email', 'userName']
         def map = userInfoProps.collectEntries { [it, scmUserInfo[it]] }
+        map['login'] = map['userName']
         expand(source, map, 'user')
     }
 
@@ -497,7 +498,7 @@ class BaseGitPlugin {
      * @param path
      * @return
      */
-    private String expandContextVarsInPath(ScmOperationContext context, String path) {
+    public static String expandContextVarsInPath(ScmOperationContext context, String path) {
         expand(expand(path, context.userInfo), [project: context.frameworkProject])
     }
 }

@@ -214,11 +214,42 @@ class BaseGitPluginSpec extends Specification {
         input                                                                           | result
         'Blah'                                                                          | 'Blah'
         '${user.userName}'                                                              | 'Z'
+        '${user.login}'                                                                 | 'Z'
         '${user.fullName}'                                                              | 'A B'
         '${user.firstName}'                                                             | 'A'
         '${user.lastName}'                                                              | 'B'
         '${user.email}'                                                                 | 'c@d.e'
         'Bob ${user.firstName} x ${user.lastName} y ${user.email} H ${user.userName} I' | 'Bob A x B y c@d.e H Z I'
+    }
+
+    def "expand context vars in path"() {
+        given:
+        def userinfo = Stub(ScmUserInfo) {
+            getUserName() >> 'Z'
+            getFirstName() >> 'A'
+            getLastName() >> 'B'
+            getFullName() >> 'A B'
+            getEmail() >> 'c@d.e'
+        }
+        def context = Stub(ScmOperationContext) {
+            getUserInfo() >> userinfo
+            getFrameworkProject() >> 'testproject'
+        }
+
+        expect:
+        BaseGitPlugin.expandContextVarsInPath(context, path) == result
+
+        where:
+        path                           | result
+        'a/b/c'                        | 'a/b/c'
+        'a/${user.login}/c'            | 'a/Z/c'
+        'a/${user.userName}/c'         | 'a/Z/c'
+        'a/${user.firstName}/c'        | 'a/A/c'
+        'a/${user.lastName}/c'         | 'a/B/c'
+        'a/${user.fullName}/c'         | 'a/A B/c'
+        'a/${user.email}/c'            | 'a/c@d.e/c'
+        'a/${project}/c'               | 'a/testproject/c'
+        'a/${project}/${user.login}/c' | 'a/testproject/Z/c'
     }
 
     def "expand user missing info"() {
