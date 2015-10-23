@@ -1830,6 +1830,9 @@ class ScheduledExecutionController  extends ControllerBase{
                 request.message=g.message(code:'ScheduledExecutionController.save.failed')
             }
         }
+        if(!scheduledExecution.jobName){
+            scheduledExecution.jobName=''
+        }
 
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
