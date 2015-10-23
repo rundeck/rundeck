@@ -269,41 +269,47 @@ class MenuController extends ControllerBase{
         }
         def results=listWorkflows(query,authContext,session.user)
         //fill scm status
-
-        if (frameworkService.authorizeApplicationResourceAny(authContext,
-                                                             frameworkService.authResourceForProject(params.project),
-                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT])) {
-            def pluginData=[:]
-            try {
-                if (scmService.projectHasConfiguredExportPlugin(params.project)) {
-                    pluginData.scmExportEnabled = true
-                    pluginData.scmStatus = scmService.exportStatusForJobs(results.nextScheduled)
-                    pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
-                    pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
-                    pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
-                    results.putAll(pluginData)
+        if(params['_no_scm']!=true) {
+            if (frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                 frameworkService.authResourceForProject(
+                                                                         params.project
+                                                                 ),
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]
+            )) {
+                def pluginData = [:]
+                try {
+                    if (scmService.projectHasConfiguredExportPlugin(params.project)) {
+                        pluginData.scmExportEnabled = true
+                        pluginData.scmStatus = scmService.exportStatusForJobs(results.nextScheduled)
+                        pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
+                        pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
+                        pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
+                        results.putAll(pluginData)
+                    }
+                } catch (ScmPluginException e) {
+                    results.warning = "Failed to update SCM Export status: ${e.message}"
                 }
-            }catch (ScmPluginException e){
-                results.warning="Failed to update SCM Export status: ${e.message}"
             }
-        }
-        if (frameworkService.authorizeApplicationResourceAny(authContext,
-                                                             frameworkService.authResourceForProject(params.project),
-                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT])) {
+            if (frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                 frameworkService.authResourceForProject(
+                                                                         params.project
+                                                                 ),
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]
+            )) {
 
-            def pluginData=[:]
-            try{
-                if(scmService.projectHasConfiguredImportPlugin(params.project)){
-                    pluginData.scmImportEnabled=true
-                    pluginData.scmImportJobStatus=scmService.importStatusForJobs(results.nextScheduled)
-                    pluginData.scmImportStatus=scmService.importPluginStatus(authContext,params.project)
-                    pluginData.scmImportActions=scmService.importPluginActions(authContext,params.project)
-    //                results.scmImportRenamed=scmService.getRenamedJobPathsForProject(params.project)
-                    results.putAll(pluginData)
+                def pluginData = [:]
+                try {
+                    if (scmService.projectHasConfiguredImportPlugin(params.project)) {
+                        pluginData.scmImportEnabled = true
+                        pluginData.scmImportJobStatus = scmService.importStatusForJobs(results.nextScheduled)
+                        pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
+                        pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project)
+                        results.putAll(pluginData)
+                    }
+
+                } catch (ScmPluginException e) {
+                    results.warning = "Failed to update SCM Import status: ${e.message}"
                 }
-
-            }catch (ScmPluginException e){
-                results.warning="Failed to update SCM Import status: ${e.message}"
             }
         }
 
@@ -1054,6 +1060,8 @@ class MenuController extends ControllerBase{
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project',params.project]])
         }
+        //don't load scm status for api response
+        params['_no_scm']=true
         def results = jobsFragment(query)
 
         withFormat{
