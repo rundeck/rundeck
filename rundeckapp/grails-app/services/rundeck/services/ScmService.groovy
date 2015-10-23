@@ -982,16 +982,13 @@ class ScmService {
 
     ScmUserInfo lookupUserInfo(final String username) {
         def user = User.findByLogin(username)
-        if (user) {
-            return new ScmUser(
-                    userName: username,
-                    email: user.email,
-                    firstName: user.firstName,
-                    lastName: user.lastName,
-                    fullName: (user.firstName ?: '') + (user.lastName ? ' ' + user.lastName : ''),
-                    )
-        }
-        throw new IllegalArgumentException("Could not find a user profile for ${username}")
+        return new ScmUser(
+                userName: username,
+                email: user?.email,
+                firstName: user?.firstName,
+                lastName: user?.lastName,
+                fullName: user ? (user.firstName ?: '') + (user.lastName ? ' ' + user.lastName : '') : null,
+                )
     }
 
     ScmDiffResult exportDiff(String project, ScheduledExecution job) {

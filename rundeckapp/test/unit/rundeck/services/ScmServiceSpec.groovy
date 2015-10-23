@@ -420,4 +420,29 @@ class ScmServiceSpec extends Specification {
 
         1 * service.pluginConfigService.loadScmConfig('projectA', 'etc/scm-export.properties', 'scm.export') >> null
     }
+
+    def "lookup user profile, no User found"() {
+        when:
+        def info = service.lookupUserInfo('bob')
+
+        then:
+        info.userName == 'bob'
+        info.firstName == null
+        info.lastName == null
+        info.email == null
+    }
+
+    def "lookup user profile, with User found"() {
+        given:
+        new User(login: 'bob', firstName: 'a', lastName: 'b', email: 'test@test.com').save()
+
+        when:
+        def info = service.lookupUserInfo('bob')
+
+        then:
+        info.userName == 'bob'
+        info.firstName == 'a'
+        info.lastName == 'b'
+        info.email == 'test@test.com'
+    }
 }
