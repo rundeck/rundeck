@@ -1823,15 +1823,15 @@ class ScheduledExecutionController  extends ControllerBase{
         }else{
             if(scheduledExecution){
                 scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
+                if(!scheduledExecution.jobName){
+                    scheduledExecution.jobName=''
+                }
             }
             if (result.unauthorized){
                 request.message = result.error
             }else{
                 request.message=g.message(code:'ScheduledExecutionController.save.failed')
             }
-        }
-        if(!scheduledExecution.jobName){
-            scheduledExecution.jobName=''
         }
 
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
