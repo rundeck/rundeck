@@ -437,48 +437,6 @@ class GitExportPluginSpec extends Specification {
         [mkcommit: true, remove: true] | 'DELETED'
     }
 
-    def "expand user string"() {
-        given:
-        def userinfo = Stub(ScmUserInfo) {
-            getUserName() >> 'Z'
-            getFirstName() >> 'A'
-            getLastName() >> 'B'
-            getFullName() >> 'A B'
-            getEmail() >> 'c@d.e'
-        }
-
-        expect:
-        GitExportPlugin.expand(input, userinfo) == result
-
-        where:
-        input                                                                           | result
-        'Blah'                                                                          | 'Blah'
-        '${user.userName}'                                                              | 'Z'
-        '${user.fullName}'                                                              | 'A B'
-        '${user.firstName}'                                                             | 'A'
-        '${user.lastName}'                                                              | 'B'
-        '${user.email}'                                                                 | 'c@d.e'
-        'Bob ${user.firstName} x ${user.lastName} y ${user.email} H ${user.userName} I' | 'Bob A x B y c@d.e H Z I'
-    }
-
-    def "expand user missing info"() {
-        given:
-        def userinfo = Stub(ScmUserInfo) {
-        }
-
-        expect:
-        GitExportPlugin.expand(input, userinfo) == result
-
-        where:
-        input                                                                           | result
-        'Blah'                                                                          | 'Blah'
-        '${user.userName}'                                                              | ''
-        '${user.fullName}'                                                              | ''
-        '${user.firstName}'                                                             | ''
-        '${user.lastName}'                                                              | ''
-        '${user.email}'                                                                 | ''
-        'Bob ${user.firstName} x ${user.lastName} y ${user.email} H ${user.userName} I' | 'Bob  x  y  H  I'
-    }
 
     def "job commit with no changes"() {
         given:
@@ -744,6 +702,7 @@ class GitExportPluginSpec extends Specification {
         theEventType                             | _
         JobChangeEvent.JobChangeEventType.MODIFY | _
     }
+
     def "job change serializer fails does not overwrite file"() {
         given:
 
