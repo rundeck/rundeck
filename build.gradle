@@ -21,7 +21,7 @@
         mavenCentral()
     }
     dependencies {
-        classpath 'com.adaptc.gradle:nexus-workflow:0.5'
+        classpath 'com.adaptc.gradle:nexus-workflow:0.6'
     }
 }
 description = 'The master-build project for Rundeck';
@@ -74,7 +74,7 @@ allprojects{
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.11'
+    gradleVersion = '2.11'
 }
 
 // prompt for PGP key passphrase if not set

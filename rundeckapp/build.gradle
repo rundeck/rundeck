@@ -53,6 +53,7 @@ configurations{
 
     }
     pluginFiles.extendsFrom(runtime)
+    warArchives
 }
 
 dependencies {
@@ -282,7 +283,12 @@ task grailsWar(type: Exec, overwrite:true, dependsOn: [ installDependencies,extr
 
 // add the war to default configuration for this project
 artifacts{
-    'default'(file(warFileLocation)){
+    'warArchives'(file(warFileLocation)){
+        name 'rundeck'
+        type 'war'
+        builtBy grailsWar
+    }
+    'archives'(file(warFileLocation)){
         name 'rundeck'
         type 'war'
         builtBy grailsWar
