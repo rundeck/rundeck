@@ -16,6 +16,8 @@ Bugfixes for SCM plugins, and the Job execution/schedule toggle feature.
 ## Contributors
 
 * Greg Schueler (gschueler)
+* Miguel A. Fuentes Buchholtz (miguelantonio)
+* robertopaez
 
 ## Bug Reporters
 
@@ -26,6 +28,7 @@ Bugfixes for SCM plugins, and the Job execution/schedule toggle feature.
 * gschueler
 * jyaworski
 * katanafleet
+* miguelantonio
 * mprasil
 * oovoo
 * paulpet
@@ -37,6 +40,7 @@ Bugfixes for SCM plugins, and the Job execution/schedule toggle feature.
 * [SCM plugin does not interpret variables in paths](https://github.com/rundeck/rundeck/issues/1510)
 * [CLI: Running rd-jobs list gives an error when user profile is incomplete and SCM is enabled](https://github.com/rundeck/rundeck/issues/1509)
 * [Upgrade to 2.6.0: schedule/execution enabled defaults to No](https://github.com/rundeck/rundeck/issues/1502)
+* [changes implementation of flipScheduleEnabled and flipExecutionEnable…](https://github.com/rundeck/rundeck/pull/1501)
 * [SCM: import while export plugin enabled can cause stacktrace/empty file](https://github.com/rundeck/rundeck/issues/1499)
 * [SCM synch rebase: if result is conflicted, it should be aborted](https://github.com/rundeck/rundeck/issues/1497)
 * [SCM: yaml whitespace error on re-import](https://github.com/rundeck/rundeck/issues/1496)
