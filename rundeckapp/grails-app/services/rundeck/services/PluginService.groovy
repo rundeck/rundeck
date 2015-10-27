@@ -173,6 +173,11 @@ class PluginService {
         return rundeckPluginRegistry?.validatePluginByName(name, service, config)
     }
 
+    /**
+     * @param clazz
+     * @param service
+     * @return map of [name: DescribedPlugin]
+     */
     def <T> Map listPlugins(Class<T> clazz,PluggableProviderService<T> service) {
         def plugins = rundeckPluginRegistry?.listPluginDescriptors(clazz, service)
         //XX: avoid groovy bug where generic types referenced in closure can cause NPE: http://jira.codehaus.org/browse/GROOVY-5034
