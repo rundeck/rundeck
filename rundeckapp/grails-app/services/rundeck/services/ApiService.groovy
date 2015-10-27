@@ -459,6 +459,19 @@ class ApiService {
         return true
     }
 
+    def requireAuthorized(authorized, HttpServletResponse response, Object[] args = []) {
+        if (!authorized) {
+            renderErrorFormat(response,
+                              [
+                                      status: HttpServletResponse.SC_FORBIDDEN,
+                                      code  : "api.error.item.unauthorized",
+                                      args  : args
+                              ]
+            )
+        }
+        return authorized
+    }
+
     def renderErrorText(messages, String code=null){
         if (!messages) {
             return messageSource.getMessage("api.error.unknown", null, null)
