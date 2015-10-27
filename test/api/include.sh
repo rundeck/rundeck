@@ -12,6 +12,13 @@ fail(){
     errorMsg "FAIL: $@"
     exit 2
 }
+test_begin(){
+    local msg=$1
+    echo "Test: $msg $ENDPOINT"
+}
+test_succeed(){
+    echo "OK"
+}
 assert(){
     # assert expected, actual
     if [ "$1" != "$2" ] ; then
@@ -78,6 +85,26 @@ shift
 
 APIURL="${RDURL}/api/${API_VERSION}"
 CUR_APIURL="${RDURL}/api/${API_CURRENT_VERSION}"
+
+
+api_request(){
+    local ENDPOINT=$1
+    local FILE=$2
+    local H_ACCEPT=
+    if [ -n "$ACCEPT" ] ; then
+        H_ACCEPT="-H accept:$ACCEPT"
+    fi
+    local H_REQUEST_TYPE=
+    if [ -n "$TYPE" ] ; then
+        H_REQUEST_TYPE="-H content-type:$TYPE"
+    fi
+    # get listing
+    docurl $H_ACCEPT $H_REQUEST_TYPE ${ENDPOINT}?${PARAMS} > $FILE
+    if [ 0 != $? ] ; then
+        fail "ERROR: failed query request"
+    fi
+}
+
 
 ##
 # utilities for testing http responses
