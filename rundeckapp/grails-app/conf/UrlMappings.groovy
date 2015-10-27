@@ -53,6 +53,11 @@ class UrlMappings {
             action = [GET: 'apiJobExecutions', DELETE: 'apiJobExecutionsDelete', POST: 'apiJobRun']
         }
         "/api/$api_version/jobs/delete"(controller: 'scheduledExecution', action: 'apiJobDeleteBulk')
+
+        "/api/$api_version/jobs/scm/$integration/status"(controller: 'scm', action: 'apiJobStatus')
+        "/api/$api_version/jobs/scm/$integration/actions"(controller: 'scm', action: 'apiJobActions')
+        "/api/$api_version/jobs/scm/$integration/action/$actionId"(controller: 'scm', action: 'apiJobAction')
+
         "/api/$api_version/project/$project/executions/running"(controller: 'menu', action: 'apiExecutionsRunningv14')
         "/api/$api_version/project/$project/executions"(controller: 'execution', action: 'apiExecutionsQueryv14')
         "/api/$api_version/project/$project/jobs/export"(controller: 'menu', action: 'apiJobsExportv14')
@@ -88,6 +93,16 @@ class UrlMappings {
         "/api/$api_version/project/$project/run/script"(controller: 'scheduledExecution', action: 'apiRunScriptv14')
         "/api/$api_version/project/$project/run/url"(controller: 'scheduledExecution', action: 'apiRunScriptUrl14')
         "/api/$api_version/project/$project/history"(controller: 'reports', action: 'apiHistoryv14')
+
+        "/api/$api_version/project/$project/scm/$integration/plugins"(controller: 'scm', action: 'apiPlugins')
+        "/api/$api_version/project/$project/scm/$integration/plugin/$type/input"(controller: 'scm', action: 'apiPluginInputs')
+        "/api/$api_version/project/$project/scm/$integration/plugin/$type/setup"(controller: 'scm', action: 'apiProjectSetup')
+        "/api/$api_version/project/$project/scm/$integration/enable"(controller: 'scm', action: 'apiProjectEnable')
+        "/api/$api_version/project/$project/scm/$integration/disable"(controller: 'scm', action: 'apiProjectDisable')
+        "/api/$api_version/project/$project/scm/$integration/status"(controller: 'scm', action: 'apiProjectStatus')
+        "/api/$api_version/project/$project/scm/$integration/config"(controller: 'scm', action: 'apiProjectConfig')
+        "/api/$api_version/project/$project/scm/$integration/actions"(controller: 'scm', action: 'apiProjectActions')
+        "/api/$api_version/project/$project/scm/$integration/action/$actionId"(controller: 'scm', action: 'apiProjectAction')
 
         "/api/$api_version/projects"(controller: 'project'){
             action = [GET: 'apiProjectList', POST:'apiProjectCreate']

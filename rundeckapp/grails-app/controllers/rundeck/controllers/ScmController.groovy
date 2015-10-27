@@ -1,23 +1,113 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.scm.ScmIntegrationRequest
+import com.dtolabs.rundeck.app.api.scm.ScmPluginConfig
+import com.dtolabs.rundeck.app.api.scm.ScmPluginDescription
+import com.dtolabs.rundeck.app.api.scm.ScmPluginInputField
+import com.dtolabs.rundeck.app.api.scm.ScmPluginInputs
+import com.dtolabs.rundeck.app.api.scm.ScmPluginList
+import com.dtolabs.rundeck.app.api.scm.ScmPluginTypeRequest
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.plugins.scm.SynchState
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import rundeck.ScheduledExecution
+import rundeck.filters.ApiRequestFilters
 
 import javax.servlet.http.HttpServletResponse
 
 class ScmController extends ControllerBase {
     def scmService
     def frameworkService
+    def apiService
 
     def static allowedMethods = [
             disable: ['POST'],
             enable: ['POST'],
             performActionSubmit: ['POST'],
-    ]
 
+            apiPlugins:['GET'],
+            apiPluginInputs:['GET'],
+
+            apiProjectSetup:['POST'],
+            apiProjectConfig:['GET'],
+            apiProjectStatus:['GET'],
+            apiProjectEnable:['POST'],
+            apiProjectDisable:['POST'],
+            apiProjectActions:['GET'],
+            apiProjectAction:['POST'],
+
+
+            apiJobStatus:['GET'],
+            apiJobActions:['GET'],
+            apiJobAction:['POST'],
+    ]
+    /**
+     * Require API v15 for all API endpoints
+     */
+    def beforeInterceptor= {
+        if (actionName.startsWith('api')) {
+            if(!apiService.requireVersion(request,response,ApiRequestFilters.V15)){
+                return false
+            }
+        }
+    }
+    private validateCommandInput(Object input){
+        if (input.hasErrors()) {
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'api.error.invalid.request',
+                    args: [input.errors.allErrors.collect { g.message(error: it) }.join(",")]
+            ])
+            return false
+        }
+        return true
+    }
+
+    def apiPlugins(ScmIntegrationRequest scm) {
+        if (!validateCommandInput(scm)) {
+           return
+        }
+        def plugins = scmService.listPlugins(scm.integration)
+        ScmPluginList list = new ScmPluginList(integration: scm.integration)
+        list.plugins= plugins.collect { k, DescribedPlugin describedPlugin ->
+            new ScmPluginDescription(
+                    type: describedPlugin.name,
+                    title: describedPlugin.description.title,
+                    description: describedPlugin.description.description
+            )
+//            def props = scmService.getSetupProperties(scm.integration, scm.project, describedPlugin.name)
+//            configs<<[type:describedPlugin.name,props:props]
+        }
+
+        respond list,[formats:['xml','json']]
+    }
+
+    def apiPluginInputs(ScmPluginTypeRequest scm) {
+        if (!validateCommandInput(scm)) {
+            return
+        }
+        def properties = scmService.getSetupProperties(scm.integration, scm.project, scm.type).collect{Property prop->
+            def field = new ScmPluginInputField(
+                    name: prop.name,
+                    title: prop.title,
+                    type: prop.type.toString(),
+                    defaultValue: prop.defaultValue,
+                    description: prop.description,
+                    required: prop.required,
+                    scope: prop.scope?.toString() ?: null,
+                    renderingOptions: prop.renderingOptions.collectEntries { k, v -> [(k): v.toString()] }
+            )
+            if (prop.type in ([Property.Type.Select,Property.Type.FreeSelect])) {
+                field.values=prop.selectValues
+            }
+            field
+        }
+
+        respond(new ScmPluginInputs(type: scm.type, integration: scm.integration, inputs: properties), [formats: ['xml', 'json']])
+    }
     def index(String project) {
         def ePluginConfig = scmService.loadScmConfig(project, 'export')
         def iPluginConfig = scmService.loadScmConfig(project, 'import')
@@ -135,6 +225,54 @@ class ScmController extends ControllerBase {
         } else {
             flash.message = message(code: 'scmController.action.setup.success.message')
             redirect(action: 'index', params: [project: project])
+        }
+    }
+
+    def apiProjectSetup(ScmPluginTypeRequest scm, ScmPluginConfig config) {
+        if (!validateCommandInput(scm)) {
+            return
+        }
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                session.subject,
+                scm.project
+        )
+
+        if (!apiService.requireAuthorized(
+                frameworkService.authorizeApplicationResourceAll(
+                        authContext,
+                        frameworkService.authResourceForProject(scm.project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                response,
+                [AuthConstants.ACTION_CONFIGURE, "Project", scm.project]
+        )) {
+            return
+        }
+        def configData = config.config
+
+
+        def result = scmService.savePluginSetup(authContext, scm.integration, scm.project, scm.type, configData)
+        def report
+        if (result.error || !result.valid) {
+            report = result.report
+            String errorMessage = result.error ? result.message : message(code: "some.input.values.were.not.valid")
+            apiService.renderErrorFormat(response,[
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    message: errorMessage
+            ])
+        } else if (result.nextAction) {
+            //redirect to next action
+            String message = message(code: 'scmController.action.setup.success.message')
+            respond(
+                    (Object) [success: true, message: message, nextAction: result.nextAction.id],
+                    [formats: ['xml', 'json']]
+            )
+        } else {
+            String message = message(code: 'scmController.action.setup.success.message')
+            respond(
+                    (Object) [success: true, message: message],
+                    [formats: ['xml', 'json']]
+            )
         }
     }
 
