@@ -47,9 +47,30 @@ If the version number is not included or if the requested version number is unsu
 }
 ~~~~~~~~~~~~~~~~~~~
 
+## Index Links
+
+View the [Index](#index) listing API paths.
+
 ## Changes
 
 Changes introduced by API Version number:
+**Version 15**:
+
+* New Endpoints.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/plugins`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugins] - List SCM plugins for a project.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input] - Get SCM plugin setup inputs.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/setup`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/setup] - Setup SCM for a project.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]plugin/[TYPE]/enable`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/enable] - Enable SCM for a project.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]plugin/[TYPE]/disable`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/disable] - Disable SCM for a project.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/status`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/status] - Get SCM status for a project.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/config`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/config] - Get SCM config for a project.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/actions`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/actions] - List SCM actions for a project.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]] - Perform SCM action for a project.
+    
+    - [`/api/15/job/[ID]/scm/[INTEGRATION]/status`][/api/V/job/[ID]/scm/[INTEGRATION]/status] - Get SCM status for a Job.
+    - [`/api/15/job/[ID]/scm/[INTEGRATION]/actions`][/api/V/job/[ID]/scm/[INTEGRATION]/actions] - List SCM actions for a Job.
+    - [`/api/15/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]`][/api/V/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]] - Perform SCM action for a Job.
+    
 
 **Version 14**:
 

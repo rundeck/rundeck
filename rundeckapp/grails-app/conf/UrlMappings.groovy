@@ -52,11 +52,14 @@ class UrlMappings {
         "/api/$api_version/job/$id/executions"(controller: 'scheduledExecution') {
             action = [GET: 'apiJobExecutions', DELETE: 'apiJobExecutionsDelete', POST: 'apiJobRun']
         }
+
+        "/api/$api_version/job/$id/scm/$integration/status"(controller: 'scm', action: 'apiJobStatus')
+        "/api/$api_version/job/$id/scm/$integration/actions"(controller: 'scm', action: 'apiJobActions')
+        "/api/$api_version/job/$id/scm/$integration/action/$actionId/input"(controller: 'scm', action: 'apiJobActionInputs')
+        "/api/$api_version/job/$id/scm/$integration/action/$actionId"(controller: 'scm', action: 'apiJobAction')
+
         "/api/$api_version/jobs/delete"(controller: 'scheduledExecution', action: 'apiJobDeleteBulk')
 
-        "/api/$api_version/jobs/scm/$integration/status"(controller: 'scm', action: 'apiJobStatus')
-        "/api/$api_version/jobs/scm/$integration/actions"(controller: 'scm', action: 'apiJobActions')
-        "/api/$api_version/jobs/scm/$integration/action/$actionId"(controller: 'scm', action: 'apiJobAction')
 
         "/api/$api_version/project/$project/executions/running"(controller: 'menu', action: 'apiExecutionsRunningv14')
         "/api/$api_version/project/$project/executions"(controller: 'execution', action: 'apiExecutionsQueryv14')
@@ -102,6 +105,7 @@ class UrlMappings {
         "/api/$api_version/project/$project/scm/$integration/status"(controller: 'scm', action: 'apiProjectStatus')
         "/api/$api_version/project/$project/scm/$integration/config"(controller: 'scm', action: 'apiProjectConfig')
         "/api/$api_version/project/$project/scm/$integration/actions"(controller: 'scm', action: 'apiProjectActions')
+        "/api/$api_version/project/$project/scm/$integration/action/$actionId/input"(controller: 'scm', action: 'apiProjectActionInput')
         "/api/$api_version/project/$project/scm/$integration/action/$actionId"(controller: 'scm', action: 'apiProjectAction')
 
         "/api/$api_version/projects"(controller: 'project'){
