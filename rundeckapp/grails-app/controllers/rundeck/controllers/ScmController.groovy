@@ -25,43 +25,45 @@ class ScmController extends ControllerBase {
     def apiService
 
     def static allowedMethods = [
-            disable: ['POST'],
-            enable: ['POST'],
+            disable            : ['POST'],
+            enable             : ['POST'],
             performActionSubmit: ['POST'],
 
-            apiPlugins:['GET'],
-            apiPluginInputs:['GET'],
+            apiPlugins         : ['GET'],
+            apiPluginInputs    : ['GET'],
 
-            apiProjectSetup:['POST'],
-            apiProjectConfig:['GET'],
-            apiProjectStatus:['GET'],
-            apiProjectEnable:['POST'],
-            apiProjectDisable:['POST'],
-            apiProjectActions:['GET'],
-            apiProjectAction:['POST'],
+            apiProjectSetup    : ['POST'],
+            apiProjectConfig   : ['GET'],
+            apiProjectStatus   : ['GET'],
+            apiProjectEnable   : ['POST'],
+            apiProjectDisable  : ['POST'],
+            apiProjectActions  : ['GET'],
+            apiProjectAction   : ['POST'],
 
 
-            apiJobStatus:['GET'],
-            apiJobActions:['GET'],
-            apiJobAction:['POST'],
+            apiJobStatus       : ['GET'],
+            apiJobActions      : ['GET'],
+            apiJobAction       : ['POST'],
     ]
     /**
      * Require API v15 for all API endpoints
      */
-    def beforeInterceptor= {
+    def beforeInterceptor = {
         if (actionName.startsWith('api')) {
-            if(!apiService.requireVersion(request,response,ApiRequestFilters.V15)){
+            if (!apiService.requireVersion(request, response, ApiRequestFilters.V15)) {
                 return false
             }
         }
     }
-    private validateCommandInput(Object input){
+
+    private validateCommandInput(Object input) {
         if (input.hasErrors()) {
             apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.invalid.request',
-                    args: [input.errors.allErrors.collect { g.message(error: it) }.join(",")]
-            ])
+                    code  : 'api.error.invalid.request',
+                    args  : [input.errors.allErrors.collect { g.message(error: it) }.join(",")]
+            ]
+            )
             return false
         }
         if(input.hasProperty('project')){
@@ -83,13 +85,14 @@ class ScmController extends ControllerBase {
 
     def apiPlugins(ScmIntegrationRequest scm) {
         if (!validateCommandInput(scm)) {
-           return
+            return
         }
         def plugins = scmService.listPlugins(scm.integration)
         def pluginConfig = scmService.loadScmConfig(scm.project, scm.integration)
         def eEnabled = pluginConfig?.enabled && scmService.projectHasConfiguredPlugin(scm.integration, scm.project)
+
         ScmPluginList list = new ScmPluginList(integration: scm.integration)
-        list.plugins= plugins.collect { k, DescribedPlugin describedPlugin ->
+        list.plugins = plugins.collect { k, DescribedPlugin describedPlugin ->
             new ScmPluginDescription(
                     type: describedPlugin.name,
                     title: describedPlugin.description.title,
@@ -99,7 +102,7 @@ class ScmController extends ControllerBase {
                     )
         }
 
-        respond list,[formats:['xml','json']]
+        respond list, [formats: ['xml', 'json']]
     }
 
     def apiPluginInputs(ScmPluginTypeRequest scm) {
@@ -124,8 +127,12 @@ class ScmController extends ControllerBase {
                     field
                 }
 
-        respond(new ScmPluginInputs(type: scm.type, integration: scm.integration, inputs: properties), [formats: ['xml', 'json']])
+        respond(
+                new ScmPluginInputs(type: scm.type, integration: scm.integration, inputs: properties),
+                [formats: ['xml', 'json']]
+        )
     }
+
     def index(String project) {
         def ePluginConfig = scmService.loadScmConfig(project, 'export')
         def iPluginConfig = scmService.loadScmConfig(project, 'import')
@@ -274,10 +281,11 @@ class ScmController extends ControllerBase {
         if (result.error || !result.valid) {
             report = result.report
             String errorMessage = result.error ? result.message : message(code: "some.input.values.were.not.valid")
-            apiService.renderErrorFormat(response,[
-                    status: HttpServletResponse.SC_BAD_REQUEST,
+            apiService.renderErrorFormat(response, [
+                    status : HttpServletResponse.SC_BAD_REQUEST,
                     message: errorMessage
-            ])
+            ]
+            )
         } else if (result.nextAction) {
             //redirect to next action
             String message = message(code: 'scmController.action.setup.success.message')
