@@ -272,7 +272,25 @@ class ScmController extends ControllerBase {
             redirect(action: 'index', params: [project: project])
         }
     }
+    private def respondActionResult(ScmPluginTypeRequest scm,result,Map messages=[:]){
+        ScmActionResult actionResult
+        def map= [formats: ['xml', 'json'],]
+        if (result.error || !result.valid) {
+            map.status = HttpServletResponse.SC_BAD_REQUEST
 
+            def code = !result.valid ? messages.invalid?:"some.input.values.were.not.valid" :
+                    messages.error?:'some.input.values.were.not.valid'
+            String errorMessage = result.error ? result.message : message(code: code,args: [scm.integration, scm.type])
+
+            actionResult = new ScmActionResult(success: false, message: errorMessage)
+
+            actionResult.validationErrors = result.report?.errors
+        } else {
+            String message = message(code: messages.success?:'scmController.action.setup.success.message',args: [scm.integration, scm.type])
+            actionResult=new ScmActionResult(success: true, message: message, nextAction: result.nextAction?.id)
+        }
+        respond(actionResult, map)
+    }
     def apiProjectSetup() {
         ScmPluginTypeRequest scm = new ScmPluginTypeRequest()
         bindData(scm,params)
@@ -320,28 +338,7 @@ class ScmController extends ControllerBase {
         def configData = config.config
 
         def result = scmService.savePluginSetup(authContext, scm.integration, scm.project, scm.type, configData)
-        def report
-        if (result.error || !result.valid) {
-            report = result.report
-            String errorMessage = result.error ? result.message : message(code: "some.input.values.were.not.valid")
-            apiService.renderErrorFormat(response, [
-                    status : HttpServletResponse.SC_BAD_REQUEST,
-                    message: errorMessage
-            ]
-            )
-        } else if (result.nextAction) {
-            //redirect to next action
-            String message = message(code: 'scmController.action.setup.success.message')
-            respond(
-                    (Object) [success: true, message: message, nextAction: result.nextAction.id],
-                    [formats: ['xml', 'json']]
-            )
-        } else {
-            String message = message(code: 'scmController.action.setup.success.message')
-            respond(
-                    (Object) [success: true, message: message],
-                    [formats: ['xml', 'json']]
-            )
+        respondActionResult(scm,result)
         }
     }
 
