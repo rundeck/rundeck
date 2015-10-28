@@ -72,12 +72,16 @@ class ScmController extends ControllerBase {
            return
         }
         def plugins = scmService.listPlugins(scm.integration)
+        def pluginConfig = scmService.loadScmConfig(scm.project, scm.integration)
+        def eEnabled = pluginConfig?.enabled && scmService.projectHasConfiguredPlugin(scm.integration, scm.project)
         ScmPluginList list = new ScmPluginList(integration: scm.integration)
         list.plugins= plugins.collect { k, DescribedPlugin describedPlugin ->
             new ScmPluginDescription(
                     type: describedPlugin.name,
                     title: describedPlugin.description.title,
                     description: CDataString.from(describedPlugin.description.description),
+                    configured: describedPlugin.name == pluginConfig?.type,
+                    enabled: describedPlugin.name == pluginConfig?.type && eEnabled,
                     )
         }
 

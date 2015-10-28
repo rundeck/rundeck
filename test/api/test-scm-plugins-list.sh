@@ -30,6 +30,8 @@ test_plugins_list_xml(){
 	assert_xml_value $intname '/scmPluginList/integration' $DIR/curl.out
 	assert_xml_value '1' 'count(/scmPluginList/plugins/scmPluginDescription)' $DIR/curl.out
 	assert_xml_value "git-$intname" '/scmPluginList/plugins/scmPluginDescription/type' $DIR/curl.out
+	assert_xml_value "false" '/scmPluginList/plugins/scmPluginDescription/configured' $DIR/curl.out
+	assert_xml_value "false" '/scmPluginList/plugins/scmPluginDescription/enabled' $DIR/curl.out
 
 	test_succeed
 
@@ -67,6 +69,8 @@ test_plugins_list_json(){
 	assert_json_value $intname '.integration' $DIR/curl.out
 	assert_json_value '1' '.plugins | length' $DIR/curl.out
 	assert_json_value "git-$intname" '.plugins[0].type' $DIR/curl.out
+	assert_json_value "false" '.plugins[0].configured' $DIR/curl.out
+	assert_json_value "false" '.plugins[0].enabled' $DIR/curl.out
 
 	test_succeed
 

@@ -9,4 +9,6 @@ class ScmPluginDescription {
     String type
     String title
     CDataString description
+    boolean configured
+    boolean enabled
 }
