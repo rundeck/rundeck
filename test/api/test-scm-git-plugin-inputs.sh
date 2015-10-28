@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #/ Purpose:
-#/   Test the scm plugins list endpoints
+#/   Test the scm plugins inputs endpoints
 #/ 
 
 DIR=$(cd `dirname $0` && pwd)
