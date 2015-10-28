@@ -1,5 +1,6 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.CDataString
 import com.dtolabs.rundeck.app.api.scm.ScmIntegrationRequest
 import com.dtolabs.rundeck.app.api.scm.ScmPluginConfig
 import com.dtolabs.rundeck.app.api.scm.ScmPluginDescription
@@ -76,10 +77,8 @@ class ScmController extends ControllerBase {
             new ScmPluginDescription(
                     type: describedPlugin.name,
                     title: describedPlugin.description.title,
-                    description: describedPlugin.description.description
-            )
-//            def props = scmService.getSetupProperties(scm.integration, scm.project, describedPlugin.name)
-//            configs<<[type:describedPlugin.name,props:props]
+                    description: CDataString.from(describedPlugin.description.description),
+                    )
         }
 
         respond list,[formats:['xml','json']]
@@ -89,22 +88,23 @@ class ScmController extends ControllerBase {
         if (!validateCommandInput(scm)) {
             return
         }
-        def properties = scmService.getSetupProperties(scm.integration, scm.project, scm.type).collect{Property prop->
-            def field = new ScmPluginInputField(
-                    name: prop.name,
-                    title: prop.title,
-                    type: prop.type.toString(),
-                    defaultValue: prop.defaultValue,
-                    description: prop.description,
-                    required: prop.required,
-                    scope: prop.scope?.toString() ?: null,
-                    renderingOptions: prop.renderingOptions.collectEntries { k, v -> [(k): v.toString()] }
-            )
-            if (prop.type in ([Property.Type.Select,Property.Type.FreeSelect])) {
-                field.values=prop.selectValues
-            }
-            field
-        }
+        def properties = scmService.getSetupProperties(scm.integration, scm.project, scm.type).
+                collect { Property prop ->
+                    def field = new ScmPluginInputField(
+                            name: prop.name,
+                            title: prop.title,
+                            type: prop.type.toString(),
+                            defaultValue: prop.defaultValue,
+                            description: CDataString.from(prop.description),
+                            required: prop.required,
+                            scope: prop.scope?.toString() ?: null,
+                            renderingOptions: prop.renderingOptions.collectEntries { k, v -> [(k): v.toString()] }
+                    )
+                    if (prop.type in ([Property.Type.Select, Property.Type.FreeSelect])) {
+                        field.values = prop.selectValues
+                    }
+                    field
+                }
 
         respond(new ScmPluginInputs(type: scm.type, integration: scm.integration, inputs: properties), [formats: ['xml', 'json']])
     }
