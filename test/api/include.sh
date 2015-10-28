@@ -98,8 +98,16 @@ api_request(){
     if [ -n "$TYPE" ] ; then
         H_REQUEST_TYPE="-H content-type:$TYPE"
     fi
+    local H_METHOD="-X GET"
+    if [ -n "$METHOD" ] ; then
+        H_METHOD="-X $METHOD"
+    fi
+    local H_UPLOAD=
+    if [ -n "$POSTFILE" ] ; then
+        H_UPLOAD="--data-binary @$POSTFILE"
+    fi
     # get listing
-    docurl $H_ACCEPT $H_REQUEST_TYPE ${ENDPOINT}?${PARAMS} > $FILE
+    docurl $H_METHOD $H_UPLOAD $H_ACCEPT $H_REQUEST_TYPE ${ENDPOINT}?${PARAMS} > $FILE
     if [ 0 != $? ] ; then
         fail "ERROR: failed query request"
     fi
