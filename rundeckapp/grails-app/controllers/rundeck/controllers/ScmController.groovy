@@ -64,6 +64,20 @@ class ScmController extends ControllerBase {
             ])
             return false
         }
+        if(input.hasProperty('project')){
+            //verify project exists
+            def project=input.project
+            if(!frameworkService.existsFrameworkProject(project)){
+
+                apiService.renderErrorFormat(response, [
+                        status: HttpServletResponse.SC_NOT_FOUND,
+                        code  : 'api.error.item.doesnotexist',
+                        args  : ["Project",project]
+                ]
+                )
+                return false
+            }
+        }
         return true
     }
 
