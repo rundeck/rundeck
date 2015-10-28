@@ -82,6 +82,25 @@ class ScmController extends ControllerBase {
         }
         return true
     }
+    private UserAndRolesAuthContext apiAuthorize(ScmIntegrationRequest scm, String action){
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                session.subject,
+                scm.project
+        )
+
+        if (!apiService.requireAuthorized(
+                frameworkService.authorizeApplicationResourceAll(
+                        authContext,
+                        frameworkService.authResourceForProject(scm.project),
+                        [action, AuthConstants.ACTION_ADMIN]
+                ),
+                response,
+                [action, "Project", scm.project]
+        )) {
+            return null
+        }
+        return authContext
+    }
 
     def apiPlugins(ScmIntegrationRequest scm) {
         if (!validateCommandInput(scm)) {
@@ -257,20 +276,9 @@ class ScmController extends ControllerBase {
         if (!validateCommandInput(scm)) {
             return
         }
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
-                session.subject,
-                scm.project
-        )
 
-        if (!apiService.requireAuthorized(
-                frameworkService.authorizeApplicationResourceAll(
-                        authContext,
-                        frameworkService.authResourceForProject(scm.project),
-                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
-                ),
-                response,
-                [AuthConstants.ACTION_CONFIGURE, "Project", scm.project]
-        )) {
+        def authContext = apiAuthorize(scm, AuthConstants.ACTION_CONFIGURE)
+        if(!authContext){
             return
         }
         def configData = config.config
