@@ -107,10 +107,18 @@ api_request(){
         H_UPLOAD="--data-binary @$POSTFILE"
     fi
     # get listing
-    docurl $H_METHOD $H_UPLOAD $H_ACCEPT $H_REQUEST_TYPE ${ENDPOINT}?${PARAMS} > $FILE
+    docurl -D $DIR/headers.out $H_METHOD $H_UPLOAD $H_ACCEPT $H_REQUEST_TYPE ${ENDPOINT}?${PARAMS} > $FILE
     if [ 0 != $? ] ; then
         fail "ERROR: failed query request"
     fi
+    
+    assert_http_status ${EXPECT_STATUS:-200} $DIR/headers.out
+    METHOD=
+    ACCEPT=
+    TYPE=
+    POSTFILE=
+    EXPECT_STATUS=
+    
 }
 
 
@@ -119,7 +127,7 @@ api_request(){
 ##
 
 assert_http_status(){
-    egrep -q "HTTP/1.1 $1" $2
+    egrep -v "HTTP/1.1 100" $2 | egrep -q "HTTP/1.1 $1"
     if [ 0 != $? ] ; then
         errorMsg "ERROR: Expected $1 result"
         egrep 'HTTP/1.1' $2
