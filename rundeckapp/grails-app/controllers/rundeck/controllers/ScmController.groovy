@@ -1,6 +1,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.CDataString
+import com.dtolabs.rundeck.app.api.scm.ScmActionResult
 import com.dtolabs.rundeck.app.api.scm.ScmIntegrationRequest
 import com.dtolabs.rundeck.app.api.scm.ScmPluginConfig
 import com.dtolabs.rundeck.app.api.scm.ScmPluginDescription
@@ -272,7 +273,9 @@ class ScmController extends ControllerBase {
         }
     }
 
-    def apiProjectSetup(ScmPluginTypeRequest scm, ScmPluginConfig config) {
+    def apiProjectSetup() {
+        ScmPluginTypeRequest scm = new ScmPluginTypeRequest()
+        bindData(scm,params)
         if (!validateCommandInput(scm)) {
             return
         }
@@ -281,8 +284,40 @@ class ScmController extends ControllerBase {
         if(!authContext){
             return
         }
-        def configData = config.config
+        ScmPluginConfig config = new ScmPluginConfig()
+        String errormsg=''
+        apiService.parseJsonXmlWith(request,response,[
+                json:{data->
+                    config.config=data.config
+                    if(!data.config) {
+                        errormsg += " json: expected 'config' property"
+                    }
+                },
+                xml:{xml->
+                    def data=[:]
+                    xml?.config?.entry?.each{
+                        data[it.'@key'.text()]= it.text()
+                    }
+                    if (!data) {
+                        errormsg += " xml: expected 'config' element: ${xml.config}"
+                    }else{
+                        config.config=data
+                    }
+                }
+        ])
 
+        if (null==config.config) {
+            return respond(
+                    new ScmActionResult(success: false, message: errormsg?:'Invalid format'),
+                    [
+                            formats: ['xml', 'json'],
+                            status:HttpServletResponse.SC_BAD_REQUEST
+                    ]
+            )
+        }
+
+        //attempt to bind document body
+        def configData = config.config
 
         def result = scmService.savePluginSetup(authContext, scm.integration, scm.project, scm.type, configData)
         def report
