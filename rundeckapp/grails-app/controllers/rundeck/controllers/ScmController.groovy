@@ -67,15 +67,15 @@ class ScmController extends ControllerBase {
             )
             return false
         }
-        if(input.hasProperty('project')){
+        if (input.hasProperty('project')) {
             //verify project exists
-            def project=input.project
-            if(!frameworkService.existsFrameworkProject(project)){
+            def project = input.project
+            if (!frameworkService.existsFrameworkProject(project)) {
 
                 apiService.renderErrorFormat(response, [
                         status: HttpServletResponse.SC_NOT_FOUND,
                         code  : 'api.error.item.doesnotexist',
-                        args  : ["Project",project]
+                        args  : ["Project", project]
                 ]
                 )
                 return false
@@ -83,7 +83,8 @@ class ScmController extends ControllerBase {
         }
         return true
     }
-    private UserAndRolesAuthContext apiAuthorize(ScmIntegrationRequest scm, String action){
+
+    private UserAndRolesAuthContext apiAuthorize(ScmIntegrationRequest scm, String action) {
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
                 session.subject,
                 scm.project
@@ -277,64 +278,74 @@ class ScmController extends ControllerBase {
             redirect(action: 'index', params: [project: project])
         }
     }
-    private def respondActionResult(ScmPluginTypeRequest scm,result,Map messages=[:]){
+
+    private def respondActionResult(ScmPluginTypeRequest scm, result, Map messages = [:]) {
         ScmActionResult actionResult
-        def map= [formats: ['xml', 'json'],]
+        def map = [formats: ['xml', 'json'],]
         if (result.error || !result.valid) {
             map.status = HttpServletResponse.SC_BAD_REQUEST
 
-            def code = !result.valid ? messages.invalid?:"some.input.values.were.not.valid" :
-                    messages.error?:'some.input.values.were.not.valid'
-            String errorMessage = result.error ? result.message : message(code: code,args: [scm.integration, scm.type])
+            def code = !result.valid ? messages.invalid ?: "some.input.values.were.not.valid" :
+                    messages.error ?: 'some.input.values.were.not.valid'
+            String errorMessage = result.error ? result.message : message(code: code, args: [scm.integration, scm.type])
 
             actionResult = new ScmActionResult(success: false, message: errorMessage)
 
             actionResult.validationErrors = result.report?.errors
         } else {
-            String message = message(code: messages.success?:'scmController.action.setup.success.message',args: [scm.integration, scm.type])
-            actionResult=new ScmActionResult(success: true, message: message, nextAction: result.nextAction?.id)
+            String message = message(
+                    code: messages.success ?: 'scmController.action.setup.success.message',
+                    args: [scm.integration, scm.type]
+            )
+            actionResult = new ScmActionResult(success: true, message: message, nextAction: result.nextAction?.id)
         }
         respond(actionResult, map)
     }
+    /**
+     * /api/15/project/$project/scm/$integration/plugin/$type/setup
+     * @param scm
+     * @return
+     */
     def apiProjectSetup() {
         ScmPluginTypeRequest scm = new ScmPluginTypeRequest()
-        bindData(scm,params)
+        bindData(scm, params)
         if (!validateCommandInput(scm)) {
             return
         }
 
         def authContext = apiAuthorize(scm, AuthConstants.ACTION_CONFIGURE)
-        if(!authContext){
+        if (!authContext) {
             return
         }
         ScmPluginConfig config = new ScmPluginConfig()
-        String errormsg=''
-        apiService.parseJsonXmlWith(request,response,[
-                json:{data->
-                    config.config=data.config
-                    if(!data.config) {
+        String errormsg = ''
+        apiService.parseJsonXmlWith(request, response, [
+                json: { data ->
+                    config.config = data.config
+                    if (!data.config) {
                         errormsg += " json: expected 'config' property"
                     }
                 },
-                xml:{xml->
-                    def data=[:]
-                    xml?.config?.entry?.each{
-                        data[it.'@key'.text()]= it.text()
+                xml : { xml ->
+                    def data = [:]
+                    xml?.config?.entry?.each {
+                        data[it.'@key'.text()] = it.text()
                     }
                     if (!data) {
                         errormsg += " xml: expected 'config' element: ${xml.config}"
-                    }else{
-                        config.config=data
+                    } else {
+                        config.config = data
                     }
                 }
-        ])
+        ]
+        )
 
-        if (null==config.config) {
+        if (null == config.config) {
             return respond(
-                    new ScmActionResult(success: false, message: errormsg?:'Invalid format'),
+                    new ScmActionResult(success: false, message: errormsg ?: 'Invalid format'),
                     [
                             formats: ['xml', 'json'],
-                            status:HttpServletResponse.SC_BAD_REQUEST
+                            status : HttpServletResponse.SC_BAD_REQUEST
                     ]
             )
         }
@@ -343,7 +354,7 @@ class ScmController extends ControllerBase {
         def configData = config.config
 
         def result = scmService.savePluginSetup(authContext, scm.integration, scm.project, scm.type, configData)
-        respondActionResult(scm,result)
+        respondActionResult(scm, result)
     }
     /**
      * /api/15/project/$project/scm/$integration/plugin/$type/disable
