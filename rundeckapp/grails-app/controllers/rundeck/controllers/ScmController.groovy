@@ -339,7 +339,58 @@ class ScmController extends ControllerBase {
 
         def result = scmService.savePluginSetup(authContext, scm.integration, scm.project, scm.type, configData)
         respondActionResult(scm,result)
+    }
+    /**
+     * /api/15/project/$project/scm/$integration/plugin/$type/disable
+     * @param scm
+     * @return
+     */
+    def apiProjectDisable(ScmPluginTypeRequest scm) {
+        if (!scm.project) {
+            bindData(scm, params)
         }
+        if (!validateCommandInput(scm)) {
+            return
+        }
+        if (!apiAuthorize(scm, AuthConstants.ACTION_CONFIGURE)) {
+            return
+        }
+
+        scmService.disablePlugin(scm.integration, scm.project, scm.type)
+
+        def message = message(code: "scmController.action.disable.success.message", args: [scm.integration, scm.type])
+        respond(
+                new ScmActionResult(success: true, message: message),
+                [formats: ['xml', 'json']]
+        )
+    }
+
+    /**
+     * /api/15/project/$project/scm/$integration/plugin/$type/enable
+     * @param scm
+     * @return
+     */
+    def apiProjectEnable(ScmPluginTypeRequest scm) {
+
+        if (!scm.project) {
+            bindData(scm, params)
+        }
+        if (!validateCommandInput(scm)) {
+            return
+        }
+
+        def auth = apiAuthorize(scm, AuthConstants.ACTION_CONFIGURE)
+        if (!auth) {
+            return
+        }
+
+        def result = scmService.enablePlugin(auth, scm.integration, scm.project, scm.type)
+        respondActionResult(scm, result, [
+                invalid: 'scmController.action.enable.invalid.message',
+                error  : 'scmController.action.enable.error.message',
+                success: 'scmController.action.enable.success.message'
+        ]
+        )
     }
 
     def disable(String integration, String project, String type) {
