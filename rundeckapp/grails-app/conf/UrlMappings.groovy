@@ -95,7 +95,7 @@ class UrlMappings {
         "/api/$api_version/project/$project/history"(controller: 'reports', action: 'apiHistoryv14')
 
         "/api/$api_version/project/$project/scm/$integration/plugins"(controller: 'scm', action: 'apiPlugins')
-        "/api/$api_version/project/$project/scm/$integration/plugin/$type/input"(controller: 'scm', action: 'apiPluginInputs')
+        "/api/$api_version/project/$project/scm/$integration/plugin/$type/input"(controller: 'scm', action: 'apiPluginInput')
         "/api/$api_version/project/$project/scm/$integration/plugin/$type/setup"(controller: 'scm', action: 'apiProjectSetup')
         "/api/$api_version/project/$project/scm/$integration/plugin/$type/enable"(controller: 'scm', action: 'apiProjectEnable')
         "/api/$api_version/project/$project/scm/$integration/plugin/$type/disable"(controller: 'scm', action: 'apiProjectDisable')

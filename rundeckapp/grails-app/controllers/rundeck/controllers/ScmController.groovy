@@ -31,7 +31,7 @@ class ScmController extends ControllerBase {
             performActionSubmit: ['POST'],
 
             apiPlugins         : ['GET'],
-            apiPluginInputs    : ['GET'],
+            apiPluginInput     : ['GET'],
 
             apiProjectSetup    : ['POST'],
             apiProjectConfig   : ['GET'],
@@ -125,7 +125,12 @@ class ScmController extends ControllerBase {
         respond list, [formats: ['xml', 'json']]
     }
 
-    def apiPluginInputs(ScmPluginTypeRequest scm) {
+    /**
+     * /api/15/project/$project/scm/$integration/plugin/$type/input
+     * @param scm
+     * @return
+     */
+    def apiPluginInput(ScmPluginTypeRequest scm) {
         if (!validateCommandInput(scm)) {
             return
         }
