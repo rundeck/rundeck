@@ -150,7 +150,7 @@ assert_xml_valid(){
 # assert_xml_value 'value' 'xpath' $file
 ##
 assert_xml_value(){
-    value=$($XMLSTARLET sel -T -t -v "$2" $3)
+    local value=$($XMLSTARLET sel -T -t -v "$2" $3)
     if [ $? != 0 -a -n "$1" ] ; then
         errorMsg "xmlstarlet failed: $!: $value, for $1 $2 $3"
         exit 2
@@ -161,7 +161,7 @@ assert_xml_value(){
     fi
 }
 assert_xml_notblank(){
-    value=$($XMLSTARLET sel -T -t -v "$1" $2)
+    local value=$($XMLSTARLET sel -T -t -v "$1" $2)
     if [ $? != 0 ] ; then
         errorMsg "Expected value for XPath $1, but select failed: $! (in file $2)"
         exit 2
@@ -176,18 +176,18 @@ assert_xml_notblank(){
 # assert_json_value 'value' 'jsonquery' $file
 ## 
 assert_json_value(){
-    JQ=`which jq`
+    local JQ=`which jq`
 
     if [ -z "$JQ" ] ; then
         errorMsg "FAIL: Can't test JSON format, install jq"
         exit 2
     fi
-    propval=$($JQ -r "$2" < $3 )
+    local propval=$($JQ -r "$2" < $3 )
     if [ $? != 0 ] ; then
         errorMsg "Json query invalid: $2: $!"
         exit 2
     fi
-    expval=$(echo "$1")
+    local expval=$(echo "$1")
     if [ "$expval" != "$propval" ] ; then
         errorMsg "Json query $2 wrong value, expected '$1' was $propval (in file $3)"
         exit 2
@@ -199,13 +199,13 @@ assert_json_value(){
 # assert_json_null  'jsonquery' $file
 ##
 assert_json_null(){
-    JQ=`which jq`
+    local JQ=`which jq`
 
     if [ -z "$JQ" ] ; then
         errorMsg "FAIL: Can't test JSON format, install jq"
         exit 2
     fi
-    propval=$($JQ  "$1" < $2 )
+    local propval=$($JQ  "$1" < $2 )
     if [ $? != 0 ] ; then
         errorMsg "Json query invalid: $1: $!"
         exit 2
@@ -219,13 +219,13 @@ assert_json_null(){
 # assert_json_not_null  'jsonquery' $file
 ##
 assert_json_not_null(){
-    JQ=`which jq`
+    local JQ=`which jq`
 
     if [ -z "$JQ" ] ; then
         errorMsg "FAIL: Can't test JSON format, install jq"
         exit 2
     fi
-    propval=$($JQ  "$1" < $2 )
+    local propval=$($JQ  "$1" < $2 )
     if [ $? != 0 ] ; then
         errorMsg "Json query invalid: $1: $!"
         exit 2
