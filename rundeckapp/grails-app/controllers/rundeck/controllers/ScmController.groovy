@@ -91,13 +91,13 @@ class ScmController extends ControllerBase {
         )
 
         if (!apiService.requireAuthorized(
-                frameworkService.authorizeApplicationResourceAll(
+                frameworkService.authorizeApplicationResourceAny(
                         authContext,
                         frameworkService.authResourceForProject(scm.project),
                         [action, AuthConstants.ACTION_ADMIN]
                 ),
                 response,
-                [action, "Project", scm.project]
+                [action, "Project", scm.project] as Object[]
         )) {
             return null
         }
