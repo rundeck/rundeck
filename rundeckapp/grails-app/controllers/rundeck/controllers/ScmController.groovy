@@ -1,6 +1,8 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.CDataString
+import com.dtolabs.rundeck.app.api.scm.ScmActionInput
+import com.dtolabs.rundeck.app.api.scm.ScmActionRequest
 import com.dtolabs.rundeck.app.api.scm.ScmActionResult
 import com.dtolabs.rundeck.app.api.scm.ScmIntegrationRequest
 import com.dtolabs.rundeck.app.api.scm.ScmPluginConfig
@@ -32,25 +34,25 @@ class ScmController extends ControllerBase {
     def apiService
 
     def static allowedMethods = [
-            disable            : ['POST'],
-            enable             : ['POST'],
-            performActionSubmit: ['POST'],
+            disable              : ['POST'],
+            enable               : ['POST'],
+            performActionSubmit  : ['POST'],
 
-            apiPlugins         : ['GET'],
-            apiPluginInput     : ['GET'],
+            apiPlugins           : ['GET'],
+            apiPluginInput       : ['GET'],
 
-            apiProjectSetup    : ['POST'],
-            apiProjectConfig   : ['GET'],
-            apiProjectStatus   : ['GET'],
-            apiProjectEnable   : ['POST'],
-            apiProjectDisable  : ['POST'],
-            apiProjectActions  : ['GET'],
-            apiProjectAction   : ['POST'],
+            apiProjectSetup      : ['POST'],
+            apiProjectConfig     : ['GET'],
+            apiProjectStatus     : ['GET'],
+            apiProjectEnable     : ['POST'],
+            apiProjectDisable    : ['POST'],
+            apiProjectActionInput: ['GET'],
+            apiProjectAction     : ['POST'],
 
 
-            apiJobStatus       : ['GET'],
-            apiJobActions      : ['GET'],
-            apiJobAction       : ['POST'],
+            apiJobStatus         : ['GET'],
+            apiJobActionInput    : ['GET'],
+            apiJobAction         : ['POST'],
     ]
     /**
      * Require API v15 for all API endpoints
@@ -142,22 +144,7 @@ class ScmController extends ControllerBase {
             return
         }
         def properties = scmService.getSetupProperties(scm.integration, scm.project, scm.type).
-                collect { Property prop ->
-                    def field = new ScmPluginInputField(
-                            name: prop.name,
-                            title: prop.title,
-                            type: prop.type.toString(),
-                            defaultValue: prop.defaultValue,
-                            description: CDataString.from(prop.description),
-                            required: prop.required,
-                            scope: prop.scope?.toString() ?: null,
-                            renderingOptions: prop.renderingOptions.collectEntries { k, v -> [(k): v.toString()] }
-                    )
-                    if (prop.type in ([Property.Type.Select, Property.Type.FreeSelect])) {
-                        field.values = prop.selectValues
-                    }
-                    field
-                }
+                collect { Property prop -> fieldBeanForProperty(prop) }
 
         respond(
                 new ScmPluginInputs(type: scm.type, integration: scm.integration, inputs: properties),
@@ -624,6 +611,69 @@ class ScmController extends ControllerBase {
 
     }
 
+    /**
+     * /api/15/project/$project/scm/$integration/action/$actionId/input
+     * list inputs for action
+     */
+    def apiProjectActionInput(ScmActionRequest scm) {
+        if (!validateCommandInput(scm)) {
+            return
+        }
+
+        def action = scm.integration == 'export' ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
+        def auth = apiAuthorize(scm, action)
+        if (!auth) {
+            return
+        }
+
+
+        def view = scmService.getInputView(auth, scm.integration, scm.project, scm.actionId)
+        if (!view) {
+            return respond(
+                    new ScmActionResult(
+                            success: false,
+                            message: message(
+                                    code: "scm.not.a.valid.action.actionid",
+                                    args: [scm.actionId, scm.integration, scm.project]
+                            )
+                    ),
+                    [
+                            formats: ['xml', 'json'],
+                            status : HttpServletResponse.SC_NOT_FOUND
+                    ]
+            )
+        }
+        def properties = view.properties.collect(this.&fieldBeanForProperty)
+
+        respond(
+                new ScmActionInput(
+                        actionId: scm.actionId,
+                        integration: scm.integration,
+                        inputs: properties,
+                        title: view.title,
+                        description: CDataString.from(view.description)
+                ),
+                [formats: ['xml', 'json']]
+        )
+
+    }
+
+    private ScmPluginInputField fieldBeanForProperty(Property prop) {
+        def field = new ScmPluginInputField(
+                name: prop.name,
+                title: prop.title,
+                type: prop.type.toString(),
+                defaultValue: prop.defaultValue,
+                description: CDataString.from(prop.description),
+                required: prop.required,
+                scope: prop.scope?.toString() ?: null,
+                renderingOptions: prop.renderingOptions.collectEntries { k, v -> [(k): v.toString()] }
+        )
+        if (prop.type in ([Property.Type.Select, Property.Type.FreeSelect])) {
+            field.values = prop.selectValues
+        }
+        field
+    }
 
     def performAction(String integration, String project, String actionId) {
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
@@ -649,7 +699,7 @@ class ScmController extends ControllerBase {
         def view = scmService.getInputView(authContext, integration, project, actionId)
         if (!view) {
             response.status = HttpServletResponse.SC_NOT_FOUND
-            renderErrorView("Not a valid action: ${actionId}")
+            renderErrorView(message(code: "scm.not.a.valid.action.actionid", args: [actionId, integration, project]))
         }
         List<String> jobIds = []
         Map deletedPaths = [:]

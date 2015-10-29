@@ -64,7 +64,7 @@ Changes introduced by API Version number:
     - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/disable`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/disable] - Disable SCM for a project.
     - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/status`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/status] - Get SCM status for a project.
     - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/config`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/config] - Get SCM config for a project.
-    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/actions`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/actions] - List SCM actions for a project.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]/input`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]/input] - Get Project SCM Action Input Fields.
     - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]] - Perform SCM action for a project.
     
     - [`/api/15/job/[ID]/scm/[INTEGRATION]/status`][/api/V/job/[ID]/scm/[INTEGRATION]/status] - Get SCM status for a Job.
@@ -4239,7 +4239,7 @@ If the result is successul:
 
 If a follow-up **Action** is expected to be called, the action ID will be identified by the `nextAction` value.
 
-See [List Project SCM Actions](#list-project-scm-actions).
+See [Get Project SCM Status](#get-project-scm-status).
 
 ### Enable SCM Plugin for a Project
 
@@ -4388,23 +4388,47 @@ Otherwise the response contains:
 }
 ~~~~~~~~~~
 
-### List Project SCM Actions
+### Get Project SCM Action Input Fields
+
+Get the input fields for a specific action.
 
 **Request**
 
-    GET /api/15/project/[PROJECT]/scm/[INTEGRATION]/actions
+    GET /api/15/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]/input
 
 **Response**
 
-
 `Content-Type: application/xml`:
 
+The content of `<scmPluginInputField>` is the same as shown in [Get SCM Plugin Input Fields](#get-scm-plugin-input-fields).
+
 ~~~~~~~~~~ {.xml}
+<scmActionInput>
+  <actionId>$actionId</actionId>
+  <description />
+  <inputs>
+    <scmPluginInputField>...</scmPluginInputField>
+  </inputs>
+  <integration>$integration</integration>
+  <title>$string</title>
+</scmActionInput>
 ~~~~~~~~~~
 
 `Content-Type: application/json`:
 
+The content of `"inputs"` array is the same as shown in [Get SCM Plugin Input Fields](#get-scm-plugin-input-fields).
+
 ~~~~~~~~~~ {.json}
+{
+  "actionId": "$actionId",
+  "description": "$string",
+  "inputs": [
+    { "name": ...
+    }
+  ],
+  "integration": "$integration",
+  "title": "$string"
+}
 ~~~~~~~~~~
 
 ### Perform Project SCM Action
@@ -4445,7 +4469,7 @@ Otherwise the response contains:
 ~~~~~~~~~~ {.json}
 ~~~~~~~~~~
 
-### List Job SCM Actions
+### Get Job SCM Action Input Fields
 
 **Request**
 
@@ -4667,13 +4691,13 @@ Otherwise the response contains:
 
 * `GET` [Get SCM config for a project.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/config]]
 
-[/api/V/project/[PROJECT]/scm/[INTEGRATION]/actions][]
-
-* `GET` [List SCM actions for a project.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/actions]
-
 [/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]][]
 
 * `POST` [Perform SCM action for a project.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]]
+
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]/input][]
+
+* `GET` [Get Project SCM Action Input Fields.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]/input]
 
 [/api/V/projects][]
 
@@ -4733,8 +4757,8 @@ Otherwise the response contains:
 [/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/disable]:#disable-scm-plugin-for-a-project
 [/api/V/project/[PROJECT]/scm/[INTEGRATION]/status]:#get-project-scm-status
 [/api/V/project/[PROJECT]/scm/[INTEGRATION]/config]:#get-project-scm-config
-[/api/V/project/[PROJECT]/scm/[INTEGRATION]/actions]:#list-project-scm-actions
 [/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]]:#perform-project-scm-action
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]/input]:#get-project-scm-action-input-fields
 [/api/V/job/[ID]/scm/[INTEGRATION]/status]:#get-job-scm-status
 [/api/V/job/[ID]/scm/[INTEGRATION]/actions]:#list-job-scm-actions
 [/api/V/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]]:#perform-job-scm-action
