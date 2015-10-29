@@ -60,8 +60,8 @@ Changes introduced by API Version number:
     - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/plugins`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugins] - List SCM plugins for a project.
     - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input] - Get SCM plugin setup inputs.
     - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/setup`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/setup] - Setup SCM for a project.
-    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]plugin/[TYPE]/enable`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/enable] - Enable SCM for a project.
-    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]plugin/[TYPE]/disable`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/disable] - Disable SCM for a project.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/enable`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/enable] - Enable SCM for a project.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/disable`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/disable] - Disable SCM for a project.
     - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/status`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/status] - Get SCM status for a project.
     - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/config`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/config] - Get SCM config for a project.
     - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/actions`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/actions] - List SCM actions for a project.
@@ -3985,6 +3985,424 @@ If request was JSON, then the following JSON:
     }
 ~~~~~~~~~~
 
+## SCM
+
+Rundeck SCM Plugins can be used to synchronize Job definitions with an external Source Control Management repository.
+
+Currently Rundeck includes a single built-in plugin for Git repositories.
+
+There are two "integration" types of SCM Plugins: `import` and `export`, and they are managed separately.
+
+A Project can be configured with a single Import and Export plugin.  After setting up these plugins, Project and Job level "status" can be read.  Changes to Jobs within a project affect the status for Import or Export.
+
+Plugins provide "actions" which are available based on the Project or Job status.  For example, a plugin can provide a "commit" action for a Job, which allows a user to save the changes for the job.
+
+The specific actions, and their behaviors depend on the plugin.  The actions can be listed and performed via the API.
+
+### List SCM Plugins
+
+Lists the available plugins for the specified integration.  Each plugin is identified by a `type` name.
+
+**Request**
+
+    GET /api/15/project/[PROJECT]/scm/[INTEGRATION]/plugins
+
+**Response**
+
+A list of plugin description.
+
+Each plugin has these properties:
+
+* `type` identifier for the plugin
+* `configured` true/false whether a configuration is stored for the plugin
+* `enabled` true/false whether the plugin is enabled
+* `title` display title for the plugin
+* `description` descriptive text for the plugin
+
+
+* `Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+<scmPluginList>
+  <integration>[$integration]</integration>
+  <plugins>
+    <scmPluginDescription>
+      <configured>[$boolean]</configured>
+      <description>[$string]</description>
+      <enabled>[$boolean]</enabled>
+      <title>[$string]</title>
+      <type>[$type]</type>
+    </scmPluginDescription>
+  </plugins>
+</scmPluginList>
+~~~~~~~~~~
+
+* `Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+{
+  "integration": "$integration",
+  "plugins": [
+    {
+      "configured": $boolean,
+      "description": "$string",
+      "enabled": $boolean,
+      "title": "$string",
+      "type": "$type"
+    }
+  ]
+}
+~~~~~~~~~~
+
+
+### Get SCM Plugin Input Fields
+
+List the input fields for a specific plugin.  The `integration` and `type` must be specified.
+
+The response will list each input field.
+
+**Request**
+
+    GET /api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input
+
+**Response**
+
+Input fields have a number of properties:
+
+* `name` identifier for the field, used when submitting the input values.
+* `defaultValue` a default value if the input does not specify one
+* `description` textual description
+* `renderOptions` a key/value map of options, such as declaring that GUI display the input as a password field.
+* `required` true/false whether the input is required
+* `scope` 
+* `title` display title for the field
+* `type` data type of the field: `String`, `Integer`, `Select` (multi-value), `FreeSelect` (open-ended multi-value), `Boolean` (true/false)
+* `values` if the type is `Select` or `FreeSelect`, a list of string values to choose from
+
+
+* `Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+<scmPluginInputs>
+  <integration>$integration</integration>
+  <type>$type</type>
+  <inputs>
+    <scmPluginInputField>
+      <defaultValue>$string</defaultValue>
+      <description>$string</description>
+      <name>$string</name>
+      <renderingOptions>
+        <entry key="$string">$string</entry>
+        <!-- <entry ... -->
+      </renderingOptions>
+      <required>$boolean</required>
+      <scope>$string</scope>
+      <title>$string</title>
+      <type>$string</type>
+      <values>
+        <!-- may be empty -->
+        <string>$string</string>
+        <string>$string</string>
+        <!-- <string ... -->
+      </values>
+    </scmPluginInputField>
+    <!-- 
+    <scmPluginInputField>...</scmPluginInputField>
+     -->
+  </inputs>
+</scmPluginInputs>
+~~~~~~~~~~
+
+* `Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+{
+  "inputs": [
+    {
+      "defaultValue": "$string",
+      "description": "$string",
+      "name": "$string",
+      "renderingOptions": {
+        "$string": "$string"
+      },
+      "required": $boolean,
+      "scope": "$string",
+      "title": "$string",
+      "type": "$string",
+      "values": null or array
+    }
+    //...
+
+  ],
+  "integration": "$integration",
+  "type": "$type"
+}
+~~~~~~~~~~
+
+### Setup SCM Plugin for a Project
+
+Configure and enable a plugin for a project.  
+
+The request body is expected to contain entries for all of the `required` inputs for the plugin.
+
+If a validation error occurs with the configuration, then the response will include detail about the errors.
+
+**Request**
+
+    POST /api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/setup
+
+Content:
+
+`Content-Type: application/xml`
+
+~~~~~ {.xml}
+<scmPluginConfig>
+    <config>
+        <entry key="key">value</entry>
+        <entry key="key2">value2</entry>
+        <!-- ... -->
+    </config>
+</scmPluginConfig>
+~~~~~
+
+`Content-Type: application/json`
+
+~~~~~ {.json}
+{
+    "config":{
+        "key":"value",
+        "key2":"value2..."
+    }
+}
+~~~~~
+
+
+**Response**
+
+If a validation error occurs, the response will include information about the result.
+
+    HTTP/1.1 400 Bad Request
+
+* `Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+<scmActionResult>
+  <message>Some input values were not valid.</message>
+  <nextAction />
+  <success>false</success>
+  <validationErrors>
+    <entry key="dir">required</entry>
+    <entry key="url">required</entry>
+  </validationErrors>
+</scmActionResult>
+~~~~~~~~~~
+
+* `Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+{
+  "message": "Some input values were not valid.",
+  "nextAction": null,
+  "success": false,
+  "validationErrors": {
+    "dir": "required",
+    "url": "required"
+  }
+}
+~~~~~~~~~~
+
+If the result is successul:
+
+    HTTP/1.1 200 OK
+
+* `Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+<scmActionResult>
+  <message>$string</message>
+  <success>true</success>
+  <nextAction />
+  <validationErrors/>
+</scmActionResult>
+~~~~~~~~~~
+
+* `Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+{
+  "message": "$string",
+  "nextAction": null,
+  "success": true,
+  "validationErrors": null
+}
+~~~~~~~~~~
+
+If a follow-up **Action** is expected to be called, the action ID will be identified by the `nextAction` value.
+
+See [List Project SCM Actions](#list-project-scm-actions).
+
+### Enable SCM Plugin for a Project
+
+Enable a plugin that was previously configured. (Idempotent)
+
+**Request**
+
+    POST /api/15/project/[PROJECT]/scm/[INTEGRATION]plugin/[TYPE]/enable
+
+No content body is expected.
+
+**Response**
+
+Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-project).
+
+### Disable SCM Plugin for a Project
+
+Disable a plugin. (Idempotent)
+
+**Request**
+
+    POST /api/15/project/[PROJECT]/scm/[INTEGRATION]plugin/[TYPE]/disable
+
+No content body is expected.
+
+**Response**
+
+Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-project).
+
+### Get Project SCM Status
+
+**Request**
+
+    GET /api/15/project/[PROJECT]/scm/[INTEGRATION]/status
+
+**Response**
+
+
+* `Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+~~~~~~~~~~
+
+* `Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+~~~~~~~~~~
+
+### Get Project SCM Config
+
+**Request**
+
+    GET /api/15/project/[PROJECT]/scm/[INTEGRATION]/config
+
+**Response**
+
+
+* `Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+~~~~~~~~~~
+
+* `Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+~~~~~~~~~~
+
+### List Project SCM Actions
+
+**Request**
+
+    GET /api/15/project/[PROJECT]/scm/[INTEGRATION]/actions
+
+**Response**
+
+
+* `Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+~~~~~~~~~~
+
+* `Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+~~~~~~~~~~
+
+### Perform Project SCM Action
+
+**Request**
+
+    POST /api/15/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]
+
+**Response**
+
+
+* `Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+~~~~~~~~~~
+
+* `Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+~~~~~~~~~~
+
+### Get Job SCM Status
+
+**Request**
+
+    GET /api/15/job/[ID]/scm/[INTEGRATION]/status
+
+**Response**
+
+
+* `Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+~~~~~~~~~~
+
+* `Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+~~~~~~~~~~
+
+### List Job SCM Actions
+
+**Request**
+
+    GET /api/15/job/[ID]/scm/[INTEGRATION]/actions
+
+**Response**
+
+
+* `Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+~~~~~~~~~~
+
+* `Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+~~~~~~~~~~
+
+### Perform Job SCM Action
+
+**Request**
+
+    POST /api/15/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]
+
+**Response**
+
+
+* `Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+~~~~~~~~~~
+
+* `Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+~~~~~~~~~~
+
+
 ## Index
 
 [/api/V/execution/[ID]][]
@@ -4036,6 +4454,18 @@ If request was JSON, then the following JSON:
 [/api/V/job/[ID]/run][]
 
 * `POST` [Running a Job](#running-a-job)
+    
+[/api/V/job/[ID]/scm/[INTEGRATION]/status][] 
+
+- `GET` [Get SCM status for a Job][/api/V/job/[ID]/scm/[INTEGRATION]/status]
+
+[/api/V/job/[ID]/scm/[INTEGRATION]/actions][] 
+
+- `GET` [List SCM actions for a Job][/api/V/job/[ID]/scm/[INTEGRATION]/actions]
+
+[/api/V/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]][] 
+
+- `GET` [Perform SCM action for a Job.][/api/V/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]]
 
 [/api/V/jobs/delete][]
 
@@ -4128,6 +4558,42 @@ If request was JSON, then the following JSON:
 
 * `POST` [Running Adhoc Script URLs](#running-adhoc-script-urls)
 
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugins][]
+
+* `GET` [List SCM plugins for a project.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugins]
+
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input][]
+
+* `GET` [Get SCM plugin setup inputs.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input]
+
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/setup][]
+
+* `POST` [Setup SCM for a project.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/setup]
+
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/enable][]
+
+* `POST` [Enable SCM for a project.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/enable]
+
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/disable][]
+
+* `POST` [Disable SCM for a project.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/disable]
+
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/status][]
+
+* `GET` [Get SCM status for a project.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/status]
+
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/config][]
+
+* `GET` [Get SCM config for a project.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/config]]
+
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/actions][]
+
+* `GET` [List SCM actions for a project.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/actions]
+
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]][]
+
+* `POST` [Perform SCM action for a project.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]]
+
 [/api/V/projects][]
 
 * `GET` [Listing Projects](#listing-projects)
@@ -4176,6 +4642,21 @@ If request was JSON, then the following JSON:
 
 * `GET` [Get a token](#get-a-token)
 * `DELETE` [Delete a token](#delete-a-token)
+
+
+
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugins]:#list-scm-plugins
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input]:#get-scm-plugin-input-fields
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/setup]:#setup-scm-plugin-for-a-project
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/enable]:#enable-scm-plugin-for-a-project
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/disable]:#disable-scm-plugin-for-a-project
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/status]:#get-project-scm-status
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/config]:#get-project-scm-config
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/actions]:#list-project-scm-actions
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]]:#perform-project-scm-action
+[/api/V/job/[ID]/scm/[INTEGRATION]/status]:#get-job-scm-status
+[/api/V/job/[ID]/scm/[INTEGRATION]/actions]:#list-job-scm-actions
+[/api/V/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]]:#perform-job-scm-action
 
 
 [/api/V/execution/[ID]]: #execution-info
