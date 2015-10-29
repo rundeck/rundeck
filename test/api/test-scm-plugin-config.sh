@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #/ Purpose:
-#/   Test the scm plugins api setup methods
+#/   Test the scm plugins api config
 #/ 
 
 DIR=$(cd `dirname $0` && pwd)

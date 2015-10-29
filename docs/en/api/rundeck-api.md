@@ -4020,7 +4020,7 @@ Each plugin has these properties:
 * `description` descriptive text for the plugin
 
 
-* `Content-Type: application/xml`:
+`Content-Type: application/xml`:
 
 ~~~~~~~~~~ {.xml}
 <scmPluginList>
@@ -4037,7 +4037,7 @@ Each plugin has these properties:
 </scmPluginList>
 ~~~~~~~~~~
 
-* `Content-Type: application/json`:
+`Content-Type: application/json`:
 
 ~~~~~~~~~~ {.json}
 {
@@ -4080,7 +4080,7 @@ Input fields have a number of properties:
 * `values` if the type is `Select` or `FreeSelect`, a list of string values to choose from
 
 
-* `Content-Type: application/xml`:
+`Content-Type: application/xml`:
 
 ~~~~~~~~~~ {.xml}
 <scmPluginInputs>
@@ -4113,7 +4113,7 @@ Input fields have a number of properties:
 </scmPluginInputs>
 ~~~~~~~~~~
 
-* `Content-Type: application/json`:
+`Content-Type: application/json`:
 
 ~~~~~~~~~~ {.json}
 {
@@ -4183,7 +4183,7 @@ If a validation error occurs, the response will include information about the re
 
     HTTP/1.1 400 Bad Request
 
-* `Content-Type: application/xml`:
+`Content-Type: application/xml`:
 
 ~~~~~~~~~~ {.xml}
 <scmActionResult>
@@ -4197,7 +4197,7 @@ If a validation error occurs, the response will include information about the re
 </scmActionResult>
 ~~~~~~~~~~
 
-* `Content-Type: application/json`:
+`Content-Type: application/json`:
 
 ~~~~~~~~~~ {.json}
 {
@@ -4215,7 +4215,7 @@ If the result is successul:
 
     HTTP/1.1 200 OK
 
-* `Content-Type: application/xml`:
+`Content-Type: application/xml`:
 
 ~~~~~~~~~~ {.xml}
 <scmActionResult>
@@ -4226,7 +4226,7 @@ If the result is successul:
 </scmActionResult>
 ~~~~~~~~~~
 
-* `Content-Type: application/json`:
+`Content-Type: application/json`:
 
 ~~~~~~~~~~ {.json}
 {
@@ -4247,7 +4247,7 @@ Enable a plugin that was previously configured. (Idempotent)
 
 **Request**
 
-    POST /api/15/project/[PROJECT]/scm/[INTEGRATION]plugin/[TYPE]/enable
+    POST /api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/enable
 
 No content body is expected.
 
@@ -4261,7 +4261,7 @@ Disable a plugin. (Idempotent)
 
 **Request**
 
-    POST /api/15/project/[PROJECT]/scm/[INTEGRATION]plugin/[TYPE]/disable
+    POST /api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/disable
 
 No content body is expected.
 
@@ -4323,7 +4323,7 @@ Export plugin values for `synchState`:
 </scmProjectStatus>
 ~~~~~~~~~~
 
-* `Content-Type: application/json`:
+`Content-Type: application/json`:
 
 ~~~~~~~~~~ {.json}
 {
@@ -4397,12 +4397,12 @@ Otherwise the response contains:
 **Response**
 
 
-* `Content-Type: application/xml`:
+`Content-Type: application/xml`:
 
 ~~~~~~~~~~ {.xml}
 ~~~~~~~~~~
 
-* `Content-Type: application/json`:
+`Content-Type: application/json`:
 
 ~~~~~~~~~~ {.json}
 ~~~~~~~~~~
@@ -4416,12 +4416,12 @@ Otherwise the response contains:
 **Response**
 
 
-* `Content-Type: application/xml`:
+`Content-Type: application/xml`:
 
 ~~~~~~~~~~ {.xml}
 ~~~~~~~~~~
 
-* `Content-Type: application/json`:
+`Content-Type: application/json`:
 
 ~~~~~~~~~~ {.json}
 ~~~~~~~~~~
@@ -4435,12 +4435,12 @@ Otherwise the response contains:
 **Response**
 
 
-* `Content-Type: application/xml`:
+`Content-Type: application/xml`:
 
 ~~~~~~~~~~ {.xml}
 ~~~~~~~~~~
 
-* `Content-Type: application/json`:
+`Content-Type: application/json`:
 
 ~~~~~~~~~~ {.json}
 ~~~~~~~~~~
@@ -4454,12 +4454,12 @@ Otherwise the response contains:
 **Response**
 
 
-* `Content-Type: application/xml`:
+`Content-Type: application/xml`:
 
 ~~~~~~~~~~ {.xml}
 ~~~~~~~~~~
 
-* `Content-Type: application/json`:
+`Content-Type: application/json`:
 
 ~~~~~~~~~~ {.json}
 ~~~~~~~~~~
@@ -4473,12 +4473,12 @@ Otherwise the response contains:
 **Response**
 
 
-* `Content-Type: application/xml`:
+`Content-Type: application/xml`:
 
 ~~~~~~~~~~ {.xml}
 ~~~~~~~~~~
 
-* `Content-Type: application/json`:
+`Content-Type: application/json`:
 
 ~~~~~~~~~~ {.json}
 ~~~~~~~~~~
