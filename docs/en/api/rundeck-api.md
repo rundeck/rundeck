@@ -4271,21 +4271,68 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 ### Get Project SCM Status
 
+Get the SCM plugin status and available actions for the project.
+
 **Request**
 
     GET /api/15/project/[PROJECT]/scm/[INTEGRATION]/status
 
 **Response**
 
+If no plugin is configured:
 
-* `Content-Type: application/xml`:
+    HTTP/1.1 404 Not Found
+
+Otherwise:
+
+    HTTP/1.1 200 OK
+
+The plugin status has these properties:
+
+* `actions` empty, or a list of action ID strings
+* `integration` the integration
+* `message` a string indicating the status message
+* `synchState` a value indicating the state
+* `project` project name
+
+Import plugin values for `synchState`:
+
+* `CLEAN` - no changes
+* `UNKNOWN` - status unknown
+* `REFRESH_NEEDED` - plugin needs to refresh
+* `IMPORT_NEEDED` - some changes need to be imported
+* `DELETE_NEEDED` - some jobs need to be deleted
+
+Export plugin values for `synchState`:
+
+* `CLEAN` - no changes
+* `REFRESH_NEEDED` - plugin needs to refresh
+* `EXPORT_NEEDED` - some changes need to be exported
+* `CREATE_NEEDED` - some jobs need to be added to the repo
+
+
+`Content-Type: application/xml`:
 
 ~~~~~~~~~~ {.xml}
+<scmProjectStatus>
+  <actions />
+  <integration>$integration</integration>
+  <message>$string</message>
+  <project>$project</project>
+  <synchState>$state</synchState>
+</scmProjectStatus>
 ~~~~~~~~~~
 
 * `Content-Type: application/json`:
 
 ~~~~~~~~~~ {.json}
+{
+  "actions": null,
+  "integration": "$integration",
+  "message": null,
+  "project": "$project",
+  "synchState": "$state"
+}
 ~~~~~~~~~~
 
 ### Get Project SCM Config
