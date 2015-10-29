@@ -9,15 +9,21 @@ import com.dtolabs.rundeck.app.api.scm.ScmPluginInputField
 import com.dtolabs.rundeck.app.api.scm.ScmPluginInputs
 import com.dtolabs.rundeck.app.api.scm.ScmPluginList
 import com.dtolabs.rundeck.app.api.scm.ScmPluginTypeRequest
+import com.dtolabs.rundeck.app.api.scm.ScmProjectStatus
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.views.Action
+import com.dtolabs.rundeck.plugins.scm.ScmExportSynchState
+import com.dtolabs.rundeck.plugins.scm.ScmImportSynchState
+import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.SynchState
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import rundeck.ScheduledExecution
 import rundeck.filters.ApiRequestFilters
 
+import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 class ScmController extends ControllerBase {
@@ -508,6 +514,72 @@ class ScmController extends ControllerBase {
 
         redirect(action: 'index', params: [project: project])
     }
+    /**
+     * /api/15/project/$project/scm/$integration/status
+     */
+    def apiProjectStatus(ScmIntegrationRequest scm) {
+        if (!validateCommandInput(scm)) {
+            return
+        }
+
+        def isExport = scm.integration == 'export'
+        def action = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
+
+        def authContext = apiAuthorize(scm, action)
+        if (!authContext) {
+            return
+        }
+        def enabled = isExport ? scmService.projectHasConfiguredExportPlugin(scm.project) :
+                scmService.projectHasConfiguredImportPlugin(scm.project)
+        if (!enabled) {
+            //404
+            return respond(
+                    new ScmActionResult(
+                            success: false,
+                            message: message(code: "no.scm.integration.plugin.configured", args: [scm.integration])
+                    ),
+                    [
+                            formats: ['xml', 'json'],
+                            status : HttpServletResponse.SC_NOT_FOUND
+                    ]
+            )
+        }
+        def scmProjectStatus = new ScmProjectStatus(integration: scm.integration, project: scm.project)
+
+        try {
+            if (isExport) {
+                ScmExportSynchState status = scmService.exportPluginStatus(authContext, scm.project)
+                List<Action> actions = scmService.exportPluginActions(authContext, scm.project)
+
+                scmProjectStatus.synchState = status?.state?.toString()
+                scmProjectStatus.message = status?.message
+                scmProjectStatus.actions = actions?.collect { it.id }
+
+            } else {
+
+                ScmImportSynchState status = scmService.importPluginStatus(authContext, scm.project)
+                List<Action> actions = scmService.importPluginActions(authContext, scm.project)
+
+                scmProjectStatus.synchState = status?.state?.toString()
+                scmProjectStatus.message = status?.message
+                scmProjectStatus.actions = actions?.collect { it.id }
+            }
+        } catch (ScmPluginException e) {
+            def message = message(
+                    code: "api.scm.failed.to.get.scm.plugin.status",
+                    args: [scm.integration, scm.project, e.message]
+            )
+            return respond(
+                    new ScmActionResult(success: false, message: message),
+                    [
+                            formats: ['xml', 'json'],
+                            status : HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+                    ]
+            )
+        }
+        respond scmProjectStatus, [formats: ['xml', 'json']]
+    }
+
 
     def performAction(String integration, String project, String actionId) {
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
