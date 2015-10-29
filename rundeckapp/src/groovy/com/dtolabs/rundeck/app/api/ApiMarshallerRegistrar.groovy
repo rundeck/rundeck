@@ -13,15 +13,19 @@ class ApiMarshallerRegistrar {
     @PostConstruct
     void registerMarshallers() {
         XML.registerObjectMarshaller(CDataString) { data,XML xml->
-            if(data.value.contains('\r') || data.value.contains('\n')  ) {
+            if(data.value?.contains('\r') || data.value?.contains('\n')  ) {
                 xml.chars('')//forces current tag completion
                 xml.stream.append('<![CDATA['+data.value.replaceAll(']]>',']]]]><![CDATA[>')+']]>')
             }else{
                 return data.value
             }
         }
-        JSON.registerObjectMarshaller(CDataString) {
-            it.value
+        JSON.registerObjectMarshaller(CDataString) { data, JSON json->
+            if(data.value !=null){
+                return data.value
+            } else{
+                json.value(null)
+            }
         }
     }
 }
