@@ -9,6 +9,7 @@ import com.dtolabs.rundeck.app.api.scm.ScmPluginInputField
 import com.dtolabs.rundeck.app.api.scm.ScmPluginInputs
 import com.dtolabs.rundeck.app.api.scm.ScmPluginList
 import com.dtolabs.rundeck.app.api.scm.ScmPluginTypeRequest
+import com.dtolabs.rundeck.app.api.scm.ScmProjectPluginConfig
 import com.dtolabs.rundeck.app.api.scm.ScmProjectStatus
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -23,7 +24,6 @@ import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import rundeck.ScheduledExecution
 import rundeck.filters.ApiRequestFilters
 
-import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 class ScmController extends ControllerBase {
@@ -578,6 +578,50 @@ class ScmController extends ControllerBase {
             )
         }
         respond scmProjectStatus, [formats: ['xml', 'json']]
+    }
+
+    /**
+     * /api/$api_version/project/$project/scm/$integration/config
+     * @param scm
+     * @return
+     */
+    def apiProjectConfig(ScmIntegrationRequest scm) {
+        if (!validateCommandInput(scm)) {
+            return
+        }
+
+        def authContext = apiAuthorize(scm, AuthConstants.ACTION_CONFIGURE)
+        if (!authContext) {
+            return
+        }
+
+        def ePluginConfig = scmService.loadScmConfig(scm.project, scm.integration)
+        if (!ePluginConfig) {
+            return respond(
+                    new ScmActionResult(
+                            success: false,
+                            message: message(code: "no.scm.integration.plugin.configured", args: [scm.integration])
+                    ),
+                    [
+                            formats: ['xml', 'json'],
+                            status : HttpServletResponse.SC_NOT_FOUND
+                    ]
+            )
+        }
+
+        def eEnabled = ePluginConfig.enabled && scmService.projectHasConfiguredPlugin(scm.integration, scm.project)
+
+        def result = new ScmProjectPluginConfig(
+                integration: scm.integration,
+                project: scm.project,
+                enabled: eEnabled,
+                type: ePluginConfig.type,
+                config: ePluginConfig.config
+        )
+
+
+        respond result, [formats: ['xml', 'json']]
+
     }
 
 

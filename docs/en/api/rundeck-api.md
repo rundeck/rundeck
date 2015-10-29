@@ -4290,21 +4290,55 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 ### Get Project SCM Config
 
+Get the configuration properties for the current plugin.
+
 **Request**
 
     GET /api/15/project/[PROJECT]/scm/[INTEGRATION]/config
 
 **Response**
 
+If no plugin for the given integration is configured for the project, a `404` response is sent:
 
-* `Content-Type: application/xml`:
+    HTTP/1.1 404 Not Found
+
+Otherwise the response contains:
+
+* `config` a set of key/value pairs for the configuration
+* `enabled` true/false if it is enabled
+* `integration` integration name
+* `project` project name
+* `type` plugin type name
+
+`Content-Type: application/xml`:
 
 ~~~~~~~~~~ {.xml}
+<scmProjectPluginConfig>
+  <config>
+    <entry key="key">value</entry>
+    <entry key="key2">value2</entry>
+    <!-- <entry ..>...</entry> -->
+  </config>
+  <enabled>$boolean</enabled>
+  <integration>$integration</integration>
+  <project>$project</project>
+  <type>$type</type>
+</scmProjectPluginConfig>
 ~~~~~~~~~~
 
-* `Content-Type: application/json`:
+`Content-Type: application/json`:
 
 ~~~~~~~~~~ {.json}
+{
+  "config": {
+    "key": "$string",
+    "key2": "$string"
+  },
+  "enabled": $boolean,
+  "integration": "$integration",
+  "project": "$project",
+  "type": "$type"
+}
 ~~~~~~~~~~
 
 ### List Project SCM Actions
