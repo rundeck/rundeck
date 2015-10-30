@@ -4315,7 +4315,12 @@ Export plugin values for `synchState`:
 
 ~~~~~~~~~~ {.xml}
 <scmProjectStatus>
-  <actions />
+  
+  <actions>
+    <string>action1</string>
+    <string>action2</string>
+  </actions>
+  
   <integration>$integration</integration>
   <message>$string</message>
   <project>$project</project>
@@ -4327,7 +4332,7 @@ Export plugin values for `synchState`:
 
 ~~~~~~~~~~ {.json}
 {
-  "actions": null,
+  "actions": ['action1','action2',..],
   "integration": "$integration",
   "message": null,
   "project": "$project",
