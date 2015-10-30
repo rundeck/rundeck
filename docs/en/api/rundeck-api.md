@@ -4395,7 +4395,15 @@ Otherwise the response contains:
 
 ### Get Project SCM Action Input Fields
 
-Get the input fields for a specific action.
+Get the input fields and selectable items for a specific action.  
+
+Each action may have a set of Input Fields describing user-input values.
+
+Export actions may have a set of `scmExportActionItem`s which describe Job changes that can be
+included in the action.
+
+Import actions may have a set of `scmImportActionItem`s which describe paths from the import repo
+which can be selected for the action, they will also be associated with a Job after they are matched.
 
 **Request**
 
@@ -4407,6 +4415,28 @@ Get the input fields for a specific action.
 
 The content of `<scmPluginInputField>` is the same as shown in [Get SCM Plugin Input Fields](#get-scm-plugin-input-fields).
 
+`scmExportActionItem` values:
+
+* `itemId` - ID of the repo item, e.g. a file path
+* `job` - job information
+    * `groupPath` group path, or empty/null
+    * `jobId` job ID
+    * `jobName` job name
+* `deleted` - boolean, whether the job was deleted and requires deleting the associated repo item
+* `renamed` - boolean if the job was renamed
+* `originalId` - ID of a repo item if the job was renamed and now is stored at a different repo path, or empty/null
+
+`scmImportActionItem` values:
+
+* `itemId` - ID of the repo item, e.g. a file path
+* `job` - job information, may be empty/null
+    * `groupPath` group path, or empty
+    * `jobId` job ID
+    * `jobName` job name
+* `tracked` - boolean, true if there is an associated `job`
+
+
+
 ~~~~~~~~~~ {.xml}
 <scmActionInput>
   <actionId>$actionId</actionId>
@@ -4416,6 +4446,33 @@ The content of `<scmPluginInputField>` is the same as shown in [Get SCM Plugin I
   </fields>
   <integration>$integration</integration>
   <title>$string</title>
+  <importItems>
+    <!-- import only -->
+    <scmImportActionItem>
+      <itemId>$string</itemId>
+      <job>
+        <!-- job tag may be empty if no associated job-->
+          <groupPath>$jobgroup</groupPath>
+          <jobId>$jobid</jobId>
+          <jobName>$jobname</jobName>
+      </job>
+      <tracked>$boolean</tracked>
+    </scmImportActionItem>
+  </importItems>
+  <exportItems>
+    <!-- export only -->
+    <scmExportActionItem>
+      <deleted>$boolean</deleted>
+      <itemId>$string</itemId>
+      <job>
+        <groupPath>$jobgroup</groupPath>
+        <jobId>$jobid</jobId>
+        <jobName>$jobname</jobName>
+      </job>
+      <originalId>$string</originalId>
+      <renamed>$boolean</renamed>
+    </scmExportActionItem>
+  </exportItems>
 </scmActionInput>
 ~~~~~~~~~~
 
@@ -4432,7 +4489,31 @@ The content of `"fields"` array is the same as shown in [Get SCM Plugin Input Fi
     }
   ],
   "integration": "$integration",
-  "title": "$string"
+  "title": "$string",
+  "importItems": [
+    {
+      "itemId": "$string",
+      "job": {
+        "groupPath": "$jobgroup",
+        "jobId": "$jobid",
+        "jobName": "$jobname"
+      },
+      "tracked": $boolean
+    }
+  ],
+  "exportItems": [
+    {
+      "deleted": $boolean,
+      "itemId": "$string",
+      "job": {
+        "groupPath": "$jobgroup",
+        "jobId": "$jobid",
+        "jobName": "$jobname"
+      },
+      "originalId": "$string",
+      "renamed": $boolean
+    }
+  ]
 }
 ~~~~~~~~~~
 

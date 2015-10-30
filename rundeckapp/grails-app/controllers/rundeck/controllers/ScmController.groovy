@@ -1,9 +1,11 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.CDataString
-import com.dtolabs.rundeck.app.api.scm.ScmActionInput
+import com.dtolabs.rundeck.app.api.scm.JobReference
 import com.dtolabs.rundeck.app.api.scm.ScmActionRequest
 import com.dtolabs.rundeck.app.api.scm.ScmActionResult
+import com.dtolabs.rundeck.app.api.scm.ScmExportActionItem
+import com.dtolabs.rundeck.app.api.scm.ScmImportActionItem
 import com.dtolabs.rundeck.app.api.scm.ScmIntegrationRequest
 import com.dtolabs.rundeck.app.api.scm.ScmPluginConfig
 import com.dtolabs.rundeck.app.api.scm.ScmPluginDescription
@@ -11,6 +13,7 @@ import com.dtolabs.rundeck.app.api.scm.ScmPluginInputField
 import com.dtolabs.rundeck.app.api.scm.ScmPluginSetupInput
 import com.dtolabs.rundeck.app.api.scm.ScmPluginList
 import com.dtolabs.rundeck.app.api.scm.ScmPluginTypeRequest
+import com.dtolabs.rundeck.app.api.scm.ScmProjectActionInput
 import com.dtolabs.rundeck.app.api.scm.ScmProjectPluginConfig
 import com.dtolabs.rundeck.app.api.scm.ScmProjectStatus
 import com.dtolabs.rundeck.core.authorization.AuthContext
@@ -19,6 +22,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.plugins.scm.ScmExportSynchState
 import com.dtolabs.rundeck.plugins.scm.ScmImportSynchState
+import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItem
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.SynchState
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -645,15 +649,85 @@ class ScmController extends ControllerBase {
                     ]
             )
         }
+
+        /**
+         *  map of [path: Map[id: jobid, jobNameAndGroup: string]]
+         */
+
+        Map scmJobStatus = [:]
+        List<ScmExportActionItem> exportActionItems = null
+        if (isExport) {
+            exportActionItems = []
+            Map deletedPaths = scmService.deletedExportFilesForProject(scm.project)
+            Map<String, String> renamedJobPaths = scmService.getRenamedJobPathsForProject(scm.project)
+            //remove deleted paths that are known to be renamed jobs
+            renamedJobPaths.values().each {
+                deletedPaths.remove(it)
+            }
+            List<ScheduledExecution> jobs = ScheduledExecution.findAllByProject(scm.project)
+            //todo: job scm status
+            scmJobStatus = scmService.exportStatusForJobs(jobs).findAll {
+                it.value.synchState != SynchState.CLEAN
+            }
+            jobs = jobs.findAll {
+                it.extid in scmJobStatus.keySet()
+            }
+            Map<String, String> scmFiles = scmService.exportFilePathsMapForJobRefs(scmService.jobRefsForJobs(jobs))
+
+            jobs.each { ScheduledExecution job ->
+                ScmExportActionItem item = new ScmExportActionItem()
+                item.job = new JobReference(jobId: job.extid, jobName: job.jobName, groupPath: job.groupPath)
+                item.itemId = scmFiles[job.extid]
+                item.originalId = renamedJobPaths[job.extid]
+                item.renamed = null != item.originalId
+                exportActionItems << item
+            }
+            deletedPaths.each { String path, Map jobInfo ->
+                ScmExportActionItem item = new ScmExportActionItem()
+                item.job = new JobReference(jobId: jobInfo.id, jobName: jobInfo.jobName, groupPath: jobInfo.groupPath)
+                item.itemId = path
+                item.deleted = true
+                exportActionItems << item
+            }
+        }
+
+        /**
+         * import: tracked items
+         */
+        List<ScmImportActionItem> importActionItems = null
+
+        if (!isExport) {
+            importActionItems = []
+            List<ScmImportTrackedItem> trackingItems = scmService.getTrackingItemsForAction(scm.project, scm.actionId)
+            trackingItems.each {
+                ScmImportActionItem item = new ScmImportActionItem()
+                item.itemId = it.id
+                ScheduledExecution job = ScheduledExecution.getByIdOrUUID(it.jobId)
+                if (job) {
+                    item.job = new JobReference(jobId: job.extid, jobName: job.jobName, groupPath: job.groupPath)
+                }
+                item.tracked = null != item.job
+
+                importActionItems << item
+            }
+            //todo: job scm status
+            //scmJobStatus = scmService.importStatusForJobs(jobs)
+        }
+
+        //todo: project scm status
+        //def scmProjectStatus = scmService.getPluginStatus(authContext, scm.integration, scm.project)
+
         def properties = view.properties.collect(this.&fieldBeanForProperty)
 
         respond(
-                new ScmActionInput(
+                new ScmProjectActionInput(
                         actionId: scm.actionId,
                         integration: scm.integration,
                         fields: properties,
                         title: view.title,
-                        description: CDataString.from(view.description)
+                        description: CDataString.from(view.description),
+                        importItems: importActionItems,
+                        exportItems: exportActionItems
                 ),
                 [formats: ['xml', 'json']]
         )
