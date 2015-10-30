@@ -58,7 +58,7 @@ Changes introduced by API Version number:
 
 * New Endpoints.
     - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/plugins`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugins] - List SCM plugins for a project.
-    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input] - Get SCM plugin setup inputs.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input] - Get SCM plugin setup input fields.
     - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/setup`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/setup] - Setup SCM for a project.
     - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/enable`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/enable] - Enable SCM for a project.
     - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/disable`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/disable] - Disable SCM for a project.
@@ -4083,10 +4083,10 @@ Input fields have a number of properties:
 `Content-Type: application/xml`:
 
 ~~~~~~~~~~ {.xml}
-<scmPluginInputs>
+<scmPluginSetupInput>
   <integration>$integration</integration>
   <type>$type</type>
-  <inputs>
+  <fields>
     <scmPluginInputField>
       <defaultValue>$string</defaultValue>
       <description>$string</description>
@@ -4109,15 +4109,15 @@ Input fields have a number of properties:
     <!-- 
     <scmPluginInputField>...</scmPluginInputField>
      -->
-  </inputs>
-</scmPluginInputs>
+  </fields>
+</scmPluginSetupInput>
 ~~~~~~~~~~
 
 `Content-Type: application/json`:
 
 ~~~~~~~~~~ {.json}
 {
-  "inputs": [
+  "fields": [
     {
       "defaultValue": "$string",
       "description": "$string",
@@ -4143,7 +4143,7 @@ Input fields have a number of properties:
 
 Configure and enable a plugin for a project.  
 
-The request body is expected to contain entries for all of the `required` inputs for the plugin.
+The request body is expected to contain entries for all of the `required` input fields for the plugin.
 
 If a validation error occurs with the configuration, then the response will include detail about the errors.
 
@@ -4411,9 +4411,9 @@ The content of `<scmPluginInputField>` is the same as shown in [Get SCM Plugin I
 <scmActionInput>
   <actionId>$actionId</actionId>
   <description />
-  <inputs>
+  <fields>
     <scmPluginInputField>...</scmPluginInputField>
-  </inputs>
+  </fields>
   <integration>$integration</integration>
   <title>$string</title>
 </scmActionInput>
@@ -4421,13 +4421,13 @@ The content of `<scmPluginInputField>` is the same as shown in [Get SCM Plugin I
 
 `Content-Type: application/json`:
 
-The content of `"inputs"` array is the same as shown in [Get SCM Plugin Input Fields](#get-scm-plugin-input-fields).
+The content of `"fields"` array is the same as shown in [Get SCM Plugin Input Fields](#get-scm-plugin-input-fields).
 
 ~~~~~~~~~~ {.json}
 {
   "actionId": "$actionId",
   "description": "$string",
-  "inputs": [
+  "fields": [
     { "name": ...
     }
   ],
@@ -4674,7 +4674,7 @@ The content of `"inputs"` array is the same as shown in [Get SCM Plugin Input Fi
 
 [/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input][]
 
-* `GET` [Get SCM plugin setup inputs.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input]
+* `GET` [Get SCM plugin setup input fields.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input]
 
 [/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/setup][]
 
