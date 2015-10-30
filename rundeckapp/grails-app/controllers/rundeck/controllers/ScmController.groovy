@@ -620,14 +620,16 @@ class ScmController extends ControllerBase {
             return
         }
 
-        def action = scm.integration == 'export' ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
-        def auth = apiAuthorize(scm, action)
-        if (!auth) {
+
+        def isExport = scm.integration == 'export'
+        def action = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
+        def authContext = apiAuthorize(scm, action)
+        if (!authContext) {
             return
         }
 
 
-        def view = scmService.getInputView(auth, scm.integration, scm.project, scm.actionId)
+        def view = scmService.getInputView(authContext, scm.integration, scm.project, scm.actionId)
         if (!view) {
             return respond(
                     new ScmActionResult(
