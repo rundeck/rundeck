@@ -104,7 +104,6 @@ class UrlMappings {
         "/api/$api_version/project/$project/scm/$integration/plugin/$type/disable"(controller: 'scm', action: 'apiProjectDisable')
         "/api/$api_version/project/$project/scm/$integration/status"(controller: 'scm', action: 'apiProjectStatus')
         "/api/$api_version/project/$project/scm/$integration/config"(controller: 'scm', action: 'apiProjectConfig')
-        "/api/$api_version/project/$project/scm/$integration/actions"(controller: 'scm', action: 'apiProjectActions')
         "/api/$api_version/project/$project/scm/$integration/action/$actionId/input"(controller: 'scm', action: 'apiProjectActionInput')
         "/api/$api_version/project/$project/scm/$integration/action/$actionId"(controller: 'scm', action: 'apiProjectAction')
 
