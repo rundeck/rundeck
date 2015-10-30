@@ -46,23 +46,23 @@ test_git_plugin_input_xml(){
 
 	$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
-	assert_xml_value "$integration" '/scmPluginInputs/integration' $DIR/curl.out
-	assert_xml_value "$plugintype" '/scmPluginInputs/type' $DIR/curl.out
+	assert_xml_value "$integration" '/scmPluginSetupInput/integration' $DIR/curl.out
+	assert_xml_value "$plugintype" '/scmPluginSetupInput/type' $DIR/curl.out
 
 	if [ "$integration" == "export" ] ; then
-		assert_xml_value "$expcount" 'count(/scmPluginInputs/inputs/scmPluginInputField)' $DIR/curl.out
+		assert_xml_value "$expcount" 'count(/scmPluginSetupInput/fields/scmPluginInputField)' $DIR/curl.out
 
 		for prop in $exprops ; do
-			assert_xml_value "$prop" "/scmPluginInputs/inputs/scmPluginInputField[name='$prop']/name" $DIR/curl.out
+			assert_xml_value "$prop" "/scmPluginSetupInput/fields/scmPluginInputField[name='$prop']/name" $DIR/curl.out
 		done
 	
 	else
-		assert_xml_value "$pcount" 'count(/scmPluginInputs/inputs/scmPluginInputField)' $DIR/curl.out
+		assert_xml_value "$pcount" 'count(/scmPluginSetupInput/fields/scmPluginInputField)' $DIR/curl.out
 	fi
 	
 
 	for prop in $props ; do
-		assert_xml_value "$prop" "/scmPluginInputs/inputs/scmPluginInputField[name='$prop']/name" $DIR/curl.out
+		assert_xml_value "$prop" "/scmPluginSetupInput/fields/scmPluginInputField[name='$prop']/name" $DIR/curl.out
 	done
 	
 	test_succeed
@@ -77,7 +77,7 @@ test_git_plugin_input_json(){
 	ENDPOINT="${APIURL}/project/$proj/scm/$integration/plugin/$plugintype/input"
 	ACCEPT=application/json
 	
-	test_begin "XML Response: $integration plugin inputs for $plugintype"
+	test_begin "XML Response: $integration plugin fields for $plugintype"
 
 	api_request $ENDPOINT $DIR/curl.out
 
@@ -86,14 +86,14 @@ test_git_plugin_input_json(){
 	assert_json_value "$plugintype" '.type' $DIR/curl.out
 
 	if [ "$integration" == "export" ] ; then
-		assert_json_value "$expcount" '.inputs | length' $DIR/curl.out
+		assert_json_value "$expcount" '.fields | length' $DIR/curl.out
 		props=$exprops
 	else
-		assert_json_value "$pcount" '.inputs | length' $DIR/curl.out
+		assert_json_value "$pcount" '.fields | length' $DIR/curl.out
 	fi
 	
 
-	assert_json_value "$props" ".inputs[].name" $DIR/curl.out
+	assert_json_value "$props" ".fields[].name" $DIR/curl.out
 	
 	test_succeed
 

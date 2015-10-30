@@ -8,7 +8,7 @@ import com.dtolabs.rundeck.app.api.scm.ScmIntegrationRequest
 import com.dtolabs.rundeck.app.api.scm.ScmPluginConfig
 import com.dtolabs.rundeck.app.api.scm.ScmPluginDescription
 import com.dtolabs.rundeck.app.api.scm.ScmPluginInputField
-import com.dtolabs.rundeck.app.api.scm.ScmPluginInputs
+import com.dtolabs.rundeck.app.api.scm.ScmPluginSetupInput
 import com.dtolabs.rundeck.app.api.scm.ScmPluginList
 import com.dtolabs.rundeck.app.api.scm.ScmPluginTypeRequest
 import com.dtolabs.rundeck.app.api.scm.ScmProjectPluginConfig
@@ -147,7 +147,7 @@ class ScmController extends ControllerBase {
                 collect { Property prop -> fieldBeanForProperty(prop) }
 
         respond(
-                new ScmPluginInputs(type: scm.type, integration: scm.integration, inputs: properties),
+                new ScmPluginSetupInput(type: scm.type, integration: scm.integration, fields: properties),
                 [formats: ['xml', 'json']]
         )
     }
@@ -649,7 +649,7 @@ class ScmController extends ControllerBase {
                 new ScmActionInput(
                         actionId: scm.actionId,
                         integration: scm.integration,
-                        inputs: properties,
+                        fields: properties,
                         title: view.title,
                         description: CDataString.from(view.description)
                 ),

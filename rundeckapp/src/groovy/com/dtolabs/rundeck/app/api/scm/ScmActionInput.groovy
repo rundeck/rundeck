@@ -10,5 +10,5 @@ class ScmActionInput {
     String integration
     String title
     CDataString description
-    List<ScmPluginInputField> inputs
+    List<ScmPluginInputField> fields
 }

@@ -5,8 +5,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 /**
  * Created by greg on 10/27/15.
  */
-class ScmPluginInputs {
+class ScmPluginSetupInput {
     String type
     String integration
-    List<ScmPluginInputField> inputs
+    List<ScmPluginInputField> fields
 }
