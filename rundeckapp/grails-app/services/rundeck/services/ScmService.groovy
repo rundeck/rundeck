@@ -344,7 +344,7 @@ class ScmService {
         }
     }
     /**
-     * Return a map of status for jobs
+     * Return a map of [ jobid: originalPath]
      * @param jobs
      * @return
      */
@@ -416,7 +416,9 @@ class ScmService {
                         plugin.getRelativePathForJob(event.jobReference),
                         [
                                 id             : event.jobReference.id,
-                                jobNameAndGroup: event.jobReference.getJobName(),
+                                jobName        : event.jobReference.getJobName(),
+                                groupPath      : event.jobReference.getGroupPath(),
+                                jobNameAndGroup: event.jobReference.getJobAndGroup(),
                         ]
                 )
             } else if (event.eventType == JobChangeEvent.JobChangeEventType.MODIFY_RENAME) {
@@ -903,7 +905,7 @@ class ScmService {
         status
     }
     /**
-     * Return a map of status for jobs
+     * Return a map of [path: Map[id: jobid, jobNameAndGroup: string]]
      * @param jobs
      * @return
      */
