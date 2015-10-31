@@ -836,8 +836,6 @@ class ScmController extends ControllerBase {
                             status : HttpServletResponse.SC_BAD_REQUEST
                     ]
             )
-        } else {
-            System.err.println("actionInput = ${actionInput}")
         }
 
 
