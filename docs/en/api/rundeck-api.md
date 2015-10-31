@@ -4519,22 +4519,63 @@ The content of `"fields"` array is the same as shown in [Get SCM Plugin Input Fi
 
 ### Perform Project SCM Action
 
+Perform the action for the SCM integration plugin, with a set of input parameters,
+selected Jobs, or Items, or Items to delete.
+
+Depending on the [available Input Fields for the action](#get-project-scm-action-input-fields), the action will
+expect a set of `input` values.  
+
+The set of `jobs` and `items` to choose from will be included in the Input Fields response,
+however where an Item has an associated Job, you can supply either the Job ID, or the Item ID.
+
+When there are items to be deleted (`export` integration), you can specify the Item IDs in the `deleted`
+section.  However, if the item is associated with a renamed Job, including the Job ID will have the same effect.
+
+Note: including the Item ID of an associated job, instead of the Job ID,
+will not automatically delete a renamed item.
+
+
 **Request**
 
     POST /api/15/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]
 
-**Response**
-
-
 `Content-Type: application/xml`:
 
 ~~~~~~~~~~ {.xml}
+<scmAction>
+    <input>
+        <entry key="message">$commitMessage</entry>
+    </input>
+    <jobs>
+        <job jobId="$jobId"/>
+    </jobs>
+    <items>
+        <item itemId="$itemId"/>
+    </items>
+    <deleted></deleted>
+</scmAction>
 ~~~~~~~~~~
 
 `Content-Type: application/json`:
 
 ~~~~~~~~~~ {.json}
+{
+    "input":{
+        "message":"$commitMessage"
+    },
+    "jobs":[
+        "$jobId"
+    ],
+    "items":[
+        "$itemId"
+    ],
+    "deleted":null
+}
 ~~~~~~~~~~
+
+**Response**
+
+Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-project).
 
 ### Get Job SCM Status
 

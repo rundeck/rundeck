@@ -2,6 +2,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.CDataString
 import com.dtolabs.rundeck.app.api.scm.JobReference
+import com.dtolabs.rundeck.app.api.scm.ScmAction
 import com.dtolabs.rundeck.app.api.scm.ScmActionRequest
 import com.dtolabs.rundeck.app.api.scm.ScmActionResult
 import com.dtolabs.rundeck.app.api.scm.ScmExportActionItem
@@ -38,25 +39,25 @@ class ScmController extends ControllerBase {
     def apiService
 
     def static allowedMethods = [
-            disable              : ['POST'],
-            enable               : ['POST'],
-            performActionSubmit  : ['POST'],
+            disable                : ['POST'],
+            enable                 : ['POST'],
+            performActionSubmit    : ['POST'],
 
-            apiPlugins           : ['GET'],
-            apiPluginInput       : ['GET'],
+            apiPlugins             : ['GET'],
+            apiPluginInput         : ['GET'],
 
-            apiProjectSetup      : ['POST'],
-            apiProjectConfig     : ['GET'],
-            apiProjectStatus     : ['GET'],
-            apiProjectEnable     : ['POST'],
-            apiProjectDisable    : ['POST'],
-            apiProjectActionInput: ['GET'],
-            apiProjectAction     : ['POST'],
+            apiProjectSetup        : ['POST'],
+            apiProjectConfig       : ['GET'],
+            apiProjectStatus       : ['GET'],
+            apiProjectEnable       : ['POST'],
+            apiProjectDisable      : ['POST'],
+            apiProjectActionInput  : ['GET'],
+            apiProjectActionPerform: ['POST'],
 
 
-            apiJobStatus         : ['GET'],
-            apiJobActionInput    : ['GET'],
-            apiJobAction         : ['POST'],
+            apiJobStatus           : ['GET'],
+            apiJobActionInput      : ['GET'],
+            apiJobAction           : ['POST'],
     ]
     /**
      * Require API v15 for all API endpoints
@@ -276,15 +277,19 @@ class ScmController extends ControllerBase {
         }
     }
 
-    private def respondActionResult(ScmPluginTypeRequest scm, result, Map messages = [:]) {
+    private def respondActionResult(ScmIntegrationRequest scm, result, Map messages = [:]) {
         ScmActionResult actionResult
+        def secondary = scm.hasProperty('type') ? scm.type : scm.hasProperty('actionId') ? scm.actionId : null
         def map = [formats: ['xml', 'json'],]
         if (result.error || !result.valid) {
             map.status = HttpServletResponse.SC_BAD_REQUEST
 
             def code = !result.valid ? messages.invalid ?: "some.input.values.were.not.valid" :
                     messages.error ?: 'some.input.values.were.not.valid'
-            String errorMessage = result.error ? result.message : message(code: code, args: [scm.integration, scm.type])
+
+
+            String errorMessage = result.error ? result.message :
+                    message(code: code, args: [scm.integration, secondary])
 
             actionResult = new ScmActionResult(success: false, message: errorMessage)
 
@@ -292,7 +297,7 @@ class ScmController extends ControllerBase {
         } else {
             String message = message(
                     code: messages.success ?: 'scmController.action.setup.success.message',
-                    args: [scm.integration, scm.type]
+                    args: [scm.integration, secondary]
             )
             actionResult = new ScmActionResult(success: true, message: message, nextAction: result.nextAction?.id)
         }
@@ -749,6 +754,170 @@ class ScmController extends ControllerBase {
             field.values = prop.selectValues
         }
         field
+    }
+
+    /**
+     * /api/$api_version/project/$project/scm/$integration/action/$actionId
+     * @return
+     */
+    def apiProjectActionPerform() {
+        ScmActionRequest scm = new ScmActionRequest()
+        bindData(scm, params)
+        if (!validateCommandInput(scm)) {
+            return
+        }
+        def isExport = scm.integration == 'export'
+        def action = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
+        def authContext = apiAuthorize(scm, action)
+        if (!authContext) {
+            return
+        }
+        if (!scmService.projectHasConfiguredPlugin(scm.integration, scm.project)) {
+            return respond(
+                    new ScmActionResult(
+                            success: false,
+                            message: message(code: "no.scm.integration.plugin.configured", args: [scm.integration])
+                    ),
+                    [
+                            formats: ['xml', 'json'],
+                            status : HttpServletResponse.SC_NOT_FOUND
+                    ]
+            )
+        }
+        def view = scmService.getInputView(authContext, scm.integration, scm.project, scm.actionId)
+        if (!view) {
+            return respond(
+                    new ScmActionResult(
+                            success: false,
+                            message: message(
+                                    code: "scm.not.a.valid.action.actionid",
+                                    args: [scm.actionId, scm.integration, scm.project]
+                            )
+                    ),
+                    [
+                            formats: ['xml', 'json'],
+                            status : HttpServletResponse.SC_NOT_FOUND
+                    ]
+            )
+        }
+        ScmAction actionInput
+        String errormsg = ''
+        boolean valid = apiService.parseJsonXmlWith(request, response, [
+                json: { data ->
+                    def invalid = ScmAction.validateJson(data)
+                    if (invalid) {
+                        errormsg += invalid
+                        return
+                    }
+                    actionInput = ScmAction.parseWithJson(data)
+                },
+                xml : { xml ->
+                    def invalid = ScmAction.validateXml(xml)
+                    if (invalid) {
+                        errormsg += invalid
+                        return
+                    }
+                    actionInput = ScmAction.parseWithXml(xml)
+                }
+        ]
+        )
+        if (!valid) {
+            return
+        }
+
+        if (null == actionInput) {
+            return respond(
+                    new ScmActionResult(success: false, message: errormsg ?: 'Invalid format'),
+                    [
+                            formats: ['xml', 'json'],
+                            status : HttpServletResponse.SC_BAD_REQUEST
+                    ]
+            )
+        } else {
+            System.err.println("actionInput = ${actionInput}")
+        }
+
+
+
+        def result
+        def messages = [
+                success: 'api.scm.action.integration.success.message'
+        ]
+        if (isExport) {
+            //input job ids
+            Set<String> exportJobIds = actionInput.jobIds.collect { it.trim() }.findAll { it }
+
+            //add job ids determined from input paths
+            List<ScheduledExecution> alljobs = ScheduledExecution.findAllByProject(scm.project)
+            Map<String, ScheduledExecution> jobMap = alljobs.collectEntries { [it.extid, it] }
+
+            Map scmJobStatus = scmService.exportStatusForJobs(alljobs).findAll {
+                it.value.synchState != SynchState.CLEAN
+            }
+
+            List<ScheduledExecution> uncleanJobs = jobMap.subMap(scmJobStatus.keySet()).values() as List
+
+            Map<String, String> scmFiles = scmService.exportFilePathsMapForJobRefs(
+                    scmService.jobRefsForJobs(uncleanJobs)
+            )
+            Map reversed = [:]
+            scmFiles.each { k, v ->
+                reversed[v] = k
+            }
+            actionInput.selectedItems?.each {
+                if (reversed[it]) {
+                    exportJobIds << reversed[it]
+                }
+            }
+
+            //list of jobs selected to export
+            List<ScheduledExecution> exportJobs = exportJobIds.collect { jobMap[it] }.findAll { it }
+
+            Map<String, String> renamedJobPaths = scmService.getRenamedJobPathsForProject(scm.project)
+            //add deleted paths from renamed jobs
+            renamedJobPaths.each { k, v ->
+                if (actionInput.jobIds.contains(k)) {
+                    actionInput.deletedItems << v
+                }
+            }
+
+            //store job ids of deleted jobs, from path
+//            def deletePathsToJobIds = actionInput.deletedItems?.collectEntries {
+//                [it, scmService.deletedJobForPath(scm.project, it)?.id]
+//            }
+
+            result = scmService.performExportAction(
+                    scm.actionId,
+                    authContext,
+                    scm.project,
+                    actionInput.input,
+                    exportJobs,
+                    actionInput.deletedItems
+            )
+            if (result.missingUserInfoField) {
+                messages.invalid = 'scmController.action.saveCommit.userInfoMissing.message'
+                messages.invalidExt = 'scmController.action.saveCommit.userInfoMissing.errorHelp'
+            }
+        } else {
+            //determine paths for tracked jobs
+            if (actionInput.jobIds) {
+                List<ScmImportTrackedItem> trackingItems = scmService.getTrackingItemsForAction(
+                        scm.project,
+                        scm.actionId
+                )
+                trackingItems.findAll { it.jobId in actionInput.jobIds }.each {
+                    actionInput.selectedItems << it.id
+                }
+            }
+            result = scmService.performImportAction(
+                    scm.actionId,
+                    authContext,
+                    scm.project,
+                    actionInput.input,
+                    actionInput.selectedItems
+            )
+        }
+        respondActionResult(scm, result, messages)
     }
 
     def performAction(String integration, String project, String actionId) {

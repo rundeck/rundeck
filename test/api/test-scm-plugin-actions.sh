@@ -113,7 +113,7 @@ test_export_perform_action_xml(){
 	local project=$1
 	local integration=export
 
-	setup_export_actions_fields $project
+	local JOBID=$(setup_export_actions_fields $project)
 	
 	sleep 2
 
@@ -128,18 +128,44 @@ test_export_perform_action_xml(){
 	assert_xml_value "1" 'count(/scmProjectStatus/actions/string)' $DIR/curl.out
 	assert_xml_value "project-commit" '/scmProjectStatus/actions/string' $DIR/curl.out
 
+	# get status input
+	# list fields for action
+
+	METHOD=GET
+	ACCEPT=application/xml
+	EXPECT_STATUS=200
+	ENDPOINT="${APIURL}/project/$project/scm/$integration/action/project-commit/input"
+	
+	api_request $ENDPOINT $DIR/curl.out
+
+	$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+
+	assert_xml_value "Commit Message" '/scmProjectActionInput/fields/scmPluginInputField[name="message"]/title' $DIR/curl.out
+	
+	local jobId=$(xmlsel '/scmProjectActionInput/exportItems/scmExportActionItem/job/jobId' $DIR/curl.out)
+	local commitMessage="A test commit"
+
 	# perform action
 
 	METHOD=POST
 	ACCEPT=application/xml
+	TYPE=application/xml
 	EXPECT_STATUS=200
 	ENDPOINT="${APIURL}/project/$project/scm/$integration/action/project-commit"
 	TMPDIR=`tmpdir`
-	tmp=$TMPDIR/job.xml
+	tmp=$TMPDIR/commit.xml
 	cat >$tmp <<END
-<scmActionRequest>
-
-</scmActionRequest>
+<scmAction>
+	<input>
+		<entry key="message">$commitMessage</entry>
+	</input>
+	<items>
+	</items>
+	<jobs>
+		<job jobId="$jobId"/>
+	</jobs>
+	<deleted></deleted>
+</scmAction>
 END
 	POSTFILE=$tmp
 	test_begin "POST SCM Action (XML)"
@@ -147,12 +173,9 @@ END
 
 	$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
-	assert_xml_value "project-commit" '/scmProjectActionInput/actionId' $DIR/curl.out
-	assert_xml_value "export" '/scmProjectActionInput/integration' $DIR/curl.out
-	assert_xml_value "Commit Changes to Git" '/scmProjectActionInput/title' $DIR/curl.out
-	assert_xml_value "3" 'count(/scmProjectActionInput/fields/scmPluginInputField)' $DIR/curl.out
-	assert_xml_value "Commit Message" '/scmProjectActionInput/fields/scmPluginInputField[name="message"]/title' $DIR/curl.out
-
+	assert_xml_value "true" '/scmActionResult/success' $DIR/curl.out
+	assert_xml_value "SCM export Action was Successful: project-commit" '/scmActionResult/message' $DIR/curl.out
+	
 	test_succeed
 
 	remove_project $project
@@ -207,12 +230,82 @@ test_export_actions_fields_json(){
 
 }
 
+test_export_perform_action_json(){
+
+	local project=$1
+	local integration=export
+
+	local JOBID=$(setup_export_actions_fields $project)
+	
+	sleep 2
+
+	#list actions for status
+
+	METHOD=GET
+	ACCEPT=application/xml
+	EXPECT_STATUS=200
+	ENDPOINT="${APIURL}/project/$project/scm/$integration/status"
+	api_request $ENDPOINT $DIR/curl.out
+
+	assert_xml_value "1" 'count(/scmProjectStatus/actions/string)' $DIR/curl.out
+	assert_xml_value "project-commit" '/scmProjectStatus/actions/string' $DIR/curl.out
+
+	# get status input
+	# list fields for action
+
+	METHOD=GET
+	ACCEPT=application/xml
+	EXPECT_STATUS=200
+	ENDPOINT="${APIURL}/project/$project/scm/$integration/action/project-commit/input"
+	
+	api_request $ENDPOINT $DIR/curl.out
+
+	$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+
+	assert_xml_value "Commit Message" '/scmProjectActionInput/fields/scmPluginInputField[name="message"]/title' $DIR/curl.out
+	
+	local jobId=$(xmlsel '/scmProjectActionInput/exportItems/scmExportActionItem/job/jobId' $DIR/curl.out)
+	local commitMessage="A test commit"
+
+	# perform action
+
+	METHOD=POST
+	ACCEPT=application/json
+	TYPE=application/json
+	EXPECT_STATUS=200
+	ENDPOINT="${APIURL}/project/$project/scm/$integration/action/project-commit"
+	TMPDIR=`tmpdir`
+	tmp=$TMPDIR/commit.json
+	cat >$tmp <<END
+{
+	"input":{
+		"message":"$commitMessage"
+	},
+	"jobs":[
+		"$jobId"
+	],
+	"items":null,
+	"deleted":null
+}
+END
+	POSTFILE=$tmp
+	test_begin "POST SCM Action (JSON)"
+	api_request $ENDPOINT $DIR/curl.out
+
+	assert_json_value "true" '.success' $DIR/curl.out
+	assert_json_value "SCM export Action was Successful: project-commit" '.message' $DIR/curl.out
+	
+	test_succeed
+
+	remove_project $project
+}
+
 main(){
 	test_export_actions_fields_xml "testscm1"
-	#test_export_perform_action_xml "testscm2"
+	test_export_perform_action_xml "testscm2"
 
 	test_export_actions_fields_json "testscm3"
-	#test_export_perform_action_json "testscm4"
+	test_export_perform_action_json "testscm4"
 }
 
 main
