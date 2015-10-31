@@ -6,17 +6,13 @@
 
 DIR=$(cd `dirname $0` && pwd)
 export API_XML_NO_WRAPPER=1
-source $DIR/include.sh
+source $DIR/include_scm_test.sh
 
-
-proj=$2
-if [ "" == "$2" ] ; then
-    proj="test"
-fi
+project="testscmlist"
 
 test_plugins_list_xml(){
 	local intname=$1
-	ENDPOINT="${APIURL}/project/$proj/scm/$intname/plugins"
+	ENDPOINT="${APIURL}/project/$project/scm/$intname/plugins"
 
 	test_begin "XML Response"
 
@@ -39,11 +35,12 @@ test_plugins_list_xml(){
 #/ expect invalid integration name
 test_plugins_list_xml_failure(){
 	local intname=$1
-	ENDPOINT="${APIURL}/project/$proj/scm/$intname/plugins"
+	ENDPOINT="${APIURL}/project/$project/scm/$intname/plugins"
 
 	test_begin "XML Response/Invalid integration"
 
 	ACCEPT=application/xml
+	EXPECT_STATUS=400
 
 	api_request $ENDPOINT $DIR/curl.out
 
@@ -56,7 +53,7 @@ test_plugins_list_xml_failure(){
 
 test_plugins_list_json(){
 	local intname=$1
-	ENDPOINT="${APIURL}/project/$proj/scm/$intname/plugins"
+	ENDPOINT="${APIURL}/project/$project/scm/$intname/plugins"
 
 	test_begin "JSON response"
 
@@ -77,11 +74,12 @@ test_plugins_list_json(){
 }
 test_plugins_list_json_failure(){
 	local intname=$1
-	ENDPOINT="${APIURL}/project/$proj/scm/$intname/plugins"
+	ENDPOINT="${APIURL}/project/$project/scm/$intname/plugins"
 
 	test_begin "JSON response/Invalid integration"
 
 	ACCEPT=application/json
+	EXPECT_STATUS=400
 
 	api_request $ENDPOINT $DIR/curl.out
 
@@ -95,12 +93,14 @@ test_plugins_list_json_failure(){
 }
 
 main(){
+	create_project $project
 	test_plugins_list_xml 'import'
 	test_plugins_list_xml 'export'
 	test_plugins_list_xml_failure 'invalid'
 	test_plugins_list_json 'import'
 	test_plugins_list_json 'export'
 	test_plugins_list_json_failure 'invalid'
+	remove_project $project
 }
 
 main
