@@ -1931,7 +1931,7 @@ class ProjectControllerTest {
                 ["message": "api.error.invalid.request;Property [jobUuidOption] of class [class com.dtolabs.rundeck.app.support.ProjectArchiveParams] with value [blah] is not contained within the list [[preserve, remove]]",
                  "error": true,
                  "errorCode": "api.error.invalid.request",
-                 "apiversion": 14],
+                 "apiversion": ApiRequestFilters.API_CURRENT_VERSION],
                 response.json
         )
     }
@@ -1991,7 +1991,7 @@ class ProjectControllerTest {
                               message:"api.error.item.unauthorized;[create, ACL for Project, [name:test1]]",
                               error: true,
                               errorCode : "api.error.item.unauthorized",
-                              apiversion: 14
+                              apiversion: ApiRequestFilters.API_CURRENT_VERSION
                       ],
                       response.json
         )
