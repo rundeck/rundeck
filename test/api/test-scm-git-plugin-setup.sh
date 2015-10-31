@@ -153,47 +153,6 @@ END
 	test_succeed
 }
 
-do_setup_export_json_valid(){
-	local integration=$1
-	local plugin=$2
-	local project=$3
-
-	ENDPOINT="${APIURL}/project/$project/scm/$integration/plugin/$plugin/setup"
-
-	TMPDIR=`tmpdir`
-	dirname=$TMPDIR/testdir
-	gitdir=$TMPDIR/testgit
-	mkdir $dirname
-	setup_remote $gitdir
-
-	tmp=$TMPDIR/test_setup_export_xml-upload.json
-	cat >$tmp <<END
-{
-	"config":{
-		"dir":"$dirname",
-		"url":"$gitdir",
-		"committerName":"Git Test",
-		"committerEmail":"A@test.com",
-		"pathTemplate":"\${job.group}\${job.name}-\${job.id}.\${config.format}",
-		"format":"xml",
-		"branch":"master",
-		"strictHostKeyChecking":"yes"
-	}
-}
-END
-	METHOD=POST
-	ACCEPT=application/json
-	TYPE=application/json
-	POSTFILE=$tmp
-	EXPECT_STATUS=200
-
-	
-	api_request $ENDPOINT $DIR/curl.out
-
-	assert_json_value "true" '.success' $DIR/curl.out
-	assert_json_value "SCM Plugin Setup Complete" '.message' $DIR/curl.out
-	
-}
 test_setup_export_json_valid(){
 	local integration=$1
 	local plugin=$2
