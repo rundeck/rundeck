@@ -321,7 +321,7 @@ class ScmController extends ControllerBase {
         }
         ScmPluginConfig config = new ScmPluginConfig()
         String errormsg = ''
-        apiService.parseJsonXmlWith(request, response, [
+        def valid = apiService.parseJsonXmlWith(request, response, [
                 json: { data ->
                     config.config = data.config
                     if (!data.config) {
@@ -341,6 +341,9 @@ class ScmController extends ControllerBase {
                 }
         ]
         )
+        if (!valid) {
+            return
+        }
 
         if (null == config.config) {
             return respond(
