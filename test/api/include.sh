@@ -105,12 +105,24 @@ api_request(){
     local H_UPLOAD=
     if [ -n "$POSTFILE" ] ; then
         H_UPLOAD="--data-binary @$POSTFILE"
+        if [ -n "$DEBUG" ] ; then
+            1>&2 echo "POSTFILE=$POSTFILE" 
+            1>&2 echo ">>>>"
+            1>&2 cat $POSTFILE
+            1>&2 echo ">>>>"
+        fi
     fi
     # get listing
     docurl -D $DIR/headers.out $H_METHOD $H_UPLOAD $H_ACCEPT $H_REQUEST_TYPE ${ENDPOINT}?${PARAMS} > $FILE
     if [ 0 != $? ] ; then
         fail "ERROR: failed query request"
     fi
+    if [ -n "$DEBUG" ] ; then
+            1>&2 echo "FILE=$FILE" 
+            1>&2 echo "<<<<"
+            1>&2 cat $FILE
+            1>&2 echo "<<<<"
+        fi
     
     assert_http_status ${EXPECT_STATUS:-200} $DIR/headers.out
     METHOD=
