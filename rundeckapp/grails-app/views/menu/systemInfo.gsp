@@ -38,6 +38,27 @@
 <div class="col-sm-9">
 
     <h3>System Info</h3>
+    <g:if test="${schedulerThreadRatio && schedulerThreadRatio>=1.0}">
+        <div class="alert alert-warning alert-dismissable">
+            <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+            <p>
+                <g:message code="quartz.scheduler.thread.usage.is.currently.at"
+                args="[g.formatNumber(number:schedulerThreadRatio,format: '#.##%')]"
+                />:
+                <g:message code="0.1.threads.in.use" args="[schedulerRunningCount, threadPoolSize]" />
+            </p>
+            <p>
+                <g:message code="jobs.and.ad.hoc.executions.will.be.queued.until.previous.executions.complete" />
+            </p>
+            <p>
+                <a href="${g.helpLinkUrl(path:'/administration/tuning-rundeck.html#quartz-job-threadcount')}">
+                    <g:icon name="question-sign"/>
+                    <g:message code="more.information" />
+                </a>
+            </p>
+        </div>
+
+    </g:if>
 
     <div class="btn-group">
         <g:link uri='/metrics/metrics?pretty=true' class="btn btn-sm btn-info" title="View JSON metrics data">
@@ -46,6 +67,10 @@
         </g:link>
         <g:link uri='/metrics/threads' class="btn btn-sm btn-info" title="View Java thread dump">
             Thread Dump
+            <i class="glyphicon glyphicon-file"></i>
+        </g:link>
+        <g:link uri='/metrics/healthcheck' class="btn btn-sm btn-info" title="Healthcheck">
+            <g:message code="healthcheck.json" />
             <i class="glyphicon glyphicon-file"></i>
         </g:link>
     </div>

@@ -1,4 +1,6 @@
 import com.codahale.metrics.MetricRegistry
+import com.codahale.metrics.health.HealthCheck
+import com.codahale.metrics.health.HealthCheckRegistry
 import com.dtolabs.launcher.Setup
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.VersionConstants
@@ -33,6 +35,7 @@ class BootStrap {
     MetricRegistry metricRegistry
     def messageSource
     def scmService
+    HealthCheckRegistry healthCheckRegistry
 
      def init = { ServletContext servletContext ->
          def appname=messageSource.getMessage('main.app.name',null,'',null) ?: messageSource.getMessage('main.app.default.name',null,'',null) ?: 'Rundeck'
@@ -241,7 +244,19 @@ class BootStrap {
          if(!maxLastLines || !(maxLastLines instanceof Integer) || maxLastLines < 1){
              grailsApplication.config.rundeck.gui.execution.tail.lines.max = 500
          }
+         healthCheckRegistry?.register("quartz.scheduler.threadPool",new HealthCheck() {
+             @Override
+             protected com.codahale.metrics.health.HealthCheck.Result check() throws Exception {
+                 def size = quartzScheduler.getMetaData().threadPoolSize
 
+                 def jobs = quartzScheduler.getCurrentlyExecutingJobs().size()
+                 if( size > jobs ){
+                     com.codahale.metrics.health.HealthCheck.Result.healthy()
+                 }  else{
+                     com.codahale.metrics.health.HealthCheck.Result.unhealthy("${jobs}/${size} threads used")
+                 }
+             }
+         })
          //set up some metrics collection for the Quartz scheduler
          metricRegistry.register(MetricRegistry.name("rundeck.scheduler.quartz","runningExecutions"),new CallableGauge<Integer>({
              quartzScheduler.getCurrentlyExecutingJobs().size()
