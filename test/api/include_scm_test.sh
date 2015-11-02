@@ -12,7 +12,7 @@ ARGS=$@
 
 tmpdir(){
 	tempfoo=`basename $0`
-	TMPDIR=`mktemp -d -t ${tempfoo}` || exit 1
+	TMPDIR=`mktemp -d -t ${tempfoo}.XXX` || exit 1
 	echo $TMPDIR
 }
 
