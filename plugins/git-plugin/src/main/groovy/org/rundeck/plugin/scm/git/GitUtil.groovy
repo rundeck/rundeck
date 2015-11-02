@@ -10,6 +10,7 @@ import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.diff.EditList
 import org.eclipse.jgit.diff.RawText
 import org.eclipse.jgit.diff.RawTextComparator
+import org.eclipse.jgit.errors.MissingObjectException
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.FileMode
 import org.eclipse.jgit.lib.ObjectId
@@ -47,9 +48,14 @@ class GitUtil {
         if (!resolve) {
             return null
         }
-        final RevCommit revCommit = walk.parseCommit(resolve);
-        walk.release()
-        revCommit
+        try {
+            return walk.parseCommit(resolve);
+        }catch (IOException e){
+
+            return null
+        }finally{
+            walk.release()
+        }
     }
 
     static ObjectId lookupId(Repository repo, RevCommit commit, String path) {
