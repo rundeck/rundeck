@@ -47,12 +47,12 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         actions = [
                 (JOB_COMMIT_ACTION_ID)    : new CommitJobsAction(
                         JOB_COMMIT_ACTION_ID,
-                        "Commit Job Changes",
+                        "Commit Changes to Git",
                         "Commit changes to local git repo."
                 ),
                 (PROJECT_COMMIT_ACTION_ID): new CommitJobsAction(
                         PROJECT_COMMIT_ACTION_ID,
-                        "Commit Job Changes",
+                        "Commit Changes to Git",
                         "Commit changes to local git repo."
                 ),
                 (PROJECT_PUSH_ACTION_ID)  : new PushAction(
