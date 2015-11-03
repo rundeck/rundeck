@@ -7,7 +7,7 @@ import grails.validation.Validateable
  * Created by greg on 10/29/15.
  */
 @Validateable
-class ScmActionRequest extends ScmIntegrationRequest {
+class ScmActionRequest extends ScmIntegrationRequest implements ActionRequest{
     String actionId
 
     static constraints={

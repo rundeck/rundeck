@@ -405,10 +405,10 @@ class ApiService {
      * @param args arguments to error message: {@literal '{0} does not exist: {1}'}
      * @return false if requirement is not met, response will already have been made
      */
-    def requireExists(HttpServletResponse response, Object item, List args) {
+    def requireExists(HttpServletResponse response, Object item, List args, String code=null) {
         if (!item) {
             renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                    code: 'api.error.item.doesnotexist', args: args])
+                    code: code?:'api.error.item.doesnotexist', args: args])
             return false
         }
         return true

@@ -54,9 +54,8 @@ class UrlMappings {
         }
 
         "/api/$api_version/job/$id/scm/$integration/status"(controller: 'scm', action: 'apiJobStatus')
-        "/api/$api_version/job/$id/scm/$integration/actions"(controller: 'scm', action: 'apiJobActions')
-        "/api/$api_version/job/$id/scm/$integration/action/$actionId/input"(controller: 'scm', action: 'apiJobActionInputs')
-        "/api/$api_version/job/$id/scm/$integration/action/$actionId"(controller: 'scm', action: 'apiJobAction')
+        "/api/$api_version/job/$id/scm/$integration/action/$actionId/input"(controller: 'scm', action: 'apiJobActionInput')
+        "/api/$api_version/job/$id/scm/$integration/action/$actionId"(controller: 'scm', action: 'apiJobActionPerform')
 
         "/api/$api_version/jobs/delete"(controller: 'scheduledExecution', action: 'apiJobDeleteBulk')
 

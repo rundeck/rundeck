@@ -3,7 +3,7 @@ package com.dtolabs.rundeck.app.api.scm
 import com.dtolabs.rundeck.app.api.CDataString
 
 /**
- * Created by greg on 10/29/15.
+ * Action input data
  */
 class ScmActionInput {
     String actionId
@@ -11,4 +11,7 @@ class ScmActionInput {
     String title
     CDataString description
     List<ScmPluginInputField> fields
+
+    List<ScmImportActionItem> importItems
+    List<ScmExportActionItem> exportItems
 }
