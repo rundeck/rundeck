@@ -210,6 +210,9 @@ class ProjectService implements InitializingBean{
                 }else if(object.jobId && skipJobIds && skipJobIds.contains(object.jobId)){
                     log.debug("Execution skipped ${object.id} for job ${object.jobId}")
                     return
+                }else if(object.jobId) {
+                    //look for same ID
+                    se = scheduledExecutionService.getByIDorUUID(object.jobId)
                 }
                 if(object.id){
                     object.id=XmlParserUtil.stringToInt(object.id,-1)

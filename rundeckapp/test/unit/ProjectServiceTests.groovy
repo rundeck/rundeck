@@ -455,6 +455,69 @@ class ProjectServiceTests  {
         assertEquals 1,e.workflow.commands.size()
         assertPropertiesEquals( [adhocRemoteString: 'exec command'],e.workflow.commands[0])
     }
+    /**
+     * using job id that already exists will attach to that job
+     */
+    public void  testImportExecutionRetainJob(){
+        def newJobId = 'test-id2'
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                uuid: newJobId,
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec(
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                )
+                        ]
+                )
+        )
+        assertNotNull se.save()
+        def idMap = [:]
+
+
+        def semock = mockFor(ScheduledExecutionService)
+        semock.demand.getByIDorUUID(1..1){id->
+            assertEquals(newJobId,id)
+            se
+        }
+
+        ProjectService svc = new ProjectService()
+        svc.scheduledExecutionService=semock.createMock()
+
+        def result = svc.loadExecutions(EXEC_XML_TEST1_START+"<outputfilepath/><jobId>${newJobId}</jobId>"+EXEC_XML_TEST1_REST,idMap)
+        assertNotNull result
+        assertNotNull result.executions
+        assertNotNull result.execidmap
+        assertEquals 1,result.executions.size()
+
+        def Execution e = result.executions[0]
+        def expected = [
+                argString: '-test args',
+                user: 'testuser',
+                project: 'testproj',
+                loglevel: 'WARN',
+                doNodedispatch: true,
+                dateStarted: new Date(0),
+                dateCompleted: new Date(3600000),
+                filter: 'hostname: test1 !tags: monkey',
+                status: 'true',
+        ]
+        assertPropertiesEquals expected,e
+        assertNotNull(e.scheduledExecution)
+        assertEquals(se,e.scheduledExecution)
+        assertEquals( [(e):1],result.execidmap)
+
+        assertNotNull e.workflow
+        assertNotNull e.workflow.commands
+        assertEquals 1,e.workflow.commands.size()
+        assertPropertiesEquals( [adhocRemoteString: 'exec command'],e.workflow.commands[0])
+    }
     public void  testloadExecutionsRetryExecId(){
         def remapExecId='12'
         def idMap=[:]
