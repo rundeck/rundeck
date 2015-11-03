@@ -18,7 +18,7 @@ setup_export_actions_fields(){
 
 	do_setup_export_json_valid "export" "git-export" $project
 
-	JOBID=$(create_job $project $JOBNAME)
+	JOBID=$(create_job $project "$JOBNAME")
 	echo $JOBID
 }
 test_export_actions_fields_xml(){
@@ -52,21 +52,21 @@ test_export_actions_fields_xml(){
 	$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 	# test "message" field
-	assert_xml_value "project-commit" '/scmProjectActionInput/actionId' $DIR/curl.out
-	assert_xml_value "export" '/scmProjectActionInput/integration' $DIR/curl.out
-	assert_xml_value "Commit Changes to Git" '/scmProjectActionInput/title' $DIR/curl.out
-	assert_xml_value "3" 'count(/scmProjectActionInput/fields/scmPluginInputField)' $DIR/curl.out
-	assert_xml_value "Commit Message" '/scmProjectActionInput/fields/scmPluginInputField[name="message"]/title' $DIR/curl.out
+	assert_xml_value "project-commit" '/scmActionInput/actionId' $DIR/curl.out
+	assert_xml_value "export" '/scmActionInput/integration' $DIR/curl.out
+	assert_xml_value "Commit Changes to Git" '/scmActionInput/title' $DIR/curl.out
+	assert_xml_value "3" 'count(/scmActionInput/fields/scmPluginInputField)' $DIR/curl.out
+	assert_xml_value "Commit Message" '/scmActionInput/fields/scmPluginInputField[name="message"]/title' $DIR/curl.out
 
 	# test export item for the job
-	assert_xml_value "1" 'count(/scmProjectActionInput/exportItems/scmExportActionItem)' $DIR/curl.out
-	assert_xml_value "$JOBID" '/scmProjectActionInput/exportItems/scmExportActionItem/job/jobId' $DIR/curl.out
-	assert_xml_value "$JOBNAME" '/scmProjectActionInput/exportItems/scmExportActionItem/job/jobName' $DIR/curl.out
-	assert_xml_value "" '/scmProjectActionInput/exportItems/scmExportActionItem/job/groupPath' $DIR/curl.out
-	assert_xml_value "false" '/scmProjectActionInput/exportItems/scmExportActionItem/deleted' $DIR/curl.out
-	assert_xml_value "false" '/scmProjectActionInput/exportItems/scmExportActionItem/renamed' $DIR/curl.out
-	assert_xml_value "$JOBNAME-$JOBID.xml" '/scmProjectActionInput/exportItems/scmExportActionItem/itemId' $DIR/curl.out
-	assert_xml_value "" '/scmProjectActionInput/exportItems/scmExportActionItem/originalId' $DIR/curl.out
+	assert_xml_value "1" 'count(/scmActionInput/exportItems/scmExportActionItem)' $DIR/curl.out
+	assert_xml_value "$JOBID" '/scmActionInput/exportItems/scmExportActionItem/job/jobId' $DIR/curl.out
+	assert_xml_value "$JOBNAME" '/scmActionInput/exportItems/scmExportActionItem/job/jobName' $DIR/curl.out
+	assert_xml_value "" '/scmActionInput/exportItems/scmExportActionItem/job/groupPath' $DIR/curl.out
+	assert_xml_value "false" '/scmActionInput/exportItems/scmExportActionItem/deleted' $DIR/curl.out
+	assert_xml_value "false" '/scmActionInput/exportItems/scmExportActionItem/renamed' $DIR/curl.out
+	assert_xml_value "$JOBNAME-$JOBID.xml" '/scmActionInput/exportItems/scmExportActionItem/itemId' $DIR/curl.out
+	assert_xml_value "" '/scmActionInput/exportItems/scmExportActionItem/originalId' $DIR/curl.out
 
 	test_succeed
 
@@ -104,9 +104,9 @@ test_export_perform_action_xml(){
 
 	$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
-	assert_xml_value "Commit Message" '/scmProjectActionInput/fields/scmPluginInputField[name="message"]/title' $DIR/curl.out
+	assert_xml_value "Commit Message" '/scmActionInput/fields/scmPluginInputField[name="message"]/title' $DIR/curl.out
 	
-	local jobId=$(xmlsel '/scmProjectActionInput/exportItems/scmExportActionItem/job/jobId' $DIR/curl.out)
+	local jobId=$(xmlsel '/scmActionInput/exportItems/scmExportActionItem/job/jobId' $DIR/curl.out)
 	local commitMessage="A test commit"
 
 	# perform action
@@ -226,9 +226,9 @@ test_export_perform_action_json(){
 
 	$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
-	assert_xml_value "Commit Message" '/scmProjectActionInput/fields/scmPluginInputField[name="message"]/title' $DIR/curl.out
+	assert_xml_value "Commit Message" '/scmActionInput/fields/scmPluginInputField[name="message"]/title' $DIR/curl.out
 	
-	local jobId=$(xmlsel '/scmProjectActionInput/exportItems/scmExportActionItem/job/jobId' $DIR/curl.out)
+	local jobId=$(xmlsel '/scmActionInput/exportItems/scmExportActionItem/job/jobId' $DIR/curl.out)
 	local commitMessage="A test commit"
 
 	# perform action
