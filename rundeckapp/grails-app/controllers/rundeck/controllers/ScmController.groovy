@@ -658,7 +658,8 @@ class ScmController extends ControllerBase {
     private Object respondApiActionInput(
             BasicInputView view,
             String project,
-            ActionRequest scm
+            ActionRequest scm,
+            String jobId = null
     )
     {
         boolean isExport = scm.integration == 'export'
@@ -671,7 +672,7 @@ class ScmController extends ControllerBase {
 
         List<ScmExportActionItem> exportActionItems = null
         if (isExport) {
-            exportActionItems = getViewExportActionItems(project, exportActionItems)
+            exportActionItems = getViewExportActionItems(project, jobId ? [jobId] : null)
         }
 
         /**
@@ -680,7 +681,7 @@ class ScmController extends ControllerBase {
         List<ScmImportActionItem> importActionItems = null
 
         if (!isExport) {
-            importActionItems = getViewImportItems(project, actionId, importActionItems)
+            importActionItems = getViewImportItems(project, actionId, jobId ? [jobId] : null)
             //todo: job scm status
             //scmJobStatus = scmService.importStatusForJobs(jobs)
         }
@@ -704,20 +705,23 @@ class ScmController extends ControllerBase {
         )
     }
 
-    private ArrayList<ScmExportActionItem> getViewExportActionItems(
-            String project,
-            List<ScmExportActionItem> exportActionItems
-    )
-    {
+    private ArrayList<ScmExportActionItem> getViewExportActionItems(String project, List<String> jobids = null) {
         Map scmJobStatus
-        exportActionItems = []
+        List<ScmExportActionItem> exportActionItems = []
         Map deletedPaths = scmService.deletedExportFilesForProject(project)
         Map<String, String> renamedJobPaths = scmService.getRenamedJobPathsForProject(project)
         //remove deleted paths that are known to be renamed jobs
         renamedJobPaths.values().each {
             deletedPaths.remove(it)
         }
-        List<ScheduledExecution> jobs = ScheduledExecution.findAllByProject(project)
+        List<ScheduledExecution> jobs = []
+        if(jobids){
+            jobs = jobids.collect{
+                ScheduledExecution.getByIdOrUUID(it)
+            }.findAll{it}
+        }else{
+            jobs=ScheduledExecution.findAllByProject(project)
+        }
         //todo: job scm status
         scmJobStatus = scmService.exportStatusForJobs(jobs).findAll {
             it.value.synchState != SynchState.CLEAN
@@ -748,11 +752,18 @@ class ScmController extends ControllerBase {
     private ArrayList<ScmImportActionItem> getViewImportItems(
             String project,
             String actionId,
-            List<ScmImportActionItem> importActionItems
+            List<String> jobids = null
     )
     {
-        importActionItems = []
-        List<ScmImportTrackedItem> trackingItems = scmService.getTrackingItemsForAction(project, actionId)
+        List<ScmImportActionItem> importActionItems = []
+        List<ScmImportTrackedItem> trackingItems = []
+        if(jobids){
+            trackingItems = scmService.getTrackingItemsForAction(project, actionId).findAll{
+                it.jobId && it.jobId in jobids
+            }
+        }else {
+            trackingItems = scmService.getTrackingItemsForAction(project, actionId)
+        }
         trackingItems.each {
             ScmImportActionItem item = new ScmImportActionItem()
             item.itemId = it.id
@@ -1289,7 +1300,7 @@ class ScmController extends ControllerBase {
                 scmJobStatus.message = scmStatus?.synchState ? g.message(
                         code: "scm.${scm.integration}.status.${scmStatus.synchState}.display.text"
                 ) : null
-                scmJobStatus.actions = null //XXX
+                scmJobStatus.actions = scmStatus?.actions?.collect { it.id }
                 if (scmStatus?.commit) {
                     scmJobStatus.commit = new ScmCommit(
                             commitId: scmStatus.commit.commitId,
@@ -1374,7 +1385,7 @@ class ScmController extends ControllerBase {
             return
         }
 
-        respondApiActionInput(view, scheduledExecution.project, scm)
+        respondApiActionInput(view, scheduledExecution.project, scm, scm.id)
     }
 
     /**

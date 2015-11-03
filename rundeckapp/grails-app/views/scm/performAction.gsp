@@ -221,7 +221,7 @@
                                             <label title="${trackedItem.id}">
                                                 <g:checkBox name="chosenTrackedItem"
                                                             value="${trackedItem.id}"
-                                                            checked="${selectedItems?.contains(trackedItem.id)||trackedItem.selected}"/>
+                                                            checked="${selectedItems?.contains(trackedItem.id)||trackedItem.selected||(trackedItem.jobId && selected?.contains(trackedItem.jobId))}"/>
 
                                                 <g:if test="${job}">
 
