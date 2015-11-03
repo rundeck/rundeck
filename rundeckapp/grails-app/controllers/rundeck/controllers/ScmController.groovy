@@ -948,12 +948,12 @@ class ScmController extends ControllerBase {
         [result, messages]
     }
 
-    private ScmAction parseScmActionInput(boolean inputOnly=false) {
+    private ScmAction parseScmActionInput(boolean inputOnly = false) {
         ScmAction actionInput
         String errormsg = ''
         boolean valid = apiService.parseJsonXmlWith(request, response, [
                 json: { data ->
-                    def invalid = ScmAction.validateJson(data,inputOnly)
+                    def invalid = ScmAction.validateJson(data, inputOnly)
                     if (invalid) {
                         errormsg += invalid
                         return
@@ -1238,7 +1238,7 @@ class ScmController extends ControllerBase {
             return
         }
         ScheduledExecution scheduledExecution = ScheduledExecution.getByIdOrUUID(scm.id)
-        if(!apiRequireJob(scheduledExecution, scm)){
+        if (!apiRequireJob(scheduledExecution, scm)) {
             return
         }
 
@@ -1367,7 +1367,7 @@ class ScmController extends ControllerBase {
             return
         }
         ScheduledExecution scheduledExecution = ScheduledExecution.getByIdOrUUID(scm.id)
-        if(!apiRequireJob(scheduledExecution, scm)){
+        if (!apiRequireJob(scheduledExecution, scm)) {
             return
         }
 
@@ -1398,7 +1398,7 @@ class ScmController extends ControllerBase {
             return
         }
         ScheduledExecution scheduledExecution = ScheduledExecution.getByIdOrUUID(scm.id)
-        if(!apiRequireJob(scheduledExecution, scm)){
+        if (!apiRequireJob(scheduledExecution, scm)) {
             return
         }
 
