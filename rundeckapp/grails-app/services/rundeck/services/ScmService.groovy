@@ -944,7 +944,7 @@ class ScmService {
         }
         ScmExportResult result = null
         try {
-            result = plugin.export(context, actionId, jobrefs as Set, deletePaths as Set, config)
+            result = plugin.export(context, actionId, jobrefs as Set, (deletePaths?:[]) as Set, config)
 
             if (result && result.success && result.commit) {
                 //synch import commit info to exported commit data
