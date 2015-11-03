@@ -99,3 +99,43 @@ END
 	assert_json_value "SCM Plugin Setup Complete" '.message' $DIR/curl.out
 	
 }
+
+
+create_job(){
+	local project=$1
+	local jobname=$2
+	local action=${3:-echo hi}
+
+
+	TMPDIR=`tmpdir`
+	tmp=$TMPDIR/job.xml
+	cat >$tmp <<END
+<joblist>
+  <job>
+    <description></description>
+    <executionEnabled>true</executionEnabled>
+    <loglevel>INFO</loglevel>
+    <name>$jobname</name>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>$action</exec>
+      </command>
+    </sequence>
+  </job>
+</joblist>
+END
+	METHOD=POST
+	ENDPOINT="${APIURL}/project/$project/jobs/import"
+	ACCEPT=application/xml
+	TYPE=application/xml
+	POSTFILE=$tmp
+
+	api_request $ENDPOINT $DIR/curl.out
+
+
+	assert_xml_value "1" '/result/succeeded/@count' $DIR/curl.out
+	local JOBID=$( xmlsel '/result/succeeded/job/id' $DIR/curl.out )
+
+	echo $JOBID
+}
