@@ -4661,8 +4661,9 @@ Get the input fields and selectable items for a specific action for a job.
 
 Each action may have a set of Input Fields describing user-input values.
 
-Export actions may have a set of `scmExportActionItem`s which describe Job changes that can be
-included in the action.
+Export actions will include one `scmExportActionItem` for the Job.
+
+Import actions may have a set of `scmImportActionItem` for the job.
 
 **Request**
 
@@ -4679,11 +4680,10 @@ The same response format as in [Get Project SCM Action Input Fields](#get-projec
     POST /api/15/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]
 
 Request Content is nearly exactly as expected in [Perform Project SCM Action](#perform-project-scm-action),
-however the `jobIds` do not need to be specified, as the Job is already defined.  Also, the `items` and
-`deleted` sections are not used.
+however the `jobIds` do not need to be specified, as the `ID` of the job is already specified.
+The `items` and `deleted` sections are not used.
 
 Only the `input` values need to be specified:
-
 
 `Content-Type: application/xml`:
 
