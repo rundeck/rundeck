@@ -76,19 +76,21 @@ class ScmAction {
         }
         return scmAction
     }
-    static Closure validateJson = { data ->
+    static Closure validateJson = { data, boolean inputOnly=false ->
         String errormsg = ''
         if (JSONObject.NULL != data.input && !(data.input instanceof Map)) {
             errormsg += " json: expected 'input' to be a map"
         }
-        if (JSONObject.NULL != data.jobs && !(data.jobs instanceof Collection)) {
-            errormsg += " json: expected 'jobs' to be a list"
-        }
-        if (JSONObject.NULL != data.items && !(data.items instanceof Collection)) {
-            errormsg += " json: expected 'items' to be a list"
-        }
-        if (JSONObject.NULL != data.deleted && !(data.deleted instanceof Collection)) {
-            errormsg += " json: expected 'deleted' to be a list"
+        if(!inputOnly) {
+            if (JSONObject.NULL != data.jobs && !(data.jobs instanceof Collection)) {
+                errormsg += " json: expected 'jobs' to be a list"
+            }
+            if (JSONObject.NULL != data.items && !(data.items instanceof Collection)) {
+                errormsg += " json: expected 'items' to be a list"
+            }
+            if (JSONObject.NULL != data.deleted && !(data.deleted instanceof Collection)) {
+                errormsg += " json: expected 'deleted' to be a list"
+            }
         }
         errormsg ?: null
     }

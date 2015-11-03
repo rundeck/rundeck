@@ -937,12 +937,12 @@ class ScmController extends ControllerBase {
         [result, messages]
     }
 
-    private ScmAction parseScmActionInput() {
+    private ScmAction parseScmActionInput(boolean inputOnly=false) {
         ScmAction actionInput
         String errormsg = ''
         boolean valid = apiService.parseJsonXmlWith(request, response, [
                 json: { data ->
-                    def invalid = ScmAction.validateJson(data)
+                    def invalid = ScmAction.validateJson(data,inputOnly)
                     if (invalid) {
                         errormsg += invalid
                         return
@@ -1406,7 +1406,7 @@ class ScmController extends ControllerBase {
             return
         }
 
-        ScmAction actionInput = parseScmActionInput()
+        ScmAction actionInput = parseScmActionInput(true)
         if (!actionInput) {
             return
         }
