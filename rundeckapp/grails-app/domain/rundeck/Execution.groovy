@@ -239,7 +239,7 @@ class Execution extends ExecutionContext {
         exec.timedOut = XmlParserUtil.stringToBool(data.timedOut,false)
         exec.argString = data.argString
         exec.loglevel = data.loglevel
-        exec.doNodedispatch = data.doNodedispatch
+        exec.doNodedispatch = XmlParserUtil.stringToBool(data.doNodedispatch,false)
         exec.timeout = data.timeout
         if(data.retryAttempt){
             exec.retryAttempt= XmlParserUtil.stringToInt(data.retryAttempt, 0)

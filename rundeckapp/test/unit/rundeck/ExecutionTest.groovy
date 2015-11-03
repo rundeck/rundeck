@@ -403,6 +403,57 @@ class ExecutionTest {
         assertNull(exec.nodeIncludeName)
         assertEquals('name: test1', exec.filter)
     }
+    void testFromMapDoNodedispatch_stringTrue(){
+        //blank threadcount
+        def exec = Execution.fromMap([
+                status: 'true',
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                doNodedispatch: "true",
+                nodefilters:[
+                    dispatch:[
+                            threadcount:1,
+                            keepgoing: "true",
+                            excludePrecedence:'false'
+                    ],
+                    filter: 'name: test1'
+                ],
+                project:'test1',
+                user:'user1',
+                workflow:[
+                        keepgoing:true,
+                        commands:[
+                                [
+                                        exec:"blah"
+                                ]
+                        ]
+                ]
+        ], null)
+        assertNotNull(exec)
+        assertEquals(true, exec.doNodedispatch)
+    }
+    void testFromMapDoNodedispatch_stringFalse(){
+        //blank threadcount
+        def exec = Execution.fromMap([
+                status: 'true',
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                doNodedispatch: "false",
+
+                project:'test1',
+                user:'user1',
+                workflow:[
+                        keepgoing:true,
+                        commands:[
+                                [
+                                        exec:"blah"
+                                ]
+                        ]
+                ]
+        ], null)
+        assertNotNull(exec)
+        assertEquals(false, exec.doNodedispatch)
+    }
     void testFromMapOldNodeFilter(){
         //blank threadcount
         def exec = Execution.fromMap([
