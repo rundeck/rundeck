@@ -19,7 +19,7 @@ setup_export_job(){
 
 	do_setup_export_json_valid "export" "git-export" $project
 
-	JOBID=$(create_job $project $JOBNAME)
+	JOBID=$(create_job $project "$JOBNAME")
 	echo $JOBID
 }
 
@@ -59,7 +59,7 @@ test_job_status_json(){
 	local project=$1
 	local integration=export
 
-	local JOBID=$(setup_export_actions_fields $project)
+	local JOBID=$(setup_export_job $project)
 	
 	sleep 2
 
