@@ -4655,6 +4655,60 @@ Export plugin values for `$synchState`:
 }
 ~~~~~~~~~~
 
+### Get Job SCM Diff
+
+Retrieve the file diff for the Job, if there are changes for the integration.
+
+The format of the diff content depends on the specific plugin. For the Git plugins,
+a unified diff format is used.
+
+**Request**
+
+    GET /api/15/job/[ID]/scm/[INTEGRATION]/diff
+
+**Response**
+
+The `commit` info will be the same structure as in [Get Job SCM Status](#get-job-scm-status).
+
+For `import` only, `incomingCommit` will indicate the to-be-imported change.
+
+For `application/xml`, the `diffContent` will use a CDATA section to preserve whitespace.
+
+
+`Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+<scmJobDiff>
+  <commit>
+    <!-- commit info -->
+  </commit>
+  <diffContent><![CDATA[...]]></diffContent>
+  <id>$jobId</id>
+  <incomingCommit>
+    <!-- import only: incoming commit info -->
+  </incomingCommit>
+  <integration>$integration</integration>
+  <project>$project</project>
+</scmJobDiff>
+~~~~~~~~~~
+
+`Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+{
+  "commit": {
+    ...
+  },
+  "diffContent": "...",
+  "id": "$jobId",
+  "incomingCommit": {
+    ...
+  },
+  "integration": "$integration",
+  "project": "$project"
+}
+~~~~~~~~~~
+
 ### Get Job SCM Action Input Fields
 
 Get the input fields and selectable items for a specific action for a job.  
