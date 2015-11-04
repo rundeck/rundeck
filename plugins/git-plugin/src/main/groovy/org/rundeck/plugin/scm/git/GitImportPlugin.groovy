@@ -334,8 +334,17 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         if (!status) {
             status = refreshJobStatus(job, originalPath)
         }
-        return createJobImportStatus(status)
+        return createJobImportStatus(status,jobActionsForStatus(status))
     }
+
+    List<Action> jobActionsForStatus(Map status) {
+        if (status.synch == ImportSynchState.IMPORT_NEEDED) {
+            [actions[ACTION_IMPORT_ALL]]
+        } else {
+            []
+        }
+    }
+
 
     @Override
     JobImportState jobChanged(JobChangeEvent event, JobScmReference reference) {
@@ -349,7 +358,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         switch (event.eventType) {
             case JobChangeEvent.JobChangeEventType.DELETE:
                 importTracker.untrackPath(path)
-                return createJobImportStatus([synch: ImportSynchState.IMPORT_NEEDED])
+
+                def status = [synch: ImportSynchState.IMPORT_NEEDED]
+                return createJobImportStatus(status,jobActionsForStatus(status))
                 break;
 
             case JobChangeEvent.JobChangeEventType.MODIFY_RENAME:

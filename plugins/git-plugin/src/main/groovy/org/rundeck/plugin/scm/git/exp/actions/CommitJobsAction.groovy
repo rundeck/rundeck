@@ -31,7 +31,8 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
 
     BasicInputView getInputView(final ScmOperationContext context, GitExportPlugin plugin) {
         inputView(id) {
-            title "Commit Changes to Git"
+            title getTitle()
+            description getDescription()
             buttonTitle "Commit"
             properties([
                     property {

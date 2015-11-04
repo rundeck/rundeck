@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory
 import com.dtolabs.rundeck.plugins.scm.ScmExportResult
 import com.dtolabs.rundeck.plugins.scm.ScmExportSynchState
+import com.dtolabs.rundeck.plugins.scm.ScmImportDiffResult
 import com.dtolabs.rundeck.plugins.scm.ScmImportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmImportPluginFactory
 import com.dtolabs.rundeck.plugins.scm.ScmImportSynchState
@@ -344,7 +345,7 @@ class ScmService {
         }
     }
     /**
-     * Return a map of status for jobs
+     * Return a map of [ jobid: originalPath]
      * @param jobs
      * @return
      */
@@ -416,7 +417,9 @@ class ScmService {
                         plugin.getRelativePathForJob(event.jobReference),
                         [
                                 id             : event.jobReference.id,
-                                jobNameAndGroup: event.jobReference.getJobName(),
+                                jobName        : event.jobReference.getJobName(),
+                                groupPath      : event.jobReference.getGroupPath(),
+                                jobNameAndGroup: event.jobReference.getJobAndGroup(),
                         ]
                 )
             } else if (event.eventType == JobChangeEvent.JobChangeEventType.MODIFY_RENAME) {
@@ -903,7 +906,7 @@ class ScmService {
         status
     }
     /**
-     * Return a map of status for jobs
+     * Return a map of [path: Map[id: jobid, jobNameAndGroup: string]]
      * @param jobs
      * @return
      */
@@ -942,7 +945,7 @@ class ScmService {
         }
         ScmExportResult result = null
         try {
-            result = plugin.export(context, actionId, jobrefs as Set, deletePaths as Set, config)
+            result = plugin.export(context, actionId, jobrefs as Set, (deletePaths?:[]) as Set, config)
 
             if (result && result.success && result.commit) {
                 //synch import commit info to exported commit data
@@ -997,7 +1000,7 @@ class ScmService {
         plugin.getFileDiff(jobref, getRenamedPathForJobId(project, job.extid))
     }
 
-    ScmDiffResult importDiff(String project, ScheduledExecution job) {
+    ScmImportDiffResult importDiff(String project, ScheduledExecution job) {
         def jobref = scmJobRef(job)
         def plugin = loadedImportPlugins[project]
         plugin.getFileDiff(jobref, getRenamedPathForJobId(project, job.extid))

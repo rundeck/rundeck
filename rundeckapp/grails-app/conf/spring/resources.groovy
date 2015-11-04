@@ -1,3 +1,4 @@
+import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.core.Constants
@@ -257,4 +258,9 @@ beans={
     resourcesPasswordFieldsService(PasswordFieldsService)
     execPasswordFieldsService(PasswordFieldsService)
     fcopyPasswordFieldsService(PasswordFieldsService)
+
+
+    /// XML/JSON custom marshaller support
+
+    apiMarshallerRegistrar(ApiMarshallerRegistrar)
 }

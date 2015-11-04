@@ -1,22 +1,175 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.CDataString
+import com.dtolabs.rundeck.app.api.scm.ActionRequest
+import com.dtolabs.rundeck.app.api.scm.IntegrationRequest
+import com.dtolabs.rundeck.app.api.scm.JobReference
+import com.dtolabs.rundeck.app.api.scm.ScmAction
+import com.dtolabs.rundeck.app.api.scm.ScmActionRequest
+import com.dtolabs.rundeck.app.api.scm.ScmActionResult
+import com.dtolabs.rundeck.app.api.scm.ScmCommit
+import com.dtolabs.rundeck.app.api.scm.ScmExportActionItem
+import com.dtolabs.rundeck.app.api.scm.ScmImportActionItem
+import com.dtolabs.rundeck.app.api.scm.ScmIntegrationRequest
+import com.dtolabs.rundeck.app.api.scm.ScmJobActionRequest
+import com.dtolabs.rundeck.app.api.scm.ScmJobDiff
+import com.dtolabs.rundeck.app.api.scm.ScmJobRequest
+import com.dtolabs.rundeck.app.api.scm.ScmJobStatus
+import com.dtolabs.rundeck.app.api.scm.ScmPluginConfig
+import com.dtolabs.rundeck.app.api.scm.ScmPluginDescription
+import com.dtolabs.rundeck.app.api.scm.ScmPluginInputField
+import com.dtolabs.rundeck.app.api.scm.ScmPluginSetupInput
+import com.dtolabs.rundeck.app.api.scm.ScmPluginList
+import com.dtolabs.rundeck.app.api.scm.ScmPluginTypeRequest
+import com.dtolabs.rundeck.app.api.scm.ScmActionInput
+import com.dtolabs.rundeck.app.api.scm.ScmProjectPluginConfig
+import com.dtolabs.rundeck.app.api.scm.ScmProjectStatus
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.views.Action
+import com.dtolabs.rundeck.core.plugins.views.BasicInputView
+import com.dtolabs.rundeck.plugins.scm.JobImportState
+import com.dtolabs.rundeck.plugins.scm.JobState
+import com.dtolabs.rundeck.plugins.scm.ScmCommitInfo
+import com.dtolabs.rundeck.plugins.scm.ScmDiffResult
+import com.dtolabs.rundeck.plugins.scm.ScmExportSynchState
+import com.dtolabs.rundeck.plugins.scm.ScmImportDiffResult
+import com.dtolabs.rundeck.plugins.scm.ScmImportSynchState
+import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItem
+import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.SynchState
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import rundeck.ScheduledExecution
+import rundeck.filters.ApiRequestFilters
 
 import javax.servlet.http.HttpServletResponse
 
 class ScmController extends ControllerBase {
     def scmService
     def frameworkService
+    def apiService
 
     def static allowedMethods = [
-            disable: ['POST'],
-            enable: ['POST'],
-            performActionSubmit: ['POST'],
+            disable                : ['POST'],
+            enable                 : ['POST'],
+            performActionSubmit    : ['POST'],
+
+            apiPlugins             : ['GET'],
+            apiPluginInput         : ['GET'],
+
+            apiProjectSetup        : ['POST'],
+            apiProjectConfig       : ['GET'],
+            apiProjectStatus       : ['GET'],
+            apiProjectEnable       : ['POST'],
+            apiProjectDisable      : ['POST'],
+            apiProjectActionInput  : ['GET'],
+            apiProjectActionPerform: ['POST'],
+
+
+            apiJobStatus           : ['GET'],
+            apiJobDiff             : ['GET'],
+            apiJobActionInput      : ['GET'],
+            apiJobActionPerform    : ['POST'],
     ]
+    /**
+     * Require API v15 for all API endpoints
+     */
+    def beforeInterceptor = {
+        if (actionName.startsWith('api')) {
+            if (!apiService.requireVersion(request, response, ApiRequestFilters.V15)) {
+                return false
+            }
+        }
+    }
+
+    private validateCommandInput(Object input) {
+        if (input.hasErrors()) {
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.invalid.request',
+                    args  : [input.errors.allErrors.collect { g.message(error: it) }.join(",")]
+            ]
+            )
+            return false
+        }
+        if (input.hasProperty('project')) {
+            //verify project exists
+            def project = input.project
+            if (!frameworkService.existsFrameworkProject(project)) {
+
+                apiService.renderErrorFormat(response, [
+                        status: HttpServletResponse.SC_NOT_FOUND,
+                        code  : 'api.error.item.doesnotexist',
+                        args  : ["Project", project]
+                ]
+                )
+                return false
+            }
+        }
+        return true
+    }
+
+    private UserAndRolesAuthContext apiAuthorize(String project, String action) {
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                session.subject,
+                project
+        )
+
+        if (!apiService.requireAuthorized(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        frameworkService.authResourceForProject(project),
+                        [action, AuthConstants.ACTION_ADMIN]
+                ),
+                response,
+                [action, "Project", project] as Object[]
+        )) {
+            return null
+        }
+        return authContext
+    }
+
+    def apiPlugins(ScmIntegrationRequest scm) {
+        if (!validateCommandInput(scm)) {
+            return
+        }
+        def plugins = scmService.listPlugins(scm.integration)
+        def pluginConfig = scmService.loadScmConfig(scm.project, scm.integration)
+        def eEnabled = pluginConfig?.enabled && scmService.projectHasConfiguredPlugin(scm.integration, scm.project)
+
+        ScmPluginList list = new ScmPluginList(integration: scm.integration)
+        list.plugins = plugins.collect { k, DescribedPlugin describedPlugin ->
+            new ScmPluginDescription(
+                    type: describedPlugin.name,
+                    title: describedPlugin.description.title,
+                    description: CDataString.from(describedPlugin.description.description),
+                    configured: describedPlugin.name == pluginConfig?.type,
+                    enabled: describedPlugin.name == pluginConfig?.type && eEnabled,
+                    )
+        }
+
+        respond list, [formats: ['xml', 'json']]
+    }
+
+    /**
+     * /api/15/project/$project/scm/$integration/plugin/$type/input
+     * @param scm
+     * @return
+     */
+    def apiPluginInput(ScmPluginTypeRequest scm) {
+        if (!validateCommandInput(scm)) {
+            return
+        }
+        def properties = scmService.getSetupProperties(scm.integration, scm.project, scm.type).
+                collect { Property prop -> fieldBeanForProperty(prop) }
+
+        respond(
+                new ScmPluginSetupInput(type: scm.type, integration: scm.integration, fields: properties),
+                [formats: ['xml', 'json']]
+        )
+    }
 
     def index(String project) {
         def ePluginConfig = scmService.loadScmConfig(project, 'export')
@@ -138,6 +291,143 @@ class ScmController extends ControllerBase {
         }
     }
 
+    private def respondActionResult(IntegrationRequest scm, result, Map messages = [:]) {
+        ScmActionResult actionResult
+        def secondary = scm.hasProperty('type') ? scm.type : scm.hasProperty('actionId') ? scm.actionId : null
+        def map = [formats: ['xml', 'json'],]
+        if (result.error || !result.valid) {
+            map.status = HttpServletResponse.SC_BAD_REQUEST
+
+            def code = !result.valid ? messages.invalid ?: "some.input.values.were.not.valid" :
+                    messages.error ?: 'some.input.values.were.not.valid'
+
+
+            String errorMessage = result.error ? result.message :
+                    message(code: code, args: [scm.integration, secondary])
+
+            actionResult = new ScmActionResult(success: false, message: errorMessage)
+
+            actionResult.validationErrors = result.report?.errors
+        } else {
+            String message = message(
+                    code: messages.success ?: 'scmController.action.setup.success.message',
+                    args: [scm.integration, secondary]
+            )
+            actionResult = new ScmActionResult(success: true, message: message, nextAction: result.nextAction?.id)
+        }
+        respond(actionResult, map)
+    }
+    /**
+     * /api/15/project/$project/scm/$integration/plugin/$type/setup
+     * @param scm
+     * @return
+     */
+    def apiProjectSetup() {
+        ScmPluginTypeRequest scm = new ScmPluginTypeRequest()
+        bindData(scm, params)
+        if (!validateCommandInput(scm)) {
+            return
+        }
+
+        def authContext = apiAuthorize(scm.project, AuthConstants.ACTION_CONFIGURE)
+        if (!authContext) {
+            return
+        }
+        ScmPluginConfig config = new ScmPluginConfig()
+        String errormsg = ''
+        def valid = apiService.parseJsonXmlWith(request, response, [
+                json: { data ->
+                    config.config = data.config
+                    if (!data.config) {
+                        errormsg += " json: expected 'config' property"
+                    }
+                },
+                xml : { xml ->
+                    def data = [:]
+                    xml?.config?.entry?.each {
+                        data[it.'@key'.text()] = it.text()
+                    }
+                    if (!data) {
+                        errormsg += " xml: expected 'config' element: ${xml.config}"
+                    } else {
+                        config.config = data
+                    }
+                }
+        ]
+        )
+        if (!valid) {
+            return
+        }
+
+        if (null == config.config) {
+            return respond(
+                    new ScmActionResult(success: false, message: errormsg ?: 'Invalid format'),
+                    [
+                            formats: ['xml', 'json'],
+                            status : HttpServletResponse.SC_BAD_REQUEST
+                    ]
+            )
+        }
+
+        //attempt to bind document body
+        def configData = config.config
+
+        def result = scmService.savePluginSetup(authContext, scm.integration, scm.project, scm.type, configData)
+        respondActionResult(scm, result)
+    }
+    /**
+     * /api/15/project/$project/scm/$integration/plugin/$type/disable
+     * @param scm
+     * @return
+     */
+    def apiProjectDisable(ScmPluginTypeRequest scm) {
+        if (!scm.project) {
+            bindData(scm, params)
+        }
+        if (!validateCommandInput(scm)) {
+            return
+        }
+        if (!apiAuthorize(scm.project, AuthConstants.ACTION_CONFIGURE)) {
+            return
+        }
+
+        scmService.disablePlugin(scm.integration, scm.project, scm.type)
+
+        def message = message(code: "scmController.action.disable.success.message", args: [scm.integration, scm.type])
+        respond(
+                new ScmActionResult(success: true, message: message),
+                [formats: ['xml', 'json']]
+        )
+    }
+
+    /**
+     * /api/15/project/$project/scm/$integration/plugin/$type/enable
+     * @param scm
+     * @return
+     */
+    def apiProjectEnable(ScmPluginTypeRequest scm) {
+
+        if (!scm.project) {
+            bindData(scm, params)
+        }
+        if (!validateCommandInput(scm)) {
+            return
+        }
+
+        def auth = apiAuthorize(scm.project, AuthConstants.ACTION_CONFIGURE)
+        if (!auth) {
+            return
+        }
+
+        def result = scmService.enablePlugin(auth, scm.integration, scm.project, scm.type)
+        respondActionResult(scm, result, [
+                invalid: 'scmController.action.enable.invalid.message',
+                error  : 'scmController.action.enable.error.message',
+                success: 'scmController.action.enable.success.message'
+        ]
+        )
+    }
+
     def disable(String integration, String project, String type) {
 
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
@@ -237,6 +527,468 @@ class ScmController extends ControllerBase {
 
         redirect(action: 'index', params: [project: project])
     }
+    /**
+     * /api/15/project/$project/scm/$integration/status
+     */
+    def apiProjectStatus(ScmIntegrationRequest scm) {
+        if (!validateCommandInput(scm)) {
+            return
+        }
+
+        def isExport = scm.integration == 'export'
+        def action = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
+
+        def authContext = apiAuthorize(scm.project, action)
+        if (!authContext) {
+            return
+        }
+
+        if (!apiService.requireExists(response,
+                                      scmService.projectHasConfiguredPlugin(scm.integration, scm.project),
+                                      [scm.integration],
+                                      "no.scm.integration.plugin.configured"
+        )) {
+            return
+        }
+
+        def scmProjectStatus = new ScmProjectStatus(integration: scm.integration, project: scm.project)
+
+        try {
+            if (isExport) {
+                ScmExportSynchState status = scmService.exportPluginStatus(authContext, scm.project)
+                List<Action> actions = scmService.exportPluginActions(authContext, scm.project)
+
+                scmProjectStatus.synchState = status?.state?.toString()
+                scmProjectStatus.message = status?.message
+                scmProjectStatus.actions = actions?.collect { it.id }
+
+            } else {
+
+                ScmImportSynchState status = scmService.importPluginStatus(authContext, scm.project)
+                List<Action> actions = scmService.importPluginActions(authContext, scm.project)
+
+                scmProjectStatus.synchState = status?.state?.toString()
+                scmProjectStatus.message = status?.message
+                scmProjectStatus.actions = actions?.collect { it.id }
+            }
+        } catch (ScmPluginException e) {
+            def message = message(
+                    code: "api.scm.failed.to.get.scm.plugin.status",
+                    args: [scm.integration, scm.project, e.message]
+            )
+            return respond(
+                    new ScmActionResult(success: false, message: message),
+                    [
+                            formats: ['xml', 'json'],
+                            status : HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+                    ]
+            )
+        }
+        respond scmProjectStatus, [formats: ['xml', 'json']]
+    }
+
+    /**
+     * /api/$api_version/project/$project/scm/$integration/config
+     * @param scm
+     * @return
+     */
+    def apiProjectConfig(ScmIntegrationRequest scm) {
+        if (!validateCommandInput(scm)) {
+            return
+        }
+
+        def authContext = apiAuthorize(scm.project, AuthConstants.ACTION_CONFIGURE)
+        if (!authContext) {
+            return
+        }
+
+        def ePluginConfig = scmService.loadScmConfig(scm.project, scm.integration)
+        if (!apiService.requireExists(
+                response,
+                ePluginConfig,
+                [scm.integration],
+                "no.scm.integration.plugin.configured"
+        )) {
+            return
+        }
+
+
+        def eEnabled = ePluginConfig.enabled && scmService.projectHasConfiguredPlugin(scm.integration, scm.project)
+
+        def result = new ScmProjectPluginConfig(
+                integration: scm.integration,
+                project: scm.project,
+                enabled: eEnabled,
+                type: ePluginConfig.type,
+                config: ePluginConfig.config
+        )
+
+
+        respond result, [formats: ['xml', 'json']]
+
+    }
+
+    /**
+     * /api/15/project/$project/scm/$integration/action/$actionId/input
+     * list inputs for action
+     */
+    def apiProjectActionInput(ScmActionRequest scm) {
+        if (!validateCommandInput(scm)) {
+            return
+        }
+
+
+        def isExport = scm.integration == 'export'
+        def action = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
+        def authContext = apiAuthorize(scm.project, action)
+        if (!authContext) {
+            return
+        }
+
+
+        def view = scmService.getInputView(authContext, scm.integration, scm.project, scm.actionId)
+
+        if (!apiService.requireExists(
+                response,
+                view,
+                [scm.actionId, scm.integration, scm.project],
+                "scm.not.a.valid.action.actionid"
+        )) {
+            return
+        }
+        return respondApiActionInput(view, scm.project, scm)
+
+    }
+
+    private Object respondApiActionInput(
+            BasicInputView view,
+            String project,
+            ActionRequest scm,
+            String jobId = null
+    )
+    {
+        boolean isExport = scm.integration == 'export'
+        def actionId = scm.actionId
+        def integration = scm.integration
+
+        /**
+         *  map of [path: Map[id: jobid, jobNameAndGroup: string]]
+         */
+
+        List<ScmExportActionItem> exportActionItems = null
+        if (isExport) {
+            exportActionItems = getViewExportActionItems(project, jobId ? [jobId] : null)
+        }
+
+        /**
+         * import: tracked items
+         */
+        List<ScmImportActionItem> importActionItems = null
+
+        if (!isExport) {
+            importActionItems = getViewImportItems(project, actionId, jobId ? [jobId] : null)
+            //todo: job scm status
+            //scmJobStatus = scmService.importStatusForJobs(jobs)
+        }
+
+        //todo: project scm status
+        //def scmProjectStatus = scmService.getPluginStatus(authContext, scm.integration, scm.project)
+
+        def properties = view.properties.collect(this.&fieldBeanForProperty)
+
+        respond(
+                new ScmActionInput(
+                        actionId: actionId,
+                        integration: integration,
+                        fields: properties,
+                        title: view.title,
+                        description: CDataString.from(view.description),
+                        importItems: importActionItems,
+                        exportItems: exportActionItems
+                ),
+                [formats: ['xml', 'json']]
+        )
+    }
+
+    private ArrayList<ScmExportActionItem> getViewExportActionItems(String project, List<String> jobids = null) {
+        Map scmJobStatus
+        List<ScmExportActionItem> exportActionItems = []
+        Map deletedPaths = scmService.deletedExportFilesForProject(project)
+        Map<String, String> renamedJobPaths = scmService.getRenamedJobPathsForProject(project)
+        //remove deleted paths that are known to be renamed jobs
+        renamedJobPaths.values().each {
+            deletedPaths.remove(it)
+        }
+        List<ScheduledExecution> jobs = []
+        if (jobids) {
+            jobs = jobids.collect {
+                ScheduledExecution.getByIdOrUUID(it)
+            }.findAll { it }
+        } else {
+            jobs = ScheduledExecution.findAllByProject(project)
+        }
+        //todo: job scm status
+        scmJobStatus = scmService.exportStatusForJobs(jobs).findAll {
+            it.value.synchState != SynchState.CLEAN
+        }
+        jobs = jobs.findAll {
+            it.extid in scmJobStatus.keySet()
+        }
+        Map<String, String> scmFiles = scmService.exportFilePathsMapForJobRefs(scmService.jobRefsForJobs(jobs))
+
+        jobs.each { ScheduledExecution job ->
+            ScmExportActionItem item = new ScmExportActionItem()
+            item.job = new JobReference(jobId: job.extid, jobName: job.jobName, groupPath: job.groupPath)
+            item.itemId = scmFiles[job.extid]
+            item.originalId = renamedJobPaths[job.extid]
+            item.renamed = null != item.originalId
+            exportActionItems << item
+        }
+        deletedPaths.each { String path, Map jobInfo ->
+            ScmExportActionItem item = new ScmExportActionItem()
+            item.job = new JobReference(jobId: jobInfo.id, jobName: jobInfo.jobName, groupPath: jobInfo.groupPath)
+            item.itemId = path
+            item.deleted = true
+            exportActionItems << item
+        }
+        exportActionItems
+    }
+
+    private ArrayList<ScmImportActionItem> getViewImportItems(
+            String project,
+            String actionId,
+            List<String> jobids = null
+    )
+    {
+        List<ScmImportActionItem> importActionItems = []
+        List<ScmImportTrackedItem> trackingItems = []
+        if (jobids) {
+            trackingItems = scmService.getTrackingItemsForAction(project, actionId).findAll {
+                it.jobId && it.jobId in jobids
+            }
+        } else {
+            trackingItems = scmService.getTrackingItemsForAction(project, actionId)
+        }
+        trackingItems.each {
+            ScmImportActionItem item = new ScmImportActionItem()
+            item.itemId = it.id
+            ScheduledExecution job = ScheduledExecution.getByIdOrUUID(it.jobId)
+            if (job) {
+                item.job = new JobReference(jobId: job.extid, jobName: job.jobName, groupPath: job.groupPath)
+            }
+            item.tracked = null != item.job
+
+            importActionItems << item
+        }
+        importActionItems
+    }
+
+    private ScmPluginInputField fieldBeanForProperty(Property prop) {
+        def field = new ScmPluginInputField(
+                name: prop.name,
+                title: prop.title,
+                type: prop.type.toString(),
+                defaultValue: prop.defaultValue,
+                description: CDataString.from(prop.description),
+                required: prop.required,
+                scope: prop.scope?.toString() ?: null,
+                renderingOptions: prop.renderingOptions.collectEntries { k, v -> [(k): v.toString()] }
+        )
+        if (prop.type in ([Property.Type.Select, Property.Type.FreeSelect])) {
+            field.values = prop.selectValues
+        }
+        field
+    }
+
+    private BasicInputView validateView(String project, ActionRequest scm) {
+        def isExport = scm.integration == 'export'
+        def action = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
+        def authContext = apiAuthorize(project, action)
+        if (!authContext) {
+            return null
+        }
+
+        if (!apiService.requireExists(response,
+                                      scmService.projectHasConfiguredPlugin(scm.integration, project),
+                                      [scm.integration],
+                                      "no.scm.integration.plugin.configured"
+        )) {
+            return null
+        }
+
+        def view = scmService.getInputView(authContext, scm.integration, project, scm.actionId)
+
+        if (!apiService.requireExists(response,
+                                      view,
+                                      [scm.actionId, scm.integration, project],
+                                      "scm.not.a.valid.action.actionid"
+        )) {
+            return null
+        }
+        return view
+    }
+    /**
+     * /api/$api_version/project/$project/scm/$integration/action/$actionId
+     * @return
+     */
+    def apiProjectActionPerform() {
+        ScmActionRequest scm = new ScmActionRequest()
+        bindData(scm, params)
+        if (!validateCommandInput(scm)) {
+            return
+        }
+        def isExport = scm.integration == 'export'
+
+        def view = validateView(scm.project, scm)
+        if (!view) {
+            return
+        }
+
+        ScmAction actionInput = parseScmActionInput()
+        if (!actionInput) {
+            return
+        }
+
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                session.subject,
+                scm.project
+        )
+
+        def (LinkedHashMap<String, Object> result, LinkedHashMap<String, String> messages) = performScmAction(
+                isExport,
+                actionInput,
+                scm.project,
+                scm,
+                authContext
+        )
+        respondActionResult(scm, result, messages)
+    }
+
+    private List performScmAction(
+            boolean isExport,
+            ScmAction actionInput,
+            String project,
+            ActionRequest scm,
+            UserAndRolesAuthContext authContext
+    )
+    {
+        def result
+        def messages = [
+                success: 'api.scm.action.integration.success.message'
+        ]
+        if (isExport) {
+            //input job ids
+            Set<String> exportJobIds = actionInput.jobIds.collect { it.trim() }.findAll { it }
+
+            //add job ids determined from input paths
+            List<ScheduledExecution> alljobs = ScheduledExecution.findAllByProject(project)
+            Map<String, ScheduledExecution> jobMap = alljobs.collectEntries { [it.extid, it] }
+
+            Map scmJobStatus = scmService.exportStatusForJobs(alljobs).findAll {
+                it.value.synchState != SynchState.CLEAN
+            }
+
+            List<ScheduledExecution> uncleanJobs = jobMap.subMap(scmJobStatus.keySet()).values() as List
+
+            Map<String, String> scmFiles = scmService.exportFilePathsMapForJobRefs(
+                    scmService.jobRefsForJobs(uncleanJobs)
+            )
+            Map reversed = [:]
+            scmFiles.each { k, v ->
+                reversed[v] = k
+            }
+            actionInput.selectedItems?.each {
+                if (reversed[it]) {
+                    exportJobIds << reversed[it]
+                }
+            }
+
+            //list of jobs selected to export
+            List<ScheduledExecution> exportJobs = exportJobIds.collect { jobMap[it] }.findAll { it }
+
+            Map<String, String> renamedJobPaths = scmService.getRenamedJobPathsForProject(project)
+            //add deleted paths from renamed jobs
+            renamedJobPaths.each { k, v ->
+                if (actionInput.jobIds.contains(k)) {
+                    actionInput.deletedItems << v
+                }
+            }
+
+            //store job ids of deleted jobs, from path
+//            def deletePathsToJobIds = actionInput.deletedItems?.collectEntries {
+//                [it, scmService.deletedJobForPath(scm.project, it)?.id]
+//            }
+
+            result = scmService.performExportAction(
+                    scm.actionId,
+                    authContext,
+                    project,
+                    actionInput.input,
+                    exportJobs,
+                    actionInput.deletedItems
+            )
+            if (result.missingUserInfoField) {
+                messages.invalid = 'scmController.action.saveCommit.userInfoMissing.message'
+                messages.invalidExt = 'scmController.action.saveCommit.userInfoMissing.errorHelp'
+            }
+        } else {
+            //determine paths for tracked jobs
+            if (actionInput.jobIds) {
+                List<ScmImportTrackedItem> trackingItems = scmService.getTrackingItemsForAction(
+                        project,
+                        scm.actionId
+                )
+                trackingItems.findAll { it.jobId in actionInput.jobIds }.each {
+                    actionInput.selectedItems << it.id
+                }
+            }
+            result = scmService.performImportAction(
+                    scm.actionId,
+                    authContext,
+                    project,
+                    actionInput.input,
+                    actionInput.selectedItems
+            )
+        }
+        [result, messages]
+    }
+
+    private ScmAction parseScmActionInput(boolean inputOnly = false) {
+        ScmAction actionInput
+        String errormsg = ''
+        boolean valid = apiService.parseJsonXmlWith(request, response, [
+                json: { data ->
+                    def invalid = ScmAction.validateJson(data, inputOnly)
+                    if (invalid) {
+                        errormsg += invalid
+                        return
+                    }
+                    actionInput = ScmAction.parseWithJson(data)
+                },
+                xml : { xml ->
+                    def invalid = ScmAction.validateXml(xml)
+                    if (invalid) {
+                        errormsg += invalid
+                        return
+                    }
+                    actionInput = ScmAction.parseWithXml(xml)
+                }
+        ]
+        )
+        if (!valid) {
+            return null
+        }
+        if (valid && null == actionInput) {
+            return respond(
+                    new ScmActionResult(success: false, message: errormsg ?: message(code: "invalid.format")),
+                    [
+                            formats: ['xml', 'json'],
+                            status : HttpServletResponse.SC_BAD_REQUEST
+                    ]
+            )
+        }
+        actionInput
+    }
 
     def performAction(String integration, String project, String actionId) {
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
@@ -262,7 +1014,7 @@ class ScmController extends ControllerBase {
         def view = scmService.getInputView(authContext, integration, project, actionId)
         if (!view) {
             response.status = HttpServletResponse.SC_NOT_FOUND
-            renderErrorView("Not a valid action: ${actionId}")
+            renderErrorView(message(code: "scm.not.a.valid.action.actionid", args: [actionId, integration, project]))
         }
         List<String> jobIds = []
         Map deletedPaths = [:]
@@ -483,6 +1235,291 @@ class ScmController extends ControllerBase {
         redirect(action: 'jobs', controller: 'menu', params: [project: params.project])
     }
 
+    /**
+     * /api/$api_version/job/$id/scm/$integration/status
+     */
+    def apiJobStatus(ScmJobRequest scm) {
+        if (!validateCommandInput(scm)) {
+            return
+        }
+        ScheduledExecution scheduledExecution = ScheduledExecution.getByIdOrUUID(scm.id)
+        if (!apiRequireJob(scheduledExecution, scm)) {
+            return
+        }
+
+        def isExport = scm.integration == 'export'
+        AuthContext authContext = apiAuthorize(
+                scheduledExecution.project,
+                isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
+        )
+        if (!authContext) {
+            return
+        }
+
+        if (!apiService.requireExists(response,
+                                      scmService.projectHasConfiguredPlugin(
+                                              scm.integration,
+                                              scheduledExecution.project
+                                      ),
+                                      [scm.integration],
+                                      "no.scm.integration.plugin.configured"
+        )) {
+            return
+        }
+
+
+
+        def scmJobStatus = new ScmJobStatus(
+                integration: scm.integration,
+                project: scheduledExecution.project,
+                id: scm.id
+        )
+
+        try {
+            loadJobStatus(isExport, scheduledExecution, scm, scmJobStatus)
+        } catch (ScmPluginException e) {
+            def message = message(
+                    code: "api.scm.failed.to.get.scm.plugin.job.status",
+                    args: [scm.integration, scm.id, e.message]
+            )
+            return respond(
+                    new ScmActionResult(success: false, message: message),
+                    [
+                            formats: ['xml', 'json'],
+                            status : HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+                    ]
+            )
+        }
+        respond scmJobStatus, [formats: ['xml', 'json']]
+    }
+
+    private void loadJobStatus(
+            boolean isExport,
+            ScheduledExecution scheduledExecution,
+            ScmJobRequest scm,
+            ScmJobStatus scmJobStatus
+    )
+    {
+        if (isExport) {
+            def scmExportStatusMap = scmService.exportStatusForJobs([scheduledExecution])
+            JobState scmStatus = scmExportStatusMap[scm.id]
+
+            scmJobStatus.synchState = scmStatus?.synchState?.toString()
+            scmJobStatus.message = scmStatus?.synchState ? g.message(
+                    code: "scm.${scm.integration}.status.${scmStatus.synchState}.display.text"
+            ) : null
+            scmJobStatus.actions = scmStatus?.actions?.collect { it.id }
+
+            if (scmStatus?.commit) {
+                def commit1 = scmStatus.commit
+                scmJobStatus.commit = buildCommit(commit1)
+            }
+
+        } else {
+
+            def scmImportStatusMap = scmService.importStatusForJobs([scheduledExecution])
+            JobImportState scmStatus = scmImportStatusMap[scm.id]
+
+            scmJobStatus.synchState = scmStatus?.synchState?.toString()
+            scmJobStatus.message = scmStatus?.synchState ? g.message(
+                    code: "scm.${scm.integration}.status.${scmStatus.synchState}.display.text"
+            ) : null
+            scmJobStatus.actions = scmStatus?.actions?.collect { it.id }
+            if (scmStatus?.commit) {
+                def commit = scmStatus.commit
+                scmJobStatus.commit = buildCommit(commit)
+            }
+        }
+    }
+
+    private ScmCommit buildCommit(ScmCommitInfo commit) {
+        new ScmCommit(
+                commitId: commit.commitId,
+                author: commit.author,
+                message: commit.message,
+                date: commit.date,
+                info: commit.asMap()
+        )
+    }
+
+    /**
+     * /api/$api_version/job/$id/scm/$integration/diff
+     */
+    def apiJobDiff(ScmJobRequest scm) {
+        if (!validateCommandInput(scm)) {
+            return
+        }
+        ScheduledExecution job = ScheduledExecution.getByIdOrUUID(scm.id)
+        if (!apiRequireJob(job, scm)) {
+            return
+        }
+
+        def isExport = scm.integration == 'export'
+        AuthContext authContext = apiAuthorize(
+                job.project,
+                isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
+        )
+        if (!authContext) {
+            return
+        }
+
+        if (!apiService.requireExists(response,
+                                      scmService.projectHasConfiguredPlugin(
+                                              scm.integration,
+                                              job.project
+                                      ),
+                                      [scm.integration],
+                                      "no.scm.integration.plugin.configured"
+        )) {
+            return
+        }
+
+
+        def scmJobDiff = new ScmJobDiff(
+                integration: scm.integration,
+                project: job.project,
+                id: scm.id
+        )
+
+        try {
+            //read current commit
+            ScmJobStatus scmJobStatus = new ScmJobStatus()
+            loadJobStatus(isExport, job, scm, scmJobStatus)
+            scmJobDiff.commit = scmJobStatus.commit
+
+            //load diff
+            ScmDiffResult diffResult = null
+            if (isExport) {
+                diffResult = scmService.exportDiff(job.project, job)
+            } else {
+                ScmImportDiffResult importdiff = scmService.importDiff(job.project, job)
+                scmJobDiff.incomingCommit = buildCommit(importdiff?.incomingCommit)
+                diffResult = importdiff
+            }
+            scmJobDiff.diffContent = CDataString.from(diffResult?.content)
+        } catch (ScmPluginException e) {
+            def message = message(
+                    code: "api.scm.failed.to.get.scm.plugin.job.status",
+                    args: [scm.integration, scm.id, e.message]
+            )
+            return respond(
+                    new ScmActionResult(success: false, message: message),
+                    [
+                            formats: ['xml', 'json'],
+                            status : HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+                    ]
+            )
+        }
+        respond scmJobDiff, [formats: ['xml', 'json']]
+    }
+
+    /**
+     * Require job exists and user has READ access
+     * @param scheduledExecution job
+     * @param scm request
+     * @return true if successful
+     */
+    private def apiRequireJob(ScheduledExecution scheduledExecution, ScmJobRequest scm) {
+        if (!apiService.requireExists(response, scheduledExecution, ['Job', scm.id])) {
+            return false
+        }
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                session.subject,
+                scheduledExecution.project
+        )
+        if (!apiService.requireAuthorized(
+                frameworkService.authorizeProjectJobAll(
+                        authContext,
+                        scheduledExecution,
+                        [AuthConstants.ACTION_READ],
+                        scheduledExecution.project
+                ),
+                response,
+                [AuthConstants.ACTION_READ, "Job", scm.id] as Object[]
+        )) {
+            return false
+        }
+        true
+    }
+
+    /**
+     * /api/$api_version/job/$id/scm/$integration/action/$actionId/input
+     * @param scm
+     * @return
+     */
+    def apiJobActionInput(ScmJobActionRequest scm) {
+
+        if (!validateCommandInput(scm)) {
+            return
+        }
+        ScheduledExecution scheduledExecution = ScheduledExecution.getByIdOrUUID(scm.id)
+        if (!apiRequireJob(scheduledExecution, scm)) {
+            return
+        }
+
+        def isExport = scm.integration == 'export'
+        AuthContext authContext = apiAuthorize(
+                scheduledExecution.project,
+                isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
+        )
+        if (!authContext) {
+            return
+        }
+
+        def view = validateView(scheduledExecution.project, scm)
+        if (!view) {
+            return
+        }
+
+        respondApiActionInput(view, scheduledExecution.project, scm, scm.id)
+    }
+
+    /**
+     * /api/$api_version/job/$id/scm/$integration/action/$actionId
+     */
+    def apiJobActionPerform() {
+        ScmJobActionRequest scm = new ScmJobActionRequest()
+        bindData(scm, params)
+        if (!validateCommandInput(scm)) {
+            return
+        }
+        ScheduledExecution scheduledExecution = ScheduledExecution.getByIdOrUUID(scm.id)
+        if (!apiRequireJob(scheduledExecution, scm)) {
+            return
+        }
+
+        def isExport = scm.integration == 'export'
+
+        AuthContext authContext = apiAuthorize(
+                scheduledExecution.project,
+                isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
+        )
+        if (!authContext) {
+            return
+        }
+
+        def view = validateView(scheduledExecution.project, scm)
+        if (!view) {
+            return
+        }
+
+        ScmAction actionInput = parseScmActionInput(true)
+        if (!actionInput) {
+            return
+        }
+        actionInput.jobIds = [scm.id]
+        actionInput.deletedItems = null
+        actionInput.selectedItems = null
+
+        def (Map<String, Object> result, Map<String, String> messages) = performScmAction(
+                isExport,
+                actionInput,
+                scheduledExecution.project,
+                scm,
+                authContext
+        )
+        respondActionResult(scm, result, messages)
+    }
     /**
      * Ajax endpoint for job diff
      */

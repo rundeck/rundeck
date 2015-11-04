@@ -228,6 +228,22 @@
             <li class="divider"></li>
         </g:if>
         <li class="dropdown-header"><g:message code="scm.import.plugin" /></li>
+    <g:each in="${jobstatus?.actions}" var="action">
+        <g:if test="${action.id == '-'}">
+            <li class="divider"></li>
+        </g:if>
+        <g:else>
+            <li>
+                <g:render template="/scm/actionLink"
+                          model="[action:action,
+                                  integration:'import',
+                                  project:params.project,
+                                  linkparams:[id: scheduledExecution.extid]]"
+                />
+
+            </li>
+        </g:else>
+    </g:each>
     <g:unless test="${importStateUnknown}">
     <li>
         <g:link controller="scm"

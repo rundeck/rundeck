@@ -47,9 +47,30 @@ If the version number is not included or if the requested version number is unsu
 }
 ~~~~~~~~~~~~~~~~~~~
 
+## Index Links
+
+View the [Index](#index) listing API paths.
+
 ## Changes
 
 Changes introduced by API Version number:
+**Version 15**:
+
+* New Endpoints.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/plugins`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugins] - List SCM plugins for a project.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input] - Get SCM plugin setup input fields.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/setup`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/setup] - Setup SCM for a project.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/enable`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/enable] - Enable SCM for a project.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/disable`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/disable] - Disable SCM for a project.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/status`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/status] - Get SCM status for a project.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/config`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/config] - Get SCM config for a project.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]/input`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]/input] - Get Project SCM Action Input Fields.
+    - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]] - Perform SCM action for a project.
+    
+    - [`/api/15/job/[ID]/scm/[INTEGRATION]/status`][/api/V/job/[ID]/scm/[INTEGRATION]/status] - Get SCM status for a Job.
+    - [`/api/15/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]`][/api/V/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]] - Perform SCM action for a Job.
+    - [`/api/15/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]/input`][/api/V/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]/input] - Get Job SCM Action Input Fields
+    
 
 **Version 14**:
 
@@ -3964,6 +3985,786 @@ If request was JSON, then the following JSON:
     }
 ~~~~~~~~~~
 
+## SCM
+
+Rundeck SCM Plugins can be used to synchronize Job definitions with an external Source Control Management repository.
+
+Currently Rundeck includes a single built-in plugin for Git repositories.
+
+There are two "integration" types of SCM Plugins: `import` and `export`, and they are managed separately.
+
+A Project can be configured with a single Import and Export plugin.  After setting up these plugins, Project and Job level "status" can be read.  Changes to Jobs within a project affect the status for Import or Export.
+
+Plugins provide "actions" which are available based on the Project or Job status.  For example, a plugin can provide a "commit" action for a Job, which allows a user to save the changes for the job.
+
+The specific actions, and their behaviors depend on the plugin.  The actions can be listed and performed via the API.
+
+### List SCM Plugins
+
+Lists the available plugins for the specified integration.  Each plugin is identified by a `type` name.
+
+**Request**
+
+    GET /api/15/project/[PROJECT]/scm/[INTEGRATION]/plugins
+
+**Response**
+
+A list of plugin description.
+
+Each plugin has these properties:
+
+* `type` identifier for the plugin
+* `configured` true/false whether a configuration is stored for the plugin
+* `enabled` true/false whether the plugin is enabled
+* `title` display title for the plugin
+* `description` descriptive text for the plugin
+
+
+`Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+<scmPluginList>
+  <integration>[$integration]</integration>
+  <plugins>
+    <scmPluginDescription>
+      <configured>[$boolean]</configured>
+      <description>[$string]</description>
+      <enabled>[$boolean]</enabled>
+      <title>[$string]</title>
+      <type>[$type]</type>
+    </scmPluginDescription>
+  </plugins>
+</scmPluginList>
+~~~~~~~~~~
+
+`Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+{
+  "integration": "$integration",
+  "plugins": [
+    {
+      "configured": $boolean,
+      "description": "$string",
+      "enabled": $boolean,
+      "title": "$string",
+      "type": "$type"
+    }
+  ]
+}
+~~~~~~~~~~
+
+
+### Get SCM Plugin Input Fields
+
+List the input fields for a specific plugin.  The `integration` and `type` must be specified.
+
+The response will list each input field.
+
+**Request**
+
+    GET /api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input
+
+**Response**
+
+Input fields have a number of properties:
+
+* `name` identifier for the field, used when submitting the input values.
+* `defaultValue` a default value if the input does not specify one
+* `description` textual description
+* `renderOptions` a key/value map of options, such as declaring that GUI display the input as a password field.
+* `required` true/false whether the input is required
+* `scope` 
+* `title` display title for the field
+* `type` data type of the field: `String`, `Integer`, `Select` (multi-value), `FreeSelect` (open-ended multi-value), `Boolean` (true/false)
+* `values` if the type is `Select` or `FreeSelect`, a list of string values to choose from
+
+
+`Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+<scmPluginSetupInput>
+  <integration>$integration</integration>
+  <type>$type</type>
+  <fields>
+    <scmPluginInputField>
+      <defaultValue>$string</defaultValue>
+      <description>$string</description>
+      <name>$string</name>
+      <renderingOptions>
+        <entry key="$string">$string</entry>
+        <!-- <entry ... -->
+      </renderingOptions>
+      <required>$boolean</required>
+      <scope>$string</scope>
+      <title>$string</title>
+      <type>$string</type>
+      <values>
+        <!-- may be empty -->
+        <string>$string</string>
+        <string>$string</string>
+        <!-- <string ... -->
+      </values>
+    </scmPluginInputField>
+    <!-- 
+    <scmPluginInputField>...</scmPluginInputField>
+     -->
+  </fields>
+</scmPluginSetupInput>
+~~~~~~~~~~
+
+`Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+{
+  "fields": [
+    {
+      "defaultValue": "$string",
+      "description": "$string",
+      "name": "$string",
+      "renderingOptions": {
+        "$string": "$string"
+      },
+      "required": $boolean,
+      "scope": "$string",
+      "title": "$string",
+      "type": "$string",
+      "values": null or array
+    }
+    //...
+
+  ],
+  "integration": "$integration",
+  "type": "$type"
+}
+~~~~~~~~~~
+
+### Setup SCM Plugin for a Project
+
+Configure and enable a plugin for a project.  
+
+The request body is expected to contain entries for all of the `required` input fields for the plugin.
+
+If a validation error occurs with the configuration, then the response will include detail about the errors.
+
+**Request**
+
+    POST /api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/setup
+
+Content:
+
+`Content-Type: application/xml`
+
+~~~~~ {.xml}
+<scmPluginConfig>
+    <config>
+        <entry key="key">value</entry>
+        <entry key="key2">value2</entry>
+        <!-- ... -->
+    </config>
+</scmPluginConfig>
+~~~~~
+
+`Content-Type: application/json`
+
+~~~~~ {.json}
+{
+    "config":{
+        "key":"value",
+        "key2":"value2..."
+    }
+}
+~~~~~
+
+
+**Response**
+
+If a validation error occurs, the response will include information about the result.
+
+    HTTP/1.1 400 Bad Request
+
+`Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+<scmActionResult>
+  <message>Some input values were not valid.</message>
+  <nextAction />
+  <success>false</success>
+  <validationErrors>
+    <entry key="dir">required</entry>
+    <entry key="url">required</entry>
+  </validationErrors>
+</scmActionResult>
+~~~~~~~~~~
+
+`Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+{
+  "message": "Some input values were not valid.",
+  "nextAction": null,
+  "success": false,
+  "validationErrors": {
+    "dir": "required",
+    "url": "required"
+  }
+}
+~~~~~~~~~~
+
+If the result is successul:
+
+    HTTP/1.1 200 OK
+
+`Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+<scmActionResult>
+  <message>$string</message>
+  <success>true</success>
+  <nextAction />
+  <validationErrors/>
+</scmActionResult>
+~~~~~~~~~~
+
+`Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+{
+  "message": "$string",
+  "nextAction": null,
+  "success": true,
+  "validationErrors": null
+}
+~~~~~~~~~~
+
+If a follow-up **Action** is expected to be called, the action ID will be identified by the `nextAction` value.
+
+See [Get Project SCM Status](#get-project-scm-status).
+
+### Enable SCM Plugin for a Project
+
+Enable a plugin that was previously configured. (Idempotent)
+
+**Request**
+
+    POST /api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/enable
+
+No content body is expected.
+
+**Response**
+
+Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-project).
+
+### Disable SCM Plugin for a Project
+
+Disable a plugin. (Idempotent)
+
+**Request**
+
+    POST /api/15/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/disable
+
+No content body is expected.
+
+**Response**
+
+Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-project).
+
+### Get Project SCM Status
+
+Get the SCM plugin status and available actions for the project.
+
+**Request**
+
+    GET /api/15/project/[PROJECT]/scm/[INTEGRATION]/status
+
+**Response**
+
+If no plugin is configured:
+
+    HTTP/1.1 404 Not Found
+
+Otherwise:
+
+    HTTP/1.1 200 OK
+
+The plugin status has these properties:
+
+* `actions` empty, or a list of action ID strings
+* `integration` the integration
+* `message` a string indicating the status message
+* `synchState` a value indicating the state
+* `project` project name
+
+Import plugin values for `synchState`:
+
+* `CLEAN` - no changes
+* `UNKNOWN` - status unknown
+* `REFRESH_NEEDED` - plugin needs to refresh
+* `IMPORT_NEEDED` - some changes need to be imported
+* `DELETE_NEEDED` - some jobs need to be deleted
+
+Export plugin values for `synchState`:
+
+* `CLEAN` - no changes
+* `REFRESH_NEEDED` - plugin needs to refresh
+* `EXPORT_NEEDED` - some changes need to be exported
+* `CREATE_NEEDED` - some jobs need to be added to the repo
+
+
+`Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+<scmProjectStatus>
+  
+  <actions>
+    <string>action1</string>
+    <string>action2</string>
+  </actions>
+  
+  <integration>$integration</integration>
+  <message>$string</message>
+  <project>$project</project>
+  <synchState>$state</synchState>
+</scmProjectStatus>
+~~~~~~~~~~
+
+`Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+{
+  "actions": ['action1','action2',..],
+  "integration": "$integration",
+  "message": null,
+  "project": "$project",
+  "synchState": "$state"
+}
+~~~~~~~~~~
+
+### Get Project SCM Config
+
+Get the configuration properties for the current plugin.
+
+**Request**
+
+    GET /api/15/project/[PROJECT]/scm/[INTEGRATION]/config
+
+**Response**
+
+If no plugin for the given integration is configured for the project, a `404` response is sent:
+
+    HTTP/1.1 404 Not Found
+
+Otherwise the response contains:
+
+* `config` a set of key/value pairs for the configuration
+* `enabled` true/false if it is enabled
+* `integration` integration name
+* `project` project name
+* `type` plugin type name
+
+`Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+<scmProjectPluginConfig>
+  <config>
+    <entry key="key">value</entry>
+    <entry key="key2">value2</entry>
+    <!-- <entry ..>...</entry> -->
+  </config>
+  <enabled>$boolean</enabled>
+  <integration>$integration</integration>
+  <project>$project</project>
+  <type>$type</type>
+</scmProjectPluginConfig>
+~~~~~~~~~~
+
+`Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+{
+  "config": {
+    "key": "$string",
+    "key2": "$string"
+  },
+  "enabled": $boolean,
+  "integration": "$integration",
+  "project": "$project",
+  "type": "$type"
+}
+~~~~~~~~~~
+
+### Get Project SCM Action Input Fields
+
+Get the input fields and selectable items for a specific action.  
+
+Each action may have a set of Input Fields describing user-input values.
+
+Export actions may have a set of `scmExportActionItem`s which describe Job changes that can be
+included in the action.
+
+Import actions may have a set of `scmImportActionItem`s which describe paths from the import repo
+which can be selected for the action, they will also be associated with a Job after they are matched.
+
+**Request**
+
+    GET /api/15/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]/input
+
+**Response**
+
+`Content-Type: application/xml`:
+
+The content of `<scmPluginInputField>` is the same as shown in [Get SCM Plugin Input Fields](#get-scm-plugin-input-fields).
+
+`scmExportActionItem` values:
+
+* `itemId` - ID of the repo item, e.g. a file path
+* `job` - job information
+    * `groupPath` group path, or empty/null
+    * `jobId` job ID
+    * `jobName` job name
+* `deleted` - boolean, whether the job was deleted and requires deleting the associated repo item
+* `renamed` - boolean if the job was renamed
+* `originalId` - ID of a repo item if the job was renamed and now is stored at a different repo path, or empty/null
+
+`scmImportActionItem` values:
+
+* `itemId` - ID of the repo item, e.g. a file path
+* `job` - job information, may be empty/null
+    * `groupPath` group path, or empty
+    * `jobId` job ID
+    * `jobName` job name
+* `tracked` - boolean, true if there is an associated `job`
+
+
+
+~~~~~~~~~~ {.xml}
+<scmActionInput>
+  <actionId>$actionId</actionId>
+  <description />
+  <fields>
+    <scmPluginInputField>...</scmPluginInputField>
+  </fields>
+  <integration>$integration</integration>
+  <title>$string</title>
+  <importItems>
+    <!-- import only -->
+    <scmImportActionItem>
+      <itemId>$string</itemId>
+      <job>
+        <!-- job tag may be empty if no associated job-->
+          <groupPath>$jobgroup</groupPath>
+          <jobId>$jobid</jobId>
+          <jobName>$jobname</jobName>
+      </job>
+      <tracked>$boolean</tracked>
+    </scmImportActionItem>
+  </importItems>
+  <exportItems>
+    <!-- export only -->
+    <scmExportActionItem>
+      <deleted>$boolean</deleted>
+      <itemId>$string</itemId>
+      <job>
+        <groupPath>$jobgroup</groupPath>
+        <jobId>$jobid</jobId>
+        <jobName>$jobname</jobName>
+      </job>
+      <originalId>$string</originalId>
+      <renamed>$boolean</renamed>
+    </scmExportActionItem>
+  </exportItems>
+</scmActionInput>
+~~~~~~~~~~
+
+`Content-Type: application/json`:
+
+The content of `"fields"` array is the same as shown in [Get SCM Plugin Input Fields](#get-scm-plugin-input-fields).
+
+~~~~~~~~~~ {.json}
+{
+  "actionId": "$actionId",
+  "description": "$string",
+  "fields": [
+    { "name": ...
+    }
+  ],
+  "integration": "$integration",
+  "title": "$string",
+  "importItems": [
+    {
+      "itemId": "$string",
+      "job": {
+        "groupPath": "$jobgroup",
+        "jobId": "$jobid",
+        "jobName": "$jobname"
+      },
+      "tracked": $boolean
+    }
+  ],
+  "exportItems": [
+    {
+      "deleted": $boolean,
+      "itemId": "$string",
+      "job": {
+        "groupPath": "$jobgroup",
+        "jobId": "$jobid",
+        "jobName": "$jobname"
+      },
+      "originalId": "$string",
+      "renamed": $boolean
+    }
+  ]
+}
+~~~~~~~~~~
+
+### Perform Project SCM Action
+
+Perform the action for the SCM integration plugin, with a set of input parameters,
+selected Jobs, or Items, or Items to delete.
+
+Depending on the [available Input Fields for the action](#get-project-scm-action-input-fields), the action will
+expect a set of `input` values.  
+
+The set of `jobs` and `items` to choose from will be included in the Input Fields response,
+however where an Item has an associated Job, you can supply either the Job ID, or the Item ID.
+
+When there are items to be deleted (`export` integration), you can specify the Item IDs in the `deleted`
+section.  However, if the item is associated with a renamed Job, including the Job ID will have the same effect.
+
+Note: including the Item ID of an associated job, instead of the Job ID,
+will not automatically delete a renamed item.
+
+
+**Request**
+
+    POST /api/15/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]
+
+`Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+<scmAction>
+    <input>
+        <entry key="message">$commitMessage</entry>
+    </input>
+    <jobs>
+        <job jobId="$jobId"/>
+    </jobs>
+    <items>
+        <item itemId="$itemId"/>
+    </items>
+    <deleted></deleted>
+</scmAction>
+~~~~~~~~~~
+
+`Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+{
+    "input":{
+        "message":"$commitMessage"
+    },
+    "jobs":[
+        "$jobId"
+    ],
+    "items":[
+        "$itemId"
+    ],
+    "deleted":null
+}
+~~~~~~~~~~
+
+**Response**
+
+Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-project).
+
+### Get Job SCM Status
+
+**Request**
+
+    GET /api/15/job/[ID]/scm/[INTEGRATION]/status
+
+**Response**
+
+Note: `import` status will not include any actions for the job, refer to the Project status to list import actions.
+
+Import plugin values for `$synchState`:
+
+* `CLEAN` - no changes
+* `UNKNOWN` - status unknown, e.g. the job was not imported via SCM
+* `REFRESH_NEEDED` - plugin needs to refresh
+* `IMPORT_NEEDED` - Job changes need to be imported
+* `DELETE_NEEDED` - Job need to be deleted
+
+Export plugin values for `$synchState`:
+
+* `CLEAN` - no changes
+* `REFRESH_NEEDED` - plugin needs to refresh
+* `EXPORT_NEEDED` - job changes need to be exported
+* `CREATE_NEEDED` - Job needs to be added to the repo
+
+
+`Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+<scmJobStatus>
+  <actions>
+    <string>$action</string>
+    <!--
+    <string>$action2</string>
+    -->
+  </actions>
+  <commit>
+    <author>$commitAuthor</author>
+    <commitId>$commitId</commitId>
+    <date>$commitDate</date>
+    <info>
+      <entry key="key">value</entry>
+      <!-- <entry key="..">...</entry> -->
+    </info>
+    <message>$commitMessage</message>
+  </commit>
+  <id>$jobId</id>
+  <integration>$integration</integration>
+  <message>$statusMessage</message>
+  <project>$project</project>
+  <synchState>$synchState</synchState>
+</scmJobStatus>
+~~~~~~~~~~
+
+`Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+{
+  "actions": [
+    "$action"
+  ],
+  "commit": {
+    "author": "$commitAuthor",
+    "commitId": "$commitId",
+    "date": "$commitDate",
+    "info": {
+      "key": "value.."
+    },
+    "message": "$commitMessage"
+  },
+  "id": "$jobId",
+  "integration": "$integration",
+  "message": "$statusMessage",
+  "project": "$project",
+  "synchState": "$synchState"
+}
+~~~~~~~~~~
+
+### Get Job SCM Diff
+
+Retrieve the file diff for the Job, if there are changes for the integration.
+
+The format of the diff content depends on the specific plugin. For the Git plugins,
+a unified diff format is used.
+
+**Request**
+
+    GET /api/15/job/[ID]/scm/[INTEGRATION]/diff
+
+**Response**
+
+The `commit` info will be the same structure as in [Get Job SCM Status](#get-job-scm-status).
+
+For `import` only, `incomingCommit` will indicate the to-be-imported change.
+
+For `application/xml`, the `diffContent` will use a CDATA section to preserve whitespace.
+
+
+`Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+<scmJobDiff>
+  <commit>
+    <!-- commit info -->
+  </commit>
+  <diffContent><![CDATA[...]]></diffContent>
+  <id>$jobId</id>
+  <incomingCommit>
+    <!-- import only: incoming commit info -->
+  </incomingCommit>
+  <integration>$integration</integration>
+  <project>$project</project>
+</scmJobDiff>
+~~~~~~~~~~
+
+`Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+{
+  "commit": {
+    ...
+  },
+  "diffContent": "...",
+  "id": "$jobId",
+  "incomingCommit": {
+    ...
+  },
+  "integration": "$integration",
+  "project": "$project"
+}
+~~~~~~~~~~
+
+### Get Job SCM Action Input Fields
+
+Get the input fields and selectable items for a specific action for a job.  
+
+Each action may have a set of Input Fields describing user-input values.
+
+Export actions will include one `scmExportActionItem` for the Job.
+
+Import actions may have a set of `scmImportActionItem` for the job.
+
+**Request**
+
+    GET /api/15/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]/input
+
+**Response**
+
+The same response format as in [Get Project SCM Action Input Fields](#get-project-scm-action-input-fields).
+
+### Perform Job SCM Action
+
+**Request**
+
+    POST /api/15/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]
+
+Request Content is nearly exactly as expected in [Perform Project SCM Action](#perform-project-scm-action),
+however the `jobIds` do not need to be specified, as the `ID` of the job is already specified.
+The `items` and `deleted` sections are not used.
+
+Only the `input` values need to be specified:
+
+`Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+<scmAction>
+    <input>
+        <entry key="message">$commitMessage</entry>
+    </input>
+</scmAction>
+~~~~~~~~~~
+
+`Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+{
+    "input":{
+        "message":"$commitMessage"
+    }
+}
+~~~~~~~~~~
+
+**Response**
+
+
+Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-project).
+
+
 ## Index
 
 [/api/V/execution/[ID]][]
@@ -4015,6 +4816,18 @@ If request was JSON, then the following JSON:
 [/api/V/job/[ID]/run][]
 
 * `POST` [Running a Job](#running-a-job)
+    
+[/api/V/job/[ID]/scm/[INTEGRATION]/status][] 
+
+- `GET` [Get SCM status for a Job][/api/V/job/[ID]/scm/[INTEGRATION]/status]
+
+[/api/V/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]][] 
+
+- `POST` [Perform SCM action for a Job.][/api/V/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]]
+
+[/api/V/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]/input][] 
+
+- `GET` [Get Job SCM Action Input Fields.][/api/V/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]/input]
 
 [/api/V/jobs/delete][]
 
@@ -4107,6 +4920,42 @@ If request was JSON, then the following JSON:
 
 * `POST` [Running Adhoc Script URLs](#running-adhoc-script-urls)
 
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugins][]
+
+* `GET` [List SCM plugins for a project.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugins]
+
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input][]
+
+* `GET` [Get SCM plugin setup input fields.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input]
+
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/setup][]
+
+* `POST` [Setup SCM for a project.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/setup]
+
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/enable][]
+
+* `POST` [Enable SCM for a project.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/enable]
+
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/disable][]
+
+* `POST` [Disable SCM for a project.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/disable]
+
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/status][]
+
+* `GET` [Get SCM status for a project.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/status]
+
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/config][]
+
+* `GET` [Get SCM config for a project.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/config]]
+
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]][]
+
+* `POST` [Perform SCM action for a project.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]]
+
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]/input][]
+
+* `GET` [Get Project SCM Action Input Fields.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]/input]
+
 [/api/V/projects][]
 
 * `GET` [Listing Projects](#listing-projects)
@@ -4155,6 +5004,21 @@ If request was JSON, then the following JSON:
 
 * `GET` [Get a token](#get-a-token)
 * `DELETE` [Delete a token](#delete-a-token)
+
+
+
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugins]:#list-scm-plugins
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input]:#get-scm-plugin-input-fields
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/setup]:#setup-scm-plugin-for-a-project
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/enable]:#enable-scm-plugin-for-a-project
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/disable]:#disable-scm-plugin-for-a-project
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/status]:#get-project-scm-status
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/config]:#get-project-scm-config
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]]:#perform-project-scm-action
+[/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]/input]:#get-project-scm-action-input-fields
+[/api/V/job/[ID]/scm/[INTEGRATION]/status]:#get-job-scm-status
+[/api/V/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]]:#perform-job-scm-action
+[/api/V/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]/input]:#get-job-scm-action-input-fields
 
 
 [/api/V/execution/[ID]]: #execution-info
