@@ -16,6 +16,7 @@ class ApiMarshallerRegistrar {
             if(data.value?.contains('\r') || data.value?.contains('\n')  ) {
                 xml.chars('')//forces current tag completion
                 xml.stream.append('<![CDATA['+data.value.replaceAll(']]>',']]]]><![CDATA[>')+']]>')
+                return null
             }else{
                 return data.value
             }
@@ -25,6 +26,7 @@ class ApiMarshallerRegistrar {
                 return data.value
             } else{
                 json.value(null)
+                return null
             }
         }
     }
