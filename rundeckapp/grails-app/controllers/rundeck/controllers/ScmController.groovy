@@ -720,12 +720,12 @@ class ScmController extends ControllerBase {
             deletedPaths.remove(it)
         }
         List<ScheduledExecution> jobs = []
-        if(jobids){
-            jobs = jobids.collect{
+        if (jobids) {
+            jobs = jobids.collect {
                 ScheduledExecution.getByIdOrUUID(it)
-            }.findAll{it}
-        }else{
-            jobs=ScheduledExecution.findAllByProject(project)
+            }.findAll { it }
+        } else {
+            jobs = ScheduledExecution.findAllByProject(project)
         }
         //todo: job scm status
         scmJobStatus = scmService.exportStatusForJobs(jobs).findAll {
@@ -762,11 +762,11 @@ class ScmController extends ControllerBase {
     {
         List<ScmImportActionItem> importActionItems = []
         List<ScmImportTrackedItem> trackingItems = []
-        if(jobids){
-            trackingItems = scmService.getTrackingItemsForAction(project, actionId).findAll{
+        if (jobids) {
+            trackingItems = scmService.getTrackingItemsForAction(project, actionId).findAll {
                 it.jobId && it.jobId in jobids
             }
-        }else {
+        } else {
             trackingItems = scmService.getTrackingItemsForAction(project, actionId)
         }
         trackingItems.each {
