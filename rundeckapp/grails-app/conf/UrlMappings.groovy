@@ -54,6 +54,7 @@ class UrlMappings {
         }
 
         "/api/$api_version/job/$id/scm/$integration/status"(controller: 'scm', action: 'apiJobStatus')
+        "/api/$api_version/job/$id/scm/$integration/diff"(controller: 'scm', action: 'apiJobDiff')
         "/api/$api_version/job/$id/scm/$integration/action/$actionId/input"(controller: 'scm', action: 'apiJobActionInput')
         "/api/$api_version/job/$id/scm/$integration/action/$actionId"(controller: 'scm', action: 'apiJobActionPerform')
 

@@ -12,6 +12,7 @@ import com.dtolabs.rundeck.app.api.scm.ScmExportActionItem
 import com.dtolabs.rundeck.app.api.scm.ScmImportActionItem
 import com.dtolabs.rundeck.app.api.scm.ScmIntegrationRequest
 import com.dtolabs.rundeck.app.api.scm.ScmJobActionRequest
+import com.dtolabs.rundeck.app.api.scm.ScmJobDiff
 import com.dtolabs.rundeck.app.api.scm.ScmJobRequest
 import com.dtolabs.rundeck.app.api.scm.ScmJobStatus
 import com.dtolabs.rundeck.app.api.scm.ScmPluginConfig
@@ -30,7 +31,10 @@ import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.JobImportState
 import com.dtolabs.rundeck.plugins.scm.JobState
+import com.dtolabs.rundeck.plugins.scm.ScmCommitInfo
+import com.dtolabs.rundeck.plugins.scm.ScmDiffResult
 import com.dtolabs.rundeck.plugins.scm.ScmExportSynchState
+import com.dtolabs.rundeck.plugins.scm.ScmImportDiffResult
 import com.dtolabs.rundeck.plugins.scm.ScmImportSynchState
 import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItem
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
@@ -65,6 +69,7 @@ class ScmController extends ControllerBase {
 
 
             apiJobStatus           : ['GET'],
+            apiJobDiff             : ['GET'],
             apiJobActionInput      : ['GET'],
             apiJobActionPerform    : ['POST'],
     ]
@@ -1271,46 +1276,7 @@ class ScmController extends ControllerBase {
         )
 
         try {
-            if (isExport) {
-                def scmExportStatusMap = scmService.exportStatusForJobs([scheduledExecution])
-                JobState scmStatus = scmExportStatusMap[scm.id]
-
-                scmJobStatus.synchState = scmStatus?.synchState?.toString()
-                scmJobStatus.message = scmStatus?.synchState ? g.message(
-                        code: "scm.${scm.integration}.status.${scmStatus.synchState}.display.text"
-                ) : null
-                scmJobStatus.actions = scmStatus?.actions?.collect { it.id }
-
-                if (scmStatus?.commit) {
-                    scmJobStatus.commit = new ScmCommit(
-                            commitId: scmStatus.commit.commitId,
-                            author: scmStatus.commit.author,
-                            message: scmStatus.commit.message,
-                            date: scmStatus.commit.date,
-                            info: scmStatus.commit.asMap()
-                    )
-                }
-
-            } else {
-
-                def scmImportStatusMap = scmService.importStatusForJobs([scheduledExecution])
-                JobImportState scmStatus = scmImportStatusMap[scm.id]
-
-                scmJobStatus.synchState = scmStatus?.synchState?.toString()
-                scmJobStatus.message = scmStatus?.synchState ? g.message(
-                        code: "scm.${scm.integration}.status.${scmStatus.synchState}.display.text"
-                ) : null
-                scmJobStatus.actions = scmStatus?.actions?.collect { it.id }
-                if (scmStatus?.commit) {
-                    scmJobStatus.commit = new ScmCommit(
-                            commitId: scmStatus.commit.commitId,
-                            author: scmStatus.commit.author,
-                            message: scmStatus.commit.message,
-                            date: scmStatus.commit.date,
-                            info: scmStatus.commit.asMap()
-                    )
-                }
-            }
+            loadJobStatus(isExport, scheduledExecution, scm, scmJobStatus)
         } catch (ScmPluginException e) {
             def message = message(
                     code: "api.scm.failed.to.get.scm.plugin.job.status",
@@ -1325,6 +1291,126 @@ class ScmController extends ControllerBase {
             )
         }
         respond scmJobStatus, [formats: ['xml', 'json']]
+    }
+
+    private void loadJobStatus(
+            boolean isExport,
+            ScheduledExecution scheduledExecution,
+            ScmJobRequest scm,
+            ScmJobStatus scmJobStatus
+    )
+    {
+        if (isExport) {
+            def scmExportStatusMap = scmService.exportStatusForJobs([scheduledExecution])
+            JobState scmStatus = scmExportStatusMap[scm.id]
+
+            scmJobStatus.synchState = scmStatus?.synchState?.toString()
+            scmJobStatus.message = scmStatus?.synchState ? g.message(
+                    code: "scm.${scm.integration}.status.${scmStatus.synchState}.display.text"
+            ) : null
+            scmJobStatus.actions = scmStatus?.actions?.collect { it.id }
+
+            if (scmStatus?.commit) {
+                def commit1 = scmStatus.commit
+                scmJobStatus.commit = buildCommit(commit1)
+            }
+
+        } else {
+
+            def scmImportStatusMap = scmService.importStatusForJobs([scheduledExecution])
+            JobImportState scmStatus = scmImportStatusMap[scm.id]
+
+            scmJobStatus.synchState = scmStatus?.synchState?.toString()
+            scmJobStatus.message = scmStatus?.synchState ? g.message(
+                    code: "scm.${scm.integration}.status.${scmStatus.synchState}.display.text"
+            ) : null
+            scmJobStatus.actions = scmStatus?.actions?.collect { it.id }
+            if (scmStatus?.commit) {
+                def commit = scmStatus.commit
+                scmJobStatus.commit = buildCommit(commit)
+            }
+        }
+    }
+
+    private ScmCommit buildCommit(ScmCommitInfo commit) {
+        new ScmCommit(
+                commitId: commit.commitId,
+                author: commit.author,
+                message: commit.message,
+                date: commit.date,
+                info: commit.asMap()
+        )
+    }
+
+    /**
+     * /api/$api_version/job/$id/scm/$integration/diff
+     */
+    def apiJobDiff(ScmJobRequest scm) {
+        if (!validateCommandInput(scm)) {
+            return
+        }
+        ScheduledExecution job = ScheduledExecution.getByIdOrUUID(scm.id)
+        if (!apiRequireJob(job, scm)) {
+            return
+        }
+
+        def isExport = scm.integration == 'export'
+        AuthContext authContext = apiAuthorize(
+                job.project,
+                isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
+        )
+        if (!authContext) {
+            return
+        }
+
+        if (!apiService.requireExists(response,
+                                      scmService.projectHasConfiguredPlugin(
+                                              scm.integration,
+                                              job.project
+                                      ),
+                                      [scm.integration],
+                                      "no.scm.integration.plugin.configured"
+        )) {
+            return
+        }
+
+
+        def scmJobDiff = new ScmJobDiff(
+                integration: scm.integration,
+                project: job.project,
+                id: scm.id
+        )
+
+        try {
+            //read current commit
+            ScmJobStatus scmJobStatus = new ScmJobStatus()
+            loadJobStatus(isExport, job, scm, scmJobStatus)
+            scmJobDiff.commit = scmJobStatus.commit
+
+            //load diff
+            ScmDiffResult diffResult = null
+            if (isExport) {
+                diffResult = scmService.exportDiff(job.project, job)
+            } else {
+                ScmImportDiffResult importdiff = scmService.importDiff(job.project, job)
+                scmJobDiff.incomingCommit = buildCommit(importdiff?.incomingCommit)
+                diffResult = importdiff
+            }
+            scmJobDiff.diffContent = CDataString.from(diffResult?.content)
+        } catch (ScmPluginException e) {
+            def message = message(
+                    code: "api.scm.failed.to.get.scm.plugin.job.status",
+                    args: [scm.integration, scm.id, e.message]
+            )
+            return respond(
+                    new ScmActionResult(success: false, message: message),
+                    [
+                            formats: ['xml', 'json'],
+                            status : HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+                    ]
+            )
+        }
+        respond scmJobDiff, [formats: ['xml', 'json']]
     }
 
     /**

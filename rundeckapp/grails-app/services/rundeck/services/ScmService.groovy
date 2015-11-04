@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory
 import com.dtolabs.rundeck.plugins.scm.ScmExportResult
 import com.dtolabs.rundeck.plugins.scm.ScmExportSynchState
+import com.dtolabs.rundeck.plugins.scm.ScmImportDiffResult
 import com.dtolabs.rundeck.plugins.scm.ScmImportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmImportPluginFactory
 import com.dtolabs.rundeck.plugins.scm.ScmImportSynchState
@@ -999,7 +1000,7 @@ class ScmService {
         plugin.getFileDiff(jobref, getRenamedPathForJobId(project, job.extid))
     }
 
-    ScmDiffResult importDiff(String project, ScheduledExecution job) {
+    ScmImportDiffResult importDiff(String project, ScheduledExecution job) {
         def jobref = scmJobRef(job)
         def plugin = loadedImportPlugins[project]
         plugin.getFileDiff(jobref, getRenamedPathForJobId(project, job.extid))
