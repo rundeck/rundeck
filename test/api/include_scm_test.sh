@@ -131,6 +131,8 @@ END
 	TYPE=application/xml
 	POSTFILE=$tmp
 
+	PARAMS="dupeOption=update"
+
 	api_request $ENDPOINT $DIR/curl.out
 
 
