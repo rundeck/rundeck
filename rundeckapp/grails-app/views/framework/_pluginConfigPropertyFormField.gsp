@@ -140,7 +140,7 @@
                 data-storage-root="${enc(attr:storageRoot)}"
                 data-storage-filter="${enc(attr:storageFilter)}"
                 data-field="#${enc(attr:fieldid)}"
-        >Select... <i class="glyphicon glyphicon-folder-open"></i></a>
+        ><g:message code="select" /> <i class="glyphicon glyphicon-folder-open"></i></a>
         </div>
     </g:if>
 </g:else>
