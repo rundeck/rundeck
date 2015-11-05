@@ -4,9 +4,10 @@
 #/   Test the scm plugins api setup methods
 #/ 
 
-DIR=$(cd `dirname $0` && pwd)
+SRC_DIR=$(cd `dirname $0` && pwd)
+DIR=${TMP_DIR:-$SRC_DIR}
 export API_XML_NO_WRAPPER=1
-source $DIR/include_scm_test.sh
+source $SRC_DIR/include_scm_test.sh
 
 ARGS=$@
 
@@ -21,7 +22,7 @@ test_setup_export_xml_invalid_config(){
 	local msg=$5
 
 	ENDPOINT="${APIURL}/project/$proj/scm/$integration/plugin/$plugin/setup"
-	TMPDIR=`tmpdir`
+	local TMPDIR=`tmpdir`
 	tmp=$TMPDIR/test_setup_export_xml-upload.xml
 	cat >$tmp <<END
 <scmPluginConfig>

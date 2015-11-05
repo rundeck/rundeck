@@ -4,15 +4,17 @@
 #/   Common functions for scm tests
 #/ 
 
-DIR=$(cd `dirname $0` && pwd)
+
+SRC_DIR=$(cd `dirname $0` && pwd)
+DIR=${TMP_DIR:-$SRC_DIR}
 export API_XML_NO_WRAPPER=1
-source $DIR/include.sh
+source $SRC_DIR/include.sh
 
 ARGS=$@
 
 tmpdir(){
 	tempfoo=`basename $0`
-	TMPDIR=`mktemp -d -t ${tempfoo}.XXX` || exit 1
+	local TMPDIR=`mktemp -d -t ${tempfoo}.XXX` || exit 1
 	echo $TMPDIR
 }
 
@@ -42,7 +44,7 @@ remove_project(){
 	api_request $ENDPOINT $DIR/curl.out
 }
 
-baregitfile=$DIR/git-bare-init.zip
+baregitfile=$SRC_DIR/git-bare-init.zip
 
 setup_remote(){
 	local gitdir=$1
