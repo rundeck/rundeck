@@ -26,7 +26,12 @@
 <span id="opt_${rkey}" class="optview">
     <span class="optdetail ${edit?'autohilite autoedit':''}" ${edit?'title="Click to edit"':''} ${edit?'':''}>
         <span class=" ${option?.required ? 'required' : ''}" title="${enc(attr:option?.description)}${option?.required ? ' (Required)' : ''}"><g:enc>${option.name}</g:enc></span>
-        <span class=""><g:truncate max="20" showtitle="true"><g:enc>${option.secureInput && option.defaultValue?'****':option.defaultValue}</g:enc></g:truncate><g:enc>${option.multivalued?'(+)':''}</g:enc></span>
+        <span class="">
+            <g:truncate max="20" showtitle="true"><g:enc>${option.secureInput && option.defaultValue?'****':option.defaultValue}</g:enc></g:truncate><g:enc>${option.multivalued?'(+)':''}</g:enc>
+            <g:if test="${option.secureInput && option.defaultStoragePath}">
+                <g:icon name="lock"/>
+            </g:if>
+        </span>
         <span class="desc"><g:strip>${option.description}</g:strip></span>
     </span>
     <g:if test="${option?.values || option.valuesList}">

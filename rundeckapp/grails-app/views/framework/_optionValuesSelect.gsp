@@ -39,11 +39,20 @@
     <g:if test="${hasTextfield }">
         <div class=" col-sm-${textcolsize}">
         <g:if test="${optionSelect.secureInput}">
+            <div class="input-group">
             <g:passwordField name="${realFieldName}"
                 class="optionvaluesfield  form-control"
                 value="${optionSelect.defaultValue?optionSelect.defaultValue:''}"
                 size="40"
                 id="${fieldwatchid}"/>
+            <g:if test="${optionSelect.defaultStoragePath}">
+                <span class="input-group-addon has_tooltip"
+                      data-placement="left"
+                      title="${message(code:"form.option.defaultStoragePath.present.description")}">
+                    <g:icon name="lock"/>
+                </span>
+            </g:if>
+            </div>
         </g:if>
         <g:else>
             <g:textField name="${realFieldName}"
