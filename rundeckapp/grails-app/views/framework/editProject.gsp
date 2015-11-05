@@ -43,16 +43,6 @@
                 elem.observe('keypress',noenter);
             }
         });
-        jQuery('#storagebrowse').find('.obs-storagebrowse-select').on('click',function(evt){
-            if(jQuery(evt.delegateTarget).hasClass('active')){
-                var storageBrowse = jQuery('#storagebrowse').data('storageBrowser');
-                var storageBrowseTarget = storageBrowse.fieldTarget();
-                if(storageBrowse && storageBrowse.selectedPath()){
-                    jQuery(storageBrowseTarget).val(storageBrowse.selectedPath());
-                    storageBrowse.selectedPath(null);
-                }
-            }
-        });
     }
     jQuery(init);
     </g:javascript>
