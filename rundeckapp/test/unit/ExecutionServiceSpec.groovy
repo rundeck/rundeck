@@ -185,7 +185,7 @@ class ExecutionServiceSpec extends Specification {
 
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
-        2
+
         when:
 
         def newCtxt=service.createJobReferenceContext(
@@ -303,7 +303,7 @@ class ExecutionServiceSpec extends Specification {
 
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
-        2
+
         when:
 
         def newCtxt=service.createJobReferenceContext(
