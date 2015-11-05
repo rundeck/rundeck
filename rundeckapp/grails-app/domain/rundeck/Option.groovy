@@ -257,7 +257,7 @@ public class Option implements Comparable{
      */
     public Option createClone(){
         Option opt = new Option()
-        ['name','description','defaultValue','sortIndex','enforced','required','values','valuesList','valuesUrl','valuesUrlLong','regex','multivalued','delimiter','secureInput','secureExposed'].each{k->
+        ['name','description','defaultValue','defaultStoragePath','sortIndex','enforced','required','values','valuesList','valuesUrl','valuesUrlLong','regex','multivalued','delimiter','secureInput','secureExposed'].each{k->
             opt[k]=this[k]
         }
         if(!opt.valuesList && values){
@@ -272,6 +272,7 @@ public class Option implements Comparable{
         "sortIndex='" + sortIndex + '\'' +
         ", description='" + description + '\'' +
         ", defaultValue='" + defaultValue + '\'' +
+        ", storagePath='" + defaultStoragePath + '\'' +
         ", enforced=" + enforced +
         ", required=" + required +
         ", values=" + values +
