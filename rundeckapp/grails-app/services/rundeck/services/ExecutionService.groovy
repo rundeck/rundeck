@@ -1228,6 +1228,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             ExecReport.findAllByJcExecId(e.id.toString()).each { rpt ->
                 rpt.delete(flush: true)
             }
+            //delete all storage requests
+            LogFileStorageRequest.findAllByExecution(e).each { req ->
+                req.delete(flush: true)
+            }
             List<File> files = []
             def execs = []
             //aggregate all files to delete
