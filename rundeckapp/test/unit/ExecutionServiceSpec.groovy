@@ -6,6 +6,7 @@ import grails.test.mixin.TestFor
 import rundeck.CommandExec
 import rundeck.ExecReport
 import rundeck.Execution
+import rundeck.LogFileStorageRequest
 import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.Workflow
@@ -23,7 +24,7 @@ import spock.lang.Unroll
  * Created by greg on 2/17/15.
  */
 @TestFor(ExecutionService)
-@Mock([Execution,ScheduledExecution,Workflow,CommandExec,Option,ExecReport])
+@Mock([Execution,ScheduledExecution,Workflow,CommandExec,Option,ExecReport,LogFileStorageRequest])
 class ExecutionServiceSpec extends Specification {
 
     void "retry execution otherwise running"() {
