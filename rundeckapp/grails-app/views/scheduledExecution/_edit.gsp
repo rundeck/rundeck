@@ -1036,4 +1036,6 @@ function getCurSEID(){
 </g:javascript>
 <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
 <div id="msg"></div>
+
+    <g:render template="/framework/storageBrowseModalKO"/>
 </div>

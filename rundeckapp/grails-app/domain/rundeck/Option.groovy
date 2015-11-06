@@ -42,6 +42,7 @@ public class Option implements Comparable{
     Integer sortIndex
     String description
     String defaultValue
+    String defaultStoragePath
     Boolean enforced
     Boolean required
     SortedSet<String> values
@@ -65,6 +66,7 @@ public class Option implements Comparable{
         name(nullable:false,blank:false,matches: '[a-zA-Z_0-9.-]+')
         description(nullable:true)
         defaultValue(nullable:true)
+        defaultStoragePath(nullable:true,matches: '^(/?)keys/.+')
         enforced(nullable:false)
         required(nullable:true)
         values(nullable:true)
@@ -107,6 +109,9 @@ public class Option implements Comparable{
         if(defaultValue){
             map.value=defaultValue
         }
+        if(defaultStoragePath){
+            map.storagePath=defaultStoragePath
+        }
         if(getRealValuesUrl()){
             map.valuesUrl=getRealValuesUrl().toExternalForm()
         }
@@ -142,6 +147,9 @@ public class Option implements Comparable{
         }
         if(data.value){
             opt.defaultValue = data.value
+        }
+        if(data.storagePath){
+            opt.defaultStoragePath=data.storagePath
         }
         if(data.valuesUrl){
             opt.realValuesUrl=new URL(data.valuesUrl)
@@ -249,7 +257,7 @@ public class Option implements Comparable{
      */
     public Option createClone(){
         Option opt = new Option()
-        ['name','description','defaultValue','sortIndex','enforced','required','values','valuesList','valuesUrl','valuesUrlLong','regex','multivalued','delimiter','secureInput','secureExposed'].each{k->
+        ['name','description','defaultValue','defaultStoragePath','sortIndex','enforced','required','values','valuesList','valuesUrl','valuesUrlLong','regex','multivalued','delimiter','secureInput','secureExposed'].each{k->
             opt[k]=this[k]
         }
         if(!opt.valuesList && values){
@@ -264,6 +272,7 @@ public class Option implements Comparable{
         "sortIndex='" + sortIndex + '\'' +
         ", description='" + description + '\'' +
         ", defaultValue='" + defaultValue + '\'' +
+        ", storagePath='" + defaultStoragePath + '\'' +
         ", enforced=" + enforced +
         ", required=" + required +
         ", values=" + values +

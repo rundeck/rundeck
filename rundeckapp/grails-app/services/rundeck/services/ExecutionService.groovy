@@ -27,6 +27,7 @@ import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import org.hibernate.StaleObjectStateException
+import org.rundeck.storage.api.StorageException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
@@ -791,6 +792,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def multiListener = MultiWorkflowExecutionListener.create(executionListener,
                     [executionListener, wfEventListener,execStateListener, /*new EchoExecListener() */])
 
+            if(scheduledExecution) {
+                if(!extraParamsExposed){
+                    extraParamsExposed=[:]
+                }
+                if(!extraParams){
+                    extraParams=[:]
+                }
+                loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext)
+            }
+
             StepExecutionContext executioncontext = createContext(execution, null,framework, authContext,
                     execution.user, jobcontext, multiListener, null,extraParams, extraParamsExposed)
 
@@ -825,6 +836,50 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return null
         }
     }
+
+    /**
+     * Load stored password default values for secure options with defaultStoragePath, and no value set.
+     *
+     * @param scheduledExecution job
+     * @param secureOptsExposed exposed secure option values
+     * @param secureOpts private secure option values
+     * @param authContext auth context
+     */
+    void loadSecureOptionStorageDefaults(
+            ScheduledExecution scheduledExecution,
+            Map secureOptsExposed,
+            Map secureOpts,
+            AuthContext authContext
+    )
+    {
+        def found = scheduledExecution.options?.findAll {
+            it.secureInput && it.defaultStoragePath
+        }?.findAll {
+            it.secureExposed ?
+                    !(secureOptsExposed?.containsKey(it.name)) :
+                    !(secureOpts?.containsKey(it.name))
+        }
+        if (found) {
+
+            //load secure option defaults from key storage
+            def keystore = storageService.storageTreeWithContext(authContext)
+            found?.each {
+                try {
+                    def password = keystore.readPassword(it.defaultStoragePath)
+                    if (it.secureExposed) {
+                        secureOptsExposed[it.name] = new String(password)
+                    } else {
+                        secureOpts[it.name] = new String(password)
+                    }
+                } catch (StorageException e) {
+                    log.error("Unable to read storage path for option ${it.name}: ${e.message}")
+                    log.debug("Unable to read storage path for option ${it.name}: ${e.message}", e)
+                }
+
+            }
+        }
+    }
+
     private LogLevel logLevelForString(String level){
         def deflevel = applicationContext?.getServletContext()?.getAttribute("LOGLEVEL_DEFAULT")
         return LogLevel.looseValueOf(level?:deflevel,LogLevel.NORMAL)
@@ -2356,6 +2411,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     false
             )
         }
+
+        loadSecureOptionStorageDefaults(se, evalSecOpts, evalSecAuthOpts, executionContext.authContext)
 
         //validate the option values
         if(dovalidate){

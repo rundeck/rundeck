@@ -22,6 +22,7 @@
 //= require workflowStepEditorKO
 //= require nodeFiltersKO
 //= require optionEditKO
+//= require storageBrowseKO
 
 /*
  Manifest: include jobedit.js, workflowStepEditorKO, nodeFiltersKO, optionEditKO

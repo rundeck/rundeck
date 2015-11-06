@@ -971,6 +971,16 @@ So the arguments for the Job Reference might look like this:
 
 > Note, If you define arguments in the wrong manner, then the Secure and Secure Remote Authentication options will not be set when the Job reference is called.  Plain options will behave the way they do in Command or Script arguments, and be left as-is as uninterpreted property references.
 
+### Secure Options using Key Storage
+
+Secure options can specify a Storage Path in lieu of a default value.  This path to the [Key Storage Facility](../administration/key-storage.html)
+will be loaded as the option value when one is not supplied.
+
+The path must indicate a stored `password` entry in the storage facility.
+
+
+![Storage Path for Secure Option](../figures/jobs-options-secure-storage-path.png)
+
 ## Remote option values
 
 A model of option values can be retrieved from an external source

@@ -431,17 +431,13 @@ class JobsXMLCodec {
                 }else{
                     x.remove('enforced')
                 }
-                if(x.secure){
-                    //convert 'secure' to @secure
-                    BuilderUtil.addAttribute(x,'secure',x.remove('secure'))
-                }else{
-                    x.remove('secure')
-                }
-                if(x.valueExposed){
-                    //convert 'valueExposed' to @valueExposed
-                    BuilderUtil.addAttribute(x,'valueExposed',x.remove('valueExposed'))
-                }else{
-                    x.remove('valueExposed')
+                ['secure','valueExposed','storagePath'].each{key->
+                    if(x[key]){
+                        //convert 'enforced' to @enforcedvalues
+                        BuilderUtil.addAttribute(x,key,x.remove(key))
+                    }else{
+                        x.remove(key)
+                    }
                 }
                 if(x.required){
                     //convert 'required' to attribute

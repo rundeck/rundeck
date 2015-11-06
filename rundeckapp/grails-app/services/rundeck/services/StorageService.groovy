@@ -2,8 +2,9 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.storage.AuthStorageTree
-import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.StorageUtil
+import com.dtolabs.rundeck.server.plugins.storage.KeyStorageTree
+import com.dtolabs.rundeck.server.plugins.storage.KeyStorageUtil
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.data.DataUtil
 
@@ -45,7 +46,7 @@ class StorageService {
      * @param ctx auth context
      * @return StorageTree
      */
-    def StorageTree storageTreeWithContext(AuthContext ctx) {
-        return StorageUtil.resolvedTree(ctx, authRundeckStorageTree)
+    def KeyStorageTree storageTreeWithContext(AuthContext ctx) {
+        KeyStorageUtil.keyStorageWrapper StorageUtil.resolvedTree(ctx, authRundeckStorageTree)
     }
 }

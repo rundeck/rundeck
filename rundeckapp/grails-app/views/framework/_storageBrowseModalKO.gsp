@@ -24,7 +24,8 @@
 </div>
 <script lang="text/javascript">
     jQuery(function(){
-        jQuery('#storagebrowse').on('show.bs.modal',function (evt) {
+        var storagebrowsemodal = jQuery('#storagebrowse');
+        storagebrowsemodal.on('show.bs.modal',function (evt) {
             var rootPath = jQuery(evt.relatedTarget).data('storage-root');
             if (!rootPath.startsWith("keys/")) {
                 rootPath = "keys";
@@ -37,7 +38,7 @@
                 storageBrowse.staticRoot(true);
                 jQuery('body').data('storageBrowser', storageBrowse );
                 jQuery(evt.delegateTarget).data('storageBrowser', storageBrowse);
-                ko.applyBindings(storageBrowse);
+                ko.applyBindings(storageBrowse,jQuery('#storagebrowse')[0]);
             }
             storageBrowse.fieldTarget(storageBrowseTarget);
         }).on('shown.bs.modal', function (evt) {
@@ -46,6 +47,18 @@
             var selectedPath = jQuery(storageBrowseTarget).val();
             var storageBrowse = jQuery(evt.delegateTarget).data('storageBrowser');
             storageBrowse.browse(null, filter, selectedPath);
+        });
+
+        //modal "save" button should find target input field and set value
+        storagebrowsemodal.find('.obs-storagebrowse-select').on('click',function(evt){
+            if(jQuery(evt.delegateTarget).hasClass('active')){
+                var storageBrowse = jQuery('#storagebrowse').data('storageBrowser');
+                var storageBrowseTarget = storageBrowse.fieldTarget();
+                if(storageBrowse && storageBrowse.selectedPath()){
+                    jQuery(storageBrowseTarget).val(storageBrowse.selectedPath());
+                    storageBrowse.selectedPath(null);
+                }
+            }
         });
     });
 </script>
