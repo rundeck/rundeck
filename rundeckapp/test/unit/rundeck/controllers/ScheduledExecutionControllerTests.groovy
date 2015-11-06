@@ -159,10 +159,28 @@ class ScheduledExecutionControllerTests  {
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         assertEquals 'server1', controller.expandUrl(option, '${job.rundeck.nodename}', se)
     }
+    public void testExpandUrlJobRundeckNodename2() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals 'server1', controller.expandUrl(option, '${rundeck.nodename}', se)
+    }
 
     public void testExpandUrlJobRundeckServerUUID() {
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         assertEquals 'xyz', controller.expandUrl(option, '${job.rundeck.serverUUID}', se)
+    }
+
+    public void testExpandUrlJobRundeckServerUUID2() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals 'xyz', controller.expandUrl(option, '${rundeck.serverUUID}', se)
+    }
+    public void testExpandUrlJobRundeckBasedir() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals '/a/path', controller.expandUrl(option, '${job.rundeck.basedir}', se,[:],false)
+    }
+
+    public void testExpandUrlJobRundeckBasedir2() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals '/a/path', controller.expandUrl(option, '${rundeck.basedir}', se,[:],false)
     }
 
     protected List setupExpandUrlJob(def controller) {
@@ -174,11 +192,14 @@ class ScheduledExecutionControllerTests  {
         se.save()
         assertNotNull(option.properties)
         controller.frameworkService = mockWith(FrameworkService) {
-            getFrameworkNodeName(1..1) {->
+            getFrameworkNodeName() {->
                 'server1'
             }
-            getServerUUID(1..12) {->
+            getServerUUID(1..1) {->
                 'xyz'
+            }
+            getRundeckBase(1..2){->
+                '/a/path'
             }
         }
         [option, se]

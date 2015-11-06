@@ -1124,7 +1124,7 @@ Two types of expansions are available, Job context, and Option
 context.
 
 To include job information in the URL, specify a variable of the form
-${job._property_}.
+`${job._property_}`.
 
 Properties available for Job context:
 
@@ -1135,6 +1135,9 @@ Properties available for Job context:
 * `user.name`: User executing the job
 * `rundeck.nodename`: Name of the Rundeck server node
 * `rundeck.serverUUID`: UUID of the Rundeck server node (cluster mode)
+* `rundeck.basedir`: File path of the Rundeck base dir (`file://` URLs only)
+
+Additionally the `rundeck.*` properties can be specified without the `job.` prefix, e.g. `${rundeck.basedir}`.
 
 To include Option information in the URL, specify a variable of the
 form ${option._property_}:

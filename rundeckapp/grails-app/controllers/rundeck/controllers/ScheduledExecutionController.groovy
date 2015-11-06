@@ -402,7 +402,9 @@ class ScheduledExecutionController  extends ControllerBase{
             def values=[]
             if (opt.realValuesUrl) {
                 //load expand variables in URL source
-                String srcUrl = expandUrl(opt, opt.realValuesUrl.toExternalForm(), scheduledExecution,params.extra?.option)
+
+                def realUrl = opt.realValuesUrl.toExternalForm()
+                String srcUrl = expandUrl(opt, realUrl, scheduledExecution, params.extra?.option,realUrl.matches(/(?i)^https?:.*$/))
                 String cleanUrl=srcUrl.replaceAll("^(https?://)([^:@/]+):[^@/]*@",'$1$2:****@');
                 def remoteResult=[:]
                 def result=null
@@ -616,18 +618,28 @@ class ScheduledExecutionController  extends ControllerBase{
      * ${job.PROPERTY} and ${option.PROPERTY}.  available properties are
      * limited
      */
-    protected String expandUrl(Option opt, String url, ScheduledExecution scheduledExecution,selectedoptsmap=[:]) {
+    protected String expandUrl(Option opt, String url, ScheduledExecution scheduledExecution,selectedoptsmap=[:],boolean isHttp=true) {
         def invalid = []
-        def extraJobProps=[
-            'user.name': (session?.user?: "anonymous"),
-            'rundeck.nodename':frameworkService.getFrameworkNodeName(),
-            'rundeck.serverUUID':frameworkService.serverUUID?:''
+        def rundeckProps=[
+                'nodename':frameworkService.getFrameworkNodeName(),
+                'serverUUID':frameworkService.serverUUID?:''
         ]
+        if(!isHttp) {
+            rundeckProps.basedir= frameworkService.getRundeckBase()
+        }
+        def extraJobProps=[
+                'user.name': (session?.user?: "anonymous"),
+        ]
+        extraJobProps.putAll rundeckProps.collectEntries {['rundeck.'+it.key,it.value]}
+
         def replacement= { Object[] group ->
             if (group[2] == 'job' && jobprops[group[3]] && scheduledExecution.properties.containsKey(jobprops[group[3]])) {
                 scheduledExecution.properties.get(jobprops[group[3]]).toString()
             } else if (group[2] == 'job' && null != extraJobProps[group[3]]) {
                 def value = extraJobProps[group[3]]
+                value.toString()
+            }else if (group[2] == 'rundeck' && null != rundeckProps[group[3]]) {
+                def value = rundeckProps[group[3]]
                 value.toString()
             } else if (group[2] == 'option' && optprops[group[3]] && opt.properties.containsKey(optprops[group[3]])) {
                 opt.properties.get(optprops[group[3]]).toString()
@@ -649,9 +661,12 @@ class ScheduledExecutionController  extends ControllerBase{
         def codecs=['URIComponent','URL']
         def result=[]
         arr.eachWithIndex { String entry, int i ->
-            result<<entry.replaceAll(/(\$\{(job|option)\.([^}]+?(\.value)?)\})/) { Object[] group ->
+            result<<entry.replaceAll(/(\$\{(job|option|rundeck)\.([^}]+?(\.value)?)\})/) { Object[] group ->
                 def val = replacement(group)
                  if (null != val) {
+                     if(!isHttp){
+                         return val
+                     }
                      val."encodeAs${codecs[i]}"()
                  } else {
                      invalid << group[0]
