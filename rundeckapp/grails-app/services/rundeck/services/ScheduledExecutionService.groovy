@@ -392,7 +392,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         schedJobs.each { ScheduledExecution se ->
             try {
                 scheduleJob(se, null, null)
-                log.error("rescheduled job: ${se.id}")
+                log.info("rescheduled job: ${se.id}")
             } catch (Exception e) {
                 log.error("Job not rescheduled: ${se.id}: ${e.message}")
             }
