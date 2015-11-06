@@ -556,6 +556,10 @@ Optional map entries are:
 
 :   "true/false" - whether a secure input option value is exposed to scripts or not. `false` means the option will be used only as a Secure Remote Authentication option.  default: `false`.
 
+`storagePath`
+
+:    for a secure option, a storage path to password value to use as default
+
 `sortIndex` (deprecated)
 
 :   *integer* - A number indicating the order this option should appear in the GUI.  If specified this

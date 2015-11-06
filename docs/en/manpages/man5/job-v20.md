@@ -575,6 +575,10 @@ valueExposed
 
 :   "true/false" - whether a secure input option value is exposed to scripts or not. `false` means the option will be used only as a Secure Remote Authentication option.  default: `false`.
 
+storagePath
+
+:    for a secure option, a storage path to password value to use as default
+
 *Example*
 
 Define defaults for the "port" option, requiring regex match. 
