@@ -708,6 +708,7 @@ class MenuController extends ControllerBase{
         def memfree = Runtime.getRuntime().freeMemory()
         def memtotal = Runtime.getRuntime().totalMemory()
         def schedulerRunningCount = quartzScheduler.getCurrentlyExecutingJobs().size()
+        def threadPoolSize = quartzScheduler.getMetaData().threadPoolSize
         def info = [
             nowDate: nowDate,
             nodeName: nodeName,
@@ -731,13 +732,19 @@ class MenuController extends ControllerBase{
             memfree: memfree,
             memtotal: memtotal,
             schedulerRunningCount: schedulerRunningCount,
+            threadPoolSize: threadPoolSize,
             executionModeActive:executionModeActive
         ]
+        def schedulerThreadRatio=info.threadPoolSize>0?(info.schedulerRunningCount/info.threadPoolSize):0
         def serverUUID=frameworkService.getServerUUID()
         if(serverUUID){
             info['serverUUID']=serverUUID
         }
-        return [systemInfo: [
+        return [
+                schedulerThreadRatio:schedulerThreadRatio,
+                schedulerRunningCount:info.schedulerRunningCount,
+                threadPoolSize:info.threadPoolSize,
+                systemInfo: [
 
             [
                 "stats: uptime": [
@@ -770,7 +777,13 @@ class MenuController extends ControllerBase{
                 'allocated.info': 'Ratio of system memory allocated to maximum allowed (total/max)',
             ]],
             ["stats: scheduler":
-            [running: info.schedulerRunningCount]
+            [
+                    running: info.schedulerRunningCount,
+                    threadPoolSize:info.threadPoolSize,
+                    ratio: (schedulerThreadRatio),
+                    'ratio.unit':'ratio',
+                    'ratio.info':'Ratio of used threads to Quartz scheduler thread pool size'
+            ]
             ],
             ["stats: threads":
             [active: info.threadActiveCount]

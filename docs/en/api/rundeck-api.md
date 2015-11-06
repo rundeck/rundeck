@@ -644,6 +644,7 @@ Success response, with included system info and stats in this format:
         </memory>
         <scheduler>
             <running>0</running>
+            <threadPoolSize>10</threadPoolSize>
         </scheduler>
         <threads>
             <active>24</active>
@@ -712,7 +713,8 @@ Success response, with included system info and stats in this format:
         "total": 527958016
       },
       "scheduler": {
-        "running": 0
+        "running": 0,
+        "threadPoolSize": 10
       },
       "threads": {
         "active": 35
@@ -829,6 +831,10 @@ The `memory` section describes memory usage in bytes:
 `scheduler/running`
 
 :   Number of running jobs in the scheduler
+
+`scheduler/threadPoolSize`
+
+:   Size of the scheduler threadPool: maximum number of concurrent Rundeck executions
 
 `threads/active`
 
