@@ -1,4 +1,4 @@
-<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.Description" %>
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; com.dtolabs.rundeck.core.plugins.configuration.Description" %>
 <g:set var="tkey" value="${g.rkey()}"/>
 <div class="notifyFields form-group"
      style="${wdgt.styleVisible(if: isVisible)}">
@@ -176,21 +176,19 @@
                     <g:set var="prefix" value="${'notifyPlugin.'+trigger+'.' + pluginName + '.config.'}"/>
                     <g:if test="${pluginDescription instanceof Description}">
                         <div class="form-horizontal">
-                            <g:each in="${pluginDescription?.properties}" var="prop">
-                                <g:set var="outofscope" value="${prop.scope && !prop.scope.isInstanceLevel() && !prop.scope.isUnspecified()}"/>
-                                <g:if test="${!outofscope}">
-                                    <g:render
-                                            template="/framework/pluginConfigPropertyFormField"
-                                            model="${[prop: prop, prefix: prefix,
-                                                    error: validation?.errors ? validation?.errors[prop.name] : null,
-                                                    values: definedConfig,
-                                                    fieldname: prefix + prop.name,
-                                                    origfieldname: 'orig.' + prefix + prop.name,
-                                                    outofscope: outofscope,
-                                                    pluginName: pluginName
-                                            ]}"/>
-                                </g:if>
-                            </g:each>
+
+                            <g:if test="${pluginDescription?.properties}">
+                                <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                                        properties:pluginDescription?.properties,
+                                        report:validation,
+                                        prefix:prefix,
+                                        values:definedConfig,
+                                        fieldnamePrefix:prefix,
+                                        origfieldnamePrefix:'orig.' + prefix,
+                                        allowedScope:PropertyScope.Instance
+                                ]}"/>
+                            </g:if>
+
                             <g:if test="${!pluginDescription?.properties}">
                                 <span class="text-muted">No configuration properties for <g:enc>${pluginDescription['title'] ?: pluginDescription['name'] ?: pluginName}</g:enc></span>
                             </g:if>

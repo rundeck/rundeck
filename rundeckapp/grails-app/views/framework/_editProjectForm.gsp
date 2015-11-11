@@ -20,7 +20,7 @@
    Created: 8/1/11 11:38 AM
 --%>
 
-<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope" contentType="text/html;charset=UTF-8" %>
 
 <div class="list-group">
 <g:if test="${editOnly}">
@@ -146,17 +146,17 @@
                         <wdgt:action visible="true" target="${nkey+'_det'}"/>
                     </wdgt:eventHandler>
                     <div class="well well-sm nexecDetails" id="${enc(attr:nkey) + '_det'}"
-                         style="${wdgt.styleVisible(if: defaultNodeExec == description.name)}">
+                         style="${wdgt.styleVisible(if: isSelected)}">
                         <div class="form-horizontal " >
-                        <g:each in="${description.properties}" var="prop">
-                            <g:if test="${!prop.scope || prop.scope.isProjectLevel() || prop.scope.isUnspecified()}">
-                                <g:render
-                                    template="pluginConfigPropertyFormField"
-                                    model="${[prop:prop,prefix:nodeexecprefix,error:nodeexecreport?.errors && isSelected ?nodeexecreport?.errors[prop.name]:null,
-                                              values: isSelected ? nodeexecconfig : null,
-                                fieldname:nodeexecprefix+prop.name,origfieldname:'orig.'+nodeexecprefix+prop.name]}"/>
-                            </g:if>
-                        </g:each>
+                            <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                                    properties:description.properties,
+                                    report:nodeexecreport?.errors && isSelected ? nodeexecreport : null,
+                                    prefix:nodeexecprefix,
+                                    values:isSelected ? nodeexecconfig : null,
+                                    fieldnamePrefix:nodeexecprefix,
+                                    origfieldnamePrefix:'orig.' + nodeexecprefix,
+                                    allowedScope: PropertyScope.Project
+                            ]}"/>
                     </div>
                     </div>
                 </g:if>
@@ -194,17 +194,27 @@
                     <wdgt:action visible="true" target="${nkey+'_det'}"/>
                 </wdgt:eventHandler>
                 <div class="well well-sm fcopyDetails" id="${enc(attr:nkey) + '_det'}"
-                       style="${wdgt.styleVisible(if: defaultFileCopy == description.name)}">
+                       style="${wdgt.styleVisible(if: isSelected)}">
                 <div class="form-horizontal " >
-                    <g:each in="${description.properties}" var="prop">
-                        <g:if test="${!prop.scope || prop.scope.isProjectLevel() || prop.scope.isUnspecified()}">
-                            <g:render
-                                template="pluginConfigPropertyFormField"
-                                model="${[prop:prop,prefix:fcopyprefix,error:fcopyreport?.errors && isSelected ?fcopyreport?.errors[prop.name]:null,
-                                          values: isSelected?fcopyconfig:null,
-                            fieldname:fcopyprefix+prop.name,origfieldname:'orig.'+fcopyprefix+prop.name]}"/>
-                        </g:if>
-                    </g:each>
+
+                    <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                            properties:description.properties,
+                            report:fcopyreport?.errors && isSelected ? fcopyreport : null,
+                            prefix:fcopyprefix,
+                            values:isSelected?fcopyconfig:null,
+                            fieldnamePrefix:fcopyprefix,
+                            origfieldnamePrefix:'orig.'+fcopyprefix,
+                            allowedScope:PropertyScope.Project
+                    ]}"/>
+                    %{--<g:each in="${description.properties}" var="prop">--}%
+                        %{--<g:if test="${!prop.scope || prop.scope.isProjectLevel() || prop.scope.isUnspecified()}">--}%
+                            %{--<g:render--}%
+                                %{--template="pluginConfigPropertyFormField"--}%
+                                %{--model="${[prop:prop,prefix:fcopyprefix,error:fcopyreport?.errors && isSelected ?fcopyreport?.errors[prop.name]:null,--}%
+                                          %{--values: isSelected?fcopyconfig:null,--}%
+                            %{--fieldname:fcopyprefix+prop.name,origfieldname:'orig.'+fcopyprefix+prop.name]}"/>--}%
+                        %{--</g:if>--}%
+                    %{--</g:each>--}%
                 </div>
                 </div>
             </g:if>

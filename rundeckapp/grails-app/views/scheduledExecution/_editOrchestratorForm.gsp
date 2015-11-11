@@ -1,4 +1,4 @@
-<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.Description" %>
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; com.dtolabs.rundeck.core.plugins.configuration.Description" %>
 <g:if test="${orchestratorPlugins}">
     <div class="form-group">
         <div class="${labelColSize} control-label text-form-label">
@@ -29,24 +29,17 @@
                                           rkey: g.rkey()]"/>
                     </span>
                 <div>
-                    <table class="simpleForm">
-                        <g:each in="${pluginDescription?.properties}" var="prop">
-                            <g:set var="outofscope" value="${prop.scope && !prop.scope.isInstanceLevel() && !prop.scope.isUnspecified()}"/>
-                            <g:if test="${!outofscope || adminauth}">
-                                <tr>
-                                    <g:render
-                                        template="/framework/pluginConfigPropertyFormField"
-                                        model="${[prop: prop, prefix: prefix,
-                                                values: definedConfig,
-                                                fieldname: prefix + prop.name,
-                                                origfieldname: 'orig.' + prefix + prop.name,
-                                                outofscope: outofscope,
-                                                pluginName: pluginName
-                                        ]}"/>
-                                </tr>
-                            </g:if>
-                        </g:each>
-                    </table>
+
+                        <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                                properties:pluginDescription?.properties,
+                                report:null,
+                                prefix:prefix,
+                                values:definedConfig,
+                                fieldnamePrefix:prefix,
+                                origfieldnamePrefix:'orig.' + prefix,
+                                allowedScope:PropertyScope.Instance
+                        ]}"/>
+
                 </div>
                 </span>
                 <wdgt:eventHandler for="orchestratorId" equals="${pluginName}"
