@@ -588,3 +588,9 @@ Available rendering option keys:
   * `valueConversionFailure` can be used to indicate that if the Private data context, or Storage path data is not present,
     then the config data key should be removed.  Allowed values:
     - `remove` - remove the original config property value if the conversion is not successful
+  * `groupName` specifies a group that the input field belongs to.  If not specified the field will be in the
+  primary, unnamed group.  If specified, all fields with the same `groupName` value will be
+  displayed in a common area under the group name.
+  * `grouping` allowed value: `secondary`, indicates that the specified `groupName` should be shown in a
+  collapsed state if no input values in that group have been set. If no `groupName` is set, then the field
+  will be displayed under a group with a heading of "More".
