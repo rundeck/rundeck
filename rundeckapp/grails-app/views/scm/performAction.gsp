@@ -5,7 +5,7 @@
   Time: 3:29 PM
 --%>
 
-<%@ page contentType="text/html;charset=UTF-8" %></page>
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope" contentType="text/html;charset=UTF-8" %></page>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
@@ -299,20 +299,16 @@
                         </g:if>
                     </g:elseif>
                     <div class="list-group-item">
-                        <g:each in="${actionView?.properties}" var="prop">
-
-                            <g:if test="${!prop.scope || prop.scope.isProjectLevel() || prop.scope.isUnspecified()}">
-                                <g:render
-                                        template="/framework/pluginConfigPropertyFormField"
-                                        model="${[prop         : prop,
-                                                  prefix       : 'test',
-                                                  error        : report?.errors ? report.errors[prop.name] : null,
-                                                  values       : config,
-                                                  fieldname    : 'pluginProperties.' + prop.name,
-                                                  origfieldname: 'orig.' + prop.name
-                                        ]}"/>
-                            </g:if>
-                        </g:each>
+                        <g:if test="${actionView?.properties}">
+                            <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                                    properties:actionView?.properties,
+                                    report:report,
+                                    values:config,
+                                    fieldnamePrefix:'pluginProperties.',
+                                    origfieldnamePrefix:'orig.' ,
+                                    allowedScope: PropertyScope.Project
+                            ]}"/>
+                        </g:if>
                     </div>
                 </div>
 

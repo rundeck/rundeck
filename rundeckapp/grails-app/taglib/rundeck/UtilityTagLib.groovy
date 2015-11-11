@@ -66,6 +66,15 @@ class UtilityTagLib{
         }
         out<<render(template:"/common/expander",model:attrs)
     }
+    /**
+    * Render collapser component
+     */
+    def collapser={attrs,body->
+        if(body && !attrs.text){
+            attrs.text=body()
+        }
+        out<<render(template:"/common/collapser",model:attrs)
+    }
 
     def dayOfWeek = { attrs, body ->
 

@@ -35,6 +35,8 @@ public class StringRenderingConstants {
      */
     public static final String DISPLAY_TYPE_KEY = "displayType";
     public static final String STATIC_TEXT_CONTENT_TYPE_KEY = "staticTextContentType";
+    public static final String GROUPING = "grouping";
+    public static final String GROUP_NAME = "groupName";
 
     /**
      * Values that can be specified for a key of {@link #DISPLAY_TYPE_KEY}
