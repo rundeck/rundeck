@@ -17,7 +17,7 @@ import org.apache.log4j.Logger
 class ScriptExecutionFileStoragePlugin implements ExecutionFileStoragePlugin, Describable, Configurable {
     static Logger logger = Logger.getLogger(ScriptExecutionFileStoragePlugin)
     Description description
-    private Map<String, Closure> handlers
+    protected Map<String, Closure> handlers
     Map configuration
     Map<String, ? extends Object> pluginContext
 

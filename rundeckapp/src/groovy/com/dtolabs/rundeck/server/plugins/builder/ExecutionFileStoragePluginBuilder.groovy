@@ -37,7 +37,11 @@ class ExecutionFileStoragePluginBuilder extends ScriptPluginBuilder implements P
 
     @Override
     ExecutionFileStoragePlugin buildPlugin() {
-        return new ScriptExecutionFileStoragePlugin(handlers, descriptionBuilder.build())
+        if(handlers.storeMultiple){
+            return new ScriptExecutionMultiFileStoragePlugin(handlers, descriptionBuilder.build())
+        }else{
+            return new ScriptExecutionFileStoragePlugin(handlers, descriptionBuilder.build())
+        }
     }
 
     @Override
@@ -61,6 +65,14 @@ class ExecutionFileStoragePluginBuilder extends ScriptPluginBuilder implements P
         }
         if (name == 'retrieve' && list.size() == 1 && list[0] instanceof Closure) {
             if (!ScriptExecutionFileStoragePlugin.validRetrieveClosure(list[0])) {
+                logger.error("Invalid trigger closure: ${name}, unexpected parameter set: ${list[0].parameterTypes}")
+                throw new MissingMethodException(name.toString(), getClass(), list.toArray(), false);
+            }
+            handlers[name] = list[0]
+            return true
+        }
+        if (name == 'storeMultiple' && list.size() == 1 && list[0] instanceof Closure) {
+            if (!ScriptExecutionMultiFileStoragePlugin.validStoreMultipleClosure(list[0])) {
                 logger.error("Invalid trigger closure: ${name}, unexpected parameter set: ${list[0].parameterTypes}")
                 throw new MissingMethodException(name.toString(), getClass(), list.toArray(), false);
             }
