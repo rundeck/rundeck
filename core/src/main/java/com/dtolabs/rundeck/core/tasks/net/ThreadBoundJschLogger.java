@@ -34,6 +34,7 @@ public class ThreadBoundJschLogger implements Logger {
         return instance;
     }
     /**
+     * Bind to static Jsch logger, and return the logger instance
      * @return the shared instance
      * @param logger logger
      * @param loggingLevel level
