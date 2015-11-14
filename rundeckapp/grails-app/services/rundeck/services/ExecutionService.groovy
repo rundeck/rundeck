@@ -36,6 +36,7 @@ import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
 import rundeck.filters.ApiRequestFilters
+import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.LoggingThreshold
 
@@ -73,6 +74,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def jobStateService
     def grailsApplication
     def configurationService
+    def grailsEvents
 
     boolean getExecutionsAreActive(){
         configurationService.executionModeActive
@@ -2024,6 +2026,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                 nodestatus: [succeeded: sucCount,failed:failedCount,total:totalCount],
                                 context: context
                         ]
+                )
+                grailsEvents?.event(
+                        null,
+                        'executionComplete',
+                        new ExecutionCompleteEvent(
+                                state: execution.executionState,
+                                execution:execution,
+                                job:scheduledExecution,
+                                nodeStatus: [succeeded: sucCount,failed:failedCount,total:totalCount],
+                                context: context?.dataContext
+
+                        )
                 )
             }
         }
