@@ -174,7 +174,7 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         def mutablestate = new MutableWorkflowStateListener(state)
         def chain = [mutablestate]
         def File outfile = getStateFileForExecution(execution)
-        def storagerequest = logFileStorageService.prepareForFileStorage(execution, STATE_FILE_FILETYPE, outfile)
+        def storagerequest = null//logFileStorageService.prepareForFileStorage(execution, STATE_FILE_FILETYPE, outfile)
         chain << new WorkflowStateListenerAction(onWorkflowExecutionStateChanged: {
             ExecutionState executionState, Date timestamp, List<String> nodeSet ->
                 if (executionState.completedState) {
