@@ -23,6 +23,7 @@ import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
 import rundeck.controllers.JobXMLException
+import rundeck.services.logging.ExecutionFileProducer
 
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -34,7 +35,10 @@ import java.util.regex.Pattern
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
-class ProjectService implements InitializingBean{
+class ProjectService implements InitializingBean, ExecutionFileProducer{
+    public static final String EXECUTION_XML_LOG_FILETYPE = 'execution.xml'
+    final String executionFileType = EXECUTION_XML_LOG_FILETYPE
+
     def grailsApplication
     def scheduledExecutionService
     def executionService
@@ -79,30 +83,66 @@ class ProjectService implements InitializingBean{
         }
     }
 
-    def exportExecution(ZipBuilder zip, Execution exec, String name) throws ProjectServiceException {
+    @Override
+    File produceStorageFileForExecution(final Execution e) {
+        getExecutionXmlFileForExecution(e)
+    }
+
+    /**
+     * Write execution.xml file to a temp file and return
+     * @param exec execution
+     * @return file containing execution.xml
+     */
+    File getExecutionXmlFileForExecution(Execution execution){
+        File executionXmlTempfile = File.createTempFile("execution-${execution.id}", ".xml")
+        executionXmlTempfile.withWriter("UTF-8") { Writer writer ->
+            exportExecutionXml(
+                    execution,
+                    writer,
+                    "output-${execution.id}.rdlog"
+            )
+        }
+        executionXmlTempfile.deleteOnExit()
+        executionXmlTempfile
+    }
+    /**
+     * Write execution.xml file to the writer
+     * @param exec execution
+     * @param writer writer
+     * @param logfilepath optional new outputfilepath to set for the xml
+     * @return
+     */
+    def exportExecutionXml(Execution exec, Writer writer, String logfilepath =null){
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
         def dateConvert = {
             sdf.format(it)
         }
         BuilderUtil builder = new BuilderUtil()
-        builder.converters= [(Date): dateConvert, (java.sql.Timestamp): dateConvert]
-
+        builder.converters = [(Date): dateConvert, (java.sql.Timestamp): dateConvert]
         def map = exec.toMap()
         BuilderUtil.makeAttribute(map, 'id')
-        def File outfile = loggingService.getLogFileForExecution(exec)
-        if (outfile && outfile.isFile()) {
+        if (logfilepath) {
             //change entry to point to local file
-            map.outputfilepath = "output-${exec.id}.rdlog"
+            map.outputfilepath = logfilepath
         }
         JobsXMLCodec.convertWorkflowMapForBuilder(map.workflow)
+        def xml = new MarkupBuilder(writer)
+        builder.objToDom("executions", [execution: map], xml)
+    }
+    def exportExecution(ZipBuilder zip, Execution exec, String name) throws ProjectServiceException {
+
+        def File logfile = loggingService.getLogFileForExecution(exec)
+        String logfilepath=null
+        if (logfile && logfile.isFile()) {
+            logfilepath = "output-${exec.id}.rdlog"
+        }
         //convert map to xml
         zip.file("$name") { Writer writer ->
-            def xml = new MarkupBuilder(writer)
-            builder.objToDom("executions", [execution:map], xml)
+            exportExecutionXml(exec, writer, logfilepath)
         }
-        if (outfile && outfile.isFile()) {
-            zip.file "output-${exec.id}.rdlog", outfile
+        if (logfile && logfile.isFile()) {
+            zip.file logfilepath, logfile
         }
         def File statefile = workflowService.getStateFileForExecution(exec)
         if (statefile && statefile.isFile()) {

@@ -11,6 +11,7 @@ import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProvi
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
 import rundeck.Execution
 import rundeck.services.logging.DisablingLogWriter
+import rundeck.services.logging.ExecutionFileProducer
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.ExecutionLogState
@@ -21,9 +22,11 @@ import rundeck.services.logging.MultiLogWriter
 import rundeck.services.logging.NodeCountingLogWriter
 import rundeck.services.logging.ThresholdLogWriter
 
-class LoggingService {
+class LoggingService implements ExecutionFileProducer {
 
-    static final String LOG_FILE_FILETYPE ="rdlog"
+    public static final String LOG_FILE_FILETYPE = 'rdlog'
+
+
     FrameworkService frameworkService
     LogFileStorageService logFileStorageService
     def pluginService
@@ -36,6 +39,16 @@ class LoggingService {
         boolean fileDisabled = grailsApplication.config?.rundeck?.execution?.logs?.localFileStorageEnabled in ['false', false]
         boolean readerPluginConfigured= getConfiguredStreamingReaderPluginName()
         return !(fileDisabled && readerPluginConfigured)
+    }
+
+    @Override
+    String getExecutionFileType() {
+        LOG_FILE_FILETYPE
+    }
+
+    @Override
+    File produceStorageFileForExecution(final Execution e) {
+        getLogFileForExecution(e)
     }
 
     /**

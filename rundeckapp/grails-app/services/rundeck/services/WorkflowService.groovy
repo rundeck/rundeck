@@ -25,12 +25,14 @@ import rundeck.JobExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.WorkflowStep
+import rundeck.services.logging.ExecutionFileProducer
 import rundeck.services.logging.ExecutionLogState
 import rundeck.services.logging.WorkflowStateFileLoader
 import rundeck.services.workflow.StateMapping
 
-class WorkflowService implements ApplicationContextAware{
+class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
     public static final String STATE_FILE_FILETYPE = "state.json"
+    final String executionFileType = STATE_FILE_FILETYPE
 
     protected def ExecutionService executionService
     def ApplicationContext applicationContext
@@ -55,6 +57,11 @@ class WorkflowService implements ApplicationContextAware{
         }
         def spec=grailsApplication.config.rundeck?.workflowService?.stateCache?.spec?: "maximumSize=5,expireAfterAccess=60s"
         stateCache= CacheBuilder.from(spec).build()
+    }
+
+    @Override
+    File produceStorageFileForExecution(final Execution e) {
+        getStateFileForExecution(e)
     }
 
     /**
