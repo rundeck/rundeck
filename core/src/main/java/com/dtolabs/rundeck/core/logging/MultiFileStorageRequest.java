@@ -9,5 +9,5 @@ public interface MultiFileStorageRequest extends MultiFileStorageSet {
      *
      * @param filetype file type
      */
-    void storageCompletedForFiletype(String filetype);
+    void storageResultForFiletype(String filetype, boolean success);
 }
