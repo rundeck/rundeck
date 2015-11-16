@@ -223,7 +223,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
      * input IDs from the XML, 'retryidmap' map of new Executions to old the 'retry' execution ID
      * @throws ProjectServiceException if an error occurs
      */
-    def loadExecutions(xmlinput,Map jobIdMap=null, skipJobIds = []) throws ProjectServiceException {
+    def loadExecutions(xmlinput, String projectName, Map jobIdMap=null, skipJobIds = []) throws ProjectServiceException {
         Node doc = parseXml(xmlinput)
         if (!doc) {
             throw new ProjectServiceException("XML Document could not be parsed.")
@@ -252,7 +252,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
                     return
                 }else if(object.jobId) {
                     //look for same ID
-                    se = scheduledExecutionService.getByIDorUUID(object.jobId)
+                    def found = scheduledExecutionService.getByIDorUUID(object.jobId)
+                    if(found && found.project==projectName){
+                        se=found
+                    }
+
                 }
                 if(object.id){
                     object.id=XmlParserUtil.stringToInt(object.id,-1)
@@ -937,7 +941,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
         execxml.each { File exml ->
             def results
             try {
-                results = loadExecutions(exml, jobIdMap,skipJobIds)
+                results = loadExecutions(exml,projectName, jobIdMap,skipJobIds)
             } catch (ProjectServiceException e) {
                 log.debug("[${execxmlmap[exml]}] ${e.message}",e)
                 execerrors<<"[${execxmlmap[exml]}] ${e.message}"
