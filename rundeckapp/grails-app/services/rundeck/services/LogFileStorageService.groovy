@@ -124,15 +124,20 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             Execution execution = Execution.get(task.request.execution.id)
 
             def files = getExecutionFiles(execution, typelist)
-            def (didsucceed,failurelist) = storeLogFiles(filetype, task.storage, task.id, files)
-            success = didsucceed
-            if (!success && failurelist) {
+            try {
+                def (didsucceed, failurelist) = storeLogFiles(filetype, task.storage, task.id, files)
+                success = didsucceed
+                if (!success && failurelist) {
 
-                LogFileStorageRequest request = LogFileStorageRequest.get(task.requestId)
-                request.filetype = failurelist.join(',')
+                    LogFileStorageRequest request = LogFileStorageRequest.get(task.requestId)
+                    request.filetype = failurelist.join(',')
 
-                request.completed = success
-                request.save(flush: true)
+                    request.completed = success
+                    request.save(flush: true)
+                }
+            }catch (IOException | ExecutionFileStorageException e) {
+                success = false
+                log.error("Failure: Storage request [ID#${task.id}]: ${e.message}", e)
             }
         }
 
