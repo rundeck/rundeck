@@ -96,7 +96,7 @@
                     selectorMinimalHeight: selectorHeight
                 });
                 var updateSelectCount = function (evt) {
-                    var selected = jQuery('select[name="extra.nodeIncludeName"]').val();
+                    var selected = jQuery('select[name="extra.nodeIncludeName"] option:checked');
                     var count = selected ? selected.length : 0;
                     $$('.nodeselectcount').each(function (e2) {
                         setText($(e2), count + '');
