@@ -58,7 +58,7 @@
             </div>
             </div>
             <div class=" matchednodes embed jobmatchednodes group_section collapse ${selectedNodes!=null? 'in' : ''}" id="nodeSelect">
-                    <div class=" group_select_control" style="${wdgt.styleVisible(if: selectedNodes)}">
+                    <div class=" group_select_control" style="${wdgt.styleVisible(if: selectedNodes != null)}">
                         Select:
                         <span class="textbtn textbtn-default textbtn-on-hover selectall">All</span>
                         <span class="textbtn textbtn-default textbtn-on-hover selectnone">None</span>
