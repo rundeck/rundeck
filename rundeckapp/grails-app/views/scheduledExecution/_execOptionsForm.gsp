@@ -73,7 +73,7 @@
 				<option
 					id="${enc(attr:nkey)}"
 					value="${enc(attr:node.nodename)}"
-					 ${(selectedNodes&&selectedNodes.contains(node.nodename))?'selected':''}
+					 ${(null==selectedNodes||(selectedNodes!=false&&selectedNodes.contains(node.nodename)))?'selected':''}
 					data-tag="${enc(attr:node.tags?.join(' '))}">
                                         ${enc(attr:node.nodename)}
                                 </option>
