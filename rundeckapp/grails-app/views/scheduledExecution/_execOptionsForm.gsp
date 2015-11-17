@@ -41,7 +41,7 @@
         </g:elseif>
         <g:elseif test="${nodes}">
             <g:set var="selectedNodes"
-                   value="${failedNodes? failedNodes.split(','):selectedNodes!=null? selectedNodes.split(','):null}"/>
+                   value="${failedNodes? failedNodes.split(','):selectedNodes!=null? selectedNodes.length>0? selectedNodes.split(','):false :null}"/>
             <div class="container">
             <div class="row">
                 <div class="col-sm-12 checkbox">
@@ -49,16 +49,16 @@
                     <input name="extra._replaceNodeFilters" value="true" type="checkbox"
                            data-toggle="collapse"
                            data-target="#nodeSelect"
-                        ${selectedNodes!=null?'checked':''}
+                        ${selectedNodes!=null?'checked disabled':''}
                            id="doReplaceFilters"/>
                     Change the Target Nodes
-                (<span class="nodeselectcount"><g:enc>${selectedNodes!=null?selectedNodes.size():nodes.size()}</g:enc></span>)</label>
+                (<span class="nodeselectcount"><g:enc>${selectedNodes?selectedNodes.size():selectedNodes==false?0:nodes.size()}</g:enc></span>)</label>
                 </div>
 
             </div>
             </div>
-            <div class=" matchednodes embed jobmatchednodes group_section collapse ${selectedNodes!=null? 'in' : ''}" id="nodeSelect">
-                    <div class=" group_select_control" style="${wdgt.styleVisible(if: selectedNodes !=null)}">
+            <div class=" matchednodes embed jobmatchednodes group_section collapse ${selectedNodes? 'in' : ''}" id="nodeSelect">
+                    <div class=" group_select_control" style="${wdgt.styleVisible(if: selectedNodes)}">
                         Select:
                         <span class="textbtn textbtn-default textbtn-on-hover selectall">All</span>
                         <span class="textbtn textbtn-default textbtn-on-hover selectnone">None</span>
@@ -73,7 +73,7 @@
 				<option
 					id="${enc(attr:nkey)}"
 					value="${enc(attr:node.nodename)}"
-					 ${(null== selectedNodes||selectedNodes.contains(node.nodename))?'selected':''}
+					 ${(selectedNodes&&selectedNodes.contains(node.nodename))?'selected':''}
 					data-tag="${enc(attr:node.tags?.join(' '))}">
                                         ${enc(attr:node.nodename)}
                                 </option>
@@ -175,10 +175,9 @@
                 Event.observe($('doReplaceFilters'), 'change', function (evt) {
                     var e = evt.element();
                     $$('select[name="extra.nodeIncludeName"] option').each(function (cb) {
-                        [cb].each(e.selected ? Field.enable : Field.disable);
+                        // [cb].each(e.checked ? Field.enable : Field.disable);
                         if (!e.checked) {
                             $$('.group_select_control').each(Element.hide);
-                            cb.selected = true;
                         } else {
                             $$('.group_select_control').each(Element.show);
                         }
