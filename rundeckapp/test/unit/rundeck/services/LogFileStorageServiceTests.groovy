@@ -2,6 +2,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogWriter
+import com.dtolabs.rundeck.core.logging.ExecutionFileStorageOptions
 import com.dtolabs.rundeck.core.logging.ExecutionMultiFileStorage
 import com.dtolabs.rundeck.core.logging.LogFileState
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageException
@@ -309,6 +310,10 @@ class LogFileStorageServiceTests  {
         public assertRetrieveLogFileCalled(){
             assert retrieveLogFileCalled
         }
+    }
+    class testOptionsStoragePlugin extends testStoragePlugin implements ExecutionFileStorageOptions{
+        boolean retrieveSupported
+        boolean storeSupported
     }
     class testMultiStoragePlugin extends testStoragePlugin implements ExecutionMultiFileStorage{
         Map<String,Boolean> storeMultipleResponseSet=[:]
@@ -756,6 +761,73 @@ class LogFileStorageServiceTests  {
     }
 
     @DirtiesRuntime
+    void testSubmitForStorage_plugin_storeSupported(){
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+
+        def test = new testOptionsStoragePlugin()
+        test.storeSupported=true
+
+        Execution execution=createExecution()
+        execution.save()
+        prepareSubmitForStorage(test)
+        service.submitForStorage(execution)
+
+        assertEquals(1,service.storageRequests.size())
+    }
+
+    @DirtiesRuntime
+    void testSubmitForStorage_plugin_storeUnsupported(){
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+
+        def test = new testOptionsStoragePlugin()
+        test.storeSupported=false
+
+        Execution execution=createExecution()
+        execution.save()
+        prepareSubmitForStorage(test)
+        service.submitForStorage(execution)
+
+        assertEquals(0,service.storageRequests.size())
+    }
+
+
+    void prepareSubmitForStorage(test){
+
+        def fmock = mockFor(FrameworkService)
+        fmock.demand.getFrameworkPropertyResolver() { project ->
+            assert project == "testprojz"
+        }
+        def pmock = mockFor(PluginService)
+        pmock.demand.configurePlugin(2..2) { String pname, PluggableProviderService psvc, PropertyResolver resolv, PropertyScope scope ->
+            assertEquals("test1", pname)
+            assert scope == PropertyScope.Instance
+            [instance: test, configuration: [:]]
+        }
+        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
+            [:]
+        }
+        ExecutionService.metaClass.static.generateServerURL = { LinkGenerator grailsLinkGenerator ->
+            ''
+        }
+
+        ExecutionService.metaClass.static.generateExecutionURL= { Execution execution1, LinkGenerator grailsLinkGenerator ->
+            ''
+        }
+        def emock = new Expando()
+        emock.executeCalled=false
+        emock.execute={Closure cls->
+            emock.executeCalled=true
+            assertNotNull(cls)
+        }
+        service.frameworkService = fmock.createMock()
+        service.pluginService = pmock.createMock()
+        service.executorService=emock
+
+    }
+
+    @DirtiesRuntime
     void testRequestLogFileReaderFileDNE(){
 
         grailsApplication.config.clear()
@@ -902,6 +974,26 @@ class LogFileStorageServiceTests  {
 
         assertNotNull(reader)
         assertEquals(ExecutionLogState.PENDING_LOCAL, reader.state)
+        assertNull(reader.reader)
+    }
+
+    @DirtiesRuntime
+    void testRequestLogFileReaderFileDNEPluginRetrieveUnsupported() {
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+
+        def test = new testOptionsStoragePlugin()
+        test.available = true
+        test.retrieveSupported=false
+
+        def reader=performReaderRequest(test, false, testLogFileDNE, false, createExecution(), false)
+
+        //initialize should have been called
+        assert test.initializeCalled
+        assert test.context!=null
+
+        assertNotNull(reader)
+        assertEquals(ExecutionLogState.NOT_FOUND, reader.state)
         assertNull(reader.reader)
     }
     @DirtiesRuntime
