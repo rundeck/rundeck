@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogWriter
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorage
+import com.dtolabs.rundeck.core.logging.ExecutionFileStorageOptions
 import com.dtolabs.rundeck.core.logging.ExecutionMultiFileStorage
 import com.dtolabs.rundeck.core.logging.LogFileState
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageException
@@ -24,7 +25,9 @@ import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.execution.ValueHolder
 import rundeck.services.execution.ValueWatcher
 import rundeck.services.logging.EventStreamingLogWriter
+import rundeck.services.logging.ExecutionFile
 import rundeck.services.logging.ExecutionFileProducer
+import rundeck.services.logging.ExecutionFileUtil
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogState
 import rundeck.services.logging.LogFileLoader
@@ -484,7 +487,18 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         log.debug("getLogFileState(${execution.id},${plugin}): ${state} forFileStates: ${local}, ${remote}")
         return [state: state, errorCode: errorCode, errorData: errorData]
     }
-
+    def pluginSupportsRetrieve(Object plugin){
+        if(plugin instanceof ExecutionFileStorageOptions){
+            return ((ExecutionFileStorageOptions)plugin).retrieveSupported
+        }
+        true
+    }
+    def pluginSupportsStorage(Object plugin){
+        if(plugin instanceof ExecutionFileStorageOptions){
+            return ((ExecutionFileStorageOptions)plugin).storeSupported
+        }
+        true
+    }
     /**
      * Get a previous retrieval cache result, if it is not expired, or has no more retries
      * @param key
@@ -737,7 +751,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             storageRequests<<task
         }
     }
-    Map<String,File> getExecutionFiles(Execution execution, List<String> filters) {
+    Map<String,ExecutionFile> getExecutionFiles(Execution execution, List<String> filters) {
         def beans = applicationContext.getBeansOfType(ExecutionFileProducer)?.values()
         if(filters) {
             beans = beans.findAll { it.executionFileType in filters }
@@ -747,6 +761,10 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         }
         log.debug("found beans of ExecutionFileProducer result: $result")
         result?:[:]
+    }
+
+    private deleteExecutionFilePerPolicy(ExecutionFile file, boolean canRetrieve) {
+        ExecutionFileUtil.deleteExecutionFilePerPolicy(file, canRetrieve)
     }
 
     /**
@@ -760,7 +778,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             String filetype,
             ExecutionFileStorage storage,
             String ident,
-            Map<String, File> files
+            Map<String, ExecutionFile> files
     )
     {
         log.debug("Storage request [ID#${ident}], start, type ${filetype}")
@@ -769,19 +787,27 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             files = files.subMap(filetype)
         }
         def list = []
+        def List<ExecutionFile> deletions=[]
         if (storage instanceof ExecutionMultiFileStorage) {
             list = storeMultiLogFiles(files, storage, ident)
-            if(!list){
-                success=true
-            }
         } else {
-            success = true
             files.each { type, file ->
-                def result = storeSingleLogFile(file, type, storage, ident)
+                def result = storeSingleLogFile(file.localFile, type, storage, ident)
                 if (!result) {
-                    success = false
+                    list<<type
                 }
             }
+        }
+        if(!list){
+            success=true
+        }
+        files.keySet().each{
+            if(!(it in list)){
+                deletions << files[it]
+            }
+        }
+        deletions.each{
+            deleteExecutionFilePerPolicy(it, canRetrieve)
         }
 
         log.debug("Storage request [ID#${ident}], finish: ${success}")
@@ -789,19 +815,28 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
     }
 
     /**
-     * Store the log file for a completed execution using the storage method
-     * @param execution
-     * @param storage plugin that is already initialized
+     * Store multiple files at once using the multi-file-storage plugin
+     * @param  files files
+     * @param storage plugin
+     * @param ident storage request ident
+     * @return list of filetypes which were not successful
      */
-    private List<String> storeMultiLogFiles(Map<String,File> files, ExecutionMultiFileStorage storage, String ident) {
+    private List<String> storeMultiLogFiles(Map<String,ExecutionFile> files, ExecutionMultiFileStorage storage, String ident) {
         log.debug("Storage request storeMultiLogFiles [ID#${ident}], start")
-        def success = false
+
         List<String> failures = []
-        def request = new MultiFileStorageRequestImpl(files: files)
-        success = storage.storeMultiple(request)
-        request.completion.each{k,v->
-            if(!v){
-                failures<<k
+
+        Map<String, File> localfiles = files.collectEntries { [it.key, it.value.localFile] }
+
+        def request = new MultiFileStorageRequestImpl(files: localfiles)
+
+        storage.storeMultiple(request)
+
+        //determine results
+        files.keySet().each { String filetype ->
+            def succeeded = request.completion[filetype]
+            if (!succeeded) {
+                failures << filetype
             }
         }
 
@@ -824,10 +859,6 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         }catch (Throwable e) {
             log.error("Storage request [ID#${ident}] error: ${e.message}")
             log.debug("Storage request [ID#${ident}] error: ${e.message}", e)
-        }
-        if (success) {
-            file.deleteOnExit()
-            //TODO: mark file to be cleaned up in future
         }
         log.debug("Storage request [ID#${ident}], finish: ${success}")
         return success
