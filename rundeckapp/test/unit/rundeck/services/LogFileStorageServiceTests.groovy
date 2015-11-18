@@ -2,8 +2,10 @@ package rundeck.services
 
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogWriter
+import com.dtolabs.rundeck.core.logging.ExecutionMultiFileStorage
 import com.dtolabs.rundeck.core.logging.LogFileState
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageException
+import com.dtolabs.rundeck.core.logging.MultiFileStorageRequest
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
@@ -14,14 +16,19 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.runtime.DirtiesRuntime
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
+import org.springframework.context.ApplicationContext
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.logging.EventStreamingLogWriter
+import rundeck.services.logging.ExecutionFile
+import rundeck.services.logging.ExecutionFileDeletePolicy
+import rundeck.services.logging.ExecutionFileProducer
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogState
 import rundeck.services.logging.LoggingThreshold
+import rundeck.services.logging.ProducedExecutionFile
 
 @TestFor(LogFileStorageService)
 @Mock([LogFileStorageRequest,Execution,ScheduledExecution,Workflow])
@@ -205,7 +212,7 @@ class LogFileStorageServiceTests  {
 
         def writer = service.getLogFileWriterForExecution(e, [:])
         assertNotNull(writer)
-        assert writer instanceof EventStreamingLogWriter
+        assert writer instanceof FSStreamingLogWriter
     }
     void testgetLogFileWriterWithFilesizeWatcher(){
         grailsApplication.config.clear()
@@ -236,7 +243,7 @@ class LogFileStorageServiceTests  {
         assertNotNull(test.valueHolder)
         assertEquals(0,test.valueHolder.value)
         assertNotNull(writer)
-        assert writer instanceof EventStreamingLogWriter
+        assert writer instanceof FSStreamingLogWriter
     }
     class testStoragePlugin implements ExecutionFileStoragePlugin{
         Map<String, ? extends Object> context
@@ -303,8 +310,21 @@ class LogFileStorageServiceTests  {
             assert retrieveLogFileCalled
         }
     }
+    class testMultiStoragePlugin extends testStoragePlugin implements ExecutionMultiFileStorage{
+        Map<String,Boolean> storeMultipleResponseSet=[:]
+        boolean storeMultipleCalled=false
+        MultiFileStorageRequest storeMultipleFiles
+        @Override
+        void storeMultiple(final MultiFileStorageRequest files) throws IOException, ExecutionFileStorageException {
+            storeMultipleCalled = true
+            storeMultipleFiles=files
+            storeMultipleResponseSet.each{k,v->
+                files.storageResultForFiletype(k,v)
+            }
+        }
+    }
     @DirtiesRuntime
-    void testgetLogFileWriterWithPlugin(){
+    void testgetLogFileWriterWithPluginNoRequest(){
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
 
@@ -314,26 +334,16 @@ class LogFileStorageServiceTests  {
         def writer=performWriterRequest(test, execution)
 
         assertNotNull(writer)
-        assert writer instanceof EventStreamingLogWriter
-        EventStreamingLogWriter elogwriter = (EventStreamingLogWriter) writer
-        assertNotNull(elogwriter.onClose)
-        assertNotNull(elogwriter.writer)
-        assert elogwriter.writer instanceof FSStreamingLogWriter
-
+        assert writer instanceof FSStreamingLogWriter
         //context set from execution data
-        assert test.initializeCalled
-        assert test.context!=null
+        assert !test.initializeCalled
+        assert test.context==null
 
-        assertEquals(1, LogFileStorageRequest.list().size())
-        LogFileStorageRequest req = LogFileStorageRequest.list().first()
-        assertEquals(false, req.completed)
-        assertEquals(execution, req.execution)
-        assertEquals("test1", req.pluginName)
-        assertEquals("rdlog", req.filetype)
+        assertEquals(0, LogFileStorageRequest.list().size())
     }
 
     @DirtiesRuntime
-    void testPluginLogFileWriterOnCloseShouldStartStorageRequest(){
+    void testPluginLogFileWriterOnCloseShouldNotStartStorageRequest(){
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
 
@@ -344,7 +354,7 @@ class LogFileStorageServiceTests  {
             assertEquals(0, svc.getCurrentStorageRequests().size())
         }
         writer.close()
-        assertEquals(1, svc.getCurrentStorageRequests().size())
+        assertEquals(0, svc.getCurrentStorageRequests().size())
     }
 
     private StreamingLogWriter performWriterRequest(testStoragePlugin test, Execution e, Closure clos=null) {
@@ -380,6 +390,234 @@ class LogFileStorageServiceTests  {
         }
         return service.getLogFileWriterForExecution(e, [:])
 
+    }
+    void testRunStorageRequestMultiSuccessSingleType(){
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
+
+        def test = new testMultiStoragePlugin()
+        test.storeMultipleResponseSet=[rdlog:true]
+
+        LogFileStorageService svc
+        Map task=performRunStorage(test, "rdlog", createExecution(), testLogFile1) { LogFileStorageService service ->
+            svc = service
+            assertFalse(test.storeMultipleCalled)
+            assertNull(test.storeMultipleFiles)
+        }
+
+        assertTrue(test.storeMultipleCalled)
+        assertNotNull(test.storeMultipleFiles)
+        assertEquals(['rdlog'] as Set, test.storeMultipleFiles.availableFiletypes)
+
+        assertEquals(1,task.count)
+        assertTrue(svc.executorService.executeCalled)
+        assertEquals(1,svc.getCurrentRequests().size())
+    }
+    void testRunStorageRequestMultiSuccessMultiType(){
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
+
+        def test = new testMultiStoragePlugin()
+        test.storeMultipleResponseSet=[rdlog:true,'state.json':true]
+
+        LogFileStorageService svc
+        Map task=performRunStorage(test, "rdlog,state.json", createExecution(), testLogFile1) { LogFileStorageService service ->
+            svc = service
+            assertFalse(test.storeMultipleCalled)
+            assertNull(test.storeMultipleFiles)
+        }
+
+        assertTrue(test.storeMultipleCalled)
+        assertNotNull(test.storeMultipleFiles)
+        assertEquals(['rdlog','state.json'] as Set, test.storeMultipleFiles.availableFiletypes)
+
+        assertEquals(1,task.count)
+        assertTrue(svc.executorService.executeCalled)
+        assertEquals(1,svc.getCurrentRequests().size())
+    }
+    void testRunStorageRequestMultiSuccessStarGlob(){
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
+
+        def test = new testMultiStoragePlugin()
+        test.storeMultipleResponseSet=[rdlog:true,'state.json':true,'execution.xml':true]
+
+        LogFileStorageService svc
+        Map task=performRunStorage(test, '*', createExecution(), testLogFile1) { LogFileStorageService service ->
+            svc = service
+            assertFalse(test.storeMultipleCalled)
+            assertNull(test.storeMultipleFiles)
+        }
+
+        assertTrue(test.storeMultipleCalled)
+        assertNotNull(test.storeMultipleFiles)
+        assertEquals(['rdlog','state.json','execution.xml'] as Set, test.storeMultipleFiles.availableFiletypes)
+
+        assertEquals(1,task.count)
+        assertTrue(svc.executorService.executeCalled)
+        assertEquals(1,svc.getCurrentRequests().size())
+    }
+    void testRunStorageRequestMultiFailureSingleType(){
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
+
+        def test = new testMultiStoragePlugin()
+        test.storeMultipleResponseSet=[rdlog:false]
+
+        LogFileStorageService svc
+        Map task=performRunStorage(test, "rdlog", createExecution(), testLogFile1) { LogFileStorageService service ->
+            svc = service
+            assertFalse(test.storeMultipleCalled)
+            assertNull(test.storeMultipleFiles)
+        }
+
+        assertTrue(test.storeMultipleCalled)
+        assertNotNull(test.storeMultipleFiles)
+        assertEquals(['rdlog'] as Set, test.storeMultipleFiles.availableFiletypes)
+
+        assertEquals(1,task.count)
+        assertFalse(svc.executorService.executeCalled)
+        assertEquals(0,svc.getCurrentRequests().size())
+    }
+    /**
+     * failure of one filetype should set request filetype to the failed type(s)
+     */
+    void testRunStorageRequestMultiFailureMultiType(){
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
+
+        def test = new testMultiStoragePlugin()
+        test.storeMultipleResponseSet=[rdlog:true,'state.json':false]
+
+        LogFileStorageService svc
+        Map task=performRunStorage(test, "rdlog,state.json", createExecution(), testLogFile1) { LogFileStorageService service ->
+            svc = service
+            assertFalse(test.storeMultipleCalled)
+            assertNull(test.storeMultipleFiles)
+        }
+
+        assertTrue(test.storeMultipleCalled)
+        assertNotNull(test.storeMultipleFiles)
+        assertEquals(['rdlog','state.json'] as Set, test.storeMultipleFiles.availableFiletypes)
+
+        assertEquals(1,task.count)
+        assertFalse(svc.executorService.executeCalled)
+        assertEquals(0,svc.getCurrentRequests().size())
+
+        def request
+        LogFileStorageRequest.withSession { session ->
+            session.flush()
+            request=LogFileStorageRequest.get(task.requestId)
+            request.refresh()
+        }
+
+        assertEquals('state.json', request.filetype)
+        assertFalse(request.completed)
+    }
+    /**
+     * failure of one filetype should set request filetype to the failed type(s)
+     */
+    void testRunStorageRequestMultiFailureMultiType2(){
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
+
+        def test = new testMultiStoragePlugin()
+        test.storeMultipleResponseSet=[rdlog:false,'state.json':false]
+
+        LogFileStorageService svc
+        Map task=performRunStorage(test, "rdlog,state.json", createExecution(), testLogFile1) { LogFileStorageService service ->
+            svc = service
+            assertFalse(test.storeMultipleCalled)
+            assertNull(test.storeMultipleFiles)
+        }
+
+        assertTrue(test.storeMultipleCalled)
+        assertNotNull(test.storeMultipleFiles)
+        assertEquals(['rdlog','state.json'] as Set, test.storeMultipleFiles.availableFiletypes)
+
+        assertEquals(1,task.count)
+        assertFalse(svc.executorService.executeCalled)
+        assertEquals(0,svc.getCurrentRequests().size())
+
+        def request
+        LogFileStorageRequest.withSession { session ->
+            session.flush()
+            request=LogFileStorageRequest.get(task.requestId)
+            request.refresh()
+        }
+
+        assertEquals('rdlog,state.json', request.filetype)
+        assertFalse(request.completed)
+    }
+    /**
+     * failure of one filetype should set request filetype to the failed type(s)
+     */
+    void testRunStorageRequestMultiFailureGlobStar(){
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
+
+        def test = new testMultiStoragePlugin()
+        test.storeMultipleResponseSet=[rdlog:true,'state.json':true,'execution.xml':false]
+
+        LogFileStorageService svc
+        Map task=performRunStorage(test, "*", createExecution(), testLogFile1) { LogFileStorageService service ->
+            svc = service
+            assertFalse(test.storeMultipleCalled)
+            assertNull(test.storeMultipleFiles)
+        }
+
+        assertTrue(test.storeMultipleCalled)
+        assertNotNull(test.storeMultipleFiles)
+        assertEquals(['rdlog','state.json','execution.xml'] as Set, test.storeMultipleFiles.availableFiletypes)
+
+        assertEquals(1,task.count)
+        assertFalse(svc.executorService.executeCalled)
+        assertEquals(0,svc.getCurrentRequests().size())
+
+        def request
+        LogFileStorageRequest.withSession { session ->
+            session.flush()
+            request=LogFileStorageRequest.get(task.requestId)
+            request.refresh()
+        }
+
+        assertEquals('execution.xml', request.filetype)
+        assertFalse(request.completed)
+    }
+    /**
+     * failure of one filetype should set request filetype to the failed type(s)
+     */
+    void testRunStorageRequestMultiFailureGlobStar2(){
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
+
+        def test = new testMultiStoragePlugin()
+        test.storeMultipleResponseSet=[rdlog:true,'state.json':false,'execution.xml':false]
+
+        LogFileStorageService svc
+        Map task=performRunStorage(test, "*", createExecution(), testLogFile1) { LogFileStorageService service ->
+            svc = service
+            assertFalse(test.storeMultipleCalled)
+            assertNull(test.storeMultipleFiles)
+        }
+
+        assertTrue(test.storeMultipleCalled)
+        assertNotNull(test.storeMultipleFiles)
+        assertEquals(['rdlog','state.json','execution.xml'] as Set, test.storeMultipleFiles.availableFiletypes)
+
+        assertEquals(1,task.count)
+        assertFalse(svc.executorService.executeCalled)
+        assertEquals(0,svc.getCurrentRequests().size())
+
+        def request
+        LogFileStorageRequest.withSession { session ->
+            session.flush()
+            request=LogFileStorageRequest.get(task.requestId)
+            request.refresh()
+        }
+
+        assertEquals('state.json,execution.xml', request.filetype)
+        assertFalse(request.completed)
     }
 
     void testRunStorageRequestSuccess(){
@@ -458,6 +696,15 @@ class LogFileStorageServiceTests  {
         assertEquals(0, svc.getCurrentRequests().size())
         assertTrue(queued)
     }
+    class testProducer implements ExecutionFileProducer{
+        String executionFileType
+        File testfile
+
+        @Override
+        ExecutionFile produceStorageFileForExecution(final Execution e) {
+            new ProducedExecutionFile(localFile: testfile, fileDeletePolicy: ExecutionFileDeletePolicy.NEVER)
+        }
+    }
 
     private Map performRunStorage(testStoragePlugin test, String filetype, Execution e, File testfile, Closure clos = null) {
         assertNotNull(e.save())
@@ -480,12 +727,30 @@ class LogFileStorageServiceTests  {
         service.frameworkService = fmock.createMock()
         service.pluginService = pmock.createMock()
         service.executorService=emock
+        def filetypes = filetype.split(',')
+        if(filetype=='*'){
+            filetypes=['rdlog','state.json','execution.xml']
+        }
+        Map<String,ExecutionFileProducer> loggingBeans=[:]
+        for (String ftype : filetypes) {
+            loggingBeans[ftype] = new testProducer(executionFileType: ftype, testfile: testfile)
+        }
+
+
+        def appmock = mockFor(ApplicationContext)
+        appmock.demand.getBeansOfType(1..1){Class clazz->
+            loggingBeans
+        }
+        service.applicationContext=appmock.createMock()
 
         assertEquals(0, LogFileStorageRequest.list().size())
+        LogFileStorageRequest request = new LogFileStorageRequest(filetype: filetype,execution: e,pluginName:'test1',completed: false)
+        request.validate()
+        assertNotNull((request.errors.allErrors*.toString()).join(';'),request.save(flush:true))
         if (null != clos) {
             service.with(clos)
         }
-        def task = [id: e.id.toString(), file: testfile, storage: test, filetype: filetype]
+        def task = [id: e.id.toString(), file: testfile, storage: test, filetype: filetype,request:request,requestId:request.id]
         service.runStorageRequest(task)
         return task
     }

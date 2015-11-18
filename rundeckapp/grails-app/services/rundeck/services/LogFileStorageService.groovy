@@ -128,9 +128,9 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
 
             def files = getExecutionFiles(execution, typelist)
             try {
-                def (didsucceed, failurelist) = storeLogFiles(filetype, task.storage, task.id, files)
+                def (didsucceed, failurelist) = storeLogFiles(typelist, task.storage, task.id, files)
                 success = didsucceed
-                if (!success && failurelist) {
+                if (!success && failurelist && failurelist.size()>1 || failurelist[0]!=filetype) {
 
                     LogFileStorageRequest request = LogFileStorageRequest.get(task.requestId)
                     request.filetype = failurelist.join(',')
@@ -292,9 +292,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             } as ValueHolder
             filesizeWatcher.watch(value)
         }
-        def fsWriter = new EventStreamingLogWriter(writer)
-//        fsWriter.onClose(prepareForFileStorage(e, filetype, file))
-        return fsWriter
+        return writer
     }
 
 
@@ -756,8 +754,9 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         if(filters) {
             beans = beans.findAll { it.executionFileType in filters }
         }
-        def result = beans?.collectEntries { bean ->
-            [bean.getExecutionFileType(), bean.produceStorageFileForExecution(execution)]
+        def result = [:]
+        beans?.each { bean ->
+            result[bean.getExecutionFileType()]= bean.produceStorageFileForExecution(execution)
         }
         log.debug("found beans of ExecutionFileProducer result: $result")
         result?:[:]
@@ -769,22 +768,22 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
 
     /**
      * Store all files for a completed execution using the storage method
-     * @param filetype filetype to store, or '*' for all
+     * @param filter, list of types to filter by, or null/empty to include all types
      * @param storage plugin that is already initialized
      * @param ident storage identifier
      * @param files available files by type
      */
     private List storeLogFiles(
-            String filetype,
+            List<String> filter,
             ExecutionFileStorage storage,
             String ident,
             Map<String, ExecutionFile> files
     )
     {
-        log.debug("Storage request [ID#${ident}], start, type ${filetype}")
+        log.debug("Storage request [ID#${ident}], start, type ${filter}")
         def success = false
-        if (filetype != '*') {
-            files = files.subMap(filetype)
+        if(filter) {
+            files = files.subMap(filter)
         }
         def list = []
         def List<ExecutionFile> deletions=[]
@@ -806,6 +805,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                 deletions << files[it]
             }
         }
+        boolean canRetrieve = pluginSupportsRetrieve(storage)
         deletions.each{
             deleteExecutionFilePerPolicy(it, canRetrieve)
         }
