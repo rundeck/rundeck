@@ -46,7 +46,8 @@
             <div class="row">
                 <div class="col-sm-12 checkbox">
                     <label >
-                    <input name="extra._replaceNodeFilters" value="true" type="checkbox"
+                    <input name="extra._replaceNodeFilters" value="${selectedNodes!=null?'true':'false'}" type="hidden" id="doReplaceFiltersActual"/>
+                    <input type="checkbox"
                            data-toggle="collapse"
                            data-target="#nodeSelect"
                         ${selectedNodes!=null?'checked disabled':''}
@@ -174,6 +175,9 @@
 
                 Event.observe($('doReplaceFilters'), 'change', function (evt) {
                     var e = evt.element();
+                    $$('#doReplaceFiltersActual').each(function(cb) {
+                        cb.value = e.checked ? 'true' : 'false';
+                    });
                     $$('select[name="extra.nodeIncludeName"] option').each(function (cb) {
                         // [cb].each(e.checked ? Field.enable : Field.disable);
                         if (!e.checked) {
@@ -189,6 +193,10 @@
                             $(e2).removeClassName('text-info');
                             $(e2).removeClassName('text-danger');
                         });
+                    }
+                    // Once checked, do not allow user to uncheck, to prevent confusion
+                    if (e.checked) {
+                        e.disabled = true;
                     }
                 });
 
