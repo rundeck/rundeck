@@ -15,5 +15,5 @@ interface ExecutionFileProducer {
      * @param e execution
      * @return the file to store
      */
-    File produceStorageFileForExecution(Execution e)
+    ExecutionFile produceStorageFileForExecution(Execution e)
 }

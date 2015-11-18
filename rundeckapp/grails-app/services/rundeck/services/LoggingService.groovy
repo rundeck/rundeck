@@ -11,6 +11,8 @@ import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProvi
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
 import rundeck.Execution
 import rundeck.services.logging.DisablingLogWriter
+import rundeck.services.logging.ExecutionFile
+import rundeck.services.logging.ExecutionFileDeletePolicy
 import rundeck.services.logging.ExecutionFileProducer
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogWriter
@@ -20,6 +22,7 @@ import rundeck.services.logging.LoggingThreshold
 import rundeck.services.logging.LoglevelThresholdLogWriter
 import rundeck.services.logging.MultiLogWriter
 import rundeck.services.logging.NodeCountingLogWriter
+import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.logging.ThresholdLogWriter
 
 class LoggingService implements ExecutionFileProducer {
@@ -47,8 +50,9 @@ class LoggingService implements ExecutionFileProducer {
     }
 
     @Override
-    File produceStorageFileForExecution(final Execution e) {
-        getLogFileForExecution(e)
+    ExecutionFile produceStorageFileForExecution(final Execution e) {
+        File file = getLogFileForExecution(e)
+        new ProducedExecutionFile(localFile: file, fileDeletePolicy: ExecutionFileDeletePolicy.WHEN_RETRIEVABLE)
     }
 
     /**

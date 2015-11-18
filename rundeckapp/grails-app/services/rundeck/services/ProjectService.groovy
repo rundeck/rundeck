@@ -23,7 +23,10 @@ import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
 import rundeck.controllers.JobXMLException
+import rundeck.services.logging.ExecutionFile
+import rundeck.services.logging.ExecutionFileDeletePolicy
 import rundeck.services.logging.ExecutionFileProducer
+import rundeck.services.logging.ProducedExecutionFile
 
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -84,8 +87,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
     }
 
     @Override
-    File produceStorageFileForExecution(final Execution e) {
-        getExecutionXmlFileForExecution(e)
+    ExecutionFile produceStorageFileForExecution(final Execution e) {
+        File localfile = getExecutionXmlFileForExecution(e)
+
+        new ProducedExecutionFile(localFile: localfile, fileDeletePolicy: ExecutionFileDeletePolicy.ALWAYS)
     }
 
     /**

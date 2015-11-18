@@ -25,8 +25,11 @@ import rundeck.JobExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.WorkflowStep
+import rundeck.services.logging.ExecutionFile
+import rundeck.services.logging.ExecutionFileDeletePolicy
 import rundeck.services.logging.ExecutionFileProducer
 import rundeck.services.logging.ExecutionLogState
+import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.logging.WorkflowStateFileLoader
 import rundeck.services.workflow.StateMapping
 
@@ -60,8 +63,9 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
     }
 
     @Override
-    File produceStorageFileForExecution(final Execution e) {
-        getStateFileForExecution(e)
+    ExecutionFile produceStorageFileForExecution(final Execution e) {
+        File localfile = getStateFileForExecution(e)
+        new ProducedExecutionFile(localFile: localfile,fileDeletePolicy: ExecutionFileDeletePolicy.WHEN_RETRIEVABLE)
     }
 
     /**
