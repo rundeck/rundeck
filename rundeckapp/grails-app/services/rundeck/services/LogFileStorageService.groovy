@@ -14,17 +14,14 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
-import grails.events.Listener
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.core.task.AsyncTaskExecutor
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
-import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.execution.ValueHolder
 import rundeck.services.execution.ValueWatcher
-import rundeck.services.logging.EventStreamingLogWriter
 import rundeck.services.logging.ExecutionFile
 import rundeck.services.logging.ExecutionFileProducer
 import rundeck.services.logging.ExecutionFileUtil
@@ -32,7 +29,6 @@ import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogState
 import rundeck.services.logging.LogFileLoader
 import rundeck.services.logging.MultiFileStorageRequestImpl
-import sun.util.logging.resources.logging_sv
 
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.ConcurrentHashMap
@@ -302,7 +298,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
      */
     void submitForStorage(Execution e) {
         def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
-        if(null==plugin){
+        if(null==plugin || !pluginSupportsStorage(plugin)){
             return
         }
         //multi storage available
@@ -334,7 +330,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                 log.info("re-queueing incomplete log storage request for execution ${e.id}")
 //                File file = getFileForExecutionFiletype(e, request.filetype,true)
                 def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
-                if(null!=plugin) {
+                if(null!=plugin && pluginSupportsStorage(plugin)) {
                     //re-queue storage request
                     storeLogFileAsync(e.id.toString() + ":" + request.filetype, plugin, request, delay)
                     delay += delayInc
@@ -458,11 +454,11 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         }
 
         //query plugin to see if it is available
-        if (null == remote && null != plugin) {
+        if (null == remote && null != plugin && pluginSupportsRetrieve(plugin)) {
             /**
              * If plugin exists, assume NOT_FOUND is actually pending
              */
-            def errorMessage=null
+            def errorMessage = null
             try {
                 def newremote = plugin.isAvailable(filetype) ? LogFileState.AVAILABLE : LogFileState.NOT_FOUND
                 remote = newremote
@@ -477,7 +473,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
 
             }
             if (remote != LogFileState.AVAILABLE) {
-                cacheRetrievalState(key, remote, 0, errorMessage, errorCode, errorData )
+                cacheRetrievalState(key, remote, 0, errorMessage, errorCode, errorData)
             }
         }
         def state = ExecutionLogState.forFileStates(local, remote, remoteNotFound)
@@ -584,7 +580,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         return null
     }
 
-/**
+    /**
      * Return an ExecutionLogFileReader containing state of logfile availability, and reader if available
      * @param e execution
      * @param performLoad if true, perform remote file transfer

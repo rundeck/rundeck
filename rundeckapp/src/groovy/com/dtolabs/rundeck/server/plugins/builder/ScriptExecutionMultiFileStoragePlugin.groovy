@@ -6,7 +6,7 @@ import com.dtolabs.rundeck.core.logging.MultiFileStorageRequest
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 
 /**
- * Created by greg on 11/12/15.
+ * Extends ExecutionFileStoragePlugin to use ExecutionMultiFileStorage
  */
 class ScriptExecutionMultiFileStoragePlugin extends ScriptExecutionFileStoragePlugin
         implements ExecutionMultiFileStorage {
@@ -17,25 +17,25 @@ class ScriptExecutionMultiFileStoragePlugin extends ScriptExecutionFileStoragePl
 
     @Override
     void initialize(final Map<String, ? extends Object> context) {
-        this.pluginContext = context
-        ['available', 'retrieve', 'storeMultiple'].each {
-            if (!handlers[it]) {
-                throw new RuntimeException(
-                        "ScriptExecutionMultiFileStoragePlugin: '${it}' closure not defined for plugin ${description.name}"
-                )
-            }
-        }
+        super.initialize(context)
+        this.storeSupported = handlers['storeMultiple'] ? true : false
     }
 
     @Override
     boolean store(final String filetype, final InputStream stream, final long length, final Date lastModified)
             throws IOException, ExecutionFileStorageException
     {
+        if (!storeSupported) {
+            throw new IllegalStateException("store is not supported")
+        }
         throw new IllegalStateException("Expected storeMultiple, not store")
     }
 
     @Override
-    boolean storeMultiple(final MultiFileStorageRequest files) throws IOException, ExecutionFileStorageException {
+    void storeMultiple(final MultiFileStorageRequest files) throws IOException, ExecutionFileStorageException {
+        if (!storeSupported) {
+            throw new IllegalStateException("store is not supported")
+        }
         logger.debug("storeMultiple($files) ${pluginContext}")
         def closure = handlers.storeMultiple
         def binding = [
@@ -48,7 +48,7 @@ class ScriptExecutionMultiFileStoragePlugin extends ScriptExecutionFileStoragePl
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
             newclos.delegate = binding
             try {
-                return newclos.call(files, binding.context, binding.configuration)
+                newclos.call(files, binding.context, binding.configuration)
             } catch (Exception e) {
                 throw new ExecutionFileStorageException(e.getMessage(), e)
             }
@@ -57,7 +57,7 @@ class ScriptExecutionMultiFileStoragePlugin extends ScriptExecutionFileStoragePl
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
             newclos.delegate = binding
             try {
-                return newclos.call(files, binding.context)
+                newclos.call(files, binding.context)
             } catch (Exception e) {
                 throw new ExecutionFileStorageException(e.getMessage(), e)
             }
@@ -66,7 +66,7 @@ class ScriptExecutionMultiFileStoragePlugin extends ScriptExecutionFileStoragePl
             newclos.delegate = binding
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
             try {
-                return newclos.call(files)
+                newclos.call(files)
             } catch (Exception e) {
                 throw new ExecutionFileStorageException(e.getMessage(), e)
             }
