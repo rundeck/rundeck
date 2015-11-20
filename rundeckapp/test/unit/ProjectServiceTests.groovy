@@ -332,7 +332,7 @@ class ProjectServiceTests  {
     }
     public void  testImportExecution(){
         ProjectService svc = new ProjectService()
-        def result = svc.loadExecutions(EXEC_XML_TEST1)
+        def result = svc.loadExecutions(EXEC_XML_TEST1,'AProject')
         assertNotNull result
         assertNotNull result.executions
         assertNotNull result.execidmap
@@ -363,7 +363,7 @@ class ProjectServiceTests  {
     }
     public void  testLoadExecutionsWorkflow(){
         ProjectService svc = new ProjectService()
-        def result = svc.loadExecutions(EXEC_XML_TEST4)
+        def result = svc.loadExecutions(EXEC_XML_TEST4,'AProject')
         assertNotNull result
         assertNotNull result.executions
         assertNotNull result.execidmap
@@ -381,7 +381,7 @@ class ProjectServiceTests  {
      */
     public void  testLoadExecutionsOrchestrator(){
         ProjectService svc = new ProjectService()
-        def result = svc.loadExecutions(EXEC_XML_TEST5)
+        def result = svc.loadExecutions(EXEC_XML_TEST5,'AProject')
         assertNotNull result
         assertNotNull result.executions
         assertNotNull result.execidmap
@@ -397,7 +397,7 @@ class ProjectServiceTests  {
      */
     public void  testImportExecutionSkipJob(){
         ProjectService svc = new ProjectService()
-        def result = svc.loadExecutions(EXEC_XML_TEST3,null,['jobid1'])
+        def result = svc.loadExecutions(EXEC_XML_TEST3,'AProject',null,['jobid1'])
         assertNotNull result
         assertNotNull result.executions
         assertNotNull result.execidmap
@@ -427,7 +427,7 @@ class ProjectServiceTests  {
         ProjectService svc = new ProjectService()
         svc.scheduledExecutionService=semock.createMock()
 
-        def result = svc.loadExecutions(EXEC_XML_TEST1_START+"<outputfilepath/><jobId>${testJobId}</jobId>"+EXEC_XML_TEST1_REST,idMap)
+        def result = svc.loadExecutions(EXEC_XML_TEST1_START+"<outputfilepath/><jobId>${testJobId}</jobId>"+EXEC_XML_TEST1_REST,'AProject',idMap)
         assertNotNull result
         assertNotNull result.executions
         assertNotNull result.execidmap
@@ -490,7 +490,7 @@ class ProjectServiceTests  {
         ProjectService svc = new ProjectService()
         svc.scheduledExecutionService=semock.createMock()
 
-        def result = svc.loadExecutions(EXEC_XML_TEST1_START+"<outputfilepath/><jobId>${newJobId}</jobId>"+EXEC_XML_TEST1_REST,idMap)
+        def result = svc.loadExecutions(EXEC_XML_TEST1_START+"<outputfilepath/><jobId>${newJobId}</jobId>"+EXEC_XML_TEST1_REST,'AProject',idMap)
         assertNotNull result
         assertNotNull result.executions
         assertNotNull result.execidmap
@@ -544,8 +544,9 @@ class ProjectServiceTests  {
     <status>true</status>'''
                     + ''' <outputfilepath />'''
                     + EXEC_XML_TEST1_DEF_END
-                + EXECS_END
-                ,idMap)
+                + EXECS_END,
+                'AProject',
+                idMap)
         assertNotNull result
         assertNotNull result.executions
         assertNotNull result.execidmap

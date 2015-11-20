@@ -11,6 +11,9 @@ import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProvi
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
 import rundeck.Execution
 import rundeck.services.logging.DisablingLogWriter
+import rundeck.services.logging.ExecutionFile
+import rundeck.services.logging.ExecutionFileDeletePolicy
+import rundeck.services.logging.ExecutionFileProducer
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.ExecutionLogState
@@ -19,11 +22,14 @@ import rundeck.services.logging.LoggingThreshold
 import rundeck.services.logging.LoglevelThresholdLogWriter
 import rundeck.services.logging.MultiLogWriter
 import rundeck.services.logging.NodeCountingLogWriter
+import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.logging.ThresholdLogWriter
 
-class LoggingService {
+class LoggingService implements ExecutionFileProducer {
 
-    static final String LOG_FILE_FILETYPE ="rdlog"
+    public static final String LOG_FILE_FILETYPE = 'rdlog'
+
+
     FrameworkService frameworkService
     LogFileStorageService logFileStorageService
     def pluginService
@@ -32,10 +38,21 @@ class LoggingService {
     def grailsApplication
     def grailsLinkGenerator
 
-    public boolean isLocalFileStorageEnabled(){
+    public boolean isLocalFileStorageEnabled() {
         boolean fileDisabled = grailsApplication.config?.rundeck?.execution?.logs?.localFileStorageEnabled in ['false', false]
-        boolean readerPluginConfigured= getConfiguredStreamingReaderPluginName()
+        boolean readerPluginConfigured = getConfiguredStreamingReaderPluginName()
         return !(fileDisabled && readerPluginConfigured)
+    }
+
+    @Override
+    String getExecutionFileType() {
+        LOG_FILE_FILETYPE
+    }
+
+    @Override
+    ExecutionFile produceStorageFileForExecution(final Execution e) {
+        File file = getLogFileForExecution(e)
+        new ProducedExecutionFile(localFile: file, fileDeletePolicy: ExecutionFileDeletePolicy.WHEN_RETRIEVABLE)
     }
 
     /**
@@ -56,16 +73,23 @@ class LoggingService {
         List<StreamingLogWriter> plugins = []
         def names = listConfiguredStreamingWriterPluginNames()
         if (names) {
-            HashMap<String, String> jobcontext = ExecutionService.exportContextForExecution(execution,grailsLinkGenerator)
+            HashMap<String, String> jobcontext = ExecutionService.exportContextForExecution(
+                    execution,
+                    grailsLinkGenerator
+            )
             log.debug("Configured log writer plugins: ${names}")
             names.each { name ->
-                def result = pluginService.configurePlugin(name, streamingLogWriterPluginProviderService,
-                        frameworkService.getFrameworkPropertyResolver(execution.project), PropertyScope.Instance)
-                if (null == result || null==result.instance) {
+                def result = pluginService.configurePlugin(
+                        name,
+                        streamingLogWriterPluginProviderService,
+                        frameworkService.getFrameworkPropertyResolver(execution.project),
+                        PropertyScope.Instance
+                )
+                if (null == result || null == result.instance) {
                     log.error("Failed to load StreamingLogWriter plugin named ${name}")
                     return
                 }
-                def plugin=result.instance
+                def plugin = result.instance
                 try {
                     plugin.initialize(jobcontext)
                     plugins << DisablingLogWriter.create(plugin, "StreamingLogWriter(${name})")
@@ -76,7 +100,7 @@ class LoggingService {
 
             }
         }
-        def outfilepath=null
+        def outfilepath = null
         if (plugins.size() < 1 || isLocalFileStorageEnabled()) {
             plugins << logFileStorageService.getLogFileWriterForExecution(
                     execution,
@@ -84,7 +108,7 @@ class LoggingService {
                     threshold?.watcherForType(LoggingThreshold.TOTAL_FILE_SIZE)
             )
             outfilepath = logFileStorageService.getFileForExecutionFiletype(execution, LOG_FILE_FILETYPE, false)
-        }else{
+        } else {
             log.debug("File log writer disabled for execution ${execution.id}")
         }
 
@@ -97,14 +121,14 @@ class LoggingService {
             multiWriter = countLogger
         }
         def linesWatcher = threshold?.watcherForType(LoggingThreshold.TOTAL_LINES)
-        if(linesWatcher){
+        if (linesWatcher) {
             def countLogger = new LineCountingLogWriter(multiWriter)
             linesWatcher.watch(countLogger)
             multiWriter = countLogger
         }
         def loglevelWriter = new LoglevelThresholdLogWriter(multiWriter, level)
-        if(threshold){
-            loglevelWriter = new ThresholdLogWriter(loglevelWriter,threshold)
+        if (threshold) {
+            loglevelWriter = new ThresholdLogWriter(loglevelWriter, threshold)
         }
         def writer = new ExecutionLogWriter(loglevelWriter)
         if (outfilepath) {
@@ -123,14 +147,15 @@ class LoggingService {
 
     String getConfiguredStreamingReaderPluginName() {
         if (grailsApplication.config?.rundeck?.execution?.logs?.streamingReaderPlugin) {
-            return grailsApplication.config?.rundeck?.execution?.logs?.streamingReaderPlugin.toString()
+            return grailsApplication.config?.rundeck?.execution?.logs?.streamingReaderPlugin?.toString()
         }
         null
     }
 
     List<String> listConfiguredStreamingWriterPluginNames() {
-        if(grailsApplication.config?.rundeck?.execution?.logs?.streamingWriterPlugins){
-            return grailsApplication.config?.rundeck?.execution?.logs?.streamingWriterPlugins.toString().split(/,\s*/) as List
+        if (grailsApplication.config?.rundeck?.execution?.logs?.streamingWriterPlugins) {
+            def value = grailsApplication.config?.rundeck?.execution?.logs?.streamingWriterPlugins?.toString()
+            return value?.split(/,\s*/) as List
         }
         []
     }
@@ -138,17 +163,25 @@ class LoggingService {
     def Map listStreamingReaderPlugins() {
         return pluginService.listPlugins(StreamingLogReaderPlugin, streamingLogReaderPluginProviderService)
     }
+
     def Map listStreamingWriterPlugins() {
         return pluginService.listPlugins(StreamingLogWriterPlugin, streamingLogWriterPluginProviderService)
     }
 
     public ExecutionLogReader getLogReader(Execution execution) {
         def pluginName = getConfiguredStreamingReaderPluginName()
-        if(pluginName){
-            HashMap<String, String> jobcontext = ExecutionService.exportContextForExecution(execution,grailsLinkGenerator)
+        if (pluginName) {
+            HashMap<String, String> jobcontext = ExecutionService.exportContextForExecution(
+                    execution,
+                    grailsLinkGenerator
+            )
             log.debug("Using log reader plugin ${pluginName}")
-            def result = pluginService.configurePlugin(pluginName, streamingLogReaderPluginProviderService,
-                    frameworkService.getFrameworkPropertyResolver(execution.project), PropertyScope.Instance)
+            def result = pluginService.configurePlugin(
+                    pluginName,
+                    streamingLogReaderPluginProviderService,
+                    frameworkService.getFrameworkPropertyResolver(execution.project),
+                    PropertyScope.Instance
+            )
             if (result != null && result.instance != null) {
                 def plugin = result.instance
                 try {
@@ -166,7 +199,7 @@ class LoggingService {
             }
         }
 
-        if(pluginName){
+        if (pluginName) {
             log.error("Falling back to local file storage log reader")
         }
         return logFileStorageService.requestLogFileReader(execution, LOG_FILE_FILETYPE)

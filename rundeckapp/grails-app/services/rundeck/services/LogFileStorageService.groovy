@@ -4,6 +4,8 @@ import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogWriter
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorage
+import com.dtolabs.rundeck.core.logging.ExecutionFileStorageOptions
+import com.dtolabs.rundeck.core.logging.ExecutionMultiFileStorage
 import com.dtolabs.rundeck.core.logging.LogFileState
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageException
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
@@ -13,15 +15,20 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import org.springframework.beans.factory.InitializingBean
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 import org.springframework.core.task.AsyncTaskExecutor
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
 import rundeck.services.execution.ValueHolder
 import rundeck.services.execution.ValueWatcher
-import rundeck.services.logging.EventStreamingLogWriter
+import rundeck.services.logging.ExecutionFile
+import rundeck.services.logging.ExecutionFileProducer
+import rundeck.services.logging.ExecutionFileUtil
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogState
 import rundeck.services.logging.LogFileLoader
+import rundeck.services.logging.MultiFileStorageRequestImpl
 
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.ConcurrentHashMap
@@ -31,7 +38,7 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
-class LogFileStorageService implements InitializingBean{
+class LogFileStorageService implements InitializingBean,ApplicationContextAware{
 
     static transactional = false
     static final RundeckLogFormat rundeckLogFormat = new RundeckLogFormat()
@@ -42,6 +49,7 @@ class LogFileStorageService implements InitializingBean{
     def executorService
     def grailsApplication
     def grailsLinkGenerator
+    ApplicationContext applicationContext
 
     /**
      * Scheduled executor for retries
@@ -105,7 +113,33 @@ class LogFileStorageService implements InitializingBean{
         int count=task.count?:0;
         task.count = ++count
         log.debug("Storage request [ID#${task.id}] (attempt ${count} of ${retry})...")
-        def success = storeLogFile(task.file, task.filetype, task.storage, task.id)
+
+        def success = false
+
+        def filetype=task.filetype
+        List<String> typelist = filetype != '*' ? (filetype.split(',') as List) : []
+
+        LogFileStorageRequest.withNewSession {
+            Execution execution = Execution.get(task.request.execution.id)
+
+            def files = getExecutionFiles(execution, typelist)
+            try {
+                def (didsucceed, failurelist) = storeLogFiles(typelist, task.storage, task.id, files)
+                success = didsucceed
+                if (!success && failurelist && failurelist.size()>1 || failurelist[0]!=filetype) {
+
+                    LogFileStorageRequest request = LogFileStorageRequest.get(task.requestId)
+                    request.filetype = failurelist.join(',')
+
+                    request.completed = success
+                    request.save(flush: true)
+                }
+            }catch (IOException | ExecutionFileStorageException e) {
+                success = false
+                log.error("Failure: Storage request [ID#${task.id}]: ${e.message}", e)
+            }
+        }
+
         if (!success && count < retry) {
             log.debug("Storage request [ID#${task.id}] was not successful, retrying in ${delay} seconds...")
             running.remove(task)
@@ -117,12 +151,16 @@ class LogFileStorageService implements InitializingBean{
             //use executorService to run within hibernate session
             executorService.execute {
                 log.debug("executorService saving storage request status...")
-                if (!task.request.isAttached()) {
-                    task.request.attach()
+                LogFileStorageRequest request = LogFileStorageRequest.get(task.requestId)
+                while(!request){
+                    Thread.sleep(500)
+                    request = LogFileStorageRequest.get(task.requestId)
+                    if(request){
+                        log.debug("Loaded LogFileStorageRequest ${task.requestId} [ID#${task.id}] after retry")
+                    }
                 }
-                task.request.refresh()
-                task.request.completed = success
-                task.request.save(flush: true)
+                request.completed = success
+                request.save(flush: true)
                 running.remove(task)
                 log.debug("Storage request [ID#${task.id}] complete.")
             }
@@ -250,46 +288,24 @@ class LogFileStorageService implements InitializingBean{
             } as ValueHolder
             filesizeWatcher.watch(value)
         }
-        def fsWriter = new EventStreamingLogWriter(writer)
-        fsWriter.onClose(prepareForFileStorage(e, filetype, file))
-        return fsWriter
+        return writer
     }
 
+
     /**
-     * Return a closure which will submit an asynchronous file storage request, or return null if no plugin is configured. If not null, call the closure to submit the requrest
-     * To prepare and submit in one step, see {@link #submitForFileStorage(rundeck.Execution, java.lang.String, java.io.File)}
-     * @param e execution
-     * @param filetype file identifier
-     * @param file file to store
-     * @return
+     * Submit asynchronous request to store log files for the execution
+     * @param e
      */
-    public Closure prepareForFileStorage(Execution e, String filetype, File file) {
+    void submitForStorage(Execution e) {
         def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
-        if(null==plugin){
-            return {->}
+        if(null==plugin || !pluginSupportsStorage(plugin)){
+            return
         }
-        LogFileStorageRequest request = createStorageRequest(e, filetype)
-        //detach from current hibernate session, will reattach in async thread later
+        //multi storage available
+        LogFileStorageRequest request = createStorageRequest(e, '*')
         request.discard()
         def reqid = request.execution.id.toString() + ":" + request.filetype
-        return {->
-            storeLogFileAsync(reqid, file, plugin, request)
-        }
-    }
-    /**
-     *
-     * @param e
-     * @param filetype
-     * @param file
-     * @return
-     */
-    public boolean submitForFileStorage(Execution e, String filetype, File file){
-        def storage = prepareForFileStorage(e, filetype, file)
-        if(storage){
-            storage.call()
-            return true
-        }
-        return false;
+        storeLogFileAsync(reqid, plugin, request)
     }
 
     private LogFileStorageRequest createStorageRequest(Execution e, String filetype) {
@@ -312,11 +328,11 @@ class LogFileStorageService implements InitializingBean{
             Execution e = request.execution
             if (serverUUID == e.serverNodeUUID) {
                 log.info("re-queueing incomplete log storage request for execution ${e.id}")
-                File file = getFileForExecutionFiletype(e, request.filetype,true)
+//                File file = getFileForExecutionFiletype(e, request.filetype,true)
                 def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
-                if(null!=plugin) {
+                if(null!=plugin && pluginSupportsStorage(plugin)) {
                     //re-queue storage request
-                    storeLogFileAsync(e.id.toString(), file, plugin, request, delay)
+                    storeLogFileAsync(e.id.toString() + ":" + request.filetype, plugin, request, delay)
                     delay += delayInc
                 }else{
                     log.error("cannot re-queue incomplete log storage request for execution ${e.id}, plugin was not available: ${getConfiguredPluginName()}")
@@ -438,11 +454,11 @@ class LogFileStorageService implements InitializingBean{
         }
 
         //query plugin to see if it is available
-        if (null == remote && null != plugin) {
+        if (null == remote && null != plugin && pluginSupportsRetrieve(plugin)) {
             /**
              * If plugin exists, assume NOT_FOUND is actually pending
              */
-            def errorMessage=null
+            def errorMessage = null
             try {
                 def newremote = plugin.isAvailable(filetype) ? LogFileState.AVAILABLE : LogFileState.NOT_FOUND
                 remote = newremote
@@ -457,7 +473,7 @@ class LogFileStorageService implements InitializingBean{
 
             }
             if (remote != LogFileState.AVAILABLE) {
-                cacheRetrievalState(key, remote, 0, errorMessage, errorCode, errorData )
+                cacheRetrievalState(key, remote, 0, errorMessage, errorCode, errorData)
             }
         }
         def state = ExecutionLogState.forFileStates(local, remote, remoteNotFound)
@@ -465,7 +481,18 @@ class LogFileStorageService implements InitializingBean{
         log.debug("getLogFileState(${execution.id},${plugin}): ${state} forFileStates: ${local}, ${remote}")
         return [state: state, errorCode: errorCode, errorData: errorData]
     }
-
+    def pluginSupportsRetrieve(Object plugin){
+        if(plugin instanceof ExecutionFileStorageOptions){
+            return ((ExecutionFileStorageOptions)plugin).retrieveSupported
+        }
+        true
+    }
+    def pluginSupportsStorage(Object plugin){
+        if(plugin instanceof ExecutionFileStorageOptions){
+            return ((ExecutionFileStorageOptions)plugin).storeSupported
+        }
+        true
+    }
     /**
      * Get a previous retrieval cache result, if it is not expired, or has no more retries
      * @param key
@@ -553,7 +580,7 @@ class LogFileStorageService implements InitializingBean{
         return null
     }
 
-/**
+    /**
      * Return an ExecutionLogFileReader containing state of logfile availability, and reader if available
      * @param e execution
      * @param performLoad if true, perform remote file transfer
@@ -685,8 +712,23 @@ class LogFileStorageService implements InitializingBean{
      * @param executionLogStorage the persisted object that records the result
      * @param delay seconds to delay the request
      */
-    private void storeLogFileAsync(String id, File file, ExecutionFileStorage storage, LogFileStorageRequest executionLogStorage, int delay=0) {
-        queueLogStorageRequest([id: id, file: file, storage: storage, filetype:executionLogStorage.filetype, request: executionLogStorage], delay)
+    private void storeLogFileAsync(
+            String id,
+            ExecutionFileStorage storage,
+            LogFileStorageRequest executionLogStorage,
+            int delay = 0
+    )
+    {
+        queueLogStorageRequest(
+                [
+                        id       : id,
+                        storage  : storage,
+                        filetype : executionLogStorage.filetype,
+                        request  : executionLogStorage,
+                        requestId: executionLogStorage.id
+                ],
+                delay
+        )
     }
 
     /**
@@ -703,12 +745,105 @@ class LogFileStorageService implements InitializingBean{
             storageRequests<<task
         }
     }
+    Map<String,ExecutionFile> getExecutionFiles(Execution execution, List<String> filters) {
+        def beans = applicationContext.getBeansOfType(ExecutionFileProducer)?.values()
+        if(filters) {
+            beans = beans.findAll { it.executionFileType in filters }
+        }
+        def result = [:]
+        beans?.each { bean ->
+            result[bean.getExecutionFileType()]= bean.produceStorageFileForExecution(execution)
+        }
+        log.debug("found beans of ExecutionFileProducer result: $result")
+        result?:[:]
+    }
+
+    private deleteExecutionFilePerPolicy(ExecutionFile file, boolean canRetrieve) {
+        ExecutionFileUtil.deleteExecutionFilePerPolicy(file, canRetrieve)
+    }
+
+    /**
+     * Store all files for a completed execution using the storage method
+     * @param filter, list of types to filter by, or null/empty to include all types
+     * @param storage plugin that is already initialized
+     * @param ident storage identifier
+     * @param files available files by type
+     */
+    private List storeLogFiles(
+            List<String> filter,
+            ExecutionFileStorage storage,
+            String ident,
+            Map<String, ExecutionFile> files
+    )
+    {
+        log.debug("Storage request [ID#${ident}], start, type ${filter}")
+        def success = false
+        if(filter) {
+            files = files.subMap(filter)
+        }
+        def list = []
+        def List<ExecutionFile> deletions=[]
+        if (storage instanceof ExecutionMultiFileStorage) {
+            list = storeMultiLogFiles(files, storage, ident)
+        } else {
+            files.each { type, file ->
+                def result = storeSingleLogFile(file.localFile, type, storage, ident)
+                if (!result) {
+                    list<<type
+                }
+            }
+        }
+        if(!list){
+            success=true
+        }
+        files.keySet().each{
+            if(!(it in list)){
+                deletions << files[it]
+            }
+        }
+        boolean canRetrieve = pluginSupportsRetrieve(storage)
+        deletions.each{
+            deleteExecutionFilePerPolicy(it, canRetrieve)
+        }
+
+        log.debug("Storage request [ID#${ident}], finish: ${success}")
+        return [success,list]
+    }
+
+    /**
+     * Store multiple files at once using the multi-file-storage plugin
+     * @param  files files
+     * @param storage plugin
+     * @param ident storage request ident
+     * @return list of filetypes which were not successful
+     */
+    private List<String> storeMultiLogFiles(Map<String,ExecutionFile> files, ExecutionMultiFileStorage storage, String ident) {
+        log.debug("Storage request storeMultiLogFiles [ID#${ident}], start")
+
+        List<String> failures = []
+
+        Map<String, File> localfiles = files.collectEntries { [it.key, it.value.localFile] }
+
+        def request = new MultiFileStorageRequestImpl(files: localfiles)
+
+        storage.storeMultiple(request)
+
+        //determine results
+        files.keySet().each { String filetype ->
+            def succeeded = request.completion[filetype]
+            if (!succeeded) {
+                failures << filetype
+            }
+        }
+
+        failures
+    }
     /**
      * Store the log file for a completed execution using the storage method
      * @param execution
      * @param storage plugin that is already initialized
      */
-    private Boolean storeLogFile(File file, String filetype, ExecutionFileStorage storage, String ident) {
+    private Boolean storeSingleLogFile(File file, String filetype, ExecutionFileStorage storage, String ident) {
         log.debug("Storage request [ID#${ident}], start")
         def success = false
         Date lastModified = new Date(file.lastModified())
@@ -720,10 +855,6 @@ class LogFileStorageService implements InitializingBean{
         }catch (Throwable e) {
             log.error("Storage request [ID#${ident}] error: ${e.message}")
             log.debug("Storage request [ID#${ident}] error: ${e.message}", e)
-        }
-        if (success) {
-            file.deleteOnExit()
-            //TODO: mark file to be cleaned up in future
         }
         log.debug("Storage request [ID#${ident}], finish: ${success}")
         return success

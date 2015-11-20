@@ -25,12 +25,17 @@ import rundeck.JobExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.WorkflowStep
+import rundeck.services.logging.ExecutionFile
+import rundeck.services.logging.ExecutionFileDeletePolicy
+import rundeck.services.logging.ExecutionFileProducer
 import rundeck.services.logging.ExecutionLogState
+import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.logging.WorkflowStateFileLoader
 import rundeck.services.workflow.StateMapping
 
-class WorkflowService implements ApplicationContextAware{
+class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
     public static final String STATE_FILE_FILETYPE = "state.json"
+    final String executionFileType = STATE_FILE_FILETYPE
 
     protected def ExecutionService executionService
     def ApplicationContext applicationContext
@@ -55,6 +60,12 @@ class WorkflowService implements ApplicationContextAware{
         }
         def spec=grailsApplication.config.rundeck?.workflowService?.stateCache?.spec?: "maximumSize=5,expireAfterAccess=60s"
         stateCache= CacheBuilder.from(spec).build()
+    }
+
+    @Override
+    ExecutionFile produceStorageFileForExecution(final Execution e) {
+        File localfile = getStateFileForExecution(e)
+        new ProducedExecutionFile(localFile: localfile,fileDeletePolicy: ExecutionFileDeletePolicy.WHEN_RETRIEVABLE)
     }
 
     /**
@@ -167,7 +178,7 @@ class WorkflowService implements ApplicationContextAware{
         def mutablestate = new MutableWorkflowStateListener(state)
         def chain = [mutablestate]
         def File outfile = getStateFileForExecution(execution)
-        def storagerequest = logFileStorageService.prepareForFileStorage(execution, STATE_FILE_FILETYPE, outfile)
+        def storagerequest = null//logFileStorageService.prepareForFileStorage(execution, STATE_FILE_FILETYPE, outfile)
         chain << new WorkflowStateListenerAction(onWorkflowExecutionStateChanged: {
             ExecutionState executionState, Date timestamp, List<String> nodeSet ->
                 if (executionState.completedState) {

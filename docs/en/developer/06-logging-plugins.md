@@ -53,6 +53,17 @@ In Rundeck 1.6, there was an `LogFileStorage` service and plugin system.  In Run
 
 Any plugins written for Rundeck 1.6 will *not* work in Rundeck 2.0, and need to be updated to use the new mechanism.
 
+## Changes in Rundeck 2.6
+
+The `ExecutionFileStorage` behavior has been extended to allow use of two new optional interfaces:
+
+* [ExecutionMultiFileStorage](#executionmultifilestorage)
+* [ExecutionFileStorageOptions](#executionfilestorageoptions)
+
+The groovy-script based DSL for this plugin type has been modified to support these features automatically.
+
+Previous plugin implementations will work without modification.
+
 ## Types of Logging Plugins
 
 There are three types of plugins that can be created:
@@ -464,6 +475,11 @@ The plugin is used in this manner:
 The `ExecutionFileStorage` system is asked to store and retrieve entire log files and state files for a specific execution.
 
 The Java interface for these plugins is [ExecutionFileStoragePlugin](../javadoc/com/dtolabs/rundeck/plugins/logging/ExecutionFileStoragePlugin.html).
+
+Additional optional interfaces provide extended behaviors that your plugin can adopt:
+
+* [ExecutionMultiFileStorage](#executionmultifilestorage) - adds a method to store all available files in one method call ([javadoc](../javadoc/com/dtolabs/rundeck/core/logging/ExecutionMultiFileStorage.html)).
+* [ExecutionFileStorageOptions](#executionfilestorageoptions) - define whether both retrieve and store are supported ([javadoc](../javadoc/com/dtolabs/rundeck/core/logging/ExecutionFileStorageOptions.html)).
     
 Exection file storage allows Rundeck to store the files elsewhere, in case local file storage is not suitable for long-term retention. 
 
@@ -474,17 +490,21 @@ The ExecutionFileStorage service is used by two aspects of the Rundeck server cu
 
 ### Storage behavior
 
-If an ExecutionFileStoragePlugin is installed and configured to be enabled, Rundeck will use it in this way after an Execution completes:
+If an ExecutionFileStoragePlugin is installed and configured to be enabled, and supports `store`, Rundeck will use it in this way after an Execution completes:
 
-Rundeck will place two *Storage Requests* in an asynchronous queue for that Execution to store the Log file and the State file.
+Rundeck will place a *Storage Request* in an asynchronous queue for that Execution to store the Log file and the State file.
 
 When triggered, the *Storage Request* will use the configured ExecutionFileStorage plugin and invoke `store`:
 
 * If it is unsuccessful, Rundeck may re-queue the request to retry it after a delay (configurable)
+* The `store` method will be invoked for each file to store.
+* (Optional) if your plugin implements [ExecutionMultiFileStorage](#executionmultifilestorage), then only a single method `storeMultiple` will be called. This is useful if you want access to all files for an execution at once.
 
 ### Retrieval behavior
 
-When a client requests a log stream to read via the **Local File Log**, or requests to read the **Execution Workflow State**, Rundeck determines if the file(s) are available locally.  If they are not available, it will start a *Retrieval Request* asynchronously for each missing file, and tell the client that the file is in a "pending" state.
+When a client requests a log stream to read via the **Local File Log**, or requests to read the **Execution Workflow State**, Rundeck determines if the file(s) are available locally.  If they are not available, it will start a *Retrieval Request* asynchronously for each missing file, and tell the client that the file is in a "pending" state. (If an ExecutionFileStorage plugin is configured and it supports `retireve`.
+If your plugin does not support `retrieve`, implement [ExecutionMultiFileStorage](#executionmultifilestorage) to
+declare available methods.)
 
 The *Retrieval Request* will use the configured ExecutionFileStorage plugin, and invoke `retrieve`.
 
@@ -500,6 +520,31 @@ Your plugin will be asked if a file of a specific type is 'available', and shoul
 Only if `true` is reported will a *Retrieval Request* be created.
 
 If there is an error discovering availability, your plugin should throw an Exception with the error message to report.
+
+### ExecutionMultiFileStorage
+
+This optional interface for you Java plugin indicates that `store` requests should all be made at once via the `storeMultiple` method.  
+
+* [ExecutionMultiFileStorage javadoc](../javadoc/com/dtolabs/rundeck/core/logging/ExecutionMultiFileStorage.html)
+
+`storeMultiple` will be passed a [MultiFileStorageRequest][] allowing access to the available file data, and a callback method for
+your plugin to use to indicate the success/failure for storage of each file type.  Your plugin must call `storageResultForFiletype(filetype, boolean)`
+for each filetype provided in the `MultiFileStorageRequest`.
+
+If storage for a filetype is not successful, it will be retried at a later point.
+
+If your plugin requires access to all available filetypes at once, you should indicate `false` for the success status for all filetypes if you want them all to be retried at once.
+
+In addition to the *Log file* and *State files* ('rdlog', and 'state.json' filetypes), an ExecutionMultiFileStorage
+will be given access to a `execution.xml` filetype.  This file is the XML serialized version of the Execution itself, in the format used by the Project Archive contents.  
+
+### ExecutionFileStorageOptions
+
+This optional interface allows your plugin to indicate whether both `store` and `retrieve` operations are available.
+The default if you do not implement this is that both operations are available.
+
+* [ExecutionFileStorageOptions javadoc](../javadoc/com/dtolabs/rundeck/core/logging/ExecutionFileStorageOptions.html)
+
 
 ### Java ExecutionFileStorage
 
@@ -605,19 +650,6 @@ To define metadata about your plugin, and configuration properties, see the [Not
 
 Define these closures inside your definition:
 
-`available`
-
-~~~~~ {.java}
-/**
- * Called to determine the file availability, return true to indicate it is available, 
- * false to indicate it is not available. An exception indicates an error.
- */
-available { String filetype, Map execution, Map configuration->
-    //determine state
-    return isAvailable()
-}
-~~~~~~
-
 `store`
 
 ~~~~~ {.java}
@@ -636,6 +668,43 @@ store { String filetype, Map execution, Map configuration, InputStream source->
 }
 ~~~~~~
 
+
+`storeMultiple` is an alternative to `store`, see [ExecutionMultiFileStorage](#executionmultifilestorage).
+
+~~~~~ {.java}
+import com.dtolabs.rundeck.plugins.logging.MultiFileStorageRequest
+...
+/**
+ * Called to store multiple files, called with a MultiFileStorageRequest, the execution data, and configuration properties
+ * Call the `files.storageResultForFiletype(type,boolan)` method to indicate success/failure for each filetype
+ */
+storeMultiple { MultiFileStorageRequest files, Map execution, Map configuration ->
+    //store all the files
+    files.availableFileTypes.each{ filetype-> 
+        //...write somewhere
+        def filedata=files.getStorageFile(filetype)
+        def inputStream = filedata.inputStream
+        boolean isSuccess=...
+        files.storageResultForFiletype(filetype,isSuccess)
+    }
+}
+~~~~~~
+
+If `store` or `storeMultiple` are not defined, then this is the equivalent of using [ExecutionFileStorageOptions](#executionfilestorageoptions) to declare that `store` operations are not supported.
+
+`available` (optional)
+
+~~~~~ {.java}
+/**
+ * Called to determine the file availability, return true to indicate it is available, 
+ * false to indicate it is not available. An exception indicates an error.
+ */
+available { String filetype, Map execution, Map configuration->
+    //determine state
+    return isAvailable()
+}
+~~~~~~
+
 `retrieve`
 
 ~~~~~ {.java}
@@ -651,8 +720,17 @@ retrieve {  String filetype, Map execution, Map configuration, OutputStream out-
 }
 ~~~~~~~
 
+If `retrieve` and `available` are not defined, then this is the equivalent of using [ExecutionFileStorageOptions](#executionfilestorageoptions) to declare that `retrieve` operations are not supported.
+
 The plugin is used in this manner:
 
-1. The `available` closure is called before retrieving the file, to determine if it is available, passing the filetype
-1. The `store` closure is called when a file needs to be stored, with the filetype, the [contextual data](#execution-context-data), configuration Map, and InputStream which will produce the log data. Additionally `length` and `lastModified` properties are in the closure binding, providing the file length, and last modification Date.
-2. The `retrieve` closure is called when a file needs to be retrieved, with the [contextual data](#execution-context-data), configuration Map, and OutputStream to write the log file content
+1. If `retrieve` is supported (both `available` and `retrieve` are defined)
+    * The `available` closure is called before retrieving the file, to determine if it is available, passing the filetype
+    * The `retrieve` closure is called when a file needs to be retrieved, with the [contextual data](#execution-context-data), configuration Map, and OutputStream to write the log file content
+2. If `storeMultiple` is defined:
+    * The `storeMultiple` closure is called when files needsto be stored, with the [MultiFileStorageRequest][], the [contextual data](#execution-context-data), and configuration Map.
+3. Else if `store` is defined:
+    * The `store` closure is called when a file needs to be stored, with the filetype, the [contextual data](#execution-context-data), configuration Map, and InputStream which will produce the log data. Additionally `length` and `lastModified` properties are in the closure binding, providing the file length, and last modification Date.
+
+
+[MultiFileStorageRequest]:../javadoc/com/dtolabs/rundeck/core/logging/MultiFileStorageRequest.html
