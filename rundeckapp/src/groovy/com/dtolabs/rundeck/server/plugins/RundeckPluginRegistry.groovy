@@ -34,6 +34,10 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
     public static Logger log = Logger.getLogger(RundeckPluginRegistry.class.name)
     HashMap pluginRegistryMap
     def ApplicationContext applicationContext
+    /**
+     * groovy plugin sources loaded dynamically will live in a sub context
+     */
+    def Map<String,ApplicationContext> subContexts=[:]
     def ServiceProviderLoader rundeckServerServiceProviderLoader
     def File pluginDirectory
     def File pluginCacheDirectory
@@ -216,7 +220,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
         try {
             def beanName = pluginRegistryMap[name]
             if (beanName) {
-                def bean = applicationContext.getBean(beanName)
+                def bean = findBean(beanName)
                 if (bean instanceof PluginBuilder) {
                     bean = ((PluginBuilder) bean).buildPlugin()
                 }
@@ -259,6 +263,19 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
         null
     }
 
+    def registerDynamicPluginBean(String beanName, ApplicationContext context){
+        subContexts[beanName]=context
+        pluginRegistryMap[beanName]=beanName
+    }
+    /**
+     * Look for specified bean in subcontexts if present, or in applicationContext
+     * @param beanName
+     * @return
+     */
+    private Object findBean(String beanName) {
+        (subContexts[beanName]?:applicationContext).getBean(beanName)
+    }
+
     /**
      * List all plugin type definitions that are either ServiceProvider plugins of the given service name,
      * or are groovy plugins of the given type
@@ -286,7 +303,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
         def Map<String,DescribedPlugin<T>> list= [:]
         pluginRegistryMap.each { String k, String v ->
             try {
-                def bean = applicationContext.getBean(v)
+                def bean = findBean(v)
                 if (bean instanceof PluginBuilder) {
                     bean = ((PluginBuilder) bean).buildPlugin()
                 }

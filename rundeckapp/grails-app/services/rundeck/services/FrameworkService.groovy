@@ -22,13 +22,23 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.loader.PluginFileManifest
 import com.dtolabs.rundeck.server.plugins.loader.PluginFileSource
 import com.dtolabs.utils.Streams
+import grails.spring.BeanBuilder
 import org.codehaus.groovy.grails.commons.GrailsApplication
+import org.springframework.beans.factory.NoSuchBeanDefinitionException
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory
+import org.springframework.beans.factory.groovy.GroovyBeanDefinitionReader
+import org.springframework.beans.factory.support.BeanDefinitionBuilder
+import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import org.springframework.scripting.config.LangNamespaceUtils
+import org.springframework.scripting.groovy.GroovyScriptFactory
+import org.springframework.scripting.support.ScriptFactoryPostProcessor
 import rundeck.Execution
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
@@ -51,6 +61,7 @@ class FrameworkService implements ApplicationContextAware {
     def ExecutionService executionService
     def metricService
     def Framework rundeckFramework
+    def rundeckPluginRegistry
 
     def getRundeckBase(){
         return rundeckFramework.baseDir.absolutePath;
@@ -86,7 +97,40 @@ class FrameworkService implements ApplicationContextAware {
                 log.error("Failed extracting bundled plugin ${pluginmf}", e)
                 result.logs << "Failed extracting bundled plugin ${pluginmf}: ${e}"
             }
+            if(pluginmf.fileName.endsWith(".groovy")){
+                //initialize groovy plugin as spring bean if it does not exist
+                def bean=loadGroovyScriptPluginBean(grailsApplication,new File(pluginsDir, pluginmf.fileName))
+                result.logs << "Loaded groovy plugin ${pluginmf.fileName} as ${bean.class} ${bean}"
+
+            }
         }
+        return result
+    }
+    def loadGroovyScriptPluginBean(GrailsApplication grailsApplication,File file){
+        String beanName = file.name.replace('.groovy', '')
+        def testBean
+        try {
+            testBean = grailsApplication.mainContext.getBean(beanName)
+            log.debug("Groovy plugin bean already exists in main context: $beanName: $testBean")
+        } catch (NoSuchBeanDefinitionException e) {
+            log.debug("Bean not found: $beanName")
+        }
+        if (testBean) {
+            return testBean
+        }
+
+        def builder=new BeanBuilder(grailsApplication.mainContext)
+        builder.beans {
+            xmlns lang: 'http://www.springframework.org/schema/lang'
+            lang.groovy(id: beanName, 'script-source': file.toURI().toString(), 'customizer-ref': 'pluginCustomizer')
+        }
+
+        def context = builder.createApplicationContext()
+        def result= context.getBean(beanName)
+
+        log.debug("Loaded groovy plugin bean; type: ${result.class} ${result}")
+        rundeckPluginRegistry.registerDynamicPluginBean(beanName,context)
+
         return result
     }
 
