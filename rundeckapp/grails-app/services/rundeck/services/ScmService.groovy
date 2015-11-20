@@ -361,10 +361,10 @@ class ScmService {
      */
     def initPlugin(String integration, ScmOperationContext context, String type, Map config) {
         def validation = validatePluginSetup(integration, context.frameworkProject, type, config)
-        if (!validation.valid) {
+        if (!(validation?.valid)) {
             throw new ScmPluginInvalidInput(
-                    "Validation failed for ${type} plugin: " + validation.report,
-                    validation.report
+                    "Validation failed for ${type} plugin: " + validation?.report,
+                    validation?.report
             )
         }
         def loaded = loadPluginWithConfig(integration, context, type, config)
