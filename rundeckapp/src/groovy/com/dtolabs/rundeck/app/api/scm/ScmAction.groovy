@@ -98,11 +98,29 @@ class ScmAction {
 
         def scmAction = new ScmAction()
         //input map
-        scmAction.input = data.input
+        scmAction.input = stringMap(data.input)
         //items values
-        scmAction.jobIds = data.jobs ?: []
-        scmAction.selectedItems = data.items ?: []
-        scmAction.deletedItems = data.deleted ?: []
+        scmAction.jobIds = stringList(data.jobs)
+        scmAction.selectedItems = stringList(data.items)
+        scmAction.deletedItems = stringList(data.deleted)
         return scmAction
+    }
+
+    private static List<String> stringList(Collection data) {
+        def data2=[]
+        if(data) {
+            for (i in data) {
+                data2 << i.toString()
+            }
+        }
+        data2
+    }
+
+    private static Map<String,String> stringMap(Map data) {
+        def data2=[:]
+        data?.each{k,v->
+            data2[k.toString()]=v.toString()
+        }
+        data2
     }
 }
