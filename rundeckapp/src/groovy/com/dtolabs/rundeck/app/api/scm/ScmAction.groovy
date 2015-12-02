@@ -106,9 +106,9 @@ class ScmAction {
         return scmAction
     }
 
-    private static List<String> stringList(Collection data) {
+    private static List<String> stringList(data) {
         def data2=[]
-        if(data) {
+        if(data && data!=JSONObject.NULL && data instanceof Collection) {
             for (i in data) {
                 data2 << i.toString()
             }

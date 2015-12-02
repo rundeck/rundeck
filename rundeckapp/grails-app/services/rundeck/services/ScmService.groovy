@@ -514,6 +514,9 @@ class ScmService {
         )
 
         if (scmPluginConfig) {
+            if (scmPluginConfig.type != type) {
+                throw new IllegalArgumentException("Plugin type ${type} for ${integration} is not configured")
+            }
             scmPluginConfig.enabled = false
             storeConfig(scmPluginConfig, project, integration)
         }
@@ -576,7 +579,13 @@ class ScmService {
                 pathForConfigFile(integration),
                 PREFIXES[integration]
         )
+        if (scmPluginConfig.type != type) {
+            return [error:true,message:"Plugin type ${type} for ${integration} is not configured"]
+        }
         def validation = validatePluginSetup(integration, project, type, scmPluginConfig.config)
+        if(!validation){
+            return [error:true,message:"Plugin type ${type} for ${integration} was not found"]
+        }
         if (!validation.valid) {
             return [valid: false, report: validation.report]
         }

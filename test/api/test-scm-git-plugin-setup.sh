@@ -259,6 +259,52 @@ test_disable_export_json(){
 	
 	test_succeed
 }
+test_disable_export_wrong_json(){
+	local project=$1
+	
+
+	do_setup_export_json_valid "export" "git-export" $project
+
+	assert_plugin_enabled "export" "git-export" "true" $project
+	
+	ENDPOINT="${APIURL}/project/$project/scm/export/plugin/wrong-plugin/disable"
+	test_begin "Disable plugin wrong type JSON"
+	
+	METHOD=POST
+	ACCEPT=application/json
+	EXPECT_STATUS=400
+	
+	api_request $ENDPOINT $DIR/curl.out
+
+	assert_json_value "false" '.success' $DIR/curl.out
+	
+	assert_plugin_enabled "export" "git-export" "true" $project
+	
+	test_succeed
+}
+test_disable_export_nosetup_json(){
+	local project=$1
+	
+
+	#do_setup_export_json_valid "export" "git-export" $project
+
+	assert_plugin_enabled "export" "git-export" "false" $project
+	
+	ENDPOINT="${APIURL}/project/$project/scm/export/plugin/wrong-plugin/disable"
+	test_begin "Disable plugin not enabled JSON"
+	
+	METHOD=POST
+	ACCEPT=application/json
+	EXPECT_STATUS=400
+	
+	api_request $ENDPOINT $DIR/curl.out
+
+	assert_json_value "false" '.success' $DIR/curl.out
+	
+	assert_plugin_enabled "export" "git-export" "false" $project
+	
+	test_succeed
+}
 test_disable_enable_export_json(){
 	local project=$1
 	
@@ -347,6 +393,14 @@ main(){
 	create_project "testscm3"
 	test_disable_export_json "testscm3"
 	remove_project "testscm3"
+
+	create_project "testscm3-2"
+	test_disable_export_wrong_json "testscm3-2"
+	remove_project "testscm3-2"
+
+	create_project "testscm3-3"
+	test_disable_export_nosetup_json "testscm3-3"
+	remove_project "testscm3-3"
 	
 	# disable using xml
 	create_project "testscm4"

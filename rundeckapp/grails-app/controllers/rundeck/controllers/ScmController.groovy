@@ -390,13 +390,32 @@ class ScmController extends ControllerBase {
         if (!apiAuthorize(scm.project, AuthConstants.ACTION_CONFIGURE)) {
             return
         }
-
-        scmService.disablePlugin(scm.integration, scm.project, scm.type)
-
-        def message = message(code: "scmController.action.disable.success.message", args: [scm.integration, scm.type])
-        respond(
-                new ScmActionResult(success: true, message: message),
-                [formats: ['xml', 'json']]
+        def result=[:]
+        def ePluginConfig = scmService.loadScmConfig(scm.project, scm.integration)
+        if (!ePluginConfig) {
+            result = [
+                    error  : true,
+                    message: g.message(code: 'no.scm.integration.plugin.configured', args: [scm.integration])
+            ]
+        } else if (ePluginConfig.type != scm.type) {
+            result = [
+                    error  : true,
+                    message: g.message(
+                            code: 'integration.plugin.type.not.configured',
+                            args: [scm.type, scm.integration]
+                    )
+            ]
+        } else {
+            scmService.disablePlugin(scm.integration, scm.project, scm.type)
+            result.valid=true
+        }
+        respondActionResult(
+                scm,
+                result,
+                [
+                        error: 'scmController.action.disable.error.message',
+                        success: 'scmController.action.disable.success.message'
+                ]
         )
     }
 
