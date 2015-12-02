@@ -160,18 +160,20 @@ class ScmServiceSpec extends Specification {
         ScmPluginConfigData config2 = Mock(ScmPluginConfigData)
 
         when:
-        service.removeAllPluginConfiguration('test1', null)
+        service.removeAllPluginConfiguration('test1')
         then:
-        1 * service.pluginConfigService.loadScmConfig(
+        service.pluginConfigService.loadScmConfig(
                 'test1',
                 "etc/scm-import.properties",
                 'scm.import'
         ) >> config
-        1 * service.pluginConfigService.loadScmConfig(
+        service.pluginConfigService.loadScmConfig(
                 'test1',
                 "etc/scm-export.properties",
                 'scm.export'
         ) >> config2
+        config.getType()>>'scm.import'
+        config2.getType()>>'scm.export'
         1 * config.setEnabled(false)
         1 * config2.setEnabled(false)
         1 * service.pluginConfigService.storeConfig(config, 'test1', "etc/scm-import.properties")

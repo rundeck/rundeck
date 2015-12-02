@@ -200,7 +200,7 @@ class ProjectServiceSpec extends Specification {
 
 
         then:
-        1 * service.scmService.removeAllPluginConfiguration('myproject', _)
+        1 * service.scmService.removeAllPluginConfiguration('myproject')
         1 * service.executionService.deleteBulkExecutionIds(*_)
         1 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
             1 * removeFrameworkProject('myproject')
