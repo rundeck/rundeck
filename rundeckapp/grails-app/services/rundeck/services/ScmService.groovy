@@ -541,9 +541,15 @@ class ScmService {
      * @param type type
      * @return
      */
-    def removeAllPluginConfiguration(String project, String type) {
-        removePluginConfiguration(IMPORT, project, type)
-        removePluginConfiguration(EXPORT, project, type)
+    def removeAllPluginConfiguration(String project) {
+        def importConfig = loadScmConfig(project, IMPORT)
+        if(importConfig?.type) {
+            removePluginConfiguration(IMPORT, project, importConfig.type)
+        }
+        def exportConfig = loadScmConfig(project, EXPORT)
+        if(exportConfig?.type){
+            removePluginConfiguration(EXPORT, project, exportConfig.type)
+        }
     }
 
     /**

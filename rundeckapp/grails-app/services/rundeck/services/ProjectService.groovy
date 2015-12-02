@@ -1042,7 +1042,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
         def result = [success: false]
 
         //disable scm
-        scmService.removeAllPluginConfiguration(project.name, null)
+        scmService.removeAllPluginConfiguration(project.name)
 
         BaseReport.withTransaction { TransactionStatus status ->
 
