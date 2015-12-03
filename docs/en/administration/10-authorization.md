@@ -318,23 +318,25 @@ Type       Resource Kind     Actions   Description
 
 Table: Project scope generic type actions
 
-Type      Properties                         Actions  Description
------     -----------                        -------- ------------
-`adhoc`                                      `read`   Read adhoc execution output
-"                                            `run`    Run an adhoc execution
-"                                            `runAs`  Run an adhoc execution as another user
-"                                            `kill`   Kill an adhoc execution
-"                                            `killAs` Kill an adhoc execution as another user
-`job`     "name","group"                     `read`   View a Job and its executions
-"                                            `update` Modify a job
-"                                            `delete` Delete a job
-"                                            `run`    Run a job
-"                                            `runAs`  Run a job as another user
-"                                            `kill`   Kill a running job
-"                                            `killAs` Kill a running job as another user
-"                                            `create` Create the matching job
-`node`    "rundeck_server", "nodename", ...  `read`   View the node in the UI (see [Node resource properties](#node-resource-properties))
-"                                            `run`    Run jobs/adhoc on the node
+Type      Properties                         Actions            Description
+-----     -----------                        --------           ------------
+`adhoc`                                      `read`             Read adhoc execution output
+"                                            `run`              Run an adhoc execution
+"                                            `runAs`            Run an adhoc execution as another user
+"                                            `kill`             Kill an adhoc execution
+"                                            `killAs`           Kill an adhoc execution as another user
+`job`     "name","group"                     `read`             View a Job and its executions
+"                                            `update`           Modify a job
+"                                            `delete`           Delete a job
+"                                            `run`              Run a job
+"                                            `runAs`            Run a job as another user
+"                                            `kill`             Kill a running job
+"                                            `killAs`           Kill a running job as another user
+"                                            `create`           Create the matching job
+"                                            `toggle_schedule`  Enable/disable the job's schedule
+"                                            `toggle_execution` Enable/disable the job for execution
+`node`    "rundeck_server", "nodename", ...  `read`             View the node in the UI (see [Node resource properties](#node-resource-properties))
+"                                            `run`              Run jobs/adhoc on the node
 ----------------------------
 
 Table: Project scope specific resource actions
