@@ -159,6 +159,7 @@ getent passwd rundeck >/dev/null || useradd -d /var/lib/rundeck -m -g rundeck ru
 %config(noreplace) /etc/rundeck/jaas-loginmodule.conf
 %config(noreplace) /etc/rundeck/realm.properties
 %config(noreplace) /etc/rundeck/rundeck-config.properties
+%config(noreplace) /var/lib/rundeck/exp/webapp/WEB-INF/web.xml
 
 # SSL Configuration
 %dir /etc/rundeck/ssl
