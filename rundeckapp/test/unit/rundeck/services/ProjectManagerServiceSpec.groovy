@@ -603,6 +603,27 @@ class ProjectManagerServiceSpec extends Specification {
         6==len
         'abcdef'==baos.toString()
     }
+    void "storage read does not close outputstream"(){
+        given:
+        def meta=Stub(ResourceMeta){
+            getInputStream() >> new ByteArrayInputStream('abcdef'.bytes)
+        }
+        def resStub = Stub(Resource){
+            getContents()>> meta
+        }
+        service.storage=Stub(StorageTree){
+            getResource("projects/test1/my-resource") >> resStub
+        }
+        def output=Mock(OutputStream)
+
+        when:
+        def len=service.readProjectFileResource("test1","my-resource",output)
+
+        then:
+        6==len
+        _*output.write(*_)
+        0*output.close()
+    }
     void "storage read does not exist"(){
         given:
 

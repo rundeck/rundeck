@@ -209,7 +209,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     long readProjectFileResource(String projectName, String path, OutputStream output) {
         def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
         def resource = getStorage().getResource(storagePath)
-        Streams.copy(resource.contents.inputStream,output,true)
+        Streams.copy(resource.contents.inputStream,output,false)
     }
     /**
      * List the full paths of file resources in the directory at the given path
