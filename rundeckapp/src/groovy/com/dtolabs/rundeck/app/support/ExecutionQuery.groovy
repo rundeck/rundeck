@@ -81,37 +81,56 @@ class ExecutionQuery extends ScheduledExecutionQuery{
         abortedbyFilter(nullable:true)
         adhoc(nullable:true)
     }
+    /**
+     * Modify a date by rewinding a certain number of units
+     * @param recentFilter string matching "\d+[hdwmyns]"
+     * @param date date to start with, or null indicating now
+     * @return modified date, or null if format was not matched
+     */
+    public static Date parseRelativeDate(String recentFilter, Date date=null){
+        Calendar n = GregorianCalendar.getInstance()
+        n.setTime(date?:new Date())
+        def matcher = recentFilter =~ /^(\d+)([hdwmyns])$/
+        if (matcher.matches()) {
+            def i = matcher.group(1).toInteger()
+            def ndx
+            switch (matcher.group(2)) {
+                case 'h':
+                    ndx = Calendar.HOUR_OF_DAY
+                    break
+                case 'n':
+                    ndx = Calendar.MINUTE
+                    break
+                case 's':
+                    ndx = Calendar.SECOND
+                    break
+                case 'd':
+                    ndx = Calendar.DAY_OF_YEAR
+                    break
+                case 'w':
+                    ndx = Calendar.WEEK_OF_YEAR
+                    break
+                case 'm':
+                    ndx = Calendar.MONTH
+                    break
+                case 'y':
+                    ndx = Calendar.YEAR
+                    break
+            }
+            n.add(ndx, -1 * i)
 
+            return n.getTime()
+        }
+        null
+    }
 
     public void configureFilter() {
         super.configureFilter()
         if (recentFilter) {
-            Calendar n = GregorianCalendar.getInstance()
-            def matcher = recentFilter =~ /^(\d+)([hdwmy])$/
-            if (matcher.matches()) {
-                def i = matcher.group(1).toInteger()
-                def ndx
-                switch (matcher.group(2)) {
-                    case 'h':
-                        ndx = Calendar.HOUR_OF_DAY
-                        break
-                    case 'd':
-                        ndx = Calendar.DAY_OF_YEAR
-                        break
-                    case 'w':
-                        ndx = Calendar.WEEK_OF_YEAR
-                        break
-                    case 'm':
-                        ndx = Calendar.MONTH
-                        break
-                    case 'y':
-                        ndx = Calendar.YEAR
-                        break
-                }
-                n.add(ndx, -1 * i)
-
+            Date recentDate=parseRelativeDate(recentFilter)
+            if (null!=recentDate) {
                 doendafterFilter = true
-                endafterFilter = n.getTime()
+                endafterFilter = recentDate
 
                 doendbeforeFilter = false
                 dostartafterFilter = false

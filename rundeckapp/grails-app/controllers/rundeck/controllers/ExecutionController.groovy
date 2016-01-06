@@ -1589,7 +1589,22 @@ class ExecutionController extends ControllerBase{
                 )
             }
         }
-        if (params.end) {
+        if (params.olderFilter) {
+            Date endDate=ExecutionQuery.parseRelativeDate(params.olderFilter)
+            if(null!=endDate){
+                query.endbeforeFilter = endDate
+                query.doendbeforeFilter = true
+            } else {
+                return apiService.renderErrorFormat(
+                        response,
+                        [
+                                status: HttpServletResponse.SC_BAD_REQUEST,
+                                code: 'api.error.history.date-relative-format',
+                                args: ['olderFilter', params.olderFilter]
+                        ]
+                )
+            }
+        }else if (params.end) {
             try {
                 query.endbeforeFilter = ReportsController.parseDate(params.end)
                 query.doendbeforeFilter = true
