@@ -10,8 +10,7 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -y xmlstarlet jq
   - sudo chsh --shell $(which bash)
-before_script: #workaround for https://github.com/travis-ci/travis-ci/issues/5227
-  - hostname
+  - hostname #workaround for https://github.com/travis-ci/travis-ci/issues/5227
   - cat /etc/hosts # optionally check the content *before*
   - sudo hostname "$(hostname | cut -c1-63)"
   - sed -e "s/^\\(127\\.0\\.0\\.1.*\\)/\\1 $(hostname | cut -c1-63)/" /etc/hosts | sudo tee /etc/hosts
