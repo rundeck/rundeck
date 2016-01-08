@@ -2070,9 +2070,11 @@ The following parameters can also be used to narrow down the result set.
         * `w`: week
         * `m`: month
         * `y`: year
-        So a value of "2w" would return executions that completed within the last two weeks.
+
+        So a value of `2w` would return executions that completed within the last two weeks.
+    * `olderFilter`: (same format as `recentFilter`) return executions that completed before the specified relative period of time.  E.g. a value of `30d` returns executions older than 30 days.
     * `begin`: Specify exact date for earliest execution completion time
-    * `end`: Specify exact date for latest xecution completion time
+    * `end`: Specify exact date for latest execution completion time
 * `adhoc`: "true/false", if true, include only Adhoc executions, if false return only Job executions. By default any matching executions are returned, however if you use any of the Job filters below, then only Job executions will be returned.
 
 The format for the `end`, and `begin` filters is either:  a unix millisecond timestamp, or a W3C dateTime string in the format "yyyy-MM-ddTHH:mm:ssZ".
