@@ -45,7 +45,8 @@ public class StringRenderingConstants {
         SINGLE_LINE,
         MULTI_LINE,
         STATIC_TEXT,
-        PASSWORD;
+        PASSWORD,
+        CODE;
         public boolean equalsOrString(Object o) {
             return this == o || toString().equals(o);
         }

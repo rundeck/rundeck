@@ -31,6 +31,7 @@
 <g:set var="valueColTypeSplit20" value="col-sm-2"/>
 <g:set var="offsetColType" value="col-sm-10 col-sm-offset-2"/>
 <g:set var="formControlType" value="form-control input-sm"/>
+<g:set var="formControlCodeType" value="form-control code apply_ace"/>
 <g:set var="hasError" value="${error ? 'has-error' : ''}"/>
 <g:set var="required" value="${prop.required ? 'required' : ''}"/>
 <g:set var="propScope"
@@ -103,8 +104,12 @@
     <g:set var="valueText" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"/>
     <g:if test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.MULTI_LINE, 'MULTI_LINE']}">
         <g:textArea name="${fieldname}" value="${valueText}"
-                 id="${fieldid}" rows="10" cols="100" class="${formControlType}"/>
+                    id="${fieldid}" rows="10" cols="100" class="${formControlType}"/>
     </g:if>
+    <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.CODE, 'CODE']}">
+        <g:textArea name="${fieldname}" value="${valueText}"
+                    id="${fieldid}" rows="10" cols="100" class="${formControlCodeType}"/>
+    </g:elseif>
     <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.PASSWORD, 'PASSWORD']}">
        <g:passwordField name="${fieldname}" value="${valueText}"
                     id="${fieldid}" cols="100" class="${formControlType}"/>
