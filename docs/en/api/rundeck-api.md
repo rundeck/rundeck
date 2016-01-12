@@ -3376,6 +3376,25 @@ Export a zip archive of the project.  Requires `export` authorization for the pr
 
 Response content type is `application/zip`
 
+Optional parameters:
+
+* `executionIds` a list (comma-separated) of execution IDs.  If this is specified then the archive will
+contain *only* executions that are specified, and will not contain Jobs, ACLs, or project configuration/readme files.
+    * optionally use `POST` method with with `application/x-www-form-urlencoded` content for large lists of execution IDs
+    * optionally, specify `executionIds` multiple times, with a single ID per entry.
+
+GET Examples:
+
+    GET /api/11/project/AlphaProject/export?executionIds=1,4,9
+    GET /api/11/project/AlphaProject/export?executionIds=1&executionIds=4&executionIds=9
+
+Post:
+
+    POST /api/11/project/AlphaProject/export
+    Content-Type: application/x-www-form-urlencoded
+
+    executionIds=1&executionIds=4&executionIds=9&...
+
 ### Project Archive Import ###
 
 **Request:** 
