@@ -1585,7 +1585,7 @@ class ProjectControllerTest {
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true)
         controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream,l,aclperms->
+            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts->
                 assertEquals 'test1',project.name
                 assertTrue aclperms
                 stream<<'some data'
@@ -1605,7 +1605,7 @@ class ProjectControllerTest {
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,false)
         controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream,l,aclperms->
+            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts->
                 assertEquals 'test1',project.name
                 assertFalse aclperms
                 stream<<'some data'

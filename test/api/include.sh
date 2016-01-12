@@ -63,13 +63,13 @@ if [ -n "$DEBUG" ] ; then
 fi
 CURL="curl $CURLOPTS"
 docurl(){
-    if [ -n "$RDAUTH" ] ; then
-        if [ "true" == "$RDDEBUG" ] ; then
-            echo $CURL -H "$AUTHHEADER" "$@" 1>&2
+    if [ -n "${RDAUTH:-}" ] ; then
+        if [ "true" == "${RDDEBUG:-}" ] ; then
+            echo $CURL -H "${AUTHHEADER:-}" "$@" 1>&2
         fi
-        $CURL -H "$AUTHHEADER" "$@"
+        $CURL -H "${AUTHHEADER:-}" "$@"
     else    
-        if [ "true" == "$RDDEBUG" ] ; then
+        if [ "true" == "${RDDEBUG:-}" ] ; then
             echo $CURL "$@" 1>&2
         fi
         $CURL "$@"
@@ -91,19 +91,19 @@ api_request(){
     local ENDPOINT=$1
     local FILE=$2
     local H_ACCEPT=
-    if [ -n "$ACCEPT" ] ; then
+    if [ -n "${ACCEPT:-}" ] ; then
         H_ACCEPT="-H accept:$ACCEPT"
     fi
     local H_REQUEST_TYPE=
-    if [ -n "$TYPE" ] ; then
+    if [ -n "${TYPE:-}" ] ; then
         H_REQUEST_TYPE="-H content-type:$TYPE"
     fi
     local H_METHOD="-X GET"
-    if [ -n "$METHOD" ] ; then
+    if [ -n "${METHOD:-}" ] ; then
         H_METHOD="-X $METHOD"
     fi
     local H_UPLOAD=
-    if [ -n "$POSTFILE" ] ; then
+    if [ -n "${POSTFILE:-}" ] ; then
         H_UPLOAD="--data-binary @$POSTFILE"
         if [ -n "$DEBUG" ] ; then
             1>&2 echo "POSTFILE=$POSTFILE" 
@@ -113,11 +113,11 @@ api_request(){
         fi
     fi
     # get listing
-    docurl -D $DIR/headers.out $H_METHOD $H_UPLOAD $H_ACCEPT $H_REQUEST_TYPE ${ENDPOINT}?${PARAMS} > $FILE
+    docurl -D $DIR/headers.out $H_METHOD $H_UPLOAD $H_ACCEPT $H_REQUEST_TYPE ${ENDPOINT}?${PARAMS:-} > $FILE
     if [ 0 != $? ] ; then
         fail "ERROR: failed query request"
     fi
-    if [ -n "$DEBUG" ] ; then
+    if [ -n "${DEBUG:-}" ] ; then
             1>&2 echo "FILE=$FILE" 
             1>&2 echo "<<<<"
             1>&2 cat $FILE
