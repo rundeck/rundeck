@@ -49,7 +49,9 @@ class BaseGitPluginSpec extends Specification {
         then:
         1 * base.mapper.fileForJob(_) >> outfile
         1 * job.getJobSerializer() >> Mock(JobSerializer) {
-            1 * serialize(format, !null)
+            1 * serialize(format, !null)>>{args->
+                args[1].write('data'.bytes)
+            }
         }
 
 
@@ -79,6 +81,61 @@ class BaseGitPluginSpec extends Specification {
         1 * base.mapper.fileForJob(_) >> outfile
         ScmPluginException e = thrown()
         e.message.startsWith('Cannot create necessary dirs to serialize file to path')
+
+        where:
+        format | _
+        'xml'  | _
+        'yaml' | _
+    }
+
+    def "serialize job: no output"() {
+        given:
+        Common config = new Common()
+        def base = new BaseGitPlugin(config)
+        base.mapper = Mock(JobFileMapper)
+        def job = Mock(JobExportReference)
+        def outfile = File.createTempFile("BaseGitPluginSpec", "serialize-job.temp")
+        outfile.deleteOnExit()
+
+        when:
+        base.serialize(job, format)
+
+        then:
+        1 * base.mapper.fileForJob(_) >> outfile
+        1 * job.getJobSerializer() >> Mock(JobSerializer) {
+            1 * serialize(format, !null)//no write to stream
+        }
+        ScmPluginException e = thrown()
+        e.message.startsWith('Failed to serialize job, no content was written')
+
+        where:
+        format | _
+        'xml'  | _
+        'yaml' | _
+    }
+
+    def "serialize job: IO exception"() {
+        given:
+        Common config = new Common()
+        def base = new BaseGitPlugin(config)
+        base.mapper = Mock(JobFileMapper)
+        def job = Mock(JobExportReference)
+        def outfile = File.createTempFile("BaseGitPluginSpec", "serialize-job.temp")
+        outfile.deleteOnExit()
+
+        when:
+        base.serialize(job, format)
+
+        then:
+        1 * base.mapper.fileForJob(_) >> outfile
+        1 * job.getJobSerializer() >> Mock(JobSerializer) {
+            1 * serialize(format, !null)>>{
+                throw new IOException("test forced error")
+            }
+        }
+        ScmPluginException e = thrown()
+        e.message.startsWith('Failed to serialize job')
+        e.message.endsWith('test forced error')
 
         where:
         format | _
