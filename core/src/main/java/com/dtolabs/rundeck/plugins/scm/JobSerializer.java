@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.plugins.scm;
 
+import java.io.IOException;
 import java.io.OutputStream;
 
 /**
@@ -11,5 +12,5 @@ public interface JobSerializer {
      * @param format       format name: 'xml' or 'yaml'
      * @param outputStream destination
      */
-    void serialize(String format, OutputStream outputStream);
+    void serialize(String format, OutputStream outputStream) throws IOException;
 }

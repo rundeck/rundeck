@@ -68,7 +68,8 @@ test_setup_export_xml_valid(){
 	local project=$3
 	
 	ENDPOINT="${APIURL}/project/$project/scm/$integration/plugin/$plugin/setup"
-	TMPDIR=`tmpdir`
+	TMPDIR=`tmpdir`/$project
+	mkdir -p $TMPDIR
 	tmp=$TMPDIR/test_setup_export_xml-upload.xml
 	dirname=$TMPDIR/testdir
 	gitdir=$TMPDIR/testgit
