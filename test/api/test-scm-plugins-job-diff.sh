@@ -60,16 +60,38 @@ END
 
 	$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 }
+do_sleep(){
+	sleep 2
+}
+
+assert_scm_job_status(){
+	local project=$1
+	local integration=$2
+	local JOBID=$3
+	local status=$4
+
+	METHOD=GET
+	ACCEPT=application/xml
+	EXPECT_STATUS=200
+	ENDPOINT="${APIURL}/job/$JOBID/scm/$integration/status"
+	api_request $ENDPOINT $DIR/curl.out
+
+	assert_xml_value "$integration" '/scmJobStatus/integration' $DIR/curl.out
+	assert_xml_value "$project" '/scmJobStatus/project' $DIR/curl.out
+	assert_xml_value "$status" '/scmJobStatus/synchState' $DIR/curl.out
+}
 
 test_job_export_diff_clean_xml(){
 	local project=$1
 	local integration=export
 
 	local JOBID=$(setup_export_job $project)
+
+	do_sleep
+	
+	assert_scm_job_status $project "$integration" "$JOBID" "CREATE_NEEDED"
 	
 	perform_job_action $project "$integration" "job-commit" "$JOBID"
-
-	sleep 2
 
 	#get job diff clean
 
@@ -97,10 +119,18 @@ test_job_export_diff_modified_xml(){
 	local integration=export
 
 	local JOBID=$(setup_export_job $project)
+
+	do_sleep
+	
+	assert_scm_job_status $project "$integration" "$JOBID" "CREATE_NEEDED"
 	
 	perform_job_action $project "$integration" "job-commit" "$JOBID"
 
 	modify_job $project "$JOBID"
+
+	do_sleep
+	
+	assert_scm_job_status $project "$integration" "$JOBID" "EXPORT_NEEDED"
 
 	#get job diff clean
 
@@ -131,9 +161,12 @@ test_job_export_diff_clean_json(){
 
 	local JOBID=$(setup_export_job $project)
 	
-	perform_job_action $project "$integration" "job-commit" "$JOBID"
 
-	sleep 2
+	do_sleep
+	
+	assert_scm_job_status $project "$integration" "$JOBID" "CREATE_NEEDED"
+
+	perform_job_action $project "$integration" "job-commit" "$JOBID"
 
 	#get job diff clean
 
@@ -161,12 +194,18 @@ test_job_export_diff_modified_json(){
 	local integration=export
 
 	local JOBID=$(setup_export_job $project)
+
+	do_sleep
+	
+	assert_scm_job_status $project "$integration" "$JOBID" "CREATE_NEEDED"
 	
 	perform_job_action $project "$integration" "job-commit" "$JOBID"
 
 	modify_job $project "$JOBID"
 
-	sleep 2
+	do_sleep
+	
+	assert_scm_job_status $project "$integration" "$JOBID" "EXPORT_NEEDED"
 
 	#get job diff clean
 
@@ -174,7 +213,7 @@ test_job_export_diff_modified_json(){
 	ACCEPT=application/json
 	EXPECT_STATUS=200
 	ENDPOINT="${APIURL}/job/$JOBID/scm/$integration/diff"
-	test_begin "SCM Job Diff clean (json)"
+	test_begin "SCM Job Diff modified (json)"
 	api_request $ENDPOINT $DIR/curl.out
 
 	
@@ -190,11 +229,11 @@ test_job_export_diff_modified_json(){
 	remove_project $project
 }
 main(){
-	test_job_export_diff_clean_xml "testscm1"
-	test_job_export_diff_clean_json "testscm2"
+	test_job_export_diff_clean_xml "testscm-job-diff-1"
+	test_job_export_diff_clean_json "testscm-job-diff-2"
 
-	test_job_export_diff_modified_xml "testscm3"
-	test_job_export_diff_modified_json "testscm4"
+	test_job_export_diff_modified_xml "testscm-job-diff-3"
+	test_job_export_diff_modified_json "testscm-job-diff-4"
 }
 
 main
