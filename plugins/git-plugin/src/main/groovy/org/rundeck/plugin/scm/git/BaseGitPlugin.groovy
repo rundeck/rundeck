@@ -73,9 +73,22 @@ class BaseGitPlugin {
                 )
             }
         }
-        File temp = new File(outfile.getAbsolutePath() + ".tmp")
-        temp.withOutputStream { out ->
-            job.jobSerializer.serialize(format, out)
+        File temp = new File(outfile.parentFile, outfile.name + ".tmp")
+        try {
+            temp.withOutputStream { out ->
+                job.jobSerializer.serialize(format, out)
+            }
+        }catch(IOException e){
+            throw new ScmPluginException(
+                    "Failed to serialize job ${job}: ${e.message}",
+                    e
+            )
+
+        }
+        if (!temp.exists() || temp.size() < 1) {
+            throw new ScmPluginException(
+                    "Failed to serialize job, no content was written for job ${job}"
+            )
         }
         Files.move(temp.toPath(), outfile.toPath(), StandardCopyOption.REPLACE_EXISTING)
     }
@@ -326,7 +339,7 @@ class BaseGitPlugin {
         return new JobImportGitState(
                 synchState: map['synch'],
                 commit: map.commitMeta ? new GitScmCommit(map.commitMeta) : null,
-                actions:actions
+                actions: actions
         )
     }
 

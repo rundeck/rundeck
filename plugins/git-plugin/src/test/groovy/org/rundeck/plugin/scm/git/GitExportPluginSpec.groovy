@@ -210,7 +210,9 @@ class GitExportPluginSpec extends Specification {
         status != null
         status.synchState == SynchState.CREATE_NEEDED
         status.commit == null
-        1 * serializer.serialize('xml', _)
+        1 * serializer.serialize('xml', _)>>{args->
+            args[1].write('data'.bytes)
+        }
         0 * serializer.serialize(*_)
     }
 

@@ -2576,6 +2576,10 @@ class ScheduledExecutionController  extends ControllerBase{
         def errjobs = loadresults.errjobs
         def skipjobs = loadresults.skipjobs
 
+        //force hibernate session flush
+        ScheduledExecution.withSession { session->
+            session.flush()
+        }
         withFormat{
             xml{
 

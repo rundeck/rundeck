@@ -72,8 +72,8 @@ test_plugin_status_json(){
 
 
 main(){
-	test_plugin_status_xml "export" "git-export" "testscm1"
-	test_plugin_status_json "export" "git-export" "testscm2"
+	test_plugin_status_xml "export" "git-export" "testscm-plugin-status-1"
+	test_plugin_status_json "export" "git-export" "testscm-plugin-status-2"
 
 }
 
