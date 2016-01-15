@@ -84,7 +84,7 @@
                 </g:javascript>
             </div>
         </div>
-        <div class="form-group ${hasErrors(bean: option, field: 'defaultValue', 'has-error')}">
+        <div class="form-group opt_default_value ${hasErrors(bean: option, field: 'defaultValue', 'has-error')}" style="${wdgt.styleVisible(if: !(option?.isDate || option?.secureInput || option?.secureExposed))}">
             <label class="col-sm-2 control-label"><g:message code="form.option.defaultValue.label" /></label>
             <div class="col-sm-10">
                             <input type="text"
@@ -150,11 +150,20 @@
 
                     <div class="radio">
                         <label>
-                            <g:radio name="inputType" value="plain" checked="${!option?.secureInput}" id="inputplain_${rkey}"/>
+                            <g:radio name="inputType" value="plain" checked="${!option?.secureInput && !option?.isDate}" id="inputplain_${rkey}"/>
                             <g:message code="form.option.secureInput.false.label"/>
                         </label>
                     </div>
-
+                    
+                    <div class="radio">
+                        <label>
+                                <g:radio name="inputType" value="date" checked="${option?.isDate}" id="inputdate_${rkey}"/>
+                            <g:message code="form.option.date.label"/>
+                        </label>
+                        <span class="text-muted">
+                            <g:message code="form.option.date.description"/>
+                        </span>
+                    </div>
 
                     <div class="radio">
                         <label>
@@ -195,24 +204,44 @@
                 <wdgt:action target="mvfalse_${rkey}" check="true"/>
                 <wdgt:action targetSelector=".opt_sec_nexp_disabled" visible="true"/>
                 <wdgt:action targetSelector=".opt_sec_nexp_enabled" visible="false"/>
+                <wdgt:action targetSelector=".opt_multi_value" visible="true"/>
                 <wdgt:action targetSelector=".opt_sec_disabled" visible="false"/>
                 <wdgt:action targetSelector=".opt_sec_enabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_allowed_values" visible="false"/>
+                <wdgt:action targetSelector=".opt_enforced" visible="false"/>
+                <wdgt:action targetSelector=".opt_default_value" visible="false"/>
             </wdgt:eventHandler>
             <wdgt:eventHandler for="secexpfalse_${rkey}" state="unempty" inline="true" oneway="true">
                 <wdgt:action targetSelector=".opt_sec_nexp_disabled" visible="false"/>
                 <wdgt:action targetSelector=".opt_sec_nexp_enabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_multi_value" visible="true"/>
                 <wdgt:action targetSelector=".opt_sec_disabled" visible="false"/>
                 <wdgt:action targetSelector=".opt_sec_enabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_allowed_values" visible="false"/>
+                <wdgt:action targetSelector=".opt_enforced" visible="false"/>
+                <wdgt:action targetSelector=".opt_default_value" visible="false"/>
             </wdgt:eventHandler>
             <wdgt:eventHandler for="inputplain_${rkey}" state="unempty" inline="true" oneway="true">
                 <wdgt:action targetSelector=".opt_sec_nexp_disabled" visible="true"/>
                 <wdgt:action targetSelector=".opt_sec_nexp_enabled" visible="false"/>
                 <wdgt:action targetSelector=".opt_sec_disabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_multi_value" visible="true"/>
                 <wdgt:action targetSelector=".opt_sec_enabled" visible="false"/>
+                <wdgt:action targetSelector=".opt_allowed_values" visible="true"/>
+                <wdgt:action targetSelector=".opt_enforced" visible="true"/>
+                <wdgt:action targetSelector=".opt_default_value" visible="true"/>
+            </wdgt:eventHandler>
+            <wdgt:eventHandler for="inputdate_${rkey}" state="unempty" inline="true" oneway="true">
+                <wdgt:action targetSelector=".opt_sec_nexp_disabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_sec_nexp_enabled" visible="false"/>
+                <wdgt:action targetSelector=".opt_multi_value" visible="false"/>
+                <wdgt:action targetSelector=".opt_allowed_values" visible="false"/>
+                <wdgt:action targetSelector=".opt_enforced" visible="false"/>
+                <wdgt:action targetSelector=".opt_default_value" visible="false"/>
             </wdgt:eventHandler>
 
         </div>
-        <div class="form-group">
+        <div class="form-group opt_allowed_values" style="${wdgt.styleVisible(if: !(option?.isDate || option?.secureInput || option?.secureExposed))}">
             <label class="col-sm-2 control-label"><g:message code="form.option.values.label" /></label>
             <div class="col-sm-10">
                 <g:set var="valueTypeListChecked" value="${!option || !option.realValuesUrl && params.valuesType != 'url' ? true : false}"/>
@@ -295,7 +324,7 @@
                 </wdgt:eventHandler>
             </div>
         </div>
-        <div class="form-group">
+        <div class="form-group opt_enforced" style="${wdgt.styleVisible(if: !(option?.isDate || option?.secureInput || option?.secureExposed))}">
             <label class="col-sm-2 control-label"><g:message code="form.option.enforcedType.label" /></label>
             <div class="col-sm-10">
                 <div class="radio">
@@ -361,7 +390,7 @@
                 </div>
             </div>
         </div>
-        <div class="row form-inline">
+        <div class="row form-inline opt_multi_value" style="${wdgt.styleVisible(if: !option?.isDate)}">
             <label class="col-sm-2 control-label ${hasErrors(bean: option, field: 'multivalued', 'has-error')}">
                 <g:message code="form.option.multivalued.label" />
             </label>

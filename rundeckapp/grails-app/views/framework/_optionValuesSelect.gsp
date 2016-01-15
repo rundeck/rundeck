@@ -32,11 +32,12 @@
     <g:set var="fieldwatchid" value="${(fieldhiddenid?:rkey+'_'+optName+'_h')}"/>
     <g:set var="hasExtended" value="${!optionSelect.secureInput && (values || optionSelect.values || optionSelect.multivalued) && !err}"/>
     <g:set var="hasTextfield" value="${!optionSelect.enforced && !optionSelect.multivalued || optionSelect.secureInput || !optionSelect.enforced && err}"/>
+    <g:set var="isDate" value="${optionSelect.isDate}"/>
     <g:set var="hasDefaulter" value="${!optionSelect.enforced && !optionSelect.multivalued && !optionSelect.secureInput && optionSelect.defaultValue && !(optionSelect.values.contains(optionSelect.defaultValue))}"/>
     <g:set var="textcolsize" value="${hasExtended?'8':'12'}"/>
     <g:set var="extcolsize" value="${hasTextfield?'4':'12'}"/>
     <%-- Print out the input box for random input --%>
-    <g:if test="${hasTextfield }">
+    <g:if test="${hasTextfield && !isDate}">
         <div class=" col-sm-${textcolsize}">
         <g:if test="${optionSelect.secureInput}">
             <div class="input-group">
@@ -65,6 +66,19 @@
             <wdgt:eventHandler for="${fieldwatchid}" state="empty" visible="true" targetSelector="${'#'+ optName+'_state span.reqwarning'}" frequency="1"  inline='true'/>
         </div>
     </g:if>
+    <g:elseif test="${isDate}">
+        <%
+            def gcal = new java.util.GregorianCalendar()
+            def now = gcal.getTime()
+        %>
+        <span class="form-inline"  id="${optName + '_Ctrl'}">
+           <g:datepickerUI name="${optName}"
+                value="${now}"
+                id="${optName}"
+                optionName="${realFieldName}"
+                class="form-control input-sm"/>
+       </span>
+    </g:elseif>
     <g:elseif test="${optionSelect.enforced && err}">
         <div class=" col-sm-${textcolsize}">
         <span class="info note"><g:message code="Execution.option.enforced.values.could.not.be.loaded" /></span>

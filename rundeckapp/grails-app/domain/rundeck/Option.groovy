@@ -45,6 +45,7 @@ public class Option implements Comparable{
     String defaultStoragePath
     Boolean enforced
     Boolean required
+    Boolean isDate
     SortedSet<String> values
     static hasMany = [values:String]
     URL valuesUrl
@@ -69,6 +70,7 @@ public class Option implements Comparable{
         defaultStoragePath(nullable:true,matches: '^(/?)keys/.+')
         enforced(nullable:false)
         required(nullable:true)
+        isDate(nullable:true)
         values(nullable:true)
         valuesUrl(nullable:true)
         valuesUrlLong(nullable:true)
@@ -102,6 +104,9 @@ public class Option implements Comparable{
         }
         if(required){
             map.required=required
+        }
+        if(isDate){
+            map.isDate=isDate
         }
         if(description){
             map.description=description
@@ -139,6 +144,7 @@ public class Option implements Comparable{
         opt.name=name
         opt.enforced=data.enforced?true:false
         opt.required=data.required?true:false
+        opt.isDate=data.isDate?true:false
         if(data.description){
             opt.description=data.description
         }
@@ -257,7 +263,7 @@ public class Option implements Comparable{
      */
     public Option createClone(){
         Option opt = new Option()
-        ['name','description','defaultValue','defaultStoragePath','sortIndex','enforced','required','values','valuesList','valuesUrl','valuesUrlLong','regex','multivalued','delimiter','secureInput','secureExposed'].each{k->
+        ['name','description','defaultValue','defaultStoragePath','sortIndex','enforced','required', 'isDate', 'values','valuesList','valuesUrl','valuesUrlLong','regex','multivalued','delimiter','secureInput','secureExposed'].each{k->
             opt[k]=this[k]
         }
         if(!opt.valuesList && values){
@@ -275,6 +281,7 @@ public class Option implements Comparable{
         ", storagePath='" + defaultStoragePath + '\'' +
         ", enforced=" + enforced +
         ", required=" + required +
+        ", isDate=" + isDate +
         ", values=" + values +
         ", valuesUrl=" + getRealValuesUrl() +
         ", regex='" + regex + '\'' +
