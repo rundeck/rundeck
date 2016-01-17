@@ -100,6 +100,48 @@
                 <g:hiddenField name="origName" value="${origName?origName:option?.name}"/>
             </g:if>
         </div>
+
+        <div class="opt_sec_enabled form-group ${hasErrors(bean: option, field: 'defaultStoragePath', 'has-error')}"
+             style="${wdgt.styleVisible(if: option?.secureInput)}">
+            <label class="col-sm-2 control-label">
+                <g:message code="form.option.defaultStoragePath.label"/>
+            </label>
+
+            <div class="col-sm-10">
+                <g:set var="storagePathKey" value="${g.rkey()}"/>
+
+                <div class="input-group">
+                    <span class="input-group-addon has_tooltip" title="${message(code:"form.option.defaultStoragePath.description")}">
+                        <g:icon name="lock"/>
+                    </span>
+
+                    <input type="text"
+                           class="form-control"
+                           id="defaultStoragePath_${storagePathKey}"
+                           name="defaultStoragePath"
+                           value="${enc(attr: option?.defaultStoragePath)}"
+                           size="40"
+                           placeholder="${message(code:"form.option.defaultStoragePath.description")}"
+                    />
+
+                    <span class="input-group-btn">
+                        <g:set var="storageRoot" value="keys"/>
+                        <g:set var="storageFilter" value="Rundeck-data-type=password"/>
+                        <a class="btn btn-default obs-select-storage-path"
+                           data-toggle="modal"
+                           href="#storagebrowse"
+                           data-storage-root="${enc(attr:storageRoot)}"
+                           data-storage-filter="${enc(attr:storageFilter)}"
+                           data-field="#defaultStoragePath_${storagePathKey}"
+                        >
+                            <g:message code="select" /> <g:icon name="folder-open"/>
+                        </a>
+                    </span>
+                </div>
+
+            </div>
+        </div>
+
         <div class="form-group">
 
             <label class="col-sm-2 control-label"><g:message code="form.option.inputType.label"/></label>

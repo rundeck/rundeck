@@ -1,3 +1,218 @@
+Release 2.6.2
+===========
+
+Date: 2015-12-02
+
+Name: <span style="color: crimson"><span class="glyphicon glyphicon-headphones"></span> "cafe bonbon crimson headphones"</span>
+
+## Notes
+
+This release includes bug fixes, and some enhancements.
+
+* Secure Job Options can now use Key Storage for defaults, enabling use via scheduled jobs
+* Quartz thread pool info and warnings added to system info
+* API added for SCM plugins, API version updated to v15
+* Plugins: input property definitions can now be placed in groups, which can be shown collapsed by default
+
+## Contributors
+
+* Greg Schueler (gschueler)
+
+## Bug Reporters
+
+* ahonor
+* gschueler
+* sea-lmarchal
+* stack72
+
+## Issues
+
+* [Feature/multifile storage](https://github.com/rundeck/rundeck/pull/1560)
+* [SCM API: push via project-commit action not working](https://github.com/rundeck/rundeck/issues/1553)
+* [SCM API: plugin type not checked for enable/disable](https://github.com/rundeck/rundeck/issues/1552)
+* [SSH debug logging is missing](https://github.com/rundeck/rundeck/issues/1546)
+* [plugin properties can be grouped](https://github.com/rundeck/rundeck/pull/1543)
+* [Feature: secure option can use key store for default values](https://github.com/rundeck/rundeck/pull/1537)
+* [for #1535 allow rundeck.basedir var in remote option file urls](https://github.com/rundeck/rundeck/pull/1536)
+* [Expand ${rdeck.base} for remoteUrl paths for options](https://github.com/rundeck/rundeck/issues/1535)
+* [2.6: startup message "Event listener rundeck.services.JobEventsService#jobChanged declared for topic jobChanged and namespace app but no such event is declared, you may never receive it"](https://github.com/rundeck/rundeck/issues/1532)
+* [Add Quartz Scheduler threadPool usage to metrics healthcheck, system info](https://github.com/rundeck/rundeck/pull/1530)
+* [Startup: ERROR level log: "ScheduledExecutionService - rescheduled job: 335"](https://github.com/rundeck/rundeck/issues/1529)
+* [Job succeeds instead of failing when executing a job-ref at the end](https://github.com/rundeck/rundeck/issues/1528)
+* [API for SCM plugins](https://github.com/rundeck/rundeck/pull/1526)
+* [SCM: add API support for SCM plugins](https://github.com/rundeck/rundeck/issues/1516)
+* [Error Deleting a Project](https://github.com/rundeck/rundeck/issues/1436)
+---
+
+Release 2.6.1
+===========
+
+Date: 2015-10-23
+
+Name: <span style="color: cornflowerblue"><span class="glyphicon glyphicon-globe"></span> "cafe bonbon cornflowerblue globe"</span>
+
+## Fixes
+
+Bugfixes for SCM plugins, and the Job execution/schedule toggle feature.
+
+## Contributors
+
+* Greg Schueler (gschueler)
+* Miguel A. Fuentes Buchholtz (miguelantonio)
+* robertopaez
+
+## Bug Reporters
+
+* LordMike
+* albertmfb
+* dustinak
+* fseiftsmlb
+* gschueler
+* jyaworski
+* katanafleet
+* miguelantonio
+* mprasil
+* oovoo
+* paulpet
+* rophy
+* tomkregenbild
+
+## Issues
+
+* [SCM plugin does not interpret variables in paths](https://github.com/rundeck/rundeck/issues/1510)
+* [CLI: Running rd-jobs list gives an error when user profile is incomplete and SCM is enabled](https://github.com/rundeck/rundeck/issues/1509)
+* [Upgrade to 2.6.0: schedule/execution enabled defaults to No](https://github.com/rundeck/rundeck/issues/1502)
+* [changes implementation of flipScheduleEnabled and flipExecutionEnable…](https://github.com/rundeck/rundeck/pull/1501)
+* [SCM: import while export plugin enabled can cause stacktrace/empty file](https://github.com/rundeck/rundeck/issues/1499)
+* [SCM synch rebase: if result is conflicted, it should be aborted](https://github.com/rundeck/rundeck/issues/1497)
+* [SCM: yaml whitespace error on re-import](https://github.com/rundeck/rundeck/issues/1496)
+* [SCM "Import remote changes"-cancel button leads to SCM configuration](https://github.com/rundeck/rundeck/issues/1494)
+* [SCM rebase gives a non-descriptive message](https://github.com/rundeck/rundeck/issues/1493)
+* [SCM imports reads as XML even though YAML has been chosen](https://github.com/rundeck/rundeck/issues/1492)
+* [SCM: File Path Template Parameter issue ](https://github.com/rundeck/rundeck/issues/1489)
+* [SCM: enabling git export and import, then exporting job changes, causes "import needed" status for the job](https://github.com/rundeck/rundeck/issues/1488)
+* [SCM: Job description with multiple lines can cause whitespace issues for git-diff](https://github.com/rundeck/rundeck/issues/1487)
+* [SCM: Merge result message is verbose](https://github.com/rundeck/rundeck/issues/1486)
+* [SCM Plugins: deleting a project should cleanup/remove loaded SCM plugins](https://github.com/rundeck/rundeck/issues/1484)
+* [Upgrading from 2.4.x to 2.6.x, all jobs have been set to "Enable Execution: no"](https://github.com/rundeck/rundeck/issues/1483)
+* [SCM export plugins: job change events leak to multiple projects](https://github.com/rundeck/rundeck/issues/1479)
+* [SCM: setup two projects with same git base dir causes issues](https://github.com/rundeck/rundeck/issues/1478)
+* [Upgrade to 2.6.0: Node selection defaults to "user has to explicitly select target nodes"](https://github.com/rundeck/rundeck/issues/1477)
+* [When disabling a crontab style schedule and restarting the rundeck service, the schedule is enabled again after service restart.](https://github.com/rundeck/rundeck/issues/1475)
+* [scm export commits yaml format in .xml extension](https://github.com/rundeck/rundeck/issues/1471)
+* [SCM HTTPS, unknown CA](https://github.com/rundeck/rundeck/issues/1469)
+* [Disable/Enable Schedule in Job Actions menu (Rundeck 2.6.0-1) ](https://github.com/rundeck/rundeck/issues/1468)
+* [problem closing file descriptors unloading plugins in rundeck](https://github.com/rundeck/rundeck/issues/1440)
+* [Deleting execution from api is not always working (random errors)](https://github.com/rundeck/rundeck/issues/1380)
+* [documentation needed: using the sudo password and ssh private key passphrase via storage facility for ssh](https://github.com/rundeck/rundeck/issues/1110)
+---
+
+Release 2.6.0
+===========
+
+Date: 2015-10-08
+
+Name: <span style="color: chocolate"><span class="glyphicon glyphicon-gift"></span> "cafe bonbon chocolate gift"</span>
+
+## New Features
+
+* SCM Plugin with Git implementation (preliminary release)
+* Per-job logging limits, such as max line count or file size, see [Jobs - Log Limit](http://rundeck.org/2.6.0/manual/jobs.html#log-limit)
+* Active/passive execution mode: disable all executions on the server
+* Per-Job schedule and execution toggling: disable scheduled or all executions for a single job
+* UI updates to Nodes and Commands pages
+* Project Archives: includes ACLs and project config
+* Per-project ACLs available via API, storable in DB
+	* Filesystem ACLs are now used for "global" level access control
+	* Project ACLs are limited to manage the specific project, and are stored in the DB
+* ACL validation improvements
+	* see the `rd-acl` tool [validate command](http://rundeck.org/2.6.0/man1/rd-acl.html#validate-command)
+	* Invalid filesystem ACLs are logged in the service log
+	* Invalid project ACLs uploaded via API will be rejected
+* Example Orchestrator plugins now bundled
+* JSON support added for all API endpoints
+* Some API refactoring for v14
+* See [API v14](http://rundeck.org/2.6.0/api/index.html)
+* Jobs can now disable automatic node selection by default
+* Phew
+
+## Upgrading
+
+
+Upgrading from 2.5 should not cause any issues. Some new database fields were added, and a new database table was added.
+
+## Compatibility
+
+Some changes to Job serialization formats:
+
+* The project name is no longer included in exported Job definitions.
+* In YAML: options are now always serialized as a sequence, and will preserve the sequence order on input. The original Map format is still allowed on import.
+
+
+## Contributors
+
+* Alex Honor (ahonor)
+* Francois Travais
+* Greg Schueler (gschueler)
+* Mathieu Chateau (mathieuchateau)
+* Miguel Fuentes (miguelantonio)
+* Roberto Paez (robertopaez)
+* William Jimenez (wjimenez5271)
+* maciejs
+
+## Bug Reporters
+
+* adamhamner
+* ahonor
+* chadlnc
+* ctgaff
+* ddzed15
+* francois-travais
+* gschueler
+* hipslu
+* ko-christ
+* maciejs
+* mathieuchateau
+* miguelantonio
+* snebel29
+* sylvainr
+* wjimenez5271
+
+## Issues
+
+* [SCM Plugin with Git support](https://github.com/rundeck/rundeck/pull/1465)
+* [Log limit](https://github.com/rundeck/rundeck/pull/1453)
+* [Add Job Logging Limit options: allow a job to abort/fail or truncate logging if too much output occurs](https://github.com/rundeck/rundeck/issues/1452)
+* [GUI improvements for schedule and execution toggle](https://github.com/rundeck/rundeck/pull/1431)
+* [XML Export of Jobs with inline scripts fails](https://github.com/rundeck/rundeck/issues/1429)
+* [Disable Compatiblity Mode in Internet Explorer: Set X-UA-Compatible](https://github.com/rundeck/rundeck/pull/1423)
+* [jobs never complete in 2.5.3 (sudoPassword option is necessary)](https://github.com/rundeck/rundeck/issues/1422)
+* [UI Improvments: Nodes page](https://github.com/rundeck/rundeck/pull/1412)
+* [project config import: needs to reset project.name](https://github.com/rundeck/rundeck/issues/1400)
+* [UI improvements: Commands page](https://github.com/rundeck/rundeck/pull/1398)
+* [Authentication Documentation Update](https://github.com/rundeck/rundeck/issues/1389)
+* [JS Error: Object doesn't support property or method 'updateError' under IE11](https://github.com/rundeck/rundeck/issues/1383)
+* [Add export/import of project config and ACL policy files in project archives](https://github.com/rundeck/rundeck/pull/1381)
+* [APIs for ACL policy, project-specific policies, ACLs stored in DB](https://github.com/rundeck/rundeck/pull/1379)
+* [Disable schedule and disable job execution: GUI and functionality](https://github.com/rundeck/rundeck/pull/1377)
+* [Documentation: MySQL connector download not usually necessary](https://github.com/rundeck/rundeck/pull/1373)
+* [2.5.2-1 Project Description isn't removed properly when using "Simple Configuration"](https://github.com/rundeck/rundeck/issues/1366)
+* [Need canonical XML serialization for jobs](https://github.com/rundeck/rundeck/issues/1350)
+* [Enhance cluster mode schedule takeover API](https://github.com/rundeck/rundeck/pull/1344)
+* [Enable multiple config locations](https://github.com/rundeck/rundeck/issues/1339)
+* [update to docs for #1333](https://github.com/rundeck/rundeck/pull/1336)
+* [Enhance takeover schedule API: all jobs, or by project](https://github.com/rundeck/rundeck/issues/1332)
+* [Active/passive execution mode](https://github.com/rundeck/rundeck/issues/1327)
+* [Promote example orchestrator plugins to bundled plugins](https://github.com/rundeck/rundeck/issues/1275)
+* [add JSON support to API](https://github.com/rundeck/rundeck/pull/1262)
+* [add a job option to disable the automatic selection of all nodes](https://github.com/rundeck/rundeck/pull/1245)
+* [documentation: update command for creating encrypted/hashed passwords for jetty](https://github.com/rundeck/rundeck/issues/1222)
+* [use JSON throughout API](https://github.com/rundeck/rundeck/issues/1109)
+* [Api endpoint like /incubator/jobs/takeoverSchedule but for all jobs](https://github.com/rundeck/rundeck/issues/1028)
+* [Disabling scheduling without loosing scheduling configuration](https://github.com/rundeck/rundeck/issues/830)
+* [Add job option to have nodes default to un-checked](https://github.com/rundeck/rundeck/issues/114)
+---
+
 Release 2.5.3
 ===========
 

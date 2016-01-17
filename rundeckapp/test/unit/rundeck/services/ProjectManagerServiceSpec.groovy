@@ -334,9 +334,10 @@ class ProjectManagerServiceSpec extends Specification {
         then:
 
         res!=null
-        res.config.size()==2
+        res.config.size()==3
         'def'==res.config['abc']
         'ghi'==res.config['def']
+        'test1'==res.config['project.name']
     }
     void "set project properties internal"(){
         setup:
@@ -368,9 +369,47 @@ class ProjectManagerServiceSpec extends Specification {
         then:
 
         res!=null
-        res.config.size()==1
+        res.config.size()==2
         null==res.config['abc']
         'ghi'==res.config['def']
+        'test1'==res.config['project.name']
+    }
+    void "set project properties should not change project.name"(){
+        setup:
+        Properties props1 = new Properties()
+        props1['def']='ghi'
+        props1['project.name']='not-right'
+        new Project(name:'test1').save()
+        service.storage=Mock(StorageTree){
+            1 * hasResource("projects/test1/etc/project.properties") >> true
+            1 * updateResource("projects/test1/etc/project.properties",{ResourceMeta rm->
+                def tprops=new Properties()
+                tprops.load(rm.inputStream)
+                rm.meta.size()==1 &&
+                        rm.meta[StorageUtil.RES_META_RUNDECK_CONTENT_TYPE]==ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES &&
+                        tprops['abc']==null &&
+                        tprops['def']=='ghi' &&
+                        tprops['project.name']=='test1'
+            }) >> Mock(Resource){
+                2 * getContents()>> Mock(ResourceMeta){
+                    1 * getModificationTime()
+                    1 * getCreationTime()
+                }
+            }
+            0 * _(*_)
+        }
+
+
+        when:
+        def res=service.setProjectProperties('test1',props1)
+
+        then:
+
+        res!=null
+        res.config.size()==2
+        null==res.config['abc']
+        res.config['def']=='ghi'
+        res.config['project.name']=='test1'
     }
 
     void "merge properties no conflict"() {
@@ -563,6 +602,27 @@ class ProjectManagerServiceSpec extends Specification {
         then:
         6==len
         'abcdef'==baos.toString()
+    }
+    void "storage read does not close outputstream"(){
+        given:
+        def meta=Stub(ResourceMeta){
+            getInputStream() >> new ByteArrayInputStream('abcdef'.bytes)
+        }
+        def resStub = Stub(Resource){
+            getContents()>> meta
+        }
+        service.storage=Stub(StorageTree){
+            getResource("projects/test1/my-resource") >> resStub
+        }
+        def output=Mock(OutputStream)
+
+        when:
+        def len=service.readProjectFileResource("test1","my-resource",output)
+
+        then:
+        6==len
+        _*output.write(*_)
+        0*output.close()
     }
     void "storage read does not exist"(){
         given:

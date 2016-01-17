@@ -9,6 +9,8 @@ class LogFileStorageRequest {
     Date dateCreated
     Date lastUpdated
 
+    static belongsTo = Execution
+
     static constraints = {
         execution nullable: false
         pluginName maxSize: 255

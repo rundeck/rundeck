@@ -205,6 +205,53 @@ for:
         validation.errors.size()==1
         validation.errors['test1[1]']==['Section \'by:\' is not valid: {blonk=elf} it must contain \'group:\' and/or \'username:\'']
     }
+    def "validate by group: not a string"(){
+        when:
+        def validation = validationForString """
+context:
+    project: test
+description: wat
+by:
+    ${section}: 1234
+for:
+    type:
+        - allow: '*'
+"""
+
+        then:
+        !validation.valid
+        validation.errors.size()==1
+        validation.errors['test1[1]'] ==
+                ['Section \'' + section + ':\' should be a list or a String, but it was: java.lang.Integer']
+
+        where:
+        section    | _
+        'group'    | _
+        'username' | _
+    }
+    def "validate by section: not a list of strings"(){
+        when:
+        def validation = validationForString """
+context:
+    project: test
+description: wat
+by:
+    ${section}: [1234]
+for:
+    type:
+        - allow: '*'
+"""
+
+        then:
+        !validation.valid
+        validation.errors.size()==1
+        validation.errors['test1[1]']==['Section \''+section+':\' should contain only Strings, but saw a: java.lang.Integer']
+
+        where:
+        section    | _
+        'group'    | _
+        'username' | _
+    }
     def "validate for empty"(){
         when:
         def validation = validationForString '''

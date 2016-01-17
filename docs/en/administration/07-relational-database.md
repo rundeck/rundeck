@@ -104,10 +104,13 @@ Update your `rundeck-config.properties` and configure the datasource:
     dataSource.url = jdbc:mysql://myserver/rundeck?autoReconnect=true
     dataSource.username=rundeckuser
     dataSource.password=rundeckpassword
-    
-Next, [Download the mysql connector jar](http://dev.mysql.com/downloads/connector/j/).
 
-Copy the mysql-connector-java-5.x.x-bin.jar to `$RDECK_BASE/server/lib` (for launcher install) or `$WEBAPPS/rundeck/WEB-INF/lib` (for Tomcat).
+With recent Rundeck version, MySQL connector is already there.
+You can check if present in this path: `$RDECK_BASE/exp/webapp/WEB-INF/lib/`
+
+Else:
+* [Download the mysql connector jar](http://dev.mysql.com/downloads/connector/j/).
+* Copy the mysql-connector-java-5.x.x-bin.jar to `$RDECK_BASE/server/lib` (for launcher install) or `$WEBAPPS/rundeck/WEB-INF/lib` (for Tomcat).
 
 Finally you can start rundeck.  If you see a startup error about database access, make sure that the hostname that the Mysql server sees from the client is the same one you granted access to.
 
@@ -139,7 +142,7 @@ in a place you can upload it later.
     * RPM/Debian install location: `/var/rundeck/projects`
     * Launcher location: `$RDECK_BASE/prjoects`
 * Make a backup of your H2 database, which you can revert back to in case of error, 
-    * RPM/Debian install location: `/var/rundeck/data`
+    * RPM/Debian install location: `/var/lib/rundeck/data`
     * Launcher location: `$RDECK_BASE/server/data`
 
 ## Stop rundeck
@@ -167,7 +170,7 @@ Then execute this sql:
 
 ## Configure rundeck-config.properties
 
-Set the datasource URL to point to your Mysql host, with appropriate databse name, 
+Set the datasource URL to point to your Mysql host, with appropriate database name, 
 username and password.
 
 Modify the rundeck config file.

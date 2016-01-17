@@ -1,35 +1,22 @@
 package rundeck.services
 
-import com.dtolabs.rundeck.app.support.ExecutionContext
-import com.dtolabs.rundeck.app.support.ExecutionQuery
-import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
+import com.dtolabs.rundeck.app.support.*
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.common.INodeEntry
-import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
-import com.dtolabs.rundeck.core.utils.OptsUtil
-import com.dtolabs.rundeck.app.support.BaseNodeFilters
-import com.dtolabs.rundeck.app.support.QueueQuery
-import com.dtolabs.rundeck.core.logging.ContextLogWriter
-import com.dtolabs.rundeck.core.logging.LogLevel
-import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.INodeSet
-import com.dtolabs.rundeck.core.common.OrchestratorConfig
-import com.dtolabs.rundeck.core.common.NodesSelector
-import com.dtolabs.rundeck.core.common.SelectorUtils
+import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.*
 import com.dtolabs.rundeck.core.execution.workflow.steps.*
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.*
+import com.dtolabs.rundeck.core.logging.ContextLogWriter
+import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.utils.NodeSet
+import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.execution.JobExecutionItem
@@ -40,7 +27,7 @@ import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import org.hibernate.StaleObjectStateException
-import org.springframework.beans.factory.InitializingBean
+import org.rundeck.storage.api.StorageException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
@@ -48,9 +35,10 @@ import org.springframework.validation.ObjectError
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
-import rundeck.controllers.ExecutionController
 import rundeck.filters.ApiRequestFilters
+import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.logging.ExecutionLogWriter
+import rundeck.services.logging.LoggingThreshold
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -86,6 +74,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def jobStateService
     def grailsApplication
     def configurationService
+    def grailsEvents
 
     boolean getExecutionsAreActive(){
         configurationService.executionModeActive
@@ -709,7 +698,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         reportMap.author=user
         reportMap.title= jobSummary?jobSummary:"Rundeck Job Execution"
-        reportMap.status= (statusString in ['true', 'succeeded'] && issuccess) ? "succeed":iscancelled?"cancel": willretry?'retry':istimedout?"timeout": (statusString in ['failed','false']) ? "fail" : "other"
+
+        def statusMap =[
+                true:'succeed',
+                (EXECUTION_SUCCEEDED):'succeed',
+                (EXECUTION_ABORTED):'cancel',
+                (EXECUTION_FAILED_WITH_RETRY):'retry',
+                (EXECUTION_TIMEDOUT):'timeout',
+                (EXECUTION_FAILED):'fail',
+                false:'fail',
+        ]
+        reportMap.status= statusMap[statusString]?:'other'
         reportMap.node= null!=nodesummary?nodesummary: frameworkService.getFrameworkNodeName()
 
         reportMap.message=(statusString? "Job status ${statusString}" : issuccess?'Job completed successfully':iscancelled?('Job killed by: '+(abortedby?:user)):
@@ -750,7 +749,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * starts an execution in a separate thread, returning a map of [thread:Thread, loghandler:LogHandler]
+     * starts an execution in a separate thread, returning a map of [thread:Thread, loghandler:LogHandler, threshold:Threshold]
      */
     def Map executeAsyncBegin(Framework framework, AuthContext authContext, Execution execution,
                               ScheduledExecution scheduledExecution=null, Map extraParams = null,
@@ -758,10 +757,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         //TODO: method can be transactional readonly
         metricService.markMeter(this.class.name,'executionStartMeter')
         execution.refresh()
+        //set up log output threshold
+        def thresholdMap = ScheduledExecution.parseLogOutputThreshold(scheduledExecution?.logOutputThreshold)
+        def threshold = LoggingThreshold.fromMap(thresholdMap,scheduledExecution?.logOutputThresholdAction)
+
         def ExecutionLogWriter loghandler= loggingService.openLogWriter(
                 execution,
                 logLevelForString(execution.loglevel),
-                [user:execution.user, node: framework.getFrameworkNodeName()]
+                [user:execution.user, node: framework.getFrameworkNodeName()],
+                threshold
         )
         execution.outputfilepath = loghandler.filepath?.getAbsolutePath()
         execution.save(flush:true)
@@ -790,6 +794,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def multiListener = MultiWorkflowExecutionListener.create(executionListener,
                     [executionListener, wfEventListener,execStateListener, /*new EchoExecListener() */])
 
+            if(scheduledExecution) {
+                if(!extraParamsExposed){
+                    extraParamsExposed=[:]
+                }
+                if(!extraParams){
+                    extraParams=[:]
+                }
+                loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext)
+            }
+
             StepExecutionContext executioncontext = createContext(execution, null,framework, authContext,
                     execution.user, jobcontext, multiListener, null,extraParams, extraParamsExposed)
 
@@ -814,7 +828,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //create service object for the framework and listener
             Thread thread = new WorkflowExecutionServiceThread(framework.getWorkflowExecutionService(),item, executioncontext)
             thread.start()
-            return [thread:thread, loghandler:loghandler, noderecorder:recorder, execution: execution, scheduledExecution:scheduledExecution]
+            return [thread:thread, loghandler:loghandler, noderecorder:recorder, execution: execution, scheduledExecution:scheduledExecution,threshold:threshold]
         }catch(Exception e) {
             log.error('Failed to start execution', e)
             loghandler.logError('Failed to start execution: ' + e.getClass().getName() + ": " + e.message)
@@ -824,6 +838,50 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return null
         }
     }
+
+    /**
+     * Load stored password default values for secure options with defaultStoragePath, and no value set.
+     *
+     * @param scheduledExecution job
+     * @param secureOptsExposed exposed secure option values
+     * @param secureOpts private secure option values
+     * @param authContext auth context
+     */
+    void loadSecureOptionStorageDefaults(
+            ScheduledExecution scheduledExecution,
+            Map secureOptsExposed,
+            Map secureOpts,
+            AuthContext authContext
+    )
+    {
+        def found = scheduledExecution.options?.findAll {
+            it.secureInput && it.defaultStoragePath
+        }?.findAll {
+            it.secureExposed ?
+                    !(secureOptsExposed?.containsKey(it.name)) :
+                    !(secureOpts?.containsKey(it.name))
+        }
+        if (found) {
+
+            //load secure option defaults from key storage
+            def keystore = storageService.storageTreeWithContext(authContext)
+            found?.each {
+                try {
+                    def password = keystore.readPassword(it.defaultStoragePath)
+                    if (it.secureExposed) {
+                        secureOptsExposed[it.name] = new String(password)
+                    } else {
+                        secureOpts[it.name] = new String(password)
+                    }
+                } catch (StorageException e) {
+                    log.error("Unable to read storage path for option ${it.name}: ${e.message}")
+                    log.debug("Unable to read storage path for option ${it.name}: ${e.message}", e)
+                }
+
+            }
+        }
+    }
+
     private LogLevel logLevelForString(String level){
         def deflevel = applicationContext?.getServletContext()?.getAttribute("LOGLEVEL_DEFAULT")
         return LogLevel.looseValueOf(level?:deflevel,LogLevel.NORMAL)
@@ -1221,13 +1279,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         Map result
         try {
             if (e.dateCompleted == null && e.dateStarted != null) {
-                throw new Exception("The execution is currently running")
+                return [error: 'running', message: "Failed to delete execution {{Execution ${e.id}}}: The execution is currently running", success: false]
             }
                 //delete all reports
             ExecReport.findAllByJcExecId(e.id.toString()).each { rpt ->
                 rpt.delete(flush: true)
             }
-            def files = []
+            //delete all storage requests
+            LogFileStorageRequest.findAllByExecution(e).each { req ->
+                req.delete(flush: true)
+            }
+            List<File> files = []
             def execs = []
             //aggregate all files to delete
             execs << e
@@ -1248,8 +1310,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //delete all files
             def deletedfiles = 0
             files.each { file ->
-                if (null != file && file.exists() && !FileUtils.deleteQuietly(file)) {
-                    log.warn("Failed to delete file while deleting project ${project.name}: ${file.absolutePath}")
+                if (!FileUtils.deleteQuietly(file)) {
+                    log.warn("Failed to delete file while deleting execution ${e.id}: ${file.absolutePath}")
                 } else {
                     deletedfiles++
                 }
@@ -1258,7 +1320,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             result = [success: true]
         } catch (Exception ex) {
             log.error("Failed to delete execution ${e.id}", ex)
-            result = [error: "Failed to delete execution {{Execution ${e.id}}}: ${ex.message}", success: false]
+            result = [error:'failure',message: "Failed to delete execution {{Execution ${e.id}}}: ${ex.message}", success: false]
         }
         return result
     }
@@ -1453,9 +1515,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 scheduledExecution.project)) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
+
         if(!getExecutionsAreActive()){
             return [success:false,failed:true,error:'disabled',message:lookupMessage('disabled.execution.run',null)]
         }
+
+        if (!scheduledExecution.hasExecutionEnabled()) {
+            return [success:false,failed:true,error:'disabled',message:lookupMessage('scheduleExecution.execution.disabled',null)]
+        }
+
         input.retryAttempt = attempt
         try {
 
@@ -1959,6 +2027,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                 context: context
                         ]
                 )
+                grailsEvents?.event(
+                        null,
+                        'executionComplete',
+                        new ExecutionCompleteEvent(
+                                state: execution.executionState,
+                                execution:execution,
+                                job:scheduledExecution,
+                                nodeStatus: [succeeded: sucCount,failed:failedCount,total:totalCount],
+                                context: context?.dataContext
+
+                        )
+                )
             }
         }
     }
@@ -2345,6 +2425,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     false
             )
         }
+
+        loadSecureOptionStorageDefaults(se, evalSecOpts, evalSecAuthOpts, executionContext.authContext)
 
         //validate the option values
         if(dovalidate){

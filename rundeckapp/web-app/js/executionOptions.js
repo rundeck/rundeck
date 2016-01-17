@@ -20,7 +20,10 @@ var ExecutionOptions = {
         if ("" == $(check).value && !$(check).checked) {
             //remove it
             var div = $(check.parentNode);
-            $(div).parentNode.removeChild(div);
+            var parent=$(div).parentNode;
+            jQuery(div).fadeTo('fast',0,function(){
+                $(div).parentNode.removeChild(div);
+            });
         }
     },
     multiVarCheckboxChangeWarningHandler: function(optname,evt) {
@@ -79,7 +82,12 @@ var ExecutionOptions = {
             inpu2.setAttribute("value", value);
         }
         Event.observe(inpu2, 'change', ExecutionOptions.multiVarInputChangeHandler.curry(inpu));
-        Event.observe(inpu2, 'keydown', ExecutionOptions.multiVarInputKeydownHandler.curry(inpu));
+        Event.observe(inpu2, 'keydown', function(evt){
+            var wasNotEnter=ExecutionOptions.multiVarInputKeydownHandler(inpu,evt);
+            if(!wasNotEnter && jQuery(inpu2).val()){
+                ExecutionOptions.addMultivarValue(name,inputarea,null,handler);
+            }
+        });
         if (handler) {
             handler(name,inpu2);
         }
@@ -91,7 +99,7 @@ var ExecutionOptions = {
         $$('#' + name + '_state span.reqwarning').each(Element.hide);
         Try.these(
             function() {
-                Effect.Appear(div, {duration:0.5});
+                jQuery(div).fadeTo('fast',1);
             },
             function() {
                 $(div).show();

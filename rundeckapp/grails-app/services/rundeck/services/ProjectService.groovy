@@ -2,6 +2,7 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.util.XmlParserUtil
@@ -22,6 +23,10 @@ import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
 import rundeck.controllers.JobXMLException
+import rundeck.services.logging.ExecutionFile
+import rundeck.services.logging.ExecutionFileDeletePolicy
+import rundeck.services.logging.ExecutionFileProducer
+import rundeck.services.logging.ProducedExecutionFile
 
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -33,7 +38,10 @@ import java.util.regex.Pattern
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
-class ProjectService implements InitializingBean{
+class ProjectService implements InitializingBean, ExecutionFileProducer{
+    public static final String EXECUTION_XML_LOG_FILETYPE = 'execution.xml'
+    final String executionFileType = EXECUTION_XML_LOG_FILETYPE
+
     def grailsApplication
     def scheduledExecutionService
     def executionService
@@ -41,6 +49,7 @@ class ProjectService implements InitializingBean{
     def logFileStorageService
     def workflowService
     def authorizationService
+    def scmService
     static transactional = false
 
     private exportJob(ScheduledExecution job, Writer writer)
@@ -77,30 +86,68 @@ class ProjectService implements InitializingBean{
         }
     }
 
-    def exportExecution(ZipBuilder zip, Execution exec, String name) throws ProjectServiceException {
+    @Override
+    ExecutionFile produceStorageFileForExecution(final Execution e) {
+        File localfile = getExecutionXmlFileForExecution(e)
+
+        new ProducedExecutionFile(localFile: localfile, fileDeletePolicy: ExecutionFileDeletePolicy.ALWAYS)
+    }
+
+    /**
+     * Write execution.xml file to a temp file and return
+     * @param exec execution
+     * @return file containing execution.xml
+     */
+    File getExecutionXmlFileForExecution(Execution execution){
+        File executionXmlTempfile = File.createTempFile("execution-${execution.id}", ".xml")
+        executionXmlTempfile.withWriter("UTF-8") { Writer writer ->
+            exportExecutionXml(
+                    execution,
+                    writer,
+                    "output-${execution.id}.rdlog"
+            )
+        }
+        executionXmlTempfile.deleteOnExit()
+        executionXmlTempfile
+    }
+    /**
+     * Write execution.xml file to the writer
+     * @param exec execution
+     * @param writer writer
+     * @param logfilepath optional new outputfilepath to set for the xml
+     * @return
+     */
+    def exportExecutionXml(Execution exec, Writer writer, String logfilepath =null){
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
         def dateConvert = {
             sdf.format(it)
         }
         BuilderUtil builder = new BuilderUtil()
-        builder.converters= [(Date): dateConvert, (java.sql.Timestamp): dateConvert]
-
+        builder.converters = [(Date): dateConvert, (java.sql.Timestamp): dateConvert]
         def map = exec.toMap()
         BuilderUtil.makeAttribute(map, 'id')
-        def File outfile = loggingService.getLogFileForExecution(exec)
-        if (outfile && outfile.isFile()) {
+        if (logfilepath) {
             //change entry to point to local file
-            map.outputfilepath = "output-${exec.id}.rdlog"
+            map.outputfilepath = logfilepath
         }
         JobsXMLCodec.convertWorkflowMapForBuilder(map.workflow)
+        def xml = new MarkupBuilder(writer)
+        builder.objToDom("executions", [execution: map], xml)
+    }
+    def exportExecution(ZipBuilder zip, Execution exec, String name) throws ProjectServiceException {
+
+        def File logfile = loggingService.getLogFileForExecution(exec)
+        String logfilepath=null
+        if (logfile && logfile.isFile()) {
+            logfilepath = "output-${exec.id}.rdlog"
+        }
         //convert map to xml
         zip.file("$name") { Writer writer ->
-            def xml = new MarkupBuilder(writer)
-            builder.objToDom("executions", [execution:map], xml)
+            exportExecutionXml(exec, writer, logfilepath)
         }
-        if (outfile && outfile.isFile()) {
-            zip.file "output-${exec.id}.rdlog", outfile
+        if (logfile && logfile.isFile()) {
+            zip.file logfilepath, logfile
         }
         def File statefile = workflowService.getStateFileForExecution(exec)
         if (statefile && statefile.isFile()) {
@@ -181,7 +228,7 @@ class ProjectService implements InitializingBean{
      * input IDs from the XML, 'retryidmap' map of new Executions to old the 'retry' execution ID
      * @throws ProjectServiceException if an error occurs
      */
-    def loadExecutions(xmlinput,Map jobIdMap=null, skipJobIds = []) throws ProjectServiceException {
+    def loadExecutions(xmlinput, String projectName, Map jobIdMap=null, skipJobIds = []) throws ProjectServiceException {
         Node doc = parseXml(xmlinput)
         if (!doc) {
             throw new ProjectServiceException("XML Document could not be parsed.")
@@ -208,6 +255,13 @@ class ProjectService implements InitializingBean{
                 }else if(object.jobId && skipJobIds && skipJobIds.contains(object.jobId)){
                     log.debug("Execution skipped ${object.id} for job ${object.jobId}")
                     return
+                }else if(object.jobId) {
+                    //look for same ID
+                    def found = scheduledExecutionService.getByIDorUUID(object.jobId)
+                    if(found && found.project==projectName){
+                        se=found
+                    }
+
                 }
                 if(object.id){
                     object.id=XmlParserUtil.stringToInt(object.id,-1)
@@ -427,9 +481,14 @@ class ProjectService implements InitializingBean{
      * @return
      * @throws ProjectServiceException
      */
-    def exportProjectToOutputStream(IRundeckProject project, Framework framework,
-                                    OutputStream stream, ProgressListener listener=null,
-                                    boolean aclReadAuth=false) throws ProjectServiceException{
+    def exportProjectToOutputStream(IRundeckProject project,
+                                    Framework framework,
+                                    OutputStream stream,
+                                    ProgressListener listener=null,
+                                    boolean aclReadAuth=false,
+                                    ArchiveOptions options=null
+    ) throws ProjectServiceException
+    {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
 
@@ -441,7 +500,7 @@ class ProjectService implements InitializingBean{
         manifest.mainAttributes.putValue('Rundeck-Archive-Export-Date', sdf.format(new Date()))
 
         def zip = new JarOutputStream(stream,manifest)
-        exportProjectToStream(project, framework, zip, listener, aclReadAuth)
+        exportProjectToStream(project, framework, zip, listener, aclReadAuth,options)
         zip.close()
     }
 
@@ -450,34 +509,64 @@ class ProjectService implements InitializingBean{
             Framework framework,
             ZipOutputStream output,
             ProgressListener listener = null,
-            boolean aclReadAuth=false
+            boolean aclReadAuth=false,
+            ArchiveOptions options=null
     ) throws ProjectServiceException
     {
         ZipBuilder zip = new ZipBuilder(output)
 //        zip.debug = true
         String projectName = project.name
-
-        listener?.total(
-                'export',
-                ScheduledExecution.countByProject(projectName)+
-                        3 * Execution.countByProject(projectName)+
-                        BaseReport.countByCtxProject(projectName)+
-                        4 //properties and other files
-        )
+        if(!options ||options.all) {
+            listener?.total(
+                    'export',
+                    ScheduledExecution.countByProject(projectName) +
+                            3 * Execution.countByProject(projectName) +
+                            BaseReport.countByCtxProject(projectName) +
+                            4 //properties and other files
+            )
+        }else if(options.executionsOnly) {
+            listener?.total(
+                    'export',
+                    4 * options.executionIds.size()
+            )
+        }
 
         zip.dir("rundeck-${projectName}/") {
             //export jobs
-            def jobs = ScheduledExecution.findAllByProject(projectName)
-            dir('jobs/') {
-                jobs.each { ScheduledExecution job ->
-                    zip.file("job-${job.extid.encodeAsURL()}.xml") { Writer writer ->
-                        exportJob job, writer
-                        listener?.inc('export',1)
+            if(!options ||options.all) {
+                def jobs = ScheduledExecution.findAllByProject(projectName)
+                dir('jobs/') {
+                    jobs.each { ScheduledExecution job ->
+                        zip.file("job-${job.extid.encodeAsURL()}.xml") { Writer writer ->
+                            exportJob job, writer
+                            listener?.inc('export', 1)
+                        }
                     }
                 }
             }
 
-            def execs = Execution.findAllByProject(projectName)
+            List<Execution> execs=[]
+            List<BaseReport> reports=[]
+            if(!options || options.all){
+                execs = Execution.findAllByProject(projectName)
+                reports = BaseReport.findAllByCtxProject(projectName)
+            }else if(options.executionsOnly){
+                //find execs
+                List<Long> execIds = []
+                List<String> execIdStrings = []
+                options.executionIds.each {
+                    if(it instanceof Long){
+                        execIds<<it
+                        execIdStrings<<it.toString()
+                    }else if(it instanceof String){
+                        execIds<<Long.parseLong(it)
+                        execIdStrings<<it
+                    }
+                }
+                execs = Execution.findAllByProjectAndIdInList(projectName,execIds)
+                reports=ExecReport.findAllByCtxProjectAndJcExecIdInList(projectName,execIdStrings)
+            }
+
             dir('executions/') {
                 //export executions
                 //export execution logs
@@ -487,7 +576,7 @@ class ProjectService implements InitializingBean{
                 }
             }
             //export history
-            def reports = BaseReport.findAllByCtxProject(projectName)
+
             dir('reports/') {
                 reports.each { BaseReport report ->
                     exportHistoryReport zip, report, "report-${report.id}.xml"
@@ -496,57 +585,59 @@ class ProjectService implements InitializingBean{
             }
 
             //export config
-            dir('files/'){
-                dir('etc/'){
-                    zip.file('project.properties'){Writer writer->
-                        def map = project.getProjectProperties()
-                        map = replaceRelativePathsForProjectProperties(project,framework,map,'%PROJECT_BASEDIR%')
-                        def projectProps = map as Properties
-                        def sw = new StringWriter()
-                        projectProps.store(sw,"Exported configuration")
-                        def projectPropertiesText = sw.toString().
-                                split(Pattern.quote(System.getProperty("line.separator"))).
-                                sort().
-                                join(System.getProperty("line.separator"))
-                        writer.write(projectPropertiesText)
+            if(!options || options.all) {
+                dir('files/') {
+                    dir('etc/') {
+                        zip.file('project.properties') { Writer writer ->
+                            def map = project.getProjectProperties()
+                            map = replaceRelativePathsForProjectProperties(project, framework, map, '%PROJECT_BASEDIR%')
+                            def projectProps = map as Properties
+                            def sw = new StringWriter()
+                            projectProps.store(sw, "Exported configuration")
+                            def projectPropertiesText = sw.toString().
+                                    split(Pattern.quote(System.getProperty("line.separator"))).
+                                    sort().
+                                    join(System.getProperty("line.separator"))
+                            writer.write(projectPropertiesText)
 
-                        listener?.inc('export',1)
-                    }
-                }
-                ['readme.md','motd.md'].each{filename->
-                    if(project.existsFileResource(filename)){
-                        zip.fileStream(filename){OutputStream stream->
-                            project.loadFileResource(filename,stream)
-                            listener?.inc('export',1)
+                            listener?.inc('export', 1)
                         }
-                    }else{
-                        listener?.inc('export',1)
                     }
-                }
-                if(aclReadAuth) {
-                    //acls
-                    def policies = project.listDirPaths('acls/').grep(~/^.*\.aclpolicy$/)
-                    if (policies) {
-                        def count = policies.size()
-                        dir('acls/') {
-                            policies.each { path ->
-                                def fname = path.substring('acls/'.length())
-                                zip.fileStream(fname) { OutputStream stream ->
-                                    project.loadFileResource(path, stream)
-                                    count--
-                                    if (count == 0) {
-                                        listener?.inc('export', 1)
+                    ['readme.md', 'motd.md'].each { filename ->
+                        if (project.existsFileResource(filename)) {
+                            zip.fileStream(filename) { OutputStream stream ->
+                                project.loadFileResource(filename, stream)
+                                listener?.inc('export', 1)
+                            }
+                        } else {
+                            listener?.inc('export', 1)
+                        }
+                    }
+                    if (aclReadAuth) {
+                        //acls
+                        def policies = project.listDirPaths('acls/').grep(~/^.*\.aclpolicy$/)
+                        if (policies) {
+                            def count = policies.size()
+                            dir('acls/') {
+                                policies.each { path ->
+                                    def fname = path.substring('acls/'.length())
+                                    zip.fileStream(fname) { OutputStream stream ->
+                                        project.loadFileResource(path, stream)
+                                        count--
+                                        if (count == 0) {
+                                            listener?.inc('export', 1)
+                                        }
                                     }
                                 }
                             }
+                        } else {
+                            listener?.inc('export', 1)
                         }
                     } else {
                         listener?.inc('export', 1)
                     }
-                } else {
-                    listener?.inc('export', 1)
-                }
 
+                }
             }
         }
         listener?.done()
@@ -600,65 +691,71 @@ class ProjectService implements InitializingBean{
      * @param input input stream of zip data
      * @param options import options, [jobUUIDBehavior: (replace/preserve), importExecutions: (true/false)]
      */
-    def importToProject(IRundeckProject project, String user, String roleList, Framework framework,
-                        AuthContext authContext, InputStream input, ProjectArchiveImportRequest options) throws ProjectServiceException {
+    def importToProject(
+            IRundeckProject project,
+            Framework framework,
+            UserAndRolesAuthContext authContext,
+            InputStream input,
+            ProjectArchiveImportRequest options
+    ) throws ProjectServiceException
+    {
         ZipReader zip = new ZipReader(new ZipInputStream(input))
 //        zip.debug=true
-        def jobxml=[]
-        def jobxmlmap=[:]
-        def execxml=[]
-        def execxmlmap=[:]
-        def Map<String,File> execout=[:]
-        def reportxml=[]
-        def reportxmlnames=[:]
+        def jobxml = []
+        def jobxmlmap = [:]
+        def execxml = []
+        def execxmlmap = [:]
+        def Map<String, File> execout = [:]
+        def reportxml = []
+        def reportxmlnames = [:]
         boolean importExecutions = options.importExecutions
         boolean importConfig = options.importConfig
         boolean importACL = options.importACL
-        File configtemp=null
-        Map<String,File> mdfilestemp=[:]
-        Map<String,File> aclfilestemp=[:]
-        zip.read{
-            '*/'{ //rundeck-<projectname>/
-                'jobs/'{
-                    'job-.*\\.xml'{path,name,inputs->
+        File configtemp = null
+        Map<String, File> mdfilestemp = [:]
+        Map<String, File> aclfilestemp = [:]
+        zip.read {
+            '*/' { //rundeck-<projectname>/
+                'jobs/' {
+                    'job-.*\\.xml' { path, name, inputs ->
                         def tempfile = copyToTemp()
-                        jobxml<< tempfile
-                        jobxmlmap[tempfile]=[path:path,name:name]
+                        jobxml << tempfile
+                        jobxmlmap[tempfile] = [path: path, name: name]
                     }
                 }
-                if(importExecutions){
-                    'executions/'{
-                        'execution-.*\\.xml' {path, name, inputs ->
+                if (importExecutions) {
+                    'executions/' {
+                        'execution-.*\\.xml' { path, name, inputs ->
                             execxml << copyToTemp()
-                            execxmlmap[execxml[-1]]=name
+                            execxmlmap[execxml[-1]] = name
                         }
-                        'output-.*\\.(txt|rdlog)|state-.*\\.state.json' {path, name, inputs ->
-                            execout[name]= copyToTemp()
+                        'output-.*\\.(txt|rdlog)|state-.*\\.state.json' { path, name, inputs ->
+                            execout[name] = copyToTemp()
                         }
                     }
-                    'reports/'{
-                        'report-.*\\.xml' {path, name, inputs ->
-                            reportxml<< copyToTemp()
-                            reportxmlnames[reportxml[-1]]=name
+                    'reports/' {
+                        'report-.*\\.xml' { path, name, inputs ->
+                            reportxml << copyToTemp()
+                            reportxmlnames[reportxml[-1]] = name
                         }
                     }
                 }
 
-                'files/'{
-                    if(importConfig){
-                        'etc/'{
-                            'project.properties'{path,name,inputs->
-                                configtemp=copyToTemp()
+                'files/' {
+                    if (importConfig) {
+                        'etc/' {
+                            'project.properties' { path, name, inputs ->
+                                configtemp = copyToTemp()
                             }
                         }
-                        '(readme|motd)\\.md'{path,name,inputs->
-                            mdfilestemp[name]=copyToTemp()
+                        '(readme|motd)\\.md' { path, name, inputs ->
+                            mdfilestemp[name] = copyToTemp()
                         }
                     }
-                    if(importACL){
-                        'acls/'{
-                            '.*\\.aclpolicy'{path,name,inputs->
-                                aclfilestemp[name]=copyToTemp()
+                    if (importACL) {
+                        'acls/' {
+                            '.*\\.aclpolicy' { path, name, inputs ->
+                                aclfilestemp[name] = copyToTemp()
                             }
                         }
                     }
@@ -666,23 +763,24 @@ class ProjectService implements InitializingBean{
             }
         }
         //have files in dir
-        (jobxml + execxml + execout.values() + reportxml + [configtemp] + mdfilestemp.values() + aclfilestemp.values()).each {it?.deleteOnExit()}
+        (jobxml + execxml + execout.values() + reportxml + [configtemp] + mdfilestemp.values() + aclfilestemp.values()).
+                each { it?.deleteOnExit() }
 
-        def loadjobresults=[]
-        def loadjoberrors=[]
-        def execerrors=[]
-        def jobIdMap=[:]
-        def jobsByOldId=[:]
-        def skipJobIds=[]
-        def projectName= project.name
+        def loadjobresults = []
+        def loadjoberrors = []
+        def execerrors = []
+        def jobIdMap = [:]
+        def jobsByOldId = [:]
+        def skipJobIds = []
+        def projectName = project.name
         //load jobs
-        jobxml.each { File jxml->
-            def path=jobxmlmap[jxml].path
-            def name=jobxmlmap[jxml].name
+        jobxml.each { File jxml ->
+            def path = jobxmlmap[jxml].path
+            def name = jobxmlmap[jxml].name
             def jobset
             jxml.withInputStream {
                 try {
-                    def reader = new InputStreamReader(it,"UTF-8")
+                    def reader = new InputStreamReader(it, "UTF-8")
                     jobset = reader.decodeJobsXML()
                 } catch (JobXMLException e) {
                     log.error("Failed parsing jobs from XML at archive path: ${path}${name}")
@@ -694,36 +792,44 @@ class ProjectService implements InitializingBean{
                     return [errorCode: 'api.error.jobs.import.empty']
                 }
                 //contains list of old extids in input order
-                def oldids=jobset.collect{it.extid}
+                def oldids = jobset.collect { it.extid }
                 //change project name to the current project
-                jobset*.project= projectName
+                jobset*.project = projectName
                 //remove uuid to reset it
-                def uuidBehavior=options.jobUuidOption?:'preserve'
-                switch (uuidBehavior){
+                def uuidBehavior = options.jobUuidOption ?: 'preserve'
+                switch (uuidBehavior) {
                     case 'remove':
                         jobset*.uuid = null
                         break;
                     case 'preserve':
                         //no-op, leave UUIDs and attempt to import
                         break;
-                    break;
+                        break;
                 }
-                def results=scheduledExecutionService.loadJobs(jobset,'update',null,user,roleList,[:],framework,authContext)
-                if(results.errjobs){
-                    log.error("Failed loading (${results.errjobs.size()}) jobs from XML at archive path: ${path}${name}")
+                def results = scheduledExecutionService.loadJobs(
+                        jobset,
+                        'update',
+                        null,
+                        [:],
+                        authContext
+                )
+                if (results.errjobs) {
+                    log.error(
+                            "Failed loading (${results.errjobs.size()}) jobs from XML at archive path: ${path}${name}"
+                    )
                     results.errjobs.each {
-                        loadjoberrors<< "Job at index [${it.entrynum}] at archive path: ${path}${name} had errors: ${it.errmsg}"
+                        loadjoberrors << "Job at index [${it.entrynum}] at archive path: ${path}${name} had errors: ${it.errmsg}"
                         log.error("Job at index [${it.entrynum}] had errors: ${it.errmsg}")
-                        if(it.entrynum!=null && oldids[it.entrynum-1]){
-                            skipJobIds<< oldids[it.entrynum - 1]
+                        if (it.entrynum != null && oldids[it.entrynum - 1]) {
+                            skipJobIds << oldids[it.entrynum - 1]
                         }
                     }
                 }
                 loadjobresults.addAll(results.jobs)
-                results.jobsi.each{jobi->
-                    if(jobi.entrynum!=null && oldids[jobi.entrynum-1]){
-                        jobIdMap[oldids[jobi.entrynum-1]]=jobi.scheduledExecution.extid
-                        jobsByOldId[oldids[jobi.entrynum - 1]]= jobi.scheduledExecution
+                results.jobsi.each { jobi ->
+                    if (jobi.entrynum != null && oldids[jobi.entrynum - 1]) {
+                        jobIdMap[oldids[jobi.entrynum - 1]] = jobi.scheduledExecution.extid
+                        jobsByOldId[oldids[jobi.entrynum - 1]] = jobi.scheduledExecution
                     }
                 }
             }
@@ -731,27 +837,38 @@ class ProjectService implements InitializingBean{
 
         log.info("Loaded ${loadjobresults.size()} jobs")
 
-        if(importExecutions){
-            Map execidmap = importExecutionsToProject(execxml, execout, projectName, framework, jobIdMap,skipJobIds,execxmlmap,execerrors)
+        if (importExecutions) {
+            Map execidmap = importExecutionsToProject(
+                    execxml,
+                    execout,
+                    projectName,
+                    framework,
+                    jobIdMap,
+                    skipJobIds,
+                    execxmlmap,
+                    execerrors
+            )
             //load reports
-            importReportsToProject(reportxml, jobsByOldId, reportxmlnames, execidmap, projectName,execerrors)
+            importReportsToProject(reportxml, jobsByOldId, reportxmlnames, execidmap, projectName, execerrors)
         }
 
-        if(importConfig && configtemp){
+        if (importConfig && configtemp) {
 
             importProjectConfig(configtemp, project, framework)
             log.debug("${project.name}: Loaded project configuration from archive")
         }
-        if(importConfig && mdfilestemp){
+        if (importConfig && mdfilestemp) {
             importProjectMdFiles(mdfilestemp, project)
         }
-        def aclerrors=[]
-        if(importACL && aclfilestemp){
-            aclerrors=importProjectACLPolicies(aclfilestemp, project)
+        def aclerrors = []
+        if (importACL && aclfilestemp) {
+            aclerrors = importProjectACLPolicies(aclfilestemp, project)
         }
 
-        (jobxml + execxml + execout.values() + reportxml + [configtemp] + mdfilestemp.values() + aclfilestemp.values()).each { it?.delete() }
-        return [success:(loadjoberrors)?false:true,joberrors: loadjoberrors,execerrors: execerrors,aclerrors:aclerrors]
+        (jobxml + execxml + execout.values() + reportxml + [configtemp] + mdfilestemp.values() + aclfilestemp.values()).
+                each { it?.delete() }
+        return [success: (loadjoberrors) ? false :
+                true, joberrors: loadjoberrors, execerrors: execerrors, aclerrors: aclerrors]
     }
 
     private List<String> importProjectACLPolicies(Map<String, File> aclfilestemp, project) {
@@ -866,7 +983,7 @@ class ProjectService implements InitializingBean{
         execxml.each { File exml ->
             def results
             try {
-                results = loadExecutions(exml, jobIdMap,skipJobIds)
+                results = loadExecutions(exml,projectName, jobIdMap,skipJobIds)
             } catch (ProjectServiceException e) {
                 log.debug("[${execxmlmap[exml]}] ${e.message}",e)
                 execerrors<<"[${execxmlmap[exml]}] ${e.message}"
@@ -960,6 +1077,10 @@ class ProjectService implements InitializingBean{
      */
     def deleteProject(IRundeckProject project, Framework framework, AuthContext authContext, String username){
         def result = [success: false]
+
+        //disable scm
+        scmService.removeAllPluginConfiguration(project.name)
+
         BaseReport.withTransaction { TransactionStatus status ->
 
             try {
@@ -970,7 +1091,6 @@ class ProjectService implements InitializingBean{
                 ExecReport.findAllByCtxProject(project.name).each { e ->
                     e.delete(flush: true)
                 }
-                def files=[]
                 //delete all jobs with their executions
                 ScheduledExecution.findAllByProject(project.name).each{ se->
                     def sedresult=scheduledExecutionService.deleteScheduledExecution(se, true, authContext,username)
@@ -983,17 +1103,8 @@ class ProjectService implements InitializingBean{
                 def other=allexecs.size()
                 executionService.deleteBulkExecutionIds(allexecs*.id, authContext, username)
 
-                log.error("${other} other executions deleted")
-                //delete all files
-                def deletedfiles=0
-                files.each{file->
-                    if (null != file && file.exists() && !FileUtils.deleteQuietly(file)) {
-                        log.warn("Failed to delete file while deleting project ${project.name}: ${file.absolutePath}")
-                    }else{
-                        deletedfiles++
-                    }
-                }
-                log.error("${deletedfiles} files removed")
+                log.debug("${other} other executions deleted")
+
                 result = [success: true]
             } catch (Exception e) {
                 status.setRollbackOnly()
@@ -1006,6 +1117,18 @@ class ProjectService implements InitializingBean{
             framework.getFrameworkProjectMgr().removeFrameworkProject(project.name)
         }
         return result
+    }
+}
+class ArchiveOptions{
+    Set executionIds=null
+    boolean executionsOnly=false
+    boolean all=true
+    def parseExecutionsIds(execidsparam){
+        if(execidsparam instanceof String){
+            executionIds=new HashSet(execidsparam.split(',') as List)
+        }else {
+            executionIds=new HashSet([execidsparam].flatten())
+        }
     }
 }
 class ArchiveRequest {

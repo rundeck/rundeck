@@ -523,20 +523,20 @@
         </div>
         <g:hiddenField name="pluginItem" value="true"/>
         <g:hiddenField name="newitemnodestep" value="${item?!!item.nodeStep:newitemnodestep=='true'}"/>
+
+
         <div>
-            <table class="simpleForm nexecDetails">
-                <g:set var="pluginprefix" value="pluginConfig."/>
-                <g:each in="${newitemDescription.properties}" var="prop">
-                    <g:if test="${!prop.scope || prop.scope.isInstanceLevel() || prop.scope.isUnspecified()}">
-                    <tr>
-                        <g:render
-                                template="/framework/pluginConfigPropertyFormField"
-                                model="${[prop: prop, prefix: pluginprefix, values: item?.configuration,
-                                        fieldname: pluginprefix + prop.name, origfieldname: 'orig.' + pluginprefix + prop.name, error: report?.errors ? report?.errors[prop.name] : null]}"/>
-                    </tr>
-                    </g:if>
-                </g:each>
-            </table>
+            <g:set var="pluginprefix" value="pluginConfig."/>
+            <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                    properties:newitemDescription.properties,
+                    report:report,
+                    prefix:pluginprefix,
+                    values:item?.configuration,
+                    fieldnamePrefix:pluginprefix,
+                    origfieldnamePrefix:'orig.' + pluginprefix,
+                    allowedScope:PropertyScope.Instance
+            ]}"/>
+
         </div>
     </div>
 </g:elseif>

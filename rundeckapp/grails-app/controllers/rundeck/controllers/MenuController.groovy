@@ -5,7 +5,7 @@ import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -13,6 +13,7 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -36,6 +37,7 @@ import rundeck.services.LoggingService
 import rundeck.services.NotificationService
 import rundeck.services.PluginService
 import rundeck.services.ScheduledExecutionService
+import rundeck.services.ScmService
 import rundeck.services.UserService
 
 import javax.servlet.http.HttpServletResponse
@@ -53,6 +55,7 @@ class MenuController extends ControllerBase{
     StorageConverterPluginProviderService storageConverterPluginProviderService
     PluginService pluginService
     def configurationService
+    ScmService scmService
     def quartzScheduler
     def ApiService apiService
     def AuthorizationService authorizationService
@@ -211,6 +214,9 @@ class MenuController extends ControllerBase{
         def results = jobsFragment(query)
         results.execQueryParams=query.asExecQueryParams()
         results.reportQueryParams=query.asReportQueryParams()
+        if(results.warning){
+            request.warn=results.warning
+        }
 
         withFormat{
             html {
@@ -233,7 +239,7 @@ class MenuController extends ControllerBase{
     
     def jobsFragment = {ScheduledExecutionQuery query ->
         long start=System.currentTimeMillis()
-        AuthContext authContext
+        UserAndRolesAuthContext authContext
         def usedFilter=null
         
         if(params.filterName){
@@ -262,6 +268,51 @@ class MenuController extends ControllerBase{
             authContext = frameworkService.getAuthContextForSubject(session.subject)
         }
         def results=listWorkflows(query,authContext,session.user)
+        //fill scm status
+        if(params['_no_scm']!=true) {
+            if (frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                 frameworkService.authResourceForProject(
+                                                                         params.project
+                                                                 ),
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]
+            )) {
+                def pluginData = [:]
+                try {
+                    if (scmService.projectHasConfiguredExportPlugin(params.project)) {
+                        pluginData.scmExportEnabled = true
+                        pluginData.scmStatus = scmService.exportStatusForJobs(results.nextScheduled)
+                        pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
+                        pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
+                        pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
+                        results.putAll(pluginData)
+                    }
+                } catch (ScmPluginException e) {
+                    results.warning = "Failed to update SCM Export status: ${e.message}"
+                }
+            }
+            if (frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                 frameworkService.authResourceForProject(
+                                                                         params.project
+                                                                 ),
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]
+            )) {
+
+                def pluginData = [:]
+                try {
+                    if (scmService.projectHasConfiguredImportPlugin(params.project)) {
+                        pluginData.scmImportEnabled = true
+                        pluginData.scmImportJobStatus = scmService.importStatusForJobs(results.nextScheduled)
+                        pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
+                        pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project)
+                        results.putAll(pluginData)
+                    }
+
+                } catch (ScmPluginException e) {
+                    results.warning = "Failed to update SCM Import status: ${e.message}"
+                }
+            }
+        }
+
         if(usedFilter){
             results.filterName=usedFilter
             results.paginateParams['filterName']=usedFilter
@@ -657,6 +708,7 @@ class MenuController extends ControllerBase{
         def memfree = Runtime.getRuntime().freeMemory()
         def memtotal = Runtime.getRuntime().totalMemory()
         def schedulerRunningCount = quartzScheduler.getCurrentlyExecutingJobs().size()
+        def threadPoolSize = quartzScheduler.getMetaData().threadPoolSize
         def info = [
             nowDate: nowDate,
             nodeName: nodeName,
@@ -680,13 +732,19 @@ class MenuController extends ControllerBase{
             memfree: memfree,
             memtotal: memtotal,
             schedulerRunningCount: schedulerRunningCount,
+            threadPoolSize: threadPoolSize,
             executionModeActive:executionModeActive
         ]
+        def schedulerThreadRatio=info.threadPoolSize>0?(info.schedulerRunningCount/info.threadPoolSize):0
         def serverUUID=frameworkService.getServerUUID()
         if(serverUUID){
             info['serverUUID']=serverUUID
         }
-        return [systemInfo: [
+        return [
+                schedulerThreadRatio:schedulerThreadRatio,
+                schedulerRunningCount:info.schedulerRunningCount,
+                threadPoolSize:info.threadPoolSize,
+                systemInfo: [
 
             [
                 "stats: uptime": [
@@ -719,7 +777,13 @@ class MenuController extends ControllerBase{
                 'allocated.info': 'Ratio of system memory allocated to maximum allowed (total/max)',
             ]],
             ["stats: scheduler":
-            [running: info.schedulerRunningCount]
+            [
+                    running: info.schedulerRunningCount,
+                    threadPoolSize:info.threadPoolSize,
+                    ratio: (schedulerThreadRatio),
+                    'ratio.unit':'ratio',
+                    'ratio.info':'Ratio of used threads to Quartz scheduler thread pool size'
+            ]
             ],
             ["stats: threads":
             [active: info.threadActiveCount]
@@ -1009,6 +1073,8 @@ class MenuController extends ControllerBase{
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist', args: ['project',params.project]])
         }
+        //don't load scm status for api response
+        params['_no_scm']=true
         def results = jobsFragment(query)
 
         withFormat{

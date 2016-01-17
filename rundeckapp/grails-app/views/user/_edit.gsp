@@ -1,54 +1,75 @@
-<g:javascript>
-    function _acl_form_check(prefix) {
-        _acl_form_check_input(prefix + '_t');
-        _acl_form_check_input(prefix + '_f');
-    }
-    function _acl_form_check_input(elem) {
-        var tdt = $(elem).parentNode;
-        if ($F(elem) == "true" && !$(tdt).hasClassName("enabled") || $F(elem) == null && $(tdt).hasClassName("enabled")) {
-            $(tdt).addClassName('changed');
-        } else if ($F(elem) == "false" && !$(tdt).hasClassName("disabled") || $F(elem) == null && $(tdt).hasClassName("disabled")) {
-            $(tdt).addClassName('changed');
-        } else {
-            $(tdt).removeClassName('changed');
-        }
-    }
-    function _acl_set(group, value) {
-        $$('table.' + group + ' td.authItem.' + value + ' input').each(function (i) {
-            $(i).setValue(true);
-        });
-        $$('table.' + group + ' td.authItem input').each(function (i) {
-            _acl_form_check_input(i);
-        });
-    }
-    function _acl_toggle(prefix, key) {
-        if (null == $F(prefix + '_' + key + '_t')) {
-            $(prefix + '_' + key + '_t').setValue(true);
-        }
-        else if (null == $F(prefix + '_' + key + '_f')) {
-            $(prefix + '_' + key + '_f').setValue(true);
-        }
-        _acl_form_check(prefix + '_' + key);
-        return false;
-    }
-</g:javascript>
-<div class="form-group">
-    <label for="login" class="control-label">
-        User
+<div class="form-group ${user.errors?.hasFieldErrors('login')?'has-error':''}">
+    <label for="login" class="col-sm-2 control-label">
+        <g:message code="domain.User.login.label"/>
     </label>
-    <g:if test="${newuser}">
-        <g:textField name="login" value="${user.login}" class="form-control"/>
-    </g:if>
-    <g:elseif test="user.login">
-        <p class="form-control-static"><g:enc>${user.login}</g:enc></p>
-        <g:hiddenField name="login" value="${user.login}"/>
-    </g:elseif>
+
+    <div class="col-sm-10">
+        <g:if test="${newuser}">
+            <div class="input-group">
+                <span class="input-group-addon"><g:icon name="user"/></span>
+                <g:textField name="login" value="${user.login}" class=" form-control"/>
+            </div>
+            <g:if test="${user.errors?.hasFieldErrors('login')}">
+                <div class="help-block">
+                    <g:fieldError field="login" bean="${user}"/>
+                </div>
+            </g:if>
+            <g:hiddenField name="newuser" value="true"/>
+        </g:if>
+        <g:elseif test="${user.login}">
+            <p class=" form-control-static">
+                <g:icon name="user"/>
+                <g:enc>${user.login}</g:enc>
+            </p>
+            <g:hiddenField name="login" value="${user.login}"/>
+            <g:hiddenField name="newuser" value="false"/>
+        </g:elseif>
+    </div>
 </div>
 
-<div class="form-group">
-    <label for="email" class="control-label">
-        Email
+<div class="form-group ${user.errors?.hasFieldErrors('email')?'has-error':''}">
+    <label for="email" class="col-sm-2 control-label">
+        <g:message code="domain.User.email.label"/>
     </label>
-    <g:textField name="email" value="${user.email}" class="form-control"/>
+
+    <div class="col-sm-10">
+        <g:textField name="email" value="${user.email}" class=" form-control"/>
+        <g:if test="${user.errors?.hasFieldErrors('email')}">
+            <div class="help-block">
+                <g:fieldError field="email" bean="${user}"/>
+            </div>
+        </g:if>
+    </div>
+</div>
+
+
+<div class="form-group ${user.errors?.hasFieldErrors('firstName')?'has-error':''}">
+    <label for="email" class="col-sm-2 control-label">
+        <g:message code="domain.User.firstName.label"/>
+    </label>
+
+    <div class="col-sm-10">
+        <g:textField name="firstName" value="${user.firstName}" class=" form-control"/>
+        <g:if test="${user.errors?.hasFieldErrors('firstName')}">
+            <div class="help-block">
+                <g:fieldError field="firstName" bean="${user}"/>
+            </div>
+        </g:if>
+    </div>
+</div>
+
+<div class="form-group ${user.errors?.hasFieldErrors('lastName')?'has-error':''}">
+    <label for="email" class="col-sm-2 control-label">
+        <g:message code="domain.User.lastName.label"/>
+    </label>
+
+    <div class="col-sm-10">
+        <g:textField name="lastName" value="${user.lastName}" class=" form-control"/>
+        <g:if test="${user.errors?.hasFieldErrors('lastName')}">
+            <div class="help-block">
+                <g:fieldError field="lastName" bean="${user}"/>
+            </div>
+        </g:if>
+    </div>
 </div>
 

@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.app.api.ApiRunAdhocRequest
 import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
@@ -158,10 +159,28 @@ class ScheduledExecutionControllerTests  {
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         assertEquals 'server1', controller.expandUrl(option, '${job.rundeck.nodename}', se)
     }
+    public void testExpandUrlJobRundeckNodename2() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals 'server1', controller.expandUrl(option, '${rundeck.nodename}', se)
+    }
 
     public void testExpandUrlJobRundeckServerUUID() {
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         assertEquals 'xyz', controller.expandUrl(option, '${job.rundeck.serverUUID}', se)
+    }
+
+    public void testExpandUrlJobRundeckServerUUID2() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals 'xyz', controller.expandUrl(option, '${rundeck.serverUUID}', se)
+    }
+    public void testExpandUrlJobRundeckBasedir() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals '/a/path', controller.expandUrl(option, '${job.rundeck.basedir}', se,[:],false)
+    }
+
+    public void testExpandUrlJobRundeckBasedir2() {
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        assertEquals '/a/path', controller.expandUrl(option, '${rundeck.basedir}', se,[:],false)
     }
 
     protected List setupExpandUrlJob(def controller) {
@@ -173,11 +192,14 @@ class ScheduledExecutionControllerTests  {
         se.save()
         assertNotNull(option.properties)
         controller.frameworkService = mockWith(FrameworkService) {
-            getFrameworkNodeName(1..1) {->
+            getFrameworkNodeName() {->
                 'server1'
             }
-            getServerUUID(1..12) {->
+            getServerUUID(1..1) {->
                 'xyz'
+            }
+            getRundeckBase(1..2){->
+                '/a/path'
             }
         }
         [option, se]
@@ -196,7 +218,7 @@ class ScheduledExecutionControllerTests  {
             //try to do update of the ScheduledExecution
             def fwkControl = mockFor(FrameworkService, true)
             fwkControl.demand.getRundeckFramework {-> return null }
-            fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+            fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             fwkControl.demand.projects {return []}
             fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
@@ -206,7 +228,7 @@ class ScheduledExecutionControllerTests  {
             def seServiceControl = mockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
-            seServiceControl.demand._dosave {params, user, rolelist, framework, authctx, changeinfo ->
+            seServiceControl.demand._dosave {params, authctx, changeinfo ->
                 [success: true, scheduledExecution: se]
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
@@ -252,7 +274,7 @@ class ScheduledExecutionControllerTests  {
             //try to do update of the ScheduledExecution
             def fwkControl = mockFor(FrameworkService, true)
             fwkControl.demand.getRundeckFramework {-> return null }
-            fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+            fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             fwkControl.demand.projects {return []}
             fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
@@ -262,7 +284,7 @@ class ScheduledExecutionControllerTests  {
             def seServiceControl = mockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
-            seServiceControl.demand._dosave {params, user, rolelist, framework, authctx, changeinfo ->
+            seServiceControl.demand._dosave {params, authctx, changeinfo ->
                 [success: true, scheduledExecution: se]
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
@@ -357,7 +379,7 @@ class ScheduledExecutionControllerTests  {
             //try to do update of the ScheduledExecution
             def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             fwkControl.demand.projects {return []}
             fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
@@ -367,7 +389,7 @@ class ScheduledExecutionControllerTests  {
             def seServiceControl = mockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
-            seServiceControl.demand._doupdate {params, user, roleList, framework, authctx, changeinfo = [:] ->
+            seServiceControl.demand._doupdate {params, authctx, changeinfo = [:] ->
                 assertNotNull(params['_sessionEditOPTSObject'])
                 assertEquals([],params['_sessionEditOPTSObject'])
                 [success: true, scheduledExecution: se]
@@ -422,7 +444,7 @@ class ScheduledExecutionControllerTests  {
             //try to do update of the ScheduledExecution
             def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             fwkControl.demand.projects {return []}
             fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
@@ -432,7 +454,7 @@ class ScheduledExecutionControllerTests  {
             def seServiceControl = mockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
-            seServiceControl.demand._doupdate {params, user, roleList, framework, authctx, changeinfo = [:] ->
+            seServiceControl.demand._doupdate {params, authctx, changeinfo = [:] ->
                 assertNotNull(params['_sessionEditOPTSObject'])
                 assertEquals([],params['_sessionEditOPTSObject'])
                 [success: true, scheduledExecution: se]
@@ -487,7 +509,7 @@ class ScheduledExecutionControllerTests  {
             //try to do update of the ScheduledExecution
             def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             fwkControl.demand.projects {return []}
             fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
@@ -497,7 +519,7 @@ class ScheduledExecutionControllerTests  {
             def seServiceControl = mockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
-        seServiceControl.demand._doupdate { params, user, roleList, framework, authctx, changeinfo = [:] ->
+        seServiceControl.demand._doupdate { params, authctx, changeinfo = [:] ->
                 assertNotNull(params['_sessionEditWFObject'])
                 assertEquals([],params['_sessionEditWFObject'])
                 [success: true, scheduledExecution: se]
@@ -551,7 +573,7 @@ class ScheduledExecutionControllerTests  {
             //try to do update of the ScheduledExecution
             def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             fwkControl.demand.projects {return []}
             fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
@@ -563,7 +585,7 @@ class ScheduledExecutionControllerTests  {
             def seServiceControl = mockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
-        seServiceControl.demand._dosave { params, user, rolelist, framework, authctx, changeinfo ->
+        seServiceControl.demand._dosave { params, authctx, changeinfo ->
                 [success: false]
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
@@ -613,7 +635,7 @@ class ScheduledExecutionControllerTests  {
             //try to do update of the ScheduledExecution
             def fwkControl = mockFor(FrameworkService, true)
             fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             fwkControl.demand.projects {return []}
             fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
@@ -625,7 +647,7 @@ class ScheduledExecutionControllerTests  {
             def seServiceControl = mockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
-        seServiceControl.demand._dosave { params, user, rolelist, framework, authctx, changeinfo ->
+        seServiceControl.demand._dosave { params, authctx, changeinfo ->
                 [success: false,unauthorized:true,error:'unauthorizedMessage']
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
@@ -673,14 +695,14 @@ class ScheduledExecutionControllerTests  {
         assertNotNull se.id
 
         controller.frameworkService = mockWith(FrameworkService){
-            getAuthContextForSubjectAndProject { subject,proj -> return null }
+            getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
         }
 
         controller.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getByIDorUUID { id -> return se }
             userAuthorizedForAdhoc { request, scheduledExecution, framework -> return true }
-            _dovalidate { params, user, rolelist, framework ->
+            _dovalidate { params, user, rolelist ->
                 assertEquals('Temporary_Job', params.jobName)
                 assertEquals('adhoc', params.groupPath)
                 [failed: false, scheduledExecution: se]
@@ -733,15 +755,17 @@ class ScheduledExecutionControllerTests  {
         assertNotNull se.id
 
         controller.frameworkService = mockWith(FrameworkService){
-            getAuthContextForSubjectAndProject { subject,proj -> return null }
+            getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
 
             //methods called in show() action
             getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
-            getAuthContextForSubjectAndProject { subject,proj -> return null }
+            getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             authorizeProjectJobAll { AuthContext authContext, ScheduledExecution job, Collection actions, String project ->
                 return true
             }
+            authResourceForProject{p->null}
+            authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
             projects { return [] }
             authorizeProjectResourceAll { framework, resource, actions, project -> return true }
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
@@ -811,14 +835,14 @@ class ScheduledExecutionControllerTests  {
         assertNotNull se.id
 
         controller.frameworkService = mockWith(FrameworkService) {
-            getAuthContextForSubjectAndProject { subject,proj -> return null }
+            getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
         }
 
         controller.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getByIDorUUID { id -> return se }
             userAuthorizedForAdhoc { request, scheduledExecution, framework -> return true }
-            _dovalidate { params, user, rolelist, framework ->
+            _dovalidate { params, user, rolelist ->
                 assertEquals('Temporary_Job', params.jobName)
                 assertEquals('adhoc', params.groupPath)
                 [failed: false, scheduledExecution: se]
@@ -870,7 +894,7 @@ class ScheduledExecutionControllerTests  {
             //try to do update of the ScheduledExecution
             def fwkControl = mockFor(FrameworkService, true)
             fwkControl.demand.getRundeckFramework {-> return null }
-            fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+            fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             fwkControl.demand.projects {return []}
             fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
@@ -881,7 +905,7 @@ class ScheduledExecutionControllerTests  {
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
             seServiceControl.demand.userAuthorizedForAdhoc {request, scheduledExecution, framework -> return true }
-            seServiceControl.demand._dovalidate {params, user, rolelist, framework ->
+            seServiceControl.demand._dovalidate {params, auth ->
                 assertEquals('Temporary_Job',params.jobName)
                 assertEquals('adhoc',params.groupPath)
                 [failed: false, scheduledExecution: se]
@@ -939,7 +963,7 @@ class ScheduledExecutionControllerTests  {
         //try to do update of the ScheduledExecution
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework { -> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.projects { return [] }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
         fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
@@ -950,7 +974,7 @@ class ScheduledExecutionControllerTests  {
 
         seServiceControl.demand.getByIDorUUID { id -> return se }
         seServiceControl.demand.userAuthorizedForAdhoc { request, scheduledExecution, framework -> return true }
-        seServiceControl.demand._dovalidate { params, user, rolelist, framework ->
+        seServiceControl.demand._dovalidate { params, auth ->
             assertEquals('Temporary_Job', params.jobName)
             assertEquals('adhoc', params.groupPath)
             [failed: false, scheduledExecution: se]
@@ -1019,7 +1043,7 @@ class ScheduledExecutionControllerTests  {
         //try to do update of the ScheduledExecution
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.projects {return []}
         fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
         fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
@@ -1029,7 +1053,7 @@ class ScheduledExecutionControllerTests  {
         def seServiceControl = mockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand.userAuthorizedForAdhoc {request, scheduledExecution, framework -> return true }
-        seServiceControl.demand._dovalidate {params, user, rolelist, framework ->
+        seServiceControl.demand._dovalidate {params, auth ->
             assertEquals('Temporary_Job',params.jobName)
             assertEquals('adhoc',params.groupPath)
             [failed: false, scheduledExecution: se]
@@ -1092,7 +1116,7 @@ class ScheduledExecutionControllerTests  {
             //try to do update of the ScheduledExecution
             def fwkControl = mockFor(FrameworkService, true)
             fwkControl.demand.getRundeckFramework {-> return null }
-            fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+            fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             fwkControl.demand.projects {return []}
             fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
@@ -1103,7 +1127,7 @@ class ScheduledExecutionControllerTests  {
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
             seServiceControl.demand.userAuthorizedForAdhoc {request, scheduledExecution, framework -> return true }
-            seServiceControl.demand._dovalidate {params, user, rolelist, framework ->
+            seServiceControl.demand._dovalidate {params, auth ->
                 assertEquals('Temporary_Job',params.jobName)
                 assertEquals('adhoc',params.groupPath)
                 [failed: true, scheduledExecution: se]
@@ -1302,7 +1326,7 @@ class ScheduledExecutionControllerTests  {
         //try to do api job run
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework { -> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.authorizeProjectJobAll { framework, resource, List actions, project ->
             assert 'run' in actions
             return true
@@ -1320,7 +1344,7 @@ class ScheduledExecutionControllerTests  {
         )
         assertNotNull exec.save()
         eServiceControl.demand.executeJob { scheduledExecution, authctx, user, inparams ->
-            assert 'anonymous' == user
+            
             return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec,success:true]
         }
         eServiceControl.demand.respondExecutionsXml { response, List<Execution> execs ->
@@ -1377,7 +1401,7 @@ class ScheduledExecutionControllerTests  {
         //try to do api job run
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
 
         def x = 0
         fwkControl.demand.authorizeProjectJobAll(2) { framework, resource, List actions, project ->
@@ -1469,7 +1493,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.createMock()
         def seServiceControl = mockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1) { params, user, roleList, framework ->
+        seServiceControl.demand._dovalidate(1..1) { params, auth ->
             assert 'testuser' == user
             new ScheduledExecution()
         }
@@ -1604,7 +1628,7 @@ class ScheduledExecutionControllerTests  {
         //try to do api job run
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework(1..2) {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject(1..1) { project, fwk ->
             true
         }
@@ -1616,8 +1640,8 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.createMock()
         def seServiceControl = mockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, user, roleList, framework->
-            assert null==user
+        seServiceControl.demand._dovalidate(1..1){params, auth->
+            
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1637,7 +1661,7 @@ class ScheduledExecutionControllerTests  {
         )
         assertNotNull exec.save()
         eServiceControl.demand.createExecutionAndPrep { params, user ->
-            assert 'anonymous' == user
+            
             exec
         }
         eServiceControl.demand.getExecutionsAreActive{->true}
@@ -1689,13 +1713,16 @@ class ScheduledExecutionControllerTests  {
         assert !model
     }
 
+    private UserAndRolesAuthContext testUserAndRolesContext(String user='test',String roleset='test') {
+        [getUsername: { user }, getRoles: { roleset.split(',') as Set }] as UserAndRolesAuthContext
+    }
     public void testApiRunCommand_v14() {
         def sec = new ScheduledExecutionController()
 
         //try to do api job run
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework(1..2) {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject(1..1) { project, fwk ->
             true
         }
@@ -1707,8 +1734,8 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.createMock()
         def seServiceControl = mockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, user, roleList, framework->
-            assert null==user
+        seServiceControl.demand._dovalidate(1..1){params, auth->
+            
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1728,7 +1755,7 @@ class ScheduledExecutionControllerTests  {
         )
         assertNotNull exec.save()
         eServiceControl.demand.createExecutionAndPrep { params, user ->
-            assert 'anonymous' == user
+            
             exec
         }
         eServiceControl.demand.getExecutionsAreActive{->true}
@@ -1777,7 +1804,7 @@ class ScheduledExecutionControllerTests  {
         //try to do api job run
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework(1..2) {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject(1..1) { project, fwk ->
             true
         }
@@ -1789,8 +1816,8 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.createMock()
         def seServiceControl = mockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, user, roleList, framework->
-            assert null==user
+        seServiceControl.demand._dovalidate(1..1){params, auth->
+            
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1810,7 +1837,7 @@ class ScheduledExecutionControllerTests  {
         )
         assertNotNull exec.save()
         eServiceControl.demand.createExecutionAndPrep { params, user ->
-            assert 'anonymous' == user
+            
             exec
         }
         eServiceControl.demand.getExecutionsAreActive{->true}
@@ -1854,7 +1881,7 @@ class ScheduledExecutionControllerTests  {
         //try to do api job run
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework(1..2) {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject(1..1) { project, fwk ->
             true
         }
@@ -1866,8 +1893,8 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.createMock()
         def seServiceControl = mockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, user, roleList, framework->
-            assert null==user
+        seServiceControl.demand._dovalidate(1..1){params, auth->
+            
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1887,7 +1914,7 @@ class ScheduledExecutionControllerTests  {
         )
         assertNotNull exec.save()
         eServiceControl.demand.createExecutionAndPrep { params, user ->
-            assert 'anonymous' == user
+            
             exec
         }
         eServiceControl.demand.getExecutionsAreActive{->executionModeActive}
@@ -1931,7 +1958,7 @@ class ScheduledExecutionControllerTests  {
         //try to do api job run
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework(1..2) {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject(1..1) { project, fwk ->
             true
         }
@@ -1943,8 +1970,8 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.createMock()
         def seServiceControl = mockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, user, roleList, framework->
-            assert null==user
+        seServiceControl.demand._dovalidate(1..1){params, auth->
+            
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -1964,7 +1991,7 @@ class ScheduledExecutionControllerTests  {
         )
         assertNotNull exec.save()
         eServiceControl.demand.createExecutionAndPrep { params, user ->
-            assert 'anonymous' == user
+            
             exec
         }
         eServiceControl.demand.getExecutionsAreActive{->true}
@@ -2012,7 +2039,7 @@ class ScheduledExecutionControllerTests  {
         //try to do api job run
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework(1..2) {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject(1..1) { project, fwk ->
             true
         }
@@ -2024,8 +2051,8 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.createMock()
         def seServiceControl = mockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1){params, user, roleList, framework->
-            assert null==user
+        seServiceControl.demand._dovalidate(1..1){params, auth->
+            
             [scheduledExecution:new ScheduledExecution(),failed:false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1){ request, scheduledExecution, framework->
@@ -2045,7 +2072,7 @@ class ScheduledExecutionControllerTests  {
         )
         assertNotNull exec.save()
         eServiceControl.demand.createExecutionAndPrep { params, user ->
-            assert 'anonymous' == user
+            
             exec
         }
         eServiceControl.demand.getExecutionsAreActive{->true}
@@ -2086,7 +2113,7 @@ class ScheduledExecutionControllerTests  {
         //try to do api job run
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework(1..2) {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject(1..1) { project, fwk ->
             true
         }
@@ -2098,8 +2125,8 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = fwkControl.createMock()
         def seServiceControl = mockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand._dovalidate(1..1) { params, user, roleList, framework ->
-            assert null == user
+        seServiceControl.demand._dovalidate(1..1) { params, auth ->
+
             [scheduledExecution: new ScheduledExecution(), failed: false]
         }
         seServiceControl.demand.userAuthorizedForAdhoc(1..1) { request, scheduledExecution, framework ->
@@ -2187,7 +2214,7 @@ class ScheduledExecutionControllerTests  {
             //try to do update of the ScheduledExecution
             def fwkControl = mockFor(FrameworkService, true)
             fwkControl.demand.getRundeckFramework {-> return null }
-            fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+            fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             fwkControl.demand.projects { return [] }
             fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
             fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
@@ -2250,10 +2277,12 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = mockWith(FrameworkService){
 
             getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
-            getAuthContextForSubjectAndProject { subject,proj -> return null }
+            getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             authorizeProjectJobAll { AuthContext authContext, ScheduledExecution job, Collection actions, String project ->
                 return true
             }
+            authResourceForProject{p->null}
+            authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
             projects { return [] }
             authorizeProjectResourceAll { framework, resource, actions, project -> return true }
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
@@ -2312,6 +2341,101 @@ class ScheduledExecutionControllerTests  {
                 project: 'project1',
                 groupPath: 'testgroup',
                 doNodedispatch: true,
+                filter:'name: nodea,nodeb',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        )
+
+        se.save()
+
+
+        assertNotNull se.id
+
+        NodeSetImpl testNodeSet = new NodeSetImpl()
+        testNodeSet.putNode(new NodeEntryImpl("nodea"))
+        testNodeSet.putNode(new NodeEntryImpl("nodeb"))
+
+        //try to do update of the ScheduledExecution
+        sec.frameworkService = mockWith(FrameworkService){
+
+            getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
+            getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+            authorizeProjectJobAll { AuthContext authContext, ScheduledExecution job, Collection actions, String project ->
+                return true
+            }
+            filterNodeSet{NodesSelector selector, String project->
+                null
+            }
+            filterAuthorizedNodes{final String project, final Set<String> actions, final INodeSet unfiltered,
+                                                                                                  AuthContext authContext->
+                testNodeSet
+            }
+            authResourceForProject{p->null}
+            authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
+            projects { return [] }
+            authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+            authorizeProjectJobAll { framework, resource, actions, project -> return true }
+            getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
+            getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
+            getNodeStepPluginDescriptions { [] }
+            getStepPluginDescriptions { [] }
+        }
+
+        sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getByIDorUUID { id -> return se }
+            nextExecutionTime { job -> null }
+            userAuthorizedForJob { user, schedexec, framework -> return true }
+        }
+
+        sec.notificationService = mockWith(NotificationService){
+            listNotificationPlugins() {->
+                []
+            }
+        }
+        sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
+            listOrchestratorPlugins(){->null}
+        }
+
+        def params = [id: se.id.toString(),project:'project1']
+        sec.params.putAll(params)
+        def model = sec.show()
+        assertNull sec.response.redirectedUrl
+        assertNotNull model
+        assertNotNull(model.scheduledExecution)
+        assertEquals(null, model.selectedNodes)
+        assertEquals('fwnode',model.localNodeName)
+        assertEquals('name: nodea,nodeb',model.nodefilter)
+        assertEquals(null,model.nodesetvariables)
+        assertEquals(null,model.failedNodes)
+        assertEquals(null,model.nodesetempty)
+        assertEquals(true,model.nodesSelectedByDefault)
+        assertEquals(testNodeSet.nodes,model.nodes)
+        assertEquals([:],model.grouptags)
+        assertEquals(null,model.selectedoptsmap)
+        assertEquals([:],model.dependentoptions)
+        assertEquals([:],model.optiondependencies)
+        assertEquals(null,model.optionordering)
+        assertEquals([:],model.remoteOptionData)
+    }
+    /**
+     * nodes not selected by default
+     */
+    public void testShowNodeDispatchSelectedFalse() {
+        def sec = controller
+
+        def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
                 nodesSelectedByDefault: false,
                 filter:'name: nodea,nodeb',
                 workflow: new Workflow(
@@ -2338,7 +2462,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = mockWith(FrameworkService){
 
             getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
-            getAuthContextForSubjectAndProject { subject,proj -> return null }
+            getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             authorizeProjectJobAll { AuthContext authContext, ScheduledExecution job, Collection actions, String project ->
                 return true
             }
@@ -2349,6 +2473,8 @@ class ScheduledExecutionControllerTests  {
                                                                                                   AuthContext authContext->
                 testNodeSet
             }
+            authResourceForProject{p->null}
+            authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
             projects { return [] }
             authorizeProjectResourceAll { framework, resource, actions, project -> return true }
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
@@ -2395,6 +2521,102 @@ class ScheduledExecutionControllerTests  {
         assertEquals([:],model.remoteOptionData)
     }
     /**
+     * select nodes by default
+     */
+    public void testShowNodeDispatchSelectedTrue() {
+        def sec = controller
+
+        def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                nodesSelectedByDefault: true,
+                filter:'name: nodea,nodeb',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        )
+
+        se.save()
+
+
+        assertNotNull se.id
+
+        NodeSetImpl testNodeSet = new NodeSetImpl()
+        testNodeSet.putNode(new NodeEntryImpl("nodea"))
+        testNodeSet.putNode(new NodeEntryImpl("nodeb"))
+
+        //try to do update of the ScheduledExecution
+        sec.frameworkService = mockWith(FrameworkService){
+
+            getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
+            getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+            authorizeProjectJobAll { AuthContext authContext, ScheduledExecution job, Collection actions, String project ->
+                return true
+            }
+            filterNodeSet{NodesSelector selector, String project->
+                null
+            }
+            filterAuthorizedNodes{final String project, final Set<String> actions, final INodeSet unfiltered,
+                                                                                                  AuthContext authContext->
+                testNodeSet
+            }
+            authResourceForProject{p->null}
+            authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
+            projects { return [] }
+            authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+            authorizeProjectJobAll { framework, resource, actions, project -> return true }
+            getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
+            getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
+            getNodeStepPluginDescriptions { [] }
+            getStepPluginDescriptions { [] }
+        }
+
+        sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getByIDorUUID { id -> return se }
+            nextExecutionTime { job -> null }
+            userAuthorizedForJob { user, schedexec, framework -> return true }
+        }
+
+        sec.notificationService = mockWith(NotificationService){
+            listNotificationPlugins() {->
+                []
+            }
+        }
+        sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
+            listOrchestratorPlugins(){->null}
+        }
+
+        def params = [id: se.id.toString(),project:'project1']
+        sec.params.putAll(params)
+        def model = sec.show()
+        assertNull sec.response.redirectedUrl
+        assertNotNull model
+        assertNotNull(model.scheduledExecution)
+        assertEquals(null, model.selectedNodes)
+        assertEquals('fwnode',model.localNodeName)
+        assertEquals('name: nodea,nodeb',model.nodefilter)
+        assertEquals(null,model.nodesetvariables)
+        assertEquals(null,model.failedNodes)
+        assertEquals(null,model.nodesetempty)
+        assertEquals(true,model.nodesSelectedByDefault)
+        assertEquals(testNodeSet.nodes,model.nodes)
+        assertEquals([:],model.grouptags)
+        assertEquals(null,model.selectedoptsmap)
+        assertEquals([:],model.dependentoptions)
+        assertEquals([:],model.optiondependencies)
+        assertEquals(null,model.optionordering)
+        assertEquals([:],model.remoteOptionData)
+    }
+    /**
      * model contains node dispatch target nodes information
      */
     public void testShowNodeDispatchEmpty() {
@@ -2431,7 +2653,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = mockWith(FrameworkService){
 
             getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
-            getAuthContextForSubjectAndProject { subject,proj -> return null }
+            getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             authorizeProjectJobAll { AuthContext authContext, ScheduledExecution job, Collection actions, String project ->
                 return true
             }
@@ -2442,6 +2664,8 @@ class ScheduledExecutionControllerTests  {
                                                                                                   AuthContext authContext->
                 testNodeSet
             }
+            authResourceForProject{p->null}
+            authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
             projects { return [] }
             authorizeProjectResourceAll { framework, resource, actions, project -> return true }
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
@@ -2544,7 +2768,7 @@ class ScheduledExecutionControllerTests  {
         sec.frameworkService = mockWith(FrameworkService){
 
             getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
-            getAuthContextForSubjectAndProject { subject,proj -> return null }
+            getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             authorizeProjectJobAll { AuthContext authContext, ScheduledExecution job, Collection actions, String project ->
                 return true
             }
@@ -2562,6 +2786,8 @@ class ScheduledExecutionControllerTests  {
                                                                                                   AuthContext authContext->
                 unfiltered
             }
+            authResourceForProject{p->null}
+            authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
             projects { return [] }
             authorizeProjectResourceAll { framework, resource, actions, project -> return true }
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
@@ -2630,7 +2856,7 @@ class ScheduledExecutionControllerTests  {
         //create mock of FrameworkService
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project, framework -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
@@ -2642,7 +2868,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input,format ->
             [jobset:[expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, framework, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx ->
             assert jobset==[expectedJob]
             [
                     jobs: [expectedJob],
@@ -2718,7 +2944,7 @@ class ScheduledExecutionControllerTests  {
         //create mock of FrameworkService
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project, framework -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
@@ -2730,7 +2956,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input,format ->
             [jobset:[expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, framework, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx ->
             assert jobset==[expectedJob]
             [
                     jobs: [expectedJob],
@@ -2794,7 +3020,7 @@ class ScheduledExecutionControllerTests  {
         //create mock of FrameworkService
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project, framework -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
@@ -2806,7 +3032,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input,format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, framework, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx ->
             assertEquals('BProject', jobset[0].project)
             [
                     jobs: [expectedJob],
@@ -2878,7 +3104,7 @@ class ScheduledExecutionControllerTests  {
         //create mock of FrameworkService
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project, framework -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
@@ -2890,7 +3116,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input, format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, framework, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
@@ -2972,7 +3198,7 @@ class ScheduledExecutionControllerTests  {
         //create mock of FrameworkService
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project, framework -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
@@ -2984,7 +3210,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input, format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, framework, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
@@ -3067,7 +3293,7 @@ class ScheduledExecutionControllerTests  {
         //create mock of FrameworkService
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project, framework -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
@@ -3079,7 +3305,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input, format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, user, roleList, changeinfo, framework, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
@@ -3144,7 +3370,7 @@ class ScheduledExecutionControllerTests  {
         //create mock of FrameworkService
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project, framework -> return true }
         sec.frameworkService = fwkControl.createMock()
         //mock the scheduledExecutionService
@@ -3167,7 +3393,7 @@ class ScheduledExecutionControllerTests  {
         //create mock of FrameworkService
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project, framework -> return true }
         sec.frameworkService = fwkControl.createMock()
         //mock the scheduledExecutionService
@@ -3195,7 +3421,7 @@ class ScheduledExecutionControllerTests  {
         //create mock of FrameworkService
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.existsFrameworkProject { project, framework -> return true }
         sec.frameworkService = fwkControl.createMock()
         //mock the scheduledExecutionService

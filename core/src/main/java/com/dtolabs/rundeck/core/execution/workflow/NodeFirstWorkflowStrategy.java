@@ -75,6 +75,10 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
             = new HashMap<String, Collection<StepExecutionResult>>();
         final Map<Integer, StepExecutionResult> stepFailures = new HashMap<Integer, StepExecutionResult>();
 
+        boolean workflowsuccess = true;
+        String statusString=null;
+        ControlBehavior controlBehavior = null;
+
         try {
             final NodesSelector nodeSelector = executionContext.getNodeSelector();
 
@@ -122,24 +126,29 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
 
                 }
                 wfresult = sectionSuccess;
-                if (!sectionSuccess.isSuccess() && !item.getWorkflow().isKeepgoing()||
-                    sectionSuccess.getControlBehavior() == ControlBehavior.Halt) {
+                if(!sectionSuccess.isSuccess()) {
+                    workflowsuccess = false;
+                }
+                if (sectionSuccess.getControlBehavior() != null &&
+                    sectionSuccess.getControlBehavior() != ControlBehavior.Continue) {
+                    controlBehavior = sectionSuccess.getControlBehavior();
+                }
+                if(sectionSuccess.getStatusString() !=null) {
+                    statusString = sectionSuccess.getStatusString();
+                }
+                if (!workflowsuccess && !item.getWorkflow().isKeepgoing() || controlBehavior == ControlBehavior.Halt) {
                     break;
                 }
                 stepCount += flowsection.getCommands().size();
             }
+            wfresult = workflowResult(workflowsuccess, statusString, controlBehavior);
         } catch (RuntimeException e) {
             exception = e;
             e.printStackTrace();
             executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Exception: " + e.getClass() + ": " + e
                     .getMessage());
             wfresult = WorkflowResultFailed;
-        } catch (DispatcherException e) {
-            exception = e;
-            executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Exception: " + e.getClass() + ": " + e
-                    .getMessage());
-            wfresult = WorkflowResultFailed;
-        } catch (ExecutionServiceException e) {
+        } catch (DispatcherException | ExecutionServiceException e) {
             exception = e;
             executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Exception: " + e.getClass() + ": " + e
                     .getMessage());

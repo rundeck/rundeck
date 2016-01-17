@@ -20,7 +20,7 @@
     Created: 7/28/11 2:16 PM
  --%>
 
-<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope" contentType="text/html;charset=UTF-8" %>
 <div class="container">
 
 
@@ -50,11 +50,16 @@
     <g:hiddenField name="${prefix+'type'}" value="${type}"/>
     <g:if test="${description}">
         <div class="col-sm-12 form-horizontal">
-        <g:each in="${description.properties}" var="prop">
-            <g:if test="${!prop.scope || prop.scope.isProjectLevel() || prop.scope.isUnspecified()}">
-            <g:render template="pluginConfigPropertyFormField" model="${[prop:prop,prefix:prefix,error:report?.errors?report?.errors[prop.name]:null,values:values,fieldname:prefix+'config.'+prop.name,origfieldname:'orig.'+prefix+'config.'+prop.name]}"/>
-            </g:if>
-        </g:each>
+
+            <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                    properties:description.properties,
+                    report:report,
+                    prefix:prefix,
+                    values:values,
+                    fieldnamePrefix:prefix+'config.',
+                    origfieldnamePrefix:'orig.'+prefix+'config.',
+                    allowedScope: PropertyScope.Project
+            ]}"/>
         </div>
     </g:if>
     <g:else>

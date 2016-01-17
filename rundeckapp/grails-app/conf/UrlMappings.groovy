@@ -29,11 +29,38 @@ class UrlMappings {
         "/api/$api_version/job/$id"(controller: 'scheduledExecution') {
             action = [GET: 'apiJobExport', DELETE: 'apiJobDelete', PUT: 'apiJobUpdateSingle', POST: 'apiJobCreateSingle']
         }
+
+        "/api/$api_version/job/$id/execution/enable"(controller: 'scheduledExecution') {
+            action = [POST: 'apiFlipExecutionEnabled']
+            status = true
+        }
+        "/api/$api_version/job/$id/execution/disable"(controller: 'scheduledExecution') {
+            action = [POST: 'apiFlipExecutionEnabled']
+            status = false
+        }
+
+        "/api/$api_version/job/$id/schedule/enable"(controller: 'scheduledExecution') {
+            action = [POST: 'apiFlipScheduleEnabled']
+            status = true
+        }
+        "/api/$api_version/job/$id/schedule/disable"(controller: 'scheduledExecution') {
+            action = [POST: 'apiFlipScheduleEnabled']
+            status = false
+        }
+
         "/api/$api_version/job/$id/run"(controller: 'scheduledExecution', action: 'apiJobRun')
         "/api/$api_version/job/$id/executions"(controller: 'scheduledExecution') {
             action = [GET: 'apiJobExecutions', DELETE: 'apiJobExecutionsDelete', POST: 'apiJobRun']
         }
+
+        "/api/$api_version/job/$id/scm/$integration/status"(controller: 'scm', action: 'apiJobStatus')
+        "/api/$api_version/job/$id/scm/$integration/diff"(controller: 'scm', action: 'apiJobDiff')
+        "/api/$api_version/job/$id/scm/$integration/action/$actionId/input"(controller: 'scm', action: 'apiJobActionInput')
+        "/api/$api_version/job/$id/scm/$integration/action/$actionId"(controller: 'scm', action: 'apiJobActionPerform')
+
         "/api/$api_version/jobs/delete"(controller: 'scheduledExecution', action: 'apiJobDeleteBulk')
+
+
         "/api/$api_version/project/$project/executions/running"(controller: 'menu', action: 'apiExecutionsRunningv14')
         "/api/$api_version/project/$project/executions"(controller: 'execution', action: 'apiExecutionsQueryv14')
         "/api/$api_version/project/$project/jobs/export"(controller: 'menu', action: 'apiJobsExportv14')
@@ -69,6 +96,16 @@ class UrlMappings {
         "/api/$api_version/project/$project/run/script"(controller: 'scheduledExecution', action: 'apiRunScriptv14')
         "/api/$api_version/project/$project/run/url"(controller: 'scheduledExecution', action: 'apiRunScriptUrl14')
         "/api/$api_version/project/$project/history"(controller: 'reports', action: 'apiHistoryv14')
+
+        "/api/$api_version/project/$project/scm/$integration/plugins"(controller: 'scm', action: 'apiPlugins')
+        "/api/$api_version/project/$project/scm/$integration/plugin/$type/input"(controller: 'scm', action: 'apiPluginInput')
+        "/api/$api_version/project/$project/scm/$integration/plugin/$type/setup"(controller: 'scm', action: 'apiProjectSetup')
+        "/api/$api_version/project/$project/scm/$integration/plugin/$type/enable"(controller: 'scm', action: 'apiProjectEnable')
+        "/api/$api_version/project/$project/scm/$integration/plugin/$type/disable"(controller: 'scm', action: 'apiProjectDisable')
+        "/api/$api_version/project/$project/scm/$integration/status"(controller: 'scm', action: 'apiProjectStatus')
+        "/api/$api_version/project/$project/scm/$integration/config"(controller: 'scm', action: 'apiProjectConfig')
+        "/api/$api_version/project/$project/scm/$integration/action/$actionId/input"(controller: 'scm', action: 'apiProjectActionInput')
+        "/api/$api_version/project/$project/scm/$integration/action/$actionId"(controller: 'scm', action: 'apiProjectActionPerform')
 
         "/api/$api_version/projects"(controller: 'project'){
             action = [GET: 'apiProjectList', POST:'apiProjectCreate']
@@ -124,6 +161,7 @@ class UrlMappings {
         //simplified url mappings for link generation
         "/project/$project/nodes/"(controller: 'framework', action: 'nodes')
         "/project/$project/run/"(controller: 'framework', action: 'nodes')
+        "/project/$project/scm/$integration?/$action?"(controller: 'scm')
         "/project/$project/command/run"(controller: 'framework',action: 'adhoc')
         "/project/$project/activity"(controller: 'reports', action: 'index')
         "/project/$project/history"(controller: 'reports', action: 'index')
@@ -132,6 +170,7 @@ class UrlMappings {
         "/project/$project/job/upload"(controller: 'scheduledExecution'){
             action = [GET: 'upload', POST: 'uploadPost']
         }
+        "/project/$project/job/$id/scm/$integration/$action"(controller: 'scm')
         "/project/$project/job/$action?/$id?"(controller: 'scheduledExecution')
         "/resources/createProject"(controller: 'framework') {
             action = [GET: 'createProject', POST: 'createProjectPost']

@@ -209,7 +209,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     long readProjectFileResource(String projectName, String path, OutputStream output) {
         def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
         def resource = getStorage().getResource(storagePath)
-        Streams.copy(resource.contents.inputStream,output,true)
+        Streams.copy(resource.contents.inputStream,output,false)
     }
     /**
      * List the full paths of file resources in the directory at the given path
@@ -348,6 +348,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     private Map storeProjectConfig(String projectName, Properties properties) {
         def storagePath = ETC_PROJECT_PROPERTIES_PATH
         def baos = new ByteArrayOutputStream()
+        properties['project.name']=projectName
         properties.store(baos, MIME_TYPE_PROJECT_PROPERTIES+";name=" + projectName)
         def bais = new ByteArrayInputStream(baos.toByteArray())
 

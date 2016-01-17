@@ -3,7 +3,7 @@
 <div class="col-sm-12 ">
 <g:form controller="scheduledExecution" method="post" action="runJobNow" useToken="true"
         params="[project:scheduledExecution.project]" class="form-horizontal" role="form">
-<div class="panel panel-default panel-tab-content">
+<div class="panel panel-default panel-tab-content panel-modal-content">
 <g:if test="${!hideHead}">
     <div class="panel-heading">
         <div class="row">
@@ -248,7 +248,7 @@
                 });
 
             </g:javascript>
-            <g:if test="${nodesSelectedByDefault != null && !nodesSelectedByDefault}">
+            <g:if test="${scheduledExecution.hasNodesSelectedByDefault()}">
                 <g:javascript>
                     Event.fire($('nodeSelect'), 'nodeset:change');
                 </g:javascript>
@@ -268,22 +268,29 @@
             <g:actionSubmit id="execFormCancelButton" value="Cancel" class="btn btn-default"/>
         </g:if>
         <div class="pull-right">
-            <button type="submit"
-                    id="execFormRunButton"
-                    class=" btn btn-success ">
+            <div title="${scheduledExecution.hasExecutionEnabled() ? '':g.message(code: 'disabled.job.run')}"
+                  class="has_tooltip"
+                  data-toggle="tooltip"
+                  data-placement="auto right"
+            >%{--Extra div because attr disabled will cancel tooltip from showing --}%
+                <button type="submit"
+                        id="execFormRunButton"
+                        ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
+                        class=" btn btn-success">
                     <g:message code="run.job.now" />
-                <b class="glyphicon glyphicon-play"></b>
-            </button>
+                    <b class="glyphicon glyphicon-play"></b>
+                </button>
+            </div>
         </div>
         <div class="clearfix">
         </div>
         <div class="pull-right">
-        <label class="control-label">
-            <g:checkBox id="followoutputcheck" name="follow"
-                        checked="${defaultFollow || params.follow == 'true'}"
-                        value="true"/>
-            <g:message code="job.run.watch.output"/>
-        </label>
+            <label class="control-label">
+                <g:checkBox id="followoutputcheck" name="follow"
+                            checked="${defaultFollow || params.follow == 'true'}"
+                            value="true"/>
+                <g:message code="job.run.watch.output"/>
+            </label>
         </div>
     </div>
 </div>
@@ -294,23 +301,32 @@
 <g:if test="${!hideHead}">
 <div class="panel-footer">
     <div class="row" >
-        <div class="col-sm-12" id="formbuttons">
+        <div class="col-sm-12 form-inline" id="formbuttons">
             <g:if test="${!hideCancel}">
                 <g:actionSubmit id="execFormCancelButton" value="Cancel" class="btn btn-default"/>
             </g:if>
-            <button type="submit"
-                    id="execFormRunButton"
-                    class=" btn btn-success">
-                <i class="glyphicon glyphicon-play"></i>
-                <g:message code="run.job.now" />
-            </button>
-            <label class="checkbox-inline">
-                <g:checkBox id="followoutputcheck"
-                            name="follow"
-                            checked="${defaultFollow || params.follow == 'true'}"
-                            value="true"/>
-                <g:message code="job.run.watch.output"/>
-            </label>
+            <div title="${scheduledExecution.hasExecutionEnabled() ? '':g.message(code: 'disabled.job.run')}"
+                  class="form-group has_tooltip"
+                  data-toggle="tooltip"
+                  data-placement="auto right"
+            >%{--Extra div because attr disabled will cancel tooltip from showing --}%
+                <button type="submit"
+                        id="execFormRunButton"
+                        ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
+                        class=" btn btn-success">
+                    <i class="glyphicon glyphicon-play"></i>
+                    <g:message code="run.job.now" />
+                </button>
+            </div>
+            <div class="checkbox-inline">
+                <label>
+                    <g:checkBox id="followoutputcheck"
+                                name="follow"
+                                checked="${defaultFollow || params.follow == 'true'}"
+                                value="true"/>
+                    <g:message code="job.run.watch.output"/>
+                </label>
+            </div>
         </div>
     </div>
 </div>

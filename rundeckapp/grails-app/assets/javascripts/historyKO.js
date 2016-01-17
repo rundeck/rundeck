@@ -49,7 +49,7 @@ function Report(data) {
     self.endTimeSimple = ko.computed(function () {
         return MomentUtil.formatTimeSimple(self.dateCompleted());
     });
-    self.statusList=['running','succeed','succeeded','failed','cancel','retry','timedout','timeout','fail'];
+    self.statusList=['running','succeed','succeeded','failed','cancel','aborted','retry','timedout','timeout','fail'];
 
     self.isCustomStatus = ko.computed(function () {
         return self.statusList.indexOf(self.status()) < 0 ;
@@ -299,7 +299,7 @@ function loadHistoryLink(history, ajaxBaseUrl, href,reload) {
     var load=function(){
         history.href(href);
         jQuery.getJSON(url, handleResult);
-    }
+    };
     handleResult= function (data) {
         history.selected(true);
         ko.mapping.fromJS(Object.extend(data, { params: params }), binding, history);

@@ -6,7 +6,6 @@ import com.dtolabs.rundeck.core.authentication.Username;
 import com.dtolabs.rundeck.core.authorization.*;
 import com.dtolabs.rundeck.core.authorization.providers.*;
 import com.dtolabs.rundeck.core.cli.*;
-import com.dtolabs.rundeck.core.cli.jobs.JobsToolException;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkFactory;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
@@ -139,16 +138,6 @@ public class AclTool extends BaseTool {
         final TestOptions testOptions = new TestOptions();
         addToolOptions(testOptions);
 
-    }
-
-    private SAREAuthorization createAuthorization(final File directory) throws IOException, PoliciesParseException {
-        return new SAREAuthorization(directory);
-    }
-
-    private SAREAuthorization createAuthorizationSingleFile(final File file)
-            throws IOException, PoliciesParseException
-    {
-        return new SAREAuthorization(Policies.loadFile(file));
     }
 
     /**
@@ -570,9 +559,9 @@ public class AclTool extends BaseTool {
     /**
      * Call the action
      *
-     * @throws com.dtolabs.rundeck.core.cli.jobs.JobsToolException if an error occurs
+     * @throws CLIToolOptionsException if an error occurs
      */
-    protected void go() throws JobsToolException, CLIToolOptionsException {
+    protected void go() throws CLIToolOptionsException {
         if (null == action) {
             throw new CLIToolOptionsException("Command expected. Choose one of: " + Arrays.asList(Actions.values()));
         }
@@ -594,7 +583,7 @@ public class AclTool extends BaseTool {
                     throw new CLIToolOptionsException("Unrecognized action: " + action);
             }
         } catch (IOException | PoliciesParseException e) {
-            throw new JobsToolException(e);
+            throw new CLIToolOptionsException(e);
         }
     }
 
@@ -927,7 +916,9 @@ public class AclTool extends BaseTool {
                     ACLConstants.ACTION_RUNAS,
                     ACLConstants.ACTION_KILL,
                     ACLConstants.ACTION_KILLAS,
-                    ACLConstants.ACTION_CREATE
+                    ACLConstants.ACTION_CREATE,
+                    ACLConstants.ACTION_TOGGLE_EXECUTION,
+                    ACLConstants.ACTION_TOGGLE_SCHEDULE
             );
     static final List<String> projectJobKindActions =
             Arrays.asList(
@@ -1097,7 +1088,8 @@ public class AclTool extends BaseTool {
                     "  Job: " +
                     optionDisplayString(JOB_OPT) +
                     "\n" +
-                    "    View, modify, create*, delete*, run, and kill specific jobs.\n" +
+                    "    View, modify, create*, delete*, run, and kill specific jobs,\n" +
+                    "    and toggle whether schedule and/or execution are enabled.\n" +
                     "    * Create and delete also require additional " +
                     optionDisplayString(GENERIC_OPT) +
                     " level access.\n" +
@@ -1912,6 +1904,8 @@ public class AclTool extends BaseTool {
         public static final String ACTION_DELETE_EXECUTION = "delete_execution";
         public static final String ACTION_ENABLE_EXECUTIONS = "enable_executions";
         public static final String ACTION_DISABLE_EXECUTIONS = "disable_executions";
+        public static final String ACTION_TOGGLE_SCHEDULE = "toggle_schedule";
+        public static final String ACTION_TOGGLE_EXECUTION = "toggle_execution";
 
         public static final String TYPE_SYSTEM = "system";
         public static final String TYPE_SYSTEM_ACL = "system_acl";

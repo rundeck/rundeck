@@ -19,8 +19,12 @@ import rundeck.Execution
 import rundeck.services.logging.DisablingLogWriter
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogState
+import rundeck.services.logging.LineCountingLogWriter
+import rundeck.services.logging.LoggingThreshold
 import rundeck.services.logging.LoglevelThresholdLogWriter
 import rundeck.services.logging.MultiLogWriter
+import rundeck.services.logging.NodeCountingLogWriter
+import rundeck.services.logging.ThresholdLogWriter
 
 @TestFor(LoggingService)
 @Mock([Execution,LogFileStorageService])
@@ -106,7 +110,7 @@ class LoggingServiceTests  {
 
 
         def lfmock = mockFor(LogFileStorageService)
-        lfmock.demand.getLogFileWriterForExecution(1..1) { Execution e2, defaultMeta ->
+        lfmock.demand.getLogFileWriterForExecution(1..1) { Execution e2, defaultMeta, x ->
             assertEquals(1, e2.id)
             assertEquals([test: "blah"], defaultMeta)
             writer
@@ -178,9 +182,10 @@ class LoggingServiceTests  {
         def writer = new testWriter()
         writer.name = "filewritertest1"
         def lfmock = mockFor(LogFileStorageService)
-        lfmock.demand.getLogFileWriterForExecution(1..1) { Execution e2, defaultMeta ->
+        lfmock.demand.getLogFileWriterForExecution(1..1) { Execution e2, defaultMeta, x ->
             assertEquals(1, e2.id)
             assertEquals([test: "blah"], defaultMeta)
+            assertEquals(null,x)
             writer
         }
         lfmock.demand.getFileForExecutionFiletype(1..1) { Execution e2, String filetype, boolean stored ->
@@ -207,6 +212,126 @@ class LoggingServiceTests  {
         MultiLogWriter multi= filtered.writer
         assertEquals(1,multi.writers.size())
         assertEquals([writer],multi.writers)
+    }
+    void testOpenLogWriter_with_fileSizeThresholdWatcher(){
+        Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
+        assertNotNull(e.save())
+
+        grailsApplication.config.clear()
+        def writer = new testWriter()
+        writer.name = "filewritertest1"
+        def lfmock = mockFor(LogFileStorageService)
+        lfmock.demand.getLogFileWriterForExecution(1..1) { Execution e2, defaultMeta, x ->
+            assertEquals(1, e2.id)
+            assertEquals([test: "blah"], defaultMeta)
+            assertNotNull("expected a value watcher for logging file size threshold",x)
+            writer
+        }
+        lfmock.demand.getFileForExecutionFiletype(1..1) { Execution e2, String filetype, boolean stored ->
+            assertEquals(1, e2.id)
+            assertEquals("rdlog", filetype)
+            assertEquals(false, stored)
+            new File("/test/file/path")
+        }
+        service.logFileStorageService=lfmock.createMock()
+        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
+            [:]
+        }
+        def t = new LoggingThreshold()
+        t.type=LoggingThreshold.TOTAL_FILE_SIZE
+        def execwriter = service.openLogWriter(e, LogLevel.NORMAL, [test:"blah"],t)
+        assertNotNull(execwriter)
+        assertEquals(new File("/test/file/path"), execwriter.filepath)
+        assertNotNull(execwriter.writer)
+
+        assertTrue(execwriter.writer instanceof ThresholdLogWriter)
+        ThresholdLogWriter unwrapped=execwriter.writer
+        assertNotNull(unwrapped.writer)
+        assertTrue(unwrapped.writer instanceof LoglevelThresholdLogWriter)
+    }
+    void testOpenLogWriter_with_maxLinesThresholdWatcher(){
+        Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
+        assertNotNull(e.save())
+
+        grailsApplication.config.clear()
+        def writer = new testWriter()
+        writer.name = "filewritertest1"
+        def lfmock = mockFor(LogFileStorageService)
+        lfmock.demand.getLogFileWriterForExecution(1..1) { Execution e2, defaultMeta, x ->
+            assertEquals(1, e2.id)
+            assertEquals([test: "blah"], defaultMeta)
+            assertNull("expected no logging file size threshold",x)
+            writer
+        }
+        lfmock.demand.getFileForExecutionFiletype(1..1) { Execution e2, String filetype, boolean stored ->
+            assertEquals(1, e2.id)
+            assertEquals("rdlog", filetype)
+            assertEquals(false, stored)
+            new File("/test/file/path")
+        }
+        service.logFileStorageService=lfmock.createMock()
+        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
+            [:]
+        }
+
+        def t = new LoggingThreshold()
+        t.type=LoggingThreshold.TOTAL_LINES
+
+        def execwriter = service.openLogWriter(e, LogLevel.NORMAL, [test:"blah"],t)
+
+        assertNotNull(t.valueHolder)
+        assertTrue(t.valueHolder instanceof LineCountingLogWriter)
+
+        assertNotNull(execwriter)
+        assertEquals(new File("/test/file/path"), execwriter.filepath)
+        assertNotNull(execwriter.writer)
+
+        assertTrue(execwriter.writer instanceof ThresholdLogWriter)
+        ThresholdLogWriter unwrapped=execwriter.writer
+        assertNotNull(unwrapped.writer)
+        assertTrue(unwrapped.writer instanceof LoglevelThresholdLogWriter)
+    }
+    void testOpenLogWriter_with_nodeLinesThresholdWatcher(){
+        Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
+        assertNotNull(e.save())
+
+        grailsApplication.config.clear()
+        def writer = new testWriter()
+        writer.name = "filewritertest1"
+        def lfmock = mockFor(LogFileStorageService)
+        lfmock.demand.getLogFileWriterForExecution(1..1) { Execution e2, defaultMeta, x ->
+            assertEquals(1, e2.id)
+            assertEquals([test: "blah"], defaultMeta)
+            assertNull("expected no logging file size threshold",x)
+            writer
+        }
+        lfmock.demand.getFileForExecutionFiletype(1..1) { Execution e2, String filetype, boolean stored ->
+            assertEquals(1, e2.id)
+            assertEquals("rdlog", filetype)
+            assertEquals(false, stored)
+            new File("/test/file/path")
+        }
+        service.logFileStorageService=lfmock.createMock()
+        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
+            [:]
+        }
+
+        def t = new LoggingThreshold()
+        t.type=LoggingThreshold.LINES_PER_NODE
+
+        def execwriter = service.openLogWriter(e, LogLevel.NORMAL, [test:"blah"],t)
+
+        assertNotNull(t.valueHolder)
+        assertTrue(t.valueHolder instanceof NodeCountingLogWriter)
+
+        assertNotNull(execwriter)
+        assertEquals(new File("/test/file/path"), execwriter.filepath)
+        assertNotNull(execwriter.writer)
+
+        assertTrue(execwriter.writer instanceof ThresholdLogWriter)
+        ThresholdLogWriter unwrapped=execwriter.writer
+        assertNotNull(unwrapped.writer)
+        assertTrue(unwrapped.writer instanceof LoglevelThresholdLogWriter)
     }
 
     class testReader implements StreamingLogReader{

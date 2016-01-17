@@ -1,11 +1,18 @@
-Release 2.5.3
+Release 2.6.2
 ===========
 
-Date: 2015-08-12
+Date: 2015-12-02
 
-Name: <span style="color: slateblue"><span class="glyphicon glyphicon-book"></span> "cafe au lait slateblue book"</span>
+Name: <span style="color: crimson"><span class="glyphicon glyphicon-headphones"></span> "cafe bonbon crimson headphones"</span>
 
-* Bug fixes
+## Notes
+
+This release includes bug fixes, and some enhancements.
+
+* Secure Job Options can now use Key Storage for defaults, enabling use via scheduled jobs
+* Quartz thread pool info and warnings added to system info
+* API added for SCM plugins, API version updated to v15
+* Plugins: input property definitions can now be placed in groups, which can be shown collapsed by default
 
 ## Contributors
 
@@ -14,20 +21,24 @@ Name: <span style="color: slateblue"><span class="glyphicon glyphicon-book"></sp
 ## Bug Reporters
 
 * ahonor
-* ddzed15
 * gschueler
-* runnnt0
-* tomkregenbild
+* sea-lmarchal
+* stack72
 
 ## Issues
 
-* [${option.wimrmPassword}  not passed between jobs in 2.5.2 version. ( was working in 2.5.1)](https://github.com/rundeck/rundeck/issues/1363)
-* [Jaas login module using LDAPS can cause exception "Unconnected sockets not implemented"](https://github.com/rundeck/rundeck/issues/1356)
-* [version 2.5.2 - Option 'sshKeyPassphrase' is required when running with job reference](https://github.com/rundeck/rundeck/issues/1355)
-* [Documentation: Yum install instructions refer to wrong URL](https://github.com/rundeck/rundeck/issues/1345)
-* [Node Filter documentation is incorrect](https://github.com/rundeck/rundeck/issues/1338)
-* [Incorrect value for server url context variable](https://github.com/rundeck/rundeck/issues/1337)
-* [Only required attribute for yaml should be nodename](https://github.com/rundeck/rundeck/issues/1335)
-* [Fix #1328](https://github.com/rundeck/rundeck/pull/1329)
-* [API: execution output in text format is encoded](https://github.com/rundeck/rundeck/issues/1328)
-* [Disallow blank password](https://github.com/rundeck/rundeck/issues/1273)
+* [Feature/multifile storage](https://github.com/rundeck/rundeck/pull/1560)
+* [SCM API: push via project-commit action not working](https://github.com/rundeck/rundeck/issues/1553)
+* [SCM API: plugin type not checked for enable/disable](https://github.com/rundeck/rundeck/issues/1552)
+* [SSH debug logging is missing](https://github.com/rundeck/rundeck/issues/1546)
+* [plugin properties can be grouped](https://github.com/rundeck/rundeck/pull/1543)
+* [Feature: secure option can use key store for default values](https://github.com/rundeck/rundeck/pull/1537)
+* [for #1535 allow rundeck.basedir var in remote option file urls](https://github.com/rundeck/rundeck/pull/1536)
+* [Expand ${rdeck.base} for remoteUrl paths for options](https://github.com/rundeck/rundeck/issues/1535)
+* [2.6: startup message "Event listener rundeck.services.JobEventsService#jobChanged declared for topic jobChanged and namespace app but no such event is declared, you may never receive it"](https://github.com/rundeck/rundeck/issues/1532)
+* [Add Quartz Scheduler threadPool usage to metrics healthcheck, system info](https://github.com/rundeck/rundeck/pull/1530)
+* [Startup: ERROR level log: "ScheduledExecutionService - rescheduled job: 335"](https://github.com/rundeck/rundeck/issues/1529)
+* [Job succeeds instead of failing when executing a job-ref at the end](https://github.com/rundeck/rundeck/issues/1528)
+* [API for SCM plugins](https://github.com/rundeck/rundeck/pull/1526)
+* [SCM: add API support for SCM plugins](https://github.com/rundeck/rundeck/issues/1516)
+* [Error Deleting a Project](https://github.com/rundeck/rundeck/issues/1436)

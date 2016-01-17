@@ -15,5 +15,6 @@
   --}%
 ${enc(rawtext:prefix ?: '')}<g:link class="nodefilterlink ${enc(attr:linkclass)?:''}" action="nodes" params="${[filter: OptsUtil.join([key + ":",value]), project: params.project ?: request.project]}"
     data-node-filter="${enc(attr:OptsUtil.join([key + ":", value]))}"
+    data-node-tag="${key=='tags'?value:''}"
 title="Filter by ${enc(attr:key)} ${enc(attr:titletext?:'value')}"><g:if test="${linkicon}"><i class="${enc(attr:linkicon)}"></i></g:if
     ><g:else><g:enc>${linktext?:value}</g:enc></g:else></g:link>${enc(rawtext:suffix?:'')}

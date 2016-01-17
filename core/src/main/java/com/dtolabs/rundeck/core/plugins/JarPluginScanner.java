@@ -35,7 +35,7 @@ import java.io.*;
  * 
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class JarPluginScanner extends DirPluginScanner {
+public class JarPluginScanner extends DirPluginScanner {
     static Logger log = Logger.getLogger(JarPluginScanner.class.getName());
     public static final FileFilter FILENAME_FILTER = new FileFilter() {
         public boolean accept(final File file) {

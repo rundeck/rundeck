@@ -76,7 +76,7 @@ class ExecReport extends BaseReport{
                 adhocExecution: null==exec.scheduledExecution,
                 adhocScript: adhocScript,
                 abortedByUser: iscancelled? exec.abortedby ?: exec.user:null,
-                node:"${failedCount}/${successCount}/${totalCount}",
+                node:"${successCount}/${failedCount}/${totalCount}",
                 title: adhocScript?adhocScript:summary,
                 status: status,
                 ctxProject: exec.project,

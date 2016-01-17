@@ -2,7 +2,7 @@
 <g:set var="scopeinfo" value="${g.rkey()}"/>
 
 <g:if test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.PASSWORD, 'PASSWORD']}">
-    <g:set var="propValue" value="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"/>
+    <g:set var="propValue" value="••••••••"/>
 </g:if>
 <g:else>
     <g:set var="propValue" value="${prop.defaultValue ?: 'value'}"/>

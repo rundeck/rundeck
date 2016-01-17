@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 
@@ -1584,7 +1585,7 @@ class ProjectControllerTest {
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true)
         controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream,l,aclperms->
+            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts->
                 assertEquals 'test1',project.name
                 assertTrue aclperms
                 stream<<'some data'
@@ -1604,7 +1605,7 @@ class ProjectControllerTest {
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,false)
         controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream,l,aclperms->
+            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts->
                 assertEquals 'test1',project.name
                 assertFalse aclperms
                 stream<<'some data'
@@ -1708,10 +1709,10 @@ class ProjectControllerTest {
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
-            importToProject{  project, String user, String roleList,  framework,
-                             AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                assertEquals('user1',user)
-                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+            importToProject{  project,  framework,
+                             UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
+                
+                
                 [success:false,joberrors:['error1','error2']]
             }
         }
@@ -1737,10 +1738,10 @@ class ProjectControllerTest {
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
-            importToProject{  project, String user, String roleList,  framework,
-                             AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                assertEquals('user1',user)
-                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+            importToProject{  project,  framework,
+                             UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
+                
+                
                 [success:false,joberrors:['error1','error2']]
             }
         }
@@ -1765,10 +1766,10 @@ class ProjectControllerTest {
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
-            importToProject{  project, String user, String roleList,  framework,
-                             AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                assertEquals('user1',user)
-                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+            importToProject{  project,  framework,
+                             UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
+                
+                
                 assertEquals(true, options.importExecutions)
                 assertEquals('preserve', options.jobUuidOption)
                 assertEquals(false, options.importConfig)
@@ -1795,10 +1796,10 @@ class ProjectControllerTest {
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
-            importToProject{  project, String user, String roleList,  framework,
-                             AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                assertEquals('user1',user)
-                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+            importToProject{  project,  framework,
+                             UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
+                
+                
                 assertEquals(false, options.importExecutions)
                 assertEquals('preserve', options.jobUuidOption)
                 assertEquals(false, options.importConfig)
@@ -1823,10 +1824,10 @@ class ProjectControllerTest {
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
-            importToProject{  project, String user, String roleList,  framework,
-                             AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                assertEquals('user1',user)
-                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+            importToProject{  project, framework,
+                             UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
+                
+                
                 assertEquals(true, options.importExecutions)
                 assertEquals('preserve', options.jobUuidOption)
                 assertEquals(false, options.importConfig)
@@ -1851,10 +1852,10 @@ class ProjectControllerTest {
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
-            importToProject{  project, String user, String roleList,  framework,
-                             AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                assertEquals('user1',user)
-                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+            importToProject{  project,  framework,
+                             UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
+                
+                
                 assertEquals(true, options.importExecutions)
                 assertEquals('preserve', options.jobUuidOption)
                 assertEquals(false, options.importConfig)
@@ -1879,10 +1880,10 @@ class ProjectControllerTest {
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
-            importToProject{  project, String user, String roleList,  framework,
-                             AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                assertEquals('user1',user)
-                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+            importToProject{  project,  framework,
+                             UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
+                
+                
                 assertEquals(true, options.importExecutions)
                 assertEquals('remove', options.jobUuidOption)
                 assertEquals(false, options.importConfig)
@@ -1907,10 +1908,10 @@ class ProjectControllerTest {
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code+';'+args.join(';') } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
-            importToProject{  project, String user, String roleList,  framework,
-                             AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                assertEquals('user1',user)
-                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+            importToProject{  project,  framework,
+                             UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
+                
+                
                 assertEquals([importExecutions: true, jobUuidOption: 'remove',importConfig:false, importACL:false], options)
                 [success:true]
             }
@@ -1930,7 +1931,7 @@ class ProjectControllerTest {
                 ["message": "api.error.invalid.request;Property [jobUuidOption] of class [class com.dtolabs.rundeck.app.support.ProjectArchiveParams] with value [blah] is not contained within the list [[preserve, remove]]",
                  "error": true,
                  "errorCode": "api.error.invalid.request",
-                 "apiversion": 14],
+                 "apiversion": ApiRequestFilters.API_CURRENT_VERSION],
                 response.json
         )
     }
@@ -1940,10 +1941,10 @@ class ProjectControllerTest {
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
         controller.projectService=mockWith(ProjectService){
-            importToProject{  project, String user, String roleList,  framework,
-                             AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                assertEquals('user1',user)
-                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+            importToProject{  project,  framework,
+                             UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
+                
+                
                 [success:true]
             }
         }
@@ -1968,10 +1969,10 @@ class ProjectControllerTest {
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code+';'+args } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import',true,false)
         controller.projectService=mockWith(ProjectService){
-            importToProject{  project, String user, String roleList,  framework,
-                              AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                assertEquals('user1',user)
-                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+            importToProject{  project,  framework,
+                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
+                
+                
                 [success:true]
             }
         }
@@ -1990,7 +1991,7 @@ class ProjectControllerTest {
                               message:"api.error.item.unauthorized;[create, ACL for Project, [name:test1]]",
                               error: true,
                               errorCode : "api.error.item.unauthorized",
-                              apiversion: 14
+                              apiversion: ApiRequestFilters.API_CURRENT_VERSION
                       ],
                       response.json
         )
@@ -2003,10 +2004,10 @@ class ProjectControllerTest {
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code+';'+args } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import',true,true)
         controller.projectService=mockWith(ProjectService){
-            importToProject{  project, String user, String roleList,  framework,
-                              AuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-                assertEquals('user1',user)
-                assertTrue(roleList in ['groupa,groupb', 'groupb,groupa'])
+            importToProject{  project,  framework,
+                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
+                
+                
                 assertTrue(options.importACL)
                 [success:true]
             }

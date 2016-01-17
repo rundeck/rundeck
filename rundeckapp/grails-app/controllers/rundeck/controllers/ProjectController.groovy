@@ -3,12 +3,14 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ApiService
+import rundeck.services.ArchiveOptions
 import rundeck.services.ProjectServiceException
 
 import javax.servlet.http.HttpServletRequest
@@ -206,7 +208,7 @@ class ProjectController extends ControllerBase{
             return renderErrorView("Project parameter is required")
         }
 
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
             return
@@ -246,11 +248,8 @@ class ProjectController extends ControllerBase{
                 return redirect(controller: 'menu', action: 'admin', params: [project: project])
             }
             Framework framework = frameworkService.getRundeckFramework()
-            String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
             def result = projectService.importToProject(
                     project1,
-                    session.user,
-                    roleList,
                     framework,
                     authContext,
                     file.getInputStream(),
@@ -1348,13 +1347,19 @@ class ProjectController extends ControllerBase{
         SimpleDateFormat dateFormater = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US);
         def dateStamp = dateFormater.format(new Date());
         response.setContentType("application/zip")
-        response.setHeader("Content-Disposition", "attachment; filename=\"${project}-${dateStamp}.rdproject.jar\"")
+        response.setHeader("Content-Disposition", "attachment; filename=\"${project.name}-${dateStamp}.rdproject.jar\"")
 
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def aclReadAuth=frameworkService.authorizeApplicationResourceAny(authContext,
                                                                          frameworkService.authResourceForProjectAcl(project.name),
                                                                          [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])
-        projectService.exportProjectToOutputStream(project, framework,response.outputStream,null,aclReadAuth)
+        ArchiveOptions options=new ArchiveOptions(all: true)
+        if(params.executionIds){
+            options.all=false
+            options.executionsOnly=true
+            options.parseExecutionsIds(params.executionIds)
+        }
+        projectService.exportProjectToOutputStream(project, framework,response.outputStream,null,aclReadAuth,options)
     }
 
     def apiProjectImport(ProjectArchiveParams archiveParams){
@@ -1400,7 +1405,7 @@ class ProjectController extends ControllerBase{
             )
             return null
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         def stream = request.getInputStream()
         def len = request.getContentLength()
@@ -1413,12 +1418,9 @@ class ProjectController extends ControllerBase{
             ])
         }
 
-        String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
 
         def result = projectService.importToProject(
                 project,
-                session.user,
-                roleList,
                 framework,
                 authContext,
                 stream,

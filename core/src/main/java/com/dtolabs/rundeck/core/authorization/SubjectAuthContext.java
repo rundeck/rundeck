@@ -16,16 +16,16 @@
 
 package com.dtolabs.rundeck.core.authorization;
 
+import com.dtolabs.rundeck.core.authentication.Group;
 import com.dtolabs.rundeck.core.authentication.Username;
 
 import javax.security.auth.Subject;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Wraps a Subject and Authorization to provide AuthContext
  */
-public class SubjectAuthContext implements NamedAuthContext {
+public class SubjectAuthContext implements UserAndRolesAuthContext {
     private Subject subject;
     private Authorization authorization;
 
@@ -37,14 +37,26 @@ public class SubjectAuthContext implements NamedAuthContext {
     @Override
     public String getUsername() {
         Set<Username> principals = subject.getPrincipals(Username.class);
-        if(principals!=null && principals.size()>0){
+        if (principals != null && principals.size() > 0) {
             return principals.iterator().next().getName();
         }
         return null;
     }
 
     @Override
-    public AuthContext combineWith(final Authorization authorization) {
+    public Set<String> getRoles() {
+        Set<Group> principals = subject.getPrincipals(Group.class);
+        Set<String> roles = new HashSet<>();
+        if (principals.size() > 0) {
+            for (Group principal : principals) {
+                roles.add(principal.getName());
+            }
+        }
+        return roles;
+    }
+
+    @Override
+    public UserAndRolesAuthContext combineWith(final Authorization authorization) {
         return new SubjectAuthContext(subject, AclsUtil.append(this.authorization, authorization));
     }
 

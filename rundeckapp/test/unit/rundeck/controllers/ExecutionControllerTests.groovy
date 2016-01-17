@@ -410,6 +410,8 @@ class ExecutionControllerTests  {
 
         def svcMock = mockFor(ApiService, false)
         svcMock.demand.requireApi { req, resp -> true }
+        svcMock.demand.requireExists { resp,e,args -> true }
+        svcMock.demand.requireAuthorized { test,resp,args -> true }
         svcMock.demand.renderSuccessXml { response, Closure clos ->
             return true
         }
@@ -443,13 +445,8 @@ class ExecutionControllerTests  {
 
         def svcMock = mockFor(ApiService, false)
         svcMock.demand.requireApi { req, resp -> true }
-        svcMock.demand.renderErrorFormat { response, Map args ->
-            assertEquals('api.error.item.unauthorized',args.code)
-            assertEquals(403,args.status)
-            assertEquals([AuthConstants.ACTION_KILL, "Execution", execs[2].id.toString()],args.args)
-            response.status=403
-            return true
-        }
+        svcMock.demand.requireExists { resp,e,args -> true }
+        svcMock.demand.requireAuthorized { test,resp,args -> resp.status=403;false }
         controller.apiService = svcMock.createMock()
         controller.apiExecutionAbort()
 
@@ -482,13 +479,8 @@ class ExecutionControllerTests  {
 
         def svcMock = mockFor(ApiService, false)
         svcMock.demand.requireApi { req, resp -> true }
-        svcMock.demand.renderErrorFormat { response, Map args ->
-            assertEquals('api.error.item.unauthorized', args.code)
-            assertEquals(403, args.status)
-            assertEquals([AuthConstants.ACTION_KILL, "Execution", execs[2].id.toString()], args.args)
-            response.status = 403
-            return true
-        }
+        svcMock.demand.requireExists { resp,e,args -> true }
+        svcMock.demand.requireAuthorized { test,resp,args -> resp.status=403;false }
         controller.apiService = svcMock.createMock()
         controller.apiExecutionAbort()
 
@@ -521,6 +513,8 @@ class ExecutionControllerTests  {
 
         def svcMock = mockFor(ApiService, false)
         svcMock.demand.requireApi { req, resp -> true }
+        svcMock.demand.requireExists { resp,e,args -> true }
+        svcMock.demand.requireAuthorized { test,resp,args -> true }
         svcMock.demand.requireVersion { request,response,int min ->
             assertEquals(5,min)
             return true
@@ -559,6 +553,9 @@ class ExecutionControllerTests  {
 
         def svcMock = mockFor(ApiService, false)
         svcMock.demand.requireApi { req, resp -> true }
+        svcMock.demand.requireExists { resp,e,args -> true }
+        svcMock.demand.requireAuthorized { test,resp,args -> true }
+
         svcMock.demand.requireVersion { request, response, int min ->
             assertEquals(5, min)
             return true
@@ -574,9 +571,9 @@ class ExecutionControllerTests  {
     }
 
     /**
-     * Test get execution output as user
+     * Test get execution unauthorized
      */
-    public void testApiExecutionAsUserUnauthorized() {
+    public void testApiExecutionUnauthorized() {
         def controller = new ExecutionController()
         def execs = createTestExecs()
         def fwkControl = mockFor(FrameworkService, false)
@@ -593,13 +590,8 @@ class ExecutionControllerTests  {
 
         def svcMock = mockFor(ApiService, false)
         svcMock.demand.requireApi { req, resp -> true }
-        svcMock.demand.renderErrorFormat{ response, Map args ->
-            assertEquals('api.error.item.unauthorized', args.code)
-            assertEquals(403, args.status)
-            assertEquals([AuthConstants.ACTION_READ, "Execution", execs[2].id.toString()], args.args)
-            response.status = 403
-            return true
-        }
+        svcMock.demand.requireExists { resp,e,args -> true }
+        svcMock.demand.requireAuthorized { test,resp,args -> resp.status=403;false }
         controller.apiService = svcMock.createMock()
         controller.apiExecution()
 

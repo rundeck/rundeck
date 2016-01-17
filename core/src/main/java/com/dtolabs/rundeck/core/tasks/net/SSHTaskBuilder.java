@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.dtolabs.utils.Streams;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Logger;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.agentproxy.AgentProxyException;
 import com.jcraft.jsch.agentproxy.Connector;
@@ -71,7 +72,23 @@ public class SSHTaskBuilder {
     public static Map<String, String> getDefaultSshConfig() {
         return DEFAULT_SSH_CONFIG;
     }
-
+    static int getJschLogLevel(int antLogLevel) {
+        // reassign log levels, to quell Jsch logging at normal levels, but
+        // pass more log info at verbose levels
+        //
+        switch (antLogLevel){
+            case Project.MSG_DEBUG:
+                return Logger.DEBUG;
+            case Project.MSG_VERBOSE:
+                return Logger.INFO;
+            case Project.MSG_ERR:
+                return Logger.FATAL;
+            case Project.MSG_WARN:
+            case Project.MSG_INFO:
+            default:
+                return Logger.ERROR;
+        }
+    }
     /**
      * Open Jsch session, applies private key configuration, timeout and custom ssh configuration
      * @param base base
@@ -80,6 +97,17 @@ public class SSHTaskBuilder {
      */
     public static Session openSession(SSHBaseInterface base) throws JSchException {
         JSch jsch = new JSch();
+
+        //will set Jsch static logger
+        ThreadBoundJschLogger.getInstance(
+                base.getPluginLogger(),
+                getJschLogLevel(
+                        base.getVerbose()
+                        ? Project.MSG_DEBUG
+                        : Project.MSG_INFO
+                )
+        );
+
 
         if (base.getEnableSSHAgent()) {
             ConnectorFactory cf = ConnectorFactory.getDefault();

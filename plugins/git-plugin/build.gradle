@@ -1,0 +1,111 @@
+
+ext.pluginClassNames='org.rundeck.plugin.scm.git.GitExportPluginFactory,org.rundeck.plugin.scm.git.GitImportPluginFactory'
+ext.pluginName = 'Git Plugin'
+ext.pluginDescription = 'Export and Import Jobs with a Git repository'
+
+apply plugin: "groovy"
+configurations{
+    pluginLibs
+
+    //declare compile to extend from pluginLibs so it inherits the dependencies
+    compile {
+        extendsFrom pluginLibs
+    }
+}
+repositories {
+    mavenLocal()
+    maven{ //snapshot dependency
+        url='https://oss.sonatype.org/content/repositories/snapshots/'
+    }
+    mavenCentral()
+}
+
+dependencies {
+    compile project(":core")
+    pluginLibs( 'org.eclipse.jgit:org.eclipse.jgit:3.7.1.201504261725-r') {
+        exclude module: 'slf4j-api'
+        exclude module: 'jsch'
+        exclude module: 'commons-logging'
+    }
+    compile 'org.codehaus.groovy:groovy-all:2.3.7'
+    compile 'log4j:log4j:1.2.17'
+
+    testCompile 'junit:junit:4.8.1',
+                'org.mockito:mockito-all:1.8.5'
+
+    testCompile "org.codehaus.groovy:groovy-all:2.3.7"
+    testCompile "cglib:cglib-nodep:2.2.2"
+    testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
+
+    testCompile( 'org.eclipse.jgit:org.eclipse.jgit:3.7.1.201504261725-r')
+}
+
+
+// task to copy plugin libs to output/lib dir
+task copyToLib(type: Copy) {
+    into "$buildDir/output/lib"
+    from configurations.pluginLibs
+}
+
+jar {
+    from "$buildDir/output"
+    manifest {
+        attributes 'Rundeck-Plugin-Classnames': pluginClassNames
+        attributes 'Rundeck-Plugin-Name': pluginName
+        attributes 'Rundeck-Plugin-Description': pluginDescription
+        def libList = configurations.pluginLibs.collect { 'lib/' + it.name }.join(' ')
+        attributes 'Rundeck-Plugin-Libs': "${libList}"
+    }
+}
+
+//set jar task to depend on copyToLib
+jar.dependsOn(copyToLib)
+
+
+apply plugin: 'maven'
+task createPom << {
+    pom {
+        project {
+            artifactId project.name
+            groupId "org.rundeck.plugins"
+            inceptionYear '2015'
+            packaging 'jar'
+            version version
+            name( 'Rundeck '+pluginName)
+            url 'http://rundeck.org'
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+            parent{
+                groupId 'com.dtolabs.rundeck'
+                artifactId "rundeck-bundled-plugins"
+                version(version)
+            }
+            build{
+                plugins{
+                    plugin{
+                        groupId 'org.apache.maven.plugins'
+                        artifactId 'maven-jar-plugin'
+                        version '2.3.2'
+                        configuration{
+                            archive{
+                                manifestEntries{
+                                    'Rundeck-Plugin-Classnames'(pluginClassNames)
+                                    'Rundeck-Plugin-File-Version' version
+                                    'Rundeck-Plugin-Version' rundeckPluginVersion
+                                    'Rundeck-Plugin-Archive' 'true'
+                                    'Rundeck-Plugin-Name' pluginName
+                                    'Rundeck-Plugin-Description' pluginDescription
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }.writeTo("pom.xml")
+}

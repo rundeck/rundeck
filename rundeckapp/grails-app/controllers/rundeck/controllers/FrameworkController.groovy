@@ -107,7 +107,11 @@ class FrameworkController extends ControllerBase {
         }
         def User u = userService.findOrCreateUser(session.user)
         def usedFilter = null
-        if (params.filterName) {
+        def prefs=userService.getFilterPref(u.login)
+        if(params.filterName=='.*'){
+            query.filter='.*'
+            usedFilter='.*'
+        }else if (params.filterName) {
             //load a named filter and create a query from it
             if (u) {
                 NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
@@ -118,6 +122,13 @@ class FrameworkController extends ControllerBase {
                     usedFilter = params.filterName
                 }
             }
+        } else if (prefs['nodes']) {
+            return redirect(action: 'nodes', params: params + [filterName: prefs['nodes']])
+        }
+
+        if(params.filterName && !usedFilter){
+            request.warn='Filter not found: '+params.filterName
+            params.remove('filterName')
         }
 
         def summaryOnly = false
@@ -127,16 +138,10 @@ class FrameworkController extends ControllerBase {
         }
         if(params.showall=='true'){
             query.filter = '.*'
-
-        }else if (query.nodeFilterIsEmpty() && 'true'!=params.formInput) {
-            query.filter = '.*'
-            params.showall='true'
-//            summaryOnly=true
-            //filter all and summarize
         }
         //in case named filter stored from another project
         query.project = params.project
-        def sortkeys = filterSummaryKeys(query)
+        def sortkeys = query.filter?filterSummaryKeys(query):[]
         def model = [query: query, params: params, showFilter:true,filter:query.filter,colkeys:sortkeys]
 
         if (usedFilter) {
@@ -320,7 +325,6 @@ class FrameworkController extends ControllerBase {
 
         def nodes=params.requireRunAuth=='true'? runnodes.nodes:readnodes.nodes
         total= nodes.size()
-        def tagsummary=[:]
         def page=-1;
         def max=-1;
         def remaining=false;
@@ -338,7 +342,9 @@ class FrameworkController extends ControllerBase {
             }
         }
 
+        def tagsummary=frameworkService.summarizeTags(nodes)
         def count=0;
+
         nodes.each{INodeEntry nd->
             if(null!=nd){
                 if(page>=0 && (count<(page*max) || count >=((page+1)*max) && !remaining)){
@@ -350,17 +356,7 @@ class FrameworkController extends ControllerBase {
                 if(params.requireRunAuth == 'true'  || runnodes.getNode(nd.nodename)){
                     noderunauthmap[nd.nodename]=true
                 }
-                //summarize tags
-                def tags = nd.getTags()
-                if(tags){
-                    tags.each{ tag->
-                        if(!tagsummary[tag]){
-                            tagsummary[tag]=1
-                        }else{
-                            tagsummary[tag]++
-                        }
-                    }
-                }
+
 
             }
         }
@@ -440,6 +436,40 @@ class FrameworkController extends ControllerBase {
 
 
         return model
+    }
+    def nodeSummaryAjax(String project){
+
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,project)
+        if (unauthorizedResponse(
+                frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+                                                             [AuthConstants.ACTION_READ],
+                                                             project),
+                AuthConstants.ACTION_READ, 'Project', 'nodes',true)) {
+            return
+        }
+        def User u = userService.findOrCreateUser(session.user)
+        def defaultFilter = null
+        Map filterpref = userService.parseKeyValuePref(u.filterPref)
+        if (filterpref['nodes']) {
+            defaultFilter = filterpref['nodes']
+        }
+        def filters=[]
+        //load a named filter and create a query from it
+        if (u) {
+            def filterResults = NodeFilter.findAllByUserAndProject(u, project, [sort: 'name', order: 'desc'])
+            filters = filterResults.collect {
+                [name: it.name, filter: it.asFilter(), project: project]
+            }
+        }
+
+        def fwkproject = frameworkService.getFrameworkProject(project)
+        INodeSet nodes1 = fwkproject.getNodeSet()
+        def size=nodes1.nodes.size()
+        def tagsummary = frameworkService.summarizeTags(nodes1.nodes)
+        tagsummary = tagsummary.keySet().sort().collect{
+            [tag:it,count:tagsummary[it]]
+        }
+        render(contentType: 'application/json',text: [tags:tagsummary,totalCount:size,filters:filters,defaultFilter:defaultFilter] as JSON)
     }
     /**
      * nodesFragment renders a set of nodes in HTML snippet, for ajax
@@ -603,6 +633,25 @@ class FrameworkController extends ControllerBase {
         }.invalidToken{
             request.error=g.message(code:'request.error.invalidtoken.message')
             renderErrorView([:])
+        }
+    }
+
+    def deleteNodeFilterAjax(String project, String filtername){
+        withForm{
+            g.refreshFormTokensHeader()
+            def User u = userService.findOrCreateUser(session.user)
+            final def ffilter = NodeFilter.findByNameAndUserAndProject(filtername, u, project)
+            if(ffilter){
+                ffilter.delete(flush:true)
+            }
+            render(contentType: 'application/json'){
+                success=true
+            }
+        }.invalidToken{
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'request.error.invalidtoken.message',
+            ])
         }
     }
 
@@ -1034,6 +1083,8 @@ class FrameworkController extends ControllerBase {
             def Properties projProps = new Properties()
             if(params.description){
                 projProps['project.description']=params.description
+            }else{
+                projProps['project.description']=''
             }
             def Set<String> removePrefixes=[]
             removePrefixes<< FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY

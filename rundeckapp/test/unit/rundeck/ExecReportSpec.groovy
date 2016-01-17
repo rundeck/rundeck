@@ -123,13 +123,13 @@ class ExecReportSpec extends Specification {
         where:
         succeeded | failed | result
         null | null | "0/0/0"
-        "node1" | null | "0/1/1"
-        "node1,node2" | null | "0/2/2"
-        null | "node1" | "1/0/1"
-        null | "node1,node2" | "2/0/2"
+        "node1" | null | "1/0/1"
+        "node1,node2" | null | "2/0/2"
+        null | "node1" | "0/1/1"
+        null | "node1,node2" | "0/2/2"
         "node1" | "node2" | "1/1/2"
-        "node1,node2" | "node3" | "1/2/3"
-        "node1" | "node2,node3" | "2/1/3"
+        "node1,node2" | "node3" | "2/1/3"
+        "node1" | "node2,node3" | "1/2/3"
     }
 
     def "no commands"(){

@@ -272,6 +272,7 @@ class ApiController extends ControllerBase{
         boolean executionModeActive=configurationService.executionModeActive
         def metricsJsonUrl = createLink(uri: '/metrics/metrics?pretty=true',absolute: true)
         def metricsThreadDumpUrl = createLink(uri: '/metrics/threads',absolute: true)
+        def metricsHealthcheckUrl = createLink(uri: '/metrics/healthcheck',absolute: true)
         if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorXml(response,[
                     status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
@@ -330,13 +331,15 @@ class ApiController extends ControllerBase{
                             }
                             scheduler{
                                 running(quartzScheduler.getCurrentlyExecutingJobs().size())
+                                threadPoolSize(quartzScheduler.getMetaData().threadPoolSize)
                             }
                             threads{
                                 active(threadActiveCount)
                             }
                         }
-                        metrics(href:metricsJsonUrl,contentType:'text/json')
+                        metrics(href:metricsJsonUrl,contentType:'application/json')
                         threadDump(href:metricsThreadDumpUrl,contentType:'text/plain')
+                        healthcheck(href:metricsHealthcheckUrl,contentType:'application/json')
                     }
                 }
 
@@ -395,13 +398,15 @@ class ApiController extends ControllerBase{
                             }
                             scheduler={
                                 running=(quartzScheduler.getCurrentlyExecutingJobs().size())
+                                threadPoolSize=(quartzScheduler.getMetaData().threadPoolSize)
                             }
                             threads={
                                 active=(threadActiveCount)
                             }
                         }
-                        metrics=[href:metricsJsonUrl,contentType:'text/json']
+                        metrics=[href:metricsJsonUrl,contentType:'application/json']
                         threadDump=[href:metricsThreadDumpUrl,contentType:'text/plain']
+                        healthcheck=[href:metricsHealthcheckUrl,contentType:'application/json']
                     }
                 }
             }

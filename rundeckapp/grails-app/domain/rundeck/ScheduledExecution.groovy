@@ -1,5 +1,5 @@
 package rundeck
-import com.dtolabs.rundeck.app.support.BaseNodeFilters
+
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
 
@@ -7,7 +7,7 @@ class ScheduledExecution extends ExecutionContext {
     Long id
     SortedSet<Option> options
     static hasMany = [executions:Execution,options:Option,notifications:Notification]
-    
+
     String groupPath
     String userRoleList
     String jobName
@@ -21,6 +21,9 @@ class ScheduledExecution extends ExecutionContext {
     String year = "*"
     String crontabString
     String uuid;
+    String logOutputThreshold;
+    String logOutputThresholdAction;
+    String logOutputThresholdStatus;
 
     Workflow workflow
 
@@ -40,6 +43,10 @@ class ScheduledExecution extends ExecutionContext {
     String notifyStartUrl
     Boolean multipleExecutions = false
     Orchestrator orchestrator
+
+    Boolean scheduleEnabled = true
+    Boolean executionEnabled = true
+
     static transients = ['userRoles','adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients',
                          'notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl',
                          'crontabString']
@@ -107,6 +114,11 @@ class ScheduledExecution extends ExecutionContext {
         })
         crontabString(bindable: true,nullable: true)
         nodesSelectedByDefault(nullable: true)
+        scheduleEnabled(nullable: true)
+        executionEnabled(nullable: true)
+        logOutputThreshold(maxSize: 256, blank:true, nullable: true)
+        logOutputThresholdAction(maxSize: 256, blank:true, nullable: true,inList: ['halt','truncate'])
+        logOutputThresholdStatus(maxSize: 256, blank:true, nullable: true)
     }
 
     static mapping = {
@@ -145,6 +157,10 @@ class ScheduledExecution extends ExecutionContext {
     Map toMap(){
         HashMap map = new HashMap()
         map.name=jobName
+
+        map.scheduleEnabled = hasScheduleEnabled()
+        map.executionEnabled = hasExecutionEnabled()
+
         if(groupPath){
             map.group=groupPath
         }
@@ -156,7 +172,14 @@ class ScheduledExecution extends ExecutionContext {
         }
         map.description=description
         map.loglevel=loglevel
-        map.project=project
+        if(logOutputThreshold){
+            map.loglimit=logOutputThreshold
+            map.loglimitAction=logOutputThresholdAction
+            if(logOutputThresholdStatus){
+                map.loglimitStatus=logOutputThresholdStatus
+            }
+        }
+        //don't include project
         if(timeout){
             map.timeout=timeout
         }
@@ -168,9 +191,12 @@ class ScheduledExecution extends ExecutionContext {
         }
 
         if(options){
-            map.options=[:]
-            options.each{Option option->
-                map.options[option.name]=option.toMap()
+            map.options = []
+            options.sort().each{Option option->
+
+                def map1 = option.toMap()
+                map1.remove('sortIndex')
+                map.options.add(map1 + [name: option.name])
             }
         }
 
@@ -188,7 +214,7 @@ class ScheduledExecution extends ExecutionContext {
             map.multipleExecutions=true
         }
         if(doNodedispatch){
-            map.nodesSelectedByDefault = nodesSelectedByDefault == null || nodesSelectedByDefault
+            map.nodesSelectedByDefault = hasNodesSelectedByDefault()
             map.nodefilters=[dispatch:[threadcount:null!=nodeThreadcount?nodeThreadcount:1,keepgoing:nodeKeepgoing?true:false,excludePrecedence:nodeExcludePrecedence?true:false]]
             if(nodeRankAttribute){
                 map.nodefilters.dispatch.rankAttribute= nodeRankAttribute
@@ -233,7 +259,17 @@ class ScheduledExecution extends ExecutionContext {
         if(data.orchestrator){
             se.orchestrator=Orchestrator.fromMap(data.orchestrator);
         }
+
+        se.scheduleEnabled = data['scheduleEnabled'] == null || data['scheduleEnabled']
+        se.executionEnabled = data['executionEnabled'] == null || data['executionEnabled']
+
         se.loglevel=data.loglevel?data.loglevel:'INFO'
+
+        if(data.loglimit){
+            se.logOutputThreshold=data.loglimit
+            se.logOutputThresholdAction = data.loglimitAction
+            se.logOutputThresholdStatus = data.loglimitStatus?:'failed'
+        }
         se.project=data.project
         if (data.uuid) {
             se.uuid = data.uuid
@@ -242,9 +278,18 @@ class ScheduledExecution extends ExecutionContext {
         se.retry = data.retry?data.retry.toString():null
         if(data.options){
             TreeSet options=new TreeSet()
-            data.options.keySet().each{optname->
-                Option opt = Option.fromMap(optname,data.options[optname])
-                options<<opt
+            if(data.options instanceof Map) {
+                data.options.keySet().each { optname ->
+                    Option opt = Option.fromMap(optname, data.options[optname])
+                    options << opt
+                }
+            }else if(data.options instanceof Collection){
+                int sortIndex=0
+                data.options.each { optdata ->
+                    Option opt = Option.fromMap(optdata.name, optdata)
+                    opt.sortIndex=sortIndex++
+                    options << opt
+                }
             }
             se.options=options
         }
@@ -373,6 +418,49 @@ class ScheduledExecution extends ExecutionContext {
         return se
     }
 
+    /**
+     * @return boolean value for nodesSelectedByDefault, defaults to true if null
+     */
+    public boolean hasNodesSelectedByDefault() {
+        null == nodesSelectedByDefault || nodesSelectedByDefault
+    }
+
+    /**
+     * Parse the logOutputThreshold setting
+     * @return map indicating the threshold values: [perNode:true/false, maxLines:Long, maxSizeBytes:Long]
+     */
+    public static Map parseLogOutputThreshold(String logOutputThreshold){
+        def map = null
+        def units = [g: 1024 * 1024 * 1024, k: 1024, m: 1024 * 1024, b: 1]
+        if (logOutputThreshold) {
+            def m = logOutputThreshold =~ /(\d+)((?i)[gmk]?b?)?(\/node)?/
+            if (m.matches()) {
+                def count = m.group(1)
+                def unit = m.group(2)
+                def node = m.group(3)
+                def multi = unit ? units[unit[0]?.toLowerCase()] ?: 1 : 1
+                def value = 0
+                try {
+                    value = Long.parseLong(count) * multi
+                } catch (NumberFormatException e) {
+                    return null
+                }
+                if (unit) {
+
+                    map = [
+                            maxSizeBytes: value
+                    ]
+                } else {
+                    map = [
+                            perNode : node == '/node',
+                            maxLines: value
+                    ]
+                }
+            }
+        }
+        map
+    }
+
     public clearFilterFields(){
         this.doNodedispatch = false
         filterKeys.keySet().each{ k->
@@ -394,6 +482,17 @@ class ScheduledExecution extends ExecutionContext {
         }
     }
 
+    def boolean hasScheduleEnabled() {
+        return (null == scheduleEnabled || scheduleEnabled)
+    }
+
+    def boolean shouldScheduleExecution() {
+        return scheduled && hasExecutionEnabled() && hasScheduleEnabled();
+    }
+
+    def boolean hasExecutionEnabled() {
+        return (null == executionEnabled || executionEnabled)
+    }
 
     def String generateJobScheduledName(){
         return [id,jobName].join(":")
@@ -753,5 +852,6 @@ class ScheduledExecution extends ExecutionContext {
             return null
         }
     }
+
 }
 

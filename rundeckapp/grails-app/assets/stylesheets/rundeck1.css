@@ -1746,24 +1746,6 @@ div.nodesummary span.type {
     color: #888;
 }
 
-/** class matchednodes.embed used when showing an embedded list of matched nodes
-*/
-
-.matchednodes.embed .node_entry {
-    display: inline-block;
-    white-space: nowrap;
-    padding: 1px;
-    margin: 1px 2px;
-    border: 1px solid #aaa;
-    border-radius: 3px;
-    -moz-border-radius: 3px;
-    -webkit-border-radius: 3px;
-    /*background:white;*/
-}
-
-.matchednodes.embed div.info.note {
-    margin-bottom: 10px;
-}
 
 /** loading display */
 .loading {

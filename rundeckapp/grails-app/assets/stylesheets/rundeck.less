@@ -5,6 +5,8 @@
   @import "bootswatch";
   @import "nav-links";
 
+  @popover-wide-max-width: 500px;
+
   @base-item-padding-vertical: 8px;
   @base-item-padding-horizontal: 10px;
   @list-group-item-padding-vertical: @base-item-padding-vertical;
@@ -510,7 +512,9 @@
       text-decoration: none;
     }
   }
-
+  &.textbtn-plain{
+    text-decoration:none;
+  }
   &.query.textbtn {
     border: 1px solid darken(@color, 12%);
     display: inline-block;
@@ -727,10 +731,17 @@ section{
       position: relative;
       display: block;
       border: 1px solid transparent;
-      margin-right: 2px;
+      margin-right: 5px;
+      margin-left: 3px;
       padding: 10px 15px;
       label{
         margin-bottom: 0;
+      }
+      &.tabs-sibling-compact{
+        padding:0;
+        &.form-inline .input-group .form-control{
+          width: 400px;
+        }
       }
     }
   }
@@ -845,6 +856,11 @@ section{
       border-top: 0;
       .border-top-radius(0);
   }
+  .modal-content{
+    .panel.panel-modal-content{
+      margin-bottom:0;
+    }
+  }
 
 
   //padding between sequential buttons in a form group
@@ -894,6 +910,34 @@ section{
     }
   }
 
+  /** class matchednodes.embed used when showing an embedded list of matched nodes
+  */
+
+  .matchednodes.embed{
+    .node_entry {
+      display: inline-block;
+      white-space: nowrap;
+      padding: 1px;
+      margin: 1px 2px;
+      border: 1px solid #aaa;
+      border-radius: 3px;
+      -moz-border-radius: 3px;
+      -webkit-border-radius: 3px;
+    }
+    &.embed_clean{
+      .node_entry{
+        border:0;
+        padding: 1px 2px;
+        margin: 1px 1px;
+        border-radius: 2px;
+        -moz-border-radius: 2px;
+        -webkit-border-radius: 2px;
+      }
+    }
+    div.info.note {
+      margin-bottom: 10px;
+    }
+  }
   .outputcontrols{
     border-bottom: 1px solid @nav-tabs-border-color;
   }
@@ -922,6 +966,12 @@ section{
       padding-top:@navbar-margin-bottom;
       padding-bottom:10px;
       border-bottom: 1px solid @list-group-border;
+      &.panel-heading-affix{
+        background-color: @panel-default-heading-bg;
+        width:auto;
+        margin: 0 15px;//normal col padding
+        padding: @base-item-padding-vertical @base-item-padding-horizontal;
+      }
     }
   }
   .affix .affixed-hidden{
@@ -1082,7 +1132,7 @@ section{
     }
     td.data {
       border-left: 1px solid white;
-      white-space: pre;
+      white-space: pre-wrap;
       font-family: "Lucida Console", courier, monospace;
       padding: 1px 3px;
       color: black;
@@ -1141,7 +1191,7 @@ section{
     }
   }
   .log_line{
-    white-space: pre;
+    white-space: pre-wrap;
     font-family: "Lucida Console", courier, monospace;
     color: black;
     &.level_verbose, &.level_debug {
@@ -1365,6 +1415,10 @@ pre.filtererror{
     overflow-x: scroll;
   }
 }
+.overflowy{
+  max-height: 300px;
+  overflow-y:auto;
+}
 
 
 //rundeck icons
@@ -1560,4 +1614,49 @@ pre.filtererror{
       .text-warning();
     }
   }
+}
+
+//popover variation
+.popover{
+  &.popover-wide{
+    max-width: @popover-wide-max-width;
+  }
+}
+
+
+//badge variation
+
+.badge-variant(@background-color; @color ){
+  color: @color;
+  background-color: @background-color ;
+}
+
+.badge-default {
+  .badge-variant(lighten(@brand-primary, 30%),@badge-color);
+}
+.badge-secondary {
+  .badge-variant(desaturate(@link-color, 100%),@badge-color);
+}
+.badge-muted {
+  .badge-variant(@text-muted,@badge-color);
+}
+
+.badge-primary {
+  .badge-variant(@brand-primary,@badge-color);
+}
+// Warning appears as orange
+.badge-warning {
+  .badge-variant(@brand-warning,@badge-color);
+}
+// Danger and error appear as red
+.badge-danger {
+  .badge-variant(@brand-danger,@badge-color);
+}
+// Success appears as green
+.badge-success {
+  .badge-variant(@brand-success,@badge-color);
+}
+// Info appears as blue-green
+.badge-info {
+  .badge-variant(@brand-info,@badge-color);
 }

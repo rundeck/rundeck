@@ -11,9 +11,11 @@ import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.app.support.ExecutionQuery
+import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
+import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
@@ -65,6 +67,85 @@ class ExecutionController extends ControllerBase{
     }
     def followFragment ={
         return render(view:'showFragment',model:show())
+    }
+    /**
+     * List recent adhoc executions to fill the recent commands menu on commands page.
+     * @param project project name
+     * @param max maximum results, defaults to 10
+     * @return
+     */
+    def adhocHistoryAjax(String project, int max, String query){
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,project)
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
+                                                          AuthConstants.ACTION_READ, params.project),
+                AuthConstants.ACTION_READ, 'adhoc', 'commands')) {
+            return
+        }
+
+        def execs = []
+        def uniques=new HashSet<String>()
+        def offset=0
+        if(!max){
+            max=10
+        }
+        def notDispatchedFilter = OptsUtil.join("name:", frameworkService.getFrameworkNodeName())
+
+        while(execs.size()<max){
+
+            def res = Execution.findAllByProjectAndUserAndScheduledExecutionIsNull(
+                    project,
+                    session.user,
+                    [sort: 'dateStarted', order: 'desc', max: max,offset:offset]
+            )
+
+            offset+=res.size()
+            res.each{exec->
+                if(execs.size()<max
+                        && exec.workflow.commands.size()==1
+                        && exec.workflow.commands[0] instanceof CommandExec
+                        && exec.workflow.commands[0].adhocRemoteString){
+
+                    def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
+                    def str=exec.workflow.commands[0].adhocRemoteString+";"+appliedFilter
+                    if(query && query.size()>4 && !str.contains(query)){
+                        return
+                    }
+                    if(!uniques.contains(str)){
+                        uniques<<str
+                        execs<<exec
+                    }
+                }
+            }
+            if(res.size()<max){
+                break
+            }
+        }
+
+        render(contentType: 'application/json'){
+            executions=array{
+                execs.each{Execution exec->
+                    if(exec.workflow.commands.size()==1 && exec.workflow.commands[0].adhocRemoteString) {
+                        def href=createLink(
+                                controller: 'framework',
+                                action: 'adhoc',
+                                params: [project: project, fromExecId: exec.id]
+                        )
+
+                        def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
+                        element(
+                                status: exec.getExecutionState(),
+                                succeeded: exec.statusSucceeded(),
+                                href: href,
+                                execid: exec.id,
+                                title: exec.workflow.commands[0].adhocRemoteString,
+                                filter: appliedFilter
+                        )
+                    }
+                }
+            }
+        }
     }
 
     public def show (ExecutionViewParams viewparams){
@@ -669,9 +750,12 @@ class ExecutionController extends ControllerBase{
      * tailExecutionOutput action, used by execution/show.gsp view to display output inline
      * Also used by apiExecutionOutput for API response
      */
-    def tailExecutionOutput = {
+    def tailExecutionOutput () {
         log.debug("tailExecutionOutput: ${params}, format: ${request.format}")
         Execution e = Execution.get(Long.parseLong(params.id))
+        if(!apiService.requireExists(response,e,['Execution',params.id])){
+            return
+        }
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
         def reqError=false
 
@@ -1126,18 +1210,17 @@ class ExecutionController extends ControllerBase{
             return
         }
         def Execution e = Execution.get(params.id)
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
-        if (!e) {
-            return apiService.renderErrorFormat(response,
-                    [status: HttpServletResponse.SC_NOT_FOUND,code: "api.error.item.doesnotexist", args: ['Execution ID', params.id]])
-        } else if (!frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_READ])){
-            return apiService.renderErrorFormat(response,
-                    [
-                            status: HttpServletResponse.SC_FORBIDDEN,
-                            code: "api.error.item.unauthorized",
-                            args: [AuthConstants.ACTION_READ, "Execution", params.id]
-                    ])
+        if(!apiService.requireExists(response,e,['Execution ID',params.id])){
+            return
         }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
+        if(!apiService.requireAuthorized(
+                frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_READ]),
+                response,
+                [AuthConstants.ACTION_READ, "Execution", params.id] as Object[])){
+            return
+        }
+
         if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorFormat(response,[
                     status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
@@ -1157,35 +1240,23 @@ class ExecutionController extends ControllerBase{
     /**
      * API: /api/execution/{id}/state , version 10
      */
-    def apiExecutionState= {
+    def apiExecutionState(){
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V10)) {
             return
         }
         def Execution e = Execution.get(params.id)
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
-        if (!e) {
-            def errormap= [status: HttpServletResponse.SC_NOT_FOUND, code: "api.error.item.doesnotexist", args: ['Execution ID', params.id]]
-            withFormat {
-                json{
-                    return apiService.renderErrorJson(response, errormap)
-                }
-                xml{
-                    return apiService.renderErrorXml(response, errormap)
-                }
-            }
 
-        } else if (!frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_READ])) {
-            def errormap = [status: HttpServletResponse.SC_FORBIDDEN,
-                    code: "api.error.item.unauthorized", args: [AuthConstants.ACTION_READ, "Execution", params.id]]
-            withFormat {
-                json {
-                    return apiService.renderErrorJson(response, errormap)
-                }
-                xml {
-                    return apiService.renderErrorXml(response, errormap)
-                }
-            }
+        if(!apiService.requireExists(response,e,['Execution ID',params.id])){
+            return
         }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
+        if(!apiService.requireAuthorized(
+                frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_READ]),
+                response,
+                [AuthConstants.ACTION_READ, "Execution", params.id] as Object[])){
+            return
+        }
+
 
         def loader = workflowService.requestState(e)
         def state= loader.workflowState
@@ -1291,22 +1362,17 @@ class ExecutionController extends ControllerBase{
             return
         }
         def Execution e = Execution.get(params.id)
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
-        if (!e) {
-            return apiService.renderErrorFormat(response,
-                        [
-                                status: HttpServletResponse.SC_NOT_FOUND,
-                                code: "api.error.item.doesnotexist",
-                                args: ['Execution ID', params.id]
-                        ])
-        } else if (!frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_KILL])){
-            return apiService.renderErrorFormat(response,
-                    [
-                            status: HttpServletResponse.SC_FORBIDDEN,
-                            code: "api.error.item.unauthorized",
-                            args: [AuthConstants.ACTION_KILL, "Execution", params.id]
-                    ])
+        if(!apiService.requireExists(response,e,['Execution ID',params.id])){
+            return
         }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
+        if(!apiService.requireAuthorized(
+                frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_KILL]),
+                response,
+                [AuthConstants.ACTION_KILL, "Execution", params.id] as Object[])){
+            return
+        }
+
         def ScheduledExecution se = e.scheduledExecution
         def user=session.user
         def killas=null
@@ -1365,32 +1431,22 @@ class ExecutionController extends ControllerBase{
             return
         }
         def Execution e = Execution.get(params.id)
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
-        if (!e) {
-            return apiService.renderErrorFormat(response,
-                    [
-                            status: HttpServletResponse.SC_NOT_FOUND,
-                            code: "api.error.item.doesnotexist",
-                            args: ['Execution ID', params.id],
-                            format: respFormat
-                    ])
+        if(!apiService.requireExists(response,e,['Execution ID',params.id])){
+            return
         }
-        if (
-                !frameworkService.authorizeApplicationResourceAny(
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
+        if(!apiService.requireAuthorized(
+                frameworkService.authorizeApplicationResourceAny(
                         authContext,
                         frameworkService.authResourceForProject(e.project),
                         [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]
-                )
-        ) {
-            return apiService.renderErrorFormat(response,
-                    [
-                            status: HttpServletResponse.SC_FORBIDDEN,
-                            code: "api.error.item.unauthorized",
-                            args: [AuthConstants.ACTION_DELETE_EXECUTION, "Project", e.project],
-                            format: respFormat
-                    ])
+                ),
+                response,
+                [AuthConstants.ACTION_DELETE_EXECUTION, "Project", e.project] as Object[])){
+            return
         }
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+
         def result = executionService.deleteExecution(e, authContext,session.user)
         if(!result.success){
             log.error("Failed to delete execution: ${result.message}")
@@ -1533,7 +1589,22 @@ class ExecutionController extends ControllerBase{
                 )
             }
         }
-        if (params.end) {
+        if (params.olderFilter) {
+            Date endDate=ExecutionQuery.parseRelativeDate(params.olderFilter)
+            if(null!=endDate){
+                query.endbeforeFilter = endDate
+                query.doendbeforeFilter = true
+            } else {
+                return apiService.renderErrorFormat(
+                        response,
+                        [
+                                status: HttpServletResponse.SC_BAD_REQUEST,
+                                code: 'api.error.history.date-relative-format',
+                                args: ['olderFilter', params.olderFilter]
+                        ]
+                )
+            }
+        }else if (params.end) {
             try {
                 query.endbeforeFilter = ReportsController.parseDate(params.end)
                 query.doendbeforeFilter = true

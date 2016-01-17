@@ -22,70 +22,113 @@
    Created: Feb 2, 2010 3:16:55 PM
    $Id$
 --%>
-<div class="presentation">
-    <table class="simpleForm">
-        <tr>
-            <td>
-                Email:
-            </td>
-            <td>
-                <g:enc>${ user.email}</g:enc>
-                <g:if test="${edit}">
+<g:set var="selfprofile" value="${user.login == request.remoteUser}"/>
 
-                    <small>
-                        <g:link action="edit" params="[login: user.login]"
-                                class=" textbtn textbtn-default btn-sm textbtn-on-hover">
-                            <i class="glyphicon-edit glyphicon"></i>
-                            Edit
-                        </g:link>
-                    </small>
-                </g:if>
-            </td>
-        </tr>
-        <g:if test="${user.login == request.remoteUser}">
+<div class="row">
+    <div class="col-sm-12">
+        <table class="table table-condensed  table-striped">
             <tr>
-                <td>Groups:</td>
-                <td><g:enc>${request.subject.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class).collect { it.name }.join(", ") }</g:enc></td>
+                <th>
+                    <g:message code="domain.User.email.label"/>
+                </th>
+                <th>
+                    <g:message code="domain.User.firstName.label"/>
+                </th>
+                <th>
+                    <g:message code="domain.User.lastName.label"/>
+                </th>
+                <g:if test="${selfprofile}">
+                    <th>
+                        <g:message code="security.groups.label"/>
+
+                        <g:helpTooltip code="security.groups.description" css="text-muted"/>
+                    </th>
+                </g:if>
+
             </tr>
-        </g:if>
-        <g:if test="${session.user==user.login && (auth.resourceAllowedTest(kind:'user',action:[AuthConstants.ACTION_ADMIN],context:'application'))}">
-            <g:set var="rkeytok" value="${g.rkey()}"/>
-            <tr id="${enc(attr:rkeytok)}" class="userapitoken">
-                <td>API Tokens:</td>
+            <tr>
                 <td>
-                    <g:set var="tokens" value="${rundeck.AuthToken.findAllByUser(user)}"/>
-
-
-                    <table class="apitokentable">
-                        <tbody >
-                            <g:if test="${tokens}">
-                            <g:each var="tokenobj" in="${tokens}">
-                                <tr class="apitokenform ${tokenobj.token == flash.newtoken?'newtoken':''}" style="${tokenobj.token== flash.newtoken?'opacity:0;':''}">
-                                <g:render template="token" model="${[user:user,token:tokenobj]}"/>
-                                </tr>
-                            </g:each>
-                            </g:if>
-                        </tbody>
-                    </table>
-                    <div style="margin-top:10px;" >
-                        <a class="gentokenbtn textbtn textbtn-default btn-xs"
-                           href="${createLink(controller: 'user', action: 'generateApiToken', params: [login: user.login])}">
-                            <i class="glyphicon glyphicon-plus"></i>
-                            Generate New Token
-                        </a>
-                    </div>
-
-                    <div style="display:none" class="gentokenerror alert alert-danger alert-dismissable">
-                        <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
-                        <span class="gentokenerror-text"></span>
-                    </div>
-
-                    <g:javascript>
-                    fireWhenReady('${enc(js:rkeytok)}',function(){addBehavior('${enc(js: rkeytok)}',"${enc(js:user.login)}");});
-                    fireWhenReady('${enc(js: rkeytok)}',function(){highlightNew('${enc(js: rkeytok)}');});
-                    </g:javascript>
+                    ${user.email}
+                    <g:if test="${!user.email}">
+                        <span class="text-muted small text-uppercase"><g:message code="not.set" /></span>
+                    </g:if>
                 </td>
+                <td>
+                    <g:enc>${user.firstName}</g:enc>
+                    <g:if test="${!user.firstName}">
+                        <span class="text-muted small text-uppercase"><g:message code="not.set" /></span>
+                    </g:if>
+                </td>
+                <td>
+                    <g:enc>${user.lastName}</g:enc>
+
+                    <g:if test="${!user.lastName}">
+                        <span class="text-muted small text-uppercase"><g:message code="not.set" /></span>
+                    </g:if>
+                </td>
+                <g:if test="${selfprofile}">
+                    <td>
+                        ${request.subject.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class).
+                                collect { it.name }.
+                                join(", ")}
+                    </td>
+                </g:if>
+
             </tr>
-        </g:if>
-    </table>
+        </table>
+    </div>
+
 </div>
+
+<g:if test="${session.user == user.login &&
+        (auth.resourceAllowedTest(kind: 'user', action: [AuthConstants.ACTION_ADMIN], context: 'application'))}">
+    <g:set var="rkeytok" value="${g.rkey()}"/>
+    <div id="${enc(attr: rkeytok)}">
+        <div class="row ">
+            <div class="col-sm-12">
+                <h3>
+                    <g:message code="userController.page.profile.heading.apiTokens.label"/>
+                    <a class="gentokenbtn small btn btn-link btn-xs"
+                       href="${createLink(
+                               controller: 'user',
+                               action: 'generateApiToken',
+                               params: [login: user.login]
+                       )}">
+                        <g:icon name="plus"/>
+                        <g:message code="button.GenerateNewToken.label" />
+                    </a>
+                </h3>
+            </div>
+        </div>
+
+        <div class="row userapitoken">
+            <div class="col-sm-12">
+                <g:set var="tokens" value="${rundeck.AuthToken.findAllByUser(user)}"/>
+
+
+                <ul class="apitokentable list-unstyled">
+                    <g:if test="${tokens}">
+                        <g:each var="tokenobj" in="${tokens}">
+                            <li class="apitokenform ${tokenobj.token == flash.newtoken ? 'newtoken' : ''}"
+                                style="${tokenobj.token == flash.newtoken ? 'opacity:0;' : ''}">
+                                <g:render template="token" model="${[user: user, token: tokenobj]}"/>
+                            </li>
+                        </g:each>
+                    </g:if>
+                </ul>
+
+
+                <div style="display:none" class="gentokenerror alert alert-danger alert-dismissable">
+                    <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+                    <span class="gentokenerror-text"></span>
+                </div>
+
+                <g:javascript>
+                    fireWhenReady('${enc(js: rkeytok)}',function(){addBehavior('${enc(js: rkeytok)}',"${enc(
+                        js: user.login
+                )}");});
+                    fireWhenReady('${enc(js: rkeytok)}',function(){highlightNew('${enc(js: rkeytok)}');});
+                </g:javascript>
+            </div>
+        </div></div>
+</g:if>

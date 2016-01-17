@@ -277,6 +277,36 @@ Each execution will be started with context variables
 indicating the current retry attempt and whether it was a retry.  
 See [Context Variables](#context-variables).
 
+### Log Limit
+
+You can specify a log limit, which can perform an action depending on how much log output
+the Job produces.
+
+The limit can be set in one of three ways:
+
+* Maximum total number of log lines
+* Maximum total log file size
+* Maximum number of log lines for a single node
+
+![Job Log limit](../figures/jobs-loglimit-field.png)
+
+Enter a value in the "Log Output Limit" field. 
+The syntax of the value you enter determines the type of limit:
+
+* `###` If you specify a number, that is treated as the "Maximum total number of log lines"
+* `###/node` If you specify a number followed by `/node`, the number is treated as the "Maximum number of log lines for a single node"
+* `###[GMK]B` If you specify a number followed by a filesize suffix, that is treated as the "total log file size".  The file size suffixes allowed are "GB" (gigabyte), "MB" (megabyte), "KB" (kilobyte) and "B" (byte).
+
+
+And one of three actions can be performed if the limit is exceeded:
+
+* Halt - the job will halt with a certain status
+	* Enter a status string in the field, such as "failed" or "aborted", or any custom status
+* Truncate and Continue - the job will not halt, but no more log output will be produced.
+
+![Job Log limit action](../figures/jobs-loglimit-action.png)
+
+
 ### Node dispatching and filtering
 
 When you create a job you can choose between either running the job only locally (on the Rundeck server), or dispatching it to multiple nodes (including the Rundeck server if you want).
@@ -941,6 +971,16 @@ So the arguments for the Job Reference might look like this:
 
 > Note, If you define arguments in the wrong manner, then the Secure and Secure Remote Authentication options will not be set when the Job reference is called.  Plain options will behave the way they do in Command or Script arguments, and be left as-is as uninterpreted property references.
 
+### Secure Options using Key Storage
+
+Secure options can specify a Storage Path in lieu of a default value.  This path to the [Key Storage Facility](../administration/key-storage.html)
+will be loaded as the option value when one is not supplied.
+
+The path must indicate a stored `password` entry in the storage facility.
+
+
+![Storage Path for Secure Option](../figures/jobs-options-secure-storage-path.png)
+
 ## Remote option values
 
 A model of option values can be retrieved from an external source
@@ -1094,7 +1134,7 @@ Two types of expansions are available, Job context, and Option
 context.
 
 To include job information in the URL, specify a variable of the form
-${job._property_}.
+`${job._property_}`.
 
 Properties available for Job context:
 
@@ -1105,6 +1145,9 @@ Properties available for Job context:
 * `user.name`: User executing the job
 * `rundeck.nodename`: Name of the Rundeck server node
 * `rundeck.serverUUID`: UUID of the Rundeck server node (cluster mode)
+* `rundeck.basedir`: File path of the Rundeck base dir (`file://` URLs only)
+
+Additionally the `rundeck.*` properties can be specified without the `job.` prefix, e.g. `${rundeck.basedir}`.
 
 To include Option information in the URL, specify a variable of the
 form ${option._property_}:

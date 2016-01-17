@@ -47,7 +47,13 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
 
     private File extdir;
     private File cachedir;
-    private final PluginCache cache;
+    private  PluginCache cache;
+    /**
+     * Create a PluginManagerService
+     */
+    public PluginManagerService() {
+
+    }
 
     /**
      * Create a PluginManagerService for the given directory and cache directory
@@ -55,14 +61,33 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
      * @param cachedir cache dir
      */
     public PluginManagerService(final File extdir, final File cachedir) {
-        this.extdir = extdir;
-        this.cachedir = cachedir;
-        final FileCache<ProviderLoader> filecache = new FileCache<ProviderLoader>();
-        cache = new FilePluginCache(filecache);
+        this(extdir, cachedir, createDefaultCache(extdir, cachedir));
+        log.debug("Create PluginManagerService");
+    }
+
+    public static PluginCache createDefaultCache(final File extdir, final File cachedir) {
+        final FileCache<ProviderLoader> filecache = createProviderLoaderFileCache();
+        PluginCache cache = new FilePluginCache(filecache);
         final int rescanInterval = 5000;//TODO: use framework property to set interval
         cache.addScanner(new JarPluginScanner(extdir, cachedir, filecache, rescanInterval));
         cache.addScanner(new ScriptPluginScanner(extdir, cachedir, filecache, rescanInterval));
-        log.debug("Create PluginManagerService");
+        return cache;
+    }
+
+    /**
+     * Create a PluginManagerService for the given directory and cache directory
+     * @param extdir plugin dir
+     * @param cachedir cache dir
+     */
+    public PluginManagerService(final File extdir, final File cachedir, final PluginCache cache) {
+        this.setExtdir(extdir);
+        this.setCachedir(cachedir);
+        this.setCache(cache);
+        log.debug("Create PluginManagerService with cache: "+cache);
+    }
+
+    public static FileCache<ProviderLoader> createProviderLoaderFileCache() {
+        return new FileCache<ProviderLoader>();
     }
 
 
@@ -91,12 +116,12 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
     }
 
     public synchronized List<ProviderIdent> listProviders() {
-        return cache.listProviders();
+        return getCache().listProviders();
     }
 
     public synchronized <T> T loadProvider(final PluggableService<T> service, final String providerName) throws ProviderLoaderException {
         final ProviderIdent ident = new ProviderIdent(service.getName(), providerName);
-        final ProviderLoader loaderForIdent = cache.getLoaderForIdent(ident);
+        final ProviderLoader loaderForIdent = getCache().getLoaderForIdent(ident);
         if (null == loaderForIdent) {
             throw new MissingProviderException("No matching plugin found", service.getName(), providerName);
         }
@@ -111,4 +136,27 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
     }
 
 
+    public File getExtdir() {
+        return extdir;
+    }
+
+    public void setExtdir(File extdir) {
+        this.extdir = extdir;
+    }
+
+    public File getCachedir() {
+        return cachedir;
+    }
+
+    public void setCachedir(File cachedir) {
+        this.cachedir = cachedir;
+    }
+
+    public PluginCache getCache() {
+        return cache;
+    }
+
+    public void setCache(PluginCache cache) {
+        this.cache = cache;
+    }
 }

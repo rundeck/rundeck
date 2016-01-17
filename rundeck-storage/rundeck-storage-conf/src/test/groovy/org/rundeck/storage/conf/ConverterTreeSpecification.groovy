@@ -17,19 +17,16 @@ class ConverterTreeSpecification extends Specification {
         boolean read=false
         boolean created=false
         boolean updated=false
-        @Override
         ContentMeta convertReadData(Path path, ContentMeta contents) {
             read=true
             dataWithText('read data',[testMeta:'filterReadData'])
         }
 
-        @Override
         ContentMeta convertCreateData(Path path, ContentMeta contents) {
             created=true
             dataWithText('create data', [testMeta: 'filterCreateData'])
         }
 
-        @Override
         ContentMeta convertUpdateData(Path path, ContentMeta content) {
             updated=true
             dataWithText('update data', [testMeta: 'filterUpdateData'])
