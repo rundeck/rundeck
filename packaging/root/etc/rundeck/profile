@@ -36,13 +36,15 @@ export RDECK_JVM="-Djava.security.auth.login.config=/etc/rundeck/jaas-loginmodul
 #
 # Set min/max heap size
 #
-RDECK_JVM="$RDECK_JVM -Xmx1024m -Xms256m -XX:MaxPermSize=256m -server"
+RDECK_JVM="$RDECK_JVM -Xmx1024m -Xms256m -server"
 #
 # SSL Configuration - Uncomment the following to enable.  Check SSL.properties for details.
 #
 #export RDECK_JVM="$RDECK_JVM -Drundeck.ssl.config=/etc/rundeck/ssl/ssl.properties -Dserver.https.port=${RDECK_HTTPS_PORT}"
 
-export RDECK_SSL_OPTS="-Djavax.net.ssl.trustStore=/etc/rundeck/ssl/truststore -Djavax.net.ssl.trustStoreType=jks -Djava.protocol.handler.pkgs=com.sun.net.ssl.internal.www.protocol"
+if [ -f /etc/rundeck/ssl/truststore ];then
+	export RDECK_SSL_OPTS="-Djavax.net.ssl.trustStore=/etc/rundeck/ssl/truststore -Djavax.net.ssl.trustStoreType=jks -Djava.protocol.handler.pkgs=com.sun.net.ssl.internal.www.protocol"
+fi
 
 if test -t 0 -a -z "$RUNDECK_CLI_TERSE"
 then
