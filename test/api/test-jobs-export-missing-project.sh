@@ -13,7 +13,7 @@ echo "TEST: export RunDeck Jobs in jobs.xml format [missing project parameter]"
 params="project="
 
 # expect error message
-sh $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"project\" is required" || exit 2
+$SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"project\" is required" || exit 2
 echo "OK"
 
 rm $DIR/curl.out

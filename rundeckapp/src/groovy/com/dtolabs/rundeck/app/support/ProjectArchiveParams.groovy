@@ -25,14 +25,29 @@ import grails.validation.Validateable
  * @since 2014-08-14
  */
 @Validateable
-class ProjectArchiveParams {
+class ProjectArchiveParams implements ProjectArchiveImportRequest{
     String project
-    String jobUUIDImportBehavior
-    String executionImportBehavior
+    String jobUuidOption='preserve'
+    Boolean importExecutions=true
+    Boolean importConfig=false
+    Boolean importACL=false
 
     static constraints={
         project(matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
-        jobUUIDImportBehavior(nullable: true,inList: ['preserve','remove'])
-        executionImportBehavior(nullable: true,inList: ['import','skip'])
+        jobUuidOption(nullable: true,inList: ['preserve','remove'])
+        importExecutions(nullable: true)
+        importConfig(nullable: true)
+        importACL(nullable: true)
+    }
+
+    @Override
+    public String toString() {
+        return "ProjectArchiveParams{" +
+                "project='" + project + '\'' +
+                ", jobUuidOption='" + jobUuidOption + '\'' +
+                ", importExecutions=" + importExecutions +
+                ", importConfig=" + importConfig +
+                ", importACL=" + importACL +
+                '}';
     }
 }

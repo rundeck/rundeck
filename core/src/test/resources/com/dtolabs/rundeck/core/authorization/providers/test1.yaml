@@ -15,6 +15,8 @@ for: # each entry in for: checks a specific type of resource
       deny: [command_exec]  #allow/deny explicitly
 by:
     group: ['qa_group','dev_group']
+context:
+    application: rundeck
 ---
 description: Prod can execute all Prod jobs and can view QA jobs, but not execute them
 for: # each entry in for: checks a specific type of resource
@@ -34,6 +36,8 @@ for: # each entry in for: checks a specific type of resource
       allow: ['*']  #allow/deny explicitly
 by:
     group: 'prod_group'
+context:
+    application: rundeck
 ---
 description: wildcard group match
 for:
@@ -50,6 +54,8 @@ for:
       deny: ['*']  #allow/deny explicitly
 by:
     group: 'dev_.*'
+context:
+    application: rundeck
 ---
 description: single user match
 for:
@@ -59,6 +65,8 @@ for:
       deny: ['*']  #allow/deny explicitly
 by:
     username: 'dev1'
+context:
+    application: rundeck
 ---
 description: multi user match
 for:
@@ -68,6 +76,8 @@ for:
       deny: ['*']  #allow/deny explicitly
 by:
     username: ['dev1','dev2']
+context:
+    application: rundeck
 ---
 description: regex user match
 for:
@@ -77,3 +87,5 @@ for:
       deny: ['*']  #allow/deny explicitly
 by:
     username: ['dev[ABC]']
+context:
+    application: rundeck

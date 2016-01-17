@@ -6,9 +6,10 @@ import java.util.Set;
 import javax.security.auth.Subject;
 import javax.xml.xpath.XPathExpressionException;
 
+import com.dtolabs.rundeck.core.authorization.AclRuleSetSource;
 import com.dtolabs.rundeck.core.authorization.Attribute;
 
-public interface PolicyCollection {
+public interface PolicyCollection extends AclRuleSetSource {
 
     /**
      * For a given policy collection, return all the group names associated with it.

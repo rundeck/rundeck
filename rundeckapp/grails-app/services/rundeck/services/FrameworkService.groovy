@@ -4,7 +4,9 @@ import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.authorization.MultiAuthorization
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization
@@ -44,7 +46,7 @@ class FrameworkService implements ApplicationContextAware {
     boolean initialized = false
     private String serverUUID
     private boolean clusterModeEnabled
-    SAREAuthorization rundeckPolicyAuthorization
+    def authorizationService
 
     def ApplicationContext applicationContext
     def ExecutionService executionService
@@ -315,6 +317,14 @@ class FrameworkService implements ApplicationContextAware {
     def Map authResourceForProject(String name){
         return AuthorizationUtil.resource(AuthConstants.TYPE_PROJECT, [name: name])
     }
+    /**
+     * Return the resource definition for a project ACL for use by authorization checks
+     * @param name the project name
+     * @return resource map for authorization check
+     */
+    def Map authResourceForProjectAcl(String name){
+        return AuthorizationUtil.resource(AuthConstants.TYPE_PROJECT_ACL, [name: name])
+    }
 
     /**
      * return the decision set for all actions on all resources in the project context
@@ -571,7 +581,7 @@ class FrameworkService implements ApplicationContextAware {
 
     def getFrameworkRoles() {
         initialize()
-        return new HashSet(rundeckPolicyAuthorization.hackMeSomeRoles())
+        return new HashSet(authorizationService.getRoleList())
     }
 
     def AuthContext userAuthContext(session) {
@@ -591,7 +601,40 @@ class FrameworkService implements ApplicationContextAware {
         if (!subject) {
             throw new RuntimeException("getAuthContextForSubject: Cannot get AuthContext without subject")
         }
-        return new SubjectAuthContext(subject, rundeckPolicyAuthorization)
+        return new SubjectAuthContext(subject, authorizationService.systemAuthorization)
+    }
+    /**
+     * Extend a generic auth context, with project-specific authorization
+     * @param orig original auth context
+     * @param project project name
+     * @return new AuthContext with project-specific authorization added
+     */
+    public AuthContext getAuthContextWithProject(AuthContext orig, String project) {
+        if (!orig) {
+            throw new RuntimeException("getAuthContextWithProject: Cannot get AuthContext without orig")
+        }
+        if(!project){
+            throw new RuntimeException("getAuthContextWithProject: Cannot get AuthContext without project")
+        }
+        def project1 = getFrameworkProject(project)
+        def projectAuth = project1.getProjectAuthorization()
+        log.debug("getAuthContextWithProject ${project}, orig: ${orig}, project auth ${projectAuth}")
+        return orig.combineWith(projectAuth)
+    }
+    public AuthContext getAuthContextForSubjectAndProject(Subject subject, String project) {
+        if (!subject) {
+            throw new RuntimeException("getAuthContextForSubjectAndProject: Cannot get AuthContext without subject")
+        }
+        if(!project){
+            throw new RuntimeException("getAuthContextForSubjectAndProject: Cannot get AuthContext without project")
+        }
+
+        def project1 = getFrameworkProject(project)
+
+        def projectAuth = project1.getProjectAuthorization()
+        def authorization = new MultiAuthorization(authorizationService.systemAuthorization, projectAuth)
+        log.debug("getAuthContextForSubjectAndProject ${project}, authorization: ${authorization}, project auth ${projectAuth}")
+        return new SubjectAuthContext(subject, authorization)
     }
     public AuthContext getAuthContextForUserAndRoles(String user, List rolelist) {
         if (!(null != user && null != rolelist)) {
@@ -603,7 +646,7 @@ class FrameworkService implements ApplicationContextAware {
         rolelist.each { String s ->
             subject.getPrincipals().add(new Group(s))
         }
-        return new SubjectAuthContext(subject, rundeckPolicyAuthorization)
+        return new SubjectAuthContext(subject, authorizationService.systemAuthorization)
     }
 
 

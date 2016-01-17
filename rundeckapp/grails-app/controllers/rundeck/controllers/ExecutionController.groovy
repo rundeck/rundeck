@@ -84,7 +84,7 @@ class ExecutionController extends ControllerBase{
                 filesize = file.length()
             }
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
 
         if (unauthorizedResponse(frameworkService.authorizeProjectExecutionAll(authContext, e,
                 [AuthConstants.ACTION_READ]), AuthConstants.ACTION_READ,'Execution',params.id)) {
@@ -146,7 +146,7 @@ class ExecutionController extends ControllerBase{
         if (notFoundResponse(e, 'Execution ID', params.id)) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
 
         if (unauthorizedResponse(frameworkService.authorizeApplicationResourceAny(authContext,
                 frameworkService.authResourceForProject(e.project),
@@ -184,7 +184,7 @@ class ExecutionController extends ControllerBase{
             flash.error="Some IDS are required for bulk delete"
             return redirect(action: 'index',controller: 'reports',params: [project:params.project])
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         def result=executionService.deleteBulkExecutionIds(ids,authContext,session.user)
         if(!result.success){
             flash.error=result.failures*.message.join(", ")
@@ -204,7 +204,7 @@ class ExecutionController extends ControllerBase{
             return render(contentType: 'application/json', text: [error: "Execution not found for id: " + params.id] as JSON)
         }
 
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
 
         if (e && !frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_READ])) {
             response.status=HttpServletResponse.SC_FORBIDDEN
@@ -272,7 +272,7 @@ class ExecutionController extends ControllerBase{
             return render(contentType: 'application/json', text: [error: "Execution not found for id: " + params.id] as JSON)
         }
 
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
 
         if (e && !frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_READ])) {
             response.status=HttpServletResponse.SC_FORBIDDEN
@@ -404,7 +404,7 @@ class ExecutionController extends ControllerBase{
                 }
             }
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
         def ScheduledExecution se = e.scheduledExecution
         def abortresult=executionService.abortExecution(se, e, session.user,authContext)
 
@@ -671,8 +671,8 @@ class ExecutionController extends ControllerBase{
      */
     def tailExecutionOutput = {
         log.debug("tailExecutionOutput: ${params}, format: ${request.format}")
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         Execution e = Execution.get(Long.parseLong(params.id))
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
         def reqError=false
 
         def apiError = { String code, List args, int status = 0 ->
@@ -1064,11 +1064,13 @@ class ExecutionController extends ControllerBase{
                 response.addHeader('X-Rundeck-ExecOutput-TotalSize', totsize.toString())
                 response.addHeader('X-Rundeck-ExecOutput-LastLinesSupported', lastlinesSupported.toString())
                 def lineSep = System.getProperty("line.separator")
-                render(contentType:"text/plain"){
+                response.setHeader("Content-Type","text/plain")
+                response.outputStream.withWriter("UTF-8"){w->
                     entry.each{
-                        out<<it.mesg+lineSep
+                        w<<it.mesg+lineSep
                     }
                 }
+                response.outputStream.close()
             }
         }
     }
@@ -1124,7 +1126,7 @@ class ExecutionController extends ControllerBase{
             return
         }
         def Execution e = Execution.get(params.id)
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
         if (!e) {
             return apiService.renderErrorFormat(response,
                     [status: HttpServletResponse.SC_NOT_FOUND,code: "api.error.item.doesnotexist", args: ['Execution ID', params.id]])
@@ -1160,7 +1162,7 @@ class ExecutionController extends ControllerBase{
             return
         }
         def Execution e = Execution.get(params.id)
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
         if (!e) {
             def errormap= [status: HttpServletResponse.SC_NOT_FOUND, code: "api.error.item.doesnotexist", args: ['Execution ID', params.id]]
             withFormat {
@@ -1289,7 +1291,7 @@ class ExecutionController extends ControllerBase{
             return
         }
         def Execution e = Execution.get(params.id)
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
         if (!e) {
             return apiService.renderErrorFormat(response,
                         [
@@ -1363,7 +1365,7 @@ class ExecutionController extends ControllerBase{
             return
         }
         def Execution e = Execution.get(params.id)
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
         if (!e) {
             return apiService.renderErrorFormat(response,
@@ -1462,6 +1464,7 @@ class ExecutionController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
+        //XXX:TODO use project specific auth context
         def result=executionService.deleteBulkExecutionIds([ids].flatten(), authContext, session.user)
         executionService.renderBulkExecutionDeleteResult(request,response,result)
     }
@@ -1484,7 +1487,6 @@ class ExecutionController extends ControllerBase{
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V5)) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(query?.hasErrors()){
             return apiService.renderErrorFormat(response,
                     [
@@ -1501,6 +1503,7 @@ class ExecutionController extends ControllerBase{
                             args: ['project']
                     ])
         }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorFormat(response,[

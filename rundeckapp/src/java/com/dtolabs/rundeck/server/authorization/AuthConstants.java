@@ -51,10 +51,12 @@ public class AuthConstants {
     public static final String ACTION_DISABLE_EXECUTIONS = "disable_executions";
 
     public static final String TYPE_SYSTEM = "system";
+    public static final String TYPE_SYSTEM_ACL = "system_acl";
     public static final String TYPE_NODE = "node";
     public static final String TYPE_JOB = "job";
     public static final String TYPE_ADHOC = "adhoc";
     public static final String TYPE_PROJECT = "project";
+    public static final String TYPE_PROJECT_ACL = "project_acl";
     public static final String TYPE_EVENT = "event";
     public static final String TYPE_USER = "user";
     public static final String TYPE_STORAGE = "storage";
@@ -64,6 +66,7 @@ public class AuthConstants {
     }
 
     public static final Map<String, String> RESOURCE_TYPE_SYSTEM = resType(TYPE_SYSTEM);
+    public static final Map<String, String> RESOURCE_TYPE_SYSTEM_ACL = resType(TYPE_SYSTEM_ACL);
     public static final Map<String, String> RESOURCE_TYPE_NODE = resType(TYPE_NODE);
     public static final Map<String, String> RESOURCE_TYPE_JOB = resType(TYPE_JOB);
     public static final Map<String, String> RESOURCE_TYPE_EVENT = resType(TYPE_EVENT);

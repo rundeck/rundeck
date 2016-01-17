@@ -38,7 +38,7 @@ class AuthTagLib {
         
         boolean has=(!attrs.has || attrs.has == "true")
 
-        def authContext = frameworkService.getAuthContextForSubject(request.subject)
+        def authContext = frameworkService.getAuthContextForSubjectAndProject(request.subject,attrs.project)
         def resource = frameworkService.authResourceForJob(attrs.job?.jobName, attrs.job?.groupPath)
 
         def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE+"project"), attrs.project))
@@ -76,7 +76,7 @@ class AuthTagLib {
         def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), attrs.project))
 
 
-        def authContext = frameworkService.getAuthContextForSubject(request.subject)
+        def authContext = frameworkService.getAuthContextForSubjectAndProject(request.subject,attrs.project)
         def decision = authContext.evaluate(resource, action, env)
 
         if(has && decision.authorized){
@@ -136,7 +136,9 @@ class AuthTagLib {
         }
 
         def env
-        if ('application' == attrs.context) {
+
+        def appContext = 'application' == attrs.context
+        if (appContext) {
             env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"application"), 'rundeck'))
         } else {
             env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), attrs.project))
@@ -155,7 +157,8 @@ class AuthTagLib {
         }
         def Set resources = [resource]
 
-        def authContext = frameworkService.getAuthContextForSubject(request.subject)
+        def authContext = appContext?frameworkService.getAuthContextForSubject(request.subject):
+                frameworkService.getAuthContextForSubjectAndProject(request.subject,attrs.project)
 
         if(anyCheck){
             return tests.any { authContext.evaluate(resources, [it] as Set, env).any{has==it.authorized} }
@@ -194,7 +197,7 @@ class AuthTagLib {
         def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), attrs.project))
 
 
-        def authContext = frameworkService.getAuthContextForSubject(request.subject)
+        def authContext = frameworkService.getAuthContextForSubjectAndProject(request.subject,attrs.project)
         def decisions = authContext.evaluate(resources, tests, env)
         //return true if all decsisions are (has==true) or are not (has!=true) authorized
         return !(decisions.find {has ^ it.authorized})
@@ -237,7 +240,7 @@ class AuthTagLib {
 
         def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), attrs.job?.project))
 
-        def authContext = frameworkService.getAuthContextForSubject(request.subject)
+        def authContext = frameworkService.getAuthContextForSubjectAndProject(request.subject,attrs.job?.project)
         def decisions = authContext.evaluate(resources, tests, env)
         //return true if all decsisions are (has==true) or are not (has!=true) authorized
         return !(decisions.find {has ^ it.authorized})

@@ -3,10 +3,7 @@ package com.dtolabs.rundeck.core.cli.acl;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.authentication.Group;
 import com.dtolabs.rundeck.core.authentication.Username;
-import com.dtolabs.rundeck.core.authorization.Attribute;
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
-import com.dtolabs.rundeck.core.authorization.Decision;
-import com.dtolabs.rundeck.core.authorization.Explanation;
+import com.dtolabs.rundeck.core.authorization.*;
 import com.dtolabs.rundeck.core.authorization.providers.*;
 import com.dtolabs.rundeck.core.cli.*;
 import com.dtolabs.rundeck.core.cli.jobs.JobsToolException;
@@ -61,6 +58,8 @@ public class AclTool extends BaseTool {
     public static final String USER_LONG_OPT = "user";
     public static final String PROJECT_OPT = "p";
     public static final String PROJECT_LONG_OPT = "project";
+    public static final String PROJECT_ACL_OPT = "P";
+    public static final String PROJECT_ACL_LONG_OPT = "projectacl";
     public static final String JOB_OPT = "j";
     public static final String JOB_LONG_OPT = "job";
     public static final String CONTEXT_OPT = "c";
@@ -75,6 +74,8 @@ public class AclTool extends BaseTool {
     public static final String DENY_LONG_OPT = "deny";
     public static final String VERBOSE_OPT = "v";
     public static final String VERBOSE_LONG_OPT = "verbose";
+    public static final String VALIDATE_OPT = "V";
+    public static final String VALIDATE_LONG_OPT = "validate";
     public static final String STORAGE_OPT = "s";
     public static final String STORAGE_LONG_OPT = "storage";
     public static final String GENERIC_OPT = "G";
@@ -93,6 +94,12 @@ public class AclTool extends BaseTool {
     final CLIToolLogger clilogger;
 
     private Actions action = null;
+    private static Comparator<Decision> comparator = new Comparator<Decision>() {
+        @Override
+        public int compare(final Decision o1, final Decision o2) {
+            return o1.getAction().compareTo(o2.getAction());
+        }
+    };
 
     public AclTool(final CLIToolLogger cliToolLogger)
             throws IOException, PoliciesParseException
@@ -187,6 +194,7 @@ public class AclTool extends BaseTool {
     public static final String ACTION_TEST = "test";
     public static final String ACTION_CREATE = "create";
     public static final String ACTION_LIST = "list";
+    public static final String ACTION_VALIDATE= "validate";
 
     static enum Actions {
 
@@ -195,7 +203,8 @@ public class AclTool extends BaseTool {
          */
         test(ACTION_TEST),
         create(ACTION_CREATE),
-        list(ACTION_LIST);
+        list(ACTION_LIST),
+        validate(ACTION_VALIDATE);
         private String name;
 
         Actions(final String name) {
@@ -218,6 +227,7 @@ public class AclTool extends BaseTool {
     }
 
     private boolean argVerbose;
+    private boolean argValidate;
     private boolean argList;
     private File argFile;
     private File argDir;
@@ -236,6 +246,7 @@ public class AclTool extends BaseTool {
 
     private Context argContext;
     private String argProject;
+    private String argProjectAcl;
     private String argProjectJob;
     private String argProjectNode;
     private String argTags;
@@ -254,6 +265,7 @@ public class AclTool extends BaseTool {
         @Override
         public void addOptions(final Options options) {
             options.addOption(VERBOSE_OPT, VERBOSE_LONG_OPT, false, "Verbose output.");
+            options.addOption(VALIDATE_OPT, VALIDATE_LONG_OPT, false, "Validate all input files.");
 
             options.addOption(
                     OptionBuilder.withArgName("file")
@@ -317,6 +329,15 @@ public class AclTool extends BaseTool {
                                          "Name of project, used in project context or for application resource."
                                  )
                                  .create(PROJECT_OPT)
+            );
+            options.addOption(
+                    OptionBuilder.withArgName("projectacl")
+                                 .withLongOpt(PROJECT_ACL_LONG_OPT)
+                                 .hasArg()
+                                 .withDescription(
+                                         "Project name for ACL policy access, used in application context."
+                                 )
+                                 .create(PROJECT_ACL_OPT)
             );
             options.addOption(
                     OptionBuilder.withArgName("group/name")
@@ -444,6 +465,9 @@ public class AclTool extends BaseTool {
             if (cli.hasOption(PROJECT_OPT)) {
                 argProject = cli.getOptionValue(PROJECT_OPT);
             }
+            if (cli.hasOption(PROJECT_ACL_OPT)) {
+                argProjectAcl = cli.getOptionValue(PROJECT_ACL_OPT);
+            }
             if (cli.hasOption(JOB_OPT)) {
                 argProjectJob = cli.getOptionValue(JOB_OPT);
             }
@@ -455,6 +479,9 @@ public class AclTool extends BaseTool {
             }
             if (cli.hasOption(VERBOSE_OPT)) {
                 argVerbose = cli.hasOption(VERBOSE_OPT);
+            }
+            if (cli.hasOption(VALIDATE_OPT)) {
+                argValidate = cli.hasOption(VALIDATE_OPT);
             }
             if (cli.hasOption(NODE_OPT)) {
                 argProjectNode = cli.getOptionValue(NODE_OPT);
@@ -560,6 +587,9 @@ public class AclTool extends BaseTool {
                 case create:
                     createAction();
                     break;
+                case validate:
+                    validateAction();
+                    break;
                 default:
                     throw new CLIToolOptionsException("Unrecognized action: " + action);
             }
@@ -569,6 +599,10 @@ public class AclTool extends BaseTool {
     }
 
     private void listAction() throws CLIToolOptionsException, IOException, PoliciesParseException {
+
+        if (applyArgValidate()) {
+            return;
+        }
 
         final SAREAuthorization authorization = createAuthorization();
         Subject subject = createSubject();
@@ -591,6 +625,22 @@ public class AclTool extends BaseTool {
             );
         }else{
             log("\n(No project (-p) specified, skipping Application context actions for a specific project.)\n");
+        }
+        if(null!=argProjectAcl){
+            HashMap<String, Object> res = new HashMap<>();
+            res.put("name", argProjectAcl);
+            Map<String,Object> resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_PROJECT_ACL, res);
+
+            logDecisions(
+                    "project_acl for Project named \"" + argProjectAcl+"\"",
+                    authorization,
+                    subject,
+                    resources(resourceMap),
+                    new HashSet<>(appProjectAclActions),
+                    Framework.RUNDECK_APP_ENV
+            );
+        }else{
+            log("\n(No project_acl (-P) specified, skipping Application context actions for a ACLs for a specific project.)\n");
         }
         if(null!=argAppStorage){
             Map<String,Object> resourceMap = createStorageResource();
@@ -686,6 +736,26 @@ public class AclTool extends BaseTool {
 
     }
 
+    /**
+     * If argValidate is specified, validate the input, exit 2 if invalid. Print validation report if argVerbose
+     * @return true if validation check failed
+     * @throws CLIToolOptionsException
+     */
+    private boolean applyArgValidate() throws CLIToolOptionsException {
+        if(argValidate) {
+            Validation validation = validatePolicies();
+            if(argVerbose && !validation.isValid()) {
+                reportValidation(validation);
+            }
+            if(!validation.isValid()){
+                log("The validation " + (validation.isValid() ? "passed" : "failed"));
+                exit(2);
+                return true;
+            }
+        }
+        return false;
+    }
+
     private HashSet<Map<String, String>> resources(final Map<String, Object>... resourceMap) {
         HashSet<Map<String, String>> resource = new HashSet<>();
         for (Map<String, Object> stringObjectMap : resourceMap) {
@@ -703,12 +773,13 @@ public class AclTool extends BaseTool {
             final Set<Attribute> env
     )
     {
-        for (Decision decision : authorization.evaluate(
+        Set<Decision> evaluate = authorization.evaluate(
                 resource,
                 subject,
                 actions,
                 env
-        )) {
+        );
+        for (Decision decision : sortByAction(evaluate)) {
             log(
                     (decision.isAuthorized()
                      ? "+"
@@ -725,6 +796,12 @@ public class AclTool extends BaseTool {
                 );
             }
         }
+    }
+
+    private Set<Decision> sortByAction(final Set<Decision> evaluate) {
+        TreeSet<Decision> sorted = new TreeSet<>(comparator);
+        sorted.addAll(evaluate);
+        return sorted;
     }
 
 
@@ -752,6 +829,7 @@ public class AclTool extends BaseTool {
             Arrays.asList(
                     ACLConstants.TYPE_PROJECT,
                     ACLConstants.TYPE_SYSTEM,
+                    ACLConstants.TYPE_SYSTEM_ACL,
                     ACLConstants.TYPE_USER,
                     ACLConstants.TYPE_JOB
             )
@@ -766,6 +844,14 @@ public class AclTool extends BaseTool {
                     ACLConstants.ACTION_IMPORT,
                     ACLConstants.ACTION_EXPORT,
                     ACLConstants.ACTION_DELETE_EXECUTION
+            );
+    static final List<String> appProjectAclActions =
+            Arrays.asList(
+                    ACLConstants.ACTION_READ,
+                    ACLConstants.ACTION_CREATE,
+                    ACLConstants.ACTION_UPDATE,
+                    ACLConstants.ACTION_DELETE,
+                    ACLConstants.ACTION_ADMIN
             );
     static final List<String> appStorageActions =
             Arrays.asList(
@@ -785,6 +871,14 @@ public class AclTool extends BaseTool {
                     ACLConstants.ACTION_DISABLE_EXECUTIONS,
                     ACLConstants.ACTION_ADMIN
             );
+    static final List<String> appSystemAclKindActions =
+            Arrays.asList(
+                    ACLConstants.ACTION_READ,
+                    ACLConstants.ACTION_CREATE,
+                    ACLConstants.ACTION_UPDATE,
+                    ACLConstants.ACTION_DELETE,
+                    ACLConstants.ACTION_ADMIN
+            );
     static final List<String> appUserKindActions =
             Arrays.asList(
                     ACLConstants.ACTION_ADMIN
@@ -799,12 +893,14 @@ public class AclTool extends BaseTool {
     static {
         appResActionsByType = new HashMap<>();
         appResActionsByType.put(ACLConstants.TYPE_PROJECT, appProjectActions);
+        appResActionsByType.put(ACLConstants.TYPE_PROJECT_ACL, appProjectAclActions);
         appResActionsByType.put(ACLConstants.TYPE_STORAGE, appStorageActions);
     }
 
     static {
         appResAttrsByType = new HashMap<>();
-        appResAttrsByType.put(ACLConstants.TYPE_PROJECT, Arrays.asList("name"));
+        appResAttrsByType.put(ACLConstants.TYPE_PROJECT, Collections.singletonList("name"));
+        appResAttrsByType.put(ACLConstants.TYPE_PROJECT_ACL, Collections.singletonList("name"));
         appResAttrsByType.put(ACLConstants.TYPE_STORAGE, Arrays.asList("path", "name"));
 
     }
@@ -816,6 +912,7 @@ public class AclTool extends BaseTool {
         appKindActionsByType = new HashMap<>();
         appKindActionsByType.put(ACLConstants.TYPE_PROJECT, appProjectKindActions);
         appKindActionsByType.put(ACLConstants.TYPE_SYSTEM, appSystemKindActions);
+        appKindActionsByType.put(ACLConstants.TYPE_SYSTEM_ACL, appSystemAclKindActions);
         appKindActionsByType.put(ACLConstants.TYPE_USER, appUserKindActions);
         appKindActionsByType.put(ACLConstants.TYPE_JOB, appJobKindActions);
     }
@@ -959,6 +1056,10 @@ public class AclTool extends BaseTool {
             HashMap<String, Object> res = new HashMap<>();
             res.put("name", argProject);
             resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_PROJECT, res);
+        } else if (argContext == Context.application && argProjectAcl != null) {
+            HashMap<String, Object> res = new HashMap<>();
+            res.put("name", argProjectAcl);
+            resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_PROJECT_ACL, res);
         } else if (argContext == Context.application && argAppStorage != null) {
             resourceMap = createStorageResource();
         } else if (argContext == Context.project && argProjectJob != null) {
@@ -1061,7 +1162,7 @@ public class AclTool extends BaseTool {
                     "  Generic: " +
                     optionDisplayString(GENERIC_OPT) +
                     "\n" +
-                    "    Create projects, read system info, manage users, change\n" +
+                    "    Create projects, read system info, manage system ACLs, manage users, change\n" +
                     "      execution mode.\n" +
                     "    generic kinds" +
                     " in this context: \n" +
@@ -1100,6 +1201,9 @@ public class AclTool extends BaseTool {
         } else if (argContext == Context.application && argProject != null) {
             //actions for job
             possibleActions.addAll(appProjectActions);
+        }else if (argContext == Context.application && argProjectAcl != null) {
+            //actions for project_acl
+            possibleActions.addAll(appProjectAclActions);
         } else if (argContext == Context.application && argGenericType != null) {
             //actions for job
             possibleActions.addAll(appKindActionsByType.get(argGenericType.toLowerCase()));
@@ -1249,6 +1353,52 @@ public class AclTool extends BaseTool {
             }
         }
         return t;
+    }
+    private void validateAction() throws CLIToolOptionsException, IOException, PoliciesParseException {
+        if (null == argFile && null == argDir && null != configDir) {
+            log("Using configured Rundeck etc dir: " + configDir);
+        }
+        final Validation validation = validatePolicies();
+        reportValidation(validation);
+        log("The validation " + (validation.isValid() ? "passed" : "failed"));
+        if (!validation.isValid()) {
+            exit(2);
+        }
+    }
+
+    private void reportValidation(final Validation validation) {
+        for (Map.Entry<String, List<String>> entry : validation.getErrors().entrySet()) {
+            String ident = entry.getKey();
+            List<String> value = entry.getValue();
+            System.err.println(ident + ":");
+            for (String s : value) {
+                System.err.println("\t" + s);
+            }
+        }
+    }
+
+    private Validation validatePolicies() throws CLIToolOptionsException {
+        final Validation validation;
+        if (null != argFile) {
+            if(!argFile.isFile()) {
+                throw new CLIToolOptionsException("File: " + argFile + ", does not exist or is not a file");
+            }
+            validation = YamlProvider.validate(YamlProvider.sourceFromFile(argFile));
+        } else if (null != argDir) {
+            if(!argDir.isDirectory()) {
+                throw new CLIToolOptionsException("File: " + argDir + ", does not exist or is not a directory");
+            }
+            validation = YamlProvider.validate(YamlProvider.asSources(argDir));
+        } else if (null != configDir) {
+            File directory = new File(configDir);
+            if(!directory.isDirectory()) {
+                throw new CLIToolOptionsException("File: " + directory + ", does not exist or is not a directory");
+            }
+            validation = YamlProvider.validate(YamlProvider.asSources(directory));
+        } else {
+            throw new CLIToolOptionsException("-f or -d are required");
+        }
+        return validation;
     }
 
     private void createAction() throws CLIToolOptionsException, IOException, PoliciesParseException {
@@ -1555,6 +1705,9 @@ public class AclTool extends BaseTool {
     }
 
     private void testAction() throws CLIToolOptionsException, IOException, PoliciesParseException {
+        if (applyArgValidate()) {
+            return;
+        }
         final SAREAuthorization authorization = createAuthorization();
         AuthRequest authRequest = createAuthRequestFromArgs();
         HashSet<Map<String, String>> resource = resources(authRequest.resourceMap);
@@ -1761,10 +1914,12 @@ public class AclTool extends BaseTool {
         public static final String ACTION_DISABLE_EXECUTIONS = "disable_executions";
 
         public static final String TYPE_SYSTEM = "system";
+        public static final String TYPE_SYSTEM_ACL = "system_acl";
         public static final String TYPE_NODE = "node";
         public static final String TYPE_JOB = "job";
         public static final String TYPE_ADHOC = "adhoc";
         public static final String TYPE_PROJECT = "project";
+        public static final String TYPE_PROJECT_ACL = "project_acl";
         public static final String TYPE_EVENT = "event";
         public static final String TYPE_USER = "user";
         public static final String TYPE_STORAGE = "storage";

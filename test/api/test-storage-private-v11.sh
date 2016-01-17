@@ -46,7 +46,7 @@ if [ 0 != $? ] ; then
 fi
 assert_http_status 200 $DIR/headers.out
 
-API_XML_NO_WRAPPER=true sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+API_XML_NO_WRAPPER=true $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check result
 
@@ -109,7 +109,7 @@ if [ 0 != $? ] ; then
 fi
 assert_http_status 200 $DIR/headers.out
 
-API_XML_NO_WRAPPER=true sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+API_XML_NO_WRAPPER=true $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check result
 

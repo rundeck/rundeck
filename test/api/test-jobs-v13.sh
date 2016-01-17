@@ -22,7 +22,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
 itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
@@ -67,7 +67,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 cat > $DIR/temp.out <<END
 - 
@@ -98,7 +98,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 # load a top-level job not in a group
 cat > $DIR/temp.out <<END
@@ -129,7 +129,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 ###
 # test query with match filter and exact filter
@@ -148,7 +148,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
 itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
@@ -175,7 +175,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
 itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
@@ -202,7 +202,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
 itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
@@ -229,7 +229,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
 itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
@@ -255,7 +255,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
 itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
@@ -281,7 +281,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
 itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
@@ -308,7 +308,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
 itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
@@ -334,7 +334,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
 itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
@@ -360,7 +360,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
 itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
@@ -386,7 +386,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
 itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)

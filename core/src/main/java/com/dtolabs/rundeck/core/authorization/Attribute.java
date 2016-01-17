@@ -16,6 +16,8 @@
 
 package com.dtolabs.rundeck.core.authorization;
 
+import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
+
 import java.net.URI;
 
 public class Attribute {
@@ -27,7 +29,13 @@ public class Attribute {
     
     public final URI property;
     public final String value;
-    
+
+    public URI getProperty(){
+        return property;
+    }
+    public String getValue(){
+        return value;
+    }
     @Override
     public String toString() {
         return property.toString() + ":" + value;
@@ -51,6 +59,13 @@ public class Attribute {
         int result = property.hashCode();
         result = 31 * result + value.hashCode();
         return result;
+    }
+
+    public static String propertyKeyForURIBase(Attribute attr, String uriBase) {
+        if(attr.getProperty().toString().startsWith(uriBase)) {
+            return attr.getProperty().toString().substring(uriBase.length());
+        }
+        return "<" + attr.getProperty() + ">";
     }
 
 

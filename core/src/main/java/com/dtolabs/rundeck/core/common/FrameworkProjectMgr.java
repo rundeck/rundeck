@@ -22,7 +22,7 @@ import java.io.File;
 import java.util.*;
 
 /**
- * DepotMgr is a framework resource that provides interfaces for looking up other resources such
+ * Filesystem based project manager
  */
 public class FrameworkProjectMgr extends FrameworkResourceParent implements IFrameworkProjectMgr {
     static final String PROJECTMGR_NAME = "frameworkProjectMgr";

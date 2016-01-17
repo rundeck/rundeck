@@ -23,6 +23,8 @@ of next possible options.
 It can also take as input the output from the Rundeck AUDIT log, and generate ACL policy definitions 
 to allow any disallowed actions.
 
+It can also validate one or more files.
+
 
 The tool works in these *COMMAND* modes:
 
@@ -35,6 +37,9 @@ The tool works in these *COMMAND* modes:
 `create`
 :   generate the correct ACL policy YAML definition for a specific action, or to allow a previously rejected 
     action as logged in the Rundeck AUDIT log.
+
+`validate`
+:   Validate a file or directory of files, and print messages about problems with the files.
 
 ## Related
 
@@ -49,13 +54,12 @@ See:
 `-h, --help`
 :   Print usage message.
 
-`-v`
+`-v, --verbose`
 :   Run verbosely.
 
+### Test and Validate Command Options
 
-### Test Command Options
-
-In addition to the [Common Options](#common-options), the `test` command takes these input options.
+The `test` and `validate` commands take these input options. 
 
 `-d, --dir <dir>`
 :   Directory. Load all policy files in the specified directory.
@@ -66,10 +70,14 @@ In addition to the [Common Options](#common-options), the `test` command takes t
 `-v`
 :   If the tested action is not allowed, print the necessary ACL policy to allow it (as per the `create` action.)
 
-
 One of `--dir` or `--file` is required for the `test` command. If the rdeck.base system property is defined, then
 the Rundeck "etc" dir will be used as for the `--dir` option by default.
 
+In addition,
+the `test` command also takes the [Common Options](#common-options) and these options:
+
+`-V, --validate`
+:   Validate all input files, and exit with non-zero exit code if validation fails. (`test` and `list` actions.)
 
 ### Create Command Options
 
@@ -487,7 +495,32 @@ by:
   group: test
 ~~~
 
-   
+## Validate Command
+
+The Validate command loads the specified aclpolicy file or directory of files, and validates the aclpolicy definitions.
+It prints any errors found and it will exit with a 0 exit code if no errors are found, otherwise it will exit with 2 exit code.
+
+*Examples*
+
+Validate all aclpolicy files in the Rundeck "etc" directory by default:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+$ rd-acl validate
+Using configured Rundeck etc dir: /etc/rundeck
+The validation passed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Validate a specific file:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+$ rd-acl validate -f bad5.aclpolicy
+/Users/greg/rundeck25/bad5.aclpolicy[1]:
+  Context section is not valid: {xproject=asdf}, it should contain only 'application:' or 'project:'
+The validation failed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
 ## See Also
 
 [`aclpolicy`](../man5/aclpolicy.html)

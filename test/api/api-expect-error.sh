@@ -44,4 +44,4 @@ if [ 0 != $okheader ] ; then
 fi
 rm $DIR/headers.out
 
-sh $SRC_DIR/api-test-error.sh $DIR/curl.out "$message"
+$SHELL $SRC_DIR/api-test-error.sh $DIR/curl.out "$message"

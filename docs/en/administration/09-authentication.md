@@ -99,14 +99,22 @@ than giving out role accounts to groups.  You may also want to avoid
 having the passwords in plaintext within the configuration file.  
 
 To accomplish this, you'll need a properly hashed or encrypted
-password to use in the config.  On the Rundeck server, move into
-the directory that contains your installation and pass the
-username and password to the `Password` utility.  In this example,
+password to use in the config.  Pass the
+username and password to the `Password` utility which is part of the
+`jetty-all-7.6.0.v20120127.jar` file.
+
+Location:
+
+* Launcher install: `$RDECK_BASE/server/lib/jetty-all-7.6.0.v20120127.jar`
+* RPM/Deb install: `/var/lib/rundeck/bootstrap/jetty-all-7.6.0.v20120127.jar`
+
+Use the correct path below.
+
+In this example,
 we'll setup a new user named "jsmith", with a password of "mypass":
 
 ~~~~~~ {.bash }
-$ cd $RDECK_BASE
-$ java -cp server/lib/jetty-all-7.6.0.v20120127.jar org.eclipse.jetty.util.security.Password jsmith mypass
+$ java -cp jetty-all-7.6.0.v20120127.jar org.eclipse.jetty.util.security.Password jsmith mypass
 ~~~~~~
 
 ~~~~~~

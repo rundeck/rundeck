@@ -1,4 +1,6 @@
 package rundeck.services
+
+import com.dtolabs.rundeck.core.authorization.RuleEvaluator
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
@@ -484,6 +486,64 @@ class ProjectManagerServiceSpec extends Specification {
         service.existsProjectFileResource("test1","my-resource")
         !service.existsProjectFileResource("test1","not-my-resource")
     }
+    void "storage dir exists test"(){
+        given:
+        service.storage=Stub(StorageTree){
+            hasDirectory("projects/test1/my-resource") >> true
+            hasDirectory("projects/test1/not-my-resource") >> false
+        }
+        expect:
+        service.existsProjectDirResource("test1","my-resource")
+        !service.existsProjectDirResource("test1","not-my-resource")
+    }
+    void "storage list paths"(){
+        given:
+        service.storage=Stub(StorageTree){
+            hasDirectory("projects/test1/my-dir") >> true
+            listDirectory("projects/test1/my-dir") >> [
+                    Stub(Resource){
+                        isDirectory()>>false
+                        getPath()>>PathUtil.asPath("projects/test1/my-dir/file1")
+                    },
+                    Stub(Resource){
+                        isDirectory()>>false
+                        getPath()>>PathUtil.asPath("projects/test1/my-dir/file2")
+                    },
+                    Stub(Resource){
+                        isDirectory()>>true
+                        getPath()>>PathUtil.asPath("projects/test1/my-dir/etc")
+                    }
+            ]
+            hasDirectory("projects/test1/not-my-resource") >> false
+        }
+        expect:
+        service.listProjectDirPaths("test1","my-dir")==['my-dir/file1','my-dir/file2','my-dir/etc/']
+        service.listProjectDirPaths("test1","not-my-resource")==[]
+    }
+    void "storage list paths regex"(){
+        given:
+        service.storage=Stub(StorageTree){
+            hasDirectory("projects/test1/my-dir") >> true
+            listDirectory("projects/test1/my-dir") >> [
+                    Stub(Resource){
+                        isDirectory()>>false
+                        getPath()>>PathUtil.asPath("projects/test1/my-dir/file1")
+                    },
+                    Stub(Resource){
+                        isDirectory()>>false
+                        getPath()>>PathUtil.asPath("projects/test1/my-dir/file2")
+                    },
+                    Stub(Resource){
+                        isDirectory()>>true
+                        getPath()>>PathUtil.asPath("projects/test1/my-dir/etc")
+                    }
+            ]
+            hasDirectory("projects/test1/not-my-resource") >> false
+        }
+        expect:
+        service.listProjectDirPaths("test1","my-dir",'file[12]')==['my-dir/file1','my-dir/file2']
+        service.listProjectDirPaths("test1","my-dir",'.*/')==['my-dir/etc/']
+    }
     void "storage read test"(){
         given:
         def meta=Stub(ResourceMeta){
@@ -680,6 +740,63 @@ class ProjectManagerServiceSpec extends Specification {
 
         then:
         !result
+    }
+
+    void "create project authorization"(){
+        given:
+
+        service.storage=Stub(StorageTree){
+            hasDirectory("projects/test1/acls") >> true
+            listDirectory("projects/test1/acls") >> [
+                    Stub(Resource){
+                        isDirectory()>>false
+                        getPath()>>PathUtil.asPath("projects/test1/acls/file1.aclpolicy")
+                    },
+                    Stub(Resource){
+                        isDirectory()>>false
+                        getPath()>>PathUtil.asPath("projects/test1/acls/file2aclpolicy")
+                    },
+                    Stub(Resource){
+                        isDirectory()>>true
+                        getPath()>>PathUtil.asPath("projects/test1/acls/blah")
+                    }
+            ]
+            hasResource("projects/test1/acls/file1.aclpolicy") >> true
+            getResource("projects/test1/acls/file1.aclpolicy") >> Stub(Resource){
+                getContents() >> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream(
+                            ('{ description: \'\', \n' +
+                                    'by: { username: \'test\' }, \n' +
+                                    'for: { resource: [ { allow: \'x\' } ] } }').bytes
+//                            ('asdf').bytes
+                    )
+                    getModificationTime() >> new Date()
+                }
+            }
+        }
+
+        when:
+        def auth=service.getProjectAuthorization("test1")
+
+        then:
+        auth!=null
+        auth instanceof RuleEvaluator
+        def rules=((RuleEvaluator)auth).getRuleSet().rules
+        rules.size()==1
+        def rulea=rules.first()
+        rulea.allowActions==['x'] as Set
+        rulea.description==''
+        !rulea.containsMatch
+        !rulea.equalsMatch
+        !rulea.regexMatch
+        rulea.resourceType=='resource'
+        rulea.resource==null
+        rulea.username=='test'
+        rulea.group==null
+        rulea.environment!=null
+        rulea.environment.key=='project'
+        rulea.environment.value=='test1'
+        rulea.sourceIdentity=='[project:test1]acls/file1.aclpolicy[1][type:resource][rule: 1]'
     }
 
     void "mark existing other project as imported"(){

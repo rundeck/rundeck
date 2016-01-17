@@ -23,6 +23,8 @@ for:
     - allow: '*' # allow create of projects
   project:
     - allow: '*' # allow view/admin of all projects
+  project_acl:
+    - allow: '*' # allow admin of all project-level ACL policies
   storage:
     - allow: '*' # allow read/create/update/delete for all /keys/* storage content
 by:

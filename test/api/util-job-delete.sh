@@ -31,7 +31,7 @@ for jobid in $joblist ; do
     # delete
     docurl -X DELETE ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-    sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+    $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
     xmlsel "/result/success/message" -n $DIR/curl.out
 done

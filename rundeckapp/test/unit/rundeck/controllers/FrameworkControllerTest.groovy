@@ -158,7 +158,7 @@ class FrameworkControllerTest {
 
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubject { subject -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
         fwkControl.demand.authorizeProjectExecutionAll {ctx,e,actions->
             assertEquals(exec,e)
             assertEquals([AuthConstants.ACTION_READ],actions)
@@ -196,7 +196,7 @@ class FrameworkControllerTest {
 
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubject { subject -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
         fwkControl.demand.authorizeProjectExecutionAll {ctx,e,actions->
             assertEquals(exec,e)
             assertEquals([AuthConstants.ACTION_READ],actions)
@@ -232,7 +232,7 @@ class FrameworkControllerTest {
 
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubject { subject -> return null }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
         fwkControl.demand.authorizeProjectResource {ctx,resource,action,proj->
             assertEquals([type: 'adhoc'], resource)
             assertEquals('run', action)
@@ -257,7 +257,8 @@ class FrameworkControllerTest {
         given:
         def fwk = mockFor(FrameworkService, true)
 
-        fwk.demand.getAuthContextForSubject {subject -> return null}
+        fwk.demand.getAuthContextForSubject { subject -> return null}
+        fwk.demand.getAuthContextForSubjectAndProject { subject,proj -> return null}
         fwk.demand.authResourceForProject {project -> return null}
         fwk.demand.authorizeApplicationResourceAll {ctx, e, actions -> true }
 
@@ -447,7 +448,7 @@ class FrameworkControllerTest {
     public void skip_testSaveProjectPrefixKeyWrong() {
         def fwk = mockFor(FrameworkService, true)
 
-        fwk.demand.getAuthContextForSubject { subject -> return null }
+        fwk.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
         fwk.demand.authResourceForProject { project -> return null }
         fwk.demand.authorizeApplicationResourceAll { ctx, e, actions -> true }
         fwk.demand.listDescriptions { -> [null, null, null] }

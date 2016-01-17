@@ -44,6 +44,11 @@ public class SubjectAuthContext implements NamedAuthContext {
     }
 
     @Override
+    public AuthContext combineWith(final Authorization authorization) {
+        return new SubjectAuthContext(subject, AclsUtil.append(this.authorization, authorization));
+    }
+
+    @Override
     public Decision evaluate(Map<String, String> resource, String action, Set<Attribute> environment) {
         return authorization.evaluate(resource, subject, action, environment);
     }

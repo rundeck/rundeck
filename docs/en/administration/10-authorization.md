@@ -34,9 +34,6 @@ Two dimensions of information dictate authorization inside Rundeck:
 The remainder of this section will describe how to use the access
 control policy.
 
-*Note from the project team*: The authorization layer is an early work
- in progress. Please share your ideas on the IRC or mailing list.
-
 ## Access control policy
 
 Access to running or modifying Jobs is managed in an access control
@@ -56,18 +53,31 @@ to be given "admin" access level to control and modify all Jobs. More
 typically, a group of users will be given access to just a subset of
 Jobs.
 
-### Lifecycle
+### Policy File Locations
 
-Rundeck loads all `*.aclpolicy` files found in the rundeck etc dir,
-which is either `/etc/rundeck` (rpm and debian install defaults),
+Rundeck loads ACL Policy definitions from these locations:
+
+* All `*.aclpolicy` files found in the rundeck `etc` dir, which is either `/etc/rundeck` (rpm and debian install defaults),
 or `$RDECK_BASE/etc` (launcher/war configuration).
+* System level policies created via the [System ACLs API](../api/index.html#acls)
+* Project level policies created via the [Project ACLs API](../api/index.html#project-acls), limited only to project context policies for a specific project.
+
+
+
+### Lifecycle
 
 The Rundeck server does not need to be restarted for changes to aclpolicy files to take effect.
 
-The files are loaded at startup, and each file's policies are cached.
+The files are loaded at startup and are cached.
 When an authorization request occurs, the policies may be reloaded if the file was modified.
 A file's contents are cached for at least 60 seconds before checking if they need to be reloaded.
 Also, the etc directory is only re-scanned for new/removed files after a 60 second delay.
+
+If an authorization request occurs in the context of a specific Project
+(e.g. "does a user have Run access for a specific Job in this project?")
+then the Project-level policies created via the API area also used to evaluate the authorization request.
+
+Otherwise, only the policies on the filesystem, and uploaded ot the System ACLs API are evaluated for the request.
 
 ### rd-acl
 
@@ -114,14 +124,21 @@ for:
       allow: [create] # allow create of projects
     - equals:
         kind: system
-      allow: [read,enable_executions,disable_executions,admin] # allow read of system info
+      allow: [read,enable_executions,disable_executions,admin] # allow read of system info, enable/disable all executions
+    - equals:
+        kind: system_acl
+      allow: [read,create,update,delete,admin] # allow modifying system ACL files
     - equals:
         kind: user
       allow: [admin] # allow modify user profiles
   project:
     - match:
         name: '.*'
-      allow: [read,import,export,configure,delete] # allow full access of all projects or use 'admin'
+      allow: [read,import,export,configure,delete,admin] # allow full access of all projects or use 'admin'
+  project_acl:
+    - match:
+        name: '.*'
+      allow: [read,create,update,delete,admin] # allow modifying project-specific ACL files
   storage:
     - allow: [read,create,update,delete] # allow access for /ssh-key/* storage content
 
@@ -183,6 +200,12 @@ aclpolicy:
 
 * Creating Projects (`create` action on a resource type with kind 'project')
 * Reading system information (`read` action on a resource type with kind 'system')
+* Managing System level ACL Policies (actions on a resource type with kind 'system_acl')
+    * Reading `read`
+    * Creating `create`
+    * Updating `update`
+    * Deleting `delete`
+    * Full access `admin`
 * Disabling executions (`disable_executions` action on a resource type with kind 'system')
 * Managing executions
     * Enabling executions (`enable_executions` action on a resource type with kind 'system')
@@ -190,13 +213,19 @@ aclpolicy:
     * Full control (`admin` action on a resource type with kind 'system')
 * Administering user profiles (`admin` action on a resource type of kind 'user')
 * Accessing SSH Keys (`create`,`update`,`read`, or `delete` action on a specific path within the storage 'storage' type)
-* Actions on specific projects by name
+* Actions on specific projects by name (actions on a `project` type)
     * Reading `read`
     * Deleting `delete`
     * Configuring `configure`
     * Importing archives `import`
     * Exporting archives `export`
     * Deleting executions `delete_execution`
+    * Full access `admin`
+* Managing Project level ACL Policies on specific projects by name (actions on a `project_acl` type)
+    * Reading `read`
+    * Creating `create`
+    * Updating `update`
+    * Deleting `delete`
     * Full access `admin`
 
 The following table summarizes the generic and specific resources and the
@@ -209,25 +238,35 @@ Type       Resource Kind     Properties   Actions               Description
 "          "                 none         `enable_executions`   Enable executions
 "          "                 none         `disable_executions`  Disable executions
 "          "                 none         `admin`               Enable or disable executions
+"          `system_acl`      none         `read`                Read system ACL policy files
+"          "                 none         `create`              Create system ACL policy files
+"          "                 none         `update`              Update system ACL policy files
+"          "                 none         `delete`              Delete system ACL policy files
+"          "                 none         `admin`               All access to system ACL policy files
 "          `user`            none         `admin`               Modify user profiles
 "          `job`             none         `admin`               Manage job schedules
 ----------------------------
 
 Table: Application scope generic type actions
 
-Type      Properties    Actions                Description
------     -----------   --------               ------------
-`project` "name"        `read`                 View a project in the project list
-"         "             `configure`            View and modify project configuration
-"         "             `delete`               Delete project
-"         "             `import`               Import archive contents to the project
-"         "             `export`               Export the project as an archive
-"         "             `delete_execution`     Delete executions
-"         "             `admin`                Full access to project
-`storage` "path","name" `create`               Create files in the storage facility
-"          "            `update`               Modify files in the storage facility
-"          "            `read`                 Read files and list directories in the storage facility
-"          "            `delete`               Delete files in the storage facility
+Type          Properties    Actions                Description
+-----         -----------   --------               ------------
+`project`     "name"        `read`                 View a project in the project list
+"             "             `configure`            View and modify project configuration
+"             "             `delete`               Delete project
+"             "             `import`               Import archive contents to the project
+"             "             `export`               Export the project as an archive
+"             "             `delete_execution`     Delete executions
+"             "             `admin`                Full access to project
+`project_acl` "name"        `read`                 Read project ACL Policy files
+"             "             `create`               Create project ACL Policy files
+"             "             `update`               Update project ACL Policy files
+"             "             `delete`               Delete project ACL Policy files
+"             "             `admin`                All access to project ACL Policy files
+`storage`     "path","name" `create`               Create files in the storage facility
+"             "             `update`               Modify files in the storage facility
+"             "             `read`                 Read files and list directories in the storage facility
+"             "             `delete`               Delete files in the storage facility
 ----------------------------
 
 Table: Application scope specific resource actions
