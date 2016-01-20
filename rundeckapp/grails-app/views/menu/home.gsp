@@ -9,12 +9,31 @@
 <%@ page import="grails.converters.JSON; com.dtolabs.rundeck.server.authorization.AuthConstants" contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
+    <style>
+        .dtCol1{
+            width:auto;
+            overflow:hidden;
+        }
+        .dtCol2{
+            width:170px;
+            overflow:hidden;
+        }
+        .dtCol3{
+            width: 140px;
+            overflow: hidden;
+        }
+    </style>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="home"/>
     <title><g:appTitle/></title>
-
+    <asset:stylesheet href="dtable.css"/>
+    <asset:javascript src="jquery.js"/>
+    <script>jQuery.noConflict(true);</script>
+    <asset:javascript src="jquery.dataTables.js"/>
+    <asset:javascript src="DT_bootstrap.js"/>
+    <asset:javascript src="dtable.js"/>
 </head>
 <body>
 
@@ -23,38 +42,66 @@
     <g:render template="/common/messages"/>
 </div>
 </div>
+
+<div class="container-fluid">
+<div class="well well-sm">
+
 <g:if test="${projCount>0}">
 <div class="row row-space">
+    <auth:resourceAllowed action="create" kind="project" context="application">
+        <div class="col-sm-1">
+            <g:link controller="framework" action="createProject" class="btn btn-sm btn-success pull-left">
+                New Project
+                <b class="glyphicon glyphicon-plus"></b>
+            </g:link>
+        </div>
+    </auth:resourceAllowed>
 
-    <div class="col-sm-4">
-        <span class="h3 text-muted">
+     <g:set var="execCountTotal" value="${0l}" />
+     <g:set var="projCountTotal" value="${0l}" />
+     <g:set var="userCountTotal" value="${0l}" />
+
+     <g:each in="${projectSummaries.sort{a,b->a.key<=>b.key}}" var="projectData">
+         <g:set var="project" value="${projectData.key}"/>
+         <g:set var="data" value="${projectData.value}"/>
+         <g:set var="execCountTotal" value="${execCountTotal+data.execCount}"/>
+         <g:if test="${data.execCount > 0}">
+             <g:set var="projCountTotal" value="${++projCountTotal}"/>
+             <g:set var="userCountTotal" value="${++userCountTotal}"/>
+         </g:if>
+     </g:each>
+
+    <auth:resourceAllowed action="read" kind="project" context="application">
+        <div class="col-sm-11">
+            <span class="h5 text-muted">
             <g:enc>${projCount}</g:enc>
             <g:plural code="Project" count="${projCount}" textOnly="${true}"/>
         </span>
-    </div>
 
-<div class="col-sm-4">
-    <g:if test="${projCount > 1}">
+            <g:if test="${projCount > 0}">
     %{--app summary info--}%
-                <span class="h4">
-                    <span class="summary-count ${execCount > 0 ? 'text-info' : 'text-muted'}"><g:enc>${execCount}</g:enc></span>
+                        <span class="h5">
+                            <span class='badge'>
+                                <span class="summary-count"><g:enc>${execCountTotal}</g:enc></span>
+                            </span>
                     <strong>
-                        <g:plural code="Execution" count="${execCount}" textOnly="${true}"/>
+                        <g:plural code="Execution" count="${execCountTotal}" textOnly="${true}"/>
                     </strong>
-                    In the last day
                 </span>
                 <g:if test="${projectSummaries.size() > 0}">
                     <div>
                         in
                         <span class="text-info">
-                            <g:enc>${projectSummary.size()}</g:enc>
+                            <g:enc>${projCountTotal}</g:enc>
                         </span>
-
-
                         <g:plural code="Project" count="${projectSummary.size()}" textOnly="${true}"/>:
-                        <g:each var="project" in="${projectSummary.sort()}" status="i">
-                            <g:link action="index" controller="menu" params="[project: project]">
-                                <g:enc>${project}</g:enc></g:link><g:if test="${i < projectSummary.size() - 1}">,</g:if>
+                                <g:each var="projectData" in="${projectSummaries.sort{a,b->a.key<=>b.key}}" status="i">
+                                    <g:set var="project" value="${projectData.key}"/>
+                                    <g:set var="data" value="${projectData.value}"/>
+                                    <g:if test="${data.execCount > 0}">
+                                        <g:link action="index" controller="menu" params="[project: project]" class="btn btn-xs btn-default">
+                                        <g:enc>${project}</g:enc></g:link>
+                                    </g:if>
                         </g:each>
                     </div>
                 </g:if>
@@ -62,31 +109,32 @@
                     <g:if test="${userCount > 0}">
                         by
                         <span class="text-info">
-                            <g:enc>${userCount}</g:enc>
+                            <g:enc>${userCountTotal}</g:enc>
                         </span>
-                        <g:plural code="user" count="${userCount}" textOnly="${true}"/>:
-                        <g:each in="${userSummary}" var="user" status="i">
-                            <g:enc>${user}</g:enc><g:if test="${i < userSummary.size() - 1}">,</g:if>
+                                <g:plural code="User" count="${userSummary.size()}" textOnly="${true}"/>
+                                <g:each var="projectData" in="${projectSummaries.sort{a,b->a.key<=>b.key}}" status="i">
+                                    <g:set var="project" value="${projectData.key}"/>
+                                    <g:set var="data" value="${projectData.value}"/>
+                                    <g:if test="${data.userCount > 0}">
+                                    <g:each in="${data.userSummary}" var="user" status="j">
+                                        <g:enc>[${user}]</g:enc><g:if test="${j < data.userSummary.size() - 1}">,</g:if>
+                                    </g:each>
+                                    </g:if>
                         </g:each>
                     </g:if>
                 </div>
     </g:if>
-</div>
-    <auth:resourceAllowed action="create" kind="project" context="application">
-        <div class="col-sm-4">
-            <g:link controller="framework" action="createProject" class="btn  btn-success pull-right">
-                New Project
-                <b class="glyphicon glyphicon-plus"></b>
-            </g:link>
         </div>
     </auth:resourceAllowed>
 </div>
 </g:if>
+</div> <%--end of well--%>
+
 <g:if test="${!projCount}">
 <div class="row row-space">
 <div class="col-sm-12">
     <auth:resourceAllowed action="create" kind="project" context="application" has="false">
-        <div class="well">
+        <div class="well well-sm">
             <g:set var="roles" value="${request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class)?.collect { it.name }?.join(", ")}"/>
             <h2 class="text-warning">
                 <g:message code="no.authorized.access.to.projects" />
@@ -104,7 +152,7 @@
                 To get started, create a new project.
             </p>
             <p>
-                <g:link controller="framework" action="createProject" class="btn  btn-success btn-lg ">
+                <g:link controller="framework" action="createProject" class="btn  btn-success btn-sm ">
                     New Project
                     <b class="glyphicon glyphicon-plus"></b>
                 </g:link>
@@ -114,71 +162,98 @@
 </div>
 </div>
 </g:if>
-
-
 <div class="row row-space">
     <div class="col-sm-12">
     <div class="list-group">
+<table id="CTable" class="table table-condensed table-hover table-striped style='width:100%'">
+<thead bgcolor='#DDD'>
+<td class="dtCol1"><b>Project(s)</b></td>
+<td class="dtCol2"><b>Execution(s) past 24H</b></td>
+<td class="dtCol3"><b>Action(s)</b></td>
+</thead>
         <g:each in="${projectSummaries.sort{a,b->a.key<=>b.key}}" var="projectData">
+<tr><td>
             <g:set var="project" value="${projectData.key}"/>
             <g:set var="data" value="${projectData.value}"/>
 %{--Template for project details--}%
-<div class="list-group-item">
-            <div class="row">
-                <div class="col-sm-6 col-md-4">
-                    <g:link action="index" controller="menu" params="[project: project]" class="h3">
-                        <i class="glyphicon glyphicon-tasks"></i>
-                        <g:enc>${project}</g:enc></g:link>
 
+                        <i class="glyphicon glyphicon-tasks"></i>
+
+                    <g:link action="index" controller="menu" params="[project: project]" class="h5">
+                        <g:enc>${project}</g:enc></g:link>
                     <g:if test="${data.description}">
                         <span class="text-muted"><g:enc>${data.description}</g:enc></span>
                     </g:if>
+        <g:if test="${data.readme?.readme || data.readme?.motd}">
+            <div class="row row-space">
+                <div class="col-sm-12">
+                    <g:if test="${data.readme?.motd}">
+                        %{--Test if user has dismissed the motd for this project--}%
+                        <div class="">
+                            <g:if test="${data.readme.motd && data.readme.readme}">
+                            </g:if>
+                            <g:if test="${data.readme.motdHTML}">
+                                <g:enc raw="true">${data.readme.motdHTML}</g:enc>
+                            </g:if>
+                            <g:elseif test="${data.readme.motd}">
+                                <g:enc>${data.readme.motd}</g:enc>
+                            </g:elseif>
+                        </div>
+                    </g:if>
+                    <g:if test="${data.readme?.readme}">
+                        <g:if test="${data.readme.readmeHTML}">
+                            <g:enc raw="true">${data.readme.readmeHTML}</g:enc>
+                    </g:if>
+                        <g:elseif test="${data.readme.readme}">
+                            <g:enc>${data.readme.readme}</g:enc>
+                        </g:elseif>
+
+                    </g:if>
                 </div>
+                </div>
+        </g:if>
+        </td><td class="dtCol2">
+                    <g:set var="execCount" value="${data.execCount}"/>
+                    <g:if test="${data.execCount<=0}">
+                        <g:set var="execCount" value="None"/>
+                    </g:if>
 
-                <div class="clearfix visible-sm"></div>
-                <div class="col-sm-6 col-md-4">
-                    <a class="h4 ${data.execCount > 0 ? '' : 'text-muted'}"
+                    <a class="${data.execCount > 0 ? 'btn btn-xs btn-link' : 'text-muted'}"
                        href="${g.createLink(controller: "reports", action: "index", params: [project: project])}"
-
-                    >
-                        <span class="summary-count ${data.execCount > 0 ? 'text-info' : '' }"><g:enc>${data.execCount}</g:enc></span>
                         <strong>
-                            <g:plural code="Execution" count="${data.execCount}" textOnly="${true}"/>
                         </strong>
-                        In the last day
-                    </a>
-                    <div>
+                    <span class="${data.execCount > 0 ? 'badge' : 'text-muted'}">
+                        <span class="summary-count"><g:enc>${execCount}</g:enc></span>
+                    </span>
                         <g:if test="${data.userCount>0}">
                         by
                         <span class="text-info">
                         <g:enc>${data.userCount}</g:enc>
                         </span>
-
-                            <g:plural code="user" count="${data.userCount}" textOnly="${true}"/>:
-
+                            <g:plural code="User" count="${data.userCount}" textOnly="${true}"/>:
                             <g:each in="${data.userSummary}" var="user" status="i">
                                 <g:enc>${user}</g:enc><g:if test="${i < data.userSummary.size() - 1}">,</g:if>
                             </g:each>
                         </g:if>
-                    </div>
-                </div>
+                    </a>
 
+</td><td>
+<%-- Add a quick link to Activity page --%>
+                <a href="${g.createLink(controller: "reports", action: "index", params: [project: project])}"
+                   class="btn btn-warning btn-xs has_Dtooltip" data-placement="bottom" data-container="body"  title data-original-title="View Project Activity">
+                   <i class="glyphicon glyphicon-time"></i>
+                </a>
 
-
-                <div class="clearfix visible-xs visible-sm"></div>
                 <g:if test="${data.auth?.jobCreate || data.auth?.admin}">
-                    <div class="col-sm-12 col-md-4">
-                    <div class="pull-right">
                         <g:if test="${data.auth?.admin}">
                             <a href="${g.createLink(controller: "menu", action: "admin", params: [project: project])}"
-                               class="btn btn-default btn-sm">
-                                <g:message code="gui.menu.Admin"/>
+                               class="btn btn-info btn-xs has_Dtooltip" data-placement="bottom" title="Configure Project">
+                               <i class="glyphicon glyphicon-cog"></i>
                             </a>
                         </g:if>
                         <div class="btn-group ">
-
                             <g:if test="${data.auth.jobCreate}">
-                            <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                            <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
                                 Create <g:message code="domain.ScheduledExecution.title"/>
                                 <span class="caret"></span>
                             </button>
@@ -202,45 +277,14 @@
                             </ul>
                             </g:if>
                         </div>
-                        </div>
-                    </div>
-                </g:if>
-            </div>
-
-        <g:if test="${data.readme?.readme || data.readme?.motd}">
-            <div class="row row-space">
-                <div class="col-sm-12">
-                    <g:if test="${data.readme?.motd}">
-                        %{--Test if user has dismissed the motd for this project--}%
-                        <div class="">
-                            <g:if test="${data.readme.motd && data.readme.readme}">
-                            </g:if>
-                            <g:if test="${data.readme.motdHTML}">
-                                <g:enc raw="true">${data.readme.motdHTML}</g:enc>
-                            </g:if>
-                            <g:elseif test="${data.readme.motd}">
-                                <g:enc>${data.readme.motd}</g:enc>
-                            </g:elseif>
-                        </div>
-                    </g:if>
-                    <g:if test="${data.readme?.readme}">
-                        <g:if test="${data.readme.readmeHTML}">
-                            <g:enc raw="true">${data.readme.readmeHTML}</g:enc>
-                        </g:if>
-                        <g:elseif test="${data.readme.readme}">
-                            <g:enc>${data.readme.readme}</g:enc>
-                        </g:elseif>
-
-                    </g:if>
-
-                </div>
-            </div>
         </g:if>
 </div>
-
+</td>
 </g:each>
+</tr></table>
     </div>
     </div>
+</div>
 </div>
 
 </body>
