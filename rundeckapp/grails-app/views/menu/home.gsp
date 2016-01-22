@@ -162,6 +162,7 @@
 </div>
 </div>
 </g:if>
+<div class="well well-sm">
 <div class="row row-space">
     <div class="col-sm-12">
     <div class="list-group">
@@ -282,6 +283,7 @@
 </td>
 </g:each>
 </tr></table>
+</div><%--endofwell--%>
     </div>
     </div>
 </div>
