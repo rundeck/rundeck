@@ -53,13 +53,13 @@
                     <th></th>
                 </tr>
                 <tbody data-bind="foreach: {data: nodeSet().nodes, as: 'node' } ">
-                <tr class=" node_entry  hover-action-holder ansicolor-on" data-bind="css: {islocal: 'server'}">
+                <tr class=" node_entry  hover-action-holder ansicolor-on" data-bind="css: {server: islocal}">
                     <td class="nodeident" data-bind="attr: {title: attributes.description}" >
 
                         <span data-bind="click: node.toggleExpanded, css: { expanded: node.expanded(), closed: !node.expanded() } "
                               class="textbtn  expandComponentControl toggle">
                             <i class="glyphicon " data-bind="css: { 'glyphicon-chevron-down': node.expanded(), 'glyphicon-chevron-right': !node.expanded() }"></i>
-                            <span class="node_ident" data-bind="css: $root.nodeSet().nodeCss(attributes), style: $root.nodeSet().nodeStyle(attributes)">
+                            <span class="node_ident" data-bind="css: {server: islocal}, css: $root.nodeSet().nodeCss(attributes), style: $root.nodeSet().nodeStyle(attributes)">
                                     <span data-bind="css: $root.nodeSet().iconCss(attributes), style: $root.nodeSet().iconStyle(attributes)">
                                     <!-- ko if: attributes['ui:icon:name'] -->
                                     <!-- ko with: attributes['ui:icon:name']() -->
