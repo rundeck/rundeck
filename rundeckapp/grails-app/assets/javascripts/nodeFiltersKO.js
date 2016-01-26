@@ -3,6 +3,7 @@
 //= require knockout-onenter
 //= require knockout-foreachprop
 //= require knockout-node-filter-link
+//= require ko/binding-popover
 /*
  Copyright 2014 SimplifyOps Inc, <http://simplifyops.com>
 

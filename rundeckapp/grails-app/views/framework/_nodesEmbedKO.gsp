@@ -13,48 +13,59 @@
     </a>
 </span>
 <span id="embednodeset" class=" ansicolor-on matchednodes embed embed_clean"
-      data-bind="if: total()<=100"
->
-    %{--<% def i =0 %>--}%
-    <span data-bind="foreach: nodeSet().nodes">
+      data-bind="if: total()<=100">
+    <span data-bind="foreach: {data: nodeSet().nodes, 'as': 'node'} ">
 
-        %{--<g:set var="nkey" value="${g.rkey()}"/>--}%
-        %{--<g:set var="nodedata" value="${nodes[nodename]}"/>--}%
-        %{--<g:set var="node" value="${nodedata.node}"/>--}%
-        %{--<g:set var="resName" value="${node.nodename}"/>--}%
-        %{--<g:set var="resHost" value="${node.hostname}"/>--}%
-        %{--<g:set var="runnable" value="${null == nodeauthrun || nodeauthrun[node.nodename]}"/>--}%
-        %{--class="${nodeStatusColorCss(node:node)}"--}%
-        <a
-           tabindex="0"
+        <a tabindex="0"
            role="button"
-           class="node_entry  node_ident textbtn-default textbtn-plain "
-           data-bind="css: {islocal: 'server'}, attr: { 'data-node': nodename }"
+           class="node_ident node_ident textbtn-default textbtn-plain"
            data-toggle="popover"
            data-placement="bottom"
            data-trigger="focus"
-           %{--data-popover-content-ref="#${nkey+'_key_tooltip'}"--}%
            data-popover-template-class="popover-wide"
-           %{--style="${nodeStatusColorStyle(node:node)}"--}%
-           data-node=""
-           %{--data-key="${enc(attr:nkey)}"--}%
->
 
-            %{--<g:nodeStatusColor node="${node}" icon="true"><g:nodeStatusIcon--}%
-                    %{--node="${node}"--}%
-            %{--><i class="rdicon node ${runnable?'node-runnable':''} icon-small"></i></g:nodeStatusIcon></g:nodeStatusColor>--}%
-
-            <i class="rdicon node icon-small" data-bind="css: {authrun: 'node-runnable'}"></i>
+           data-bind="css: {server: islocal},
+                  css: $root.nodeSet().nodeCss(attributes),
+                  style: $root.nodeSet().nodeStyle(attributes),
+                  attr: { 'data-node': nodename, 'data-popover-content-ref': '#node_pop_'+$index() },
+                  bootstrapPopover: true,
+                  bootstrapPopoverContentRef: '#node_pop_'+$index()
+                  ">
+            <span data-bind="css: $root.nodeSet().iconCss(attributes), style: $root.nodeSet().iconStyle(attributes)">
+                <!-- ko if: attributes['ui:icon:name'] -->
+                <!-- ko with: attributes['ui:icon:name']() -->
+                <i data-bind="css: $root.nodeSet().glyphiconCss($data)"></i>
+                <!-- /ko -->
+                <!-- /ko -->
+                <!-- ko if: !attributes['ui:icon:name'] -->
+                <i class="rdicon node icon-small" data-bind="css: {authrun: 'node-runnable'}"></i>
+                <!-- /ko -->
+            </span>
             <span data-bind="text: nodename"></span>
         </a>
 
-        %{--<g:render template="nodeTooltipView" model="[node:node,key: nkey+'_key',islocal:nodedata.islocal,runnable:runnable, nodefilterLinkId: nodefilterLinkId?:'']"/>--}%
-        %{--<% i++ %>--}%
-    </span>
-    %{--<g:javascript>--}%
-        %{--fireWhenReady('embednodeset',function(){--}%
-            %{--_initPopoverContentRef('#embednodeset');--}%
-        %{--});--}%
+        <div data-bind="attr: { 'id': 'node_pop_'+$index() }, css: {server: islocal }"
+             style="display:none;"
+             class="detailpopup node_entry tooltipcontent node_filter_link_holder"
+             data-node-filter-link-id="${enc(attr: nodefilterLinkId ?: '')}">
 
-    %{--</g:javascript>--}%
+            <span>
+                <i class="rdicon node icon-small" data-bind="css: {authrun: 'node-runnable'}"></i>
+                <span data-bind="text: nodename"></span>
+            </span>
+
+            <node-filter-link params="
+                filterkey: 'name',
+                filterval: nodename,
+                linkicon: 'glyphicon glyphicon-circle-arrow-right'
+                "></node-filter-link>
+
+            <span class="nodedesc"></span>
+
+            <div class="nodedetail">
+                <g:render template="nodeDetailsSimpleKO"/>
+            </div>
+        </div>
+
+    </span>
 </span>
