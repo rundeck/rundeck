@@ -19,11 +19,16 @@ ko.bindingHandlers.messageTemplate = {
         var values=[];
         if(typeof(data)!='object'){
             values=[data];
+        }else if(jQuery.isArray(data)){
+            values=data;
         }else if(typeof(data)=='object'){
             values=ko.utils.unwrapObservable(data['value']);
-            if(typeof(values)!='array'){
+            if(!jQuery.isArray(values)){
                 values=[values];
             }
+        }
+        for(var i=0;i<values.length;i++){
+            values[i] = ko.utils.unwrapObservable(values[i]);
         }
         var text = template.replace(/\{(\d+)\}/g,function(match, g1, offset, string){
             var val= parseInt(g1);
