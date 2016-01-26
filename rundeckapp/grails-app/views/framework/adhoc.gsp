@@ -210,7 +210,7 @@
                         <div class="col-sm-10 col-sm-offset-2">
                             <div class="spacing text-warning" id="emptyerror"
                                  style="display: none"
-                                 data-bind="visible: !loading() && !error() && (!allcount() || allcount()==0)">
+                                 data-bind="visible: !loading() && !error() && (!total() || total()==0)">
                                 <span class="errormessage">
                                     <g:message code="no.nodes.selected.match.nodes.by.selecting.or.entering.a.filter" />
                                 </span>
@@ -223,20 +223,21 @@
 
                                 </span>
                             </div>
-                            <div data-bind="visible: allcount()>0 || loading()" class="well well-sm inline">
+                            <div data-bind="visible: total()>0 || loading()" class="well well-sm inline">
                                 <span data-bind="if: loading()" class="text-info">
                                     <i class="glyphicon glyphicon-time"></i>
                                     <g:message code="loading.matched.nodes" />
                                 </span>
                                 <span data-bind="if: !loading() && !error()">
-                                <span data-bind="text: allcount()">0</span>
+                                <span data-bind="text: total()">0</span>
                                 <span data-bind="text: nodesTitle"><g:message code="Node.plural" /></span> <g:message code="matched" />.
                                 <a class="textbtn textbtn-default pull-right" data-bind="click: nodesPageView">
                                     <g:message code="view.in.nodes.page.prompt" />
                                 </a>
                                 </span>
                             </div>
-                            <span id="${enc(attr:ukey)}nodeForm">
+                            <span >
+                                <g:render template="nodesEmbedKO"/>
                             </span>
                         </div>
                     </div>
@@ -245,9 +246,9 @@
                 <div class="col-sm-2" id="actionButtonArea" >
 
                     <button class="btn btn-success runbutton pull-right"
-                            data-bind="attr: { disabled: allcount()<1 || error() } "
+                            data-bind="attr: { disabled: total()<1 || error() } "
                             onclick="runFormSubmit('runbox');" data-loading-text="Running…">
-                        <g:message code="run.on" /> <span data-bind="text: allcount">0</span> <span data-bind="text: nodesTitle"><g:message code="Node.plural" /></span> <span class="glyphicon glyphicon-play"></span>
+                        <g:message code="run.on" /> <span data-bind="text: total">0</span> <span data-bind="text: nodesTitle"><g:message code="Node.plural" /></span> <span class="glyphicon glyphicon-play"></span>
                     </button>
                 </div>
                 </g:ifExecutionMode>

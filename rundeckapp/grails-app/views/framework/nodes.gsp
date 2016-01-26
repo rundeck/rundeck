@@ -278,6 +278,9 @@
                         <g:render template="allnodes" model="${[nodeview:'table', expanddetail: true,allnodes: allnodes, totalexecs: totalexecs, jobs: jobs, params: params, total: total, allcount: allcount, page: page, max: max, nodeauthrun: nodeauthrun, tagsummary: null]}" />
                     </g:if>
                 </div>
+                    <div class="clear matchednodes" id="nodeview">
+                        <g:render template="allnodesKO" />
+                    </div>
             </div>
             <div class="tab-pane active" id="summary">
 

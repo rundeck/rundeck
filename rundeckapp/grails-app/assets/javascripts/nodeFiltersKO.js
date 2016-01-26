@@ -1,6 +1,8 @@
 //= require knockout.min
 //= require knockout-mapping
 //= require knockout-onenter
+//= require knockout-foreachprop
+//= require knockout-node-filter-link
 /*
  Copyright 2014 SimplifyOps Inc, <http://simplifyops.com>
 
@@ -114,7 +116,272 @@ function NodeSummary(data){
         ko.mapping.fromJS(data, {}, self);
     }
 }
+var CSSColors='aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgreen darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray darkturquoise darkviolet deeppink deepskyblue dimgray dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray green greenyellow honeydew hotpink indianred indigo ivory khaki lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan lightgoldenrodyellow lightgreen lightgrey lightpink lightsalmon lightseagreen lightskyblue lightslategray lightsteelblue lightyellow lime limegreen linen magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive olivedrab orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum powderblue purple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver skyblue slateblue slategray snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen'.split(' ');
+function NodeEntry(data){
+    var self=this;
+    self.expanded=ko.observable(false);
+    self.expandedNs=ko.observable({});
 
+    self.toggleExpanded=function(){
+        self.expanded(!self.expanded());
+    };
+    self.toggleExpandedNs=function(ns){
+        var obj=self.expandedNs();
+        if(null==obj[ns]){
+            obj[ns]=ko.observable(true);
+        }else{
+            obj[ns](!obj[ns]());
+        }
+
+    };
+    self.isExpandedNs=function(ns){
+        var obj=self.expandedNs();
+        if(null==obj[ns]){
+            obj[ns]=ko.observable(false);
+        }
+        return obj[ns];
+    };
+    if(data) {
+        ko.mapping.fromJS(data, {}, self);
+    }
+}
+/**
+ * The set of node results
+ * @param data
+ * @constructor
+ */
+function NodeSet(data) {
+    var self = this;
+    self.nodes=ko.observableArray([]);
+    self.tagsummary=ko.observable();
+
+    var mapping = {
+
+        'nodes': {
+
+            key: function (data) {
+                return ko.utils.unwrapObservable(data.nodename);
+            }
+            ,
+            create: function (options) {
+                return new NodeEntry(options.data);
+            }
+        }
+    };
+
+    self.glyphiconCss=function(name){
+        if(name.match(/^glyphicon-[a-z-]+$/)){
+            return 'glyphicon '+name;
+        }
+        return '';
+    };
+    self.glyphiconBadges=function(attributes){
+        var badges=[];
+        if(attributes['ui:badges']){
+            var found=attributes['ui:badges']().split(/,\s*/g);
+            for(var i=0;i<found.length;i++){
+                if(found[i].match(/^glyphicon-[a-z-]+$/)){
+                    badges.push(found[i]);
+                }
+            }
+        }
+
+        return badges;
+    };
+    self.isAnsiFg=function(str){
+        return str!=null && typeof(str)=='string' && str.match(/^ansi-fg-(light-)?(black|green|red|yellow|blue|magenta|cyan|white)$/);
+    };
+    self.isStyleFg=function(str){
+        return str!=null && typeof(str)=='string' && str.match(/^#[0-9a-fA-F]{3,6}$/) || CSSColors.indexOf(str)>=0;
+    };
+    self.isAnsiBg=function(str){
+        return str!=null && typeof(str)=='string' && str.match(/^ansi-bg-(black|green|red|yellow|blue|magenta|cyan|white|default)$/);
+    };
+    self.isStyleBg=function(str){
+        return str!=null && typeof(str)=='string' && str.match(/^#[0-9a-fA-F]{3,6}$/)|| CSSColors.indexOf(str)>=0;
+    };
+    self.iconFgCss=function(attrs){
+
+        var uiIconColor = attrs['ui:icon:color']?attrs['ui:icon:color']():null;
+        var uiColor = attrs['ui:color']?attrs['ui:color']():null;
+        if(self.isAnsiFg(uiIconColor)){
+            return uiIconColor;
+        }else if(self.isAnsiFg(uiColor)){
+            return uiColor;
+        }
+        return null;
+    };
+    self.iconBgCss=function(attrs){
+        var uiIconBgcolor = attrs['ui:icon:bgcolor']?attrs['ui:icon:bgcolor']():null;
+        var uiBgcolor = attrs['ui:bgcolor']?attrs['ui:bgcolor']():null;
+        if(self.isAnsiBg(uiIconBgcolor)){
+            return uiIconBgcolor;
+        }else if(self.isAnsiBg(uiBgcolor)){
+            return uiBgcolor;
+        }
+        return null;
+    };
+    self.iconCss=function(attrs){
+        var classnames=[];
+        var fgColor= self.iconFgCss(attrs);
+        if(fgColor){
+            classnames.push(fgColor);
+        }
+        var bgColor = self.iconBgCss(attrs);
+        if(bgColor){
+            classnames.push(bgColor);
+        }
+        return classnames.join(' ');
+    };
+    self.nodeFgCss=function(attrs) {
+        var uiColor = attrs['ui:color'] ? attrs['ui:color']() : null;
+        if (self.isAnsiFg(uiColor)) {
+            return uiColor;
+        }
+        return null
+    };
+    self.nodeBgCss=function(attrs) {
+        var uiBgcolor = attrs['ui:bgcolor']?attrs['ui:bgcolor']():null;
+        if(self.isAnsiBg(uiBgcolor)){
+            return uiBgcolor;
+        }
+        return null
+    };
+    self.nodeCss=function(attrs){
+        var classnames=[];
+        var uiColor = self.nodeFgCss(attrs);
+        if(uiColor){
+            classnames.push(uiColor);
+        }
+        var uiBgcolor = self.nodeBgCss(attrs);
+        if(uiBgcolor){
+            classnames.push(uiBgcolor);
+        }
+        return classnames.join(' ');
+    };
+    self.iconStyle=function(attrs){
+
+        var styles={};
+        if(!self.iconFgCss(attrs)) {
+            var uiIconColor = attrs['ui:icon:color']?attrs['ui:icon:color']():null;
+            var uiColor = attrs['ui:color']?attrs['ui:color']():null;
+            if (self.isStyleFg(uiIconColor)){
+                styles['color']=uiIconColor;
+            }else if(self.isStyleFg(uiColor)){
+                styles['color']=uiColor;
+            }
+        }
+        if(!self.iconBgCss(attrs)) {
+            var uiIconBgcolor = attrs['ui:icon:bgcolor']?attrs['ui:icon:bgcolor']():null;
+            var uiBgcolor = attrs['ui:bgcolor']?attrs['ui:bgcolor']():null;
+            if (self.isStyleBg(uiIconBgcolor)){
+                styles['background-color']=uiIconBgcolor;
+            }else if(self.isStyleBg(uiBgcolor)){
+                styles['background-color']=uiBgcolor;
+            }
+        }
+        return styles;
+    };
+    self.nodeStyle=function(attrs){
+
+        var styles={};
+        var uiColor = attrs['ui:color']?attrs['ui:color']():null;
+        if(!self.nodeFgCss(attrs) && self.isStyleFg(uiColor)){
+            styles['color']=uiColor;
+        }
+        var uiBgcolor = attrs['ui:bgcolor']?attrs['ui:bgcolor']():null;
+        if(!self.nodeBgCss(attrs) && self.isStyleBg(uiBgcolor)){
+            styles['background-color']=uiBgcolor;
+        }
+        return styles;
+    };
+    self.startsWith = function (a, b) {
+        return ( a.length >= (b.length)) && a.substring(0, b.length) == b;
+    };
+
+    self.attributesInNamespace=function(attrs,ns){
+        var result=[];
+        for(var e in attrs){
+            if(self.startsWith(e, ns+':') && attrs[e]()){
+                result.push({name:e,value:attrs[e](),shortname: e.substring(ns.length+1)});
+            }
+        }
+        result.sort(function(a,b){return a.shortname.localeCompare(b.shortname);});
+        return result;
+    };
+    self.attributeNamespaceNames=function(attrs){
+        var namespaces=[];
+        for(var e in attrs){
+            var found=e.match(/^(\w+):.+$/);
+            if(found && found.length>1){
+                if(namespaces.indexOf(found[1])<0){
+                    namespaces.push(found[1]);
+                }
+            }
+        }
+        namespaces.sort();
+        return namespaces;
+    };
+    self.attributeNamespaces=function(attrs){
+        var index={};
+        var names=[];
+        for(var e in attrs){
+            var found=e.match(/^(\w+):.+$/);
+            if(found && found.length>1){
+                if(!index[found[1]]){
+                    index[found[1]]=[];
+                    names.push(found[1]);
+                }
+                index[found[1]].push({name:e,value:attrs[e](),shortname: e.substring(found[1].length+1)});
+            }
+        }
+        names.sort();
+
+        var results=[];
+        for(var i=0;i<names.length;i++){
+            var values=index[names[i]];
+            values.sort(function(a,b){return a.shortname.localeCompare(b.shortname);});
+            results.push({ns:names[i],values:values});
+        }
+
+        return results;
+    };
+    self.OsAttributeNames='nodename hostname username description tags osFamily osName osVersion osArch'.split(' ');
+    /**
+     * Return an object with only attributes for display, excluding ui: namespace, and osAttrs
+     *
+     * @param attrs
+     */
+    self.displayAttributes = function (attrs) {
+        var result = {};
+        for(var e in attrs){
+            if(e.indexOf(':')<0 && self.OsAttributeNames.indexOf(e)<0){
+                result[e]=attrs[e];
+            }
+        }
+        return result;
+    };
+    /**
+     * Replace context variables in the string for the node details.
+     * @param attrs
+     * @param str
+     */
+    self.expandNodeAttributes=function(attrs,str){
+        return str.replace(/\$\{node\.([a-zA-Z-.]+)\}/g,function(match, g1, offset, string){
+            if(attrs[g1]){
+                return attrs[g1]()||'';
+            }else{
+                return string;
+            }
+        });
+    };
+    self.loadJS=function(data){
+        ko.mapping.fromJS(data,mapping,self);
+    };
+    if(data){
+        self.loadJS(data);
+    }
+}
 function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     var self = this;
     self.baseRunUrl = baseRunUrl;
@@ -142,6 +409,32 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.emptyMessage=ko.observable(data.emptyMessage?data.emptyMessage:'No match');
     self.hideAll=ko.observable(data.hideAll!=null?(data.hideAll?true:false):false);
     self.nodeSummary=ko.observable(data.nodeSummary?data.nodeSummary:null);
+    self.nodeSet=ko.observable(new NodeSet());
+    self.truncated=ko.observable(false);
+    /**
+     * Names of node attributes to show as columns in table results
+     */
+    self.colkeys=ko.observableArray([]);
+
+    /**
+     * Names of node attributes to show as columns removing ui: namespace
+     */
+    self.filterColumns=ko.pureComputed(function(){
+       return ko.utils.arrayFilter(self.colkeys(),function(el){
+           return !self.nodeSet().startsWith(el,'ui:');
+       });
+    });
+
+    self.useDefaultColumns=ko.pureComputed(function(){
+       return self.filterColumns().size()<1;
+    });
+
+    /**
+     * Total column count for table view
+     */
+    self.totalColumnsCount=ko.pureComputed(function(){
+       return self.useDefaultColumns()? 5 : 2 + self.filterColumns().size();
+    });
 
     self.isFilterNameAll=ko.pureComputed(function(){
         return self.filterName()==NODE_FILTER_ALL;
@@ -178,6 +471,36 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     });
     self.hasMultiplePages=ko.computed(function(){
         return self.pageRemaining()>self.pagingMax();
+    });
+    self.hasPaging=ko.computed(function(){
+        return self.paging() && self.total()>self.pagingMax();
+    });
+    /**
+     * highest number of pages
+     */
+    self.maxPages = ko.pureComputed(function(){
+        return self.paging() && Math.ceil(self.total()/self.pagingMax());
+    });
+    self.pageNumbers=ko.pureComputed(function(){
+        var arr=[];
+        for(var i=0;i<self.maxPages();i++){
+            arr.push(i+1);
+        }
+        return arr;
+    });
+    self.pageNumbersSkipped=ko.pureComputed(function(){
+        var arr=[];
+        var cur = self.page();
+        var maxPages = self.maxPages();
+        var buffer=3;
+        for(var i=0;i< maxPages;i++){
+            if(i>=(cur-buffer) && i<=(cur+buffer) || i<buffer || i>=(maxPages-buffer)) {
+                arr.push(i);
+            }else if(i==(cur-buffer-1) || i==(cur+buffer+1)) {
+                arr.push('..');
+            }
+        }
+        return arr;
     });
     self.nodesTitle = ko.computed(function () {
         return self.allcount() == 1 ?
@@ -282,6 +605,53 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         return self.nodeSummary().linkForNodeFilters(self);
     };
     /**
+     * Generate filter string for params
+     * @param params
+     */
+    self.escapeFilter=function(str){
+
+        if(str != '' && !(str.match(/[ '"\r\n]/))){
+            return str==null?'':str;
+        }
+        var outstr='"';
+        if(null!=str) {
+            outstr += str.replace(/"/g, '""');
+        }
+        outstr+='"';
+        return outstr;
+    };
+    /**
+     * Generate filter string for params
+     * @param params
+     */
+    self.paramsAsfilter=function(params){
+        var comps=[];
+        for (var e in params) {
+            comps.push(self.escapeFilter(e + ":"));
+            comps.push(self.escapeFilter(params[e]));
+        }
+        return comps.join(" ");
+    };
+    /**
+     * Generate URL for some filter params
+     * @param params
+     * @returns {*}
+     */
+    self.linkForFilterParams=function(params,extra){
+        var filter;
+        if(typeof(params) == 'object'){
+            filter=self.paramsAsfilter(params);
+        }else if(typeof(params)=='string' && typeof(extra)=='string'){
+            var nparams={};
+            nparams[params]=extra;
+            filter=self.paramsAsfilter(nparams);
+        }
+        return _genUrl(self.baseNodesPageUrl,{filter:filter});
+    };
+    self.triggerNodeRemoteEdit=function(node){
+        doRemoteEdit(node.nodename,self.project,self.nodeSet().expandNodeAttributes(node.attributes,node.attributes['remoteUrl']()))
+    };
+    /**
      * Update to match state parameters
      * @param data
      */
@@ -333,10 +703,39 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         self.page(self.page()+1);
         self.updateMatchedNodes();
     };
+    self.setNodesPage=function(newpage){
+        if(self.page()==newpage){
+            return;
+        }
+        self.page(newpage);
+        if(!self.page()){
+            self.page(0);
+        }
+        if(self.page()<0){
+            self.page(0);
+        }
+        self.updateMatchedNodes();
+    };
+    self.nodesPageNext=function(){
+        if(self.page()+ 1<self.maxPages()) {
+            self.setNodesPage(self.page() + 1);
+        }
+    };
+    self.nodesPagePrev=function(){
+        if(self.page()>0) {
+            self.setNodesPage(self.page() - 1);
+        }
+    };
     self.updateNodesRemainingPages=function(){
         self.page(-1);
         self.updateMatchedNodes();
     };
+    self.loadJS=function(data){
+        ko.mapping.fromJS(data,{},self);
+    };
+    self.pagingMax.subscribe(function (){
+        self.updateMatchedNodes();
+    });
     self.updateMatchedNodes= function () {
         if(!self.filter()){
             return;
@@ -390,31 +789,61 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             params.nodeExcludePrecedence = "true";
         }
         self.loading(true);
-        jQuery(loadTarget).load(
-            _genUrl(appLinks.frameworkNodesFragment, params),
-            function (response, status, xhr) {
+
+        var requrl=_genUrl(appLinks.frameworkNodesQueryAjax, params);
+        jQuery.ajax({
+            type:'GET',
+            dataType:'json',
+            url:requrl,
+
+            error:function(data,jqxhr,err){
                 self.loading(false);
-                if (status == 'success') {
-                    if(needsBinding){
-                        ko.applyBindings(self,jQuery(loadTarget)[0]);
-                    }
-                    var headerVal = xhr.getResponseHeader('X-rundeck-data-id');
-                    if(headerVal){
-                        var values= headerVal.split(', ');
-                        ko.utils.arrayForEach(values,function(dataId){
-                            var data = loadJsonData(dataId);
-                            if(data && data.name=='nodes' && data.content){
-                                ko.mapping.fromJS({allcount:data.content.allcount,total:data.content.total},{},self);
-                            }
-                        })
-                    }
-                } else if (typeof(errcallback) == 'function') {
-                    if (xhr.getResponseHeader("X-Rundeck-Error-Message")) {
-                        self.error(xhr.getResponseHeader("X-Rundeck-Error-Message"));
-                    } else {
-                        self.error(xhr.statusText);
-                    }
+                if (typeof(errcallback) == 'function') {
+                    self.error('Failed '+requrl+': '+err+", "+jqxhr);
                 }
+            },
+            success:function(data,status,jqxhr){
+                self.loading(false);
+                self.nodeSet().loadJS(
+                    {
+                        nodes:data.allnodes,
+                        tagsummary:data.tagsummary
+                    });
+                self.loadJS({
+                    allcount:data.allcount,
+                    total:data.total,
+                    truncated:data.truncated,
+                    colkeys:data.colkeys,
+
+                });
+
+            }
         });
+        //jQuery(loadTarget).load(
+        //    _genUrl(appLinks.frameworkNodesFragment, params),
+        //    function (response, status, xhr) {
+        //        self.loading(false);
+        //        if (status == 'success') {
+        //            if(needsBinding){
+        //                ko.applyBindings(self,jQuery(loadTarget)[0]);
+        //            }
+        //            var headerVal = xhr.getResponseHeader('X-rundeck-data-id');
+        //            if(headerVal){
+        //                var values= headerVal.split(', ');
+        //                ko.utils.arrayForEach(values,function(dataId){
+        //                    var data = loadJsonData(dataId);
+        //                    if(data && data.name=='nodes' && data.content){
+        //                        ko.mapping.fromJS({allcount:data.content.allcount,total:data.content.total},{},self);
+        //                    }
+        //                })
+        //            }
+        //        } else if (typeof(errcallback) == 'function') {
+        //            if (xhr.getResponseHeader("X-Rundeck-Error-Message")) {
+        //                self.error(xhr.getResponseHeader("X-Rundeck-Error-Message"));
+        //            } else {
+        //                self.error(xhr.statusText);
+        //            }
+        //        }
+        //});
     };
 }

@@ -275,6 +275,15 @@ function init() {
             jQuery('a[data-node-filter-name=\'' + val + '\']').addClass('active');
         }
     });
+    nodeFilter.total.subscribe(function(val){
+        if (val && val != "0" && !running) {
+            enableRunBar();
+            adhocCommand.canRun(true);
+        } else if (!running) {
+            disableRunBar(false);
+            adhocCommand.canRun(false);
+        }
+    });
     nodeSummary.reload();
     nodeFilter.updateMatchedNodes();
     jQuery('.act_adhoc_history_dropdown').click(function () {

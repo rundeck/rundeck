@@ -19,6 +19,7 @@
         frameworkCreateResourceModelConfig: "${createLink(action: 'createResourceModelConfig', controller: 'framework')}",
         frameworkNodes: "${createLink(controller:"framework",action:"nodes",params:projParams)}",
         frameworkNodesFragment: "${createLink(controller:"framework",action:"nodesFragment",params:projParams)}",
+        frameworkNodesQueryAjax: "${createLink(controller:"framework",action:"nodesQueryAjax",params:projParams)}",
         frameworkAdhoc: "${createLink(controller:"framework",action:"adhoc",params:projParams)}",
         frameworkReloadNodes: "${createLink(controller:"framework",action:"reloadNodes",params:projParams)}",
         frameworkNodeSummaryAjax: "${createLink(controller:"framework",action:"nodeSummaryAjax",params:projParams)}",

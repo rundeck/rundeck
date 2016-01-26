@@ -15,7 +15,11 @@ ko.bindingHandlers.foreachprop = {
     init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         var value = ko.utils.unwrapObservable(valueAccessor()),
             properties = ko.bindingHandlers.foreachprop.transformObject(value);
-        ko.applyBindingsToNode(element, { foreach: properties });
+        var childBindingContext = bindingContext.createChildContext(
+            bindingContext.$rawData,
+            null // Optionally, pass a string here as an alias for the data item in descendant contexts
+        );
+        ko.applyBindingsToNode(element, { foreach: properties }, childBindingContext);
         return { controlsDescendantBindings: true };
     }
 };
