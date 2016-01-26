@@ -7,12 +7,6 @@
 <g:if test="${params.maxShown}">
     <g:set var="max" value="${params.int('maxShown')}"/>
 </g:if>
-<span data-bind="if: total()>100">
-    <a href="#embednodeset" class="textbtn textbtn-default " data-toggle="collapse">
-        <span data-bind="messageTemplate: total()"><g:message code="show.all.0.nodes" /></span>
-        <i class="auto-caret"></i>
-    </a>
-</span>
 <span id="embednodeset" class=" ansicolor-on matchednodes embed embed_clean"
       data-bind="if: total()<=100">
     <span data-bind="foreach: {data: nodeSet().nodes, 'as': 'node'} ">
@@ -28,7 +22,7 @@
            data-bind="css: {server: islocal},
                   css: $root.nodeSet().nodeCss(attributes),
                   style: $root.nodeSet().nodeStyle(attributes),
-                  attr: { 'data-node': nodename, 'data-popover-content-ref': '#node_pop_'+$index() },
+                  attr: { 'data-node': nodename },
                   bootstrapPopover: true,
                   bootstrapPopoverContentRef: '#node_pop_'+$index()
                   ">

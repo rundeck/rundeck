@@ -232,9 +232,12 @@
 
                                     <span data-bind="messageTemplate: [ total(), nodesTitle() ]"><g:message code="count.nodes.matched" /></span>.
 
-                                <a class="textbtn textbtn-default pull-right" data-bind="click: nodesPageView">
-                                    <g:message code="view.in.nodes.page.prompt" />
-                                </a>
+                                    <span data-bind="if: total()>100">
+                                        <span class="text-muted"><g:message code="not.shown" /></span>
+                                    </span>
+                                    <a class="textbtn textbtn-default pull-right" data-bind="click: nodesPageView">
+                                        <g:message code="view.in.nodes.page.prompt" />
+                                    </a>
                                 </span>
                             </div>
                             <span >
