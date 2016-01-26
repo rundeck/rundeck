@@ -692,19 +692,31 @@ function paginate(elem,offset,total,max,options){
 /**
  * jQuery/bootstrap utility functions
  */
-function _initPopoverContentRef(parent){
+function _initPopoverContentRef(parent,options){
     var sel= '[data-toggle=popover][data-popover-content-ref]';
-    jQuery(parent!=null?parent+' '+sel:sel).each(function (i, e) {
+    var result;
+    options = options|| {};
+    if (options['element']) {
+        result = jQuery(options['element']);
+    } else if (typeof(parent) == 'string') {
+        result = jQuery(parent + ' ' + sel);
+    } else if (typeof(parent) == 'undefined') {
+        result = jQuery(sel);
+    } else if (typeof(parent) == 'object') {
+        result = jQuery(parent).find(sel);
+    }
+    result.each(function (i, e) {
         if('true'== jQuery(e).data('popover-content-ref-inited')){
             //init only once
             return;
         }
-        var ref = jQuery(e).data('popover-content-ref');
-        var opts={html: true, content: jQuery(ref).html(),trigger:jQuery(e).data('trigger')||'click'};
-        if(jQuery(e).data('popover-template-class')){
+        var ref = jQuery(e).data('popover-content-ref')||options.contentRef;
+        var opts={html: true, content: function(){return jQuery(ref).html();},trigger:jQuery(e).data('trigger')||options.trigger||'click'};
+        var templateClass=jQuery(e).data('popover-template-class')||options.templateClass;
+        if(templateClass){
             opts.template=jQuery.fn.popover.Constructor.DEFAULTS.template.replace(
                 /class="popover"/,
-                "class=\"popover "+jQuery(e).data('popover-template-class')+"\""
+                "class=\"popover "+templateClass+"\""
             );
         }
         jQuery(e).popover(opts).on('shown.bs.popover',function(){
@@ -718,12 +730,23 @@ function _initPopoverContentRef(parent){
 /**
  * jQuery/bootstrap utility functions
  */
-function _initPopoverContentFor(parent){
+function _initPopoverContentFor(parent,options){
     var sel= '[data-toggle=popover-for]';
-    jQuery(parent!=null?parent+' '+sel:sel).each(function (i, e) {
-        var ref = jQuery(e).data('target')|| e.href();
+    var result;
+    options = options|| {};
+    if (options['element']) {
+        result = jQuery(options['element']);
+    } else if (typeof(parent) == 'string') {
+        result = jQuery(parent + ' ' + sel);
+    } else if (typeof(parent) == 'undefined') {
+        result = jQuery(sel);
+    } else if (typeof(parent) == 'object') {
+        result = jQuery(parent).find(sel);
+    }
+    result.each(function (i, e) {
+        var ref = jQuery(e).data('target')|| e.href()||options.target;
         var found=jQuery(ref);
-        jQuery(e).on(found.data('data-trigger')||'click',function(){
+        jQuery(e).on(found.data('data-trigger')||options.trigger||'click',function(){
             found.popover('toggle');
         });
         found.on('shown.bs.popover',function(){
