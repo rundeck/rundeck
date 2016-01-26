@@ -1,6 +1,6 @@
 <g:if test="${params.declarenone}">
     <span data-bind="if: !total() || total()<1">
-        <span class="warn note">None</span>
+        <span class="warn note"><g:message code="none"/></span>
     </span>
 </g:if>
 <g:set var="max" value="${-1}"/>
@@ -8,7 +8,8 @@
     <g:set var="max" value="${params.int('maxShown')}"/>
 </g:if>
 <span data-bind="if: total()>100">
-    <a href="#embednodeset" class="textbtn textbtn-default " data-toggle="collapse">Show all <span data-bind="text: total()"></span> Nodes
+    <a href="#embednodeset" class="textbtn textbtn-default " data-toggle="collapse">
+        <span data-bind="messageTemplate: total()"><g:message code="show.all.0.nodes" /></span>
         <i class="auto-caret"></i>
     </a>
 </span>

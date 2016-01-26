@@ -4,6 +4,7 @@
 //= require knockout-foreachprop
 //= require knockout-node-filter-link
 //= require ko/binding-popover
+//= require ko/binding-message-template
 /*
  Copyright 2014 SimplifyOps Inc, <http://simplifyops.com>
 
