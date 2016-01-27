@@ -255,7 +255,7 @@ function init() {
             nodeSummary:nodeSummary,
             elem: pageParams.ukey+'nodeForm',
             view: 'embed',
-            maxShown: 20,
+            maxShown: 100,
             emptyMode: 'blank',
             project: pageParams.project,
             nodesTitleSingular: message('Node'),

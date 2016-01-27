@@ -288,7 +288,7 @@ class FrameworkController extends ControllerBase {
         def allnodes = [:]
         def totalexecs = [:]
         def total=0
-        def truncateMax=params.untruncate?-1:100
+        def truncateMax=params.untruncate?-1: params.maxShown?params.int('maxShown'):100
         def allcount=null
         NodeSet nset = ExecutionService.filtersAsNodeSet(query)
         def projects=[]
