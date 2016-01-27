@@ -160,11 +160,10 @@ function NodeSet(data) {
     var mapping = {
 
         'nodes': {
+            //nb: don't use a key: function because in some cases
+            //we need a new dom element every time we redraw nodes,
+            //and a key function will cause re-use of the element
 
-            key: function (data) {
-                return ko.utils.unwrapObservable(data.nodename);
-            }
-            ,
             create: function (options) {
                 return new NodeEntry(options.data);
             }
