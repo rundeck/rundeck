@@ -290,16 +290,12 @@
                         <span class="text-uppercase text-muted small"><i class="glyphicon glyphicon-tags  " ></i> Tags</span>
                         <ul data-bind="foreach: nodeSummary().tags" class="list-unstyled">
                             <li>
-                                <a
-                                        href="#"
-                                        class="nodefilterlink tag textbtn textbtn-default"
-                                        data-bind="attr: {
-                             'data-node-filter': 'tags: '+tag(),
-                             'data-node-tag': tag(),
-                             'title': 'Filter by tag: '+tag(),
-                            'href': $root.nodeSummary().linkForTagFilter($data)
-                            } ">
-                                    <span data-bind="text: tag"></span></a>
+                                <node-filter-link params="
+                                    filterkey: 'tags',
+                                    filterval: tag,
+                                    tag: tag
+                                ">
+                                </node-filter-link>
 
                                 <span data-bind="text: count" class="text-muted"></span>
                             </li>
