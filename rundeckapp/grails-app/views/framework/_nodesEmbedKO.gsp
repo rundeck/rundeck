@@ -1,19 +1,11 @@
-<g:if test="${params.declarenone}">
-    <span data-bind="if: !total() || total()<1">
-        <span class="warn note"><g:message code="none"/></span>
-    </span>
-</g:if>
-<g:set var="max" value="${-1}"/>
-<g:if test="${params.maxShown}">
-    <g:set var="max" value="${params.int('maxShown')}"/>
-</g:if>
-<span id="embednodeset" class=" ansicolor-on matchednodes embed embed_clean"
-      data-bind="if: total()<=100">
+%{--random string for uniqueness--}%
+<g:set var="xkey" value="${g.rkey()}"/>
+<span  class=" ansicolor-on matchednodes embed embed_clean" data-bind="">
     <span data-bind="foreach: {data: nodeSet().nodes, 'as': 'node'} ">
 
         <a tabindex="0"
            role="button"
-           class="node_ident node_ident textbtn-default textbtn-plain"
+           class="node_ident textbtn-default textbtn-plain"
            data-toggle="popover"
            data-placement="bottom"
            data-trigger="focus"
@@ -24,7 +16,7 @@
                   style: $root.nodeSet().nodeStyle(attributes),
                   attr: { 'data-node': nodename },
                   bootstrapPopover: true,
-                  bootstrapPopoverContentRef: '#node_pop_'+$index()
+                  bootstrapPopoverContentRef: '#node_pop_${xkey}_'+$index()
                   ">
             <span data-bind="css: $root.nodeSet().iconCss(attributes), style: $root.nodeSet().iconStyle(attributes)">
                 <!-- ko if: attributes['ui:icon:name'] -->
@@ -39,7 +31,7 @@
             <span data-bind="text: nodename"></span>
         </a>
 
-        <div data-bind="attr: { 'id': 'node_pop_'+$index() }, css: {server: islocal }"
+        <div data-bind="attr: { 'id': 'node_pop_${xkey}_'+$index() }, css: {server: islocal }"
              style="display:none;"
              class="detailpopup node_entry tooltipcontent node_filter_link_holder"
              data-node-filter-link-id="${enc(attr: nodefilterLinkId ?: '')}">
@@ -58,9 +50,22 @@
             <span class="nodedesc"></span>
 
             <div class="nodedetail">
-                <g:render template="nodeDetailsSimpleKO"/>
+                <g:render template="/framework/nodeDetailsSimpleKO"/>
             </div>
         </div>
 
     </span>
 </span>
+
+<g:if test="${showLoading}">
+    <div data-bind="if: loading() " class="text-info">
+        <i class="glyphicon glyphicon-time"></i>
+        <g:message code="loading.matched.nodes" />
+    </div>
+</g:if>
+<g:if test="${showTruncated}">
+    <div data-bind="if: total() > maxShown()">
+        <span data-bind="messageTemplate: [maxShown(), total()]" class="text-info"><g:message code="results.truncated.count.results.shown" /></span>
+    </div>
+</g:if>
+
