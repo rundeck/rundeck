@@ -633,6 +633,9 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         }
         return comps.join(" ");
     };
+    self.linkForFilterString=function(filter){
+        return _genUrl(self.baseNodesPageUrl,{filter:filter});
+    };
     /**
      * Generate URL for some filter params
      * @param params
@@ -647,7 +650,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             nparams[params]=extra;
             filter=self.paramsAsfilter(nparams);
         }
-        return _genUrl(self.baseNodesPageUrl,{filter:filter});
+        return self.linkForFilterString(filter);
     };
     self.triggerNodeRemoteEdit=function(node){
         doRemoteEdit(node.nodename,self.project,self.nodeSet().expandNodeAttributes(node.attributes,node.attributes['remoteUrl']()))
