@@ -227,20 +227,11 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
-    def detailFragment = {
-        log.debug("ScheduledExecutionController: show : params: " + params)
-        def crontab = [:]
+    private def jobDetailData() {
         Framework framework = frameworkService.getRundeckFramework()
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
-        if(notFoundResponse(scheduledExecution,'Job',params.id)){
-            return
-        }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-        if(unauthorizedResponse(frameworkService.authorizeProjectJobAll(authContext, scheduledExecution,
-                [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ,'Job',params.id)){
-            return
-        }
-        crontab = scheduledExecution.timeAndDateAsBooleanMap()
+
+        def crontab = scheduledExecution.timeAndDateAsBooleanMap()
         //list executions using query params and pagination params
 
         def executions=Execution.findAllByScheduledExecution(scheduledExecution,[offset: params.offset?params.offset:0, max: params.max?params.max:10, sort:'dateStarted', order:'desc'])
@@ -253,7 +244,7 @@ class ScheduledExecutionController  extends ControllerBase{
             remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
         }
 
-        return render(view:'jobDetailFragment',model: [scheduledExecution:scheduledExecution, crontab:crontab, params:params,
+        [scheduledExecution:scheduledExecution, crontab:crontab, params:params,
             executions:executions,
             total:total,
             nextExecution:scheduledExecutionService.nextExecutionTime(scheduledExecution),
@@ -261,7 +252,53 @@ class ScheduledExecutionController  extends ControllerBase{
             max: params.max?params.max:10,
             notificationPlugins: notificationService.listNotificationPlugins(),
             orchestratorPlugins: orchestratorPluginService.listOrchestratorPlugins(),
-            offset:params.offset?params.offset:0])
+            offset:params.offset?params.offset:0]
+    }
+    def detailFragment () {
+        log.debug("ScheduledExecutionController: detailFragment : params: " + params)
+        Framework framework = frameworkService.getRundeckFramework()
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
+        if(notFoundResponse(scheduledExecution,'Job',params.id)){
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        if(unauthorizedResponse(frameworkService.authorizeProjectJobAll(authContext, scheduledExecution,
+                [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ,'Job',params.id)){
+            return
+        }
+        def model=jobDetailData()
+
+        return render(view:'jobDetailFragment',model: model)
+    }
+    def detailFragmentAjax () {
+        log.debug("ScheduledExecutionController: detailFragmentAjax : params: " + params)
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
+        if(notFoundResponse(scheduledExecution,'Job',params.id)){
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        if(unauthorizedResponse(frameworkService.authorizeProjectJobAll(authContext, scheduledExecution,
+                [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ,'Job',params.id)){
+            return
+        }
+        def model=jobDetailData()
+        def se = model.scheduledExecution
+        render(contentType: 'application/json') {
+            total = model.total
+            nextExecution = model.nextExecution
+            max = model.max
+            job(
+                    id: se.extid,
+                    name: (se.jobName),
+                    group: (se.groupPath),
+                    project: (se.project),
+                    description: (se.description),
+                    href: apiService.apiHrefForJob(se),
+                    permalink: apiService.guiHrefForJob(se),
+                    filter: se.filter?:'',
+                    doNodeDispatch: se.doNodedispatch
+            )
+        }
     }
     def show = {
         log.debug("ScheduledExecutionController: show : params: " + params)
