@@ -109,25 +109,23 @@
 
     <g:if test="${useNamespace}">
     %{--node attributes with namespaces--}%
-    <tbody>
+
     <!-- ko foreach: { data: $root.nodeSet().attributeNamespaces(node.attributes), as: 'namespace' } -->
-    <tr class="subattrs">
+    <tr class="">
         <td class="key namespace">
-            <span data-bind="click: function(){node.toggleExpandedNs(namespace.ns);},
-                                    css: {
-                                       expanded: node.isExpandedNs(namespace.ns),
-                                       closed: !node.isExpandedNs(namespace.ns)()
-                                    }"
-                  class="textbtn textbtn-muted textbtn-saturated expandComponentControl toggle">
-                <i class="glyphicon "
-                   data-bind="css: { 'glyphicon-chevron-down': node.isExpandedNs(namespace.ns), 'glyphicon-chevron-right': !node.isExpandedNs(namespace.ns)() }"></i>
+            <a href="#"
+               data-bind="attr: { href: '#ns_'+$index()+'_'+$parentContext.$index()}"
+                data-toggle="collapse"
+                  class="textbtn textbtn-muted textbtn-saturated ">
                 <span data-bind="text: namespace.ns"></span>
                 (<span data-bind="text: namespace.values.size()"></span>)
-            </span>
+                <i class="auto-caret "></i>
+            </a>
         </td>
         <td colspan="3"></td>
     </tr>
-    <tr class="subattrs" data-bind="visible: node.isExpandedNs(namespace.ns)" >
+        <tbody class="subattrs collapse collapse-expandable" data-bind="attr: {id: 'ns_'+$index()+'_'+$parentContext.$index()}" >
+    <tr >
         <td colspan="4">
             <table class="table table-condensed table-embed">
                 <tbody data-bind="foreach: { data: $data.values , as: 'nsattr' }" >
@@ -159,8 +157,8 @@
             </table>
         </td>
     </tr>
+        </tbody>
     <!-- /ko -->
-    </tbody>
 
 
     </g:if>

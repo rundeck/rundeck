@@ -121,24 +121,7 @@ function NodeSummary(data){
 var CSSColors='aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgreen darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray darkturquoise darkviolet deeppink deepskyblue dimgray dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray green greenyellow honeydew hotpink indianred indigo ivory khaki lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan lightgoldenrodyellow lightgreen lightgrey lightpink lightsalmon lightseagreen lightskyblue lightslategray lightsteelblue lightyellow lime limegreen linen magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive olivedrab orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum powderblue purple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver skyblue slateblue slategray snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen'.split(' ');
 function NodeEntry(data){
     var self=this;
-    self.expandedNs=ko.observable({});
 
-    self.toggleExpandedNs=function(ns){
-        var obj=self.expandedNs();
-        if(null==obj[ns]){
-            obj[ns]=ko.observable(true);
-        }else{
-            obj[ns](!obj[ns]());
-        }
-
-    };
-    self.isExpandedNs=function(ns){
-        var obj=self.expandedNs();
-        if(null==obj[ns]){
-            obj[ns]=ko.observable(false);
-        }
-        return obj[ns];
-    };
     if(data) {
         ko.mapping.fromJS(data, {}, self);
     }
