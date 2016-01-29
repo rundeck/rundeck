@@ -7,16 +7,16 @@
                 <i class="glyphicon glyphicon-tags text-muted"></i>
 
                 <span data-bind="if: nodeSet().tagsummary">
-                    <span data-bind="foreachprop: nodeSet().tagsummary">
+                    <span data-bind="foreach: nodeSet().tagsummary">
                         <span class="summary nodetags">
 
                             <node-filter-link params="
                                         filterkey: 'tags',
-                                        filterval: key,
+                                        filterval: tag,
                                         suffix: ' ('+ko.unwrap(value)+')',
-                                        linktext: key,
+                                        linktext: tag,
                                         classnames: 'tag textbtn',
-                                        tag: key,
+                                        tag: tag,
                                         "></node-filter-link>
                         </span>
                     </span>
