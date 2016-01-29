@@ -149,6 +149,12 @@
 
 
                         </span>
+                        <span data-bind="if: !attributes.hostname()">
+                            <span class="text-warning" title="SSH command execution will not work without a hostname value for the node."
+                            >
+                                (unset)
+                            </span>
+                        </span>
                     </td>
                     <!--/ko -->
 
