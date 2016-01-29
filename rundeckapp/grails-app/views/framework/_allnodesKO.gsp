@@ -29,14 +29,14 @@
         <div class="col-sm-12 ">
             <table cellpadding="0" cellspacing="0" width="100%" id="nodesTable2" class="nodesTable" >
                 <tr>
-                    <th>Node</th>
+                    <th><g:message code="Node"/></th>
                     <!--ko foreach: filterColumns-->
                     <th data-bind="text: $data"></th>
                     <!--/ko -->
 
                     <!-- ko if: useDefaultColumns -->
-                        <th>Tags</th>
-                        <th colspan="3" class="text-center">User @ Host</th>
+                        <th><g:message code="resource.metadata.entity.tags"/></th>
+                        <th colspan="3" class="text-center"><g:message code="user.at.host" /></th>
                     <!-- /ko -->
                     <th></th>
                 </tr>
@@ -127,7 +127,7 @@
                             </span>
                         </span>
                     </td>
-                    <td class="username"  title="Username">
+                    <td class="username"  title="${message(code:"node.metadata.username")}">
                         <span data-bind="if: attributes.username">
 
 
@@ -157,18 +157,18 @@
                     %{--remote edit urls --}%
                     <span data-bind="if: node.attributes['remoteUrl']">
                         <span class="textbtn "
-                              title="Edit this node via remote URL..."
+                              title="${message(code:"edit.this.node.via.remote.url")}"
                               data-bind="click: triggerNodeRemoteEdit"
 
                         >
-                            Edit&hellip;
+                            <g:message code="edit.ellipsis" />
                         </span>
                     </span>
                     <span data-bind="if: node.attributes['editUrl']">
                         <a href="#"
                            target="_blank"
                             data-bind="attr: { href: $root.nodeSet().expandNodeAttributes(node.attributes,node.attributes['editUrl']()) }"
-                           title="Opens a link to edit this node at a remote site.">Edit</a>
+                           title="${message(code:"opens.a.link.to.edit.this.node.at.a.remote.site")}"><g:message code="button.Edit.label" /></a>
                     </span>
                     </td>
                 </tr>
