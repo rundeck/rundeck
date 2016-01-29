@@ -488,14 +488,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.maxPages = ko.pureComputed(function(){
         return self.paging() && Math.ceil(self.total()/self.pagingMax());
     });
-    self.pageNumbers=ko.pureComputed(function(){
-        var arr=[];
-        for(var i=0;i<self.maxPages();i++){
-            arr.push(i+1);
-        }
-        return arr;
-    });
-    self.pageNumbersSkipped=ko.pureComputed(function(){
+    self.pageNumbersSkipped=ko.computed(function(){
         var arr=[];
         var cur = self.page();
         var maxPages = self.maxPages();
