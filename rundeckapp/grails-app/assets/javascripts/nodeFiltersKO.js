@@ -126,6 +126,14 @@ function NodeEntry(data){
         ko.mapping.fromJS(data, {}, self);
     }
 }
+function TagSummary(data){
+    var self=this;
+    self.tag=ko.observable(data.tag);
+    self.value=ko.observable(data.value);
+    if(data){
+        ko.mapping.fromJS(data, {}, self);
+    }
+}
 /**
  * The set of node results
  * @param data
@@ -134,7 +142,7 @@ function NodeEntry(data){
 function NodeSet(data) {
     var self = this;
     self.nodes=ko.observableArray([]);
-    self.tagsummary=ko.observable();
+    self.tagsummary=ko.observableArray([]);
 
     var mapping = {
 
@@ -145,6 +153,15 @@ function NodeSet(data) {
 
             create: function (options) {
                 return new NodeEntry(options.data);
+            }
+        }
+        ,
+        'tagsummary': {
+            key: function (data) {
+                return ko.utils.unwrapObservable(data.tag);
+            },
+            create: function (options) {
+                return new TagSummary(options.data);
             }
         }
     };
@@ -355,8 +372,18 @@ function NodeSet(data) {
             }
         });
     };
+    self.convertTagSummary=function(obj){
+        var arr=[];
+        for(var e in obj){
+            arr.push({tag:e,value:obj[e]});
+        }
+        return arr;
+    };
     self.loadJS=function(data){
-        ko.mapping.fromJS(data,mapping,self);
+        ko.mapping.fromJS({
+            nodes:data.nodes,
+            tagsummary:self.convertTagSummary(data.tagsummary)
+        },mapping,self);
     };
     if(data){
         self.loadJS(data);
