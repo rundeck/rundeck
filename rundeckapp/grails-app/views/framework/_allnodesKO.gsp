@@ -150,9 +150,9 @@
 
                         </span>
                         <span data-bind="if: !attributes.hostname()">
-                            <span class="text-warning" title="SSH command execution will not work without a hostname value for the node."
+                            <span class="text-warning" title="${message(code:"node.hostname.unset.description")}"
                             >
-                                (unset)
+                                <g:message code="node.hostname.unset.label" />
                             </span>
                         </span>
                     </td>
@@ -201,7 +201,7 @@
                         href="#"
                             class="btn btn-xs btn-default"
                             data-bind="click: $root.nodesPagePrev, visible: $root.maxPages() > 1"
-                            title="Previous"><g:message code="default.paginate.prev"/></a>
+                            title="${message(code:"Previous")}"><g:message code="default.paginate.prev"/></a>
                 </li>
 
                 <!-- ko  foreach: {data: pageNumbersSkipped(), as: 'num'} -->
@@ -220,7 +220,7 @@
                                     href="#"
                                     class="btn btn-xs btn-default"
                                     data-bind="click: $root.nodesPageNext, visible: $root.maxPages() > 1"
-                                    title="Next">
+                                    title="${message(code:"Next")}">
                                 <g:message code="default.paginate.next"/>
                             </a>
                         </li>
@@ -231,13 +231,13 @@
                 <div class="form-inline">
                     <div class="form-group form-group-sm">
                         <label>
-                            Jump to:
+                            <g:message code="jump.to" />
                             <input class="form-control input-sm" type="number" min="1" data-bind="value: pageDisplay, attr: {max: maxPages}, disable: $root.loading()"/>
                         </label>
                     </div>
                     <div class="form-group form-group-sm">
                         <label>
-                            Per page:
+                            <g:message code="per.page" />
                             <input class="form-control input-sm" type="number" min="1" max="100" data-bind="value: pagingMax, disable: $root.loading()"/>
                         </label>
                     </div>
