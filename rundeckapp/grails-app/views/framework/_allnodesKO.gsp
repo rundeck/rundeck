@@ -224,7 +224,12 @@
 
                 </span>
                 <div class="form-inline">
-                    <label class="form-input input-sm">Per page: <input type="number" data-bind="value: pagingMax"/></label>
+                    <div class="form-group form-group-sm">
+                        <label>
+                            Per page:
+                            <input class="form-control input-sm" type="number" min="1" max="100" data-bind="value: pagingMax, disable: $root.loading()"/>
+                        </label>
+                    </div>
                 </div>
                 <span data-bind="if: loading()"  class="text-info">
                     <i class="glyphicon glyphicon-time"></i>
