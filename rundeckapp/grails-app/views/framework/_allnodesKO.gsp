@@ -4,23 +4,11 @@
             <div class=" col-inset">
 
                 <span id="tagdemo">
-                    %{--<g:if test="${!hidetop}">--}%
-                    <i class="glyphicon glyphicon-tags text-muted"></i>
-
+                <i class="glyphicon glyphicon-tags text-muted"></i>
 
                 <span data-bind="if: nodeSet().tagsummary">
                     <span data-bind="foreachprop: nodeSet().tagsummary">
                         <span class="summary nodetags">
-
-                            %{--<g:elseif test="${action}">--}%
-                                %{--<span class="${enc(attr:action.classnames)}" onclick="${enc(attr:action.onclick)}"--}%
-                                      %{--data-tag="${enc(attr:tag)}" title="Filter by tag: ${enc(attr:tag)}">--}%
-                                    %{--<g:enc>${tag}:${tagsummary[tag]}</g:enc>--}%
-                                %{--</span>--}%
-                            %{--</g:elseif>--}%
-                            %{--<g:else>--}%
-                                %{--<g:enc>${tag}:${tagsummary[tag]}</g:enc>--}%
-                            %{--</g:else>--}%
 
                             <node-filter-link params="
                                         filterkey: 'tags',
