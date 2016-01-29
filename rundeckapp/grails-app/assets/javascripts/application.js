@@ -903,6 +903,7 @@ function _initTokenRefresh() {
 (function(){
     if(typeof(jQuery)=='function'){
         jQuery(document).ready(function () {
+            jQuery.support.transition = false;
             jQuery('.has_tooltip').tooltip({});
             jQuery('.has_popover').popover({});
             _initPopoverContentRef();
