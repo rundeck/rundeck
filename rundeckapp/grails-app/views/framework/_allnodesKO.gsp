@@ -191,7 +191,7 @@
             <div class="col-sm-12" id="nodesPaging">
                 <span class="paginate">
                 <ul class="pagination pagination-sm pagination-embed">
-                <li data-bind="css: {disabled: page()==0}">
+                <li data-bind="css: {disabled: page()==0 || $root.loading()}">
                     <a
                         href="#"
                             class="btn btn-xs btn-default"
@@ -200,7 +200,7 @@
                 </li>
 
                 <!-- ko  foreach: {data: pageNumbersSkipped(), as: 'num'} -->
-                        <li data-bind="css: {'active': num==$root.page(), 'disabled': num == '..' }">
+                        <li data-bind="css: {'active': num==$root.page(), 'disabled': num == '..' || $root.loading() }">
                             <!-- ko if: num == '..' -->
                                 <a href="#" > &hellip; </a>
                             <!-- /ko -->
@@ -210,7 +210,7 @@
                         </li>
                 <!-- /ko -->
 
-                        <li data-bind="css: {disabled: page()==maxPages() } ">
+                        <li data-bind="css: {disabled: page()==maxPages() || $root.loading() } ">
                             <a
                                     href="#"
                                     class="btn btn-xs btn-default"
