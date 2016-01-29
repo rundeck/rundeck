@@ -237,11 +237,15 @@
                         </label>
                     </div>
                 </div>
-                <span data-bind="if: loading()"  class="text-info">
-                    <i class="glyphicon glyphicon-time"></i>
-                    <g:message code="loading.matched.nodes"/>
-                </span>
             </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <span data-bind="if: loading()"  class="text-info">
+                <i class="glyphicon glyphicon-time"></i>
+                <g:message code="loading.matched.nodes"/>
+            </span>
         </div>
     </div>
 </div>

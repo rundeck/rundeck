@@ -250,10 +250,6 @@
                     <div class="row row-space">
                         <div class="col-sm-12">
 
-                            <span data-bind="if: loading()"  class="text-info">
-                                <i class="glyphicon glyphicon-time"></i>
-                                <g:message code="loading.matched.nodes"/>
-                            </span>
                             <span data-bind="if: error()"  class="text-danger">
                                 <i class="glyphicon glyphicon-warning-sign"></i>
                                 <span data-bind="text: error()"></span>
@@ -278,9 +274,9 @@
                         <g:render template="allnodes" model="${[nodeview:'table', expanddetail: true,allnodes: allnodes, totalexecs: totalexecs, jobs: jobs, params: params, total: total, allcount: allcount, page: page, max: max, nodeauthrun: nodeauthrun, tagsummary: null]}" />
                     </g:if>
                 </div>
-                    <div class="clear matchednodes" id="nodeview">
-                        <g:render template="allnodesKO" />
-                    </div>
+                <div class="clear matchednodes" id="nodeview">
+                    <g:render template="allnodesKO" />
+                </div>
             </div>
             <div class="tab-pane active" id="summary">
 
