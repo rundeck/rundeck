@@ -226,6 +226,12 @@
                 <div class="form-inline">
                     <div class="form-group form-group-sm">
                         <label>
+                            Jump to:
+                            <input class="form-control input-sm" type="number" min="1" data-bind="value: pageDisplay, attr: {max: maxPages}, disable: $root.loading()"/>
+                        </label>
+                    </div>
+                    <div class="form-group form-group-sm">
+                        <label>
                             Per page:
                             <input class="form-control input-sm" type="number" min="1" max="100" data-bind="value: pagingMax, disable: $root.loading()"/>
                         </label>

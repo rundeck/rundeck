@@ -424,6 +424,19 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.colkeys=ko.observableArray([]);
 
     /**
+     * Display value of page number, indexed starting at 1
+     */
+    this.pageDisplay = ko.computed({
+        read: function () {
+            return self.page()+1;
+        },
+        write: function (value) {
+            self.page(value-1);
+            self.updateMatchedNodes();
+        },
+        owner: self
+    });
+    /**
      * Names of node attributes to show as columns removing ui: namespace
      */
     self.filterColumns=ko.pureComputed(function(){
