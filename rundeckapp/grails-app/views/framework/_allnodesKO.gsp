@@ -56,9 +56,12 @@
                 <tr class=" node_entry  hover-action-holder ansicolor-on" data-bind="css: {server: islocal}">
                     <td class="nodeident" data-bind="attr: {title: attributes.description}" >
 
-                        <span data-bind="click: node.toggleExpanded, css: { expanded: node.expanded(), closed: !node.expanded() } "
-                              class="textbtn  expandComponentControl toggle">
-                            <i class="glyphicon " data-bind="css: { 'glyphicon-chevron-down': node.expanded(), 'glyphicon-chevron-right': !node.expanded() }"></i>
+                        <a href="#"
+                           data-toggle="collapse"
+                           data-bind="attr: {href: '#detail_'+$index() }"
+                           class="textbtn textbtn-default expandComponentControl toggle"
+                        >
+                            <i class="auto-caret"></i>
                             <span class="node_ident" data-bind="css: {server: islocal}, css: $root.nodeSet().nodeCss(attributes), style: $root.nodeSet().nodeStyle(attributes)">
                                     <span data-bind="css: $root.nodeSet().iconCss(attributes), style: $root.nodeSet().iconStyle(attributes)">
                                     <!-- ko if: attributes['ui:icon:name'] -->
@@ -72,7 +75,7 @@
                                     </span>
                                     <span data-bind="text: nodename"></span>
                             </span>
-                        </span>
+                        </a>
 
                         <node-filter-link params="
                                         filterkey: 'name',
@@ -181,7 +184,8 @@
                     </span>
                     </td>
                 </tr>
-                <tr class="detail_content nodedetail "  data-bind="css: { server: islocal },  visible: node.expanded()  ">
+                <tr class="detail_content nodedetail collapse collapse-expandable"
+                    data-bind="css: { server: islocal }, attr: {id: 'detail_'+$index() }">
                     <td colspan="4" data-bind="attr: { colspan: $root.totalColumnsCount }">
 
                         <g:render template="nodeDetailsSimpleKO" model="[useNamespace:true]"/>
