@@ -229,6 +229,18 @@ function init() {
             history.pushState(oldparams, document.title, href);
         }
     });
+    nodeFilter.browse.subscribe(function(val){
+        //update browser history when inputting page number
+        if(typeof(history.pushState)=='function' && val) {
+
+            //push history state
+            var oldparams=nodeFilter.getPageParams();
+            var href=nodeFilter.getPageUrl();
+            console.log("pushState",oldparams);
+            history.pushState(oldparams, document.title, href);
+            nodeFilter.browse(false);
+        }
+    });
     jQuery('#tab_link_summary').on('show.bs.tab',function(e){
         nodeSummary.reload();
     });

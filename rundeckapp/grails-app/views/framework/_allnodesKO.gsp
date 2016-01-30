@@ -200,7 +200,7 @@
                     <a
                         href="#"
                             class="btn btn-xs btn-default"
-                            data-bind="click: $root.nodesPagePrev, visible: $root.maxPages() > 1"
+                            data-bind="click: $root.browseNodesPagePrev, visible: $root.maxPages() > 1"
                             title="${message(code:"Previous")}"><g:message code="default.paginate.prev"/></a>
                 </li>
 
@@ -210,7 +210,7 @@
                                 <a href="#" > &hellip; </a>
                             <!-- /ko -->
                             <!-- ko if: num != '..' -->
-                                <a href="#" data-bind="text: num+1, click: $root.setNodesPage"></a>
+                                <a href="#" data-bind="text: num+1, click: $root.browseNodesPage"></a>
                             <!-- /ko -->
                         </li>
                 <!-- /ko -->
@@ -219,7 +219,7 @@
                             <a
                                     href="#"
                                     class="btn btn-xs btn-default"
-                                    data-bind="click: $root.nodesPageNext, visible: $root.maxPages() > 1"
+                                    data-bind="click: $root.browseNodesPageNext, visible: $root.maxPages() > 1"
                                     title="${message(code:"Next")}">
                                 <g:message code="default.paginate.next"/>
                             </a>

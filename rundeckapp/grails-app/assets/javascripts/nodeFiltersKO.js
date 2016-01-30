@@ -416,12 +416,18 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.nodeSet=ko.observable(new NodeSet());
     self.truncated=ko.observable(false);
     /**
+     *
+     * can be subscribed to for browser history updating, will be changed to 'true'
+     * when a browse event should be recorded, the listener should set it to false.
+     */
+    self.browse=ko.observable(false);
+    /**
      * Names of node attributes to show as columns in table results
      */
     self.colkeys=ko.observableArray([]);
 
     /**
-     * Display value of page number, indexed starting at 1
+     * Display value of page number, indexed starting at 1,
      */
     this.pageDisplay = ko.computed({
         read: function () {
@@ -429,6 +435,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         },
         write: function (value) {
             self.page(value-1);
+            self.browse(true);
             self.updateMatchedNodes();
         },
         owner: self
@@ -539,7 +546,6 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     });
     self.filter.subscribe(function (newValue) {
         if (newValue == '' && self.emptyMode() == 'blank') {
-            jQuery('#'+self.elem()).empty();
             self.clear();
         }
     });
@@ -605,7 +611,9 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         return {
             filter: self.filter()||'',
             filterName: self.filterName()||'',
-            filterAll: self.filterAll()||''
+            filterAll: self.filterAll()||'',
+            page:self.page()||0,
+            max:self.pagingMax()||20
         };
     };
     /**
@@ -673,6 +681,8 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         self.filter(data.filter);
         self.filterName(data.filterName);
         self.clear();
+        self.page(data.page);
+        self.pagingMax(data.max);
         self.updateMatchedNodes();
     };
     self.selectNodeFilterLink=function(link,isappend){
@@ -716,27 +726,24 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         self.page(self.page()+1);
         self.updateMatchedNodes();
     };
-    self.setNodesPage=function(newpage){
+    self.browseNodesPage=function(newpage){
         if(self.page()==newpage){
             return;
         }
-        self.page(newpage);
-        if(!self.page()){
-            self.page(0);
+        if (!newpage || newpage + 1 >= self.maxPages() || newpage < 0) {
+            newpage=0;
         }
-        if(self.page()<0){
-            self.page(0);
-        }
+        self.pageDisplay(newpage+1);
         self.updateMatchedNodes();
     };
-    self.nodesPageNext=function(){
+    self.browseNodesPageNext=function(){
         if(self.page()+ 1<self.maxPages()) {
-            self.setNodesPage(self.page() + 1);
+            self.browseNodesPage(self.page() + 1);
         }
     };
-    self.nodesPagePrev=function(){
+    self.browseNodesPagePrev=function(){
         if(self.page()>0) {
-            self.setNodesPage(self.page() - 1);
+            self.browseNodesPage(self.page() - 1);
         }
     };
     self.updateNodesRemainingPages=function(){
