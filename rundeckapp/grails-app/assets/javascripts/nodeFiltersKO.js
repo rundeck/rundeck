@@ -681,8 +681,8 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         self.filter(data.filter);
         self.filterName(data.filterName);
         self.clear();
-        self.page(data.page);
-        self.pagingMax(data.max);
+        self.page(data.page||0);
+        self.pagingMax(data.max||20);
         self.updateMatchedNodes();
     };
     self.selectNodeFilterLink=function(link,isappend){
