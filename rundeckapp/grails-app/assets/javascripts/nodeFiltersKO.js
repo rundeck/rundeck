@@ -812,7 +812,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
                     allcount:data.allcount,
                     total:data.total,
                     truncated:data.truncated,
-                    colkeys:data.colkeys,
+                    colkeys:data.colkeys
 
                 });
 
