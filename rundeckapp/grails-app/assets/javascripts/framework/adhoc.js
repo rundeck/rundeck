@@ -253,7 +253,6 @@ function init() {
         appLinks.frameworkNodes,
         Object.extend(filterParams, {
             nodeSummary:nodeSummary,
-            elem: pageParams.ukey+'nodeForm',
             view: 'embed',
             maxShown: 100,
             emptyMode: 'blank',

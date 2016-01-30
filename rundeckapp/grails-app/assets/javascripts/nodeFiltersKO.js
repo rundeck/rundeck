@@ -408,9 +408,6 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.pagingMax=ko.observable(data.pagingMax?data.pagingMax:20);
     self.paging=ko.observable(data.paging != null ? (data.paging ? true : false) : false);
     self.maxShown=ko.observable(data.maxShown);
-    self.elem=ko.observable(data.elem);
-    self.tableElem=ko.observable(data.tableElem?data.tableElem:'nodesTable');
-    self.pagingElem=ko.observable(data.pagingElem);
     self.view=ko.observable(data.view);
     self.emptyMode=ko.observable(data.emptyMode?data.emptyMode:'localnode');
     self.emptyMessage=ko.observable(data.emptyMessage?data.emptyMessage:'No match');
@@ -762,38 +759,24 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         }
         var filterdata = self.filterName() ? {filterName: self.filterName()} : self.filter()?{filter: self.filter()}:{};
         var page = self.page();
-        var loadTarget = '#'+self.elem();
-        var needsBinding = true;
         var view = self.view() ? self.view() : 'table';
         var basedata = {view: view, declarenone: true, fullresults: true, expanddetail: true, inlinepaging: false, nodefilterLinkId: self.nodefilterLinkId};
-        var clearContent=true;
         if(self.paging()){
             basedata.page = page;
             basedata.max = self.pagingMax();
             basedata.inlinepaging=true;
             if (page != 0) {
-                clearContent=false;
-                var tbody = document.createElement('tbody');
-                jQuery('#'+ self.tableElem()).append(tbody);
-                loadTarget=tbody;
-                needsBinding = true;
                 basedata.view= 'tableContent';
             }
         }
         if(self.maxShown()){
             basedata.maxShown=self.maxShown();
         }
-        if(clearContent){
-            var div = document.createElement('div');
-            jQuery('#' + self.elem()).empty().append(div);
-            loadTarget = div;
-        }
 
         var params = Object.extend(basedata, filterdata);
         if(self.emptyMode()=='localnode' && !self.filter()){
             params.localNodeOnly = 'true';
         }else if(self.emptyMode()=='blank' && !self.filter()){
-            jQuery(loadTarget).empty();
             self.clear();
             return;
         }
@@ -835,31 +818,5 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
 
             }
         });
-        //jQuery(loadTarget).load(
-        //    _genUrl(appLinks.frameworkNodesFragment, params),
-        //    function (response, status, xhr) {
-        //        self.loading(false);
-        //        if (status == 'success') {
-        //            if(needsBinding){
-        //                ko.applyBindings(self,jQuery(loadTarget)[0]);
-        //            }
-        //            var headerVal = xhr.getResponseHeader('X-rundeck-data-id');
-        //            if(headerVal){
-        //                var values= headerVal.split(', ');
-        //                ko.utils.arrayForEach(values,function(dataId){
-        //                    var data = loadJsonData(dataId);
-        //                    if(data && data.name=='nodes' && data.content){
-        //                        ko.mapping.fromJS({allcount:data.content.allcount,total:data.content.total},{},self);
-        //                    }
-        //                })
-        //            }
-        //        } else if (typeof(errcallback) == 'function') {
-        //            if (xhr.getResponseHeader("X-Rundeck-Error-Message")) {
-        //                self.error(xhr.getResponseHeader("X-Rundeck-Error-Message"));
-        //            } else {
-        //                self.error(xhr.statusText);
-        //            }
-        //        }
-        //});
     };
 }

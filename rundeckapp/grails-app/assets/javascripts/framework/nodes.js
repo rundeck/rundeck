@@ -199,7 +199,6 @@ function init() {
         appLinks.scheduledExecutionCreate,
         appLinks.frameworkNodes,
         Object.extend(filterParams,{
-            elem: 'nodelist',
             project: pageParams.project,
             paging:true,
             nodesTitleSingular:message('Node'),
