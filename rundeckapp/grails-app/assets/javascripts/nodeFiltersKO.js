@@ -746,6 +746,21 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             self.browseNodesPage(self.page() - 1);
         }
     };
+    self.browseNodesPageUrl=function(page){
+        var pageParams = self.getPageParams();
+        if (page >= 0 && page < self.maxPages()) {
+            pageParams.page = page;
+        }else{
+            pageParams.page=0;
+        }
+        return _genUrl(self.baseNodesPageUrl, pageParams);
+    };
+    self.browseNodesPagePrevUrl=function(){
+        return self.browseNodesPageUrl(self.page()-1);
+    };
+    self.browseNodesPageNextUrl=function(){
+        return self.browseNodesPageUrl(self.page()+1);
+    };
     self.updateNodesRemainingPages=function(){
         self.page(-1);
         self.updateMatchedNodes();
