@@ -230,13 +230,11 @@ function init() {
         }
     });
     nodeFilter.browse.subscribe(function(val){
-        //update browser history when inputting page number
+        //update browser history when a browse link is used, e.g. page number/page forward
         if(typeof(history.pushState)=='function' && val) {
-
             //push history state
             var oldparams=nodeFilter.getPageParams();
             var href=nodeFilter.getPageUrl();
-            console.log("pushState",oldparams);
             history.pushState(oldparams, document.title, href);
             nodeFilter.browse(false);
         }
