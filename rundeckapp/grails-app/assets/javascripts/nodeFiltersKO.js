@@ -730,7 +730,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         if(self.page()==newpage){
             return;
         }
-        if (!newpage || newpage + 1 >= self.maxPages() || newpage < 0) {
+        if (!newpage || newpage >= self.maxPages() || newpage < 0) {
             newpage=0;
         }
         self.pageDisplay(newpage+1);
