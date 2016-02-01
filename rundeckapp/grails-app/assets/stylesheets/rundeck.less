@@ -720,7 +720,7 @@ section{
   table.nodesTable th{
     .text-muted();
   }
-  table.nodesTable tbody.subattrs td{
+  table.nodesTable tbody.subattrs td,table.nodesTable tr.subattrs td{
     background-color: @table-bg-accent;
   }
 
@@ -1320,6 +1320,12 @@ section{
     color: #f66;
     content: " server " "\2022" " ";
     padding-left: 18px;
+  }
+  .text-parenthetical:before{
+    content: '(';
+  }
+  .text-parenthetical:after{
+    content: ')';
   }
 
   //search icons

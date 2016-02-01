@@ -11,11 +11,13 @@ import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource
 import com.dtolabs.rundeck.core.resources.FileResourceModelSourceFactory
+import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerator
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.shared.resources.ResourceXMLGenerator
 
 import grails.converters.JSON
+import grails.converters.XML
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.services.ApiService
@@ -286,6 +288,7 @@ class FrameworkController extends ControllerBase {
         def allnodes = [:]
         def totalexecs = [:]
         def total=0
+        def truncateMax=params.untruncate?-1: params.maxShown?params.int('maxShown'):100
         def allcount=null
         NodeSet nset = ExecutionService.filtersAsNodeSet(query)
         def projects=[]
@@ -294,6 +297,8 @@ class FrameworkController extends ControllerBase {
         def INodeSet nodeset
 
         INodeSet nodes1 = project.getNodeSet()
+
+//        System.err.println("nodesData getNodeSet: ${System.currentTimeMillisentTimeMillis()-mark}ms")
 //        allcount=nodes1.nodes.size()
         if(params.localNodeOnly){
             nodeset=new NodeSetImpl()
@@ -303,6 +308,7 @@ class FrameworkController extends ControllerBase {
             //match using nodeset unless all filters are blank
             try {
                 nodeset = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nset, nodes1)
+//                System.err.println("nodesData filter: ${System.currentTimeMillis()-mark}ms")
             } catch (PatternSyntaxException e) {
                 filterErrors['filter']=e.getMessage()
                 nodeset=new NodeSetImpl()
@@ -344,20 +350,19 @@ class FrameworkController extends ControllerBase {
 
         def tagsummary=frameworkService.summarizeTags(nodes)
         def count=0;
-
-        nodes.each{INodeEntry nd->
-            if(null!=nd){
-                if(page>=0 && (count<(page*max) || count >=((page+1)*max) && !remaining)){
-                    count++;
-                    return
-                }
-                count++;
-                allnodes[nd.nodename]=[node:nd,projects:[project],project:project,executions:[],resources:[],islocal:nd.nodename==framework.getFrameworkNodeName()]
-                if(params.requireRunAuth == 'true'  || runnodes.getNode(nd.nodename)){
-                    noderunauthmap[nd.nodename]=true
-                }
-
-
+        int first=page<0? 0 : page*max
+        int last=page<0 || remaining ? (nodes.size()) : ((page+1)*max)
+        def truncated=false
+        if(truncateMax>0 && last-first > truncateMax){
+            truncated=true
+            last=first+truncateMax
+        }
+        def nlist=new ArrayList<INodeEntry>(nodes)
+        for(int i=first;i < last && i<nodes.size();i++){
+            INodeEntry nd  = nlist[i]
+            allnodes[nd.nodename]=[node:nd,project:project.name,islocal:nd.nodename==framework.getFrameworkNodeName()]
+            if(params.requireRunAuth == 'true'  || runnodes.getNode(nd.nodename)){
+                noderunauthmap[nd.nodename]=true
             }
         }
         if(filterErrors){
@@ -405,7 +410,6 @@ class FrameworkController extends ControllerBase {
             
         }
 */
-        def resources=[:]
 
         def parseExceptions= project.projectNodes.getResourceModelSourceExceptions()
 
@@ -420,13 +424,13 @@ class FrameworkController extends ControllerBase {
 //            nodesfile:nodes1.file,
             params:params,
             total:total,
-            allcount:allcount,
+            allcount:total,
             tagsummary:tagsummary,
             page:page,
             max:max,
+            truncated:truncated,
 //            totalexecs:totalexecs,
 //            jobs:runningset.jobs,
-            resources:resources,
             query:query
         ]
 
@@ -474,19 +478,24 @@ class FrameworkController extends ControllerBase {
     /**
      * nodesFragment renders a set of nodes in HTML snippet, for ajax
      */
-    def nodesFragment(ExtNodeFilters query) {
+    def nodesFragmentData(ExtNodeFilters query) {
+        long start = System.currentTimeMillis()
         if (query.hasErrors()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
-            return renderErrorFragment(g.message(error: query.errors.allErrors.collect { g.message(error: it) }.join("; ")))
+            return renderErrorFragment(
+                    g.message(error: query.errors.allErrors.collect { g.message(error: it) }.join("; "))
+            )
         }
 
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
         if (unauthorizedResponse(
                 frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
-                        [AuthConstants.ACTION_READ],
-                        query.project),
-                AuthConstants.ACTION_READ, 'Project', 'nodes',true)) {
+                                                             [AuthConstants.ACTION_READ],
+                                                             query.project
+                ),
+                AuthConstants.ACTION_READ, 'Project', 'nodes', true
+        )) {
             return
         }
         def User u = userService.findOrCreateUser(session.user)
@@ -524,15 +533,52 @@ class FrameworkController extends ControllerBase {
         //in case named filter stored from another project
         query.project = params.project
         def result = nodesdata(query)
-        result.colkeys= filterSummaryKeys(query)
+        result.colkeys = filterSummaryKeys(query)
         if (usedFilter) {
             result['filterName'] = usedFilter
         }
-        if(!result.nodesvalid){
-            request.error="Error parsing file \"${result.nodesfile}\": "+result.nodeserror? result.nodeserror*.message?.join("\n"):'no message'
+        if (!result.nodesvalid) {
+            request.error = "Error parsing file \"${result.nodesfile}\": " + result.nodeserror ? result.nodeserror*.message?.
+                    join("\n") : 'no message'
         }
-        result['nodefilterLinkId']=params.nodefilterLinkId
+        result['nodefilterLinkId'] = params.nodefilterLinkId
+        return result
+    }
+
+    /**
+     * nodesFragment renders a set of nodes in HTML snippet, for ajax
+     */
+    def nodesFragment(ExtNodeFilters query) {
+        def result= nodesFragmentData(query)
         render(template:"allnodes",model: result)
+    }
+    /**
+     * nodesFragment renders a set of nodes in HTML snippet, for ajax
+     */
+    def nodesQueryAjax(ExtNodeFilters query) {
+        Map result= nodesFragmentData(query)
+        result.remove('selectedProject')
+        result.remove('query')
+        result.remove('params')
+        def nodes=result.remove('allnodes')
+        withFormat {
+            json{
+                return render ((result + [
+                        allnodes: nodes.collect{entry->
+                            [
+                                    nodename:entry.key,
+                                    islocal:entry.value.islocal,
+                                    tags:entry.value.node.tags,
+                                    attributes:entry.value.node.attributes,
+                                    authrun:result.nodeauthrun[entry.key]?true:false
+                            ]
+                        }
+                ]) as JSON)
+            }
+            xml{
+                return render (result as XML)
+            }
+        }
     }
 
     /**

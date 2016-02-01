@@ -105,14 +105,16 @@ function getCurSEID(){
         }
         function setupJobExecNodeFilterBinding(root,target,dataId){
             var filterParams = loadJsonData(dataId);
+            var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
             var jobRefNodeFilter = new NodeFilters(
                     appLinks.frameworkAdhoc,
                     appLinks.scheduledExecutionCreate,
                     appLinks.frameworkNodes,
                     Object.extend(filterParams, {
+                        nodeSummary:nodeSummary,
                         nodefilterLinkId:root,
-                        elem: target,
                         project: selFrameworkProject,
+                        maxShown:20,
                         view: 'embed',
                         emptyMode: 'blank',
                         emptyMessage: "${g.message(code: 'JobExec.property.nodeFilter.null.description')}",
@@ -137,13 +139,15 @@ function getCurSEID(){
 
             //define NodeFilters mvvm for the job
             var filterParams = loadJsonData('filterParamsJSON');
+            var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
             nodeFilter = new NodeFilters(
                     appLinks.frameworkAdhoc,
                     appLinks.scheduledExecutionCreate,
                     appLinks.frameworkNodes,
                     Object.extend(filterParams, {
+                        nodeSummary:nodeSummary,
+                        maxShown:100,
                         nodefilterLinkId: '#nodegroupitem',
-                         elem: 'matchednodes',
                          project: selFrameworkProject,
                          view:'embed',
                         nodesTitleSingular: "${g.message(code:'Node',default:'Node')}",
@@ -615,10 +619,11 @@ function getCurSEID(){
                     <g:message code="refresh" />
                     <i class="glyphicon glyphicon-refresh"></i>
                 </button>
-                <span class="matchednodes_show text-muted" style="display: none;">
-                    <span class="matchednodes_count "></span> <g:message code="nodes.matched" />
+                <span class="text-muted" >
+                    <span data-bind="messageTemplate: [total,nodesTitle]"><g:message code="count.nodes.matched"/></span>
                 </span>
                 <div id='matchednodes' class="clearfix">
+                    <g:render template="/framework/nodesEmbedKO" model="[showLoading:true,showTruncated:true]"/>
                 </div>
             </div>
         </div>

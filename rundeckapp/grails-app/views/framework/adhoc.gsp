@@ -65,7 +65,7 @@
                                           model="${[params: params, query: query]}"/>
                                     </div>
                                 <div class="form-group ">
-                                <label class="col-sm-2 text-right form-control-static" for="runFormExec">Command:</label>
+                                <label class="col-sm-2 text-right form-control-static" for="runFormExec"><g:message code="command.prompt" /></label>
                                 <div class=" col-sm-10"  id="adhocInput">
                                     <span class="input-group">
                                         <span class="input-group-btn">
@@ -85,7 +85,7 @@
                                                 <!-- /ko -->
 
                                                 <!-- ko if: recentCommandsLoaded() && !recentCommandsNoneFound() -->
-                                                <li role="presentation" class="dropdown-header">Your recently executed commands</li>
+                                                <li role="presentation" class="dropdown-header"><g:message code="your.recently.executed.commands" /></li>
                                                 <!-- /ko -->
 
                                                 <!-- ko foreach: recentCommands -->
@@ -102,7 +102,7 @@
 
                                             </ul>
                                         </span>
-                                    <g:textField name="exec" size="50" placeholder="Enter a command"
+                                    <g:textField name="exec" size="50" placeholder="${message(code:'enter.a.command')}"
                                                  value="${runCommand}"
                                                  id="runFormExec"
                                                  class="form-control"
@@ -112,7 +112,7 @@
 
                                     <span class="input-group-btn">
                                         <button class="btn btn-default has_tooltip" type="button"
-                                                title="Node Dispatch Settings"
+                                                title="${message(code:"node.dispatch.settings")}"
                                                 data-placement="left"
                                                 data-container="body"
                                                 data-toggle="collapse" data-target="#runconfig">
@@ -125,10 +125,10 @@
                                 <div class="collapse well well-sm inline form-inline" id="runconfig">
                                     <div class="row">
                                         <div class="col-sm-12">
-                                            <div class="form-group text-muted "><g:message code="node.dispatch.settings" /></div>
+                                            <div class="form-group text-muted "><g:message code="node.dispatch.settings" />:</div>
 
                                             <div class="form-group has_tooltip"
-                                                 title="Maximum number of parallel threads to use"
+                                                 title="${message(code:"maximum.number.of.parallel.threads.to.use")}"
                                                  data-placement="bottom">
                                                 <g:message code="thread.count" />
                                             </div>
@@ -137,7 +137,7 @@
                                                 <input min="1" type="number" name="nodeThreadcount"
                                                        id="runNodeThreadcount"
                                                        size="2"
-                                                       placeholder="Maximum threadcount for nodes" value="1"
+                                                       placeholder="${message(code:"maximum.threadcount.for.nodes")}" value="1"
                                                        class="form-control  input-sm"/>
                                             </div>
 
@@ -145,7 +145,7 @@
 
                                             <div class="radio">
                                                 <label class="has_tooltip"
-                                                       title="Continue to execute on other nodes"
+                                                       title="${message(code:"continue.to.execute.on.other.nodes")}"
                                                        data-placement="bottom">
                                                     <input type="radio" name="nodeKeepgoing"
                                                            value="true"
@@ -155,7 +155,7 @@
 
                                             <div class="radio">
                                                 <label class="has_tooltip"
-                                                       title="Do not execute on any other nodes"
+                                                       title="${message(code:"do.not.execute.on.any.other.nodes")}"
                                                        data-placement="bottom">
                                                     <input type="radio" name="nodeKeepgoing"
                                                            value="false"/> <strong><g:message code="stop" /></strong>
@@ -210,7 +210,7 @@
                         <div class="col-sm-10 col-sm-offset-2">
                             <div class="spacing text-warning" id="emptyerror"
                                  style="display: none"
-                                 data-bind="visible: !loading() && !error() && (!allcount() || allcount()==0)">
+                                 data-bind="visible: !loading() && !error() && (!total() || total()==0)">
                                 <span class="errormessage">
                                     <g:message code="no.nodes.selected.match.nodes.by.selecting.or.entering.a.filter" />
                                 </span>
@@ -223,20 +223,25 @@
 
                                 </span>
                             </div>
-                            <div data-bind="visible: allcount()>0 || loading()" class="well well-sm inline">
+                            <div data-bind="visible: total()>0 || loading()" class="well well-sm inline">
                                 <span data-bind="if: loading()" class="text-info">
                                     <i class="glyphicon glyphicon-time"></i>
                                     <g:message code="loading.matched.nodes" />
                                 </span>
                                 <span data-bind="if: !loading() && !error()">
-                                <span data-bind="text: allcount()">0</span>
-                                <span data-bind="text: nodesTitle"><g:message code="Node.plural" /></span> <g:message code="matched" />.
-                                <a class="textbtn textbtn-default pull-right" data-bind="click: nodesPageView">
-                                    <g:message code="view.in.nodes.page.prompt" />
-                                </a>
+
+                                    <span data-bind="messageTemplate: [ total(), nodesTitle() ]"><g:message code="count.nodes.matched" /></span>.
+
+                                    <span data-bind="if: total()>maxShown()">
+                                    <span data-bind="messageTemplate: [maxShown(), total()]" class="text-muted"><g:message code="count.nodes.shown" /></span>
+                                    </span>
+                                    <a class="textbtn textbtn-default pull-right" data-bind="click: nodesPageView">
+                                        <g:message code="view.in.nodes.page.prompt" />
+                                    </a>
                                 </span>
                             </div>
-                            <span id="${enc(attr:ukey)}nodeForm">
+                            <span >
+                                <g:render template="nodesEmbedKO"/>
                             </span>
                         </div>
                     </div>
@@ -245,9 +250,12 @@
                 <div class="col-sm-2" id="actionButtonArea" >
 
                     <button class="btn btn-success runbutton pull-right"
-                            data-bind="attr: { disabled: allcount()<1 || error() } "
-                            onclick="runFormSubmit('runbox');" data-loading-text="Running…">
-                        <g:message code="run.on" /> <span data-bind="text: allcount">0</span> <span data-bind="text: nodesTitle"><g:message code="Node.plural" /></span> <span class="glyphicon glyphicon-play"></span>
+                            data-bind="attr: { disabled: total()<1 || error() } "
+                            onclick="runFormSubmit('runbox');" data-loading-text="${message(code:"running1")}">
+
+                        <span data-bind="messageTemplate: [ total(), nodesTitle() ] "><g:message code="run.on.count.nodes" /></span>
+
+                        <span class="glyphicon glyphicon-play"></span>
                     </button>
                 </div>
                 </g:ifExecutionMode>
