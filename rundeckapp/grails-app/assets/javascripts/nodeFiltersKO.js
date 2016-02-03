@@ -734,7 +734,6 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             newpage=0;
         }
         self.pageDisplay(newpage+1);
-        self.updateMatchedNodes();
     };
     self.browseNodesPageNext=function(){
         if(self.page()+ 1<self.maxPages()) {
