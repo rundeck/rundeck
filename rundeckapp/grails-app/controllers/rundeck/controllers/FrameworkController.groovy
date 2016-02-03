@@ -303,9 +303,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def project = framework.getFrameworkProjectMgr().getFrameworkProject(query.project)
         def INodeSet nodeset
 
+        long mark=System.currentTimeMillis()
         INodeSet nodes1 = project.getNodeSet()
 
-//        System.err.println("nodesData getNodeSet: ${System.currentTimeMillisentTimeMillis()-mark}ms")
 //        allcount=nodes1.nodes.size()
         if(params.localNodeOnly){
             nodeset=new NodeSetImpl()
@@ -315,7 +315,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             //match using nodeset unless all filters are blank
             try {
                 nodeset = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nset, nodes1)
-//                System.err.println("nodesData filter: ${System.currentTimeMillis()-mark}ms")
             } catch (PatternSyntaxException e) {
                 filterErrors['filter']=e.getMessage()
                 nodeset=new NodeSetImpl()
@@ -331,8 +330,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 //            nodes = nodes.sort { INodeEntry a, INodeEntry b -> return a.nodename.compareTo(b.nodename) }
         //filter nodes by read authorization
 
+        mark=System.currentTimeMillis()
         def readnodes = frameworkService.filterAuthorizedNodes(query.project, ['read'] as Set, nodeset, authContext)
+        log.debug("nodesData filterAuthorizedNodes[read]: ${System.currentTimeMillis()-mark}ms")
+        mark=System.currentTimeMillis()
         def runnodes = frameworkService.filterAuthorizedNodes(query.project, ['run'] as Set, readnodes, authContext)
+        log.debug("nodesData filterAuthorizedNodes[run]: ${System.currentTimeMillis()-mark}ms")
         def noderunauthmap = [:]
 
 
