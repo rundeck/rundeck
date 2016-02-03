@@ -84,7 +84,7 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
      */
     private FilesystemFramework filesystemFramework;
     private Framework framework;
-    private IProjectNodes projectNodes;
+    private IProjectNodesFactory projectNodesFactory;
     private Authorization projectAuthorization;
     private IRundeckProjectConfig projectConfig;
     private IRundeckProjectConfigModifier projectConfigModifier;
@@ -176,33 +176,53 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
      */
     @Override
     public synchronized List<Map<String, Object>> listResourceModelConfigurations(){
-        return projectNodes.listResourceModelConfigurations();
+        return getProjectNodes().listResourceModelConfigurations();
     }
 
     /**
-     * @return Create a new Project object at the specified projects.directory
-     * @param name project name
+     * @param name        project name
      * @param projectsDir projects dir
      * @param resourceMgr resourcemanager
+     *
+     * @return Create a new Project object at the specified projects.directory
      */
-    public static FrameworkProject create(final String name, final File projectsDir,final FilesystemFramework filesystemFramework, final IFrameworkProjectMgr resourceMgr) {
-        return FrameworkFactory.createFrameworkProject(name,new File(projectsDir, name),filesystemFramework,resourceMgr,null);
+    public static FrameworkProject create(
+            final String name,
+            final File projectsDir,
+            final FilesystemFramework filesystemFramework,
+            final IFrameworkProjectMgr resourceMgr,
+            IProjectNodesFactory nodesFactory
+    )
+    {
+        return FrameworkFactory.createFrameworkProject(name,
+                                                       new File(projectsDir, name),
+                                                       filesystemFramework,
+                                                       resourceMgr,
+                                                       nodesFactory,
+                                                       null);
     }
+
     /**
-     * @return Create a new Project object at the specified projects.directory
-     * @param name project name
+     * @param name        project name
      * @param projectsDir projects dir
      * @param resourceMgr resourcemanager
-     * @param properties project properties
+     *
+     * @return Create a new Project object at the specified projects.directory
      */
-    public static FrameworkProject create(final String name, final File projectsDir,final FilesystemFramework filesystemFramework, final IFrameworkProjectMgr resourceMgr, final Properties properties) {
-
+    public static FrameworkProject create(
+            final String name,
+            final File projectsDir,
+            final FilesystemFramework filesystemFramework,
+            final IFrameworkProjectMgr resourceMgr
+    )
+    {
         return FrameworkFactory.createFrameworkProject(
                 name,
                 new File(projectsDir, name),
                 filesystemFramework,
                 resourceMgr,
-                properties
+                FrameworkFactory.createNodesFactory(filesystemFramework),
+                null
         );
     }
 
@@ -268,7 +288,7 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
      */
     @Override
     public INodeSet getNodeSet() throws NodeFileParserException {
-        return projectNodes.getNodeSet();
+        return getProjectNodes().getNodeSet();
     }
 
     /**
@@ -281,7 +301,7 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
      */
     @Override
     public boolean updateNodesResourceFile() throws UpdateUtils.UpdateException {
-        return projectNodes.updateNodesResourceFile(ProjectNodeSupport.getNodesResourceFilePath(this, framework));
+        return getProjectNodes().updateNodesResourceFile(ProjectNodeSupport.getNodesResourceFilePath(this, framework));
     }
 
     /**
@@ -298,7 +318,7 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
             final String password
     ) throws UpdateUtils.UpdateException
     {
-        projectNodes.updateNodesResourceFileFromUrl(
+        getProjectNodes().updateNodesResourceFileFromUrl(
                 providerURL,
                 username,
                 password,
@@ -317,7 +337,7 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
      */
     @Override
     public void updateNodesResourceFile(final INodeSet nodeset) throws UpdateUtils.UpdateException {
-       projectNodes.updateNodesResourceFile(nodeset,ProjectNodeSupport.getNodesResourceFilePath(this, framework));
+       getProjectNodes().updateNodesResourceFile(nodeset,ProjectNodeSupport.getNodesResourceFilePath(this, framework));
     }
 
 
@@ -437,7 +457,7 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
      * @return the set of exceptions produced by the last attempt to invoke all node providers
      */
     public ArrayList<Exception> getResourceModelSourceExceptions() {
-        return projectNodes.getResourceModelSourceExceptions();
+        return getProjectNodes().getResourceModelSourceExceptions();
     }
 
     public Framework getFramework() {
@@ -448,13 +468,10 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
         this.framework = framework;
     }
 
+
     @Override
     public IProjectNodes getProjectNodes() {
-        return projectNodes;
-    }
-
-    public void setProjectNodes(final IProjectNodes projectNodes) {
-        this.projectNodes = projectNodes;
+        return projectNodesFactory.getNodes(getName());
     }
 
     @Override
@@ -464,5 +481,9 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
 
     public void setProjectAuthorization(Authorization projectAuthorization) {
         this.projectAuthorization = projectAuthorization;
+    }
+
+    public void setProjectNodesFactory(IProjectNodesFactory projectNodesFactory) {
+        this.projectNodesFactory = projectNodesFactory;
     }
 }

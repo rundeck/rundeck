@@ -30,22 +30,36 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
     public static final Logger log = Logger.getLogger(FrameworkProjectMgr.class);
 
     private final FilesystemFramework filesystemFramework;
-
+    private IProjectNodesFactory nodesFactory;
 
 
     /**
      * Base constructor
      *
-     * @param name       Name of manager. informational purposes
-     * @param baseDir    Basedir where child resources live
-     * @param filesystemFramework  Framework instance
+     * @param name                Name of manager. informational purposes
+     * @param baseDir             Basedir where child resources live
+     * @param filesystemFramework Framework instance
      */
-    FrameworkProjectMgr(final String name, final File baseDir, final FilesystemFramework filesystemFramework) {
+    FrameworkProjectMgr(
+            final String name,
+            final File baseDir,
+            final FilesystemFramework filesystemFramework,
+            final IProjectNodesFactory nodesFactory
+    )
+    {
         super(name, baseDir, null);
         this.filesystemFramework = filesystemFramework;
+        this.nodesFactory=nodesFactory;
     }
-    static FrameworkProjectMgr create(final String name, final File baseDir, final Framework framework) {
-        return FrameworkFactory.createProjectManager(baseDir, framework.getFilesystemFramework());
+
+    static FrameworkProjectMgr create(
+            final String name,
+            final File baseDir,
+            final Framework framework,
+            final IProjectNodesFactory nodesFactory
+    )
+    {
+        return FrameworkFactory.createProjectManager(baseDir, framework.getFilesystemFramework(), nodesFactory);
     }
 
 
@@ -120,6 +134,7 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
                     new File(getBaseDir(), projectName),
                     filesystemFramework,
                     this,
+                    nodesFactory,
                     properties
             );
 

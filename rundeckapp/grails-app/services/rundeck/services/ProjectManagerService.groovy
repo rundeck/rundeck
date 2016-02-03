@@ -53,6 +53,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     ApplicationContext applicationContext
     def grailsApplication
     def metricService
+    def nodeService
     /**
      * Scheduled executor for retries
      */
@@ -358,6 +359,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def resource = writeProjectFileResource(projectName, storagePath, bais, metadata)
 
         projectCache.invalidate(projectName)
+        nodeService.expireProjectNodes(projectName)
         return [
                 config      : properties,
                 lastModified: resource.contents.modificationTime,
@@ -370,6 +372,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             log.error("Failed to delete all associated resources for project ${projectName}")
         }
         projectCache.invalidate(projectName)
+        nodeService.expireProjectNodes(projectName)
     }
 
     private IPropertyLookup createProjectPropertyLookup(String projectName, Properties config) {
@@ -407,6 +410,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         )
 
         def newproj= new RundeckProject(rdprojectconfig, this)
+        newproj.projectNodes = nodeService.getNodes(projectName)
         return newproj
     }
 
@@ -443,6 +447,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                                                        resource.lastModified
         )
         project.projectConfig=rdprojectconfig
+        project.projectNodes = nodeService.getNodes(project.name)
     }
 
     Map mergeProjectProperties(
@@ -460,6 +465,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         Properties newprops = mergeProperties(removePrefixes, oldprops, properties)
         Map newres=storeProjectConfig(projectName, newprops)
         projectCache.invalidate(projectName)
+        nodeService.expireProjectNodes(projectName)
         newres
     }
 
@@ -493,6 +499,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                                                        resource.lastModified
         )
         project.projectConfig=rdprojectconfig
+        project.projectNodes = nodeService.getNodes(project.name)
     }
     Map setProjectProperties(final String projectName, final Properties properties) {
         Project found = Project.findByName(projectName)
@@ -501,6 +508,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         }
         Map resource=storeProjectConfig(projectName, properties)
         projectCache.invalidate(projectName)
+        nodeService.expireProjectNodes(projectName)
         resource
     }
     //basic creation, created via spec string in afterPropertiesSet()
@@ -587,6 +595,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      */
     IRundeckProject loadProject(final String project) {
         def rdproject = new RundeckProject(loadProjectConfig(project), this)
+        rdproject.projectNodes = nodeService.getNodes(project)
         return rdproject
     }
 
