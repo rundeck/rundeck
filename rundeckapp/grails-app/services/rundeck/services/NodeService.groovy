@@ -29,9 +29,9 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
     public static final String PROJECT_NODECACHE_DELAY = 'project.nodeCache.delay'
     public static final String PROJECT_NODECACHE_ENABLED = 'project.nodeCache.enabled'
     static transactional = false
-    def grailsApplication
     def metricService
     def frameworkService
+    def configurationService
 
     String category='resourceModelSource'
 
@@ -78,8 +78,7 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
 
     @Override
     void afterPropertiesSet() throws Exception {
-        def spec = grailsApplication.config.rundeck?.nodeService?.nodeCache?.spec ?:
-                "refreshAfterWrite=30s"
+        def spec = configurationService.getCacheSpecFor('nodeService','nodeCache', "refreshAfterWrite=30s")
 
         log.debug("nodeCache: creating from spec: ${spec}")
 
@@ -110,7 +109,7 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
         Util.addCacheMetrics(this.class.name + ".nodeCache", registry, nodeCache)
     }
     boolean isCacheEnabled(IRundeckProjectConfig projectConfig){
-        def globalEnabled = grailsApplication.config.rundeck?.nodeService?.nodeCache?.enabled || grailsApplication.config.feature?.incubator?.nodeCache
+        def globalEnabled = configurationService.getCacheEnabledFor('nodeService','nodeCache', true)
         return globalEnabled && projectNodeCacheEnabledConfig(projectConfig)
     }
 
