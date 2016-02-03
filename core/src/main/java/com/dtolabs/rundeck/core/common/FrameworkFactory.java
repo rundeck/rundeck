@@ -217,6 +217,29 @@ public class FrameworkFactory {
     }
 
     /**
+     *
+     * @param projectName
+     * @param baseDir project base directory
+     * @param filesystemFramework
+     * @param properties
+     * @return
+     */
+    public static FrameworkProjectConfig loadFrameworkProjectConfig(
+            final String projectName,
+            final File baseDir,
+            final FilesystemFramework filesystemFramework,
+            final Properties properties
+    )
+    {
+        return FrameworkProjectConfig.create(
+                projectName,
+                FrameworkProject.getProjectPropertyFile(baseDir),
+                properties,
+                filesystemFramework
+        );
+    }
+
+    /**
      * Return true if the config has values for each config
      * @param config config
      * @return true if valid values are found

@@ -75,8 +75,6 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
 
     private final IFrameworkProjectMgr projectResourceMgr;
 
-    private final File propertyFile;
-
     /**
      * reference to PropertyLookup object providing access to project.properties
      */
@@ -84,11 +82,13 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
     /**
      * Direct projec properties
      */
-    private PropertyLookup projectLookup;
     private FilesystemFramework filesystemFramework;
     private Framework framework;
     private IProjectNodes projectNodes;
     private Authorization projectAuthorization;
+    private IRundeckProjectConfig projectConfig;
+    private IRundeckProjectConfigModifier projectConfigModifier;
+
 
     /**
      * Constructor
@@ -96,32 +96,15 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
      * @param name        Name of the project
      * @param basedir     the base directory for the Depot
      * @param resourceMgr manager
-     */
-    public FrameworkProject(
-            final String name,
-            final File basedir,
-            final FilesystemFramework filesystemFramework,
-            final IFrameworkProjectMgr resourceMgr
-    )
-    {
-
-        this(name, basedir, filesystemFramework, resourceMgr, null);
-    }
-
-    /**
-     * Constructor
-     *
-     * @param name        Name of the project
-     * @param basedir     the base directory for the Depot
-     * @param resourceMgr manager
-     * @param properties  properties
+     * @param projectConfig  config
      */
     public FrameworkProject(
             final String name,
             final File basedir,
             final FilesystemFramework filesystemFramework,
             final IFrameworkProjectMgr resourceMgr,
-            final Properties properties
+            final IRundeckProjectConfig projectConfig,
+            final IRundeckProjectConfigModifier projectConfigModifier
     )
     {
 
@@ -139,138 +122,49 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
             }
         }
 
-        propertyFile = getProjectPropertyFile(getBaseDir());
-        if (!propertyFile.exists()) {
-            generateProjectPropertiesFile(false, properties, true);
-        }
-        loadProperties();
-
-
+        this.projectConfig=projectConfig;
+        this.projectConfigModifier=projectConfigModifier;
         initialize();
     }
 
     /**
      * Get the etc dir from the basedir
      */
-    private static File getProjectEtcDir(File baseDir) {
+    public static File getProjectEtcDir(File baseDir) {
         return new File(baseDir, ETC_DIR_NAME);
     }
 
     /**
      * Get the project property file from the basedir
      */
-    private static File getProjectPropertyFile(File baseDir) {
+    public static File getProjectPropertyFile(File baseDir) {
         return new File(getProjectEtcDir(baseDir), PROP_FILENAME);
     }
 
-    private long propertiesLastReload=0L;
-    private synchronized void checkReloadProperties(){
-        if (needsPropertiesReload()) {
-            loadProperties();
-        }
+    @Override
+    public String getProperty(final String name) {
+        return projectConfig.getProperty(name);
     }
 
-    private boolean needsPropertiesReload() {
-        final File fwkProjectPropertyFile = getFrameworkPropertyFile();
-        final long fwkPropsLastModified = fwkProjectPropertyFile.lastModified();
-        if (propertyFile.exists()) {
-            return propertyFile.lastModified() > propertiesLastReload || fwkPropsLastModified > propertiesLastReload;
-        } else {
-            return fwkPropsLastModified > propertiesLastReload;
-        }
-    }
-    private synchronized void loadProperties() {
-        //generic framework properties for a project
-        final File fwkProjectPropertyFile = getFrameworkPropertyFile();
-
-        lookup = createProjectPropertyLookup(
-                filesystemFramework,
-                getName()
-        );
-        projectLookup = createDirectProjectPropertyLookup(
-                filesystemFramework,
-                getName()
-        );
-
-        if (propertyFile.exists()) {
-            getLogger().debug("loading existing project.properties: " + propertyFile.getAbsolutePath());
-            final long fwkPropsLastModified = fwkProjectPropertyFile.lastModified();
-            final long propsLastMod = propertyFile.lastModified();
-            propertiesLastReload = propsLastMod > fwkPropsLastModified ? propsLastMod : fwkPropsLastModified;
-        } else {
-            getLogger().debug("loading instance-level project.properties: " + propertyFile.getAbsolutePath());
-            propertiesLastReload = fwkProjectPropertyFile.lastModified();
-        }
+    @Override
+    public boolean hasProperty(final String key) {
+        return projectConfig.hasProperty(key);
     }
 
-    private File getFrameworkPropertyFile() {
-        return new File(
-                    filesystemFramework.getConfigDir(),
-                    PROP_FILENAME
-            );
+    @Override
+    public Map<String, String> getProperties() {
+        return projectConfig.getProperties();
     }
 
-    /**
-     * Create PropertyLookup for a project from the framework basedir
-     *
-     * @param filesystemFramework the filesystem
-     */
-    private static PropertyLookup createProjectPropertyLookup(FilesystemFramework filesystemFramework, String projectName) {
-        PropertyLookup lookup;
-        final Properties ownProps = new Properties();
-        ownProps.setProperty("project.name", projectName);
-
-        File baseDir=filesystemFramework.getBaseDir();
-        File projectsBaseDir=filesystemFramework.getFrameworkProjectsBaseDir();
-        //generic framework properties for a project
-        final File fwkProjectPropertyFile = FilesystemFramework.getPropertyFile(filesystemFramework.getConfigDir());
-        final Properties nodeWideDepotProps = PropertyLookup.fetchProperties(fwkProjectPropertyFile);
-        nodeWideDepotProps.putAll(ownProps);
-
-        final File propertyFile = getProjectPropertyFile(new File(projectsBaseDir, projectName));
-
-        if (propertyFile.exists()) {
-            lookup = PropertyLookup.create(propertyFile,
-                    nodeWideDepotProps, FilesystemFramework.createPropertyLookupFromBasedir(baseDir));
-        } else {
-            lookup = PropertyLookup.create(fwkProjectPropertyFile,
-                    ownProps, FilesystemFramework.createPropertyLookupFromBasedir(baseDir));
-        }
-        lookup.expand();
-        return lookup;
-    }
-    /**
-     * Create PropertyLookup for a project from the framework basedir
-     *
-     * @param filesystemFramework the filesystem
-     */
-    private static PropertyLookup createDirectProjectPropertyLookup(FilesystemFramework filesystemFramework, String projectName) {
-        PropertyLookup lookup;
-        final Properties ownProps = new Properties();
-        ownProps.setProperty("project.name", projectName);
-
-        File projectsBaseDir=filesystemFramework.getFrameworkProjectsBaseDir();
-        //generic framework properties for a project
-
-        final File propertyFile = getProjectPropertyFile(new File(projectsBaseDir, projectName));
-        final Properties projectProps = PropertyLookup.fetchProperties(propertyFile);
-
-        lookup = PropertyLookup.create(projectProps, PropertyLookup.create(ownProps));
-        lookup.expand();
-        return lookup;
+    @Override
+    public Map<String, String> getProjectProperties() {
+        return projectConfig.getProjectProperties();
     }
 
-    /**
-     * @return Create a property retriever for a project given the framework basedir
-     *
-     * @param filesystemFramework filesystem
-     * @param projectName name of project
-     */
-    public static PropertyRetriever createProjectPropertyRetriever(FilesystemFramework filesystemFramework, String projectName) {
-        return createProjectPropertyLookup(filesystemFramework, projectName).safe();
+    @Override
+    public Date getConfigLastModifiedTime() {
+        return projectConfig.getConfigLastModifiedTime();
     }
-
-
 
     /**
      * list the configurations of resource model providers.
@@ -348,9 +242,6 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
     }
 
 
-    public File getPropertyFile() {
-        return propertyFile;
-    }
 
     public IFrameworkProjectMgr getFrameworkProjectMgr() {
         return projectResourceMgr;
@@ -429,42 +320,6 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
        projectNodes.updateNodesResourceFile(nodeset,ProjectNodeSupport.getNodesResourceFilePath(this, framework));
     }
 
-
-
-    /**
-     * @return the property value by name
-     * @param name property name
-     */
-    @Override
-    public synchronized String getProperty(final String name) {
-        checkReloadProperties();
-        return lookup.getProperty(name);
-    }
-
-
-    @Override
-    public synchronized boolean hasProperty(final String key) {
-        checkReloadProperties();
-        return lookup.hasProperty(key);
-    }
-    @Override
-    public Map<String,String> getProperties() {
-        return lookup.getPropertiesMap();
-    }
-
-    @Override
-    public Map<String,String> getProjectProperties() {
-        return projectLookup.getPropertiesMap();
-    }
-
-
-    /**
-     * @return a PropertyRetriever interface for project-scoped properties
-     */
-    public synchronized PropertyRetriever getPropertyRetriever() {
-        checkReloadProperties();
-        return lookup.safe();
-    }
 
 
    /**
@@ -546,117 +401,8 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
         }
     }
 
-    /**
-     * Create project.properties file based on $RDECK_BASE/etc/project.properties
-     * @param overwrite Overwrite existing properties file
-     */
-    protected void generateProjectPropertiesFile(final boolean overwrite) {
-        generateProjectPropertiesFile(overwrite, null, false);
-    }
-
-    /**
-     * Create project.properties file based on $RDECK_BASE/etc/project.properties
-     *
-     * @param overwrite Overwrite existing properties file
-     * @param properties properties
-     * @param addDefaultProps true to add default properties
-     */
-    protected void generateProjectPropertiesFile(final boolean overwrite, final Properties properties, boolean
-            addDefaultProps) {
-        generateProjectPropertiesFile(overwrite, properties, false, null, addDefaultProps);
-    }
-
-    /**
-     * Create project.properties file based on $RDECK_BASE/etc/project.properties
-     *
-     * @param overwrite Overwrite existing properties file
-     * @param properties properties to use
-     * @param merge if true, merge existing properties that are not replaced
-     * @param removePrefixes set of property prefixes to remove from original
-     * @param addDefaultProps true to add default properties
-     */
-    protected void generateProjectPropertiesFile(final boolean overwrite, final Properties properties,
-            final boolean merge, final Set<String> removePrefixes, boolean addDefaultProps) {
-        final File destfile = getPropertyFile();
-        if (destfile.exists() && !overwrite) {
-            return;
-        }
-        final Properties newProps = new Properties();
-        newProps.setProperty("project.name", getName());
-
-        //TODO: improve default configuration generation
-        if(addDefaultProps){
-            if (null == properties || !properties.containsKey("resources.source.1.type") ) {
-                //add default file source
-                newProps.setProperty("resources.source.1.type", "file");
-                newProps.setProperty("resources.source.1.config.file", new File(getEtcDir(), "resources.xml").getAbsolutePath());
-                newProps.setProperty("resources.source.1.config.includeServerNode", "true");
-                newProps.setProperty("resources.source.1.config.generateFileAutomatically", "true");
-            }
-            if(null==properties || !properties.containsKey("service.NodeExecutor.default.provider")) {
-                newProps.setProperty("service.NodeExecutor.default.provider", "jsch-ssh");
-            }
-            if(null==properties || !properties.containsKey("service.FileCopier.default.provider")) {
-                newProps.setProperty("service.FileCopier.default.provider", "jsch-scp");
-            }
-            if (null == properties || !properties.containsKey("project.ssh-keypath")) {
-                newProps.setProperty("project.ssh-keypath", new File(System.getProperty("user.home"),
-                        ".ssh/id_rsa").getAbsolutePath());
-            }
-            if(null==properties || !properties.containsKey("project.ssh-authentication")) {
-                newProps.setProperty("project.ssh-authentication", "privateKey");
-            }
-        }
-        if(merge) {
-            final Properties orig = new Properties();
-
-            if(destfile.exists()){
-                try {
-                    final FileInputStream fileInputStream = new FileInputStream(destfile);
-                    try {
-                        orig.load(fileInputStream);
-                    } finally {
-                        fileInputStream.close();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            //add all original properties that are not in the incoming  properties, and are not
-            //matched by one of the remove prefixes
-            entry: for (final Object o : orig.entrySet()) {
-                Map.Entry entry=(Map.Entry) o;
-                //determine if
-                final String key = (String) entry.getKey();
-                if (null != removePrefixes) {
-                    for (final String replacePrefix : removePrefixes) {
-                        if (key.startsWith(replacePrefix)) {
-                            //skip this key
-                            continue entry;
-                        }
-                    }
-                }
-                newProps.put(entry.getKey(), entry.getValue());
-            }
-        }
-        //overwrite original with the input properties
-        if (null != properties) {
-            newProps.putAll(properties);
-        }
-
-        try {
-            final FileOutputStream fileOutputStream = new FileOutputStream(destfile);
-            try {
-                newProps.store(fileOutputStream, "Project " + getName() + " configuration, generated");
-            } finally {
-                fileOutputStream.close();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        loadProperties();
-        getLogger().debug("generated project.properties: " + destfile.getAbsolutePath());
+    protected void generateProjectPropertiesFile(boolean overwrite, Properties properties, boolean addDefault){
+        projectConfigModifier.generateProjectPropertiesFile(overwrite, properties, addDefault);
     }
     /**
      * Update the project properties file by setting updating the given properties, and removing
@@ -666,7 +412,7 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
      */
     @Override
     public void mergeProjectProperties(final Properties properties, final Set<String> removePrefixes) {
-        generateProjectPropertiesFile(true, properties, true, removePrefixes, false);
+        projectConfigModifier.mergeProjectProperties(properties, removePrefixes);
     }
     /**
      * Set the project properties file contents exactly
@@ -674,13 +420,9 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
      */
     @Override
     public void setProjectProperties(final Properties properties) {
-        generateProjectPropertiesFile(true, properties, false, null, false);
+        projectConfigModifier.setProjectProperties(properties);
     }
 
-    @Override
-    public Date getConfigLastModifiedTime() {
-        return new Date(getPropertyFile().lastModified());
-    }
 
     /**
      * Checks if project is installed by checking if it's basedir directory exists.

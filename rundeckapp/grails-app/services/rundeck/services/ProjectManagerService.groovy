@@ -10,6 +10,7 @@ import com.dtolabs.rundeck.core.authorization.providers.Policies
 import com.dtolabs.rundeck.core.authorization.providers.PoliciesCache
 import com.dtolabs.rundeck.core.authorization.providers.YamlProvider
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.storage.ResourceMeta
@@ -18,6 +19,7 @@ import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.dtolabs.rundeck.server.projects.RundeckProject
+import com.dtolabs.rundeck.server.projects.RundeckProjectConfig
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
@@ -398,13 +400,14 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             project.save()
         }
         def res = storeProjectConfig(projectName, properties)
-        return new RundeckProject(
-                projectName,
-                createProjectPropertyLookup(projectName, res.config),
-                createDirectProjectPropertyLookup(projectName, res.config),
-                this,
-                res.lastModified
+        def rdprojectconfig = new RundeckProjectConfig(projectName,
+                                                       createProjectPropertyLookup(projectName, res.config ?: new Properties()),
+                                                       createDirectProjectPropertyLookup(projectName, res.config ?: new Properties()),
+                                                       res.lastModified
         )
+
+        def newproj= new RundeckProject(rdprojectconfig, this)
+        return newproj
     }
 
     @Override
@@ -434,9 +437,12 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     )
     {
         def resource=mergeProjectProperties(project.name,properties,removePrefixes)
-        project.lookup = createProjectPropertyLookup(project.name, resource.config ?: new Properties())
-        project.projectLookup = createDirectProjectPropertyLookup(project.name, resource.config ?: new Properties())
-        project.lastModifiedTime = resource.lastModified
+        def rdprojectconfig = new RundeckProjectConfig(project.name,
+                                                       createProjectPropertyLookup(project.name, resource.config ?: new Properties()),
+                                                       createDirectProjectPropertyLookup(project.name, resource.config ?: new Properties()),
+                                                       resource.lastModified
+        )
+        project.projectConfig=rdprojectconfig
     }
 
     Map mergeProjectProperties(
@@ -481,9 +487,12 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
     void setProjectProperties(final RundeckProject project, final Properties properties) {
         def resource=setProjectProperties(project.name,properties)
-        project.lookup = createProjectPropertyLookup(project.name, resource.config ?: new Properties())
-        project.projectLookup = createDirectProjectPropertyLookup(project.name, resource.config ?: new Properties())
-        project.lastModifiedTime = resource.lastModified
+        def rdprojectconfig = new RundeckProjectConfig(project.name,
+                                                       createProjectPropertyLookup(project.name, resource.config ?: new Properties()),
+                                                       createDirectProjectPropertyLookup(project.name, resource.config ?: new Properties()),
+                                                       resource.lastModified
+        )
+        project.projectConfig=rdprojectconfig
     }
     Map setProjectProperties(final String projectName, final Properties properties) {
         Project found = Project.findByName(projectName)
@@ -553,26 +562,31 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      * @param project
      * @return
      */
-    IRundeckProject loadProject(final String project) {
+    IRundeckProjectConfig loadProjectConfig(final String project) {
         if (!existsFrameworkProject(project)) {
             throw new IllegalArgumentException("Project does not exist: " + project)
         }
         def resource = loadProjectConfigResource(project)
-        def rdproject = new RundeckProject(
-                project,
-                createProjectPropertyLookup(project, resource.config ?: new Properties()),
-                createDirectProjectPropertyLookup(project, resource.config ?: new Properties()),
-                this,
-                resource.lastModified
+        def rdprojectconfig = new RundeckProjectConfig(project,
+                                                 createProjectPropertyLookup(
+                                                         project,
+                                                         resource.config ?: new Properties()
+                                                 ),
+                                                 createDirectProjectPropertyLookup(
+                                                         project,
+                                                         resource.config ?: new Properties()
+                                                 ),
+                                                 resource.lastModified
         )
-
-        def framework = frameworkService.getRundeckFramework()
-        def nodes = new ProjectNodeSupport(
-                rdproject,
-                framework.getResourceFormatGeneratorService(),
-                framework.getResourceModelSourceService()
-        )
-        rdproject.projectNodes = nodes
+        return rdprojectconfig
+    }
+    /**
+     * Load the project config and node support
+     * @param project
+     * @return
+     */
+    IRundeckProject loadProject(final String project) {
+        def rdproject = new RundeckProject(loadProjectConfig(project), this)
         return rdproject
     }
 

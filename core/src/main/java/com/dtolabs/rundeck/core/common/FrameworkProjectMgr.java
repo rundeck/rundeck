@@ -160,6 +160,16 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
         }
     }
 
+    @Override
+    public IRundeckProjectConfig loadProjectConfig(final String projectName) {
+        return FrameworkFactory.loadFrameworkProjectConfig(
+                projectName,
+                new File(getBaseDir(), projectName),
+                filesystemFramework,
+                null
+        );
+    }
+
     /**
      * @return true if project exists in framework.
      *
