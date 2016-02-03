@@ -9,6 +9,9 @@ import com.dtolabs.rundeck.core.common.ProviderService
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
+import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource
 import com.dtolabs.rundeck.core.resources.FileResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerator
@@ -18,11 +21,14 @@ import com.dtolabs.shared.resources.ResourceXMLGenerator
 
 import grails.converters.JSON
 import grails.converters.XML
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
 import rundeck.services.PasswordFieldsService
+import rundeck.services.framework.RundeckProjectConfigurable
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -55,7 +61,7 @@ import rundeck.services.FrameworkService
 import rundeck.services.UserService
 import rundeck.filters.ApiRequestFilters
 
-class FrameworkController extends ControllerBase {
+class FrameworkController extends ControllerBase implements ApplicationContextAware {
     FrameworkService frameworkService
     ExecutionService executionService
     UserService userService
@@ -68,6 +74,7 @@ class FrameworkController extends ControllerBase {
     def ApiService apiService
     def configStorageService
     def AuthorizationService authorizationService
+    def ApplicationContext applicationContext
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
@@ -827,6 +834,40 @@ class FrameworkController extends ControllerBase {
                 configs << [type: type, props: props]
             }
         }
+
+        //load extra configuration for grails services
+
+        Map<String,RundeckProjectConfigurable> projectConfigurableBeans=applicationContext.getBeansOfType(RundeckProjectConfigurable)
+
+        Map<String,Map> extraConfig=[:]
+        projectConfigurableBeans.each { k, RundeckProjectConfigurable v ->
+            //construct input values for the bean
+            def beanData=[
+                    configurable:v,
+                    prefix:"extraConfig.${k}"
+            ]
+            def input=params.extraConfig."${k}"
+            beanData.values=input
+
+            v.getProjectConfigProperties().findAll{it.type==Property.Type.Boolean}.each{
+                if(input[it.name]!='true'){
+                    input[it.name]='false'
+                }
+            }
+            //validate
+            def report=Validator.validate(input as Properties, v.projectConfigProperties)
+            beanData.report=report
+            if(!report.valid){
+                errors << ("Some configuration was invalid: "+ report )
+                extraConfig[k]=beanData
+            }else{
+                def projvalues = Validator.performMapping(input, v.getPropertiesMapping(),true)
+
+                projProps.putAll(projvalues)
+            }
+        }
+
+
         if (!project) {
             projectNameError = "Project name is required"
             errors << projectNameError
@@ -869,7 +910,9 @@ class FrameworkController extends ControllerBase {
                 nodeexecreport: nodeexecreport,
                 fcopyreport: fcopyreport,
                 prefixKey: prefixKey,
-                configs: configs])
+                configs: configs,
+                extraConfig:extraConfig
+                ])
     }
 
     /**
@@ -905,6 +948,19 @@ class FrameworkController extends ControllerBase {
                 ]
             ]
         ]
+        //get grails services that declare project configurations
+        Map<String,RundeckProjectConfigurable> projectConfigurableBeans=applicationContext.getBeansOfType(RundeckProjectConfigurable)
+
+        Map<String,Map> extraConfig=[:]
+        projectConfigurableBeans.each { k, v ->
+            //construct existing values from project properties
+            extraConfig[k]=[
+                    configurable:v,
+                    values:[:],
+                    prefix:"extraConfig.${k}."
+            ]
+        }
+
         return [
             newproject:params.newproject,
             resourceModelConfigDescriptions: descriptions,
@@ -915,7 +971,8 @@ class FrameworkController extends ControllerBase {
             nodeExecDescriptions: nodeexecdescriptions,
             fileCopyDescriptions: filecopydescs,
             prefixKey:prefixKey,
-            configs: configs
+            configs: configs,
+            extraConfig:extraConfig
         ]
     }
 
@@ -1124,6 +1181,7 @@ class FrameworkController extends ControllerBase {
         def defaultFileCopy
         def nodeexec, fcopy
         def nodeexecreport, fcopyreport
+        Map<String,Map> extraConfig=[:]
         if(request.method=='POST'){
             //only attempt project create if form POST is used
             def Properties projProps = new Properties()
@@ -1216,6 +1274,39 @@ class FrameworkController extends ControllerBase {
 
             removePrefixes << FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
 
+
+            //load extra configuration for grails services
+
+            Map<String,RundeckProjectConfigurable> projectConfigurableBeans=applicationContext.getBeansOfType(RundeckProjectConfigurable)
+
+            projectConfigurableBeans.each { k, RundeckProjectConfigurable v ->
+                //construct input values for the bean
+                def beanData=[
+                        configurable:v,
+                        prefix:"extraConfig.${k}"
+                ]
+                def input=params.extraConfig."${k}"
+                beanData.values=input
+
+                v.getProjectConfigProperties().findAll{it.type==Property.Type.Boolean}.each{
+                    if(input[it.name]!='true'){
+                        input[it.name]='false'
+                    }
+                }
+                //validate
+                def report=Validator.validate(input as Properties, v.projectConfigProperties)
+                beanData.report=report
+                if(!report.valid){
+                    errors << ("Some configuration was invalid: "+ report )
+                    extraConfig[k]=beanData
+                }else{
+                    def projvalues = Validator.performMapping(input, v.getPropertiesMapping(),true)
+                    projProps.putAll(projvalues)
+                    //remove all previous settings
+                    removePrefixes.addAll(v.getPropertiesMapping().values())
+                }
+            }
+
             if (!errors) {
                 // Password Field Substitution
 
@@ -1255,7 +1346,9 @@ class FrameworkController extends ControllerBase {
             nodeexecreport: nodeexecreport,
             fcopyreport: fcopyreport,
             prefixKey: prefixKey,
-            configs: configs])
+            configs: configs,
+            extraConfig:extraConfig
+        ])
     }
 
     private List parseDefaultPluginConfig(ArrayList errors, ndx, String identifier, ProviderService service, String title) {
@@ -1313,6 +1406,20 @@ class FrameworkController extends ControllerBase {
         // resourceConfig CRUD rely on this session mapping
         // saveProject will replace the password fields on change
 
+        //get grails services that declare project configurations
+        Map<String,RundeckProjectConfigurable> projectConfigurableBeans=applicationContext.getBeansOfType(RundeckProjectConfigurable)
+
+        Map<String,Map> extraConfig=[:]
+        projectConfigurableBeans.each { k, v ->
+            //construct existing values from project properties
+            def values=Validator.demapProperties(fwkProject.getProjectProperties(),v.getPropertiesMapping(), true)
+            extraConfig[k]=[
+                    configurable:v,
+                    values:values,
+                    prefix:"extraConfig.${k}."
+            ]
+        }
+
         [
             project: project,
             projectDescription:fwkProject.getProjectProperties().get("project.description"),
@@ -1324,7 +1431,8 @@ class FrameworkController extends ControllerBase {
             defaultFileCopy: defaultFileCopy,
             nodeExecDescriptions: execDesc,
             fileCopyDescriptions: filecopyDesc,
-            prefixKey: 'plugin'
+            prefixKey: 'plugin',
+            extraConfig:extraConfig
         ]
     }
     def editProjectFile (){
