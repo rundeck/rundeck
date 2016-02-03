@@ -488,10 +488,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def nodesFragmentData(ExtNodeFilters query) {
         long start = System.currentTimeMillis()
         if (query.hasErrors()) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
-            return renderErrorFragment(
-                    g.message(error: query.errors.allErrors.collect { g.message(error: it) }.join("; "))
-            )
+            return null
         }
 
         Framework framework = frameworkService.getRundeckFramework()
@@ -556,6 +553,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * nodesFragment renders a set of nodes in HTML snippet, for ajax
      */
     def nodesFragment(ExtNodeFilters query) {
+        if (query.hasErrors()) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorFragment(
+                    g.message(error: query.errors.allErrors.collect { g.message(error: it) }.join("; "))
+            )
+        }
         def result= nodesFragmentData(query)
         render(template:"allnodes",model: result)
     }
@@ -563,6 +566,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * nodesFragment renders a set of nodes in HTML snippet, for ajax
      */
     def nodesQueryAjax(ExtNodeFilters query) {
+        if (query.hasErrors()) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorFragment(
+                    g.message(error: query.errors.allErrors.collect { g.message(error: it) }.join("; "))
+            )
+        }
         Map result= nodesFragmentData(query)
         result.remove('selectedProject')
         result.remove('query')
