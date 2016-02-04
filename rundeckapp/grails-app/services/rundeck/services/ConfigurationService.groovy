@@ -21,9 +21,11 @@ class ConfigurationService {
         getAppConfig()?."${service}"?."${cache}"?.spec ?: defval
     }
     boolean getCacheEnabledFor(String service, String cache, boolean defval) {
-        getAppConfig()?."${service}"?."${cache}"?.enabled ?: defval
-    }
-    boolean getIncubatorEnabled(String feature){
-        getAppConfig()?.incubator?."${feature}"
+        def val=getAppConfig()?."${service}"?."${cache}"?.enabled
+        if(null!=val){
+            return val in [true,'true']
+        }else{
+            return defval
+        }
     }
 }

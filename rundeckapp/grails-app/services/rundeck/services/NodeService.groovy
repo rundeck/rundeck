@@ -138,7 +138,7 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
      */
     long projectNodeCacheDelayConfig(final IRundeckProjectConfig projectConfig) {
         projectConfig.hasProperty(PROJECT_NODECACHE_DELAY)?
-                Long.parseLong(projectConfig.getProperty(PROJECT_NODECACHE_DELAY)) :
+                Long.parseLong(projectConfig.getProperty(PROJECT_NODECACHE_DELAY))*1000 :
         (30*1000)
     }
     /**

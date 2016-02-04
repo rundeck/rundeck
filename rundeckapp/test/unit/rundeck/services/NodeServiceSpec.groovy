@@ -51,7 +51,7 @@ class NodeServiceSpec extends Specification {
                 name: 'test1',
                 configLastModifiedTime: new Date()
         )
-        def modelSource=Mock(ResourceModelSource) {
+        def modelSource = Mock(ResourceModelSource) {
             getNodes() >> nodeSet
         }
         when:
@@ -73,9 +73,10 @@ class NodeServiceSpec extends Specification {
         null != nodes1.getNode('anode')
         nodes1.nodeNames as List == ['anode']
     }
-    class PropsConfig implements IRundeckProjectConfig{
-        Map<String,String> properties
-        Map<String,String> projectProperties
+
+    class PropsConfig implements IRundeckProjectConfig {
+        Map<String, String> properties
+        Map<String, String> projectProperties
         String name
         Date configLastModifiedTime
 
@@ -90,6 +91,7 @@ class NodeServiceSpec extends Specification {
             projectProperties.get(property)
         }
     }
+
     @Unroll
     def "get nodes when project cache #isenabled"(String isenabled, int expectedCount) {
         given:
@@ -103,8 +105,8 @@ class NodeServiceSpec extends Specification {
                 'project.resources.file': '/tmp/test.xml',
 
         ]
-        if(null!=isenabled){
-            properties['project.nodeCache.enabled']= isenabled
+        if (null != isenabled) {
+            properties['project.nodeCache.enabled'] = isenabled
         }
         def projConfig = new PropsConfig(
                 projectProperties: properties,
@@ -117,7 +119,7 @@ class NodeServiceSpec extends Specification {
         service.frameworkService.getRundeckFramework() >> Mock(Framework) {
             getProjectManager() >> Mock(ProjectManager) {
                 existsFrameworkProject('test1') >> true
-                1*loadProjectConfig('test1') >> projConfig
+                1 * loadProjectConfig('test1') >> projConfig
             }
             getResourceModelSourceService() >> Mock(ResourceModelSourceService) {
                 _ * getSourceForConfiguration('file', _) >> modelSource
@@ -134,7 +136,7 @@ class NodeServiceSpec extends Specification {
         null != nodes2.getNode('anode')
         nodes1.nodeNames as List == ['anode']
         nodes2.nodeNames as List == ['anode']
-        result1.doCache==('false'!=isenabled)
+        result1.doCache == ('false' != isenabled)
         expectedCount * modelSource.getNodes() >> nodeSet
 
         where:
@@ -142,5 +144,74 @@ class NodeServiceSpec extends Specification {
         'true'    | 1
         'false'   | 3
         null      | 1
+    }
+
+    def "project nodecache delay"(String confval, long expected) {
+        given:
+        def properties = [:]
+        if (null != confval) {
+            properties['project.nodeCache.delay'] = confval
+        }
+        def config = new PropsConfig(name: 'test1', properties: properties, projectProperties: properties)
+
+        when:
+        def result = service.projectNodeCacheDelayConfig(config)
+
+        then:
+        result == expected
+
+        where:
+        confval | expected
+        '10'    | 10000
+        null    | 30000
+    }
+
+    def "project nodecache enabled"(String confval, boolean expected) {
+        given:
+        def properties = [:]
+        if (null != confval) {
+            properties['project.nodeCache.enabled'] = confval
+        }
+        def config = new PropsConfig(name: 'test1', properties: properties, projectProperties: properties)
+
+        when:
+        def result = service.projectNodeCacheEnabledConfig(config)
+
+        then:
+        result == expected
+
+        where:
+        confval | expected
+        'true'  | true
+        'false' | false
+        null    | true
+    }
+
+    def "is cache enabled for project"(String confval, boolean globalconfval, boolean expected) {
+        given:
+        def properties = [:]
+        if (null != confval) {
+            properties['project.nodeCache.enabled'] = confval
+        }
+        def config = new PropsConfig(name: 'test1', properties: properties, projectProperties: properties)
+
+        service.configurationService = Mock(ConfigurationService) {
+            getCacheEnabledFor('nodeService', 'nodeCache', true) >> globalconfval
+        }
+
+        when:
+        def result = service.isCacheEnabled(config)
+
+        then:
+        result == expected
+
+        where:
+        confval | globalconfval | expected
+        'true'  | true          | true
+        'true'  | false         | false
+        'false' | true          | false
+        'false' | false         | false
+        null    | true          | true
+        null    | false         | false
     }
 }
