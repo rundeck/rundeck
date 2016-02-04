@@ -105,7 +105,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
 
     //basic creation, created via spec string in afterPropertiesSet()
-    private LoadingCache<String, IRundeckProject> projectCache =
+    def LoadingCache<String, IRundeckProject> projectCache =
             CacheBuilder.newBuilder()
                         .expireAfterAccess(10, TimeUnit.MINUTES)
                         .refreshAfterWrite(1, TimeUnit.MINUTES)
@@ -464,8 +464,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def oldprops = res.config
         Properties newprops = mergeProperties(removePrefixes, oldprops, properties)
         Map newres=storeProjectConfig(projectName, newprops)
-        projectCache.invalidate(projectName)
-        nodeService.expireProjectNodes(projectName)
         newres
     }
 
@@ -507,8 +505,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             throw new IllegalArgumentException("project does not exist: " + projectName)
         }
         Map resource=storeProjectConfig(projectName, properties)
-        projectCache.invalidate(projectName)
-        nodeService.expireProjectNodes(projectName)
         resource
     }
     //basic creation, created via spec string in afterPropertiesSet()

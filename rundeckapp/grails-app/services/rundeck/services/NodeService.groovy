@@ -1,6 +1,7 @@
 package rundeck.services
 
 import com.codahale.metrics.MetricRegistry
+import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.IProjectNodes
 import com.dtolabs.rundeck.core.common.IProjectNodesFactory
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
@@ -29,6 +30,7 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
     public static final String PROJECT_NODECACHE_DELAY = 'project.nodeCache.delay'
     public static final String PROJECT_NODECACHE_ENABLED = 'project.nodeCache.enabled'
     static transactional = false
+    public static final String DEFAULT_CACHE_SPEC = "refreshAfterWrite=30s"
     def metricService
     def frameworkService
     def configurationService
@@ -78,7 +80,7 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
 
     @Override
     void afterPropertiesSet() throws Exception {
-        def spec = configurationService.getCacheSpecFor('nodeService','nodeCache', "refreshAfterWrite=30s")
+        def spec = configurationService?.getCacheSpecFor('nodeService', 'nodeCache', DEFAULT_CACHE_SPEC)?:DEFAULT_CACHE_SPEC
 
         log.debug("nodeCache: creating from spec: ${spec}")
 
@@ -166,9 +168,9 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
                 nodeSupport: nodeSupport,
                 doCache: isCacheEnabled(rdprojectconfig)
         )
-        metricService.withTimer(this.class.name,"project.${project}.loadNodes"){
-            cachedNodes.reloadNodeSet()
-        }
+        Closure clos = cachedNodes.&reloadNodeSet
+        metricService?.withTimer(this.class.name, "project.${project}.loadNodes", clos) ?: clos()
+
         cachedNodes
     }
     def expireProjectNodes(String name){

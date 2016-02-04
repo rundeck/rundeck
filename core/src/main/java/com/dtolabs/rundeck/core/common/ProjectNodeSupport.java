@@ -91,14 +91,7 @@ public class ProjectNodeSupport implements IProjectNodes {
                 } else {
                     list.addNodeSet(nodes);
                 }
-            } catch (ResourceModelSourceException e) {
-                logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
-                nodesSourceExceptions.add(
-                        new ResourceModelSourceException(
-                                "Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e
-                        )
-                );
-            } catch (RuntimeException e) {
+            } catch (ResourceModelSourceException | RuntimeException e) {
                 logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
                 nodesSourceExceptions.add(
                         new ResourceModelSourceException(
