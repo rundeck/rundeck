@@ -5,4 +5,5 @@ package com.dtolabs.rundeck.core.common;
  */
 public interface IProjectNodesFactory {
     IProjectNodes getNodes(final String name);
+    void refreshProjectNodes(String name);
 }

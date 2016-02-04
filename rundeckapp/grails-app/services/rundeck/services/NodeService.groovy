@@ -173,6 +173,12 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
 
         cachedNodes
     }
+
+    @Override
+    void refreshProjectNodes(final String name) {
+        expireProjectNodes(name)
+    }
+
     def expireProjectNodes(String name){
         nodeCache.invalidate(name)
     }

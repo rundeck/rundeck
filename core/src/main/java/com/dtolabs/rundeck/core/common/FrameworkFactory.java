@@ -12,6 +12,7 @@ import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import java.io.File;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * Created by greg on 2/19/15.
@@ -57,6 +58,11 @@ public class FrameworkFactory {
                                 null
                         ),
                         filesystemFramework);
+            }
+
+            @Override
+            public void refreshProjectNodes(final String name) {
+                //noop
             }
         };
     }
@@ -185,6 +191,48 @@ public class FrameworkFactory {
     }
 
     /**
+     * Tells the nodesFactory to refresh nodes after any config change
+     */
+    static class NodeResetConfigModifier implements IRundeckProjectConfigModifier{
+        IProjectNodesFactory nodesFactory;
+        IRundeckProjectConfigModifier modifier;
+        String name;
+
+        public NodeResetConfigModifier(
+                final IProjectNodesFactory nodesFactory,
+                final IRundeckProjectConfigModifier modifier,
+                final String name
+        )
+        {
+            this.nodesFactory = nodesFactory;
+            this.modifier = modifier;
+            this.name = name;
+        }
+
+        @Override
+        public void mergeProjectProperties(final Properties properties, final Set<String> removePrefixes) {
+            modifier.mergeProjectProperties(properties, removePrefixes);
+            nodesFactory.refreshProjectNodes(name);
+        }
+
+        @Override
+        public void setProjectProperties(final Properties properties) {
+            modifier.setProjectProperties(properties);
+            nodesFactory.refreshProjectNodes(name);
+        }
+
+        @Override
+        public void generateProjectPropertiesFile(
+                final boolean overwrite,
+                final Properties properties,
+                final boolean addDefault
+        )
+        {
+            modifier.generateProjectPropertiesFile(overwrite,properties,addDefault);
+            nodesFactory.refreshProjectNodes(name);
+        }
+    }
+    /**
      *
      * @param projectName name
      * @param baseDir base dir
@@ -214,7 +262,7 @@ public class FrameworkFactory {
                 filesystemFramework,
                 mgr,
                 projectConfig,
-                projectConfig
+                new NodeResetConfigModifier(nodesFactory,projectConfig,projectName)
         );
         frameworkProject.setFramework(filesystemFramework.getFramework());
         frameworkProject.setProjectNodesFactory(nodesFactory);
