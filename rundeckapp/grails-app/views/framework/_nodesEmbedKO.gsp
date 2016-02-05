@@ -9,6 +9,7 @@
            data-toggle="popover"
            data-placement="bottom"
            data-trigger="focus"
+           data-delay="{&quot;show&quot;:0,&quot;hide&quot;:200}"
            data-popover-template-class="popover-wide"
 
            data-bind="css: {server: islocal},
