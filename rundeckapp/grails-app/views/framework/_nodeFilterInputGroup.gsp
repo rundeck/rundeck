@@ -40,7 +40,7 @@
     </ul>
 </span>
 <input type='search' name="${filterFieldName?enc(attr:filterFieldName):'filter'}" class="schedJobNodeFilter form-control"
-       data-bind="textInput: filterWithoutAll,  executeOnEnter: updateMatchedNodes"
+       data-bind="textInput: filterWithoutAll,  executeOnEnter: newFilterText"
        placeholder="${queryFieldPlaceholderText?:g.message(code:'enter.a.node.filter')}"
        data-toggle='popover'
        data-popover-content-ref="#${queryFieldHelpId?enc(attr:queryFieldHelpId):'queryFilterHelp'}"
@@ -54,7 +54,7 @@
     <a class="btn btn-default" data-toggle='popover-for' data-target="#${filterFieldId ? enc(attr: filterFieldId) : 'schedJobNodeFilter'}">
         <i class="glyphicon glyphicon-question-sign"></i>
     </a>
-    <a class="btn btn-default" data-bind="click: $data.updateMatchedNodes, css: {disabled: !filter()}" href="#">
+    <a class="btn btn-default" data-bind="click: $data.newFilterText, css: {disabled: !filter()}" href="#">
         <g:message code="search" />
     </a>
 </span>

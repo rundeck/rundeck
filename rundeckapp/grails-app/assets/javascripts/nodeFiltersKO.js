@@ -770,6 +770,10 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.pagingMax.subscribe(function (){
         self.updateMatchedNodes();
     });
+    self.newFilterText=function(){
+        self.page(0);
+        self.updateMatchedNodes();
+    };
     self.updateMatchedNodes= function () {
         if(!self.filter()){
             return;
