@@ -542,6 +542,8 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.filter.subscribe(function (newValue) {
         if (newValue == '' && self.hideAll()) {
             self.filterAll(true);
+        }else if(newValue==NODE_FILTER_ALL){
+            self.filterAll(true);
         }
     });
     self.filter.subscribe(function (newValue) {
@@ -550,7 +552,9 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         }
     });
     self.filter.subscribe(function (newValue) {
-        if (newValue != '' && self.filterName()) {
+        if (newValue === NODE_FILTER_ALL) {
+            self.filterName(NODE_FILTER_ALL);
+        }else if (newValue != '' && self.filterName()) {
             self.filterName(null);
         }
     });
