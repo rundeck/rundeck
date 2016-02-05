@@ -21,6 +21,8 @@ import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProvide
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.ScheduledExecutionFilter
@@ -39,11 +41,12 @@ import rundeck.services.PluginService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import rundeck.services.UserService
+import rundeck.services.framework.RundeckProjectConfigurable
 
 import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 
-class MenuController extends ControllerBase{
+class MenuController extends ControllerBase implements ApplicationContextAware{
     FrameworkService frameworkService
     ExecutionService executionService
     UserService userService
@@ -59,6 +62,7 @@ class MenuController extends ControllerBase{
     def quartzScheduler
     def ApiService apiService
     def AuthorizationService authorizationService
+    def ApplicationContext applicationContext
     static allowedMethods = [
             deleteJobfilter:'POST',
             storeJobfilter:'POST',
@@ -580,7 +584,7 @@ class MenuController extends ControllerBase{
 //        }
 
     }
-    def admin={
+    def admin(){
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
@@ -633,6 +637,18 @@ class MenuController extends ControllerBase{
                 }
             }
 
+        Map<String,RundeckProjectConfigurable> projectConfigurableBeans=applicationContext.getBeansOfType(RundeckProjectConfigurable)
+
+        Map<String,Map> extraConfig=[:]
+        projectConfigurableBeans.each { k, v ->
+            //construct existing values from project properties
+            def values=Validator.demapProperties(fproject.getProjectProperties(),v.getPropertiesMapping(), true)
+            extraConfig[k]=[
+                    configurable:v,
+                    values:values,
+                    prefix:"extraConfig.${k}."
+            ]
+        }
             return [configs:configs,
                 resourceModelConfigDescriptions:descriptions,
                 nodeexecconfig:nodeexec,
@@ -643,6 +659,7 @@ class MenuController extends ControllerBase{
                 fileCopyDescriptions: filecopydescs,
                 hasreadme:fproject.existsFileResource("readme.md"),
                 hasmotd:fproject.existsFileResource("motd.md"),
+                    extraConfig:extraConfig
             ]
     }
     def systemConfig(){

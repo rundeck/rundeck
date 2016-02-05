@@ -12,6 +12,7 @@ import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import java.io.File;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * Created by greg on 2/19/15.
@@ -39,9 +40,42 @@ public class FrameworkFactory {
         PropertyLookup lookup1 = PropertyLookup.createDeferred(propertyFile2);
         lookup1.expand();
         FrameworkProjectMgr projectManager = createProjectManager(
-                filesystemFramework
+                filesystemFramework,
+                createNodesFactory(filesystemFramework)
+
         );
         return createFramework(lookup1, filesystemFramework, projectManager);
+    }
+    public static IProjectNodesFactory createNodesFactory(final FilesystemFramework filesystemFramework){
+        return new IProjectNodesFactory() {
+            @Override
+            public IProjectNodes getNodes(final String name) {
+                return createNodes(
+                        loadFrameworkProjectConfig(
+                                name,
+                                new File(filesystemFramework.getFrameworkProjectsBaseDir(), name),
+                                filesystemFramework,
+                                null
+                        ),
+                        filesystemFramework);
+            }
+
+            @Override
+            public void refreshProjectNodes(final String name) {
+                //noop
+            }
+        };
+    }
+    public static IProjectNodes createNodes(IRundeckProjectConfig projectConfig, FilesystemFramework filesystemFramework){
+
+        ProjectNodeSupport projectNodeSupport = new ProjectNodeSupport(
+                projectConfig,
+                filesystemFramework.getFramework()
+                                                                                          .getResourceFormatGeneratorService(),
+                filesystemFramework.getFramework()
+                                                                                          .getResourceModelSourceService()
+        );
+        return projectNodeSupport;
     }
 
     public static FilesystemFramework createFilesystemFramework(final File baseDir) {
@@ -52,24 +86,6 @@ public class FrameworkFactory {
         File projectsBase = determineProjectsBasedir(baseDir, propertyFile);
 
         return new FilesystemFramework(baseDir, projectsBase);
-    }
-
-    /**
-     * Returns an instance of Framework object.  Loads the framework.projects.dir property value, or defaults to
-     * basedir/projects
-     *
-     * @return a Framework instance
-     */
-    public static Framework createForFilesystem(
-            final IPropertyLookup lookup, final FilesystemFramework filesystemFramework
-    ) {
-
-
-        FrameworkProjectMgr projectManager = createProjectManager(
-                filesystemFramework
-        );
-
-        return createFramework(lookup, filesystemFramework, projectManager, null);
     }
 
     private static File determineProjectsBasedir(final File baseDir, final File propertyFile) {
@@ -157,16 +173,65 @@ public class FrameworkFactory {
 
     public static FrameworkProjectMgr createProjectManager(
             final File baseDir,
-            FilesystemFramework filesystemFramework
+            FilesystemFramework filesystemFramework,
+            IProjectNodesFactory nodesFactory
     ) {
-        return new FrameworkProjectMgr("name", baseDir, filesystemFramework);
+        return new FrameworkProjectMgr("name", baseDir, filesystemFramework,nodesFactory);
     }
     public static FrameworkProjectMgr createProjectManager(
-            FilesystemFramework filesystemFramework
+            FilesystemFramework filesystemFramework,
+            IProjectNodesFactory nodesFactory
     ) {
-        return new FrameworkProjectMgr("name", filesystemFramework.getFrameworkProjectsBaseDir(), filesystemFramework);
+        return new FrameworkProjectMgr(
+                "name",
+                filesystemFramework.getFrameworkProjectsBaseDir(),
+                filesystemFramework,
+                nodesFactory
+        );
     }
 
+    /**
+     * Tells the nodesFactory to refresh nodes after any config change
+     */
+    static class NodeResetConfigModifier implements IRundeckProjectConfigModifier{
+        IProjectNodesFactory nodesFactory;
+        IRundeckProjectConfigModifier modifier;
+        String name;
+
+        public NodeResetConfigModifier(
+                final IProjectNodesFactory nodesFactory,
+                final IRundeckProjectConfigModifier modifier,
+                final String name
+        )
+        {
+            this.nodesFactory = nodesFactory;
+            this.modifier = modifier;
+            this.name = name;
+        }
+
+        @Override
+        public void mergeProjectProperties(final Properties properties, final Set<String> removePrefixes) {
+            modifier.mergeProjectProperties(properties, removePrefixes);
+            nodesFactory.refreshProjectNodes(name);
+        }
+
+        @Override
+        public void setProjectProperties(final Properties properties) {
+            modifier.setProjectProperties(properties);
+            nodesFactory.refreshProjectNodes(name);
+        }
+
+        @Override
+        public void generateProjectPropertiesFile(
+                final boolean overwrite,
+                final Properties properties,
+                final boolean addDefault
+        )
+        {
+            modifier.generateProjectPropertiesFile(overwrite,properties,addDefault);
+            nodesFactory.refreshProjectNodes(name);
+        }
+    }
     /**
      *
      * @param projectName name
@@ -181,24 +246,26 @@ public class FrameworkFactory {
             File baseDir,
             final FilesystemFramework filesystemFramework,
             IFrameworkProjectMgr mgr,
+            IProjectNodesFactory nodesFactory,
             Properties properties
     )
     {
+        FrameworkProjectConfig projectConfig = loadFrameworkProjectConfig(
+                projectName,
+                baseDir,
+                filesystemFramework,
+                properties
+        );
         FrameworkProject frameworkProject = new FrameworkProject(
                 projectName,
                 baseDir,
                 filesystemFramework,
                 mgr,
-                properties
+                projectConfig,
+                new NodeResetConfigModifier(nodesFactory,projectConfig,projectName)
         );
         frameworkProject.setFramework(filesystemFramework.getFramework());
-        ProjectNodeSupport projectNodeSupport = new ProjectNodeSupport(frameworkProject,
-                                                                       filesystemFramework.getFramework()
-                                                                                          .getResourceFormatGeneratorService(),
-                                                                       filesystemFramework.getFramework()
-                                                                                          .getResourceModelSourceService()
-        );
-        frameworkProject.setProjectNodes(projectNodeSupport);
+        frameworkProject.setProjectNodesFactory(nodesFactory);
         File aclPath = new File(baseDir, "acls");
         if(!aclPath.exists()) {
             aclPath.mkdirs();
@@ -214,6 +281,29 @@ public class FrameworkFactory {
                 )
         );
         return frameworkProject;
+    }
+
+    /**
+     *
+     * @param projectName
+     * @param baseDir project base directory
+     * @param filesystemFramework
+     * @param properties
+     * @return
+     */
+    public static FrameworkProjectConfig loadFrameworkProjectConfig(
+            final String projectName,
+            final File baseDir,
+            final FilesystemFramework filesystemFramework,
+            final Properties properties
+    )
+    {
+        return FrameworkProjectConfig.create(
+                projectName,
+                FrameworkProject.getProjectPropertyFile(baseDir),
+                properties,
+                filesystemFramework
+        );
     }
 
     /**

@@ -10,7 +10,7 @@ import java.util.*;
 /**
  * Interface for a project
  */
-public interface IRundeckProject {
+public interface IRundeckProject extends IRundeckProjectConfig {
     /**
      * @return project name
      */
