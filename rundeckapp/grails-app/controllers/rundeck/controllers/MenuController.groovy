@@ -896,8 +896,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def defaultScopes=[
                 (framework.getNodeStepExecutorService().name) : PropertyScope.InstanceOnly,
                 (framework.getStepExecutionService().name) : PropertyScope.InstanceOnly,
-                (scmService.scmExportPluginProviderService.name) : PropertyScope.Project,
-                (scmService.scmImportPluginProviderService.name) : PropertyScope.Project,
         ]
         def bundledPlugins=[
                 (framework.getNodeExecutorService().name): framework.getNodeExecutorService().getBundledProviderNames(),
@@ -922,10 +920,26 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 ],
                 (logFileStorageService.executionFileStoragePluginProviderService.name):[
                         description: message(code:"plugin.executionFileStorage.special.description"),
+                ],
+                (scmService.scmExportPluginProviderService.name):[
+                        description: message(code:"plugin.scmExport.special.description"),
+                ],
+                (scmService.scmImportPluginProviderService.name):[
+                        description: message(code:"plugin.scmImport.special.description"),
                 ]
         ]
+        def specialScoping=[
+                (scmService.scmExportPluginProviderService.name):true,
+                (scmService.scmImportPluginProviderService.name):true
+        ]
 
-        [descriptions:pluginDescs,serviceDefaultScopes: defaultScopes, bundledPlugins: bundledPlugins, specialConfiguration: specialConfiguration]
+        [
+                descriptions        : pluginDescs,
+                serviceDefaultScopes: defaultScopes,
+                bundledPlugins      : bundledPlugins,
+                specialConfiguration: specialConfiguration,
+                specialScoping      : specialScoping
+        ]
     }
 
     def home(){
