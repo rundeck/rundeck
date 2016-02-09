@@ -886,10 +886,18 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         pluginDescs[storageConverterPluginProviderService.name] = pluginService.listPlugins(StorageConverterPlugin.class, storageConverterPluginProviderService).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
+        pluginDescs[scmService.scmExportPluginProviderService.name]=scmService.listPlugins('export').collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+        pluginDescs[scmService.scmImportPluginProviderService.name]=scmService.listPlugins('import').collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
 
         def defaultScopes=[
                 (framework.getNodeStepExecutorService().name) : PropertyScope.InstanceOnly,
                 (framework.getStepExecutionService().name) : PropertyScope.InstanceOnly,
+                (scmService.scmExportPluginProviderService.name) : PropertyScope.Project,
+                (scmService.scmImportPluginProviderService.name) : PropertyScope.Project,
         ]
         def bundledPlugins=[
                 (framework.getNodeExecutorService().name): framework.getNodeExecutorService().getBundledProviderNames(),
