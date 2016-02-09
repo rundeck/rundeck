@@ -932,11 +932,11 @@ class ScmService {
             deleted = plugin.deletedFiles
         }
         //create map of path -> job info
-        def map = deleted.collectEntries {
+        def map = deleted?.collectEntries {
             [it, deletedJobForPath(project, it) ?: [:]]
         }
         log.debug "Deleted job map for ${project}: ${map}"
-        return map
+        return map?:[:]
     }
 
     def performExportAction(
