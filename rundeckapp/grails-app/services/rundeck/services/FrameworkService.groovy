@@ -215,10 +215,10 @@ class FrameworkService implements ApplicationContextAware {
         try {
             proj = rundeckFramework.getFrameworkProjectMgr().createFrameworkProjectStrict(project, properties)
         } catch (Error e) {
-            log.error(e.message)
+            log.error(e.message,e)
             errors << e.getMessage()
         } catch (RuntimeException e) {
-            log.error(e.message)
+            log.error(e.message,e)
             errors << e.getMessage()
         }
         [proj,errors]
@@ -234,8 +234,7 @@ class FrameworkService implements ApplicationContextAware {
         try {
             getFrameworkProject(project).mergeProjectProperties(properties, removePrefixes)
         } catch (Error e) {
-            log.error(e.message)
-            log.debug(e.message,e)
+            log.error(e.message,e)
             return [success: false, error: e.message]
         }
         [success:true]
@@ -1007,6 +1006,7 @@ class FrameworkService implements ApplicationContextAware {
                 properties = Validator.demapProperties(props, desc)
             } catch (ExecutionServiceException e) {
                 log.error(e.message)
+                log.debug(e.message,e)
             }
         }
         properties
