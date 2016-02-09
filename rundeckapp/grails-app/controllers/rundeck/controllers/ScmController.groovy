@@ -1030,6 +1030,7 @@ class ScmController extends ControllerBase {
             flash.message = "No plugin for SCM ${integration} configured for project ${project}"
             return redirect(action: 'index', params: [project: project])
         }
+        def pluginDesc = scmService.loadProjectPluginDescriptor(project, integration)
         def view = scmService.getInputView(authContext, integration, project, actionId)
         if (!view) {
             response.status = HttpServletResponse.SC_NOT_FOUND
@@ -1083,6 +1084,7 @@ class ScmController extends ControllerBase {
 
 
         [
+                pluginDescription: pluginDesc,
                 actionView      : view,
                 jobs            : jobs,
                 jobMap          : jobMap,
