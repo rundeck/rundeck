@@ -76,3 +76,7 @@ these properties in the [rundeck-config.properties](configuration-file-reference
 
 The `rundeck.gui.errorpage.hidestacktrace` can also be set to true via a Java system property defined at system startup: 
 `-Dorg.rundeck.gui.errorpage.hidestacktrace=true`.
+
+## Localization
+
+See [Localization](localization.html).
