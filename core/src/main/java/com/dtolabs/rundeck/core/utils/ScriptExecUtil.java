@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.utils.Streams;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.collections.PredicateUtils;
+import org.apache.tools.ant.taskdefs.Execute;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -140,6 +141,11 @@ public class ScriptExecUtil {
                 );
             }
 
+            @Override
+            public Map<String, String> loadLocalEnvironment() {
+                return ScriptExecUtil.loadLocalEnvironment();
+            }
+
         };
     }
 
@@ -226,6 +232,14 @@ public class ScriptExecUtil {
             throw errthread.getException();
         }
         return result;
+    }
+
+    /**
+     * @return local environment variables
+     */
+    @SuppressWarnings("unchecked")
+    public static Map<String,String> loadLocalEnvironment(){
+        return (Map<String,String>)Execute.getEnvironmentVariables();
     }
 
     /**

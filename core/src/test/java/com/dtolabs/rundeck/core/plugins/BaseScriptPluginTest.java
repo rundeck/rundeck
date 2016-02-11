@@ -2,9 +2,12 @@ package com.dtolabs.rundeck.core.plugins;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.dtolabs.rundeck.core.execution.service.TestScriptPluginFileCopier;
+import com.dtolabs.rundeck.core.plugins.metadata.PluginMeta;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -60,7 +63,7 @@ public class BaseScriptPluginTest {
         File basedir = File.createTempFile("test", "dir");
 
         test1 test = new test1(
-                scriptPluginProvider(data, archiveFile, basedir), null);
+                scriptPluginProvider(new PluginMeta(),data, archiveFile, basedir), null);
         Map<String, Map<String, String>> datactx = new HashMap<String, Map<String, String>>();
         String[] result = test.createScriptArgs(datactx);
         File testfile = new File(basedir, "myfile.sh");
@@ -76,7 +79,7 @@ public class BaseScriptPluginTest {
         File basedir = File.createTempFile("test", "dir");
 
         test1 test = new test1(
-                scriptPluginProvider(data, archiveFile, basedir), null);
+                scriptPluginProvider(new PluginMeta(),data, archiveFile, basedir), null);
         Map<String, Map<String, String>> datactx = new HashMap<String, Map<String, String>>();
         ExecArgList result = test.createScriptArgsList(datactx);
         File testfile = new File(basedir, "myfile.sh");
@@ -89,9 +92,10 @@ public class BaseScriptPluginTest {
     }
 
     static ScriptPluginProvider scriptPluginProvider(
+            final PluginMeta pluginMeta,
             final Map<String, Object> data, final File archiveFile,
             final File basedir) {
-        return new ScriptPluginProviderImpl(providerDef(data), archiveFile,
+        return new ScriptPluginProviderImpl(pluginMeta,providerDef(data), archiveFile,
                 basedir);
     }
 }
