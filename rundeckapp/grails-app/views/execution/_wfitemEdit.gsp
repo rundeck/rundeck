@@ -150,14 +150,15 @@
                     <g:message code="refresh"/>
                     <i class="glyphicon glyphicon-refresh"></i>
                 </button>
-                <span class="text-muted" data-bind="visible: allcount()>0">
-                    <span data-bind="text: allcount"></span> <g:message code="nodes.matched"/>
+                <span class="text-muted" data-bind="visible: total()>0">
+                    <span data-bind="messageTemplate: [total,nodesTitle]"><g:message code="count.nodes.matched"/></span>
                 </span>
                 <span class="text-muted" data-bind="visible: !filter()">
                     <span data-bind="text: emptyMessage"></span>
                 </span>
 
-                <div id='matchednodes${rkey}' class="clearfix matched_nodes_receiver">
+                <div id='matchednodes${rkey}' class="clearfix ">
+                    <g:render template="/framework/nodesEmbedKO" model="[showLoading:true,showTruncated:true,showNone:true]"/>
                 </div>
             </div>
         </div>

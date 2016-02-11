@@ -10,6 +10,7 @@ import com.dtolabs.rundeck.core.authorization.providers.Policies
 import com.dtolabs.rundeck.core.authorization.providers.PoliciesCache
 import com.dtolabs.rundeck.core.authorization.providers.YamlProvider
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.storage.ResourceMeta
@@ -18,6 +19,7 @@ import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.dtolabs.rundeck.server.projects.RundeckProject
+import com.dtolabs.rundeck.server.projects.RundeckProjectConfig
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
@@ -51,6 +53,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     ApplicationContext applicationContext
     def grailsApplication
     def metricService
+    def nodeService
     /**
      * Scheduled executor for retries
      */
@@ -102,7 +105,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
 
     //basic creation, created via spec string in afterPropertiesSet()
-    private LoadingCache<String, IRundeckProject> projectCache =
+    def LoadingCache<String, IRundeckProject> projectCache =
             CacheBuilder.newBuilder()
                         .expireAfterAccess(10, TimeUnit.MINUTES)
                         .refreshAfterWrite(1, TimeUnit.MINUTES)
@@ -209,7 +212,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     long readProjectFileResource(String projectName, String path, OutputStream output) {
         def storagePath = "projects/" + projectName + (path.startsWith("/")?path:"/${path}")
         def resource = getStorage().getResource(storagePath)
-        Streams.copy(resource.contents.inputStream,output,true)
+        Streams.copy(resource.contents.inputStream,output,false)
     }
     /**
      * List the full paths of file resources in the directory at the given path
@@ -356,6 +359,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def resource = writeProjectFileResource(projectName, storagePath, bais, metadata)
 
         projectCache.invalidate(projectName)
+        nodeService.expireProjectNodes(projectName)
         return [
                 config      : properties,
                 lastModified: resource.contents.modificationTime,
@@ -368,6 +372,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             log.error("Failed to delete all associated resources for project ${projectName}")
         }
         projectCache.invalidate(projectName)
+        nodeService.expireProjectNodes(projectName)
     }
 
     private IPropertyLookup createProjectPropertyLookup(String projectName, Properties config) {
@@ -398,13 +403,15 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             project.save()
         }
         def res = storeProjectConfig(projectName, properties)
-        return new RundeckProject(
-                projectName,
-                createProjectPropertyLookup(projectName, res.config),
-                createDirectProjectPropertyLookup(projectName, res.config),
-                this,
-                res.lastModified
+        def rdprojectconfig = new RundeckProjectConfig(projectName,
+                                                       createProjectPropertyLookup(projectName, res.config ?: new Properties()),
+                                                       createDirectProjectPropertyLookup(projectName, res.config ?: new Properties()),
+                                                       res.lastModified
         )
+
+        def newproj= new RundeckProject(rdprojectconfig, this)
+        newproj.projectNodes = nodeService.getNodes(projectName)
+        return newproj
     }
 
     @Override
@@ -434,9 +441,13 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     )
     {
         def resource=mergeProjectProperties(project.name,properties,removePrefixes)
-        project.lookup = createProjectPropertyLookup(project.name, resource.config ?: new Properties())
-        project.projectLookup = createDirectProjectPropertyLookup(project.name, resource.config ?: new Properties())
-        project.lastModifiedTime = resource.lastModified
+        def rdprojectconfig = new RundeckProjectConfig(project.name,
+                                                       createProjectPropertyLookup(project.name, resource.config ?: new Properties()),
+                                                       createDirectProjectPropertyLookup(project.name, resource.config ?: new Properties()),
+                                                       resource.lastModified
+        )
+        project.projectConfig=rdprojectconfig
+        project.projectNodes = nodeService.getNodes(project.name)
     }
 
     Map mergeProjectProperties(
@@ -453,7 +464,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def oldprops = res.config
         Properties newprops = mergeProperties(removePrefixes, oldprops, properties)
         Map newres=storeProjectConfig(projectName, newprops)
-        projectCache.invalidate(projectName)
         newres
     }
 
@@ -481,9 +491,13 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
     void setProjectProperties(final RundeckProject project, final Properties properties) {
         def resource=setProjectProperties(project.name,properties)
-        project.lookup = createProjectPropertyLookup(project.name, resource.config ?: new Properties())
-        project.projectLookup = createDirectProjectPropertyLookup(project.name, resource.config ?: new Properties())
-        project.lastModifiedTime = resource.lastModified
+        def rdprojectconfig = new RundeckProjectConfig(project.name,
+                                                       createProjectPropertyLookup(project.name, resource.config ?: new Properties()),
+                                                       createDirectProjectPropertyLookup(project.name, resource.config ?: new Properties()),
+                                                       resource.lastModified
+        )
+        project.projectConfig=rdprojectconfig
+        project.projectNodes = nodeService.getNodes(project.name)
     }
     Map setProjectProperties(final String projectName, final Properties properties) {
         Project found = Project.findByName(projectName)
@@ -491,7 +505,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             throw new IllegalArgumentException("project does not exist: " + projectName)
         }
         Map resource=storeProjectConfig(projectName, properties)
-        projectCache.invalidate(projectName)
         resource
     }
     //basic creation, created via spec string in afterPropertiesSet()
@@ -553,26 +566,32 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      * @param project
      * @return
      */
-    IRundeckProject loadProject(final String project) {
+    IRundeckProjectConfig loadProjectConfig(final String project) {
         if (!existsFrameworkProject(project)) {
             throw new IllegalArgumentException("Project does not exist: " + project)
         }
         def resource = loadProjectConfigResource(project)
-        def rdproject = new RundeckProject(
-                project,
-                createProjectPropertyLookup(project, resource.config ?: new Properties()),
-                createDirectProjectPropertyLookup(project, resource.config ?: new Properties()),
-                this,
-                resource.lastModified
+        def rdprojectconfig = new RundeckProjectConfig(project,
+                                                 createProjectPropertyLookup(
+                                                         project,
+                                                         resource.config ?: new Properties()
+                                                 ),
+                                                 createDirectProjectPropertyLookup(
+                                                         project,
+                                                         resource.config ?: new Properties()
+                                                 ),
+                                                 resource.lastModified
         )
-
-        def framework = frameworkService.getRundeckFramework()
-        def nodes = new ProjectNodeSupport(
-                rdproject,
-                framework.getResourceFormatGeneratorService(),
-                framework.getResourceModelSourceService()
-        )
-        rdproject.projectNodes = nodes
+        return rdprojectconfig
+    }
+    /**
+     * Load the project config and node support
+     * @param project
+     * @return
+     */
+    IRundeckProject loadProject(final String project) {
+        def rdproject = new RundeckProject(loadProjectConfig(project), this)
+        rdproject.projectNodes = nodeService.getNodes(project)
         return rdproject
     }
 

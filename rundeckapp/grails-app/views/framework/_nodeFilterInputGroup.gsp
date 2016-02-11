@@ -20,7 +20,7 @@
             class="btn btn-default dropdown-toggle"
         data-bind="css: { 'btn-success': filterName(), 'btn-default': !filterName() }"
             data-toggle="dropdown">
-        <span data-bind="text: filterNameDisplay() || ''">Filter</span> <span class="caret"></span></button>
+        <span data-bind="text: filterNameDisplay() || ''"><g:message code="filter.title" /></span> <span class="caret"></span></button>
     <ul class="dropdown-menu">
 
         <li>
@@ -30,17 +30,17 @@
                     data-node-filter=".*"
                     data-bind="css: { active: '.*'== filterName() }"
                     params="[filterName: '.*']">
-                Show all nodes
+                <g:message code="show.all.nodes" />
             </g:link>
         </li>
         <li class="divider"></li>
-        <li class="dropdown-header"><i class="glyphicon glyphicon-filter"></i> Saved Filters</li>
+        <li class="dropdown-header"><i class="glyphicon glyphicon-filter"></i> <g:message code="saved.filters" /></li>
         <g:render template="/common/selectFilter"
-                  model="[filterList: true, filterset: filterset, filterName: filterName, prefName: 'nodes', noSelection: filterName ? '-All Nodes-' : null]"/>
+                  model="[filterList: true, filterset: filterset, filterName: filterName, prefName: 'nodes', noSelection: filterName ? message(code:'all.nodes.menu.item') : null]"/>
     </ul>
 </span>
 <input type='search' name="${filterFieldName?enc(attr:filterFieldName):'filter'}" class="schedJobNodeFilter form-control"
-       data-bind="textInput: filterWithoutAll,  executeOnEnter: updateMatchedNodes"
+       data-bind="textInput: filterWithoutAll,  executeOnEnter: newFilterText"
        placeholder="${queryFieldPlaceholderText?:g.message(code:'enter.a.node.filter')}"
        data-toggle='popover'
        data-popover-content-ref="#${queryFieldHelpId?enc(attr:queryFieldHelpId):'queryFilterHelp'}"
@@ -54,7 +54,7 @@
     <a class="btn btn-default" data-toggle='popover-for' data-target="#${filterFieldId ? enc(attr: filterFieldId) : 'schedJobNodeFilter'}">
         <i class="glyphicon glyphicon-question-sign"></i>
     </a>
-    <a class="btn btn-default" data-bind="click: $data.updateMatchedNodes, css: {disabled: !filter()}" href="#">
+    <a class="btn btn-default" data-bind="click: $data.newFilterText, css: {disabled: !filter()}" href="#">
         <g:message code="search" />
     </a>
 </span>

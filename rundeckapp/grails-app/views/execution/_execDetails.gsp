@@ -91,8 +91,6 @@
         </td>
     </tr>
 </g:if>
-    <g:set var="NODE_FILTERS" value="${['','Name','Tags','OsName','OsFamily','OsArch','OsVersion']}"/>
-    <g:set var="NODE_FILTER_MAP" value="${['':'Hostname','OsName':'OS Name','OsFamily':'OS Family','OsArch':'OS Architecture','OsVersion':'OS Version']}"/>
 
     <g:if test="${execdata?.doNodedispatch}">
     <tbody>
@@ -113,18 +111,43 @@
                         </span>
                     </g:if>
                     <g:else>
-                        <g:embedJSON id="nodeFilterData" data="${jsdata}"/>
-                        <g:javascript>
-                            jQuery(function(){
-                                var nfilter=loadJsonData('nodeFilterData');
-                                jQuery('#nodeFilterUpdate').click(function(e){
-                                    _updateMatchedNodes(nfilter,'matchednodes_${ enc(js: rkey) }','${enc(js:execdata?.project)}',false,{requireRunAuth:true});
+                        <g:if test="${!knockout}">
+                            <g:embedJSON id="nodeFilterData" data="${jsdata}"/>
+                            <g:javascript>
+                                jQuery(function(){
+                                    var nfilter=loadJsonData('nodeFilterData');
+                                    jQuery('#nodeFilterUpdate').click(function(e){
+                                        _updateMatchedNodes(nfilter,'matchednodes_${ enc(js: rkey) }','${enc(js:execdata?.project)}',false,{requireRunAuth:true});
+                                    });
                                 });
-                            });
-                        </g:javascript>
-                        <span class="action textbtn  textbtn query " title="Display matching nodes" id="nodeFilterUpdate">
-                            <g:render template="/framework/displayNodeFilters" model="${[displayParams:execdata]}"/>
-                        </span>
+                            </g:javascript>
+                            <span class="action textbtn  textbtn query " title="Display matching nodes" id="nodeFilterUpdate">
+                                <g:render template="/framework/displayNodeFilters" model="${[displayParams:execdata]}"/>
+                            </span>
+                            <g:link
+                                    controller="framework"
+                                    action="nodes"
+                                    params="[project: params.project ?: request.project, filter: filterstring]"
+                                    title="${message(code: 'view.in.nodes.page')}"><g:icon name="arrow-right"/></g:link>
+                        </g:if>
+                        <g:if test="${knockout}">
+                            <span class="ko-wrap">
+                                    <span class="action textbtn  textbtn query "
+                                          title="Display matching nodes"
+                                          data-bind="click: updateMatchedNodes"
+                                          >
+                                        <g:render template="/framework/displayNodeFilters" model="${[displayParams:execdata]}"/>
+                                    </span>
+                                <g:link
+                                        controller="framework"
+                                        action="nodes"
+                                        params="[project: params.project ?: request.project, filter: filterstring]"
+                                        title="${message(code: 'view.in.nodes.page')}"><g:icon name="arrow-right"/></g:link>
+                                <span >
+                                    <g:render template="/framework/nodesEmbedKO" model="[showLoading:true,showTruncated:true]"/>
+                                </span>
+                            </span>
+                        </g:if>
                     </g:else>
                     </span>
 

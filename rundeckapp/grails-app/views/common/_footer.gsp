@@ -2,7 +2,7 @@
 <div class="row">
 <div class="col-sm-12">
     <g:appTitle/>
-    &copy; Copyright 2015 <a href="http://simplifyops.com">
+    &copy; Copyright 2016 <a href="http://simplifyops.com">
     <span style="color:red;">#Simplify</span>Ops</a>.
 
     All rights reserved.

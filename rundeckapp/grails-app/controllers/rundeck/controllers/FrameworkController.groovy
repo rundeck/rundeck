@@ -9,18 +9,26 @@ import com.dtolabs.rundeck.core.common.ProviderService
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
+import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource
 import com.dtolabs.rundeck.core.resources.FileResourceModelSourceFactory
+import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerator
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.shared.resources.ResourceXMLGenerator
 
 import grails.converters.JSON
+import grails.converters.XML
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
 import rundeck.services.PasswordFieldsService
+import rundeck.services.framework.RundeckProjectConfigurable
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -53,7 +61,7 @@ import rundeck.services.FrameworkService
 import rundeck.services.UserService
 import rundeck.filters.ApiRequestFilters
 
-class FrameworkController extends ControllerBase {
+class FrameworkController extends ControllerBase implements ApplicationContextAware {
     FrameworkService frameworkService
     ExecutionService executionService
     UserService userService
@@ -66,6 +74,7 @@ class FrameworkController extends ControllerBase {
     def ApiService apiService
     def configStorageService
     def AuthorizationService authorizationService
+    def ApplicationContext applicationContext
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
@@ -286,6 +295,7 @@ class FrameworkController extends ControllerBase {
         def allnodes = [:]
         def totalexecs = [:]
         def total=0
+        def truncateMax=params.untruncate?-1: params.maxShown?params.int('maxShown'):100
         def allcount=null
         NodeSet nset = ExecutionService.filtersAsNodeSet(query)
         def projects=[]
@@ -293,7 +303,9 @@ class FrameworkController extends ControllerBase {
         def project = framework.getFrameworkProjectMgr().getFrameworkProject(query.project)
         def INodeSet nodeset
 
+        long mark=System.currentTimeMillis()
         INodeSet nodes1 = project.getNodeSet()
+
 //        allcount=nodes1.nodes.size()
         if(params.localNodeOnly){
             nodeset=new NodeSetImpl()
@@ -318,8 +330,12 @@ class FrameworkController extends ControllerBase {
 //            nodes = nodes.sort { INodeEntry a, INodeEntry b -> return a.nodename.compareTo(b.nodename) }
         //filter nodes by read authorization
 
+        mark=System.currentTimeMillis()
         def readnodes = frameworkService.filterAuthorizedNodes(query.project, ['read'] as Set, nodeset, authContext)
+        log.debug("nodesData filterAuthorizedNodes[read]: ${System.currentTimeMillis()-mark}ms")
+        mark=System.currentTimeMillis()
         def runnodes = frameworkService.filterAuthorizedNodes(query.project, ['run'] as Set, readnodes, authContext)
+        log.debug("nodesData filterAuthorizedNodes[run]: ${System.currentTimeMillis()-mark}ms")
         def noderunauthmap = [:]
 
 
@@ -344,20 +360,19 @@ class FrameworkController extends ControllerBase {
 
         def tagsummary=frameworkService.summarizeTags(nodes)
         def count=0;
-
-        nodes.each{INodeEntry nd->
-            if(null!=nd){
-                if(page>=0 && (count<(page*max) || count >=((page+1)*max) && !remaining)){
-                    count++;
-                    return
-                }
-                count++;
-                allnodes[nd.nodename]=[node:nd,projects:[project],project:project,executions:[],resources:[],islocal:nd.nodename==framework.getFrameworkNodeName()]
-                if(params.requireRunAuth == 'true'  || runnodes.getNode(nd.nodename)){
-                    noderunauthmap[nd.nodename]=true
-                }
-
-
+        int first=page<0? 0 : page*max
+        int last=page<0 || remaining ? (nodes.size()) : ((page+1)*max)
+        def truncated=false
+        if(truncateMax>0 && last-first > truncateMax){
+            truncated=true
+            last=first+truncateMax
+        }
+        def nlist=new ArrayList<INodeEntry>(nodes)
+        for(int i=first;i < last && i<nodes.size();i++){
+            INodeEntry nd  = nlist[i]
+            allnodes[nd.nodename]=[node:nd,project:project.name,islocal:nd.nodename==framework.getFrameworkNodeName()]
+            if(params.requireRunAuth == 'true'  || runnodes.getNode(nd.nodename)){
+                noderunauthmap[nd.nodename]=true
             }
         }
         if(filterErrors){
@@ -405,7 +420,6 @@ class FrameworkController extends ControllerBase {
             
         }
 */
-        def resources=[:]
 
         def parseExceptions= project.projectNodes.getResourceModelSourceExceptions()
 
@@ -420,13 +434,13 @@ class FrameworkController extends ControllerBase {
 //            nodesfile:nodes1.file,
             params:params,
             total:total,
-            allcount:allcount,
+            allcount:total,
             tagsummary:tagsummary,
             page:page,
             max:max,
+            truncated:truncated,
 //            totalexecs:totalexecs,
 //            jobs:runningset.jobs,
-            resources:resources,
             query:query
         ]
 
@@ -474,19 +488,21 @@ class FrameworkController extends ControllerBase {
     /**
      * nodesFragment renders a set of nodes in HTML snippet, for ajax
      */
-    def nodesFragment(ExtNodeFilters query) {
+    def nodesFragmentData(ExtNodeFilters query) {
+        long start = System.currentTimeMillis()
         if (query.hasErrors()) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
-            return renderErrorFragment(g.message(error: query.errors.allErrors.collect { g.message(error: it) }.join("; ")))
+            return null
         }
 
         Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
         if (unauthorizedResponse(
                 frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
-                        [AuthConstants.ACTION_READ],
-                        query.project),
-                AuthConstants.ACTION_READ, 'Project', 'nodes',true)) {
+                                                             [AuthConstants.ACTION_READ],
+                                                             query.project
+                ),
+                AuthConstants.ACTION_READ, 'Project', 'nodes', true
+        )) {
             return
         }
         def User u = userService.findOrCreateUser(session.user)
@@ -524,15 +540,64 @@ class FrameworkController extends ControllerBase {
         //in case named filter stored from another project
         query.project = params.project
         def result = nodesdata(query)
-        result.colkeys= filterSummaryKeys(query)
+        result.colkeys = filterSummaryKeys(query)
         if (usedFilter) {
             result['filterName'] = usedFilter
         }
-        if(!result.nodesvalid){
-            request.error="Error parsing file \"${result.nodesfile}\": "+result.nodeserror? result.nodeserror*.message?.join("\n"):'no message'
+        if (!result.nodesvalid) {
+            request.error = "Error parsing file \"${result.nodesfile}\": " + result.nodeserror ? result.nodeserror*.message?.
+                    join("\n") : 'no message'
         }
-        result['nodefilterLinkId']=params.nodefilterLinkId
+        result['nodefilterLinkId'] = params.nodefilterLinkId
+        return result
+    }
+
+    /**
+     * nodesFragment renders a set of nodes in HTML snippet, for ajax
+     */
+    def nodesFragment(ExtNodeFilters query) {
+        if (query.hasErrors()) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorFragment(
+                    g.message(error: query.errors.allErrors.collect { g.message(error: it) }.join("; "))
+            )
+        }
+        def result= nodesFragmentData(query)
         render(template:"allnodes",model: result)
+    }
+    /**
+     * nodesFragment renders a set of nodes in HTML snippet, for ajax
+     */
+    def nodesQueryAjax(ExtNodeFilters query) {
+        if (query.hasErrors()) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorFragment(
+                    g.message(error: query.errors.allErrors.collect { g.message(error: it) }.join("; "))
+            )
+        }
+        Map result= nodesFragmentData(query)
+        result.remove('selectedProject')
+        result.remove('query')
+        result.remove('params')
+        def nodes=result.remove('allnodes')
+        withFormat {
+            json{
+                return render ((result + [
+                        allnodes: nodes.collect{entry->
+                            [
+                                    nodename:entry.key,
+                                    islocal:entry.value.islocal,
+                                    tags:entry.value.node.tags,
+                                    attributes:entry.value.node.attributes,
+                                    authrun:result.nodeauthrun[entry.key]?true:false
+                            ]
+                        }
+                ]) as JSON)
+            }
+            xml{
+                return render (result as XML)
+            }
+        }
     }
 
     /**
@@ -781,6 +846,40 @@ class FrameworkController extends ControllerBase {
                 configs << [type: type, props: props]
             }
         }
+
+        //load extra configuration for grails services
+
+        Map<String,RundeckProjectConfigurable> projectConfigurableBeans=applicationContext.getBeansOfType(RundeckProjectConfigurable)
+
+        Map<String,Map> extraConfig=[:]
+        projectConfigurableBeans.each { k, RundeckProjectConfigurable v ->
+            //construct input values for the bean
+            def beanData=[
+                    configurable:v,
+                    prefix:"extraConfig.${k}"
+            ]
+            def input=params.extraConfig."${k}"
+            beanData.values=input
+
+            v.getProjectConfigProperties().findAll{it.type==Property.Type.Boolean}.each{
+                if(input[it.name]!='true'){
+                    input[it.name]='false'
+                }
+            }
+            //validate
+            def report=Validator.validate(input as Properties, v.projectConfigProperties)
+            beanData.report=report
+            if(!report.valid){
+                errors << ("Some configuration was invalid: "+ report )
+                extraConfig[k]=beanData
+            }else{
+                def projvalues = Validator.performMapping(input, v.getPropertiesMapping(),true)
+
+                projProps.putAll(projvalues)
+            }
+        }
+
+
         if (!project) {
             projectNameError = "Project name is required"
             errors << projectNameError
@@ -823,7 +922,9 @@ class FrameworkController extends ControllerBase {
                 nodeexecreport: nodeexecreport,
                 fcopyreport: fcopyreport,
                 prefixKey: prefixKey,
-                configs: configs])
+                configs: configs,
+                extraConfig:extraConfig
+                ])
     }
 
     /**
@@ -859,6 +960,19 @@ class FrameworkController extends ControllerBase {
                 ]
             ]
         ]
+        //get grails services that declare project configurations
+        Map<String,RundeckProjectConfigurable> projectConfigurableBeans=applicationContext.getBeansOfType(RundeckProjectConfigurable)
+
+        Map<String,Map> extraConfig=[:]
+        projectConfigurableBeans.each { k, v ->
+            //construct existing values from project properties
+            extraConfig[k]=[
+                    configurable:v,
+                    values:[:],
+                    prefix:"extraConfig.${k}."
+            ]
+        }
+
         return [
             newproject:params.newproject,
             resourceModelConfigDescriptions: descriptions,
@@ -869,7 +983,8 @@ class FrameworkController extends ControllerBase {
             nodeExecDescriptions: nodeexecdescriptions,
             fileCopyDescriptions: filecopydescs,
             prefixKey:prefixKey,
-            configs: configs
+            configs: configs,
+            extraConfig:extraConfig
         ]
     }
 
@@ -1078,6 +1193,7 @@ class FrameworkController extends ControllerBase {
         def defaultFileCopy
         def nodeexec, fcopy
         def nodeexecreport, fcopyreport
+        Map<String,Map> extraConfig=[:]
         if(request.method=='POST'){
             //only attempt project create if form POST is used
             def Properties projProps = new Properties()
@@ -1170,6 +1286,39 @@ class FrameworkController extends ControllerBase {
 
             removePrefixes << FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
 
+
+            //load extra configuration for grails services
+
+            Map<String,RundeckProjectConfigurable> projectConfigurableBeans=applicationContext.getBeansOfType(RundeckProjectConfigurable)
+
+            projectConfigurableBeans.each { k, RundeckProjectConfigurable v ->
+                //construct input values for the bean
+                def beanData=[
+                        configurable:v,
+                        prefix:"extraConfig.${k}"
+                ]
+                def input=params.extraConfig."${k}"
+                beanData.values=input
+
+                v.getProjectConfigProperties().findAll{it.type==Property.Type.Boolean}.each{
+                    if(input[it.name]!='true'){
+                        input[it.name]='false'
+                    }
+                }
+                //validate
+                def report=Validator.validate(input as Properties, v.projectConfigProperties)
+                beanData.report=report
+                if(!report.valid){
+                    errors << ("Some configuration was invalid: "+ report )
+                    extraConfig[k]=beanData
+                }else{
+                    def projvalues = Validator.performMapping(input, v.getPropertiesMapping(),true)
+                    projProps.putAll(projvalues)
+                    //remove all previous settings
+                    removePrefixes.addAll(v.getPropertiesMapping().values())
+                }
+            }
+
             if (!errors) {
                 // Password Field Substitution
 
@@ -1209,7 +1358,9 @@ class FrameworkController extends ControllerBase {
             nodeexecreport: nodeexecreport,
             fcopyreport: fcopyreport,
             prefixKey: prefixKey,
-            configs: configs])
+            configs: configs,
+            extraConfig:extraConfig
+        ])
     }
 
     private List parseDefaultPluginConfig(ArrayList errors, ndx, String identifier, ProviderService service, String title) {
@@ -1267,6 +1418,20 @@ class FrameworkController extends ControllerBase {
         // resourceConfig CRUD rely on this session mapping
         // saveProject will replace the password fields on change
 
+        //get grails services that declare project configurations
+        Map<String,RundeckProjectConfigurable> projectConfigurableBeans=applicationContext.getBeansOfType(RundeckProjectConfigurable)
+
+        Map<String,Map> extraConfig=[:]
+        projectConfigurableBeans.each { k, v ->
+            //construct existing values from project properties
+            def values=Validator.demapProperties(fwkProject.getProjectProperties(),v.getPropertiesMapping(), true)
+            extraConfig[k]=[
+                    configurable:v,
+                    values:values,
+                    prefix:"extraConfig.${k}."
+            ]
+        }
+
         [
             project: project,
             projectDescription:fwkProject.getProjectProperties().get("project.description"),
@@ -1278,7 +1443,8 @@ class FrameworkController extends ControllerBase {
             defaultFileCopy: defaultFileCopy,
             nodeExecDescriptions: execDesc,
             fileCopyDescriptions: filecopyDesc,
-            prefixKey: 'plugin'
+            prefixKey: 'plugin',
+            extraConfig:extraConfig
         ]
     }
     def editProjectFile (){

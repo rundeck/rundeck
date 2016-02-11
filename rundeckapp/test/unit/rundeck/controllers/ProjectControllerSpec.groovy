@@ -1,14 +1,13 @@
 package rundeck.controllers
 
-import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.TestFor
 import org.codehaus.groovy.grails.plugins.testing.GrailsMockMultipartFile
 import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.services.ApiService
+import rundeck.services.ArchiveOptions
 import rundeck.services.AuthorizationService
 import rundeck.services.FrameworkService
 import rundeck.services.ProjectService
@@ -18,7 +17,6 @@ import spock.lang.Unroll
 import javax.security.auth.Subject
 
 import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_ADMIN
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_CONFIGURE
 import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_CREATE
 import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_DELETE
 import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_IMPORT
@@ -35,6 +33,33 @@ class ProjectControllerSpec extends Specification{
     }
     def cleanup(){
 
+    }
+
+    def "api export execution ids string"(){
+        given:
+        controller.projectService=Mock(ProjectService)
+        controller.apiService=Mock(ApiService)
+        controller.frameworkService=Mock(FrameworkService)
+        params.project='aproject'
+        params.executionIds=eidparam
+
+        when:
+        def result=controller.apiProjectExport()
+
+        then:
+        1 * controller.apiService.requireVersion(_,_,_) >> true
+        1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_,_,['export','admin']) >> true
+        1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
+        1 * controller.projectService.exportProjectToOutputStream(_,_,_,_,_,{ ArchiveOptions opts ->
+            opts.executionsOnly==true && opts.executionIds==(expectedset)
+        })
+
+        where:
+        eidparam | expectedset
+        '123' | ['123'] as Set
+        '123,456' | ['123','456'] as Set
+        ['123','456'] | ['123','456'] as Set
     }
     def "project file readme get not project param"(){
         given:

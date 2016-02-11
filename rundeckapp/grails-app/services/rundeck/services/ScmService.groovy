@@ -74,11 +74,7 @@ class ScmService {
     def initialize() {
         for (String project : frameworkService.projectNames()) {
             for (String integration : INTEGRATIONS) {
-                def pluginConfig = pluginConfigService.loadScmConfig(
-                        project,
-                        pathForConfigFile(integration),
-                        PREFIXES[integration]
-                )
+                def pluginConfig = loadScmConfig(project, integration)
                 if (!pluginConfig?.enabled) {
                     log.debug("SCM ${integration} not setup for project: ${project}: ${pluginConfig}")
                     continue
@@ -208,6 +204,16 @@ class ScmService {
         plugin.instance.getSetupPropertiesForBasedir(baseDir)
     }
 
+    /**
+     * Return the descriptor for the configured plugin for the project, or null
+     * @param project project
+     * @param integration integration
+     * @return description, or null
+     */
+    def loadProjectPluginDescriptor(String project, String integration) {
+        def config = loadScmConfig(project, integration)
+        config?.enabled ? getPluginDescriptor(integration,config.type): null
+    }
     ScmPluginConfigData loadScmConfig(String project, String integration) {
         pluginConfigService.loadScmConfig(project, pathForConfigFile(integration), PREFIXES[integration])
     }
@@ -932,11 +938,11 @@ class ScmService {
             deleted = plugin.deletedFiles
         }
         //create map of path -> job info
-        def map = deleted.collectEntries {
+        def map = deleted?.collectEntries {
             [it, deletedJobForPath(project, it) ?: [:]]
         }
         log.debug "Deleted job map for ${project}: ${map}"
-        return map
+        return map?:[:]
     }
 
     def performExportAction(

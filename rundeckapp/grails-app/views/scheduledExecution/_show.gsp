@@ -31,7 +31,7 @@
                     </a>
                 </li>
             </g:else>
-            <li class="${canRunJob ? '' : 'active'}"><a href="#schedExDetails${enc(attr:scheduledExecution?.id)}"
+            <li class="${canRunJob ? '' : 'active'}"><a href="#schedExDetails"
                                                         data-toggle="tab"><g:message code="definition"/></a></li>
         </ul>
 
@@ -45,11 +45,10 @@
                             defaultFollow="${true}"/>
                 </div>
             </g:if>
-            <div id="schedExDetails${enc(attr:scheduledExecution?.id)}"
+            <div id="schedExDetails"
                  class="tab-pane panel panel-default panel-tab-content  ${canRunJob ? '' : 'active'}">
                 <div class="panel-body">
-                    <g:render template="showDetail"
-                              model="[scheduledExecution: scheduledExecution, showEdit: true, hideOptions: true]"/>
+                    <g:render template="/execution/execDetails" model="[execdata: scheduledExecution, showEdit: true, hideOptions: true, knockout: true]"/>
 
                 </div>
             </div>
@@ -76,7 +75,7 @@
 
 <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
 <g:javascript>
-    fireWhenReady('schedExDetails${enc(attr: scheduledExecution?.id)}', function (z) {
+    fireWhenReady('schedExDetails', function (z) {
         jQuery('.apply_ace').each(function () {
             _applyAce(this,'400px');
         });

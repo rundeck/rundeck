@@ -79,9 +79,9 @@
             </div>
         </form>
         </div>
-        <g:if test="${flash.error}">
+        <g:if test="${flash.loginerror}">
             <div class="panel-footer panel-danger">
-                <g:enc>${flash.error}</g:enc>
+                <g:enc>${flash.loginerror}</g:enc>
             </div>
         </g:if>
     </div>

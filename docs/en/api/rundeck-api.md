@@ -95,6 +95,10 @@ Changes introduced by API Version number:
     - [`/api/14/system/executions/disable`][/api/V/system/executions/disable] - Disable executions (PASSIVE mode)
     - [`/api/14/system/acl/*`][/api/V/system/acl/*] - Manage system ACLs
     - [`/api/14/project/[PROJECT]/acl/*`][/api/V/project/[PROJECT]/acl/*] - Manage project ACLs
+    - [`/api/14/job/[ID]/execution/enable`][/api/V/job/[ID]/execution/enable] - Enable executions for a job
+    - [`/api/14/job/[ID]/execution/disable`][/api/V/job/[ID]/execution/disable] - Disable executions for a job
+    - [`/api/14/job/[ID]/schedule/enable`][/api/V/job/[ID]/schedule/enable] - Enable scheduling for a job
+    - [`/api/14/job/[ID]/schedule/disable`][/api/V/job/[ID]/schedule/disable] - Disable scheduling for a job
 * New Endpoints, replacing deprecated versions:
     - [`/api/14/project/[PROJECT*]/executions/running`][/api/V/project/[PROJECT*]/executions/running]
     - [`/api/14/project/[PROJECT]/executions`][/api/V/project/[PROJECT]/executions]
@@ -1689,6 +1693,64 @@ The list of succeeded/failed will contain objects of this form:
 }
 ~~~~~~
 
+### Enable Executions for a Job
+
+Enable executions for a job. (ACL requires `toggle_execution` action for a job.)
+
+**Request:**
+
+    POST /api/14/job/[ID]/execution/enable
+
+**Response:**
+
+`application/xml`
+
+~~~{.xml}
+<success>true</success>
+~~~
+
+`application/json`
+
+~~~{.json}
+{"success":true}
+~~~
+
+### Disable Executions for a Job
+
+Disable all executions for a job (scheduled or manual). (ACL requires `toggle_execution` action for a job.)
+
+**Request:**
+
+    POST /api/14/job/[ID]/execution/disable
+
+**Response:**
+
+(See [Enable Executions for a Job](#enable-executions-for-a-job).)
+
+### Enable Scheduling for a Job
+
+Enable the schedule for a job. (ACL requires `toggle_schedule` action for a job.)
+
+**Request:**
+
+    POST /api/14/job/[ID]/schedule/enable
+
+**Response:**
+
+(See [Enable Executions for a Job](#enable-executions-for-a-job).)
+
+### Disable Scheduling for a Job
+
+Disable the schedule for a job. (ACL requires `toggle_schedule` action for a job.)
+
+**Request:**
+
+    POST /api/14/job/[ID]/schedule/disable
+
+**Response:**
+
+(See [Enable Executions for a Job](#enable-executions-for-a-job).)
+
 ## Executions
 
 ### Getting Executions for a Job
@@ -2070,9 +2132,11 @@ The following parameters can also be used to narrow down the result set.
         * `w`: week
         * `m`: month
         * `y`: year
-        So a value of "2w" would return executions that completed within the last two weeks.
+
+        So a value of `2w` would return executions that completed within the last two weeks.
+    * `olderFilter`: (same format as `recentFilter`) return executions that completed before the specified relative period of time.  E.g. a value of `30d` returns executions older than 30 days.
     * `begin`: Specify exact date for earliest execution completion time
-    * `end`: Specify exact date for latest xecution completion time
+    * `end`: Specify exact date for latest execution completion time
 * `adhoc`: "true/false", if true, include only Adhoc executions, if false return only Job executions. By default any matching executions are returned, however if you use any of the Job filters below, then only Job executions will be returned.
 
 The format for the `end`, and `begin` filters is either:  a unix millisecond timestamp, or a W3C dateTime string in the format "yyyy-MM-ddTHH:mm:ssZ".
@@ -3373,6 +3437,25 @@ Export a zip archive of the project.  Requires `export` authorization for the pr
     GET /api/11/project/[PROJECT]/export
 
 Response content type is `application/zip`
+
+Optional parameters:
+
+* `executionIds` a list (comma-separated) of execution IDs.  If this is specified then the archive will
+contain *only* executions that are specified, and will not contain Jobs, ACLs, or project configuration/readme files.
+    * optionally use `POST` method with with `application/x-www-form-urlencoded` content for large lists of execution IDs
+    * optionally, specify `executionIds` multiple times, with a single ID per entry.
+
+GET Examples:
+
+    GET /api/11/project/AlphaProject/export?executionIds=1,4,9
+    GET /api/11/project/AlphaProject/export?executionIds=1&executionIds=4&executionIds=9
+
+Post:
+
+    POST /api/11/project/AlphaProject/export
+    Content-Type: application/x-www-form-urlencoded
+
+    executionIds=1&executionIds=4&executionIds=9&...
 
 ### Project Archive Import ###
 
@@ -4819,9 +4902,26 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 * `GET` [Getting Executions for a Job](#getting-executions-for-a-job)
 * `DELETE` [Delete all Executions for a Job](#delete-all-executions-for-a-job)
 
+
+[/api/V/job/[ID]/execution/enable][]
+
+* `POST` [Enable Executions for a Job](#enable-executions-for-a-job)
+
+[/api/V/job/[ID]/execution/disable][]
+
+* `POST` [Disable Executions for a Job](#disable-executions-for-a-job)
+
 [/api/V/job/[ID]/run][]
 
 * `POST` [Running a Job](#running-a-job)
+
+[/api/V/job/[ID]/schedule/enable][]
+
+* `POST` [Enable Scheduling for a Job](#enable-scheduling-for-a-job)
+
+[/api/V/job/[ID]/schedule/disable][]
+
+* `POST` [Disable Scheduling for a Job](#disable-scheduling-for-a-job)
     
 [/api/V/job/[ID]/scm/[INTEGRATION]/status][] 
 
@@ -5051,8 +5151,18 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 [DELETE /api/V/job/[ID]]:#deleting-a-job-definition
 
 [/api/V/job/[ID]/executions]:#getting-executions-for-a-job
+
+[/api/V/job/[ID]/execution/enable]:#enable-executions-for-a-job
+
+[/api/V/job/[ID]/execution/disable]:#disable-executions-for-a-job
+
 [POST /api/V/job/[ID]/executions]:#running-a-job
 [DELETE /api/V/job/[ID]/executions]:#delete-all-executions-for-a-job
+
+
+[/api/V/job/[ID]/schedule/enable]:#enable-scheduling-for-a-job
+
+[/api/V/job/[ID]/schedule/disable]:#disable-scheduling-for-a-job
 
 
 [/api/V/job/[ID]/run]:#running-a-job

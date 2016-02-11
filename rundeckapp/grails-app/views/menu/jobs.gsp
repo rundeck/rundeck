@@ -10,7 +10,9 @@
     <g:javascript library="pagehistory"/>
     <g:javascript library="prototype/effects"/>
     <g:javascript library="executionOptions"/>
-    <asset:javascript src="historyKO.js"/>
+    <asset:javascript src="menu/jobs.js"/>
+    <g:embedJSON id="pageParams" data="${[project:params.project?:request.project]}"/>
+    <g:jsMessages code="Node,Node.plural"/>
     <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
     <script type="text/javascript">
         /** knockout binding for activity */
@@ -242,17 +244,38 @@
             }
             bcontent.loading();
 
-            jQuery('#jobIdDetailContent').load(_genUrl(appLinks.scheduledExecutionDetailFragment, {id: matchId}),function(response,status,xhr){
-                if (status=='success') {
-                    popJobDetails(elem);
-                    $('jobIdDetailContent').select('.apply_ace').each(function (t) {
-                        _applyAce(t);
-                    });
-                }else{
-                    clearHtml(bcontent);
-                    viewdom.hide();
+            jQuery.ajax({
+                dataType:'json',
+                url:_genUrl(appLinks.scheduledExecutionDetailFragmentAjax, {id: matchId}),
+                success:function(data,status,xhr){
+                    var params={};
+                    if(data.job && data.job.filter) {
+                        params.filter=data.job.filter;
+                    }
+                    if(!jobNodeFilters){
+                        initJobNodeFilters(params);
+                    }else{
+                        jobNodeFilters.filter(params.filter);
+                    }
                 }
-            });
+            }).done(
+                    function(){
+                        jQuery('#jobIdDetailContent').load(_genUrl(appLinks.scheduledExecutionDetailFragment, {id: matchId}),
+                                function(response,status,xhr){
+                            if (status=='success') {
+                                ko.applyBindings(jobNodeFilters,jQuery('#jobIdDetailHolder').find('.ko-wrap')[0]);
+                                popJobDetails(elem);
+                                $('jobIdDetailContent').select('.apply_ace').each(function (t) {
+                                    _applyAce(t);
+                                });
+                            }else{
+                                clearHtml(bcontent);
+                                viewdom.hide();
+                            }
+                        });
+                    }
+            );
+
         }
 
         function initJobIdLinks(){

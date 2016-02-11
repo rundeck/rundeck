@@ -67,7 +67,8 @@ do_setup_export_json_valid(){
 
 	ENDPOINT="${APIURL}/project/$project/scm/$integration/plugin/$plugin/setup"
 
-	TMPDIR=`tmpdir`
+	TMPDIR=`tmpdir`/$project
+	mkdir -p $TMPDIR
 	dirname=$TMPDIR/testdir
 	gitdir=$TMPDIR/testgit
 	mkdir $dirname

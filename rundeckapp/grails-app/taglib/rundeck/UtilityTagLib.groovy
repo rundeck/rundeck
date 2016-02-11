@@ -1181,7 +1181,7 @@ menu-up''')
     def nodeBadgeIcons={attrs,body->
         String found = attrs.node?.attributes[UI_BADGES_GLYPHICON]
         if(found){
-            found.split(/,\s+/).collect{
+            found.split(/,\s*/).collect{
                 glyphiconName(it)
             }.findAll{it}.each{
                 out<<"<i class='glyphicon glyphicon-${it}'></i>"

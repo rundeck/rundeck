@@ -80,7 +80,7 @@ beans={
     frameworkFilesystem(FrameworkFactory,rdeckBase){ bean->
         bean.factoryMethod='createFilesystemFramework'
     }
-    filesystemProjectManager(FrameworkFactory,frameworkFilesystem){ bean->
+    filesystemProjectManager(FrameworkFactory,frameworkFilesystem,ref('nodeService')){ bean->
         bean.factoryMethod='createProjectManager'
     }
 

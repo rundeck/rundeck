@@ -103,7 +103,8 @@ public class ProjectNodeSupportTest extends AbstractBaseTest {
         FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
                                                            new File(getFrameworkProjectsBase()),
                                                            getFrameworkInstance().getFilesystemFramework(),
-                                                           getFrameworkInstance().getFilesystemFrameworkProjectManager());
+                                                           getFrameworkInstance().getFilesystemFrameworkProjectManager(),
+                                                           FrameworkFactory.createNodesFactory(getFrameworkInstance().getFilesystemFramework()));
 
         //set project providerURL and allowed URL regexes
         Properties orig = new Properties();

@@ -86,8 +86,8 @@ test_job_status_json(){
 }
 
 main(){
-	test_job_status_xml "testscm1"
-	test_job_status_json "testscm2"
+	test_job_status_xml "testscm-job-status-1"
+	test_job_status_json "testscm-job-status-2"
 }
 
 main

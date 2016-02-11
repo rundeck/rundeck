@@ -23,6 +23,8 @@ public interface ProjectManager {
      */
     IRundeckProject getFrameworkProject(String name);
 
+    IRundeckProjectConfig loadProjectConfig(final String project);
+
     /**
      * Checks if project by that name exists
      *
