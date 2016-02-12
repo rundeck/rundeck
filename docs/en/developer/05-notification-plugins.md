@@ -323,7 +323,7 @@ import com.dtolabs.rundeck.plugins.notification.NotificationPlugin;
  
 rundeckPlugin(NotificationPlugin){
     onstart { 
-        println("success: data ${execution}")
+        println("job start: data ${execution}")
         true
     }
  
@@ -333,7 +333,7 @@ rundeckPlugin(NotificationPlugin){
     }
  
     onsuccess {
-        println("job start: data ${execution}")
+        println("success: data ${execution}")
         true
     }
 }
@@ -386,7 +386,7 @@ rundeckPlugin(NotificationPlugin) {
     }
  
     onstart { Map executionData,Map config ->
-        println("script, success: data ${executionData}, config: ${config}")
+        println("script, start: data ${executionData}, config: ${config}")
         true
     }
  
@@ -398,7 +398,7 @@ rundeckPlugin(NotificationPlugin) {
  
     onsuccess {
         //with no args, there is a "configuration" and an "execution" variable in the context
-        println("script, start: data ${execution}, test1: ${configuration.test1}, test2: ${configuration.test2} test3: ${configuration.test3}")
+        println("script, success: data ${execution}, test1: ${configuration.test1}, test2: ${configuration.test2} test3: ${configuration.test3}")
         true
     }
 }
