@@ -94,8 +94,8 @@ The token_strings can be used as Authentication tokens to the [API](../api/index
 
 ## log4j.properties
 
-Rundeck uses [log4j] as its application logging facility. This file
-defines the logging configuration for the Rundeck server.
+Rundeck uses [log4j] as its application logging facility. This file defines the logging configuration for the CLI tools.
+In addition, there is another configuration file using to define the logging from the WEB API. This file is located in the following path: $RDECK_BASE/server/exp/webapps/WEB-INF/classes/log4j.properties.
 
 [log4j]: http://logging.apache.org/log4j/
 
