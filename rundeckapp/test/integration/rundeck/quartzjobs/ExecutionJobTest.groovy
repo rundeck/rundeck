@@ -17,8 +17,8 @@
 package rundeck.quartzjobs
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import grails.test.GrailsMock
 import org.junit.Assert
@@ -32,7 +32,6 @@ import rundeck.Workflow
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
-import rundeck.services.execution.ThresholdValue
 
 /**
  * $INTERFACE is ...
@@ -101,16 +100,21 @@ class ExecutionJobTest extends GroovyTestCase{
         mockes.demand.selectSecureOptionInput(1..1){ ScheduledExecution scheduledExecution, Map params, Boolean exposed = false->
             [test:'input']
         }
-        mockes.demand.createExecution(1..1){ ScheduledExecution se1, String user->
+        mockes.demand.createExecution(1..1){ ScheduledExecution se1, UserAndRolesAuthContext auth ->
             Assert.assertEquals(se.id,se1.id)
-            Assert.assertEquals(se.user,user)
+            Assert.assertEquals(se.user, auth.username)
             'fakeExecution'
         }
         mockfs.demand.getRundeckFramework(1..1){->
             'fakeFramework'
         }
+        def mockAuth =new GrailsMock(UserAndRolesAuthContext)
+        mockAuth.demand.getUsername(1..1){
+            'test'
+        }
+        def authcontext=mockAuth.createMock()
         mockfs.demand.getAuthContextForUserAndRoles(1..1) { user, rolelist ->
-            [dummy: true]
+            authcontext
         }
         ExecutionService es = mockes.createMock()
         ExecutionUtilService eus = mockeus.createMock()
