@@ -369,7 +369,7 @@ class EditOptsController {
         if(opt.multivalued && opt.secureInput){
             opt.errors.rejectValue('multivalued', 'option.multivalued.secure-conflict.message')
         }
-        if(jobWasScheduled && opt.required && !opt.defaultValue){
+        if(jobWasScheduled && opt.required && !(opt.defaultValue||opt.defaultStoragePath)){
             opt.errors.rejectValue('defaultValue', 'option.defaultValue.required.message')
         }
         return result
