@@ -50,7 +50,7 @@
             }
             jQuery('#execDivContent').load(_genUrl(appLinks.scheduledExecutionExecuteFragment, params),function(response,status,xhr){
                 if (status=='success') {
-                    loadedFormSuccess();
+                    loadedFormSuccess(!!id);
                 } else{
                     requestError("executeFragment for [" + id + "]",xhr);
                 }
@@ -87,7 +87,7 @@
                 onFailure: requestError.curry("runJobInline")
             });
         }
-        function loadedFormSuccess(){
+        function loadedFormSuccess(doShow){
             if ($('execFormCancelButton')) {
                 Event.observe($('execFormCancelButton'),'click',function(evt) {
                     Event.stop(evt);
@@ -104,7 +104,9 @@
                     return false;
                 },false);
             }
-            jQuery('#execDiv').modal('show');
+            if(doShow){
+                jQuery('#execDiv').modal('show');
+            }
             $('busy').hide();
         }
 
