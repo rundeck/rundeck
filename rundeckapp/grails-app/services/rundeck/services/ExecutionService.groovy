@@ -1858,10 +1858,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             opt.defaultStoragePath,
                             false
                     )){
-                        invalidOpt opt,lookupMessage("domain.Option.validation.required.storageDefault",[opt.name,opt.defaultStoragePath])
+                        invalidOpt opt,lookupMessage("domain.Option.validation.required.storageDefault",[opt.name,opt.defaultStoragePath].toArray())
                         return
                     }else if(!opt.defaultStoragePath){
-                        invalidOpt opt,lookupMessage("domain.Option.validation.required",[opt.name])
+                        invalidOpt opt,lookupMessage("domain.Option.validation.required",[opt.name].toArray())
                         return
                     }
                 }
@@ -1899,7 +1899,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     if (opt.regex && !opt.enforced && optparams[opt.name]) {
                         if (!(optparams[opt.name] ==~ opt.regex)) {
                             invalidOpt opt, opt.secureInput ?
-                                    lookupMessage("domain.Option.validation.secure.invalid",[opt.name])
+                                    lookupMessage("domain.Option.validation.secure.invalid",[opt.name].toArray())
                                     : lookupMessage("domain.Option.validation.regex.invalid",[opt.name,optparams[opt.name],opt.regex])
 
                             return
@@ -1910,7 +1910,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             optparams[opt.name] instanceof String &&
                             !opt.values.contains(optparams[opt.name])) {
                         invalidOpt opt,  opt.secureInput ?
-                                lookupMessage("domain.Option.validation.secure.invalid",[opt.name])
+                                lookupMessage("domain.Option.validation.secure.invalid",[opt.name].toArray())
                                 : lookupMessage("domain.Option.validation.allowed.invalid",[opt.name,optparams[opt.name],opt.values])
                         return
                     }
