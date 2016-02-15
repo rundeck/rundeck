@@ -114,6 +114,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }else if(params.exec){
             return redirect(action: 'adhoc', params: params)
         }
+        if(params.filterLocalNodeOnly=='true') {
+            //redirect to local node filter
+            return redirect(
+                    action: 'nodes',
+                    params: [project: params.project, filter: frameworkService.frameworkNodeName]
+            )
+        }
         def User u = userService.findOrCreateUser(session.user)
         def usedFilter = null
         def prefs=userService.getFilterPref(u.login)

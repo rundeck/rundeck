@@ -209,15 +209,36 @@
             <td>Node:</td>
             <td class="matchednodes embed" id="matchednodes_${rkey}">
                 <span class="text-muted"><g:message code="execute.on.the.server.node" /></span>
-                <span class="btn btn-sm btn-default receiver"  title="Display matching nodes" id="serverNodeUpdate">Server Node</span>
+
+                <g:if test="${knockout}">
+                    <span class="ko-wrap">
+                        <span class="btn btn-sm btn-default receiver"
+                              title="Display matching nodes"
+                              data-bind="click: updateMatchedNodes"
+                        >
+                            Server Node
+                        </span>
+                        <g:link
+                                controller="framework"
+                                action="nodes"
+                                params="[project: params.project ?: request.project, filterLocalNodeOnly: true]"
+                                title="${message(code: 'view.in.nodes.page')}"><g:icon name="arrow-right"/></g:link>
+                        <div >
+                            <g:render template="/framework/nodesEmbedKO" model="[showLoading:true,showTruncated:true]"/>
+                        </div>
+                    </span>
+                </g:if>
             </td>
         </tr>
         </tbody>
-            <g:javascript>
-            jQuery('#serverNodeUpdate').click(function(e){
-               _updateMatchedNodes({},'matchednodes_${enc(js: rkey)}','${enc(js: execdata?.project)}', true, {requireRunAuth:true});
-            });
-            </g:javascript>
+
+            <g:if test="${!knockout}">
+                <g:javascript>
+                jQuery('#serverNodeUpdate').click(function(e){
+                   _updateMatchedNodes({},'matchednodes_${enc(js: rkey)}','${enc(js: execdata?.project)}', true, {requireRunAuth:true});
+                });
+                </g:javascript>
+            </g:if>
         </g:if>
     </g:else>
     <g:if test="${execdata?.doNodedispatch}">

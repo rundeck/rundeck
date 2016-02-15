@@ -779,7 +779,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         self.updateMatchedNodes();
     };
     self.updateMatchedNodes= function () {
-        if(!self.filter()){
+        if(!self.filter() && self.emptyMode()=='blank'){
             return;
         }
         var project=self.project();

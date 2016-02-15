@@ -221,6 +221,10 @@
             var matchId=match[1];
             var viewdom=$('jobIdDetailHolder');
             var bcontent=$('jobIdDetailContent');
+            if(viewdom){
+                viewdom.parentNode.removeChild(viewdom);
+                viewdom=null;
+            }
             if(!viewdom){
                 viewdom = $(document.createElement('div'));
                 viewdom.addClassName('bubblewrap');
@@ -243,27 +247,31 @@
                 Event.observe(viewdom,'mouseout',jobLinkMouseout.curry(viewdom));
             }
             bcontent.loading();
-
+            var jobNodeFilters;
             jQuery.ajax({
                 dataType:'json',
                 url:_genUrl(appLinks.scheduledExecutionDetailFragmentAjax, {id: matchId}),
                 success:function(data,status,xhr){
                     var params={};
-                    if(data.job && data.job.filter) {
-                        params.filter=data.job.filter;
-                    }
-                    if(!jobNodeFilters){
-                        initJobNodeFilters(params);
+                    if(data.job && data.job.doNodeDispatch) {
+                        if (data.job.filter) {
+                            params.filter = data.job.filter;
+                        }
                     }else{
-                        jobNodeFilters.filter(params.filter);
+                        params.localNodeOnly=true;
+                        params.emptyMode='localnode';
                     }
+                    jobNodeFilters=initJobNodeFilters(params);
                 }
             }).done(
                     function(){
                         jQuery('#jobIdDetailContent').load(_genUrl(appLinks.scheduledExecutionDetailFragment, {id: matchId}),
                                 function(response,status,xhr){
                             if (status=='success') {
-                                ko.applyBindings(jobNodeFilters,jQuery('#jobIdDetailHolder').find('.ko-wrap')[0]);
+                                var wrapDiv = jQuery('#jobIdDetailHolder').find('.ko-wrap')[0];
+                                if(wrapDiv) {
+                                    ko.applyBindings(jobNodeFilters, wrapDiv);
+                                }
                                 popJobDetails(elem);
                                 $('jobIdDetailContent').select('.apply_ace').each(function (t) {
                                     _applyAce(t);
