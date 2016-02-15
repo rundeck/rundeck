@@ -5,7 +5,7 @@
 <table class="simpleForm execdetails">
     <g:if test="${execdata!=null && execdata.id && execdata instanceof ScheduledExecution && execdata.scheduled}">
         <tr>
-        <td >Schedule:</td>
+        <td ><g:message code="scheduledExecution.property.crontab.detail.prompt" /></td>
         <td>
             <g:render template="/scheduledExecution/showCrontab" model="${[scheduledExecution:execdata,crontab:crontab]}"/>
         </td>
@@ -18,13 +18,13 @@
                     <i class="glyphicon glyphicon-time"></i>
                       <span title="${enc(attr:remoteClusterNodeUUID)}"><g:message code="expecting.another.cluster.server.to.run"/></span>
                       <g:relativeDate elapsed="${nextExecution}" untilClass="desc"/>
-                      at <span class="desc"><g:enc>${nextExecution}</g:enc></span>
+                      <g:message code="job.detail.time.at" /> <span class="desc"><g:enc>${nextExecution}</g:enc></span>
                 </g:if>
                 <g:else>
                     <i class="glyphicon glyphicon-time"></i>
-                        Next execution
+                        <g:message code="job.detail.next.execution" />
                         <g:relativeDate elapsed="${nextExecution}" untilClass="timeuntil"/>
-                        at <span class="timeabs"><g:enc>${nextExecution}</g:enc></span>
+                        <g:message code="job.detail.time.at" /> <span class="timeabs"><g:enc>${nextExecution}</g:enc></span>
                 </g:else>
 
                 </g:if>
@@ -66,7 +66,7 @@
         </g:unless>
         <g:if test="${execdata instanceof ScheduledExecution && execdata.options}">
             <tr>
-                <td>Options:</td>
+                <td><g:message code="scheduledExecution.options.prompt" /></td>
                 <td >
                     <g:render template="/scheduledExecution/optionsSummary" model="${[options:execdata.options]}"/>
                 </td>
@@ -75,7 +75,7 @@
         <g:if test="${execdata.argString && (null==showArgString || showArgString)}">
             <tr>
                 <td>
-                    Options:
+                    <g:message code="scheduledExecution.options.prompt" />
                 </td>
                 <td >
                     <g:render template="/execution/execArgString" model="[argString: execdata.argString]"/>
@@ -85,9 +85,9 @@
     </g:if>
 <g:if test="${execdata?.loglevel=='DEBUG'}">
     <tr>
-        <td>Verbose Logging:</td>
+        <td><g:message code="scheduledExecution.property.verbose.logging.prompt" /></td>
         <td >
-            Enabled
+            <g:message code="badge.Enabled.title" />
         </td>
     </tr>
 </g:if>
@@ -121,7 +121,7 @@
                                     });
                                 });
                             </g:javascript>
-                            <span class="action textbtn  textbtn query " title="Display matching nodes" id="nodeFilterUpdate">
+                            <span class="action textbtn  textbtn query " title="${message(code:"display.matching.nodes")}" id="nodeFilterUpdate">
                                 <g:render template="/framework/displayNodeFilters" model="${[displayParams:execdata]}"/>
                             </span>
                             <g:link
@@ -133,7 +133,7 @@
                         <g:if test="${knockout}">
                             <span class="ko-wrap">
                                     <span class="action textbtn  textbtn query "
-                                          title="Display matching nodes"
+                                          title="${message(code:"display.matching.nodes")}"
                                           data-bind="click: updateMatchedNodes"
                                           >
                                         <g:render template="/framework/displayNodeFilters" model="${[displayParams:execdata]}"/>
@@ -178,11 +178,12 @@
 
                         <g:message code="sort.nodes.by"  />
                         <strong><g:enc>${execdata?.nodeRankAttribute?: 'name'}</g:enc></strong>
-                        in
-                        <strong>
-                            <g:message code="${isAscending ? 'ascending' : 'descending'}"/>
-                        </strong>
-                        order.
+                        <g:if test="${isAscending}">
+                            <g:message code="scheduledExecution.property.nodeRankOrder.ascending.message"/>
+                        </g:if>
+                        <g:else>
+                            <g:message code="scheduledExecution.property.nodeRankOrder.descending.message"/>
+                        </g:else>
                     </span>
                     </div>
                     <g:if test="${execdata instanceof ScheduledExecution}">
@@ -206,17 +207,17 @@
         <g:if test="${!nomatchednodes}">
         <tbody>
         <tr>
-            <td>Node:</td>
+            <td><g:message code="job.detail.node.prompt" /></td>
             <td class="matchednodes embed" id="matchednodes_${rkey}">
                 <span class="text-muted"><g:message code="execute.on.the.server.node" /></span>
 
                 <g:if test="${knockout}">
                     <span class="ko-wrap">
                         <span class="btn btn-sm btn-default receiver"
-                              title="Display matching nodes"
+                              title="${message(code:"display.matching.nodes")}"
                               data-bind="click: updateMatchedNodes"
                         >
-                            Server Node
+                            <g:message code="server.node.label" />
                         </span>
                         <g:link
                                 controller="framework"
@@ -247,7 +248,7 @@
     </g:if>
     <g:if test="${execdata instanceof ScheduledExecution && execdata.notifications}">
         <tr>
-            <td class="displabel">Notification:</td>
+            <td class="displabel"><g:message code="scheduledExecution.property.notification.prompt" /></td>
             <g:set var="bytrigger" value="${execdata.notifications.groupBy{ it.eventTrigger }}"/>
             <td class="container">
             <g:each var="trigger" in="${bytrigger.keySet().sort()}" status="k">
@@ -280,13 +281,13 @@
                 <g:message code="scheduledExecution.property.timeout.label" />
             </td>
             <td>
-                <span title="Timeout duration"><g:enc>${execdata.timeout}</g:enc></span>
+                <span title="${message(code:"scheduledExecution.property.timeout.title")}"><g:enc>${execdata.timeout}</g:enc></span>
             </td>
         </tr>
     </g:if>
     <g:if test="${execdata.orchestrator}">
         <tr>
-            <td class="displabel">Orchestrator:</td>
+            <td class="displabel"><g:message code="scheduledExecution.property.orchestrator.prompt" /></td>
             <td class="container">
                 <g:render template="/execution/execDetailsOrchestrator" model="${[orchestrator: execdata.orchestrator]}"/>
             </td>
@@ -318,15 +319,15 @@
         </g:if>
         <tr>
             <td>
-                <span class="jobuuid desc">UUID:</span>
+                <span class="jobuuid desc"><g:message code="scheduledExecution.property.uuid.prompt" /></span>
             </td>
             <td>
-                <span class="jobuuid desc" title="UUID for this job"><g:enc>${scheduledExecution.uuid}</g:enc></span>
+                <span class="jobuuid desc" title="${message(code:"scheduledExecution.property.uuid.description")}"><g:enc>${scheduledExecution.uuid}</g:enc></span>
             </td>
         </tr>
         <tr>
             <td >
-                Created:
+                <g:message code="scheduledExecution.property.datecreated.prompt" />
             </td>
             <td >
                 <span class="when">

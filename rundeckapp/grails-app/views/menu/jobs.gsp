@@ -12,7 +12,7 @@
     <g:javascript library="executionOptions"/>
     <asset:javascript src="menu/jobs.js"/>
     <g:embedJSON id="pageParams" data="${[project:params.project?:request.project]}"/>
-    <g:jsMessages code="Node,Node.plural"/>
+    <g:jsMessages code="Node,Node.plural,job.starting.execution"/>
     <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
     <script type="text/javascript">
         /** knockout binding for activity */
@@ -100,7 +100,7 @@
                 Event.observe($('execFormRunButton'),'click', function(evt) {
                     Event.stop(evt);
                     execSubmit('execDivContent');
-                    $('formbuttons').loading("Starting Execution…");
+                    $('formbuttons').loading(message('job.starting.execution'));
                     return false;
                 },false);
             }
