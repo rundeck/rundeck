@@ -129,7 +129,7 @@ class ExecutionJob implements InterruptableJob {
                 )
 
                 success=result.success
-                statusString=Execution.isCustomStatusString(result.result.statusString)?result.result.statusString:null
+                statusString=Execution.isCustomStatusString(result.result?.statusString)?result.result?.statusString:null
             }
         }catch(Throwable t){
             log.error("Failed execution ${initMap.execution.id} : ${t.message?t.message:'no message'}",t)
@@ -262,7 +262,7 @@ class ExecutionJob implements InterruptableJob {
             def rolelist = initMap.scheduledExecution.userRoles
             initMap.authContext = frameworkService.getAuthContextForUserAndRoles(initMap.scheduledExecution.user, rolelist)
             initMap.secureOptsExposed = initMap.executionService.selectSecureOptionInput(initMap.scheduledExecution,[:],true)
-            initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution,initMap.scheduledExecution.user)
+            initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution,initMap.authContext)
         }
         if (!initMap.authContext) {
             throw new RuntimeException("authContext could not be determined")

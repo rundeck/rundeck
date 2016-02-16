@@ -2350,7 +2350,7 @@ class ScheduledExecutionController  extends ControllerBase{
 //            response.setStatus (404)
             return [error:"No Job found for id: " + params.id,code:404]
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
             scheduledExecution.project)) {
             return [success:false,failed:true,error:'unauthorized',message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
@@ -2697,7 +2697,7 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', jobid])) {
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
 
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
             scheduledExecution.project)) {

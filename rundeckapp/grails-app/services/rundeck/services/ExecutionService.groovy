@@ -3,6 +3,7 @@ package rundeck.services
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
 import com.dtolabs.rundeck.app.support.*
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
@@ -801,7 +802,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 if(!extraParams){
                     extraParams=[:]
                 }
-                loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext)
+                loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext,true)
             }
 
             StepExecutionContext executioncontext = createContext(execution, null,framework, authContext,
@@ -830,12 +831,34 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             thread.start()
             return [thread:thread, loghandler:loghandler, noderecorder:recorder, execution: execution, scheduledExecution:scheduledExecution,threshold:threshold]
         }catch(Exception e) {
-            log.error('Failed to start execution', e)
+            log.error("Failed while starting execution: ${execution.id}", e)
             loghandler.logError('Failed to start execution: ' + e.getClass().getName() + ": " + e.message)
             sysThreadBoundOut.removeThreadStream()
             sysThreadBoundErr.removeThreadStream()
             loghandler.close()
             return null
+        }
+    }
+
+    /**
+     * Return true if password can be read
+     * @param authContext
+     * @param storagePath
+     * @param failIfMissing
+     * @return
+     */
+    boolean canReadStoragePassword(AuthContext authContext, String storagePath, boolean failIfMissing){
+        def keystore = storageService.storageTreeWithContext(authContext)
+        try {
+            return keystore.readPassword(storagePath)!=null
+        } catch (StorageException e) {
+            if (failIfMissing) {
+                throw new ExecutionServiceException(
+                        "Could not read password, storage path ${storagePath}: ${e.message}",
+                        e
+                )
+            }
+            return false;
         }
     }
 
@@ -851,7 +874,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             ScheduledExecution scheduledExecution,
             Map secureOptsExposed,
             Map secureOpts,
-            AuthContext authContext
+            AuthContext authContext,
+            boolean failIfMissingRequired=false
     )
     {
         def found = scheduledExecution.options?.findAll {
@@ -874,8 +898,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         secureOpts[it.name] = new String(password)
                     }
                 } catch (StorageException e) {
-                    log.error("Unable to read storage path for option ${it.name}: ${e.message}")
-                    log.debug("Unable to read storage path for option ${it.name}: ${e.message}", e)
+                    if(it.required&&failIfMissingRequired){
+                        throw new ExecutionServiceException("Required option '${it.name}' default value could not be loaded from storage: ${e.message}",e)
+                    }
                 }
 
             }
@@ -1490,7 +1515,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param input, map of input overrides, allowed keys: nodeIncludeName: Collection/String, loglevel: String, argString: String, optparams: Map,   option.*: String, option: Map, _replaceNodeFilters:true/false, filter: String
      * @return
      */
-    public Map executeJob(ScheduledExecution scheduledExecution, AuthContext authContext, String user, Map input) {
+    public Map executeJob(ScheduledExecution scheduledExecution, UserAndRolesAuthContext authContext, String user, Map input) {
         def secureOpts = selectSecureOptionInput(scheduledExecution, input)
         def secureOptsExposed = selectSecureOptionInput(scheduledExecution, input, true)
         return retryExecuteJob(scheduledExecution, authContext, user, input, secureOpts, secureOptsExposed, 0,-1)
@@ -1508,7 +1533,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param attempt
      * @return
      */
-    public Map retryExecuteJob(ScheduledExecution scheduledExecution, AuthContext authContext,
+    public Map retryExecuteJob(ScheduledExecution scheduledExecution, UserAndRolesAuthContext authContext,
                                String user, Map input, Map secureOpts=[:], Map secureOptsExposed = [:], int attempt,
                                long prevId) {
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
@@ -1529,7 +1554,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             Map allowedOptions = input.subMap(['loglevel', 'argString', 'option','_replaceNodeFilters', 'filter', 'retryAttempt']).findAll { it.value != null }
             allowedOptions.putAll(input.findAll { it.key.startsWith('option.') || it.key.startsWith('nodeInclude') || it.key.startsWith('nodeExclude') }.findAll { it.value != null })
-            def Execution e = createExecution(scheduledExecution, user, allowedOptions,attempt>0,prevId)
+            def Execution e = createExecution(scheduledExecution, authContext, allowedOptions,attempt>0,prevId)
             def timeout = 0
             if (e.timeout) {
                 timeout = evaluateTimeoutDuration(e.timeout)
@@ -1553,7 +1578,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param input , map of input overrides, allowed keys: loglevel: String, option.*:String, argString: String, node(Include|Exclude).*: String, _replaceNodeFilters:true/false, filter: String, retryAttempt: Integer
      * @return
      */
-    Execution int_createExecution(ScheduledExecution se,user, Map input){
+    Execution int_createExecution(ScheduledExecution se, UserAndRolesAuthContext authContext, Map input){
         def props = [:]
 
         se = ScheduledExecution.get(se.id)
@@ -1577,9 +1602,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         propset.each{k->
             props.put(k,se[k])
         }
-        if (user) {
-            props.user = user
-        }
+        props.user = authContext.username
         if (input && 'true' == input['_replaceNodeFilters']) {
             //remove all existing node filters to replace with input filters
             props = props.findAll {!(it.key =~ /^(filter|node(Include|Exclude).*)$/)}
@@ -1595,7 +1618,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         //evaluate embedded Job options for validation
-        HashMap optparams = validateJobInputOptions(props, se)
+        HashMap optparams = validateJobInputOptions(props, se, authContext)
         optparams = removeSecureOptionEntries(se, optparams)
 
         props.argString = generateJobArgline(se, optparams)
@@ -1664,7 +1687,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      * @throws ExecutionServiceException
      */
-    def Execution createExecution(ScheduledExecution se, String user, Map input = [:], boolean retry=false, long prevId=-1) throws ExecutionServiceException {
+    def Execution createExecution(ScheduledExecution se, UserAndRolesAuthContext authContext, Map input = [:], boolean retry=false, long prevId=-1) throws ExecutionServiceException {
         if (!se.multipleExecutions ) {
             synchronized (this) {
                 //find any currently running executions for this job, and if so, throw exception
@@ -1676,10 +1699,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 if (found && !(retry && prevId && found.size()==1 && found[0].id==prevId)) {
                     throw new ExecutionServiceException('Job "' + se.jobName + '" [' + se.extid + '] is currently being executed (execution [' + found.id + '])','conflict')
                 }
-                return int_createExecution(se,user,input)
+                return int_createExecution(se,authContext,input)
             }
         }else{
-            return int_createExecution(se,user,input)
+            return int_createExecution(se,authContext,input)
         }
     }
 
@@ -1689,11 +1712,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * to value for the parsed options.
      * @param props
      * @param scheduledExec
+     * @param authContext auth for reading storage defaults
      * @return
      */
-    private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec) {
+    private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec, UserAndRolesAuthContext authContext) {
         HashMap optparams = parseJobOptionInput(props, scheduledExec)
-        validateOptionValues(scheduledExec, optparams)
+        validateOptionValues(scheduledExec, optparams,authContext)
         return optparams
     }
 
@@ -1782,6 +1806,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * evaluate the options in the input properties, and if any Options defined for the Job have regex constraints,
      * require the values in the properties to match the regular expressions.  Throw ExecutionServiceException if
      * any options don't match.
+     * @deprecated unused? cull
      */
     def boolean validateInputOptionValues(ScheduledExecution scheduledExecution, Map props) throws ExecutionServiceException{
         def optparams = filterOptParams(props)
@@ -1796,36 +1821,51 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * any options don't match.
      * @param scheduledExecution the job
      * @param optparams Map of String to String
+     * @param authContext auth for reading storage defaults
      */
-    def boolean validateOptionValues(ScheduledExecution scheduledExecution, Map optparams) throws ExecutionServiceValidationException {
+    def boolean validateOptionValues(
+            ScheduledExecution scheduledExecution,
+            Map optparams,
+            AuthContext authContext = null
+    ) throws ExecutionServiceValidationException
+    {
 
         def fail = false
-        def StringBuffer sb = new StringBuffer()
+        def sb = []
 
-        def failedkeys=[:]
+        def failedkeys = [:]
+        def invalidOpt={Option opt, String msg->
+            fail = true
+            if (!failedkeys[opt.name]) {
+                failedkeys[opt.name] = ''
+            }
+            sb << msg
+            failedkeys[opt.name] += msg
+        }
         if (scheduledExecution.options) {
-            scheduledExecution.options.each {Option opt ->
+            scheduledExecution.options.each { Option opt ->
                 if (!opt.multivalued && optparams[opt.name] && !(optparams[opt.name] instanceof String)) {
-                    fail = true
-                    if (!failedkeys[opt.name]) {
-                        failedkeys[opt.name] = ''
-                    }
-                    final String msg = "Option '${opt.name}' value: ${opt.secureInput ? '***' : optparams[opt.name]} does not allow multiple values.\n"
-                    sb << msg
-                    failedkeys[opt.name] += msg
+                    invalidOpt opt,lookupMessage("domain.Option.validation.multivalue.notallowed",[opt.name,opt.secureInput ? '***' : optparams[opt.name]])
                     return
                 }
+
+
                 if (opt.required && !optparams[opt.name]) {
-                    fail = true
-                    if (!failedkeys[opt.name]) {
-                        failedkeys[opt.name] = ''
+
+
+                    if(opt.defaultStoragePath && !canReadStoragePassword(
+                            authContext,
+                            opt.defaultStoragePath,
+                            false
+                    )){
+                        invalidOpt opt,lookupMessage("domain.Option.validation.required.storageDefault",[opt.name,opt.defaultStoragePath].toArray())
+                        return
+                    }else if(!opt.defaultStoragePath){
+                        invalidOpt opt,lookupMessage("domain.Option.validation.required",[opt.name].toArray())
+                        return
                     }
-                    final String msg = "Option '${opt.name}' is required.\n"
-                    sb << msg
-                    failedkeys[opt.name] += msg
-                    return
                 }
-                if(opt.multivalued){
+                if (opt.multivalued) {
                     if (opt.regex && !opt.enforced && optparams[opt.name]) {
                         def val
                         if (optparams[opt.name] instanceof Collection) {
@@ -1833,69 +1873,53 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         } else {
                             val = optparams[opt.name].toString().split(Pattern.quote(opt.delimiter))
                         }
-                        val.grep { it }.each{value->
+                        val.grep { it }.each { value ->
                             if (!(value ==~ opt.regex)) {
                                 fail = true
-                                if (!failedkeys[opt.name]) {
-                                    failedkeys[opt.name] = ''
-                                }
-
                             }
                         }
                         if (fail) {
-                            final String msg = "Option '${opt.name}' values: ${optparams[opt.name]} did not all match regular expression: '${opt.regex}'\n"
-                            sb << msg
-                            failedkeys[opt.name] += msg
+                            invalidOpt opt,lookupMessage("domain.Option.validation.regex.values",[opt.name,optparams[opt.name],opt.regex])
                             return
                         }
                     }
                     if (opt.enforced && opt.values && optparams[opt.name]) {
                         def val
-                        if(optparams[opt.name] instanceof Collection){
+                        if (optparams[opt.name] instanceof Collection) {
                             val = [optparams[opt.name]].flatten();
-                        }else{
+                        } else {
                             val = optparams[opt.name].toString().split(Pattern.quote(opt.delimiter))
                         }
-                        if (!opt.values.containsAll(val.grep{it})) {
-                            fail = true
-                            if (!failedkeys[opt.name]) {
-                                failedkeys[opt.name] = ''
-                            }
-                            final String msg = "Option '${opt.name}' values: ${optparams[opt.name]} were not all in the allowed values: ${opt.values}\n"
-                            sb << msg
-                            failedkeys[opt.name] += msg
+                        if (!opt.values.containsAll(val.grep { it })) {
+                            invalidOpt opt,lookupMessage("domain.Option.validation.allowed.values",[opt.name,optparams[opt.name],opt.values])
                             return
                         }
                     }
-                }else{
+                } else {
                     if (opt.regex && !opt.enforced && optparams[opt.name]) {
                         if (!(optparams[opt.name] ==~ opt.regex)) {
-                            fail = true
-                            if (!failedkeys[opt.name]) {
-                                failedkeys[opt.name] = ''
-                            }
-                            String msg = opt.secureInput? "Option '${opt.name}' value was not valid\n":"Option '${opt.name}' doesn't match regular expression ${opt.regex}, value: ${optparams[opt.name]}\n"
-                            sb << msg
-                            failedkeys[opt.name] += msg
+                            invalidOpt opt, opt.secureInput ?
+                                    lookupMessage("domain.Option.validation.secure.invalid",[opt.name].toArray())
+                                    : lookupMessage("domain.Option.validation.regex.invalid",[opt.name,optparams[opt.name],opt.regex])
+
                             return
                         }
                     }
-                    if (opt.enforced && opt.values && optparams[opt.name] && optparams[opt.name] instanceof String && !opt.values.contains(optparams[opt.name])){
-                        fail=true
-                        if(!failedkeys[opt.name]){
-                            failedkeys[opt.name]=''
-                        }
-                        final String msg = opt.secureInput ? "Option '${opt.name}' value was not valid\n" : "Option '${opt.name}' value: ${optparams[opt.name]} was not in the allowed values: ${opt.values}\n"
-                        sb << msg
-                        failedkeys[opt.name]+=msg
+                    if (opt.enforced && opt.values &&
+                            optparams[opt.name] &&
+                            optparams[opt.name] instanceof String &&
+                            !opt.values.contains(optparams[opt.name])) {
+                        invalidOpt opt,  opt.secureInput ?
+                                lookupMessage("domain.Option.validation.secure.invalid",[opt.name].toArray())
+                                : lookupMessage("domain.Option.validation.allowed.invalid",[opt.name,optparams[opt.name],opt.values])
                         return
                     }
                 }
             }
         }
         if (fail) {
-            def msg = sb.toString()
-            throw new ExecutionServiceValidationException(msg,optparams,failedkeys)
+            def msg = sb.join('\n')
+            throw new ExecutionServiceValidationException(msg, optparams, failedkeys)
         }
         return !fail
     }
@@ -2155,7 +2179,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     public static Map filterOptParams(Map params) {
         def result = [ : ]
-        def optpatt = '^option\\.(.*)$'
+        def optpatt = '^option\\.(.+)$'
         params.each { key, val ->
             def matcher = key =~ optpatt
             if (matcher.matches()) {
@@ -2226,7 +2250,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
       def lookupMessage(String theKey, Object[] data, String defaultMessage=null) {
           def locale = getLocale()
           def theValue = null
-          MessageSource messageSource = applicationContext.getBean("messageSource")
+          MessageSource messageSource = messageSource?:applicationContext.getBean("messageSource")
           try {
               theValue =  messageSource.getMessage(theKey,data,locale )
           } catch (org.springframework.context.NoSuchMessageException e){
@@ -2430,7 +2454,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         //validate the option values
         if(dovalidate){
-            validateOptionValues(se, evalPlainOpts + evalSecOpts + evalSecAuthOpts)
+            validateOptionValues(se, evalPlainOpts + evalSecOpts + evalSecAuthOpts,executionContext.authContext)
         }
 
         //arg list for new context
