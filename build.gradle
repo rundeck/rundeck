@@ -112,7 +112,7 @@ exportedProjects.each {
             }
         }
         def archiveName=project.name.startsWith('rundeck-')?project.name: "rundeck-${project.name}"
-        //build a pom we reuse for both maven builds and release to sonatype
+        //build a pom for release to sonatype
         ext.publishPom = pom {
             project {
                 artifactId archiveName
@@ -179,13 +179,6 @@ exportedProjects.each {
             }
         }
 
-        //utility to create a pom for building
-        if(!(project.name in ['core','launcher'])){
-            //:core buildfile will generate its own pom for specialized purpose
-            task createPom << {
-                publishPom.writeTo("pom.xml")
-            }
-        }
     }
 }
 
