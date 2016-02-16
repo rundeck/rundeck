@@ -31,18 +31,6 @@ function showRowSelected(elem, tbl, classname) {
 }
 
 
-function _editFormSelectProject(value){
-
-}
-
-function prepJobType(data) {
-    if (data.authorized) {
-        $('scriptAuthWarn').hide();
-    } else {
-        $('scriptAuthWarn').show();
-    }
-}
-
 /** begin wf edit code */
 var jobEdittedHandler;
 function _onJobEdit(func){
