@@ -306,14 +306,14 @@
     </g:javascript>
 </g:if>
 %{--Script or Command item--}%
-<g:elseif test="${'script'==newitemtype || 'scriptfile'==newitemtype || 'command'==newitemtype || item instanceof CommandExec }">
-    <g:set var="isAdhocRemote" value="${'command'==newitemtype || item?.adhocRemoteString}"/>
-    <g:set var="isAdhocLocal" value="${'script'==newitemtype || item?.adhocLocalString}"/>
-    <g:set var="isAdhocFileExecution" value="${'scriptfile'==newitemtype || item?.adhocFilepath}"/>
+<g:elseif test="${(newitemtype in ['command','script','scriptfile']) || item instanceof CommandExec }">
+    <g:set var="isAdhocRemote" value="${'command'==newitemtype || 'command'==origitemtype || item?.adhocRemoteString}"/>
+    <g:set var="isAdhocLocal" value="${'script'==newitemtype ||'script'==origitemtype || item?.adhocLocalString}"/>
+    <g:set var="isAdhocFileExecution" value="${'scriptfile'==newitemtype ||'scriptfile'==origitemtype || item?.adhocFilepath}"/>
     <g:hiddenField name="adhocExecution" value="true"/>
     <div id="scriptStep_${rkey}">
     <g:if test="${isAdhocLocal}">
-        <div id="localScriptDiv" class="form-group ${hasErrors(bean:item,field:'adhocExecution','has-error')}">
+        <div id="localScriptDiv" class="form-group ${hasErrors(bean:item,field:'adhocLocalString','has-error')}">
             <label class="col-sm-12 text-form-label" for="adhocLocalStringField${rkey}">
                 <g:message code="Workflow.Step.adhocLocalString.description" />
             </label>
@@ -323,7 +323,7 @@
         </div>
     </g:if>
     <g:elseif test="${isAdhocFileExecution}">
-    <div id="filepathDiv" class="form-group">
+    <div id="filepathDiv" class="form-group ${hasErrors(bean:item,field:'adhocFilepath','has-error')}">
         <label class="col-sm-2 control-label"><g:message code="Workflow.Step.adhocFilepath.label" /></label>
         <div class="col-sm-10">
             <input
@@ -339,7 +339,7 @@
     </div>
     </g:elseif>
     <g:elseif test="${isAdhocRemote}">
-    <div id="remoteScriptDiv"  class="form-group  ${hasErrors(bean:item,field:'adhocExecution','has-error')}">
+    <div id="remoteScriptDiv"  class="form-group  ${hasErrors(bean:item,field:'adhocRemoteString','has-error')}">
         <label class="col-sm-2 control-label"><g:message code="Workflow.Step.adhocRemoteString.label" /></label>
         <div class="col-sm-10">
             <input
@@ -603,6 +603,7 @@
         </g:if>
         <g:else>
             <g:hiddenField name="num" value="${num}"/>
+            <g:hiddenField name="origitemtype" value="${origitemtype}"/>
             <span class="btn btn-default btn-sm" onclick="_wfiview('${key}',${num},${isErrorHandler?true:false});" title="Discard changes to the ${g.message(code:'Workflow.'+ msgItem+'.label')}">Discard</span>
             <span class="btn btn-primary btn-sm" onclick="_wfisave('${key}',${num}, 'wfiedit_${rkey}', ${ isErrorHandler?true:false});"
                   title="Save changes to the ${g.message(code:'Workflow.'+ msgItem+'.label')}">Save</span>
