@@ -54,6 +54,21 @@ function jobWasEdited(){
     }
 }
 
+/**
+ * After loading WF item edit form in the list, update input and apply ACE editor
+ * @param item
+ */
+function postLoadItemEdit(item){
+    var liitem = jQuery(item);
+    liitem.find('input[type=text]').each(function (ndx,elem) {
+        elem.observe('keypress', noenter);
+    });
+    if(liitem.find('input[type=text]').length>0){
+        liitem.find('input[type=text]')[0].focus();
+    }
+    liitem.find('textarea.apply_ace').each(function(ndx,elem){_addAceTextarea(elem)});
+}
+
 function _wfiedit(key,num,isErrorHandler) {
     jobWasEdited();
     var params = {num:num, isErrorHandler:isErrorHandler?true:false,key:key};
@@ -62,13 +77,7 @@ function _wfiedit(key,num,isErrorHandler) {
     }
     jQuery('#wfli_' + key).load(_genUrl(appLinks.workflowEdit, params),function(resp,status,jqxhr){
         _hideWFItemControls();
-        var liitem = jQuery('#wfli_' + key);
-        liitem.find('input').each(function (ndx,elem) {
-            if (elem.type === 'text') {
-                elem.observe('keypress', noenter);
-            }
-        });
-        liitem.find('textarea.apply_ace').each(function(ndx,elem){_addAceTextarea(elem)});
+        postLoadItemEdit('#wfli_' + key);
     });
 }
 
@@ -95,6 +104,8 @@ function _wfisave(key,num, formelem,iseh) {
                 if (iseh) {
                     _hideWFItemControlsAddEH(num);
                 }
+            }else{
+                postLoadItemEdit('#wfli_' + key);
             }
         }
     }).success(_ajaxReceiveTokens.curry('job_edit_tokens'));
@@ -135,14 +146,8 @@ function _wfiaddnew(type,nodestep) {
     parentli.appendChild(ehUlElement);
     olist.appendChild(parentli);
     jQuery(newitemElem).load(_genUrl(appLinks.workflowEdit,params),function(){
-        $(newitemElem).select('input').each(function (elem) {
-            if (elem.type == 'text') {
-                elem.observe('keypress', noenter);
-            }
-        });
-        $(newitemElem).down('input[type=text]').focus();
-        $(newitemElem).select('textarea.apply_ace').each(_addAceTextarea);
 
+        postLoadItemEdit('#wfli_' + num);
     });
 }
 
@@ -159,12 +164,17 @@ function _wfisavenew(formelem) {
         beforeSend:_ajaxSendTokens.curry('job_edit_tokens'),
         success:function(resp,status,jqxhr){
             jQuery(newitemElem).html(resp);
-            var litem = $(newitemElem.parentNode);
-            $(litem).highlight();
-            $('wfnewbutton').show();
-            _showWFItemControls();
-            $('workflowDropfinal').setAttribute('data-wfitemnum', parseInt(litem.getAttribute('data-wfitemnum')) + 1);
-            newitemElem = null;
+            if(jQuery(newitemElem).find('.wfitemEditForm').length > 0){
+                //was error
+                postLoadItemEdit(newitemElem);
+            }else{
+                var litem = jQuery(newitemElem.parentNode);
+                litem.highlight();
+                jQuery('#wfnewbutton').show();
+                _showWFItemControls();
+                jQuery('#workflowDropfinal').data('wfitemnum', parseInt(litem.data('wfitemnum')) + 1);
+                newitemElem = null;
+            }
         }
     }).success(_ajaxReceiveTokens.curry('job_edit_tokens'));
 }
@@ -299,12 +309,7 @@ function _wfiaddNewErrorHandler(elem,type,num,nodestep){
     _hideAddNewEH();
 
     wfiehli.load(_genUrl(appLinks.workflowEdit,params),function(){
-        wfiehli.find('input').each(function (ndx,elem) {
-            if (elem.type == 'text') {
-                elem.observe('keypress', noenter);
-            }
-        });
-        wfiehli.find('textarea.apply_ace').each(function (){_addAceTextarea(this);});
+        postLoadItemEdit(wfiehli);
     });
 }
 
