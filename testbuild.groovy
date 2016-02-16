@@ -2,29 +2,19 @@
 
 //Test the result of the build to verify expected artifacts are created
 
-def target
+def target="build/libs"
 
 def props=new Properties()
 new File('gradle.properties').withReader{
     props.load(it)
 }
 args.each{
-    if("-maven" == it){
-        target="target"
-    }else if("-gradle" == it){
-        target="build/libs"
-    }else{
         def m=it=~/^-[PD](.+?)(=(.+))?$/
         if(m.matches()){
             props[m[0][1]]=m[0][2]?m[0][3]:true
         }
-    }
 }
 
-if(!target){
-    println "ERROR: specify -maven or -gradle to indicate build file locations"
-    System.exit(2)
-}
 
 def tag="-SNAPSHOT"
 if(props.'release'){
