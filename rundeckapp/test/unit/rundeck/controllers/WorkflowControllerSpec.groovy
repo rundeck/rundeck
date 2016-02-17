@@ -16,10 +16,14 @@ class WorkflowControllerSpec extends Specification {
         given:
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
         wf.commands = new ArrayList()
-        wf.commands << new CommandExec(adhocRemoteString: 'blah')
+        def inputparams = [(fieldname): 'blah']
+        wf.commands << new CommandExec(inputparams)
 
         when:
-        def result = controller._applyWFEditAction(wf, [action: 'modify', num: 0, params: [origitemtype: itemtype,]])
+        def result = controller._applyWFEditAction(
+                wf,
+                [action: 'modify', num: 0, params: [origitemtype: itemtype, (fieldname): '']]
+        )
 
         then:
         result.error
@@ -39,14 +43,15 @@ class WorkflowControllerSpec extends Specification {
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
         wf.commands = new ArrayList()
 
-        def cmd = new CommandExec(adhocRemoteString: 'blah')
-        cmd.errorHandler = new CommandExec(adhocRemoteString: 'blah')
+        def inputparams = [(fieldname): 'blah']
+        def cmd = new CommandExec(inputparams)
+        cmd.errorHandler = new CommandExec(inputparams)
         wf.commands << cmd
 
         when:
         def result = controller._applyWFEditAction(
                 wf,
-                [action: 'modifyHandler', num: 0, params: [origitemtype: itemtype,]]
+                [action: 'modifyHandler', num: 0, params: [origitemtype: itemtype, (fieldname): '']]
         )
 
         then:
