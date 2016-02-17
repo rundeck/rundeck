@@ -1043,8 +1043,9 @@ class ScheduledExecutionService implements ApplicationContextAware{
                         if (jobdata instanceof ScheduledExecution) {
                             //xxx:try/catch the update
                             result = _doupdateJob(scheduledExecution.id, jobdata, projectAuthContext, jobchange)
-                            success = result[0]
-                            scheduledExecution = result[1]
+
+                            success = result.success
+                            scheduledExecution = result.scheduledExecution
                         } else {
                             jobdata.id = scheduledExecution.uuid ?: scheduledExecution.id
                             result = _doupdate(jobdata, projectAuthContext, jobchange)
@@ -1929,7 +1930,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         }
         return [failed:failed,modified:addedNotifications]
     }
-    public List _doupdateJob(id, ScheduledExecution params, UserAndRolesAuthContext authContext, changeinfo = [:]) {
+    public Map _doupdateJob(id, ScheduledExecution params, UserAndRolesAuthContext authContext, changeinfo = [:]) {
         log.debug("ScheduledExecutionController: update : attempting to update: " + id +
                   ". params: " + params)
         if (params.groupPath) {
@@ -1947,7 +1948,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
 
         def crontab = [:]
         if (!scheduledExecution) {
-            return [false, null]
+            return [success:false]
         }
         def oldjobname = scheduledExecution.generateJobScheduledName()
         def oldjobgroup = scheduledExecution.generateJobGroupName()
@@ -2178,13 +2179,13 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 deleteJob(oldjobname, oldjobgroup)
             }
 
-            return [true, scheduledExecution]
+            return [success:true, scheduledExecution:  scheduledExecution]
         } else {
             todiscard.each {
                 it.discard()
             }
             scheduledExecution.discard()
-            return [false, scheduledExecution]
+            return [success:false, scheduledExecution:  scheduledExecution]
         }
 
     }
