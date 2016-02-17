@@ -1399,7 +1399,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
-    def edit = {
+    def edit (){
         log.debug("ScheduledExecutionController: edit : params: " + params)
         def scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if(!scheduledExecution) {
@@ -1861,7 +1861,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
 
 
-    def save = {
+    def save () {
         withForm{
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         def changeinfo=[user:session.user,change:'create',method:'save']
