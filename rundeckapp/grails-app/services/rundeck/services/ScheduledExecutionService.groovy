@@ -970,13 +970,6 @@ class ScheduledExecutionService implements ApplicationContextAware{
         return RequestContextHolder.currentRequestAttributes().getSession()
     }
 
-    /**
-     * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.
-     * @return map of load results, [jobs: List of ScheduledExecutions, jobsi: list of maps [scheduledExecution: (job), entrynum: (index)], errjobs: List of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg], skipjobs: list of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]]
-     */
-    def loadJobs ( jobset, option, changeinfo = [:], UserAndRolesAuthContext authContext ) {
-        return loadJobs(jobset, option, null, changeinfo, authContext)
-    }
 
     /**
      * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.

@@ -6318,7 +6318,7 @@ class ScheduledExServiceTests {
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: "echo test")]),
                 uuid: se.uuid
         )
-        def result = sec.loadJobs([upload], 'update', [:],testUserAndRolesContext('test', 'userrole,test'))
+        def result = sec.loadJobs([upload], 'update',null, [:],testUserAndRolesContext('test', 'userrole,test'))
         assertNotNull result
         assertNotNull result.jobs
         assertNotNull result.errjobs
@@ -6521,7 +6521,7 @@ class ScheduledExServiceTests {
 //        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
         //set update
 //        sec.params.dupeOption = 'update'
-        def result = sec.loadJobs([upload], 'update', [:], testUserAndRolesContext('test', 'userrole,test'))
+        def result = sec.loadJobs([upload], 'update', null,[:], testUserAndRolesContext('test', 'userrole,test'))
 //        final subject = new Subject()
 //        subject.principals << new Username('test')
 //        subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
@@ -6601,7 +6601,7 @@ class ScheduledExServiceTests {
 //        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
         //set update
 //        sec.params.dupeOption = 'skip'
-        def result = sec.loadJobs([upload], 'skip', [:],  testUserAndRolesContext('test', 'userrole,test'))
+        def result = sec.loadJobs([upload], 'skip', null,[:],  testUserAndRolesContext('test', 'userrole,test'))
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
         assertNotNull result
         assertNotNull result.jobs
@@ -6672,7 +6672,7 @@ class ScheduledExServiceTests {
 //        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
         //set update
 //        sec.params.dupeOption = 'create'
-        def result = sec.loadJobs([upload], 'create', [:],  testUserAndRolesContext('test', 'userrole,test'))
+        def result = sec.loadJobs([upload], 'create', null,[:],  testUserAndRolesContext('test', 'userrole,test'))
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
         assertNotNull result
         assertNotNull result.jobs
@@ -6754,7 +6754,7 @@ class ScheduledExServiceTests {
 //        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
         //set update
 //        sec.params.dupeOption = 'skip'
-        def result = sec.loadJobs([upload], 'skip', [:],  testUserAndRolesContext('test', 'userrole,test'))
+        def result = sec.loadJobs([upload], 'skip',null, [:],  testUserAndRolesContext('test', 'userrole,test'))
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
         assertNotNull result
         assertNotNull result.jobs
@@ -6830,7 +6830,7 @@ class ScheduledExServiceTests {
         //set update
 //        sec.params.dupeOption = 'skip'
 
-        def result = sec.loadJobs([upload], 'skip', [:],  testUserAndRolesContext('test', 'userrole,test'))
+        def result = sec.loadJobs([upload], 'skip',null, [:],  testUserAndRolesContext('test', 'userrole,test'))
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
         assertNotNull result
         assertNotNull result.jobs
@@ -6905,7 +6905,7 @@ class ScheduledExServiceTests {
         //set update
 //        sec.params.dupeOption = 'skip'
 
-        def result = sec.loadJobs([upload], 'skip', [:],  testUserAndRolesContext('test', 'userrole,test'))
+        def result = sec.loadJobs([upload], 'skip',null, [:],  testUserAndRolesContext('test', 'userrole,test'))
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
         assertNotNull result
         assertNotNull result.jobs
@@ -6947,7 +6947,7 @@ class ScheduledExServiceTests {
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: "echo test")])
         )
 
-        def result = sec.loadJobs([upload], 'create', [:],  testUserAndRolesContext('test', 'userrole,test'))
+        def result = sec.loadJobs([upload], 'create', null,[:],  testUserAndRolesContext('test', 'userrole,test'))
         assertNotNull result
         assertNotNull result.jobs
         assertNotNull result.errjobs
@@ -7033,7 +7033,7 @@ class ScheduledExServiceTests {
 //        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
         //set update
 
-        def result = sec.loadJobs([upload], 'update', [:],  testUserAndRolesContext('test', 'test,userrole'))
+        def result = sec.loadJobs([upload], 'update',null, [:],  testUserAndRolesContext('test', 'test,userrole'))
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
 //        assertNull sec.response.redirectedUrl
 //        assertNull "Result had an error: ${sec.flash.error}", sec.flash.error
@@ -7118,7 +7118,7 @@ class ScheduledExServiceTests {
 //        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
         //set update
 
-        def result = sec.loadJobs([upload], 'update', [:],  testUserAndRolesContext('test', 'test,userrole'))
+        def result = sec.loadJobs([upload], 'update',null, [:],  testUserAndRolesContext('test', 'test,userrole'))
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
 //        assertNull sec.response.redirectedUrl
 //        assertNull "Result had an error: ${sec.flash.error}", sec.flash.error
@@ -7197,7 +7197,7 @@ class ScheduledExServiceTests {
 //        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
         //set update
 
-        def result = sec.loadJobs([upload], 'update', [:],  testUserAndRolesContext('test', 'test,userrole'))
+        def result = sec.loadJobs([upload], 'update',null, [:],  testUserAndRolesContext('test', 'test,userrole'))
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
 //        assertNull sec.response.redirectedUrl
 //        assertNull "Result had an error: ${sec.flash.error}", sec.flash.error
@@ -7266,7 +7266,7 @@ class ScheduledExServiceTests {
 //        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
         //set update
 
-        def result = sec.loadJobs([upload], 'update', [:],  testUserAndRolesContext('test', 'test,userrole'))
+        def result = sec.loadJobs([upload], 'update',null, [:],  testUserAndRolesContext('test', 'test,userrole'))
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
         assertNotNull result
         assertNotNull result.jobs
