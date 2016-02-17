@@ -232,6 +232,7 @@ class ScheduledExecutionControllerTests  {
                 [success: true, scheduledExecution: se]
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
+            seServiceControl.demand.issueJobChangeEvent {event->}
             sec.scheduledExecutionService = seServiceControl.createMock()
 
 			def oServiceControl = mockFor(OrchestratorPluginService, true)
@@ -395,6 +396,7 @@ class ScheduledExecutionControllerTests  {
                 [success: true, scheduledExecution: se]
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
+            seServiceControl.demand.issueJobChangeEvent {evt->}
             sec.scheduledExecutionService = seServiceControl.createMock()
 
 
@@ -525,6 +527,7 @@ class ScheduledExecutionControllerTests  {
                 [success: true, scheduledExecution: se]
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
+        seServiceControl.demand.issueJobChangeEvent {evt->}
             sec.scheduledExecutionService = seServiceControl.createMock()
 
 
@@ -589,6 +592,7 @@ class ScheduledExecutionControllerTests  {
                 [success: false]
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
+        seServiceControl.demand.issueJobChangeEvent {event->}
             sec.scheduledExecutionService = seServiceControl.createMock()
             def nServiceControl = mockFor(NotificationService, true)
             nServiceControl.demand.listNotificationPlugins { []}
@@ -651,6 +655,7 @@ class ScheduledExecutionControllerTests  {
                 [success: false,unauthorized:true,error:'unauthorizedMessage']
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
+            seServiceControl.demand.issueJobChangeEvent {event->}
             sec.scheduledExecutionService = seServiceControl.createMock()
 
             def nServiceControl = mockFor(NotificationService, true)
@@ -2877,6 +2882,7 @@ class ScheduledExecutionControllerTests  {
                     skipjobs: []
             ]
         }
+        mock2.demand.issueJobChangeEvents {event->}
         sec.scheduledExecutionService = mock2.createMock()
 
         def xml = '''
@@ -3041,6 +3047,7 @@ class ScheduledExecutionControllerTests  {
                     skipjobs: []
             ]
         }
+        mock2.demand.issueJobChangeEvents {event->}
         sec.scheduledExecutionService = mock2.createMock()
 
         def xml = '''
@@ -3124,6 +3131,7 @@ class ScheduledExecutionControllerTests  {
                     skipjobs: []
             ]
         }
+        mock2.demand.issueJobChangeEvents {event->}
         sec.scheduledExecutionService = mock2.createMock()
 
         def xml = '''
@@ -3218,6 +3226,7 @@ class ScheduledExecutionControllerTests  {
                     skipjobs: []
             ]
         }
+        mock2.demand.issueJobChangeEvents {event->}
         sec.scheduledExecutionService = mock2.createMock()
         def xml = '''
 -
@@ -3313,6 +3322,7 @@ class ScheduledExecutionControllerTests  {
                     skipjobs: []
             ]
         }
+        mock2.demand.issueJobChangeEvents {event->}
         sec.scheduledExecutionService = mock2.createMock()
 
         def xml = '''

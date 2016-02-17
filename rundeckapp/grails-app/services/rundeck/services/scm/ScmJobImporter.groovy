@@ -66,6 +66,8 @@ class ScmJobImporter implements ContextJobImporter {
                 [user: context.userInfo.userName, method: 'scm-import'],
                 context.authContext
         )
+        scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
+
         loadresults.jobs.each { ScheduledExecution job ->
             jobMetadataService.setJobPluginMeta(job, 'scm-import', [version: job.version, pluginMeta: importMetadata])
         }
