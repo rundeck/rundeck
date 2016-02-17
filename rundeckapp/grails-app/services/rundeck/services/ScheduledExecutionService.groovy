@@ -2174,7 +2174,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
             }
         }
 
-        if (!failed && scheduledExecution.save(true)) {
+        if (!failed && scheduledExecution.save(flush:true)) {
             if (scheduledExecution.shouldScheduleExecution()) {
                 def nextdate = null
                 try {
@@ -2270,7 +2270,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         if (!scheduledExecution.uuid) {
             scheduledExecution.uuid = UUID.randomUUID().toString()
         }
-        if (!failed && scheduledExecution.save(true)) {
+        if (!failed && scheduledExecution.save(flush:true)) {
             rescheduleJob(scheduledExecution)
 
             def event = new StoredJobChangeEvent(
