@@ -163,7 +163,7 @@ specifies the use of the PropertyFileLoginModule:
       file="/etc/rundeck/realm.properties";
     };
 
-[JAAS]: http://docs.codehaus.org/display/JETTY/JAAS
+[JAAS]: https://wiki.eclipse.org/Jetty/Feature/JAAS
 
 ## realm.properties
 
