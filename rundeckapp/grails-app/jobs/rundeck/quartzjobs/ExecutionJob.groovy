@@ -312,7 +312,9 @@ class ExecutionJob implements InterruptableJob {
         def WorkflowExecutionServiceThread thread = execmap.thread
         def ThresholdValue threshold = execmap.threshold
         def boolean stop=false
-        while (thread.isAlive()) {
+        boolean never=true
+        while (thread.isAlive() || never) {
+            never=false
             try {
                 thread.join(1000)
             } catch (InterruptedException e) {
