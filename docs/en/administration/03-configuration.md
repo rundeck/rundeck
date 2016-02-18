@@ -232,21 +232,19 @@ system and is useful when managing Rundeck server clusters.
 
 The [Project Setup - Project Definitions](project-setup.html#project-definitions) mechanism is configured within this file, see:
 
-* [Configuring Storage Plugins][]
-* [Configuring Storage Converter Plugins][]
+* [Project Storage][]
 
-[Configuring Storage Plugins]: ssh-key-storage.html#configuring-storage-plugins
-[Configuring Storage Converter Plugins]: ssh-key-storage.html#configuring-storage-converter-plugins
+[Project Storage]: storage-facility.html#project-storage
 
-### SSH Key Storage settings
+### Key Storage settings
 
-The [SSH Key storage](ssh-key-storage.html) mechanism is configured within this file, see:
+The [Key storage](key-storage.html) mechanism is configured within this file, see:
 
 * [Configuring Storage Plugins][]
 * [Configuring Storage Converter Plugins][]
 
-[Configuring Storage Plugins]: ssh-key-storage.html#configuring-storage-plugins
-[Configuring Storage Converter Plugins]: ssh-key-storage.html#configuring-storage-converter-plugins
+[Configuring Storage Plugins]: ../plugins-user-guide/configuring.html#storage-plugins
+[Configuring Storage Converter Plugins]: ../plugins-user-guide/configuring.html#storage-converter-plugins
 
 ### Notification email settings
 
