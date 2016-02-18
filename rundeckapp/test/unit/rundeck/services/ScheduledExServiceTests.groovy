@@ -2285,8 +2285,8 @@ class ScheduledExServiceTests {
                     workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)])
             )
             def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -2335,8 +2335,8 @@ class ScheduledExServiceTests {
                     workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)])
             )
             def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -2378,8 +2378,8 @@ class ScheduledExServiceTests {
                     workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', errorHandler: eh1)])
             )
             def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -2432,8 +2432,8 @@ class ScheduledExServiceTests {
                     workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', errorHandler: eh1)])
             )
             def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.out.println(it);
@@ -2505,7 +2505,7 @@ class ScheduledExServiceTests {
                     )
             )
             def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-            def succeeded = results[0]
+            def succeeded = results.success
             assertTrue succeeded
 
         }
@@ -2551,8 +2551,8 @@ class ScheduledExServiceTests {
                     )
             )
             def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-            def succeeded = results[0]
-            def ScheduledExecution rese = results[1]
+            def succeeded = results.success
+            def rese = results.scheduledExecution
             assertFalse succeeded
 
             assertFalse rese.workflow.commands[0].errors.hasErrors()
@@ -2591,8 +2591,8 @@ class ScheduledExServiceTests {
                     workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)])
             )
             def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -2638,8 +2638,8 @@ class ScheduledExServiceTests {
                     workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)])
             )
             def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -2689,8 +2689,8 @@ class ScheduledExServiceTests {
                     workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)])
             )
             def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -3303,8 +3303,8 @@ class ScheduledExServiceTests {
                 scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040', useCrontabString: 'true')
         assert params.parseCrontabString('0 21 */4 */4 */6 ? 2010-2040')
         def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-        def succeeded = results[0]
-        def scheduledExecution = results[1]
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
             scheduledExecution.errors.allErrors.each {
                 System.err.println(it);
@@ -3366,8 +3366,8 @@ class ScheduledExServiceTests {
                 scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040',
                 useCrontabString: 'true')
         def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-        def succeeded = results[0]
-        def scheduledExecution = results[1]
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
             scheduledExecution.errors.allErrors.each {
                 System.err.println(it);
@@ -3431,8 +3431,8 @@ class ScheduledExServiceTests {
                 scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040',
                 useCrontabString: 'true')
         def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-        def succeeded = results[0]
-        def scheduledExecution = results[1]
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
             scheduledExecution.errors.allErrors.each {
                 System.err.println(it);
@@ -3509,8 +3509,8 @@ class ScheduledExServiceTests {
             params.crontabString = '0 21 */4 */4 */6 3 2010-2040'
             assert null != params.crontabString
             def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -3573,8 +3573,8 @@ class ScheduledExServiceTests {
                     )
             )
             def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -3628,8 +3628,8 @@ class ScheduledExServiceTests {
                     )
             )
             def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -3686,8 +3686,8 @@ class ScheduledExServiceTests {
                     )
             )
             def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -3744,8 +3744,8 @@ class ScheduledExServiceTests {
                     )
             )
             def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -3802,8 +3802,8 @@ class ScheduledExServiceTests {
                     )
             )
             def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -3860,8 +3860,8 @@ class ScheduledExServiceTests {
                     )
             )
             def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -3918,8 +3918,8 @@ class ScheduledExServiceTests {
                     )
             )
             def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -3976,8 +3976,8 @@ class ScheduledExServiceTests {
                     )
             )
             def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -4017,8 +4017,8 @@ class ScheduledExServiceTests {
             def params = new ScheduledExecution(scheduled: true, crontabString: '0 0 2 ? 12 8', useCrontabString: 'true', jobName: 'monkey1', project: 'testProject', description: 'blah',
                     workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]))
             def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -4180,8 +4180,8 @@ class ScheduledExServiceTests {
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: 'true', adhocRemoteString: '')])
         )
         def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-        def succeeded = results[0]
-        def scheduledExecution = results[1]
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
             scheduledExecution.errors.allErrors.each {
                 System.err.println(it);
@@ -4231,8 +4231,8 @@ class ScheduledExServiceTests {
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: 'true', adhocRemoteString: 'test remote')])
         )
         def results = sec._doupdateJob(se.id.toString(), params, testUserAndRolesContext())
-        def succeeded = results[0]
-        def scheduledExecution = results[1]
+        def succeeded = results.success
+        def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
             scheduledExecution.errors.allErrors.each {
                 System.err.println(it);
@@ -5008,8 +5008,8 @@ class ScheduledExServiceTests {
                             new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'milk@store.com')
                     ])
             def results = sec._doupdateJob(se.id, params, null)
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -5091,8 +5091,8 @@ class ScheduledExServiceTests {
                             new Notification(eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'milkstore.com')
                     ])
             def results = sec._doupdateJob(se.id, params, null)
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -6006,8 +6006,8 @@ class ScheduledExServiceTests {
                     workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]),
             )
             def results = sec._doupdateJob(se.id, params, null)
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -6113,8 +6113,8 @@ class ScheduledExServiceTests {
                     ]
             )
             def results = sec._doupdateJob(se.id, params, null)
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -6170,8 +6170,8 @@ class ScheduledExServiceTests {
                     ]
             )
             def results = sec._doupdateJob(se.id, params, null)
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -6238,8 +6238,8 @@ class ScheduledExServiceTests {
                     ]
             )
             def results = sec._doupdateJob(se.id, params, null)
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -6318,7 +6318,7 @@ class ScheduledExServiceTests {
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: "echo test")]),
                 uuid: se.uuid
         )
-        def result = sec.loadJobs([upload], 'update', [:],testUserAndRolesContext('test', 'userrole,test'))
+        def result = sec.loadJobs([upload], 'update',null, [:],testUserAndRolesContext('test', 'userrole,test'))
         assertNotNull result
         assertNotNull result.jobs
         assertNotNull result.errjobs
@@ -6521,7 +6521,7 @@ class ScheduledExServiceTests {
 //        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
         //set update
 //        sec.params.dupeOption = 'update'
-        def result = sec.loadJobs([upload], 'update', [:], testUserAndRolesContext('test', 'userrole,test'))
+        def result = sec.loadJobs([upload], 'update', null,[:], testUserAndRolesContext('test', 'userrole,test'))
 //        final subject = new Subject()
 //        subject.principals << new Username('test')
 //        subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
@@ -6601,7 +6601,7 @@ class ScheduledExServiceTests {
 //        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
         //set update
 //        sec.params.dupeOption = 'skip'
-        def result = sec.loadJobs([upload], 'skip', [:],  testUserAndRolesContext('test', 'userrole,test'))
+        def result = sec.loadJobs([upload], 'skip', null,[:],  testUserAndRolesContext('test', 'userrole,test'))
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
         assertNotNull result
         assertNotNull result.jobs
@@ -6672,7 +6672,7 @@ class ScheduledExServiceTests {
 //        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
         //set update
 //        sec.params.dupeOption = 'create'
-        def result = sec.loadJobs([upload], 'create', [:],  testUserAndRolesContext('test', 'userrole,test'))
+        def result = sec.loadJobs([upload], 'create', null,[:],  testUserAndRolesContext('test', 'userrole,test'))
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
         assertNotNull result
         assertNotNull result.jobs
@@ -6754,7 +6754,7 @@ class ScheduledExServiceTests {
 //        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
         //set update
 //        sec.params.dupeOption = 'skip'
-        def result = sec.loadJobs([upload], 'skip', [:],  testUserAndRolesContext('test', 'userrole,test'))
+        def result = sec.loadJobs([upload], 'skip',null, [:],  testUserAndRolesContext('test', 'userrole,test'))
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
         assertNotNull result
         assertNotNull result.jobs
@@ -6830,7 +6830,7 @@ class ScheduledExServiceTests {
         //set update
 //        sec.params.dupeOption = 'skip'
 
-        def result = sec.loadJobs([upload], 'skip', [:],  testUserAndRolesContext('test', 'userrole,test'))
+        def result = sec.loadJobs([upload], 'skip',null, [:],  testUserAndRolesContext('test', 'userrole,test'))
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
         assertNotNull result
         assertNotNull result.jobs
@@ -6905,7 +6905,7 @@ class ScheduledExServiceTests {
         //set update
 //        sec.params.dupeOption = 'skip'
 
-        def result = sec.loadJobs([upload], 'skip', [:],  testUserAndRolesContext('test', 'userrole,test'))
+        def result = sec.loadJobs([upload], 'skip',null, [:],  testUserAndRolesContext('test', 'userrole,test'))
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
         assertNotNull result
         assertNotNull result.jobs
@@ -6947,7 +6947,7 @@ class ScheduledExServiceTests {
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: "echo test")])
         )
 
-        def result = sec.loadJobs([upload], 'create', [:],  testUserAndRolesContext('test', 'userrole,test'))
+        def result = sec.loadJobs([upload], 'create', null,[:],  testUserAndRolesContext('test', 'userrole,test'))
         assertNotNull result
         assertNotNull result.jobs
         assertNotNull result.errjobs
@@ -7033,7 +7033,7 @@ class ScheduledExServiceTests {
 //        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
         //set update
 
-        def result = sec.loadJobs([upload], 'update', [:],  testUserAndRolesContext('test', 'test,userrole'))
+        def result = sec.loadJobs([upload], 'update',null, [:],  testUserAndRolesContext('test', 'test,userrole'))
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
 //        assertNull sec.response.redirectedUrl
 //        assertNull "Result had an error: ${sec.flash.error}", sec.flash.error
@@ -7118,7 +7118,7 @@ class ScheduledExServiceTests {
 //        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
         //set update
 
-        def result = sec.loadJobs([upload], 'update', [:],  testUserAndRolesContext('test', 'test,userrole'))
+        def result = sec.loadJobs([upload], 'update',null, [:],  testUserAndRolesContext('test', 'test,userrole'))
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
 //        assertNull sec.response.redirectedUrl
 //        assertNull "Result had an error: ${sec.flash.error}", sec.flash.error
@@ -7197,7 +7197,7 @@ class ScheduledExServiceTests {
 //        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
         //set update
 
-        def result = sec.loadJobs([upload], 'update', [:],  testUserAndRolesContext('test', 'test,userrole'))
+        def result = sec.loadJobs([upload], 'update',null, [:],  testUserAndRolesContext('test', 'test,userrole'))
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
 //        assertNull sec.response.redirectedUrl
 //        assertNull "Result had an error: ${sec.flash.error}", sec.flash.error
@@ -7266,7 +7266,7 @@ class ScheduledExServiceTests {
 //        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
         //set update
 
-        def result = sec.loadJobs([upload], 'update', [:],  testUserAndRolesContext('test', 'test,userrole'))
+        def result = sec.loadJobs([upload], 'update',null, [:],  testUserAndRolesContext('test', 'test,userrole'))
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
         assertNotNull result
         assertNotNull result.jobs

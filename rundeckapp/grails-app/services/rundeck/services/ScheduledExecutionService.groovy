@@ -5,9 +5,12 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.jobs.JobReference
+import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.plugins.quartz.listeners.SessionBinderJobListener
+import grails.transaction.Transactional
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
@@ -16,6 +19,7 @@ import org.quartz.impl.matchers.KeyMatcher
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils
 import rundeck.*
@@ -469,15 +473,11 @@ class ScheduledExecutionService implements ApplicationContextAware{
     def deleteScheduledExecution(ScheduledExecution scheduledExecution, boolean deleteExecutions=false,
                                  AuthContext authContext=null, String username){
         scheduledExecution = ScheduledExecution.get(scheduledExecution.id)
-        def jobuuid = scheduledExecution.extid
-        def origName = scheduledExecution.jobName
-        def origPath = scheduledExecution.groupPath
+        def originalRef=jobEventRevRef(scheduledExecution)
         def jobname = scheduledExecution.generateJobScheduledName()
         def groupname = scheduledExecution.generateJobGroupName()
-        def project = scheduledExecution.project
         def errmsg=null
         def success = false
-        def version=scheduledExecution.version
         Execution.withTransaction {
             //find any currently running executions for this job, and if so, throw exception
             def found = Execution.createCriteria().get {
@@ -516,27 +516,11 @@ class ScheduledExecutionService implements ApplicationContextAware{
             }
         }
         if(success){
-            grailsEvents?.event(
-                    null,
-                    'jobChanged',
-                    new StoredJobChangeEvent(
-                            eventType: JobChangeEvent.JobChangeEventType.DELETE,
-                            originalJobReference: new JobReferenceImpl(
-                                    id: jobuuid,
-                                    jobName: origName,
-                                    groupPath: origPath,
-                                    project: project
-                            ),
-                            jobReference: new JobRevReferenceImpl(
-                                    id: jobuuid,
-                                    jobName: origName,
-                                    groupPath: origPath,
-                                    project: project,
-                                    version: version
-                            )
 
-                    )
-            )
+            def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.DELETE, originalRef)
+
+            //issue event directly
+            grailsEvents?.event(null, 'jobChanged', event)
         }
         return [success:success,error:errmsg]
     }
@@ -968,13 +952,6 @@ class ScheduledExecutionService implements ApplicationContextAware{
         return RequestContextHolder.currentRequestAttributes().getSession()
     }
 
-    /**
-     * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.
-     * @return map of load results, [jobs: List of ScheduledExecutions, jobsi: list of maps [scheduledExecution: (job), entrynum: (index)], errjobs: List of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg], skipjobs: list of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]]
-     */
-    def loadJobs ( jobset, option, changeinfo = [:], UserAndRolesAuthContext authContext ) {
-        return loadJobs(jobset, option, null, changeinfo, authContext)
-    }
 
     /**
      * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.
@@ -992,6 +969,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         def i = 1
         def errjobs = []
         def skipjobs = []
+        def jobChangeEvents=[]
         jobset.each { jobdata ->
             log.debug("saving job data: ${jobdata}")
             def ScheduledExecution scheduledExecution
@@ -1043,13 +1021,20 @@ class ScheduledExecutionService implements ApplicationContextAware{
                         if (jobdata instanceof ScheduledExecution) {
                             //xxx:try/catch the update
                             result = _doupdateJob(scheduledExecution.id, jobdata, projectAuthContext, jobchange)
-                            success = result[0]
-                            scheduledExecution = result[1]
+
+                            success = result.success
+                            scheduledExecution = result.scheduledExecution
+                            if(success && result.jobChangeEvent){
+                                jobChangeEvents<<result.jobChangeEvent
+                            }
                         } else {
                             jobdata.id = scheduledExecution.uuid ?: scheduledExecution.id
                             result = _doupdate(jobdata, projectAuthContext, jobchange)
                             success = result.success
                             scheduledExecution = result.scheduledExecution
+                            if(success && result.jobChangeEvent){
+                                jobChangeEvents<<result.jobChangeEvent
+                            }
                         }
 
                         if (!success && scheduledExecution && scheduledExecution.hasErrors()) {
@@ -1087,6 +1072,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
                             errmsg = result.error ?: "Failed to save job"
                         } else {
                             logJobChange(jobchange, scheduledExecution.properties)
+                            jobChangeEvents<<result.jobChangeEvent
                         }
                     } catch (Exception e) {
                         System.err.println("caught exception");
@@ -1108,7 +1094,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
             i++
 
         }
-        return [jobs: jobs, jobsi: jobsi, errjobs: errjobs, skipjobs: skipjobs]
+        return [jobs: jobs, jobsi: jobsi, errjobs: errjobs, skipjobs: skipjobs,jobChangeEvents:jobChangeEvents]
     }
     static Logger jobChangeLogger = Logger.getLogger("com.dtolabs.rundeck.data.jobs.changes")
 
@@ -1144,6 +1130,19 @@ class ScheduledExecutionService implements ApplicationContextAware{
         }
         ['id', 'jobName', 'groupPath', 'project'].each {k ->
             MDC.remove(k)
+        }
+    }
+
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    def void issueJobChangeEvents(Collection<JobChangeEvent> events) {
+        events?.each{
+            issueJobChangeEvent(it)
+        }
+    }
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    def void issueJobChangeEvent(JobChangeEvent event) {
+        if (event) {
+            grailsEvents?.event(null, 'jobChanged', event)
         }
     }
     static def parseNotificationsFromParams(params){
@@ -1336,10 +1335,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         if (nonopts.uuid != scheduledExecution.uuid) {
             changeinfo.extraInfo = " (internalID:${scheduledExecution.id})"
         }
-        def origJobName=scheduledExecution.jobName
-        def origGroupPath=scheduledExecution.groupPath
-        def origId=scheduledExecution.extid
-        def origProject=scheduledExecution.project
+        def originalRef = jobEventRevRef(scheduledExecution)
 
         scheduledExecution.properties = nonopts
 
@@ -1356,7 +1352,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         if (!scheduledExecution.validate()) {
             failed = true
         }
-        if(origGroupPath!=scheduledExecution.groupPath || origJobName!=scheduledExecution.jobName){
+        if(originalRef.groupPath!=scheduledExecution.groupPath || originalRef.jobName!=scheduledExecution.jobName){
             //reauthorize if the name/group has changed
             if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_CREATE], scheduledExecution.project)) {
                 failed = true
@@ -1672,32 +1668,12 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 deleteJob(oldjobname, oldjobgroup)
             }
             def eventType=JobChangeEvent.JobChangeEventType.MODIFY
-            if(origJobName!=scheduledExecution.jobName || origGroupPath!=scheduledExecution.groupPath){
-                eventType=JobChangeEvent.JobChangeEventType.MODIFY_RENAME
+            if (originalRef.jobName != scheduledExecution.jobName || originalRef.groupPath != scheduledExecution.groupPath) {
+                eventType = JobChangeEvent.JobChangeEventType.MODIFY_RENAME
             }
-            def vers = scheduledExecution.version.toString()
-            grailsEvents?.event(
-                    null,
-                    'jobChanged',
-                    new StoredJobChangeEvent(
-                            eventType: eventType,
-                            originalJobReference: new JobReferenceImpl(
-                                    id: origId,
-                                    jobName: origJobName,
-                                    groupPath: origGroupPath,
-                                    project: origProject
-                            ),
-                            jobReference: new JobRevReferenceImpl(
-                                    id: scheduledExecution.extid,
-                                    jobName: scheduledExecution.jobName,
-                                    groupPath: scheduledExecution.groupPath,
-                                    project: scheduledExecution.project,
-                                    version: scheduledExecution.version
-                            )
 
-                    )
-            )
-            return [success: true, scheduledExecution: scheduledExecution]
+            def event = createJobChangeEvent(eventType, scheduledExecution, originalRef)
+            return [success: true, scheduledExecution: scheduledExecution,jobChangeEvent:event]
         } else {
             todiscard.each {
                 it.discard()
@@ -1929,7 +1905,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         }
         return [failed:failed,modified:addedNotifications]
     }
-    public List _doupdateJob(id, ScheduledExecution params, UserAndRolesAuthContext authContext, changeinfo = [:]) {
+    public Map _doupdateJob(id, ScheduledExecution params, UserAndRolesAuthContext authContext, changeinfo = [:]) {
         log.debug("ScheduledExecutionController: update : attempting to update: " + id +
                   ". params: " + params)
         if (params.groupPath) {
@@ -1947,7 +1923,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
 
         def crontab = [:]
         if (!scheduledExecution) {
-            return [false, null]
+            return [success:false]
         }
         def oldjobname = scheduledExecution.generateJobScheduledName()
         def oldjobgroup = scheduledExecution.generateJobGroupName()
@@ -1966,10 +1942,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
         }
         //clear filter params
         scheduledExecution.clearFilterFields()
-        def origGroupPath=scheduledExecution.groupPath
-        def origJobName=scheduledExecution.jobName
-        def origId=scheduledExecution.extid
-        def origProject=scheduledExecution.project
+        def originalRef=jobEventRevRef(scheduledExecution)
 
         scheduledExecution.properties = newprops
 
@@ -1982,7 +1955,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
             failed = true
         }
 
-        if (origGroupPath != scheduledExecution.groupPath || origJobName != scheduledExecution.jobName) {
+        if (originalRef.groupPath != scheduledExecution.groupPath || originalRef.jobName != scheduledExecution.jobName) {
             //reauthorize if the name/group has changed
             if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_CREATE], scheduledExecution.project)) {
                 failed = true
@@ -2161,7 +2134,7 @@ class ScheduledExecutionService implements ApplicationContextAware{
             }
         }
 
-        if (!failed && scheduledExecution.save(true)) {
+        if (!failed && scheduledExecution.save(flush:true)) {
             if (scheduledExecution.shouldScheduleExecution()) {
                 def nextdate = null
                 try {
@@ -2177,14 +2150,20 @@ class ScheduledExecutionService implements ApplicationContextAware{
             } else if (oldsched && oldjobname && oldjobgroup) {
                 deleteJob(oldjobname, oldjobgroup)
             }
+            def eventType=JobChangeEvent.JobChangeEventType.MODIFY
+            if(originalRef.jobName!=scheduledExecution.jobName || originalRef.groupPath!=scheduledExecution.groupPath){
+                eventType=JobChangeEvent.JobChangeEventType.MODIFY_RENAME
+            }
 
-            return [true, scheduledExecution]
+            def event = createJobChangeEvent (eventType, scheduledExecution, originalRef)
+
+            return [success:true, scheduledExecution:  scheduledExecution,jobChangeEvent: event]
         } else {
             todiscard.each {
                 it.discard()
             }
             scheduledExecution.discard()
-            return [false, scheduledExecution]
+            return [success:false, scheduledExecution:  scheduledExecution]
         }
 
     }
@@ -2235,36 +2214,49 @@ class ScheduledExecutionService implements ApplicationContextAware{
         if (!scheduledExecution.uuid) {
             scheduledExecution.uuid = UUID.randomUUID().toString()
         }
-        if (!failed && scheduledExecution.save(true)) {
+        if (!failed && scheduledExecution.save(flush:true)) {
             rescheduleJob(scheduledExecution)
-            grailsEvents?.event(
-                    null,
-                    'jobChanged',
-                    new StoredJobChangeEvent(
-                            eventType: JobChangeEvent.JobChangeEventType.CREATE,
-                            originalJobReference: new JobReferenceImpl(
-                                    id: scheduledExecution.extid,
-                                    jobName: scheduledExecution.jobName,
-                                    groupPath: scheduledExecution.groupPath,
-                                    project: scheduledExecution.project
-                            ),
-                            jobReference: new JobRevReferenceImpl(
-                                    id: scheduledExecution.extid,
-                                    jobName: scheduledExecution.jobName,
-                                    groupPath: scheduledExecution.groupPath,
-                                    project: scheduledExecution.project,
-                                    version:scheduledExecution.version
-                            )
-
-                    )
-            )
-            return [success: true, scheduledExecution: scheduledExecution]
+            def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.CREATE, scheduledExecution)
+            return [success: true, scheduledExecution: scheduledExecution,jobChangeEvent: event]
 
         } else {
             scheduledExecution.discard()
             return [success: false, scheduledExecution: scheduledExecution]
         }
     }
+
+    private static StoredJobChangeEvent createJobChangeEvent(
+            JobChangeEvent.JobChangeEventType type,
+            ScheduledExecution scheduledExecution,
+            JobReference orig = null
+    )
+    {
+        createJobChangeEvent(type, jobEventRevRef(scheduledExecution), orig)
+    }
+    private static StoredJobChangeEvent createJobChangeEvent(
+            JobChangeEvent.JobChangeEventType type,
+            JobRevReference rev,
+            JobReference orig = null
+    )
+    {
+        new StoredJobChangeEvent(
+                eventType: type,
+                originalJobReference: orig?:rev,
+                jobReference: rev
+
+        )
+    }
+
+    private static JobRevReferenceImpl jobEventRevRef(ScheduledExecution scheduledExecution) {
+        new JobRevReferenceImpl(
+                id: scheduledExecution.extid,
+                jobName: scheduledExecution.jobName,
+                groupPath: scheduledExecution.groupPath,
+                project: scheduledExecution.project,
+                version: scheduledExecution.version
+        )
+    }
+
     /**
      * Parse some kind of job input request using the specified format
      * @param input either an inputStream, a File, or a String

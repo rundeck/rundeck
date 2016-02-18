@@ -1201,6 +1201,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def changeinfo = [user: session.user, method: 'apiJobCreateSingle']
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
         def loadresults = scheduledExecutionService.loadJobs(jobset, 'create', 'preserve', changeinfo, authContext)
+        scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
         def jobs = loadresults.jobs
         def jobsi = loadresults.jobsi
@@ -1273,6 +1274,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def changeinfo = [user: session.user, method: 'apiJobUpdateSingle']
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
         def loadresults = scheduledExecutionService.loadJobs(jobset, 'update', 'preserve', changeinfo, authContext)
+        scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
         def jobs = loadresults.jobs
         def jobsi = loadresults.jobsi
@@ -1397,7 +1399,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
-    def edit = {
+    def edit (){
         log.debug("ScheduledExecutionController: edit : params: " + params)
         def scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if(!scheduledExecution) {
@@ -1496,6 +1498,8 @@ class ScheduledExecutionController  extends ControllerBase{
                     params:params
                    ])
         }else{
+
+            scheduledExecutionService.issueJobChangeEvent(result.jobChangeEvent)
 
             clearEditSession('_new')
             clearEditSession(scheduledExecution.id.toString())
@@ -1857,7 +1861,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
 
 
-    def save = {
+    def save () {
         withForm{
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         def changeinfo=[user:session.user,change:'create',method:'save']
@@ -1865,6 +1869,7 @@ class ScheduledExecutionController  extends ControllerBase{
         //pass session-stored edit state in params map
         transferSessionEditState(session, params,'_new')
         def result = scheduledExecutionService._dosave(params, authContext, changeinfo)
+        scheduledExecutionService.issueJobChangeEvent(result.jobChangeEvent)
         def scheduledExecution = result.scheduledExecution
         if(result.success && scheduledExecution.id){
             clearEditSession()
@@ -1949,6 +1954,7 @@ class ScheduledExecutionController  extends ControllerBase{
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         def loadresults = scheduledExecutionService.loadJobs(jobset, params.dupeOption, params.uuidOption,
                  changeinfo,authContext)
+            scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
 
         def jobs = loadresults.jobs
@@ -2606,6 +2612,7 @@ class ScheduledExecutionController  extends ControllerBase{
             option = null
         }
         def loadresults = scheduledExecutionService.loadJobs(jobset,params.dupeOption, option, changeinfo, authContext)
+        scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
         def jobs = loadresults.jobs
         def jobsi = loadresults.jobsi
