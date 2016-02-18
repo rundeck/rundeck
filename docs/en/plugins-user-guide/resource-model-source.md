@@ -156,3 +156,16 @@ Rundeck includes two built-in plugins in the core installation:
     Supported File extensions:
 
     * ".yml", ".yaml"
+
+`resourcejson`
+
+:    Supports the Resource JSON document format: [resource-JSON](../man5/resource-json.html).
+
+    Supported MIME types:
+
+    * Generator: "application/json", "text/json"
+    * Parser: "application/json", "text/json"
+
+    Supported File extensions:
+
+    * ".json"
