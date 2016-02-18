@@ -24,6 +24,11 @@ class TestWEServiceThread extends WorkflowExecutionServiceThread {
     }
 
     @Override
+    void run() {
+        Thread.sleep(500)
+    }
+
+    @Override
     boolean isSuccessful() {
         return mysuccess
     }
