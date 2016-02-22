@@ -57,9 +57,9 @@ class ExecutionUtilServiceTests {
 
         def stbocontrol=mockFor(ThreadBoundOutputStream)
         def stbecontrol=mockFor(ThreadBoundOutputStream)
-        stbocontrol.demand.flush(1..1){->}
+        stbocontrol.demand.close(1..1){->}
         stbocontrol.demand.removeThreadStream(1..1){->}
-        stbecontrol.demand.flush(1..1){->}
+        stbecontrol.demand.close(1..1){->}
         stbecontrol.demand.removeThreadStream(1..1){->}
         executionUtilService.sysThreadBoundOut=stbocontrol.createMock()
         executionUtilService.sysThreadBoundErr=stbecontrol.createMock()
@@ -88,9 +88,9 @@ class ExecutionUtilServiceTests {
 
         def stbocontrol=mockFor(ThreadBoundOutputStream)
         def stbecontrol=mockFor(ThreadBoundOutputStream)
-        stbocontrol.demand.flush(1..1){->}
+        stbocontrol.demand.close(1..1){->}
         stbocontrol.demand.removeThreadStream(1..1){->}
-        stbecontrol.demand.flush(1..1){->}
+        stbecontrol.demand.close(1..1){->}
         stbecontrol.demand.removeThreadStream(1..1){->}
         executionUtilService.sysThreadBoundOut=stbocontrol.createMock()
         executionUtilService.sysThreadBoundErr=stbecontrol.createMock()
@@ -121,9 +121,9 @@ class ExecutionUtilServiceTests {
 
         def stbocontrol=mockFor(ThreadBoundOutputStream)
         def stbecontrol=mockFor(ThreadBoundOutputStream)
-        stbocontrol.demand.flush(1..1){->}
+        stbocontrol.demand.close(1..1){->}
         stbocontrol.demand.removeThreadStream(1..1){->}
-        stbecontrol.demand.flush(1..1){->}
+        stbecontrol.demand.close(1..1){->}
         stbecontrol.demand.removeThreadStream(1..1){->}
         executionUtilService.sysThreadBoundOut=stbocontrol.createMock()
         executionUtilService.sysThreadBoundErr=stbecontrol.createMock()
@@ -154,9 +154,9 @@ class ExecutionUtilServiceTests {
 
         def stbocontrol=mockFor(ThreadBoundOutputStream)
         def stbecontrol=mockFor(ThreadBoundOutputStream)
-        stbocontrol.demand.flush(1..1){->}
+        stbocontrol.demand.close(1..1){->}
         stbocontrol.demand.removeThreadStream(1..1){->}
-        stbecontrol.demand.flush(1..1){->}
+        stbecontrol.demand.close(1..1){->}
         stbecontrol.demand.removeThreadStream(1..1){->}
         executionUtilService.sysThreadBoundOut=stbocontrol.createMock()
         executionUtilService.sysThreadBoundErr=stbecontrol.createMock()
