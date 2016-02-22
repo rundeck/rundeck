@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.app.internal.logging.LogFlusher
 import com.dtolabs.rundeck.app.internal.logging.ThreadBoundLogOutputStream
 import com.dtolabs.rundeck.core.execution.Contextual
 import com.dtolabs.rundeck.core.logging.LogLevel
@@ -205,7 +206,15 @@ class LoggingService implements ExecutionFileProducer {
         return logFileStorageService.requestLogFileReader(execution, LOG_FILE_FILETYPE)
     }
 
-    public OutputStream createLogOutputStream(StreamingLogWriter logWriter, LogLevel level, Contextual listener) {
-        return new ThreadBoundLogOutputStream(logWriter, level, listener)
+    public OutputStream createLogOutputStream(
+            StreamingLogWriter logWriter,
+            LogLevel level,
+            Contextual listener,
+            LogFlusher flusherWorkflowListener
+    )
+    {
+        def stream = new ThreadBoundLogOutputStream(logWriter, level, listener)
+        flusherWorkflowListener.logOut=stream
+        return stream
     }
 }
