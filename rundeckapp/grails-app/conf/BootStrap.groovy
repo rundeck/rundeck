@@ -272,14 +272,9 @@ class BootStrap {
 
          //configure System.out and System.err so that remote command execution will write to a specific print stream
          if(Environment.getCurrent() != Environment.TEST){
-             PrintStream oldout = System.out;
-             PrintStream olderr = System.err;
 
-             def ThreadBoundOutputStream newOut = new ThreadBoundOutputStream(oldout)
-             def ThreadBoundOutputStream newErr = new ThreadBoundOutputStream(olderr)
-
-             System.setOut(new PrintStream(newOut));
-             System.setErr(new PrintStream(newErr));
+             def ThreadBoundOutputStream newOut = ThreadBoundOutputStream.bindSystemOut()
+             def ThreadBoundOutputStream newErr = ThreadBoundOutputStream.bindSystemErr()
 
              executionService.sysThreadBoundOut=newOut
              executionService.sysThreadBoundErr=newErr
