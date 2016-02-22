@@ -133,6 +133,15 @@ public class ThreadBoundOutputStream extends FilterOutputStream {
         }
     }
 
+    @Override
+    public void close() throws IOException {
+        final OutputStream out = getThreadLocalOutputStream();
+        if (out == null || out == this) {
+            super.close();
+        } else {
+            out.close();
+        }
+    }
 
     private static PrintStream origSystemOut;
     private static ThreadBoundPrintStream boundOutPrint;
