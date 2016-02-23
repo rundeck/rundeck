@@ -415,6 +415,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.nodeSummary=ko.observable(data.nodeSummary?data.nodeSummary:null);
     self.nodeSet=ko.observable(new NodeSet());
     self.truncated=ko.observable(false);
+    self.loaded=ko.observable(false);
     /**
      *
      * can be subscribed to for browser history updating, will be changed to 'true'
@@ -560,6 +561,11 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     });
     self.nodeExcludePrecedence.subscribe(function(newValue){
         self.updateMatchedNodes();
+    });
+    self.loading.subscribe(function(newValue){
+        if(!newValue){
+            self.loaded(true);
+        }
     });
     self.hasNodes = ko.computed(function () {
         return 0 != self.allcount();
