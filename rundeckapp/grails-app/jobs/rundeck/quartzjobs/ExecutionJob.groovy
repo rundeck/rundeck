@@ -199,10 +199,14 @@ class ExecutionJob implements InterruptableJob {
             }
             initMap.scheduledExecutionId=initMap.scheduledExecution.id
         }
-        initMap.timeout = jobDataMap.get('timeout')
+
         initMap.executionService = fetchExecutionService(jobDataMap)
         initMap.executionUtilService = fetchExecutionUtilService(jobDataMap)
         initMap.frameworkService = fetchFrameworkService(jobDataMap)
+        if (initMap.scheduledExecution?.timeout){
+            initMap.timeout = initMap.scheduledExecution.timeoutDuration
+        }
+
         if(initMap.isTemp){
             //an adhoc execution without associated job
             initMap.execution = Execution.get(initMap.executionId)

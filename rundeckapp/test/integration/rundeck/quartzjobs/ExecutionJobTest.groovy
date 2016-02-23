@@ -134,6 +134,49 @@ class ExecutionJobTest extends GroovyTestCase{
     }
 
     /**
+     * Job timeout determined by ScheduledExecution setting
+     */
+    @Test()
+    void testInitializeJobExecutionWithTimeout(){
+        ScheduledExecution se = setupJob{se->
+            se.user='test'
+            se.userRoleList='a,b'
+            se.timeout='60m'
+        }
+        ExecutionJob job = new ExecutionJob()
+        def mockes=new GrailsMock(ExecutionService)
+        def mockeus=new GrailsMock(ExecutionUtilService)
+        def mockfs=new GrailsMock(FrameworkService)
+        mockes.demand.selectSecureOptionInput(1..1){ ScheduledExecution scheduledExecution, Map params, Boolean exposed = false->
+            [test:'input']
+        }
+        mockes.demand.createExecution(1..1){ ScheduledExecution se1, UserAndRolesAuthContext auth ->
+            Assert.assertEquals(se.id,se1.id)
+            Assert.assertEquals(se.user, auth.username)
+            'fakeExecution'
+        }
+        mockfs.demand.getRundeckFramework(1..1){->
+            'fakeFramework'
+        }
+        def mockAuth =new GrailsMock(UserAndRolesAuthContext)
+        mockAuth.demand.getUsername(1..1){
+            'test'
+        }
+        def authcontext=mockAuth.createMock()
+        mockfs.demand.getAuthContextForUserAndRoles(1..1) { user, rolelist ->
+            authcontext
+        }
+        ExecutionService es = mockes.createMock()
+        ExecutionUtilService eus = mockeus.createMock()
+        FrameworkService fs = mockfs.createMock()
+
+        def contextMock = setupJobDataMap([timeout:123L,scheduledExecutionId:se.id,frameworkService:fs,executionService:es,executionUtilService:eus,authContext:[dummy:true]])
+        def result=job.initialize(null, contextMock)
+
+        Assert.assertEquals(3600L,result.timeout)
+    }
+
+    /**
      * executeAsyncBegin fails to start, result is success=false
      */
     @Test
