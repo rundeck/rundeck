@@ -1496,31 +1496,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         return execution
     }
-    /**
-     * Return the timeout duration in seconds for a timeout string
-     * @param timeout
-     * @param opts
-     * @return
-     */
-    public long evaluateTimeoutDuration(String timeout){
-        long timeoutval=0
-        def exts=[s:1,m:60,h:60*60,d:24*60*60]
-        def matcher= (timeout =~ /(\d+)(.)?/)
-        matcher.each {m->
-            int val
-            try{
-                val=Integer.parseInt(m[1])
-            }catch (NumberFormatException e){
-                return
-            }
-            if(m[2] && exts[m[2]]){
-                timeoutval+=(val*exts[m[2]])
-            }else if(!m[2]){
-                timeoutval += val
-            }
-        }
-        timeoutval
-    }
 
     /**
      * Run a job,
@@ -1573,12 +1548,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             allowedOptions.putAll(input.findAll { it.key.startsWith('option.') || it.key.startsWith('nodeInclude') || it.key.startsWith('nodeExclude') }.findAll { it.value != null })
             def Execution e = createExecution(scheduledExecution, authContext, allowedOptions,attempt>0,prevId)
             def timeout = 0
-            if (e.timeout) {
-                timeout = evaluateTimeoutDuration(e.timeout)
-            }
-            def eid = scheduledExecutionService.scheduleTempJob(scheduledExecution, user, authContext, e,
-                    timeout,
-                    secureOpts, secureOptsExposed,e.retryAttempt)
+            def eid = scheduledExecutionService.scheduleTempJob(
+                    scheduledExecution,
+                    user,
+                    authContext,
+                    e,
+                    secureOpts,
+                    secureOptsExposed,
+                    e.retryAttempt
+            )
             return [success: true, executionId: eid, name: scheduledExecution.jobName, execution: e]
         } catch (ExecutionServiceValidationException exc) {
             return [success: false, error: 'invalid', message: exc.getMessage(), options: exc.getOptions(), errors: exc.getErrors()]

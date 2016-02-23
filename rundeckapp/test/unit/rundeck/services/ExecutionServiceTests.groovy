@@ -399,38 +399,4 @@ class ExecutionServiceTests {
         assert 2 == result.total
     }
 
-    public void testEvaluateTimeoutDuration1(){
-        assertEquals(1,service.evaluateTimeoutDuration("1s"))
-        assertEquals(60,service.evaluateTimeoutDuration("1m"))
-        assertEquals(3600,service.evaluateTimeoutDuration("1h"))
-        assertEquals(24*3600,service.evaluateTimeoutDuration("1d"))
-    }
-    public void testEvaluateTimeoutDurationAdditional(){
-        assertEquals(24 * 3600 + 3600 + 60 + 1,service.evaluateTimeoutDuration("1d1h1m1s"))
-        assertEquals(24 * 3600 + 3600 + 60 + 2,service.evaluateTimeoutDuration("1d1h1m2s"))
-        assertEquals(24 * 3600 + 3600 + 60 + 73,service.evaluateTimeoutDuration("1d1h1m73s"))
-        assertEquals(24 * 3600 + 3600 + (17*60) + 1,service.evaluateTimeoutDuration("1d1h17m1s"))
-        assertEquals(24 * 3600 + (9* 3600) + (1*60) + 1,service.evaluateTimeoutDuration("1d9h1m1s"))
-        assertEquals((3*24 * 3600) + (1* 3600) + (1*60) + 1,service.evaluateTimeoutDuration("3d1h1m1s"))
-    }
-    public void testEvaluateTimeoutDurationIgnoredText(){
-        assertEquals(24 * 3600 + 3600 + 60 + 1,service.evaluateTimeoutDuration("1d 1h 1m 1s"))
-        assertEquals(24 * 3600 + 3600 + 60 + 2,service.evaluateTimeoutDuration("1d 1h 1m 2s"))
-        assertEquals(24 * 3600 + 3600 + 60 + 73,service.evaluateTimeoutDuration("1d 1h 1m 73s"))
-        assertEquals(24 * 3600 + 3600 + (17*60) + 1,service.evaluateTimeoutDuration("1d 1h 17m 1s"))
-        assertEquals(24 * 3600 + (9* 3600) + (1*60) + 1,service.evaluateTimeoutDuration("1d 9h 1m 1s"))
-        assertEquals((3*24 * 3600) + (1* 3600) + (1*60) + 1,service.evaluateTimeoutDuration("3d 1h 1m 1s"))
-        assertEquals((3*24 * 3600) + (12* 3600) + (0*60) + 0,service.evaluateTimeoutDuration("3d 12h #usual wait " +
-                "time"))
-    }
-    public void testEvaluateTimeoutDurationDefaultUnit(){
-        assertEquals(0,service.evaluateTimeoutDuration("0"))
-        assertEquals(123,service.evaluateTimeoutDuration("123"))
-        assertEquals(10000,service.evaluateTimeoutDuration("10000"))
-        assertEquals(5858929,service.evaluateTimeoutDuration("5858929"))
-    }
-    public void testEvaluateTimeoutDurationInvalid(){
-        assertEquals(0,service.evaluateTimeoutDuration("asdf"))
-        assertEquals(0,service.evaluateTimeoutDuration("123z"))
-    }
 }

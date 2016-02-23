@@ -682,7 +682,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * Schedule a stored job to execute immediately, include a set of params in the data map
      */
     def long scheduleTempJob(ScheduledExecution se, String user, AuthContext authContext,
-                             Execution e, long timeout, Map secureOpts =null,
+                             Execution e, Map secureOpts =null,
                              Map secureOptsExposed =null, int retryAttempt = 0) {
 
         def quartzjobname="TEMP:" + user + ":" + se.id + ":" + e.id
@@ -690,7 +690,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         jobDetail.getJobDataMap().put("user", user)
         jobDetail.getJobDataMap().put("authContext", authContext)
         jobDetail.getJobDataMap().put("executionId", e.id.toString())
-        jobDetail.getJobDataMap().put("timeout", timeout)
         if(secureOpts){
             jobDetail.getJobDataMap().put("secureOpts", secureOpts)
         }
@@ -767,10 +766,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         .withDescription(se.description)
                 .usingJobData("scheduledExecutionId",se.id.toString())
                 .usingJobData("rdeck.base",frameworkService.getRundeckBase())
-
-        if(se.timeout){
-            jobDetailBuilder.usingJobData("timeout",executionService.evaluateTimeoutDuration(se.timeout))
-        }
 
         if(se.scheduled){
             jobDetailBuilder.usingJobData("userRoles",se.userRoleList)
