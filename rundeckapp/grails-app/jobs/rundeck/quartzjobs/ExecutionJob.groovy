@@ -184,20 +184,20 @@ class ExecutionJob implements InterruptableJob {
     }
 
     def initialize(JobExecutionContext context, def jobDataMap) {
-        def initMap=[:]
-        initMap.isTemp = "true"==jobDataMap.get("isTempExecution")
-        if(initMap.isTemp){
+        def initMap = [:]
+        initMap.isTemp = "true" == jobDataMap.get("isTempExecution")
+        if (initMap.isTemp) {
             //temp execution, means no associated ScheduledExecution object
-            initMap.executionId=jobDataMap.get("executionId")
-            if(!initMap.executionId){
+            initMap.executionId = jobDataMap.get("executionId")
+            if (!initMap.executionId) {
                 throw new RuntimeException("executionId was not found in job data map for temporary execution")
             }
-        }else{
+        } else {
             initMap.scheduledExecution = fetchScheduledExecution(jobDataMap)
-            if(!initMap.scheduledExecution){
+            if (!initMap.scheduledExecution) {
                 throw new RuntimeException("scheduledExecution data was not found in job data map")
             }
-            initMap.scheduledExecutionId=initMap.scheduledExecution.id
+            initMap.scheduledExecutionId = initMap.scheduledExecution.id
         }
 
         initMap.executionService = fetchExecutionService(jobDataMap)
