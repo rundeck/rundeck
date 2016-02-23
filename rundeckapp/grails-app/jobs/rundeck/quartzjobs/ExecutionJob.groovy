@@ -21,7 +21,7 @@ import rundeck.services.logging.LoggingThreshold
 
 class ExecutionJob implements InterruptableJob {
 
-    public static final int DEFAULT_STATS_RETRY_MAX = 3
+    public static final int DEFAULT_STATS_RETRY_MAX = 5
     public static final long DEFAULT_STATS_RETRY_DELAY = 5000
     public static final int DEFAULT_FINALIZE_RETRY_MAX = 10
     public static final long DEFAULT_FINALIZE_RETRY_DELAY = 5000
@@ -358,6 +358,7 @@ class ExecutionJob implements InterruptableJob {
                 "Execution ${execution.id} finishExecution:"
         ) {
             executionUtilService.finishExecution(execmap)
+            true
         }
         if (!retrysuccess && exc) {
             throw new RuntimeException("Execution ${execution.id} failed: " + exc.getMessage(), exc)
@@ -387,12 +388,17 @@ class ExecutionJob implements InterruptableJob {
     def List withRetry(int max, long sleep, String identity, Closure action){
         int count=0
         boolean complete=false
+        def backoff=1.5
+        def jitter ={
+            Math.floor(Math.random()*(sleep))
+        }
+        long newsleep=sleep+jitter()
         Throwable caught=null
         while(!complete && (max>count || max<0)){
             if(count>0){
-                log.warn(identity + " failed (attempts=${count}/${max}), retrying in " + sleep + "ms")
+                log.warn(identity + " failed (attempts=${count}/${max}), retrying in " + newsleep + "ms")
                 try {
-                    Thread.sleep(sleep)
+                    Thread.sleep(newsleep)
                 } catch (InterruptedException e) {
                     log.error(identity + " retry was interrupted, failing")
                     break
@@ -401,11 +407,12 @@ class ExecutionJob implements InterruptableJob {
                     log.error(identity + " retry was interrupted, failing")
                     break
                 }
+                newsleep = Math.floor(newsleep*backoff)
             }
             count++
             try{
-                action.call()
-                complete=true
+                def result=action.call()
+                complete=result?true:false
                 caught=null
             }catch (Throwable t){
                 caught=t
@@ -472,6 +479,7 @@ class ExecutionJob implements InterruptableJob {
                     execmap,
                     retryContext
             )
+            true
         }
         //attempt to save execution state, with retry, in case DB connection fails
         if(finalizeRetryMax>1) {
@@ -490,6 +498,7 @@ class ExecutionJob implements InterruptableJob {
             def savedJobState = false
             withRetry(statsRetryMax, statsRetryDelay, "Execution ${execution.id} update job stats (${scheduledExecutionId}):") {
                 savedJobState = executionService.updateScheduledExecStatistics(scheduledExecutionId, execution.id, time)
+                savedJobState
             }
             if (!savedJobState) {
                 log.error("ExecutionJob: Failed to update job statistics for ${execution.id}, after retrying ${statsRetryMax} times")

@@ -390,6 +390,12 @@ class ExecutionJobTest extends GroovyTestCase{
         throw new Exception("test failure")
     }
     /**
+     * Always return false
+     */
+    def failedClos = {
+        false
+    }
+    /**
      * Return a closure that throws an exception the first X times it is called
      */
     def throwXTimes( int max){
@@ -399,6 +405,20 @@ class ExecutionJobTest extends GroovyTestCase{
                 count++
                 throw new Exception("test failure number ${count}")
             }
+            true
+        }
+    }
+    /**
+     * Return a closure that throws an exception the first X times it is called
+     */
+    def failXTimes( int max){
+        int count=0
+        return {
+            if (max > count) {
+                count++
+                return false
+            }
+            return true
         }
     }
 
@@ -411,7 +431,7 @@ class ExecutionJobTest extends GroovyTestCase{
         Assert.assertNull(exc)
     }
     @Test
-    void testWithRetryFailure(){
+    void testWithRetryException(){
         def job=new ExecutionJob()
         def retrySuccess,exc
         (retrySuccess,exc)=job.withRetry(2,1,"test1",alwaysThrowClos)
@@ -420,7 +440,15 @@ class ExecutionJobTest extends GroovyTestCase{
         Assert.assertEquals("test failure",exc.message)
     }
     @Test
-    void testWithRetryXTimesWithoutSuccess(){
+    void testWithRetryFailure(){
+        def job=new ExecutionJob()
+        def retrySuccess,exc
+        (retrySuccess,exc)=job.withRetry(2,1,"test1",failedClos)
+        Assert.assertEquals(false,retrySuccess)
+        Assert.assertNull(exc)
+    }
+    @Test
+    void testWithRetryXTimesWithException(){
         def job=new ExecutionJob()
         def retrySuccess,exc
         (retrySuccess,exc)=job.withRetry(3,1,"test1",throwXTimes(3))
@@ -429,7 +457,15 @@ class ExecutionJobTest extends GroovyTestCase{
         Assert.assertEquals("test failure number 3",exc.message)
     }
     @Test
-    void testWithRetryXTimesWithSuccess(){
+    void testWithRetryXTimesWithFailure(){
+        def job=new ExecutionJob()
+        def retrySuccess,exc
+        (retrySuccess,exc)=job.withRetry(3,1,"test1",failXTimes(3))
+        Assert.assertEquals(false,retrySuccess)
+        Assert.assertNull(exc)
+    }
+    @Test
+    void testWithRetryXTimesWithSuccessAfterException(){
         def job=new ExecutionJob()
         def retrySuccess,exc
         (retrySuccess,exc)=job.withRetry(3,1,"test1",throwXTimes(2))
@@ -437,6 +473,14 @@ class ExecutionJobTest extends GroovyTestCase{
         Assert.assertNull(exc)
     }
 
+    @Test
+    void testWithRetryXTimesWithSuccessAfterFailure(){
+        def job=new ExecutionJob()
+        def retrySuccess,exc
+        (retrySuccess,exc)=job.withRetry(3,1,"test1",failXTimes(2))
+        Assert.assertEquals(true,retrySuccess)
+        Assert.assertNull(exc)
+    }
     @Test
     void testSaveStateNoJob(){
         def job = new ExecutionJob()
