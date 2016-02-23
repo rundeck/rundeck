@@ -18,7 +18,7 @@
       var pagehistory;
       function init(){
         var params=loadJsonData('jobParams');
-        initJobNodeFilters(params);
+        var jobNodeFilters=initJobNodeFilters(params);
         ko.applyBindings(jobNodeFilters,document.getElementById('schedExDetails'));
 
         pagehistory = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
