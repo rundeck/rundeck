@@ -16,6 +16,7 @@ import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
 import org.quartz.*
 import org.quartz.impl.matchers.KeyMatcher
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
@@ -36,7 +37,7 @@ import java.text.SimpleDateFormat
 /**
  *  ScheduledExecutionService manages scheduling jobs with the Quartz scheduler
  */
-class ScheduledExecutionService implements ApplicationContextAware{
+class ScheduledExecutionService implements ApplicationContextAware, InitializingBean{
     boolean transactional = true
 
     def FrameworkService frameworkService
@@ -53,6 +54,12 @@ class ScheduledExecutionService implements ApplicationContextAware{
 
     def MessageSource messageSource
     def grailsEvents
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        //add listener for every job
+        quartzScheduler?.getListenerManager()?.addJobListener(sessionBinderListener)
+    }
 
     /**
      * private getter for executionService that is not auto-injected
@@ -738,7 +745,6 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 .build()
 
 
-        addJobSessionListener(ident.jobname,ident.groupname)
 
         def Trigger trigger = TriggerBuilder.newTrigger().withIdentity(ident.jobname + "Trigger").startNow().build()
         def nextTime
@@ -755,18 +761,6 @@ class ScheduledExecutionService implements ApplicationContextAware{
         return createJobDetail(se,se.generateJobScheduledName(), se.generateJobGroupName())
     }
 
-    /**
-     * Add the session binder listener from quartz plugin for manually created jobs
-     * @param jobname
-     * @param jobgroup
-     */
-    private void addJobSessionListener(String jobname, String jobgroup){
-        //manually add session binder listener
-        quartzScheduler.getListenerManager().addJobListener(
-                sessionBinderListener,
-                KeyMatcher.keyEquals(JobKey.jobKey(jobname,jobgroup))
-        );
-    }
 
     def JobDetail createJobDetail(ScheduledExecution se, String jobname, String jobgroup){
         def jobDetailBuilder = JobBuilder.newJob(ExecutionJob).withIdentity(jobname,jobgroup)
@@ -784,7 +778,6 @@ class ScheduledExecutionService implements ApplicationContextAware{
                 jobDetailBuilder.usingJobData("serverUUID",frameworkService.getServerUUID())
             }
         }
-        addJobSessionListener(jobname,jobgroup)
 
         return jobDetailBuilder.build()
     }
