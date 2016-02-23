@@ -593,6 +593,39 @@ class ScheduledExecution extends ExecutionContext {
         return value;
     }
     /**
+     * Return evaluated timeout duration, or -1 if not set
+     * @return
+     */
+    public long getTimeoutDuration(){
+        timeout?evaluateTimeoutDuration(timeout):-1
+    }
+
+    /**
+     * Return the timeout duration in seconds for a timeout string
+     * @param timeout
+     * @param opts
+     * @return
+     */
+    public static long evaluateTimeoutDuration(String timeout){
+        long timeoutval=0
+        def exts=[s:1,m:60,h:60*60,d:24*60*60]
+        def matcher= (timeout =~ /(\d+)(.)?/)
+        matcher.each {m->
+            int val
+            try{
+                val=Integer.parseInt(m[1])
+            }catch (NumberFormatException e){
+                return
+            }
+            if(m[2] && exts[m[2]]){
+                timeoutval+=(val*exts[m[2]])
+            }else if(!m[2]){
+                timeoutval += val
+            }
+        }
+        timeoutval
+    }
+    /**
      * parse the request parameters, and populate the dayOfWeek and month fields.
      * if 'everyDayOfWeek' is 'true', then dayOfWeek will be "*".
      * if 'everyMonth' is 'true', then month will be "*".
