@@ -342,8 +342,8 @@ function _updateWFUndoRedo() {
 
 ///Drag drop
 function moveDragItem(dragged, droparea) {
-    var num = $(dragged).getAttribute('data-wfitemnum');
-    var to = $(droparea).getAttribute('data-wfitemnum');
+    var num = jQuery(dragged).data('wfitemnum');
+    var to = jQuery(droparea).data('wfitemnum');
 
     if (to > num) {
         to = to - 1;
