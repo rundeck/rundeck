@@ -442,6 +442,11 @@
                 evt.preventDefault();
                loadExec(jQuery(this).data('jobId'));
             });
+            $$('#wffilterform input').each(function(elem){
+                if(elem.type=='text'){
+                    elem.observe('keypress',noenter);
+                }
+            });
             var bulkeditor=new BulkEditor();
             ko.applyBindings(bulkeditor,document.getElementById('bulk_del_confirm'));
             ko.applyBindings(bulkeditor,document.getElementById('bulk_edit_panel'));

@@ -33,7 +33,7 @@
     <g:set var="filterset" value="${User.findByLogin(session.user)?.jobfilters}"/>
 </g:if>
 
-<div id="${enc(attr:rkey)}wffilterform">
+<div id="wffilterform">
     <g:render template="/common/messages"/>
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|idlist$/)}"/>
     <g:if test="${params.createFilters}">
@@ -74,7 +74,7 @@
                     </div>
                 </g:else>
                 <g:render template="/common/queryFilterManagerModal" model="${[rkey:rkey,filterName:filterName,
-                        filterset:filterset,update:rkey+'wffilterform',
+                        filterset:filterset,update:'wffilterform',
                         deleteActionSubmit:'deleteJobfilter',
                         storeActionSubmit:'storeJobfilter']}"/>
 
@@ -475,33 +475,6 @@
     </table>
 </div>
 
-<%-- template load script, adds behavior to radio buttons to hide appropriate form elements when selected --%>
-<g:javascript>
-    function _set_adhoc_filters(e){
-        if($F(e.target)=='true'){
-            $('${enc(js:rkey)}adhocFilters').show();
-            $('${enc(js:rkey)}definedFilters').hide();
-        }else if($F(e.target)=='false'){
-            $('${enc(js:rkey)}adhocFilters').hide();
-            $('${enc(js:rkey)}definedFilters').show();
-        }else{
-            $('${enc(js: rkey)}adhocFilters').hide();
-            $('${enc(js: rkey)}definedFilters').hide();
-        }
-    }
-    $$('#adhocFilterPick_${enc(js: rkey)} input').each(function(elem){
-        Event.observe(elem,'click',function(e){_set_adhoc_filters(e)});
-    });
-    $$('#${enc(js: rkey)}wffilterform input').each(function(elem){
-        if(elem.type=='text'){
-            elem.observe('keypress',noenter);
-        }
-    });
 
-
-
-
-
-</g:javascript>
 <g:timerEnd key="tail"/>
 <g:timerEnd key="_workflowsFull.gsp"/>
