@@ -905,7 +905,9 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def payload = [id: params.id, scheduleEnabled: params.scheduleEnabled]
         def result = scheduledExecutionService._doUpdateExecutionFlags(payload, session.user, roleList, framework, authContext, changeinfo)
-
+        if(!result.success){
+            flash.error=result.message
+        }
         redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
     }
 
@@ -935,7 +937,9 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def payload = [id: params.id, executionEnabled: params.executionEnabled]
         def result = scheduledExecutionService._doUpdateExecutionFlags(payload, session.user, roleList, framework, authContext, changeinfo)
-
+        if(!result.success){
+            flash.error=result.message
+        }
         redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
     }
 
@@ -1200,7 +1204,7 @@ class ScheduledExecutionController  extends ControllerBase{
      */
     def deleteBulk (ApiBulkJobDeleteRequest deleteRequest) {
         if(deleteRequest.hasErrors()){
-            flash.errors = deleteRequest.error
+            flash.errors = deleteRequest.errors
             return redirect(controller: 'menu', action: 'jobs')
         }
         log.debug("ScheduledExecutionController: deleteBulk : params: " + params)

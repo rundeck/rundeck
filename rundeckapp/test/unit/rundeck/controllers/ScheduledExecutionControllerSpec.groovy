@@ -65,7 +65,7 @@ class ScheduledExecutionControllerSpec extends Specification {
                 _,
                 _,
                 _
-        )
+        )>>[success:true]
         0 * controller.scheduledExecutionService._(*_)
 
         response.status == 302
@@ -105,7 +105,7 @@ class ScheduledExecutionControllerSpec extends Specification {
                 _,
                 _,
                 _
-        )
+        )>>[success:true]
         0 * controller.scheduledExecutionService._(*_)
 
         response.status == 302
