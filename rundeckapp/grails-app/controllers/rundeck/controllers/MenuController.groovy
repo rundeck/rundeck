@@ -202,6 +202,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return redirect(controller:'framework',action:'nodes', params: [project: params.project])
     }
     
+    def clearJobsFilter = { ScheduledExecutionQuery query ->
+        return redirect(action: 'jobs', params: [project: params.project])
+    }
     def jobs = {ScheduledExecutionQuery query ->
         
         def User u = userService.findOrCreateUser(session.user)
