@@ -162,7 +162,7 @@
                 </li>
                 <li class="divider"></li>
                 <li>
-                    <a href="#" class="job_bulk_edit "
+                    <a href="#"
                         data-bind="click: beginEdit"
                     >
                         Bulk Edit…
@@ -271,11 +271,13 @@
                         </span>
                     </g:if>
                 </g:else>
-                    <span class="textbtn textbtn-default obs_expand_all">
+                    <span id="group_controls">
+                    <span class="textbtn textbtn-default" data-bind="click: expandAllComponents">
                         Expand All
                     </span>
-                    <span class="textbtn textbtn-default obs_collapse_all">
+                    <span class="textbtn textbtn-default" data-bind="click: collapseAllComponents">
                         Collapse All
+                    </span>
                     </span>
                     <div class="clear"></div>
                 </div>
@@ -360,7 +362,7 @@
                     <div class="floatr" style="margin-top: 10px; display: none;" id="bulk_edit_panel" data-bind="visible: enabled" >
                         <div class="bulk_edit_controls panel panel-warning"  >
                             <div class="panel-heading">
-                                <button type="button" class="close job_bulk_edit_hide "
+                                <button type="button" class="close "
                                         data-bind="click: cancelEdit"
                                         aria-hidden="true">&times;</button>
                                 <h3 class="panel-title">
@@ -368,8 +370,14 @@
                                 </h3>
                             </div>
                             <div class="panel-body">
-                                <span class="btn btn-default btn-xs job_bulk_select_none" ><g:message code="select.none" /></span>
-                                <span class="btn btn-default btn-xs job_bulk_select_all" ><g:message code="select.all" /></span>
+                                <span class="btn btn-default btn-xs " data-bind="click: selectAll">
+                                    <g:icon name="check"/>
+                                    <g:message code="select.all" />
+                                </span>
+                                <span class="btn btn-default btn-xs " data-bind="click: selectNone" >
+                                    <g:icon name="unchecked"/>
+                                    <g:message code="select.none" />
+                                </span>
 
                             </div>
 
@@ -490,52 +498,9 @@
         }
     });
 
-    $$('.obs_expand_all').each(function(elem){
-        Event.observe(elem,'click',function(e){
-            $$('.expandComponent').each(Element.show);
-        });
-    });
-    $$('.obs_collapse_all').each(function(elem){
-        Event.observe(elem,'click',function(e){
-            $$('.topgroup .expandComponent').each(Element.hide);
-        });
-    });
-    $$('.job_bulk_edit').each(function(elem){
-        Event.observe(elem,'click',function(e){
-            //$$('.jobbulkeditfield').each(Element.show);
-            $$('.expandComponent').each(Element.show);
-        });
-    });
-    $$('.job_bulk_edit_hide').each(function(elem){
-        Event.observe(elem,'click',function(e){
-            //$$('.jobbulkeditfield').each(Element.hide);
-            $$('.jobbulkeditfield').each(function(z){
-                z.select('input[type=checkbox]').each(function(box){
-                    box.checked=false;
-                });
-            });
-        });
-    });
-    $$('.job_bulk_select_all').each(function(elem){
-        Event.observe(elem,'click',function(e){
-            $$('.expandComponent').each(Element.show);
-            $$('.jobbulkeditfield').each(function(z){
-                z.select('input[type=checkbox]').each(function(box){
-                    box.checked=true;
-                });
-            });
-        });
-    });
-    $$('.job_bulk_select_none').each(function(elem){
-        Event.observe(elem,'click',function(e){
-            $$('.expandComponent').each(Element.show);
-            $$('.jobbulkeditfield').each(function(z){
-                z.select('input[type=checkbox]').each(function(box){
-                    box.checked=false;
-                });
-            });
-        });
-    });
+
+
+
 
 </g:javascript>
 <g:timerEnd key="tail"/>
