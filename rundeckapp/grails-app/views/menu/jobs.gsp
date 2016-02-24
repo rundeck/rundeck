@@ -470,26 +470,6 @@
 <body>
 
 
-<g:if test="${flash.bulkDeleteResult?.errors}">
-    <div class="alert alert-dismissable alert-warning">
-        <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
-        <ul>
-            <g:each in="${flash.bulkDeleteResult.errors*.message}" var="message">
-                <li><g:enc>${message}</g:enc></li>
-            </g:each>
-        </ul>
-    </div>
-</g:if>
-<g:if test="${flash.bulkDeleteResult?.success}">
-    <div class="alert alert-dismissable alert-info">
-        <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
-        <ul>
-        <g:each in="${flash.bulkDeleteResult.success*.message}" var="message">
-            <li><g:enc>${message}</g:enc></li>
-        </g:each>
-        </ul>
-    </div>
-</g:if>
 <g:if test="${flash.bulkJobResult?.errors}">
     <div class="alert alert-dismissable alert-warning">
         <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>

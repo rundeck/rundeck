@@ -1093,7 +1093,7 @@ class ScheduledExecutionController  extends ControllerBase{
                     return renderErrorView(result.error.message)
                 } else {
                     def project = result.success.job ? result.success.job.project : params.project
-                    flash.bulkDeleteResult = [success: [result.success]]
+                    flash.bulkJobResult = [success: [result.success]]
                     redirect(controller: 'menu', action: 'jobs', params: [project: project])
                 }
             }.invalidToken {
@@ -1235,7 +1235,7 @@ class ScheduledExecutionController  extends ControllerBase{
                     successful << result.success
                 }
             }
-            flash.bulkDeleteResult = [success: successful, errors: deleteerrs]
+            flash.bulkJobResult = [success: successful, errors: deleteerrs]
             redirect(controller: 'menu', action: 'jobs',params:[project:params.project])
         }.invalidToken{
             response.status = HttpServletResponse.SC_BAD_REQUEST
