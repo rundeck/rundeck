@@ -38,7 +38,7 @@
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|idlist$/)}"/>
     <g:if test="${params.createFilters}">
         <span class="note help">
-            Enter filter parameters below and click "save this filter" to set a name and save it.
+            <g:message code="job.filter.create.help" />
         </span>
     </g:if>
     <g:set var="filtersOpen" value="${params.createFilters||params.editFilters||params.saveFilter?true:false}"/>
@@ -53,23 +53,23 @@
                 </g:if>
                 <g:hiddenField name="project" value="${params.project}"/>
                 <span class="textbtn textbtn-default obs_filtertoggle">
-                    Filter
+                    <g:message code="filter.title" />
                     <b class="glyphicon glyphicon-chevron-down"></b>
                 </span>
                 <g:if test="${!filterName}">
                     <a class="btn btn-xs pull-right btn-success"
                           data-toggle="modal"
-                          href="#saveFilterModal" title="Click to save this filter with a name">
-                        <i class="glyphicon glyphicon-plus"></i> save this filter&hellip;
+                          href="#saveFilterModal" title="${message(code:"job.filter.save.button.title")}">
+                        <i class="glyphicon glyphicon-plus"></i> <g:message code="job.filter.save.button" />
                     </a>
                 </g:if>
                 <g:else >
                     <div class="filterdef saved clear">
                                     <span class="prompt"><g:enc>${filterName}</g:enc></span>
                     <a class="btn btn-xs btn-link btn-danger pull-right" data-toggle="modal"
-                          href="#deleteFilterModal" title="Click to delete this saved filter">
+                          href="#deleteFilterModal" title="${message(code:"job.filter.delete.button.title")}">
                         <b class="glyphicon glyphicon-remove"></b>
-                        delete&hellip;
+                        <g:message code="job.filter.delete.button" />
                     </a>
                     </div>
                 </g:else>
@@ -109,8 +109,8 @@
 
 
                             <div class="form-group">
-                                    <g:actionSubmit  value="Filter" name="filterAll" controller='menu' action='jobs'  class="btn btn-primary btn-sm"/>
-                                    <g:actionSubmit  value="Clear" name="clearFilter" controller='menu' action='jobs' class="btn btn-default btn-sm"/>
+                                    <g:actionSubmit value="${message(code:'job.filter.apply.button.title')}" name="filterAll" controller='menu' action='jobs' class="btn btn-primary btn-sm"/>
+                                    <g:actionSubmit  value="${message(code:'job.filter.clear.button.title')}" name="clearFilter" controller='menu' action='jobs' class="btn btn-default btn-sm"/>
                             </div>
                 </div>
             </g:form>
@@ -165,7 +165,7 @@
                     <a href="#"
                         data-bind="click: beginEdit"
                     >
-                        Bulk Edit…
+                        <g:message code="job.bulk.activate.menu.label" />
                     </a>
                 </li>
             <g:if test="${(scmExportEnabled && scmExportActions) || (scmImportEnabled && scmImportActions)}">
@@ -225,8 +225,8 @@
                 <g:if test="${wasfiltered}">
                     <div>
                     <g:if test="${!params.compact}">
-                        <span class="h4"><g:enc>${totalauthorized}</g:enc> <g:message code="domain.ScheduledExecution.title"/>s</span>
-                            matching filter:
+                        <span class="h4"><g:enc>${totalauthorized}</g:enc>
+                        <g:message code="jobs.matching.filter" />
                     </g:if>
 
                     <g:if test="${filterset}">
@@ -257,26 +257,28 @@
                 </g:if>
                 <g:else>
                     <g:if test="${!params.compact}">
-                    <span class="h4"><g:message code="domain.ScheduledExecution.title"/>s (<g:enc>${totalauthorized}</g:enc>)</span>
+                    <span class="h4">
+                        <g:message code="Job.plural" /> (<g:enc>${totalauthorized}</g:enc>)
+                    </span>
                     </g:if>
 
                     <span class="textbtn textbtn-default obs_filtertoggle"  id="${enc(attr:rkey)}filter-toggle">
-                        Filter
+                        <g:message code="filter.title" />
                         <b class="glyphicon glyphicon-chevron-${wasfiltered?'down':'right'}"></b>
                     </span>
                     <g:if test="${filterset}">
                         <span style="margin-left:10px;">
-                            <span class="info note">Choose a Filter:</span>
+                            <span class="info note"><g:message code="choose.a.filter" /></span>
                             <g:render template="/common/selectFilter" model="[noSelection:'-All-',filterset:filterset,filterName:filterName,prefName:'workflows']"/>
                         </span>
                     </g:if>
                 </g:else>
                     <span id="group_controls">
                     <span class="textbtn textbtn-default" data-bind="click: expandAllComponents">
-                        Expand All
+                        <g:message code="expand.all" />
                     </span>
                     <span class="textbtn textbtn-default" data-bind="click: collapseAllComponents">
-                        Collapse All
+                        <g:message code="collapse.all" />
                     </span>
                     </span>
                     <div class="clear"></div>
@@ -285,7 +287,7 @@
                 <g:if test="${flash.savedJob}">
                     <div class="newjob">
                     <span class="popout message note" style="background:white">
-                        <g:enc>${flash.savedJobMessage?:'Saved changes to Job'}</g:enc>:
+                        <g:enc>${flash.savedJobMessage?:message(code:"job.save.completed.message")}</g:enc>:
                         <g:link controller="scheduledExecution" action="show" id="${flash.savedJob.id}"
                                 params="[project: params.project ?: request.project]"><g:enc>${flash.savedJob.generateFullName()}</g:enc></g:link>
                     </span>
@@ -307,15 +309,15 @@
                                     <div class="modal-header">
                                         <button type="button" class="close" data-dismiss="modal"
                                                 aria-hidden="true">&times;</button>
-                                        <h4 class="modal-title">Confirm Bulk Job Modification</h4>
+                                        <h4 class="modal-title"><g:message code="job.bulk.modify.confirm.panel.title" /></h4>
                                     </div>
 
                                     <div class="modal-body">
                                         <p data-bind="if: isDelete"><g:message code="really.delete.these.jobs"/></p>
-                                        <p data-bind="if: isDisableSchedule">Disable schedules for all selected Jobs?</p>
-                                        <p data-bind="if: isEnableSchedule">Enable schedules for all selected Jobs?</p>
-                                        <p data-bind="if: isDisableExecution">Disable execution for all selected Jobs?</p>
-                                        <p data-bind="if: isEnableExecution">Enable execution for all selected Jobs?</p>
+                                        <p data-bind="if: isDisableSchedule"><g:message code="job.bulk.disable.schedule.confirm.message" /></p>
+                                        <p data-bind="if: isEnableSchedule"><g:message code="job.bulk.enable.schedule.confirm" /></p>
+                                        <p data-bind="if: isDisableExecution"><g:message code="job.bulk.disable.execution.confirm" /></p>
+                                        <p data-bind="if: isEnableExecution"><g:message code="job.bulk.enable.execution.confirm" /></p>
                                     </div>
 
                                     <div class="modal-footer">
@@ -326,23 +328,23 @@
 
                                         <span data-bind="if: isDisableSchedule">
                                             <g:actionSubmit action="flipScheduleDisabledBulk"
-                                                            value="Disable Schedules"
+                                                            value="${message(code:'job.bulk.disable.schedule.button')}"
                                                             class="btn btn-danger"/>
                                         </span>
 
                                         <span data-bind="if: isEnableSchedule">
                                             <g:actionSubmit action="flipScheduleEnabledBulk"
-                                                            value="Enable Schedules"
+                                                            value="${message(code:'job.bulk.enable.schedule.button')}"
                                                             class="btn btn-danger"/>
                                         </span>
                                         <span data-bind="if: isDisableExecution">
                                             <g:actionSubmit action="flipExecutionDisabledBulk"
-                                                            value="Disable Execution"
+                                                            value="${message(code:'scheduledExecution.action.disable.execution.button.label')}"
                                                             class="btn btn-danger"/>
                                         </span>
                                         <span data-bind="if: isEnableExecution">
                                             <g:actionSubmit action="flipExecutionEnabledBulk"
-                                                            value="Enable Execution"
+                                                            value="${message(code:'scheduledExecution.action.enable.execution.button.label')}"
                                                             class="btn btn-danger"/>
                                         </span>
 
@@ -351,7 +353,7 @@
                                                               project="${params.project ?: request.project}">
                                         <span data-bind="if: isDelete">
                                             <g:actionSubmit action="deleteBulk"
-                                                            value="Delete Jobs" class="btn btn-danger"/>
+                                                            value="${message(code:'job.bulk.delete.button')}" class="btn btn-danger"/>
                                         </span>
                                         </auth:resourceAllowed>
                                     </div>
@@ -366,7 +368,7 @@
                                         data-bind="click: cancelEdit"
                                         aria-hidden="true">&times;</button>
                                 <h3 class="panel-title">
-                                    Select Jobs for Bulk Edit
+                                    <g:message code="job.bulk.panel.select.title" />
                                 </h3>
                             </div>
                             <div class="panel-body">
@@ -384,7 +386,7 @@
                             <div class="panel-footer">
                                 <div class="btn-group">
                                     <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-                                        Perform Action…
+                                        <g:message code="job.bulk.perform.action.menu.label" />
                                         <span class="caret"></span>
                                     </button>
                                     <ul class="dropdown-menu " role="menu">
@@ -460,10 +462,14 @@
                             <ul>
                             <li style="padding:5px"><g:link controller="scheduledExecution" action="create"
                                                             params="[project: params.project ?: request.project]"
-                                                            class="btn btn-default btn-sm">Create a new Job&hellip;</g:link></li>
+                                                            class="btn btn-default btn-sm">
+                                <g:message code="job.create.button" />
+                            </g:link></li>
                             <li style="padding:5px"><g:link controller="scheduledExecution" action="upload"
                                                             params="[project: params.project ?: request.project]"
-                                                            class="btn btn-default btn-sm">Upload a Job definition&hellip;</g:link></li>
+                                                            class="btn btn-default btn-sm">
+                                <g:message code="job.upload.button.title" />
+                            </g:link></li>
                             </ul>
                         </auth:resourceAllowed>
 
