@@ -94,6 +94,20 @@
             </g:expander>
             <g:if test="${!jobsjscallback}">
             <a class=" groupname secondary" href="${createLink(controller: 'menu', action: 'jobs', params: [project:params.project,groupPath: prefix ? prefix + '/' + group.key : group.key])}"><g:enc>${displaygroup}</g:enc></a>
+                <g:if test="${jobgroups[group.key]}">
+                <span class="" data-bind="visible: enabled">
+                    &bull;
+                    <a href="#" class="btn btn-xs btn-link" data-job-group="${group.key}" data-bind="click: function(){jobGroupSelectAll($element);}">
+                        <g:icon name="check"/>
+                        <g:message code="select.all" />
+                    </a>
+                    <a href="#" class="btn btn-xs btn-link" data-job-group="${group.key}" data-bind="click: function(){jobGroupSelectNone($element);}">
+                        <g:icon name="unchecked"/>
+                        <g:message code="select.none" />
+                    </a>
+                </span>
+
+                </g:if>
             </g:if>
         </g:else>
         </div>

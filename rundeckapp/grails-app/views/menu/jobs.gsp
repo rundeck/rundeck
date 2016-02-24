@@ -340,6 +340,96 @@
                 Event.observe(e, 'click', filterToggleSave);
             });
         }
+        /**
+         * Possible actions for bulk edit jobs, to present in modal dialog
+         * @constructor
+         */
+        function BulkEditor(){
+            const DISABLE_SCHEDULE = 'disable_schedule';
+            const ENABLE_SCHEDULE = 'enable_schedule';
+            const ENABLE_EXECUTION= 'enable_execution';
+            const DISABLE_EXECUTION= 'disable_execution';
+            const DELETE= 'delete';
+            var self=this;
+            self.action=ko.observable(null);
+            self.enabled=ko.observable(false);
+            self.beginEdit=function(){
+                self.expandAllComponents();
+                self.enabled(true);
+            };
+            self.cancelEdit=function(){
+                self.enabled(false);
+                self.selectNone();
+            };
+            self.disableSchedule=function(){
+
+                self.action(DISABLE_SCHEDULE);
+            };
+            self.isDisableSchedule=ko.pureComputed(function(){
+                return self.action()===DISABLE_SCHEDULE;
+            });
+            self.enableSchedule=function(){
+                self.action(ENABLE_SCHEDULE);
+            };
+            self.isEnableSchedule=ko.pureComputed(function(){
+                return self.action()===ENABLE_SCHEDULE;
+            });
+            self.enableExecution=function(){
+                self.action(ENABLE_EXECUTION);
+            };
+            self.isEnableExecution=ko.pureComputed(function(){
+                return self.action()===ENABLE_EXECUTION;
+            });
+            self.disableExecution=function(){
+                self.action(DISABLE_EXECUTION);
+            };
+            self.isDisableExecution=ko.pureComputed(function(){
+                return self.action()===DISABLE_EXECUTION;
+            });
+            self.actionDelete=function(){
+                self.action(DELETE);
+            };
+            self.isDelete=ko.pureComputed(function(){
+                return self.action()===DELETE;
+            });
+            self.cancel=function(){
+                self.action(null);
+            };
+
+            self.checkboxesForGroup=function(group){
+                return jQuery('.jobbulkeditfield input[type=checkbox][data-job-group="'+group+'"]');
+            };
+            self.allCheckboxes=function(group){
+                return jQuery('.jobbulkeditfield input[type=checkbox]');
+            };
+            self.jobGroupSelectAll=function(e){
+                var jgroup=jQuery(e).data('job-group');
+                if(jgroup){
+                    self.checkboxesForGroup(jgroup).prop('checked', true);
+                }
+            };
+
+            self.jobGroupSelectNone=function(e){
+                var jgroup=jQuery(e).data('job-group');
+                if(jgroup){
+                    self.checkboxesForGroup(jgroup).prop('checked', false);
+                }
+            };
+            self.expandAllComponents=function(){
+                jQuery('.expandComponent').show();
+            };
+            self.collapseAllComponents=function(){
+                jQuery('.topgroup .expandComponent').hide();
+            };
+            self.selectAll=function(){
+                self.expandAllComponents();
+                self.allCheckboxes().prop('checked', true);
+            };
+            self.selectNone=function(){
+                self.expandAllComponents();
+                self.allCheckboxes().prop('checked', false);
+            };
+        }
 
         jQuery(document).ready(function () {
             init();
@@ -352,6 +442,12 @@
                 evt.preventDefault();
                loadExec(jQuery(this).data('jobId'));
             });
+            var bulkeditor=new BulkEditor();
+            ko.applyBindings(bulkeditor,document.getElementById('bulk_del_confirm'));
+            ko.applyBindings(bulkeditor,document.getElementById('bulk_edit_panel'));
+            ko.applyBindings(bulkeditor,document.getElementById('job_action_menu'));
+            ko.applyBindings(bulkeditor,document.getElementById('job_group_tree'));
+            ko.applyBindings(bulkeditor,document.getElementById('group_controls'));
         });
     </script>
     <g:javascript library="yellowfade"/>
@@ -385,6 +481,31 @@
         <ul>
         <g:each in="${flash.bulkDeleteResult.success*.message}" var="message">
             <li><g:enc>${message}</g:enc></li>
+        </g:each>
+        </ul>
+    </div>
+</g:if>
+<g:if test="${flash.bulkJobResult?.errors}">
+    <div class="alert alert-dismissable alert-warning">
+        <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+        <ul>
+            <g:if test="${flash.bulkJobResult.errors instanceof org.springframework.validation.Errors}">
+                <g:renderErrors bean="${flash.bulkJobResult.errors}" as="list"/>
+            </g:if>
+            <g:else>
+                <g:each in="${flash.bulkJobResult.errors*.message}" var="message">
+                    <li><g:autoLink>${message}</g:autoLink></li>
+                </g:each>
+            </g:else>
+        </ul>
+    </div>
+</g:if>
+<g:if test="${flash.bulkJobResult?.success}">
+    <div class="alert alert-dismissable alert-info">
+        <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+        <ul>
+        <g:each in="${flash.bulkJobResult.success*.message}" var="message">
+            <li><g:autoLink>${message}</g:autoLink></li>
         </g:each>
         </ul>
     </div>

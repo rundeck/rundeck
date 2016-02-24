@@ -91,6 +91,10 @@ class ScheduledExecutionController  extends ControllerBase{
     def static allowedMethods = [
             delete: ['POST','GET'],
             deleteBulk: 'POST',
+            flipExecutionDisabledBulk:'POST',
+            flipExecutionEnabledBulk:'POST',
+            flipScheduleDisabledBulk:'POST',
+            flipScheduleEnabledBulk:'POST',
             runJobInline: 'POST',
             runJobNow: 'POST',
             runAdhocInline: 'POST',
@@ -1096,6 +1100,98 @@ class ScheduledExecutionController  extends ControllerBase{
         }else{
             return [scheduledExecution: scheduledExecution]
         }
+
+    }
+    /**
+     * Enable execution for a set of jobs.
+     * Only allowed via POST http method
+     */
+    def flipExecutionEnabledBulk (ApiBulkJobDeleteRequest deleteRequest) {
+        log.debug("ScheduledExecutionController: flipExecutionEnabledBulk : params: " + params)
+        return handleFlipJobFlagBulk(deleteRequest,'flipExecutionEnabledBulk',[executionEnabled: true],'api.success.job.execution.enabled')
+    }
+
+    private def handleFlipJobFlagBulk(ApiBulkJobDeleteRequest deleteRequest,String methodName,Map flags,String successCode) {
+        if (deleteRequest.hasErrors()) {
+            flash.bulkJobResult = [success: false, errors: deleteRequest.errors]
+            return redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
+        }
+        withForm {
+            if (!params.ids && !params.idlist) {
+                flash.error = g.message(code: 'ScheduledExecutionController.bulkUpdate.empty')
+                return redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
+            }
+            UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+            def ids = deleteRequest.generateIdSet()
+
+            def successful = []
+            def errs = []
+            def changeinfo = [method: methodName, change: 'modify', user: authContext.username]
+            def framework = frameworkService.getRundeckFramework()
+            ids.sort().each { jobid ->
+
+                def result = scheduledExecutionService._doUpdateExecutionFlags(
+                        [id: jobid]+ flags,
+                        authContext.username,
+                        authContext.roles.join(','),
+                        framework,
+                        authContext,
+                        changeinfo
+                )
+                if (!result.success) {
+                    if (result.unauthorized) {
+                        errs << [id     : jobid,
+                                 errorCode: result.errorCode,
+                                 message: result.message ?:
+                                         g.message(code: result.errorCode, args: ['Job', "{{Job " + jobid + "}}"])
+                        ]
+                    } else if (result.errorCode) {
+                        errs << [id: jobid, errorCode: result.errorCode,
+                                 message: result.message ?: g.message(code: result.errorCode, args: ['Job', "{{Job " + jobid + "}}"]
+                                 )]
+                    } else if (result.error) {
+                        errs << result.error
+                    }else {
+                        errs << [id: jobid, message: result.message]
+                    }
+                } else {
+                    def jobtitle = "{{Job " + result.scheduledExecution.extid + "}}"
+                    successful << [message: g.message(code: successCode, args: [jobtitle])]
+                }
+            }
+            flash.bulkJobResult = [success: successful, errors: errs]
+            redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
+        }.invalidToken {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            request.errorCode = 'request.error.invalidtoken.message'
+            return renderErrorView([:])
+        }
+    }
+
+     /**
+     * Disable execution for a set of jobs.
+     * Only allowed via POST http method
+     */
+    def flipExecutionDisabledBulk (ApiBulkJobDeleteRequest deleteRequest) {
+        log.debug("ScheduledExecutionController: flipExecutionDisabledBulk : params: " + params)
+        return handleFlipJobFlagBulk(deleteRequest,'flipExecutionDisabledBulk',[executionEnabled: false],'api.success.job.execution.disabled')
+
+    }
+    /**
+     * Enable schedule for a set of jobs.
+     * Only allowed via POST http method
+     */
+    def flipScheduleEnabledBulk (ApiBulkJobDeleteRequest deleteRequest) {
+        log.debug("ScheduledExecutionController: flipScheduleEnabledBulk : params: " + params)
+        return handleFlipJobFlagBulk(deleteRequest,'flipScheduleEnabledBulk',[scheduleEnabled: true],'api.success.job.schedule.enabled')
+    }
+    /**
+     * Disable schedule for a set of jobs.
+     * Only allowed via POST http method
+     */
+    def flipScheduleDisabledBulk (ApiBulkJobDeleteRequest deleteRequest) {
+        log.debug("ScheduledExecutionController: flipScheduleDisabledBulk : params: " + params)
+        return handleFlipJobFlagBulk(deleteRequest,'flipScheduleDisabledBulk',[scheduleEnabled: false],'api.success.job.schedule.disabled')
 
     }
     /**

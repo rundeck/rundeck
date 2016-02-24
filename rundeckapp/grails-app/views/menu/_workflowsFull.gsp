@@ -143,7 +143,7 @@
                 <g:message code="job.actions" />
                 <span class="caret"></span>
             </button>
-            <ul class="dropdown-menu pull-right" role="menu">
+            <ul class="dropdown-menu pull-right" role="menu" id="job_action_menu">
                 <li><g:link controller="scheduledExecution" action="create"
                     params="[project: params.project ?: request.project]"
                             class="">
@@ -160,15 +160,14 @@
                         <g:message code="upload.definition.button.label" />
                     </g:link>
                 </li>
-                <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE  }" project="${params.project ?: request.project}">
-                    <li class="divider"></li>
-                    <li>
-                        <a href="#" class="job_bulk_edit bulk_edit_invoke">
-                            <g:icon name="remove"/>
-                            <g:message code="bulk.delete" />
-                        </a>
-                    </li>
-                </auth:resourceAllowed>
+                <li class="divider"></li>
+                <li>
+                    <a href="#" class="job_bulk_edit "
+                        data-bind="click: beginEdit"
+                    >
+                        Bulk Edit…
+                    </a>
+                </li>
             <g:if test="${(scmExportEnabled && scmExportActions) || (scmImportEnabled && scmImportActions)}">
                 <g:if test="${scmExportEnabled && scmExportActions}">
                     <li class="divider">
@@ -299,37 +298,73 @@
 <g:timerEnd key="head"/>
                 <g:if test="${ jobgroups}">
                     <g:timerStart key="groupTree"/>
-                    <g:form controller="scheduledExecution" action="deleteBulk" useToken="true" params="[project: params.project ?: request.project]">
-                    <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE  }" project="${params.project ?: request.project}">
+                    <g:form controller="scheduledExecution"  useToken="true" params="[project: params.project ?: request.project]">
                         <div class="modal fade" id="bulk_del_confirm" tabindex="-1" role="dialog" aria-hidden="true">
                             <div class="modal-dialog">
                                 <div class="modal-content">
                                     <div class="modal-header">
                                         <button type="button" class="close" data-dismiss="modal"
                                                 aria-hidden="true">&times;</button>
-                                        <h4 class="modal-title">Confirm Bulk Job Delete</h4>
+                                        <h4 class="modal-title">Confirm Bulk Job Modification</h4>
                                     </div>
 
                                     <div class="modal-body">
-                                        <p><g:message code="really.delete.these.jobs"/></p>
+                                        <p data-bind="if: isDelete"><g:message code="really.delete.these.jobs"/></p>
+                                        <p data-bind="if: isDisableSchedule">Disable schedules for all selected Jobs?</p>
+                                        <p data-bind="if: isEnableSchedule">Enable schedules for all selected Jobs?</p>
+                                        <p data-bind="if: isDisableExecution">Disable execution for all selected Jobs?</p>
+                                        <p data-bind="if: isEnableExecution">Enable execution for all selected Jobs?</p>
                                     </div>
 
                                     <div class="modal-footer">
                                         <button type="button"
                                                 class="btn btn-default"
+                                                data-bind="click: cancel"
                                                 data-dismiss="modal" ><g:message code="no"/></button>
-                                        <g:submitButton name="${g.message(code: 'yes')}" class="btn btn-danger"/>
+
+                                        <span data-bind="if: isDisableSchedule">
+                                            <g:actionSubmit action="flipScheduleDisabledBulk"
+                                                            value="Disable Schedules"
+                                                            class="btn btn-danger"/>
+                                        </span>
+
+                                        <span data-bind="if: isEnableSchedule">
+                                            <g:actionSubmit action="flipScheduleEnabledBulk"
+                                                            value="Enable Schedules"
+                                                            class="btn btn-danger"/>
+                                        </span>
+                                        <span data-bind="if: isDisableExecution">
+                                            <g:actionSubmit action="flipExecutionDisabledBulk"
+                                                            value="Disable Execution"
+                                                            class="btn btn-danger"/>
+                                        </span>
+                                        <span data-bind="if: isEnableExecution">
+                                            <g:actionSubmit action="flipExecutionEnabledBulk"
+                                                            value="Enable Execution"
+                                                            class="btn btn-danger"/>
+                                        </span>
+
+
+                                        <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE  }"
+                                                              project="${params.project ?: request.project}">
+                                        <span data-bind="if: isDelete">
+                                            <g:actionSubmit action="deleteBulk"
+                                                            value="Delete Jobs" class="btn btn-danger"/>
+                                        </span>
+                                        </auth:resourceAllowed>
                                     </div>
                                 </div><!-- /.modal-content -->
                             </div><!-- /.modal-dialog -->
                         </div><!-- /.modal -->
-                    <div class="floatr" style="margin-top: 10px;">
-                        <div class="bulk_edit_controls panel panel-warning" style="display: none">
-                            <div class="bulk_edit_controls panel-heading">
-                                <button type="button" class="close job_bulk_edit_hide "
-                                        aria-hidden="true">&times;</button>
-                                <h3 class="panel-title"><g:message code="select.jobs.to.delete"/>
 
+                    <div class="floatr" style="margin-top: 10px; display: none;" id="bulk_edit_panel" data-bind="visible: enabled" >
+                        <div class="bulk_edit_controls panel panel-warning"  >
+                            <div class="panel-heading">
+                                <button type="button" class="close job_bulk_edit_hide "
+                                        data-bind="click: cancelEdit"
+                                        aria-hidden="true">&times;</button>
+                                <h3 class="panel-title">
+                                    Select Jobs for Bulk Edit
                                 </h3>
                             </div>
                             <div class="panel-body">
@@ -339,16 +374,74 @@
                             </div>
 
                             <div class="panel-footer">
-                                <a id="bulk_del_prompt"
-                                      data-toggle="modal"
-                                      href="#bulk_del_confirm"
-                                      class="btn btn-warning btn-sm" ><g:message code="delete.selected.jobs" /></a>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                        Perform Action…
+                                        <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu " role="menu">
+                                        <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE  }"
+                                                              project="${params.project ?: request.project}">
+
+
+                                        <li>
+                                            <a id="bulk_del_prompt"
+                                               data-toggle="modal"
+                                               href="#bulk_del_confirm"
+                                               data-bind="click: actionDelete"
+                                               class="" ><g:message code="delete.selected.jobs" /></a>
+                                        </li>
+                                        <li class="divider"></li>
+
+                                        </auth:resourceAllowed>
+                                        <li>
+                                            <a
+                                                    data-toggle="modal"
+                                                    href="#bulk_del_confirm"
+                                                data-bind="click: enableSchedule"
+                                               class="" >
+                                                <g:message code="scheduledExecution.action.enable.schedule.button.label"/>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a
+                                                data-toggle="modal"
+                                                href="#bulk_del_confirm"
+                                               data-bind="click: disableSchedule"
+                                               class="" >
+                                                <g:message code="scheduledExecution.action.disable.schedule.button.label"/>
+                                            </a>
+                                        </li>
+                                        <li class="divider"></li>
+                                        <li>
+                                            <a
+                                               data-toggle="modal"
+                                               href="#bulk_del_confirm"
+                                               data-bind="click: enableExecution"
+                                               class="" >
+                                                <g:message code="scheduledExecution.action.enable.execution.button.label"/>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a
+                                                    data-toggle="modal"
+                                                    href="#bulk_del_confirm"
+                                                    data-bind="click: disableExecution"
+                                               class="" >
+                                                <g:message code="scheduledExecution.action.disable.execution.button.label"/>
+                                            </a>
+                                        </li>
+                                        %{--<li class="divider"></li>--}%
+                                    </ul>
+                                </div>
+
                             </div>
 
                         </div>
                     </div>
-                    </auth:resourceAllowed>
+                    <div id="job_group_tree">
                     <g:render template="groupTree" model="${[small:params.compact?true:false,currentJobs:jobgroups['']?jobgroups['']:[],wasfiltered:wasfiltered?true:false,nowrunning:nowrunning, clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
+                    </div>
                     </g:form>
                     <g:timerEnd key="groupTree"/>
                 </g:if>
@@ -409,17 +502,13 @@
     });
     $$('.job_bulk_edit').each(function(elem){
         Event.observe(elem,'click',function(e){
-            $$('.jobbulkeditfield').each(Element.show);
-            $$('.bulk_edit_controls').each(Element.show);
-            $$('.bulk_edit_invoke').each(Element.hide);
+            //$$('.jobbulkeditfield').each(Element.show);
             $$('.expandComponent').each(Element.show);
         });
     });
     $$('.job_bulk_edit_hide').each(function(elem){
         Event.observe(elem,'click',function(e){
-            $$('.jobbulkeditfield').each(Element.hide);
-            $$('.bulk_edit_controls').each(Element.hide);
-            $$('.bulk_edit_invoke').each(Element.show);
+            //$$('.jobbulkeditfield').each(Element.hide);
             $$('.jobbulkeditfield').each(function(z){
                 z.select('input[type=checkbox]').each(function(box){
                     box.checked=false;
