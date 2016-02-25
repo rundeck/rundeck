@@ -7,8 +7,11 @@ function ActionHandlers() {
     self.registerHandler = function (key, func) {
         self.handlers[key] = func;
     };
-    self.triggerHandler = function (key, data) {
-        self.handlers[key](data);
+    self.triggerHandler = function (evt,key, el) {
+        if(self.handlers[key]!=null){
+            if (el.is('a')) evt.preventDefault();
+            self.handlers[key](el);
+        }
     };
 
     /**
@@ -25,9 +28,8 @@ function ActionHandlers() {
         jQuery(document.body).on('click', '.page_action', function (e) {
 
             var el = jQuery(this);
-            if (el.is('a')) e.preventDefault();
             var handler = el.data('action');
-            self.triggerHandler(handler, el);
+            self.triggerHandler(e, handler, el);
         });
     };
 
