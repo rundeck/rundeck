@@ -95,6 +95,8 @@ class ScheduledExecutionController  extends ControllerBase{
             flipExecutionEnabledBulk:'POST',
             flipScheduleDisabledBulk:'POST',
             flipScheduleEnabledBulk:'POST',
+            flipScheduleEnabled:'POST',
+            flipExecutionEnabled: 'POST',
             runJobInline: 'POST',
             runJobNow: 'POST',
             runAdhocInline: 'POST',
@@ -884,67 +886,89 @@ class ScheduledExecutionController  extends ControllerBase{
     }
 
     def flipScheduleEnabled() {
+        withForm{
         if (!params.id) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
             return renderErrorView(g.message(code: 'api.error.parameter.required', args: ['id']))
         }
 
         def jobid = params.id
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
-        if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
-            return
+
+            def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
+            if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
+                return
+            }
+
+            Framework framework = frameworkService.getRundeckFramework()
+            UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                    session.subject,
+                    scheduledExecution.project
+            )
+            def changeinfo = [method: 'update', change: 'modify', user: session.user]
+
+            //pass session-stored edit state in params map
+            transferSessionEditState(session, params, params.id)
+
+            String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
+
+            def payload = [id: params.id, scheduleEnabled: params.scheduleEnabled]
+            def result = scheduledExecutionService._doUpdateExecutionFlags(payload, session.user, roleList, framework, authContext, changeinfo)
+            if(!result.success){
+                flash.error=result.message
+            }
+            if(params.returnToJob=='true'){
+                return redirect(controller: 'scheduledExecution', action: 'show', params: [project: params.project,id:scheduledExecution.extid])
+            }
+            redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
+
+        }.invalidToken{
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            request.errorCode = 'request.error.invalidtoken.message'
+            return renderErrorView([:])
         }
-
-        Framework framework = frameworkService.getRundeckFramework()
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
-                session.subject,
-                scheduledExecution.project
-        )
-        def changeinfo = [method: 'update', change: 'modify', user: session.user]
-
-        //pass session-stored edit state in params map
-        transferSessionEditState(session, params, params.id)
-
-        String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
-
-        def payload = [id: params.id, scheduleEnabled: params.scheduleEnabled]
-        def result = scheduledExecutionService._doUpdateExecutionFlags(payload, session.user, roleList, framework, authContext, changeinfo)
-        if(!result.success){
-            flash.error=result.message
-        }
-        redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
     }
 
     def flipExecutionEnabled() {
-        if (!params.id) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
-            return renderErrorView(g.message(code: 'api.error.parameter.required', args: ['id']))
+        withForm{
+
+            if (!params.id) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+                return renderErrorView(g.message(code: 'api.error.parameter.required', args: ['id']))
+            }
+
+            def jobid = params.id
+            def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
+            if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
+                return
+            }
+
+            Framework framework = frameworkService.getRundeckFramework()
+            UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                    session.subject,
+                    scheduledExecution.project
+            )
+            def changeinfo = [method: 'update', change: 'modify', user: authContext.username]
+
+            //pass session-stored edit state in params map
+            transferSessionEditState(session, params, params.id)
+
+            String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
+
+            def payload = [id: params.id, executionEnabled: params.executionEnabled]
+            def result = scheduledExecutionService._doUpdateExecutionFlags(payload, session.user, roleList, framework, authContext, changeinfo)
+            if(!result.success){
+                flash.error=result.message
+            }
+            if(params.returnToJob=='true'){
+                return redirect(controller: 'scheduledExecution', action: 'show', params: [project: params.project,id:scheduledExecution.extid])
+            }
+            redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
+
+        }.invalidToken{
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            request.errorCode = 'request.error.invalidtoken.message'
+            return renderErrorView([:])
         }
-
-        def jobid = params.id
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
-        if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
-            return
-        }
-
-        Framework framework = frameworkService.getRundeckFramework()
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
-                session.subject,
-                scheduledExecution.project
-        )
-        def changeinfo = [method: 'update', change: 'modify', user: authContext.username]
-
-        //pass session-stored edit state in params map
-        transferSessionEditState(session, params, params.id)
-
-        String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
-
-        def payload = [id: params.id, executionEnabled: params.executionEnabled]
-        def result = scheduledExecutionService._doUpdateExecutionFlags(payload, session.user, roleList, framework, authContext, changeinfo)
-        if(!result.success){
-            flash.error=result.message
-        }
-        redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
     }
 
     def apiFlipExecutionEnabled() {

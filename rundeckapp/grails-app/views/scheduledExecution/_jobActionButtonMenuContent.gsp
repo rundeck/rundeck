@@ -85,6 +85,8 @@
                     action="flipScheduleEnabled"
                     params="${[id:scheduledExecution.extid,project: scheduledExecution.project, scheduleEnabled: false]}"
                     data-job-id="${enc(attr: scheduledExecution.extid)}"
+                    class="page_action"
+                    data-action="disable_job_schedule_single"
                     title="${g.message(code: 'disable.schedule.this.job')}">
                 <b class="glyphicon glyphicon-unchecked"></b>
                 <g:message code="scheduledExecution.action.disable.schedule.button.label"/>
@@ -95,6 +97,8 @@
                     action="flipScheduleEnabled"
                     params="${[id:scheduledExecution.extid,project: scheduledExecution.project, scheduleEnabled: true]}"
                     data-job-id="${enc(attr: scheduledExecution.extid)}"
+                    class="page_action"
+                    data-action="enable_job_schedule_single"
                     title="${g.message(code: 'enable.schedule.this.job')}">
                 <b class="glyphicon glyphicon-check"></b>
                 <g:message code="scheduledExecution.action.enable.schedule.button.label"/>
@@ -110,6 +114,8 @@
                     action="flipExecutionEnabled"
                     params="${[id:scheduledExecution.extid,project: scheduledExecution.project, executionEnabled: false]}"
                     data-job-id="${enc(attr: scheduledExecution.extid)}"
+                    class="page_action"
+                    data-action="disable_job_execution_single"
                     title="${g.message(code: 'disable.execution.this.job')}">
                 <b class="glyphicon glyphicon-unchecked"></b>
                 <g:message code="scheduledExecution.action.disable.execution.button.label"/>
@@ -120,6 +126,8 @@
                     action="flipExecutionEnabled"
                     params="${[id:scheduledExecution.extid,project: scheduledExecution.project, executionEnabled: true]}"
                     data-job-id="${enc(attr: scheduledExecution.extid)}"
+                    class="page_action"
+                    data-action="enable_job_execution_single"
                     title="${g.message(code: 'enable.execution.this.job')}">
                 <b class="glyphicon glyphicon-check"></b>
                 <g:message code="scheduledExecution.action.enable.execution.button.label"/>

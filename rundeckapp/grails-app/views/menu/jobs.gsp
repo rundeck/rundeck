@@ -315,14 +315,21 @@
             </g:if>
 
             PageActionHandlers.registerHandler('job_delete_single',function(el){
-                var id=el.data('jobId');
-                //check only the checkbox with this job id by passing an array
-                jQuery(':input[name=ids]').val([id]);
-                bulkeditor.beginEdit();
-                bulkeditor.actionDelete();
-                jQuery('#bulk_del_confirm').modal('toggle');
+                bulkeditor.activateActionForJob(bulkeditor.DELETE,el.data('jobId'));
             });
-            
+            PageActionHandlers.registerHandler('enable_job_execution_single',function(el){
+                bulkeditor.activateActionForJob(bulkeditor.ENABLE_EXECUTION,el.data('jobId'));
+            });
+            PageActionHandlers.registerHandler('disable_job_execution_single',function(el){
+                bulkeditor.activateActionForJob(bulkeditor.DISABLE_EXECUTION,el.data('jobId'));
+            });
+            PageActionHandlers.registerHandler('disable_job_schedule_single',function(el){
+                bulkeditor.activateActionForJob(bulkeditor.DISABLE_SCHEDULE,el.data('jobId'));
+            });
+            PageActionHandlers.registerHandler('enable_job_schedule_single',function(el){
+                bulkeditor.activateActionForJob(bulkeditor.ENABLE_SCHEDULE,el.data('jobId'));
+            });
+
             Event.observe(document.body,'click',function(evt){
                 //click outside of popup bubble hides it
                 doMouseout();
@@ -347,12 +354,12 @@
          * @constructor
          */
         function BulkEditor(){
-            const DISABLE_SCHEDULE = 'disable_schedule';
-            const ENABLE_SCHEDULE = 'enable_schedule';
-            const ENABLE_EXECUTION= 'enable_execution';
-            const DISABLE_EXECUTION= 'disable_execution';
-            const DELETE= 'delete';
             var self=this;
+            self.DISABLE_SCHEDULE = 'disable_schedule';
+            self.ENABLE_SCHEDULE = 'enable_schedule';
+            self.ENABLE_EXECUTION= 'enable_execution';
+            self.DISABLE_EXECUTION= 'disable_execution';
+            self.DELETE= 'delete';
             self.action=ko.observable(null);
             self.enabled=ko.observable(false);
             self.beginEdit=function(){
@@ -365,39 +372,43 @@
             };
             self.disableSchedule=function(){
 
-                self.action(DISABLE_SCHEDULE);
+                self.action(self.DISABLE_SCHEDULE);
             };
             self.isDisableSchedule=ko.pureComputed(function(){
-                return self.action()===DISABLE_SCHEDULE;
+                return self.action()===self.DISABLE_SCHEDULE;
             });
             self.enableSchedule=function(){
-                self.action(ENABLE_SCHEDULE);
+                self.action(self.ENABLE_SCHEDULE);
             };
             self.isEnableSchedule=ko.pureComputed(function(){
-                return self.action()===ENABLE_SCHEDULE;
+                return self.action()===self.ENABLE_SCHEDULE;
             });
             self.enableExecution=function(){
-                self.action(ENABLE_EXECUTION);
+                self.action(self.ENABLE_EXECUTION);
             };
             self.isEnableExecution=ko.pureComputed(function(){
-                return self.action()===ENABLE_EXECUTION;
+                return self.action()===self.ENABLE_EXECUTION;
             });
             self.disableExecution=function(){
-                self.action(DISABLE_EXECUTION);
+                self.action(self.DISABLE_EXECUTION);
             };
             self.isDisableExecution=ko.pureComputed(function(){
-                return self.action()===DISABLE_EXECUTION;
+                return self.action()===self.DISABLE_EXECUTION;
             });
             self.actionDelete=function(){
-                self.action(DELETE);
+                self.action(self.DELETE);
             };
             self.isDelete=ko.pureComputed(function(){
-                return self.action()===DELETE;
+                return self.action()===self.DELETE;
             });
             self.cancel=function(){
                 self.action(null);
             };
 
+            self.setCheckboxValues=function(ids){
+                //check only the checkbox with this job id by passing an array
+                jQuery('.jobbulkeditfield :input[name=ids]').val(ids);
+            };
             self.checkboxesForGroup=function(group){
                 return jQuery('.jobbulkeditfield input[type=checkbox][data-job-group="'+group+'"]');
             };
@@ -431,6 +442,15 @@
                 self.expandAllComponents();
                 self.allCheckboxes().prop('checked', false);
             };
+            self.toggleModal=function(){
+                jQuery('#bulk_del_confirm').modal('toggle');
+            };
+            self.activateActionForJob=function(action,jobid){
+                self.setCheckboxValues([jobid]);
+                self.beginEdit();
+                self.action(action);
+                self.toggleModal();
+            }
         }
         var bulkeditor;
         jQuery(document).ready(function () {
