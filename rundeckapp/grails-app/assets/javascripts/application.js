@@ -2,6 +2,7 @@
 //= require_self
 //= require menus
 //= require versionIdentity
+//= require actionHandlers
 
 // methods for modifying inner html or text content
 

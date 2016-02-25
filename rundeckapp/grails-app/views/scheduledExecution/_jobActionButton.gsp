@@ -45,6 +45,12 @@
 <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}"
                       project="${scheduledExecution.project ?: params.project ?: request.project}">
     <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_DELETE, project: scheduledExecution.project)}">
+<g:javascript>
+jQuery(function(){
+   //register modal as the handler for 'job_delete_single'
+    PageActionHandlers.registerModalHandler('job_delete_single','#jobdelete',{});
+});
+</g:javascript>
         <div class="modal" id="jobdelete" tabindex="-1" role="dialog"
              aria-labelledby="deletejobtitle" aria-hidden="true">
             <div class="modal-dialog">

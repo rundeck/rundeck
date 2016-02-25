@@ -301,14 +301,6 @@
                     _genUrl(appLinks.scheduledExecutionActionMenuFragment,{id:id})
                 );
             });
-            jQuery(document.body).on('click','.act_job_delete_single',function(){
-                var el=jQuery(this);
-                var id=el.data('jobId');
-                jQuery('.job_bulk_edit').click();//show bulk edit mode
-                //check only the checkbox with this job id by passing an array
-                jQuery(':input[name=ids]').val([id]);
-               jQuery('#bulk_del_confirm').modal('toggle');
-            });
         }
          function filterToggle(evt) {
             ['${enc(js:rkey)}filter','${enc(js:rkey)}filter-toggle'].each(Element.toggle);
@@ -321,6 +313,16 @@
             <g:if test="${!(grailsApplication.config.rundeck?.gui?.enableJobHoverInfo in ['false',false])}">
             initJobIdLinks();
             </g:if>
+
+            PageActionHandlers.registerHandler('job_delete_single',function(el){
+                var id=el.data('jobId');
+                //check only the checkbox with this job id by passing an array
+                jQuery(':input[name=ids]').val([id]);
+                bulkeditor.beginEdit();
+                bulkeditor.actionDelete();
+                jQuery('#bulk_del_confirm').modal('toggle');
+            });
+            
             Event.observe(document.body,'click',function(evt){
                 //click outside of popup bubble hides it
                 doMouseout();
@@ -430,7 +432,7 @@
                 self.allCheckboxes().prop('checked', false);
             };
         }
-
+        var bulkeditor;
         jQuery(document).ready(function () {
             init();
             if (jQuery('#activity_section')) {
@@ -447,7 +449,7 @@
                     elem.observe('keypress',noenter);
                 }
             });
-            var bulkeditor=new BulkEditor();
+            bulkeditor=new BulkEditor();
             ko.applyBindings(bulkeditor,document.getElementById('bulk_del_confirm'));
             ko.applyBindings(bulkeditor,document.getElementById('bulk_edit_panel'));
             ko.applyBindings(bulkeditor,document.getElementById('job_action_menu'));
