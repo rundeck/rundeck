@@ -1254,19 +1254,41 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             return [success: false]
         }
 
-        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE], scheduledExecution.project)) {
-            return [success: false, scheduledExecution: scheduledExecution, message: "Update Job ${scheduledExecution.extid}", unauthorized: true]
-        }
 
         def oldSched = scheduledExecution.scheduled
         def oldJobName = scheduledExecution.generateJobScheduledName()
         def oldJobGroup = scheduledExecution.generateJobGroupName()
 
         if (null != params.scheduleEnabled) {
+            if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_TOGGLE_SCHEDULE], scheduledExecution.project)) {
+                return [success     : false, scheduledExecution: scheduledExecution,
+                        message     : lookupMessage(
+                                'api.error.item.unauthorized',
+                                [AuthConstants.ACTION_TOGGLE_SCHEDULE, 'Job ID', scheduledExecution.extid].toArray()
+
+                        ),
+                        errorCode   : 'api.error.item.unauthorized',
+                        unauthorized: true]
+            }
+            if(!scheduledExecution.scheduled){
+
+                return [success: false, scheduledExecution: scheduledExecution,
+                        errorCode: 'api.error.job.toggleSchedule.notScheduled' ]
+            }
             scheduledExecution.properties.scheduleEnabled = params.scheduleEnabled
         }
 
         if (null != params.executionEnabled) {
+            if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_TOGGLE_EXECUTION], scheduledExecution.project)) {
+                return [success          : false, scheduledExecution: scheduledExecution,
+                        message          : lookupMessage(
+                                'api.error.item.unauthorized',
+                                [AuthConstants.ACTION_TOGGLE_EXECUTION, 'Job ID', scheduledExecution.extid]
+
+                        ),
+                        errorCode   : 'api.error.item.unauthorized',
+                        unauthorized: true]
+            }
             scheduledExecution.properties.executionEnabled = params.executionEnabled
         }
 

@@ -54,6 +54,16 @@ View the [Index](#index) listing API paths.
 ## Changes
 
 Changes introduced by API Version number:
+**Version 16**:
+
+* New Endpoints.
+    - [`/api/16/jobs/execution/enable`][/api/V/jobs/execution/enable] - Enable execution for multiple jobs
+    - [`/api/16/jobs/execution/disable`][/api/V/jobs/execution/disable] - Disable execution for multiple jobs
+    - [`/api/16/jobs/schedule/enable`][/api/V/jobs/schedule/enable] - Enable schedule for multiple jobs
+    - [`/api/16/jobs/schedule/disable`][/api/V/jobs/schedule/disable] - Disable schedule for multiple jobs
+
+
+Changes introduced by API Version number:
 **Version 15**:
 
 * New Endpoints.
@@ -1750,6 +1760,200 @@ Disable the schedule for a job. (ACL requires `toggle_schedule` action for a job
 **Response:**
 
 (See [Enable Executions for a Job](#enable-executions-for-a-job).)
+
+### Bulk Toggle Job Execution
+
+Toggle whether executions are enabled for a set of jobs. (ACL requires `toggle_execution` action for each job.)
+
+Executions will be enabled or disabled, depending on the URL used:
+
+**Request:**
+
+    POST /api/14/jobs/execution/enable
+    POST /api/14/jobs/execution/disable
+
+Query parameters:
+
+* `ids`: The Job IDs to delete, can be specified multiple times
+* `idlist`: The Job IDs to delete as a single comma-separated string.
+
+Or JSON/XML content:
+
+`Content-Type: application/json`
+
+~~~~~ {.json}
+{
+  "ids": [
+    "fefa50e1-2265-47af-b101-d4bbaa3ba21c",
+    "f07e2311-4dae-40ca-bdfa-412bd223f863"
+  ],
+  "idlist":"49336998-21a3-42c7-8da3-a855587982e0,a387f77f-a623-45dc-967f-746a2e3f6686"
+}
+~~~~~
+
+Note: you can combine `ids` with `idlist`.
+
+**Response:**
+
+If successful, then the `result` will contain a `toggleExecution` element with two sections of results, `succeeded` and `failed`:
+
+~~~~~~~~~~ {.xml}
+<toggleExecution enabled="true" requestCount="#" allsuccessful="true/false">
+    <succeeded count="1">
+        <toggleExecutionResult id="[job ID]">
+            <message>[message]</message>
+        </toggleExecutionResult>
+    </succeeded>
+    <failed count="1">
+        <toggleExecutionResult id="[job ID]" errorCode="[code]">
+            <error>[message]</error>
+        </toggleExecutionResult>
+    </failed>
+</toggleExecution>
+~~~~~~~~~~
+
+
+`toggleExecution` has these attributes:
+
+* `enabled`: `true` or `false`, depending on whether `enable` or `disable` was requested.
+* `requestCount`: the number of job IDs that were in the request
+* `allsuccessful`: true/false: true if all modifications were successful, false otherwise.
+
+The response may contain only one of `succeeded` or `failed`, depending on the result.
+
+The `succeeded` and `failed` sections contain multiple `toggleExecutionResult` elements.  
+
+Each `toggleExecutionResult` under the `succeeded` section will contain:
+
+* `id` attribute - the Job ID
+* `message` sub-element - result message for the request
+
+
+Each `toggleExecutionResult` under the `failed` section will contain:
+
+* `id` attribute - the Job ID
+* `error` sub-element - result error message for the request
+* `errorCode` attribute - a code indicating the type of failure, currently one of `failed`, `unauthorized` or `notfound`.
+
+`application/json` response:
+
+
+~~~~~~ {.json}
+{
+  "requestCount": #integer#,
+  "enabled": true/false,
+  "allsuccessful": true/false,
+  "succeeded": [...],
+  "failed":[...]
+}
+~~~~~~
+
+The list of succeeded/failed will contain objects of this form:
+
+~~~~~~ {.json}
+{
+  "id": "[UUID]",
+  "errorCode": "(error code, see above)",
+  "message": "(success or failure message)"
+}
+~~~~~~
+
+### Bulk Toggle Job Schedules
+
+Toggle whether schedules are enabled for a set of jobs. (ACL requires `toggle_schedule` action for each job.)
+
+Schedules will be enabled or disabled, depending on the URL used:
+
+**Request:**
+
+    POST /api/14/jobs/schedule/enable
+    POST /api/14/jobs/schedule/disable
+
+Query parameters:
+
+* `ids`: The Job IDs to delete, can be specified multiple times
+* `idlist`: The Job IDs to delete as a single comma-separated string.
+
+Or JSON/XML content:
+
+`Content-Type: application/json`
+
+~~~~~ {.json}
+{
+  "ids": [
+    "fefa50e1-2265-47af-b101-d4bbaa3ba21c",
+    "f07e2311-4dae-40ca-bdfa-412bd223f863"
+  ],
+  "idlist":"49336998-21a3-42c7-8da3-a855587982e0,a387f77f-a623-45dc-967f-746a2e3f6686"
+}
+~~~~~
+
+Note: you can combine `ids` with `idlist`.
+
+**Response:**
+
+If successful, then the `result` will contain a `toggleSchedule` element with two sections of results, `succeeded` and `failed`:
+
+~~~~~~~~~~ {.xml}
+<toggleSchedule enabled="true" requestCount="#" allsuccessful="true/false">
+    <succeeded count="1">
+        <toggleScheduleResult id="[job ID]">
+            <message>[message]</message>
+        </toggleScheduleResult>
+    </succeeded>
+    <failed count="1">
+        <toggleScheduleResult id="[job ID]" errorCode="[code]">
+            <error>[message]</error>
+        </toggleScheduleResult>
+    </failed>
+</toggleSchedule>
+~~~~~~~~~~
+
+
+`toggleSchedule` has these attributes:
+
+* `enabled`: `true` or `false`, depending on whether `enable` or `disable` was requested.
+* `requestCount`: the number of job IDs that were in the request
+* `allsuccessful`: true/false: true if all modifications were successful, false otherwise.
+
+The response may contain only one of `succeeded` or `failed`, depending on the result.
+
+The `succeeded` and `failed` sections contain multiple `toggleScheduleResult` elements.  
+
+Each `toggleScheduleResult` under the `succeeded` section will contain:
+
+* `id` attribute - the Job ID
+* `message` sub-element - result message for the request
+
+
+Each `toggleScheduleResult` under the `failed` section will contain:
+
+* `id` attribute - the Job ID
+* `error` sub-element - result error message for the request
+* `errorCode` attribute - a code indicating the type of failure, currently one of `failed`, `unauthorized` or `notfound`.
+
+`application/json` response:
+
+
+~~~~~~ {.json}
+{
+  "requestCount": #integer#,
+  "enabled": true/false,
+  "allsuccessful": true/false,
+  "succeeded": [...],
+  "failed":[...]
+}
+~~~~~~
+
+The list of succeeded/failed will contain objects of this form:
+
+~~~~~~ {.json}
+{
+  "id": "[UUID]",
+  "errorCode": "(error code, see above)",
+  "message": "(success or failure message)"
+}
+~~~~~~
 
 ## Executions
 
@@ -4939,6 +5143,22 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 * `DELETE` [Bulk Job Delete](#bulk-job-delete)
 
+[/api/V/jobs/execution/enable][]
+
+* `POST` [Bulk Toggle Job Execution](#bulk-toggle-job-execution)
+
+[/api/V/jobs/execution/disable][]
+
+* `POST` [Bulk Toggle Job Execution](#bulk-toggle-job-execution)
+
+[/api/V/jobs/schedule/enable][]
+
+* `POST` [Bulk Toggle Job Schedules](#bulk-toggle-job-schedules)
+
+[/api/V/jobs/schedule/disable][]
+
+* `POST` [Bulk Toggle Job Schedules](#bulk-toggle-job-schedules)
+
 [/api/V/project/[PROJECT]][]
 
 * `GET` [Getting Project Info](#getting-project-info)
@@ -5168,6 +5388,10 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 [/api/V/job/[ID]/run]:#running-a-job
 
 [/api/V/jobs/delete]:#bulk-job-delete
+[/api/V/jobs/execution/enable]:#bulk-toggle-job-execution
+[/api/V/jobs/execution/disable]:#bulk-toggle-job-execution
+[/api/V/jobs/schedule/enable]:#bulk-toggle-job-schedules
+[/api/V/jobs/schedule/disable]:#bulk-toggle-job-schedules
 
 [/api/V/project/[PROJECT]]:#getting-project-info
 [DELETE /api/V/project/[PROJECT]]:#project-deletion

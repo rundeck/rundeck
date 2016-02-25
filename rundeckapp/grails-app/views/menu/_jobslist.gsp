@@ -44,16 +44,13 @@
                             %{--normal view--}%
                         <tr class="sectionhead expandComponentHolder ${paginateParams?.idlist==scheduledExecution.id.toString()?'expanded':''}" id="jobrow_${scheduledExecution.id}">
                             <td class="jobname">
-                                <span class="jobbulkeditfield" style="display: none">
-                                    <g:if test="${jobauthorizations && jobauthorizations[AuthConstants.ACTION_DELETE]?.contains(scheduledExecution.id.toString())}">
-                                        <input type="checkbox" name="ids" value="${enc(attr:scheduledExecution.extid)}" class=" checkbox-inline"/>
-                                    </g:if>
-                                    <g:else>
-                                        <span class="text-muted"
-                                              title="${message(code: 'unauthorized.job.delete',default: 'Not authorized to delete this job')}">
-                                            <i class="glyphicon glyphicon-exclamation-sign"></i>
-                                        </span>
-                                    </g:else>
+                                <span class="jobbulkeditfield" style="display: none" data-bind="visible: enabled">
+                                <input type="checkbox"
+                                       name="ids"
+                                       value="${enc(attr:scheduledExecution.extid)}"
+                                       data-job-group="${scheduledExecution.groupPath}"
+                                       class=" checkbox-inline"
+                                />
                                 </span>
                                     <span class="inlinebuttons jobbuttons">
                                         <g:if test="${scheduledExecution.hasExecutionEnabled() && jobauthorizations && jobauthorizations[AuthConstants.ACTION_RUN]?.contains(scheduledExecution.id.toString())}">

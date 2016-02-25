@@ -91,6 +91,10 @@ class ScheduledExecutionController  extends ControllerBase{
     def static allowedMethods = [
             delete: ['POST','GET'],
             deleteBulk: 'POST',
+            flipExecutionDisabledBulk:'POST',
+            flipExecutionEnabledBulk:'POST',
+            flipScheduleDisabledBulk:'POST',
+            flipScheduleEnabledBulk:'POST',
             runJobInline: 'POST',
             runJobNow: 'POST',
             runAdhocInline: 'POST',
@@ -99,6 +103,10 @@ class ScheduledExecutionController  extends ControllerBase{
             update: 'POST',
             upload: 'GET',
             uploadPost: ['POST'],
+            apiFlipExecutionEnabled: 'POST',
+            apiFlipExecutionEnabledBulk: 'POST',
+            apiFlipScheduleEnabled: 'POST',
+            apiFlipScheduleEnabledBulk: 'POST',
             apiJobCreateSingle: 'POST',
             apiJobRun: ['POST','GET'],
             apiJobsImport: 'POST',
@@ -901,7 +909,9 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def payload = [id: params.id, scheduleEnabled: params.scheduleEnabled]
         def result = scheduledExecutionService._doUpdateExecutionFlags(payload, session.user, roleList, framework, authContext, changeinfo)
-
+        if(!result.success){
+            flash.error=result.message
+        }
         redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
     }
 
@@ -931,7 +941,9 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def payload = [id: params.id, executionEnabled: params.executionEnabled]
         def result = scheduledExecutionService._doUpdateExecutionFlags(payload, session.user, roleList, framework, authContext, changeinfo)
-
+        if(!result.success){
+            flash.error=result.message
+        }
         redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
     }
 
@@ -1085,7 +1097,7 @@ class ScheduledExecutionController  extends ControllerBase{
                     return renderErrorView(result.error.message)
                 } else {
                     def project = result.success.job ? result.success.job.project : params.project
-                    flash.bulkDeleteResult = [success: [result.success]]
+                    flash.bulkJobResult = [success: [result.success]]
                     redirect(controller: 'menu', action: 'jobs', params: [project: project])
                 }
             }.invalidToken {
@@ -1099,12 +1111,110 @@ class ScheduledExecutionController  extends ControllerBase{
 
     }
     /**
+     * Enable execution for a set of jobs.
+     * Only allowed via POST http method
+     */
+    def flipExecutionEnabledBulk (ApiBulkJobDeleteRequest deleteRequest) {
+        log.debug("ScheduledExecutionController: flipExecutionEnabledBulk : params: " + params)
+        return handleFormFlipJobFlagBulk(deleteRequest, 'flipExecutionEnabledBulk', [executionEnabled: true], 'api.success.job.execution.enabled')
+    }
+
+    private def handleFormFlipJobFlagBulk(ApiBulkJobDeleteRequest deleteRequest, String methodName, Map flags, String successCode) {
+        if (deleteRequest.hasErrors()) {
+            flash.bulkJobResult = [success: false, errors: deleteRequest.errors]
+            return redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
+        }
+        withForm {
+            if (!params.ids && !params.idlist) {
+                flash.error = g.message(code: 'ScheduledExecutionController.bulkUpdate.empty')
+                return redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
+            }
+            flash.bulkJobResult = performFlipJobFlagBulk(deleteRequest,methodName,flags, successCode)
+            redirect(controller: 'menu', action: 'jobs', params: [project: params.project])
+        }.invalidToken {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            request.errorCode = 'request.error.invalidtoken.message'
+            return renderErrorView([:])
+        }
+    }
+
+    private def performFlipJobFlagBulk(ApiBulkJobDeleteRequest deleteRequest,String methodName,Map flags, String successCode) {
+
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def ids = deleteRequest.generateIdSet()
+
+        def successful = []
+        def errs = []
+        def changeinfo = [method: methodName, change: 'modify', user: authContext.username]
+        def framework = frameworkService.getRundeckFramework()
+        ids.sort().each { jobid ->
+
+            def result = scheduledExecutionService._doUpdateExecutionFlags(
+                    [id: jobid] + flags,
+                    authContext.username,
+                    authContext.roles.join(','),
+                    framework,
+                    authContext,
+                    changeinfo
+            )
+            if (!result.success) {
+                if (result.unauthorized) {
+                    errs << [id       : jobid,
+                             errorCode: result.errorCode,
+                             message  : result.message ?:
+                                     g.message(code: result.errorCode, args: ['Job', "{{Job " + jobid + "}}"])
+                    ]
+                } else if (result.errorCode) {
+                    errs << [id     : jobid, errorCode: result.errorCode,
+                             message: result.message ?:
+                                     g.message(code: result.errorCode, args: ['Job', "{{Job " + jobid + "}}"]
+                                     )]
+                } else if (result.error) {
+                    errs << result.error
+                } else {
+                    errs << [id: jobid, message: result.message]
+                }
+            } else {
+                def jobtitle = "{{Job " + result.scheduledExecution.extid + "}}"
+                successful << [message: g.message(code: successCode, args: [jobtitle]),id:jobid]
+            }
+        }
+        return [success: successful, errors: errs]
+    }
+
+    /**
+     * Disable execution for a set of jobs.
+     * Only allowed via POST http method
+     */
+    def flipExecutionDisabledBulk (ApiBulkJobDeleteRequest deleteRequest) {
+        log.debug("ScheduledExecutionController: flipExecutionDisabledBulk : params: " + params)
+        return handleFormFlipJobFlagBulk(deleteRequest, 'flipExecutionDisabledBulk', [executionEnabled: false], 'api.success.job.execution.disabled')
+
+    }
+    /**
+     * Enable schedule for a set of jobs.
+     * Only allowed via POST http method
+     */
+    def flipScheduleEnabledBulk (ApiBulkJobDeleteRequest deleteRequest) {
+        log.debug("ScheduledExecutionController: flipScheduleEnabledBulk : params: " + params)
+        return handleFormFlipJobFlagBulk(deleteRequest, 'flipScheduleEnabledBulk', [scheduleEnabled: true], 'api.success.job.schedule.enabled')
+    }
+    /**
+     * Disable schedule for a set of jobs.
+     * Only allowed via POST http method
+     */
+    def flipScheduleDisabledBulk (ApiBulkJobDeleteRequest deleteRequest) {
+        log.debug("ScheduledExecutionController: flipScheduleDisabledBulk : params: " + params)
+        return handleFormFlipJobFlagBulk(deleteRequest, 'flipScheduleDisabledBulk', [scheduleEnabled: false], 'api.success.job.schedule.disabled')
+
+    }
+    /**
      * Delete a set of jobs as specified in the idlist parameter.
      * Only allowed via POST http method
      */
     def deleteBulk (ApiBulkJobDeleteRequest deleteRequest) {
         if(deleteRequest.hasErrors()){
-            flash.errors = deleteRequest.error
+            flash.errors = deleteRequest.errors
             return redirect(controller: 'menu', action: 'jobs')
         }
         log.debug("ScheduledExecutionController: deleteBulk : params: " + params)
@@ -1114,13 +1224,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 return redirect(controller: 'menu', action: 'jobs')
             }
             AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-            def ids = new HashSet<String>()
-            if (deleteRequest.ids) {
-                ids.addAll(deleteRequest.ids)
-            }
-            if (deleteRequest.idlist) {
-                ids.addAll(deleteRequest.idlist.split(','))
-            }
+            def ids = deleteRequest.generateIdSet()
 
             def successful = []
             def deleteerrs = []
@@ -1135,12 +1239,170 @@ class ScheduledExecutionController  extends ControllerBase{
                     successful << result.success
                 }
             }
-            flash.bulkDeleteResult = [success: successful, errors: deleteerrs]
+            flash.bulkJobResult = [success: successful, errors: deleteerrs]
             redirect(controller: 'menu', action: 'jobs',params:[project:params.project])
         }.invalidToken{
             response.status = HttpServletResponse.SC_BAD_REQUEST
             request.errorCode = 'request.error.invalidtoken.message'
             return renderErrorView([:])
+        }
+    }
+    def apiFlipExecutionEnabledBulk(ApiBulkJobDeleteRequest deleteRequest) {
+        if(!apiService.requireVersion(request,response,ApiRequestFilters.V16)){
+            return
+        }
+        if (deleteRequest.hasErrors()) {
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                                                           code: 'api.error.invalid.request',
+                                                           args: [deleteRequest.errors.allErrors.collect { g.message(error: it) }.join("; ")]])
+        }
+        log.debug("ScheduledExecutionController: apiFlipExecutionEnabledBulk : params: " + params)
+
+        def ids = deleteRequest.generateIdSet()
+        if(!ids) {
+            if (!apiService.requireAnyParameters(params, response, ['ids', 'idlist','id'])) {
+                return
+            }
+        }
+        def result = performFlipJobFlagBulk(
+                deleteRequest,
+                'apiFlipExecutionEnabledBulk',
+                [executionEnabled: params.status],
+                'api.success.job.execution.'+(params.status?'enabled':'disabled')
+        )
+        def successful = result.success
+        def errors=result.errors
+
+        withFormat{
+            xml{
+                return apiService.renderSuccessXml(request,response) {
+                    delegate.'toggleExecution'(
+                            enabled: params.status,
+                            requestCount: ids.size(),
+                            allsuccessful: (successful.size() == ids.size())
+                    ) {
+                        if (successful) {
+                            delegate.'succeeded'(count: successful.size()) {
+                                successful.each { del ->
+                                    delegate.'toggleExecutionResult'(id: del.id,) {
+                                        delegate.'message'(del.message)
+                                    }
+                                }
+                            }
+                        }
+                        if (errors) {
+                            delegate.'failed'(count: errors.size()) {
+                                errors.each { del ->
+                                    delegate.'toggleExecutionResult'(id: del.id, errorCode: del.errorCode) {
+                                        delegate.'error'(del.message)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+            json{
+                return apiService.renderSuccessJson(response) {
+                    requestCount= ids.size()
+                    enabled=params.status
+                    allsuccessful=(successful.size()==ids.size())
+                    if(successful){
+                        delegate.'succeeded'=array {
+                            successful.each{del->
+                                delegate.'element'(id:del.id,message:del.message)
+                            }
+                        }
+                    }
+                    if(errors){
+                        delegate.'failed'=array {
+                            errors.each{del->
+                                delegate.'element'(id:del.id,errorCode:del.errorCode,message:del.message)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    def apiFlipScheduleEnabledBulk(ApiBulkJobDeleteRequest deleteRequest) {
+        if(!apiService.requireVersion(request,response,ApiRequestFilters.V16)){
+            return
+        }
+        if (deleteRequest.hasErrors()) {
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                                                           code: 'api.error.invalid.request',
+                                                           args: [deleteRequest.errors.allErrors.collect { g.message(error: it) }.join("; ")]])
+        }
+        log.debug("ScheduledExecutionController: apiFlipScheduleEnabledBulk : params: " + params)
+
+        def ids = deleteRequest.generateIdSet()
+        if(!ids) {
+            if (!apiService.requireAnyParameters(params, response, ['ids', 'idlist','id'])) {
+                return
+            }
+        }
+        def result = performFlipJobFlagBulk(
+                deleteRequest,
+                'apiFlipScheduleEnabledBulk',
+                [scheduleEnabled: params.status],
+                'api.success.job.schedule.'+(params.status?'enabled':'disabled')
+        )
+        def successful = result.success
+        def errors=result.errors
+
+        withFormat{
+            xml{
+                return apiService.renderSuccessXml(request,response) {
+                    delegate.'toggleSchedule'(
+                            enabled: params.status,
+                            requestCount: ids.size(),
+                            allsuccessful: (successful.size() == ids.size())
+                    ) {
+                        if (successful) {
+                            delegate.'succeeded'(count: successful.size()) {
+                                successful.each { del ->
+                                    delegate.'toggleScheduleResult'(id: del.id,) {
+                                        delegate.'message'(del.message)
+                                    }
+                                }
+                            }
+                        }
+                        if (errors) {
+                            delegate.'failed'(count: errors.size()) {
+                                errors.each { del ->
+                                    delegate.'toggleScheduleResult'(id: del.id, errorCode: del.errorCode) {
+                                        delegate.'error'(del.message)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+            json{
+                return apiService.renderSuccessJson(response) {
+                    requestCount= ids.size()
+                    enabled=params.status
+                    allsuccessful=(successful.size()==ids.size())
+                    if(successful){
+                        delegate.'succeeded'=array {
+                            successful.each{del->
+                                delegate.'element'(id:del.id,message:del.message)
+                            }
+                        }
+                    }
+                    if(errors){
+                        delegate.'failed'=array {
+                            errors.each{del->
+                                delegate.'element'(id:del.id,errorCode:del.errorCode,message:del.message)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
