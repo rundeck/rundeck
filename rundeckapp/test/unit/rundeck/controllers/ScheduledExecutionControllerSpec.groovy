@@ -3,6 +3,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.CommandExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
@@ -49,7 +50,9 @@ class ScheduledExecutionControllerSpec extends Specification {
         params.id = 'dummy'
         params.executionEnabled = isEnabled
         request.subject=new Subject()
+        setupFormTokens(params)
 
+        request.method = "POST"
         when:
         def result = controller.flipExecutionEnabled()
 
@@ -89,7 +92,9 @@ class ScheduledExecutionControllerSpec extends Specification {
         params.id = 'dummy'
         params.scheduleEnabled = isEnabled
         request.subject=new Subject()
+        setupFormTokens(params)
 
+        request.method = "POST"
         when:
         def result = controller.flipScheduleEnabled()
 
@@ -178,4 +183,9 @@ class ScheduledExecutionControllerSpec extends Specification {
     }
 
 
+    protected void setupFormTokens(params) {
+        def token = SynchronizerTokensHolder.store(session)
+        params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
+        params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
+    }
 }
