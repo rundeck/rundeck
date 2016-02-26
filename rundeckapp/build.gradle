@@ -53,6 +53,7 @@ configurations{
 
     }
     pluginFiles.extendsFrom(runtime)
+    warArchives
 }
 
 dependencies {
@@ -282,7 +283,12 @@ task grailsWar(type: Exec, overwrite:true, dependsOn: [ installDependencies,extr
 
 // add the war to default configuration for this project
 artifacts{
-    'default'(file(warFileLocation)){
+    'warArchives'(file(warFileLocation)){
+        name 'rundeck'
+        type 'war'
+        builtBy grailsWar
+    }
+    'archives'(file(warFileLocation)){
         name 'rundeck'
         type 'war'
         builtBy grailsWar
@@ -306,7 +312,7 @@ if(isReleaseBuild && project.hasProperty("signing.keyId")) {
     }
 }
 
-//build a pom we reuse for both maven builds and release to sonatype
+//build a pom for release to sonatype
 def deploypom=pom {
     project {
         artifactId archivesBaseName
@@ -329,14 +335,14 @@ def deploypom=pom {
         }
         scm {
             url 'https://github.com/dtolabs/rundeck'
-            connection 'scm:git:git@github.com/dtolabs/rundeck.git'
-            developerConnection 'scm:git:git@github.com:dtolabs/rundeck.git'
+            connection 'scm:git:git@github.com/rundeck/rundeck.git'
+            developerConnection 'scm:git:git@github.com:rundeck/rundeck.git'
         }
         developers {
           developer {
             id('gschueler')
             name('Greg Schueler')
-            email('greg@dtosolutions.com')
+            email('greg@simplifyops.com')
           }
         }
         parent {
