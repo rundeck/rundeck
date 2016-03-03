@@ -465,6 +465,7 @@ class LogFileStorageServiceTests  {
     void testRunStorageRequestMultiFailureSingleType(){
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
+        grailsApplication.config.rundeck.execution.logs.fileStorage.cancelOnStorageFailure = false
 
         def test = new testMultiStoragePlugin()
         test.storeMultipleResponseSet=[rdlog:false]
@@ -490,6 +491,7 @@ class LogFileStorageServiceTests  {
     void testRunStorageRequestMultiFailureMultiType(){
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
+        grailsApplication.config.rundeck.execution.logs.fileStorage.cancelOnStorageFailure = false
 
         def test = new testMultiStoragePlugin()
         test.storeMultipleResponseSet=[rdlog:true,'state.json':false]
@@ -525,6 +527,7 @@ class LogFileStorageServiceTests  {
     void testRunStorageRequestMultiFailureMultiType2(){
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
+        grailsApplication.config.rundeck.execution.logs.fileStorage.cancelOnStorageFailure = false
 
         def test = new testMultiStoragePlugin()
         test.storeMultipleResponseSet=[rdlog:false,'state.json':false]
@@ -560,6 +563,7 @@ class LogFileStorageServiceTests  {
     void testRunStorageRequestMultiFailureGlobStar(){
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
+        grailsApplication.config.rundeck.execution.logs.fileStorage.cancelOnStorageFailure = false
 
         def test = new testMultiStoragePlugin()
         test.storeMultipleResponseSet=[rdlog:true,'state.json':true,'execution.xml':false]
@@ -595,6 +599,7 @@ class LogFileStorageServiceTests  {
     void testRunStorageRequestMultiFailureGlobStar2(){
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
+        grailsApplication.config.rundeck.execution.logs.fileStorage.cancelOnStorageFailure = false
 
         def test = new testMultiStoragePlugin()
         test.storeMultipleResponseSet=[rdlog:true,'state.json':false,'execution.xml':false]
@@ -650,6 +655,7 @@ class LogFileStorageServiceTests  {
     void testRunStorageRequestFailure(){
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+        grailsApplication.config.rundeck.execution.logs.fileStorage.cancelOnStorageFailure = false
 
         def test = new testStoragePlugin()
         test.storeLogFileSuccess=false
@@ -668,6 +674,29 @@ class LogFileStorageServiceTests  {
         assertEquals(1,task.count)
         assertFalse(svc.executorService.executeCalled)
         assertEquals(0, svc.getCurrentRequests().size())
+    }
+    void testRunStorageRequestFailureCancel(){
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+        grailsApplication.config.rundeck.execution.logs.fileStorage.cancelOnStorageFailure = true
+
+        def test = new testStoragePlugin()
+        test.storeLogFileSuccess=false
+        LogFileStorageService svc
+        Map task=performRunStorage(test, "rdlog", createExecution(), testLogFile1) { LogFileStorageService service ->
+            svc = service
+            assertFalse(test.storeLogFileCalled)
+            assertNull( test.storeFiletype)
+        }
+
+        assertTrue(test.storeLogFileCalled)
+        assertEquals("rdlog", test.storeFiletype)
+        assertEquals(testLogFile1.length(),test.storeLength)
+        assertEquals(new Date(testLogFile1.lastModified()),test.storeLastModified)
+
+        assertEquals(1,task.count)
+        assertTrue(svc.executorService.executeCalled)
+        assertEquals(1, svc.getCurrentRequests().size())
     }
     void testRunStorageRequestFailureWithRetry(){
         grailsApplication.config.clear()
