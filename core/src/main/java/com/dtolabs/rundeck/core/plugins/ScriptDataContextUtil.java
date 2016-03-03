@@ -39,8 +39,6 @@ import java.util.*;
 public class ScriptDataContextUtil {
 
     private static File getVarDirForProject(final Framework framework, final String projectName) {
-        final IRundeckProject frameworkProject = framework.getFrameworkProjectMgr().getFrameworkProject(
-            projectName);
         return new File(
                 Constants.getBaseVar(
                         new File(

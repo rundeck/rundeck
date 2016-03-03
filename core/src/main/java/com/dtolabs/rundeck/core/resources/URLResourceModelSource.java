@@ -235,14 +235,12 @@ public class URLResourceModelSource implements ResourceModelSource, Configurable
         this.configuration = new Configuration(configuration);
         this.configuration.validate();
         //set destination temp file
-        final IRundeckProject frameworkProject = framework.getFrameworkProjectMgr().getFrameworkProject(
-            this.configuration.project);
 
         tempFileName = hashURL(this.configuration.nodesUrl.toExternalForm()) + ".temp";
         destinationTempFile = new File(framework.getFilesystemFramework().getBaseDir(),
-            "var/urlResourceModelSourceCache/"+frameworkProject.getName()+"/" + tempFileName);
+            "var/urlResourceModelSourceCache/"+this.configuration.project+"/" + tempFileName);
         destinationCacheData = new File(framework.getFilesystemFramework().getBaseDir(),
-            "var/urlResourceModelSourceCache/" +frameworkProject.getName()+"/"+ tempFileName + ".cache.properties");
+            "var/urlResourceModelSourceCache/" +this.configuration.project+"/"+ tempFileName + ".cache.properties");
         if (!destinationTempFile.getParentFile().isDirectory() && !destinationTempFile.getParentFile().mkdirs()) {
             logger.warn(
                 "Unable to create destination directory: " + destinationTempFile.getParentFile().getAbsolutePath());
