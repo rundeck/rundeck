@@ -28,6 +28,8 @@ class TaskRunner<E> implements Runnable{
                 runner.call(task)
             } catch (InterruptedException e) {
                 break;
+            } catch (Throwable t) {
+                log.error("An error occured while processing a task: ${t}", t)
             }
         }
     }
