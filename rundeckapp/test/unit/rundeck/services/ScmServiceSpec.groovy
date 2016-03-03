@@ -331,6 +331,7 @@ class ScmServiceSpec extends Specification {
 
         ScmExportPlugin plugin = Mock(ScmExportPlugin)
         service.loadedExportPlugins['test1'] = plugin
+        service.initedProjects.add('test1')
 
         def input = [:]
         def auth = Mock(UserAndRolesAuthContext) {
@@ -369,10 +370,11 @@ class ScmServiceSpec extends Specification {
         result.commitId == 'a-commit-id'
     }
 
-    def "initialize should read correct configs"() {
+    def "initialize should read correct configs when initDeferred is false"() {
         given:
         service.pluginConfigService = Mock(PluginConfigService)
         service.frameworkService = Mock(FrameworkService)
+        grailsApplication.config.rundeck.scm.startup.initDeferred=false
         when:
         service.initialize()
         then:
@@ -404,6 +406,7 @@ class ScmServiceSpec extends Specification {
         service.pluginService = Mock(PluginService)
         service.jobEventsService = Mock(JobEventsService)
         def validated = new ValidatedPlugin(valid: true)
+        grailsApplication.config.rundeck.scm.startup.initDeferred=false
 
         when:
         service.initialize()
