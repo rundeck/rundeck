@@ -1283,7 +1283,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 return [success          : false, scheduledExecution: scheduledExecution,
                         message          : lookupMessage(
                                 'api.error.item.unauthorized',
-                                [AuthConstants.ACTION_TOGGLE_EXECUTION, 'Job ID', scheduledExecution.extid]
+                                [AuthConstants.ACTION_TOGGLE_EXECUTION, 'Job ID', scheduledExecution.extid].toArray()
 
                         ),
                         errorCode   : 'api.error.item.unauthorized',
