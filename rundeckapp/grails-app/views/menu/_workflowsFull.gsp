@@ -120,7 +120,6 @@
 
                 <div class="jobscontent head">
     <g:if test="${!params.compact}">
-        <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
         <div class=" pull-right" >
 
             <g:if test="${scmExportEnabled && scmExportStatus || scmImportEnabled  && scmImportStatus}">
@@ -144,6 +143,8 @@
                 <span class="caret"></span>
             </button>
             <ul class="dropdown-menu pull-right" role="menu" id="job_action_menu">
+
+        <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
                 <li><g:link controller="scheduledExecution" action="create"
                     params="[project: params.project ?: request.project]"
                             class="">
@@ -161,6 +162,7 @@
                     </g:link>
                 </li>
                 <li class="divider"></li>
+        </auth:resourceAllowed>
                 <li>
                     <a href="#"
                         data-bind="click: beginEdit"
@@ -219,7 +221,6 @@
             </ul>
             </div>
         </div>
-        </auth:resourceAllowed>
     </g:if>
 
                 <g:if test="${wasfiltered}">
