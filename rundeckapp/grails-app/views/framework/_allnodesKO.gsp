@@ -149,7 +149,7 @@
 
 
                         </span>
-                        <span data-bind="if: !attributes.hostname()">
+                        <span data-bind="if: !ko.unwrap(attributes.hostname)">
                             <span class="text-warning" title="${message(code:"node.hostname.unset.description")}"
                             >
                                 <g:message code="node.hostname.unset.label" />
