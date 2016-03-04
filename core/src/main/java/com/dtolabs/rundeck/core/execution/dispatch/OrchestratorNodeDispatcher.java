@@ -95,10 +95,14 @@ public class OrchestratorNodeDispatcher implements NodeDispatcher {
 
         //replace embedded properties
 
-        final PropertyResolver resolver =  PropertyResolverFactory.createFrameworkProjectRuntimeResolver(
+        Map<String, Object> instanceProperties = null;
+        if (config.getConfig() != null) {
+            instanceProperties = DataContextUtils.replaceDataReferences(config.getConfig(), context.getDataContext());
+        }
+        final PropertyResolver resolver = PropertyResolverFactory.createFrameworkProjectRuntimeResolver(
                 framework,
                 context.getFrameworkProject(),
-                DataContextUtils.replaceDataReferences(config.getConfig(), context.getDataContext()),
+                instanceProperties,
                 ServiceNameConstants.Orchestrator,
                 config.getType()
         );

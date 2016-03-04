@@ -100,7 +100,49 @@ class OrchestratorNodeDispatcherSpec extends Specification {
         [intTest: '1', stringTest: 'beans']                 | [:]
         [intTest: '${option.intTest}', stringTest: 'beans'] | [option: [intTest: '1']]
         [intTest: '1', stringTest: '${option.blah}']        | [option: [blah: 'beans']]
+    }
+    def "don't expand property refs for empty config"() {
+        given:
+        Map<String, Map<String, String>> dataContext = [:] + idataContext
+        OrchestratorService orchestratorService = OrchestratorService.getInstanceForFramework(framework)
+        OrchestratorConfig oconfig = new OrchestratorConfig('test', inputConfig)
+        OrchestratorPlugin plugin = new TestPlugin1()
+        TestProviderLoader providerLoader = Mock(TestProviderLoader) {
+            1 * loadProvider(orchestratorService, 'test') >> plugin
+        }
+        INodeSet nodeSet = new NodeSetImpl()
+        IFrameworkServices frameworkServices = Mock(IFrameworkServices) {
+            getOrchestratorService() >> orchestratorService
+            getPluginManager() >> providerLoader
+            0 * _(*_)
+        }
 
+        framework.setFrameworkServices(frameworkServices)
+
+
+        OrchestratorNodeDispatcher dispatcher = new OrchestratorNodeDispatcher(framework)
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getOrchestrator() >> oconfig
+            getNodes() >> nodeSet
+            getExecutionListener() >> Mock(ExecutionListener)
+            getThreadCount() >> 1
+            getDataContext() >> dataContext
+        }
+
+        NodeStepExecutionItem item = Mock(NodeStepExecutionItem)
+
+        when:
+        def result = dispatcher.dispatch(context, item, null)
+
+
+        then:
+        result.success
+        0 == plugin.intTest
+        null == plugin.stringTest
+
+        where:
+        inputConfig | idataContext
+        null        | [:]
 
     }
 }
