@@ -172,11 +172,11 @@ used. Specified from [jaas-loginmodule.conf](#jaas-loginmodule.conf).
 
 ## Session timeout
 
-Edit the web.xml to modify session-timout from 30 to 90 minutes:
+Edit the web.xml to modify session-timeout from 30 to 90 minutes:
 
 RPM: /var/lib/rundeck/exp/webapp/WEB-INF/web.xml
 
-Example: Set the timout to 60 seconds:
+Example: Set the timeout to 60 minutes:
 
 ~~~~
 diff /var/lib/rundeck/exp/webapp/WEB-INF/web.xml web.xml
