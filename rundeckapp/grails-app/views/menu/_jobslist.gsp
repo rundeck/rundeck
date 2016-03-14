@@ -25,6 +25,7 @@
                         <g:set var="clusterUUID"
                                value="${ (clusterMap)? clusterMap[scheduledExecution.id] : null}"/>
                         <g:set var="currentTime" value="${new Date()}"/>
+                        <g:set var="remoteClusterNodeUUID" value="${scheduledExecution.scheduled && serverClusterNodeUUID!=scheduledExecution.serverNodeUUID ? scheduledExecution.serverNodeUUID :null}" />
                         %{-- select job view --}%
                         <g:if test="${jobsjscallback}">
                             <tr class=" expandComponentHolder expanded" id="jobrow_${scheduledExecution.id}">
@@ -125,9 +126,15 @@
                             <td class="scheduletime">
                                 <g:if test="${scheduledExecution.scheduled && nextExecution}">
                                     <i class="glyphicon glyphicon-time"></i>
-                                    <span title="${remoteClusterNodeUUID ? g.message(code: "expecting.another.cluster.server.to.run") : ''} at ${g.relativeDate(atDate: nextExecution)}">
+                                    <span title="${remoteClusterNodeUUID ? g.message(code: "scheduled.to.run.on.server.0", args:[remoteClusterNodeUUID]) : ''} at ${g.relativeDate(atDate: nextExecution)}">
                                         <g:relativeDate elapsed="${nextExecution}" untilClass="timeuntil"/>
                                     </span>
+
+                                    <g:if test="${remoteClusterNodeUUID}">
+                                        on
+                                        <span data-server-uuid="${remoteClusterNodeUUID}" data-server-name=" " class="rundeck-server-uuid text-muted">
+                                        </span>
+                                    </g:if>
                                 </g:if>
                                 <g:elseif test="${scheduledExecution.scheduled && !g.executionMode(is:'active')}">
                                     <span class="scheduletime disabled has_tooltip" data-toggle="tooltip"

@@ -16,7 +16,7 @@
                 <g:if test="${nextExecution}">
                 <g:if test="${remoteClusterNodeUUID}">
                     <i class="glyphicon glyphicon-time"></i>
-                      <span title="${enc(attr:remoteClusterNodeUUID)}"><g:message code="expecting.another.cluster.server.to.run"/></span>
+                      <span title="${enc(attr:remoteClusterNodeUUID)}"><g:message code="scheduled.to.run.on.server.0" args="${[remoteClusterNodeUUID]}"/></span>
                       <g:relativeDate elapsed="${nextExecution}" untilClass="desc"/>
                       <g:message code="job.detail.time.at" /> <span class="desc"><g:enc>${nextExecution}</g:enc></span>
                 </g:if>

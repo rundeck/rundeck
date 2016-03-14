@@ -325,6 +325,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             results.paginateParams['filterName']=usedFilter
         }
         results.params=params
+
+        def remoteClusterNodeUUID=null
+        if (frameworkService.isClusterModeEnabled()) {
+            results.serverClusterNodeUUID = frameworkService.getServerUUID()
+        }
         log.debug("jobsFragment(tot): "+(System.currentTimeMillis()-start));
         return results
     }
