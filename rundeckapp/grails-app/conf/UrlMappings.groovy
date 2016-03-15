@@ -122,6 +122,12 @@ class UrlMappings {
         "/api/$api_version/projects"(controller: 'project'){
             action = [GET: 'apiProjectList', POST:'apiProjectCreate']
         }
+        "/api/$api_version/scheduler/jobs"(controller: 'menu', action: 'apiSchedulerListJobs'){
+            currentServer=true
+        }
+        "/api/$api_version/scheduler/server/$uuid/jobs"(controller: 'menu', action: 'apiSchedulerListJobs'){
+            currentServer=false
+        }
         "/api/$api_version/scheduler/takeover"(controller: 'scheduledExecution', action: 'apiJobClusterTakeoverSchedule')
 
         //////////

@@ -1024,9 +1024,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     code: 'api.error.parameter.required', args: ['project']])
 
         }
+
         query.projFilter = params.project
         //test valid project
-        Framework framework = frameworkService.getRundeckFramework()
 
         def exists=frameworkService.existsFrameworkProject(params.project)
         if(!exists){
@@ -1040,6 +1040,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 return
             }
         }
+        if(null!=query.scheduledFilter || null!=query.serverNodeUUIDFilter){
+            if (!apiService.requireVersion(request,response,ApiRequestFilters.V17)) {
+                return
+            }
+        }
 
         if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorFormat(response,[
@@ -1048,13 +1053,39 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     args: [response.format]
             ])
         }
+        if(query.hasErrors()){
+            return apiService.renderErrorFormat(response,
+                                                [
+                                                        status: HttpServletResponse.SC_BAD_REQUEST,
+                                                        code: "api.error.parameter.error",
+                                                        args: [query.errors.allErrors.collect { message(error: it) }.join("; ")]
+                                                ])
+        }
         def results = jobsFragment(query)
-        withFormat{
+
+        respondApiJobsList(results.nextScheduled)
+    }
+
+    private void respondApiJobsList(List<ScheduledExecution> results) {
+        def clusterModeEnabled = frameworkService.isClusterModeEnabled()
+        def serverNodeUUID = frameworkService.serverUUID
+        withFormat {
             xml {
                 return apiService.renderSuccessXml(request, response) {
-                    delegate.'jobs'(count: results.nextScheduled.size()) {
-                        results.nextScheduled.each { ScheduledExecution se ->
-                            job(id: se.extid, href:apiService.apiHrefForJob(se),permalink:apiService.guiHrefForJob(se)) {
+                    delegate.'jobs'(count: results.size()) {
+                        results.each { ScheduledExecution se ->
+                            def jobparams = [id: se.extid, href: apiService.apiHrefForJob(se),
+                                             permalink: apiService.guiHrefForJob(se)]
+                            if (request.api_version >= ApiRequestFilters.V17) {
+                                jobparams.scheduled = se.scheduled
+                                jobparams.scheduleEnabled = se.scheduleEnabled
+                                jobparams.enabled = se.executionEnabled
+                                if (clusterModeEnabled && se.scheduled) {
+                                    jobparams.serverNodeUUID = se.serverNodeUUID
+                                    jobparams.serverOwner = jobparams.serverNodeUUID == serverNodeUUID
+                                }
+                            }
+                            job(jobparams) {
                                 name(se.jobName)
                                 group(se.groupPath)
                                 project(se.project)
@@ -1064,22 +1095,78 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     }
                 }
             }
-            json{
+            json {
                 return apiService.renderSuccessJson(response) {
-                    results.nextScheduled.each { ScheduledExecution se ->
-                        element(
-                                id: se.extid,
-                                name: (se.jobName),
-                                group: (se.groupPath),
-                                project: (se.project),
-                                description: (se.description),
-                                href: apiService.apiHrefForJob(se),
-                                permalink: apiService.guiHrefForJob(se)
-                        )
+                    results.each { ScheduledExecution se ->
+                        def jobparams = [id         : se.extid,
+                                         name       : (se.jobName),
+                                         group      : (se.groupPath),
+                                         project    : (se.project),
+                                         description: (se.description),
+                                         href       : apiService.apiHrefForJob(se),
+                                         permalink  : apiService.guiHrefForJob(se)]
+                        if (request.api_version >= ApiRequestFilters.V17) {
+                            jobparams.scheduled = se.scheduled
+                            jobparams.scheduleEnabled = se.scheduleEnabled
+                            jobparams.enabled = se.executionEnabled
+                            if (clusterModeEnabled && se.scheduled) {
+                                jobparams.serverNodeUUID = se.serverNodeUUID
+                                jobparams.serverOwner = jobparams.serverNodeUUID == serverNodeUUID
+                            }
+                        }
+                        element(jobparams)
                     }
                 }
             }
         }
+    }
+    /**
+     * Require server UUID and list all owned jobs
+     * /api/$api_version/scheduler/server/$uuid/jobs and
+     * /api/$api_version/scheduler/jobs
+     * @return
+     */
+    def apiSchedulerListJobs(String uuid, boolean currentServer) {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V17)) {
+            return
+        }
+        if(currentServer) {
+            uuid = frameworkService.serverUUID
+        }
+        def query = new ScheduledExecutionQuery(serverNodeUUIDFilter: uuid, scheduledFilter: true)
+        query.validate()
+        if (query.hasErrors()) {
+            return apiService.renderErrorFormat(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code: "api.error.parameter.error",
+                            args: [query.errors.allErrors.collect { message(error: it) }.join("; ")]
+                    ]
+            )
+        }
+
+
+        def list = ScheduledExecution.findAllByServerNodeUUID(uuid)
+        //filter authorized jobs
+        Map<String, UserAndRolesAuthContext> projectAuths = [:]
+        def authForProject = { String project ->
+            if (projectAuths[project]) {
+                return projectAuths[project]
+            }
+            projectAuths[project] = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+            projectAuths[project]
+        }
+        def authorized = list.findAll { ScheduledExecution se ->
+            frameworkService.authorizeProjectJobAll(
+                    authForProject(se.project),
+                    se,
+                    [AuthConstants.ACTION_READ],
+                    se.project
+            )
+        }
+
+        respondApiJobsList(authorized)
     }
     /**
      * API: /api/2/project/NAME/jobs, version 2
