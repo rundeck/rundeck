@@ -81,3 +81,7 @@ a.navbar-brand{
 .breadcrumb li.active a{
   font-weight: bold;
 }
+
+a > code{
+  color: #337ab7;
+}
