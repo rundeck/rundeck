@@ -179,8 +179,20 @@
                                 </g:if>
                                 <g:else>
                                     <span
-                                        class="warn note"><g:message code="invalid.resource.model.source.configuration.provider.not.found"  args="${[config.type]}"/></span>
+                                        class="text-warning"><g:message code="invalid.resource.model.source.configuration.provider.not.found"  args="${[config.type]}"/></span>
                                 </g:else>
+                                <g:if test="${nodeErrorsMap && nodeErrorsMap[(n+1)+'.'+config.type]}">
+                                    <div class="row row-space">
+                                    <div class="col-sm-12">
+                                        <g:set var="arkey" value="${g.rkey()}"/>
+                                        <div class=" well well-embed text-danger " id="srcerr_${arkey}">
+                                            <g:icon name="warning-sign"/>
+                                            Error:
+                                            ${nodeErrorsMap[(n+1)+'.'+config.type].message}
+                                        </div>
+                                    </div>
+                                    </div>
+                                </g:if>
                             </div>
                         </li>
                     </g:each>

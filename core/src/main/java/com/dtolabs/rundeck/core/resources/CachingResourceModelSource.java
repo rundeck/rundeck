@@ -37,6 +37,17 @@ public class CachingResourceModelSource extends ExceptionCatchingResourceModelSo
         this.cache = cache;
     }
 
+    public CachingResourceModelSource(
+            final ResourceModelSource delegate,
+            final String identity,
+            final ExceptionHandler handler,
+            final ResourceModelSourceCache cache
+    )
+    {
+        super(delegate, identity, handler);
+        this.cache = cache;
+    }
+
     @Override
     INodeSet returnResultNodes(INodeSet nodes) throws ResourceModelSourceException {
         if (null != nodes) {
