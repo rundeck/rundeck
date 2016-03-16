@@ -15,6 +15,7 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
 import org.springframework.beans.factory.InitializingBean
+import org.springframework.core.task.AsyncListenableTaskExecutor
 import rundeck.Project
 import rundeck.services.framework.RundeckProjectConfigurable
 import rundeck.services.nodes.CachedProjectNodes
@@ -34,6 +35,7 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
     def metricService
     def frameworkService
     def configurationService
+    def AsyncListenableTaskExecutor nodeTaskExecutor
 
     String category='resourceModelSource'
 
@@ -61,10 +63,6 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
     Map<String, String> getPropertiesMapping() {
         ['delay': PROJECT_NODECACHE_DELAY, 'enabled': PROJECT_NODECACHE_ENABLED]
     }
-    /**
-     * Scheduled executor for retries
-     */
-    private ExecutorService executor = Executors.newFixedThreadPool(2)
 
     //basic creation, created via spec string in afterPropertiesSet()
     private LoadingCache<String, CachedProjectNodes> nodeCache =
@@ -73,7 +71,7 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
                         .build(
                     new CacheLoader<String, CachedProjectNodes>() {
                         public CachedProjectNodes load(String key) {
-                            return loadNodes(key);
+                            return loadNodes(key,true);
                         }
                     }
             );
@@ -89,7 +87,7 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
                                 .build(
                 new CacheLoader<String, CachedProjectNodes>() {
                     public CachedProjectNodes load(String key) {
-                        return loadNodes(key);
+                        return loadNodes(key,true);
                     }
 
                     @Override
@@ -97,8 +95,8 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
                             throws Exception
                     {
                         if (needsReload(key, oldValue)) {
-                            ListenableFutureTask<CachedProjectNodes> task = ListenableFutureTask.create{ loadNodes(key) }
-                            executor.execute(task);
+                            ListenableFutureTask<CachedProjectNodes> task = ListenableFutureTask.create{ loadNodes(key,false) }
+                            nodeTaskExecutor.execute(task);
                             return task;
                         } else {
                             return Futures.immediateFuture(oldValue)
@@ -152,7 +150,7 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
         true
     }
 
-    CachedProjectNodes loadNodes(final String project) {
+    CachedProjectNodes loadNodes(final String project, boolean inBg) {
         def framework = frameworkService.getRundeckFramework()
         def rdprojectconfig = framework.getProjectManager().loadProjectConfig(project)
         log.debug("loadNodes for ${project}... (cacheEnabled: ${isCacheEnabled(rdprojectconfig)})")
@@ -169,7 +167,15 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
                 doCache: isCacheEnabled(rdprojectconfig)
         )
         Closure clos = cachedNodes.&reloadNodeSet
-        metricService?.withTimer(this.class.name, "project.${project}.loadNodes", clos) ?: clos()
+        if(inBg){
+            //run on another thread
+            nodeTaskExecutor.submit{
+                metricService?.withTimer(this.class.name, "project.${project}.loadNodes", clos) ?: clos()
+            }
+        }else{
+            metricService?.withTimer(this.class.name, "project.${project}.loadNodes", clos) ?: clos()
+        }
+
 
         cachedNodes
     }

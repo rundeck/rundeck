@@ -157,6 +157,9 @@ beans={
     logFileTaskExecutor(SimpleAsyncTaskExecutor,"LogFileStorage"){
         concurrencyLimit= 2 + (application.config.rundeck?.execution?.logs?.fileStorage?.concurrencyLimit ?: 5)
     }
+    nodeTaskExecutor(SimpleAsyncTaskExecutor,"NodeService-SourceLoader") {
+        concurrencyLimit = (application.config.rundeck?.nodeService?.concurrencyLimit ?: 25) //-1 for unbounded
+    }
 
     pluggableStoragePluginProviderService(PluggableStoragePluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
