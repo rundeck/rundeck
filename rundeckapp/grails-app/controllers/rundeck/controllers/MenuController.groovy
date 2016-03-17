@@ -380,15 +380,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def nextExecutions=scheduledExecutionService.nextExecutionTimes(allScheduled)
         def clusterMap=scheduledExecutionService.clusterScheduledJobs(allScheduled)
         log.debug("listWorkflows(nextSched): "+(System.currentTimeMillis()-rest));
-        long running=System.currentTimeMillis()
-        
-        //find currently running executions
-        def runlist = Execution.findAllByDateCompletedIsNullAndScheduledExecutionIsNotNull()
-        def nowrunning=[:]
-        runlist.each{
-            nowrunning[it.scheduledExecution.id.toString()]=it.id.toString()
-        }
-        log.debug("listWorkflows(running): "+(System.currentTimeMillis()-running));
         long preeval=System.currentTimeMillis()
 
         //collect all jobs and authorize the user for the set of available Job actions
@@ -480,7 +471,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 clusterMap: clusterMap,
         jobauthorizations:jobauthorizations,
         authMap:authorizemap,
-        nowrunning: nowrunning,
         jobgroups:jobgroups,
         paginateParams:finishq.paginateParams,
         displayParams:finishq.displayParams,
