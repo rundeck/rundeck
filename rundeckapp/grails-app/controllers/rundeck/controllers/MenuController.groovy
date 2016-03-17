@@ -955,7 +955,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         fprojects.each { IRundeckProject project->
             long sumstart=System.currentTimeMillis()
             summary[project.name]=[
-                    jobCount: ScheduledExecution.countByProject(project.name),
                     execCount: Execution.countByProjectAndDateStartedGreaterThan(project.name,today),
                     description: project.hasProperty("project.description")?project.getProperty("project.description"):''
             ]
