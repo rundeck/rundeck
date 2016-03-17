@@ -182,7 +182,7 @@ class FrameworkService implements ApplicationContextAware {
      * Return a list of FrameworkProject objects
      */
     def projectNames () {
-        rundeckFramework.frameworkProjectMgr.listFrameworkProjects()*.name
+        rundeckFramework.frameworkProjectMgr.listFrameworkProjectNames()
     }
     def projects (AuthContext authContext) {
         //authorize the list of projects
@@ -194,6 +194,15 @@ class FrameworkService implements ApplicationContextAware {
         }
         def authed = authorizeApplicationResourceSet(authContext, resources, 'read')
         return new ArrayList(authed.collect{projMap[it.name]})
+    }
+    def projectNames (AuthContext authContext) {
+        //authorize the list of projects
+        def resources=[] as Set
+        for (projName in rundeckFramework.frameworkProjectMgr.listFrameworkProjectNames()) {
+            resources << authResourceForProject(projName)
+        }
+        def authed = authorizeApplicationResourceSet(authContext, resources, 'read')
+        return new ArrayList(authed.collect{it.name})
     }
 
     def existsFrameworkProject(String project) {

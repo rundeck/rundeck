@@ -2180,7 +2180,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
         render(view: 'create', model: [scheduledExecution: scheduledExecution, params: params,
-                projects: frameworkService.projects(authContext), nodeStepDescriptions: nodeStepTypes,
+                                       nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions: stepTypes,
                 notificationPlugins: notificationService.listNotificationPlugins(),
                 orchestratorPlugins: orchestratorPluginService.listDescriptions(),

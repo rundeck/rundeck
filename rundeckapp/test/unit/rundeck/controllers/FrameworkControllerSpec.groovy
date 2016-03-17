@@ -612,7 +612,6 @@ class FrameworkControllerSpec extends Specification {
         1 * fwkService.updateFrameworkProjectConfig(_,{
             it['project.description'] == 'abc'
         },_) >> [success:true]
-        1 * fwkService.getFrameworkProject(_)>>[name:'TestSaveProject']
 
         1 * controller.userService.storeFilterPref(_,_)
     }
@@ -642,7 +641,6 @@ class FrameworkControllerSpec extends Specification {
         1 * fwkService.updateFrameworkProjectConfig(_,{
             it['project.description'] == ''
         },_) >> [success:true]
-        1 * fwkService.getFrameworkProject(_)>>[name:'TestSaveProject']
 
         1 * controller.userService.storeFilterPref(_,_)
     }

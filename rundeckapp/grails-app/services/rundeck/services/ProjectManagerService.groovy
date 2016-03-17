@@ -81,6 +81,16 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
 
     @Override
+    Collection<String> listFrameworkProjectNames() {
+//        return Project.findAll()*.name
+
+        def c = Project.createCriteria()
+        c.list {
+            projections {
+                property "name"
+            }
+        }
+    }
     IRundeckProject getFrameworkProject(final String name) {
         if (!existsFrameworkProject(name)) {
             throw new IllegalArgumentException("Project does not exist: " + name)

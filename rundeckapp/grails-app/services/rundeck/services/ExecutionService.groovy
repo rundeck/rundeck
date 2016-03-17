@@ -191,7 +191,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
 
     def listLastExecutionsPerProject(AuthContext authContext, int max=5){
-        def projects = frameworkService.projects(authContext).collect{ it.name }
+        def projects = frameworkService.projectNames(authContext)
 
         def c = Execution.createCriteria()
         def lastexecs=[:]

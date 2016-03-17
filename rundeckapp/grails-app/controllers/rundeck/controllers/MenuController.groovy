@@ -364,7 +364,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
     private def listWorkflows(ScheduledExecutionQuery query,AuthContext authContext,String user) {
         long start=System.currentTimeMillis()
-        def projects = frameworkService.projects(authContext)
         if(null!=query){
             query.configureFilter()
         }
@@ -476,7 +475,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         log.debug("listWorkflows(total): "+(System.currentTimeMillis()-start));
 
         return [
-        projects:projects,
         nextScheduled:schedlist,
         nextExecutions: nextExecutions,
                 clusterMap: clusterMap,
@@ -953,14 +951,19 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     def home(){
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         Framework framework = frameworkService.rundeckFramework
+        long start=System.currentTimeMillis()
         def fprojects = frameworkService.projects(authContext)
+        System.err.println("frameworkService.projects(context)... ${System.currentTimeMillis()-start}")
+        start=System.currentTimeMillis()
         session.frameworkProjects = fprojects*.name
 
         Calendar n = GregorianCalendar.getInstance()
         n.add(Calendar.DAY_OF_YEAR, -1)
         Date today = n.getTime()
         def summary=[:]
+        def durs=[]
         fprojects.each { IRundeckProject project->
+            long sumstart=System.currentTimeMillis()
             summary[project.name]=[
                     jobCount: ScheduledExecution.countByProject(project.name),
                     execCount: Execution.countByProjectAndDateStartedGreaterThan(project.name,today),
@@ -985,6 +988,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                             [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
                                     AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE]),
             ]
+            durs<<(System.currentTimeMillis()-sumstart)
         }
         def projects = Execution.createCriteria().list {
             gt('dateStarted', today)
@@ -1002,6 +1006,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def jobCount = ScheduledExecution.count()
         def execCount= Execution.countByDateStartedGreaterThan( today)
         def fwkNode = framework.getFrameworkNodeName()
+        System.err.println("summarize all... ${System.currentTimeMillis()-start}")
+
+        System.err.println("summarize avg/proj (${durs.size()})... ${durs.inject(0){a,b->a+b}/durs.size()}")
         [jobCount:jobCount,execCount:execCount,projectSummary:projects,projCount: fprojects.size(),userSummary:users,
                 userCount:users.size(),projectSummaries:summary,
                 frameworkNodeName: fwkNode,

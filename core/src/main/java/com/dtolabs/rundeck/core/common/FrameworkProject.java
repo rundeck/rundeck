@@ -237,13 +237,13 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
         return file.exists() && file.isDirectory();
     }
 
-    public Collection listChildNames() {
-        HashSet childnames = new HashSet();
+    public Collection<String> listChildNames() {
+        HashSet<String> childnames = new HashSet<>();
         if(resourcesBaseDir.isDirectory()){
             final String[] list = resourcesBaseDir.list();
             if (null != list) {
-                for (int i = 0; i < list.length; i++) {
-                    final File dir = new File(resourcesBaseDir, list[i]);
+                for (final String aList : list) {
+                    final File dir = new File(resourcesBaseDir, aList);
                     if (dir.isDirectory()) {
                         childnames.add(dir.getName());
                     }
