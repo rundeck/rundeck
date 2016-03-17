@@ -214,51 +214,55 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             schedlist << it
         }
 
-        def total = ScheduledExecution.createCriteria().count{
+        def total = schedlist.size()
+        if(query?.max && query.max.toInteger()>0) {
+            //count full result set
+            total = ScheduledExecution.createCriteria().count {
 
-            if(idlist){
-                or{
-                    idlist.each{ theid->
-                        if (theid instanceof Long) {
-                            eq("id", theid)
-                        } else {
-                            eq("uuid", theid)
+                if (idlist) {
+                    or {
+                        idlist.each { theid ->
+                            if (theid instanceof Long) {
+                                eq("id", theid)
+                            } else {
+                                eq("uuid", theid)
+                            }
                         }
                     }
                 }
-            }
 
-            txtfilters.each{ key,val ->
-                if(query["${key}Filter"]){
-                    ilike(val,'%'+query["${key}Filter"]+'%')
+                txtfilters.each { key, val ->
+                    if (query["${key}Filter"]) {
+                        ilike(val, '%' + query["${key}Filter"] + '%')
+                    }
                 }
-            }
-            eqfilters.each{ key,val ->
-                if(query["${key}Filter"]){
-                    eq(val,query["${key}Filter"])
+                eqfilters.each { key, val ->
+                    if (query["${key}Filter"]) {
+                        eq(val, query["${key}Filter"])
+                    }
                 }
-            }
-            boolfilters.each{ key,val ->
-                if(null!=query["${key}Filter"]){
-                    eq(val,query["${key}Filter"])
+                boolfilters.each { key, val ->
+                    if (null != query["${key}Filter"]) {
+                        eq(val, query["${key}Filter"])
+                    }
                 }
-            }
 
 
-            if('*'==query["groupPath"]){
-                //don't filter out any grouppath
-            }else if(query["groupPath"]){
-                or{
-                    like("groupPath",query["groupPath"]+"/%")
-                    eq("groupPath",query['groupPath'])
-                }
-            }else{
-                or{
-                    eq("groupPath","")
-                    isNull("groupPath")
+                if ('*' == query["groupPath"]) {
+                    //don't filter out any grouppath
+                } else if (query["groupPath"]) {
+                    or {
+                        like("groupPath", query["groupPath"] + "/%")
+                        eq("groupPath", query['groupPath'])
+                    }
+                } else {
+                    or {
+                        eq("groupPath", "")
+                        isNull("groupPath")
+                    }
                 }
             }
-        };
+        }
 
 
         return [
