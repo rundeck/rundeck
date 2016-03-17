@@ -943,7 +943,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         Framework framework = frameworkService.rundeckFramework
         long start=System.currentTimeMillis()
         def fprojects = frameworkService.projects(authContext)
-        System.err.println("frameworkService.projects(context)... ${System.currentTimeMillis()-start}")
         start=System.currentTimeMillis()
         session.frameworkProjects = fprojects*.name
 
@@ -955,17 +954,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         fprojects.each { IRundeckProject project->
             long sumstart=System.currentTimeMillis()
             summary[project.name]=[
-                    execCount: Execution.countByProjectAndDateStartedGreaterThan(project.name,today),
+                    execCount: 0,//Execution.countByProjectAndDateStartedGreaterThan(project.name,today),
                     description: project.hasProperty("project.description")?project.getProperty("project.description"):''
             ]
 
-            summary[project.name].userSummary=Execution.createCriteria().list {
-                eq('project',project.name)
-                gt('dateStarted', today)
-                projections {
-                    distinct('user')
-                }
-            }
+            summary[project.name].userSummary=[]
             summary[project.name].userCount= summary[project.name].userSummary.size()
             summary[project.name].readme=frameworkService.getFrameworkProjectReadmeContents(project.name)
             //authorization
@@ -979,25 +972,55 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             ]
             durs<<(System.currentTimeMillis()-sumstart)
         }
-        def projects = Execution.createCriteria().list {
+        def projects = []
+        long proj2=System.currentTimeMillis()
+        def projects2 = Execution.createCriteria().list {
             gt('dateStarted', today)
             projections {
-                distinct('project')
+                groupProperty('project')
+                count()
             }
         }
-        def users = Execution.createCriteria().list {
+        proj2=System.currentTimeMillis()-proj2
+        log.debug("projection: ${projects2} keys ${summary.keySet()}")
+        def execCount= 0 //Execution.countByDateStartedGreaterThan( today)
+        projects2.each{val->
+            if(val.size()==2){
+                log.debug("users ${val[0]}=${val[1]} summ: ${summary[val[0]]}")
+                if(summary[val[0]]) {
+                    summary[val[0].toString()].execCount = val[1]
+                    projects << val[0]
+                    execCount+=val[1]
+                }
+            }
+        }
+
+        long proj3=System.currentTimeMillis()
+        def users2 = Execution.createCriteria().list {
             gt('dateStarted', today)
             projections {
                 distinct('user')
+                property('project')
             }
         }
+        proj3=System.currentTimeMillis()-proj3
+        log.debug("users2: ${users2}")
+        def users = new HashSet<String>()
+        users2.each{val->
+            if(val.size()==2){
+                if(summary[val[1]]){
+                    summary[val[1]].userSummary<<val[0]
+                    summary[val[1]].userCount=summary[val[1]].userSummary.size()
+                    users.add(val[0])
+                }
+            }
+        }
+
         //summarize cross-project details
         def jobCount = ScheduledExecution.count()
-        def execCount= Execution.countByDateStartedGreaterThan( today)
-        def fwkNode = framework.getFrameworkNodeName()
-        System.err.println("summarize all... ${System.currentTimeMillis()-start}")
 
-        System.err.println("summarize avg/proj (${durs.size()})... ${durs.inject(0){a,b->a+b}/durs.size()}")
+        def fwkNode = framework.getFrameworkNodeName()
+
         [jobCount:jobCount,execCount:execCount,projectSummary:projects,projCount: fprojects.size(),userSummary:users,
                 userCount:users.size(),projectSummaries:summary,
                 frameworkNodeName: fwkNode,
