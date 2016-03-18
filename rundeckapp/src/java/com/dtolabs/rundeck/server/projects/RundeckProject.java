@@ -17,6 +17,7 @@ public class RundeckProject implements IRundeckProject{
     private ProjectManagerService projectService;
     private IProjectNodes projectNodes;
     private IRundeckProjectConfig projectConfig;
+    private IProjectInfo info;
 
     public RundeckProject(
             final IRundeckProjectConfig projectConfig,
@@ -31,6 +32,7 @@ public class RundeckProject implements IRundeckProject{
     public String getName(){
         return projectConfig.getName();
     }
+
     public String getProperty(final String property) {
         return projectConfig.getProperty(property);
     }
@@ -149,5 +151,14 @@ public class RundeckProject implements IRundeckProject{
 
     public void setProjectConfig(IRundeckProjectConfig projectConfig) {
         this.projectConfig = projectConfig;
+    }
+
+    @Override
+    public IProjectInfo getInfo() {
+        return info;
+    }
+
+    public void setInfo(IProjectInfo info) {
+        this.info = info;
     }
 }

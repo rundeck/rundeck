@@ -15,6 +15,7 @@ public interface IRundeckProject extends IRundeckProjectConfig {
      * @return project name
      */
     public String getName();
+    public IProjectInfo getInfo();
     /**
      * list the configurations of resource model providers.
      *

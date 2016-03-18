@@ -19,22 +19,12 @@ package com.dtolabs.rundeck.core.common;
 import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.Authorization;
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
-import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
-import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.plugins.configuration.Describable;
-import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.core.resources.*;
-import com.dtolabs.rundeck.core.resources.format.*;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import com.dtolabs.utils.Streams;
 
 import java.io.*;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 /**
@@ -125,6 +115,39 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
         this.projectConfig=projectConfig;
         this.projectConfigModifier=projectConfigModifier;
         initialize();
+    }
+
+    @Override
+    public IProjectInfo getInfo() {
+        return new IProjectInfo() {
+            @Override
+            public String getDescription() {
+                return hasProperty("project.description")?getProperty("project.description"):null;
+            }
+
+            @Override
+            public String getReadme() {
+                return readFileResourceContents("readme.md");
+            }
+
+            @Override
+            public String getMotd() {
+                return readFileResourceContents("motd.md");
+            }
+        };
+    }
+
+    private String readFileResourceContents(final String path) {
+        if (!existsFileResource(path)) {
+            return null;
+        }
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        try {
+            loadFileResource(path, output);
+        } catch (IOException e) {
+            return null;
+        }
+        return output.toString();
     }
 
     /**

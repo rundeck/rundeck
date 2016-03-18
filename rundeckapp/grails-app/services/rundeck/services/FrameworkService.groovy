@@ -289,16 +289,12 @@ class FrameworkService implements ApplicationContextAware {
     def getFrameworkProjectReadmeContents(String project){
         def project1 = getFrameworkProject(project)
         def result = [:]
-        if(project1.existsFileResource("readme.md")){
-            def baos=new ByteArrayOutputStream()
-            def len=project1.loadFileResource("readme.md",baos)
-            result.readme = baos.toString()
+        if(project1.info?.readme){
+            result.readme = project1.info?.readme
             result.readmeHTML = result.readme?.decodeMarkdown()
         }
-        if(project1.existsFileResource("motd.md")){
-            def baos=new ByteArrayOutputStream()
-            def len=project1.loadFileResource("motd.md",baos)
-            result.motd = baos.toString()
+        if(project1.info?.motd){
+            result.motd = project1.info?.motd
             result.motdHTML = result.motd?.decodeMarkdown()
         }
 
