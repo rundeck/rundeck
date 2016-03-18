@@ -945,6 +945,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         Framework framework = frameworkService.rundeckFramework
         long start=System.currentTimeMillis()
         def fprojects = frameworkService.projects(authContext)
+        log.debug("frameworkService.projects(context)... ${System.currentTimeMillis()-start}")
         start=System.currentTimeMillis()
         session.frameworkProjects = fprojects*.name
 
@@ -984,11 +985,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         }
         proj2=System.currentTimeMillis()-proj2
-        log.debug("projection: ${projects2} keys ${summary.keySet()}")
         def execCount= 0 //Execution.countByDateStartedGreaterThan( today)
         projects2.each{val->
             if(val.size()==2){
-                log.debug("users ${val[0]}=${val[1]} summ: ${summary[val[0]]}")
                 if(summary[val[0]]) {
                     summary[val[0].toString()].execCount = val[1]
                     projects << val[0]
@@ -1006,7 +1005,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         }
         proj3=System.currentTimeMillis()-proj3
-        log.debug("users2: ${users2}")
         def users = new HashSet<String>()
         users2.each{val->
             if(val.size()==2){
@@ -1022,7 +1020,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def jobCount = ScheduledExecution.count()
 
         def fwkNode = framework.getFrameworkNodeName()
+        log.debug("summarize all... ${System.currentTimeMillis()-start}, proj2 ${proj2}, proj3 ${proj3}")
 
+        if(durs.size()>0) {
+            def sum=durs.inject(0) { a, b -> a + b }
+            log.debug("summarize avg/proj (${durs.size()}) ${sum}ms ... ${sum / durs.size()}")
+        }
         [jobCount:jobCount,execCount:execCount,projectSummary:projects,projCount: fprojects.size(),userSummary:users,
                 userCount:users.size(),projectSummaries:summary,
                 frameworkNodeName: fwkNode,
