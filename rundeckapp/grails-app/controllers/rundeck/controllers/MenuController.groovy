@@ -963,7 +963,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
             summary[project.name].userSummary=[]
             summary[project.name].userCount= summary[project.name].userSummary.size()
-            summary[project.name].readme=frameworkService.getFrameworkProjectReadmeContents(project.name)
             //authorization
             summary[project.name].auth = [
                     jobCreate: frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
@@ -973,6 +972,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                             [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
                                     AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE]),
             ]
+                summary[project.name].readme = frameworkService.getFrameworkProjectReadmeContents(project)
             durs<<(System.currentTimeMillis()-sumstart)
         }
         def projects = []
@@ -1017,7 +1017,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
         //summarize cross-project details
-        def jobCount = ScheduledExecution.count()
+        def jobCount = 0//ScheduledExecution.count()
 
         def fwkNode = framework.getFrameworkNodeName()
         log.debug("summarize all... ${System.currentTimeMillis()-start}, proj2 ${proj2}, proj3 ${proj3}")

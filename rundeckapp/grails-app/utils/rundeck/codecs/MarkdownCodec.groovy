@@ -29,7 +29,10 @@ import org.markdownj.MarkdownProcessor
   */
 class MarkdownCodec {
     static MarkdownProcessor p = new MarkdownProcessor();
-    static decode = { str ->
+    static String decodeStr (String str){
         return SanitizedHTMLCodec.encode(p.markdown(str))
+    }
+    static decode = { str ->
+        return decodeStr(str)
     }
 }

@@ -131,6 +131,16 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
             }
 
             @Override
+            public String getReadmeHTML() {
+                return null;
+            }
+
+            @Override
+            public String getMotdHTML() {
+                return null;
+            }
+
+            @Override
             public String getMotd() {
                 return readFileResourceContents("motd.md");
             }

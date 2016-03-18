@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.server.projects;
 
 import com.dtolabs.rundeck.core.common.IProjectInfo;
+import rundeck.codecs.MarkdownCodec;
 import rundeck.services.ProjectManagerService;
 
 /**
@@ -25,6 +26,31 @@ public class ProjectInfo implements IProjectInfo {
         return projectService.readCachedProjectFileAsAstring(projectName, "readme.md");
     }
 
+    String readmeStr = null;
+    String readmeHTML = null;
+
+    @Override
+    public String getReadmeHTML() {
+        String readme = getReadme();
+        if (readme != null && !readme.equals(readmeStr)) {
+            readmeStr = readme;
+            readmeHTML = MarkdownCodec.decodeStr(readmeStr);//markdown process
+        }
+        return readmeHTML;
+    }
+
+    String motdStr = null;
+    String motdHTML = null;
+
+    @Override
+    public String getMotdHTML() {
+        String readme = getMotd();
+        if (readme != null && !readme.equals(motdStr)) {
+            motdStr = readme;
+            motdHTML = MarkdownCodec.decodeStr(motdStr);
+        }
+        return motdHTML;
+    }
 
     @Override
     public String getMotd() {
