@@ -36,6 +36,7 @@ class BaseQuery {
         sortOrder(inList:["ascending","descending"],nullable: true)
         max(min:0,nullable: true)
         offset(min:0,nullable: true)
+        sortBy(nullable: true)
     }
 
     /**

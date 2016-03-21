@@ -639,9 +639,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      * @return
      */
     IRundeckProjectConfig loadProjectConfig(final String project) {
-        if (!existsFrameworkProject(project)) {
-            throw new IllegalArgumentException("Project does not exist: " + project)
-        }
         def resource = loadProjectConfigResource(project)
         def rdprojectconfig = new RundeckProjectConfig(project,
                                                  createProjectPropertyLookup(

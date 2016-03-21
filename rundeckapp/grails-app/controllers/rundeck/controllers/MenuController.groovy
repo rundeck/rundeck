@@ -1,6 +1,7 @@
 package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.app.support.BaseQuery
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
@@ -940,14 +941,51 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         ]
     }
 
-    def home(){
+    def home() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        Framework framework = frameworkService.rundeckFramework
+        long start = System.currentTimeMillis()
+        def fprojects = frameworkService.projectNames(authContext)
+        session.frameworkProjects = fprojects
+        log.debug("frameworkService.projects(context)... ${System.currentTimeMillis() - start}")
+
+        render(view: 'home2', model: [projectNames: fprojects])
+    }
+    def homeAjax(BaseQuery paging){
+        if('true'!=request.getHeader('x-rundeck-ajax')) {
+            return redirect(action: 'home')
+        }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         Framework framework = frameworkService.rundeckFramework
         long start=System.currentTimeMillis()
-        def fprojects = frameworkService.projects(authContext)
+        //select paged projects to return
+        def fprojects
+        def pagingparams=[:]
+        if (null != paging.max && null != paging.offset) {
+            List<String> projectNames = frameworkService.projectNames(authContext).sort()
+            if(paging.max>0 && paging.offset<projectNames.size()) {
+
+                def lastIndex = Math.min(projectNames.size()-1,paging.offset+paging.max-1)
+                pagingparams = [max: paging.max, offset: paging.offset]
+                if(lastIndex+1<projectNames.size()) {
+                    pagingparams.nextoffset = lastIndex + 1
+                }else{
+                    pagingparams.nextoffset=-1
+                }
+                fprojects = projectNames[paging.offset..lastIndex].collect {
+                    frameworkService.getFrameworkProject(it)
+                }
+            }else{
+                fprojects=[]
+            }
+
+        }else{
+            fprojects= frameworkService.projects(authContext)
+        }
+
         log.debug("frameworkService.projects(context)... ${System.currentTimeMillis()-start}")
         start=System.currentTimeMillis()
-        session.frameworkProjects = fprojects*.name
+
 
         Calendar n = GregorianCalendar.getInstance()
         n.add(Calendar.DAY_OF_YEAR, -1)
@@ -957,22 +995,25 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         fprojects.each { IRundeckProject project->
             long sumstart=System.currentTimeMillis()
             summary[project.name]=[
+                    name:project.name,
                     execCount: 0,//Execution.countByProjectAndDateStartedGreaterThan(project.name,today),
                     description: project.hasProperty("project.description")?project.getProperty("project.description"):''
             ]
 
             summary[project.name].userSummary=[]
             summary[project.name].userCount= summary[project.name].userSummary.size()
-            //authorization
-            summary[project.name].auth = [
-                    jobCreate: frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
-                            AuthConstants.ACTION_CREATE, project.name),
-                    admin: frameworkService.authorizeApplicationResourceAny(authContext,
-                                                                            frameworkService.authResourceForProject(project.name),
-                            [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
-                                    AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE]),
-            ]
+            if(!params.refresh) {
                 summary[project.name].readme = frameworkService.getFrameworkProjectReadmeContents(project)
+                //authorization
+                summary[project.name].auth = [
+                        jobCreate: frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
+                                AuthConstants.ACTION_CREATE, project.name),
+                        admin: frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                                frameworkService.authResourceForProject(project.name),
+                                [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
+                                        AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE]),
+                ]
+            }
             durs<<(System.currentTimeMillis()-sumstart)
         }
         def projects = []
@@ -1016,20 +1057,84 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         }
 
-        //summarize cross-project details
-        def jobCount = 0//ScheduledExecution.count()
-
-        def fwkNode = framework.getFrameworkNodeName()
         log.debug("summarize all... ${System.currentTimeMillis()-start}, proj2 ${proj2}, proj3 ${proj3}")
 
         if(durs.size()>0) {
             def sum=durs.inject(0) { a, b -> a + b }
             log.debug("summarize avg/proj (${durs.size()}) ${sum}ms ... ${sum / durs.size()}")
         }
-        [jobCount:jobCount,execCount:execCount,projectSummary:projects,projCount: fprojects.size(),userSummary:users,
-                userCount:users.size(),projectSummaries:summary,
-                frameworkNodeName: fwkNode,
-        ]
+        render(contentType:'application/json',text:
+                (pagingparams + [
+                        projects : summary.values(),
+                ] )as JSON
+        )
+    }
+    def homeSummaryAjax(){
+        if('true'!=request.getHeader('x-rundeck-ajax')) {
+            return redirect(action: 'home')
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        Framework framework = frameworkService.rundeckFramework
+        long start=System.currentTimeMillis()
+        //select paged projects to return
+        List<String> projectNames = frameworkService.projectNames(authContext).sort()
+
+        log.debug("frameworkService.homeSummaryAjax(context)... ${System.currentTimeMillis()-start}")
+        start=System.currentTimeMillis()
+
+        Calendar n = GregorianCalendar.getInstance()
+        n.add(Calendar.DAY_OF_YEAR, -1)
+        Date today = n.getTime()
+
+        def projects = []
+        long proj2=System.currentTimeMillis()
+        def projects2 = Execution.createCriteria().list {
+            gt('dateStarted', today)
+            projections {
+                groupProperty('project')
+                count()
+            }
+        }
+        proj2=System.currentTimeMillis()-proj2
+        def execCount= 0 //Execution.countByDateStartedGreaterThan( today)
+        projects2.each{val->
+            if(val.size()==2){
+                if(val[0] in projectNames) {
+                    projects << val[0]
+                    execCount+=val[1]
+                }
+            }
+        }
+
+        long proj3=System.currentTimeMillis()
+        def users2 = Execution.createCriteria().list {
+            gt('dateStarted', today)
+            projections {
+                distinct('user')
+                property('project')
+            }
+        }
+        proj3=System.currentTimeMillis()-proj3
+        def users = new HashSet<String>()
+        users2.each{val->
+            if(val.size()==2){
+                if(val[1] in projectNames) {
+                    users.add(val[0])
+                }
+            }
+        }
+
+        def fwkNode = framework.getFrameworkNodeName()
+        log.debug("home summary... ${System.currentTimeMillis()-start}, proj2 ${proj2}, proj3 ${proj3}")
+
+        render(contentType:'application/json',text:
+                ( [
+                        execCount        : execCount,
+                        recentUsers      : users,
+                        recentProjects   : projects,
+                        frameworkNodeName: fwkNode
+                ] )as JSON
+        )
     }
 
     /**
