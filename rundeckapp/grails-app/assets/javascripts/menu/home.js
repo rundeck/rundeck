@@ -20,6 +20,8 @@ function HomeData(data) {
     self.doRefresh=ko.observable(false);
     self.doPaging=ko.observable(false);
     self.pagingMax=ko.observable(20);
+    self.pagingRepeatMax=ko.observable(20);
+    self.pagingDelay=ko.observable(2000);
     self.pagingOffset=ko.observable(0);
     self.refreshTime=ko.observable(30000);
 
@@ -97,6 +99,7 @@ function HomeData(data) {
                 offset:self.pagingOffset(),
                 max:self.pagingMax()
             });
+            self.pagingMax(self.pagingRepeatMax());
         }
         jQuery.ajax({
             type: 'GET',
@@ -113,7 +116,7 @@ function HomeData(data) {
                     if(self.pagingOffset()===-1){
                         self.pagingOffset(0);
                     }else{
-                        setTimeout(self.load.curry(true),1);
+                        setTimeout(self.load.curry(true),self.pagingDelay());
                         return;
                     }
                 }
@@ -151,11 +154,18 @@ function HomeData(data) {
  */
 var homedata;
 function init() {
-    homedata = new HomeData({baseUrl: appLinks.menuHomeAjax,summaryUrl: appLinks.menuHomeSummaryAjax, projectNames: loadJsonData('projectNamesData').sort()});
+    var pageparams=loadJsonData('homeDataPagingParams')||{};
+    homedata = new HomeData({
+        baseUrl: appLinks.menuHomeAjax,
+        summaryUrl: appLinks.menuHomeSummaryAjax,
+        projectNames: loadJsonData('projectNamesList').sort()
+    });
     ko.applyBindings(homedata);
-    homedata.pagingMax(50);
-    homedata.doRefresh(false);
-    homedata.doPaging(true);
+    homedata.pagingMax(pageparams.pagingInitialMax||10);
+    homedata.pagingRepeatMax(pageparams.pagingRepeatMax||50);
+    homedata.doRefresh(pageparams.summaryRefresh!=null?pageparams.summaryRefresh:false);
+    homedata.doPaging(pageparams.doPaging!=null?pageparams.doPaging:true);
+    homedata.pagingDelay(pageparams.pagingDelay||2000);
     homedata.loadSummary();
     homedata.load();
 }

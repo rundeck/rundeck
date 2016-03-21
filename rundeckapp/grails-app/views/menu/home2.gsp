@@ -14,7 +14,14 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="home"/>
     <title><g:appTitle/></title>
-    <g:embedJSON data="${projectNames}" id="projectNamesData"/>
+    <g:embedJSON data="${projectNames}" id="projectNamesList"/>
+    <g:embedJSON data="${[
+            pagingInitialMax:grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingInitialMax?:10,
+            pagingRepeatMax:grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingRepeatMax?:50,
+            summaryRefresh:grailsApplication.config.rundeck?.gui?.home?.projectList?.summaryRefresh in ['true',true],
+            doPaging:!(grailsApplication.config.rundeck?.gui?.home?.projectList?.doPaging in ['false',false]),
+            pagingDelay:grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingDelay?:2000
+    ]}" id="homeDataPagingParams"/>
     <asset:javascript src="menu/home.js"/>
 
 </head>
