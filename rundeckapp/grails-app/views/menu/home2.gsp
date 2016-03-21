@@ -158,11 +158,10 @@
                         <div class="clearfix visible-sm"></div>
                         <div class="col-sm-6 col-md-4">
                             <span data-bind="if: $root.projectForName(project)">
-                            <a class="h4"
-                                data-bind="css: { 'text-muted': $root.projectForName(project).execCount()<1 } "
-                                href="#"
-                               %{--href="${g.createLink(controller: "reports", action: "index", params: [project: project])}"--}%
-
+                            <a
+                                    class="h4"
+                                    data-bind="css: { 'text-muted': $root.projectForName(project).execCount()<1 }, urlPathParam: project "
+                                    href="${g.createLink(controller: "reports", action: "index", params: [project: '<$>'])}"
                             >
                                 <span class="summary-count "
                                       data-bind="css: { 'text-muted': $root.projectForName(project).execCount()<1, 'text-info':$root.projectForName(project).execCount()>0 } "
