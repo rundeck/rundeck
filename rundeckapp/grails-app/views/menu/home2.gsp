@@ -205,8 +205,12 @@
                         <div class="clearfix visible-xs visible-sm"></div>
                         <div data-bind="if: $root.projectForName(project)">
 
-                            <div class="col-sm-12 col-md-4" data-bind="if: $root.projectForName(project).auth">
+
+                            <div class="col-sm-12 col-md-4" >
                                 <div class="pull-right">
+                                    <span class="text-muted"
+                                          data-bind="if: !$root.projectForName(project).loaded()" >Loading actions…</span>
+                                    <div data-bind="if: $root.projectForName(project).auth">
                                     <span data-bind="if: $root.projectForName(project).auth.admin">
                                         <a href="${g.createLink(controller: "menu", action: "admin", params: [project: '<$>'])}"
                                             data-bind="urlPathParam: project"
@@ -241,6 +245,7 @@
                                                     </a>
                                                 </li>
                                             </ul>
+                                    </div>
                                     </div>
                                 </div>
                             </div>
