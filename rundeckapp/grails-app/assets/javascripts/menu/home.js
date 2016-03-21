@@ -132,6 +132,7 @@ function HomeData(data) {
                     name:self.projectNames()[i],
                     execCount:0,
                     userCount:0,
+                    description:null,
                     auth:{
                         jobCreate:false,
                         admin:false
