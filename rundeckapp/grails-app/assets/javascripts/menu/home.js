@@ -307,19 +307,24 @@ function HomeData(data) {
         }
     };
 }
+var _waypointBatchTimer;
 function batchInitWaypoints(arr,handler,count){
     "use strict";
     var arr2=arr.splice(0,count);
     if(arr2.length>0) {
         jQuery(arr2).waypoint(handler, {offset: '100%'});
         if (arr.length > 0) {
-            setTimeout(batchInitWaypoints.curry(arr, handler,count), 1500);
+            _waypointBatchTimer=setTimeout(batchInitWaypoints.curry(arr, handler,count), 1500);
         }
     }
 }
 function initWaypoints(homedata,reset){
     "use strict";
     if(reset){
+        if(_waypointBatchTimer){
+            clearTimeout(_waypointBatchTimer);
+            _waypointBatchTimer=null;
+        }
         Waypoint.destroyAll();
     }
 
