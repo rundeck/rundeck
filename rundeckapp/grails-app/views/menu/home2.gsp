@@ -20,6 +20,7 @@
     <g:else>
         <g:embedJSON data="${[projectNames:projectNames[0..49],projectNamesTotal:projectNames.size()]}" id="projectNamesData"/>
     </g:else>
+    <g:embedJSON data="${[loaded:true,execCount:execCount,recentUsers:recentUsers,recentProjects:recentProjects]}" id="statsData"/>
     <g:embedJSON data="${[
             pagingInitialMax:grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingInitialMax?:15,
             pagingRepeatMax:grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingRepeatMax?:50,

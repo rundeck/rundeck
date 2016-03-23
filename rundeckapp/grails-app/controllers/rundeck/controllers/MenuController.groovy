@@ -947,94 +947,33 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def fprojects = frameworkService.projectNames(authContext)
         session.frameworkProjects = fprojects
         log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
-
-        render(view: 'home2', model: [projectNames: fprojects])
+        def stats=cachedSummaryProjectStats(fprojects)
+        render(view: 'home2', model: [projectNames: fprojects,execCount:stats.execCount,recentUsers:stats.recentUsers,recentProjects:stats.recentProjects])
     }
-    def projectNamesAjax() {
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        long start = System.currentTimeMillis()
-        def fprojects = frameworkService.projectNames(authContext)
-        session.frameworkProjects = fprojects
-        log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
 
-        render(contentType:'application/json',text:
-                ([projectNames: fprojects] )as JSON
-        )
-    }
-    def homeAjax(BaseQuery paging){
-        if('true'!=request.getHeader('x-rundeck-ajax')) {
-            return redirect(action: 'home')
+    private def cachedSummaryProjectStats(final List projectNames) {
+        long now = System.currentTimeMillis()
+        if(null==session.summaryProjectStats || session.summaryProjectStats_expire<now){
+            session.summaryProjectStats=loadSummaryProjectStats(projectNames)
+            session.summaryProjectStats_expire=now+ (60 * 1000)
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        return session.summaryProjectStats
+    }
+    /**
+     *
+     * @param projectNames
+     * @return
+     */
+    private def loadSummaryProjectStats(final List projectNames) {
         long start=System.currentTimeMillis()
-        //select paged projects to return
-        def fprojects
-        def pagingparams=[:]
-        if (null != paging.max && null != paging.offset) {
-            List<String> projectNames = frameworkService.projectNames(authContext)
-            if (paging.max > 0 && paging.offset < projectNames.size()) {
-
-                def lastIndex = Math.min(projectNames.size() - 1, paging.offset + paging.max - 1)
-                pagingparams = [max: paging.max, offset: paging.offset]
-                if (lastIndex + 1 < projectNames.size()) {
-                    pagingparams.nextoffset = lastIndex + 1
-                } else {
-                    pagingparams.nextoffset = -1
-                }
-                fprojects = projectNames[paging.offset..lastIndex].collect {
-                    frameworkService.getFrameworkProject(it)
-                }
-            } else {
-                fprojects = []
-            }
-        }else if (params.projects) {
-            List<String> projectNames = frameworkService.projectNames(authContext)
-            def selected = [params.projects].flatten()
-            if(selected.size()==1 && selected[0].contains(',')){
-                selected = selected[0].split(',') as List
-            }
-            System.err.println("ajax for projects: $selected")
-            fprojects = selected.findAll{projectNames.contains(it)}.collect{
-                frameworkService.getFrameworkProject(it)
-            }
-        } else {
-            fprojects = frameworkService.projects(authContext)
-        }
-
-        log.debug("frameworkService.projects(context)... ${System.currentTimeMillis()-start}")
-        start=System.currentTimeMillis()
-
-
         Calendar n = GregorianCalendar.getInstance()
         n.add(Calendar.DAY_OF_YEAR, -1)
         Date today = n.getTime()
         def summary=[:]
-        def durs=[]
-        fprojects.each { IRundeckProject project->
-            long sumstart=System.currentTimeMillis()
-            summary[project.name]=[
-                    name:project.name,
-                    execCount: 0,//Execution.countByProjectAndDateStartedGreaterThan(project.name,today),
-                    description: project.hasProperty("project.description")?project.getProperty("project.description"):''
-            ]
-
-            summary[project.name].userSummary=[]
-            summary[project.name].userCount= summary[project.name].userSummary.size()
-            if(!params.refresh) {
-                summary[project.name].readme = frameworkService.getFrameworkProjectReadmeContents(project)
-                //authorization
-                summary[project.name].auth = [
-                        jobCreate: frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
-                                AuthConstants.ACTION_CREATE, project.name),
-                        admin: frameworkService.authorizeApplicationResourceAny(authContext,
-                                                                                frameworkService.authResourceForProject(project.name),
-                                [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
-                                        AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE]),
-                ]
-            }
-            durs<<(System.currentTimeMillis()-sumstart)
-        }
         def projects = []
+        projectNames.each{project->
+            summary[project]=[name: project, execCount: 0, userSummary: [], userCount: 0]
+        }
         long proj2=System.currentTimeMillis()
         def projects2 = Execution.createCriteria().list {
             gt('dateStarted', today)
@@ -1075,7 +1014,86 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         }
 
-        log.debug("summarize all... ${System.currentTimeMillis()-start}, proj2 ${proj2}, proj3 ${proj3}")
+        log.debug("loadSummaryProjectStats... ${System.currentTimeMillis()-start}, proj2 ${proj2}, proj3 ${proj3}")
+        [summary:summary,recentUsers:users,recentProjects:projects,execCount:execCount]
+    }
+
+    def projectNamesAjax() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        long start = System.currentTimeMillis()
+        def fprojects = frameworkService.projectNames(authContext)
+        session.frameworkProjects = fprojects
+        log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
+
+        render(contentType:'application/json',text:
+                ([projectNames: fprojects] )as JSON
+        )
+    }
+    def homeAjax(BaseQuery paging){
+        if('true'!=request.getHeader('x-rundeck-ajax')) {
+            return redirect(action: 'home')
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        long start=System.currentTimeMillis()
+        //select paged projects to return
+        def fprojects
+        List<String> projectNames = frameworkService.projectNames(authContext)
+        def pagingparams=[:]
+        if (null != paging.max && null != paging.offset) {
+            if (paging.max > 0 && paging.offset < projectNames.size()) {
+
+                def lastIndex = Math.min(projectNames.size() - 1, paging.offset + paging.max - 1)
+                pagingparams = [max: paging.max, offset: paging.offset]
+                if (lastIndex + 1 < projectNames.size()) {
+                    pagingparams.nextoffset = lastIndex + 1
+                } else {
+                    pagingparams.nextoffset = -1
+                }
+                fprojects = projectNames[paging.offset..lastIndex].collect {
+                    frameworkService.getFrameworkProject(it)
+                }
+            } else {
+                fprojects = []
+            }
+        }else if (params.projects) {
+            def selected = [params.projects].flatten()
+            if(selected.size()==1 && selected[0].contains(',')){
+                selected = selected[0].split(',') as List
+            }
+            fprojects = selected.findAll{projectNames.contains(it)}.collect{
+                frameworkService.getFrameworkProject(it)
+            }
+        } else {
+            fprojects = frameworkService.projects(authContext)
+        }
+
+        log.debug("frameworkService.projects(context)... ${System.currentTimeMillis()-start}")
+        start=System.currentTimeMillis()
+
+
+        def allsummary=cachedSummaryProjectStats(projectNames).summary
+        def summary=[:]
+        def durs=[]
+        fprojects.each { IRundeckProject project->
+            long sumstart=System.currentTimeMillis()
+            summary[project.name]=allsummary[project.name]
+
+            summary[project.name].description= project.hasProperty("project.description")?project.getProperty("project.description"):''
+            if(!params.refresh) {
+                summary[project.name].readme = frameworkService.getFrameworkProjectReadmeContents(project)
+                //authorization
+                summary[project.name].auth = [
+                        jobCreate: frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
+                                AuthConstants.ACTION_CREATE, project.name),
+                        admin: frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                                frameworkService.authResourceForProject(project.name),
+                                [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
+                                        AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE]),
+                ]
+            }
+            durs<<(System.currentTimeMillis()-sumstart)
+        }
+
 
         if(durs.size()>0) {
             def sum=durs.inject(0) { a, b -> a + b }
@@ -1095,55 +1113,16 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         Framework framework = frameworkService.rundeckFramework
         long start=System.currentTimeMillis()
         //select paged projects to return
-        List<String> projectNames = frameworkService.projectNames(authContext).sort()
+        List<String> projectNames = frameworkService.projectNames(authContext)
 
         log.debug("frameworkService.homeSummaryAjax(context)... ${System.currentTimeMillis()-start}")
         start=System.currentTimeMillis()
-
-        Calendar n = GregorianCalendar.getInstance()
-        n.add(Calendar.DAY_OF_YEAR, -1)
-        Date today = n.getTime()
-
-        def projects = []
-        long proj2=System.currentTimeMillis()
-        def projects2 = Execution.createCriteria().list {
-            gt('dateStarted', today)
-            projections {
-                groupProperty('project')
-                count()
-            }
-        }
-        proj2=System.currentTimeMillis()-proj2
-        def execCount= 0 //Execution.countByDateStartedGreaterThan( today)
-        projects2.each{val->
-            if(val.size()==2){
-                if(val[0] in projectNames) {
-                    projects << val[0]
-                    execCount+=val[1]
-                }
-            }
-        }
-
-        long proj3=System.currentTimeMillis()
-        def users2 = Execution.createCriteria().list {
-            gt('dateStarted', today)
-            projections {
-                distinct('user')
-                property('project')
-            }
-        }
-        proj3=System.currentTimeMillis()-proj3
-        def users = new HashSet<String>()
-        users2.each{val->
-            if(val.size()==2){
-                if(val[1] in projectNames) {
-                    users.add(val[0])
-                }
-            }
-        }
+        def allsummary=cachedSummaryProjectStats(projectNames)
+        def projects=allsummary.recentProjects
+        def users=allsummary.recentUsers
+        def execCount=allsummary.execCount
 
         def fwkNode = framework.getFrameworkNodeName()
-        log.debug("home summary... ${System.currentTimeMillis()-start}, proj2 ${proj2}, proj3 ${proj3}")
 
         render(contentType:'application/json',text:
                 ( [

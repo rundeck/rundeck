@@ -57,17 +57,17 @@ function HomeData(data) {
     self.baseUrl = data.baseUrl;
     self.summaryUrl = data.summaryUrl;
     self.projectNamesUrl = data.projectNamesUrl;
-    self.loaded = ko.observable(false);
+    self.loaded = ko.observable(data.loaded?true:false);
     self.jobCount = ko.observable(0);
-    self.execCount = ko.observable(0);
+    self.execCount = ko.observable(data.execCount||0);
     self.projectNames = ko.observableArray(data.projectNames || []);
     self.projectNamesTotal = ko.observable(data.projectNamesTotal || 0);
     self.loadedProjectNames = ko.observable(false);
     self.projects = ko.observableArray([]);
     self.projects.extend({rateLimit: 500});
 
-    self.recentUsers = ko.observableArray([]);
-    self.recentProjects = ko.observableArray([]);
+    self.recentUsers = ko.observableArray(data.recentUsers||[]);
+    self.recentProjects = ko.observableArray(data.recentProjects||[]);
     self.frameworkNodeName = ko.observable(null);
     self.doRefresh = ko.observable(false);
     self.doPaging = ko.observable(false);
@@ -285,7 +285,10 @@ function HomeData(data) {
     };
     //initial setup
     self.beginLoad = function () {
-        self.loadSummary();
+
+        if (self.doRefresh()) {
+            setTimeout(self.loadSummary, self.refreshDelay());
+        }
     };
     self.loadProjectNames = function () {
         return jQuery.ajax({
@@ -342,20 +345,21 @@ function init() {
     if (projectNamesData.projectNames == null) {
         projectNamesData.projectNames = [];
     }
-    homedata = new HomeData({
+    var statsdata = loadJsonData('statsData') || {};
+    homedata = new HomeData(jQuery.extend({
         baseUrl: appLinks.menuHomeAjax,
         summaryUrl: appLinks.menuHomeSummaryAjax,
         projectNamesUrl: appLinks.menuProjectNamesAjax,
         projectNames: projectNamesData.projectNames.sort(),
         projectNamesTotal: projectNamesData.projectNamesTotal || 0
-    });
+    },statsdata));
     homedata.loadedProjectNames(projectNamesData.projectNames.length > 0 && projectNamesData.projectNames.length == projectNamesData.projectNamesTotal);
     ko.applyBindings(homedata);
 
     homedata.pagingMax(pageparams.pagingInitialMax || 15);
     homedata.pagingRepeatMax(pageparams.pagingRepeatMax || 50);
     homedata.doRefresh(pageparams.summaryRefresh != null ? pageparams.summaryRefresh : true);
-    homedata.refreshDelay(pageparams.refreshDelay || 30000);
+    homedata.refreshDelay(pageparams.refreshDelay || 60000);
     homedata.doPaging(pageparams.doPaging != null ? pageparams.doPaging : true);
     homedata.pagingDelay(pageparams.pagingDelay || 2000);
     homedata.searchedProjects.subscribe(function(val){
