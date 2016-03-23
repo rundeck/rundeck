@@ -282,10 +282,7 @@ function HomeData(data) {
     };
     //initial setup
     self.beginLoad = function () {
-        self.loadSummary().then(function () {
-            "use strict";
-            // setTimeout(self.load,200);
-        });
+        self.loadSummary();
     };
     self.loadProjectNames = function () {
         return jQuery.ajax({
@@ -297,14 +294,13 @@ function HomeData(data) {
                 self.projectNames(data.projectNames);
                 self.projectNamesTotal(data.projectNames.length);
                 self.loadedProjectNames(true);
-                self.beginLoad();
             }
         });
     };
     self.init = function () {
         self.beginLoad();
         if (self.projectCount() != self.projectNamesTotal()) {
-            setTimeout(self.loadProjectNames, 200);
+            self.loadProjectNames();
         }
     };
 }
@@ -343,8 +339,7 @@ function init() {
         summaryUrl: appLinks.menuHomeSummaryAjax,
         projectNamesUrl: appLinks.menuProjectNamesAjax,
         projectNames: projectNamesData.projectNames.sort(),
-        projectNamesTotal: projectNamesData.projectNamesTotal || 0,
-
+        projectNamesTotal: projectNamesData.projectNamesTotal || 0
     });
     homedata.loadedProjectNames(projectNamesData.projectNames.length > 0 && projectNamesData.projectNames.length == projectNamesData.projectNamesTotal);
     ko.applyBindings(homedata);
