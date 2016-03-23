@@ -14,11 +14,11 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="home"/>
     <title><g:appTitle/></title>
-    <g:if test="${projectNames.size()<100}">
+    <g:if test="${projectNames.size()<50}">
         <g:embedJSON data="${[projectNames:projectNames,projectNamesTotal:projectNames.size()]}" id="projectNamesData"/>
     </g:if>
     <g:else>
-        <g:embedJSON data="${[projectNames:projectNames[0..99],projectNamesTotal:projectNames.size()]}" id="projectNamesData"/>
+        <g:embedJSON data="${[projectNames:projectNames[0..49],projectNamesTotal:projectNames.size()]}" id="projectNamesData"/>
     </g:else>
     <g:embedJSON data="${[
             pagingInitialMax:grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingInitialMax?:15,
