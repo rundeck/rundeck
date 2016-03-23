@@ -301,8 +301,6 @@
 
                 <span id="busy" style="display:none"></span>
 <g:timerEnd key="head"/>
-                <g:if test="${ jobgroups}">
-                    <g:timerStart key="groupTree"/>
                     <g:form controller="scheduledExecution"  useToken="true" params="[project: params.project ?: request.project]">
                         <div class="modal fade" id="bulk_del_confirm" tabindex="-1" role="dialog" aria-hidden="true">
                             <div class="modal-dialog">
@@ -450,13 +448,20 @@
 
                         </div>
                     </div>
-                    <div id="job_group_tree">
-                    <g:render template="groupTree" model="${[small:params.compact?true:false,currentJobs:jobgroups['']?jobgroups['']:[],wasfiltered:wasfiltered?true:false,nowrunning:nowrunning, clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
-                    </div>
+                        <div id="job_group_tree">
+                        <g:if test="${jobgroups}">
+
+                            <g:timerStart key="groupTree"/>
+
+                    <g:render template="groupTree" model="${[small:params.compact?true:false,currentJobs:jobgroups['']?jobgroups['']:[],wasfiltered:wasfiltered?true:false, clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
+
+
+                            <g:timerEnd key="groupTree"/>
+                        </g:if>
+                        </div>
                     </g:form>
-                    <g:timerEnd key="groupTree"/>
-                </g:if>
-                <g:else>
+
+                <g:if test="${!jobgroups}">
                     <div class="presentation">
 
                         <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
@@ -475,7 +480,7 @@
                         </auth:resourceAllowed>
 
                     </div>
-                </g:else>
+                </g:if>
     <g:timerStart key="tail"/>
             </td>
         </tr>
