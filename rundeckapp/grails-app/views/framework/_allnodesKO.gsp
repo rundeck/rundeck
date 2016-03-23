@@ -27,7 +27,7 @@
     </div>
     <div class="row row-space">
         <div class="col-sm-12 ">
-            <table cellpadding="0" cellspacing="0" width="100%" id="nodesTable2" class="nodesTable" >
+            <table cellpadding="0" cellspacing="0" width="100%" id="nodesTable" class="nodesTable" >
                 <tr>
                     <th><g:message code="Node"/></th>
                     <!--ko foreach: filterColumns-->
@@ -164,7 +164,7 @@
                     <span data-bind="if: node.attributes['remoteUrl']">
                         <span class="textbtn "
                               title="${message(code:"edit.this.node.via.remote.url")}"
-                              data-bind="click: triggerNodeRemoteEdit"
+                              data-bind="click: function(){$root.triggerNodeRemoteEdit(node);}"
 
                         >
                             <g:message code="edit.ellipsis" />
@@ -252,5 +252,24 @@
                 <g:message code="loading.matched.nodes"/>
             </span>
         </div>
+    </div>
+</div>
+
+<div id="remoteEditholder" style="display:none" class="popout">
+    <span id="remoteEditHeader">
+        <span class="welcomeMessage">Edit node: <i class="rdicon node icon-small"></i> <span id="editNodeIdent"></span></span>
+    </span>
+    <span class="toolbar" id="remoteEditToolbar">
+        <span class="action " onclick="_remoteEditCompleted();" title="Close the remote edit box and discard any changes"><g:img file="icon-tiny-removex-gray.png" /> Close remote editing</span>
+    </span>
+    <div id="remoteEditResultHolder" class="info message" style="display:none">
+        <span id="remoteEditResultText" class="info message" >
+        </span>
+        <span class="action " onclick="_remoteEditContinue();"> Continue&hellip;</span>
+    </div>
+    <div id="remoteEditError" class="error note" style="display:none">
+    </div>
+    <div id="remoteEditTarget" >
+
     </div>
 </div>

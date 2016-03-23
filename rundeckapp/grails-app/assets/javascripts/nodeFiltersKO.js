@@ -680,7 +680,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         return self.linkForFilterString(filter);
     };
     self.triggerNodeRemoteEdit=function(node){
-        doRemoteEdit(node.nodename,self.project,self.nodeSet().expandNodeAttributes(node.attributes,node.attributes['remoteUrl']()))
+        doRemoteEdit(node.nodename(),self.project(),self.nodeSet().expandNodeAttributes(node.attributes,node.attributes['remoteUrl']()))
     };
     /**
      * Update to match state parameters
