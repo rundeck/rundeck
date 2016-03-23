@@ -100,6 +100,9 @@ function HomeData(data) {
             return val.search(search)>=0;
         });
     });
+    self.searchedProjectsCount = ko.pureComputed(function () {
+        return self.searchedProjects().length;
+    });
     self.projectCount = ko.pureComputed(function () {
         return self.projectNames().length;
     });

@@ -163,7 +163,11 @@
                                     data-bind="value: search"
                                 />
                             </label>
-
+                            <span data-bind="if: search()">
+                            <span data-bind="messageTemplate: searchedProjectsCount(), css: { 'text-info': searchedProjectsCount()>0, 'text-warning': searchedProjectsCount()<1 }">
+                                {0} Projects found
+                            </span>
+                            </span>
                         </div>
                     </div>
                 </div>
