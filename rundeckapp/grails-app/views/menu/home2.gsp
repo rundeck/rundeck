@@ -183,9 +183,6 @@
                             <span data-bind="if: $root.projectForName(project)">
                                 <span class="text-muted" data-bind="text: $root.projectForName(project).description"></span>
                             </span>
-                            %{--<g:if test="${data.description}">--}%
-                                %{--<span class="text-muted"><g:enc>${data.description}</g:enc></span>--}%
-                            %{--</g:if>--}%
                         </div>
 
                         <div class="clearfix visible-sm"></div>
