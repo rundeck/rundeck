@@ -308,13 +308,23 @@ function HomeData(data) {
         }
     };
 }
+function batchInitWaypoints(arr,handler,count){
+    "use strict";
+    var arr2=arr.splice(0,count);
+    if(arr2.length>0) {
+        jQuery(arr2).waypoint(handler, {offset: '100%'});
+        if (arr.length > 0) {
+            setTimeout(batchInitWaypoints.curry(arr, handler,count), 1500);
+        }
+    }
+}
 function initWaypoints(homedata,reset){
     "use strict";
     if(reset){
         Waypoint.destroyAll();
     }
 
-    jQuery('.list-group-item.project_list_item[data-project]').waypoint(homedata.waypointHandler, {offset:'100%'});
+    batchInitWaypoints(jQuery('.list-group-item.project_list_item[data-project]'),homedata.waypointHandler,50);
 }
 
 /**
