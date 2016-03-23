@@ -2,6 +2,7 @@
 //= require knockout-mapping
 //= require knockout-onenter
 //= require ko/binding-url-path-param
+//= require ko/binding-message-template
 //= require jquery.waypoints.min
 function ProjectAuth(data) {
     "use strict";
