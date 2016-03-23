@@ -202,7 +202,7 @@ class FrameworkService implements ApplicationContextAware {
             resources << authResourceForProject(projName)
         }
         def authed = authorizeApplicationResourceSet(authContext, resources, 'read')
-        return new ArrayList(authed.collect{it.name})
+        return new ArrayList(authed.collect{it.name}).sort()
     }
 
     def existsFrameworkProject(String project) {

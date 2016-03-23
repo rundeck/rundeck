@@ -943,44 +943,62 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     def home() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        Framework framework = frameworkService.rundeckFramework
         long start = System.currentTimeMillis()
         def fprojects = frameworkService.projectNames(authContext)
         session.frameworkProjects = fprojects
-        log.debug("frameworkService.projects(context)... ${System.currentTimeMillis() - start}")
+        log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
 
         render(view: 'home2', model: [projectNames: fprojects])
+    }
+    def projectNamesAjax() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        long start = System.currentTimeMillis()
+        def fprojects = frameworkService.projectNames(authContext)
+        session.frameworkProjects = fprojects
+        log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
+
+        render(contentType:'application/json',text:
+                ([projectNames: fprojects] )as JSON
+        )
     }
     def homeAjax(BaseQuery paging){
         if('true'!=request.getHeader('x-rundeck-ajax')) {
             return redirect(action: 'home')
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        Framework framework = frameworkService.rundeckFramework
         long start=System.currentTimeMillis()
         //select paged projects to return
         def fprojects
         def pagingparams=[:]
         if (null != paging.max && null != paging.offset) {
-            List<String> projectNames = frameworkService.projectNames(authContext).sort()
-            if(paging.max>0 && paging.offset<projectNames.size()) {
+            List<String> projectNames = frameworkService.projectNames(authContext)
+            if (paging.max > 0 && paging.offset < projectNames.size()) {
 
-                def lastIndex = Math.min(projectNames.size()-1,paging.offset+paging.max-1)
+                def lastIndex = Math.min(projectNames.size() - 1, paging.offset + paging.max - 1)
                 pagingparams = [max: paging.max, offset: paging.offset]
-                if(lastIndex+1<projectNames.size()) {
+                if (lastIndex + 1 < projectNames.size()) {
                     pagingparams.nextoffset = lastIndex + 1
-                }else{
-                    pagingparams.nextoffset=-1
+                } else {
+                    pagingparams.nextoffset = -1
                 }
                 fprojects = projectNames[paging.offset..lastIndex].collect {
                     frameworkService.getFrameworkProject(it)
                 }
-            }else{
-                fprojects=[]
+            } else {
+                fprojects = []
             }
-
-        }else{
-            fprojects= frameworkService.projects(authContext)
+        }else if (params.projects) {
+            List<String> projectNames = frameworkService.projectNames(authContext)
+            def selected = [params.projects].flatten()
+            if(selected.size()==1 && selected[0].contains(',')){
+                selected = selected[0].split(',') as List
+            }
+            System.err.println("ajax for projects: $selected")
+            fprojects = selected.findAll{projectNames.contains(it)}.collect{
+                frameworkService.getFrameworkProject(it)
+            }
+        } else {
+            fprojects = frameworkService.projects(authContext)
         }
 
         log.debug("frameworkService.projects(context)... ${System.currentTimeMillis()-start}")

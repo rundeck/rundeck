@@ -14,11 +14,17 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="home"/>
     <title><g:appTitle/></title>
-    <g:embedJSON data="${projectNames}" id="projectNamesList"/>
+    <g:if test="${projectNames.size()<100}">
+        <g:embedJSON data="${[projectNames:projectNames,projectNamesTotal:projectNames.size()]}" id="projectNamesData"/>
+    </g:if>
+    <g:else>
+        <g:embedJSON data="${[projectNames:projectNames[0..99],projectNamesTotal:projectNames.size()]}" id="projectNamesData"/>
+    </g:else>
     <g:embedJSON data="${[
-            pagingInitialMax:grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingInitialMax?:10,
+            pagingInitialMax:grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingInitialMax?:15,
             pagingRepeatMax:grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingRepeatMax?:50,
-            summaryRefresh:grailsApplication.config.rundeck?.gui?.home?.projectList?.summaryRefresh in ['true',true],
+            summaryRefresh:!(grailsApplication.config.rundeck?.gui?.home?.projectList?.summaryRefresh in ['false',false]),
+            refreshDelay:grailsApplication.config.rundeck?.gui?.home?.projectList?.summaryRefreshDelay?:30000,
             doPaging:!(grailsApplication.config.rundeck?.gui?.home?.projectList?.doPaging in ['false',false]),
             pagingDelay:grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingDelay?:2000
     ]}" id="homeDataPagingParams"/>
@@ -32,19 +38,23 @@
         <g:render template="/common/messages"/>
     </div>
 </div>
-<div data-bind="if: projectCount()>0">
+<div data-bind="if: projectCount()>0 || !loadedProjectNames()">
     <div class="row row-space">
 
         <div class="col-sm-4">
             <span class="h3 text-muted">
-                <span data-bind="text: projectCount"></span>
+                <span data-bind="text: projectNamesTotal"></span>
                 Projects
                 %{--<g:plural code="Project" count="${projCount}" textOnly="${true}"/>--}%
             </span>
         </div>
 
         <div class="col-sm-4">
-            <div data-bind="if: projectCount() > 1">
+
+            <span data-bind="if: !loaded()">
+                <asset:image src="spinner-gray.gif" width="32px" height="32px"/>
+            </span>
+            <div data-bind="if: projectCount() > 1 && loaded()">
             %{--app summary info--}%
                 <span class="h4">
 
@@ -58,6 +68,7 @@
                         %{--<g:plural code="Execution" count="${execCount}" textOnly="${true}"/>--}%
                     </strong>
                     In the last day
+
                 </span>
                 <div data-bind="if: recentProjectsCount()>1">
                     in
@@ -70,15 +81,7 @@
                     <span data-bind="foreach: recentProjects">
                         <a href="${g.createLink(action:'index',controller:'menu',params:[project:'<$>'])}"
                            data-bind="urlPathParam: $data, text: $data"></a>
-                        %{--<g:link action="index" controller="menu" params="[project: '$']" --}%
-                                %{--data-bind="text: $data,">--}%
-                            %{----}%
-                        %{--</g:link>--}%
                     </span>
-                    <g:each var="project" in="${projectSummary?.sort()}" status="i">
-                        <g:link action="index" controller="menu" params="[project: project]">
-                            <g:enc>${project}</g:enc></g:link><g:if test="${i < projectSummary.size() - 1}">,</g:if>
-                    </g:each>
                 </div>
                 <div data-bind="if: recentUsersCount()>0">
                         by
@@ -90,9 +93,6 @@
                         <span data-bind="text: recentUsers().join(', ')">
 
                         </span>
-                        %{--<g:each in="${userSummary}" var="user" status="i">--}%
-                            %{--<g:enc>${user}</g:enc><g:if test="${i < userSummary.size() - 1}">,</g:if>--}%
-                        %{--</g:each>--}%
                 </div>
             </div>
         </div>
@@ -106,7 +106,7 @@
         </auth:resourceAllowed>
     </div>
 </div>
-<div data-bind="if: projectCount()<1">
+<div data-bind="if: projectCount()<1 && loadedProjectNames()">
     <div class="row row-space">
         <div class="col-sm-12">
             <auth:resourceAllowed action="create" kind="project" context="application" has="false">
@@ -142,10 +142,36 @@
 <div class="row row-space">
     <div class="col-sm-12">
         <div class="list-group">
-            <div data-bind="foreach: { data: projectNames(), as: 'project' } ">
+            <div data-bind="if: !loadedProjectNames() && projectCount()<1">
+            <div class="list-group-item">
+                Loading Projects
+                <asset:image src="spinner-gray.gif" width="32px" height="32px"/>
+            </div>
+            </div>
+            <div class="list-group-item">
+                <div class="row">
+                    <div class="col-sm-12  form-inline">
+                        <div class="form-group  ">
+
+                            <label>
+                                <g:icon name="search"/>
+                                <input
+                                        type="search"
+                                        name="search"
+                                        placeholder="Project search"
+                                    class="form-control input-sm"
+                                    data-bind="value: search"
+                                />
+                            </label>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div data-bind="foreach: { data: searchedProjects(), as: 'project' } ">
             %{--Template for project details--}%
-                <div class="list-group-item">
-                    <div class="row">
+                <div class="list-group-item project_list_item" data-bind="attr: { 'data-project': project }, ">
+                <div class="row">
                         <div class="col-sm-6 col-md-4">
                             <a href="${g.createLink(action:'index',controller:'menu',params:[project:'<$>'])}"
                                 data-bind="urlPathParam: project"
@@ -208,17 +234,17 @@
 
                             <div class="col-sm-12 col-md-4" >
                                 <div class="pull-right">
-                                    <span class="text-muted"
-                                          data-bind="if: !$root.projectForName(project).loaded()" >Loading actions…</span>
-                                    <div data-bind="if: $root.projectForName(project).auth">
-                                    <span data-bind="if: $root.projectForName(project).auth.admin">
+                                    <span data-bind="if: !$root.projectForName(project).loaded()">
+                                        <g:img file="spinner-gray.gif" width="24px" height="24px"/>
+                                    </span>
+                                    <span data-bind="if: $root.projectForName(project).auth().admin">
                                         <a href="${g.createLink(controller: "menu", action: "admin", params: [project: '<$>'])}"
                                             data-bind="urlPathParam: project"
                                            class="btn btn-default btn-sm">
                                             <g:message code="gui.menu.Admin"/>
                                         </a>
                                     </span>
-                                    <div class="btn-group " data-bind="if: $root.projectForName(project).auth.jobCreate">
+                                    <div class="btn-group " data-bind="if: $root.projectForName(project).auth().jobCreate">
 
                                             <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
                                                 Create <g:message code="domain.ScheduledExecution.title"/>
@@ -246,7 +272,6 @@
                                                 </li>
                                             </ul>
                                     </div>
-                                    </div>
                                 </div>
                             </div>
 
@@ -254,26 +279,17 @@
                     </div>
 
                     <div data-bind="if: $root.projectForName(project)">
-                        <div class="row row-space" data-bind="if: $root.projectForName(project).readme && ($root.projectForName(project).readme.readmeHTML || $root.projectForName(project).readme.motdHTML)">
+                        <div class="row row-space" data-bind="if: $root.projectForName(project).readme && ($root.projectForName(project).readme().readmeHTML || $root.projectForName(project).readme().motdHTML)">
                             <div class="col-sm-12">
-                                <div data-bind="if: $root.projectForName(project).readme.motd">
-                                %{--Test if user has dismissed the motd for this project--}%
-                                    <span data-bind="if: $root.projectForName(project).readme.motdHTML">
-                                        %{--<g:enc raw="true">${data.readme.motdHTML}</g:enc>--}%
-                                        <span data-bind="html: $root.projectForName(project).readme.motdHTML()"></span>
+                                <div data-bind="if: $root.projectForName(project).readme().motdHTML()">
+                                    <span data-bind="if: $root.projectForName(project).readme().motdHTML()">
+                                        <span data-bind="html: $root.projectForName(project).readme().motdHTML()"></span>
                                     </span>
-                                    %{--<span data-bind="if: $root.projectForName(project).readme.motd">--}%
-                                        %{--<span data-bind="text: $root.projectForName(project).readme.motd()"></span>--}%
-                                    %{--</span>--}%
                                 </div>
-                                <div data-bind="if: $root.projectForName(project).readme.readme">
-                                    <span data-bind="if: $root.projectForName(project).readme.readmeHTML">
-                                        <span data-bind="html: $root.projectForName(project).readme.readmeHTML()"></span>
+                                <div data-bind="if: $root.projectForName(project).readme().readmeHTML()">
+                                    <span data-bind="if: $root.projectForName(project).readme().readmeHTML()">
+                                        <span data-bind="html: $root.projectForName(project).readme().readmeHTML()"></span>
                                     </span>
-                                    %{--<span data-bind="if: $root.projectForName(project).readme.readme">--}%
-                                        %{--<span data-bind="text: $root.projectForName(project).readme.readme()"></span>--}%
-                                    %{--</span>--}%
-
                                 </div>
 
                             </div>
