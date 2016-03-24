@@ -242,11 +242,59 @@ public class ProjectNodeSupport implements IProjectNodes {
         }
     }
 
+    /**
+     * @param nodes IProjectNodes
+     *
+     * @return model source view of the nodes
+     */
+    public static ResourceModelSource asModelSource(IProjectNodes nodes) {
+        return new ProjectNodesSource(nodes);
+    }
 
+    /**
+     * implements ResourceModelSource by wrapping IProjectNodes
+     */
+    private static class ProjectNodesSource implements ResourceModelSource {
+        IProjectNodes nodes;
+
+        public ProjectNodesSource(final IProjectNodes nodes) {
+            this.nodes = nodes;
+        }
+
+        @Override
+        public INodeSet getNodes() throws ResourceModelSourceException {
+            return nodes.getNodeSet();
+        }
+    }
+
+    /**
+     * @param origin origin source
+     * @param ident  unique identity for this cached source, used in filename
+     * @param descr  description of the source, used in logging
+     *
+     * @return new source
+     */
     private ResourceModelSource createCachingSource(
-            ResourceModelSource sourceForConfiguration,
+            ResourceModelSource origin,
             String ident,
             String descr
+    )
+    {
+        return createCachingSource(origin, ident, descr, SourceFactory.CacheType.BOTH);
+    }
+
+    /**
+     * @param origin origin source
+     * @param ident  unique identity for this cached source, used in filename
+     * @param descr  description of the source, used in logging
+     *
+     * @return new source
+     */
+    public ResourceModelSource createCachingSource(
+            ResourceModelSource origin,
+            String ident,
+            String descr,
+            SourceFactory.CacheType type
     )
     {
         final File file = getResourceModelSourceFileCacheForType(ident);
@@ -264,19 +312,52 @@ public class ProjectNodeSupport implements IProjectNodes {
 
             String ident1 = "[ResourceModelSource: " + descr + ", project: " + projectConfig.getName() + "]";
             StoreExceptionHandler handler = new StoreExceptionHandler(ident);
-            return new CachingResourceModelSource(
-                    sourceForConfiguration,
+            return SourceFactory.cachedSource(
+                    origin,
                     ident1,
                     handler,
                     new LoggingResourceModelSourceCache(
                             new FileResourceModelSourceCache(file, generatorForFormat, fileSource),
                             ident1
-                    )
+                    ),
+                    type
             );
         } catch (UnsupportedFormatException | ExecutionServiceException e) {
             e.printStackTrace();
         }
         return null;
+    }
+
+    /**
+     * @param origin origin source
+     * @param ident  unique identity for this cached source, used in filename
+     * @param descr  description of the source, used in logging
+     *
+     * @return new source
+     */
+    private ResourceModelSource createCacheLoadingSource(
+            ResourceModelSource origin,
+            String ident,
+            String descr
+    )
+    {
+        return createCachingSource(origin, ident, descr, SourceFactory.CacheType.LOAD_ONLY);
+    }
+
+    /**
+     * @param origin origin source
+     * @param ident  unique identity for this cached source, used in filename
+     * @param descr  description of the source, used in logging
+     *
+     * @return new source
+     */
+    private ResourceModelSource createCacheWritingSource(
+            ResourceModelSource origin,
+            String ident,
+            String descr
+    )
+    {
+        return createCachingSource(origin, ident, descr, SourceFactory.CacheType.STORE_ONLY);
     }
 
     private ResourceFormatGeneratorService getResourceFormatGeneratorService() {
