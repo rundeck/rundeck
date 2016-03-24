@@ -162,6 +162,11 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
         return listChildren();
     }
 
+    @Override
+    public Collection<String> listFrameworkProjectNames() {
+        return new TreeSet<>(listChildNames());
+    }
+
     /**
      * @return an existing Project object and returns it
      *

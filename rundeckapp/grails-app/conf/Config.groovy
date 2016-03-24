@@ -118,6 +118,7 @@ log4j={
 //            info 'org.rundeck.web.requests'
 //            debug 'org.rundeck.web.infosec'
             debug 'org.apache.commons.httpclient'
+            info 'grails.app.services.rundeck.services.ProjectManagerService'
             off 'h2database'
         }
     }

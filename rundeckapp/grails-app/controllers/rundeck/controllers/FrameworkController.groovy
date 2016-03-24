@@ -1336,14 +1336,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }
 
             if (!errors) {
-                def projectName = frameworkService.getFrameworkProject(project).name
-                def result = userService.storeFilterPref(session.user, [project: projectName])
+                def result = userService.storeFilterPref(session.user, [project: project])
                 flash.message = "Project ${project} saved"
 
                 resourcesPasswordFieldsService.reset()
                 fcopyPasswordFieldsService.reset()
                 execPasswordFieldsService.reset()
-                return redirect(controller: 'menu', action: 'admin', params: [project: projectName])
+                return redirect(controller: 'menu', action: 'admin', params: [project: project])
             }
         }
         if(errors){
@@ -1842,7 +1841,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if(session.frameworkProjects){
             projects=session.frameworkProjects
         }else{
-            projects = frameworkService.projects(authContext)*.name
+            projects = frameworkService.projectNames(authContext)
             session.frameworkProjects=projects
         }
         [projects:projects,project:params.project] + (params.page?[selectParams:[page:params.page]]:[:])

@@ -39,6 +39,7 @@ class BootStrap {
 
     def timer(String name,Closure clos){
         long bstart=System.currentTimeMillis()
+        log.debug("BEGIN: ${name}")
         def res=clos()
         log.debug("${name} in ${System.currentTimeMillis()-bstart}ms")
         return res
@@ -318,7 +319,7 @@ class BootStrap {
                  logFileStorageService.resumeIncompleteLogStorage(clusterMode ? serverNodeUUID : null)
              }
          }
-         log.debug("Bootstrap finish in ${System.currentTimeMillis()-bstart}ms")
+         log.info("Rundeck startup finished in ${System.currentTimeMillis()-bstart}ms")
      }
 
      def destroy = {

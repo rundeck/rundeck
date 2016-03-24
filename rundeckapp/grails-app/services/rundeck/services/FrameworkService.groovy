@@ -182,7 +182,7 @@ class FrameworkService implements ApplicationContextAware {
      * Return a list of FrameworkProject objects
      */
     def projectNames () {
-        rundeckFramework.frameworkProjectMgr.listFrameworkProjects()*.name
+        rundeckFramework.frameworkProjectMgr.listFrameworkProjectNames()
     }
     def projects (AuthContext authContext) {
         //authorize the list of projects
@@ -194,6 +194,15 @@ class FrameworkService implements ApplicationContextAware {
         }
         def authed = authorizeApplicationResourceSet(authContext, resources, 'read')
         return new ArrayList(authed.collect{projMap[it.name]})
+    }
+    def projectNames (AuthContext authContext) {
+        //authorize the list of projects
+        def resources=[] as Set
+        for (projName in rundeckFramework.frameworkProjectMgr.listFrameworkProjectNames()) {
+            resources << authResourceForProject(projName)
+        }
+        def authed = authorizeApplicationResourceSet(authContext, resources, 'read')
+        return new ArrayList(authed.collect{it.name}).sort()
     }
 
     def existsFrameworkProject(String project) {
@@ -277,20 +286,15 @@ class FrameworkService implements ApplicationContextAware {
      * @param framework
      * @return [readme: "readme content", readmeHTML: "rendered content", motd: "motd content", motdHTML: "readnered content"]
      */
-    def getFrameworkProjectReadmeContents(String project){
-        def project1 = getFrameworkProject(project)
+    def getFrameworkProjectReadmeContents(IRundeckProject project1){
         def result = [:]
-        if(project1.existsFileResource("readme.md")){
-            def baos=new ByteArrayOutputStream()
-            def len=project1.loadFileResource("readme.md",baos)
-            result.readme = baos.toString()
-            result.readmeHTML = result.readme?.decodeMarkdown()
+        if(project1.info?.readme){
+            result.readme = project1.info?.readme
+            result.readmeHTML = project1.info?.readmeHTML?:result.readme?.decodeMarkdown()
         }
-        if(project1.existsFileResource("motd.md")){
-            def baos=new ByteArrayOutputStream()
-            def len=project1.loadFileResource("motd.md",baos)
-            result.motd = baos.toString()
-            result.motdHTML = result.motd?.decodeMarkdown()
+        if(project1.info?.motd){
+            result.motd = project1.info?.motd
+            result.motdHTML = project1.info?.motdHTML?:result.motd?.decodeMarkdown()
         }
 
         return result

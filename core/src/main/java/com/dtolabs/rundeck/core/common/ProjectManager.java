@@ -16,6 +16,12 @@ public interface ProjectManager {
     Collection<IRundeckProject> listFrameworkProjects();
 
     /**
+     * List the project names
+     * @return
+     */
+    Collection<String> listFrameworkProjectNames();
+
+    /**
      * Get the specified existing project
      *
      * @param name Depot name
