@@ -3,6 +3,7 @@ package rundeck.services.nodes
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.IProjectNodes
 import com.dtolabs.rundeck.core.common.ProjectNodeSupport
+import com.dtolabs.rundeck.core.resources.ResourceModelSource
 
 /**
  * Created by greg on 1/15/16.
@@ -10,6 +11,7 @@ import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 class CachedProjectNodes implements IProjectNodes {
     @Delegate
     ProjectNodeSupport nodeSupport
+    ResourceModelSource source
     INodeSet nodes
     boolean doCache
     Date cacheTime
@@ -21,7 +23,7 @@ class CachedProjectNodes implements IProjectNodes {
     }
 
     INodeSet reloadNodeSet() {
-        nodes = nodeSupport.getNodeSet()
+        nodes = source.getNodes()
         nodes
     }
 }

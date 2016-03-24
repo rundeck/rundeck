@@ -1,12 +1,12 @@
 package rundeck.services
 
 import com.codahale.metrics.MetricRegistry
-import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.IProjectNodes
 import com.dtolabs.rundeck.core.common.IProjectNodesFactory
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.resources.SourceFactory
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
@@ -20,8 +20,6 @@ import rundeck.Project
 import rundeck.services.framework.RundeckProjectConfigurable
 import rundeck.services.nodes.CachedProjectNodes
 
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 /**
@@ -71,7 +69,7 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
                         .build(
                     new CacheLoader<String, CachedProjectNodes>() {
                         public CachedProjectNodes load(String key) {
-                            return loadNodes(key,true);
+                            return loadNodes(key,null);
                         }
                     }
             );
@@ -87,7 +85,7 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
                                 .build(
                 new CacheLoader<String, CachedProjectNodes>() {
                     public CachedProjectNodes load(String key) {
-                        return loadNodes(key,true);
+                        return loadNodes(key,null);
                     }
 
                     @Override
@@ -95,7 +93,7 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
                             throws Exception
                     {
                         if (needsReload(key, oldValue)) {
-                            ListenableFutureTask<CachedProjectNodes> task = ListenableFutureTask.create{ loadNodes(key,false) }
+                            ListenableFutureTask<CachedProjectNodes> task = ListenableFutureTask.create{ loadNodes(key,oldValue) }
                             nodeTaskExecutor.execute(task);
                             return task;
                         } else {
@@ -150,32 +148,86 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
         true
     }
 
-    CachedProjectNodes loadNodes(final String project, boolean inBg) {
+    /**
+     * Create the project nodes object for a project.
+     * @param project project name
+     * @param oldValue old value if present, null if this is the first load
+     * @return project nodes object
+     */
+    CachedProjectNodes loadNodes(final String project, final CachedProjectNodes oldValue) {
         def framework = frameworkService.getRundeckFramework()
         def rdprojectconfig = framework.getProjectManager().loadProjectConfig(project)
         log.debug("loadNodes for ${project}... (cacheEnabled: ${isCacheEnabled(rdprojectconfig)})")
 
-
+        /**
+         * base node support object for loading all node data synchronously
+         */
         def nodeSupport = new ProjectNodeSupport(
                 rdprojectconfig,
                 framework.getResourceFormatGeneratorService(),
                 framework.getResourceModelSourceService()
         )
+
+        /**
+         * Use a loading cache to preload data if it is cached on disk
+         */
+        def loadingCache = nodeSupport.createCachingSource(
+                SourceFactory.staticSource(null),
+                "cache",
+                "(cache)",
+                SourceFactory.CacheType.LOAD_ONLY
+        )
+
+        def preloadedNodes = loadingCache.nodes
+
+        log.debug("Preload nodes cache for ${project} size: ${preloadedNodes?.nodes?.size() ?: 0}")
+
+        /**
+         * Create a caching source to write data loaded from nodeSupport to disk when successful
+         */
+        def writingCache = nodeSupport.createCachingSource(
+                ProjectNodeSupport.asModelSource(nodeSupport),
+                "cache",
+                "(cache)",
+                SourceFactory.CacheType.STORE_ONLY
+        )
+
+        /**
+         * actual object used for project node loading, using preloaded node data,
+         * and writing successful loads to disk.  Uses nodeSupport as delegate for other IProjectNodes method calls.
+         */
         def cachedNodes = new CachedProjectNodes(
                 cacheTime: new Date(),
                 nodeSupport: nodeSupport,
-                doCache: isCacheEnabled(rdprojectconfig)
+                doCache: isCacheEnabled(rdprojectconfig),
+                nodes: preloadedNodes,
+                source: writingCache
         )
-        Closure clos = cachedNodes.&reloadNodeSet
-        if(inBg){
-            //run on another thread
-            nodeTaskExecutor.submit{
-                metricService?.withTimer(this.class.name, "project.${project}.loadNodes", clos) ?: clos()
-            }
-        }else{
-            metricService?.withTimer(this.class.name, "project.${project}.loadNodes", clos) ?: clos()
+
+        /**
+         * asynchronous first load, only if there are preloaded cache nodes
+         */
+        def firstLoadInBg = null==oldValue && preloadedNodes?.nodes?.size()>0
+        if(null==oldValue && !firstLoadInBg){
+            log.debug("Empty preload cache, loading nodes synchronously for $project ...")
         }
 
+        Closure clos = {
+            long start=System.currentTimeMillis()
+            def result = cachedNodes.reloadNodeSet()
+            log.debug("Finish reloadNodeSet for ${project} in ${System.currentTimeMillis()-start}")
+            result
+        }
+        if (firstLoadInBg) {
+            //want to return something asap, and have some cache data, so perform first reload in background thread
+            nodeTaskExecutor.submit {
+                metricService?.withTimer(this.class.name, "project.${project}.loadNodes", clos) ?: clos()
+            }
+        } else {
+            //we are refreshing the data in asynch thread already, so can perform this synchronously
+            //or we have no preloaded cache data, so force synchronous first load
+            metricService?.withTimer(this.class.name, "project.${project}.loadNodes", clos) ?: clos()
+        }
 
         cachedNodes
     }
