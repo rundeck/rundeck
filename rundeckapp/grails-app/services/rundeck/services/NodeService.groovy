@@ -157,7 +157,8 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
     CachedProjectNodes loadNodes(final String project, final CachedProjectNodes oldValue) {
         def framework = frameworkService.getRundeckFramework()
         def rdprojectconfig = framework.getProjectManager().loadProjectConfig(project)
-        log.debug("loadNodes for ${project}... (cacheEnabled: ${isCacheEnabled(rdprojectconfig)})")
+        def enabled = isCacheEnabled(rdprojectconfig)
+        log.debug("loadNodes for ${project}... (cacheEnabled: ${enabled})")
 
         /**
          * base node support object for loading all node data synchronously
@@ -168,29 +169,39 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
                 framework.getResourceModelSourceService()
         )
 
-        /**
-         * Use a loading cache to preload data if it is cached on disk
-         */
-        def loadingCache = nodeSupport.createCachingSource(
-                SourceFactory.staticSource(null),
-                "cache",
-                "(cache)",
-                SourceFactory.CacheType.LOAD_ONLY
-        )
 
-        def preloadedNodes = loadingCache.nodes
+        def preloadedNodes = null
+
+        if(enabled){
+            /**
+             * Use a loading cache to preload data if it is cached on disk
+             */
+            def loadingCache = nodeSupport.createCachingSource(
+                    SourceFactory.staticSource(null),
+                    "cache",
+                    "(cache)",
+                    SourceFactory.CacheType.LOAD_ONLY,
+                    false
+            )
+            preloadedNodes = loadingCache.nodes
+
+        }
 
         log.debug("Preload nodes cache for ${project} size: ${preloadedNodes?.nodes?.size() ?: 0}")
 
         /**
          * Create a caching source to write data loaded from nodeSupport to disk when successful
          */
-        def writingCache = nodeSupport.createCachingSource(
-                ProjectNodeSupport.asModelSource(nodeSupport),
-                "cache",
-                "(cache)",
-                SourceFactory.CacheType.STORE_ONLY
-        )
+        def source = ProjectNodeSupport.asModelSource(nodeSupport)
+        if(enabled) {
+            source = nodeSupport.createCachingSource(
+                    source,
+                    "cache",
+                    "(cache)",
+                    SourceFactory.CacheType.STORE_ONLY,
+                    true
+            )
+        }
 
         /**
          * actual object used for project node loading, using preloaded node data,
@@ -199,15 +210,16 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
         def cachedNodes = new CachedProjectNodes(
                 cacheTime: new Date(),
                 nodeSupport: nodeSupport,
-                doCache: isCacheEnabled(rdprojectconfig),
+                doCache: enabled,
                 nodes: preloadedNodes,
-                source: writingCache
+                source: source
         )
 
         /**
-         * asynchronous first load, only if there are preloaded cache nodes
+         * asynchronous first load, unless disabled by configuration
          */
-        def firstLoadInBg = null==oldValue && preloadedNodes?.nodes?.size()>0
+        def asynchronousFirstLoad = configurationService.getBoolean('nodeService.nodeCache.firstLoadAsynch', true)
+        def firstLoadInBg = null==oldValue && (preloadedNodes?.nodes?.size()>0 || asynchronousFirstLoad)
         if(null==oldValue && !firstLoadInBg){
             log.debug("Empty preload cache, loading nodes synchronously for $project ...")
         }
@@ -220,7 +232,7 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
         }
         if (firstLoadInBg) {
             //want to return something asap, and have some cache data, so perform first reload in background thread
-            nodeTaskExecutor.submit {
+            nodeTaskExecutor.execute {
                 metricService?.withTimer(this.class.name, "project.${project}.loadNodes", clos) ?: clos()
             }
         } else {
