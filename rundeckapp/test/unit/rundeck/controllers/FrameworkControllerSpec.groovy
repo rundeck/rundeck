@@ -613,7 +613,6 @@ class FrameworkControllerSpec extends Specification {
             it['project.description'] == 'abc'
         },_) >> [success:true]
 
-        1 * controller.userService.storeFilterPref(_,_)
     }
     def "save project with out description"(){
         setup:
@@ -642,7 +641,6 @@ class FrameworkControllerSpec extends Specification {
             it['project.description'] == ''
         },_) >> [success:true]
 
-        1 * controller.userService.storeFilterPref(_,_)
     }
 
     protected void setupFormTokens(params) {
