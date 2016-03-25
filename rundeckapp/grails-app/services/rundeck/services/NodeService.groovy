@@ -29,7 +29,7 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
     public static final String PROJECT_NODECACHE_DELAY = 'project.nodeCache.delay'
     public static final String PROJECT_NODECACHE_ENABLED = 'project.nodeCache.enabled'
     static transactional = false
-    public static final String DEFAULT_CACHE_SPEC = "refreshAfterWrite=30s"
+    public static final String DEFAULT_CACHE_SPEC = "refreshInterval=30s"
     def metricService
     def frameworkService
     def configurationService
@@ -50,7 +50,7 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
                 PropertyBuilder.builder().with {
                     integer 'delay'
                     title 'Cache Delay'
-                    description 'Delay in seconds.\n\nRefresh results after this many seconds have passed. (Results may be this many seconds old.)'
+                    description 'Delay in seconds, at least 30.\n\nRefresh results after this many seconds have passed. Results may be this many seconds old. Cache refreshes no more frequently that 30s.'
                     required(false)
                     defaultValue '30'
                 }.build()
@@ -115,16 +115,19 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
         def framework = frameworkService.getRundeckFramework()
         def rdprojectconfig = framework.projectManager.loadProjectConfig(project)
         def now = new Date()
-        if(now.time - oldNodes.cacheTime.time < projectNodeCacheDelayConfig(rdprojectconfig)){
+        def delay = projectNodeCacheDelayConfig(rdprojectconfig)
+        log.debug("check needs reload ${project} delay ${delay}, elapsed ${now.time - oldNodes.cacheTime.time}...")
+        if(rdprojectconfig.configLastModifiedTime > oldNodes.cacheTime){
+            log.debug("config changed, forcing node reload for ${project}")
+            //refresh if config has changed
+            return true
+        }
+        if(now.time - oldNodes.cacheTime.time < delay){
+            log.debug("within cache duration, not reloading for ${project}")
             return false
         }
-        Project.withNewSession {
-            Project rdproject = Project.findByName(project)
-            boolean needsReload = rdproject == null ||
-                    oldNodes.projectConfig.configLastModifiedTime == null ||
-                    rdprojectconfig.getConfigLastModifiedTime() > oldNodes.projectConfig.configLastModifiedTime
-            needsReload
-        }
+        log.debug("Elapsed cache duration, will reload for ${project}")
+        return true
     }
 
     /**

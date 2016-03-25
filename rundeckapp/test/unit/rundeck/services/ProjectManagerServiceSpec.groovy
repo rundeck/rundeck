@@ -80,7 +80,7 @@ class ProjectManagerServiceSpec extends Specification {
 
         then:
 
-        1*service.nodeService.getNodes('test1')
+        0*service.nodeService.getNodes('test1')
         result!=null
         'test1'==result.name
         'fwkvalue'==result.getProperty('fwkprop')
@@ -120,7 +120,7 @@ class ProjectManagerServiceSpec extends Specification {
         def result=service.getFrameworkProject('test1')
 
         then:
-        1*service.nodeService.getNodes('test1')
+        0*service.nodeService.getNodes('test1')
         result!=null
         'test1'==result.name
         'fwkvalue'==result.getProperty('fwkprop')
@@ -178,7 +178,7 @@ class ProjectManagerServiceSpec extends Specification {
         def result=service.getFrameworkProject('test1')
 
         then:
-        1*service.nodeService.getNodes('test1')
+        0*service.nodeService.getNodes('test1')
         result!=null
         'test1'==result.name
         'fwkvalue'==result.getProperty('fwkprop')
@@ -222,7 +222,7 @@ class ProjectManagerServiceSpec extends Specification {
         def result=service.getFrameworkProject('test1')
 
         then:
-        1*service.nodeService.getNodes('test1')
+        0*service.nodeService.getNodes('test1')
         result!=null
         'test1'==result.name
         'fwkvalue'==result.getProperty('fwkprop')
@@ -271,7 +271,7 @@ class ProjectManagerServiceSpec extends Specification {
         then:
         1*service.projectCache.invalidate('test1')
         1*service.nodeService.expireProjectNodes('test1')
-        1*service.nodeService.getNodes('test1')
+        0*service.nodeService.getNodes('test1')
 
         result.name=='test1'
         2==result.getProjectProperties().size()
@@ -335,7 +335,7 @@ class ProjectManagerServiceSpec extends Specification {
         then:
         1*service.projectCache.invalidate('test1')
         1*service.nodeService.expireProjectNodes('test1')
-        1*service.nodeService.getNodes('test1')
+        0*service.nodeService.getNodes('test1')
 
         0*service.nodeService._(*_)
         result.name=='test1'
@@ -1156,7 +1156,7 @@ class ProjectManagerServiceSpec extends Specification {
 
         then:
         1*service.nodeService.expireProjectNodes('abc')
-        1*service.nodeService.getNodes('abc')
+        0*service.nodeService.getNodes('abc')
         1*service.projectCache.invalidate('abc')
         Project.findByName('abc')!=null
     }

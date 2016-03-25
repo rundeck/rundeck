@@ -177,7 +177,7 @@ rundeck.projectsStorageType='filesystem'
 rundeck.ajax.compression='gzip'
 rundeck.ajax.executionState.compression.nodeThreshold=500
 
-rundeck.nodeService.nodeCache.spec='refreshAfterWrite=30s'
+rundeck.nodeService.nodeCache.spec='refreshInterval=30s'
 rundeck.nodeService.nodeCache.enabled=true
 
 grails.assets.less.compile = 'less4j'
