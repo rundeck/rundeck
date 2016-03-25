@@ -280,13 +280,15 @@ public class ProjectNodeSupport implements IProjectNodes {
             String descr
     )
     {
-        return createCachingSource(origin, ident, descr, SourceFactory.CacheType.BOTH);
+        return createCachingSource(origin, ident, descr, SourceFactory.CacheType.BOTH, true);
     }
 
     /**
+     * @param logging
      * @param origin origin source
      * @param ident  unique identity for this cached source, used in filename
      * @param descr  description of the source, used in logging
+     * @param logging if true, log cache access
      *
      * @return new source
      */
@@ -294,7 +296,8 @@ public class ProjectNodeSupport implements IProjectNodes {
             ResourceModelSource origin,
             String ident,
             String descr,
-            SourceFactory.CacheType type
+            SourceFactory.CacheType type,
+            final boolean logging
     )
     {
         final File file = getResourceModelSourceFileCacheForType(ident);
@@ -312,14 +315,19 @@ public class ProjectNodeSupport implements IProjectNodes {
 
             String ident1 = "[ResourceModelSource: " + descr + ", project: " + projectConfig.getName() + "]";
             StoreExceptionHandler handler = new StoreExceptionHandler(ident);
+            ResourceModelSourceCache cache = new FileResourceModelSourceCache(
+                    file,
+                    generatorForFormat,
+                    fileSource
+            );
+            if(logging) {
+                cache = new LoggingResourceModelSourceCache(cache, ident1);
+            }
             return SourceFactory.cachedSource(
                     origin,
                     ident1,
                     handler,
-                    new LoggingResourceModelSourceCache(
-                            new FileResourceModelSourceCache(file, generatorForFormat, fileSource),
-                            ident1
-                    ),
+                    cache,
                     type
             );
         } catch (UnsupportedFormatException | ExecutionServiceException e) {
@@ -341,7 +349,7 @@ public class ProjectNodeSupport implements IProjectNodes {
             String descr
     )
     {
-        return createCachingSource(origin, ident, descr, SourceFactory.CacheType.LOAD_ONLY);
+        return createCachingSource(origin, ident, descr, SourceFactory.CacheType.LOAD_ONLY, true);
     }
 
     /**
@@ -357,7 +365,7 @@ public class ProjectNodeSupport implements IProjectNodes {
             String descr
     )
     {
-        return createCachingSource(origin, ident, descr, SourceFactory.CacheType.STORE_ONLY);
+        return createCachingSource(origin, ident, descr, SourceFactory.CacheType.STORE_ONLY, true);
     }
 
     private ResourceFormatGeneratorService getResourceFormatGeneratorService() {
