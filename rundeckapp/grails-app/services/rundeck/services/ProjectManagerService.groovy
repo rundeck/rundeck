@@ -663,7 +663,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             return null
         }
         long start=System.currentTimeMillis()
-        log.info("Loading project defintion for ${project}...")
+        log.info("Loading project definition for ${project}...")
         def rdproject = new RundeckProject(loadProjectConfig(project), this)
         //preload cached readme/motd
         String readme = readCachedProjectFileAsAstring(project,"readme.md")
