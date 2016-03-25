@@ -903,6 +903,9 @@ function _initTokenRefresh() {
 }
 (function(){
     if(typeof(jQuery)=='function'){
+        jQuery.ajaxSetup({
+            headers: {'x-rundeck-ajax': 'true'}
+        });
         jQuery(document).ready(function () {
             jQuery.support.transition = false;
             jQuery('.has_tooltip').tooltip({});
