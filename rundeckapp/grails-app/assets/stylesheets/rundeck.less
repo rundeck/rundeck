@@ -691,7 +691,7 @@ section{
 
 // clock icon in scheduled job view is gray if job will not fire
 .scheduletime{
-  .glyphicon{
+  > .glyphicon:first-child {
     color:@brand-success;
   }
   &.disabled .glyphicon, &.disabled .detail{
@@ -720,7 +720,7 @@ section{
   table.nodesTable th{
     .text-muted();
   }
-  table.nodesTable tbody.subattrs td{
+  table.nodesTable tbody.subattrs td,table.nodesTable tr.subattrs td{
     background-color: @table-bg-accent;
   }
 
@@ -1321,6 +1321,12 @@ section{
     content: " server " "\2022" " ";
     padding-left: 18px;
   }
+  .text-parenthetical:before{
+    content: '(';
+  }
+  .text-parenthetical:after{
+    content: ')';
+  }
 
   //search icons
   .hover-action-holder {
@@ -1585,6 +1591,8 @@ pre.filtererror{
 
 //version identity
 .rundeck-version-identity,.rundeck-server-uuid{
+  text-wrap: none;
+  white-space: nowrap;
   .version-icon{
     .badge();
     background-color: #eee;

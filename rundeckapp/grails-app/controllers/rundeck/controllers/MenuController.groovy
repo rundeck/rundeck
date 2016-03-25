@@ -1,6 +1,7 @@
 package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.app.support.BaseQuery
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
@@ -21,6 +22,8 @@ import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProvide
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.ScheduledExecutionFilter
@@ -39,11 +42,12 @@ import rundeck.services.PluginService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import rundeck.services.UserService
+import rundeck.services.framework.RundeckProjectConfigurable
 
 import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 
-class MenuController extends ControllerBase{
+class MenuController extends ControllerBase implements ApplicationContextAware{
     FrameworkService frameworkService
     ExecutionService executionService
     UserService userService
@@ -59,6 +63,7 @@ class MenuController extends ControllerBase{
     def quartzScheduler
     def ApiService apiService
     def AuthorizationService authorizationService
+    def ApplicationContext applicationContext
     static allowedMethods = [
             deleteJobfilter:'POST',
             storeJobfilter:'POST',
@@ -198,6 +203,9 @@ class MenuController extends ControllerBase{
         return redirect(controller:'framework',action:'nodes', params: [project: params.project])
     }
     
+    def clearJobsFilter = { ScheduledExecutionQuery query ->
+        return redirect(action: 'jobs', params: [project: params.project])
+    }
     def jobs = {ScheduledExecutionQuery query ->
         
         def User u = userService.findOrCreateUser(session.user)
@@ -263,6 +271,8 @@ class MenuController extends ControllerBase{
         }
         if(query && !query.projFilter && params.project) {
             query.projFilter = params.project
+        }
+        if(query && query.projFilter){
             authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
         } else {
             authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -318,6 +328,11 @@ class MenuController extends ControllerBase{
             results.paginateParams['filterName']=usedFilter
         }
         results.params=params
+
+        def remoteClusterNodeUUID=null
+        if (frameworkService.isClusterModeEnabled()) {
+            results.serverClusterNodeUUID = frameworkService.getServerUUID()
+        }
         log.debug("jobsFragment(tot): "+(System.currentTimeMillis()-start));
         return results
     }
@@ -352,7 +367,6 @@ class MenuController extends ControllerBase{
     }
     private def listWorkflows(ScheduledExecutionQuery query,AuthContext authContext,String user) {
         long start=System.currentTimeMillis()
-        def projects = frameworkService.projects(authContext)
         if(null!=query){
             query.configureFilter()
         }
@@ -369,15 +383,6 @@ class MenuController extends ControllerBase{
         def nextExecutions=scheduledExecutionService.nextExecutionTimes(allScheduled)
         def clusterMap=scheduledExecutionService.clusterScheduledJobs(allScheduled)
         log.debug("listWorkflows(nextSched): "+(System.currentTimeMillis()-rest));
-        long running=System.currentTimeMillis()
-        
-        //find currently running executions
-        def runlist = Execution.findAllByDateCompletedIsNullAndScheduledExecutionIsNotNull()
-        def nowrunning=[:]
-        runlist.each{
-            nowrunning[it.scheduledExecution.id.toString()]=it.id.toString()
-        }
-        log.debug("listWorkflows(running): "+(System.currentTimeMillis()-running));
         long preeval=System.currentTimeMillis()
 
         //collect all jobs and authorize the user for the set of available Job actions
@@ -464,13 +469,11 @@ class MenuController extends ControllerBase{
         log.debug("listWorkflows(total): "+(System.currentTimeMillis()-start));
 
         return [
-        projects:projects,
         nextScheduled:schedlist,
         nextExecutions: nextExecutions,
                 clusterMap: clusterMap,
         jobauthorizations:jobauthorizations,
         authMap:authorizemap,
-        nowrunning: nowrunning,
         jobgroups:jobgroups,
         paginateParams:finishq.paginateParams,
         displayParams:finishq.displayParams,
@@ -580,7 +583,7 @@ class MenuController extends ControllerBase{
 //        }
 
     }
-    def admin={
+    def admin(){
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
@@ -633,6 +636,18 @@ class MenuController extends ControllerBase{
                 }
             }
 
+        Map<String,RundeckProjectConfigurable> projectConfigurableBeans=applicationContext.getBeansOfType(RundeckProjectConfigurable)
+
+        Map<String,Map> extraConfig=[:]
+        projectConfigurableBeans.each { k, v ->
+            //construct existing values from project properties
+            def values=Validator.demapProperties(fproject.getProjectProperties(),v.getPropertiesMapping(), true)
+            extraConfig[k]=[
+                    configurable:v,
+                    values:values,
+                    prefix:"extraConfig.${k}."
+            ]
+        }
             return [configs:configs,
                 resourceModelConfigDescriptions:descriptions,
                 nodeexecconfig:nodeexec,
@@ -643,6 +658,7 @@ class MenuController extends ControllerBase{
                 fileCopyDescriptions: filecopydescs,
                 hasreadme:fproject.existsFileResource("readme.md"),
                 hasmotd:fproject.existsFileResource("motd.md"),
+                    extraConfig:extraConfig
             ]
     }
     def systemConfig(){
@@ -869,6 +885,12 @@ class MenuController extends ControllerBase{
         pluginDescs[storageConverterPluginProviderService.name] = pluginService.listPlugins(StorageConverterPlugin.class, storageConverterPluginProviderService).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
+        pluginDescs[scmService.scmExportPluginProviderService.name]=scmService.listPlugins('export').collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+        pluginDescs[scmService.scmImportPluginProviderService.name]=scmService.listPlugins('import').collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
 
         def defaultScopes=[
                 (framework.getNodeStepExecutorService().name) : PropertyScope.InstanceOnly,
@@ -897,68 +919,219 @@ class MenuController extends ControllerBase{
                 ],
                 (logFileStorageService.executionFileStoragePluginProviderService.name):[
                         description: message(code:"plugin.executionFileStorage.special.description"),
+                ],
+                (scmService.scmExportPluginProviderService.name):[
+                        description: message(code:"plugin.scmExport.special.description"),
+                ],
+                (scmService.scmImportPluginProviderService.name):[
+                        description: message(code:"plugin.scmImport.special.description"),
                 ]
         ]
+        def specialScoping=[
+                (scmService.scmExportPluginProviderService.name):true,
+                (scmService.scmImportPluginProviderService.name):true
+        ]
 
-        [descriptions:pluginDescs,serviceDefaultScopes: defaultScopes, bundledPlugins: bundledPlugins, specialConfiguration: specialConfiguration]
+        [
+                descriptions        : pluginDescs,
+                serviceDefaultScopes: defaultScopes,
+                bundledPlugins      : bundledPlugins,
+                specialConfiguration: specialConfiguration,
+                specialScoping      : specialScoping
+        ]
     }
 
-    def home(){
+    def home() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        Framework framework = frameworkService.rundeckFramework
-        def fprojects = frameworkService.projects(authContext)
-        session.frameworkProjects = fprojects*.name
+        long start = System.currentTimeMillis()
+        def fprojects = frameworkService.projectNames(authContext)
+        session.frameworkProjects = fprojects
+        log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
+        def stats=cachedSummaryProjectStats(fprojects)
+        render(view: 'home2', model: [projectNames: fprojects,execCount:stats.execCount,recentUsers:stats.recentUsers,recentProjects:stats.recentProjects])
+    }
 
+    private def cachedSummaryProjectStats(final List projectNames) {
+        long now = System.currentTimeMillis()
+        if(null==session.summaryProjectStats || session.summaryProjectStats_expire<now){
+            session.summaryProjectStats=loadSummaryProjectStats(projectNames)
+            session.summaryProjectStats_expire=now+ (60 * 1000)
+        }
+        return session.summaryProjectStats
+    }
+    /**
+     *
+     * @param projectNames
+     * @return
+     */
+    private def loadSummaryProjectStats(final List projectNames) {
+        long start=System.currentTimeMillis()
         Calendar n = GregorianCalendar.getInstance()
         n.add(Calendar.DAY_OF_YEAR, -1)
         Date today = n.getTime()
         def summary=[:]
-        fprojects.each { IRundeckProject project->
-            summary[project.name]=[
-                    jobCount: ScheduledExecution.countByProject(project.name),
-                    execCount: Execution.countByProjectAndDateStartedGreaterThan(project.name,today),
-                    description: project.hasProperty("project.description")?project.getProperty("project.description"):''
-            ]
-
-            summary[project.name].userSummary=Execution.createCriteria().list {
-                eq('project',project.name)
-                gt('dateStarted', today)
-                projections {
-                    distinct('user')
-                }
-            }
-            summary[project.name].userCount= summary[project.name].userSummary.size()
-            summary[project.name].readme=frameworkService.getFrameworkProjectReadmeContents(project.name)
-            //authorization
-            summary[project.name].auth = [
-                    jobCreate: frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
-                            AuthConstants.ACTION_CREATE, project.name),
-                    admin: frameworkService.authorizeApplicationResourceAny(authContext,
-                                                                            frameworkService.authResourceForProject(project.name),
-                            [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
-                                    AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE]),
-            ]
+        def projects = []
+        projectNames.each{project->
+            summary[project]=[name: project, execCount: 0, userSummary: [], userCount: 0]
         }
-        def projects = Execution.createCriteria().list {
+        long proj2=System.currentTimeMillis()
+        def projects2 = Execution.createCriteria().list {
             gt('dateStarted', today)
             projections {
-                distinct('project')
+                groupProperty('project')
+                count()
             }
         }
-        def users = Execution.createCriteria().list {
+        proj2=System.currentTimeMillis()-proj2
+        def execCount= 0 //Execution.countByDateStartedGreaterThan( today)
+        projects2.each{val->
+            if(val.size()==2){
+                if(summary[val[0]]) {
+                    summary[val[0].toString()].execCount = val[1]
+                    projects << val[0]
+                    execCount+=val[1]
+                }
+            }
+        }
+
+        long proj3=System.currentTimeMillis()
+        def users2 = Execution.createCriteria().list {
             gt('dateStarted', today)
             projections {
                 distinct('user')
+                property('project')
             }
         }
-        //summarize cross-project details
-        def jobCount = ScheduledExecution.count()
-        def execCount= Execution.countByDateStartedGreaterThan( today)
+        proj3=System.currentTimeMillis()-proj3
+        def users = new HashSet<String>()
+        users2.each{val->
+            if(val.size()==2){
+                if(summary[val[1]]){
+                    summary[val[1]].userSummary<<val[0]
+                    summary[val[1]].userCount=summary[val[1]].userSummary.size()
+                    users.add(val[0])
+                }
+            }
+        }
+
+        log.debug("loadSummaryProjectStats... ${System.currentTimeMillis()-start}, proj2 ${proj2}, proj3 ${proj3}")
+        [summary:summary,recentUsers:users,recentProjects:projects,execCount:execCount]
+    }
+
+    def projectNamesAjax() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        long start = System.currentTimeMillis()
+        def fprojects = frameworkService.projectNames(authContext)
+        session.frameworkProjects = fprojects
+        log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
+
+        render(contentType:'application/json',text:
+                ([projectNames: fprojects] )as JSON
+        )
+    }
+    def homeAjax(BaseQuery paging){
+        if('true'!=request.getHeader('x-rundeck-ajax')) {
+            return redirect(action: 'home')
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        long start=System.currentTimeMillis()
+        //select paged projects to return
+        def fprojects
+        List<String> projectNames = frameworkService.projectNames(authContext)
+        def pagingparams=[:]
+        if (null != paging.max && null != paging.offset) {
+            if (paging.max > 0 && paging.offset < projectNames.size()) {
+
+                def lastIndex = Math.min(projectNames.size() - 1, paging.offset + paging.max - 1)
+                pagingparams = [max: paging.max, offset: paging.offset]
+                if (lastIndex + 1 < projectNames.size()) {
+                    pagingparams.nextoffset = lastIndex + 1
+                } else {
+                    pagingparams.nextoffset = -1
+                }
+                fprojects = projectNames[paging.offset..lastIndex].collect {
+                    frameworkService.getFrameworkProject(it)
+                }
+            } else {
+                fprojects = []
+            }
+        }else if (params.projects) {
+            def selected = [params.projects].flatten()
+            if(selected.size()==1 && selected[0].contains(',')){
+                selected = selected[0].split(',') as List
+            }
+            fprojects = selected.findAll{projectNames.contains(it)}.collect{
+                frameworkService.getFrameworkProject(it)
+            }
+        } else {
+            fprojects = frameworkService.projects(authContext)
+        }
+
+        log.debug("frameworkService.projects(context)... ${System.currentTimeMillis()-start}")
+        start=System.currentTimeMillis()
+
+
+        def allsummary=cachedSummaryProjectStats(projectNames).summary
+        def summary=[:]
+        def durs=[]
+        fprojects.each { IRundeckProject project->
+            long sumstart=System.currentTimeMillis()
+            summary[project.name]=allsummary[project.name]
+
+            summary[project.name].description= project.hasProperty("project.description")?project.getProperty("project.description"):''
+            if(!params.refresh) {
+                summary[project.name].readme = frameworkService.getFrameworkProjectReadmeContents(project)
+                //authorization
+                summary[project.name].auth = [
+                        jobCreate: frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
+                                AuthConstants.ACTION_CREATE, project.name),
+                        admin: frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                                frameworkService.authResourceForProject(project.name),
+                                [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
+                                        AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE]),
+                ]
+            }
+            durs<<(System.currentTimeMillis()-sumstart)
+        }
+
+
+        if(durs.size()>0) {
+            def sum=durs.inject(0) { a, b -> a + b }
+            log.debug("summarize avg/proj (${durs.size()}) ${sum}ms ... ${sum / durs.size()}")
+        }
+        render(contentType:'application/json',text:
+                (pagingparams + [
+                        projects : summary.values(),
+                ] )as JSON
+        )
+    }
+    def homeSummaryAjax(){
+        if('true'!=request.getHeader('x-rundeck-ajax')) {
+            return redirect(action: 'home')
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        Framework framework = frameworkService.rundeckFramework
+        long start=System.currentTimeMillis()
+        //select paged projects to return
+        List<String> projectNames = frameworkService.projectNames(authContext)
+
+        log.debug("frameworkService.homeSummaryAjax(context)... ${System.currentTimeMillis()-start}")
+        start=System.currentTimeMillis()
+        def allsummary=cachedSummaryProjectStats(projectNames)
+        def projects=allsummary.recentProjects
+        def users=allsummary.recentUsers
+        def execCount=allsummary.execCount
+
         def fwkNode = framework.getFrameworkNodeName()
-        [jobCount:jobCount,execCount:execCount,projectSummary:projects,projCount: fprojects.size(),userSummary:users,
-                userCount:users.size(),projectSummaries:summary,
-                frameworkNodeName: fwkNode,
-        ]
+
+        render(contentType:'application/json',text:
+                ( [
+                        execCount        : execCount,
+                        recentUsers      : users,
+                        recentProjects   : projects,
+                        frameworkNodeName: fwkNode
+                ] )as JSON
+        )
     }
 
     /**
@@ -977,9 +1150,9 @@ class MenuController extends ControllerBase{
                     code: 'api.error.parameter.required', args: ['project']])
 
         }
+
         query.projFilter = params.project
         //test valid project
-        Framework framework = frameworkService.getRundeckFramework()
 
         def exists=frameworkService.existsFrameworkProject(params.project)
         if(!exists){
@@ -993,6 +1166,11 @@ class MenuController extends ControllerBase{
                 return
             }
         }
+        if(null!=query.scheduledFilter || null!=query.serverNodeUUIDFilter){
+            if (!apiService.requireVersion(request,response,ApiRequestFilters.V17)) {
+                return
+            }
+        }
 
         if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorFormat(response,[
@@ -1001,13 +1179,39 @@ class MenuController extends ControllerBase{
                     args: [response.format]
             ])
         }
+        if(query.hasErrors()){
+            return apiService.renderErrorFormat(response,
+                                                [
+                                                        status: HttpServletResponse.SC_BAD_REQUEST,
+                                                        code: "api.error.parameter.error",
+                                                        args: [query.errors.allErrors.collect { message(error: it) }.join("; ")]
+                                                ])
+        }
         def results = jobsFragment(query)
-        withFormat{
+
+        respondApiJobsList(results.nextScheduled)
+    }
+
+    private void respondApiJobsList(List<ScheduledExecution> results) {
+        def clusterModeEnabled = frameworkService.isClusterModeEnabled()
+        def serverNodeUUID = frameworkService.serverUUID
+        withFormat {
             xml {
                 return apiService.renderSuccessXml(request, response) {
-                    delegate.'jobs'(count: results.nextScheduled.size()) {
-                        results.nextScheduled.each { ScheduledExecution se ->
-                            job(id: se.extid, href:apiService.apiHrefForJob(se),permalink:apiService.guiHrefForJob(se)) {
+                    delegate.'jobs'(count: results.size()) {
+                        results.each { ScheduledExecution se ->
+                            def jobparams = [id: se.extid, href: apiService.apiHrefForJob(se),
+                                             permalink: apiService.guiHrefForJob(se)]
+                            if (request.api_version >= ApiRequestFilters.V17) {
+                                jobparams.scheduled = se.scheduled
+                                jobparams.scheduleEnabled = se.scheduleEnabled
+                                jobparams.enabled = se.executionEnabled
+                                if (clusterModeEnabled && se.scheduled) {
+                                    jobparams.serverNodeUUID = se.serverNodeUUID
+                                    jobparams.serverOwner = jobparams.serverNodeUUID == serverNodeUUID
+                                }
+                            }
+                            job(jobparams) {
                                 name(se.jobName)
                                 group(se.groupPath)
                                 project(se.project)
@@ -1017,22 +1221,78 @@ class MenuController extends ControllerBase{
                     }
                 }
             }
-            json{
+            json {
                 return apiService.renderSuccessJson(response) {
-                    results.nextScheduled.each { ScheduledExecution se ->
-                        element(
-                                id: se.extid,
-                                name: (se.jobName),
-                                group: (se.groupPath),
-                                project: (se.project),
-                                description: (se.description),
-                                href: apiService.apiHrefForJob(se),
-                                permalink: apiService.guiHrefForJob(se)
-                        )
+                    results.each { ScheduledExecution se ->
+                        def jobparams = [id         : se.extid,
+                                         name       : (se.jobName),
+                                         group      : (se.groupPath),
+                                         project    : (se.project),
+                                         description: (se.description),
+                                         href       : apiService.apiHrefForJob(se),
+                                         permalink  : apiService.guiHrefForJob(se)]
+                        if (request.api_version >= ApiRequestFilters.V17) {
+                            jobparams.scheduled = se.scheduled
+                            jobparams.scheduleEnabled = se.scheduleEnabled
+                            jobparams.enabled = se.executionEnabled
+                            if (clusterModeEnabled && se.scheduled) {
+                                jobparams.serverNodeUUID = se.serverNodeUUID
+                                jobparams.serverOwner = jobparams.serverNodeUUID == serverNodeUUID
+                            }
+                        }
+                        element(jobparams)
                     }
                 }
             }
         }
+    }
+    /**
+     * Require server UUID and list all owned jobs
+     * /api/$api_version/scheduler/server/$uuid/jobs and
+     * /api/$api_version/scheduler/jobs
+     * @return
+     */
+    def apiSchedulerListJobs(String uuid, boolean currentServer) {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V17)) {
+            return
+        }
+        if(currentServer) {
+            uuid = frameworkService.serverUUID
+        }
+        def query = new ScheduledExecutionQuery(serverNodeUUIDFilter: uuid, scheduledFilter: true)
+        query.validate()
+        if (query.hasErrors()) {
+            return apiService.renderErrorFormat(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code: "api.error.parameter.error",
+                            args: [query.errors.allErrors.collect { message(error: it) }.join("; ")]
+                    ]
+            )
+        }
+
+
+        def list = ScheduledExecution.findAllByServerNodeUUID(uuid)
+        //filter authorized jobs
+        Map<String, UserAndRolesAuthContext> projectAuths = [:]
+        def authForProject = { String project ->
+            if (projectAuths[project]) {
+                return projectAuths[project]
+            }
+            projectAuths[project] = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+            projectAuths[project]
+        }
+        def authorized = list.findAll { ScheduledExecution se ->
+            frameworkService.authorizeProjectJobAll(
+                    authForProject(se.project),
+                    se,
+                    [AuthConstants.ACTION_READ],
+                    se.project
+            )
+        }
+
+        respondApiJobsList(authorized)
     }
     /**
      * API: /api/2/project/NAME/jobs, version 2

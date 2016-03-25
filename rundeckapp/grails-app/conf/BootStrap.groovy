@@ -37,7 +37,16 @@ class BootStrap {
     def scmService
     HealthCheckRegistry healthCheckRegistry
 
+    def timer(String name,Closure clos){
+        long bstart=System.currentTimeMillis()
+        log.debug("BEGIN: ${name}")
+        def res=clos()
+        log.debug("${name} in ${System.currentTimeMillis()-bstart}ms")
+        return res
+    }
+
      def init = { ServletContext servletContext ->
+         long bstart=System.currentTimeMillis()
          def appname=messageSource.getMessage('main.app.name',null,'',null) ?: messageSource.getMessage('main.app.default.name',null,'',null) ?: 'Rundeck'
          log.info("Starting ${appname} ${grailsApplication.metadata['build.ident']}...")
          /*filterInterceptor.handlers.sort { FilterToHandlerAdapter handler1,
@@ -170,7 +179,9 @@ class BootStrap {
                  }
              }
 
-            def result=frameworkService.extractEmbeddedPlugins(grailsApplication)
+            def result=timer("FrameworkService extractEmbeddedPlugins"){
+                frameworkService.extractEmbeddedPlugins(grailsApplication)
+            }
             if(!result.success){
                 log.error("Failed extracting embedded plugins: "+result.message)
                 result?.logs?.each {
@@ -185,14 +196,19 @@ class BootStrap {
             //import filesystem projects if using DB storage
             if((grailsApplication.config.rundeck?.projectsStorageType?:'db') == 'db'){
                 log.debug("importing existing filesystem projects")
-                projectManagerService.importProjectsFromProjectManager(filesystemProjectManager)
+                timer("ProjectManagerService importProjectsFromProjectManager"){
+                    projectManagerService.importProjectsFromProjectManager(filesystemProjectManager)
+                }
             }
          }
 
          //initialize manually to avoid circular reference problem with spring
-         workflowService.initialize()
-         scmService.initialize()
-
+         timer("Initialized WorkflowService"){
+             workflowService.initialize()
+         }
+         timer("Initialized ScmService"){
+             scmService.initialize()
+         }
 
          if(grailsApplication.config.loglevel.default){
              servletContext.setAttribute("LOGLEVEL_DEFAULT", grailsApplication.config.loglevel.default)
@@ -272,14 +288,9 @@ class BootStrap {
 
          //configure System.out and System.err so that remote command execution will write to a specific print stream
          if(Environment.getCurrent() != Environment.TEST){
-             PrintStream oldout = System.out;
-             PrintStream olderr = System.err;
 
-             def ThreadBoundOutputStream newOut = new ThreadBoundOutputStream(oldout)
-             def ThreadBoundOutputStream newErr = new ThreadBoundOutputStream(olderr)
-
-             System.setOut(new PrintStream(newOut));
-             System.setErr(new PrintStream(newErr));
+             def ThreadBoundOutputStream newOut = ThreadBoundOutputStream.bindSystemOut()
+             def ThreadBoundOutputStream newErr = ThreadBoundOutputStream.bindSystemErr()
 
              executionService.sysThreadBoundOut=newOut
              executionService.sysThreadBoundErr=newErr
@@ -287,16 +298,28 @@ class BootStrap {
              executionUtilService.sysThreadBoundErr=newErr
              executionService.defaultLogLevel=servletContext.getAttribute("LOGLEVEL_DEFAULT")
 
-             reportService.fixReportStatusStrings()
-             executionService.cleanupRunningJobs(clusterMode ? serverNodeUUID : null)
+
+             timer("reportService.fixReportStatusStrings"){
+                 reportService.fixReportStatusStrings()
+             }
+             timer("executionService.cleanupRunningJobs"){
+                 executionService.cleanupRunningJobs(clusterMode ? serverNodeUUID : null)
+             }
              if(clusterMode){
-                scheduledExecutionService.claimScheduledJobs(serverNodeUUID)
+                 timer("scheduledExecutionService.claimScheduledJobs"){
+                     scheduledExecutionService.claimScheduledJobs(serverNodeUUID)
+                 }
              }
              if(configurationService.executionModeActive) {
-                 scheduledExecutionService.rescheduleJobs(clusterMode ? serverNodeUUID : null)
+                 timer("scheduledExecutionService.rescheduleJobs"){
+                     scheduledExecutionService.rescheduleJobs(clusterMode ? serverNodeUUID : null)
+                 }
              }
-             logFileStorageService.resumeIncompleteLogStorage(clusterMode ? serverNodeUUID : null)
+             timer("logFileStorageService.resumeIncompleteLogStorage"){
+                 logFileStorageService.resumeIncompleteLogStorage(clusterMode ? serverNodeUUID : null)
+             }
          }
+         log.info("Rundeck startup finished in ${System.currentTimeMillis()-bstart}ms")
      }
 
      def destroy = {

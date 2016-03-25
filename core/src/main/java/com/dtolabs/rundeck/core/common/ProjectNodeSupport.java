@@ -31,7 +31,7 @@ public class ProjectNodeSupport implements IProjectNodes {
     public static final String PROJECT_RESOURCES_ALLOWED_URL_PREFIX = "project.resources.allowedURL.";
     public static final String FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX = "framework.resources.allowedURL.";
 
-    private IRundeckProject project;
+    private IRundeckProjectConfig projectConfig;
     private ArrayList<Exception> nodesSourceExceptions;
     private long nodesSourcesLastReload = -1L;
     private List<ResourceModelSource> nodesSourceList;
@@ -39,12 +39,12 @@ public class ProjectNodeSupport implements IProjectNodes {
     private ResourceModelSourceService resourceModelSourceService;
 
     public ProjectNodeSupport(
-            final IRundeckProject project,
+            final IRundeckProjectConfig projectConfig,
             final ResourceFormatGeneratorService resourceFormatGeneratorService,
             final ResourceModelSourceService resourceModelSourceService
     )
     {
-        this.project = project;
+        this.projectConfig = projectConfig;
         this.resourceFormatGeneratorService = resourceFormatGeneratorService;
         this.resourceModelSourceService = resourceModelSourceService;
     }
@@ -65,8 +65,8 @@ public class ProjectNodeSupport implements IProjectNodes {
      * @return a NodeSetMerge
      */
     private NodeSetMerge getNodeSetMerge() {
-        if (project.hasProperty(PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES) && "false".equals(
-                project.getProperty
+        if (projectConfig.hasProperty(PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES) && "false".equals(
+                projectConfig.getProperty
                         (PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES))) {
             return new AdditiveListNodeSet();
         }
@@ -91,14 +91,7 @@ public class ProjectNodeSupport implements IProjectNodes {
                 } else {
                     list.addNodeSet(nodes);
                 }
-            } catch (ResourceModelSourceException e) {
-                logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
-                nodesSourceExceptions.add(
-                        new ResourceModelSourceException(
-                                "Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e
-                        )
-                );
-            } catch (RuntimeException e) {
+            } catch (ResourceModelSourceException | RuntimeException e) {
                 logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
                 nodesSourceExceptions.add(
                         new ResourceModelSourceException(
@@ -128,7 +121,7 @@ public class ProjectNodeSupport implements IProjectNodes {
 
     private synchronized Collection<ResourceModelSource> getResourceModelSources() {
         //determine if sources need to be reloaded
-        final long lastMod = project.getConfigLastModifiedTime()!=null?project.getConfigLastModifiedTime().getTime():0;
+        final long lastMod = projectConfig.getConfigLastModifiedTime()!=null? projectConfig.getConfigLastModifiedTime().getTime():0;
         if (lastMod > nodesSourcesLastReload) {
             nodesSourceList = new ArrayList<ResourceModelSource>();
             loadResourceModelSources();
@@ -139,7 +132,7 @@ public class ProjectNodeSupport implements IProjectNodes {
     private void loadResourceModelSources() {
         nodesSourceExceptions = new ArrayList<Exception>();
         //generate Configuration for file source
-        if (project.hasProperty(PROJECT_RESOURCES_FILE_PROPERTY)) {
+        if (projectConfig.hasProperty(PROJECT_RESOURCES_FILE_PROPERTY)) {
             try {
                 final Properties config = createFileSourceConfiguration();
                 logger.info("Source (project.resources.file): loading with properties: " + config);
@@ -149,7 +142,7 @@ public class ProjectNodeSupport implements IProjectNodes {
                 nodesSourceExceptions.add(e);
             }
         }
-        if (project.hasProperty(PROJECT_RESOURCES_URL_PROPERTY)) {
+        if (projectConfig.hasProperty(PROJECT_RESOURCES_URL_PROPERTY)) {
             try {
                 final Properties config = createURLSourceConfiguration();
                 logger.info("Source (project.resources.url): loading with properties: " + config);
@@ -181,21 +174,21 @@ public class ProjectNodeSupport implements IProjectNodes {
             i++;
         }
 
-        Date configLastModifiedTime = project.getConfigLastModifiedTime();
+        Date configLastModifiedTime = projectConfig.getConfigLastModifiedTime();
         nodesSourcesLastReload = configLastModifiedTime!=null?configLastModifiedTime.getTime():-1;
     }
 
     private Properties createURLSourceConfiguration() {
         final URLResourceModelSource.Configuration build = URLResourceModelSource.Configuration.build();
-        build.url(project.getProperty(PROJECT_RESOURCES_URL_PROPERTY));
-        build.project(project.getName());
+        build.url(projectConfig.getProperty(PROJECT_RESOURCES_URL_PROPERTY));
+        build.project(projectConfig.getName());
 
         return build.getProperties();
     }
 
     private File getResourceModelSourceFileCacheForType(String ident) {
-        String varDir = project.getProperty("framework.var.dir");
-        File file = new File(varDir, "resourceModelSourceCache/" + project.getName() + "/" + ident + ".xml");
+        String varDir = projectConfig.getProperty("framework.var.dir");
+        File file = new File(varDir, "resourceModelSourceCache/" + projectConfig.getName() + "/" + ident + ".xml");
         if (!file.getParentFile().exists() && !file.getParentFile().mkdirs()) {
             logger.warn("Failed to create cache dirs for source file cache");
         }
@@ -222,7 +215,7 @@ public class ProjectNodeSupport implements IProjectNodes {
             ResourceFormatGenerator generatorForFormat = resourceFormatGeneratorService.getGeneratorForFormat
                     (ResourceXMLFormatGenerator.SERVICE_PROVIDER_TYPE);
 
-            String ident1 = "[ResourceModelSource: " + descr + ", project: " + project.getName() + "]";
+            String ident1 = "[ResourceModelSource: " + descr + ", project: " + projectConfig.getName() + "]";
             return new CachingResourceModelSource(
                     sourceForConfiguration,
                     ident1,
@@ -255,7 +248,7 @@ public class ProjectNodeSupport implements IProjectNodes {
 
         final ResourceModelSourceService nodesSourceService =
                 getResourceModelSourceService();
-        configuration.put("project",project.getName());
+        configuration.put("project", projectConfig.getName());
         ResourceModelSource sourceForConfiguration = nodesSourceService.getSourceForConfiguration(type, configuration);
 
         if (useCache) {
@@ -282,7 +275,7 @@ public class ProjectNodeSupport implements IProjectNodes {
         if (null != format) {
             build.format(format);
         }
-        build.project(project.getName());
+        build.project(projectConfig.getName());
         build.generateFileAutomatically(generate);
         build.includeServerNode(includeServerNode);
 
@@ -292,11 +285,11 @@ public class ProjectNodeSupport implements IProjectNodes {
 
     private Properties createFileSourceConfiguration() {
         String format = null;
-        if (project.hasProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY)) {
-            format = project.getProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY);
+        if (projectConfig.hasProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY)) {
+            format = projectConfig.getProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY);
         }
         return generateFileSourceConfigurationProperties(
-                project.getProperty(PROJECT_RESOURCES_FILE_PROPERTY), format, true,
+                projectConfig.getProperty(PROJECT_RESOURCES_FILE_PROPERTY), format, true,
                 true
         );
     }
@@ -310,7 +303,7 @@ public class ProjectNodeSupport implements IProjectNodes {
      */
     @Override
     public synchronized List<Map<String, Object>> listResourceModelConfigurations(){
-        Map propertiesMap = project.getProperties();
+        Map propertiesMap = projectConfig.getProperties();
         Properties properties = new Properties();
         properties.putAll(propertiesMap);
         return listResourceModelConfigurations(properties);
@@ -373,7 +366,7 @@ public class ProjectNodeSupport implements IProjectNodes {
      *
      */
     private boolean shouldUpdateNodesResourceFile() {
-        return project.hasProperty(PROJECT_RESOURCES_URL_PROPERTY);
+        return projectConfig.hasProperty(PROJECT_RESOURCES_URL_PROPERTY);
     }
     /**
      * Conditionally update the nodes resources file if a URL source is defined for it and return
@@ -387,7 +380,7 @@ public class ProjectNodeSupport implements IProjectNodes {
     @Override
     public boolean updateNodesResourceFile(final String nodesResourcesFilePath) throws UpdateUtils.UpdateException {
         if (shouldUpdateNodesResourceFile()) {
-            updateNodesResourceFileFromUrl(project.getProperty(PROJECT_RESOURCES_URL_PROPERTY), null, null,nodesResourcesFilePath);
+            updateNodesResourceFileFromUrl(projectConfig.getProperty(PROJECT_RESOURCES_URL_PROPERTY), null, null,nodesResourcesFilePath);
             return true;
         }
         return false;
@@ -441,7 +434,7 @@ public class ProjectNodeSupport implements IProjectNodes {
      */
     boolean isAllowedProviderURL(final String providerURL) {
         //whitelist the configured providerURL
-        if (project.hasProperty(PROJECT_RESOURCES_URL_PROPERTY) && project.getProperty(PROJECT_RESOURCES_URL_PROPERTY).equals(
+        if (projectConfig.hasProperty(PROJECT_RESOURCES_URL_PROPERTY) && projectConfig.getProperty(PROJECT_RESOURCES_URL_PROPERTY).equals(
                 providerURL)) {
             return true;
         }
@@ -449,9 +442,9 @@ public class ProjectNodeSupport implements IProjectNodes {
         int i = 0;
         boolean projpass = false;
         boolean setproj = false;
-        while (project.hasProperty(PROJECT_RESOURCES_ALLOWED_URL_PREFIX + i)) {
+        while (projectConfig.hasProperty(PROJECT_RESOURCES_ALLOWED_URL_PREFIX + i)) {
             setproj = true;
-            final String regex = project.getProperty(PROJECT_RESOURCES_ALLOWED_URL_PREFIX + i);
+            final String regex = projectConfig.getProperty(PROJECT_RESOURCES_ALLOWED_URL_PREFIX + i);
             final Pattern pat = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
             final Matcher matcher = pat.matcher(providerURL);
             if (matcher.matches()) {
@@ -469,7 +462,7 @@ public class ProjectNodeSupport implements IProjectNodes {
         //check framework props
         i = 0;
 
-        final boolean setframework = project.hasProperty(FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX + i);
+        final boolean setframework = projectConfig.hasProperty(FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX + i);
         if (!setframework && projpass) {
             //unset in framework.props, allowed by project.props
             return true;
@@ -478,8 +471,8 @@ public class ProjectNodeSupport implements IProjectNodes {
             //unset in both
             return false;
         }
-        while (project.hasProperty(FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX + i)) {
-            final String regex = project.getProperty(FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX + i);
+        while (projectConfig.hasProperty(FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX + i)) {
+            final String regex = projectConfig.getProperty(FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX + i);
             final Pattern pat = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
             final Matcher matcher = pat.matcher(providerURL);
             if (matcher.matches()) {
@@ -542,7 +535,7 @@ public class ProjectNodeSupport implements IProjectNodes {
             throw new UpdateUtils.UpdateException("Unable to generate resources file: " + e.getMessage(), e);
         }
 
-        updateNodesResourceFile(resfile,nodesResourceFilePath);
+        updateNodesResourceFile(resfile, nodesResourceFilePath);
         if (!resfile.delete()) {
             logger.warn("failed to remove temp file: " + resfile);
         }
@@ -562,5 +555,7 @@ public class ProjectNodeSupport implements IProjectNodes {
     }
 
 
-
+    public IRundeckProjectConfig getProjectConfig() {
+        return projectConfig;
+    }
 }

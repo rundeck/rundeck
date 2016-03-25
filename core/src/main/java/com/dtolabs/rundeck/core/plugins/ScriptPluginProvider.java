@@ -23,6 +23,8 @@
 */
 package com.dtolabs.rundeck.core.plugins;
 
+import com.dtolabs.rundeck.core.plugins.metadata.PluginMeta;
+
 import java.io.File;
 import java.util.Map;
 
@@ -73,4 +75,12 @@ public interface ScriptPluginProvider {
      * @return any interpreter specification to run the script
      */
     public Map<String,Object> getMetadata();
+
+    /**
+     * Metadata about plugin file
+     * @return
+     */
+    public PluginMeta getPluginMeta();
+
+    boolean getDefaultMergeEnvVars();
 }

@@ -811,6 +811,7 @@ public class AclTool extends BaseTool {
     static final Set<String> appTypes = new HashSet<>(
             Arrays.asList(
                     ACLConstants.TYPE_PROJECT,
+                    ACLConstants.TYPE_PROJECT_ACL,
                     ACLConstants.TYPE_STORAGE
             )
     );
@@ -1137,6 +1138,10 @@ public class AclTool extends BaseTool {
                     "    *Note: Project create requires additional " +
                     optionDisplayString(GENERIC_OPT) +
                     " level access.\n" +
+                    "  Project ACLs: " +
+                    optionDisplayString(PROJECT_ACL_OPT) +
+                    "\n" +
+                    "    CRUD access for the project ACLs.\n" +
                     "  Storage: " +
                     optionDisplayString(STORAGE_OPT) +
                     "\n" +

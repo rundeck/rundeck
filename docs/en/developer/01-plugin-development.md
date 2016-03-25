@@ -297,7 +297,7 @@ The file `plugin.yaml` must have this structure:
  
 name: plugin name
 version: plugin version
-rundeckPluginVersion: 1.0
+rundeckPluginVersion: 1.1
 author: author name
 date: release date
 providers:
@@ -313,7 +313,7 @@ The main metadata that is required:
 
 * `name` - name for the plugin
 * `version` - version number of the plugin
-* `rundeckPluginVersion` - Rundeck Plugin type version, currently "1.0"
+* `rundeckPluginVersion` - Rundeck Plugin type version, currently "1.1"
 * `providers` - list of provider metadata maps
 
 These are optional:
@@ -323,6 +323,15 @@ These are optional:
 
 This provides the necessary metadata about the plugin, including one or more 
 entries in the `providers` list to declare those providers defined in the plugin.
+
+### Plugin version changes
+
+The value of `rundeckPluginVersion` defines some features of the loaded plugin.
+
+* `1.1` 
+    * uses a default of `true` for `mergeEnvironment` (see below)
+* `1.0` first release
+    * uses a default of `false` for `mergeEnvironment` (see below)
 
 ### Provider metadata
 
@@ -353,6 +362,11 @@ Optional entries:
      `${interpreter} "${file} ${arg1} ${arg2}..."`. If false,
     the execution will be done by passing the file and args as separate arguments:
      `${interpreter} ${file} ${arg1} ${arg2}...`
+* `mergeEnvironment` - boolean, if true (default for `rundeckPluginVersion: 1.1+`), when the script
+  is executed the Environment variables from the Rundeck server
+  will be merged with the context environment variables provided to the script.
+  If false (default for `rundeckPluginVersion: 1.0`), then
+  only the context environment variables will be provided.
 * `config` - a Map defining custom plugin properties (see below.)
 
 ### Plugin properties

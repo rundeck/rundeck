@@ -199,7 +199,6 @@ function init() {
         appLinks.scheduledExecutionCreate,
         appLinks.frameworkNodes,
         Object.extend(filterParams,{
-            elem: 'nodelist',
             project: pageParams.project,
             paging:true,
             nodesTitleSingular:message('Node'),
@@ -228,6 +227,16 @@ function init() {
             var oldparams=nodeFilter.getPageParams();
             var href=nodeFilter.getPageUrl();
             history.pushState(oldparams, document.title, href);
+        }
+    });
+    nodeFilter.browse.subscribe(function(val){
+        //update browser history when a browse link is used, e.g. page number/page forward
+        if(typeof(history.pushState)=='function' && val) {
+            //push history state
+            var oldparams=nodeFilter.getPageParams();
+            var href=nodeFilter.getPageUrl();
+            history.pushState(oldparams, document.title, href);
+            nodeFilter.browse(false);
         }
     });
     jQuery('#tab_link_summary').on('show.bs.tab',function(e){

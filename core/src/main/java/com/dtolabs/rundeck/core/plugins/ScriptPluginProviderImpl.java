@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.plugins;
 
+import com.dtolabs.rundeck.core.plugins.metadata.PluginMeta;
 import com.dtolabs.rundeck.core.plugins.metadata.ProviderDef;
 
 import java.io.File;
@@ -38,8 +39,10 @@ class ScriptPluginProviderImpl implements ScriptPluginProvider {
     final private File archiveFile;
     final private File scriptFile;
     final private File contentsBasedir;
+    final private PluginMeta pluginMeta;
 
-    ScriptPluginProviderImpl(final ProviderDef plugindef, final File archiveFile, final File basedir) {
+    ScriptPluginProviderImpl(PluginMeta pluginMeta,final ProviderDef plugindef, final File archiveFile, final File basedir) {
+        this.pluginMeta = pluginMeta;
         this.plugindef = plugindef;
         this.archiveFile = archiveFile;
         this.contentsBasedir=basedir;
@@ -80,5 +83,14 @@ class ScriptPluginProviderImpl implements ScriptPluginProvider {
 
     public File getContentsBasedir() {
         return contentsBasedir;
+    }
+
+    public PluginMeta getPluginMeta() {
+        return pluginMeta;
+    }
+
+    @Override
+    public boolean getDefaultMergeEnvVars() {
+        return ScriptPluginProviderLoader.getDefaultMergeEnvVars(pluginMeta);
     }
 }

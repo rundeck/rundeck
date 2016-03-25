@@ -46,4 +46,14 @@ class ApiBulkJobDeleteRequest {
         idlist(nullable:true, matches: IDLIST_REGEX)
         id(nullable:true, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
     }
+    def Set<String> generateIdSet(){
+        def ids = new HashSet<String>()
+        if (this.ids) {
+            ids.addAll(this.ids)
+        }
+        if (idlist) {
+            ids.addAll(idlist.split(','))
+        }
+        ids
+    }
 }

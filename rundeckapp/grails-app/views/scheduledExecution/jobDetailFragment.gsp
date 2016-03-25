@@ -24,6 +24,6 @@
 
 <!--Display job details-->
 <div >
-    <g:render template="/execution/execDetails" model="[execdata:scheduledExecution]"/>
+    <g:render template="/execution/execDetails" model="[execdata:scheduledExecution,knockout:true]"/>
     <g:render template="/scheduledExecution/renderJobStats" model="${[scheduledExecution: scheduledExecution]}"/>
 </div>

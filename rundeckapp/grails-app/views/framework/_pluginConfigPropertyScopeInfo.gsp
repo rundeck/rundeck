@@ -8,6 +8,7 @@
     <g:set var="propValue" value="${prop.defaultValue ?: 'value'}"/>
 </g:else>
 
+<g:unless test="${outofscopeHidden}">
 <g:unless test="${outofscopeShown}">
     <g:expander key="${scopeinfo}">Admin configuration info</g:expander>
 </g:unless>
@@ -61,3 +62,4 @@
         </g:if>
     </div>
 </div>
+</g:unless>

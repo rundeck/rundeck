@@ -74,6 +74,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     public static final String CONFIG_VALUES = "values";
     public static final String CONFIG_SCOPE = "scope";
     public static final String CONFIG_RENDERING_OPTIONS = "renderingOptions";
+    public static final String SETTING_MERGE_ENVIRONMENT = "mergeEnvironment";
 
     private final ScriptPluginProvider provider;
     private final Framework framework;
@@ -95,6 +96,25 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
         pluginDataContext.put("base", provider.getContentsBasedir().getAbsolutePath());
 
         return pluginDataContext;
+    }
+
+    /**
+     * Return true if the "mergeEnvironment" is true for the plugin
+     * @return
+     */
+    boolean isMergeEnvVars(){
+        return metaBooleanProp(SETTING_MERGE_ENVIRONMENT, provider.getDefaultMergeEnvVars());
+    }
+
+    private boolean metaBooleanProp(final String prop, boolean defVal) {
+        Object o = provider.getMetadata().get(prop);
+        if (o == null) {
+            return defVal;
+        }
+        if (o == Boolean.TRUE) {
+            return true;
+        }
+        return "true".equals(o);
     }
 
 

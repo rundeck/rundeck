@@ -135,6 +135,7 @@
                                             outofscope: true,
                                             outofscopeShown: true,
                                             outofscopeOnly: true,
+                                            outofscopeHidden:specialScoping[serviceName],
                                             defaultScope: serviceDefaultScope,
                                             pluginName: pluginName,
                                             serviceName: serviceName,

@@ -188,6 +188,38 @@
             </ol>
         </li>
 
+             <g:if test="${extraConfig}">
+                 <div class="list-group-item">
+                     <h4 class="list-group-item-heading ">
+                         <g:message code="resource.model" />
+                     </h4>
+
+                     <span class="text-muted">
+                         <g:message code="additional.configuration.for.the.resource.model.for.this.project" />
+                     </span>
+
+                     <div class="inpageconfig">
+                         <g:each in="${extraConfig.keySet()}" var="configService">
+                             <g:set var="configurable" value="${extraConfig[configService].configurable}"/>
+                             <g:if test="${configurable.category == 'resourceModelSource'}">
+
+                                 <g:set var="pluginprefix" value="${extraConfig[configService].get('prefix')}"/>
+
+                                 <g:each in="${configurable.projectConfigProperties}" var="prop">
+                                     <g:render template="/framework/pluginConfigPropertySummaryValue"
+                                               model="${[
+                                                       prop:prop,
+                                                       prefix:pluginprefix,
+                                                         values:extraConfig[configService].get('values')?:[:],
+                                               ]}"/>
+                                 </g:each>
+                                 
+                             </g:if>
+                         </g:each>
+                     </div>
+                 </div>
+             </g:if>
+
         <li class="list-group-item">
             <h4 class="list-group-item-heading">
                 <g:message code="framework.service.NodeExecutor.default.label" />

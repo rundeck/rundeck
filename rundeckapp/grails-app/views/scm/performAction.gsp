@@ -34,6 +34,9 @@
             <div class="panel panel-primary" id="createform">
                 <div class="panel-heading">
                     <span class="h3">
+                        <g:if test="${pluginDescription && pluginDescription.description?.title}">
+                            ${pluginDescription.description.title}:
+                        </g:if>
                         <g:if test="${actionView && actionView.title}">
                             ${actionView.title}
                         </g:if>

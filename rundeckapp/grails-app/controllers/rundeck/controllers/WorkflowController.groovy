@@ -60,18 +60,39 @@ class WorkflowController extends ControllerBase {
                 }
             }
         }
+        def newitemtype = params['newitemtype']
+        def origitemtype
         def newitemDescription
         if(item && item.instanceOf(PluginStep)){
             newitemDescription = getPluginStepDescription(item.nodeStep, item.type)
+            origitemtype=item.type
         } else{
             newitemDescription = getPluginStepDescription(params.newitemnodestep == 'true', params['newitemtype'])
         }
-        return render(template: "/execution/wfitemEdit",
-                      model: [item: item, key:params.key, num: numi, scheduledExecutionId: params.scheduledExecutionId,
-                              newitemtype: params['newitemtype'], newitemDescription: newitemDescription,
-                              pluginNotFound:null==newitemDescription,
-                              edit: true, isErrorHandler: isErrorHandler,newitemnodestep:
-                                      params.newitemnodestep])
+        if(item){
+            if(item.instanceOf(JobExec)){
+                origitemtype='job'
+            }else if(item.instanceOf(CommandExec)){
+                origitemtype=item.adhocLocalString?'script':item.adhocRemoteString?'command':'scriptfile'
+            }
+        }
+
+        return render(
+                template: "/execution/wfitemEdit",
+                  model: [
+                          item                : item,
+                          key                 : params.key,
+                          num                 : numi,
+                          scheduledExecutionId: params.scheduledExecutionId,
+                          newitemtype         : newitemtype,
+                          origitemtype         : origitemtype,
+                          newitemDescription  : newitemDescription,
+                          pluginNotFound      : null == newitemDescription,
+                          edit                : true,
+                          isErrorHandler      : isErrorHandler,
+                          newitemnodestep     : params.newitemnodestep
+                  ]
+        )
     }
 
     /**
@@ -154,8 +175,25 @@ class WorkflowController extends ControllerBase {
             log.error(result.error)
             item=result.item
             def itemDescription = item.instanceOf(PluginStep) ? getPluginStepDescription(item.nodeStep, item.type) : null
-            return render(template: "/execution/wfitemEdit", model: [item: result.item, key: params.key, num: params.num,
-                scheduledExecutionId: params.scheduledExecutionId, newitemtype: params['newitemtype'], edit: true, isErrorHandler: isErrorHandler, newitemDescription: itemDescription,report:result.report])
+
+            def newitemtype = params['newitemtype']
+            def origitemtype = params['origitemtype']
+
+            return render(
+                    template: "/execution/wfitemEdit",
+                    model: [
+                            item                : result.item,
+                            key                 : params.key,
+                            num                 : params.num,
+                            scheduledExecutionId: params.scheduledExecutionId,
+                            newitemtype         : newitemtype,
+                            origitemtype        : origitemtype,
+                            edit                : true,
+                            isErrorHandler      : isErrorHandler,
+                            newitemDescription  : itemDescription,
+                            report              : result.report
+                    ]
+            )
         }
         _pushUndoAction(params.scheduledExecutionId, result.undo)
         if (result.undo) {
@@ -467,7 +505,7 @@ class WorkflowController extends ControllerBase {
             def moditem = item.createClone()
             modifyItemFromParams(moditem,input.params)
 
-            _validateCommandExec(moditem)
+            _validateCommandExec(moditem,input.params.origitemtype)
             if (moditem.errors.hasErrors()) {
                 return [error: moditem.errors.allErrors.collect {g.message(error: it)}.join(","), item: moditem]
             }
@@ -525,7 +563,7 @@ class WorkflowController extends ControllerBase {
 
             modifyItemFromParams(moditem, input.params)
 
-            _validateCommandExec(moditem)
+            _validateCommandExec(moditem,input.params.origitemtype)
             if (moditem.errors.hasErrors()) {
                 return [error: moditem.errors.allErrors.collect {g.message(error: it)}.join(","), item: moditem]
             }

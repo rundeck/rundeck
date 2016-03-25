@@ -16,12 +16,20 @@ public interface ProjectManager {
     Collection<IRundeckProject> listFrameworkProjects();
 
     /**
+     * List the project names
+     * @return
+     */
+    Collection<String> listFrameworkProjectNames();
+
+    /**
      * Get the specified existing project
      *
      * @param name Depot name
      * @return {@link IRundeckProject} instance
      */
     IRundeckProject getFrameworkProject(String name);
+
+    IRundeckProjectConfig loadProjectConfig(final String project);
 
     /**
      * Checks if project by that name exists

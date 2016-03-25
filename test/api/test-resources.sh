@@ -7,6 +7,21 @@ source $DIR/include.sh
 
 file=$DIR/curl.out
 
+project="test"
+proj_config_url="${APIURL}/project/${project}/config"
+set_url_config(){
+    prop=$1
+    value=$2
+
+    docurl -X PUT --data-binary "${value}" -H 'Content-Type:text/plain' "${proj_config_url}/${prop}" > $DIR/curl.out
+    if [ 0 != $? ] ; then
+        errorMsg "ERROR: failed PUT request"
+        exit 2
+    fi
+    #echo "project.resources.url=http://invalid.domain:1235/resources.xml" >> $TPROPS
+}
+
+
 ###
 # Setup: acquire local server name from RDECK_ETC/framework.properties#server.name
 ####
@@ -17,12 +32,14 @@ if [ -z "${localnode}" ] ; then
     exit 2
 fi
 
+#disable node caching
+set_url_config "project.nodeCache.enabled" "false"
+
 # now submit req
 runurl="${APIURL}/resources"
 
 echo "TEST: /api/resources, basic XML response with all nodes: >0 result"
 
-project="test"
 params="project=${project}"
 
 # get listing

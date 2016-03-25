@@ -149,7 +149,7 @@
         </div>
     </g:if>
 </g:else>
-<div class="${offsetColType}">
+<div class="${outofscope?valueColType:offsetColType}">
     <div class="help-block"> <g:render template="/scheduledExecution/description"
                                        model="[description: prop.description, textCss: '',
                                                mode: 'collapsed', rkey: g.rkey()]"/></div>

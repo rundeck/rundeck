@@ -66,48 +66,77 @@ class ScmService {
     JobMetadataService jobMetadataService
     PluginConfigService pluginConfigService
     def StorageService storageService
+    final Set<String> initedProjects = Collections.synchronizedSet(new HashSet())
     Map<String, ScmExportPlugin> loadedExportPlugins = Collections.synchronizedMap([:])
     Map<String, ScmImportPlugin> loadedImportPlugins = Collections.synchronizedMap([:])
     Map<String, JobChangeListener> loadedExportListeners = Collections.synchronizedMap([:])
     Map<String, JobChangeListener> loadedImportListeners = Collections.synchronizedMap([:])
 
     def initialize() {
-        for (String project : frameworkService.projectNames()) {
-            for (String integration : INTEGRATIONS) {
-                def pluginConfig = pluginConfigService.loadScmConfig(
-                        project,
-                        pathForConfigFile(integration),
-                        PREFIXES[integration]
-                )
-                if (!pluginConfig?.enabled) {
-                    log.debug("SCM ${integration} not setup for project: ${project}: ${pluginConfig}")
-                    continue
-                }
-                log.debug("Loading '${integration}' plugin ${pluginConfig.type} for ${project}...")
-
-                def username = pluginConfig.getSetting("username")
-                def roles = pluginConfig.getSettingList("roles")
-
-                if (!username || !roles) {
-                    log.error(
-                            "SCM ${integration} config not valid (missing username or roles) for project: ${project}: ${pluginConfig}"
-                    )
-                    continue
-                }
-
-                try {
-                    def context = scmOperationContext(username, roles, project)
-                    initPlugin(integration, context, pluginConfig.type, pluginConfig.config)
-                } catch (Throwable e) {
-                    log.error(
-                            "Failed to initialize SCM ${integration} plugin ${pluginConfig.type} for ${project}: ${e.message}",
-                            e
-                    )
-                }
-
-                //TODO: refresh status of all jobs in project?
+        if(!isScmInitDeferred()) {
+            for (String project : frameworkService.projectNames()) {
+                initProject(project)
             }
         }
+    }
+    boolean isScmInitDeferred(){
+        if(grailsApplication.config.rundeck?.scm?.startup?.containsKey('initDeferred')) {
+            return grailsApplication.config.rundeck?.scm?.startup?.initDeferred in [true, 'true']
+        }
+        return true
+    }
+
+    /**
+     * Initialize integrations for the project.
+     * @param project
+     */
+    def initProject(String project){
+        synchronized (initedProjects){
+            if(initedProjects.contains(project)){
+                return true
+            }
+            initedProjects.add(project)
+        }
+        for (String integration : INTEGRATIONS) {
+            initProject(project, integration)
+            //TODO: refresh status of all jobs in project?
+        }
+    }
+    def initProject(String project, String integration){
+        def pluginConfig = loadScmConfig(project, integration)
+        if (!pluginConfig?.enabled) {
+            return false
+        }
+        log.debug("Loading '${integration}' plugin ${pluginConfig.type} for ${project}...")
+
+        def username = pluginConfig.getSetting("username")
+        def roles = pluginConfig.getSettingList("roles")
+
+        if (!username || !roles) {
+            log.error(
+                    "SCM ${integration} config not valid (missing username or roles) for project: ${project}: ${pluginConfig}"
+            )
+            return false
+        }
+
+        try {
+            def context = scmOperationContext(username, roles, project)
+            initPlugin(integration, context, pluginConfig.type, pluginConfig.config)
+            return true
+        } catch (Throwable e) {
+            log.error(
+                    "Failed to initialize SCM ${integration} plugin ${pluginConfig.type} for ${project}: ${e.message}",
+                    e
+            )
+        }
+    }
+    ScmExportPlugin getLoadedExportPluginFor(String project){
+        initProject(project)
+        loadedExportPlugins[project]
+    }
+    ScmImportPlugin getLoadedImportPluginFor(String project){
+        initProject(project)
+        loadedImportPlugins[project]
     }
 
     def listPlugins(String integration) {
@@ -152,10 +181,12 @@ class ScmService {
     }
 
     def projectHasConfiguredExportPlugin(String project) {
+        initProject(project)
         loadedExportPlugins.containsKey(project)
     }
 
     def projectHasConfiguredImportPlugin(String project) {
+        initProject(project)
         loadedImportPlugins.containsKey(project)
     }
 
@@ -170,7 +201,7 @@ class ScmService {
     }
 
     BasicInputView getExportInputView(UserAndRolesAuthContext auth, String project, String actionId) {
-        def plugin = loadedExportPlugins[project]
+        def plugin = getLoadedExportPluginFor project
         if (plugin) {
             def context = scmOperationContext(auth, project)
             plugin.getInputViewForAction(context, actionId)
@@ -178,7 +209,7 @@ class ScmService {
     }
 
     BasicInputView getImportInputView(UserAndRolesAuthContext auth, String project, String actionId) {
-        def plugin = loadedImportPlugins[project]
+        def plugin = getLoadedImportPluginFor project
         if (plugin) {
             def context = scmOperationContext(auth, project)
             plugin.getInputViewForAction(context, actionId)
@@ -208,6 +239,16 @@ class ScmService {
         plugin.instance.getSetupPropertiesForBasedir(baseDir)
     }
 
+    /**
+     * Return the descriptor for the configured plugin for the project, or null
+     * @param project project
+     * @param integration integration
+     * @return description, or null
+     */
+    def loadProjectPluginDescriptor(String project, String integration) {
+        def config = loadScmConfig(project, integration)
+        config?.enabled ? getPluginDescriptor(integration,config.type): null
+    }
     ScmPluginConfigData loadScmConfig(String project, String integration) {
         pluginConfigService.loadScmConfig(project, pathForConfigFile(integration), PREFIXES[integration])
     }
@@ -361,6 +402,9 @@ class ScmService {
      */
     def initPlugin(String integration, ScmOperationContext context, String type, Map config) {
         def validation = validatePluginSetup(integration, context.frameworkProject, type, config)
+        if (!validation) {
+            throw new ScmPluginException("Plugin could not be loaded: " + type)
+        }
         if (!(validation?.valid)) {
             throw new ScmPluginInvalidInput(
                     "Validation failed for ${type} plugin: " + validation?.report,
@@ -650,7 +694,7 @@ class ScmService {
     Map<String, String> exportFilePathsMapForJobRefs(List<JobRevReference> refs) {
         def files = [:]
         refs.each { JobRevReference jobReference ->
-            def plugin = loadedExportPlugins[jobReference.project]
+            def plugin = getLoadedExportPluginFor jobReference.project
             if (plugin) {
                 files[jobReference.id] = plugin.getRelativePathForJob(jobReference)
             }
@@ -797,7 +841,7 @@ class ScmService {
      * @return
      */
     List<ScmImportTrackedItem> getTrackingItemsForAction(String project, String actionId) {
-        def plugin = loadedImportPlugins[project]
+        def plugin = getLoadedImportPluginFor project
         if (plugin) {
             return plugin.getTrackedItemsForAction(actionId)
         }
@@ -822,8 +866,7 @@ class ScmService {
      * @return
      */
     ScmExportSynchState exportPluginStatus(UserAndRolesAuthContext auth, String project) throws ScmPluginException {
-
-        def plugin = loadedExportPlugins[project]
+        def plugin = getLoadedExportPluginFor project
         if (plugin) {
             return plugin.getStatus(scmOperationContext(auth, project))
         }
@@ -835,7 +878,7 @@ class ScmService {
      * @return
      */
     ScmImportSynchState importPluginStatus(UserAndRolesAuthContext auth, String project) throws ScmPluginException {
-        def plugin = loadedImportPlugins[project]
+        def plugin = getLoadedImportPluginFor project
         if (plugin) {
             return plugin.getStatus(scmOperationContext(auth, project))
         }
@@ -847,8 +890,7 @@ class ScmService {
      * @return
      */
     List<Action> exportPluginActions(UserAndRolesAuthContext auth, String project) {
-
-        def plugin = loadedExportPlugins[project]
+        def plugin = getLoadedExportPluginFor project
         if (plugin) {
             def context = scmOperationContext(auth, project)
             return plugin.actionsAvailableForContext(context)
@@ -861,8 +903,7 @@ class ScmService {
      * @return
      */
     List<Action> exportPluginActionsForJob(UserAndRolesAuthContext auth, ScheduledExecution job) {
-
-        def plugin = loadedExportPlugins[job.project]
+        def plugin = getLoadedExportPluginFor job.project
         if (plugin) {
             def context = scmOperationContext(auth, job.project, job.extid)
             return plugin.actionsAvailableForContext(context)
@@ -876,8 +917,7 @@ class ScmService {
      * @return
      */
     List<Action> importPluginActions(UserAndRolesAuthContext auth, String project) {
-
-        def plugin = loadedImportPlugins[project]
+        def plugin = getLoadedImportPluginFor project
         if (plugin) {
             def context = scmOperationContext(auth, project)
             return plugin.actionsAvailableForContext(context)
@@ -893,7 +933,7 @@ class ScmService {
     Map<String, JobState> exportStatusForJobs(List<ScheduledExecution> jobs) {
         def status = [:]
         exportjobRefsForJobs(jobs).each { jobReference ->
-            def plugin = loadedExportPlugins[jobReference.project]
+            def plugin = getLoadedExportPluginFor jobReference.project
             if (plugin) {
                 def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
                 status[jobReference.id] = plugin.getJobStatus(jobReference, originalPath)
@@ -910,7 +950,7 @@ class ScmService {
     Map<String, JobImportState> importStatusForJobs(List<ScheduledExecution> jobs) {
         def status = [:]
         scmJobRefsForJobs(jobs).each { JobScmReference jobReference ->
-            def plugin = loadedImportPlugins[jobReference.project]
+            def plugin = getLoadedImportPluginFor jobReference.project
             if (plugin) {
                 //TODO: deleted job paths?
 //                def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
@@ -927,16 +967,16 @@ class ScmService {
      */
     Map<String, Map> deletedExportFilesForProject(String project) {
         def deleted = []
-        def plugin = loadedExportPlugins[project]
+        def plugin = getLoadedExportPluginFor project
         if (plugin) {
             deleted = plugin.deletedFiles
         }
         //create map of path -> job info
-        def map = deleted.collectEntries {
+        def map = deleted?.collectEntries {
             [it, deletedJobForPath(project, it) ?: [:]]
         }
         log.debug "Deleted job map for ${project}: ${map}"
-        return map
+        return map?:[:]
     }
 
     def performExportAction(
@@ -950,7 +990,7 @@ class ScmService {
     {
         log.debug("exportCommit project: ${project}, jobs: ${jobs}, deletePaths: ${deletePaths}")
         //store config
-        def plugin = loadedExportPlugins[project]
+        def plugin = getLoadedExportPluginFor project
         def jobrefs = exportjobRefsForJobs(jobs)
         def context = scmOperationContext(auth, project)
         def view = plugin.getInputViewForAction(context, actionId)
@@ -1011,13 +1051,13 @@ class ScmService {
 
     ScmDiffResult exportDiff(String project, ScheduledExecution job) {
         def jobref = exportJobRef(job)
-        def plugin = loadedExportPlugins[project]
+        def plugin = getLoadedExportPluginFor project
         plugin.getFileDiff(jobref, getRenamedPathForJobId(project, job.extid))
     }
 
     ScmImportDiffResult importDiff(String project, ScheduledExecution job) {
         def jobref = scmJobRef(job)
-        def plugin = loadedImportPlugins[project]
+        def plugin = getLoadedImportPluginFor project
         plugin.getFileDiff(jobref, getRenamedPathForJobId(project, job.extid))
     }
 
@@ -1039,7 +1079,7 @@ class ScmService {
     {
         log.debug("performImportAction project: ${project}, items: ${chosenTrackedItems}")
         //store config
-        def plugin = loadedImportPlugins[project]
+        def plugin = getLoadedImportPluginFor project
         def context = scmOperationContext(auth, project)
         def view = plugin.getInputViewForAction(context, actionId)
         def report = validatePluginConfigProperties(project, view.properties, config)

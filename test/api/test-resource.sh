@@ -7,6 +7,26 @@ set -- -
 
 source $DIR/include.sh
 
+
+project="test"
+proj_config_url="${APIURL}/project/${project}/config"
+set_url_config(){
+    prop=$1
+    value=$2
+
+    docurl -X PUT --data-binary "${value}" -H 'Content-Type:text/plain' "${proj_config_url}/${prop}" > $DIR/curl.out
+    if [ 0 != $? ] ; then
+        errorMsg "ERROR: failed PUT request"
+        exit 2
+    fi
+    #echo "project.resources.url=http://invalid.domain:1235/resources.xml" >> $TPROPS
+}
+
+
+#disable node caching
+set_url_config "project.nodeCache.enabled" "false"
+
+
 file=$DIR/curl.out
 
 ###

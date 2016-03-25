@@ -8,6 +8,8 @@ import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.utils.PropertyLookup
+import com.google.common.cache.Cache
+import com.google.common.cache.LoadingCache
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.apache.commons.fileupload.util.Streams
@@ -72,16 +74,22 @@ class ProjectManagerServiceSpec extends Specification {
                 getPropertyLookup() >> PropertyLookup.create(properties)
             }
         }
+        service.nodeService=Mock(NodeService)
         when:
         def result=service.getFrameworkProject('test1')
 
         then:
+
+        1*service.nodeService.getNodes('test1')
         result!=null
         'test1'==result.name
         'fwkvalue'==result.getProperty('fwkprop')
         'test1'==result.getProperty('project.name')
         1==result.getProjectProperties().size()
         'test1'==result.getProjectProperties().get('project.name')
+        null==result.info.description
+        null==result.info.readme
+        null==result.info.motd
     }
     void "get project exists with props"(){
         setup:
@@ -93,7 +101,7 @@ class ProjectManagerServiceSpec extends Specification {
             hasResource("projects/test1/etc/project.properties") >> true
             getResource("projects/test1/etc/project.properties") >> Stub(Resource){
                 getContents() >> Stub(ResourceMeta){
-                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nprojkey=projval').bytes)
+                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nprojkey=projval\nproject.description=blah').bytes)
                     getModificationTime() >> modDate
                 }
             }
@@ -107,19 +115,83 @@ class ProjectManagerServiceSpec extends Specification {
                 getPropertyLookup() >> PropertyLookup.create(properties)
             }
         }
+        service.nodeService=Mock(NodeService)
         when:
         def result=service.getFrameworkProject('test1')
 
         then:
+        1*service.nodeService.getNodes('test1')
         result!=null
         'test1'==result.name
         'fwkvalue'==result.getProperty('fwkprop')
         'test1'==result.getProperty('project.name')
         'projval'==result.getProperty('projkey')
-        2==result.getProjectProperties().size()
+        3==result.getProjectProperties().size()
         'test1'==result.getProjectProperties().get('project.name')
+        'blah'==result.getProjectProperties().get('project.description')
         'projval'==result.getProjectProperties().get('projkey')
         modDate==result.getConfigLastModifiedTime()
+        'blah'==result.info.description
+        null==result.info.readme
+        null==result.info.motd
+    }
+    void "get project exists with readme/motd"(){
+        setup:
+        def p = new Project(name:'test1')
+        p.save(flush: true)
+        def modDate= new Date(123)
+
+        service.storage=Mock(StorageTree){
+            1*hasResource("projects/test1/etc/project.properties") >> true
+            1*hasResource("projects/test1/readme.md") >> true
+            1*hasResource("projects/test1/motd.md") >> true
+            getResource("projects/test1/etc/project.properties") >> Stub(Resource){
+                getContents() >> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nprojkey=projval\nproject.description=blah').bytes)
+                    getModificationTime() >> modDate
+                }
+            }
+            1*getResource("projects/test1/readme.md") >> Stub(Resource){
+                getContents() >> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('blah readme'.bytes)
+                    getModificationTime() >> modDate
+                }
+            }
+            1*getResource("projects/test1/motd.md") >> Stub(Resource){
+                getContents() >> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('blah motd'.bytes)
+                    getModificationTime() >> modDate
+                }
+            }
+        }
+
+        def properties = new Properties()
+        properties.setProperty("fwkprop","fwkvalue")
+
+        service.frameworkService=Stub(FrameworkService){
+            getRundeckFramework() >> Stub(Framework){
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+        }
+        service.nodeService=Mock(NodeService)
+        when:
+        def result=service.getFrameworkProject('test1')
+
+        then:
+        1*service.nodeService.getNodes('test1')
+        result!=null
+        'test1'==result.name
+        'fwkvalue'==result.getProperty('fwkprop')
+        'test1'==result.getProperty('project.name')
+        'projval'==result.getProperty('projkey')
+        3==result.getProjectProperties().size()
+        'test1'==result.getProjectProperties().get('project.name')
+        'blah'==result.getProjectProperties().get('project.description')
+        'projval'==result.getProjectProperties().get('projkey')
+        modDate==result.getConfigLastModifiedTime()
+        'blah'==result.info.description
+        'blah readme'==result.info.readme
+        'blah motd'==result.info.motd
     }
     void "get project exists invalid props content"(){
         setup:
@@ -145,10 +217,12 @@ class ProjectManagerServiceSpec extends Specification {
                 getPropertyLookup() >> PropertyLookup.create(properties)
             }
         }
+        service.nodeService=Mock(NodeService)
         when:
         def result=service.getFrameworkProject('test1')
 
         then:
+        1*service.nodeService.getNodes('test1')
         result!=null
         'test1'==result.name
         'fwkvalue'==result.getProperty('fwkprop')
@@ -187,12 +261,17 @@ class ProjectManagerServiceSpec extends Specification {
                 getPropertyLookup() >> PropertyLookup.create(properties)
             }
         }
+        service.nodeService=Mock(NodeService)
+        service.projectCache=Mock(LoadingCache)
 
         when:
 
         def result = service.createFrameworkProject('test1',props)
 
         then:
+        1*service.projectCache.invalidate('test1')
+        1*service.nodeService.expireProjectNodes('test1')
+        1*service.nodeService.getNodes('test1')
 
         result.name=='test1'
         2==result.getProjectProperties().size()
@@ -247,12 +326,18 @@ class ProjectManagerServiceSpec extends Specification {
             }
         }
 
+        service.nodeService=Mock(NodeService)
+        service.projectCache=Mock(LoadingCache)
         when:
 
         def result = service.createFrameworkProjectStrict('test1',props)
 
         then:
+        1*service.projectCache.invalidate('test1')
+        1*service.nodeService.expireProjectNodes('test1')
+        1*service.nodeService.getNodes('test1')
 
+        0*service.nodeService._(*_)
         result.name=='test1'
         2==result.getProjectProperties().size()
         'test1'==result.getProjectProperties().get('project.name')
@@ -268,6 +353,7 @@ class ProjectManagerServiceSpec extends Specification {
         service.removeFrameworkProject('test1')
 
         then:
+        0*service.nodeService._(*_)
         IllegalArgumentException e = thrown()
         e.message.contains('does not exist')
     }
@@ -282,11 +368,15 @@ class ProjectManagerServiceSpec extends Specification {
             1*hasDirectory({it.path=="projects/test1"}) >> true
             1*listDirectory({it.path=="projects/test1"}) >> []
         }
+        service.nodeService=Mock(NodeService)
+        service.projectCache=Mock(LoadingCache)
         when:
 
         service.removeFrameworkProject('test1')
 
         then:
+        1*service.projectCache.invalidate('test1')
+        1*service.nodeService.expireProjectNodes('test1')
         null==Project.findByName('test1')
 
     }
@@ -327,11 +417,15 @@ class ProjectManagerServiceSpec extends Specification {
             }
         }
 
+        service.nodeService=Mock(NodeService)
+        service.projectCache=Mock(LoadingCache)
 
         when:
         def res=service.mergeProjectProperties('test1',props1,[] as Set)
 
         then:
+        1*service.projectCache.invalidate('test1')
+        1*service.nodeService.expireProjectNodes('test1')
 
         res!=null
         res.config.size()==3
@@ -362,12 +456,16 @@ class ProjectManagerServiceSpec extends Specification {
             }
         }
 
+        service.nodeService=Mock(NodeService)
+        service.projectCache=Mock(LoadingCache)
 
         when:
         def res=service.setProjectProperties('test1',props1)
 
         then:
 
+        1*service.projectCache.invalidate('test1')
+        1*service.nodeService.expireProjectNodes('test1')
         res!=null
         res.config.size()==2
         null==res.config['abc']
@@ -400,11 +498,15 @@ class ProjectManagerServiceSpec extends Specification {
         }
 
 
+        service.nodeService=Mock(NodeService)
+        service.projectCache=Mock(LoadingCache)
         when:
         def res=service.setProjectProperties('test1',props1)
 
         then:
 
+        1*service.projectCache.invalidate('test1')
+        1*service.nodeService.expireProjectNodes('test1')
         res!=null
         res.config.size()==2
         null==res.config['abc']
@@ -1047,10 +1149,15 @@ class ProjectManagerServiceSpec extends Specification {
                 getPropertyLookup() >> PropertyLookup.create(properties)
             }
         }
+        service.nodeService=Mock(NodeService)
+        service.projectCache=Mock(LoadingCache)
         when:
         service.importProjectsFromProjectManager(pm1)
 
         then:
+        1*service.nodeService.expireProjectNodes('abc')
+        1*service.nodeService.getNodes('abc')
+        1*service.projectCache.invalidate('abc')
         Project.findByName('abc')!=null
     }
 }

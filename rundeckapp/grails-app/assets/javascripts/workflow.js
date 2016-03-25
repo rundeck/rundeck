@@ -54,7 +54,7 @@ var RDWorkflow = Class.create({
         if (ctx.length > 1) {
 //                string += "/" + ctx.slice(1).join("/")
         }
-        string += ". "
+        string += ". ";
         return string;
     },
     renderContextString: function (ctx) {
@@ -77,10 +77,10 @@ var RDWorkflow = Class.create({
                 string = step['scriptfile'];
             } else if (step['type']) {//plugin
                 var title = "Plugin " + step['type'];
-                if (step['nodeStep'] && this.nodeSteppluginDescriptions) {
-                    title = this.nodeSteppluginDescriptions[step['type']].title;
-                } else if (!step['nodeStep'] && this.wfSteppluginDescriptions) {
-                    title = this.wfSteppluginDescriptions[step['type']].title;
+                if (step['nodeStep'] && this.nodeSteppluginDescriptions && this.nodeSteppluginDescriptions[step['type']]) {
+                    title = this.nodeSteppluginDescriptions[step['type']].title || title;
+                } else if (!step['nodeStep'] && this.wfSteppluginDescriptions && this.wfSteppluginDescriptions[step['type']]) {
+                    title = this.wfSteppluginDescriptions[step['type']].title || title;
                 }
                 string = title;
             }

@@ -59,6 +59,18 @@ class UrlMappings {
         "/api/$api_version/job/$id/scm/$integration/action/$actionId"(controller: 'scm', action: 'apiJobActionPerform')
 
         "/api/$api_version/jobs/delete"(controller: 'scheduledExecution', action: 'apiJobDeleteBulk')
+        "/api/$api_version/jobs/schedule/enable"(controller: 'scheduledExecution',action: 'apiFlipScheduleEnabledBulk') {
+            status = true
+        }
+        "/api/$api_version/jobs/schedule/disable"(controller: 'scheduledExecution',action: 'apiFlipScheduleEnabledBulk'){
+            status = false
+        }
+        "/api/$api_version/jobs/execution/enable"(controller: 'scheduledExecution',action: 'apiFlipExecutionEnabledBulk') {
+            status = true
+        }
+        "/api/$api_version/jobs/execution/disable"(controller: 'scheduledExecution',action: 'apiFlipExecutionEnabledBulk'){
+            status = false
+        }
 
 
         "/api/$api_version/project/$project/executions/running"(controller: 'menu', action: 'apiExecutionsRunningv14')
@@ -109,6 +121,12 @@ class UrlMappings {
 
         "/api/$api_version/projects"(controller: 'project'){
             action = [GET: 'apiProjectList', POST:'apiProjectCreate']
+        }
+        "/api/$api_version/scheduler/jobs"(controller: 'menu', action: 'apiSchedulerListJobs'){
+            currentServer=true
+        }
+        "/api/$api_version/scheduler/server/$uuid/jobs"(controller: 'menu', action: 'apiSchedulerListJobs'){
+            currentServer=false
         }
         "/api/$api_version/scheduler/takeover"(controller: 'scheduledExecution', action: 'apiJobClusterTakeoverSchedule')
 

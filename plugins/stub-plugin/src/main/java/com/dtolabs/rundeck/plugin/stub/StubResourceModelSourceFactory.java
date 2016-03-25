@@ -63,11 +63,19 @@ public class StubResourceModelSourceFactory implements ResourceModelSourceFactor
         builder.property(PropertyUtil.string("tags", "Tags",
                 "Comma separated tags to add to all nodes",
                 false, "stub"));
+        builder.property(PropertyUtil.string("attrs", "Attributes",
+                "Comma separated key=val to add to all nodes",
+                false, null));
+        builder.property(PropertyUtil.string("delay", "Delay",
+                "Seconds of delay to introduce, or range.\n\nCan be, e.g. `0-10` (random between 0 and 10 seconds)",
+                false, "0"));
 
         builder.mapping("prefix", "plugin.ResourceModelSource.stub.prefix");
         builder.mapping("suffix", "plugin.ResourceModelSource.stub.suffix");
         builder.mapping("count", "plugin.ResourceModelSource.stub.count");
         builder.mapping("tags", "plugin.ResourceModelSource.stub.tags");
+        builder.mapping("attrs", "plugin.ResourceModelSource.stub.attrs");
+        builder.mapping("delay", "plugin.ResourceModelSource.stub.delay");
 
         DESC = builder.build();
     }

@@ -10,7 +10,7 @@
         if (report.jcExecId) {
             exec = Execution.get(Long.parseLong(report.jcExecId))
         }
-        item.title=(report.status=='succeed'?'SUCCEEDED': exec&&exec.cancelled?'KILLED':'FAILED')
+        item.title=(exec?exec.executionState:report.status=='succeed'?'SUCCEEDED':'FAILED')
         if(report.jcExecId){
             item.link=createLink(controller:'execution', action:'show',params:[id:report.jcExecId], absolute: true)
         }

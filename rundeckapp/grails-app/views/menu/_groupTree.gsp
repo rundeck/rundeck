@@ -94,6 +94,20 @@
             </g:expander>
             <g:if test="${!jobsjscallback}">
             <a class=" groupname secondary" href="${createLink(controller: 'menu', action: 'jobs', params: [project:params.project,groupPath: prefix ? prefix + '/' + group.key : group.key])}"><g:enc>${displaygroup}</g:enc></a>
+                <g:if test="${jobgroups[group.key]}">
+                <span class="" data-bind="visible: enabled">
+                    &bull;
+                    <a href="#" class="btn btn-xs btn-link" data-job-group="${group.key}" data-bind="click: function(){jobGroupSelectAll($element);}">
+                        <g:icon name="check"/>
+                        <g:message code="select.all" />
+                    </a>
+                    <a href="#" class="btn btn-xs btn-link" data-job-group="${group.key}" data-bind="click: function(){jobGroupSelectNone($element);}">
+                        <g:icon name="unchecked"/>
+                        <g:message code="select.none" />
+                    </a>
+                </span>
+
+                </g:if>
             </g:if>
         </g:else>
         </div>
@@ -103,7 +117,7 @@
         %{ divcounts++;}%
         <g:if test="${jobgroups[group.key]}">
             <div class="jobGroups subjobs">
-            <g:render template="jobslist" model="[hideSummary:true,jobslist:jobgroups[group.key],total:jobgroups[group.key]?.size(),nowrunning:nowrunning, clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,headers:false,wasfiltered:wasfiltered,small:small?true:false,jobsjscallback:jobsjscallback,runAuthRequired:runAuthRequired]"/>
+            <g:render template="jobslist" model="[hideSummary:true,jobslist:jobgroups[group.key],total:jobgroups[group.key]?.size(), clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,headers:false,wasfiltered:wasfiltered,small:small?true:false,jobsjscallback:jobsjscallback,runAuthRequired:runAuthRequired]"/>
             </div>
         </g:if>
 
@@ -114,7 +128,7 @@
     <g:if test="${currentJobs}">
         <g:timerStart key="_groupTree2.gsp-jobslist"/>
         <div>
-        <g:render template="jobslist" model="[jobslist:currentJobs,total:currentJobs?.size(),nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,headers:false,wasfiltered:wasfiltered,small:small?true:false,jobsjscallback:jobsjscallback,runAuthRequired:runAuthRequired]"/>
+        <g:render template="jobslist" model="[jobslist:currentJobs,total:currentJobs?.size(),nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,headers:false,wasfiltered:wasfiltered,small:small?true:false,jobsjscallback:jobsjscallback,runAuthRequired:runAuthRequired]"/>
         </div>
         <g:timerEnd key="_groupTree2.gsp-jobslist"/>
     </g:if>

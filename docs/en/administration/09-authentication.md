@@ -18,7 +18,7 @@ If you use the Rundeck war file with a different container, such as Tomcat, refe
 
 Rundeck has three basic ways of defining authentication.
 
-1. [PropertyFileLoginModule](#PropertyFileLoginModule)
+1. [PropertyFileLoginModule](#propertyfileloginmodule)
 2. [LDAP](#ldap)
 3. [PAM](#pam)
 
@@ -655,7 +655,7 @@ multiauth {
     cacheDurationMillis="300000"
     reportStatistics="true";
 
-  org.mortbay.jetty.plus.jaas.spi.PropertyFileLoginModule required
+  org.eclipse.jetty.plus.jaas.spi.PropertyFileLoginModule required
     debug="true"
     file="/etc/rundeck/realm.properties";
 };

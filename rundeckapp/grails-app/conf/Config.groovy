@@ -118,6 +118,7 @@ log4j={
 //            info 'org.rundeck.web.requests'
 //            debug 'org.rundeck.web.infosec'
             debug 'org.apache.commons.httpclient'
+            info 'grails.app.services.rundeck.services.ProjectManagerService'
             off 'h2database'
         }
     }
@@ -144,7 +145,7 @@ grails.plugins.twitterbootstrap.fixtaglib = true
 
 rundeck.execution.finalize.retryMax=10
 rundeck.execution.finalize.retryDelay=5000
-rundeck.execution.stats.retryMax=3
+rundeck.execution.stats.retryMax=5
 rundeck.execution.stats.retryDelay=5000
 rundeck.gui.execution.tail.lines.default = 20
 rundeck.gui.execution.tail.lines.max = 500
@@ -175,6 +176,9 @@ rundeck.projectsStorageType='filesystem'
 
 rundeck.ajax.compression='gzip'
 rundeck.ajax.executionState.compression.nodeThreshold=500
+
+rundeck.nodeService.nodeCache.spec='refreshAfterWrite=30s'
+rundeck.nodeService.nodeCache.enabled=true
 
 grails.assets.less.compile = 'less4j'
 grails.assets.plugin."twitter-bootstrap".excludes = ["**/*.less"]

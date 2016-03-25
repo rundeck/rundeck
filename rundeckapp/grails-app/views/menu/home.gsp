@@ -34,6 +34,8 @@
     <asset:javascript src="jquery.dataTables.js"/>
     <asset:javascript src="DT_bootstrap.js"/>
     <asset:javascript src="dtable.js"/>
+    <asset:javascript src="menu/home.js"/>
+
 </head>
 <body>
 

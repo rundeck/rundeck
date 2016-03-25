@@ -34,6 +34,8 @@ public class ScheduledExecutionQuery extends BaseQuery{
     String descFilter
     String loglevelFilter
     String idlist
+    Boolean scheduledFilter
+    String serverNodeUUIDFilter
 
     /**
      * text filters
@@ -49,11 +51,13 @@ public class ScheduledExecutionQuery extends BaseQuery{
                 loglevel:'loglevel',
                 proj:'project',
                 jobExact:'jobName',
+                serverNodeUUID:'serverNodeUUID'
             ]
     /**
      * Boolean filters
      */
     public final static  BOOL_FILTERS=[
+            'scheduled':'scheduled'
             ]
     /**
      * all filters
@@ -67,7 +71,27 @@ public class ScheduledExecutionQuery extends BaseQuery{
 
 
     static constraints={
-        
+
+        sortBy(nullable: true)
+        sortOrder(inList:["ascending","descending"],nullable: true)
+        max(min:0,nullable: true)
+        offset(min:0,nullable: true)
+
+        jobFilter(nullable: true)
+        jobExactFilter(nullable: true)
+        projFilter(nullable: true)
+        groupPath(nullable: true)
+        groupPathExact(nullable: true)
+        descFilter(nullable: true)
+        loglevelFilter(nullable: true)
+        idlist(nullable: true)
+        scheduledFilter(nullable: true)
+        serverNodeUUIDFilter(size: 36..36, blank: true, nullable: true, validator: { val, obj ->
+            if (null == val) return true;
+            try { return null != UUID.fromString(val) } catch (IllegalArgumentException e) {
+                return false
+            }
+        })
     }
 
 

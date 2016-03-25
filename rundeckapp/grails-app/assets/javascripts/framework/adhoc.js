@@ -253,9 +253,8 @@ function init() {
         appLinks.frameworkNodes,
         Object.extend(filterParams, {
             nodeSummary:nodeSummary,
-            elem: pageParams.ukey+'nodeForm',
             view: 'embed',
-            maxShown: 20,
+            maxShown: 100,
             emptyMode: 'blank',
             project: pageParams.project,
             nodesTitleSingular: message('Node'),
@@ -273,6 +272,15 @@ function init() {
         if (val) {
             jQuery('a[data-node-filter-name]').removeClass('active');
             jQuery('a[data-node-filter-name=\'' + val + '\']').addClass('active');
+        }
+    });
+    nodeFilter.total.subscribe(function(val){
+        if (val && val != "0" && !running) {
+            enableRunBar();
+            adhocCommand.canRun(true);
+        } else if (!running) {
+            disableRunBar(false);
+            adhocCommand.canRun(false);
         }
     });
     nodeSummary.reload();
