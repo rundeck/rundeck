@@ -863,9 +863,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             //construct input values for the bean
             def beanData=[
                     configurable:v,
-                    prefix:"extraConfig.${k}"
+                    prefix:"extraConfig.${k}."
             ]
-            def input=params.extraConfig."${k}"
+            def input=params.extraConfig?."${k}"?:[:]
             beanData.values=input
 
             v.getProjectConfigProperties().findAll{it.type==Property.Type.Boolean}.each{
@@ -878,12 +878,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             beanData.report=report
             if(!report.valid){
                 errors << ("Some configuration was invalid: "+ report )
-                extraConfig[k]=beanData
             }else{
                 def projvalues = Validator.performMapping(input, v.getPropertiesMapping(),true)
-
                 projProps.putAll(projvalues)
             }
+            extraConfig[k]=beanData
         }
 
 
@@ -1317,17 +1316,16 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 beanData.report=report
                 if(!report.valid){
                     errors << ("Some configuration was invalid: "+ report )
-                    extraConfig[k]=beanData
                 }else{
                     def projvalues = Validator.performMapping(input, v.getPropertiesMapping(),true)
                     projProps.putAll(projvalues)
                     //remove all previous settings
                     removePrefixes.addAll(v.getPropertiesMapping().values())
                 }
+                extraConfig[k]=beanData
             }
 
             if (!errors) {
-                // Password Field Substitution
 
                 def result = frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
                 if (!result.success) {
@@ -1336,7 +1334,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }
 
             if (!errors) {
-                def result = userService.storeFilterPref(session.user, [project: project])
                 flash.message = "Project ${project} saved"
 
                 resourcesPasswordFieldsService.reset()
