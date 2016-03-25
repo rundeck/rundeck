@@ -132,6 +132,10 @@ public class ResourceXMLGenerator implements NodesFileGenerator {
                 ent.setProperty(setName, value);
             }
         }
+        if(null!=node.getTags()){
+            ent.setProperty("tags", joinStrings(node.getTags(), ", "));
+        }
+
 
 
         return ent;
@@ -146,8 +150,11 @@ public class ResourceXMLGenerator implements NodesFileGenerator {
      * @return joined string
      */
     private static String joinStrings(final Set tags, final String delim) {
+        ArrayList<String> strings = new ArrayList<String>(tags);
+        String[] objects = strings.toArray(new String[strings.size()]);
+        Arrays.sort(objects);
         final StringBuffer sb = new StringBuffer();
-        for (final Object tag : tags) {
+        for (final String tag : objects) {
             if (sb.length() > 0) {
                 sb.append(delim);
             }

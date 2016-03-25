@@ -602,6 +602,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             def project= params.project
             def fproject = frameworkService.getFrameworkProject(project)
             def configs = fproject.projectNodes.listResourceModelConfigurations()
+            def nodeErrorsMap = fproject.projectNodes.getResourceModelSourceExceptionsMap()
 
             final service = framework.getResourceModelSourceService()
             final descriptions = service.listDescriptions()
@@ -649,6 +650,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             ]
         }
             return [configs:configs,
+                    nodeErrorsMap:nodeErrorsMap,
                 resourceModelConfigDescriptions:descriptions,
                 nodeexecconfig:nodeexec,
                 fcopyconfig:fcopy,

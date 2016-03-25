@@ -21,6 +21,11 @@ public interface IProjectNodes {
     ArrayList<Exception> getResourceModelSourceExceptions();
 
     /**
+     * @return the set of exceptions produced by source name
+     */
+    Map<String,Exception> getResourceModelSourceExceptionsMap();
+
+    /**
      * list the configurations of resource model providers.
      *
      * @return a list of maps containing:
