@@ -160,6 +160,12 @@ beans={
     nodeTaskExecutor(SimpleAsyncTaskExecutor,"NodeService-SourceLoader") {
         concurrencyLimit = (application.config.rundeck?.nodeService?.concurrencyLimit ?: 25) //-1 for unbounded
     }
+    //alternately use ThreadPoolTaskExecutor ...
+//    nodeTaskExecutor(ThreadPoolTaskExecutor) {
+//        threadNamePrefix="NodeService-SourceLoader"
+//        corePoolSize= (application.config.rundeck?.nodeService?.corePoolSize ?: 5)
+//        maxPoolSize= (application.config.rundeck?.nodeService?.maxPoolSize ?: 40)
+//    }
 
     pluggableStoragePluginProviderService(PluggableStoragePluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
