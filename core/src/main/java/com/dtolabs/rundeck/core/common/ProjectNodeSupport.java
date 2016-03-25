@@ -302,7 +302,7 @@ public class ProjectNodeSupport implements IProjectNodes {
         final ResourceFormatGeneratorService resourceFormatGeneratorService = getResourceFormatGeneratorService();
         final Properties fileSourceConfig = generateFileSourceConfigurationProperties(
                 file.getAbsolutePath(),
-                ResourceXMLFormatGenerator.SERVICE_PROVIDER_TYPE, true, false
+                ResourceXMLFormatGenerator.SERVICE_PROVIDER_TYPE, false, false
         );
         try {
             ResourceModelSource fileSource = nodesSourceService.getSourceForConfiguration("file", fileSourceConfig);
