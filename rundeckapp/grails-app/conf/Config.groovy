@@ -172,6 +172,8 @@ rundeck.gui.clusterIdentityInFooter=true
 rundeck.projectService.projectExportCache.spec= "expireAfterAccess=30m"
 rundeck.projectManagerService.projectCache.spec='expireAfterAccess=10m,refreshAfterWrite=1m'
 
+rundeck.logFileStorageService.startup.resumeMode = 'async'
+
 rundeck.projectsStorageType='filesystem'
 
 rundeck.ajax.compression='gzip'

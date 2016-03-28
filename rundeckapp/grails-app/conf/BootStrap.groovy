@@ -315,8 +315,17 @@ class BootStrap {
                      scheduledExecutionService.rescheduleJobs(clusterMode ? serverNodeUUID : null)
                  }
              }
-             timer("logFileStorageService.resumeIncompleteLogStorage"){
-                 logFileStorageService.resumeIncompleteLogStorage(clusterMode ? serverNodeUUID : null)
+
+             def resumeMode = configurationService.getString("logFileStorageService.startup.resumeMode", "")
+             if ('sync' == resumeMode) {
+                 timer("logFileStorageService.resumeIncompleteLogStorage") {
+                     logFileStorageService.resumeIncompleteLogStorage(clusterMode ? serverNodeUUID : null)
+                 }
+             } else if ('async' == resumeMode) {
+                 log.debug("logFileStorageService.resumeIncompleteLogStorage: resuming asynchronously")
+                 logFileStorageService.resumeIncompleteLogStorageAsync(clusterMode ? serverNodeUUID : null)
+             }else{
+                 log.debug("logFileStorageService.resumeIncompleteLogStorage: skipping per configuration")
              }
          }
          log.info("Rundeck startup finished in ${System.currentTimeMillis()-bstart}ms")

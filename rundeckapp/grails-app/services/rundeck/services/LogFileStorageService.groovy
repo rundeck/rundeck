@@ -318,6 +318,11 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
      * Resume log storage requests for the given serverUUID, or null for unspecified
      * @param serverUUID
      */
+    void resumeIncompleteLogStorageAsync(String serverUUID){
+        executorService.execute {
+            resumeIncompleteLogStorage(serverUUID)
+        }
+    }
     void resumeIncompleteLogStorage(String serverUUID){
         def incomplete = LogFileStorageRequest.findAllByCompleted(false)
         log.debug("resumeIncompleteLogStorage: incomplete count: ${incomplete.size()}, serverUUID: ${serverUUID}")
@@ -327,7 +332,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         incomplete.each{ LogFileStorageRequest request ->
             Execution e = request.execution
             if (serverUUID == e.serverNodeUUID) {
-                log.info("re-queueing incomplete log storage request for execution ${e.id}")
+                log.info("re-queueing incomplete log storage request for execution ${e.id} delay ${delay}")
 //                File file = getFileForExecutionFiletype(e, request.filetype,true)
                 def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
                 if(null!=plugin && pluginSupportsStorage(plugin)) {
