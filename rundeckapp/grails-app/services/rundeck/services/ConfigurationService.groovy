@@ -22,6 +22,20 @@ class ConfigurationService {
      * @param defval default value
      * @return
      */
+    String getString(String property, String defval) {
+        def strings = property.split('\\.')
+        def val = appConfig
+        strings.each{
+            val = val?."${it}"
+        }
+        stringValue(defval,val)
+    }
+    /**
+     * Lookup boolean config value, rundeck.some.property.name, evaluate true/false.
+     * @param property property name
+     * @param defval default value
+     * @return
+     */
     boolean getBoolean(String property, boolean defval) {
         def strings = property.split('\\.')
         def val = appConfig
@@ -50,6 +64,16 @@ class ConfigurationService {
         } else {
             //not found implies false
             return val in [true, 'true']
+        }
+    }
+
+    private String stringValue(String defval, val) {
+        if(val instanceof ConfigObject){
+            return val.isEmpty()?defval:val.toString()
+        }else if(val instanceof String){
+            return val
+        }else{
+            return val?.toString()?:defval
         }
     }
 
