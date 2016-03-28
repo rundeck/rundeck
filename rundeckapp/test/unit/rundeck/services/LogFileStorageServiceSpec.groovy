@@ -1,0 +1,83 @@
+package rundeck.services
+
+import asset.pipeline.grails.LinkGenerator
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
+import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin
+import grails.test.mixin.Mock
+import grails.test.mixin.TestFor
+import rundeck.Execution
+import rundeck.LogFileStorageRequest
+import spock.lang.Specification
+
+import java.util.concurrent.ScheduledExecutorService
+
+/**
+ * Created by greg on 3/28/16.
+ */
+@Mock([LogFileStorageRequest, Execution])
+@TestFor(LogFileStorageService)
+class LogFileStorageServiceSpec extends Specification {
+
+    def "resume incomplete no uuid"() {
+        given:
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = 'blah'
+        def mockPlugin = Mock(ExecutionFileStoragePlugin){
+            1 * initialize({args->
+                args.username==testuser
+            })
+        }
+        service.pluginService = Mock(PluginService) {
+            1 * configurePlugin('blah', _, _, PropertyScope.Instance) >> new ConfiguredPlugin(
+                    mockPlugin,
+                    [:]
+            )
+        }
+        service.frameworkService = Mock(FrameworkService)
+        service.grailsLinkGenerator = Mock(LinkGenerator)
+        def e1 = new Execution(dateStarted: new Date(),
+                               dateCompleted: null,
+                               user: 'user1',
+                               project: 'test',
+                               serverNodeUUID: null
+        ).save()
+
+        def l = new LogFileStorageRequest(
+                execution: e1,
+                pluginName: 'blah',
+                filetype: '*',
+                completed: false
+        ).save()
+
+        def e2 = new Execution(dateStarted: new Date(),
+                               dateCompleted: null,
+                               user: 'user2',
+                               project: 'test',
+                               serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+        ).save()
+        def l2 = new LogFileStorageRequest(
+                execution: e2,
+                pluginName: 'blah',
+                filetype: '*',
+                completed: false
+        ).save()
+
+
+        service.scheduledExecutor = Mock(ScheduledExecutorService)
+        when:
+        service.resumeIncompleteLogStorage(serverUUID)
+
+        then:
+        e1 != null
+        l != null
+        e2 != null
+        l2 != null
+        1 * service.scheduledExecutor.schedule(*_)
+
+        where:
+        serverUUID                             | testuser
+        null                                   | 'user1'
+        'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F' | 'user2'
+    }
+}

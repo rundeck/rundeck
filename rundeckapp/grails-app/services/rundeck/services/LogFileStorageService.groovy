@@ -54,7 +54,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
     /**
      * Scheduled executor for retries
      */
-    private ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(1)
+    def ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(1)
     /**
      * Queue of log storage requests
      */
@@ -324,7 +324,16 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         }
     }
     void resumeIncompleteLogStorage(String serverUUID){
-        def incomplete = LogFileStorageRequest.findAllByCompleted(false)
+        def incomplete = LogFileStorageRequest.withCriteria {
+            eq('completed',false)
+            execution{
+                if(serverUUID){
+                    eq('serverNodeUUID',serverUUID)
+                }else{
+                    isNull('serverNodeUUID')
+                }
+            }
+        }
         log.debug("resumeIncompleteLogStorage: incomplete count: ${incomplete.size()}, serverUUID: ${serverUUID}")
         //use a slow start to process backlog storage requests
         def delayInc = getConfiguredStorageRetryDelay()
