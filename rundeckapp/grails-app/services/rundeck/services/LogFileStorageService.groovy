@@ -92,7 +92,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             return
         }
         logFileTaskExecutor?.execute( new TaskRunner<Map>(storageRequests,{ Map task ->
-            storageQueueCounter.dec()
+            storageQueueCounter?.dec()
             runStorageRequest(task)
         }))
         logFileTaskExecutor?.execute( new TaskRunner<Map>(retrievalRequests,{ Map task ->
@@ -100,16 +100,16 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         }))
     }
     Counter getStorageQueueCounter(){
-        metricService.counter(this.class.name + ".storageRequests","queued")
+        metricService?.counter(this.class.name + ".storageRequests","queued")
     }
     Counter getStorageTotalCounter(){
-        metricService.counter(this.class.name + ".storageRequests","total")
+        metricService?.counter(this.class.name + ".storageRequests","total")
     }
     Counter getStorageSuccessCounter(){
-        metricService.counter(this.class.name + ".storageRequests","succeeded")
+        metricService?.counter(this.class.name + ".storageRequests","succeeded")
     }
     Counter getStorageFailedCounter(){
-        metricService.counter(this.class.name + ".storageRequests","failed")
+        metricService?.counter(this.class.name + ".storageRequests","failed")
     }
 
     List getCurrentRetrievalRequests(){
@@ -171,7 +171,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             running.remove(task)
             queueLogStorageRequest(task, delay)
         } else if (!success) {
-            getStorageFailedCounter().inc()
+            getStorageFailedCounter()?.inc()
             log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, giving up")
             running.remove(task)
         } else {
@@ -190,7 +190,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                 request.save(flush: true)
                 running.remove(task)
                 log.debug("Storage request [ID#${task.id}] complete.")
-                getStorageSuccessCounter().inc()
+                getStorageSuccessCounter()?.inc()
             }
         }
     }
@@ -874,8 +874,8 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
      */
     private void queueLogStorageRequest(Map task, int delay=0) {
         if(delay>=0) {
-            storageQueueCounter.inc()
-            storageTotalCounter.inc()
+            storageQueueCounter?.inc()
+            storageTotalCounter?.inc()
         }
         if(delay>0){
             scheduledExecutor.schedule({
