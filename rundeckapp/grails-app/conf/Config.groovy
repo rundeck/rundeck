@@ -150,8 +150,6 @@ rundeck.execution.stats.retryDelay=5000
 rundeck.gui.execution.tail.lines.default = 20
 rundeck.gui.execution.tail.lines.max = 500
 
-rundeck.execution.logs.fileStorage.cancelOnStorageFailure=true
-
 rundeck.mail.template.subject='${notification.eventStatus} [${execution.project}] ${job.group}/${job.name} ${execution.argstring}'
 rundeck.security.useHMacRequestTokens=true
 rundeck.security.apiCookieAccess.enabled=true
