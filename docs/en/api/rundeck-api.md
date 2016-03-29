@@ -60,6 +60,7 @@ Changes introduced by API Version number:
 * New Endpoints.
     - [`/api/17/scheduler/server/[UUID]/jobs`][/api/V/scheduler/server/[UUID]/jobs] - List scheduled jobs owned by the server with given UUID.
     - [`/api/17/scheduler/jobs`][/api/V/scheduler/jobs] - List scheduled jobs owned by the target server.
+    - [`/api/17/system/logstorage/info`][/api/V/system/logstorage/info] - Get stats about the Log File storage system.
 
 * Updated Endpoints.
     - [`/api/17/project/[PROJECT]/jobs`][/api/V/project/[PROJECT]/jobs] 
@@ -865,6 +866,79 @@ The `memory` section describes memory usage in bytes:
 `threads/active`
 
 :   Number of active Threads in the JVM
+
+## Log Storage System Info
+
+Get Log Storage information and stats.
+
+**Request:**
+
+    GET /api/17/system/logstorage/info
+
+**Response:**
+
+Success response, with included system info and stats in this format:
+
+`Content-Type: application/xml`:
+
+~~~ {.xml}
+<logStorage enabled="true" pluginName="NAME">
+  <succeededCount>349</succeededCount>
+  <failedCount>0</failedCount>
+  <queuedCount>0</queuedCount>
+  <totalCount>349</totalCount>
+  <incompleteCount>0</incompleteCount>
+  <missingCount>0</missingCount>
+</logStorage>
+~~~
+
+`Content-Type: application/json`:
+
+~~~ {.json}
+{
+  "enabled": true,
+  "pluginName": "NAME",
+  "succeededCount": 369,
+  "failedCount": 0,
+  "queuedCount": 0,
+  "totalCount": 369,
+  "incompleteCount": 0,
+  "missingCount": 0
+}
+~~~
+
+`enabled`
+
+:   True if a plugin is configured
+
+`pluginName`
+
+:   Name of the configured plugin
+
+`succeededCount`
+
+:   Number of successful storage requests
+
+`failedCount`
+
+:   Number of failed storage requests
+
+`queuedCount`
+
+:   Number of queued storage requests
+
+`totalCount`
+
+:   Total number of storage requests (currently queued plus previously processed)
+
+`incompleteCount`
+
+:   Number of storage requests which have not completed successfully
+
+`missingCount`
+
+:   Number of executions for this cluster node which have no associated storage requests
+
 
 ## Execution Mode ##
 

@@ -147,6 +147,7 @@ class UrlMappings {
         ///////////////
 
         "/api/$api_version/system/info"(controller: 'api', action: 'apiSystemInfo')
+        "/api/$api_version/system/logstorage/info"(controller: 'menu', action: 'apiLogstorageInfo')
         "/api/$api_version/system/executions/enable"(controller: 'execution', action: 'apiExecutionModeActive')
         "/api/$api_version/system/executions/disable"(controller: 'execution', action: 'apiExecutionModePassive')
         "/api/$api_version/system/acl/$path**"(controller: 'framework',action: 'apiSystemAcls')

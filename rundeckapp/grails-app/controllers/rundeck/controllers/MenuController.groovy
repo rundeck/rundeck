@@ -1198,6 +1198,57 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     * API Actions
      */
 
+    def apiLogstorageInfo() {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V17)) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (!apiService.requireAuthorized(
+                frameworkService.authorizeApplicationResource(
+                        authContext,
+                        AuthConstants.RESOURCE_TYPE_SYSTEM,
+                        AuthConstants.ACTION_READ
+                ),
+                response,
+                [AuthConstants.ACTION_READ, 'System','Logstorage Info'].toArray()
+        )) {
+            return
+        }
+
+        def data = logFileStorageService.getStorageStats()
+        def propnames = [
+                'succeededCount',
+                'failedCount',
+                'queuedCount',
+                'totalCount',
+                'incompleteCount',
+                'missingCount'
+        ]
+        withFormat {
+            json {
+                apiService.renderSuccessJson(response) {
+                    enabled = data.pluginName ? true : false
+                    pluginName = data.pluginName
+                    for (String name : propnames) {
+                        delegate.setProperty(name, data[name])
+                    }
+                }
+            }
+            xml {
+
+                apiService.renderSuccessXml(request, response) {
+                    logStorage(enabled: data.pluginName ? true : false, pluginName: data.pluginName) {
+                        for (String name : propnames) {
+                            delegate."${name}"(data[name])
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
     /**
      * API: /api/jobs, version 1
      */
