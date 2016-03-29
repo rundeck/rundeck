@@ -402,7 +402,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             resumeIncompleteLogStorage(serverUUID)
         }
     }
-    void resumeIncompleteLogStorage(String serverUUID){
+    int resumeIncompleteLogStorage(String serverUUID){
         def incomplete = LogFileStorageRequest.withCriteria {
             eq('completed',false)
             execution{
@@ -413,25 +413,30 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                 }
             }
         }
-        log.debug("resumeIncompleteLogStorage: incomplete count: ${incomplete.size()}, serverUUID: ${serverUUID}")
+        log.info("resumeIncompleteLogStorage: found: ${incomplete.size()} incomplete requests for serverUUID: ${serverUUID}")
         //use a slow start to process backlog storage requests
         def delayInc = getConfiguredStorageRetryDelay()
         def delay = delayInc
+        def count=0
         incomplete.each{ LogFileStorageRequest request ->
             Execution e = request.execution
             if (serverUUID == e.serverNodeUUID) {
-                log.info("re-queueing incomplete log storage request for execution ${e.id} delay ${delay}")
+                log.debug("re-queueing incomplete log storage request for execution ${e.id} delay ${delay}")
 //                File file = getFileForExecutionFiletype(e, request.filetype,true)
                 def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
                 if(null!=plugin && pluginSupportsStorage(plugin)) {
                     //re-queue storage request
                     storeLogFileAsync(e.id.toString() + ":" + request.filetype, plugin, request, delay)
                     delay += delayInc
+                    count++
                 }else{
                     log.error("cannot re-queue incomplete log storage request for execution ${e.id}, plugin was not available: ${getConfiguredPluginName()}")
                 }
             }
         }
+        log.info("resumeIncompleteLogStorage: ${count} incomplete requests requeued for serverUUID: ${serverUUID}")
+        count
+    }
 
     /**
      *
@@ -466,7 +471,6 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             }
         }
         return found2
-    }
     }
 
     /**
@@ -866,7 +870,6 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                 delay
         )
     }
-
     /**
      * Queue the request to store a log file
      * @param execution
