@@ -699,7 +699,6 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         if (!pluginName) {
             return null
         }
-        log.debug("Using log file storage plugin ${pluginName}")
         def result
         try {
             result= pluginService.configurePlugin(pluginName, executionFileStoragePluginProviderService, resolver, PropertyScope.Instance)
