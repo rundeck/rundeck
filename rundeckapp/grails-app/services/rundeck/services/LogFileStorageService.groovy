@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.codahale.metrics.Counter
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogWriter
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
@@ -14,6 +15,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
+import org.hibernate.sql.JoinType
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -37,7 +39,16 @@ import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 
+/**
+ * Manage execution file storage retrieve and store requests.
+ * "executorService" runs tasks within a hibernate session.
+ * "logFileTaskExecutor" runs asynchronous tasks as well as two threads which process retrieve/storage queues
+ * "scheduledExecutor" runs delayed tasks for retrying at a later time
+ * "storageRequests" blocking queue for storage requests
+ * "retrievalRequests" blocking queue for retrieval requests
+ */
 class LogFileStorageService implements InitializingBean,ApplicationContextAware{
 
     static transactional = false
@@ -50,6 +61,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
     def grailsApplication
     def grailsLinkGenerator
     ApplicationContext applicationContext
+    def metricService
 
     /**
      * Scheduled executor for retries
@@ -80,12 +92,26 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             return
         }
         logFileTaskExecutor?.execute( new TaskRunner<Map>(storageRequests,{ Map task ->
+            storageQueueCounter.dec()
             runStorageRequest(task)
         }))
         logFileTaskExecutor?.execute( new TaskRunner<Map>(retrievalRequests,{ Map task ->
             runRetrievalRequest(task)
         }))
     }
+    Counter getStorageQueueCounter(){
+        metricService.counter(this.class.name + ".storageRequests","queued")
+    }
+    Counter getStorageTotalCounter(){
+        metricService.counter(this.class.name + ".storageRequests","total")
+    }
+    Counter getStorageSuccessCounter(){
+        metricService.counter(this.class.name + ".storageRequests","succeeded")
+    }
+    Counter getStorageFailedCounter(){
+        metricService.counter(this.class.name + ".storageRequests","failed")
+    }
+
     List getCurrentRetrievalRequests(){
         return new ArrayList(retrievalRequests)
     }
@@ -145,6 +171,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             running.remove(task)
             queueLogStorageRequest(task, delay)
         } else if (!success) {
+            getStorageFailedCounter().inc()
             if(getConfiguredStorageFailureCancel()){
                 log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, cancelling")
                 //if policy, remove the request from db
@@ -179,6 +206,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                 request.save(flush: true)
                 running.remove(task)
                 log.debug("Storage request [ID#${task.id}] complete.")
+                getStorageSuccessCounter().inc()
             }
         }
     }
@@ -339,6 +367,57 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         request.save(flush:true)
         request
     }
+    public Map getStorageStats() {
+        def missing = countMissingLogStorageExecutions()
+        def queued = storageQueueCounter.count
+        def failed = storageFailedCounter.count
+        def succeeded = storageSuccessCounter.count
+        def total = storageTotalCounter.count
+        def incomplete = countIncompleteLogStorageExecutions() - queued
+
+        def data = [
+                pluginName        : getConfiguredPluginName(),
+                succeededCount   : succeeded,
+                failedCount    : failed,
+                queuedCount   : queued,
+                totalCount     : total,
+                incompleteCount: incomplete,
+                missingCount   : missing
+        ]
+        data
+    }
+
+    /**
+     *
+     * @return count of executions with incomplete log storage requests for this cluster node
+     */
+    int countIncompleteLogStorageExecutions(){
+        def result=[]
+        def serverUUID=frameworkService.serverUUID
+        def plugin
+        def requests = listIncompleteRequests(serverUUID)
+        requests.each{ LogFileStorageRequest request->
+            Execution e = request.execution
+            if(null==plugin) {
+                plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
+            }
+            if(null!=plugin && pluginSupportsStorage(plugin)) {
+                if(!isStorageRequestInProgress(e.id+':'+request.filetype)){
+                    result << e
+                }
+            }
+        }
+        result.size()
+    }
+
+    /**
+     *
+     * @return count of executions with missing log storage requests
+     */
+    int countMissingLogStorageExecutions(){
+        countExecutionsWithoutStorageRequests(frameworkService.serverUUID)
+    }
+
     /**
      * Resume log storage requests for the given serverUUID, or null for unspecified
      * @param serverUUID
@@ -378,8 +457,51 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                 }
             }
         }
+
+    /**
+     *
+     * @param serverUUID
+     * @return list of incomplete storage requests for this cluster id or null
+     */
+    def List<LogFileStorageRequest> listIncompleteRequests(String serverUUID){
+        def found2=LogFileStorageRequest.withCriteria{
+            eq('completed',false)
+            execution {
+                if (null == serverUUID) {
+                    isNull('serverNodeUUID')
+                } else {
+                    eq('serverNodeUUID', serverUUID)
+                }
+            }
+        }
+        return found2
+    }
+    int countExecutionsWithoutStorageRequests(String serverUUID){
+        def found2=Execution.createCriteria().get{
+            createAlias('logFileStorageRequest', 'logid', JoinType.LEFT_OUTER_JOIN)
+            isNull( 'logid.id')
+            isNotNull('dateCompleted')
+            if(null==serverUUID){
+                isNull('serverNodeUUID')
+            }else{
+                eq('serverNodeUUID', serverUUID)
+            }
+            projections{
+                rowCount()
+            }
+        }
+        return found2
+    }
     }
 
+    /**
+     * Return true if the storage request with the given ID is queued or running
+     * @param reqid
+     * @return
+     */
+    boolean isStorageRequestInProgress(reqid) {
+        getCurrentStorageRequests().find { it.id == reqid } || getCurrentRequests().find { it.id == reqid }
+    }
     /**
      * Return the local file path for a stored file for the execution given the filetype
      * @param execution the execution
@@ -776,9 +898,13 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
      * @param storage plugin that is already initialized
      */
     private void queueLogStorageRequest(Map task, int delay=0) {
+        if(delay>=0) {
+            storageQueueCounter.inc()
+            storageTotalCounter.inc()
+        }
         if(delay>0){
             scheduledExecutor.schedule({
-                queueLogStorageRequest(task)
+                queueLogStorageRequest(task,-1)
             }, delay, TimeUnit.SECONDS)
         }else{
             storageRequests<<task
