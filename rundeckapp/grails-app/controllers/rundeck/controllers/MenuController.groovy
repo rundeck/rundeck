@@ -666,6 +666,61 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     extraConfig:extraConfig
             ]
     }
+
+    public def resumeIncompleteLogStorage(){
+        withForm{
+
+            AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+            if (unauthorizedResponse(
+                    frameworkService.authorizeApplicationResourceAny(
+                            authContext,
+                            AuthConstants.RESOURCE_TYPE_SYSTEM,
+                            [ AuthConstants.ACTION_ADMIN]
+                    ),
+                    AuthConstants.ACTION_ADMIN, 'for', 'Rundeck')) {
+                return
+            }
+            logFileStorageService.resumeIncompleteLogStorageAsync(frameworkService.serverUUID)
+//            logFileStorageService.resumeCancelledLogStorageAsync(frameworkService.serverUUID)
+            flash.message="Resumed log storage requests"
+            return redirect(action: 'logStorage', params: [project: params.project])
+
+        }.invalidToken{
+
+            request.error=g.message(code:'request.error.invalidtoken.message')
+            renderErrorView([:])
+        }
+    }
+    def logStorage() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
+                                                              AuthConstants.ACTION_READ
+                ),
+                AuthConstants.ACTION_READ, 'System configuration'
+        )) {
+            return
+        }
+    }
+    def logStorageAjax(){
+        if('true'!=request.getHeader('x-rundeck-ajax')) {
+            return redirect(action: 'logStorage',controller: 'menu',params: params)
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
+                                                              AuthConstants.ACTION_READ
+                ),
+                AuthConstants.ACTION_READ, 'System configuration'
+        )) {
+            return
+        }
+        def data = logFileStorageService.getStorageStats()
+        return render(contentType: 'application/json', text: data + [enabled: data.pluginName ? true : false] as JSON)
+    }
     def systemConfig(){
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
