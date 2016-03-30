@@ -353,17 +353,19 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
     }
     public Map getStorageStats() {
         def missing = countMissingLogStorageExecutions()
+        def incompleteRequests = countIncompleteLogStorageRequests()
         def queued = storageQueueCounter.count
         def failed = storageFailedCounter.count
         def succeeded = storageSuccessCounter.count
         def total = storageTotalCounter.count
-        def incomplete = countIncompleteLogStorageExecutions() - queued
+
+        def incomplete = incompleteRequests - queued
 
         def data = [
-                pluginName        : getConfiguredPluginName(),
-                succeededCount   : succeeded,
+                pluginName     : getConfiguredPluginName(),
+                succeededCount : succeeded,
                 failedCount    : failed,
-                queuedCount   : queued,
+                queuedCount    : queued,
                 totalCount     : total,
                 incompleteCount: incomplete,
                 missingCount   : missing
@@ -371,28 +373,6 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         data
     }
 
-    /**
-     *
-     * @return count of executions with incomplete log storage requests for this cluster node
-     */
-    int countIncompleteLogStorageExecutions(){
-        def result=[]
-        def serverUUID=frameworkService.serverUUID
-        def plugin
-        def requests = listIncompleteRequests(serverUUID)
-        requests.each{ LogFileStorageRequest request->
-            Execution e = request.execution
-            if(null==plugin) {
-                plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
-            }
-            if(null!=plugin && pluginSupportsStorage(plugin)) {
-                if(!isStorageRequestInProgress(e.id+':'+request.filetype)){
-                    result << e
-                }
-            }
-        }
-        result.size()
-    }
 
     /**
      *
@@ -447,6 +427,27 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         count
     }
 
+    /**
+     *
+     * @return count of executions with incomplete log storage requests for this cluster node
+     */
+    int countIncompleteLogStorageRequests(){
+        def serverUUID=frameworkService.serverUUID
+        def found2=LogFileStorageRequest.createCriteria().get{
+            eq('completed',false)
+            execution {
+                if (null == serverUUID) {
+                    isNull('serverNodeUUID')
+                } else {
+                    eq('serverNodeUUID', serverUUID)
+                }
+            }
+            projections{
+                rowCount()
+            }
+        }
+        found2
+    }
     /**
      *
      * @param serverUUID
