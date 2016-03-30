@@ -61,6 +61,7 @@ Changes introduced by API Version number:
     - [`/api/17/scheduler/server/[UUID]/jobs`][/api/V/scheduler/server/[UUID]/jobs] - List scheduled jobs owned by the server with given UUID.
     - [`/api/17/scheduler/jobs`][/api/V/scheduler/jobs] - List scheduled jobs owned by the target server.
     - [`/api/17/system/logstorage/info`][/api/V/system/logstorage/info] - Get stats about the Log File storage system.
+    - [`/api/17/system/logstorage/resumeIncomplete`][/api/V/system/logstorage/resumeIncomplete] - Resume incomplete log storage processing.
 
 * Updated Endpoints.
     - [`/api/17/project/[PROJECT]/jobs`][/api/V/project/[PROJECT]/jobs] 
@@ -867,7 +868,9 @@ The `memory` section describes memory usage in bytes:
 
 :   Number of active Threads in the JVM
 
-## Log Storage System Info
+## Log Storage
+
+### Log Storage Info
 
 Get Log Storage information and stats.
 
@@ -877,7 +880,7 @@ Get Log Storage information and stats.
 
 **Response:**
 
-Success response, with included system info and stats in this format:
+Success response, with log storage info and stats in this format:
 
 `Content-Type: application/xml`:
 
@@ -939,6 +942,32 @@ Success response, with included system info and stats in this format:
 
 :   Number of executions for this cluster node which have no associated storage requests
 
+
+### Resume Incomplete Log Storage
+
+Resume processing incomplete Log Storage uploads.
+
+**Request:**
+
+    POST /api/17/system/logstorage/resumeIncomplete
+
+**Response:**
+
+Success response, with included system info and stats in this format:
+
+`Content-Type: application/xml`:
+
+```xml
+<logStorage resumed='true' />
+```
+
+`Content-Type: application/json`:
+
+~~~ {.json}
+{
+  "resumed": true
+}
+~~~
 
 ## Execution Mode ##
 
@@ -5382,10 +5411,6 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 * `PUT` [Update an ACL Policy](#update-an-acl-policy)
 * `DELETE` [Delete an ACL Policy](#delete-an-acl-policy)
 
-[/api/V/system/info][]
-
-* `GET` [System Info](#system-info)
-
 [/api/V/system/executions/enable][]
 
 * `POST` [Set Active Mode](#set-active-mode)
@@ -5393,6 +5418,18 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 [/api/V/system/executions/disable][]
 
 * `POST` [Set Passive Mode](#set-passive-mode)
+
+[/api/V/system/info][]
+
+* `GET` [System Info](#system-info)
+
+[/api/V/system/logstorage/info][]
+
+* `GET` [Log Storage Info](#log-storage-info)
+
+[/api/V/system/logstorage/resumeIncomplete][]
+
+* `POST` [Resume Incomplete Log Storage](#resume-incomplete-log-storage)
 
 [/api/V/tokens][]
 
@@ -5537,6 +5574,8 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 [/api/V/system/info]:#system-info
 [/api/V/system/executions/enable]:#set-active-mode
 [/api/V/system/executions/disable]:#set-passive-mode
+[/api/V/system/logstorage/info]:#log-storage-info
+[/api/V/system/logstorage/resumeIncomplete]:#resume-incomplete-log-storage
 
 [/api/V/tokens]:#list-tokens
 [/api/V/tokens/[USER]]:#list-tokens

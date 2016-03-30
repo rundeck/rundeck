@@ -67,6 +67,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     static allowedMethods = [
             deleteJobfilter:'POST',
             storeJobfilter:'POST',
+            apiResumeIncompleteLogstorage:'POST'
     ]
     def list = {
         def results = index(params)
@@ -1243,6 +1244,40 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                             delegate."${name}"(data[name])
                         }
                     }
+                }
+            }
+        }
+    }
+
+    def apiResumeIncompleteLogstorage() {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V17)) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (!apiService.requireAuthorized(
+                frameworkService.authorizeApplicationResource(
+                        authContext,
+                        AuthConstants.RESOURCE_TYPE_SYSTEM,
+                        AuthConstants.ACTION_ADMIN
+                ),
+                response,
+                [AuthConstants.ACTION_ADMIN, 'System','Logstorage'].toArray()
+        )) {
+            return
+        }
+
+        logFileStorageService.resumeIncompleteLogStorageAsync(frameworkService.serverUUID)
+        withFormat {
+            json {
+                apiService.renderSuccessJson(response) {
+                    resumed=true
+                }
+            }
+            xml {
+
+                apiService.renderSuccessXml(request, response) {
+                    delegate.'logStorage'(resumed:true)
                 }
             }
         }
