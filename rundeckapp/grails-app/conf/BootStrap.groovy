@@ -307,8 +307,11 @@ class BootStrap {
              timer("executionService.cleanupRunningJobs"){
                  executionService.cleanupRunningJobs(clusterMode ? serverNodeUUID : null)
              }
-             if(clusterMode){
-                 timer("scheduledExecutionService.claimScheduledJobs"){
+             if (clusterMode && configurationService.getBoolean(
+                     "scheduledExecutionService.startup.claimScheduledJobs",
+                     false
+             )) {
+                 timer("scheduledExecutionService.claimScheduledJobs") {
                      scheduledExecutionService.claimScheduledJobs(serverNodeUUID)
                  }
              }
