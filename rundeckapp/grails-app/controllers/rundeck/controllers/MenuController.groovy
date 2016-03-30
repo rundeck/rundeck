@@ -1239,7 +1239,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             xml {
 
                 apiService.renderSuccessXml(request, response) {
-                    logStorage(enabled: data.pluginName ? true : false, pluginName: data.pluginName) {
+                    delegate.'logStorage'(enabled: data.pluginName ? true : false, pluginName: data.pluginName) {
                         for (String name : propnames) {
                             delegate."${name}"(data[name])
                         }
