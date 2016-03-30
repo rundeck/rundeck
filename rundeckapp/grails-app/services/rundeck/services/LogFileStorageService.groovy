@@ -196,8 +196,24 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             queueLogStorageRequest(task, delay)
         } else if (!success) {
             getStorageFailedCounter()?.inc()
-            log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, giving up")
-            running.remove(task)
+            if(getConfiguredStorageFailureCancel()){
+                log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, cancelling")
+                //if policy, remove the request from db
+                executorService.execute {
+                    //use executorService to run within hibernate session
+                    LogFileStorageRequest request = LogFileStorageRequest.get(task.requestId)
+                    while(!request){
+                        Thread.sleep(500)
+                        request = LogFileStorageRequest.get(task.requestId)
+                    }
+                    request.delete(flush:true)
+                    running.remove(task)
+                    log.debug("Storage request [ID#${task.id}] cancelled.")
+                }
+            }else{
+                log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, giving up")
+                running.remove(task)
+            }
         } else {
             //use executorService to run within hibernate session
             executorService.execute {
@@ -269,6 +285,12 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             delay = delay.toInteger()
         }
         delay > 0 ? delay : 60
+    }
+    /**
+     * @return whether storage failure should cancel storage request completely
+     */
+    boolean getConfiguredStorageFailureCancel() {
+        configurationService.getBoolean("execution.logs.fileStorage.cancelOnStorageFailure", true)
     }
     /**
      * Return the configured retry count
