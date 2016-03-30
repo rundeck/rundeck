@@ -299,8 +299,10 @@ class BootStrap {
              executionService.defaultLogLevel=servletContext.getAttribute("LOGLEVEL_DEFAULT")
 
 
-             timer("reportService.fixReportStatusStrings"){
-                 reportService.fixReportStatusStrings()
+             if(configurationService.getBoolean("reportService.startup.cleanupReports", false)) {
+                 timer("reportService.fixReportStatusStrings") {
+                     reportService.fixReportStatusStrings()
+                 }
              }
              timer("executionService.cleanupRunningJobs"){
                  executionService.cleanupRunningJobs(clusterMode ? serverNodeUUID : null)
