@@ -9,6 +9,7 @@ function StorageStats(baseUrl) {
     var self = this;
     self.baseUrl=baseUrl;
     self.loaded = ko.observable(false);
+    self.loading = ko.observable(false);
     self.enabled = ko.observable(false);
     self.queuedCount = ko.observable(0);
     self.totalCount = ko.observable(0);
@@ -16,6 +17,7 @@ function StorageStats(baseUrl) {
     self.failedCount = ko.observable(0);
     self.incompleteCount = ko.observable(0);
     self.missingCount = ko.observable(0);
+    self.reloadTime = ko.observable(10000);
 
     //0,1,2, indicates first panel view state
     self.progressView = ko.observable(0);
@@ -32,13 +34,15 @@ function StorageStats(baseUrl) {
         self.progressView((self.progressView() + 1) % 3);
     };
     self.reload = function () {
+        self.loading(true);
         jQuery.ajax({
             url: self.baseUrl,
             dataType: 'json',
             success: function (data) {
                 ko.mapping.fromJS(data, {}, self);
                 self.loaded(true);
-                setTimeout(self.reload, 5000);
+                self.loading(false);
+                setTimeout(self.reload, self.reloadTime());
             }
         });
     };

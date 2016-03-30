@@ -33,8 +33,8 @@
     <div class="col-sm-9">
 
         <h3><g:message code="menu.logStorage.page.title" />
-            <span data-bind="if: !loaded()">
-                <asset:image src="spinner-blue.gif" width="24px" height="24px"/>
+            <span data-bind="if: !loaded() || loading()">
+                <asset:image src="spinner-blue.gif" width="20px" height="20px"/>
             </span>
         </h3>
 
