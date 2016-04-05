@@ -46,7 +46,40 @@ class ConfigurationServiceSpec extends Specification {
         'blah' == service.getString('something.value', 'blah')
     }
 
-    void "get boolean present"(testval,resultval) {
+    void "get integer"() {
+        when:
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.something.value = confVal
+        then:
+        expval == service.getInteger('something.value', defval)
+
+        where:
+        confVal | expval | defval
+        null    | 1      | 1
+        12      | 12     | 1
+        12L     | 12     | 1
+        '12'    | 12     | 1
+        '3'     | 3      | 1
+    }
+
+    void "get long"() {
+        when:
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.something.value = confVal
+        then:
+        expval == service.getLong('something.value', defval)
+
+        where:
+        confVal | expval | defval
+        null    | 1L     | 1L
+        12      | 12L    | 1L
+        12L     | 12L    | 1L
+        '12'    | 12L    | 1L
+        '3'     | 3L     | 1L
+    }
+
+
+    void "get boolean present"(testval, resultval) {
         when:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.something.value = testval
