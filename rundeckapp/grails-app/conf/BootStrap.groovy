@@ -36,6 +36,7 @@ class BootStrap {
     def messageSource
     def scmService
     HealthCheckRegistry healthCheckRegistry
+    def dataSource
 
     def timer(String name,Closure clos){
         long bstart=System.currentTimeMillis()
@@ -273,6 +274,27 @@ class BootStrap {
                  }
              }
          })
+         int dbHealthTimeout = configurationService.getInteger("metrics.datasource.health.timeout", 5)
+         healthCheckRegistry?.register("dataSource.connection.time", new HealthCheck() {
+             @Override
+             protected com.codahale.metrics.health.HealthCheck.Result check() throws Exception {
+                 long start=System.currentTimeMillis()
+                 def valid = dataSource.connection.isValid(60)
+                 long dur=System.currentTimeMillis()-start
+                 if(dur<(dbHealthTimeout*1000L)){
+                     com.codahale.metrics.health.HealthCheck.Result.healthy("Datasource connection healthy with timeout ${dbHealthTimeout} seconds")
+                 }  else{
+                     com.codahale.metrics.health.HealthCheck.Result.unhealthy("Datasource connection timeout after ${dbHealthTimeout} seconds")
+                 }
+             }
+         })
+
+         int dbPingTimeout = configurationService.getInteger("metrics.datasource.ping.timeout", 60)
+         metricRegistry.register(MetricRegistry.name("dataSource.connection","pingTime"),new CallableGauge<Long>({
+             long start=System.currentTimeMillis()
+             def valid = dataSource.connection.isValid(dbPingTimeout)
+             System.currentTimeMillis()-start
+         }))
          //set up some metrics collection for the Quartz scheduler
          metricRegistry.register(MetricRegistry.name("rundeck.scheduler.quartz","runningExecutions"),new CallableGauge<Integer>({
              quartzScheduler.getCurrentlyExecutingJobs().size()
