@@ -326,9 +326,20 @@ class BootStrap {
                      reportService.fixReportStatusStrings()
                  }
              }
-             timer("executionService.cleanupRunningJobs"){
-                 executionService.cleanupRunningJobs(clusterMode ? serverNodeUUID : null)
+
+             def cleanupMode = configurationService.getString(
+                     'executionService.startup.cleanupMode',
+                     'async'
+             )
+             if ('sync' == cleanupMode) {
+                 timer("executionService.cleanupRunningJobs") {
+                     executionService.cleanupRunningJobs(clusterMode ? serverNodeUUID : null)
+                 }
+             } else {
+                 log.debug("executionService.cleanupRunningJobs: starting asynchronously")
+                 executionService.cleanupRunningJobsAsync(clusterMode ? serverNodeUUID : null)
              }
+
              if (clusterMode && configurationService.getBoolean(
                      "scheduledExecutionService.startup.claimScheduledJobs",
                      false
@@ -337,9 +348,19 @@ class BootStrap {
                      scheduledExecutionService.claimScheduledJobs(serverNodeUUID)
                  }
              }
+
              if(configurationService.executionModeActive) {
-                 timer("scheduledExecutionService.rescheduleJobs"){
-                     scheduledExecutionService.rescheduleJobs(clusterMode ? serverNodeUUID : null)
+                 def rescheduleMode = configurationService.getString(
+                         'scheduledExecutionService.startup.rescheduleMode',
+                         'async'
+                 )
+                 if ('sync' == rescheduleMode) {
+                     timer("scheduledExecutionService.rescheduleJobs") {
+                         scheduledExecutionService.rescheduleJobs(clusterMode ? serverNodeUUID : null)
+                     }
+                 } else {
+                     log.debug("scheduledExecutionService.rescheduleJobs: starting asynchronously")
+                     scheduledExecutionService.rescheduleJobsAsync(clusterMode ? serverNodeUUID : null)
                  }
              }
 

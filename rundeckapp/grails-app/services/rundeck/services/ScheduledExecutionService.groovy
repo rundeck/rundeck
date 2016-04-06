@@ -44,7 +44,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def NotificationService notificationService
     //private field to set lazy bean dependency
     private ExecutionService executionServiceBean
-
+    def executorService
     def Scheduler quartzScheduler
     /**
      * defined in quartz plugin
@@ -67,7 +67,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      */
     private ExecutionService getExecutionService(){
         if(null==executionServiceBean){
-            this.executionServiceBean = applicationContext.getBean(ExecutionService)
+            this.executionServiceBean = applicationContext.getBean("executionService",ExecutionService)
         }
         return executionServiceBean
     }
@@ -404,6 +404,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
+    /**
+     * Reschedule all scheduled jobs which match the given serverUUID, or all jobs if it is null.
+     * @param serverUUID
+     * @return
+     */
+    def rescheduleJobsAsync(String serverUUID=null) {
+        executorService.execute{
+            rescheduleJobs(serverUUID)
+        }
+    }
     /**
      * Reschedule all scheduled jobs which match the given serverUUID, or all jobs if it is null.
      * @param serverUUID
