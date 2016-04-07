@@ -426,6 +426,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 scheduleJob(se, null, null)
                 log.info("rescheduled job: ${se.id}")
             } catch (Exception e) {
+                log.debug("Job not rescheduled: ${se.id}: ${e.message}",e)
                 log.error("Job not rescheduled: ${se.id}: ${e.message}")
             }
         }
