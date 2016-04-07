@@ -25,6 +25,7 @@ import groovy.xml.MarkupBuilder
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
+import rundeck.LogFileStorageRequest
 import rundeck.ScheduledExecution
 import rundeck.ScheduledExecutionFilter
 import rundeck.User
@@ -67,7 +68,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     static allowedMethods = [
             deleteJobfilter:'POST',
             storeJobfilter:'POST',
-            apiResumeIncompleteLogstorage:'POST'
+            apiResumeIncompleteLogstorage:'POST',
+            cleanupIncompleteLogStorageAjax:'POST',
+            resumeIncompleteLogStorageAjax: 'POST',
+            resumeIncompleteLogStorage: 'POST',
+            cleanupIncompleteLogStorage: 'POST',
     ]
     def list = {
         def results = index(params)
@@ -672,7 +677,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             ]
     }
 
-    public def resumeIncompleteLogStorage(){
+    public def resumeIncompleteLogStorage(Long id){
         withForm{
 
             AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -686,7 +691,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     AuthConstants.ACTION_ADMIN, 'for', 'Rundeck')) {
                 return
             }
-            logFileStorageService.resumeIncompleteLogStorageAsync(frameworkService.serverUUID)
+            logFileStorageService.resumeIncompleteLogStorageAsync(frameworkService.serverUUID,id)
 //            logFileStorageService.resumeCancelledLogStorageAsync(frameworkService.serverUUID)
             flash.message="Resumed log storage requests"
             return redirect(action: 'logStorage', params: [project: params.project])
@@ -695,6 +700,50 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
             request.error=g.message(code:'request.error.invalidtoken.message')
             renderErrorView([:])
+        }
+    }
+    public def resumeIncompleteLogStorageAjax(Long id){
+        withForm{
+
+            g.refreshFormTokensHeader()
+
+            AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+            if (!apiService.requireAuthorized(
+                    frameworkService.authorizeApplicationResourceAny(
+                            authContext,
+                            AuthConstants.RESOURCE_TYPE_SYSTEM,
+                            [ AuthConstants.ACTION_ADMIN]
+                    ),
+                    response,
+                    [AuthConstants.ACTION_ADMIN, 'for', 'Rundeck'].toArray())) {
+                return
+            }
+            logFileStorageService.resumeIncompleteLogStorageAsync(frameworkService.serverUUID,id)
+//            logFileStorageService.resumeCancelledLogStorageAsync(frameworkService.serverUUID)
+            def message="Resumed log storage requests"
+            LogFileStorageRequest req=null
+            if(id){
+                req=LogFileStorageRequest.get(id)
+            }
+            withFormat{
+                ajax{
+                    render(contentType: 'application/json'){
+                        status='ok'
+                        delegate.message=message
+                        if(req){
+                            contents = exportRequestMap(req, true, false, null)
+                        }
+                    }
+                }
+            }
+
+        }.invalidToken{
+
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'request.error.invalidtoken.message',
+            ])
         }
     }
     def logStorage() {
@@ -707,6 +756,196 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 AuthConstants.ACTION_READ, 'System configuration'
         )) {
             return
+        }
+    }
+    /**
+     * Remove outstanding queued requests
+     * @return
+     */
+    def haltIncompleteLogStorage(){
+        withForm{
+            AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+            if (unauthorizedResponse(
+                    frameworkService.authorizeApplicationResourceAny(
+                            authContext,
+                            AuthConstants.RESOURCE_TYPE_SYSTEM,
+                            [ AuthConstants.ACTION_ADMIN]
+                    ),
+                    AuthConstants.ACTION_ADMIN, 'for', 'Rundeck')) {
+                return
+            }
+            logFileStorageService.haltIncompleteLogStorage(frameworkService.serverUUID)
+            flash.message="Unqueued incomplete log storage requests"
+            return redirect(action: 'logStorage', params: [project: params.project])
+        }.invalidToken{
+
+            request.error=g.message(code:'request.error.invalidtoken.message')
+            renderErrorView([:])
+
+        }
+    }
+    def cleanupIncompleteLogStorage(Long id){
+        withForm{
+            AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+            if (unauthorizedResponse(
+                    frameworkService.authorizeApplicationResourceAny(
+                            authContext,
+                            AuthConstants.RESOURCE_TYPE_SYSTEM,
+                            [ AuthConstants.ACTION_ADMIN]
+                    ),
+                    AuthConstants.ACTION_ADMIN, 'for', 'Rundeck')) {
+                return
+            }
+            def count=logFileStorageService.cleanupIncompleteLogStorage(frameworkService.serverUUID,id)
+            flash.message="Removed $count log storage requests"
+            return redirect(action: 'logStorage', params: [project: params.project])
+        }.invalidToken{
+
+            request.error=g.message(code:'request.error.invalidtoken.message')
+            renderErrorView([:])
+
+        }
+    }
+    public def cleanupIncompleteLogStorageAjax(Long id){
+        withForm{
+
+            g.refreshFormTokensHeader()
+
+            AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+            if (!apiService.requireAuthorized(
+                    frameworkService.authorizeApplicationResourceAny(
+                            authContext,
+                            AuthConstants.RESOURCE_TYPE_SYSTEM,
+                            [ AuthConstants.ACTION_ADMIN]
+                    ),
+                    response,
+                    [AuthConstants.ACTION_ADMIN, 'for', 'Rundeck'].toArray())) {
+                return
+            }
+            def count=logFileStorageService.cleanupIncompleteLogStorage(frameworkService.serverUUID,id)
+            def message="Removed $count log storage requests"
+            withFormat{
+                ajax{
+                    render(contentType: 'application/json'){
+                        status='ok'
+                        delegate.message=message
+                    }
+                }
+            }
+
+        }.invalidToken{
+
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'request.error.invalidtoken.message',
+            ])
+        }
+    }
+    def logStorageIncompleteAjax(BaseQuery query){
+        if('true'!=request.getHeader('x-rundeck-ajax')) {
+            return redirect(action: 'logStorage',controller: 'menu',params: params)
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
+                                                              AuthConstants.ACTION_READ
+                ),
+                AuthConstants.ACTION_READ, 'System configuration'
+        )) {
+            return
+        }
+        def total=logFileStorageService.countIncompleteLogStorageRequests()
+        def list = logFileStorageService.listIncompleteRequests(
+                frameworkService.serverUUID,
+                [max: query.max, offset: query.offset]
+        )
+        def queuedIds=logFileStorageService.getQueuedIncompleteRequestIds()
+        def failedIds=logFileStorageService.getFailedRequestIds()
+        withFormat{
+            json{
+                render(contentType: "application/json") {
+                    incompleteRequests {
+                        delegate.'total' = total
+                        max = params.max ?: 20
+                        offset = params.offset ?: 0
+                        contents = list.collect { LogFileStorageRequest req ->
+                            exportRequestMap(
+                                    req,
+                                    queuedIds.contains(req.id),
+                                    failedIds.contains(req.id),
+                                    failedIds.contains(req.id) ? logFileStorageService.getFailures(req.id) : null
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private LinkedHashMap<String, Object> exportRequestMap(LogFileStorageRequest req, isQueued, isFailed, messages) {
+        [
+                id         : req.id,
+                executionId: req.execution.id,
+                project    : req.execution.project,
+                href       : createLink(
+                        action: 'show',
+                        controller: 'execution',
+                        params: [project: req.execution.project, id: req.execution.id]
+                ),
+                dateCreated: req.dateCreated,
+                completed  : req.completed,
+                filetype   : req.filetype,
+                queued     : isQueued,
+                failed     : isFailed,
+                messages   : messages
+        ]
+    }
+
+    def logStorageMissingAjax(BaseQuery query){
+        if('true'!=request.getHeader('x-rundeck-ajax')) {
+            return redirect(action: 'logStorage',controller: 'menu',params: params)
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
+                                                              AuthConstants.ACTION_READ
+                ),
+                AuthConstants.ACTION_READ, 'System configuration'
+        )) {
+            return
+        }
+        def totalc=logFileStorageService.countExecutionsWithoutStorageRequests(frameworkService.serverUUID)
+        def list = logFileStorageService.listExecutionsWithoutStorageRequests(
+                frameworkService.serverUUID,
+                [max: query.max, offset: query.offset]
+        )
+        withFormat{
+            json{
+                render(contentType: "application/json") {
+                    missingRequests {
+                        total = totalc
+                        max = params.max ?: 20
+                        offset = params.offset ?: 0
+                        contents = list.collect { Execution req ->
+                            [
+                                    id     : req.id,
+                                    project: req.project,
+                                    href   : createLink(
+                                            action: 'show',
+                                            controller: 'execution',
+                                            params: [project: req.project, id: req.id]
+                                    ),
+//                                    summary: executionService.summarizeJob(req.scheduledExecution, req)
+                            ]
+                        }
+                    }
+                }
+            }
         }
     }
     def logStorageAjax(){
@@ -724,6 +963,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return
         }
         def data = logFileStorageService.getStorageStats()
+        data.retryDelay=logFileStorageService.getConfiguredStorageRetryDelay()
         return render(contentType: 'application/json', text: data + [enabled: data.pluginName ? true : false] as JSON)
     }
     def systemConfig(){

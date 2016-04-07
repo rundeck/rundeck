@@ -14,7 +14,15 @@
     <title><g:message code="menu.logStorage.page.title"/></title>
     <asset:javascript src="menu/logStorage.js"/>
     <g:javascript>
-        StorageStats.init("${g.createLink(action: 'logStorageAjax')}");
+
+        var storagestats=StorageStats.init({
+            baseUrl:"${g.createLink(action: 'logStorageAjax')}",
+            requestsUrl:"${g.createLink(action: 'logStorageIncompleteAjax')}",
+            missingUrl:"${g.createLink(action: 'logStorageMissingAjax')}",
+            resumeUrl:"${g.createLink(action: 'resumeIncompleteLogStorageAjax', params: [project: params.project])}",
+            cleanupUrl:"${g.createLink(action: 'cleanupIncompleteLogStorageAjax', params: [project: params.project])}",
+            tokensName:'page_tokens'
+        });
     </g:javascript>
 </head>
 
@@ -32,7 +40,7 @@
 
     <div class="col-sm-9">
 
-        <h3><g:message code="menu.logStorage.page.title" />
+        <h3><g:message code="menu.logStorage.page.title"/>
             <span data-bind="if: !loaded() || loading()">
                 <asset:image src="spinner-blue.gif" width="20px" height="20px"/>
             </span>
@@ -43,40 +51,37 @@
             <table class="table table-bordered table-condensed">
 
                 <tr>
-                    <th colspan="6" class="text-muted table-footer text-small">
-                        <g:message code="menu.logStorage.table.title" />
+                    <th colspan="5" class="text-muted table-footer text-small">
+                        <g:message code="menu.logStorage.table.title"/>
                     </th>
                 </tr>
                 <tr>
                     <th style="width: 20%" class="text-muted text-center h5 text-header">
-                        <g:message code="menu.logStorage.stats.progress.title" />
+                        <g:message code="menu.logStorage.stats.progress.title"/>
                     </th>
                     <th style="width: 20%" class="text-muted text-center h5 text-header">
-                        <g:message code="menu.logStorage.stats.queueCount.title" />
+                        <g:message code="menu.logStorage.stats.queueCount.title"/>
                     </th>
                     <th style="width: 20%" class="text-muted text-center h5 text-header">
-                        <g:message code="menu.logStorage.stats.storageResults.title" />
+                        <g:message code="menu.logStorage.stats.storageResults.title"/>
                     </th>
                     <th style="width: 20%" class="text-muted text-center h5 text-header">
-                        <g:message code="menu.logStorage.stats.incomplete.title" />
-                    </th>
-                    <th style="width: 20%" class="text-muted text-center h5 text-header">
-                        <g:message code="menu.logStorage.stats.missing.title" />
+                        <g:message code="menu.logStorage.stats.incomplete.title"/>
                     </th>
                 </tr>
                 <tr>
                     <td class="text-center" data-bind="click: toggleProgressView">
                         <span data-bind="visible: progressView()==0">
                             <g:render template="/common/progressBar"
-                                      model="[completePercent: 0,
-                                              progressClass: 'progress-embed',
+                                      model="[completePercent : 0,
+                                              progressClass   : 'progress-embed',
                                               progressBarClass: 'progress-bar-success',
-                                              containerId: 'progressContainer2',
-                                              innerContent: '',
-                                              showpercent: true,
-                                              progressId: 'progressBar',
-                                              bind: 'percent()',
-                                              bindText: '',
+                                              containerId     : 'progressContainer2',
+                                              innerContent    : '',
+                                              showpercent     : true,
+                                              progressId      : 'progressBar',
+                                              bind            : 'percent()',
+                                              bindText        : '',
                                       ]"/>
                         </span>
                         <span data-bind="visible: progressView()==1">
@@ -94,48 +99,186 @@
                     <td class="text-center h3">
                         <span class="text-success" data-bind="text: succeededCount"></span>
                         <span class="text-muted">/</span>
-                        <span  data-bind="text: failedCount, css: {'text-warning': failedCount()>0, 'text-muted': failedCount()<1 }"></span>
+                        <span data-bind="text: failedCount, css: {'text-warning': failedCount()>0, 'text-muted': failedCount()<1 }"></span>
 
                     </td>
                     <g:each in="['incompleteCount']" var="propname">
                         <td class="h3 text-center"
                             data-bind="text: ${propname}, css: { 'text-warning': ${propname}()>0 , 'text-muted': ${propname}()<1 } "></td>
                     </g:each>
-                    <td class="h3 text-center text-muted"
-                        data-bind="text: missingCount"></td>
                 </tr>
                 <tr>
-                    %{--descriptions--}%
-                    <g:each in="['progress','queueCount','storageResults','incomplete','missing']" var="name">
+                %{--descriptions--}%
+                    <g:each in="['progress', 'queueCount', 'storageResults', 'incomplete']" var="name">
 
                         <td class="text-muted text-small">
                             <g:message code="menu.logStorage.stats.${name}.description"/>
+                            <g:if test="${name == 'queueCount'}">
+                                <span data-bind="messageTemplate: retryDelay">
+                                    <g:message code="menu.logStorage.stats.queueCount.description.extended"/>
+                                </span>
+                            </g:if>
                         </td>
                     </g:each>
                 </tr>
+                <tr>
+                    <td></td>
+                    <td>
+
+                        <div data-bind="if: queuedCount()>0">
+
+                            <g:form useToken="true" action="haltIncompleteLogStorage" controller="menu"
+                                    params="[project: params.project]">
+                                <div class="btn-group">
+                                    <button class="btn btn-warning btn-sm" title="Stop Queue processing">
+                                        Stop
+                                        <g:icon name="stop"/>
+                                    </button>
+                                </div>
+                            </g:form>
+                        </div>
+                    </td>
+                    <td></td>
+                    <td>
+                        <div data-bind="if: incompleteCount()>0">
+
+                            <div class="btn-group">
+                                <button class="btn btn-default btn-sm"
+                                        data-bind="click: resumeAllIncomplete">
+                                    <g:message code="menu.logStorage.button.resume.incomplete.log.storage.uploads"/>
+                                    <g:icon name="play"/>
+                                </button>
+                                <button class="btn btn-warning btn-sm"
+                                        data-bind="click: cleanupAllIncomplete"
+                                        title="Remove all incomplete requests that are not queued">
+                                    Remove All
+                                    <g:icon name="remove-sign"/>
+                                </button>
+                            </div>
+
+                        </div>
+                    </td>
+                </tr>
             </table>
 
-            <div data-bind="if: incompleteCount()>0">
 
-                <g:form useToken="true" action="resumeIncompleteLogStorage" controller="menu"
-                        params="[project: params.project]">
-                    <div class="btn-group">
-                        <button class="btn btn-info">
-                            <g:message code="menu.logStorage.button.resume.incomplete.log.storage.uploads" />
-                            <g:icon name="upload"/>
-                        </button>
-                    </div>
-                </g:form>
+            <div class="btn-group">
+                <button class="btn btn-info  btn-sm"
+                        data-bind="click: loadIncomplete, attr: { disabled: incompleteCount()<1 && queuedCount()<1 }">
+                    List Incomplete Storage Requests
+                </button>
 
+                %{--<button class="btn btn-default  btn-sm" data-bind="click: loadMissing, attr: { disabled: missingCount()<1 } ">--}%
+                %{--Show Executions Missing Requests--}%
+                %{--</button>--}%
             </div>
 
+
+            <div data-bind="if: incompleteRequests().total()>0">
+                <table class="table table-bordered table-condensed">
+                    <tr>
+                        <th colspan="5" class="text-muted table-footer text-small">
+                            Incomplete Storage Requests:
+                            Executions with log files that have not all been uploaded successfully
+                        </th>
+                    </tr>
+                    <tr>
+                        <th colspan="5" class="text-muted table-footer text-small">
+
+                            <div class="btn-group">
+                                <button class="btn btn-default btn-xs"
+                                        data-bind="click: incompletePageBackward, attr: {disabled: !hasIncompletePageBackward()}">
+                                    Prev Page
+                                </button>
+                                <button class="btn btn-default btn-xs"
+                                        data-bind="click: incompletePageForward, attr: {disabled: !hasIncompletePageForward()}">
+                                    Next Page
+                                </button>
+                            </div>
+                            <span class="text-muted">
+                                <span data-bind="text: incompleteRequests().offsetInt()+1"></span>
+                                -
+                                <span data-bind="text: incompleteRequests().offsetInt()+incompleteRequests().maxInt()"></span>
+                                of
+
+                                <span data-bind="text: incompleteRequests().total"></span>
+                            </span>
+                        </th>
+                    </tr>
+                    <tr>
+                        <th class="text-muted text-small" colspan="2">
+                            Execution ID
+                        </th>
+                        <th class="text-muted text-small">
+                            Request ID
+                        </th>
+                        <th class="text-muted text-small">
+                            Date Created
+                        </th>
+                        <th class="text-muted text-small">
+                            Action
+                        </th>
+                    </tr>
+                    <tbody data-bind="foreach: incompleteRequests().contents()">
+                    <tr>
+                        <td width="24px">
+                            <span data-bind="if: queued" class="text-info" title="Queued for upload">
+                                %{--<asset:image src="spinner-gray.gif" width="16px" height="16px" title="Queued"/>--}%
+                                <g:icon name="hourglass"/>
+                            </span>
+                            <span data-bind="if: failed" title="Failed" class="text-warning">
+                                <g:icon name="exclamation-sign"/>
+                            </span>
+                            <span data-bind="if: !failed() && !queued()" title="Unqueued" class="text-muted">
+                                <g:icon name="hourglass"/>
+                            </span>
+                        </td>
+                        <td>
+
+                            <a href="#" data-bind="attr: { href: href }  ">
+                                #<span data-bind="text: executionId"></span>
+                            </a>
+                        </td>
+                        <td data-bind="text: id"></td>
+                        <td data-bind="text: dateCreated"></td>
+                        <td width="25%">
+                            <span data-bind="if: failed">
+                                <div class="btn-group">
+
+                                    <button class="btn btn-default btn-xs"
+                                            data-bind="click: $root.resumeSingleIncomplete">
+                                        Requeue
+                                        <g:icon name="play"/>
+                                    </button>
+
+                                    <button class="btn btn-warning btn-xs"
+                                            data-bind="click: $root.cleanupSingleIncomplete">
+                                        Remove
+                                        <g:icon name="remove"/>
+                                    </button>
+                                </div>
+                            </span>
+                        </td>
+
+                    </tr>
+                    <tr data-bind="if: messages()">
+                        <td colspan="5">
+                            <div data-bind="foreach: messages()" class="text-warning text-small">
+                                <span data-bind="text: $data"></span>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
 
         </div>
 
         <div data-bind="if: !enabled() && loaded()">
-            <g:message code="menu.logStorage.not.enabled.message" />
+            <g:message code="menu.logStorage.not.enabled.message"/>
         </div>
     </div>
 </div>
+<g:jsonToken id="page_tokens" url="${request.forwardURI}"/>
 </body>
 </html>

@@ -465,6 +465,9 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             }
         }
     }
+    Set<Long> getQueuedIncompleteRequestIds() {
+        Collections.unmodifiableSet new HashSet<Long>(retryIncompleteRequests)
+    }
     Set<Long> getFailedRequestIds(){
         Collections.unmodifiableSet failedRequests
     }
@@ -511,13 +514,16 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             resumeIncompleteLogStoragePeriodic(serverUUID,id)
         }
     }
+    void haltIncompleteLogStorage(String serverUUID){
         def strategy = getConfiguredResumeStrategy()
         if ('delayed' == strategy) {
             //previous method of processing all tasks now and requeueing at incremental delays
-            resumeIncompleteLogStorageDelayed(serverUUID)
+            throw new IllegalStateException("Cannot halt storage task when strategy is: delayed")
         } else /*if("periodic".equals(strategy))*/ {
             //requeue all tasks to be processed periodically
-            resumeIncompleteLogStoragePeriodic(serverUUID)
+            int size=retryIncompleteRequests.size()
+            retryIncompleteRequests.clear()
+            storageQueueCounter.dec(size)
         }
     }
     /**
@@ -614,7 +620,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
      * @param serverUUID
      * @return list of incomplete storage requests for this cluster id or null
      */
-    def List<LogFileStorageRequest> listIncompleteRequests(String serverUUID){
+    def List<LogFileStorageRequest> listIncompleteRequests(String serverUUID,Map paging =[:]){
         def found2=LogFileStorageRequest.withCriteria{
             eq('completed',false)
             execution {
@@ -623,6 +629,10 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                 } else {
                     eq('serverNodeUUID', serverUUID)
                 }
+            }
+            if(paging && paging.max){
+                maxResults(paging.max.toInteger())
+                firstResult(paging.offset?:0)
             }
         }
         return found2
@@ -642,6 +652,22 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             }
         }
         return found2
+    }
+    List<Execution> listExecutionsWithoutStorageRequests(String serverUUID,Map paging=[:]){
+        Execution.createCriteria().list{
+            createAlias('logFileStorageRequest', 'logid', JoinType.LEFT_OUTER_JOIN)
+            isNull( 'logid.id')
+            isNotNull('dateCompleted')
+            if(null==serverUUID){
+                isNull('serverNodeUUID')
+            }else{
+                eq('serverNodeUUID', serverUUID)
+            }
+            if(paging && paging.max){
+                maxResults(paging.max.toInteger())
+                firstResult(paging.offset?:0)
+            }
+        }
     }
 
     /**
