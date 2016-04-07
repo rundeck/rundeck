@@ -520,6 +520,30 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             resumeIncompleteLogStoragePeriodic(serverUUID)
         }
     }
+    /**
+     * remove incomplete requests from the database
+     * @param serverUUID
+     * @return
+     */
+    int cleanupIncompleteLogStorage(String serverUUID, Long id = null) {
+        List<LogFileStorageRequest> incomplete
+        if (!id) {
+            incomplete = listIncompleteRequests(serverUUID)
+        } else {
+            def found = LogFileStorageRequest.get(id)
+            if (found && found.execution.serverNodeUUID == serverUUID) {
+                incomplete = [found]
+            }
+        }
+        incomplete = incomplete.findAll { !retryIncompleteRequests.contains(it.id) }
+        incomplete.each { LogFileStorageRequest request ->
+            failedRequests.remove(request.id)
+            failures.remove(request.id)
+            request.execution.logFileStorageRequest = null
+            request.delete(flush: true)
+        }
+        incomplete.size()
+    }
 
     /**
      * list incomplete requests, schedule each one to be added to queue after an incrementing delay by using the
