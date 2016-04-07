@@ -1094,7 +1094,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         log.debug("Storage request [ID#${ident}], start, type ${filter}")
         def success = false
         if(filter) {
-            files = files.subMap(filter)
+            files = files.subMap(filter.findAll{it in files.keySet()})
         }
         def list = [:]
         def List<ExecutionFile> deletions=[]
