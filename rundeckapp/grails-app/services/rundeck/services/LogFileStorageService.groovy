@@ -434,9 +434,9 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
      * Resume log storage requests for the given serverUUID, or null for unspecified
      * @param serverUUID
      */
-    void resumeIncompleteLogStorageAsync(String serverUUID){
+    void resumeIncompleteLogStorageAsync(String serverUUID,Long id=null){
         executorService.execute {
-            resumeIncompleteLogStorage(serverUUID)
+            resumeIncompleteLogStorage(serverUUID,id)
         }
     }
     /**
@@ -475,8 +475,16 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
      * List incomplete requests, add all to a queue processed by periodic task
      * @param serverUUID
      */
-    void resumeIncompleteLogStoragePeriodic(String serverUUID){
-        def incomplete=listIncompleteRequests(serverUUID)
+    void resumeIncompleteLogStoragePeriodic(String serverUUID,Long id=null){
+        List<LogFileStorageRequest> incomplete
+        if(!id){
+            incomplete=listIncompleteRequests(serverUUID)
+        }else{
+            def found = LogFileStorageRequest.get(id)
+            if(found && found.execution.serverNodeUUID==serverUUID){
+                incomplete=[found]
+            }
+        }
 
         incomplete.each { LogFileStorageRequest request ->
             if(!retryIncompleteRequests.contains(request.id)){
@@ -493,7 +501,16 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
      * This uses the configured strategy: 'delayed' or 'periodic' (default)
      * @param serverUUID
      */
-    void resumeIncompleteLogStorage(String serverUUID){
+    void resumeIncompleteLogStorage(String serverUUID,Long id=null){
+        def strategy = getConfiguredResumeStrategy()
+        if ('delayed' == strategy) {
+            //previous method of processing all tasks now and requeueing at incremental delays
+            resumeIncompleteLogStorageDelayed(serverUUID,id)
+        } else /*if("periodic".equals(strategy))*/ {
+            //requeue all tasks to be processed periodically
+            resumeIncompleteLogStoragePeriodic(serverUUID,id)
+        }
+    }
         def strategy = getConfiguredResumeStrategy()
         if ('delayed' == strategy) {
             //previous method of processing all tasks now and requeueing at incremental delays
@@ -510,9 +527,21 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
      * @param serverUUID
      * @return
      */
-    int resumeIncompleteLogStorageDelayed(String serverUUID){
-        def incomplete=listIncompleteRequests(serverUUID)
+    int resumeIncompleteLogStorageDelayed(String serverUUID,Long id=null){
+        List<LogFileStorageRequest> incomplete
+        if(!id){
+            incomplete=listIncompleteRequests(serverUUID)
+        }else {
+            def found = LogFileStorageRequest.get(id)
+            if (found && found.execution.serverNodeUUID == serverUUID) {
+                incomplete = [found]
+            }
+        }
         log.info("resumeIncompleteLogStorage: found: ${incomplete.size()} incomplete requests for serverUUID: ${serverUUID}")
+
+        if(!incomplete){
+            return 0
+        }
         //use a slow start to process backlog storage requests
         def delayInc = getConfiguredStorageRetryDelay()
         def delay = delayInc
