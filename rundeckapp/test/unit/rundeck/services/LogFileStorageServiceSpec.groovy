@@ -26,6 +26,7 @@ class LogFileStorageServiceSpec extends Specification {
         grailsApplication.config.rundeck.logFileStorageService.resumeIncomplete.strategy = 'delayed'
         service.configurationService=Mock(ConfigurationService){
             getString('logFileStorageService.resumeIncomplete.strategy',_)>>'delayed'
+            getString('execution.logs.fileStoragePlugin',_)>>'blah'
         }
         def mockPlugin = Mock(ExecutionFileStoragePlugin){
             1 * initialize({args->

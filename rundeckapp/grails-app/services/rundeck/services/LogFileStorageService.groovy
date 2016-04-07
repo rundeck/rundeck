@@ -342,8 +342,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
      * @return
      */
     String getConfiguredPluginName() {
-        def plugin = grailsApplication.config?.rundeck?.execution?.logs?.fileStoragePlugin
-        return (plugin instanceof String) ? plugin : null
+        configurationService?.getString('execution.logs.fileStoragePlugin',null)
     }
     /**
      * Create a streaming log writer for the given execution.

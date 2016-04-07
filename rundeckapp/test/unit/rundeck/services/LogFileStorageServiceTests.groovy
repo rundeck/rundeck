@@ -61,14 +61,10 @@ class LogFileStorageServiceTests  {
     }
 
     void testConfiguredPluginName() {
-        grailsApplication.config.clear()
-
         assertNull(service.getConfiguredPluginName())
-
-
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
-
+        service.configurationService=mockWith(ConfigurationService){
+            getString{String prop,String defval->'test1'}
+        }
         assertEquals("test1", service.getConfiguredPluginName())
     }
     void testConfiguredRetry() {
@@ -164,6 +160,10 @@ class LogFileStorageServiceTests  {
     void testCacheResult(){
         grailsApplication.config=[:]
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+
+        service.configurationService=mockWith(ConfigurationService){
+            getString{String prop,String defval->'test1'}
+        }
         def result = service.cacheRetrievalState("1", LogFileState.NOT_FOUND, 0, 'error','errorCode',['errorData'])
         assertNotNull(result)
         assertEquals("1",result.id)
@@ -181,6 +181,9 @@ class LogFileStorageServiceTests  {
     void testCacheResultDefaults(){
         grailsApplication.config=[:]
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+        service.configurationService=mockWith(ConfigurationService){
+            getString{String prop,String defval->'test1'}
+        }
         def result = service.cacheRetrievalState("1", LogFileState.NOT_FOUND, 0, 'error', null, null)
         assertNotNull(result)
         assertEquals("1",result.id)
@@ -696,6 +699,7 @@ class LogFileStorageServiceTests  {
             //default to true fo cancelOnStorageFailure
             service.configurationService=mockWith(ConfigurationService){
                 getBoolean{String prop,boolean defval->true}
+                getString{String prop,String defval->'test1'}
             }
             svc = service
             assertFalse(test.storeLogFileCalled)
@@ -791,6 +795,7 @@ class LogFileStorageServiceTests  {
         service.applicationContext=appmock.createMock()
         service.configurationService=mockWith(ConfigurationService){
             getBoolean{String prop,boolean defval->false}
+            getString{String prop,String defval->'test1'}
         }
 
         assertEquals(0, LogFileStorageRequest.list().size())
@@ -812,6 +817,9 @@ class LogFileStorageServiceTests  {
 
         def test = new testOptionsStoragePlugin()
         test.storeSupported=true
+        service.configurationService=mockWith(ConfigurationService){
+            getString(1..2){String prop,String defval->'test1'}
+        }
 
         Execution execution=createExecution()
         execution.save()
@@ -931,7 +939,12 @@ class LogFileStorageServiceTests  {
         def test = new testStoragePlugin()
         test.available = false
 
-        def reader = performReaderRequest(test, false, testLogFile1, false, createExecution(), true)
+        def reader = performReaderRequest(test, false, testLogFile1, false, createExecution(), true){svc->
+
+            svc.configurationService=mockWith(ConfigurationService){
+                getString{String prop,String defval->null}
+            }
+        }
 
         //initialize should not have been called
         assert !test.initializeCalled
@@ -1260,6 +1273,10 @@ class LogFileStorageServiceTests  {
             assert useStored==useStoredValues[useStoredNdx]
             useStoredNdx++
             logfile
+        }
+
+        service.configurationService=mockWith(ConfigurationService){
+            getString(1..3){String prop,String defval->'test1'}
         }
         if(null!= svcClosure){
             service.with(svcClosure)
