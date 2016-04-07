@@ -130,9 +130,9 @@
                             <g:form useToken="true" action="haltIncompleteLogStorage" controller="menu"
                                     params="[project: params.project]">
                                 <div class="btn-group">
-                                    <button class="btn btn-warning btn-sm" title="Stop Queue processing">
-                                        Stop
-                                        <g:icon name="stop"/>
+                                    <button class="btn btn-warning btn-sm" title="${message(code:"menu.logStorage.button.clear.queue.title")}">
+                                        <g:message code="menu.logStorage.button.clear.queue" />
+                                        <g:icon name="remove-sign"/>
                                     </button>
                                 </div>
                             </g:form>
@@ -150,9 +150,9 @@
                                 </button>
                                 <button class="btn btn-warning btn-sm"
                                         data-bind="click: cleanupAllIncomplete"
-                                        title="Remove all incomplete requests that are not queued">
-                                    Remove All
-                                    <g:icon name="remove-sign"/>
+                                        title="${message(code:"menu.logStorage.button.remove.all.title")}">
+                                    <g:message code="menu.logStorage.button.remove.all" />
+                                    <g:icon name="remove"/>
                                 </button>
                             </div>
 
@@ -165,71 +165,61 @@
             <div class="btn-group">
                 <button class="btn btn-info  btn-sm"
                         data-bind="click: loadIncomplete, attr: { disabled: incompleteCount()<1 && queuedCount()<1 }">
-                    List Incomplete Storage Requests
+                    <g:message code="menu.logStorage.button.list.incomplete.log.data.storage" />
                 </button>
 
-                %{--<button class="btn btn-default  btn-sm" data-bind="click: loadMissing, attr: { disabled: missingCount()<1 } ">--}%
-                %{--Show Executions Missing Requests--}%
-                %{--</button>--}%
             </div>
 
 
             <div data-bind="if: incompleteRequests().total()>0">
                 <table class="table table-bordered table-condensed">
                     <tr>
-                        <th colspan="5" class="text-muted table-footer text-small">
-                            Incomplete Storage Requests:
-                            Executions with log files that have not all been uploaded successfully
+                        <th colspan="4" class="text-muted table-footer text-small">
+                            <g:message code="menu.logStorage.table.title.incomplete.log.data" />
                         </th>
                     </tr>
                     <tr>
-                        <th colspan="5" class="text-muted table-footer text-small">
+                        <th colspan="4" class="text-muted table-footer text-small">
 
                             <div class="btn-group">
                                 <button class="btn btn-default btn-xs"
                                         data-bind="click: incompletePageBackward, attr: {disabled: !hasIncompletePageBackward()}">
-                                    Prev Page
+                                    <g:message code="prev.page" />
                                 </button>
                                 <button class="btn btn-default btn-xs"
                                         data-bind="click: incompletePageForward, attr: {disabled: !hasIncompletePageForward()}">
-                                    Next Page
+                                    <g:message code="next.page" />
                                 </button>
                             </div>
                             <span class="text-muted">
-                                <span data-bind="text: incompleteRequests().offsetInt()+1"></span>
-                                -
-                                <span data-bind="text: incompleteRequests().offsetInt()+incompleteRequests().maxInt()"></span>
-                                of
-
-                                <span data-bind="text: incompleteRequests().total"></span>
+                                <span data-bind="messageTemplate: [incompleteRequests().offsetInt()+1, incompleteRequests().offsetInt()+incompleteRequests().maxInt(),incompleteRequests().total] ">
+                                    <g:message code="menu.logStorage.table.paging.info" />
+                                </span>
                             </span>
                         </th>
                     </tr>
                     <tr>
                         <th class="text-muted text-small" colspan="2">
-                            Execution ID
+                            <g:message code="menu.logStorage.table.incomplete.header.execution.id" />
                         </th>
                         <th class="text-muted text-small">
-                            Request ID
+                            <g:message code="menu.logStorage.table.incomplete.header.date.created" />
                         </th>
                         <th class="text-muted text-small">
-                            Date Created
-                        </th>
-                        <th class="text-muted text-small">
-                            Action
+                            <g:message code="menu.logStorage.table.incomplete.header.Action" />
                         </th>
                     </tr>
                     <tbody data-bind="foreach: incompleteRequests().contents()">
                     <tr>
                         <td width="24px">
-                            <span data-bind="if: queued" class="text-info" title="Queued for upload">
+                            <span data-bind="if: queued" class="text-info" title="${message(code:"menu.logStorage.incomplete.status.queued.title")}">
                                 %{--<asset:image src="spinner-gray.gif" width="16px" height="16px" title="Queued"/>--}%
                                 <g:icon name="hourglass"/>
                             </span>
-                            <span data-bind="if: failed" title="Failed" class="text-warning">
+                            <span data-bind="if: failed" title="${message(code:"menu.logStorage.incomplete.status.failed.title")}" class="text-warning">
                                 <g:icon name="exclamation-sign"/>
                             </span>
-                            <span data-bind="if: !failed() && !queued()" title="Unqueued" class="text-muted">
+                            <span data-bind="if: !failed() && !queued()" title="${message(code:"menu.logStorage.incomplete.status.unqueued.title")}" class="text-muted">
                                 <g:icon name="hourglass"/>
                             </span>
                         </td>
@@ -239,7 +229,6 @@
                                 #<span data-bind="text: executionId"></span>
                             </a>
                         </td>
-                        <td data-bind="text: id"></td>
                         <td data-bind="text: dateCreated"></td>
                         <td width="25%">
                             <span data-bind="if: failed">
@@ -247,13 +236,13 @@
 
                                     <button class="btn btn-default btn-xs"
                                             data-bind="click: $root.resumeSingleIncomplete">
-                                        Requeue
+                                        <g:message code="menu.logStorage.button.requeue" />
                                         <g:icon name="play"/>
                                     </button>
 
                                     <button class="btn btn-warning btn-xs"
                                             data-bind="click: $root.cleanupSingleIncomplete">
-                                        Remove
+                                        <g:message code="menu.logStorage.button.remove" />
                                         <g:icon name="remove"/>
                                     </button>
                                 </div>
@@ -262,7 +251,7 @@
 
                     </tr>
                     <tr data-bind="if: messages()">
-                        <td colspan="5">
+                        <td colspan="4">
                             <div data-bind="foreach: messages()" class="text-warning text-small">
                                 <span data-bind="text: $data"></span>
                             </div>
