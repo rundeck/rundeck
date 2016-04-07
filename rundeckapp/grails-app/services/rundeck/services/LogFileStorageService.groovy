@@ -74,6 +74,11 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
      */
     private BlockingQueue<Long> retryIncompleteRequests = new LinkedBlockingQueue<>()
     /**
+     * Request IDs that were attempted and then failed
+     */
+    private Set<Long> failedRequests = new HashSet<>()
+    private Map<Long,List<String>> failures = new HashMap<>()
+    /**
      * Queue of log storage requests
      */
     private BlockingQueue<Map> storageRequests = new LinkedBlockingQueue<Map>()
@@ -165,10 +170,13 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
 
             def files = getExecutionFiles(execution, typelist)
             try {
-                def (didsucceed, failurelist) = storeLogFiles(typelist, task.storage, task.id, files)
+                def (didsucceed, failuremap) = storeLogFiles(typelist, task.storage, task.id, files)
                 success = didsucceed
-                if (!success && failurelist && failurelist.size()>1 || failurelist[0]!=filetype) {
-                    def ftype=failurelist.join(',')
+                if(!success) {
+                    failures.put(task.requestId, new ArrayList<String>(failuremap.values()))
+                }
+                if (!success && failuremap && failuremap.size()>1 || !failuremap[filetype]) {
+                    def ftype=failuremap.keySet().findAll{it!=null && it!='null'}.join(',')
                     LogFileStorageRequest request = LogFileStorageRequest.get(task.requestId)
                     if(request.filetype!=ftype || request.completed!=success) {
                         while(true) {
@@ -213,8 +221,11 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             }else{
                 log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, giving up")
                 running.remove(task)
+                failedRequests.add(task.requestId)
             }
         } else {
+            failedRequests.remove(task.requestId)
+            failures.remove(task.requestId)
             //use executorService to run within hibernate session
             executorService.execute {
                 log.debug("executorService saving storage request status...")
@@ -454,6 +465,12 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             }
         }
     }
+    Set<Long> getFailedRequestIds(){
+        Collections.unmodifiableSet failedRequests
+    }
+    List<String> getFailures(Long id){
+        Collections.unmodifiableList failures[id]
+    }
     /**
      * List incomplete requests, add all to a queue processed by periodic task
      * @param serverUUID
@@ -464,6 +481,8 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         incomplete.each { LogFileStorageRequest request ->
             if(!retryIncompleteRequests.contains(request.id)){
                 retryIncompleteRequests.add(request.id)
+                failedRequests.remove(request.id)
+                failures.remove(request.id)
                 storageQueueCounter?.inc()
                 storageTotalCounter?.inc()
             }
@@ -1024,15 +1043,15 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         if(filter) {
             files = files.subMap(filter)
         }
-        def list = []
+        def list = [:]
         def List<ExecutionFile> deletions=[]
         if (storage instanceof ExecutionMultiFileStorage) {
             list = storeMultiLogFiles(files, storage, ident)
         } else {
             files.each { type, file ->
-                def result = storeSingleLogFile(file.localFile, type, storage, ident)
+                def (result,message) = storeSingleLogFile(file.localFile, type, storage, ident)
                 if (!result) {
-                    list<<type
+                    list[type]=message
                 }
             }
         }
@@ -1040,7 +1059,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             success=true
         }
         files.keySet().each{
-            if(!(it in list)){
+            if(!(it in list.keySet())){
                 deletions << files[it]
             }
         }
@@ -1060,10 +1079,10 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
      * @param ident storage request ident
      * @return list of filetypes which were not successful
      */
-    private List<String> storeMultiLogFiles(Map<String,ExecutionFile> files, ExecutionMultiFileStorage storage, String ident) {
+    private Map<String,String> storeMultiLogFiles(Map<String,ExecutionFile> files, ExecutionMultiFileStorage storage, String ident) {
         log.debug("Storage request storeMultiLogFiles [ID#${ident}], start")
 
-        List<String> failures = []
+        Map<String,String> failures = [:]
 
         Map<String, File> localfiles = files.collectEntries { [it.key, it.value.localFile] }
 
@@ -1075,7 +1094,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         files.keySet().each { String filetype ->
             def succeeded = request.completion[filetype]
             if (!succeeded) {
-                failures << filetype
+                failures[filetype] = request.errors[filetype]?:('No failure message (filetype: ' + filetype + ')')
             }
         }
 
@@ -1086,21 +1105,24 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
      * @param execution
      * @param storage plugin that is already initialized
      */
-    private Boolean storeSingleLogFile(File file, String filetype, ExecutionFileStorage storage, String ident) {
+    private def storeSingleLogFile(File file, String filetype, ExecutionFileStorage storage, String ident) {
         log.debug("Storage request [ID#${ident}], start")
         def success = false
+        String message=null
         Date lastModified = new Date(file.lastModified())
         long length = file.length()
         try{
             file.withInputStream { input ->
                 success = storage.store(filetype, input,length,lastModified)
+                message="No message"
             }
         }catch (Throwable e) {
             log.error("Storage request [ID#${ident}] error: ${e.message}")
             log.debug("Storage request [ID#${ident}] error: ${e.message}", e)
+            message=e.message
         }
         log.debug("Storage request [ID#${ident}], finish: ${success}")
-        return success
+        return [success,message]
     }
 
     /**
