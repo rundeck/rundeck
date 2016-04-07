@@ -860,6 +860,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         Map<String,Map> extraConfig=[:]
         projectConfigurableBeans.each { k, RundeckProjectConfigurable v ->
+            if(k.endsWith('Profiled')){
+                //skip profiled versions of beans
+                return
+            }
             //construct input values for the bean
             def beanData=[
                     configurable:v,
@@ -971,6 +975,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         Map<String,Map> extraConfig=[:]
         projectConfigurableBeans.each { k, v ->
+            if(k.endsWith('Profiled')){
+                //skip profiled versions of beans
+                return
+            }
             //construct existing values from project properties
             extraConfig[k]=[
                     configurable:v,
@@ -1298,6 +1306,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             Map<String,RundeckProjectConfigurable> projectConfigurableBeans=applicationContext.getBeansOfType(RundeckProjectConfigurable)
 
             projectConfigurableBeans.each { k, RundeckProjectConfigurable v ->
+                if(k.endsWith('Profiled')){
+                    //skip profiled versions of beans
+                    return
+                }
                 //construct input values for the bean
                 def beanData=[
                         configurable:v,
@@ -1426,6 +1438,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         Map<String,Map> extraConfig=[:]
         projectConfigurableBeans.each { k, v ->
+            if(k.endsWith('Profiled')){
+                //skip profiled versions of beans
+                return
+            }
             //construct existing values from project properties
             def values=Validator.demapProperties(fwkProject.getProjectProperties(),v.getPropertiesMapping(), true)
             extraConfig[k]=[

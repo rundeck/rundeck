@@ -645,6 +645,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         Map<String,Map> extraConfig=[:]
         projectConfigurableBeans.each { k, v ->
+            if(k.endsWith('Profiled')){
+                //skip profiled versions of beans
+                return
+            }
             //construct existing values from project properties
             def values=Validator.demapProperties(fproject.getProjectProperties(),v.getPropertiesMapping(), true)
             extraConfig[k]=[

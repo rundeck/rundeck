@@ -47,6 +47,11 @@ class BootStrap {
     }
 
      def init = { ServletContext servletContext ->
+         //setup profiler logging
+         if(!(grailsApplication.config?.grails?.profiler?.disable)) {
+             //re-enable log output for profiler info, which is disabled by miniprofiler
+             grailsApplication.mainContext.profilerLog.appenderNames = ["loggingAppender", 'miniProfilerAppender']
+         }
          long bstart=System.currentTimeMillis()
          def appname=messageSource.getMessage('main.app.name',null,'',null) ?: messageSource.getMessage('main.app.default.name',null,'',null) ?: 'Rundeck'
          log.info("Starting ${appname} ${grailsApplication.metadata['build.ident']}...")

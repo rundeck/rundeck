@@ -52,12 +52,16 @@ grails.enable.native2ascii = true
 environments {
     production {
 //        grails.serverURL = "http://www.changeme.com"
+
+        grails.profiler.disable=true
     }
     development{
         grails.serverURL="http://localhost:9090/rundeck"
         plugin.refreshDelay=5000
+        grails.profiler.disable=false
     }
     test {
+        grails.profiler.disable=true
     }
 }
 grails.json.legacy.builder = false

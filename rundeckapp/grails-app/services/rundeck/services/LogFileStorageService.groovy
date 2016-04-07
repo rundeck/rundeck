@@ -987,7 +987,9 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         }
     }
     Map<String,ExecutionFile> getExecutionFiles(Execution execution, List<String> filters) {
-        def beans = applicationContext.getBeansOfType(ExecutionFileProducer)?.values()
+        def type = applicationContext.getBeansOfType(ExecutionFileProducer)
+        def all = type?.findAll { !it.key.endsWith('Profiled') }
+        def beans = all?.values()
         if(filters) {
             beans = beans.findAll { it.executionFileType in filters }
         }
