@@ -747,7 +747,7 @@ function _initPopoverContentFor(parent,options){
     result.each(function (i, e) {
         var ref = jQuery(e).data('target')|| e.href()||options.target;
         var found=jQuery(ref);
-        jQuery(e).on(found.data('data-trigger')||options.trigger||'click',function(){
+        jQuery(e).on(found.data('trigger')||options.trigger||'click',function(){
             found.popover('toggle');
         });
         found.on('shown.bs.popover',function(){
