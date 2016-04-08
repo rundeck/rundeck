@@ -2,6 +2,7 @@
 //= require knockout-mapping
 //= require ko/binding-url-path-param
 //= require ko/binding-message-template
+//= require ko/binding-popover
 
 function ReqSet(stats) {
     "use strict";

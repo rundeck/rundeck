@@ -228,6 +228,18 @@
                             <a href="#" data-bind="attr: { href: href }  ">
                                 #<span data-bind="text: executionId"></span>
                             </a>
+                            <span data-bind="if: localFilesPresent, bootstrapTooltip:true"
+                                  class="text-success"
+                                  data-placement="right"
+                                  title="${message(code:"menu.logStorage.localFilesPresent.true.title")}">
+                                <g:icon name="file"/>
+                            </span>
+                            <span data-bind="if: !localFilesPresent(), bootstrapTooltip:true"
+                                  class="text-warning"
+                                  data-placement="right"
+                                  title="${message(code:"menu.logStorage.localFilesPresent.false.title")}">
+                                <g:icon name="alert"/>
+                            </span>
                         </td>
                         <td data-bind="text: dateCreated"></td>
                         <td width="25%">
