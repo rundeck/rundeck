@@ -231,7 +231,7 @@
                         </td>
                         <td data-bind="text: dateCreated"></td>
                         <td width="25%">
-                            <span data-bind="if: failed">
+                            <span data-bind="if: !queued()">
                                 <div class="btn-group">
 
                                     <button class="btn btn-default btn-xs"
