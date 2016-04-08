@@ -12,6 +12,12 @@ interface ExecutionFileProducer {
     String getExecutionFileType()
 
     /**
+     *
+     * @return true if the file will be generated, false if it was previously generated
+     */
+    boolean isExecutionFileGenerated()
+
+    /**
      * @param e execution
      * @return the file to store
      */

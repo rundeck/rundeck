@@ -750,7 +750,7 @@ class LogFileStorageServiceTests  {
     class testProducer implements ExecutionFileProducer{
         String executionFileType
         File testfile
-
+        boolean executionFileGenerated = false
         @Override
         ExecutionFile produceStorageFileForExecution(final Execution e) {
             new ProducedExecutionFile(localFile: testfile, fileDeletePolicy: ExecutionFileDeletePolicy.NEVER)

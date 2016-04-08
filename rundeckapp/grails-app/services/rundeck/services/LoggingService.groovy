@@ -51,6 +51,11 @@ class LoggingService implements ExecutionFileProducer {
     }
 
     @Override
+    boolean isExecutionFileGenerated() {
+        return false
+    }
+
+    @Override
     ExecutionFile produceStorageFileForExecution(final Execution e) {
         File file = getLogFileForExecution(e)
         new ProducedExecutionFile(localFile: file, fileDeletePolicy: ExecutionFileDeletePolicy.WHEN_RETRIEVABLE)

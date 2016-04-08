@@ -888,20 +888,18 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     private LinkedHashMap<String, Object> exportRequestMap(LogFileStorageRequest req, isQueued, isFailed, messages) {
         [
-                id         : req.id,
-                executionId: req.execution.id,
-                project    : req.execution.project,
-                href       : createLink(
-                        action: 'show',
-                        controller: 'execution',
-                        params: [project: req.execution.project, id: req.execution.id]
-                ),
-                dateCreated: req.dateCreated,
-                completed  : req.completed,
-                filetype   : req.filetype,
-                queued     : isQueued,
-                failed     : isFailed,
-                messages   : messages
+                id               : req.id,
+                executionId      : req.execution.id,
+                project          : req.execution.project,
+                href             : apiService.apiHrefForExecution(req.execution),
+                permalink        : apiService.guiHrefForExecution(req.execution),
+                dateCreated      : req.dateCreated,
+                completed        : req.completed,
+                filetype         : req.filetype,
+                localFilesPresent: logFileStorageService.areAllExecutionFilesPresent(req.execution),
+                queued           : isQueued,
+                failed           : isFailed,
+                messages         : messages
         ]
     }
 
@@ -1486,6 +1484,110 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     delegate.'logStorage'(enabled: data.pluginName ? true : false, pluginName: data.pluginName) {
                         for (String name : propnames) {
                             delegate."${name}"(data[name])
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    def apiLogstorageListIncompleteExecutions(BaseQuery query) {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V17)) {
+            return
+        }
+        query.validate()
+        if (query.hasErrors()) {
+            return apiService.renderErrorFormat(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code: "api.error.parameter.error",
+                            args: [query.errors.allErrors.collect { message(error: it) }.join("; ")]
+                    ]
+            )
+        }
+
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (!apiService.requireAuthorized(
+                frameworkService.authorizeApplicationResource(
+                        authContext,
+                        AuthConstants.RESOURCE_TYPE_SYSTEM,
+                        AuthConstants.ACTION_READ
+                ),
+                response,
+                [AuthConstants.ACTION_READ, 'System','Logstorage Info'].toArray()
+        )) {
+            return
+        }
+
+
+        def total=logFileStorageService.countIncompleteLogStorageRequests()
+        def list = logFileStorageService.listIncompleteRequests(
+                frameworkService.serverUUID,
+                [max: query.max?:20, offset: query.offset?:0]
+        )
+        def queuedIds=logFileStorageService.getQueuedIncompleteRequestIds()
+        def failedIds=logFileStorageService.getFailedRequestIds()
+        withFormat{
+            json{
+                apiService.renderSuccessJson(response) {
+                    delegate.'total' = total
+                    max = query.max ?: 20
+                    offset = query.offset ?: 0
+                    executions = list.collect { LogFileStorageRequest req ->
+                        def data=exportRequestMap(
+                                req,
+                                queuedIds.contains(req.id),
+                                failedIds.contains(req.id),
+                                failedIds.contains(req.id) ? logFileStorageService.getFailures(req.id) : null
+                        )
+                        [
+                                id:data.executionId,
+                                project:data.project,
+                                href:data.href,
+                                permalink:data.permalink,
+                                storage:[
+                                        localFilesPresent:data.localFilesPresent,
+                                        incompleteFiletypes:data.filetype,
+                                        queued:data.queued,
+                                        failed:data.failed,
+                                        date:apiService.w3cDateValue(req.dateCreated),
+                                ],
+                                errors:data.messages
+                        ]
+                    }
+                }
+            }
+            xml{
+                apiService.renderSuccessXml (request,response) {
+                    logstorage {
+                        incompleteExecutions(total: total, max: query.max ?: 20, offset: query.offset ?: 0) {
+                            list.each { LogFileStorageRequest req ->
+                                def data=exportRequestMap(
+                                        req,
+                                        queuedIds.contains(req.id),
+                                        failedIds.contains(req.id),
+                                        failedIds.contains(req.id) ? logFileStorageService.getFailures(req.id) : null
+                                )
+                                execution(id:data.executionId,project:data.project,href:data.href,permalink:data.permalink){
+                                    delegate.'storage'(
+                                            incompleteFiletypes:data.filetype,
+                                            queued:data.queued,
+                                            failed:data.failed,
+                                            date: apiService.w3cDateValue(req.dateCreated),
+                                            localFilesPresent:data.localFilesPresent,
+                                    ) {
+                                        if(data.messages){
+                                            delegate.'errors' {
+                                                data.messages.each {
+                                                    delegate.'message'(it)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

@@ -87,6 +87,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
     }
 
     @Override
+    boolean isExecutionFileGenerated() {
+        return true
+    }
+
+    @Override
     ExecutionFile produceStorageFileForExecution(final Execution e) {
         File localfile = getExecutionXmlFileForExecution(e)
 

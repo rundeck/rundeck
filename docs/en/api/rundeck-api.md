@@ -60,9 +60,10 @@ Changes introduced by API Version number:
 * New Endpoints.
     - [`/api/17/scheduler/server/[UUID]/jobs`][/api/V/scheduler/server/[UUID]/jobs] - List scheduled jobs owned by the server with given UUID.
     - [`/api/17/scheduler/jobs`][/api/V/scheduler/jobs] - List scheduled jobs owned by the target server.
-    - [`/api/17/system/logstorage/info`][/api/V/system/logstorage/info] - Get stats about the Log File storage system.
-    - [`/api/17/system/logstorage/resumeIncomplete`][/api/V/system/logstorage/resumeIncomplete] - Resume incomplete log storage processing.
-
+    - [`/api/17/system/logstorage`][/api/V/system/logstorage] - Get stats about the Log File storage system.
+    - [`/api/17/system/logstorage/incomplete`][/api/V/system/logstorage/incomplete] - List all executions with incomplete logstorage.
+    - [`/api/17/system/logstorage/incomplete/resume`][/api/V/system/logstorage/incomplete/resume] - Resume incomplete log storage processing.
+    
 * Updated Endpoints.
     - [`/api/17/project/[PROJECT]/jobs`][/api/V/project/[PROJECT]/jobs] 
         - Response now includes whether a job is enabled, scheduled, schedule is enabled, and in Cluster mode includes the cluster mode server UUID of the schedule owner, and whether that is the current server or not.
@@ -876,7 +877,7 @@ Get Log Storage information and stats.
 
 **Request:**
 
-    GET /api/17/system/logstorage/info
+    GET /api/17/system/logstorage
 
 **Response:**
 
@@ -942,6 +943,99 @@ Success response, with log storage info and stats in this format:
 
 :   Number of executions for this cluster node which have no associated storage requests
 
+### List Executions with Incomplete Log Storage
+
+List all executions with incomplete log storage.
+
+**Request:**
+
+    GET /api/17/system/logstorage/incomplete
+
+**Response:**
+
+`Content-Type: application/xml`:
+
+```xml
+<logstorage>
+  <incompleteExecutions total="[#]" max="20" offset="0">
+    <execution id="[EXECID]" project="[PROJECT]" href="[API HREF]" permalink="[GUI HREF]">
+      <storage incompleteFiletypes="[TYPES]" queued="true/false" failed="true/false" date="[DATE]" localFilesPresent="true/false">
+        <errors>
+          <message>[error message]</message>
+          <message>[error message...]</message>
+        </errors>
+    </storage>
+    </execution>
+    ...
+</logstorage>
+```
+
+`Content-Type: application/json`:
+
+```json
+{
+  "total": #,
+  "max": 20,
+  "offset": 0,
+  "executions": [
+    {
+      "id": [EXECID],
+      "project": "[PROJECT]",
+      "href": "[API HREF]",
+      "permalink": "[GUI HREF]",
+      "storage": {
+        "localFilesPresent": true/false,
+        "incompleteFiletypes": "[TYPES]",
+        "queued": true/false,
+        "failed": true/false,
+        "date": "[DATE]"
+      },
+      "errors": ["message","message..."]
+    },
+    ...
+    ]
+}
+```
+
+`total`, `max`, `offset` (paging information)
+
+:   Total number of executions with incomplete log data storage, maximum returned in the response, offset of first result.
+
+`id`
+
+:   Execution ID
+
+`project`
+
+:   Project Name
+
+`href`
+
+:   API URL for Execution
+
+`permalink`
+
+:   GUI URL for Execution
+
+`incompleteFiletypes`
+
+:   Comma-separated list of filetypes which have not be uploaded, e.g. `rdlog,state.json`. Types are `rdlog` (log output), `state.json` (workflow state data), `execution.xml` (execution definition)
+
+`queued`
+
+:   True if the log data storage is queued to be processed.
+
+`failed`
+
+:   True if the log data storage was processed but failed without completion.
+
+`date`
+
+:   Date when log data storage was first processed. (W3C date format.)
+
+`localFilesPresent`
+
+:   True if all local files (`rdlog` and `state.json`) are available for upload.  False if one of them is not proesent on disk.
 
 ### Resume Incomplete Log Storage
 
@@ -949,11 +1043,9 @@ Resume processing incomplete Log Storage uploads.
 
 **Request:**
 
-    POST /api/17/system/logstorage/resumeIncomplete
+    POST /api/17/system/logstorage/incomplete/resume
 
 **Response:**
-
-Success response, with included system info and stats in this format:
 
 `Content-Type: application/xml`:
 
@@ -5387,13 +5479,13 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 * `PUT` [Takeover Schedule in Cluster Mode](#takeover-schedule-in-cluster-mode)
 
-[/api/V/scheduler/server/jobs][]
+[/api/V/scheduler/jobs][]
 
-* `GET` [List Scheduled Jobs For this Cluster Server](#list-scheduled-jobs-for-this-cluster-server)
+* `GET` [List Scheduled Jobs For this Cluster Server][/api/V/scheduler/jobs]
 
 [/api/V/scheduler/server/[UUID]/jobs][]
 
-* `GET` [List Scheduled Jobs For a Cluster Server](#list-scheduled-jobs-for-a-cluster-server)
+* `GET` [List Scheduled Jobs For a Cluster Server][/api/V/scheduler/server/[UUID]/jobs]
 
 [/api/V/storage/keys/[PATH]/[FILE]][]
 
@@ -5423,13 +5515,17 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 * `GET` [System Info](#system-info)
 
-[/api/V/system/logstorage/info][]
+[/api/V/system/logstorage][]
 
-* `GET` [Log Storage Info](#log-storage-info)
+* `GET` [Log Storage Info][/api/V/system/logstorage]
 
-[/api/V/system/logstorage/resumeIncomplete][]
+[/api/V/system/logstorage/incomplete][]
 
-* `POST` [Resume Incomplete Log Storage](#resume-incomplete-log-storage)
+* `GET` [List Executions with Incomplete Log Storage][/api/V/system/logstorage/incomplete]
+
+[/api/V/system/logstorage/incomplete/resume][]
+
+* `POST` [Resume Incomplete Log Storage][/api/V/system/logstorage/incomplete/resume]
 
 [/api/V/tokens][]
 
@@ -5574,8 +5670,11 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 [/api/V/system/info]:#system-info
 [/api/V/system/executions/enable]:#set-active-mode
 [/api/V/system/executions/disable]:#set-passive-mode
-[/api/V/system/logstorage/info]:#log-storage-info
-[/api/V/system/logstorage/resumeIncomplete]:#resume-incomplete-log-storage
+
+[/api/V/system/logstorage]:#log-storage-info
+[/api/V/system/logstorage/incomplete]:#list-executions-with-incomplete-log-storage
+[/api/V/system/logstorage/incomplete/resume]:#resume-incomplete-log-storage
+[POST /api/V/system/logstorage/incomplete/resume]:#resume-incomplete-log-storage
 
 [/api/V/tokens]:#list-tokens
 [/api/V/tokens/[USER]]:#list-tokens

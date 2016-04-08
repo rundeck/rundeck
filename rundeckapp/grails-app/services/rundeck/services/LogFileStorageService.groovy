@@ -1083,19 +1083,39 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             storageRequests<<task
         }
     }
-    Map<String,ExecutionFile> getExecutionFiles(Execution execution, List<String> filters) {
-        def type = applicationContext.getBeansOfType(ExecutionFileProducer)
-        def all = type?.find { it.key.endsWith('Profiled') } ? type?.findAll { it.key.endsWith('Profiled') } : type
-        def beans = all?.values()
-        if(filters) {
-            beans = beans.findAll { it.executionFileType in filters }
+    /**
+     * Return true if all non-generated execution files are present locally
+     * @param execution
+     * @return false if any local file is not present
+     */
+    boolean areAllExecutionFilesPresent(Execution execution) {
+        for (def bean : listExecutionFileProducers()) {
+            if (!bean.isExecutionFileGenerated()) {
+                if (!bean.produceStorageFileForExecution(execution).localFile.exists()) {
+                    return false
+                }
+            }
         }
+        true
+    }
+    Map<String,ExecutionFile> getExecutionFiles(Execution execution, List<String> filters) {
+        Collection<ExecutionFileProducer> beans = listExecutionFileProducers(filters)
         def result = [:]
         beans?.each { bean ->
             result[bean.getExecutionFileType()]= bean.produceStorageFileForExecution(execution)
         }
         log.debug("found beans of ExecutionFileProducer result: $result")
         result?:[:]
+    }
+
+    private Collection<ExecutionFileProducer> listExecutionFileProducers(List<String> filters=null) {
+        def type = applicationContext.getBeansOfType(ExecutionFileProducer)
+        def all = type?.find { it.key.endsWith('Profiled') } ? type?.findAll { it.key.endsWith('Profiled') } : type
+        def beans = all?.values()
+        if (filters) {
+            beans = beans.findAll { it.executionFileType in filters }
+        }
+        beans
     }
 
     private deleteExecutionFilePerPolicy(ExecutionFile file, boolean canRetrieve) {
