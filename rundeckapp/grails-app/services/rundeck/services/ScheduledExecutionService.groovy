@@ -362,7 +362,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     eq('project',queryProject)
                 }
             }.each { ScheduledExecution se ->
-                claimed[se.extid]=[success:claimScheduledJob(se, toServerUUID, queryFromServerUUID),job:se]
+                def orig=se.serverNodeUUID
+                claimed[se.extid]=[success:claimScheduledJob(se, toServerUUID, queryFromServerUUID),job:se,previous:orig]
             }
         }
         claimed
