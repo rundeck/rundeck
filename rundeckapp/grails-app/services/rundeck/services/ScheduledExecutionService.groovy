@@ -345,18 +345,19 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      */
     def Map claimScheduledJobs(String toServerUUID, String fromServerUUID=null, boolean selectAll=false, String projectFilter=null) {
         Map claimed=[:]
-        def checkall=selectAll?true:false
         def queryFromServerUUID=fromServerUUID
         def queryProject=projectFilter
         ScheduledExecution.withTransaction {
             ScheduledExecution.withCriteria {
                 eq('scheduled',true)
-                if(!checkall){
+                if(!selectAll){
                     if(queryFromServerUUID){
                         eq('serverNodeUUID',queryFromServerUUID)
                     }else{
                         isNull('serverNodeUUID')
                     }
+                }else{
+                    ne('serverNodeUUID',toServerUUID)
                 }
                 if(queryProject){
                     eq('project',queryProject)

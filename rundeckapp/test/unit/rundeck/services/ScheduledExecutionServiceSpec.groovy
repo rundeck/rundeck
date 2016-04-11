@@ -124,8 +124,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName:'blue1',project:'AProject',serverNodeUUID:null)).save()
         ScheduledExecution job2 = new ScheduledExecution(createJobParams(jobName:'blue2',project:'AProject2',serverNodeUUID:serverUUID1)).save()
         ScheduledExecution job3 = new ScheduledExecution(createJobParams(jobName:'blue3',project:'AProject2',serverNodeUUID:serverUUID2)).save()
+        ScheduledExecution job3x = new ScheduledExecution(createJobParams(jobName:'blue3',project:'AProject2',serverNodeUUID:targetserverUUID)).save()
         ScheduledExecution job4 = new ScheduledExecution(createJobParams(jobName:'blue4',project:'AProject2',scheduled:false)).save()
-        def jobs=[job1,job2,job3,job4]
+        def jobs=[job1,job2,job3,job3x,job4]
         when:
         def resultMap=service.claimScheduledJobs(targetserverUUID,null,true)
 
@@ -135,7 +136,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         }
         then:
 
-        [job1,job2,job3]==jobs.findAll{it.serverNodeUUID==targetserverUUID}
+        [job1,job2,job3,job3x]==jobs.findAll{it.serverNodeUUID==targetserverUUID}
         [job1,job2,job3]*.extid == resultMap.keySet() as List
     }
     def "claim all scheduled jobs in a project"(String targetProject, String targetServerUUID, String serverUUID1, List<Map> dataList, List<String> resultList){
@@ -152,14 +153,13 @@ class ScheduledExecutionServiceSpec extends Specification {
             jobs*.refresh()
         }
         then:
-        resultList==jobs.findAll{it.serverNodeUUID==targetServerUUID}*.uuid
 
         resultList == resultMap.keySet() as List
 
         where:
         targetProject | targetServerUUID| serverUUID1|dataList | resultList
-        'AProject'    | TEST_UUID1 | TEST_UUID2 |[[uuid:'job1',serverNodeUUID: TEST_UUID2],[project:'AProject2',uuid:'job2']]       | ['job1']
-        'AProject2'   | TEST_UUID1 | TEST_UUID2 |[[uuid:'job1',serverNodeUUID: TEST_UUID2],[project:'AProject2',uuid:'job2']]       | ['job2']
+        'AProject'    | TEST_UUID1 | TEST_UUID2 |[[uuid:'job3',project:'AProject',serverNodeUUID: TEST_UUID1],[uuid:'job1',serverNodeUUID: TEST_UUID2],[project:'AProject2',uuid:'job2']]       | ['job1']
+        'AProject2'   | TEST_UUID1 | TEST_UUID2 |[[uuid:'job3',project:'AProject2',serverNodeUUID: TEST_UUID1],[uuid:'job1',serverNodeUUID: TEST_UUID2],[project:'AProject2',uuid:'job2']]       | ['job2']
     }
 
     @Unroll
