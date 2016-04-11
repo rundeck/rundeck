@@ -3465,6 +3465,8 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireVersion(request,response,ApiRequestFilters.V14)) {
             return
         }
+        def api17 = request.api_version >= ApiRequestFilters.V17
+
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         //test valid project
 
@@ -3526,11 +3528,16 @@ class ScheduledExecutionController  extends ControllerBase{
         //TODO: retry for failed reclaims?
 
         def jobData = { entry ->
-            [
+            def dat=[
                     id: entry.key,
                     href: apiService.apiHrefForJob(entry.value.job),
-                    permalink:apiService.guiHrefForJob(entry.value.job)
+                    permalink:apiService.guiHrefForJob(entry.value.job),
+
             ]
+            if(api17){
+                dat['previous-owner']=entry.value.previous
+            }
+            dat
         }
         def jobLink={ delegate, entry->
             delegate.'job'(jobData(entry))

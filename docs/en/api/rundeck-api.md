@@ -68,7 +68,9 @@ Changes introduced by API Version number:
     - [`/api/17/project/[PROJECT]/jobs`][/api/V/project/[PROJECT]/jobs] 
         - Response now includes whether a job is enabled, scheduled, schedule is enabled, and in Cluster mode includes the cluster mode server UUID of the schedule owner, and whether that is the current server or not.
         - add `?scheduledFilter=true/false` returns scheduled/unscheduled jobs only
-        - and `?serverNodeUUIDFilter=[uuid]` returns scheduled jobs owned by the given cluster member 
+        - and `?serverNodeUUIDFilter=[uuid]` returns scheduled jobs owned by the given cluster member
+    - [`/api/17/scheduler/takeover`][/api/V/scheduler/takeover]
+        - Response now includes previous scheduler owner UUID for jobs.
 
 **Version 16**:
 
@@ -1197,12 +1199,12 @@ A JSON object.
 
 If request was XML, then Standard API response containing the following additional elements:
 
-* `self`
-    * `server`
-        *  `@uuid` - this cluster server's uuid
 *  `takeoverSchedule`
+    * `self`
+        * `server`
+            *  `@uuid` - this cluster server's UUID
     *  `server`
-        *  `@uuid` - requested server uuid to take over, if specifed in the request
+        *  `@uuid` - requested server UUID to take over, if specifed in the request
         *  `@all` - `true` if requested
     *  `project` - name of project, if specified in request
     *  `jobs` - set of successful and failed jobs taken over
@@ -1212,6 +1214,7 @@ If request was XML, then Standard API response containing the following addition
                 *  `@id` Job ID
                 *  `@href` Job API HREF
                 *  `@permalink` Job GUI HREF
+                *  `@previous-owner` UUID of the cluster server that was the previous schedule owner
 
 Example XML Response, when `uuid` was specified:
 
@@ -1225,10 +1228,12 @@ Example XML Response, when `uuid` was specified:
       <successful count='2'>
         <job id='a1aa53ac-73a6-4ead-bbe4-34afbff8e057'
         href='http://localhost:9090/api/14/job/a1aa53ac-73a6-4ead-bbe4-34afbff8e057'
-        permalink='http://localhost:9090/rundeck/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057' />
+        permalink='http://localhost:9090/rundeck/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057'
+        previous-owner="8F3D5976-2232-4529-847B-8E45764608E3" />
         <job id='116e2025-7895-444a-88f7-d96b4f19fdb3'
         href='http://localhost:9090/api/14/job/116e2025-7895-444a-88f7-d96b4f19fdb3'
-        permalink='http://localhost:9090/rundeck/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3' />
+        permalink='http://localhost:9090/rundeck/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3'
+        previous-owner="8F3D5976-2232-4529-847B-8E45764608E3" />
       </successful>
       <failed count='0'></failed>
     </jobs>
@@ -1274,12 +1279,14 @@ JSON response for `uuid` specified:
         {
           "href": "http://dignan:4440/api/14/job/a1aa53ac-73a6-4ead-bbe4-34afbff8e057",
           "permalink": "http://dignan:4440/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057",
-          "id": "a1aa53ac-73a6-4ead-bbe4-34afbff8e057"
+          "id": "a1aa53ac-73a6-4ead-bbe4-34afbff8e057",
+          "previous-owner": "8F3D5976-2232-4529-847B-8E45764608E3"
         },
         {
           "href": "http://dignan:4440/api/14/job/116e2025-7895-444a-88f7-d96b4f19fdb3",
           "permalink": "http://dignan:4440/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3",
-          "id": "116e2025-7895-444a-88f7-d96b4f19fdb3"
+          "id": "116e2025-7895-444a-88f7-d96b4f19fdb3",
+          "previous-owner": "8F3D5976-2232-4529-847B-8E45764608E3"
         }
       ],
       "total": 2
