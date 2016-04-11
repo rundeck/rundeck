@@ -336,8 +336,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def total = Execution.countByScheduledExecution(scheduledExecution)
 
         def remoteClusterNodeUUID=null
-        if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()
-                && scheduledExecution.serverNodeUUID != frameworkService.getServerUUID()) {
+        if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()) {
             remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
         }
 

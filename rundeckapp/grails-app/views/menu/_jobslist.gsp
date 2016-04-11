@@ -25,7 +25,7 @@
                         <g:set var="clusterUUID"
                                value="${ (clusterMap)? clusterMap[scheduledExecution.id] : null}"/>
                         <g:set var="currentTime" value="${new Date()}"/>
-                        <g:set var="remoteClusterNodeUUID" value="${scheduledExecution.scheduled && serverClusterNodeUUID!=scheduledExecution.serverNodeUUID ? scheduledExecution.serverNodeUUID :null}" />
+                        <g:set var="remoteClusterNodeUUID" value="${scheduledExecution.scheduled ? scheduledExecution.serverNodeUUID :null}" />
                         %{-- select job view --}%
                         <g:if test="${jobsjscallback}">
                             <tr class=" expandComponentHolder expanded" id="jobrow_${scheduledExecution.id}">
