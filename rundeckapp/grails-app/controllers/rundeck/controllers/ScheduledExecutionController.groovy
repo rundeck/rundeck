@@ -3472,8 +3472,15 @@ class ScheduledExecutionController  extends ControllerBase{
 
         if (!frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
                 AuthConstants.ACTION_ADMIN)) {
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                    code: 'api.error.item.unauthorized', args: ['Reschedule Jobs (admin)', 'Server', params.serverNodeUUID]])
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_FORBIDDEN,
+                    code: 'api.error.item.unauthorized',
+                    args: [
+                            'Reschedule Jobs (admin)',
+                            'Server',
+                            frameworkService.getServerUUID()
+                    ]
+            ])
         }
         if (!frameworkService.isClusterModeEnabled()) {
             withFormat {
