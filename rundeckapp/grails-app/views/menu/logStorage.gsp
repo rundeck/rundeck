@@ -225,7 +225,7 @@
                         </td>
                         <td>
 
-                            <a href="#" data-bind="attr: { href: href }  ">
+                            <a href="#" data-bind="attr: { href: permalink }  ">
                                 #<span data-bind="text: executionId"></span>
                             </a>
                             <span data-bind="if: localFilesPresent, bootstrapTooltip:true"
