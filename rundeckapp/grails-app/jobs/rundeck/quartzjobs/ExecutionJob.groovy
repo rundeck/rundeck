@@ -95,7 +95,7 @@ class ExecutionJob implements InterruptableJob {
             initMap= initialize(context,context.jobDetail.jobDataMap)
         }catch(Throwable t){
             log.error("Unable to start Job execution: ${t.message?t.message:'no message'}",t)
-            return
+            throw t
         }
         if(initMap.jobShouldNotRun){
             log.info(initMap.jobShouldNotRun)
@@ -256,8 +256,8 @@ class ExecutionJob implements InterruptableJob {
             if (serverUUID != null && jobDataMap.get("bySchedule")) {
                 //verify scheduled job should be run on this node in cluster mode
                 if (serverUUID!=initMap.scheduledExecution.serverNodeUUID){
-                    initMap.jobShouldNotRun="Job ${initMap.scheduledExecution.extid} will run on server ID ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this node."
-                    context.getScheduler().deleteJob(context.jobDetail.name,context.jobDetail.group)
+                    initMap.jobShouldNotRun="Job ${initMap.scheduledExecution.extid} will run on server ID ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this server (${serverUUID})."
+                    context.getScheduler().deleteJob(context.jobDetail.key)
                     return initMap
                 }
             }
