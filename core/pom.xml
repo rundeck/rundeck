@@ -111,7 +111,7 @@
           <archive>
             <manifestEntries>
               <Rundeck-Version>2.6.5-SNAPSHOT</Rundeck-Version>
-              <Rundeck-Tools-Dependencies>rundeck-storage-api-2.6.5-SNAPSHOT.jar rundeck-storage-conf-2.6.5-SNAPSHOT.jar jaxen-1.1.jar ant-1.8.3.jar log4j-1.2.17.jar commons-codec-1.5.jar commons-beanutils-1.8.3.jar commons-collections-3.2.1.jar commons-logging-1.1.1.jar commons-lang-2.6.jar dom4j-1.6.1.jar commons-cli-1.0.jar ant-jsch-1.8.3.jar jsch-0.1.52.jar jsch.agentproxy.jsch-0.0.9.jar jsch.agentproxy.sshagent-0.0.9.jar jsch.agentproxy.usocket-jna-0.0.9.jar jsch.agentproxy.usocket-nc-0.0.9.jar jsch.agentproxy.connector-factory-0.0.9.jar jsch.agentproxy.core-0.0.9.jar jackson-databind-2.5.3.jar jackson-core-2.5.3.jar jackson-annotations-2.5.3.jar snakeyaml-1.9.jar xercesImpl-2.11.0.jar xml-apis-1.4.01.jar commons-httpclient-3.0.1.jar rundeck-storage-data-2.6.5-SNAPSHOT.jar jdom-1.0.jar xom-1.0.jar ant-launcher-1.8.3.jar jna-4.1.0.jar jna-platform-4.1.0.jar jsch.agentproxy.pageant-0.0.9.jar icu4j-2.6.1.jar</Rundeck-Tools-Dependencies>
+              <Rundeck-Tools-Dependencies>rundeck-storage-api-2.6.5-SNAPSHOT.jar rundeck-storage-conf-2.6.5-SNAPSHOT.jar jaxen-1.1.jar ant-1.8.3.jar log4j-1.2.17.jar commons-codec-1.5.jar commons-beanutils-1.8.3.jar commons-collections-3.2.1.jar commons-logging-1.1.1.jar commons-lang-2.6.jar dom4j-1.6.1.jar commons-cli-1.0.jar ant-jsch-1.8.3.jar jsch-0.1.53.jar jsch.agentproxy.jsch-0.0.9.jar jsch.agentproxy.sshagent-0.0.9.jar jsch.agentproxy.usocket-jna-0.0.9.jar jsch.agentproxy.usocket-nc-0.0.9.jar jsch.agentproxy.connector-factory-0.0.9.jar jsch.agentproxy.core-0.0.9.jar jackson-databind-2.5.3.jar jackson-core-2.5.3.jar jackson-annotations-2.5.3.jar snakeyaml-1.9.jar xercesImpl-2.11.0.jar xml-apis-1.4.01.jar commons-httpclient-3.0.1.jar rundeck-storage-data-2.6.5-SNAPSHOT.jar jdom-1.0.jar xom-1.0.jar ant-launcher-1.8.3.jar jna-4.1.0.jar jna-platform-4.1.0.jar jsch.agentproxy.pageant-0.0.9.jar icu4j-2.6.1.jar</Rundeck-Tools-Dependencies>
             </manifestEntries>
           </archive>
         </configuration>
@@ -176,7 +176,7 @@
     <dependency>
       <groupId>com.jcraft</groupId>
       <artifactId>jsch</artifactId>
-      <version>0.1.52</version>
+      <version>0.1.53</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
