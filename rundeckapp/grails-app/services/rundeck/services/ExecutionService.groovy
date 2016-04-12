@@ -394,11 +394,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     }
                 }
 
-                eqfilters.each{ key,val ->
-                    if(query["${key}Filter"]){
-                        eq(val,query["${key}Filter"])
-                    }
-                }
+                 if(!allProjectsQuery){
+                     eqfilters.each{ key,val ->
+                         if(query["${key}Filter"]){
+                             eq(val,query["${key}Filter"])
+                         }
+                     }
+                 }
 
                  //running status filter.
                  if(query.runningFilter){
