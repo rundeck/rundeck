@@ -47,6 +47,7 @@ import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 import com.jcraft.jsch.JSchException;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.BuildException;
@@ -213,7 +214,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
     public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
                                              final INodeEntry node)  {
-        if (null == node.getHostname() || null == node.extractHostname()) {
+        if (null == node.getHostname() || null == node.extractHostname() || StringUtils.isBlank(node.extractHostname())) {
             return NodeExecutorResultImpl.createFailure(
                 StepFailureReason.ConfigurationFailure,
                 "Hostname must be set to connect to remote node '" + node.getNodename() + "'",
