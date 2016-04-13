@@ -946,7 +946,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
             theValue = messageSource.getMessage(error, locale)
         } catch (org.springframework.context.NoSuchMessageException e) {
-            log.error "Missing message ${theKey}"
+            log.error "Missing message ${error}"
 //        } catch (java.lang.NullPointerException e) {
 //            log.error "Expression does not exist: ${error}: ${e}"
         }
@@ -1436,6 +1436,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             failed = true
             scheduledExecution.errors.rejectValue('project', 'scheduledExecution.project.invalid.message', [scheduledExecution.project].toArray(), 'Project was not found: {0}')
         }
+        def frameworkProject = frameworkService.getFrameworkProject(scheduledExecution.project)
+        def projectProps = frameworkProject.getProperties()
 
         def todiscard = []
         def wftodelete = []
@@ -1644,7 +1646,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def modifiednotifs = []
         if (params.notifications && 'false' != params.notified) {
             //create notifications
-            def result = _updateNotificationsData(params, scheduledExecution)
+            def result = _updateNotificationsData(params, scheduledExecution,projectProps)
             if(result.failed){
                 failed = result.failed
             }
@@ -1718,7 +1720,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     }
 
-    private Map validatePluginNotification(ScheduledExecution scheduledExecution, String trigger,notif,params=null){
+    private Map validatePluginNotification(ScheduledExecution scheduledExecution, String trigger,notif,params=null, Map projectProperties=null){
         //plugin type
         def failed=false
         def pluginDesc = notificationService.getNotificationPluginDescriptor(notif.type)
@@ -1731,7 +1733,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             )
             return [failed:true]
         }
-        def validation = notificationService.validatePluginConfig(scheduledExecution.project, notif.type, notif.configuration)
+        def validation = notificationService.validatePluginConfig(notif.type, projectProperties, notif.configuration)
         if (!validation.valid) {
             failed = true
             if(params instanceof Map){
@@ -1858,7 +1860,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      *
      * expected params: [notifications: [<eventTrigger>:[email:<content>]]]
      */
-    private Map _updateNotificationsData( params, ScheduledExecution scheduledExecution) {
+    private Map _updateNotificationsData( params, ScheduledExecution scheduledExecution, Map projectProperties) {
         boolean failed = false
         def fieldNames = [
                 (ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME):
@@ -1901,7 +1903,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 if(notif instanceof Notification){
                     data=[type:notif.type, configuration:notif.configuration]
                 }
-                def result = validatePluginNotification(scheduledExecution, trigger, data, params)
+                def result = validatePluginNotification(scheduledExecution, trigger, data, params,projectProperties)
                 if (result.failed) {
                     failed = true
                     failureField="notifications"
@@ -1915,6 +1917,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 if(oldn){
                     oldn.content=n.content
                     n=oldn
+                    n.scheduledExecution = scheduledExecution
                 }else{
                     n.scheduledExecution = scheduledExecution
                 }
@@ -2038,6 +2041,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             failed = true
             scheduledExecution.errors.rejectValue('project', 'scheduledExecution.project.invalid.message', [scheduledExecution.project].toArray(), 'Project was not found: {0}')
         }
+        def frameworkProject = frameworkService.getFrameworkProject(scheduledExecution.project)
+        def projectProps = frameworkProject.getProperties()
 
         if (params.workflow) {
             //use the input params to define the workflow
@@ -2129,7 +2134,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def modifiednotifs=[]
         if (params.notifications) {
             //create notifications
-            def result = _updateNotificationsData(params, scheduledExecution)
+            def result = _updateNotificationsData(params, scheduledExecution,projectProps)
             if (result.failed) {
                 failed = result.failed
             }
@@ -2406,6 +2411,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             failed = true
             scheduledExecution.errors.rejectValue('project', 'scheduledExecution.project.invalid.message', [scheduledExecution.project].toArray(), 'Project does not exist: {0}')
         }
+
+        def frameworkProject = frameworkService.getFrameworkProject(scheduledExecution.project)
+        def projectProps = frameworkProject.getProperties()
+
         if (params['_sessionwf'] == 'true' && params['_sessionEditWFObject']) {
             //use session-stored workflow
             def Workflow wf = params['_sessionEditWFObject']
@@ -2628,7 +2637,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         parseNotificationsFromParams(params)
         if (params.notifications) {
             //create notifications
-            def result = _updateNotificationsData(params, scheduledExecution)
+            def result = _updateNotificationsData(params, scheduledExecution,projectProps)
             if (result.failed) {
                 failed = result.failed
             }
