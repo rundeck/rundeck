@@ -970,7 +970,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return map of load results, [jobs: List of ScheduledExecutions, jobsi: list of maps [scheduledExecution: (job), entrynum: (index)], errjobs: List of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg], skipjobs: list of maps [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]]
      */
     def loadJobs (
-            List jobset,
+            List<ScheduledExecution> jobset,
             String option,
             String uuidOption,
             Map changeinfo = [:],
@@ -1029,26 +1029,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     errmsg = "Unauthorized: Update Job ${scheduledExecution.id}"
                 } else {
                     try {
-                        def result
-                        if (jobdata instanceof ScheduledExecution) {
-                            //xxx:try/catch the update
-                            result = _doupdateJob(scheduledExecution.id, jobdata, projectAuthContext, jobchange)
-
-                            success = result.success
-                            scheduledExecution = result.scheduledExecution
-                            if(success && result.jobChangeEvent){
-                                jobChangeEvents<<result.jobChangeEvent
-                            }
-                        } else {
-                            jobdata.id = scheduledExecution.uuid ?: scheduledExecution.id
-                            result = _doupdate(jobdata, projectAuthContext, jobchange)
-                            success = result.success
-                            scheduledExecution = result.scheduledExecution
-                            if(success && result.jobChangeEvent){
-                                jobChangeEvents<<result.jobChangeEvent
-                            }
+                        def result = _doupdateJob(scheduledExecution.id, jobdata, projectAuthContext, jobchange)
+                        success = result.success
+                        scheduledExecution = result.scheduledExecution
+                        if(success && result.jobChangeEvent){
+                            jobChangeEvents<<result.jobChangeEvent
                         }
-
                         if (!success && scheduledExecution && scheduledExecution.hasErrors()) {
                             errmsg = "Validation errors: "+ scheduledExecution.errors.allErrors.collect{lookupMessageError(it)}.join("; ")
                         } else {
