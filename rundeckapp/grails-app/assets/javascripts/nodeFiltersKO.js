@@ -415,6 +415,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.nodeSummary=ko.observable(data.nodeSummary?data.nodeSummary:null);
     self.nodeSet=ko.observable(new NodeSet());
     self.truncated=ko.observable(false);
+    self.loaded=ko.observable(false);
     /**
      *
      * can be subscribed to for browser history updating, will be changed to 'true'
@@ -561,6 +562,11 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.nodeExcludePrecedence.subscribe(function(newValue){
         self.updateMatchedNodes();
     });
+    self.loading.subscribe(function(newValue){
+        if(!newValue){
+            self.loaded(true);
+        }
+    });
     self.hasNodes = ko.computed(function () {
         return 0 != self.allcount();
     });
@@ -674,7 +680,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         return self.linkForFilterString(filter);
     };
     self.triggerNodeRemoteEdit=function(node){
-        doRemoteEdit(node.nodename,self.project,self.nodeSet().expandNodeAttributes(node.attributes,node.attributes['remoteUrl']()))
+        doRemoteEdit(node.nodename(),self.project(),self.nodeSet().expandNodeAttributes(node.attributes,node.attributes['remoteUrl']()))
     };
     /**
      * Update to match state parameters
@@ -779,7 +785,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         self.updateMatchedNodes();
     };
     self.updateMatchedNodes= function () {
-        if(!self.filter()){
+        if(!self.filter() && self.emptyMode()=='blank'){
             return;
         }
         var project=self.project();

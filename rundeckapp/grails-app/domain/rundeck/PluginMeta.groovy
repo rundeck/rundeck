@@ -5,10 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper
 class PluginMeta {
 
     static constraints = {
-        jsonData(nullable: true, blank: true, maxSize: 8192)
+        jsonData(nullable: true, blank: true)
     }
     static mapping = {
         key column: 'data_key'
+        jsonData(type: 'text')
     }
     Long id
     String key

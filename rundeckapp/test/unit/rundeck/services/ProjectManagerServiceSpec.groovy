@@ -80,13 +80,16 @@ class ProjectManagerServiceSpec extends Specification {
 
         then:
 
-        1*service.nodeService.getNodes('test1')
+        0*service.nodeService.getNodes('test1')
         result!=null
         'test1'==result.name
         'fwkvalue'==result.getProperty('fwkprop')
         'test1'==result.getProperty('project.name')
         1==result.getProjectProperties().size()
         'test1'==result.getProjectProperties().get('project.name')
+        null==result.info.description
+        null==result.info.readme
+        null==result.info.motd
     }
     void "get project exists with props"(){
         setup:
@@ -98,7 +101,7 @@ class ProjectManagerServiceSpec extends Specification {
             hasResource("projects/test1/etc/project.properties") >> true
             getResource("projects/test1/etc/project.properties") >> Stub(Resource){
                 getContents() >> Stub(ResourceMeta){
-                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nprojkey=projval').bytes)
+                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nprojkey=projval\nproject.description=blah').bytes)
                     getModificationTime() >> modDate
                 }
             }
@@ -117,16 +120,78 @@ class ProjectManagerServiceSpec extends Specification {
         def result=service.getFrameworkProject('test1')
 
         then:
-        1*service.nodeService.getNodes('test1')
+        0*service.nodeService.getNodes('test1')
         result!=null
         'test1'==result.name
         'fwkvalue'==result.getProperty('fwkprop')
         'test1'==result.getProperty('project.name')
         'projval'==result.getProperty('projkey')
-        2==result.getProjectProperties().size()
+        3==result.getProjectProperties().size()
         'test1'==result.getProjectProperties().get('project.name')
+        'blah'==result.getProjectProperties().get('project.description')
         'projval'==result.getProjectProperties().get('projkey')
         modDate==result.getConfigLastModifiedTime()
+        'blah'==result.info.description
+        null==result.info.readme
+        null==result.info.motd
+    }
+    void "get project exists with readme/motd"(){
+        setup:
+        def p = new Project(name:'test1')
+        p.save(flush: true)
+        def modDate= new Date(123)
+
+        service.storage=Mock(StorageTree){
+            1*hasResource("projects/test1/etc/project.properties") >> true
+            1*hasResource("projects/test1/readme.md") >> true
+            1*hasResource("projects/test1/motd.md") >> true
+            getResource("projects/test1/etc/project.properties") >> Stub(Resource){
+                getContents() >> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nprojkey=projval\nproject.description=blah').bytes)
+                    getModificationTime() >> modDate
+                }
+            }
+            1*getResource("projects/test1/readme.md") >> Stub(Resource){
+                getContents() >> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('blah readme'.bytes)
+                    getModificationTime() >> modDate
+                }
+            }
+            1*getResource("projects/test1/motd.md") >> Stub(Resource){
+                getContents() >> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream('blah motd'.bytes)
+                    getModificationTime() >> modDate
+                }
+            }
+        }
+
+        def properties = new Properties()
+        properties.setProperty("fwkprop","fwkvalue")
+
+        service.frameworkService=Stub(FrameworkService){
+            getRundeckFramework() >> Stub(Framework){
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+        }
+        service.nodeService=Mock(NodeService)
+        when:
+        def result=service.getFrameworkProject('test1')
+
+        then:
+        0*service.nodeService.getNodes('test1')
+        result!=null
+        'test1'==result.name
+        'fwkvalue'==result.getProperty('fwkprop')
+        'test1'==result.getProperty('project.name')
+        'projval'==result.getProperty('projkey')
+        3==result.getProjectProperties().size()
+        'test1'==result.getProjectProperties().get('project.name')
+        'blah'==result.getProjectProperties().get('project.description')
+        'projval'==result.getProjectProperties().get('projkey')
+        modDate==result.getConfigLastModifiedTime()
+        'blah'==result.info.description
+        'blah readme'==result.info.readme
+        'blah motd'==result.info.motd
     }
     void "get project exists invalid props content"(){
         setup:
@@ -157,7 +222,7 @@ class ProjectManagerServiceSpec extends Specification {
         def result=service.getFrameworkProject('test1')
 
         then:
-        1*service.nodeService.getNodes('test1')
+        0*service.nodeService.getNodes('test1')
         result!=null
         'test1'==result.name
         'fwkvalue'==result.getProperty('fwkprop')
@@ -206,7 +271,7 @@ class ProjectManagerServiceSpec extends Specification {
         then:
         1*service.projectCache.invalidate('test1')
         1*service.nodeService.expireProjectNodes('test1')
-        1*service.nodeService.getNodes('test1')
+        0*service.nodeService.getNodes('test1')
 
         result.name=='test1'
         2==result.getProjectProperties().size()
@@ -270,7 +335,7 @@ class ProjectManagerServiceSpec extends Specification {
         then:
         1*service.projectCache.invalidate('test1')
         1*service.nodeService.expireProjectNodes('test1')
-        1*service.nodeService.getNodes('test1')
+        0*service.nodeService.getNodes('test1')
 
         0*service.nodeService._(*_)
         result.name=='test1'
@@ -1091,7 +1156,7 @@ class ProjectManagerServiceSpec extends Specification {
 
         then:
         1*service.nodeService.expireProjectNodes('abc')
-        1*service.nodeService.getNodes('abc')
+        0*service.nodeService.getNodes('abc')
         1*service.projectCache.invalidate('abc')
         Project.findByName('abc')!=null
     }

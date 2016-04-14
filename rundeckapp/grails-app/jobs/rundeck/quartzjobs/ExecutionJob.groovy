@@ -21,7 +21,7 @@ import rundeck.services.logging.LoggingThreshold
 
 class ExecutionJob implements InterruptableJob {
 
-    public static final int DEFAULT_STATS_RETRY_MAX = 3
+    public static final int DEFAULT_STATS_RETRY_MAX = 5
     public static final long DEFAULT_STATS_RETRY_DELAY = 5000
     public static final int DEFAULT_FINALIZE_RETRY_MAX = 10
     public static final long DEFAULT_FINALIZE_RETRY_DELAY = 5000
@@ -95,7 +95,7 @@ class ExecutionJob implements InterruptableJob {
             initMap= initialize(context,context.jobDetail.jobDataMap)
         }catch(Throwable t){
             log.error("Unable to start Job execution: ${t.message?t.message:'no message'}",t)
-            return
+            throw t
         }
         if(initMap.jobShouldNotRun){
             log.info(initMap.jobShouldNotRun)
@@ -129,7 +129,7 @@ class ExecutionJob implements InterruptableJob {
                 )
 
                 success=result.success
-                statusString=Execution.isCustomStatusString(result.result.statusString)?result.result.statusString:null
+                statusString=Execution.isCustomStatusString(result.result?.statusString)?result.result?.statusString:null
             }
         }catch(Throwable t){
             log.error("Failed execution ${initMap.execution.id} : ${t.message?t.message:'no message'}",t)
@@ -184,25 +184,29 @@ class ExecutionJob implements InterruptableJob {
     }
 
     def initialize(JobExecutionContext context, def jobDataMap) {
-        def initMap=[:]
-        initMap.isTemp = "true"==jobDataMap.get("isTempExecution")
-        if(initMap.isTemp){
+        def initMap = [:]
+        initMap.isTemp = "true" == jobDataMap.get("isTempExecution")
+        if (initMap.isTemp) {
             //temp execution, means no associated ScheduledExecution object
-            initMap.executionId=jobDataMap.get("executionId")
-            if(!initMap.executionId){
+            initMap.executionId = jobDataMap.get("executionId")
+            if (!initMap.executionId) {
                 throw new RuntimeException("executionId was not found in job data map for temporary execution")
             }
-        }else{
+        } else {
             initMap.scheduledExecution = fetchScheduledExecution(jobDataMap)
-            if(!initMap.scheduledExecution){
+            if (!initMap.scheduledExecution) {
                 throw new RuntimeException("scheduledExecution data was not found in job data map")
             }
-            initMap.scheduledExecutionId=initMap.scheduledExecution.id
+            initMap.scheduledExecutionId = initMap.scheduledExecution.id
         }
-        initMap.timeout = jobDataMap.get('timeout')
+
         initMap.executionService = fetchExecutionService(jobDataMap)
         initMap.executionUtilService = fetchExecutionUtilService(jobDataMap)
         initMap.frameworkService = fetchFrameworkService(jobDataMap)
+        if (initMap.scheduledExecution?.timeout){
+            initMap.timeout = initMap.scheduledExecution.timeoutDuration
+        }
+
         if(initMap.isTemp){
             //an adhoc execution without associated job
             initMap.execution = Execution.get(initMap.executionId)
@@ -252,8 +256,8 @@ class ExecutionJob implements InterruptableJob {
             if (serverUUID != null && jobDataMap.get("bySchedule")) {
                 //verify scheduled job should be run on this node in cluster mode
                 if (serverUUID!=initMap.scheduledExecution.serverNodeUUID){
-                    initMap.jobShouldNotRun="Job ${initMap.scheduledExecution.extid} will run on server ID ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this node."
-                    context.getScheduler().deleteJob(context.jobDetail.name,context.jobDetail.group)
+                    initMap.jobShouldNotRun="Job ${initMap.scheduledExecution.extid} will run on server ID ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this server (${serverUUID})."
+                    context.getScheduler().deleteJob(context.jobDetail.key)
                     return initMap
                 }
             }
@@ -262,7 +266,7 @@ class ExecutionJob implements InterruptableJob {
             def rolelist = initMap.scheduledExecution.userRoles
             initMap.authContext = frameworkService.getAuthContextForUserAndRoles(initMap.scheduledExecution.user, rolelist)
             initMap.secureOptsExposed = initMap.executionService.selectSecureOptionInput(initMap.scheduledExecution,[:],true)
-            initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution,initMap.scheduledExecution.user)
+            initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution,initMap.authContext)
         }
         if (!initMap.authContext) {
             throw new RuntimeException("authContext could not be determined")
@@ -312,7 +316,9 @@ class ExecutionJob implements InterruptableJob {
         def WorkflowExecutionServiceThread thread = execmap.thread
         def ThresholdValue threshold = execmap.threshold
         def boolean stop=false
-        while (thread.isAlive()) {
+        boolean never=true
+        while (thread.isAlive() || never) {
+            never=false
             try {
                 thread.join(1000)
             } catch (InterruptedException e) {
@@ -356,6 +362,7 @@ class ExecutionJob implements InterruptableJob {
                 "Execution ${execution.id} finishExecution:"
         ) {
             executionUtilService.finishExecution(execmap)
+            true
         }
         if (!retrysuccess && exc) {
             throw new RuntimeException("Execution ${execution.id} failed: " + exc.getMessage(), exc)
@@ -385,12 +392,17 @@ class ExecutionJob implements InterruptableJob {
     def List withRetry(int max, long sleep, String identity, Closure action){
         int count=0
         boolean complete=false
+        def backoff=1.5
+        def jitter ={
+            Math.floor(Math.random()*(sleep))
+        }
+        long newsleep=sleep+jitter()
         Throwable caught=null
         while(!complete && (max>count || max<0)){
             if(count>0){
-                log.warn(identity + " failed (attempts=${count}/${max}), retrying in " + sleep + "ms")
+                log.warn(identity + " failed (attempts=${count}/${max}), retrying in " + newsleep + "ms")
                 try {
-                    Thread.sleep(sleep)
+                    Thread.sleep(newsleep)
                 } catch (InterruptedException e) {
                     log.error(identity + " retry was interrupted, failing")
                     break
@@ -399,11 +411,12 @@ class ExecutionJob implements InterruptableJob {
                     log.error(identity + " retry was interrupted, failing")
                     break
                 }
+                newsleep = Math.floor(newsleep*backoff)
             }
             count++
             try{
-                action.call()
-                complete=true
+                def result=action.call()
+                complete=result?true:false
                 caught=null
             }catch (Throwable t){
                 caught=t
@@ -470,6 +483,7 @@ class ExecutionJob implements InterruptableJob {
                     execmap,
                     retryContext
             )
+            true
         }
         //attempt to save execution state, with retry, in case DB connection fails
         if(finalizeRetryMax>1) {
@@ -488,6 +502,7 @@ class ExecutionJob implements InterruptableJob {
             def savedJobState = false
             withRetry(statsRetryMax, statsRetryDelay, "Execution ${execution.id} update job stats (${scheduledExecutionId}):") {
                 savedJobState = executionService.updateScheduledExecStatistics(scheduledExecutionId, execution.id, time)
+                savedJobState
             }
             if (!savedJobState) {
                 log.error("ExecutionJob: Failed to update job statistics for ${execution.id}, after retrying ${statsRetryMax} times")

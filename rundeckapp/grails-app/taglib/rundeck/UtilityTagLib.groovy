@@ -14,7 +14,7 @@ class UtilityTagLib{
     def static  daysofweekkey = [Calendar.SUNDAY,Calendar.MONDAY,Calendar.TUESDAY,Calendar.WEDNESDAY,Calendar.THURSDAY,Calendar.FRIDAY,Calendar.SATURDAY];
     def public static daysofweekord = ScheduledExecution.daysofweeklist;
     def public static monthsofyearord = ScheduledExecution.monthsofyearlist;
-	static returnObjectForTags = ['nodeStatusColorStyle','nodeStatusColorCss','executionMode','appTitle','rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','helpLinkParams','parseOptsFromString','relativeDateString','enc','textFirstLine','textRemainingLines']
+	static returnObjectForTags = ['nodeStatusColorStyle','nodeStatusColorCss','logStorageEnabled','executionMode','appTitle','rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','helpLinkParams','parseOptsFromString','relativeDateString','enc','textFirstLine','textRemainingLines']
 
     private static Random rand=new java.util.Random()
     def HMacSynchronizerTokensManager hMacSynchronizerTokensManager
@@ -898,6 +898,14 @@ class UtilityTagLib{
     }
     def ifExecutionMode={attrs,body->
         if(executionMode(attrs,body)){
+            out<<body()
+        }
+    }
+    def logStorageEnabled={attrs,body->
+        configurationService.getString('execution.logs.fileStoragePlugin',null)!=null
+    }
+    def ifLogStorageEnabled={attrs,body->
+        if(logStorageEnabled(attrs,body)){
             out<<body()
         }
     }

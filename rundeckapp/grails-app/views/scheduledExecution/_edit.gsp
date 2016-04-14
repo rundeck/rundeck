@@ -619,7 +619,7 @@ function getCurSEID(){
                     <g:message code="refresh" />
                     <i class="glyphicon glyphicon-refresh"></i>
                 </button>
-                <span class="text-muted" >
+                <span class="text-muted" data-bind="if: loaded" >
                     <span data-bind="messageTemplate: [total,nodesTitle]"><g:message code="count.nodes.matched"/></span>
                 </span>
                 <div id='matchednodes' class="clearfix">

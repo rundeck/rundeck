@@ -63,6 +63,11 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
     }
 
     @Override
+    boolean isExecutionFileGenerated() {
+        return false
+    }
+
+    @Override
     ExecutionFile produceStorageFileForExecution(final Execution e) {
         File localfile = getStateFileForExecution(e)
         new ProducedExecutionFile(localFile: localfile,fileDeletePolicy: ExecutionFileDeletePolicy.WHEN_RETRIEVABLE)

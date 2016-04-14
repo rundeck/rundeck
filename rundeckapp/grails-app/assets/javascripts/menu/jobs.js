@@ -25,11 +25,10 @@
  */
 //TODO: refactor menu/jobs.gsp to move javascript here
 
-var jobNodeFilters;
 function initJobNodeFilters(filterParams){
     var pageParams = loadJsonData('pageParams');
     var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
-    jobNodeFilters = new NodeFilters(
+    return new NodeFilters(
         appLinks.frameworkAdhoc,
         appLinks.scheduledExecutionCreate,
         appLinks.frameworkNodes,

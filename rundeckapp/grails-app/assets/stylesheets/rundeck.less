@@ -691,7 +691,7 @@ section{
 
 // clock icon in scheduled job view is gray if job will not fire
 .scheduletime{
-  .glyphicon{
+  > .glyphicon:first-child {
     color:@brand-success;
   }
   &.disabled .glyphicon, &.disabled .detail{
@@ -1591,6 +1591,8 @@ pre.filtererror{
 
 //version identity
 .rundeck-version-identity,.rundeck-server-uuid{
+  text-wrap: none;
+  white-space: nowrap;
   .version-icon{
     .badge();
     background-color: #eee;

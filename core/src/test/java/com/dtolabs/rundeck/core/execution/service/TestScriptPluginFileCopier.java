@@ -9,6 +9,7 @@ import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
+import com.dtolabs.rundeck.core.plugins.metadata.PluginMeta;
 import com.dtolabs.rundeck.core.utils.ScriptExecHelper;
 import junit.framework.Assert;
 import org.junit.After;
@@ -136,9 +137,19 @@ public class TestScriptPluginFileCopier {
         public void setMetadata(Map<String, Object> metadata) {
             this.metadata = metadata;
         }
+
+        @Override
+        public PluginMeta getPluginMeta() {
+            return null;
+        }
+
+        @Override
+        public boolean getDefaultMergeEnvVars() {
+            return false;
+        }
     }
 
-    static class TestHelper implements ScriptExecHelper {
+    public static class TestHelper implements ScriptExecHelper {
         @Override public int runLocalCommand(
                 String osFamily,
                 ExecArgList execArgList,
@@ -194,6 +205,12 @@ public class TestScriptPluginFileCopier {
                 String scriptinterpreter,
                 boolean interpreterargsquoted
         ) {
+            Assert.fail("Unexpected");
+            return null;
+        }
+
+        @Override
+        public Map<String, String> loadLocalEnvironment() {
             Assert.fail("Unexpected");
             return null;
         }

@@ -49,7 +49,15 @@ import java.util.zip.ZipInputStream;
 class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
 
     private static final Logger log = Logger.getLogger(ScriptPluginProviderLoader.class.getName());
-    public static final String SCRIPT_PLUGIN_VERSION = "1.0";
+    public static final String VERSION_1_0 = "1.0";
+    public static final String VERSION_1_1 = "1.1";
+    public static final List<String> SUPPORTED_PLUGIN_VERSIONS;
+    static {
+        SUPPORTED_PLUGIN_VERSIONS = Collections.unmodifiableList(Arrays.asList(
+                VERSION_1_0,
+                VERSION_1_1
+        ));
+    }
     private final File file;
     final File cachedir;
     /**
@@ -97,7 +105,7 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
                 if (matchesProvider(ident, pluginDef)) {
                     final ScriptPluginProvider provider;
                     try {
-                        provider = getPlugin(file, pluginDef, ident);
+                        provider = getPlugin(pluginMeta, file, pluginDef, ident);
                     } catch (PluginException e) {
                         throw new ProviderLoaderException(e, service.getName(), providerName);
                     }
@@ -137,8 +145,14 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
     /**
      * Get the ScriptPluginProvider definition from the file for the given provider def and ident
      */
-    private ScriptPluginProvider getPlugin(final File file, final ProviderDef pluginDef, final ProviderIdent ident) throws
-        ProviderLoaderException, PluginException {
+    private ScriptPluginProvider getPlugin(
+            final PluginMeta pluginMeta,
+            final File file,
+            final ProviderDef pluginDef,
+            final ProviderIdent ident
+    ) throws
+            ProviderLoaderException, PluginException
+    {
         if (null == fileExpandedDir) {
             final File dir;
             try {
@@ -163,7 +177,7 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
         if (!script.exists() || !script.isFile()) {
             throw new PluginException("Script file was not found: " + script.getAbsolutePath());
         }
-        return new ScriptPluginProviderImpl(pluginDef, file, fileExpandedDir);
+        return new ScriptPluginProviderImpl(pluginMeta, pluginDef, file, fileExpandedDir);
     }
 
     /**
@@ -306,7 +320,7 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
         if (null == pluginList.getRundeckPluginVersion()) {
             log.error("rundeckPluginVersion not found in metadata: " + file.getAbsolutePath());
             valid = false;
-        } else if (!SCRIPT_PLUGIN_VERSION.equals(pluginList.getRundeckPluginVersion())) {
+        } else if (!SUPPORTED_PLUGIN_VERSIONS.contains(pluginList.getRundeckPluginVersion())) {
             log.error("rundeckPluginVersion: " + pluginList.getRundeckPluginVersion() + " is not supported: " + file
                     .getAbsolutePath());
             valid = false;
@@ -354,7 +368,6 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
      */
     private synchronized boolean removeScriptPluginCache() {
         if (null != fileExpandedDir && fileExpandedDir.exists()) {
-            System.err.println("removeScriptPluginCache: " + fileExpandedDir + " for: " + file);
             debug("removeScriptPluginCache: " + fileExpandedDir);
             return FileUtils.deleteDir(fileExpandedDir);
         }
@@ -484,5 +497,17 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
             e.printStackTrace();
         }
         return null;
+    }
+
+    /**
+     * Return default value for "mergeEnvironment" based on plugin type version
+     * @param pluginMeta
+     * @return
+     */
+    public static boolean getDefaultMergeEnvVars(final PluginMeta pluginMeta) {
+        if (VERSION_1_0.equals(pluginMeta.getRundeckPluginVersion())) {
+            return false;
+        }
+        return true;
     }
 }

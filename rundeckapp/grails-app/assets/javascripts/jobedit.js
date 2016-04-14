@@ -31,18 +31,6 @@ function showRowSelected(elem, tbl, classname) {
 }
 
 
-function _editFormSelectProject(value){
-
-}
-
-function prepJobType(data) {
-    if (data.authorized) {
-        $('scriptAuthWarn').hide();
-    } else {
-        $('scriptAuthWarn').show();
-    }
-}
-
 /** begin wf edit code */
 var jobEdittedHandler;
 function _onJobEdit(func){
@@ -54,6 +42,21 @@ function jobWasEdited(){
     }
 }
 
+/**
+ * After loading WF item edit form in the list, update input and apply ACE editor
+ * @param item
+ */
+function postLoadItemEdit(item){
+    var liitem = jQuery(item);
+    liitem.find('input[type=text]').each(function (ndx,elem) {
+        elem.observe('keypress', noenter);
+    });
+    if(liitem.find('input[type=text]').length>0){
+        liitem.find('input[type=text]')[0].focus();
+    }
+    liitem.find('textarea.apply_ace').each(function(ndx,elem){_addAceTextarea(elem)});
+}
+
 function _wfiedit(key,num,isErrorHandler) {
     jobWasEdited();
     var params = {num:num, isErrorHandler:isErrorHandler?true:false,key:key};
@@ -62,13 +65,7 @@ function _wfiedit(key,num,isErrorHandler) {
     }
     jQuery('#wfli_' + key).load(_genUrl(appLinks.workflowEdit, params),function(resp,status,jqxhr){
         _hideWFItemControls();
-        var liitem = jQuery('#wfli_' + key);
-        liitem.find('input').each(function (ndx,elem) {
-            if (elem.type === 'text') {
-                elem.observe('keypress', noenter);
-            }
-        });
-        liitem.find('textarea.apply_ace').each(function(ndx,elem){_addAceTextarea(elem)});
+        postLoadItemEdit('#wfli_' + key);
     });
 }
 
@@ -95,6 +92,8 @@ function _wfisave(key,num, formelem,iseh) {
                 if (iseh) {
                     _hideWFItemControlsAddEH(num);
                 }
+            }else{
+                postLoadItemEdit('#wfli_' + key);
             }
         }
     }).success(_ajaxReceiveTokens.curry('job_edit_tokens'));
@@ -107,42 +106,33 @@ function _wfiaddnew(type,nodestep) {
         params.scheduledExecutionId = getCurSEID();
     }
     clearHtml('wfnewitem');
-    $('wfnewtypes').hide();
+    jQuery('#wfnewtypes').hide();
     _hideWFItemControls();
-    var olist = $('workflowContent').down('ol');
-    var litems = $$('#workflowContent ol > li');
-    var num = litems.length;
+    var wfcontent = jQuery('#workflowContent');
+    var olist = wfcontent.find('ol').first();
+    var num = wfcontent.find('ol > li').length;
     params['key']=num;
-    var parentli = new Element('li');
+    var parentli = jQuery('<li>' +
+            '<span></span>' +
+            '<div></div>' +
+            '<ul class="wfhandleritem" style="display:none">' +
+                '<li></li>' +
+            '</ul>' +
+        '</li>');
     if (num % 2 == 1) {
-        parentli.addClassName('alternate');
+        parentli.addClass('alternate');
     }
-    parentli.setAttribute('data-wfitemnum', num);
-    newitemElem = new Element('span');
-    newitemElem.setAttribute('id', 'wfli_' + num);
-    parentli.appendChild(newitemElem);
-    var createElement = new Element('div');
-    createElement.setAttribute('id','wfivis_' + num);
-    parentli.appendChild(createElement);
+    parentli.data('wfitemnum', num);
 
-    var ehUlElement = new Element('ul');
-    ehUlElement.addClassName('wfhandleritem');
-    ehUlElement.style.display='none';
-    ehUlElement.setAttribute('data-wfitemnum',num);
-    var ehLiElement = new Element('li');
-    ehLiElement.setAttribute('id','wfli_eh_'+num);
-    ehUlElement.appendChild(ehLiElement);
-    parentli.appendChild(ehUlElement);
-    olist.appendChild(parentli);
+
+    parentli.find('div').attr('id','wfivis_' + num);
+    parentli.find('ul').data('wfitemnum',num);
+    parentli.find('ul li').attr('id','wfli_eh_'+num);
+    olist.append(parentli);
+    newitemElem = parentli.find('span').first()[0];
+    jQuery(newitemElem).attr('id', 'wfli_' + num);
     jQuery(newitemElem).load(_genUrl(appLinks.workflowEdit,params),function(){
-        $(newitemElem).select('input').each(function (elem) {
-            if (elem.type == 'text') {
-                elem.observe('keypress', noenter);
-            }
-        });
-        $(newitemElem).down('input[type=text]').focus();
-        $(newitemElem).select('textarea.apply_ace').each(_addAceTextarea);
-
+        postLoadItemEdit('#wfli_' + num);
     });
 }
 
@@ -159,29 +149,28 @@ function _wfisavenew(formelem) {
         beforeSend:_ajaxSendTokens.curry('job_edit_tokens'),
         success:function(resp,status,jqxhr){
             jQuery(newitemElem).html(resp);
-            var litem = $(newitemElem.parentNode);
-            $(litem).highlight();
-            $('wfnewbutton').show();
-            _showWFItemControls();
-            $('workflowDropfinal').setAttribute('data-wfitemnum', parseInt(litem.getAttribute('data-wfitemnum')) + 1);
-            newitemElem = null;
+            if(jQuery(newitemElem).find('.wfitemEditForm').length > 0){
+                //was error
+                postLoadItemEdit(newitemElem);
+            }else{
+                var litem = jQuery(newitemElem.parentNode);
+                litem.highlight();
+                jQuery('#wfnewbutton').show();
+                _showWFItemControls();
+                jQuery('#workflowDropfinal').data('wfitemnum', parseInt(litem.data('wfitemnum')) + 1);
+                newitemElem = null;
+            }
         }
     }).success(_ajaxReceiveTokens.curry('job_edit_tokens'));
 }
 function _wficancelnew() {
-    var olist = $('workflowContent').down('ol');
-    $(olist).removeChild($(newitemElem.parentNode));
+    jQuery(newitemElem.parentNode).remove();
     newitemElem = null;
-    $('wfnewbutton').show();
+    jQuery('#wfnewbutton').show();
     _showWFItemControls();
 }
 function _findParentAttr(e,attr){
-    var value = e.getAttribute(attr);
-    while (e && !value && !e.hasAttribute(attr)) {
-        value = e.parentNode.getAttribute(attr);
-        e = e.parentNode;
-    }
-    return value;
+    return jQuery(e).closest('['+attr+']').attr(attr);
 }
 //events handlers for add/cancel new step
 function _evtNewStepChooseType(evt) {
@@ -195,34 +184,32 @@ function _evtNewNodeStepChooseType(evt) {
     _wfiaddnew(type,true);
 }
 function _evtNewStepCancel(evt){
-    $('wfnewtypes').hide();
-    $('wfnewbutton').show();
+    jQuery('#wfnewtypes').hide();
+    jQuery('#wfnewbutton').show();
 }
 
 function _hideWFItemControls() {
-    $$('#workflowContent span.wfitemcontrols').each(Element.hide);
-    $('wfundoredo').hide();
-    $('wfnewbutton').hide();
+    jQuery('#workflowContent').find('span.wfitemcontrols').hide();
+    jQuery('#wfundoredo,#wfnewbutton').hide();
 }
 function _updateEmptyMessage() {
-    var x = $('workflowContent').down('ol li');
-    if (x) {
-        $('wfempty').hide();
+    var x = jQuery('#workflowContent').find('ol li');
+    if (x.length>0) {
+        jQuery('#wfempty').hide();
     } else {
-        $('wfempty').show();
+        jQuery('#wfempty').show();
     }
 }
 function _showWFItemControls() {
-    $$('#workflowContent span.wfitemcontrols').each(Element.show);
-    $('wfundoredo').show();
-    $('wfnewbutton').show();
+    jQuery('#workflowContent').find('span.wfitemcontrols').show();
+    jQuery('#wfundoredo,#wfnewbutton').show();
     _updateWFUndoRedo();
     _enableDragdrop();
     _updateEmptyMessage();
 }
 function _hideWFItemControlsAddEH(num){
-    var lielem=$('wfli_'+num);
-    lielem.select('.wfitem_add_errorhandler').each(Element.hide);
+    var lielem=jQuery('#wfli_'+num);
+    lielem.find('.wfitem_add_errorhandler').hide();
 }
 
 function _evtNewEHChooseType(evt){
@@ -236,56 +223,59 @@ function _evtNewEHNodeStepType(evt){
     _wfiaddNewErrorHandler(e, type,null, true);
 }
 function _hideAddNewEHLinks() {
-    $$('span.wfitem_add_errorhandler').each(Element.hide);
+    jQuery('span.wfitem_add_errorhandler').hide();
 }
 function _showAddNewEHLinks() {
-    $$('span.wfitem_add_errorhandler').each(Element.show);
+    jQuery('span.wfitem_add_errorhandler').show();
 }
 function _evtNewEHCancel(evt){
-    var d = $(evt.element()).up('ul.wfhandleritem', 0);
-    d.hide();
+    var d = jQuery(evt.element()).closest('ul.wfhandleritem').hide();
     _hideAddNewEH();
 
     _showWFItemControls();
 }
 function _wficancelnewEH(elem){
-    var ul = $(elem).up('ul.wfhandleritem', 0);
-    ul.hide();
-    var d = $(elem).up('ul.wfhandleritem li', 0);
-    clearHtml(d);
+    var ul = jQuery(elem).closest('ul.wfhandleritem').hide();
+    var d = jQuery(elem).closest('ul.wfhandleritem li').first();
+    clearHtml(d[0]);
 
     _showWFItemControls();
 }
 function _hideAddNewEH(){
-    var wfstepnew = $('wfnewtypes');
-    var newehdiv = $('wfnew_eh_types');
+    var wfstepnew = jQuery('#wfnewtypes');
+    var newehdiv = jQuery('#wfnew_eh_types');
     newehdiv.hide();
-    newehdiv.parentNode.removeChild(newehdiv);
-    $(wfstepnew).insert({after:newehdiv});
+    newehdiv.detach();
+    wfstepnew.append(newehdiv);
 }
 function _wfishownewErrorHandler(key,num,nodeStep){
-    var newehdiv=$('wfnew_eh_types');
-    var wfiehli=$('wfli_eh_'+key);
-    clearHtml(wfiehli);
-    newehdiv.parentNode.removeChild(newehdiv);
-    wfiehli.appendChild(newehdiv);
+    var newehdiv=jQuery('#wfnew_eh_types');
+    var wfiehli=jQuery('#wfli_eh_'+key);
+    clearHtml(wfiehli[0]);
+    newehdiv.detach();
+    wfiehli.append(newehdiv);
 
-    var nodeFirstWfStrat = $('wf_strat_node_first').checked;
+    var nodeFirstWfStrat = jQuery('#wf_strat_node_first').is(':checked');
     var allowedWfStepEh=!(nodeStep && nodeFirstWfStrat);
     //WF step error handler not allowed if strategy is "node-first" and the step is a node step
-    $(newehdiv).select('.step_section').each(allowedWfStepEh ? Element.show : Element.hide);
+    var sections = newehdiv.find('.step_section');
+    if(allowedWfStepEh){
+        sections.show()
+    }else{
+        sections.hide()
+    }
 
     newehdiv.show();
-    $(wfiehli.parentNode).show();
+    wfiehli.parent().show();
     _hideWFItemControls();
 }
 
 function _wfiaddNewErrorHandler(elem,type,num,nodestep){
     if(null==num){
         //find num by looking for enclosing ul and getting wfitemNum attribute
-        var d=$(elem).up('ul.wfhandleritem',0);
-        if(d){
-            num= d.getAttribute('data-wfitemnum');
+        var d=jQuery(elem).closest('ul.wfhandleritem');
+        if(d.length==1){
+            num= d.data('wfitemnum');
         }
     }
     var key='eh_'+num;
@@ -299,12 +289,7 @@ function _wfiaddNewErrorHandler(elem,type,num,nodestep){
     _hideAddNewEH();
 
     wfiehli.load(_genUrl(appLinks.workflowEdit,params),function(){
-        wfiehli.find('input').each(function (ndx,elem) {
-            if (elem.type == 'text') {
-                elem.observe('keypress', noenter);
-            }
-        });
-        wfiehli.find('textarea.apply_ace').each(function (){_addAceTextarea(this);});
+        postLoadItemEdit(wfiehli);
     });
 }
 
@@ -341,7 +326,7 @@ function _ajaxWFAction(url, params){
         success: function (data, status, jqxhr) {
             jQuery('#workflowContent').find('ol').html(data);
             newitemElem = null;
-            $('wfnewbutton').show();
+            jQuery('#wfnewbutton').show();
             _showWFItemControls();
         }
     });
@@ -357,8 +342,8 @@ function _updateWFUndoRedo() {
 
 ///Drag drop
 function moveDragItem(dragged, droparea) {
-    var num = $(dragged).getAttribute('data-wfitemnum');
-    var to = $(droparea).getAttribute('data-wfitemnum');
+    var num = jQuery(dragged).data('wfitemnum');
+    var to = jQuery(droparea).data('wfitemnum');
 
     if (to > num) {
         to = to - 1;
@@ -527,9 +512,9 @@ function _optsave(formelem, tokendataid, target) {
         beforeSend: _ajaxSendTokens.curry(tokendataid),
         success:function(data,status,xhr){
             jQuery(target).html(data);
-            if (!$(target).down('div.optEditForm')) {
+            if (jQuery(target).find('div.optEditForm').length<1) {
                 _showOptControls();
-                $(target).highlight();
+                jQuery(target).highlight();
             } else {
                 _configureInputRestrictions(target);
                 _hideOptControls();
@@ -742,8 +727,8 @@ function hideJobChooser() {
 //group chooser
 function groupChosen(path) {
     jobWasEdited();
-    $('schedJobGroup').setValue(path);
-    $('schedJobGroup').highlight();
+    jQuery('#schedJobGroup').val(path);
+    jQuery('#schedJobGroup').highlight();
     jQuery('#groupChooseBtn').popover('hide');
 }
 function loadGroupChooser() {

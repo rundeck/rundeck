@@ -54,7 +54,7 @@ public class JobsYAMLCodecTests  {
             scheduled: true,
             seconds: '*',
             minute: '0',
-            hour: '2',
+            hour: '2,15',
             month: '3',
             dayOfMonth: '?',
             dayOfWeek: '4',
@@ -105,7 +105,7 @@ public class JobsYAMLCodecTests  {
             assertEquals "wrong option values[0]", "a", doc[0].options[0].values[0]
             assertEquals "wrong option values[1]", "b", doc[0].options[0].values[1]
 
-            assertEquals "incorrect dispatch threadcount", 1, doc[0].nodefilters.dispatch.threadcount
+            assertEquals "incorrect dispatch threadcount", '1', doc[0].nodefilters.dispatch.threadcount
             assertTrue "incorrect dispatch keepgoing", doc[0].nodefilters.dispatch.keepgoing
             assertTrue "incorrect dispatch excludePrecedence", doc[0].nodefilters.dispatch.excludePrecedence
             assertNotNull "missing nodefilters include", doc[0].nodefilters.filter
@@ -117,7 +117,7 @@ public class JobsYAMLCodecTests  {
             assertNotNull "not scheduled.time", doc[0].schedule.time
             assertEquals "not scheduled.time", "*", doc[0].schedule.time.seconds
             assertEquals "not scheduled.time", "0", doc[0].schedule.time.minute
-            assertEquals "not scheduled.time", "2", doc[0].schedule.time.hour
+            assertEquals "not scheduled.time", "2,15", doc[0].schedule.time.hour
             assertEquals "not scheduled.time", "3", doc[0].schedule.month
             assertEquals "not scheduled.time", "4", doc[0].schedule.weekday.day
             assertEquals "not scheduled.time", "2011", doc[0].schedule.year

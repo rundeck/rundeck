@@ -141,8 +141,8 @@ public abstract class FrameworkResourceParent extends FrameworkResource implemen
     /**
      * Default implementation lists the subdirectory names and adds any existing child names
      */
-    public Collection listChildNames() {
-        HashSet childnames = new HashSet();
+    public Collection<String> listChildNames() {
+        HashSet<String> childnames = new HashSet<>();
         FilenameFilter filter = new FilenameFilter() {
             public boolean accept(File dir, String name) {
                 return name.matches(VALID_RESOURCE_NAME_REGEX);
@@ -150,10 +150,10 @@ public abstract class FrameworkResourceParent extends FrameworkResource implemen
         };
         final String[] list = getBaseDir().list(filter);
         if(null!=list){
-            for (int i = 0; i < list.length; i++) {
+            for (final String aList : list) {
                 //
                 // add new child
-                final File projectDir = new File(getBaseDir(), list[i]);
+                final File projectDir = new File(getBaseDir(), aList);
                 final String resName = projectDir.getName();
                 if (childCouldBeLoaded(resName)) {
                     childnames.add(resName);

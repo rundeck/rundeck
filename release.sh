@@ -89,10 +89,14 @@ generate_release_notes_documentation(){
     mv RELEASE.md.new RELEASE.md
     make -C docs notes
     git add RELEASE.md
+    git add CHANGELOG.md
     git add docs/en/history/version-${NEW_VERS}.md
     git add docs/en/history/toc.conf
+    git add docs/en/history/changelog.md
     local out=$( git status --porcelain | grep '^M  docs/en/history/toc.conf') || die "docs/en/history/toc.conf was not modified"
     out=$( git status --porcelain | grep "^A  docs/en/history/version-${NEW_VERS}.md") || die "docs/en/history/version-${NEW_VERS}.md was not added"
+    out=$( git status --porcelain | grep "^M  docs/en/history/changelog.md") || die "docs/en/history/changelog.md was not modified"
+    out=$( git status --porcelain | grep "^M  CHANGELOG.md") || die "CHANGELOG.md was not modified"
 }
 
 

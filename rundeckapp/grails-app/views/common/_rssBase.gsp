@@ -15,7 +15,7 @@
             <description>${enc(xml:item.description)}</description>
         </g:if>
         <g:elseif test="${item.templateName && item.model}">
-            <description>${enc(xml:render(template:item.templateName,model:item.model))}</description>
+            <description>${render(template:item.templateName,model:item.model,encodeAs:'html')}</description>
         </g:elseif>
         <g:else>
             <description></description>

@@ -87,6 +87,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
     }
 
     @Override
+    boolean isExecutionFileGenerated() {
+        return true
+    }
+
+    @Override
     ExecutionFile produceStorageFileForExecution(final Execution e) {
         File localfile = getExecutionXmlFileForExecution(e)
 
@@ -813,6 +818,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
                         [:],
                         authContext
                 )
+
+                scheduledExecutionService.issueJobChangeEvents(results.jobChangeEvents)
+
                 if (results.errjobs) {
                     log.error(
                             "Failed loading (${results.errjobs.size()}) jobs from XML at archive path: ${path}${name}"

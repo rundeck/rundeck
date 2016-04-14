@@ -208,8 +208,25 @@ var RemoteOptionControl = Class.create({
         this.setOptionValue(name,value);
         //trigger reload
         if(this.dependents[name] && !this.cyclic){
+            var formOpts;
             for(var i=0;i<this.dependents[name].length;i++){
-                this.loadRemoteOptionValues(this.dependents[name][i])
+                if(!formOpts) { formOpts = Form.serialize(this.formId,true); }
+                var dependentName = this.dependents[name][i];
+                var skip = false;
+                // if any of the dependencies does not have value, and is required, then skip.
+                for(var j=0;j<this.dependencies[dependentName].length;j++){
+                    var dependencyName = this.dependencies[dependentName][j];
+                    if(! formOpts['extra.option.'+dependencyName]) {
+                        var reqSigns = $$('#'+dependencyName+'_state .reqwarning');
+                        if (reqSigns.length > 0 && reqSigns[0].visible()) {
+                            skip = true;
+                            break;
+                        }
+                    }
+                }
+                if (!skip) {
+                    this.loadRemoteOptionValues(this.dependents[name][i])
+                }
             }
         }
     },
@@ -309,8 +326,8 @@ var RemoteOptionControl = Class.create({
         }
         var roc = this;
         //observe field value change and trigger reloads
-        this.observers[name] = new Form.Element.Observer(id, this.observeFreq, function (evt, value) {
-            roc.optionValueChanged(name, value);
+        this.observers[name] = Event.observe(id, 'change', function(evt) {
+            roc.optionValueChanged(name, this.value);
         });
     },
     onStartObserve:function(){
@@ -337,7 +354,8 @@ var RemoteOptionControl = Class.create({
     },
     stopObserving: function(name){
         if (this.observers[name]) {
-            this.observers[name].stop();
+            var id = this.ids[name];
+            Event.stopObserving(id,'change');
             this.observers[name]=null;
         }
     },

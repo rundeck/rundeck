@@ -54,6 +54,33 @@ View the [Index](#index) listing API paths.
 ## Changes
 
 Changes introduced by API Version number:
+
+**Version 17**:
+
+* New Endpoints.
+    - [`/api/17/scheduler/server/[UUID]/jobs`][/api/V/scheduler/server/[UUID]/jobs] - List scheduled jobs owned by the server with given UUID.
+    - [`/api/17/scheduler/jobs`][/api/V/scheduler/jobs] - List scheduled jobs owned by the target server.
+    - [`/api/17/system/logstorage`][/api/V/system/logstorage] - Get stats about the Log File storage system.
+    - [`/api/17/system/logstorage/incomplete`][/api/V/system/logstorage/incomplete] - List all executions with incomplete logstorage.
+    - [`/api/17/system/logstorage/incomplete/resume`][/api/V/system/logstorage/incomplete/resume] - Resume incomplete log storage processing.
+    
+* Updated Endpoints.
+    - [`/api/17/project/[PROJECT]/jobs`][/api/V/project/[PROJECT]/jobs] 
+        - Response now includes whether a job is enabled, scheduled, schedule is enabled, and in Cluster mode includes the cluster mode server UUID of the schedule owner, and whether that is the current server or not.
+        - add `?scheduledFilter=true/false` returns scheduled/unscheduled jobs only
+        - and `?serverNodeUUIDFilter=[uuid]` returns scheduled jobs owned by the given cluster member
+    - [`/api/17/scheduler/takeover`][/api/V/scheduler/takeover]
+        - Response now includes previous scheduler owner UUID for jobs.
+
+**Version 16**:
+
+* New Endpoints.
+    - [`/api/16/jobs/execution/enable`][/api/V/jobs/execution/enable] - Enable execution for multiple jobs
+    - [`/api/16/jobs/execution/disable`][/api/V/jobs/execution/disable] - Disable execution for multiple jobs
+    - [`/api/16/jobs/schedule/enable`][/api/V/jobs/schedule/enable] - Enable schedule for multiple jobs
+    - [`/api/16/jobs/schedule/disable`][/api/V/jobs/schedule/disable] - Disable schedule for multiple jobs
+
+
 **Version 15**:
 
 * New Endpoints.
@@ -844,6 +871,198 @@ The `memory` section describes memory usage in bytes:
 
 :   Number of active Threads in the JVM
 
+## Log Storage
+
+### Log Storage Info
+
+Get Log Storage information and stats.
+
+**Request:**
+
+    GET /api/17/system/logstorage
+
+**Response:**
+
+Success response, with log storage info and stats in this format:
+
+`Content-Type: application/xml`:
+
+~~~ {.xml}
+<logStorage enabled="true" pluginName="NAME">
+  <succeededCount>349</succeededCount>
+  <failedCount>0</failedCount>
+  <queuedCount>0</queuedCount>
+  <totalCount>349</totalCount>
+  <incompleteCount>0</incompleteCount>
+  <missingCount>0</missingCount>
+</logStorage>
+~~~
+
+`Content-Type: application/json`:
+
+~~~ {.json}
+{
+  "enabled": true,
+  "pluginName": "NAME",
+  "succeededCount": 369,
+  "failedCount": 0,
+  "queuedCount": 0,
+  "totalCount": 369,
+  "incompleteCount": 0,
+  "missingCount": 0
+}
+~~~
+
+`enabled`
+
+:   True if a plugin is configured
+
+`pluginName`
+
+:   Name of the configured plugin
+
+`succeededCount`
+
+:   Number of successful storage requests
+
+`failedCount`
+
+:   Number of failed storage requests
+
+`queuedCount`
+
+:   Number of queued storage requests
+
+`totalCount`
+
+:   Total number of storage requests (currently queued plus previously processed)
+
+`incompleteCount`
+
+:   Number of storage requests which have not completed successfully
+
+`missingCount`
+
+:   Number of executions for this cluster node which have no associated storage requests
+
+### List Executions with Incomplete Log Storage
+
+List all executions with incomplete log storage.
+
+**Request:**
+
+    GET /api/17/system/logstorage/incomplete
+
+**Response:**
+
+`Content-Type: application/xml`:
+
+```xml
+<logstorage>
+  <incompleteExecutions total="[#]" max="20" offset="0">
+    <execution id="[EXECID]" project="[PROJECT]" href="[API HREF]" permalink="[GUI HREF]">
+      <storage incompleteFiletypes="[TYPES]" queued="true/false" failed="true/false" date="[DATE]" localFilesPresent="true/false">
+        <errors>
+          <message>[error message]</message>
+          <message>[error message...]</message>
+        </errors>
+    </storage>
+    </execution>
+    ...
+</logstorage>
+```
+
+`Content-Type: application/json`:
+
+```json
+{
+  "total": #,
+  "max": 20,
+  "offset": 0,
+  "executions": [
+    {
+      "id": [EXECID],
+      "project": "[PROJECT]",
+      "href": "[API HREF]",
+      "permalink": "[GUI HREF]",
+      "storage": {
+        "localFilesPresent": true/false,
+        "incompleteFiletypes": "[TYPES]",
+        "queued": true/false,
+        "failed": true/false,
+        "date": "[DATE]"
+      },
+      "errors": ["message","message..."]
+    },
+    ...
+    ]
+}
+```
+
+`total`, `max`, `offset` (paging information)
+
+:   Total number of executions with incomplete log data storage, maximum returned in the response, offset of first result.
+
+`id`
+
+:   Execution ID
+
+`project`
+
+:   Project Name
+
+`href`
+
+:   API URL for Execution
+
+`permalink`
+
+:   GUI URL for Execution
+
+`incompleteFiletypes`
+
+:   Comma-separated list of filetypes which have not be uploaded, e.g. `rdlog,state.json`. Types are `rdlog` (log output), `state.json` (workflow state data), `execution.xml` (execution definition)
+
+`queued`
+
+:   True if the log data storage is queued to be processed.
+
+`failed`
+
+:   True if the log data storage was processed but failed without completion.
+
+`date`
+
+:   Date when log data storage was first processed. (W3C date format.)
+
+`localFilesPresent`
+
+:   True if all local files (`rdlog` and `state.json`) are available for upload.  False if one of them is not proesent on disk.
+
+### Resume Incomplete Log Storage
+
+Resume processing incomplete Log Storage uploads.
+
+**Request:**
+
+    POST /api/17/system/logstorage/incomplete/resume
+
+**Response:**
+
+`Content-Type: application/xml`:
+
+```xml
+<logStorage resumed='true' />
+```
+
+`Content-Type: application/json`:
+
+~~~ {.json}
+{
+  "resumed": true
+}
+~~~
+
 ## Execution Mode ##
 
 Change the server execution mode to ACTIVE or PASSIVE.  The state of the current
@@ -980,12 +1199,12 @@ A JSON object.
 
 If request was XML, then Standard API response containing the following additional elements:
 
-* `self`
-    * `server`
-        *  `@uuid` - this cluster server's uuid
 *  `takeoverSchedule`
+    * `self`
+        * `server`
+            *  `@uuid` - this cluster server's UUID
     *  `server`
-        *  `@uuid` - requested server uuid to take over, if specifed in the request
+        *  `@uuid` - requested server UUID to take over, if specifed in the request
         *  `@all` - `true` if requested
     *  `project` - name of project, if specified in request
     *  `jobs` - set of successful and failed jobs taken over
@@ -995,6 +1214,7 @@ If request was XML, then Standard API response containing the following addition
                 *  `@id` Job ID
                 *  `@href` Job API HREF
                 *  `@permalink` Job GUI HREF
+                *  `@previous-owner` UUID of the cluster server that was the previous schedule owner
 
 Example XML Response, when `uuid` was specified:
 
@@ -1008,10 +1228,12 @@ Example XML Response, when `uuid` was specified:
       <successful count='2'>
         <job id='a1aa53ac-73a6-4ead-bbe4-34afbff8e057'
         href='http://localhost:9090/api/14/job/a1aa53ac-73a6-4ead-bbe4-34afbff8e057'
-        permalink='http://localhost:9090/rundeck/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057' />
+        permalink='http://localhost:9090/rundeck/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057'
+        previous-owner="8F3D5976-2232-4529-847B-8E45764608E3" />
         <job id='116e2025-7895-444a-88f7-d96b4f19fdb3'
         href='http://localhost:9090/api/14/job/116e2025-7895-444a-88f7-d96b4f19fdb3'
-        permalink='http://localhost:9090/rundeck/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3' />
+        permalink='http://localhost:9090/rundeck/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3'
+        previous-owner="8F3D5976-2232-4529-847B-8E45764608E3" />
       </successful>
       <failed count='0'></failed>
     </jobs>
@@ -1057,12 +1279,14 @@ JSON response for `uuid` specified:
         {
           "href": "http://dignan:4440/api/14/job/a1aa53ac-73a6-4ead-bbe4-34afbff8e057",
           "permalink": "http://dignan:4440/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057",
-          "id": "a1aa53ac-73a6-4ead-bbe4-34afbff8e057"
+          "id": "a1aa53ac-73a6-4ead-bbe4-34afbff8e057",
+          "previous-owner": "8F3D5976-2232-4529-847B-8E45764608E3"
         },
         {
           "href": "http://dignan:4440/api/14/job/116e2025-7895-444a-88f7-d96b4f19fdb3",
           "permalink": "http://dignan:4440/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3",
-          "id": "116e2025-7895-444a-88f7-d96b4f19fdb3"
+          "id": "116e2025-7895-444a-88f7-d96b4f19fdb3",
+          "previous-owner": "8F3D5976-2232-4529-847B-8E45764608E3"
         }
       ],
       "total": 2
@@ -1127,6 +1351,32 @@ JSON response for `project` specified:
   "success": true
 }
 ~~~~~~~~~~
+
+### List Scheduled Jobs For a Cluster Server
+
+List the scheduled Jobs with their schedule owned by the cluster server with the specified UUID.
+
+**Request**
+
+    GET /api/17/scheduler/server/[UUID]/jobs
+
+**Response**
+
+The same format as [Listing Jobs](#listing-jobs).
+
+
+### List Scheduled Jobs For this Cluster Server
+
+List the scheduled Jobs with their schedule owned by the target cluster server.
+
+**Request**
+
+    GET /api/17/scheduler/jobs
+
+**Response**
+
+The same format as [Listing Jobs](#listing-jobs).
+
 
 ## ACLs
 
@@ -1382,6 +1632,8 @@ The following parameters can also be used to narrow down the result set.
 * `jobFilter`: specify a filter for the job Name. Matches any job name that contains this value.
 * `jobExactFilter`: specify an exact job name to match.
 * `groupPathExact`: specify an exact group path to match.  Set to the special value "-" to match the top level jobs only
+* `scheduledFilter`: `true/false` specify whether to return only scheduled or only not scheduled jobs.
+* `serverNodeUUIDFilter`: Value: a UUID. In cluster mode, use to select scheduled jobs assigned to the server with given UUID.
 
 Note: If neither `groupPath` nor `groupPathExact` are specified, then the default `groupPath` value of "*" will be used (matching jobs in all groups).  `groupPathExact` cannot be combined with `groupPath`.  You can set either one to "-" to match only the top-level jobs which are not within a group.
 
@@ -1390,7 +1642,9 @@ Note: If neither `groupPath` nor `groupPathExact` are specified, then the defaul
 `Content-Type: application/xml`:  An Item List of `jobs`. Each `job` is of the form:
 
 ~~~~~~~~~~ {.xml}
-<job id="ID" href="[API url]" permalink="[GUI URL]">
+<job id="ID" href="[API url]" permalink="[GUI URL]" scheduled="true/false" scheduleEnabled="true/false"
+   enabled="true/false"
+   >
     <name>Job Name</name>
     <group>Job Name</group>
     <project>Project Name</project>
@@ -1409,10 +1663,61 @@ Note: If neither `groupPath` nor `groupPathExact` are specified, then the defaul
     "project": "[project]",
     "description": "...",
     "href": "[API url]",
-    "permalink": "[GUI url]"
+    "permalink": "[GUI url]",
+    "scheduled": true/false,
+    "scheduleEnabled": true/false,
+    "enabled": true/false
   }
 ]
 ~~~~~~~~~~~~
+
+**Since v17**:
+
+* `scheduled` indicates whether the job has a schedule
+* `scheduleEnabled` indicates whether the job's schedule is enabled or not
+* `enabled` indicates whether executions are enabled or not
+
+In Cluster mode, additional information about what server UUID is the schedule owner will be included:
+
+* `serverNodeUUID` UUID of the schedule owner server for this job
+* `serverOwner` boolean value whether the target server is the owner, `true/false`.
+
+`Content-Type: application/xml`: 
+
+~~~~~~~~~~ {.xml}
+<job id="ID" href="[API url]" permalink="[GUI URL]" scheduled="true/false" scheduleEnabled="true/false" 
+  enabled="true/false"
+  serverNodeUUID="[UUID]" 
+  serverOwner="true/false"
+  >
+    <name>Job Name</name>
+    <group>Job Name</group>
+    <project>Project Name</project>
+    <description>...</description>
+</job>
+~~~~~~~~~~~~
+
+`Content-Type: application/json`
+
+~~~~~~~~~~ {.json}
+[
+  {
+    "id": "[UUID]",
+    "name": "[name]",
+    "group": "[group]",
+    "project": "[project]",
+    "description": "...",
+    "href": "[API url]",
+    "permalink": "[GUI url]",
+    "scheduled": true/false,
+    "scheduleEnabled": true/false,
+    "enabled": true/false,
+    "serverNodeUUID": "[UUID]",
+    "serverOwner": true/false
+  }
+]
+~~~~~~~~~~~~
+
 
 ### Running a Job
 
@@ -1750,6 +2055,200 @@ Disable the schedule for a job. (ACL requires `toggle_schedule` action for a job
 **Response:**
 
 (See [Enable Executions for a Job](#enable-executions-for-a-job).)
+
+### Bulk Toggle Job Execution
+
+Toggle whether executions are enabled for a set of jobs. (ACL requires `toggle_execution` action for each job.)
+
+Executions will be enabled or disabled, depending on the URL used:
+
+**Request:**
+
+    POST /api/14/jobs/execution/enable
+    POST /api/14/jobs/execution/disable
+
+Query parameters:
+
+* `ids`: The Job IDs to delete, can be specified multiple times
+* `idlist`: The Job IDs to delete as a single comma-separated string.
+
+Or JSON/XML content:
+
+`Content-Type: application/json`
+
+~~~~~ {.json}
+{
+  "ids": [
+    "fefa50e1-2265-47af-b101-d4bbaa3ba21c",
+    "f07e2311-4dae-40ca-bdfa-412bd223f863"
+  ],
+  "idlist":"49336998-21a3-42c7-8da3-a855587982e0,a387f77f-a623-45dc-967f-746a2e3f6686"
+}
+~~~~~
+
+Note: you can combine `ids` with `idlist`.
+
+**Response:**
+
+If successful, then the `result` will contain a `toggleExecution` element with two sections of results, `succeeded` and `failed`:
+
+~~~~~~~~~~ {.xml}
+<toggleExecution enabled="true" requestCount="#" allsuccessful="true/false">
+    <succeeded count="1">
+        <toggleExecutionResult id="[job ID]">
+            <message>[message]</message>
+        </toggleExecutionResult>
+    </succeeded>
+    <failed count="1">
+        <toggleExecutionResult id="[job ID]" errorCode="[code]">
+            <error>[message]</error>
+        </toggleExecutionResult>
+    </failed>
+</toggleExecution>
+~~~~~~~~~~
+
+
+`toggleExecution` has these attributes:
+
+* `enabled`: `true` or `false`, depending on whether `enable` or `disable` was requested.
+* `requestCount`: the number of job IDs that were in the request
+* `allsuccessful`: true/false: true if all modifications were successful, false otherwise.
+
+The response may contain only one of `succeeded` or `failed`, depending on the result.
+
+The `succeeded` and `failed` sections contain multiple `toggleExecutionResult` elements.  
+
+Each `toggleExecutionResult` under the `succeeded` section will contain:
+
+* `id` attribute - the Job ID
+* `message` sub-element - result message for the request
+
+
+Each `toggleExecutionResult` under the `failed` section will contain:
+
+* `id` attribute - the Job ID
+* `error` sub-element - result error message for the request
+* `errorCode` attribute - a code indicating the type of failure, currently one of `failed`, `unauthorized` or `notfound`.
+
+`application/json` response:
+
+
+~~~~~~ {.json}
+{
+  "requestCount": #integer#,
+  "enabled": true/false,
+  "allsuccessful": true/false,
+  "succeeded": [...],
+  "failed":[...]
+}
+~~~~~~
+
+The list of succeeded/failed will contain objects of this form:
+
+~~~~~~ {.json}
+{
+  "id": "[UUID]",
+  "errorCode": "(error code, see above)",
+  "message": "(success or failure message)"
+}
+~~~~~~
+
+### Bulk Toggle Job Schedules
+
+Toggle whether schedules are enabled for a set of jobs. (ACL requires `toggle_schedule` action for each job.)
+
+Schedules will be enabled or disabled, depending on the URL used:
+
+**Request:**
+
+    POST /api/14/jobs/schedule/enable
+    POST /api/14/jobs/schedule/disable
+
+Query parameters:
+
+* `ids`: The Job IDs to delete, can be specified multiple times
+* `idlist`: The Job IDs to delete as a single comma-separated string.
+
+Or JSON/XML content:
+
+`Content-Type: application/json`
+
+~~~~~ {.json}
+{
+  "ids": [
+    "fefa50e1-2265-47af-b101-d4bbaa3ba21c",
+    "f07e2311-4dae-40ca-bdfa-412bd223f863"
+  ],
+  "idlist":"49336998-21a3-42c7-8da3-a855587982e0,a387f77f-a623-45dc-967f-746a2e3f6686"
+}
+~~~~~
+
+Note: you can combine `ids` with `idlist`.
+
+**Response:**
+
+If successful, then the `result` will contain a `toggleSchedule` element with two sections of results, `succeeded` and `failed`:
+
+~~~~~~~~~~ {.xml}
+<toggleSchedule enabled="true" requestCount="#" allsuccessful="true/false">
+    <succeeded count="1">
+        <toggleScheduleResult id="[job ID]">
+            <message>[message]</message>
+        </toggleScheduleResult>
+    </succeeded>
+    <failed count="1">
+        <toggleScheduleResult id="[job ID]" errorCode="[code]">
+            <error>[message]</error>
+        </toggleScheduleResult>
+    </failed>
+</toggleSchedule>
+~~~~~~~~~~
+
+
+`toggleSchedule` has these attributes:
+
+* `enabled`: `true` or `false`, depending on whether `enable` or `disable` was requested.
+* `requestCount`: the number of job IDs that were in the request
+* `allsuccessful`: true/false: true if all modifications were successful, false otherwise.
+
+The response may contain only one of `succeeded` or `failed`, depending on the result.
+
+The `succeeded` and `failed` sections contain multiple `toggleScheduleResult` elements.  
+
+Each `toggleScheduleResult` under the `succeeded` section will contain:
+
+* `id` attribute - the Job ID
+* `message` sub-element - result message for the request
+
+
+Each `toggleScheduleResult` under the `failed` section will contain:
+
+* `id` attribute - the Job ID
+* `error` sub-element - result error message for the request
+* `errorCode` attribute - a code indicating the type of failure, currently one of `failed`, `unauthorized` or `notfound`.
+
+`application/json` response:
+
+
+~~~~~~ {.json}
+{
+  "requestCount": #integer#,
+  "enabled": true/false,
+  "allsuccessful": true/false,
+  "succeeded": [...],
+  "failed":[...]
+}
+~~~~~~
+
+The list of succeeded/failed will contain objects of this form:
+
+~~~~~~ {.json}
+{
+  "id": "[UUID]",
+  "errorCode": "(error code, see above)",
+  "message": "(success or failure message)"
+}
+~~~~~~
 
 ## Executions
 
@@ -3972,107 +4471,7 @@ Using set logic, if "A" is the set of all resources, "X" is the set of all resou
 * when `exclude-precedence=false` then the result is:
     * $( A - X ) \cup I$
 
-## Takeover Schedule in Cluster Mode
 
-**INCUBATOR**: this endpoint is available under the `/incubator` top-level path to indicate it is under development, and the specific behavior may change before it is finalized, or even completely removed.
-
-Tell a Rundeck server in cluster mode to claim all scheduled jobs from another cluster server.
-
-**Request**
-
-    PUT /api/7/incubator/jobs/takeoverSchedule
-
-Required Content:
-
-One of the following:
-
-* `Content-Type: application/xml`:
-
-~~~ {.xml}
-<server uuid="[UUID]"/>
-~~~
-
-* `Content-Type: application/json`:
-
-~~~ {.json}
-{ server: { uuid: "[UUID]" } }
-~~~
-
-**Response:**
-
-If request was XML, then Standard API response containing the following additional elements:
-
-* `self`
-    * `server`
-        *  `@uuid` - this cluster server's uuid
-*  `takeoverSchedule`
-    *  `server`
-        *  `@uuid` - requested server uuid to take over
-    *  `jobs` - set of successful and failed jobs taken over
-        *  `successful`/`failed` - job set
-            *  `@count` number of jobs in the set
-            *  `job` - one element for each job
-                *  `@id` Job ID
-                *  `@href` Job API HREF
-                *  `@permalink` Job GUI HREF
-
-Example XML Response:
-
-~~~~~~~~~~ {.xml}
-<takeoverSchedule>
-    <self>
-      <server uuid='C677C663-F902-4B97-B8AC-4AA57B58DDD6' />
-    </self>
-    <server uuid='8F3D5976-2232-4529-847B-8E45764608E3' />
-    <jobs total='2'>
-      <successful count='2'>
-        <job id='a1aa53ac-73a6-4ead-bbe4-34afbff8e057'
-        href='http://localhost:9090/api/14/job/a1aa53ac-73a6-4ead-bbe4-34afbff8e057'
-        permalink='http://localhost:9090/rundeck/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057' />
-        <job id='116e2025-7895-444a-88f7-d96b4f19fdb3'
-        href='http://localhost:9090/api/14/job/116e2025-7895-444a-88f7-d96b4f19fdb3'
-        permalink='http://localhost:9090/rundeck/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3' />
-      </successful>
-      <failed count='0'></failed>
-    </jobs>
-</takeoverSchedule>
-~~~~~~~~~~
-
-If request was JSON, then the following JSON:
-
-~~~~~~~~~~ {.json}
-    {
-      "takeoverSchedule": {
-        "jobs": {
-          "failed": [],
-          "successful": [
-            {
-              "href": "http://dignan:4440/api/14/job/a1aa53ac-73a6-4ead-bbe4-34afbff8e057",
-              "permalink": "http://dignan:4440/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057",
-              "id": "a1aa53ac-73a6-4ead-bbe4-34afbff8e057"
-            },
-            {
-              "href": "http://dignan:4440/api/14/job/116e2025-7895-444a-88f7-d96b4f19fdb3",
-              "permalink": "http://dignan:4440/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3",
-              "id": "116e2025-7895-444a-88f7-d96b4f19fdb3"
-            }
-          ],
-          "total": 2
-        },
-        "server": {
-          "uuid": "8F3D5976-2232-4529-847B-8E45764608E3"
-        }
-      },
-      "self": {
-        "server": {
-          "uuid": "C677C663-F902-4B97-B8AC-4AA57B58DDD6"
-        }
-      },
-      "message": "Schedule Takeover successful for 2/2 Jobs.",
-      "apiversion": 14,
-      "success": true
-    }
-~~~~~~~~~~
 
 ## SCM
 
@@ -4939,6 +5338,22 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 * `DELETE` [Bulk Job Delete](#bulk-job-delete)
 
+[/api/V/jobs/execution/enable][]
+
+* `POST` [Bulk Toggle Job Execution](#bulk-toggle-job-execution)
+
+[/api/V/jobs/execution/disable][]
+
+* `POST` [Bulk Toggle Job Execution](#bulk-toggle-job-execution)
+
+[/api/V/jobs/schedule/enable][]
+
+* `POST` [Bulk Toggle Job Schedules](#bulk-toggle-job-schedules)
+
+[/api/V/jobs/schedule/disable][]
+
+* `POST` [Bulk Toggle Job Schedules](#bulk-toggle-job-schedules)
+
 [/api/V/project/[PROJECT]][]
 
 * `GET` [Getting Project Info](#getting-project-info)
@@ -5071,6 +5486,14 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 * `PUT` [Takeover Schedule in Cluster Mode](#takeover-schedule-in-cluster-mode)
 
+[/api/V/scheduler/jobs][]
+
+* `GET` [List Scheduled Jobs For this Cluster Server][/api/V/scheduler/jobs]
+
+[/api/V/scheduler/server/[UUID]/jobs][]
+
+* `GET` [List Scheduled Jobs For a Cluster Server][/api/V/scheduler/server/[UUID]/jobs]
+
 [/api/V/storage/keys/[PATH]/[FILE]][]
 
 * `PUT` [Upload Keys](#upload-keys)
@@ -5087,10 +5510,6 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 * `PUT` [Update an ACL Policy](#update-an-acl-policy)
 * `DELETE` [Delete an ACL Policy](#delete-an-acl-policy)
 
-[/api/V/system/info][]
-
-* `GET` [System Info](#system-info)
-
 [/api/V/system/executions/enable][]
 
 * `POST` [Set Active Mode](#set-active-mode)
@@ -5098,6 +5517,22 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 [/api/V/system/executions/disable][]
 
 * `POST` [Set Passive Mode](#set-passive-mode)
+
+[/api/V/system/info][]
+
+* `GET` [System Info](#system-info)
+
+[/api/V/system/logstorage][]
+
+* `GET` [Log Storage Info][/api/V/system/logstorage]
+
+[/api/V/system/logstorage/incomplete][]
+
+* `GET` [List Executions with Incomplete Log Storage][/api/V/system/logstorage/incomplete]
+
+[/api/V/system/logstorage/incomplete/resume][]
+
+* `POST` [Resume Incomplete Log Storage][/api/V/system/logstorage/incomplete/resume]
 
 [/api/V/tokens][]
 
@@ -5168,6 +5603,10 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 [/api/V/job/[ID]/run]:#running-a-job
 
 [/api/V/jobs/delete]:#bulk-job-delete
+[/api/V/jobs/execution/enable]:#bulk-toggle-job-execution
+[/api/V/jobs/execution/disable]:#bulk-toggle-job-execution
+[/api/V/jobs/schedule/enable]:#bulk-toggle-job-schedules
+[/api/V/jobs/schedule/disable]:#bulk-toggle-job-schedules
 
 [/api/V/project/[PROJECT]]:#getting-project-info
 [DELETE /api/V/project/[PROJECT]]:#project-deletion
@@ -5214,6 +5653,7 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 [/api/V/project/[PROJECT]/resources/refresh]:#refreshing-resources-for-a-project
 
 [/api/V/projects]:#listing-projects
+
 [POST /api/V/projects]:#project-creation
 
 [/api/V/project/[PROJECT]/run/command]:#running-adhoc-commands
@@ -5223,6 +5663,11 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 [/api/V/project/[PROJECT]/run/url]:#running-adhoc-script-urls
 
 [/api/V/scheduler/takeover]:#takeover-schedule-in-cluster-mode
+
+[/api/V/scheduler/jobs]:#list-scheduled-jobs-for-this-cluster-server
+
+[/api/V/scheduler/server/[UUID]/jobs]:#list-scheduled-jobs-for-a-cluster-server
+
 [/api/V/storage/keys/[PATH]/[FILE]]:#list-keys
 [PUT /api/V/storage/keys/[PATH]/[FILE]]:#upload-keys
 [DELETE /api/V/storage/keys/[PATH]/[FILE]]:#delete-keys
@@ -5232,6 +5677,11 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 [/api/V/system/info]:#system-info
 [/api/V/system/executions/enable]:#set-active-mode
 [/api/V/system/executions/disable]:#set-passive-mode
+
+[/api/V/system/logstorage]:#log-storage-info
+[/api/V/system/logstorage/incomplete]:#list-executions-with-incomplete-log-storage
+[/api/V/system/logstorage/incomplete/resume]:#resume-incomplete-log-storage
+[POST /api/V/system/logstorage/incomplete/resume]:#resume-incomplete-log-storage
 
 [/api/V/tokens]:#list-tokens
 [/api/V/tokens/[USER]]:#list-tokens

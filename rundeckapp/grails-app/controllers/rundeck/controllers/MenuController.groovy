@@ -1,6 +1,7 @@
 package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.app.support.BaseQuery
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
@@ -24,6 +25,7 @@ import groovy.xml.MarkupBuilder
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
+import rundeck.LogFileStorageRequest
 import rundeck.ScheduledExecution
 import rundeck.ScheduledExecutionFilter
 import rundeck.User
@@ -66,6 +68,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     static allowedMethods = [
             deleteJobfilter:'POST',
             storeJobfilter:'POST',
+            apiResumeIncompleteLogstorage:'POST',
+            cleanupIncompleteLogStorageAjax:'POST',
+            resumeIncompleteLogStorageAjax: 'POST',
+            resumeIncompleteLogStorage: 'POST',
+            cleanupIncompleteLogStorage: 'POST',
     ]
     def list = {
         def results = index(params)
@@ -127,6 +134,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
     
     def nowrunningFragment = {QueueQuery query->
+        if('true'!=request.getHeader('x-rundeck-ajax')) {
+            return redirect(action: 'index',controller: 'reports',params: params)
+        }
         def results = nowrunning(query)
         return results
     }
@@ -202,6 +212,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return redirect(controller:'framework',action:'nodes', params: [project: params.project])
     }
     
+    def clearJobsFilter = { ScheduledExecutionQuery query ->
+        return redirect(action: 'jobs', params: [project: params.project])
+    }
     def jobs = {ScheduledExecutionQuery query ->
         
         def User u = userService.findOrCreateUser(session.user)
@@ -267,6 +280,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         if(query && !query.projFilter && params.project) {
             query.projFilter = params.project
+        }
+        if(query && query.projFilter){
             authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
         } else {
             authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -322,6 +337,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             results.paginateParams['filterName']=usedFilter
         }
         results.params=params
+
+        def remoteClusterNodeUUID=null
+        if (frameworkService.isClusterModeEnabled()) {
+            results.serverClusterNodeUUID = frameworkService.getServerUUID()
+        }
         log.debug("jobsFragment(tot): "+(System.currentTimeMillis()-start));
         return results
     }
@@ -356,7 +376,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
     private def listWorkflows(ScheduledExecutionQuery query,AuthContext authContext,String user) {
         long start=System.currentTimeMillis()
-        def projects = frameworkService.projects(authContext)
         if(null!=query){
             query.configureFilter()
         }
@@ -373,15 +392,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def nextExecutions=scheduledExecutionService.nextExecutionTimes(allScheduled)
         def clusterMap=scheduledExecutionService.clusterScheduledJobs(allScheduled)
         log.debug("listWorkflows(nextSched): "+(System.currentTimeMillis()-rest));
-        long running=System.currentTimeMillis()
-        
-        //find currently running executions
-        def runlist = Execution.findAllByDateCompletedIsNullAndScheduledExecutionIsNotNull()
-        def nowrunning=[:]
-        runlist.each{
-            nowrunning[it.scheduledExecution.id.toString()]=it.id.toString()
-        }
-        log.debug("listWorkflows(running): "+(System.currentTimeMillis()-running));
         long preeval=System.currentTimeMillis()
 
         //collect all jobs and authorize the user for the set of available Job actions
@@ -468,13 +478,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         log.debug("listWorkflows(total): "+(System.currentTimeMillis()-start));
 
         return [
-        projects:projects,
         nextScheduled:schedlist,
         nextExecutions: nextExecutions,
                 clusterMap: clusterMap,
         jobauthorizations:jobauthorizations,
         authMap:authorizemap,
-        nowrunning: nowrunning,
         jobgroups:jobgroups,
         paginateParams:finishq.paginateParams,
         displayParams:finishq.displayParams,
@@ -603,6 +611,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             def project= params.project
             def fproject = frameworkService.getFrameworkProject(project)
             def configs = fproject.projectNodes.listResourceModelConfigurations()
+            def nodeErrorsMap = fproject.projectNodes.getResourceModelSourceExceptionsMap()
 
             final service = framework.getResourceModelSourceService()
             final descriptions = service.listDescriptions()
@@ -641,6 +650,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         Map<String,Map> extraConfig=[:]
         projectConfigurableBeans.each { k, v ->
+            if(k.endsWith('Profiled')){
+                //skip profiled versions of beans
+                return
+            }
             //construct existing values from project properties
             def values=Validator.demapProperties(fproject.getProjectProperties(),v.getPropertiesMapping(), true)
             extraConfig[k]=[
@@ -650,6 +663,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             ]
         }
             return [configs:configs,
+                    nodeErrorsMap:nodeErrorsMap,
                 resourceModelConfigDescriptions:descriptions,
                 nodeexecconfig:nodeexec,
                 fcopyconfig:fcopy,
@@ -661,6 +675,294 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 hasmotd:fproject.existsFileResource("motd.md"),
                     extraConfig:extraConfig
             ]
+    }
+
+    public def resumeIncompleteLogStorage(Long id){
+        withForm{
+
+            AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+            if (unauthorizedResponse(
+                    frameworkService.authorizeApplicationResourceAny(
+                            authContext,
+                            AuthConstants.RESOURCE_TYPE_SYSTEM,
+                            [ AuthConstants.ACTION_ADMIN]
+                    ),
+                    AuthConstants.ACTION_ADMIN, 'for', 'Rundeck')) {
+                return
+            }
+            logFileStorageService.resumeIncompleteLogStorageAsync(frameworkService.serverUUID,id)
+//            logFileStorageService.resumeCancelledLogStorageAsync(frameworkService.serverUUID)
+            flash.message="Resumed log storage requests"
+            return redirect(action: 'logStorage', params: [project: params.project])
+
+        }.invalidToken{
+
+            request.error=g.message(code:'request.error.invalidtoken.message')
+            renderErrorView([:])
+        }
+    }
+    public def resumeIncompleteLogStorageAjax(Long id){
+        withForm{
+
+            g.refreshFormTokensHeader()
+
+            AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+            if (!apiService.requireAuthorized(
+                    frameworkService.authorizeApplicationResourceAny(
+                            authContext,
+                            AuthConstants.RESOURCE_TYPE_SYSTEM,
+                            [ AuthConstants.ACTION_ADMIN]
+                    ),
+                    response,
+                    [AuthConstants.ACTION_ADMIN, 'for', 'Rundeck'].toArray())) {
+                return
+            }
+            logFileStorageService.resumeIncompleteLogStorageAsync(frameworkService.serverUUID,id)
+//            logFileStorageService.resumeCancelledLogStorageAsync(frameworkService.serverUUID)
+            def message="Resumed log storage requests"
+            LogFileStorageRequest req=null
+            if(id){
+                req=LogFileStorageRequest.get(id)
+            }
+            withFormat{
+                ajax{
+                    render(contentType: 'application/json'){
+                        status='ok'
+                        delegate.message=message
+                        if(req){
+                            contents = exportRequestMap(req, true, false, null)
+                        }
+                    }
+                }
+            }
+
+        }.invalidToken{
+
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'request.error.invalidtoken.message',
+            ])
+        }
+    }
+    def logStorage() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
+                                                              AuthConstants.ACTION_READ
+                ),
+                AuthConstants.ACTION_READ, 'System configuration'
+        )) {
+            return
+        }
+    }
+    /**
+     * Remove outstanding queued requests
+     * @return
+     */
+    def haltIncompleteLogStorage(){
+        withForm{
+            AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+            if (unauthorizedResponse(
+                    frameworkService.authorizeApplicationResourceAny(
+                            authContext,
+                            AuthConstants.RESOURCE_TYPE_SYSTEM,
+                            [ AuthConstants.ACTION_ADMIN]
+                    ),
+                    AuthConstants.ACTION_ADMIN, 'for', 'Rundeck')) {
+                return
+            }
+            logFileStorageService.haltIncompleteLogStorage(frameworkService.serverUUID)
+            flash.message="Unqueued incomplete log storage requests"
+            return redirect(action: 'logStorage', params: [project: params.project])
+        }.invalidToken{
+
+            request.error=g.message(code:'request.error.invalidtoken.message')
+            renderErrorView([:])
+
+        }
+    }
+    def cleanupIncompleteLogStorage(Long id){
+        withForm{
+            AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+            if (unauthorizedResponse(
+                    frameworkService.authorizeApplicationResourceAny(
+                            authContext,
+                            AuthConstants.RESOURCE_TYPE_SYSTEM,
+                            [ AuthConstants.ACTION_ADMIN]
+                    ),
+                    AuthConstants.ACTION_ADMIN, 'for', 'Rundeck')) {
+                return
+            }
+            def count=logFileStorageService.cleanupIncompleteLogStorage(frameworkService.serverUUID,id)
+            flash.message="Removed $count log storage requests"
+            return redirect(action: 'logStorage', params: [project: params.project])
+        }.invalidToken{
+
+            request.error=g.message(code:'request.error.invalidtoken.message')
+            renderErrorView([:])
+
+        }
+    }
+    public def cleanupIncompleteLogStorageAjax(Long id){
+        withForm{
+
+            g.refreshFormTokensHeader()
+
+            AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+            if (!apiService.requireAuthorized(
+                    frameworkService.authorizeApplicationResourceAny(
+                            authContext,
+                            AuthConstants.RESOURCE_TYPE_SYSTEM,
+                            [ AuthConstants.ACTION_ADMIN]
+                    ),
+                    response,
+                    [AuthConstants.ACTION_ADMIN, 'for', 'Rundeck'].toArray())) {
+                return
+            }
+            def count=logFileStorageService.cleanupIncompleteLogStorage(frameworkService.serverUUID,id)
+            def message="Removed $count log storage requests"
+            withFormat{
+                ajax{
+                    render(contentType: 'application/json'){
+                        status='ok'
+                        delegate.message=message
+                    }
+                }
+            }
+
+        }.invalidToken{
+
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: 'request.error.invalidtoken.message',
+            ])
+        }
+    }
+    def logStorageIncompleteAjax(BaseQuery query){
+        if('true'!=request.getHeader('x-rundeck-ajax')) {
+            return redirect(action: 'logStorage',controller: 'menu',params: params)
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
+                                                              AuthConstants.ACTION_READ
+                ),
+                AuthConstants.ACTION_READ, 'System configuration'
+        )) {
+            return
+        }
+        def total=logFileStorageService.countIncompleteLogStorageRequests()
+        def list = logFileStorageService.listIncompleteRequests(
+                frameworkService.serverUUID,
+                [max: query.max, offset: query.offset]
+        )
+        def queuedIds=logFileStorageService.getQueuedIncompleteRequestIds()
+        def failedIds=logFileStorageService.getFailedRequestIds()
+        withFormat{
+            json{
+                render(contentType: "application/json") {
+                    incompleteRequests {
+                        delegate.'total' = total
+                        max = params.max ?: 20
+                        offset = params.offset ?: 0
+                        contents = list.collect { LogFileStorageRequest req ->
+                            exportRequestMap(
+                                    req,
+                                    queuedIds.contains(req.id),
+                                    failedIds.contains(req.id),
+                                    failedIds.contains(req.id) ? logFileStorageService.getFailures(req.id) : null
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private LinkedHashMap<String, Object> exportRequestMap(LogFileStorageRequest req, isQueued, isFailed, messages) {
+        [
+                id               : req.id,
+                executionId      : req.execution.id,
+                project          : req.execution.project,
+                href             : apiService.apiHrefForExecution(req.execution),
+                permalink        : apiService.guiHrefForExecution(req.execution),
+                dateCreated      : req.dateCreated,
+                completed        : req.completed,
+                filetype         : req.filetype,
+                localFilesPresent: logFileStorageService.areAllExecutionFilesPresent(req.execution),
+                queued           : isQueued,
+                failed           : isFailed,
+                messages         : messages
+        ]
+    }
+
+    def logStorageMissingAjax(BaseQuery query){
+        if('true'!=request.getHeader('x-rundeck-ajax')) {
+            return redirect(action: 'logStorage',controller: 'menu',params: params)
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
+                                                              AuthConstants.ACTION_READ
+                ),
+                AuthConstants.ACTION_READ, 'System configuration'
+        )) {
+            return
+        }
+        def totalc=logFileStorageService.countExecutionsWithoutStorageRequests(frameworkService.serverUUID)
+        def list = logFileStorageService.listExecutionsWithoutStorageRequests(
+                frameworkService.serverUUID,
+                [max: query.max, offset: query.offset]
+        )
+        withFormat{
+            json{
+                render(contentType: "application/json") {
+                    missingRequests {
+                        total = totalc
+                        max = params.max ?: 20
+                        offset = params.offset ?: 0
+                        contents = list.collect { Execution req ->
+                            [
+                                    id     : req.id,
+                                    project: req.project,
+                                    href   : createLink(
+                                            action: 'show',
+                                            controller: 'execution',
+                                            params: [project: req.project, id: req.id]
+                                    ),
+//                                    summary: executionService.summarizeJob(req.scheduledExecution, req)
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+    def logStorageAjax(){
+        if('true'!=request.getHeader('x-rundeck-ajax')) {
+            return redirect(action: 'logStorage',controller: 'menu',params: params)
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
+                                                              AuthConstants.ACTION_READ
+                ),
+                AuthConstants.ACTION_READ, 'System configuration'
+        )) {
+            return
+        }
+        def data = logFileStorageService.getStorageStats()
+        data.retryDelay=logFileStorageService.getConfiguredStorageRetryDelay()
+        return render(contentType: 'application/json', text: data + [enabled: data.pluginName ? true : false] as JSON)
     }
     def systemConfig(){
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -942,67 +1244,391 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         ]
     }
 
-    def home(){
+    def home() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        Framework framework = frameworkService.rundeckFramework
-        def fprojects = frameworkService.projects(authContext)
-        session.frameworkProjects = fprojects*.name
+        long start = System.currentTimeMillis()
+        def fprojects = frameworkService.projectNames(authContext)
+        session.frameworkProjects = fprojects
+        log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
+        def stats=cachedSummaryProjectStats(fprojects)
+        render(view: 'home2', model: [projectNames: fprojects,execCount:stats.execCount,recentUsers:stats.recentUsers,recentProjects:stats.recentProjects])
+    }
 
+    private def cachedSummaryProjectStats(final List projectNames) {
+        long now = System.currentTimeMillis()
+        if(null==session.summaryProjectStats || session.summaryProjectStats_expire<now){
+            session.summaryProjectStats=loadSummaryProjectStats(projectNames)
+            session.summaryProjectStats_expire=now+ (60 * 1000)
+        }
+        return session.summaryProjectStats
+    }
+    /**
+     *
+     * @param projectNames
+     * @return
+     */
+    private def loadSummaryProjectStats(final List projectNames) {
+        long start=System.currentTimeMillis()
         Calendar n = GregorianCalendar.getInstance()
         n.add(Calendar.DAY_OF_YEAR, -1)
         Date today = n.getTime()
         def summary=[:]
-        fprojects.each { IRundeckProject project->
-            summary[project.name]=[
-                    jobCount: ScheduledExecution.countByProject(project.name),
-                    execCount: Execution.countByProjectAndDateStartedGreaterThan(project.name,today),
-                    description: project.hasProperty("project.description")?project.getProperty("project.description"):''
-            ]
-
-            summary[project.name].userSummary=Execution.createCriteria().list {
-                eq('project',project.name)
-                gt('dateStarted', today)
-                projections {
-                    distinct('user')
-                }
-            }
-            summary[project.name].userCount= summary[project.name].userSummary.size()
-            summary[project.name].readme=frameworkService.getFrameworkProjectReadmeContents(project.name)
-            //authorization
-            summary[project.name].auth = [
-                    jobCreate: frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
-                            AuthConstants.ACTION_CREATE, project.name),
-                    admin: frameworkService.authorizeApplicationResourceAny(authContext,
-                                                                            frameworkService.authResourceForProject(project.name),
-                            [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
-                                    AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE]),
-            ]
+        def projects = []
+        projectNames.each{project->
+            summary[project]=[name: project, execCount: 0, userSummary: [], userCount: 0]
         }
-        def projects = Execution.createCriteria().list {
+        long proj2=System.currentTimeMillis()
+        def projects2 = Execution.createCriteria().list {
             gt('dateStarted', today)
             projections {
-                distinct('project')
+                groupProperty('project')
+                count()
             }
         }
-        def users = Execution.createCriteria().list {
+        proj2=System.currentTimeMillis()-proj2
+        def execCount= 0 //Execution.countByDateStartedGreaterThan( today)
+        projects2.each{val->
+            if(val.size()==2){
+                if(summary[val[0]]) {
+                    summary[val[0].toString()].execCount = val[1]
+                    projects << val[0]
+                    execCount+=val[1]
+                }
+            }
+        }
+
+        long proj3=System.currentTimeMillis()
+        def users2 = Execution.createCriteria().list {
             gt('dateStarted', today)
             projections {
                 distinct('user')
+                property('project')
             }
         }
-        //summarize cross-project details
-        def jobCount = ScheduledExecution.count()
-        def execCount= Execution.countByDateStartedGreaterThan( today)
+        proj3=System.currentTimeMillis()-proj3
+        def users = new HashSet<String>()
+        users2.each{val->
+            if(val.size()==2){
+                if(summary[val[1]]){
+                    summary[val[1]].userSummary<<val[0]
+                    summary[val[1]].userCount=summary[val[1]].userSummary.size()
+                    users.add(val[0])
+                }
+            }
+        }
+
+        log.debug("loadSummaryProjectStats... ${System.currentTimeMillis()-start}, proj2 ${proj2}, proj3 ${proj3}")
+        [summary:summary,recentUsers:users,recentProjects:projects,execCount:execCount]
+    }
+
+    def projectNamesAjax() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        long start = System.currentTimeMillis()
+        def fprojects = frameworkService.projectNames(authContext)
+        session.frameworkProjects = fprojects
+        log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
+
+        render(contentType:'application/json',text:
+                ([projectNames: fprojects] )as JSON
+        )
+    }
+    def homeAjax(BaseQuery paging){
+        if('true'!=request.getHeader('x-rundeck-ajax')) {
+            return redirect(action: 'home')
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        long start=System.currentTimeMillis()
+        //select paged projects to return
+        def fprojects
+        List<String> projectNames = frameworkService.projectNames(authContext)
+        def pagingparams=[:]
+        if (null != paging.max && null != paging.offset) {
+            if (paging.max > 0 && paging.offset < projectNames.size()) {
+
+                def lastIndex = Math.min(projectNames.size() - 1, paging.offset + paging.max - 1)
+                pagingparams = [max: paging.max, offset: paging.offset]
+                if (lastIndex + 1 < projectNames.size()) {
+                    pagingparams.nextoffset = lastIndex + 1
+                } else {
+                    pagingparams.nextoffset = -1
+                }
+                fprojects = projectNames[paging.offset..lastIndex].collect {
+                    frameworkService.getFrameworkProject(it)
+                }
+            } else {
+                fprojects = []
+            }
+        }else if (params.projects) {
+            def selected = [params.projects].flatten()
+            if(selected.size()==1 && selected[0].contains(',')){
+                selected = selected[0].split(',') as List
+            }
+            fprojects = selected.findAll{projectNames.contains(it)}.collect{
+                frameworkService.getFrameworkProject(it)
+            }
+        } else {
+            fprojects = frameworkService.projects(authContext)
+        }
+
+        log.debug("frameworkService.projects(context)... ${System.currentTimeMillis()-start}")
+        start=System.currentTimeMillis()
+
+
+        def allsummary=cachedSummaryProjectStats(projectNames).summary
+        def summary=[:]
+        def durs=[]
+        fprojects.each { IRundeckProject project->
+            long sumstart=System.currentTimeMillis()
+            summary[project.name]=allsummary[project.name]
+
+            summary[project.name].description= project.hasProperty("project.description")?project.getProperty("project.description"):''
+            if(!params.refresh) {
+                summary[project.name].readme = frameworkService.getFrameworkProjectReadmeContents(project)
+                //authorization
+                summary[project.name].auth = [
+                        jobCreate: frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
+                                AuthConstants.ACTION_CREATE, project.name),
+                        admin: frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                                frameworkService.authResourceForProject(project.name),
+                                [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
+                                        AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE]),
+                ]
+            }
+            durs<<(System.currentTimeMillis()-sumstart)
+        }
+
+
+        if(durs.size()>0) {
+            def sum=durs.inject(0) { a, b -> a + b }
+            log.debug("summarize avg/proj (${durs.size()}) ${sum}ms ... ${sum / durs.size()}")
+        }
+        render(contentType:'application/json',text:
+                (pagingparams + [
+                        projects : summary.values(),
+                ] )as JSON
+        )
+    }
+    def homeSummaryAjax(){
+        if('true'!=request.getHeader('x-rundeck-ajax')) {
+            return redirect(action: 'home')
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        Framework framework = frameworkService.rundeckFramework
+        long start=System.currentTimeMillis()
+        //select paged projects to return
+        List<String> projectNames = frameworkService.projectNames(authContext)
+
+        log.debug("frameworkService.homeSummaryAjax(context)... ${System.currentTimeMillis()-start}")
+        start=System.currentTimeMillis()
+        def allsummary=cachedSummaryProjectStats(projectNames)
+        def projects=allsummary.recentProjects
+        def users=allsummary.recentUsers
+        def execCount=allsummary.execCount
+
         def fwkNode = framework.getFrameworkNodeName()
-        [jobCount:jobCount,execCount:execCount,projectSummary:projects,projCount: fprojects.size(),userSummary:users,
-                userCount:users.size(),projectSummaries:summary,
-                frameworkNodeName: fwkNode,
-        ]
+
+        render(contentType:'application/json',text:
+                ( [
+                        execCount        : execCount,
+                        recentUsers      : users,
+                        recentProjects   : projects,
+                        frameworkNodeName: fwkNode
+                ] )as JSON
+        )
     }
 
     /**
     * API Actions
      */
+
+    def apiLogstorageInfo() {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V17)) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (!apiService.requireAuthorized(
+                frameworkService.authorizeApplicationResource(
+                        authContext,
+                        AuthConstants.RESOURCE_TYPE_SYSTEM,
+                        AuthConstants.ACTION_READ
+                ),
+                response,
+                [AuthConstants.ACTION_READ, 'System','Logstorage Info'].toArray()
+        )) {
+            return
+        }
+
+        def data = logFileStorageService.getStorageStats()
+        def propnames = [
+                'succeededCount',
+                'failedCount',
+                'queuedCount',
+                'totalCount',
+                'incompleteCount',
+                'missingCount'
+        ]
+        withFormat {
+            json {
+                apiService.renderSuccessJson(response) {
+                    enabled = data.pluginName ? true : false
+                    pluginName = data.pluginName
+                    for (String name : propnames) {
+                        delegate.setProperty(name, data[name])
+                    }
+                }
+            }
+            xml {
+
+                apiService.renderSuccessXml(request, response) {
+                    delegate.'logStorage'(enabled: data.pluginName ? true : false, pluginName: data.pluginName) {
+                        for (String name : propnames) {
+                            delegate."${name}"(data[name])
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    def apiLogstorageListIncompleteExecutions(BaseQuery query) {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V17)) {
+            return
+        }
+        query.validate()
+        if (query.hasErrors()) {
+            return apiService.renderErrorFormat(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code: "api.error.parameter.error",
+                            args: [query.errors.allErrors.collect { message(error: it) }.join("; ")]
+                    ]
+            )
+        }
+
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (!apiService.requireAuthorized(
+                frameworkService.authorizeApplicationResource(
+                        authContext,
+                        AuthConstants.RESOURCE_TYPE_SYSTEM,
+                        AuthConstants.ACTION_READ
+                ),
+                response,
+                [AuthConstants.ACTION_READ, 'System','Logstorage Info'].toArray()
+        )) {
+            return
+        }
+
+
+        def total=logFileStorageService.countIncompleteLogStorageRequests()
+        def list = logFileStorageService.listIncompleteRequests(
+                frameworkService.serverUUID,
+                [max: query.max?:20, offset: query.offset?:0]
+        )
+        def queuedIds=logFileStorageService.getQueuedIncompleteRequestIds()
+        def failedIds=logFileStorageService.getFailedRequestIds()
+        withFormat{
+            json{
+                apiService.renderSuccessJson(response) {
+                    delegate.'total' = total
+                    max = query.max ?: 20
+                    offset = query.offset ?: 0
+                    executions = list.collect { LogFileStorageRequest req ->
+                        def data=exportRequestMap(
+                                req,
+                                queuedIds.contains(req.id),
+                                failedIds.contains(req.id),
+                                failedIds.contains(req.id) ? logFileStorageService.getFailures(req.id) : null
+                        )
+                        [
+                                id:data.executionId,
+                                project:data.project,
+                                href:data.href,
+                                permalink:data.permalink,
+                                storage:[
+                                        localFilesPresent:data.localFilesPresent,
+                                        incompleteFiletypes:data.filetype,
+                                        queued:data.queued,
+                                        failed:data.failed,
+                                        date:apiService.w3cDateValue(req.dateCreated),
+                                ],
+                                errors:data.messages
+                        ]
+                    }
+                }
+            }
+            xml{
+                apiService.renderSuccessXml (request,response) {
+                    logstorage {
+                        incompleteExecutions(total: total, max: query.max ?: 20, offset: query.offset ?: 0) {
+                            list.each { LogFileStorageRequest req ->
+                                def data=exportRequestMap(
+                                        req,
+                                        queuedIds.contains(req.id),
+                                        failedIds.contains(req.id),
+                                        failedIds.contains(req.id) ? logFileStorageService.getFailures(req.id) : null
+                                )
+                                execution(id:data.executionId,project:data.project,href:data.href,permalink:data.permalink){
+                                    delegate.'storage'(
+                                            incompleteFiletypes:data.filetype,
+                                            queued:data.queued,
+                                            failed:data.failed,
+                                            date: apiService.w3cDateValue(req.dateCreated),
+                                            localFilesPresent:data.localFilesPresent,
+                                    ) {
+                                        if(data.messages){
+                                            delegate.'errors' {
+                                                data.messages.each {
+                                                    delegate.'message'(it)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    def apiResumeIncompleteLogstorage() {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V17)) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (!apiService.requireAuthorized(
+                frameworkService.authorizeApplicationResource(
+                        authContext,
+                        AuthConstants.RESOURCE_TYPE_SYSTEM,
+                        AuthConstants.ACTION_ADMIN
+                ),
+                response,
+                [AuthConstants.ACTION_ADMIN, 'System','Logstorage'].toArray()
+        )) {
+            return
+        }
+
+        logFileStorageService.resumeIncompleteLogStorageAsync(frameworkService.serverUUID)
+        withFormat {
+            json {
+                apiService.renderSuccessJson(response) {
+                    resumed=true
+                }
+            }
+            xml {
+
+                apiService.renderSuccessXml(request, response) {
+                    delegate.'logStorage'(resumed:true)
+                }
+            }
+        }
+    }
+
 
     /**
      * API: /api/jobs, version 1
@@ -1016,9 +1642,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     code: 'api.error.parameter.required', args: ['project']])
 
         }
+
         query.projFilter = params.project
         //test valid project
-        Framework framework = frameworkService.getRundeckFramework()
 
         def exists=frameworkService.existsFrameworkProject(params.project)
         if(!exists){
@@ -1032,6 +1658,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 return
             }
         }
+        if(null!=query.scheduledFilter || null!=query.serverNodeUUIDFilter){
+            if (!apiService.requireVersion(request,response,ApiRequestFilters.V17)) {
+                return
+            }
+        }
 
         if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorFormat(response,[
@@ -1040,13 +1671,39 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     args: [response.format]
             ])
         }
+        if(query.hasErrors()){
+            return apiService.renderErrorFormat(response,
+                                                [
+                                                        status: HttpServletResponse.SC_BAD_REQUEST,
+                                                        code: "api.error.parameter.error",
+                                                        args: [query.errors.allErrors.collect { message(error: it) }.join("; ")]
+                                                ])
+        }
         def results = jobsFragment(query)
-        withFormat{
+
+        respondApiJobsList(results.nextScheduled)
+    }
+
+    private void respondApiJobsList(List<ScheduledExecution> results) {
+        def clusterModeEnabled = frameworkService.isClusterModeEnabled()
+        def serverNodeUUID = frameworkService.serverUUID
+        withFormat {
             xml {
                 return apiService.renderSuccessXml(request, response) {
-                    delegate.'jobs'(count: results.nextScheduled.size()) {
-                        results.nextScheduled.each { ScheduledExecution se ->
-                            job(id: se.extid, href:apiService.apiHrefForJob(se),permalink:apiService.guiHrefForJob(se)) {
+                    delegate.'jobs'(count: results.size()) {
+                        results.each { ScheduledExecution se ->
+                            def jobparams = [id: se.extid, href: apiService.apiHrefForJob(se),
+                                             permalink: apiService.guiHrefForJob(se)]
+                            if (request.api_version >= ApiRequestFilters.V17) {
+                                jobparams.scheduled = se.scheduled
+                                jobparams.scheduleEnabled = se.scheduleEnabled
+                                jobparams.enabled = se.executionEnabled
+                                if (clusterModeEnabled && se.scheduled) {
+                                    jobparams.serverNodeUUID = se.serverNodeUUID
+                                    jobparams.serverOwner = jobparams.serverNodeUUID == serverNodeUUID
+                                }
+                            }
+                            job(jobparams) {
                                 name(se.jobName)
                                 group(se.groupPath)
                                 project(se.project)
@@ -1056,22 +1713,78 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     }
                 }
             }
-            json{
+            json {
                 return apiService.renderSuccessJson(response) {
-                    results.nextScheduled.each { ScheduledExecution se ->
-                        element(
-                                id: se.extid,
-                                name: (se.jobName),
-                                group: (se.groupPath),
-                                project: (se.project),
-                                description: (se.description),
-                                href: apiService.apiHrefForJob(se),
-                                permalink: apiService.guiHrefForJob(se)
-                        )
+                    results.each { ScheduledExecution se ->
+                        def jobparams = [id         : se.extid,
+                                         name       : (se.jobName),
+                                         group      : (se.groupPath),
+                                         project    : (se.project),
+                                         description: (se.description),
+                                         href       : apiService.apiHrefForJob(se),
+                                         permalink  : apiService.guiHrefForJob(se)]
+                        if (request.api_version >= ApiRequestFilters.V17) {
+                            jobparams.scheduled = se.scheduled
+                            jobparams.scheduleEnabled = se.scheduleEnabled
+                            jobparams.enabled = se.executionEnabled
+                            if (clusterModeEnabled && se.scheduled) {
+                                jobparams.serverNodeUUID = se.serverNodeUUID
+                                jobparams.serverOwner = jobparams.serverNodeUUID == serverNodeUUID
+                            }
+                        }
+                        element(jobparams)
                     }
                 }
             }
         }
+    }
+    /**
+     * Require server UUID and list all owned jobs
+     * /api/$api_version/scheduler/server/$uuid/jobs and
+     * /api/$api_version/scheduler/jobs
+     * @return
+     */
+    def apiSchedulerListJobs(String uuid, boolean currentServer) {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V17)) {
+            return
+        }
+        if(currentServer) {
+            uuid = frameworkService.serverUUID
+        }
+        def query = new ScheduledExecutionQuery(serverNodeUUIDFilter: uuid, scheduledFilter: true)
+        query.validate()
+        if (query.hasErrors()) {
+            return apiService.renderErrorFormat(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code: "api.error.parameter.error",
+                            args: [query.errors.allErrors.collect { message(error: it) }.join("; ")]
+                    ]
+            )
+        }
+
+
+        def list = ScheduledExecution.findAllByServerNodeUUID(uuid)
+        //filter authorized jobs
+        Map<String, UserAndRolesAuthContext> projectAuths = [:]
+        def authForProject = { String project ->
+            if (projectAuths[project]) {
+                return projectAuths[project]
+            }
+            projectAuths[project] = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+            projectAuths[project]
+        }
+        def authorized = list.findAll { ScheduledExecution se ->
+            frameworkService.authorizeProjectJobAll(
+                    authForProject(se.project),
+                    se,
+                    [AuthConstants.ACTION_READ],
+                    se.project
+            )
+        }
+
+        respondApiJobsList(authorized)
     }
     /**
      * API: /api/2/project/NAME/jobs, version 2

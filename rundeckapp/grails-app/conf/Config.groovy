@@ -52,12 +52,16 @@ grails.enable.native2ascii = true
 environments {
     production {
 //        grails.serverURL = "http://www.changeme.com"
+
+        grails.profiler.disable=true
     }
     development{
         grails.serverURL="http://localhost:9090/rundeck"
         plugin.refreshDelay=5000
+        grails.profiler.disable=false
     }
     test {
+        grails.profiler.disable=true
     }
 }
 grails.json.legacy.builder = false
@@ -118,6 +122,7 @@ log4j={
 //            info 'org.rundeck.web.requests'
 //            debug 'org.rundeck.web.infosec'
             debug 'org.apache.commons.httpclient'
+            info 'grails.app.services.rundeck.services.ProjectManagerService'
             off 'h2database'
         }
     }
@@ -144,10 +149,12 @@ grails.plugins.twitterbootstrap.fixtaglib = true
 
 rundeck.execution.finalize.retryMax=10
 rundeck.execution.finalize.retryDelay=5000
-rundeck.execution.stats.retryMax=3
+rundeck.execution.stats.retryMax=5
 rundeck.execution.stats.retryDelay=5000
 rundeck.gui.execution.tail.lines.default = 20
 rundeck.gui.execution.tail.lines.max = 500
+
+rundeck.execution.logs.fileStorage.cancelOnStorageFailure=true
 
 rundeck.mail.template.subject='${notification.eventStatus} [${execution.project}] ${job.group}/${job.name} ${execution.argstring}'
 rundeck.security.useHMacRequestTokens=true
@@ -171,12 +178,14 @@ rundeck.gui.clusterIdentityInFooter=true
 rundeck.projectService.projectExportCache.spec= "expireAfterAccess=30m"
 rundeck.projectManagerService.projectCache.spec='expireAfterAccess=10m,refreshAfterWrite=1m'
 
+rundeck.logFileStorageService.startup.resumeMode = 'async'
+
 rundeck.projectsStorageType='filesystem'
 
 rundeck.ajax.compression='gzip'
 rundeck.ajax.executionState.compression.nodeThreshold=500
 
-rundeck.nodeService.nodeCache.spec='refreshAfterWrite=30s'
+rundeck.nodeService.nodeCache.spec='refreshInterval=30s'
 rundeck.nodeService.nodeCache.enabled=true
 
 grails.assets.less.compile = 'less4j'

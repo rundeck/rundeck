@@ -126,4 +126,6 @@ public interface ScriptExecHelper {
             final boolean interpreterargsquoted
     );
 
+    public Map<String,String> loadLocalEnvironment();
+
 }

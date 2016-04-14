@@ -612,9 +612,7 @@ class FrameworkControllerSpec extends Specification {
         1 * fwkService.updateFrameworkProjectConfig(_,{
             it['project.description'] == 'abc'
         },_) >> [success:true]
-        1 * fwkService.getFrameworkProject(_)>>[name:'TestSaveProject']
 
-        1 * controller.userService.storeFilterPref(_,_)
     }
     def "save project with out description"(){
         setup:
@@ -642,9 +640,7 @@ class FrameworkControllerSpec extends Specification {
         1 * fwkService.updateFrameworkProjectConfig(_,{
             it['project.description'] == ''
         },_) >> [success:true]
-        1 * fwkService.getFrameworkProject(_)>>[name:'TestSaveProject']
 
-        1 * controller.userService.storeFilterPref(_,_)
     }
 
     protected void setupFormTokens(params) {

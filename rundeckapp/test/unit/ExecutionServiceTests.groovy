@@ -1,4 +1,5 @@
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
@@ -12,9 +13,11 @@ import com.dtolabs.rundeck.core.utils.NodeSet
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.mixin.web.ControllerUnitTestMixin
+import groovy.mock.interceptor.MockFor
 import org.codehaus.groovy.grails.plugins.databinding.DataBindingGrailsPlugin
 import org.grails.plugins.metricsweb.MetricService
 import org.junit.Before
+import org.springframework.context.MessageSource
 import rundeck.*
 import rundeck.services.*
 
@@ -37,7 +40,11 @@ class ExecutionServiceTests  {
         mock.demand.with(clos)
         return mock.createMock()
     }
-
+    private UserAndRolesAuthContext createAuthContext(String user){
+        def mock=mockFor(UserAndRolesAuthContext)
+        mock.demand.getUsername{ user }
+        mock.createMock()
+    }
     void testCreateExecutionRunning(){
 
         ScheduledExecution se = new ScheduledExecution(
@@ -65,7 +72,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService = fsvc
         try{
-            svc.createExecution(se,"user1")
+            svc.createExecution(se,createAuthContext("user1"))
             fail("should fail")
         }catch(ExecutionServiceException ex){
             assertTrue(ex.message.contains('is currently being executed'))
@@ -100,7 +107,7 @@ class ExecutionServiceTests  {
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService = fsvc
-        def execution=svc.createExecution(se,"user1")
+        def execution=svc.createExecution(se,createAuthContext("user1"))
         assertNotNull(execution)
     }
     void testCreateExecutionSimple(){
@@ -120,7 +127,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        Execution e2=svc.createExecution(se,"user1")
+        Execution e2=svc.createExecution(se,createAuthContext("user1"))
 
         assertNotNull(e2)
         assertEquals('-a b -c d', e2.argString)
@@ -150,7 +157,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        Execution e2=svc.createExecution(se,"user1",['extra.option.test':'12'])
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),['extra.option.test':'12'])
 
         assertNotNull(e2)
         assertEquals('-a b -c d', e2.argString)
@@ -216,7 +223,7 @@ class ExecutionServiceTests  {
         svc.frameworkService = fsvc
 
 
-        Execution e2 = svc.createExecution(se, "user1", [('option.test'): testOptionValue])
+        Execution e2 = svc.createExecution(se,createAuthContext("user1"), [('option.test'): testOptionValue])
 
         assertNotNull(e2)
         assertEquals(argString, e2.argString)
@@ -254,7 +261,7 @@ class ExecutionServiceTests  {
 
 
         try{
-            Execution e2 = svc.createExecution(se, "user1", [('option.test'): testOptionValue])
+            Execution e2 = svc.createExecution(se,createAuthContext("user1"), [('option.test'): testOptionValue])
             fail("expected exception")
         }catch (ExecutionServiceException e){
             assertEquals(exceptionMessage,e.message)
@@ -280,7 +287,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        Execution e2=svc.createExecution(se,"user1",[('_replaceNodeFilters'):"true",filter:'name: monkey'])
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),[('_replaceNodeFilters'):"true",filter:'name: monkey'])
 
         assertNotNull(e2)
         assertEquals('name: monkey', e2.filter)
@@ -311,7 +318,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        Execution e2=svc.createExecution(se,"user1",[('_replaceNodeFilters'):"true",nodeIncludeName: 'monkey'])
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),[('_replaceNodeFilters'):"true",nodeIncludeName: 'monkey'])
 
         assertNotNull(e2)
         assertEquals('name: monkey', e2.filter)
@@ -342,7 +349,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        Execution e2=svc.createExecution(se,"user1",[('_replaceNodeFilters'):"true",nodeIncludeName: ['monkey','banana']])
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),[('_replaceNodeFilters'):"true",nodeIncludeName: ['monkey','banana']])
 
         assertNotNull(e2)
         assertEquals('name: monkey,banana', e2.filter)
@@ -380,7 +387,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        Execution e=svc.createExecution(se,null,null)
+        Execution e=svc.createExecution(se,createAuthContext('bob'),null)
 
         assertNotNull(e)
         assertEquals('-a b -c d',e.argString)
@@ -417,7 +424,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        Execution e=svc.createExecution(se,"user1")
+        Execution e=svc.createExecution(se,createAuthContext("user1"))
 
         assertNotNull(e)
         assertEquals('-a b -c d',e.argString)
@@ -437,7 +444,7 @@ class ExecutionServiceTests  {
         svc.frameworkService=fsvc
 
             assertNull(se.executions)
-            Execution e=svc.createExecution(se,"user1",[argString:'-test1 asdf -test2 val2b -test4 asdf4'])
+            Execution e=svc.createExecution(se,createAuthContext("user1"),[argString:'-test1 asdf -test2 val2b -test4 asdf4'])
 
             assertNotNull(e)
             assertEquals("secure option value should not be stored",'-test1 asdf -test2 val2b -test3 val3',e.argString)
@@ -456,7 +463,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService = fsvc
         assertNull(se.executions)
-        Execution e=svc.createExecution(se,"user1",[argString:'-test2 val2b -test4 asdf4'])
+        Execution e=svc.createExecution(se,createAuthContext("user1"),[argString:'-test2 val2b -test4 asdf4'])
 
         assertNotNull(e)
         assertEquals("default value should be used",'-test1 val1 -test2 val2b -test3 val3',e.argString)
@@ -475,7 +482,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService = fsvc
         assertNull(se.executions)
-        Execution e=svc.createExecution(se,"user1",[argString:'-test2 val2b -test3 monkey3'])
+        Execution e=svc.createExecution(se,createAuthContext("user1"),[argString:'-test2 val2b -test3 monkey3'])
 
         assertNotNull(e)
         assertEquals('-test1 val1 -test2 val2b -test3 monkey3',e.argString)
@@ -493,12 +500,16 @@ class ExecutionServiceTests  {
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService = fsvc
+        def ms = mockFor(MessageSource,true)
+//        ms.demand.getMessage { key, data, locale -> key + ":" + data.toString() + ":" + locale.toString() }
+        ms.demand.getMessage(2) { error, data,locale -> error.toString()  }
+        svc.messageSource = ms.createMock()
             //enforced value failure on test2
             try {
-                Execution e = svc.createExecution(se, "user1", [argString: '-test2 val2D -test3 monkey4'])
+                Execution e = svc.createExecution(se,createAuthContext("user1"), [argString: '-test2 val2D -test3 monkey4'])
                 fail("shouldn't succeed")
             } catch (ExecutionServiceException e) {
-                assertTrue(e.message.contains("was not in the allowed values"))
+                assertTrue(e.message,e.message.contains("domain.Option.validation.allowed.invalid"))
             }
         }
 
@@ -508,12 +519,16 @@ class ExecutionServiceTests  {
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService = fsvc
+        def ms = mockFor(MessageSource,true)
+//        ms.demand.getMessage { key, data, locale -> key + ":" + data.toString() + ":" + locale.toString() }
+        ms.demand.getMessage(2) { error, data,locale -> error.toString()  }
+        svc.messageSource = ms.createMock()
             //regex failure on test3
             try {
-                Execution e = svc.createExecution(se, "user1", [argString: '-test2 val2b -test3 monkey4'])
+                Execution e = svc.createExecution(se,createAuthContext("user1"), [argString: '-test2 val2b -test3 monkey4'])
                 fail("shouldn't succeed")
             } catch (ExecutionServiceException e) {
-                assertTrue(e.message.contains("doesn't match regular expression"))
+                assertTrue(e.message,e.message.contains("domain.Option.validation.regex.invalid"))
             }
         }
 
@@ -546,428 +561,12 @@ class ExecutionServiceTests  {
         se
     }
 
-    void testValidateInputOptionValues(){
-        ScheduledExecution se = new ScheduledExecution()
-        def frameworkService = new FrameworkService()
-		def testService = service
-        testService.frameworkService=frameworkService
-
-            //test regex and optional value
-            assertTrue testService.validateInputOptionValues(se,[:])
-            ScheduledExecution se2 = new ScheduledExecution()
-            se2.addToOptions(new Option(name:'test1',enforced:false))
-            se2.addToOptions(new Option(name:'test2',enforced:false,regex:'.*abc.*'))
-            assertNotNull(se2.options)
-            assertEquals(2,se2.options.size())
-
-            assertTrue testService.validateInputOptionValues(se2,['option.test1':'some value'])
-            assertTrue testService.validateInputOptionValues(se2,[argString:'-test1 \'some value\''])
-            assertTrue testService.validateInputOptionValues(se2,['option.test1':'some value','option.test2':'abc'])
-            assertTrue testService.validateInputOptionValues(se2,[argString:'-test1 \'some value\' -test2 abc'])
-            assertTrue testService.validateInputOptionValues(se2,['option.test1':'some value','option.test2':'abcdefg'])
-            assertTrue testService.validateInputOptionValues(se2,[argString:'-test1 \'some value\' -test2 abcdefg'])
-            assertTrue testService.validateInputOptionValues(se2,['option.test1':'some value','option.test2':'xyzabcdefg'])
-            assertTrue testService.validateInputOptionValues(se2,[argString:'-test1 \'some value\' -test2 xyzabcdefg'])
-            try{
-                testService.validateInputOptionValues(se2,['option.test1':'some value','option.test2':'xyz'])
-                fail("Should have thrown exception")
-            }catch (Exception e){
-                assertNotNull(e)
-                assertTrue( e.message.contains("'test2' doesn't match regular expression"))
-            }
-            try{
-                testService.validateInputOptionValues(se2,[argString:'-test1 \'some value\' -test2 xyz'])
-                fail("Should have thrown exception")
-            }catch (Exception e){
-                assertNotNull(e)
-                assertTrue( e.message.contains("'test2' doesn't match regular expression"))
-            }
-            try{
-                testService.validateInputOptionValues(se2,['option.test1':'some value','option.test2':'xyzab'])
-                fail("Should have thrown exception")
-            }catch (Exception e){
-                assertNotNull(e)
-                assertTrue( e.message.contains("'test2' doesn't match regular expression"))
-            }
-            try{
-                testService.validateInputOptionValues(se2,[argString:'-test1 \'some value\' -test2 xyzab'])
-                fail("Should have thrown exception")
-            }catch (Exception e){
-                assertNotNull(e)
-                assertTrue( e.message.contains("'test2' doesn't match regular expression"))
-            }
-            se2.addToOptions(new Option(name:'test3',enforced:false,regex:'shampoo[abc].*'))
-
-            assertTrue testService.validateInputOptionValues(se2,['option.test3':'shampooa'])
-            assertTrue testService.validateInputOptionValues(se2,['option.test3':'shampoob'])
-            assertTrue testService.validateInputOptionValues(se2,['option.test3':'shampooc'])
-            assertTrue testService.validateInputOptionValues(se2,['option.test3':'shampoocxyz234'])
-            assertTrue testService.validateInputOptionValues(se2,[argString:'-test3 shampooa'])
-            assertTrue testService.validateInputOptionValues(se2,[argString:'-test3 shampoob'])
-            assertTrue testService.validateInputOptionValues(se2,[argString:'-test3 shampooc'])
-            assertTrue testService.validateInputOptionValues(se2,[argString:'-test3 shampoocxyz234'])
-
-            try{
-                testService.validateInputOptionValues(se2,['option.test3':'shampooz'])
-                fail("Should have thrown exception")
-            }catch (Exception e){
-                assertNotNull(e)
-                assertTrue( e.message.contains("'test3' doesn't match regular expression"))
-            }
-            try{
-                testService.validateInputOptionValues(se2,[argString:'-test3 shampooz'])
-                fail("Should have thrown exception")
-            }catch (Exception e){
-                assertNotNull(e)
-                assertTrue( e.message.contains("'test3' doesn't match regular expression"))
-            }
-            try{
-                testService.validateInputOptionValues(se2,['option.test3':'zshampooa'])
-                fail("Should have thrown exception")
-            }catch (Exception e){
-                assertNotNull(e)
-                assertTrue( e.message.contains("'test3' doesn't match regular expression"))
-            }
-            try{
-                testService.validateInputOptionValues(se2,[argString:'-test3 zshampooa'])
-                fail("Should have thrown exception")
-            }catch (Exception e){
-                assertNotNull(e)
-                assertTrue( e.message.contains("'test3' doesn't match regular expression"))
-            }
-        }
-
-    void testValidateInputOptionValues_enforced() {
-        ScheduledExecution se = new ScheduledExecution()
-        def frameworkService = new FrameworkService()
-        def testService = service
-        testService.frameworkService = frameworkService
-
-        //test enforced values list
-            assertTrue testService.validateInputOptionValues(se,[:])
-            ScheduledExecution se2 = new ScheduledExecution()
-            final Option option = new Option(name: 'test1', enforced: true)
-            option.addToValues('a')
-            option.addToValues('b')
-            option.addToValues('abc')
-            se2.addToOptions(option)
-            assertNotNull(se2.options)
-            assertEquals(1,se2.options.size())
-
-            assertTrue testService.validateInputOptionValues(se2,['option.test1':'a'])
-            assertTrue testService.validateInputOptionValues(se2,['option.test1':'b'])
-            assertTrue testService.validateInputOptionValues(se2,['option.test1':'abc'])
-            assertTrue testService.validateInputOptionValues(se2,[argString:'-test1 a'])
-            assertTrue testService.validateInputOptionValues(se2,[argString:'-test1 b'])
-            assertTrue testService.validateInputOptionValues(se2,[argString:'-test1 abc'])
-            try{
-                testService.validateInputOptionValues(se2,['option.test1':'some value'])
-                fail("Should have thrown exception")
-            }catch (Exception e){
-                assertNotNull(e)
-                assertTrue( e.message.contains("Option 'test1'"))
-                assertTrue( e.message.contains("was not in the allowed values"))
-            }
-            try{
-                testService.validateInputOptionValues(se2,[argString:'-test1 \'some value\''])
-                fail("Should have thrown exception")
-            }catch (Exception e){
-                assertNotNull(e)
-                assertTrue( e.message.contains("Option 'test1'"))
-                assertTrue( e.message.contains("was not in the allowed values"))
-            }
-            try{
-                testService.validateInputOptionValues(se2,['option.test1':'abd'])
-                fail("Should have thrown exception")
-            }catch (Exception e){
-                assertNotNull(e)
-                assertTrue( e.message.contains("Option 'test1'"))
-                assertTrue( e.message.contains("was not in the allowed values"))
-            }
-            try{
-                testService.validateInputOptionValues(se2,[argString:'-test1 abd'])
-                fail("Should have thrown exception")
-            }catch (Exception e){
-                assertNotNull(e)
-                assertTrue( e.message.contains("Option 'test1'"))
-                assertTrue( e.message.contains("was not in the allowed values"))
-            }
-
-            //test1 is not required, so value can be absent:
-            assertTrue testService.validateInputOptionValues(se2,[:])
-            assertTrue testService.validateInputOptionValues(se2,[argString:''])
-
-        }
 
 
-    void testValidateInputOptionValues_required_enforced() {
-        ScheduledExecution se = new ScheduledExecution()
-        def frameworkService = new FrameworkService()
-        def testService = service
-        testService.frameworkService = frameworkService
 
-        //test required & values list
-            assertTrue testService.validateInputOptionValues(se,[:])
-            ScheduledExecution se2 = new ScheduledExecution()
-            final Option option = new Option(name: 'test1', enforced: true, required:true)
-            option.addToValues('a')
-            option.addToValues('b')
-            option.addToValues('abc')
-            se2.addToOptions(option)
-            assertNotNull(se2.options)
-            assertEquals(1,se2.options.size())
-            //test1 is required, so value cannot be absent:
-            try{
-                testService.validateInputOptionValues(se2,[:])
-                fail("Should have thrown exception")
-            }catch (Exception e){
-                assertNotNull(e)
-                assertTrue( e.message.contains("'test1' is required"))
-            }
-            try{
-                testService.validateInputOptionValues(se2,[argString:''])
-                fail("Should have thrown exception")
-            }catch (Exception e){
-                assertNotNull(e)
-                assertTrue( e.message.contains("'test1' is required"))
-            }
-        }
 
-    void testValidateInputOptionValues_enforced_notrequired() {
-        ScheduledExecution se = new ScheduledExecution()
-        def frameworkService = new FrameworkService()
-        def testService = service
-        testService.frameworkService = frameworkService
 
-        //test non-multi-valued and list input
-            assertTrue testService.validateInputOptionValues(se,[:])
-            ScheduledExecution se2 = new ScheduledExecution()
-            final Option option = new Option(name: 'test1', required:false, enforced: true, multivalued: false)
-            option.addToValues('a')
-            option.addToValues('b')
-            option.addToValues('abc')
-            se2.addToOptions(option)
-            assertNotNull(se2.options)
-            assertEquals(1,se2.options.size())
-            //valid single value input
-            assertTrue testService.validateInputOptionValues(se2, ['option.test1': 'abc'])
-            try{
-                //should fail with list input
-                testService.validateInputOptionValues(se2,['option.test1':['blah']])
-                fail("Should have thrown exception")
-            }catch (Exception e){
-                assertNotNull(e)
-                assertTrue(e.message, e.message.contains("Option 'test1' value: [blah] does not allow multiple values"))
-            }
-            try{
-                //should fail with list input
-                testService.validateInputOptionValues(se2, ['option.test1': ['abc']])
-                fail("Should have thrown exception")
-            }catch (Exception e){
-                assertNotNull(e)
-                assertTrue(e.message, e.message.contains("Option 'test1' value: [abc] does not allow multiple values"))
-            }
-            try{
-                //should fail with list input
-                testService.validateInputOptionValues(se2, ['option.test1': ['abc','a']])
-                fail("Should have thrown exception")
-            }catch (Exception e){
-                assertNotNull(e)
-                assertTrue(e.message, e.message.contains("does not allow multiple values"))
-            }
-        }
 
-    void testValidateInputOptionValues_multivalued_enforced() {
-        ScheduledExecution se = new ScheduledExecution()
-        def frameworkService = new FrameworkService()
-        def testService = service
-        testService.frameworkService = frameworkService
-
-        //test multi-valued and list input
-            assertTrue testService.validateInputOptionValues(se,[:])
-            ScheduledExecution se2 = new ScheduledExecution()
-            final Option option = new Option(name: 'test1', required:false, enforced: true, multivalued: true, delimiter: ' ')
-            option.addToValues('a')
-            option.addToValues('b')
-            option.addToValues('abc')
-            se2.addToOptions(option)
-            assertNotNull(se2.options)
-            assertEquals(1,se2.options.size())
-            assertTrue testService.validateInputOptionValues(se2, ['option.test1': 'abc'])
-            assertTrue testService.validateInputOptionValues(se2, ['option.test1': ['abc']])
-            try{
-                //should fail with invalid value input
-                testService.validateInputOptionValues(se2, ['option.test1': ['blah']])
-                fail("Should have thrown exception")
-            }catch (Exception e){
-                assertNotNull(e)
-                assertTrue(e.message, e.message.contains("were not all in the allowed values"))
-            }
-            try{
-                //should fail with invalid value input
-                testService.validateInputOptionValues(se2, ['option.test1': ['abc','blah']])
-                fail("Should have thrown exception")
-            }catch (Exception e){
-                assertNotNull(e)
-                assertTrue(e.message, e.message.contains("were not all in the allowed values"))
-            }
-        }
-    void testValidateInputOptionValues_multivalued_enforced_stringinput() {
-        ScheduledExecution se = new ScheduledExecution()
-        def frameworkService = new FrameworkService()
-        def testService = service
-        testService.frameworkService = frameworkService
-
-        //test multi-valued and list input
-        assertTrue testService.validateInputOptionValues(se,[:])
-        ScheduledExecution se2 = new ScheduledExecution()
-        final Option option = new Option(name: 'test1', required:false, enforced: true, multivalued: true, delimiter: ',')
-        option.addToValues('abc')
-        option.addToValues('def')
-        option.addToValues('ghi')
-        se2.addToOptions(option)
-        assertNotNull(se2.options)
-        assertEquals(1,se2.options.size())
-        assertTrue testService.validateInputOptionValues(se2, ['option.test1': 'abc'])
-        assertTrue testService.validateInputOptionValues(se2, ['option.test1': ['abc','def']])
-        assertTrue testService.validateInputOptionValues(se2, ['option.test1': 'abc,def'])
-        assertTrue testService.validateInputOptionValues(se2, ['argString': '-test1 abc,def'])
-        try{
-            //should fail with invalid value input
-            testService.validateInputOptionValues(se2, ['option.test1': ['blah']])
-            fail("Should have thrown exception")
-        }catch (Exception e){
-            assertNotNull(e)
-            assertTrue(e.message, e.message.contains("were not all in the allowed values"))
-        }
-        try{
-            //should fail with invalid value input
-            testService.validateInputOptionValues(se2, ['option.test1': ['abc','blah']])
-            fail("Should have thrown exception")
-        }catch (Exception e){
-            assertNotNull(e)
-            assertTrue(e.message, e.message.contains("were not all in the allowed values"))
-        }
-        try {
-            assertTrue testService.validateInputOptionValues(se2, ['option.test1': 'abc,gef'])
-            fail("Should have thrown exception")
-        } catch (Exception e) {
-            assertNotNull(e)
-            assertTrue(e.message, e.message.contains("were not all in the allowed values"))
-        }
-        try {
-            assertTrue testService.validateInputOptionValues(se2, ['argString': '-test1 abc,zef'])
-            fail("Should have thrown exception")
-        } catch (Exception e) {
-            assertNotNull(e)
-            assertTrue(e.message, e.message.contains("were not all in the allowed values"))
-        }
-        }
-
-    void testValidateInputOptionValues_regex_multivalued() {
-        ScheduledExecution se = new ScheduledExecution()
-        def frameworkService = new FrameworkService()
-        def testService = service
-        testService.frameworkService = frameworkService
-
-        //test multi-valued list with regex validation
-            assertTrue testService.validateInputOptionValues(se, [:])
-            ScheduledExecution se2 = new ScheduledExecution()
-            final Option option = new Option(name: 'test1', required: false, enforced: false, multivalued: true, delimiter: ' ',regex:'^[abc]+$')
-            se2.addToOptions(option)
-            assertNotNull(se2.options)
-            assertEquals(1, se2.options.size())
-            assertTrue testService.validateInputOptionValues(se2, ['option.test1': 'abc'])
-            assertTrue testService.validateInputOptionValues(se2, ['option.test1': ['abc']])
-            assertTrue testService.validateInputOptionValues(se2, ['option.test1': 'abc cba'])
-            assertTrue testService.validateInputOptionValues(se2, ['option.test1': 'abc  cba   bca  '])
-            assertTrue testService.validateInputOptionValues(se2, ['argString': '-test1 "abcbcbabcbbab acbbcb"'])
-            try {
-                //should fail with invalid regex value
-                testService.validateInputOptionValues(se2, ['option.test1': 'zabc'])
-                fail("Should have thrown exception")
-            } catch (Exception e) {
-                assertNotNull(e)
-                assertTrue(e.message,e.message.contains("did not all match regular expression"))
-            }
-            try {
-                //should fail with invalid regex value
-                testService.validateInputOptionValues(se2, ['option.test1': ['blah']])
-                fail("Should have thrown exception")
-            } catch (Exception e) {
-                assertNotNull(e)
-                assertTrue(e.message,e.message.contains("did not all match regular expression"))
-            }
-            try {
-                //should fail with invalid regex value
-                testService.validateInputOptionValues(se2, ['option.test1': ['abc', 'blah']])
-                fail("Should have thrown exception")
-            } catch (Exception e) {
-                assertNotNull(e)
-                assertTrue(e.message,e.message.contains("did not all match regular expression"))
-            }
-            try {
-                //should fail with invalid regex value
-                testService.validateInputOptionValues(se2, ['option.test1': 'abc cba def'])
-                fail("Should have thrown exception")
-            } catch (Exception e) {
-                assertNotNull(e)
-                assertTrue(e.message,e.message.contains("did not all match regular expression"))
-            }
-            try {
-                //should fail with invalid regex value
-                testService.validateInputOptionValues(se2, ['argString': '-test1 "abc def"'])
-                fail("Should have thrown exception")
-            } catch (Exception e) {
-                assertNotNull(e)
-                assertTrue(e.message,e.message.contains("did not all match regular expression"))
-            }
-    }
-
-    void testParseJobOptsFromString() {
-        ScheduledExecution se = new ScheduledExecution()
-        def testService = new ExecutionService()
-        def frameworkService = new FrameworkService()
-        testService.frameworkService = frameworkService
-
-        t: {
-            //test regex and optional value
-            assertTrue testService.validateInputOptionValues(se, [:])
-            ScheduledExecution se2 = new ScheduledExecution()
-            se2.addToOptions(new Option(name: 'test1', enforced: false, multivalued: true, delimiter: ","))
-            final opt2 = new Option(name: 'test2', enforced: true, multivalued: true, delimiter: ' ')
-            opt2.addToValues('a')
-            opt2.addToValues('b')
-            opt2.addToValues('abc')
-            se2.addToOptions(opt2)
-            assertNotNull(se2.options)
-            assertEquals(2, se2.options.size())
-
-            final map = testService.parseJobOptsFromString(se2, "-test1 blah")
-            assertNotNull map
-            assertNotNull map['test1']
-            assertTrue map['test1'] instanceof Collection
-            assertEquals 1, map.size()
-            assertEquals "wrong value: ${map['test1']}",1, map['test1'].size()
-            assertEquals ("Wrong value: ${map.get('test1')}",["blah"], map.get('test1'))
-
-            final map2 = testService.parseJobOptsFromString(se2, "-test1 blah,zah")
-            assertNotNull map2
-            assertNotNull map2['test1']
-            assertTrue map2['test1'] instanceof Collection
-            assertEquals 1, map2.size()
-            assertEquals 2, map2['test1'].size()
-            assertEquals (['blah','zah'], map2.get('test1'))
-
-            final map3 = testService.parseJobOptsFromString(se2, "-test2 'blah zah nah'")
-            assertNotNull map3
-            assertNotNull map3['test2']
-            assertTrue map3['test2'] instanceof Collection
-            assertEquals 1, map3.size()
-            assertEquals 3, map3['test2'].size()
-            assertEquals (['blah','zah','nah'], map3.get('test2'))
-        }
-    }
 
     void testGenerateJobArgline() {
         ScheduledExecution se = new ScheduledExecution()
@@ -1789,7 +1388,7 @@ class ExecutionServiceTests  {
         assertNull(exec2.status)
         assertEquals(2,Execution.findAll().size())
         assertEquals(1,Execution.findAllByDateCompletedAndServerNodeUUID(null, null).size())
-        testService.cleanupRunningJobs(null)
+        testService.cleanupRunningJobs((String)null)
         exec1.refresh()
         assertNotNull(exec1.dateCompleted)
         assertEquals("false", exec1.status)

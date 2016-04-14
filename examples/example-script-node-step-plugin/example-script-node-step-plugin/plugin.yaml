@@ -1,6 +1,6 @@
 name: example script-based node step plugin
 version: 1.0
-rundeckPluginVersion: 1.0
+rundeckPluginVersion: 1.1
 author: Greg Schueler
 date: 12/7/12
 providers:
@@ -8,6 +8,7 @@ providers:
     service: WorkflowNodeStep
     title: Example Script Node Step
     description: Does nothing
+    mergeEnvironment: true
     plugin-type: script
     script-interpreter: /bin/bash
     script-file: nodestep.sh

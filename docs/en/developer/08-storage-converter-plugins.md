@@ -4,15 +4,15 @@
 
 ## About 
 
-Storage converters can modify file contents and metadata uploaded to the [SSH Key Storage](../administration/ssh-key-storage.html) via the [SSH Key Storage API](../api/index.html#ssh-key-storage).
+Storage converters can modify file contents and metadata uploaded to the [Key Storage](../administration/key-storage.html) via the [Key Storage API](../api/index.html#key-storage).
 
 When installed, Storage Converter plugins can be configured to apply to all storage requests for a certain Path, or matching a certain metadata selector.  This lets you apply plugins to only a subset of storage requests.
 
-A typical example is to apply some form of encryption to the [SSH Key Storage](../administration/ssh-key-storage.html) stored under the `/ssh-key` path.  In this case you can also have the plugin apply only to Private keys, by using the metadata selector.
+A typical example is to apply some form of encryption to the [Key Storage](../administration/key-storage.html) stored under the `/keys` path.  In this case you can also have the plugin apply only to Private keys, by using the metadata selector.
 
 ## Configuring
 
-See: [Configuring the Storage Converter Plugin](../administration/ssh-key-storage.html#configuring-the-storage-converter-plugin).
+See: [Configuring the Storage Converter Plugin](../administration/key-storage.html#configuring-the-storage-converter-plugin).
 
 ## Java Plugin Type
 

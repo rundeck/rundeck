@@ -2,8 +2,8 @@ package com.dtolabs.rundeck.app.internal.logging
 
 import com.dtolabs.rundeck.core.execution.Contextual
 import com.dtolabs.rundeck.core.logging.LogLevel
-import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
+import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 
 /**
  * Thread local buffered log output
@@ -14,61 +14,107 @@ class ThreadBoundLogOutputStream extends OutputStream {
     StreamingLogWriter logger
     LogLevel level
     Contextual contextual
-    ThreadLocal<Date> time = new ThreadLocal<Date>()
-    ThreadLocal<Map> context = new ThreadLocal<Map>()
-    ThreadLocal<Boolean> crchar = new ThreadLocal<Boolean>()
-    ThreadLocal<ByteArrayOutputStream> baos = new ThreadLocal<ByteArrayOutputStream>()
+    ThreadLocal<LogEventBuffer> buffer = new ThreadLocal<LogEventBuffer>()
+    InheritableThreadLocal<LogEventBufferManager> manager = new InheritableThreadLocal<LogEventBufferManager>()
 
+    /**
+     * Create a new thread local buffered stream
+     * @param logger logger for events
+     * @param level loglevel
+     * @param contextual source of context
+     */
     ThreadBoundLogOutputStream(StreamingLogWriter logger, LogLevel level, Contextual contextual) {
         this.logger = logger
         this.level = level
         this.contextual = contextual
     }
 
+    /**
+     * Install a new inherited thread local buffer manager and return it
+     * @return manager
+     */
+    public LogEventBufferManager installManager() {
+        def manager = LogEventBufferManager.createManager()
+        this.manager.set(manager)
+        return manager
+    }
+
+    /**
+     * If no manager is set, install one, otherwise return the existing one
+     * @return
+     */
+    LogEventBufferManager getOrCreateManager() {
+        if (null == manager.get()) {
+            installManager()
+        }
+        return manager.get()
+    }
+
+    /**
+     * Write output
+     * @param b
+     */
     public void write(final int b) {
-        if (baos.get() == null) {
-            createEventBuffer()
-        }
-        if (b == '\n') {
+        def log = getOrReset()
+        if (b == (char) '\n') {
             flushEventBuffer();
-            crchar.set(false);
-        } else if (b == '\r') {
-            crchar.set(true);
+        } else if (b == (char) '\r') {
+            log.crchar = true
         } else {
-            if (crchar.get()) {
+            if (log.crchar) {
                 flushEventBuffer()
-                crchar.set(false);
-                createEventBuffer()
+                resetEventBuffer()
             }
-            baos.get().write((byte) b)
+            log.baos.write((byte) b)
         }
 
     }
 
-    private void createEventBuffer() {
-        time.set(new Date())
-        context.set(contextual.getContext())
-        baos.set(new ByteArrayOutputStream())
+    /**
+     * get the thread's event buffer, reset it if it is empty
+     * @return
+     */
+    private LogEventBuffer getOrReset() {
+        if (buffer.get() == null || buffer.get().isEmpty()) {
+            resetEventBuffer()
+        }
+        return buffer.get()
     }
 
+    /**
+     * reset existing or create a new buffer with the current context
+     */
+    private void resetEventBuffer() {
+        if (!buffer.get()) {
+            buffer.set(getOrCreateManager().create(contextual.getContext()))
+        } else {
+            buffer.get().reset(contextual.getContext())
+        }
+    }
+
+    /**
+     * emit a log event for the current contents of the buffer
+     */
     private void flushEventBuffer() {
-        def buffer = baos.get()
-        logger.addEvent(
-                new DefaultLogEvent(
-                        loglevel: level,
-                        metadata: context.get() ?: [:],
-                        message: buffer ? new String(buffer.toByteArray()) : '',
-                        datetime: time.get() ?: new Date(),
-                        eventType: LogUtil.EVENT_TYPE_LOG)
-        )
-        time.set(null)
-        context.set(null)
-        baos.set(null)
+        def logstate = buffer.get()
+        logger.addEvent(logstate.createEvent(level))
+        logstate.clear()
+    }
+
+    /**
+     * Flush all event buffers managed by the current manager
+     */
+    public void flushBuffers() {
+        getOrCreateManager().flush(logger, level)
     }
 
     public void flush() {
-        if (baos.get() != null && baos.get().size() > 0) {
-            flushEventBuffer();
-        }
+    }
+
+    @Override
+    void close() throws IOException {
+        flushBuffers()
+
+        super.close()
     }
 }

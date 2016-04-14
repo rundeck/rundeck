@@ -14,6 +14,7 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="home"/>
     <title><g:appTitle/></title>
+    <asset:javascript src="menu/home.js"/>
 
 </head>
 <body>

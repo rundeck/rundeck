@@ -82,9 +82,14 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
         executionContext.getLogger().log(3, "[" + getProvider().getName() + "] executing: " + Arrays.asList(
             finalargs));
 
+        Map<String, String> envMap = new HashMap<>();
+        if(isMergeEnvVars()){
+            envMap.putAll(getScriptExecHelper().loadLocalEnvironment());
+        }
+        envMap.putAll(DataContextUtils.generateEnvVarsFromContext(localDataContext));
         return getScriptExecHelper().runLocalCommand(
                 finalargs,
-                DataContextUtils.generateEnvVarsFromContext(localDataContext),
+                envMap,
                 null,
                 outputStream,
                 errorStream

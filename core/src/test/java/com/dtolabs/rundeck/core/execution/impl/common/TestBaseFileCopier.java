@@ -109,6 +109,11 @@ public class TestBaseFileCopier extends TestCase {
         }
 
         @Override
+        public IProjectInfo getInfo() {
+            return null;
+        }
+
+        @Override
         public List<Map<String, Object>> listResourceModelConfigurations() {
             return null;
         }

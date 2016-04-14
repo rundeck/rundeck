@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.common.OrchestratorConfig;
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService;
@@ -85,18 +86,26 @@ public class OrchestratorNodeDispatcher implements NodeDispatcher {
         try {
             
             plugin = loader.loadProvider(orchestratorService, config.getType());
-        } catch (ProviderCreationException e) {
-            throw new DispatcherException(e);
         } catch (ProviderLoaderException e) {
             throw new DispatcherException(e);
         }
         
         
         Description description = PluginAdapterUtility.buildDescription(plugin, DescriptionBuilder.builder());
-        
-        final PropertyResolver resolver =  PropertyResolverFactory.createFrameworkProjectRuntimeResolver(framework, 
-            context.getFrameworkProject(), config.getConfig(), ServiceNameConstants.Orchestrator, config.getType());
-        
+
+        //replace embedded properties
+
+        Map<String, Object> instanceProperties = null;
+        if (config.getConfig() != null) {
+            instanceProperties = DataContextUtils.replaceDataReferences(config.getConfig(), context.getDataContext());
+        }
+        final PropertyResolver resolver = PropertyResolverFactory.createFrameworkProjectRuntimeResolver(
+                framework,
+                context.getFrameworkProject(),
+                instanceProperties,
+                ServiceNameConstants.Orchestrator,
+                config.getType()
+        );
         PluginAdapterUtility.configureProperties(resolver, description, plugin, PropertyScope.InstanceOnly);        
         
         INodeSet nodes = context.getNodes();
