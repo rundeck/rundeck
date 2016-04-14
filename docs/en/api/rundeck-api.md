@@ -71,6 +71,7 @@ Changes introduced by API Version number:
         - and `?serverNodeUUIDFilter=[uuid]` returns scheduled jobs owned by the given cluster member
     - [`/api/17/scheduler/takeover`][/api/V/scheduler/takeover]
         - Response now includes previous scheduler owner UUID for jobs.
+    - [`/api/17/scheduler/takeover`][/api/V/scheduler/takeover] - Can specify a single job ID to takeover.
 
 **Version 16**:
 
@@ -1133,6 +1134,8 @@ This endpoint can take over the schedule of certain jobs based on the input:
 Additionally, you can specify a `project` name to take over only jobs matching
 the given project name, in combination with the server options.
 
+Alternately, specify a job ID to takeover only a single Job's schedule.
+
 **Request**
 
     PUT /api/14/scheduler/takeover
@@ -1144,10 +1147,12 @@ Either XML or JSON request.
 XML Document containing:
 
 * `<takeoverSchedule>` top level element
-  * required `<server>` element, with one of required attributes:
+  * optional `<server>` element, with one of required attributes:
     * `uuid` server UUID to take over from
     * `all` value of `true` to take over from all servers
   * optional `<project>` element, required attribute: `name`
+  * optional `<job`> element, with attribute:
+    * `id` Job UUID to take over.
 
 Example for a single server UUID:
 
@@ -1174,16 +1179,26 @@ Example for all servers and a specific project:
 </takeoverSchedule>
 ~~~
 
+Example for a single Job:
+
+~~~ {.xml}
+<takeoverSchedule>
+    <job id="[UUID]"/>
+</takeoverSchedule>
+~~~
+
 **Note**: The `<server>` element can be the root of the document request for backwards compatibility.
 
 `Content-Type: application/json`:
 
 A JSON object.
 
-* required `server` entry, with one of these required entries:
+* optional `server` entry, with one of these required entries:
     * `uuid` server UUID to take over from
     * `all` value of `true` to take over from all servers
 * optional `project` entry, specifying a project name
+* optional `job` entry, with required entry:
+    * `id` Job UUID
 
 ~~~ {.json}
 {
@@ -1192,6 +1207,16 @@ A JSON object.
     "all": true
   },
   "project": "[PROJECT]"
+}
+~~~
+
+Specify a job id:
+
+~~~ {.json}
+{
+  "job": {
+    "id": "[UUID]"
+  }
 }
 ~~~
 
@@ -1207,6 +1232,8 @@ If request was XML, then Standard API response containing the following addition
         *  `@uuid` - requested server UUID to take over, if specifed in the request
         *  `@all` - `true` if requested
     *  `project` - name of project, if specified in request
+    *  `job`
+        *  `@id` - requested job UUID to take over, if specifed in the request
     *  `jobs` - set of successful and failed jobs taken over
         *  `successful`/`failed` - job set
             *  `@count` number of jobs in the set

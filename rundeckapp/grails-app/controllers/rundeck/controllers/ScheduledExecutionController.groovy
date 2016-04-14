@@ -3505,11 +3505,13 @@ class ScheduledExecutionController  extends ControllerBase{
         String serverUUID=null
         boolean serverAll=false
         String project=null
+        def jobid=null
         if(request.format=='json' ){
             def data= request.JSON
             serverUUID = data?.server?.uuid?:null
             serverAll = data?.server?.all?true:false
             project = data?.project?:null
+            jobid = data?.job?.id?:null
         }else if(request.format=='xml' || !request.format){
             def data= request.XML
             if(data.name()=='server'){
@@ -3519,18 +3521,19 @@ class ScheduledExecutionController  extends ControllerBase{
                 serverUUID = data.server?.'@uuid'?.text()?:null
                 serverAll = data.server?.'@all'?.text()=='true'
                 project = data.project?.'@name'?.text()?:null
+                jobid = data.job?.'@id'?.text()?:null
             }
         }else{
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.invalid.request',
                     args: ['Expected content of type text/xml or text/json, content was of type: ' + request.format]])
         }
-        if (!serverUUID && !serverAll) {
+        if (!serverUUID && !serverAll&& !jobid) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.invalid.request', args: ['Expected server.uuid or server.all in request.']])
+                    code: 'api.error.invalid.request', args: ['Expected server.uuid or server.all or job.id in request.']])
         }
 
-        def reclaimMap=scheduledExecutionService.reclaimAndScheduleJobs(serverUUID,serverAll,project)
+        def reclaimMap=scheduledExecutionService.reclaimAndScheduleJobs(serverUUID,serverAll,project,jobid)
         def successCount=reclaimMap.findAll {it.value.success}.size()
         def failedCount = reclaimMap.size() - successCount
         //TODO: retry for failed reclaims?
@@ -3573,6 +3576,9 @@ class ScheduledExecutionController  extends ControllerBase{
                         }
                         if(project){
                             delegate.'project'(name:project)
+                        }
+                        if(jobid){
+                            delegate.'job'(id:jobid)
                         }
                         delegate.'jobs'(total: reclaimMap.size()){
                             delegate.'successful'(count: successCount) {

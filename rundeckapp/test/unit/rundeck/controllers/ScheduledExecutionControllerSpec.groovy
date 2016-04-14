@@ -161,7 +161,7 @@ class ScheduledExecutionControllerSpec extends Specification {
             1 * isClusterModeEnabled()>>true
         }
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
-            1 * reclaimAndScheduleJobs(requestUUID,allserver,project)>>[:]
+            1 * reclaimAndScheduleJobs(requestUUID,allserver,project,jobid)>>[:]
         }
         when:
         request.method='PUT'
@@ -173,13 +173,14 @@ class ScheduledExecutionControllerSpec extends Specification {
         response.status==200
 
         where:
-        requestXml                                                                                              | requestUUID | allserver | project
-        "<server uuid='${TEST_UUID1}' />".toString()                                                            | TEST_UUID1  | false     | null
-        "<server all='true' />".toString()                                                                      | null        | true      | null
-        "<takeoverSchedule><server uuid='${TEST_UUID1}' /></takeoverSchedule>".toString()                       | TEST_UUID1  | false     | null
-        "<takeoverSchedule><server all='true' /></takeoverSchedule>".toString()                                 | null        | true      | null
-        '<takeoverSchedule><server all="true" /><project name="asdf"/></takeoverSchedule>'                      | null        | true      | 'asdf'
-        "<takeoverSchedule><server uuid='${TEST_UUID1}' /><project name='asdf'/></takeoverSchedule>".toString() | TEST_UUID1  | false     | 'asdf'
+        requestXml                                                                                              | requestUUID | allserver | project | jobid
+        "<server uuid='${TEST_UUID1}' />".toString()                                                            | TEST_UUID1  | false     | null    | null
+        "<server all='true' />".toString()                                                                      | null        | true      | null    | null
+        "<takeoverSchedule><server uuid='${TEST_UUID1}' /></takeoverSchedule>".toString()                       | TEST_UUID1  | false     | null    | null
+        "<takeoverSchedule><server all='true' /></takeoverSchedule>".toString()                                 | null        | true      | null    | null
+        '<takeoverSchedule><server all="true" /><project name="asdf"/></takeoverSchedule>'                      | null        | true      | 'asdf'  | null
+        '<takeoverSchedule><server all="true" /><job id="ajobid"/></takeoverSchedule>'                      | null        | true      | 'asdf'  | 'ajobid'
+        "<takeoverSchedule><server uuid='${TEST_UUID1}' /><project name='asdf'/></takeoverSchedule>".toString() | TEST_UUID1  | false     | 'asdf'  | null
     }
 
 

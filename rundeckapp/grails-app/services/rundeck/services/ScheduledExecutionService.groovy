@@ -343,28 +343,42 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      *
      * @return Map of job ID to boolean, indicating whether the job was claimed
      */
-    def Map claimScheduledJobs(String toServerUUID, String fromServerUUID=null, boolean selectAll=false, String projectFilter=null) {
-        Map claimed=[:]
-        def queryFromServerUUID=fromServerUUID
-        def queryProject=projectFilter
+    def Map claimScheduledJobs(
+            String toServerUUID,
+            String fromServerUUID = null,
+            boolean selectAll = false,
+            String projectFilter = null,
+            String jobid = null
+    )
+    {
+        Map claimed = [:]
+        def queryFromServerUUID = fromServerUUID
+        def queryProject = projectFilter
         ScheduledExecution.withTransaction {
             ScheduledExecution.withCriteria {
-                eq('scheduled',true)
-                if(!selectAll){
-                    if(queryFromServerUUID){
-                        eq('serverNodeUUID',queryFromServerUUID)
-                    }else{
+                eq('scheduled', true)
+                if (!selectAll) {
+                    if (queryFromServerUUID) {
+                        eq('serverNodeUUID', queryFromServerUUID)
+                    } else {
                         isNull('serverNodeUUID')
                     }
-                }else{
-                    ne('serverNodeUUID',toServerUUID)
+                } else {
+                    ne('serverNodeUUID', toServerUUID)
                 }
-                if(queryProject){
-                    eq('project',queryProject)
+                if (queryProject) {
+                    eq('project', queryProject)
+                }
+                if(jobid){
+                    eq('uuid',jobid)
                 }
             }.each { ScheduledExecution se ->
-                def orig=se.serverNodeUUID
-                claimed[se.extid]=[success:claimScheduledJob(se, toServerUUID, queryFromServerUUID),job:se,previous:orig]
+                def orig = se.serverNodeUUID
+                claimed[se.extid] = [success: claimScheduledJob(
+                        se,
+                        toServerUUID,
+                        queryFromServerUUID
+                ), job                      : se, previous: orig]
             }
         }
         claimed
@@ -438,8 +452,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param fromServerUUID server UUID to claim scheduling of jobs from
      * @return map of job ID to [success:boolean, job:ScheduledExecution] indicating reclaim was successful or not.
      */
-    def reclaimAndScheduleJobs(String fromServerUUID, boolean all=false, String project=null){
-        def claimed=claimScheduledJobs(frameworkService.getServerUUID(), fromServerUUID, all, project)
+    def reclaimAndScheduleJobs(String fromServerUUID, boolean all=false, String project=null, String id=null){
+        def claimed=claimScheduledJobs(frameworkService.getServerUUID(), fromServerUUID, all, project, id)
         rescheduleJobs(frameworkService.getServerUUID())
         claimed
     }
