@@ -1,6 +1,7 @@
 package rundeck
 
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
+import grails.util.Environment
 import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
 import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
@@ -1488,6 +1489,10 @@ ansi-bg-default'''))
         }
         if (glyphiconSet.contains(attrs.name)) {
             out << "<i class=\"glyphicon glyphicon-${attrs.name}\"></i>"
+        }else{
+            if(Environment.current==Environment.DEVELOPMENT) {
+                throw new Exception("icon name not recognized: ${attrs.name}")
+            }
         }
     }
 }

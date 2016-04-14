@@ -125,7 +125,16 @@
                             <g:if test="${scheduledExecution.scheduled}">
                             <td class="scheduletime">
                                 <g:if test="${scheduledExecution.scheduled && nextExecution}">
-                                    <i class="glyphicon glyphicon-time"></i>
+                                    <g:if test="${serverClusterNodeUUID && !remoteClusterNodeUUID}">
+                                        <span class="text-warning has_tooltip" title="${message(code:"scheduledExecution.scheduled.cluster.orphan.title")}"
+                                              data-placement="right"
+                                        >
+                                            <g:icon name="alert"/>
+                                        </span>
+                                    </g:if>
+                                    <g:else>
+                                        <g:icon name="time"/>
+                                    </g:else>
                                     <span title="${remoteClusterNodeUUID ? g.message(code: "scheduled.to.run.on.server.0", args:[remoteClusterNodeUUID]) : ''} at ${g.relativeDate(atDate: nextExecution)}">
                                         <g:relativeDate elapsed="${nextExecution}" untilClass="timeuntil"/>
                                     </span>
