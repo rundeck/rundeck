@@ -769,6 +769,7 @@ class ScheduledExecutionControllerTests  {
             authorizeProjectJobAll { AuthContext authContext, ScheduledExecution job, Collection actions, String project ->
                 return true
             }
+            isClusterModeEnabled{-> false }
             authResourceForProject{p->null}
             authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
             projects { return [] }
@@ -2286,6 +2287,7 @@ class ScheduledExecutionControllerTests  {
             authorizeProjectJobAll { AuthContext authContext, ScheduledExecution job, Collection actions, String project ->
                 return true
             }
+            isClusterModeEnabled{-> false }
             authResourceForProject{p->null}
             authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
             projects { return [] }
@@ -2375,6 +2377,7 @@ class ScheduledExecutionControllerTests  {
             authorizeProjectJobAll { AuthContext authContext, ScheduledExecution job, Collection actions, String project ->
                 return true
             }
+            isClusterModeEnabled{-> false }
             filterNodeSet{NodesSelector selector, String project->
                 null
             }
@@ -2471,6 +2474,7 @@ class ScheduledExecutionControllerTests  {
             authorizeProjectJobAll { AuthContext authContext, ScheduledExecution job, Collection actions, String project ->
                 return true
             }
+            isClusterModeEnabled{-> false }
             filterNodeSet{NodesSelector selector, String project->
                 null
             }
@@ -2567,6 +2571,7 @@ class ScheduledExecutionControllerTests  {
             authorizeProjectJobAll { AuthContext authContext, ScheduledExecution job, Collection actions, String project ->
                 return true
             }
+            isClusterModeEnabled{-> false }
             filterNodeSet{NodesSelector selector, String project->
                 null
             }
@@ -2662,6 +2667,7 @@ class ScheduledExecutionControllerTests  {
             authorizeProjectJobAll { AuthContext authContext, ScheduledExecution job, Collection actions, String project ->
                 return true
             }
+            isClusterModeEnabled{-> false }
             filterNodeSet{NodesSelector selector, String project->
                 null
             }
@@ -2777,6 +2783,7 @@ class ScheduledExecutionControllerTests  {
             authorizeProjectJobAll { AuthContext authContext, ScheduledExecution job, Collection actions, String project ->
                 return true
             }
+            isClusterModeEnabled{-> false }
             filterNodeSet(1){NodesSelector selector, String project->
                 selector.acceptNode(new NodeEntryImpl("nodeb"))?testNodeSet:testNodeSetB
             }
