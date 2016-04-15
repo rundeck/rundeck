@@ -1,11 +1,13 @@
-Release 2.6.5
+Release 2.6.6
 ===========
 
 Date: 2016-04-15
 
-Name: <span style="color: forestgreen"><span class="glyphicon glyphicon-paperclip"></span> "cafe bonbon forestgreen paperclip"</span>
+Name: <span style="color: fuchsia"><span class="glyphicon glyphicon-phone"></span> "cafe bonbon fuchsia phone"</span>
 
 ## Notes
+
+(Release 2.6.5 was missing some changes noted here, so 2.6.6 includes those changes. 2.6.5 release notes are repeated here.)
 
 Primarily bug fixes and performance improvements.
 
