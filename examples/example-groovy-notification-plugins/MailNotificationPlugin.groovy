@@ -127,14 +127,14 @@ def sendMail={Closure callable->
 
     //create a builder and use it as the delegate of the closure
     //which will build the message
-    def mbuilder = new org.grails.mail.MailMessageBuilder(null,sender)
+    def mbuilder = new grails.plugin.mail.MailMessageBuilder(sender,new ConfigObject())
     callable.delegate = mbuilder
     callable.resolveStrategy = Closure.DELEGATE_FIRST
     callable.call()
 
     //send the message
-    def message = mbuilder.createMessage()
-    message.sentDate = new Date()
+    def message = mbuilder.finishMessage()
+    
     if(message instanceof MimeMailMessage) {
         MimeMailMessage msg = message
         MimeMessage mimeMsg = msg.getMimeMessage()
