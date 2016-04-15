@@ -259,11 +259,7 @@ function RDNode(name, steps,flow){
         }
     };
     self.currentStepFromData=function(data){
-        if(self.currentStep()){
-            ko.mapping.fromJS(data,{},self.currentStep());
-        }else{
-            self.currentStep(new RDNodeStep(data, self, flow));
-        }
+        self.currentStep(new RDNodeStep(data, self, self.flow));
     };
     self.updateSummary=function(nodesummary){
         if(nodesummary.lastUpdated && self.lastUpdated()==nodesummary.lastUpdated
