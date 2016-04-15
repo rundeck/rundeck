@@ -11,6 +11,7 @@ import rundeck.services.ApiService
 import rundeck.services.FrameworkService
 import rundeck.services.ScheduledExecutionService
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import javax.security.auth.Subject
 
@@ -148,7 +149,8 @@ class ScheduledExecutionControllerSpec extends Specification {
         response.status==200
     }
 
-    def "api scheduler takeover XML input"(String requestXml, String requestUUID, boolean allserver, String project){
+    @Unroll
+    def "api scheduler takeover XML input"(String requestXml, String requestUUID, boolean allserver, String project, String jobid){
         given:
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -162,6 +164,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         }
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             1 * reclaimAndScheduleJobs(requestUUID,allserver,project,jobid)>>[:]
+            0 * _(*_)
         }
         when:
         request.method='PUT'
@@ -179,7 +182,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         "<takeoverSchedule><server uuid='${TEST_UUID1}' /></takeoverSchedule>".toString()                       | TEST_UUID1  | false     | null    | null
         "<takeoverSchedule><server all='true' /></takeoverSchedule>".toString()                                 | null        | true      | null    | null
         '<takeoverSchedule><server all="true" /><project name="asdf"/></takeoverSchedule>'                      | null        | true      | 'asdf'  | null
-        '<takeoverSchedule><server all="true" /><job id="ajobid"/></takeoverSchedule>'                      | null        | true      | 'asdf'  | 'ajobid'
+        '<takeoverSchedule><server all="true" /><job id="ajobid"/></takeoverSchedule>'                          | null        | true      | null    | 'ajobid'
         "<takeoverSchedule><server uuid='${TEST_UUID1}' /><project name='asdf'/></takeoverSchedule>".toString() | TEST_UUID1  | false     | 'asdf'  | null
     }
 
