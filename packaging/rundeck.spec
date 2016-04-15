@@ -93,7 +93,7 @@ fi
 /var/lib/rundeck/cli/commons-beanutils-1.8.3.jar
 /var/lib/rundeck/cli/commons-cli-1.0.jar
 /var/lib/rundeck/cli/commons-codec-1.5.jar
-/var/lib/rundeck/cli/commons-collections-3.2.1.jar
+/var/lib/rundeck/cli/commons-collections-3.2.2.jar
 /var/lib/rundeck/cli/commons-httpclient-3.0.1.jar
 /var/lib/rundeck/cli/commons-lang-2.6.jar
 /var/lib/rundeck/cli/commons-logging-1.1.1.jar
