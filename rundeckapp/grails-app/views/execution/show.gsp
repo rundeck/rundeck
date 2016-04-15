@@ -593,7 +593,7 @@
         </div>
             <div class="row row-space clearfix">
                 <div class="col-sm-12">
-
+                    <g:render template="/common/messages"/>
                     <ul class="nav nav-tabs">
                         <li id="tab_link_summary" class="active">
                             <a href="#summary" data-toggle="tab"><g:message code="execution.page.show.tab.Summary.title" /></a>
