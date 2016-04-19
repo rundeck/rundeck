@@ -370,8 +370,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
      * @throws Exception action error
      */
     public static void main(final String[] args) throws Exception {
-        PropertyConfigurator.configure(new File(Constants.getFrameworkConfigFile(),
-            "log4j.properties").getAbsolutePath());
+        PropertyConfigurator.configure(Constants.getLog4jPropertiesFile().getAbsolutePath());
         final JobsTool tool = new JobsTool(createDefaultDispatcherConfig(),new DefaultCLIToolLogger());
         tool.setShouldExit(true);
         int exitCode = 1; //pessimistic initial value

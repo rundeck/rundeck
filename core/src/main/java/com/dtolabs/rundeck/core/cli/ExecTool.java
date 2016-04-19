@@ -524,13 +524,7 @@ public class ExecTool implements CLITool, IDispatchedScript, CLILoggerParams {
      * @throws Exception on error
      */
     public static void main(final String[] args) throws Exception {
-
-        /**
-         * Initialize the log4j logger
-         */
-        File configDir = Constants.getFrameworkConfigFile();
-        PropertyConfigurator.configure(new File(configDir,
-                "log4j.properties").getAbsolutePath());
+        PropertyConfigurator.configure(Constants.getLog4jPropertiesFile().getAbsolutePath());
         final ExecTool ExecTool = new ExecTool( BaseTool.createDefaultDispatcherConfig());
         ExecTool.shouldExit = true;
         ExecTool.run(args);
