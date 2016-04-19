@@ -149,6 +149,7 @@
                 <asset:image src="spinner-gray.gif" width="32px" height="32px"/>
             </div>
             </div>
+            <div data-bind="if: projectCount()>0">
             <div class="list-group-item">
                 <div class="row">
                     <div class="col-sm-12  form-inline">
@@ -172,6 +173,7 @@
                         </div>
                     </div>
                 </div>
+            </div>
             </div>
             <div data-bind="foreach: { data: searchedProjects(), as: 'project' } ">
             %{--Template for project details--}%

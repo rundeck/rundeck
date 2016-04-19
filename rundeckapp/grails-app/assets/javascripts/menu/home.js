@@ -353,7 +353,7 @@ function init() {
         projectNames: projectNamesData.projectNames.sort(),
         projectNamesTotal: projectNamesData.projectNamesTotal || 0
     },statsdata));
-    homedata.loadedProjectNames(projectNamesData.projectNames.length > 0 && projectNamesData.projectNames.length == projectNamesData.projectNamesTotal);
+    homedata.loadedProjectNames(projectNamesData.projectNames.length == projectNamesData.projectNamesTotal);
     ko.applyBindings(homedata);
 
     homedata.pagingMax(pageparams.pagingInitialMax || 15);
