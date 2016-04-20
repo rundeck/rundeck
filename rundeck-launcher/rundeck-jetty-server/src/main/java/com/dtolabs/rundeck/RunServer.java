@@ -55,6 +55,7 @@ public class RunServer {
     private static final String SYS_PROP_ROLE_CLASS_NAMES = "loginmodule.role.classnames";
     public static final String SYS_PROP_WEB_CONTEXT = "server.web.context";
     File configdir;
+    File workdir;
     String loginmodulename;
     String roleclassnames;
     private boolean useJaas;
@@ -73,6 +74,7 @@ public class RunServer {
     private String appContext;
     private static final String RUNDECK_SERVER_SERVER_DIR = "rundeck.server.serverDir";
     private static final String RUNDECK_SERVER_CONFIG_DIR = "rundeck.server.configDir";
+    private static final String RUNDECK_SERVER_WORK_DIR = "rundeck.server.workDir";
 
     public static void main(final String[] args) throws Exception {
         new RunServer().run(args);
@@ -257,7 +259,7 @@ public class RunServer {
             throw new RuntimeException("expected expanded webapp at location: " + webapp.getAbsolutePath());
         }
         final WebAppContext context = new WebAppContext(webapp.getAbsolutePath(), appContext);
-        context.setTempDirectory(new File(serverdir, "work"));
+        context.setTempDirectory(workdir);
         context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false");
         return context;
     }
@@ -277,6 +279,11 @@ public class RunServer {
             configdir = new File(System.getProperty(RUNDECK_SERVER_CONFIG_DIR));
         } else {
             configdir = new File(serverdir, "config");
+        }
+        if (null != System.getProperty(RUNDECK_SERVER_WORK_DIR)) {
+            workdir = new File(System.getProperty(RUNDECK_SERVER_WORK_DIR));
+        } else {
+            workdir = new File(serverdir, "work");
         }
         if(null!=System.getProperty(RUNDECK_SSL_CONFIG)){
             final Properties sslProperties = new Properties();
