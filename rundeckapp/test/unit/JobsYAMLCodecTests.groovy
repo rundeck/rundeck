@@ -105,7 +105,7 @@ public class JobsYAMLCodecTests  {
             assertEquals "wrong option values[0]", "a", doc[0].options[0].values[0]
             assertEquals "wrong option values[1]", "b", doc[0].options[0].values[1]
 
-            assertEquals "incorrect dispatch threadcount", '1', doc[0].nodefilters.dispatch.threadcount
+            assertEquals "incorrect dispatch threadcount", 1, doc[0].nodefilters.dispatch.threadcount
             assertTrue "incorrect dispatch keepgoing", doc[0].nodefilters.dispatch.keepgoing
             assertTrue "incorrect dispatch excludePrecedence", doc[0].nodefilters.dispatch.excludePrecedence
             assertNotNull "missing nodefilters include", doc[0].nodefilters.filter
