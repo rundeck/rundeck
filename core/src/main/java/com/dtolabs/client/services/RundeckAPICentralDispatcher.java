@@ -796,6 +796,12 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         if (null == response) {
             throw new CentralDispatcherServerRequestException("Response was null");
         }
+        if (response.getResultCode() < 200 || response.getResultCode() >= 400) {
+            throw new CentralDispatcherServerRequestException("Response was not OK: " +
+                                                              response.getResultCode() +
+                                                              ": " +
+                                                              response.getResponseMessage());
+        }
 
         if (null != response.getResponseMessage()) {
             logger.debug("Response: " + response.getResponseMessage());
