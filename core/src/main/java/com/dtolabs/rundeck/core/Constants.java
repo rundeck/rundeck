@@ -47,6 +47,8 @@ public final class Constants {
 
     // java.home
     public static final String JAVA_HOME = System.getProperty("java.home");
+    public static final String CLI_LOG4J_PROPERTIES = System.getProperty("rundeck.cli.log4j.config",
+                                                                         "cli-log4j.properties");
 
     /**
      * @return RDECK_BASE, base directory patch for instance of client, equivalent to ${rdeck.base}
@@ -94,7 +96,7 @@ public final class Constants {
      * @param rdeck_base Ctl Base directory
      */
     public static String getLog4jProperties(final String rdeck_base) {
-        return getFrameworkConfigDir(rdeck_base) + FILE_SEP + "log4j.properties";
+        return getFrameworkConfigDir(rdeck_base) + FILE_SEP + CLI_LOG4J_PROPERTIES;
     }
 
     public static String getLog4jProperties() {

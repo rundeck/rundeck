@@ -80,7 +80,7 @@ public class Setup implements CLIToolLogger {
         "admin.aclpolicy",
         "apitoken.aclpolicy",
         "framework.properties",
-        "log4j.properties",
+        "cli-log4j.properties",
         "profile.bat",
         "profile",
         "project.properties"

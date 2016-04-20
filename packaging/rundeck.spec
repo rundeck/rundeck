@@ -152,6 +152,7 @@ getent passwd rundeck >/dev/null || useradd -d /var/lib/rundeck -m -g rundeck ru
 %config(noreplace) /etc/rundeck/admin.aclpolicy
 %config(noreplace) /etc/rundeck/apitoken.aclpolicy
 %config(noreplace) /etc/rundeck/log4j.properties
+%config(noreplace) /etc/rundeck/cli-log4j.properties
 %config(noreplace) /etc/rundeck/profile
 %config(noreplace) /etc/rundeck/project.properties
 
