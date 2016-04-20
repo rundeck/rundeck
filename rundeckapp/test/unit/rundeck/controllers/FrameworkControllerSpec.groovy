@@ -1,5 +1,6 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -641,6 +642,29 @@ class FrameworkControllerSpec extends Specification {
             it['project.description'] == ''
         },_) >> [success:true]
 
+    }
+    def "get project resources, project dne"(){
+        setup:
+        controller.frameworkService=Mock(FrameworkService){
+            1 * getRundeckFramework()
+            1 * existsFrameworkProject('test') >> false
+            0 * _(*_)
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireApi(_,_) >> true
+            1 * renderErrorFormat(_,{map->
+                map.status==404
+            })>>'404result'
+            0 * _(*_)
+        }
+        def query = new ExtNodeFilters(project: 'test')
+        params.project="test"
+        when:
+
+        def result=controller.apiResources(query)
+
+        then:
+        result=='404result'
     }
 
     protected void setupFormTokens(params) {
