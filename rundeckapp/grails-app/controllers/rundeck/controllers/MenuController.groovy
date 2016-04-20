@@ -1256,9 +1256,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     private def cachedSummaryProjectStats(final List projectNames) {
         long now = System.currentTimeMillis()
-        if(null==session.summaryProjectStats || session.summaryProjectStats_expire<now){
-            session.summaryProjectStats=loadSummaryProjectStats(projectNames)
-            session.summaryProjectStats_expire=now+ (60 * 1000)
+        if (null == session.summaryProjectStats ||
+                session.summaryProjectStats_expire < now ||
+                session.summaryProjectStatsSize != projectNames.size()) {
+            session.summaryProjectStats = loadSummaryProjectStats(projectNames)
+            session.summaryProjectStatsSize = projectNames.size()
+            session.summaryProjectStats_expire = now + (60 * 1000)
         }
         return session.summaryProjectStats
     }
@@ -1379,7 +1382,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def durs=[]
         fprojects.each { IRundeckProject project->
             long sumstart=System.currentTimeMillis()
-            summary[project.name]=allsummary[project.name]
+            summary[project.name]=allsummary[project.name]?:[:]
 
             summary[project.name].description= project.hasProperty("project.description")?project.getProperty("project.description"):''
             if(!params.refresh) {
