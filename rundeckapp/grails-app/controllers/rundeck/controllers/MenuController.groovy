@@ -1251,7 +1251,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         session.frameworkProjects = fprojects
         log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
         def stats=cachedSummaryProjectStats(fprojects)
-        render(view: 'home2', model: [projectNames: fprojects,execCount:stats.execCount,recentUsers:stats.recentUsers,recentProjects:stats.recentProjects])
+        render(view: 'home', model: [projectNames: fprojects,execCount:stats.execCount,recentUsers:stats.recentUsers,recentProjects:stats.recentProjects])
     }
 
     private def cachedSummaryProjectStats(final List projectNames) {
