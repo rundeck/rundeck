@@ -44,9 +44,9 @@
 
         <div class="col-sm-4">
             <span class="h3 text-muted">
-                <span data-bind="text: projectNamesTotal"></span>
-                Projects
-                %{--<g:plural code="Project" count="${projCount}" textOnly="${true}"/>--}%
+                <span data-bind="messageTemplate: projectNamesTotal, messageTemplatePluralize:true">
+                    <g:message code="page.home.section.project.title" />|<g:message code="page.home.section.project.title.plural" />
+                </span>
             </span>
         </div>
 
@@ -61,36 +61,36 @@
 
                     <span class="summary-count"
                         data-bind="css: { 'text-info': execCount()>0, 'text-muted': execCount()<1 }">
-                        <span data-bind="text: loaded()?execCount:''"></span>
-                        <span data-bind="if: !loaded()" >...</span>
+                        <span data-bind="text: execCount"></span>
                     </span>
-                    <strong>
-                        Executions
-                        %{--<g:plural code="Execution" count="${execCount}" textOnly="${true}"/>--}%
-                    </strong>
-                    In the last day
+
+                    <span data-bind="messageTemplate: execCount, messageTemplatePluralize:true">
+                        <g:message code="Execution" />|<g:message code="Execution.plural" />
+                    </span>
+
+                    <g:message code="page.home.duration.in.the.last.day" />
 
                 </span>
                 <div data-bind="if: recentProjectsCount()>1">
-                    in
-                    <span class="text-info" data-bind="text: recentProjectsCount()">
 
-                    </span>
+                    <g:message code="in" />
+                    <span class="text-info" data-bind="text: recentProjectsCount()"></span>
+                    <g:message code="Project.plural" />:
 
-                    %{--<g:plural code="Project" count="${projectSummary?.size()}" textOnly="${true}"/>:--}%
-                    Projects:
                     <span data-bind="foreach: recentProjects">
                         <a href="${g.createLink(action:'index',controller:'menu',params:[project:'<$>'])}"
                            data-bind="urlPathParam: $data, text: $data"></a>
                     </span>
                 </div>
                 <div data-bind="if: recentUsersCount()>0">
-                        by
+                        <g:message code="by" />
                         <span class="text-info" data-bind="text: recentUsersCount">
 
                         </span>
-                        users:
-                        %{--<g:plural code="user" count="${userCount}" textOnly="${true}"/>:--}%
+
+                        <span data-bind="messageTemplate: recentUsersCount(),messageTemplatePluralize:true">
+                            <g:message code="user" />:|<g:message code="user.plural" />:
+                        </span>
                         <span data-bind="text: recentUsers().join(', ')">
 
                         </span>
@@ -100,7 +100,7 @@
         <auth:resourceAllowed action="create" kind="project" context="application">
             <div class="col-sm-4">
                 <g:link controller="framework" action="createProject" class="btn  btn-success pull-right">
-                    New Project
+                    <g:message code="page.home.new.project.button.label" />
                     <b class="glyphicon glyphicon-plus"></b>
                 </g:link>
             </div>
@@ -123,14 +123,14 @@
             </auth:resourceAllowed>
             <auth:resourceAllowed action="create" kind="project" context="application" has="true">
                 <div class="jumbotron">
-                    <h1>Welcome to <g:appTitle/></h1>
+                    <h1><g:message code="page.home.welcome.to.app" args="${[g.appTitle()]}"/></h1>
 
                     <p>
-                        To get started, create a new project.
+                        <g:message code="page.home.get.started.message" />
                     </p>
                     <p>
                         <g:link controller="framework" action="createProject" class="btn  btn-success btn-lg ">
-                            New Project
+                            <g:message code="page.home.new.project.button.label" />
                             <b class="glyphicon glyphicon-plus"></b>
                         </g:link>
                     </p>
@@ -145,7 +145,7 @@
         <div class="list-group">
             <div data-bind="if: !loadedProjectNames() && projectCount()<1">
             <div class="list-group-item">
-                Loading Projects
+                <g:message code="page.home.loading.projects" />
                 <asset:image src="spinner-gray.gif" width="32px" height="32px"/>
             </div>
             </div>
@@ -160,14 +160,14 @@
                                 <input
                                         type="search"
                                         name="search"
-                                        placeholder="Project search"
+                                        placeholder="${message(code:"page.home.search.projects.input.placeholder")}"
                                     class="form-control input-sm"
                                     data-bind="value: search"
                                 />
                             </label>
                             <span data-bind="if: search()">
-                            <span data-bind="messageTemplate: searchedProjectsCount(), css: { 'text-info': searchedProjectsCount()>0, 'text-warning': searchedProjectsCount()<1 }">
-                                {0} Projects found
+                            <span data-bind="messageTemplate: searchedProjectsCount(), messageTemplatePluralize:true, css: { 'text-info': searchedProjectsCount()>0, 'text-warning': searchedProjectsCount()<1 }">
+                                <g:message code="page.home.search.project.title" />|<g:message code="page.home.search.project.title.plural" />
                             </span>
                             </span>
                         </div>
@@ -206,21 +206,20 @@
                                         <span data-bind="text: $root.projectForName(project).loaded()?$root.projectForName(project).execCount():''"></span>
                                         <span data-bind="if: !$root.projectForName(project).loaded()" >...</span>
                                 </span>
-                                <strong>
-                                    Executions
-                                    %{--<g:plural code="Execution" count="${data.execCount}" textOnly="${true}"/>--}%
-                                </strong>
-                                In the last day
+                                <span data-bind="messageTemplate: $root.projectForName(project).execCount(), messageTemplatePluralize: true">
+                                    <g:message code="Execution" />|<g:message code="Execution.plural" />
+                                </span>
+                                <g:message code="page.home.duration.in.the.last.day" />
                             </a>
                             <div>
                                 <div data-bind="if: $root.projectForName(project).userCount()>0">
-                                    by
+                                    <g:message code="by" />
                                     <span class="text-info" data-bind="text: $root.projectForName(project).userCount()">
                                     </span>
 
-                                    users
-                                    %{--<g:plural code="user" count="${data.userCount}" textOnly="${true}"/>:--}%
-
+                                    <span data-bind="messageTemplate: $root.projectForName(project).userCount(),messageTemplatePluralize:true">
+                                        <g:message code="user" />:|<g:message code="user.plural" />:
+                                    </span>
 
                                     <span data-bind="text: $root.projectForName(project).userSummary().join(', ')">
 
@@ -251,7 +250,7 @@
                                     <div class="btn-group " data-bind="if: $root.projectForName(project).auth().jobCreate">
 
                                             <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-                                                Create <g:message code="domain.ScheduledExecution.title"/>
+                                                <g:message code="create.job.button.label" />
                                                 <span class="caret"></span>
                                             </button>
                                             <ul class="dropdown-menu pull-right" role="menu">
@@ -259,8 +258,7 @@
                                                        data-bind="urlPathParam: project"
                                                 >
                                                     <i class="glyphicon glyphicon-plus"></i>
-                                                    New <g:message
-                                                        code="domain.ScheduledExecution.title"/>&hellip;
+                                                    <g:message code="new.job.button.label" />
 
                                                 </a>
                                                 </li>
@@ -271,7 +269,7 @@
                                                        data-bind="urlPathParam: project"
                                                        class="">
                                                         <i class="glyphicon glyphicon-upload"></i>
-                                                        Upload Definition&hellip;
+                                                        <g:message code="upload.definition.button.label" />
                                                     </a>
                                                 </li>
                                             </ul>
