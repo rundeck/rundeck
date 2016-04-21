@@ -42,6 +42,21 @@
 <div data-bind="if: projectCount()>0 || !loadedProjectNames()">
     <div class="row row-space">
 
+        <g:if test="${isFirstRun}">
+            <div class="col-sm-12">
+                <div class="alert alert-dismissable alert-welcome">
+                    <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+                    <h1><g:message code="app.firstRun.title" args="${[g.appTitle(),grailsApplication.metadata['build.ident']]}"/></h1>
+                    <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
+                    <span class="text-small text-muted">
+                        <g:message code="you.can.see.this.message.again.by.clicking.the" />
+                        <g:link action="welcome" controller="menu"><g:message code="version.number" /></g:link>
+                        <g:message code="in.the.page.footer" />
+                    </span>
+                </div>
+            </div>
+        </g:if>
+
         <div class="col-sm-4">
             <span class="h3 text-muted">
                 <span data-bind="messageTemplate: projectNamesTotal, messageTemplatePluralize:true">
@@ -123,8 +138,8 @@
             </auth:resourceAllowed>
             <auth:resourceAllowed action="create" kind="project" context="application" has="true">
                 <div class="jumbotron">
-                    <h1><g:message code="page.home.welcome.to.app" args="${[g.appTitle()]}"/></h1>
-
+                    <h2><g:message code="app.firstRun.title" args="${[g.appTitle(),grailsApplication.metadata['build.ident']]}"/></h2>
+                    <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
                     <p>
                         <g:message code="page.home.get.started.message" />
                     </p>
@@ -134,6 +149,11 @@
                             <b class="glyphicon glyphicon-plus"></b>
                         </g:link>
                     </p>
+                    <span class="text-small text-muted">
+                        <g:message code="you.can.see.this.message.again.by.clicking.the" />
+                        <g:link action="welcome" controller="menu"><g:message code="version.number" /></g:link>
+                        <g:message code="in.the.page.footer" />
+                    </span>
                 </div>
             </auth:resourceAllowed>
         </div>

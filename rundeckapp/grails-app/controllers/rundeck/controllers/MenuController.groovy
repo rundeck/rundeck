@@ -1245,13 +1245,38 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     def home() {
+        //first-run html info
+        def isFirstRun=false
+
+        if(configurationService.getBoolean("startup.detectFirstRun",true) &&
+                frameworkService.rundeckFramework.hasProperty('framework.var.dir')) {
+            def vardir = frameworkService.rundeckFramework.getProperty('framework.var.dir')
+            def vers = grailsApplication.metadata['build.ident'].replaceAll('\\s+\\(.+\\)$','')
+            def file = new File(vardir, ".first-run-${vers}")
+            if(!file.exists()){
+                isFirstRun=true
+                file.withWriter("UTF-8"){out->
+                    out.write('#'+(new Date().toString()))
+                }
+            }
+        }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         long start = System.currentTimeMillis()
         def fprojects = frameworkService.projectNames(authContext)
         session.frameworkProjects = fprojects
         log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
         def stats=cachedSummaryProjectStats(fprojects)
-        render(view: 'home', model: [projectNames: fprojects,execCount:stats.execCount,recentUsers:stats.recentUsers,recentProjects:stats.recentProjects])
+
+        render(view: 'home', model: [
+                isFirstRun:isFirstRun,
+                projectNames: fprojects,
+                execCount:stats.execCount,
+                recentUsers:stats.recentUsers,
+                recentProjects:stats.recentProjects
+        ])
+    }
+
+    def welcome(){
     }
 
     private def cachedSummaryProjectStats(final List projectNames) {
