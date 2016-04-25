@@ -1,14 +1,21 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.common.NodesSelector
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.CommandExec
+import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
+import rundeck.services.NotificationService
+import rundeck.services.OrchestratorPluginService
 import rundeck.services.ScheduledExecutionService
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -19,7 +26,7 @@ import javax.security.auth.Subject
  * Created by greg on 7/14/15.
  */
 @TestFor(ScheduledExecutionController)
-@Mock([ScheduledExecution,Workflow,CommandExec])
+@Mock([ScheduledExecution,Workflow,CommandExec,Execution])
 class ScheduledExecutionControllerSpec extends Specification {
 
 
@@ -191,5 +198,92 @@ class ScheduledExecutionControllerSpec extends Specification {
         def token = SynchronizerTokensHolder.store(session)
         params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
         params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
+    }
+
+    def "show job retry failed exec id filter nodes"(){
+        given:
+
+        def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter:'name: ${option.nodes}',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        ).save()
+        def exec = new Execution(
+                user: "testuser",
+                project: "project1",
+                loglevel: 'WARN',
+                status: 'FAILED',
+                doNodedispatch: true,
+                filter:'name: nodea',
+                succeededNodeList:'fwnode',
+                failedNodeList: 'nodec xyz,nodea',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
+                scheduledExecution: se
+        ).save()
+
+
+
+        NodeSetImpl testNodeSet = new NodeSetImpl()
+        testNodeSet.putNode(new NodeEntryImpl("nodea"))
+        testNodeSet.putNode(new NodeEntryImpl("nodeb"))
+        testNodeSet.putNode(new NodeEntryImpl("nodec xyz"))
+        NodeSetImpl testNodeSetB = new NodeSetImpl()
+        testNodeSetB.putNode(new NodeEntryImpl("nodea"))
+        testNodeSetB.putNode(new NodeEntryImpl("nodec xyz"))
+
+        controller.frameworkService=Mock(FrameworkService){
+            authorizeProjectJobAll(_,_,_,_)>>true
+            filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+            filterNodeSet({ NodesSelector selector->
+                selector.acceptNode(new NodeEntryImpl("nodea")) &&
+                selector.acceptNode(new NodeEntryImpl("nodec xyz")) &&
+                !selector.acceptNode(new NodeEntryImpl("nodeb"))
+
+                          },_)>>testNodeSetB
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+        controller.scheduledExecutionService=Mock(ScheduledExecutionService){
+            getByIDorUUID(_)>>se
+        }
+        controller.notificationService=Mock(NotificationService)
+        controller.orchestratorPluginService=Mock(OrchestratorPluginService)
+
+        when:
+        request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
+
+        def model = controller.show()
+        then:
+        response.redirectedUrl==null
+        model != null
+        model.scheduledExecution != null
+        'fwnode' == model.localNodeName
+        'name: ${option.nodes}' == model.nodefilter
+        false == model.nodesetvariables
+        'nodec xyz,nodea' == model.failedNodes
+        null == model.nodesetempty
+        testNodeSetB.nodes == model.nodes
+        null == model.selectedNodes
+        [:] == model.grouptags
+        null == model.selectedoptsmap
+        true == model.nodesSelectedByDefault
+        [:] == model.dependentoptions
+        [:] == model.optiondependencies
+        null == model.optionordering
+        [:] == model.remoteOptionData
+
     }
 }
