@@ -11,6 +11,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.utils.NodeSet
+import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
@@ -2291,8 +2292,9 @@ class ScheduledExecutionController  extends ControllerBase{
                 if (e && e.scheduledExecution?.id == scheduledExecution.id) {
                     model.failedNodes = e.failedNodeList
                     if(varfound){
-                        nset = ExecutionService.filtersAsNodeSet([filter: "name: " + e.failedNodeList])
+                        nset = ExecutionService.filtersAsNodeSet([filter: OptsUtil.join("name:", e.failedNodeList)])
                     }
+                    model.nodesetvariables = false
                 }
             }
             def nodes = frameworkService.filterAuthorizedNodes(
