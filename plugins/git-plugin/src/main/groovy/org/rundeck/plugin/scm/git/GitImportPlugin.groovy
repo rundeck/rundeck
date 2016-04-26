@@ -122,8 +122,15 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             return null
         }
 
+        def msgs = []
         if (performFetch) {
-            fetchFromRemote(context)
+            try {
+                fetchFromRemote(context)
+            } catch (Exception e) {
+                msgs<<"Fetch from the repository failed: ${e.message}"
+                logger.error("Failed fetch from the repository: ${e.message}")
+                logger.debug("Failed fetch from the repository: ${e.message}", e)
+            }
         }
 
         int importNeeded = 0
@@ -173,7 +180,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         } else {
             state.state = ImportSynchState.CLEAN
         }
-        def msgs = []
 
         if (bstat && bstat.behindCount > 0) {
             msgs << "${bstat.behindCount} changes from remote need to be pulled"

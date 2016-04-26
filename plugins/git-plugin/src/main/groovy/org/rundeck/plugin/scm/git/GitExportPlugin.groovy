@@ -173,8 +173,17 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     GitExportSynchState getStatusInternal(ScmOperationContext context, boolean performFetch) {
         //perform fetch
+        def msgs=[]
+        boolean fetchError=false
         if (performFetch) {
-            fetchFromRemote(context)
+            try {
+                fetchFromRemote(context)
+            } catch (Exception e) {
+                fetchError=true
+                msgs<<"Fetch from the repository failed: ${e.message}"
+                logger.error("Failed fetch from the repository: ${e.message}")
+                logger.debug("Failed fetch from the repository: ${e.message}", e)
+            }
         }
 
         Status status = git.status().call()
@@ -183,7 +192,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         synchState.gitStatus = status
         synchState.state = status.isClean() ? SynchState.CLEAN : SynchState.EXPORT_NEEDED
         if (!status.isClean()) {
-            synchState.message = "Some changes have not been committed"
+            msgs<< "Some changes have not been committed"
         }
 
         //if clean, check remote tracking status
@@ -192,14 +201,14 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             if (bstat) {
                 synchState.branchTrackingStatus = bstat
                 if (bstat && bstat.aheadCount > 0 && bstat.behindCount > 0) {
-                    synchState.message = "${bstat.aheadCount} ahead and ${bstat.behindCount} behind remote branch"
+                    msgs<< "${bstat.aheadCount} ahead and ${bstat.behindCount} behind remote branch"
                     synchState.state = SynchState.REFRESH_NEEDED
                     //TODO: test if merge would fail
                 } else if (bstat && bstat.aheadCount > 0) {
-                    synchState.message = "${bstat.aheadCount} changes need to be pushed"
+                    msgs<< "${bstat.aheadCount} changes need to be pushed"
                     synchState.state = SynchState.EXPORT_NEEDED
                 } else if (bstat && bstat.behindCount > 0) {
-                    synchState.message = "${bstat.behindCount} changes from remote need to be pulled"
+                    msgs<< "${bstat.behindCount} changes from remote need to be pulled"
                     synchState.state = SynchState.REFRESH_NEEDED
                 }
             } else if (!remoteTrackingBranch()) {
@@ -207,12 +216,15 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 def head = GitUtil.getHead(git.repository)
                 if (head) {
                     //if no remote branch exists, i.e. bare repo, need to push local files
-                    synchState.message = "Changes need to be pushed"
+                    msgs<< "Changes need to be pushed"
                     synchState.state = SynchState.EXPORT_NEEDED
                 }
             }
         }
-
+        synchState.message=msgs.join(', ')
+        if (fetchError && synchState.state == SynchState.CLEAN) {
+            synchState.state = SynchState.REFRESH_NEEDED
+        }
 
         return synchState
     }
