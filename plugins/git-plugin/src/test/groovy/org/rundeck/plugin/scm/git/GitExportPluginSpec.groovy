@@ -334,7 +334,7 @@ class GitExportPluginSpec extends Specification {
         then:
         status!=null
         status.state==SynchState.CLEAN
-        status.message==''
+        status.message==null
 
     }
     def "get status fetch fails"() {

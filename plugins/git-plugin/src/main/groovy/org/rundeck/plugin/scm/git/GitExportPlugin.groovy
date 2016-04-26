@@ -221,7 +221,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 }
             }
         }
-        synchState.message=msgs.join(', ')
+        synchState.message=msgs? msgs.join(', ') : null
         if (fetchError && synchState.state == SynchState.CLEAN) {
             synchState.state = SynchState.REFRESH_NEEDED
         }
