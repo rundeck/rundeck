@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.state;
 
 import com.dtolabs.rundeck.core.utils.PairImpl;
+import com.dtolabs.rundeck.core.utils.TextUtils;
 
 import java.util.*;
 
@@ -128,15 +129,26 @@ public class StateUtils {
      * @param params params
      */
     public static String parameterString(Map<String, String> params) {
-        TreeSet<String> stringStringTreeSet = new TreeSet<String>(params.keySet());
-        StringBuilder sb = new StringBuilder();
+        TreeSet<String> stringStringTreeSet = new TreeSet<>(params.keySet());
+        ArrayList<String> result = new ArrayList<>();
+
+        //join key & value with '=' escaping both = and ,
         for (String s : stringStringTreeSet) {
-            if (sb.length() > 0) {
-                sb.append(",");
-            }
-            sb.append(s).append("=").append(params.get(s));
+            result.add(
+                    TextUtils.joinEscaped(
+                            new String[]{s, params.get(s)},
+                            '=',
+                            '\\',
+                            new char[]{','}
+                    )
+            );
         }
-        return sb.toString();
+
+        //simply join with ',' since each string has already escaped it
+        return TextUtils.join(
+                result.toArray(new String[result.size()]),
+                ','
+        );
     }
 
     /**
@@ -144,14 +156,17 @@ public class StateUtils {
      * @param ident ident
      */
     public static String stepIdentifierToString(StepIdentifier ident) {
-        StringBuilder sb = new StringBuilder();
+        ArrayList<String> parts = new ArrayList<>();
         for (StepContextId stepContextId : ident.getContext()) {
-            if(sb.length()>0) {
-                sb.append("/");
-            }
-            sb.append(stepContextId.toString());
+            parts.add(stepContextIdToString(stepContextId));
         }
-        return sb.toString();
+        //join with '/' and escape it
+        return TextUtils.joinEscaped(
+                parts.toArray(new String[parts.size()]),
+                '/',
+                '\\',
+                null
+        );
     }
 
     /**
@@ -163,30 +178,34 @@ public class StateUtils {
             return null;
         }
         List<StepContextId> ids = new ArrayList<StepContextId>();
-        for (String s : input.split("/")) {
+        for (String s : TextUtils.splitUnescape(input, '/', '\\', new char[]{'/'})) {
             ids.add(stepContextIdFromString(s));
         }
         return stepIdentifier(ids);
     }
 
+    public static String stepContextIdToString(StepContextId context){
+        return context.getStep() + (context.getAspect().isMain() ? "" : "e") + parameterString(context);
+    }
     /**
      * @return Generate a step context id from a string
      * @param s context id
      */
     public static StepContextId stepContextIdFromString(String s) {
-        String[] split = s.split("@");
+        if(!s.matches("^\\d+e?(@.+)?$")){
+            throw new IllegalArgumentException("not a valid step context id: " + s);
+        }
+        String[] split = s.split("@", 2);
         boolean errHandler=false;
         int stepnum=-1;
         Map<String,String> params=null;
         if(split.length>0) {
             String t = split[0];
-            if (t.matches("^\\d+e?$")) {
-                if (t.endsWith("e")) {
-                    errHandler = true;
-                    t = t.substring(0, t.length() - 1);
-                }
-                stepnum = Integer.parseInt(t);
+            if (t.endsWith("e")) {
+                errHandler = true;
+                t = t.substring(0, t.length() - 1);
             }
+            stepnum = Integer.parseInt(t);
         }
         if (stepnum <= 0) {
             throw new IllegalArgumentException("not a valid step context id: " + s);
@@ -203,13 +222,18 @@ public class StateUtils {
      * @param t parameter
      */
     public static Map<String, String> parseParameterString(String t) {
-        Map<String, String> params;
-        params = new HashMap<String, String>();
-        for (String s1 : t.split(",")) {
-            String[] split1 = s1.split("=", 2);
-            if (split1.length == 2 && !"".equals(split1[0])) {
-                params.put(split1[0], split1[1]);
+        Map<String, String> params = new HashMap<>();
+        String key=null;
+        for (String s1 : TextUtils.splitUnescape(t, new char[]{',', '='}, '\\', null)) {
+            if (null == key) {
+                key = s1;
+            } else {
+                params.put(key, s1);
+                key = null;
             }
+        }
+        if (key != null) {
+            throw new IllegalArgumentException("Not a valid parameter string: " + t);
         }
         return params;
     }

@@ -91,6 +91,68 @@ var RDWorkflow = Class.create({
     }
 });
 /**
+ * remove escaping and halt processing at any break chars, returns object with 'text' (unescaped text), 'bchar' (seen break char or null),
+ * 'rest' (remaining escaped text after first seen breakchar or null)
+ * @param input input
+ * @param echar escape char (e.g. '\\')
+ * @param chars chars to process as escaped
+ * @param breakchars chars to halt processing
+ * @returns {{text: string, bchar: *, rest: *}}
+ */
+RDWorkflow.unescape=function(input,echar,chars,breakchars){
+    "use strict";
+    var arr=[];
+    var e=false;
+    var i=0;
+    var bchar=null;
+    for(;i<input.length;i++){
+        var c = input.charAt(i);
+        if(c==echar){
+            if(e){
+                arr.push(echar);
+                e=false;
+            }else{
+                e=true;
+            }
+        }else if(chars.indexOf(c)>=0){
+            if(e){
+                arr.push(c);
+                e=false;
+            }else if(breakchars.indexOf(c)>=0){
+                bchar=c;
+                break;
+            }else{
+                arr.push(c);
+            }
+        }else{
+            if(e){
+                arr.push(echar);
+                e=false;
+            }
+            arr.push(c);
+        }
+    }
+    return {text:arr.join(""),bchar:bchar,rest:i<=input.length-1?input.substring(i+1):null};
+};
+/**
+ *
+ * @param input
+ * @param sep
+ * @returns {Array}
+ */
+RDWorkflow.splitEscaped=function(input,sep){
+    "use strict";
+    var parts=[];
+
+    var rest=input;
+    while(rest){
+        var result=RDWorkflow.unescape(rest,'\\',['\\','/'],[sep]);
+        parts.push(result.text);
+        rest=result.rest;
+    }
+    return parts;
+};
+/**
  * Returns array of step context strings given the context identifier
  * @param context
  * @returns {*}
@@ -101,7 +163,7 @@ RDWorkflow.parseContextId= function (context) {
         return null;
     }
     //split context into project,type,object
-    var t = context.split(RDWorkflow.contextStringSeparator);
+    var t = RDWorkflow.splitEscaped(context,RDWorkflow.contextStringSeparator);
     var i = 0;
     var vals = new Array();
     for (i = 0; i < t.length; i++) {
@@ -119,7 +181,7 @@ RDWorkflow.parseContextId= function (context) {
 RDWorkflow.paramsForContextId= function (ctxid) {
     var m = ctxid.match(/^(\d+)(e)?(@(.+))?$/);
     if (m[4]) {
-        return m[4]
+        return m[4].replace(/\\([/@,=])/g, '$1');
     }
     return null;
 }
