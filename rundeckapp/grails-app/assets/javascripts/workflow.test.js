@@ -1,7 +1,43 @@
 //= require workflow
 
+RDWorkflow.assertObjEq = function (arr1,arr2) {
+    "use strict";
+    console.assert(arr1.length==arr2.length,arr1,arr2);
+    if(arr1.length!=arr2.length){
+        return false;
+    }
+    for(var prop in arr1){
+        if(arr1.hasOwnProperty(prop)){
+            console.assert(arr1[prop]==arr2[prop],arr1[prop],arr2[prop],"prop "+prop);
+        }
+    }
+    return true;
+};
+RDWorkflow.assertArrayEq = function (arr1,arr2) {
+    "use strict";
+
+    console.assert(arr1.length==arr2.length,arr1,arr2);
+    if(arr1.length!=arr2.length){
+        return false;
+    }
+    for(var i=0;i<arr1.length;i++){
+        console.assert(arr1[i]==arr2[i],arr1[i],arr2[i]);
+    }
+    return true;
+};
 RDWorkflow.test = function () {
+
+    RDWorkflow.assertObjEq(RDWorkflow.unescape('abc/123','\\',['\\','/'],['/']),{text:'abc',bchar:'/',rest:'123'});
+    RDWorkflow.assertObjEq(RDWorkflow.unescape('abc/123/456','\\',['\\','/'],['/']),{text:'abc',bchar:'/',rest:'123/456'});
+    RDWorkflow.assertObjEq(RDWorkflow.unescape('a\\/bc/123/456','\\',['\\','/'],['/']), {text:'a/bc',bchar:'/',rest:'123/456'});
+
+    RDWorkflow.assertArrayEq(RDWorkflow.splitEscaped('a\\/bc/123/456','/') , ['a/bc','123','456']);
+    RDWorkflow.assertArrayEq(RDWorkflow.splitEscaped('a\\/b@c/1,2=3/4\\\\56','/') , ['a/b@c','1,2=3','4\\56']);
+
+
+
     console.assert(RDWorkflow.paramsForContextId('2@node=a') === 'node=a');
+    console.assert(RDWorkflow.paramsForContextId('2@node\\=a') === 'node=a');
     console.assert(RDWorkflow.stepNumberForContextId('2@node=a') === 2);
     console.assert(RDWorkflow.workflowIndexForContextId('2@node=a') === 1);
     console.assert(RDWorkflow.isErrorhandlerForContextId('2@node=a') === false);
@@ -22,14 +58,13 @@ RDWorkflow.test = function () {
     console.assert(RDWorkflow.isErrorhandlerForContextId('1e@blah=c') === true);
 
     //parse context id
-    console.assert(RDWorkflow.parseContextId('1').length === 1, 'wrong length');
-    console.assert(RDWorkflow.parseContextId('1/1').length === 2, 'wrong length');
-    console.assert(RDWorkflow.parseContextId('1/1/1').length === 3, 'wrong length');
-    console.assert(RDWorkflow.parseContextId('1/2/3')[0] ===  '1', 'wrong value');
-    console.assert(RDWorkflow.parseContextId('1/2/3')[1] === '2', 'wrong value');
-    console.assert(RDWorkflow.parseContextId('1/2/3')[2] === '3', 'wrong value');
-    console.assert(RDWorkflow.parseContextId('1e@abc/2/3')[0] === '1e@abc', 'wrong value');
-    console.assert(RDWorkflow.parseContextId('1/2e@asdf=xyz/3')[1] === '2e@asdf=xyz', 'wrong value');
+    RDWorkflow.assertArrayEq(RDWorkflow.parseContextId('1'),['1']);
+    RDWorkflow.assertArrayEq(RDWorkflow.parseContextId('1/1'),['1','1']);
+    RDWorkflow.assertArrayEq(RDWorkflow.parseContextId('1/1/1'),['1','1','1']);
+    RDWorkflow.assertArrayEq(RDWorkflow.parseContextId('1/2/3'),['1','2','3']);
+    RDWorkflow.assertArrayEq(RDWorkflow.parseContextId('1e@abc/2/3'),['1e@abc','2','3']);
+    RDWorkflow.assertArrayEq(RDWorkflow.parseContextId('1/2e@asdf=xyz/3'),['1','2e@asdf=xyz','3']);
+    RDWorkflow.assertArrayEq(RDWorkflow.parseContextId('2@node=crub\\/dub-1/1'),['2@node=crub/dub-1','1']);
 
 
     //clean context id
