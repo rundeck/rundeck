@@ -868,7 +868,11 @@ class ScmService {
     ScmExportSynchState exportPluginStatus(UserAndRolesAuthContext auth, String project) throws ScmPluginException {
         def plugin = getLoadedExportPluginFor project
         if (plugin) {
-            return plugin.getStatus(scmOperationContext(auth, project))
+            try{
+                return plugin.getStatus(scmOperationContext(auth, project))
+            }catch (Throwable t){
+                log.error("Failed to get status for SCM export plugin in project ${project}: $t",t);
+            }
         }
         null
     }

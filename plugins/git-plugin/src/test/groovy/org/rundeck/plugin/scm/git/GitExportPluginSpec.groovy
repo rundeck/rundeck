@@ -315,6 +315,52 @@ class GitExportPluginSpec extends Specification {
 
     }
 
+    def "get status clean"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(Mock(ScmOperationContext))
+
+        when:
+        def status = plugin.getStatus(Mock(ScmOperationContext))
+
+        then:
+        status!=null
+        status.state==SynchState.CLEAN
+        status.message==null
+
+    }
+    def "get status fetch fails"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(Mock(ScmOperationContext))
+
+        //delete origin contents, will cause fetch to fail
+        FileUtils.delete(origindir, FileUtils.RECURSIVE)
+
+        when:
+        def status = plugin.getStatus(Mock(ScmOperationContext))
+
+        then:
+        status!=null
+        status.state==SynchState.REFRESH_NEEDED
+        status.message=='Fetch from the repository failed: Invalid remote: origin'
+    }
 
     static RevCommit addCommitFile(final File gitdir, final Git git, final String path, final String content) {
         def outfile = new File(gitdir, path)
