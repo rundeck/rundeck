@@ -175,8 +175,12 @@ public class ResourceJsonFormatParser implements ResourceFormatParser, Describab
     private Map<String, String> safe(final Map attrs) {
         HashMap<String, String> map = new HashMap<>();
         for (Object o : attrs.keySet()) {
-            if (!(attrs.get(o) instanceof Collection) && !(attrs.get(o) instanceof Map)) {
-                map.put(o.toString(), attrs.get(o).toString());
+            Object val = attrs.get(o);
+            if (val == null) {
+                continue;
+            }
+            if (!(val instanceof Collection) && !(val instanceof Map)) {
+                map.put(o.toString(), val.toString());
             }
         }
         return map;

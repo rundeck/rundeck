@@ -36,7 +36,8 @@ class ResourceJsonFormatParserSpec extends Specification {
     "nodename": "test2",
     "osName": "Mac OS X",
     "rank":"2",
-    "doodad":"true"
+    "doodad":"true",
+    "meddlesome":null
   }
 }
 '''
@@ -67,6 +68,7 @@ class ResourceJsonFormatParserSpec extends Specification {
     "hostname": "192.168.33.12",
     "nodename": "test2",
     "osName": "Mac OS X",
+    "meddlesome": null,
     "rank":"2",
     "doodad":"true"
   }
@@ -102,6 +104,7 @@ class ResourceJsonFormatParserSpec extends Specification {
     "hostname": "192.168.33.12",
     "nodename": "test2",
     "osName": "Mac OS X",
+    "meddlesome": null,
     "rank":2,
     "doodad":true
   }
@@ -134,6 +137,7 @@ class ResourceJsonFormatParserSpec extends Specification {
     "hostname": "192.168.33.12",
     "nodename": "test2",
     "osName": "Mac OS X",
+    "meddlesome": null,
     "rank":"2",
     "doodad":"true"
   }
