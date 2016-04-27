@@ -96,19 +96,21 @@ public class ProjectNodeSupport implements IProjectNodes {
                 }
                 validSources.add(index + ".source");
             } catch (ResourceModelSourceException | RuntimeException e) {
-                logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
+                logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage());
+                logger.debug("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
                 exceptions.put(
                         index+".source",
                         new ResourceModelSourceException(
-                                "Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e
+                                e.getMessage(), e
                         )
                 );
             } catch (Throwable e) {
-                logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
+                logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage());
+                logger.debug("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
                 exceptions.put(
                         index+".source",
                         new ResourceModelSourceException(
-                                "Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage()
+                                e.getMessage()
                         )
                 );
             }
@@ -191,13 +193,13 @@ public class ProjectNodeSupport implements IProjectNodes {
                 nodesSourceList.add(
                         loadResourceModelSource(
                                 providerType, props, shouldCacheForType(providerType),
-                                i + "." + providerType
+                                i + ".source"
                         )
                 );
-                validSources.add(i + "." + providerType);
+                validSources.add(i + ".source" );
             } catch (ExecutionServiceException e) {
                 logger.error("Failed loading resource model source #" + i + ", skipping: " + e.getMessage(), e);
-                exceptions.put(i + "." + providerType,e);
+                exceptions.put(i + ".source" ,e);
             }
             i++;
         }
