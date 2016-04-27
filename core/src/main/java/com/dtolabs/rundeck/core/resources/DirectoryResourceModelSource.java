@@ -127,8 +127,8 @@ public class DirectoryResourceModelSource implements ResourceModelSource, Config
             for (final File file : sortFiles(sourceCache.keySet())) {
                 try {
                     listNodeSet.addNodeSet(sourceCache.get(file).getNodes());
-                } catch (ResourceModelSourceException e) {
-                    e.printStackTrace();
+                } catch(Throwable t){
+                    t.printStackTrace();
                 }
             }
             return listNodeSet;
