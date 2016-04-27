@@ -18,10 +18,12 @@ package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.INodeSet;
 
+import java.util.List;
+
 /**
  * Delegating source meant to be subclassed
  */
-public abstract class DelegateResourceModelSource implements ResourceModelSource {
+public abstract class DelegateResourceModelSource implements ResourceModelSource,ResourceModelSourceErrors {
     private ResourceModelSource delegate;
 
     public DelegateResourceModelSource(ResourceModelSource delegate) {
@@ -35,5 +37,14 @@ public abstract class DelegateResourceModelSource implements ResourceModelSource
 
     public ResourceModelSource getDelegate() {
         return delegate;
+    }
+
+    @Override
+    public List<String> getModelSourceErrors() {
+        if(getDelegate() instanceof ResourceModelSourceErrors){
+            return ((ResourceModelSourceErrors)getDelegate()).getModelSourceErrors();
+        }else{
+            return null;
+        }
     }
 }
