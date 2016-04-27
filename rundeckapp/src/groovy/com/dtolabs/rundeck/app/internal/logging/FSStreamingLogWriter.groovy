@@ -51,7 +51,7 @@ class FSStreamingLogWriter implements StreamingLogWriter {
         bytesWritten = 0
     }
     private write(String val) {
-        def bytes = val.bytes
+        def bytes = val.getBytes("UTF-8")
         output.write(bytes)
         bytesWritten += bytes.length
     }

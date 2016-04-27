@@ -45,7 +45,7 @@ class FSStreamingLogReader implements ReverseSeekingStreamingLogReader {
         this.rundeckLogFormat=rundeckLogFormat
     }
     private void detectLegacyLogFile(){
-        file.withReader {reader->
+        file.withReader('UTF-8') {reader->
             detectedFormat=RundeckLogFormat.detectFormat(reader.readLine())
             detected=true
         }
