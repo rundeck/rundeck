@@ -24,6 +24,7 @@ class DirectoryResourceModelSourceSpec extends Specification {
         framework = AbstractBaseTest.createTestFramework()
         testProject = framework.getFrameworkProjectMgr().createFrameworkProject(PROJECT_NAME)
         directory = new File(testProject.getBaseDir(), "testGetNodesMultiFile");
+        FileUtils.deleteDir(directory)
         directory.mkdirs();
     }
 
@@ -45,6 +46,7 @@ class DirectoryResourceModelSourceSpec extends Specification {
                 throw new NullPointerException("test npe")
             }
         })
+        def path = file.absolutePath
 
         Properties props = ["project": PROJECT_NAME, "directory": directory.getAbsolutePath()]
 
@@ -58,10 +60,13 @@ class DirectoryResourceModelSourceSpec extends Specification {
 
         then:
         nodes.nodes.size()==0
+        directoryNodesProvider.modelSourceErrors != null
+        directoryNodesProvider.modelSourceErrors == ["Error loading file: "+(path)+": java.lang.NullPointerException: test npe"]
     }
     def "multiple files with one causing npe"(){
         given:
         def file = new File(directory, "test.nodes")
+        def path = file.absolutePath
         def file2 = new File(directory, "test2.nodes")
         file<<'nodes'
         file2<<'nodes'
@@ -89,5 +94,7 @@ class DirectoryResourceModelSourceSpec extends Specification {
         then:
         nodes.nodes.size()==1
         nodes.getNode('anode1')!=null
+        directoryNodesProvider.modelSourceErrors != null
+        directoryNodesProvider.modelSourceErrors == ["Error loading file: "+(path)+": java.lang.NullPointerException: test npe"]
     }
 }
