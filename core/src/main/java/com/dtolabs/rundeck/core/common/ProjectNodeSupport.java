@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.resources.*;
 import com.dtolabs.rundeck.core.resources.format.*;
+import com.dtolabs.rundeck.core.utils.TextUtils;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -94,7 +95,30 @@ public class ProjectNodeSupport implements IProjectNodes {
                 } else {
                     list.addNodeSet(nodes);
                 }
-                validSources.add(index + ".source");
+                boolean hasErrors=false;
+                if(nodesSource instanceof ResourceModelSourceErrors){
+                    ResourceModelSourceErrors nodeerrors = (ResourceModelSourceErrors) nodesSource;
+                    List<String> modelSourceErrors = nodeerrors.getModelSourceErrors();
+                    if(modelSourceErrors!=null && modelSourceErrors.size()>0){
+                        hasErrors=true;
+                        logger.error("Some errors getting nodes from [" +
+                                     nodesSource.toString() +
+                                     "]: " +
+                                     modelSourceErrors);
+                        exceptions.put(
+                                index + ".source",
+                                new ResourceModelSourceException(
+                                        TextUtils.join(
+                                                modelSourceErrors.toArray(new String[modelSourceErrors.size()]),
+                                                ';'
+                                        )
+                                )
+                        );
+                    }
+                }
+                if(!hasErrors) {
+                    validSources.add(index + ".source");
+                }
             } catch (ResourceModelSourceException | RuntimeException e) {
                 logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage());
                 logger.debug("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
