@@ -24,8 +24,11 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
 import com.dtolabs.rundeck.core.execution.HasFailureHandler;
+import com.dtolabs.rundeck.core.execution.workflow.ConditionalStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
+
+import java.util.Map;
 
 
 /**
@@ -34,12 +37,17 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionI
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public abstract class ScriptURLCommandBase implements ScriptURLCommandExecutionItem,HasFailureHandler,NodeStepExecutionItem {
+public abstract class ScriptURLCommandBase implements ScriptURLCommandExecutionItem,HasFailureHandler,NodeStepExecutionItem,ConditionalStepExecutionItem {
     public String getNodeStepType() {
         return ScriptURLNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME;
     }
 
     public String getType() {
         return NodeDispatchStepExecutor.STEP_EXECUTION_TYPE;
+    }
+
+    @Override
+    public Map<String, Object> getConditionsMap() {
+        return null;
     }
 }

@@ -137,7 +137,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
                 //parallel step failed
                 context.getExecutionListener().log(3, "Dispatch failed on node: " +df.getNode());
             }else{
-                context.getExecutionListener().log(0, e.getMessage());
+                context.getExecutionListener().log(0, "Parallel node dispatch failed: " + e.getMessage());
                 if (!keepgoing) {
                     throw new DispatcherException(e);
                 }

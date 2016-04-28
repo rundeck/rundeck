@@ -24,7 +24,6 @@ package com.dtolabs.rundeck.core.execution.workflow;
 */
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -287,9 +286,9 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             //test empty workflow
             final NodeSet nodeset = new NodeSet();
             final WorkflowImpl workflow = new WorkflowImpl(new ArrayList<StepExecutionItem>(), 1, false,
-                WorkflowStrategy.STEP_FIRST);
+                                                           WorkflowExecutor.STEP_FIRST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
-            final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+            final StepFirstWorkflowExecutor strategy = new StepFirstWorkflowExecutor(testFramework);
             final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
@@ -328,9 +327,9 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             final ArrayList<StepExecutionItem> commands = new ArrayList<StepExecutionItem>();
             commands.add(new testWorkflowCmdItem());
 
-            final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false, WorkflowStrategy.STEP_FIRST);
+            final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false, WorkflowExecutor.STEP_FIRST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
-            final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+            final StepFirstWorkflowExecutor strategy = new StepFirstWorkflowExecutor(testFramework);
             final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
@@ -382,9 +381,9 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             };
             commands.add(testWorkflowCmdItem);
             final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false,
-                WorkflowStrategy.STEP_FIRST);
+                                                           WorkflowExecutor.STEP_FIRST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
-            final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+            final StepFirstWorkflowExecutor strategy = new StepFirstWorkflowExecutor(testFramework);
             final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
@@ -453,9 +452,9 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
 
             commands.add(testWorkflowCmdItem);
             final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false,
-                WorkflowStrategy.STEP_FIRST);
+                                                           WorkflowExecutor.STEP_FIRST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
-            final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+            final StepFirstWorkflowExecutor strategy = new StepFirstWorkflowExecutor(testFramework);
             final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
@@ -553,9 +552,9 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             };
             commands.add(testWorkflowCmdItemScript2);
             final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false,
-                WorkflowStrategy.STEP_FIRST);
+                                                           WorkflowExecutor.STEP_FIRST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
-            final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+            final StepFirstWorkflowExecutor strategy = new StepFirstWorkflowExecutor(testFramework);
             final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
@@ -698,10 +697,10 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             };
             commands.add(testWorkflowCmdItemScript2);
             final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false,
-                WorkflowStrategy.STEP_FIRST);
+                                                           WorkflowExecutor.STEP_FIRST);
             workflow.setKeepgoing(false);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
-            final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+            final StepFirstWorkflowExecutor strategy = new StepFirstWorkflowExecutor(testFramework);
             final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
@@ -851,10 +850,10 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             };
             commands.add(testWorkflowCmdItemScript2);
             final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false,
-                WorkflowStrategy.STEP_FIRST);
+                                                           WorkflowExecutor.STEP_FIRST);
             workflow.setKeepgoing(true);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
-            final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+            final StepFirstWorkflowExecutor strategy = new StepFirstWorkflowExecutor(testFramework);
             final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
@@ -1014,10 +1013,10 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             commands.add(testWorkflowCmdItemScript);
 
             final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false,
-                WorkflowStrategy.STEP_FIRST);
+                                                           WorkflowExecutor.STEP_FIRST);
             workflow.setKeepgoing(KEEPGOING_TEST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
-            final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+            final StepFirstWorkflowExecutor strategy = new StepFirstWorkflowExecutor(testFramework);
             final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
@@ -1199,10 +1198,10 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             commands.add(testWorkflowCmdItem2);
 
             final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false,
-                WorkflowStrategy.STEP_FIRST);
+                                                           WorkflowExecutor.STEP_FIRST);
             workflow.setKeepgoing(KEEPGOING_TEST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
-            final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+            final StepFirstWorkflowExecutor strategy = new StepFirstWorkflowExecutor(testFramework);
             final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
@@ -1429,10 +1428,10 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             commands.add(testWorkflowCmdItem2);
 
             final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false,
-                WorkflowStrategy.STEP_FIRST);
+                                                           WorkflowExecutor.STEP_FIRST);
             workflow.setKeepgoing(KEEPGOING_TEST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
-            final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+            final StepFirstWorkflowExecutor strategy = new StepFirstWorkflowExecutor(testFramework);
             final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
@@ -1569,9 +1568,9 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             item.type = "my-type";
             commands.add(item);
             final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false,
-                WorkflowStrategy.STEP_FIRST);
+                                                           WorkflowExecutor.STEP_FIRST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
-            final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+            final StepFirstWorkflowExecutor strategy = new StepFirstWorkflowExecutor(testFramework);
             final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
@@ -1638,9 +1637,9 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             item.type = "my-type";
             commands.add(item);
             final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false,
-                WorkflowStrategy.STEP_FIRST);
+                                                           WorkflowExecutor.STEP_FIRST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
-            final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+            final StepFirstWorkflowExecutor strategy = new StepFirstWorkflowExecutor(testFramework);
             final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
@@ -1734,9 +1733,9 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             item2.type = "my-type";
             commands.add(item2);
             final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false,
-                WorkflowStrategy.STEP_FIRST);
+                                                           WorkflowExecutor.STEP_FIRST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
-            final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+            final StepFirstWorkflowExecutor strategy = new StepFirstWorkflowExecutor(testFramework);
             final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
@@ -1869,29 +1868,29 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
         Map<String, String> secureData = new HashMap<String, String>();
         String secureKey = "secureKey";
         secureData.put(secureKey, "secureValue");
-        dataContext.put(StepFirstWorkflowStrategy.SECURE_OPTION_KEY, secureData);
+        dataContext.put(StepFirstWorkflowExecutor.SECURE_OPTION_KEY, secureData);
         
         Map<String, String> regularData = new HashMap<String, String>();
         String insecureKey = "insecureKey";
         regularData.put(insecureKey, "insecureValue");
         regularData.put(secureKey, "secureValue");
-        dataContext.put(StepFirstWorkflowStrategy.OPTION_KEY, regularData);
+        dataContext.put(StepFirstWorkflowExecutor.OPTION_KEY, regularData);
                 
-        StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+        StepFirstWorkflowExecutor strategy = new StepFirstWorkflowExecutor(testFramework);
         Map<String, Map<String, String>> result = strategy.createPrintableDataContext(dataContext);
         
         Assert.assertSame("Expected other data to be present", otherData, result.get(otherKey));
         
-        Map<String, String> resultSecureData = result.get(StepFirstWorkflowStrategy.SECURE_OPTION_KEY);
-        Assert.assertEquals("Expected secure value to be replaced", StepFirstWorkflowStrategy.SECURE_OPTION_VALUE, resultSecureData.get(secureKey));
+        Map<String, String> resultSecureData = result.get(StepFirstWorkflowExecutor.SECURE_OPTION_KEY);
+        Assert.assertEquals("Expected secure value to be replaced", StepFirstWorkflowExecutor.SECURE_OPTION_VALUE, resultSecureData.get(secureKey));
         
-        Map<String, String> resultRegularData = result.get(StepFirstWorkflowStrategy.OPTION_KEY);
-        Assert.assertEquals("Expected secure value to be replaced", StepFirstWorkflowStrategy.SECURE_OPTION_VALUE, resultRegularData.get(secureKey));
+        Map<String, String> resultRegularData = result.get(StepFirstWorkflowExecutor.OPTION_KEY);
+        Assert.assertEquals("Expected secure value to be replaced", StepFirstWorkflowExecutor.SECURE_OPTION_VALUE, resultRegularData.get(secureKey));
         Assert.assertEquals("Expected insecure value to be untouched", regularData.get(insecureKey), resultRegularData.get(insecureKey));
     }
     
     public void testCreatePrintableDataContextNoDataContext() {
-        StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+        StepFirstWorkflowExecutor strategy = new StepFirstWorkflowExecutor(testFramework);
         Map<String, Map<String, String>> result = strategy.createPrintableDataContext(null);
         
         Assert.assertTrue("Expected empty data context", result.isEmpty());
@@ -1900,7 +1899,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
     public void testCreatePrintableDataContextEmptyDataContext() {
         Map<String, Map<String, String>> dataContext = new HashMap<String, Map<String, String>>();
         
-        StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+        StepFirstWorkflowExecutor strategy = new StepFirstWorkflowExecutor(testFramework);
         Map<String, Map<String, String>> result = strategy.createPrintableDataContext(dataContext);
         
         Assert.assertTrue("Expected empty data context", result.isEmpty());
@@ -1916,14 +1915,14 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
         Map<String, String> regularData = new HashMap<String, String>();
         String insecureKey = "insecureKey";
         regularData.put(insecureKey, "insecureValue");
-        dataContext.put(StepFirstWorkflowStrategy.OPTION_KEY, regularData);
+        dataContext.put(StepFirstWorkflowExecutor.OPTION_KEY, regularData);
                 
-        StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+        StepFirstWorkflowExecutor strategy = new StepFirstWorkflowExecutor(testFramework);
         Map<String, Map<String, String>> result = strategy.createPrintableDataContext(dataContext);
         
         Assert.assertSame("Expected other data to be present", otherData, result.get(otherKey));
                 
-        Map<String, String> resultRegularData = result.get(StepFirstWorkflowStrategy.OPTION_KEY);
+        Map<String, String> resultRegularData = result.get(StepFirstWorkflowExecutor.OPTION_KEY);
         Assert.assertEquals("Expected insecure value to be untouched", regularData.get(insecureKey), resultRegularData.get(insecureKey));
     }
     
@@ -1937,15 +1936,15 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
         Map<String, String> secureData = new HashMap<String, String>();
         String secureKey = "secureKey";
         secureData.put(secureKey, "secureValue");
-        dataContext.put(StepFirstWorkflowStrategy.SECURE_OPTION_KEY, secureData);
+        dataContext.put(StepFirstWorkflowExecutor.SECURE_OPTION_KEY, secureData);
                 
-        StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+        StepFirstWorkflowExecutor strategy = new StepFirstWorkflowExecutor(testFramework);
         Map<String, Map<String, String>> result = strategy.createPrintableDataContext(dataContext);
         
         Assert.assertSame("Expected other data to be present", otherData, result.get(otherKey));
         
-        Map<String, String> resultSecureData = result.get(StepFirstWorkflowStrategy.SECURE_OPTION_KEY);
-        Assert.assertEquals("Expected secure value to be replaced", StepFirstWorkflowStrategy.SECURE_OPTION_VALUE, resultSecureData.get(secureKey));
+        Map<String, String> resultSecureData = result.get(StepFirstWorkflowExecutor.SECURE_OPTION_KEY);
+        Assert.assertEquals("Expected secure value to be replaced", StepFirstWorkflowExecutor.SECURE_OPTION_VALUE, resultSecureData.get(secureKey));
     }
     
     @SuppressWarnings("unchecked")
@@ -1963,7 +1962,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
         Mockito.when(dataContext.toString()).thenReturn(dataContextToString);
         Mockito.when(context.getDataContext()).thenReturn(dataContext);
         
-        StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+        StepFirstWorkflowExecutor strategy = new StepFirstWorkflowExecutor(testFramework);
         strategy = Mockito.spy(strategy);
         Mockito.doReturn(printableContext).when(strategy).createPrintableDataContext(Mockito.same(dataContext));
         
@@ -1976,7 +1975,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
         Mockito.verify(listener, Mockito.atLeastOnce()).log(Mockito.anyInt(), logLineCaptor.capture());
         
         for (String line : logLineCaptor.getAllValues()) {
-            if (line.startsWith(StepFirstWorkflowStrategy.DATA_CONTEXT_PREFIX)) {
+            if (line.startsWith(StepFirstWorkflowExecutor.DATA_CONTEXT_PREFIX)) {
                 Assert.assertTrue("Expected printable data context string.", line.contains(printableContextToString));
                 Assert.assertFalse("Not expecting raw data context string.", line.contains(dataContextToString));
             }

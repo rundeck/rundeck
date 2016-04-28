@@ -10,20 +10,22 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.dtolabs.rundeck.core.execution.workflow.EngineWorkflowExecutor.WORKFLOW_STATE_KEY;
-import static com.dtolabs.rundeck.core.execution.workflow.EngineWorkflowExecutor.WORKFLOW_STATE_STARTED;
+import static com.dtolabs.rundeck.core.execution.workflow.EngineWorkflowExecutor.STEP_AFTER_KEY;
+import static com.dtolabs.rundeck.core.execution.workflow.EngineWorkflowExecutor.VALUE_TRUE;
+import static com.dtolabs.rundeck.core.execution.workflow.EngineWorkflowExecutor.stepKey;
 
 /**
  * Created by greg on 5/5/16.
  */
-@Plugin(name = "parallel", service = ServiceNameConstants.WorkflowStrategy)
-@PluginDescription(title = "Parallel", description = "Run all steps in parallel")
-public class ParallelWorkflowStrategy implements WorkflowStrategy {
-    public static String PROVIDER_NAME = "parallel";
+@Plugin(name = "sequential", service = ServiceNameConstants.WorkflowStrategy)
+@PluginDescription(title = "Sequential", description = "Run each step in order")
+
+public class SequentialWorkflowStrategy implements WorkflowStrategy {
+    public static String PROVIDER_NAME = "sequential";
 
     @Override
     public int getThreadCount() {
-        return 0;
+        return 1;
     }
 
     @Override
@@ -33,7 +35,9 @@ public class ParallelWorkflowStrategy implements WorkflowStrategy {
 
     @Override
     public WorkflowStrategyProfile getProfile() {
+
         return new EngineWorkflowExecutor.BaseProfile() {
+
 
             @Override
             public Set<Condition> getStartConditionsForStep(
@@ -44,8 +48,14 @@ public class ParallelWorkflowStrategy implements WorkflowStrategy {
             )
             {
                 HashSet<Condition> conditionHashMap = new HashSet<>();
-                conditionHashMap.add(new KeyValueEqualsCondition(WORKFLOW_STATE_KEY, WORKFLOW_STATE_STARTED));
+                if (!isFirstStep) {
+                    conditionHashMap.add(conditionAfterStep(stepNum - 1));
+                }
                 return conditionHashMap;
+            }
+
+            public Condition conditionAfterStep(final int stepNum) {
+                return new KeyValueEqualsCondition(stepKey(STEP_AFTER_KEY, stepNum), VALUE_TRUE);
             }
 
         };

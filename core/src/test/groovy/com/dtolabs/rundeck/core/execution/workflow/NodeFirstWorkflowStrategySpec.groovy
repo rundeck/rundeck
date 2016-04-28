@@ -7,12 +7,9 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
@@ -36,7 +33,7 @@ class NodeFirstWorkflowStrategySpec extends Specification {
 
     def "node step fails then workflow step success should fail"() {
         given:
-        def strategy = new NodeFirstWorkflowStrategy(framework)
+        def strategy = new NodeFirstWorkflowExecutor(framework)
         def nodeSet = new NodeSetImpl()
         def node1 = new NodeEntryImpl('node1')
         nodeSet.putNode(node1)

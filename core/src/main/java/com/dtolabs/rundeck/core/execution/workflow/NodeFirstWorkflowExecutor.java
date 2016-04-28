@@ -57,10 +57,10 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
-    static final Logger logger = Logger.getLogger(NodeFirstWorkflowStrategy.class.getName());
+public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
+    static final Logger logger = Logger.getLogger(NodeFirstWorkflowExecutor.class.getName());
 
-    public NodeFirstWorkflowStrategy(final Framework framework) {
+    public NodeFirstWorkflowExecutor(final Framework framework) {
         super(framework);
     }
 
@@ -507,19 +507,9 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
      * @param item workflow item
      *             @return inner loop
      */
-    public static WorkflowExecutionItem createInnerLoopItem(WorkflowExecutionItem item) {
-        return createInnerLoopItem(item.getWorkflow());
-    }
-
-
-    /**
-     * Create workflowExecutionItem suitable for inner loop of node-first strategy
-     * @param item workflow item
-     *             @return inner loop
-     */
     public static WorkflowExecutionItem createInnerLoopItem(IWorkflow item) {
         final WorkflowExecutionItemImpl workflowExecutionItem = new WorkflowExecutionItemImpl(
-            new StepFirstWorkflowStrategy.stepFirstWrapper(item));
+            new StepFirstWorkflowExecutor.stepFirstWrapper(item));
         return workflowExecutionItem;
     }
 

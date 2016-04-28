@@ -54,10 +54,15 @@ import java.util.Set;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
+public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
+    protected static final String DATA_CONTEXT_PREFIX = "data context: ";
+    protected static final String OPTION_KEY = "option";
+    protected static final String SECURE_OPTION_KEY = "secureOption";
+    protected static final String SECURE_OPTION_VALUE = "****";
+
     final Framework framework;
 
-    public BaseWorkflowStrategy(final Framework framework) {
+    public BaseWorkflowExecutor(final Framework framework) {
         this.framework = framework;
     }
 
@@ -79,6 +84,136 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
             null,
             ControlBehavior.Continue
     );
+
+    /**
+     * Executes a step
+     *
+     * @param wlistener listener
+     * @param cmd step
+     * @param executionContext context
+     * @param stepFailedMap failures
+     * @param stepNum index
+     * @return result
+     * @deprecated use {@link #executeWorkflowStep(StepExecutionContext, Map, List, boolean, WorkflowExecutionListener, int, StepExecutionItem)}
+     */
+    protected StepExecutionResult executeWorkflowStep(
+            WorkflowExecutionListener wlistener,
+            StepExecutionItem cmd,
+            StepExecutionContext executionContext,
+            Map<Integer, StepExecutionResult> stepFailedMap,
+            int stepNum
+    ) {
+
+        boolean stepSuccess=false;
+        String statusString=null;
+        ControlBehavior controlBehavior = null;
+        if (null != wlistener) {
+            wlistener.beginWorkflowItem(stepNum, cmd);
+        }
+
+        //wrap node failed listener (if any) and capture status results
+        NodeRecorder stepCaptureFailedNodesListener = new NodeRecorder();
+        StepExecutionContext stepContext = replaceFailedNodesListenerInContext(executionContext,
+                stepCaptureFailedNodesListener);
+        Map<String,NodeStepResult> nodeFailures;
+
+        //execute the step item, and store the results
+        StepExecutionResult stepResult = null;
+
+        final FlowController stepController=new FlowController();
+
+        StepExecutionContext controllableContext = withFlowControl(stepContext, stepController);
+
+        stepResult = executeWFItem(controllableContext, stepFailedMap, stepNum, cmd);
+        stepSuccess = stepResult.isSuccess();
+        nodeFailures = stepCaptureFailedNodesListener.getFailedNodes();
+
+        if(null!=executionContext.getExecutionListener() && null!=executionContext.getExecutionListener().getFailedNodesListener()) {
+            executionContext.getExecutionListener().getFailedNodesListener().matchedNodes(
+                    stepCaptureFailedNodesListener.getMatchedNodes());
+        }
+        if (stepController.isControlled()) {
+
+            //TODO: halt execution without running the error-handler?
+            stepSuccess = stepController.isSuccess();
+            statusString=stepController.getStatusString();
+            controlBehavior=stepController.getControlBehavior();
+            executionContext.getExecutionListener().log(
+                    3,
+                    controlBehavior +
+                    " requested" +
+                    (controlBehavior == ControlBehavior.Halt ?
+                     " with result: " +
+                     (null != statusString ? statusString : stepSuccess) : "")
+            );
+        }
+        try {
+            if(!stepSuccess && cmd instanceof HasFailureHandler) {
+                final HasFailureHandler handles = (HasFailureHandler) cmd;
+                final StepExecutionItem handler = handles.getFailureHandler();
+                if (null != handler) {
+                    //if there is a failure, and a failureHandler item, execute the failure handler
+                    //set keepgoing=false, and store the results
+                    //will throw an exception on failure because keepgoing=false
+
+                    NodeRecorder handlerCaptureFailedNodesListener = new NodeRecorder();
+                    StepExecutionContext handlerExecContext = replaceFailedNodesListenerInContext(executionContext,
+                            handlerCaptureFailedNodesListener);
+
+                    //if multi-node, determine set of nodes to run handler on: (failed node list only)
+                    if(stepCaptureFailedNodesListener.getMatchedNodes().size()>1) {
+                        HashSet<String> failedNodeList = new HashSet<String>(
+                                stepCaptureFailedNodesListener.getFailedNodes().keySet());
+
+                        handlerExecContext = new ExecutionContextImpl.Builder(handlerExecContext).nodeSelector(
+                                SelectorUtils.nodeList(failedNodeList)).build();
+
+                    }
+
+                    //add step failure data to data context
+                    handlerExecContext = addStepFailureContextData(stepResult, handlerExecContext);
+
+                    //extract node-specific failure and set as node-context data
+                    handlerExecContext = addNodeStepFailureContextData(stepResult, handlerExecContext);
+
+                    Map<Integer, StepExecutionResult> handlerFailedMap = new HashMap<Integer, StepExecutionResult>();
+                    StepExecutionResult handlerResult = executeWFItem(handlerExecContext,
+                            handlerFailedMap,
+                            stepNum,
+                            handler);
+                    boolean handlerSuccess = handlerResult.isSuccess();
+
+                    boolean useHandlerResults=true;
+                    if(handlerSuccess && handler instanceof HandlerExecutionItem) {
+                        useHandlerResults= ((HandlerExecutionItem) handler).isKeepgoingOnSuccess();
+                    }
+                    if(useHandlerResults){
+                        stepSuccess = handlerSuccess;
+                        stepResult=handlerResult;
+                        stepFailedMap = handlerFailedMap;
+                        nodeFailures = handlerCaptureFailedNodesListener.getFailedNodes();
+                    }
+                }
+            }
+        } finally {
+            if (null != wlistener) {
+                wlistener.finishWorkflowItem(stepNum, cmd, stepResult);
+            }
+        }
+
+        //report node failures based on results of step and handler run.
+        if (null != executionContext.getExecutionListener() && null != executionContext.getExecutionListener()
+                .getFailedNodesListener()) {
+            if(nodeFailures.size()>0){
+                executionContext.getExecutionListener().getFailedNodesListener().nodesFailed(
+                        nodeFailures);
+            }else if(stepSuccess){
+                executionContext.getExecutionListener().getFailedNodesListener().nodesSucceeded();
+            }
+
+        }
+        return stepResult;
+    }
 
     static class BaseWorkflowStatusResult implements WorkflowStatusResult {
         private boolean status;
@@ -174,14 +309,14 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                                                          final WorkflowExecutionItem item) {
 
         final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
-        if (null != wlistener && !StepFirstWorkflowStrategy.isInnerLoop(item)) {
+        if (null != wlistener && !StepFirstWorkflowExecutor.isInnerLoop(item)) {
             wlistener.beginWorkflowExecution(executionContext, item);
         }
         WorkflowExecutionResult result = null;
         try {
             result = executeWorkflowImpl(executionContext, item);
         } finally {
-            if (null != wlistener && !StepFirstWorkflowStrategy.isInnerLoop(item)) {
+            if (null != wlistener && !StepFirstWorkflowExecutor.isInnerLoop(item)) {
                 wlistener.finishWorkflowExecution(result, executionContext, item);
             }
         }
@@ -281,156 +416,22 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
         int c = beginStepIndex;
         for (final StepExecutionItem cmd : iWorkflowCmdItems) {
-            if (null != wlistener) {
-                wlistener.beginWorkflowItem(c, cmd);
-            }
-            boolean hasHandler= cmd instanceof HasFailureHandler;
-
-            //wrap node failed listener (if any) and capture status results
-            NodeRecorder stepCaptureFailedNodesListener = new NodeRecorder();
-            StepExecutionContext stepContext = replaceFailedNodesListenerInContext(executionContext,
-                stepCaptureFailedNodesListener);
-
-            final FlowController stepController=new FlowController();
-
-            StepExecutionContext controllableContext = withFlowControl(stepContext, stepController);
-
-            Map<String,NodeStepResult> nodeFailures;
-
-            //execute the step item, and store the results
-            StepExecutionResult stepResult=null;
-            Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<Integer, StepExecutionResult>();
-            stepResult = executeWFItem(controllableContext, stepFailedMap, c, cmd);
-            boolean stepSuccess = stepResult.isSuccess();
-            nodeFailures = stepCaptureFailedNodesListener.getFailedNodes();
-
-            if(null!=executionContext.getExecutionListener() && null!=executionContext.getExecutionListener().getFailedNodesListener()) {
-                executionContext.getExecutionListener().getFailedNodesListener().matchedNodes(
-                    stepCaptureFailedNodesListener.getMatchedNodes());
-
-            }
-            if (stepController.isControlled()) {
-
-                //TODO: halt execution without running the error-handler?
-                stepSuccess = stepController.isSuccess();
-                statusString=stepController.getStatusString();
-                controlBehavior=stepController.getControlBehavior();
-                executionContext.getExecutionListener().log(
-                        3,
-                        controlBehavior +
-                        " requested" +
-                        (controlBehavior == ControlBehavior.Halt ?
-                         " with result: " +
-                         (null != statusString ? statusString : stepSuccess) : "")
-                );
-            }
-            try {
-                if(!stepSuccess && hasHandler) {
-                    final HasFailureHandler handles = (HasFailureHandler) cmd;
-                    final StepExecutionItem handler = handles.getFailureHandler();
-                    if (null != handler) {
-                        //if there is a failure, and a failureHandler item, execute the failure handler
-                        //set keepgoing=false, and store the results
-                        //will throw an exception on failure because keepgoing=false
-
-                        NodeRecorder handlerCaptureFailedNodesListener = new NodeRecorder();
-                        StepExecutionContext handlerExecContext = replaceFailedNodesListenerInContext(executionContext,
-                            handlerCaptureFailedNodesListener);
-
-                        //if multi-node, determine set of nodes to run handler on: (failed node list only)
-                        if(stepCaptureFailedNodesListener.getMatchedNodes().size()>1) {
-                            HashSet<String> failedNodeList = new HashSet<String>(
-                                stepCaptureFailedNodesListener.getFailedNodes().keySet());
-
-                            handlerExecContext = new ExecutionContextImpl.Builder(handlerExecContext).nodeSelector(
-                                SelectorUtils.nodeList(failedNodeList)).build();
-
-                        }
-
-                        if(null!=stepResult) {
-                            //add step failure data to data context
-                            handlerExecContext = addStepFailureContextData(stepResult, handlerExecContext);
-
-                            //extract node-specific failure and set as node-context data
-                            handlerExecContext = addNodeStepFailureContextData(stepResult, handlerExecContext);
-                        }
-                        if (null != wlistener) {
-                            wlistener.beginWorkflowItemErrorHandler(c, cmd);
-                        }
-                        final FlowController handlerController=new FlowController();
-                        StepExecutionContext handlerControlContext = withFlowControl(
-                                handlerExecContext,
-                                handlerController
-                        );
-
-                        Map<Integer, StepExecutionResult> handlerFailedMap = new HashMap<Integer, StepExecutionResult>();
-                        StepExecutionResult handlerResult = executeWFItem(handlerControlContext,
-                                                                          handlerFailedMap,
-                                                                          c,
-                                                                          handler);
-                        boolean handlerSuccess = handlerResult.isSuccess();
-
-                        if (null != wlistener) {
-                            wlistener.finishWorkflowItemErrorHandler(c, cmd, handlerResult);
-                        }
-
-                        if (handlerController.isControlled() &&
-                            handlerController.getControlBehavior() == ControlBehavior.Halt) {
-                            //handler called Halt()
-                            stepSuccess = handlerController.isSuccess();
-                            statusString = handlerController.getStatusString();
-                            controlBehavior = handlerController.getControlBehavior();
-                            executionContext.getExecutionListener().log(3,
-                                                                        controlBehavior +
-                                                                        " requested with result: " +
-                                                                        (null != statusString ? statusString : stepSuccess)
-                            );
-                        } else {
-
-                            //handle success conditions:
-                            //1. if keepgoing=true, then status from handler overrides original step
-                            //2. keepgoing=false, then status is the same as the original step, unless
-                            //   the keepgoingOnSuccess is set to true and the handler succeeded
-                            boolean useHandlerResults = keepgoing;
-                            if (!keepgoing && handlerSuccess && handler instanceof HandlerExecutionItem) {
-                                useHandlerResults = ((HandlerExecutionItem) handler).isKeepgoingOnSuccess();
-                            }
-                            if (useHandlerResults) {
-                                stepSuccess = handlerSuccess;
-                                stepResult = handlerResult;
-                                stepFailedMap = handlerFailedMap;
-                                nodeFailures = handlerCaptureFailedNodesListener.getFailedNodes();
-                            }
-                        }
-                    }
-                }
-            }catch (RuntimeException t) {
-                stepResult = new StepExecutionResultImpl(t, StepFailureReason.Unknown, t.getMessage());
-                throw t;
-            } finally {
-                if (null != wlistener) {
-                    wlistener.finishWorkflowItem(c, cmd, stepResult);
-                }
-            }
-            resultList.add(stepResult);
-            failedMap.putAll(stepFailedMap);
-            if(!stepSuccess){
+            StepResultCapture stepResultCapture = executeWorkflowStep(
+                    executionContext,
+                    failedMap,
+                    resultList,
+                    keepgoing,
+                    wlistener,
+                    c,
+                    cmd
+            );
+            statusString = stepResultCapture.getStatusString();
+            controlBehavior = stepResultCapture.getControlBehavior();
+            if(!stepResultCapture.isStepSuccess()){
                 workflowsuccess = false;
             }
-
-            //report node failures based on results of step and handler run.
-            if (null != executionContext.getExecutionListener() && null != executionContext.getExecutionListener()
-                .getFailedNodesListener()) {
-                if(nodeFailures.size()>0){
-                    executionContext.getExecutionListener().getFailedNodesListener().nodesFailed(
-                    nodeFailures);
-                }else if(workflowsuccess){
-                    executionContext.getExecutionListener().getFailedNodesListener().nodesSucceeded();
-                }
-
-            }
-
-            if (controlBehavior == ControlBehavior.Halt || !stepSuccess && !keepgoing ) {
+            if (stepResultCapture.controlBehavior == ControlBehavior.Halt ||
+                !stepResultCapture.isStepSuccess() && !keepgoing) {
                 break;
             }
             c++;
@@ -630,6 +631,19 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
     }
 
     /**
+     * Creates a copy of the given data context with the secure option values obfuscated.
+     * This does not modify the original data context.
+     *
+     * "secureOption" map values will always be obfuscated. "option" entries that are also in "secureOption"
+     * will have their values obfuscated. All other maps within the data context will be added
+     * directly to the copy.
+     * @param dataContext data
+     * @return printable data
+     */
+    protected Map<String, Map<String, String>> createPrintableDataContext(Map<String, Map<String, String>> dataContext) {
+        return createPrintableDataContext(OPTION_KEY, SECURE_OPTION_KEY, SECURE_OPTION_VALUE, dataContext);
+    }
+    /**
      *
      * Creates a copy of the given data context with the secure option values obfuscated.
      * This does not modify the original data context.
@@ -673,5 +687,224 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
             }
         }
         return printableContext;
+    }
+
+    /**
+     * Execute a step and handle flow control and error handler.
+     * @param executionContext context
+     * @param failedMap map for placing failure results
+     * @param resultList list of step results
+     * @param keepgoing true if the workflow should keepgoing on error
+     * @param wlistener listener
+     * @param c step number
+     * @param cmd step
+     * @return result and flow control
+     */
+    public StepResultCapture executeWorkflowStep(final StepExecutionContext executionContext,
+                                                 final Map<Integer, StepExecutionResult> failedMap,
+                                                 final List<StepExecutionResult> resultList,
+                                                 final boolean keepgoing,
+                                                 final WorkflowExecutionListener wlistener,
+                                                 final int c,
+                                                 final StepExecutionItem cmd) {
+        if (null != wlistener) {
+            wlistener.beginWorkflowItem(c, cmd);
+        }
+        String statusString=null;
+        ControlBehavior controlBehavior=null;
+
+        boolean hasHandler= cmd instanceof HasFailureHandler;
+
+        //wrap node failed listener (if any) and capture status results
+        NodeRecorder stepCaptureFailedNodesListener = new NodeRecorder();
+        StepExecutionContext stepContext = replaceFailedNodesListenerInContext(executionContext,
+                                                                               stepCaptureFailedNodesListener);
+
+        final FlowController stepController=new FlowController();
+
+        StepExecutionContext controllableContext = withFlowControl(stepContext, stepController);
+
+        Map<String,NodeStepResult> nodeFailures;
+
+        //execute the step item, and store the results
+        StepExecutionResult stepResult=null;
+        Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<>();
+        stepResult = executeWFItem(controllableContext, stepFailedMap, c, cmd);
+        boolean stepSuccess = stepResult.isSuccess();
+        nodeFailures = stepCaptureFailedNodesListener.getFailedNodes();
+
+        if(null!=executionContext.getExecutionListener() && null!=executionContext.getExecutionListener().getFailedNodesListener()) {
+            executionContext.getExecutionListener().getFailedNodesListener().matchedNodes(
+                    stepCaptureFailedNodesListener.getMatchedNodes());
+
+        }
+        if (stepController.isControlled()) {
+
+            //TODO: halt execution without running the error-handler?
+            stepSuccess = stepController.isSuccess();
+            statusString=stepController.getStatusString();
+            controlBehavior=stepController.getControlBehavior();
+            executionContext.getExecutionListener().log(
+                    3,
+                    controlBehavior +
+                    " requested" +
+                    (controlBehavior == ControlBehavior.Halt ?
+                     " with result: " +
+                     (null != statusString ? statusString : stepSuccess) : "")
+            );
+        }
+        try {
+            if(!stepSuccess && hasHandler) {
+                final HasFailureHandler handles = (HasFailureHandler) cmd;
+                final StepExecutionItem handler = handles.getFailureHandler();
+                if (null != handler) {
+                    //if there is a failure, and a failureHandler item, execute the failure handler
+                    //set keepgoing=false, and store the results
+                    //will throw an exception on failure because keepgoing=false
+
+                    NodeRecorder handlerCaptureFailedNodesListener = new NodeRecorder();
+                    StepExecutionContext handlerExecContext = replaceFailedNodesListenerInContext(executionContext,
+                                                                                                  handlerCaptureFailedNodesListener);
+
+                    //if multi-node, determine set of nodes to run handler on: (failed node list only)
+                    if(stepCaptureFailedNodesListener.getMatchedNodes().size()>1) {
+                        HashSet<String> failedNodeList = new HashSet<String>(
+                                stepCaptureFailedNodesListener.getFailedNodes().keySet());
+
+                        handlerExecContext = new ExecutionContextImpl.Builder(handlerExecContext).nodeSelector(
+                                SelectorUtils.nodeList(failedNodeList)).build();
+
+                    }
+
+                    if(null!=stepResult) {
+                        //add step failure data to data context
+                        handlerExecContext = addStepFailureContextData(stepResult, handlerExecContext);
+
+                        //extract node-specific failure and set as node-context data
+                        handlerExecContext = addNodeStepFailureContextData(stepResult, handlerExecContext);
+                    }
+                    if (null != wlistener) {
+                        wlistener.beginWorkflowItemErrorHandler(c, cmd);
+                    }
+                    final FlowController handlerController=new FlowController();
+                    StepExecutionContext handlerControlContext = withFlowControl(
+                            handlerExecContext,
+                            handlerController
+                    );
+
+                    Map<Integer, StepExecutionResult> handlerFailedMap = new HashMap<Integer, StepExecutionResult>();
+                    StepExecutionResult handlerResult = executeWFItem(handlerControlContext,
+                                                                      handlerFailedMap,
+                                                                      c,
+                                                                      handler);
+                    boolean handlerSuccess = handlerResult.isSuccess();
+
+                    if (null != wlistener) {
+                        wlistener.finishWorkflowItemErrorHandler(c, cmd, handlerResult);
+                    }
+
+                    if (handlerController.isControlled() &&
+                        handlerController.getControlBehavior() == ControlBehavior.Halt) {
+                        //handler called Halt()
+                        stepSuccess = handlerController.isSuccess();
+                        statusString = handlerController.getStatusString();
+                        controlBehavior = handlerController.getControlBehavior();
+                        executionContext.getExecutionListener().log(3,
+                                                                    controlBehavior +
+                                                                    " requested with result: " +
+                                                                    (null != statusString ? statusString : stepSuccess)
+                        );
+                    } else {
+
+                        //handle success conditions:
+                        //1. if keepgoing=true, then status from handler overrides original step
+                        //2. keepgoing=false, then status is the same as the original step, unless
+                        //   the keepgoingOnSuccess is set to true and the handler succeeded
+                        boolean useHandlerResults = keepgoing;
+                        if (!keepgoing && handlerSuccess && handler instanceof HandlerExecutionItem) {
+                            useHandlerResults = ((HandlerExecutionItem) handler).isKeepgoingOnSuccess();
+                        }
+                        if (useHandlerResults) {
+                            stepSuccess = handlerSuccess;
+                            stepResult = handlerResult;
+                            stepFailedMap = handlerFailedMap;
+                            nodeFailures = handlerCaptureFailedNodesListener.getFailedNodes();
+                        }
+                    }
+                }
+            }
+        }catch (RuntimeException t) {
+//            t.printStackTrace(System.err);
+            stepResult = new StepExecutionResultImpl(t, StepFailureReason.Unknown, t.getMessage());
+            throw t;
+        } finally {
+            if (null != wlistener) {
+                wlistener.finishWorkflowItem(c, cmd, stepResult);
+            }
+        }
+        resultList.add(stepResult);
+        failedMap.putAll(stepFailedMap);
+
+        //report node failures based on results of step and handler run.
+        if (null != executionContext.getExecutionListener() && null != executionContext.getExecutionListener()
+                                                                                       .getFailedNodesListener()) {
+            if(nodeFailures.size()>0){
+                executionContext.getExecutionListener().getFailedNodesListener().nodesFailed(
+                        nodeFailures);
+            }else if(stepSuccess){
+                executionContext.getExecutionListener().getFailedNodesListener().nodesSucceeded();
+            }
+
+        }
+
+        return new StepResultCapture(stepResult,stepSuccess, statusString, controlBehavior);
+    }
+    public static class StepResultCapture {
+
+        private StepExecutionResult stepResult;
+        private boolean stepSuccess;
+        private String statusString;
+        private ControlBehavior controlBehavior;
+
+        public StepResultCapture(
+                final StepExecutionResult stepResult,
+                final boolean stepSuccess,
+                final String statusString,
+                final ControlBehavior controlBehavior
+        )
+        {
+            this.stepResult = stepResult;
+            this.stepSuccess = stepSuccess;
+            this.statusString = statusString;
+            this.controlBehavior = controlBehavior;
+        }
+
+        boolean isStepSuccess() {
+            return stepSuccess;
+        }
+
+
+        public String getStatusString() {
+            return statusString;
+        }
+
+        public ControlBehavior getControlBehavior() {
+            return controlBehavior;
+        }
+
+
+        public StepExecutionResult getStepResult() {
+            return stepResult;
+        }
+
+        @Override
+        public String toString() {
+            return "StepResultCapture{" +
+                   "stepResult=" + stepResult +
+                   ", stepSuccess=" + stepSuccess +
+                   ", statusString='" + statusString + '\'' +
+                   ", controlBehavior=" + controlBehavior +
+                   '}';
+        }
     }
 }

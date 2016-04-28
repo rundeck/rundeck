@@ -52,6 +52,12 @@
             <g:message code="Workflow.strategy.label.parallel"/>
         </label>
         </g:if>
+        <g:if test="${workflow?.strategy == 'condition' || grailsApplication.config.feature?.incubator?.conditionalWorkflowStrategy in [true,'true']}">
+        <label title="Execute each step conditionally">
+            <input type="radio" name="workflow.strategy" value="condition" ${workflow?.strategy=='condition'?'checked':''}/>
+            <g:message code="Workflow.strategy.label.conditional" default="Conditional"/>
+        </label>
+        </g:if>
 
     <span id="nodeStratHelp"
           data-toggle="popover"
@@ -80,6 +86,9 @@
                 <g:if test="${workflow?.strategy == 'parallel' || grailsApplication.config.feature?.incubator?.parallelWorkflowStrategy in [true, 'true']}">
                     <td width="200px;"><span class="text-muted">Parallel executes all steps in parallel across all nodes before the next step</span></td>
                 </g:if>
+                    <g:if test="${workflow?.strategy == 'condition' || grailsApplication.config.feature?.incubator?.conditionalWorkflowStrategy in [true, 'true']}">
+                        <td width="200px;"><span class="text-muted">Conditional strategy allows conditions</span></td>
+                    </g:if>
                 </tr>
                 <tr>
                 <td>
