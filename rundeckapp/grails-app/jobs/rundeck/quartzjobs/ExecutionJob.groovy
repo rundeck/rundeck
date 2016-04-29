@@ -210,6 +210,7 @@ class ExecutionJob implements InterruptableJob {
         if(initMap.isTemp){
             //an adhoc execution without associated job
             initMap.execution = Execution.get(initMap.executionId)
+            initMap.execution.executionType="adhoc"
             if (!initMap.execution) {
                 throw new RuntimeException("failed to lookup Exception object from job data map: id: ${initMap.executionId}")
             }
@@ -226,6 +227,7 @@ class ExecutionJob implements InterruptableJob {
             initMap.secureOpts=jobDataMap.get("secureOpts")
             initMap.secureOptsExposed=jobDataMap.get("secureOptsExposed")
             initMap.execution = Execution.get(initMap.executionId)
+            initMap.execution.executionType="user"
             //NOTE: Oracle/hibernate bug workaround: if session has not flushed we may have to wait until Execution.get
             //can return the right entity
             int retry=30
@@ -267,6 +269,7 @@ class ExecutionJob implements InterruptableJob {
             initMap.authContext = frameworkService.getAuthContextForUserAndRoles(initMap.scheduledExecution.user, rolelist)
             initMap.secureOptsExposed = initMap.executionService.selectSecureOptionInput(initMap.scheduledExecution,[:],true)
             initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution,initMap.authContext)
+            initMap.execution.executionType="scheduled"
         }
         if (!initMap.authContext) {
             throw new RuntimeException("authContext could not be determined")
