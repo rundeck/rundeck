@@ -1655,4 +1655,4 @@ Context variables can be used in a few ways in a Job step, with slightly differe
 [job-xml]: ../man5/job-xml.html
 [job-yaml]: ../man5/job-yaml.html
 
-[Quartz Scheduler crontrigger]: http://www.quartz-scheduler.org/documentation/quartz-1.x/tutorials/crontrigger
+[Quartz Scheduler crontrigger]: http://www.quartz-scheduler.org/api/2.2.1/org/quartz/CronTrigger.html
