@@ -325,7 +325,7 @@ Saved ジョブは周期的な基準にそって実行されるよう設定で�
 
 ![Scheduled job crontab form](../figures/fig0307.png)
 
-Crontab の文法についてはここを参照して下さい: [CronExpresssion](http://www.quartz-scheduler.org/docs/api/1.8.1/org/quartz/CronExpression.html)
+Crontab の文法についてはここを参照して下さい: [CronExpresssion](http://www.quartz-scheduler.org/api/2.2.1/org/quartz/CronTrigger.html)
 
 スケジュールを追加してアップデートすると、ジョブがリストに記載されたときに時計アイコンが出てきます。
 
