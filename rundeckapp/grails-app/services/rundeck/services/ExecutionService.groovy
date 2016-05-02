@@ -1482,6 +1482,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                     nodeRankAttribute:params.nodeRankAttribute,
                                     workflow:params.workflow,
                                     argString:params.argString,
+                                    executionType: params.executionType?:"user",
                                     timeout:params.timeout?:null,
                                     retryAttempt:params.retryAttempt?:0,
                                     retry:params.retry?:null,
@@ -1644,6 +1645,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         propset.each{k->
             props.put(k,se[k])
         }
+        props.executionType="scheduled"
         props.user = authContext.username
         if (input && 'true' == input['_replaceNodeFilters']) {
             //remove all existing node filters to replace with input filters
