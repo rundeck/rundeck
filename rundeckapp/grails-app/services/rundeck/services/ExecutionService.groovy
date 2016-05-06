@@ -1015,23 +1015,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (!execMap.workflow.commands || execMap.workflow.commands.size() < 1) {
             throw new Exception("Workflow is empty")
         }
-        if (!userName) {
-            userName = execMap.user
-        }
 
-        final WorkflowExecutionItemImpl item = new WorkflowExecutionItemImpl(
-            new WorkflowImpl(
-                    execMap.workflow.commands.collect {
-                        itemForWFCmdItem(
-                                it,
-                                it.errorHandler?itemForWFCmdItem(it.errorHandler):null
-                        )
-                    },
-                    execMap.workflow.threadcount,
-                    execMap.workflow.keepgoing,
-                    execMap.workflow.strategy?execMap.workflow.strategy: "node-first"
-            )
+        def impl = new WorkflowImpl(
+                execMap.workflow.commands.collect {
+                    itemForWFCmdItem(
+                            it,
+                            it.errorHandler ? itemForWFCmdItem(it.errorHandler) : null
+                    )
+                },
+                execMap.workflow.threadcount,
+                execMap.workflow.keepgoing,
+                execMap.workflow.strategy ? execMap.workflow.strategy : "node-first"
         )
+        impl.setStrategyConfig(execMap.workflow.strategyConfigMap)
+        final WorkflowExecutionItemImpl item = new WorkflowExecutionItemImpl(impl)
         return item
     }
 

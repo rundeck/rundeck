@@ -1592,6 +1592,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (!validateWorkflow(scheduledExecution.workflow,scheduledExecution)) {
             failed = true
         }
+        //workflow strategy plugin config and validation
+        if(params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config){
+            def configmap=params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config
+            scheduledExecution.workflow.strategyConfigMap=configmap
+            //todo:validate
+        }
         if (( params.options || params['_nooptions']) && scheduledExecution.options) {
             def todelete = []
             scheduledExecution.options.each {
@@ -2590,6 +2596,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         //validate error handler types
         if(!validateWorkflow(scheduledExecution.workflow,scheduledExecution)){
             failed = true
+        }
+
+        //workflow strategy plugin config and validation
+        if(params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config){
+            def configmap=params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config
+            scheduledExecution.workflow.strategyConfigMap=configmap
+            //todo:validate
         }
 
         if (scheduledExecution.argString) {

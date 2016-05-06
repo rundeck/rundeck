@@ -25,4 +25,14 @@ class DescribedPlugin<T> {
     T instance
     Description description
     File file
+
+    @Override
+    public String toString() {
+        return "DescribedPlugin{" +
+                "name='" + name + '\'' +
+                ", instance=" + instance +
+                ", description=" + description +
+                ", file=" + file +
+                "} " + super.toString();
+    }
 }

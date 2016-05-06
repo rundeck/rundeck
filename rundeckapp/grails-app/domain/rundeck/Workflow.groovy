@@ -1,5 +1,8 @@
 package rundeck
 
+import com.fasterxml.jackson.core.JsonParseException
+import com.fasterxml.jackson.databind.ObjectMapper
+
 /*
 * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
 *
@@ -28,17 +31,46 @@ package rundeck
 
 public class Workflow {
 
-//    Boolean nodeKeepgoing=false
     Integer threadcount=1
     Boolean keepgoing=false
     List<WorkflowStep> commands
     String strategy="node-first"
+    String strategyConfig;
     static hasMany=[commands:WorkflowStep]
     static constraints = {
-        strategy(nullable:false, inList:['node-first','step-first','parallel','condition'])
+        strategy(nullable:false, maxSize: 256)
+        strategyConfig(nullable: true, blank:true)
     }
+
     static mapping = {
+        strategyConfig type: 'text'
         commands lazy: false
+    }
+    //ignore fake property 'configuration' and do not store it
+    static transients = ['strategyConfigMap']
+
+    public Map getStrategyConfigMap() {
+        //de-serialize the json
+        if (null != strategyConfig) {
+            final ObjectMapper mapper = new ObjectMapper()
+            try{
+                return mapper.readValue(strategyConfig, Map.class)
+            }catch (JsonParseException e){
+                return null
+            }
+        } else {
+            return null
+        }
+    }
+
+    public void setStrategyConfigMap(Map obj) {
+        //serialize json and store into field
+        if (null != obj) {
+            final ObjectMapper mapper = new ObjectMapper()
+            strategyConfig = mapper.writeValueAsString(obj)
+        } else {
+            strategyConfig = null
+        }
     }
     public String toString() {
         return "Workflow:(threadcount:${threadcount}){ ${commands} }"
@@ -52,6 +84,7 @@ public class Workflow {
         this.threadcount=source.threadcount
         this.keepgoing=source.keepgoing
         this.strategy=source.strategy
+        this.strategyConfigMap=source.strategyConfigMap
         commands = new ArrayList()
         source.commands.each { WorkflowStep cmd->
             final item = createItem(cmd)
@@ -67,6 +100,7 @@ public class Workflow {
         newwf.threadcount = this.threadcount
         newwf.keepgoing = this.keepgoing
         newwf.strategy = this.strategy
+        newwf.strategyConfigMap=this.strategyConfigMap
         newwf.commands = new ArrayList()
 
         this.commands?.each { WorkflowStep cmd ->
@@ -85,7 +119,7 @@ public class Workflow {
 
     /** create canonical map representation */
     public Map toMap(){
-        return [/*threadcount:threadcount,*/keepgoing:keepgoing,strategy:strategy,commands:commands.collect{it.toMap()}]
+        return [/*threadcount:threadcount,*/keepgoing:keepgoing,strategy:strategy,strategyConfig:strategyConfigMap,commands:commands.collect{it.toMap()}]
     }
 
     static Workflow fromMap(Map data){
@@ -94,6 +128,9 @@ public class Workflow {
             wf.keepgoing=true
         }
         wf.strategy=data.strategy?data.strategy:'node-first'
+        if(data.strategyConfig instanceof Map){
+            wf.strategyConfigMap=data.strategyConfig
+        }
         if(data.commands){
             ArrayList commands = new ArrayList()
             Set handlers = new HashSet()

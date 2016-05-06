@@ -10,9 +10,13 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
+import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
 import org.apache.commons.collections.list.TreeList
@@ -83,6 +87,7 @@ class ScheduledExecutionController  extends ControllerBase{
     def ApiService apiService
     def UserService userService
     def ScmService scmService
+    def PluginService pluginService
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -1847,14 +1852,22 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
+        def strategyPlugins = pluginService.listPlugins(WorkflowStrategy, frameworkService.rundeckFramework.workflowStrategyService).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
         def crontab = scheduledExecution.timeAndDateAsBooleanMap()
-        return [ scheduledExecution:scheduledExecution, crontab:crontab,params:params,
-                notificationPlugins: notificationService.listNotificationPlugins(),
-                orchestratorPlugins: orchestratorPluginService.listDescriptions(),
-                nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
-                authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
+
+        def notificationPlugins = notificationService.listNotificationPlugins()
+
+        def orchestratorPlugins = orchestratorPluginService.listDescriptions()
+        return [scheduledExecution  :scheduledExecution, crontab:crontab, params:params,
+                notificationPlugins : notificationPlugins,
+                orchestratorPlugins : orchestratorPlugins,
+                strategyPlugins     : strategyPlugins,
+                nextExecutionTime   :scheduledExecutionService.nextExecutionTime(scheduledExecution),
+                authorized          :scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
                 nodeStepDescriptions: nodeStepTypes,
-                stepDescriptions:stepTypes]
+                stepDescriptions    :stepTypes]
     }
 
 
@@ -1979,12 +1992,21 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
-		
+
+        def plugins = pluginService.listPlugins(
+                WorkflowStrategy,
+                frameworkService.rundeckFramework.workflowStrategyService
+        )
+        def strategyPlugins = plugins?.collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+
         render(view:'create',model: [ scheduledExecution:newScheduledExecution, crontab:crontab,params:params,
                 iscopy:true,
                 authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
                 nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions: stepTypes,
+                                      strategyPlugins: strategyPlugins,
                 notificationPlugins: notificationService.listNotificationPlugins(),
                 orchestratorPlugins: orchestratorPluginService.listDescriptions()])
 
@@ -2114,9 +2136,13 @@ class ScheduledExecutionController  extends ControllerBase{
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
         log.debug("ScheduledExecutionController: create : now returning model data to view...")
+        def strategyPlugins = pluginService.listPlugins(WorkflowStrategy, frameworkService.rundeckFramework.workflowStrategyService).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
         return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],
                 nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes,
                 notificationPlugins: notificationService.listNotificationPlugins(),
+                strategyPlugins:strategyPlugins,
                 orchestratorPlugins: orchestratorPluginService.listDescriptions()]
     }
 
@@ -2309,10 +2335,14 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
+            def strategyPlugins = pluginService.listPlugins(WorkflowStrategy, frameworkService.rundeckFramework.workflowStrategyService).collect {
+                it.value.description
+            }.sort { a, b -> a.name <=> b.name }
         render(view: 'create', model: [scheduledExecution: scheduledExecution, params: params,
                                        nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions: stepTypes,
                 notificationPlugins: notificationService.listNotificationPlugins(),
+                   strategyPlugins:strategyPlugins,
                 orchestratorPlugins: orchestratorPluginService.listDescriptions(),
                 notificationValidation:params['notificationValidation']
         ])

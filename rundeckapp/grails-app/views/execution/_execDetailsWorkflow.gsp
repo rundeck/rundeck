@@ -1,3 +1,4 @@
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope" %>
 <%--
  Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
 
@@ -35,29 +36,63 @@
         <g:message code="Workflow.property.keepgoing.true.description"/>
     </label>
 </div>
-<div>
+<div class="form-inline">
+    <g:set var="wfstrat" value="${workflow?.strategy=='step-first'?'sequential':workflow?.strategy}"/>
 
-    <span class="" title="Strategy for iteration"><g:message code="strategy" />:</span>
-        <label title="Execute the full workflow on each node before the next node">
-            <input id="wf_strat_node_first" type="radio" name="workflow.strategy" value="node-first" ${!workflow?.strategy||workflow?.strategy=='node-first'?'checked':''}/>
-            <g:message code="Workflow.strategy.label.node-first"/>
-        </label>
-        <label title="Execute each step on all nodes before the next step">
-            <input type="radio" name="workflow.strategy" value="step-first" ${workflow?.strategy=='step-first'?'checked':''}/>
-            <g:message code="Workflow.strategy.label.step-first"/>
-        </label>
-        <g:if test="${workflow?.strategy == 'parallel' || grailsApplication.config.feature?.incubator?.parallelWorkflowStrategy in [true,'true']}">
-        <label title="Execute each step in parallel across all nodes before next step">
-            <input type="radio" name="workflow.strategy" value="parallel" ${workflow?.strategy=='parallel'?'checked':''}/>
-            <g:message code="Workflow.strategy.label.parallel"/>
-        </label>
-        </g:if>
-        <g:if test="${workflow?.strategy == 'condition' || grailsApplication.config.feature?.incubator?.conditionalWorkflowStrategy in [true,'true']}">
-        <label title="Execute each step conditionally">
-            <input type="radio" name="workflow.strategy" value="condition" ${workflow?.strategy=='condition'?'checked':''}/>
-            <g:message code="Workflow.strategy.label.conditional" default="Conditional"/>
-        </label>
-        </g:if>
+
+
+    <label class="" title="Strategy for iteration">
+        <g:message code="strategy" />:
+        <g:select name="workflow.strategy" from="${strategyPlugins}" optionKey="name" optionValue="title" value="${wfstrat}"
+            class="form-control"
+        />
+    </label>
+    <g:each in="${strategyPlugins}" var="pluginDescription">
+        <g:set var="pluginName" value="${pluginDescription.name}"/>
+        <g:set var="prefix" value="${('workflow.strategyPlugin.'+ pluginName + '.config.')}"/>
+        <g:set var="definedConfig"
+               value="${params.workflow?.strategyPlugin?.get(pluginName)?.config ?: wfstrat == pluginName?workflow?.strategyConfigMap:null}"/>
+        <span id="strategyPlugin${pluginName}" style="${wdgt.styleVisible(if: wfstrat == pluginName ? true : false)}"
+              class="strategyPlugin">
+            <span class="text-info">
+                <g:render template="/scheduledExecution/description"
+                          model="[description: pluginDescription.description,
+                                  textCss: '',
+                                  mode: 'collapsed',
+                                  moreText:'More Information',
+                                  rkey: g.rkey()]"/>
+            </span>
+            <div>
+
+                <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                        properties:pluginDescription?.properties,
+                        report:null,
+                        prefix:prefix,
+                        values:definedConfig,
+                        fieldnamePrefix:prefix,
+                        origfieldnamePrefix:'orig.' + prefix,
+                        allowedScope:com.dtolabs.rundeck.core.plugins.configuration.PropertyScope.Instance
+                ]}"/>
+
+            </div>
+        </span>
+        <wdgt:eventHandler for="workflow.strategy" equals="${pluginName}"
+                           target="strategyPlugin${pluginName}" visible="true"/>
+    </g:each>
+        %{--<label title="Execute the full workflow on each node before the next node">--}%
+            %{--<input id="wf_strat_node_first" type="radio" name="workflow.strategy" value="node-first" ${!workflow?.strategy||workflow?.strategy=='node-first'?'checked':''}/>--}%
+            %{--<g:message code="Workflow.strategy.label.node-first"/>--}%
+        %{--</label>--}%
+        %{--<label title="Execute each step on all nodes before the next step">--}%
+            %{--<input type="radio" name="workflow.strategy" value="step-first" ${workflow?.strategy=='step-first'?'checked':''}/>--}%
+            %{--<g:message code="Workflow.strategy.label.step-first"/>--}%
+        %{--</label>--}%
+        %{--<g:if test="${workflow?.strategy == 'parallel' || grailsApplication.config.feature?.incubator?.parallelWorkflowStrategy in [true,'true']}">--}%
+        %{--<label title="Execute each step in parallel across all nodes before next step">--}%
+            %{--<input type="radio" name="workflow.strategy" value="parallel" ${workflow?.strategy=='parallel'?'checked':''}/>--}%
+            %{--<g:message code="Workflow.strategy.label.parallel"/>--}%
+        %{--</label>--}%
+        %{--</g:if>--}%
 
     <span id="nodeStratHelp"
           data-toggle="popover"
