@@ -1592,7 +1592,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         input.retryAttempt = attempt
         try {
 
-            Map allowedOptions = input.subMap(['loglevel', 'argString', 'option','_replaceNodeFilters', 'filter', 'retryAttempt']).findAll { it.value != null }
+            Map allowedOptions = input.subMap(['loglevel', 'argString', 'option','_replaceNodeFilters', 'filter', 'executionType', 'retryAttempt']).findAll { it.value != null }
             allowedOptions.putAll(input.findAll { it.key.startsWith('option.') || it.key.startsWith('nodeInclude') || it.key.startsWith('nodeExclude') }.findAll { it.value != null })
             def Execution e = createExecution(scheduledExecution, authContext, allowedOptions,attempt>0,prevId)
             def timeout = 0
@@ -2022,6 +2022,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     execution.willRetry = true
                     def input = [
                             argString: execution.argString,
+                            executionType: execution.executionType,
                             loglevel : execution.loglevel,
                             filter   : execution.filter //TODO: failed nodes?
                     ]
