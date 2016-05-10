@@ -11,9 +11,9 @@ import org.apache.log4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 
 /**
@@ -30,6 +30,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
     public static final String STEP_BEFORE_KEY = "before.step.#";
     public static final String STEP_AFTER_KEY = "after.step.#";
     public static final String STEP_STATE_KEY = "step.#.state";
+    public static final String STEP_ANY_STATE_SKIPPED_KEY = "step.any.state.skipped";
     public static final String STEP_ANY_STATE_SUCCESS_KEY = "step.any.state.success";
     public static final String STEP_ANY_STATE_FAILED_KEY = "step.any.state.failed";
     public static final String STEP_COMPLETED_KEY = "step.#.completed";
@@ -37,7 +38,9 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
     public static final String VALUE_FALSE = Boolean.FALSE.toString();
     public static final String STEP_STATE_RESULT_SUCCESS = "success";
     public static final String STEP_STATE_RESULT_FAILURE = "failure";
-    public static final String STEP_CONTROL_KEY = "step.#.control";
+    public static final String STEP_STATE_RESULT_SKIPPED = "skipped";
+    public static final String STEP_CONTROL_KEY = "step.#.start";
+    public static final String STEP_CONTROL_SKIP_KEY = "step.#.skip";
     public static final String STEP_CONTROL_START = "start";
     public static final String STEP_DATA_RESULT_KEY_PREFIX = "step.#.result.";
 
@@ -94,6 +97,16 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             MutableStateObj state = States.mutable(stepKey(STEP_BEFORE_KEY, stepNum), VALUE_TRUE);
             state.updateState(stepKey(STEP_AFTER_KEY, stepNum), VALUE_FALSE);
             return state;
+        }
+
+        @Override
+        public Set<Condition> getSkipConditionsForStep(
+                final WorkflowExecutionItem item,
+                final int stepNum,
+                final boolean isFirstStep
+        )
+        {
+            return null;
         }
 
     }
@@ -197,22 +210,38 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             state.updateState(profile.getInitialStateForStep(stepNum, item, i == 0));
 
             // Conditions that indicate step should start
-            Set<Condition> stepStartConditions = profile.getStartConditionsForStep(strategy, item, stepNum, i == 0);
+            Set<Condition> stepStartTriggerConditions = profile.getStartConditionsForStep(item, stepNum, i == 0);
 
             executionContext.getExecutionListener().log(
                     Constants.DEBUG_LEVEL,
-                    String.format("start conditions for step [%d]: %s", stepNum, stepStartConditions)
+                    String.format("start conditions for step [%d]: %s", stepNum, stepStartTriggerConditions)
             );
             // State that will trigger the step
-            StateObj stepTriggerState = createTriggerStateForStep(stepNum);
+            StateObj stepRunTriggerState = createTriggerControlStateForStep(stepNum);
 
             //add a rule to start the step when conditions are met
-            ruleEngine.addRule(Rules.conditionsRule(stepStartConditions, stepTriggerState));
+            ruleEngine.addRule(Rules.conditionsRule(stepStartTriggerConditions, stepRunTriggerState));
+
+            Set<Condition> stepSkipTriggerConditions = profile.getSkipConditionsForStep(item, stepNum, i == 0);
+            StateObj stepSkipTriggerState = null;
+            if (null != stepSkipTriggerConditions && stepSkipTriggerConditions.size() > 0) {
+                // State that will skip the step
+                stepSkipTriggerState = createSkipTriggerStateForStep(stepNum);
+                //add a rule to skip the step when conditions are met
+                ruleEngine.addRule(Rules.conditionsRule(stepSkipTriggerConditions, stepSkipTriggerState));
+                executionContext.getExecutionListener().log(
+                        Constants.DEBUG_LEVEL,
+                        String.format("skip conditions for step [%d]: %s", stepNum, stepSkipTriggerConditions)
+                );
+            }
 
             operations.add(new StepOperation(
                     stepNum,
                     callable(cmd, executionContext, stepNum, wlistener, workflow.isKeepgoing()),
-                    stepTriggerState
+                    stepRunTriggerState,
+                    stepSkipTriggerState,
+                    stepStartTriggerConditions,
+                    stepSkipTriggerConditions
             ));
         }
 
@@ -226,7 +255,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         );
 
         WorkflowEngine workflowEngine = new WorkflowEngine(ruleEngine, state, executorService);
-
+        workflowEngine.setAppLogger(executionContext.getExecutionListener());
         Set<WorkflowSystem.OperationResult<StepSuccess, StepOperation>> operationResults =
                 workflowEngine.processOperations(operations);
 
@@ -241,17 +270,40 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 stepResults.add(success.result);
             } else {
                 Throwable failure = operationResult.getFailure();
+                StepFailureReason reason = StepFailureReason.Unknown;
+
                 String message = String.format(
                         "Exception while executing step [%d]: \t[%s]",
                         operation.stepNum,
                         failure.toString()
                 );
+                if (failure instanceof CancellationException) {
+                    reason = StepFailureReason.Interrupted;
+
+                    message = String.format(
+                            "Cancellation while running step [%d]",
+                            operation.stepNum
+                    );
+                }
                 executionContext.getExecutionListener().log(Constants.ERR_LEVEL, message);
                 stepFailures.put(operation.stepNum, StepExecutionResultImpl.wrapStepException(
                         failure instanceof StepException ? (StepException) failure :
-                        new StepException(message, failure, StepFailureReason.Unknown)
+                        new StepException(message, failure, reason)
                 ));
 
+            }
+        }
+        for (StepOperation operation : operations) {
+            if (!operation.isDidRun()) {
+                executionContext.getExecutionListener().log(
+                        Constants.WARN_LEVEL,
+                        String.format(
+                                "Step [%d] did not run. start conditions: %s, skip conditions: %s",
+                                operation.stepNum,
+                                operation.startTriggerConditions,
+                                operation.skipTriggerConditions
+                        )
+                );
             }
         }
 
@@ -259,7 +311,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         // Poll results, fail if there is any result is missing or not successful
         for (int i = 0; i < stepCount; i++) {
             int stepNum = i + executionContext.getStepNumber();
-            if (null == stepExecutionResults.get(stepNum) ||
+            if (null != stepExecutionResults.get(stepNum) &&
                 !stepExecutionResults.get(stepNum).isSuccess()) {
 //                logger.debug("No result, or failure result for step " +
 //                                   stepNum +
@@ -283,10 +335,17 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
     }
 
-    private StateObj createTriggerStateForStep(final int stepNum) {
+    private StateObj createTriggerControlStateForStep(final int stepNum) {
         return States.state(
                 stepKey(STEP_CONTROL_KEY, stepNum),
-                STEP_CONTROL_START
+                VALUE_TRUE
+        );
+    }
+
+    private StateObj createSkipTriggerStateForStep(final int stepNum) {
+        return States.state(
+                stepKey(STEP_CONTROL_SKIP_KEY, stepNum),
+                VALUE_TRUE
         );
     }
 
@@ -355,27 +414,43 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
      */
     static class StepOperation implements WorkflowSystem.Operation<StepSuccess> {
         int stepNum;
+        Set<Condition> startTriggerConditions;
+        Set<Condition> skipTriggerConditions;
         Callable<StepResultCapture> callable;
-        private StateObj startState;
+        private StateObj startTriggerState;
+        private StateObj skipTriggerState;
+        private boolean didRun = false;
 
         public StepOperation(
                 final int stepNum,
-                final Callable<StepResultCapture> callable, final StateObj startState
+                final Callable<StepResultCapture> callable,
+                final StateObj startTriggerState,
+                final StateObj skipTriggerState,
+                final Set<Condition> startTriggerConditions,
+                final Set<Condition> skipTriggerConditions
         )
         {
             this.stepNum = stepNum;
             this.callable = callable;
-            this.startState = startState;
+            this.startTriggerState = startTriggerState;
+            this.startTriggerConditions = startTriggerConditions;
+            this.skipTriggerConditions = skipTriggerConditions;
+            this.skipTriggerState = skipTriggerState;
         }
 
         @Override
         public boolean shouldRun(final StateObj state) {
-            return state.hasState(startState);
+            return state.hasState(startTriggerState);
+        }
+
+        @Override
+        public boolean shouldSkip(final StateObj state) {
+            return null != skipTriggerState && state.hasState(skipTriggerState);
         }
 
         @Override
         public StepSuccess call() throws Exception {
-
+            didRun = true;
             StepResultCapture stepResultCapture = callable.call();
             StepExecutionResult result = stepResultCapture.getStepResult();
             ControlBehavior controlBehavior = stepResultCapture.getControlBehavior();
@@ -418,6 +493,17 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         }
 
         @Override
+        public StateObj getSkipState(final StateObj state) {
+            MutableStateObj stateChanges = States.mutable();
+            stateChanges.updateState(stepKey(STEP_COMPLETED_KEY, stepNum), VALUE_FALSE);
+            stateChanges.updateState(stepKey(STEP_STATE_KEY, stepNum), STEP_STATE_RESULT_SKIPPED);
+            stateChanges.updateState(STEP_ANY_STATE_SKIPPED_KEY, VALUE_TRUE);
+            stateChanges.updateState(stepKey(STEP_BEFORE_KEY, stepNum), VALUE_FALSE);
+            stateChanges.updateState(stepKey(STEP_AFTER_KEY, stepNum), VALUE_TRUE);
+            return stateChanges;
+        }
+
+        @Override
         public StateObj getFailureState(final Throwable t) {
             MutableStateObj stateChanges = States.mutable();
             stateChanges.updateState(stepKey(STEP_COMPLETED_KEY, stepNum), VALUE_TRUE);
@@ -428,6 +514,10 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             stateChanges.updateState(stepKey(STEP_BEFORE_KEY, stepNum), VALUE_FALSE);
             stateChanges.updateState(stepKey(STEP_AFTER_KEY, stepNum), VALUE_TRUE);
             return stateChanges;
+        }
+
+        public boolean isDidRun() {
+            return didRun;
         }
     }
 
@@ -445,6 +535,15 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         @Override
         public StateObj getNewState() {
             return newState;
+        }
+
+        @Override
+        public String toString() {
+            return "StepSuccess{" +
+                   "stepNum=" + stepNum +
+                   ", result=" + result +
+                   ", newState=" + newState +
+                   '}';
         }
     }
 

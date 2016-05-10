@@ -6,7 +6,8 @@ import java.util.concurrent.Callable;
 /**
  * Process a set of Operations, by use of a RuleEngine to determine when/if operations should run,
  * and by updating a shared state object with new state changes returned by each operation.
- * {@link WorkflowEngine} implementation: Operations can supply state changes after they succeed, or fail. State changes
+ * {@link WorkflowEngine} implementation: Operations can supply state changes after they succeed, or fail. State
+ * changes
  * provided by
  * operations are added in the order they are received, and after a set of available state
  * changes are added, the rule engine is used to update the state based on its rules.  After
@@ -64,6 +65,20 @@ public interface WorkflowSystem {
          * @return true if the operation should run given the state shown
          */
         boolean shouldRun(StateObj state);
+
+        /**
+         * @param state current state
+         *
+         * @return true if the operation should be skipped and never run
+         */
+        boolean shouldSkip(StateObj state);
+
+        /**
+         * @param state current state
+         *
+         * @return state change if operation is skipped
+         */
+        StateObj getSkipState(StateObj state);
 
         /**
          * @param t throwable

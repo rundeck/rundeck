@@ -1,17 +1,14 @@
 package com.dtolabs.rundeck.core.rules;
 
+import com.dtolabs.rundeck.core.Constants;
+import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.*;
 import org.apache.log4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.*;
-
-import static com.dtolabs.rundeck.core.rules.Workflows.WORKFLOW_DONE;
-import static com.dtolabs.rundeck.core.rules.Workflows.WORKFLOW_STATE_KEY;
-import static com.dtolabs.rundeck.core.rules.Workflows.WORKFLOW_STATE_STARTED;
 
 /**
  * A WorkflowSystem which processes the operations by use of a rule system and a mutable state.
@@ -22,8 +19,11 @@ public class WorkflowEngine implements WorkflowSystem {
     private final RuleEngine engine;
     private final LinkedBlockingQueue<StateObj> stateChangeQueue;
     private final Set<Operation> inProcess = Collections.synchronizedSet(new HashSet<Operation>());
+    private final Set<Operation> skipped = new HashSet<>();
     private final ListeningExecutorService executorService;
     private final ListeningExecutorService manager;
+
+    private PluginLogger appLogger;
 
     /**
      * Create engine
@@ -65,11 +65,11 @@ public class WorkflowEngine implements WorkflowSystem {
                     //no changes seen, so wait for any change
                     if (inProcess.size() < 1) {
                         //no pending operations, signalling no new state changes will occur
-                        logger.debug("No more state changes expected, finishing workflow.");
+                        logDebug("No more state changes expected, finishing workflow.");
                         completed = true;
                         break;
                     }
-                    //otherwise wait for chang
+                    //otherwise wait for change
                     StateObj take = stateChangeQueue.poll(30, TimeUnit.SECONDS);
                     if (null == take || take.getState().size() < 1) {
                         continue;
@@ -77,42 +77,60 @@ public class WorkflowEngine implements WorkflowSystem {
                     changes.putAll(take.getState());
                     pollAll(changes);
                 }
-                logger.debug("saw state changes: " + changes);
+                logDebug(String.format("saw state changes: %s", changes));
 
                 state.updateState(changes);
 
                 boolean update = Rules.update(engine, state);
-                logger.debug("applied state changes and rules (changed? " + update + "): " + state);
+                logDebug(String.format("applied state changes and rules (changed? %s): %s", update, state));
 
                 if (isWorkflowEndState(state)) {
                     completed = true;
                     break;
                 }
 
-                //analyze runnable operations
-                ImmutableList<X> shouldrun = FluentIterable.from(pending)
-                                                           .filter(shouldRun(state))
-                                                           .toList();
-                logger.debug("Pending(" + pending.size() + ") => shouldrun: (" + shouldrun.size() + ")");
+                int origPendingCount = pending.size();
+
+                //operations which match runnable conditions
+                FluentIterable<X> runnable = FluentIterable.from(pending).filter(shouldRun(state));
+
+                //runnable that should be skipped
+                List<X> shouldskip = runnable.filter(shouldSkip(state, true)).toList();
+
+                //runnable, should not skip
+                List<X> shouldrun = runnable.toList();
+
                 for (final X operation : shouldrun) {
+                    if (shouldskip.contains(operation)) {
+                        continue;
+                    }
                     pending.remove(operation);
                     final ListenableFuture<T> submit = executorService.submit(operation);
                     synchronized (inProcess) {
                         inProcess.add(operation);
                     }
                     futures.add(submit);
-                    Futures.addCallback(submit, new FutureCallback<T>() {
+                    FutureCallback<T> cleanup = new FutureCallback<T>() {
+                        @Override
+                        public void onSuccess(final T result) {
+                            futures.remove(submit);
+                        }
+
+                        @Override
+                        public void onFailure(final Throwable t) {
+                            futures.remove(submit);
+                        }
+                    };
+                    FutureCallback<T> callback = new FutureCallback<T>() {
                         @Override
                         public void onSuccess(final T successResult) {
-                            logger.debug("operation succeeded: " + successResult);
+                            logDebug(String.format("operation succeeded: %s", successResult));
                             assert successResult != null;
                             OperationResult<T, X> result = result(successResult, operation);
                             synchronized (results) {
                                 results.add(result);
                             }
-                            logger.debug("queue changes... ");
                             queueChange(successResult.getNewState());
-                            logger.debug("complete operation... ");
                             synchronized (inProcess) {
                                 inProcess.remove(operation);
                             }
@@ -120,26 +138,41 @@ public class WorkflowEngine implements WorkflowSystem {
 
                         @Override
                         public void onFailure(final Throwable t) {
-                            logger.debug("operation failed: " + t);
+                            logDebug(String.format("operation failed: %s", t));
                             OperationResult<T, X> result = result(t, operation);
                             synchronized (results) {
                                 results.add(result);
                             }
                             StateObj newFailureState = operation.getFailureState(t);
                             if (null != newFailureState && newFailureState.getState().size() > 0) {
-                                logger.debug("queue changes... ");
                                 queueChange(newFailureState);
                             }
-                            logger.debug("complete operation... ");
                             synchronized (inProcess) {
                                 inProcess.remove(operation);
                             }
 
                         }
-                    }, manager);
+                    };
+                    Futures.addCallback(submit, callback, manager);
+                    Futures.addCallback(submit, cleanup, manager);
                 }
+                for (final X operation : shouldskip) {
+                    logDebug(String.format("Skip condition statisfied for step: %s, skipping", operation));
+                    pending.remove(operation);
+                    skipped.add(operation);
+                    StateObj newstate = operation.getSkipState(state);
+                    queueChange(newstate);
+                }
+
+                logDebug(String.format(
+                        "Pending(%d) => run(%d), skip(%d), remain(%d)",
+                        origPendingCount,
+                        shouldrun.size() - shouldskip.size(),
+                        shouldskip.size(),
+                        pending.size()
+                ));
             } catch (InterruptedException e) {
-                logger.debug("interrupted, stopping engine...");
+                logDebug("interrupted, stopping engine...");
                 break;
             }
         }
@@ -175,11 +208,29 @@ public class WorkflowEngine implements WorkflowSystem {
             }
         } catch (InterruptedException ignored) {
         }
+        if (pending.size() > 0) {
+            logDebug(String.format("Some operations were not run: %d", pending.size()));
+        }
         return results;
+    }
+
+    private void logDebug(final String message) {
+        logger.debug(message);
+        if(null!=appLogger){
+            appLogger.log(Constants.DEBUG_LEVEL, message);
+        }
     }
 
     protected boolean isWorkflowEndState(final MutableStateObj state) {
         return state.hasState(Workflows.getWorkflowEndState());
+    }
+
+    public PluginLogger getAppLogger() {
+        return appLogger;
+    }
+
+    public void setAppLogger(PluginLogger appLogger) {
+        this.appLogger = appLogger;
     }
 
 
@@ -238,6 +289,16 @@ public class WorkflowEngine implements WorkflowSystem {
             public boolean apply(final Operation input) {
                 assert input != null;
                 return input.shouldRun(state);
+            }
+        };
+    }
+
+    static private Predicate<Operation> shouldSkip(final StateObj state, final boolean requireSkip) {
+        return new Predicate<Operation>() {
+            @Override
+            public boolean apply(final Operation input) {
+                assert input != null;
+                return requireSkip == input.shouldSkip(state);
             }
         };
     }

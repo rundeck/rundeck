@@ -37,7 +37,6 @@ public class ParallelWorkflowStrategy implements WorkflowStrategy {
 
             @Override
             public Set<Condition> getStartConditionsForStep(
-                    final String strategy,
                     final WorkflowExecutionItem item,
                     final int stepNum,
                     final boolean isFirstStep
