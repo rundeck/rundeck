@@ -259,6 +259,10 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         Set<WorkflowSystem.OperationResult<StepSuccess, StepOperation>> operationResults =
                 workflowEngine.processOperations(operations);
 
+
+        String statusString = null;
+        ControlBehavior controlBehavior = null;
+
         for (WorkflowSystem.OperationResult<StepSuccess, StepOperation> operationResult : operationResults) {
             StepSuccess success = operationResult.getSuccess();
             StepOperation operation = operationResult.getOperation();
@@ -268,6 +272,10 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                     stepFailures.put(success.stepNum, success.result);
                 }
                 stepResults.add(success.result);
+                if (success.controlBehavior != null && success.controlBehavior != ControlBehavior.Continue) {
+                    controlBehavior = success.controlBehavior;
+                    statusString = success.statusString;
+                }
             } else {
                 Throwable failure = operationResult.getFailure();
                 StepFailureReason reason = StepFailureReason.Unknown;
@@ -307,22 +315,20 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             }
         }
 
-        WorkflowStatusResult workflowResult = null;
+        boolean workflowSuccess = true;
         // Poll results, fail if there is any result is missing or not successful
         for (int i = 0; i < stepCount; i++) {
             int stepNum = i + executionContext.getStepNumber();
             if (null != stepExecutionResults.get(stepNum) &&
                 !stepExecutionResults.get(stepNum).isSuccess()) {
-//                logger.debug("No result, or failure result for step " +
-//                                   stepNum +
-//                                   ", failing workflow: " +
-//                                   stepExecutionResults.get(stepNum));
-                workflowResult = WorkflowResultFailed;
+                workflowSuccess = false;
             }
         }
-        if (null == workflowResult) {
-            workflowResult = workflowResult(true, null, ControlBehavior.Continue);
-        }
+        WorkflowStatusResult workflowResult = workflowResult(
+                workflowSuccess,
+                statusString,
+                null != controlBehavior ? controlBehavior : ControlBehavior.Continue
+        );
 //        final Exception orig = exception;
         final Map<String, Collection<StepExecutionResult>> nodeFailures = convertFailures(stepFailures);
         return new BaseWorkflowExecutionResult(
@@ -489,7 +495,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 }
             }
 
-            return new StepSuccess(stepNum, result, stateChanges);
+            return new StepSuccess(stepNum, result, stateChanges, controlBehavior, statusString);
         }
 
         @Override
@@ -525,11 +531,20 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         int stepNum;
         StepExecutionResult result;
         StateObj newState;
+        ControlBehavior controlBehavior;
+        String statusString;
 
-        public StepSuccess(final int stepNum, final StepExecutionResult result, final StateObj newState) {
+        public StepSuccess(
+                final int stepNum,
+                final StepExecutionResult result,
+                final StateObj newState, final ControlBehavior controlBehavior, final String statusString
+        )
+        {
             this.stepNum = stepNum;
             this.result = result;
             this.newState = newState;
+            this.controlBehavior = controlBehavior;
+            this.statusString = statusString;
         }
 
         @Override
