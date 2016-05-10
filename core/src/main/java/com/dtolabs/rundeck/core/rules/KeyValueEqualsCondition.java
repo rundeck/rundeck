@@ -23,9 +23,7 @@ public class KeyValueEqualsCondition implements Condition {
 
     @Override
     public String toString() {
-        return "Condition: (If " +
-               key +
-               "== '" + value + '\'' + ")";
+        return "(" + key + " == '" + value + '\'' + ")";
     }
 
     public String getKey() {

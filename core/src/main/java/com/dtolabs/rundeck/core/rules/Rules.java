@@ -55,6 +55,11 @@ public class Rules {
             public boolean apply(final StateObj input) {
                 return input.hasState(state);
             }
+
+            @Override
+            public String toString() {
+                return "(State equals: " + state + ")";
+            }
         };
     }
 
@@ -136,7 +141,7 @@ public class Rules {
 
             @Override
             public String toString() {
-                return "Condition: (Predicate: " + pred + ")";
+                return pred.toString();
             }
         };
     }
