@@ -72,7 +72,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             for (String s : failureData.keySet()) {
                 stringStringHashMap.put(
                         stepKey(STEP_DATA_RESULT_KEY_PREFIX + s, stepNum),
-                        resultData.get(s).toString()
+                        failureData.get(s).toString()
                 );
             }
         }
