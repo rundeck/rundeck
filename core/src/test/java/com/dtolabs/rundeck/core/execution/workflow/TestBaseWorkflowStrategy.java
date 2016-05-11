@@ -761,7 +761,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
     }
 
 
-    static class testWorkflowCmdItem implements NodeStepExecutionItem, HandlerExecutionItem {
+    static class testWorkflowCmdItem extends BaseExecutionItem implements NodeStepExecutionItem, HandlerExecutionItem {
         private String type;
         private String nodeStepType;
         int flag = -1;
@@ -791,7 +791,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         }
     }
 
-    static class testHandlerWorkflowCmdItem implements StepExecutionItem, HasFailureHandler {
+    static class testHandlerWorkflowCmdItem extends BaseExecutionItem implements StepExecutionItem, HasFailureHandler {
         private String type;
         private StepExecutionItem failureHandler;
         int flag = -1;

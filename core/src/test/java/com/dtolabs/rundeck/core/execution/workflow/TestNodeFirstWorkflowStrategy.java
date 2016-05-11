@@ -24,12 +24,7 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.common.*;
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
-import com.dtolabs.rundeck.core.execution.ExecutionListenerOverride;
-import com.dtolabs.rundeck.core.execution.FailedNodesListener;
-import com.dtolabs.rundeck.core.execution.StatusResult;
-import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
@@ -98,7 +93,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
         junit.textui.TestRunner.run(suite());
     }
 
-    static class testWorkflowCmdItem implements NodeStepExecutionItem {
+    static class testWorkflowCmdItem extends BaseExecutionItem implements NodeStepExecutionItem {
         private String type;
         int flag = -1;
 

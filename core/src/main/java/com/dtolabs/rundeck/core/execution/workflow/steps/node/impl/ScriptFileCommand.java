@@ -23,7 +23,7 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
-import com.dtolabs.rundeck.core.execution.workflow.ConditionalStepExecutionItem;
+import com.dtolabs.rundeck.core.execution.BaseExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
 
 import java.util.Map;
@@ -34,7 +34,7 @@ import java.util.Map;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public abstract class ScriptFileCommand implements ScriptFileCommandExecutionItem, ConditionalStepExecutionItem {
+public abstract class ScriptFileCommand extends BaseExecutionItem implements ScriptFileCommandExecutionItem {
 
     public String getType() {
         return NodeDispatchStepExecutor.STEP_EXECUTION_TYPE;
@@ -45,8 +45,4 @@ public abstract class ScriptFileCommand implements ScriptFileCommandExecutionIte
         return ScriptFileNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME;
     }
 
-    @Override
-    public Map<String, Object> getConditionsMap() {
-        return null;
-    }
 }

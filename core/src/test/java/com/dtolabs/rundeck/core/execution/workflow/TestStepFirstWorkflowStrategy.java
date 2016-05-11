@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.dtolabs.rundeck.core.common.*;
+import com.dtolabs.rundeck.core.execution.*;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -39,13 +40,6 @@ import org.junit.Assert;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
-import com.dtolabs.rundeck.core.execution.ExecutionListener;
-import com.dtolabs.rundeck.core.execution.ExecutionListenerOverride;
-import com.dtolabs.rundeck.core.execution.FailedNodesListener;
-import com.dtolabs.rundeck.core.execution.StatusResult;
-import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
@@ -103,7 +97,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
         junit.textui.TestRunner.run(suite());
     }
 
-    static class testWorkflowCmdItem implements NodeStepExecutionItem {
+    static class testWorkflowCmdItem extends BaseExecutionItem implements NodeStepExecutionItem {
         private String type;
         int flag=-1;
 
