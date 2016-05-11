@@ -201,6 +201,9 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         strategyForWorkflow.setup(ruleEngine);
 
         WorkflowStrategyProfile profile = strategyForWorkflow.getProfile();
+        if(profile==null){
+            profile = new SequentialStrategyProfile();
+        }
 
         for (int i = 0; i < stepCount; i++) {
             final int stepNum = executionContext.getStepNumber() + i;
