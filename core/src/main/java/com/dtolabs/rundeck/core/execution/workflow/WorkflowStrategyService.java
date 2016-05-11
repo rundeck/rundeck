@@ -37,6 +37,7 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
          */
         HashMap<String, Class<? extends WorkflowStrategy>> builtinProviders =
                 new HashMap<String, Class<? extends WorkflowStrategy>>() {{
+                    put(NodeFirstWorkflowStrategy.PROVIDER_NAME, NodeFirstWorkflowStrategy.class);
                     put(SequentialWorkflowStrategy.PROVIDER_NAME, SequentialWorkflowStrategy.class);
                     //backwards compatibility synonym
 //                    put("step-first", SequentialWorkflowStrategy.class);
