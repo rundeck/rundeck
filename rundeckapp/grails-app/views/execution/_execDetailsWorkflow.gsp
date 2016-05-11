@@ -79,20 +79,7 @@
         <wdgt:eventHandler for="workflow.strategy" equals="${pluginName}"
                            target="strategyPlugin${pluginName}" visible="true"/>
     </g:each>
-        %{--<label title="Execute the full workflow on each node before the next node">--}%
-            %{--<input id="wf_strat_node_first" type="radio" name="workflow.strategy" value="node-first" ${!workflow?.strategy||workflow?.strategy=='node-first'?'checked':''}/>--}%
-            %{--<g:message code="Workflow.strategy.label.node-first"/>--}%
-        %{--</label>--}%
-        %{--<label title="Execute each step on all nodes before the next step">--}%
-            %{--<input type="radio" name="workflow.strategy" value="step-first" ${workflow?.strategy=='step-first'?'checked':''}/>--}%
-            %{--<g:message code="Workflow.strategy.label.step-first"/>--}%
-        %{--</label>--}%
-        %{--<g:if test="${workflow?.strategy == 'parallel' || grailsApplication.config.feature?.incubator?.parallelWorkflowStrategy in [true,'true']}">--}%
-        %{--<label title="Execute each step in parallel across all nodes before next step">--}%
-            %{--<input type="radio" name="workflow.strategy" value="parallel" ${workflow?.strategy=='parallel'?'checked':''}/>--}%
-            %{--<g:message code="Workflow.strategy.label.parallel"/>--}%
-        %{--</label>--}%
-        %{--</g:if>--}%
+
 
     <span id="nodeStratHelp"
           data-toggle="popover"
@@ -228,7 +215,9 @@
     <div>
     <span class="text-muted text-em">
         <g:message code="strategy"/>:
-        <strong><g:message code="Workflow.strategy.description.${workflow?.strategy}"/></strong>
+        <g:render template="/framework/renderPluginConfig"
+            model="[type:workflow?.strategy,values: workflow?.strategyConfigMap, description: strategyPlugins.find{it.name==workflow?.strategy}]"
+        />
     </span>
 
     </div>
