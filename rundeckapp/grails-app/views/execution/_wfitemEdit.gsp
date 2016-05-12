@@ -565,11 +565,11 @@
 </g:if>
 <g:else>
     <div class="form-group">
-        <label class="col-sm-2 control-label" for="description${rkey}">Step Description</label>
+        <label class="col-sm-2 control-label" for="description${rkey}"><g:message code="Workflow.step.property.description.label" /></label>
         <div class="col-sm-10">
         <input id="description${rkey}" type="text" name="description" value="${enc(attr:item?.description)}"
             class="form-control"
-            placeholder="Description of this step"
+            placeholder="${message(code:"Workflow.step.property.description.placeholder")}"
                size="100"/>
         </div>
     </div>
