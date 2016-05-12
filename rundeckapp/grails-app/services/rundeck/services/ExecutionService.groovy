@@ -1056,8 +1056,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 final List<String> strings = OptsUtil.burst(cmd.getAdhocRemoteString());
                 final String[] args = strings.toArray(new String[strings.size()]);
 
-                return ExecutionItemFactory.createExecCommand(args, handler, !!cmd.keepgoingOnSuccess);
-
+                return ExecutionItemFactory.createExecCommand(args, handler, !!cmd.keepgoingOnSuccess, step.description);
             } else if (null != cmd.getAdhocLocalString()) {
                 final String script = cmd.getAdhocLocalString();
                 final String[] args;
@@ -1074,7 +1073,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         script,
                         args,
                         handler,
-                        !!cmd.keepgoingOnSuccess);
+                        !!cmd.keepgoingOnSuccess,
+                        step.description);
 
             } else if (null != cmd.getAdhocFilepath()) {
                 final String filepath = cmd.getAdhocFilepath();
@@ -1093,7 +1093,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             filepath,
                             args,
                             handler,
-                            !!cmd.keepgoingOnSuccess)
+                            !!cmd.keepgoingOnSuccess,
+                            step.description)
                 }else {
                     return ExecutionItemFactory.createScriptFileItem(
                             cmd.getScriptInterpreter(),
@@ -1102,7 +1103,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             new File(filepath),
                             args,
                             handler,
-                            !!cmd.keepgoingOnSuccess);
+                            !!cmd.keepgoingOnSuccess,
+                            step.description);
 
                 }
             }
@@ -1127,14 +1129,27 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     jobcmditem.nodeThreadcount!=null && jobcmditem.nodeThreadcount>=1?jobcmditem.nodeThreadcount:null,
                     jobcmditem.nodeKeepgoing,
                     jobcmditem.nodeRankAttribute,
-                    jobcmditem.nodeRankOrderAscending
+                    jobcmditem.nodeRankOrderAscending,
+                    step.description
             )
         }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
             final PluginStep stepitem = step as PluginStep
-            if(stepitem.nodeStep){
-                return ExecutionItemFactory.createPluginNodeStepItem(stepitem.type, stepitem.configuration, !!stepitem.keepgoingOnSuccess, handler)
-            }else{
-                return ExecutionItemFactory.createPluginStepItem(stepitem.type,stepitem.configuration, !!stepitem.keepgoingOnSuccess,handler)
+            if(stepitem.nodeStep) {
+                return ExecutionItemFactory.createPluginNodeStepItem(
+                        stepitem.type,
+                        stepitem.configuration,
+                        !!stepitem.keepgoingOnSuccess,
+                        handler,
+                        step.description
+                )
+            }else {
+                return ExecutionItemFactory.createPluginStepItem(
+                        stepitem.type,
+                        stepitem.configuration,
+                        !!stepitem.keepgoingOnSuccess,
+                        handler,
+                        step.description
+                )
             }
         } else {
             throw new IllegalArgumentException("Workflow step type was not expected: "+step);
