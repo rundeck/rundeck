@@ -364,24 +364,6 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         return conditions;
     }
 
-
-    private void addConditionalRules(final StepExecutionItem cmd, int stepNum, final RuleEngine ruleEngine) {
-        if (cmd instanceof ConditionalStepExecutionItem) {
-            ConditionalStepExecutionItem conds = (ConditionalStepExecutionItem) cmd;
-            Map<String, Object> conditionsMap = conds.getConditionsMap();
-            addConditionalRules(conditionsMap, stepNum, ruleEngine);
-        }
-    }
-
-    private void addConditionalRules(
-            final Map<String, Object> conditionsMap,
-            final int stepNum,
-            final RuleEngine ruleEngine
-    )
-    {
-        logger.debug("add conditions from step for " + conditionsMap);
-    }
-
     Callable<StepResultCapture> callable(
             final StepExecutionItem cmd,
             final StepExecutionContext executionContext,
