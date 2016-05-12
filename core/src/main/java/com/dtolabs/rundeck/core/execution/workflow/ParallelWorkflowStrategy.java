@@ -27,7 +27,7 @@ public class ParallelWorkflowStrategy implements WorkflowStrategy {
     }
 
     @Override
-    public void setup(final RuleEngine ruleEngine) {
+    public void setup(final RuleEngine ruleEngine, StepExecutionContext context, IWorkflow workflow) {
 
     }
 

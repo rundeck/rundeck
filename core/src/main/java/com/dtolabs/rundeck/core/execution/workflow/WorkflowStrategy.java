@@ -42,7 +42,7 @@ public interface WorkflowStrategy {
      *
      * @param ruleEngine
      */
-    void setup(RuleEngine ruleEngine);
+    void setup(RuleEngine ruleEngine, StepExecutionContext context, IWorkflow workflow);
 
     /**
      * Profile for the workflow

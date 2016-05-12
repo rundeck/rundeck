@@ -198,7 +198,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         );
 
         //add any additional strategy rules
-        strategyForWorkflow.setup(ruleEngine);
+        strategyForWorkflow.setup(ruleEngine, executionContext, workflow);
 
         WorkflowStrategyProfile profile = strategyForWorkflow.getProfile();
         if(profile==null){
