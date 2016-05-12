@@ -10,13 +10,9 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
-import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
-import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
 import org.apache.commons.collections.list.TreeList
@@ -357,6 +353,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 serverNodeUUID: frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null,
                 notificationPlugins: notificationService.listNotificationPlugins(),
 				orchestratorPlugins: orchestratorPluginService.listOrchestratorPlugins(),
+                strategyPlugins: scheduledExecutionService.getWorkflowStrategyPluginDescriptions(),
                 max: params.int('max') ?: 10,
                 offset: params.int('offset') ?: 0] + _prepareExecute(scheduledExecution, framework,authContext)
 
@@ -1852,9 +1849,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
-        def strategyPlugins = pluginService.listPlugins(WorkflowStrategy, frameworkService.rundeckFramework.workflowStrategyService).collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
+        def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
         def crontab = scheduledExecution.timeAndDateAsBooleanMap()
 
         def notificationPlugins = notificationService.listNotificationPlugins()
@@ -1993,13 +1988,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
 
-        def plugins = pluginService.listPlugins(
-                WorkflowStrategy,
-                frameworkService.rundeckFramework.workflowStrategyService
-        )
-        def strategyPlugins = plugins?.collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
+        def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
 
         render(view:'create',model: [ scheduledExecution:newScheduledExecution, crontab:crontab,params:params,
                 iscopy:true,
@@ -2136,9 +2125,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
         log.debug("ScheduledExecutionController: create : now returning model data to view...")
-        def strategyPlugins = pluginService.listPlugins(WorkflowStrategy, frameworkService.rundeckFramework.workflowStrategyService).collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
+        def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
         return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],
                 nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes,
                 notificationPlugins: notificationService.listNotificationPlugins(),
@@ -2335,9 +2322,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
-            def strategyPlugins = pluginService.listPlugins(WorkflowStrategy, frameworkService.rundeckFramework.workflowStrategyService).collect {
-                it.value.description
-            }.sort { a, b -> a.name <=> b.name }
+        def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
         render(view: 'create', model: [scheduledExecution: scheduledExecution, params: params,
                                        nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions: stepTypes,

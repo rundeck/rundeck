@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
@@ -54,6 +55,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def MessageSource messageSource
     def grailsEvents
+    def pluginService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -72,6 +74,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return executionServiceBean
     }
 
+    def getWorkflowStrategyPluginDescriptions(){
+        pluginService.listPlugins(WorkflowStrategy, frameworkService.rundeckFramework.workflowStrategyService).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+    }
 
     def Map finishquery ( query,params,model){
 
