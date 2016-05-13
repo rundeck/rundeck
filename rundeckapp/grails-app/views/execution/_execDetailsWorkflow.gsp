@@ -89,6 +89,12 @@
         <wdgt:eventHandler for="workflow.strategy" equals="${pluginName}"
                            target="strategyPlugin${pluginName}" visible="true"/>
     </g:each>
+<g:javascript>
+jQuery(function(){
+    "use strict";
+    jQuery('#workflowstrategyplugins').find('textarea.apply_ace').each(function(ndx,elem){_addAceTextarea(elem)});
+})
+</g:javascript>
 
 
     <span id="nodeStratHelp"
