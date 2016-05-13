@@ -8,8 +8,10 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import com.dtolabs.rundeck.server.plugins.ValidatedPlugin
 import grails.plugins.quartz.listeners.SessionBinderJobListener
 import grails.transaction.Transactional
 import org.apache.log4j.Logger
@@ -1602,7 +1604,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(scheduledExecution.workflow && params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config){
             def configmap=params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config
             scheduledExecution.workflow.setPluginConfigData('WorkflowStrategy',scheduledExecution.workflow.strategy,configmap)
-            //todo:validate
+            if (!validateWorkflowStrategyPlugin(
+                    scheduledExecution,
+                    projectProps,
+                    configmap,
+                    params
+            )) {
+                failed = true
+            }
         }
         if (( params.options || params['_nooptions']) && scheduledExecution.options) {
             def todelete = []
@@ -2606,13 +2615,28 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         //workflow strategy plugin config and validation
-        if(params.workflow.hasProperty('strategyPlugin') &&
-                params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config){
-            def configmap=params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config
+        if(params.workflow instanceof Map) {
+            Map configmap=params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config
+
             scheduledExecution.workflow.setPluginConfigData('WorkflowStrategy',scheduledExecution.workflow.strategy,configmap)
-            //todo:validate
-        }else if(params.workflow.hasProperty('pluginConfigMap')){
-            scheduledExecution.workflow.pluginConfigMap=params.workflow.getPluginConfigMap
+
+            if(!validateWorkflowStrategyPlugin(scheduledExecution, projectProps, configmap, params)){
+                failed=true
+            }
+        }else if(params.workflow instanceof Workflow){
+            scheduledExecution.workflow.pluginConfigMap=params.workflow.pluginConfigMap
+            if (!validateWorkflowStrategyPlugin(
+                    scheduledExecution,
+                    projectProps,
+                    scheduledExecution.workflow.getPluginConfigData(
+                            'WorkflowStrategy',
+                            scheduledExecution.workflow.strategy
+                    ),
+                    params
+            )) {
+                failed = true
+
+            }
         }
 
         if (scheduledExecution.argString) {
@@ -2728,6 +2752,48 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         failed = failed || !valid
         return [failed: failed, scheduledExecution: scheduledExecution]
+    }
+
+    private boolean validateWorkflowStrategyPlugin(
+            ScheduledExecution scheduledExecution,
+            Map<String, String> projectProps,
+            Map configmap,
+            Map params
+    )
+    {
+        def validation = pluginService.validatePlugin(scheduledExecution.workflow.strategy,
+                                                      frameworkService.rundeckFramework.workflowStrategyService,
+                                                      frameworkService.getFrameworkPropertyResolverWithProps(
+                                                              projectProps,
+                                                              configmap
+                                                      ),
+                                                      PropertyScope.Instance
+        )
+        if (!validation.valid) {
+            if (params instanceof Map) {
+                if (!params['strategyValidation']) {
+                    params['strategyValidation'] = [:]
+                }
+                if (!params['strategyValidation'][scheduledExecution.workflow.strategy]) {
+                    params['strategyValidation'][scheduledExecution.workflow.strategy] = [:]
+                }
+                params['strategyValidation'][scheduledExecution.workflow.strategy] = validation.report
+            }
+            scheduledExecution?.errors.rejectValue('workflow',
+                                                   'Workflow.strategy.plugin.config.invalid',
+                                                   [scheduledExecution.workflow.strategy] as Object[],
+                                                   "Workflow strategy {0}: Some config values were not valid"
+            )
+
+            scheduledExecution.workflow.errors.rejectValue(
+                    'strategy',
+                    'scheduledExecution.workflowStrategy.invalidPlugin.message',
+                    [scheduledExecution.workflow.strategy] as Object[],
+                    'Invalid Configuration for plugin: {0}'
+            )
+            return false
+        }
+        true
     }
 
 }
