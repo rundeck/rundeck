@@ -2669,6 +2669,7 @@ class ScheduledExecutionController  extends ControllerBase{
             inputOpts.putAll(params.extra.subMap(['nodeIncludeName', 'loglevel',/*'argString',*/ 'optparams', 'option', '_replaceNodeFilters', 'filter']).findAll { it.value })
             inputOpts.putAll(params.extra.findAll{it.key.startsWith('option.')||it.key.startsWith('nodeInclude')|| it.key.startsWith('nodeExclude')}.findAll { it.value })
         }
+        inputOpts['executionType'] = "user"
         def result = executionService.executeJob(scheduledExecution, authContext,session.user, inputOpts)
 
         if (result.error){

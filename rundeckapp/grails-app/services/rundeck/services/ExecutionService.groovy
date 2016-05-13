@@ -1482,7 +1482,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                     nodeRankAttribute:params.nodeRankAttribute,
                                     workflow:params.workflow,
                                     argString:params.argString,
-                                    executionType: params.executionType?:"user",
+                                    executionType: params.executionType?:"scheduled",
                                     timeout:params.timeout?:null,
                                     retryAttempt:params.retryAttempt?:0,
                                     retry:params.retry?:null,
@@ -1645,7 +1645,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         propset.each{k->
             props.put(k,se[k])
         }
-        props.executionType="scheduled"
         props.user = authContext.username
         if (input && 'true' == input['_replaceNodeFilters']) {
             //remove all existing node filters to replace with input filters
@@ -1659,6 +1658,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (input) {
             props.putAll(input.subMap(['argString','filter','loglevel','retryAttempt','doNodedispatch']).findAll{it.value!=null})
             props.putAll(input.findAll{it.key.startsWith('option.') && it.value!=null})
+        }
+
+        if (input && input['executionType']) {
+            props.executionType = input['executionType']
+        } else {
+            props.executionType="scheduled"
         }
 
         //evaluate embedded Job options for validation
