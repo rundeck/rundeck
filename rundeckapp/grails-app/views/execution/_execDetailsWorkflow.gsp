@@ -36,23 +36,33 @@
         <g:message code="Workflow.property.keepgoing.true.description"/>
     </label>
 </div>
-<div class="form-inline">
-    <g:set var="wfstrat" value="${workflow?.strategy=='step-first'?'sequential':workflow?.strategy}"/>
+<div class="" id="workflowstrategyplugins">
+    <g:set var="wfstrat" value="${params?.workflow?.strategy?:workflow?.strategy=='step-first'?'sequential':workflow?.strategy?:'node-first'}"/>
+    <div class="form-inline">
+        <div class="form-group ${hasErrors(bean: workflow, field: 'strategy', 'has-error')}">
+            <label class="col-sm-12" title="Strategy for iteration">
+                <g:message code="strategy"/>:
+                <g:select name="workflow.strategy" from="${strategyPlugins}" optionKey="name" optionValue="title"
+                          value="${wfstrat}"
+                          class="form-control"/>
+            </label>
+            <g:hasErrors bean="${workflow}" field="strategy">
 
+                <div class="text-warning col-sm-12">
+                    %{--<i class="glyphicon glyphicon-warning-sign"></i>--}%
+                    <g:renderErrors bean="${workflow}" as="list" field="strategy"/>
 
+                </div>
 
-    <label class="" title="Strategy for iteration">
-        <g:message code="strategy" />:
-        <g:select name="workflow.strategy" from="${strategyPlugins}" optionKey="name" optionValue="title" value="${wfstrat}"
-            class="form-control"
-        />
-    </label>
+            </g:hasErrors>
+        </div>
+    </div>
     <g:each in="${strategyPlugins}" var="pluginDescription">
         <g:set var="pluginName" value="${pluginDescription.name}"/>
         <g:set var="prefix" value="${('workflow.strategyPlugin.'+ pluginName + '.config.')}"/>
         <g:set var="definedConfig"
                value="${params.workflow?.strategyPlugin?.get(pluginName)?.config ?: wfstrat == pluginName?workflow?.getPluginConfigData('WorkflowStrategy',pluginName):null}"/>
-        <span id="strategyPlugin${pluginName}" style="${wdgt.styleVisible(if: wfstrat == pluginName ? true : false)}"
+        <div id="strategyPlugin${pluginName}" style="${wdgt.styleVisible(if: wfstrat == pluginName ? true : false)}"
               class="strategyPlugin">
             <span class="text-info">
                 <g:render template="/scheduledExecution/description"
@@ -66,7 +76,7 @@
 
                 <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
                         properties:pluginDescription?.properties,
-                        report:null,
+                        report:params?.strategyValidation?.get(pluginName)?:null,
                         prefix:prefix,
                         values:definedConfig,
                         fieldnamePrefix:prefix,
@@ -75,7 +85,7 @@
                 ]}"/>
 
             </div>
-        </span>
+        </div>
         <wdgt:eventHandler for="workflow.strategy" equals="${pluginName}"
                            target="strategyPlugin${pluginName}" visible="true"/>
     </g:each>
