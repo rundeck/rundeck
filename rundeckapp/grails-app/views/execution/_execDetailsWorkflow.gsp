@@ -51,7 +51,7 @@
         <g:set var="pluginName" value="${pluginDescription.name}"/>
         <g:set var="prefix" value="${('workflow.strategyPlugin.'+ pluginName + '.config.')}"/>
         <g:set var="definedConfig"
-               value="${params.workflow?.strategyPlugin?.get(pluginName)?.config ?: wfstrat == pluginName?workflow?.strategyConfigMap:null}"/>
+               value="${params.workflow?.strategyPlugin?.get(pluginName)?.config ?: wfstrat == pluginName?workflow?.getPluginConfigData('WorkflowStrategy',pluginName):null}"/>
         <span id="strategyPlugin${pluginName}" style="${wdgt.styleVisible(if: wfstrat == pluginName ? true : false)}"
               class="strategyPlugin">
             <span class="text-info">
@@ -216,7 +216,7 @@
     <span class="text-muted text-em">
         <g:message code="strategy"/>:
         <g:render template="/framework/renderPluginConfig"
-            model="[type:workflow?.strategy,values: workflow?.strategyConfigMap, description: strategyPlugins.find{it.name==workflow?.strategy}]"
+            model="[type:workflow?.strategy,values: workflow?.getPluginConfigData('WorkflowStrategy',workflow?.strategy), description: strategyPlugins.find{it.name==workflow?.strategy}]"
         />
     </span>
 

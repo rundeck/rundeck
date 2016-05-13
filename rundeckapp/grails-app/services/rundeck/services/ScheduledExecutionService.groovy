@@ -16,7 +16,6 @@ import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
 import org.quartz.*
-import org.quartz.impl.matchers.KeyMatcher
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -1600,9 +1599,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             failed = true
         }
         //workflow strategy plugin config and validation
-        if(params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config){
+        if(scheduledExecution.workflow && params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config){
             def configmap=params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config
-            scheduledExecution.workflow.strategyConfigMap=configmap
+            scheduledExecution.workflow.setPluginConfigData('WorkflowStrategy',scheduledExecution.workflow.strategy,configmap)
             //todo:validate
         }
         if (( params.options || params['_nooptions']) && scheduledExecution.options) {
@@ -2422,6 +2421,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 cmdi++
             }
         }
+        //TODO: validate workflow plugin
         return valid
     }
 
@@ -2606,10 +2606,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         //workflow strategy plugin config and validation
-        if(params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config){
+        if(params.workflow.hasProperty('strategyPlugin') &&
+                params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config){
             def configmap=params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config
-            scheduledExecution.workflow.strategyConfigMap=configmap
+            scheduledExecution.workflow.setPluginConfigData('WorkflowStrategy',scheduledExecution.workflow.strategy,configmap)
             //todo:validate
+        }else if(params.workflow.hasProperty('pluginConfigMap')){
+            scheduledExecution.workflow.pluginConfigMap=params.workflow.getPluginConfigMap
         }
 
         if (scheduledExecution.argString) {

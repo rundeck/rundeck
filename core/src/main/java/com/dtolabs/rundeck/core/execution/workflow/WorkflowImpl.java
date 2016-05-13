@@ -38,7 +38,7 @@ public class WorkflowImpl implements IWorkflow {
     private int threadcount;
     private boolean keepgoing;
     private String strategy;
-    private Map<String, Object> strategyConfig;
+    private Map<String, Object> pluginConfig;
 
     public WorkflowImpl(final List<StepExecutionItem> commands, final int threadcount, final boolean keepgoing,
                         final String strategy) {
@@ -127,11 +127,11 @@ public class WorkflowImpl implements IWorkflow {
     }
 
     @Override
-    public Map<String, Object> getStrategyConfig() {
-        return strategyConfig;
+    public Map<String, Object> getPluginConfig() {
+        return pluginConfig;
     }
 
-    public void setStrategyConfig(Map<String, Object> strategyConfig) {
-        this.strategyConfig = strategyConfig;
+    public void setPluginConfig(Map<String, Object> pluginConfig) {
+        this.pluginConfig = pluginConfig;
     }
 }

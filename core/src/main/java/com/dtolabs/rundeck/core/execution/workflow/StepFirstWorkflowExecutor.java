@@ -121,8 +121,8 @@ public class StepFirstWorkflowExecutor extends BaseWorkflowExecutor {
         }
 
         @Override
-        public Map<String, Object> getStrategyConfig() {
-            return workflow.getStrategyConfig();
+        public Map<String, Object> getPluginConfig() {
+            return workflow.getPluginConfig();
         }
 
         @Override

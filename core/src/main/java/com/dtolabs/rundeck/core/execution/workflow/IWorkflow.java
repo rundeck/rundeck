@@ -39,5 +39,5 @@ public interface IWorkflow {
     public int getThreadcount();
     public boolean isKeepgoing();
     public String getStrategy();
-    public Map<String,Object> getStrategyConfig();
+    public Map<String,Object> getPluginConfig();
 }

@@ -132,9 +132,17 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
         WorkflowStrategy strategyForWorkflow;
         try {
+            Map<String, Object> pluginConfig = new HashMap<>();
+            Map<String, Object> pluginConfig1 = workflow.getPluginConfig();
+            if(pluginConfig1!=null) {
+                Object o = pluginConfig1.get("WorkflowStrategy:" + workflow.getStrategy());
+                if (o instanceof Map) {
+                    pluginConfig = (Map<String, Object>) o;
+                }
+            }
             strategyForWorkflow = framework.getWorkflowStrategyService().getStrategyForWorkflow(
                     item,
-                    workflow.getStrategyConfig()
+                    pluginConfig
             );
         } catch (ExecutionServiceException e) {
             executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Exception: " + e.getClass() + ": " + e
@@ -201,7 +209,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         strategyForWorkflow.setup(ruleEngine, executionContext, workflow);
 
         WorkflowStrategyProfile profile = strategyForWorkflow.getProfile();
-        if(profile==null){
+        if (profile == null) {
             profile = new SequentialStrategyProfile();
         }
 

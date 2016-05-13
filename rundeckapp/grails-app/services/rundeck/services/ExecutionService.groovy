@@ -1027,7 +1027,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 execMap.workflow.keepgoing,
                 execMap.workflow.strategy ? execMap.workflow.strategy : "node-first"
         )
-        impl.setStrategyConfig(execMap.workflow.strategyConfigMap)
+        impl.setPluginConfig(execMap.workflow.pluginConfigMap)
         final WorkflowExecutionItemImpl item = new WorkflowExecutionItemImpl(impl)
         return item
     }
