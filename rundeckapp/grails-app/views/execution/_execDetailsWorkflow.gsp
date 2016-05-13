@@ -96,66 +96,6 @@ jQuery(function(){
 })
 </g:javascript>
 
-
-    <span id="nodeStratHelp"
-          data-toggle="popover"
-          data-popover-content-ref="#nodeStratHelp_tooltip"
-          data-placement="bottom"
-          data-trigger="hover"
-    ><i
-            class="glyphicon glyphicon-question-sign text-info"></i> Explain </span>
-        <div class="" id="nodeStratHelp_tooltip" style="display:none; background:white;">
-            <style type="text/css">
-                td.nodea{
-                    color:blue;
-                }
-                td.nodeb{
-                    color:green;
-                }
-                
-            </style>
-            <table>
-                <tr>
-                    <td width="200px;">
-
-                <span class="text-muted">Node-oriented: <g:message code="Workflow.strategy.description.node-first"/></span>
-                    </td>
-                    <td width="200px;"><span class="text-muted">Step-oriented: <g:message code="Workflow.strategy.description.step-first" /></span></td>
-                <g:if test="${workflow?.strategy == 'parallel' || grailsApplication.config.feature?.incubator?.parallelWorkflowStrategy in [true, 'true']}">
-                    <td width="200px;"><span class="text-muted">Parallel executes all steps in parallel across all nodes before the next step</span></td>
-                </g:if>
-                    <g:if test="${workflow?.strategy == 'condition' || grailsApplication.config.feature?.incubator?.conditionalWorkflowStrategy in [true, 'true']}">
-                        <td width="200px;"><span class="text-muted">Conditional strategy allows conditions</span></td>
-                    </g:if>
-                </tr>
-                <tr>
-                <td>
-                <table>
-                    <tr><td>1.</td><td class="nodea">NodeA</td> <td>step 1</td></tr>
-                    <tr><td>2.</td><td class="nodea">"</td> <td>step 2</td></tr>
-                    <tr><td>3.</td><td class="nodea">"</td> <td>step 3</td></tr>
-                    <tr><td>4.</td><td class="nodeb">NodeB</td> <td>step 1</td></tr>
-                    <tr><td>5.</td><td class="nodeb">"</td> <td>step 2</td></tr>
-                    <tr><td>6.</td><td class="nodeb">"</td> <td>step 3</td></tr>
-                </table>
-
-            </td>
-
-            <td>
-
-            <table>
-                <tr><td>1.</td><td class="nodea">NodeA</td> <td class="step1">step 1</td></tr>
-                <tr><td>2.</td><td class="nodeb">NodeB</td> <td class="step1">"</td></tr>
-                <tr><td>3.</td><td class="nodea">NodeA</td> <td class="step2">step 2</td></tr>
-                <tr><td>4.</td><td class="nodeb">NodeB</td> <td class="step2">"</td></tr>
-                <tr><td>5.</td><td class="nodea">NodeA</td> <td>step 3</td></tr>
-                <tr><td>6.</td><td class="nodeb">NodeB</td> <td>"</td></tr>
-            </table>
-            </td></tr></table>
-        </div>
-        <g:javascript>
-            fireWhenReady('nodeStratHelp', _initPopoverContentRef);
-        </g:javascript>
 </div>
 </g:if>
 </g:unless>
