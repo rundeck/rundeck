@@ -65,16 +65,21 @@ public class Workflow {
     public def getPluginConfigData(String type,String name) {
         def map = getPluginConfigMap()
         if(!map){
-            map=[:]
+            map=[(type):[:]]
+        }else if(!map[type]){
+            map[type]=[:]
         }
-        map[type+':'+name]?:[:]
+        map?.get(type)?.get(name)?:[:]
     }
     public void setPluginConfigData(String type,String name, data) {
         def map = getPluginConfigMap()
         if(!map){
             map=[:]
         }
-        map[type+':'+name]= data
+        if(!map[type]){
+            map[type]=[:]
+        }
+        map[type][name] = data
         setPluginConfigMap(map)
     }
 
@@ -134,7 +139,8 @@ public class Workflow {
 
     /** create canonical map representation */
     public Map toMap(){
-        return [/*threadcount:threadcount,*/ keepgoing:keepgoing, strategy:strategy, pluginConfig:pluginConfigMap, commands:commands.collect{it.toMap()}]
+        def plugins=pluginConfigMap?[pluginConfig:pluginConfigMap]:[:]
+        return [/*threadcount:threadcount,*/ keepgoing:keepgoing, strategy:strategy, commands:commands.collect{it.toMap()}] + plugins
     }
 
     static Workflow fromMap(Map data){

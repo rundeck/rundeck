@@ -118,7 +118,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             final WorkflowExecutionItem item
     )
     {
-        executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, "Start ConditionalWorkflowStrategy2");
+        executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, "Start EngineWorkflowExecutor");
         final IWorkflow workflow = item.getWorkflow();
 
         List<StepExecutionItem> commands = workflow.getCommands();
@@ -134,10 +134,14 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         try {
             Map<String, Object> pluginConfig = new HashMap<>();
             Map<String, Object> pluginConfig1 = workflow.getPluginConfig();
-            if(pluginConfig1!=null) {
-                Object o = pluginConfig1.get("WorkflowStrategy:" + workflow.getStrategy());
+            if (pluginConfig1 != null) {
+                Object o = pluginConfig1.get("WorkflowStrategy");
                 if (o instanceof Map) {
-                    pluginConfig = (Map<String, Object>) o;
+                    Object o1 = ((Map<String, Object>) o).get(strategy);
+                    if (o1 instanceof Map) {
+                        pluginConfig = (Map<String, Object>) o1;
+                    }
+
                 }
             }
             strategyForWorkflow = framework.getWorkflowStrategyService().getStrategyForWorkflow(
