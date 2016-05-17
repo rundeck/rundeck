@@ -1607,7 +1607,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (scheduledExecution.workflow && params.workflow?.strategyPlugin?.get(
                 scheduledExecution.workflow.strategy
         )?.config) {
-            def configmap = params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config
+            Map configmap = params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config
             scheduledExecution.workflow.setPluginConfigData(
                     'WorkflowStrategy',
                     scheduledExecution.workflow.strategy,
@@ -1616,8 +1616,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def report=validateWorkflowStrategyPlugin(
                     scheduledExecution,
                     projectProps,
-                    configmap,
-                    params
+                    configmap
             )
             if(null!=report && !report.valid) {
                 rejectWorkflowStrategyInput(scheduledExecution,params,report)
@@ -2635,7 +2634,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     configmap
             )
 
-            def report=validateWorkflowStrategyPlugin(scheduledExecution, projectProps, configmap, params)
+            def report=validateWorkflowStrategyPlugin(scheduledExecution, projectProps, configmap)
 
             if(null!=report && !report.valid) {
                 rejectWorkflowStrategyInput(scheduledExecution,params,report)
@@ -2649,8 +2648,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     scheduledExecution.workflow.getPluginConfigData(
                             'WorkflowStrategy',
                             scheduledExecution.workflow.strategy
-                    ),
-                    params
+                    )
             )
             if(null!=report && !report.valid) {
                 rejectWorkflowStrategyInput(scheduledExecution,params,report)
@@ -2784,8 +2782,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     private Validator.Report validateWorkflowStrategyPlugin(
             ScheduledExecution scheduledExecution,
             Map<String, String> projectProps,
-            Map configmap,
-            Map params
+            Map configmap
     )
     {
 
