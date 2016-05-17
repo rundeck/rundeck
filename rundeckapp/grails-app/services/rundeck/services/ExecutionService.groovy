@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import grails.transaction.Transactional
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
@@ -33,6 +34,7 @@ import org.rundeck.storage.api.StorageException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.validation.ObjectError
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
@@ -826,7 +828,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def jobcontext=exportContextForExecution(execution,grailsLinkGenerator)
             loghandler.openStream()
 
-            WorkflowExecutionItem item = createExecutionItemForExecutionContext(execution, framework, execution.user)
+            WorkflowExecutionItem item = createExecutionItemForWorkflow(execution.workflow)
 
             NodeRecorder recorder = new NodeRecorder();//TODO: use workflow-aware listener for nodes
 
@@ -988,46 +990,29 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return levels.indexOf(loglevel)
     }
 
-    /**
-     * Return an appropriate StepExecutionItem object for the stored Execution
-     */
-    public WorkflowExecutionItem createExecutionItemForExecutionContext(ExecutionContext execution, Framework framework, String user=null) {
-        WorkflowExecutionItem item
-        if (execution.workflow) {
-            item = createExecutionItemForWorkflowContext(execution, framework,user)
-        } else {
-            throw new RuntimeException("unsupported job type")
-        }
-        return item
-    }
-
 
     /**
-     * Return an WorkflowExecutionItem instance for the given workflow Execution,
+     * Create an WorkflowExecutionItem instance for the given Workflow,
      * suitable for the ExecutionService layer
      */
-    public WorkflowExecutionItem createExecutionItemForWorkflowContext(
-            ExecutionContext execMap,
-            Framework framework,
-            String userName=null
-    )
-    {
-        if (!execMap.workflow.commands || execMap.workflow.commands.size() < 1) {
+    @Transactional(propagation = Propagation.NEVER, readOnly = true)
+    public WorkflowExecutionItem createExecutionItemForWorkflow(Workflow workflow) {
+        if (!workflow.commands || workflow.commands.size() < 1) {
             throw new Exception("Workflow is empty")
         }
 
         def impl = new WorkflowImpl(
-                execMap.workflow.commands.collect {
+                workflow.commands.collect {
                     itemForWFCmdItem(
                             it,
                             it.errorHandler ? itemForWFCmdItem(it.errorHandler) : null
                     )
                 },
-                execMap.workflow.threadcount,
-                execMap.workflow.keepgoing,
-                execMap.workflow.strategy ? execMap.workflow.strategy : "node-first"
+                workflow.threadcount,
+                workflow.keepgoing,
+                workflow.strategy ? workflow.strategy : "node-first"
         )
-        impl.setPluginConfig(execMap.workflow.pluginConfigMap)
+        impl.setPluginConfig(workflow.pluginConfigMap)
         final WorkflowExecutionItemImpl item = new WorkflowExecutionItemImpl(impl)
         return item
     }
@@ -1048,6 +1033,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         e.executionState
     }
 
+    @Transactional(propagation = Propagation.NEVER, readOnly = true)
     public StepExecutionItem itemForWFCmdItem(final WorkflowStep step,final StepExecutionItem handler=null) throws FileNotFoundException {
         if(step instanceof CommandExec || step.instanceOf(CommandExec)){
             CommandExec cmd=step.asType(CommandExec)
@@ -1107,6 +1093,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             step.description);
 
                 }
+            }else {
+                throw new IllegalArgumentException("Workflow step type was not expected: "+step);
             }
         }else if (step instanceof JobExec || step.instanceOf(JobExec)) {
             final JobExec jobcmditem = step as JobExec;
@@ -2615,7 +2603,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 result = createFailure(JobReferenceFailureReason.Unauthorized, msg)
                 return
             }
-            newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
+            newExecItem = createExecutionItemForWorkflow(se.workflow)
 
             try {
                 newContext = createJobReferenceContext(
