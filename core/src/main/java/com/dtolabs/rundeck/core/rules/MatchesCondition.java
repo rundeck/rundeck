@@ -50,11 +50,9 @@ public class MatchesCondition extends KeyValueEqualsCondition {
 
     @Override
     public String toString() {
-        return "MatchesCondition{" +
-               "key=" + getKey() +
-               ", keyRegex=" + (null != keyPattern) +
-               ", value=" + getValue() +
-               ", valueRegex=" + (null != valuePattern) +
-               "} " + super.toString();
+        return "Matches{" +
+               (null != keyPattern ? "~" : "") + getKey() +
+               (null != valuePattern?"=~":"==")+ getValue() +
+               "}";
     }
 }
