@@ -125,11 +125,11 @@ public class Rules {
     }
 
     public static Condition or(final Condition... conditions) {
-        return conditionFrom(Predicates.and(conditions));
+        return conditionFrom(Predicates.or(conditions));
     }
 
     public static Condition or(final Iterable<Condition> conditions) {
-        return conditionFrom(Predicates.and(conditions));
+        return conditionFrom(Predicates.or(conditions));
     }
 
     static Condition conditionFrom(final Predicate<StateObj> pred) {
@@ -194,7 +194,7 @@ public class Rules {
 
             @Override
             public StateObj evaluate(final StateObj stateObj) {
-                if (applyConditions(stateObj, conditions, true)) {
+                if (apply(stateObj)) {
                     return newstate;
                 }
                 return null;
