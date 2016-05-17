@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.core.plugins.configuration.Validator;
 import com.dtolabs.rundeck.core.rules.Condition;
 import com.dtolabs.rundeck.core.rules.KeyValueEqualsCondition;
 import com.dtolabs.rundeck.core.rules.RuleEngine;
@@ -31,6 +32,11 @@ public class ParallelWorkflowStrategy implements WorkflowStrategy {
 
     }
 
+    @Override
+    public Validator.Report validate(final IWorkflow workflow) {
+
+        return null;
+    }
     @Override
     public WorkflowStrategyProfile getProfile() {
         return new EngineWorkflowExecutor.BaseProfile() {

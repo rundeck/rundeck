@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.core.plugins.configuration.Validator;
 import com.dtolabs.rundeck.core.rules.RuleEngine;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
@@ -50,6 +51,12 @@ public class NodeFirstWorkflowStrategy implements WorkflowStrategy {
     @Override
     public void setup(final RuleEngine ruleEngine, StepExecutionContext context, IWorkflow workflow) {
 
+    }
+
+    @Override
+    public Validator.Report validate(final IWorkflow workflow) {
+
+        return null;
     }
 
     @Override

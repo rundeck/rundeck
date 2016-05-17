@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow;
 
+import com.dtolabs.rundeck.core.plugins.configuration.Validator;
 import com.dtolabs.rundeck.core.rules.RuleEngine;
 
 /**
@@ -43,6 +44,15 @@ public interface WorkflowStrategy {
      * @param ruleEngine
      */
     void setup(RuleEngine ruleEngine, StepExecutionContext context, IWorkflow workflow);
+
+    /**
+     * Validate configuration values in the context of the workflow
+     *
+     * @param workflow workflow input
+     *
+     * @return report of any input property validation errors
+     */
+    Validator.Report validate(IWorkflow workflow);
 
     /**
      * Profile for the workflow
