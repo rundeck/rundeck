@@ -146,7 +146,8 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             }
             strategyForWorkflow = framework.getWorkflowStrategyService().getStrategyForWorkflow(
                     item,
-                    pluginConfig
+                    pluginConfig,
+                    executionContext.getFrameworkProject()
             );
         } catch (ExecutionServiceException e) {
             executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Exception: " + e.getClass() + ": " + e

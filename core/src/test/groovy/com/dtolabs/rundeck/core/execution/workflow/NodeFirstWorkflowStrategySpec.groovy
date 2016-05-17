@@ -19,16 +19,17 @@ import spock.lang.Specification
  * Created by greg on 11/6/15.
  */
 class NodeFirstWorkflowStrategySpec extends Specification {
+    public static final String TEST_PROJ = 'NodeFirstWorkflowStrategySpec'
     Framework framework
     FrameworkProject testProject
 
     def setup() {
         framework = AbstractBaseTest.createTestFramework()
-        testProject = framework.getFrameworkProjectMgr().createFrameworkProject('NodeFirstWorkflowStrategySpec')
+        testProject = framework.getFrameworkProjectMgr().createFrameworkProject(TEST_PROJ)
     }
 
     def cleanup() {
-        framework.getFrameworkProjectMgr().removeFrameworkProject('NodeFirstWorkflowStrategySpec')
+        framework.getFrameworkProjectMgr().removeFrameworkProject(TEST_PROJ)
     }
 
     def "node step fails then workflow step success should fail"() {
@@ -44,6 +45,7 @@ class NodeFirstWorkflowStrategySpec extends Specification {
                 }
             }
             getNodes() >> nodeSet
+            getFrameworkProject()>>TEST_PROJ
         }
         def successExecutor = Mock(StepExecutor) {
             isNodeDispatchStep(_) >> false

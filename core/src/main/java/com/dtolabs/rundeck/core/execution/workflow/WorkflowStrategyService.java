@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IRundeckProjectConfig;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
@@ -20,6 +21,7 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
         PluggableProviderService<WorkflowStrategy>
 {
     private static final String SERVICE_NAME = ServiceNameConstants.WorkflowStrategy;
+    private final Framework framework;
     private List<ProviderService<WorkflowStrategy>> serviceList;
     private final PluggableProviderService<WorkflowStrategy> pluginService;
     private final Map<String, String> builtinProviderSynonyms = new HashMap<>();
@@ -29,6 +31,7 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
     }
 
     private WorkflowStrategyService(final Framework framework) {
+        this.framework=framework;
         this.serviceList = new ArrayList<>();
         /*
          * WorkflowExecutionService chains several other services:
@@ -73,21 +76,6 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
     }
 
     /**
-     * Get unconfigured strategy instance
-     *
-     * @param workflow
-     *
-     * @return
-     *
-     * @throws ExecutionServiceException
-     */
-    public WorkflowStrategy getStrategyForWorkflow(final WorkflowExecutionItem workflow)
-            throws ExecutionServiceException
-    {
-        return getStrategyForWorkflow(workflow, null);
-    }
-
-    /**
      * Get a configured strategy instance
      *
      * @param workflow workflow
@@ -97,9 +85,14 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
      *
      * @throws ExecutionServiceException
      */
-    public WorkflowStrategy getStrategyForWorkflow(final WorkflowExecutionItem workflow, Map<String, Object> config)
+    public WorkflowStrategy getStrategyForWorkflow(
+            final WorkflowExecutionItem workflow,
+            Map<String, Object> config,
+            String projectName
+    )
             throws ExecutionServiceException
     {
+
         String provider = workflow.getWorkflow().getStrategy();
         String s = builtinProviderSynonyms.get(provider);
         if (null != s) {
@@ -107,7 +100,16 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
         }
         WorkflowStrategy workflowStrategy = providerOfType(provider);
         if (null != config) {
-            final PropertyResolver resolver = PropertyResolverFactory.createInstanceResolver(config);
+            IRundeckProjectConfig iRundeckProjectConfig = framework.getFrameworkProjectMgr().loadProjectConfig(
+                    projectName);
+
+            PropertyResolver resolver = PropertyResolverFactory.createResolver(
+                    config.size() > 0 ? PropertyResolverFactory.instanceRetriever(config) : null,
+                    PropertyResolverFactory.instanceRetriever(
+                            iRundeckProjectConfig.getProjectProperties()
+                    ),
+                    framework.getPropertyRetriever()
+            );
 
             Description description = DescribableServiceUtil.descriptionForProvider(
                     true,
