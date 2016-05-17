@@ -2,6 +2,10 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategyService
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.quartz.ListenerManager
@@ -35,7 +39,10 @@ class ScheduledExecutionServiceSpec extends Specification {
             existsFrameworkProject('testProject') >> true
             isClusterModeEnabled()>>enabled
             getServerUUID()>>TEST_UUID1
+            getFrameworkPropertyResolverWithProps(*_)>>Mock(PropertyResolver)
         }
+        service.pluginService=Mock(PluginService)
+        service.executionServiceBean=Mock(ExecutionService)
         TEST_UUID1
     }
     def "blank email notification"() {
@@ -827,10 +834,14 @@ class ScheduledExecutionServiceSpec extends Specification {
             }
             isClusterModeEnabled()>>enabled
             getServerUUID()>>uuid
+            getRundeckFramework()>>Mock(Framework){
+                getWorkflowStrategyService()>>Mock(WorkflowStrategyService)
+            }
         }
         service.executionServiceBean=Mock(ExecutionService){
             executionsAreActive()>>false
         }
+        service.pluginService=Mock(PluginService)
         uuid
     }
 
