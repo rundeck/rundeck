@@ -3,7 +3,7 @@ package com.dtolabs.rundeck.core.rules;
 import com.google.common.base.Predicate;
 
 /**
- * Created by greg on 4/28/16.
+ * A predicate of a state
  */
 public interface Condition extends Predicate<StateObj> {
 }

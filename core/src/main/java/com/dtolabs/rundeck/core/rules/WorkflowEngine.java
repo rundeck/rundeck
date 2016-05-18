@@ -12,6 +12,14 @@ import java.util.concurrent.*;
 
 /**
  * A WorkflowSystem which processes the operations by use of a rule system and a mutable state.
+ * implementation: Operations can supply state changes after they succeed, or fail. State
+ * changes
+ * provided by
+ * operations are added in the order they are received, and after a set of available state
+ * changes are added, the rule engine is used to update the state based on its rules.  After
+ * the state is updated, all pending operations are queried to see if they can run given the new
+ * state, and any that can are queued to be executed.  Workflow processing stops when no operations
+ * are currently running, no new state changes are available, and no pending operations can be run.
  */
 public class WorkflowEngine implements WorkflowSystem {
     static Logger logger = Logger.getLogger(WorkflowEngine.class.getName());

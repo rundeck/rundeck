@@ -6,7 +6,7 @@ import com.dtolabs.rundeck.core.rules.StateObj;
 import java.util.Set;
 
 /**
- * Created by greg on 5/3/16.
+ * Defines how steps in the workflow
  */
 public interface WorkflowStrategyProfile {
 
