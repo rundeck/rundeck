@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import grails.transaction.NotTransactional
 import grails.transaction.Transactional
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
@@ -995,7 +996,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * Create an WorkflowExecutionItem instance for the given Workflow,
      * suitable for the ExecutionService layer
      */
-    @Transactional(propagation = Propagation.NEVER, readOnly = true)
+    @NotTransactional
     public WorkflowExecutionItem createExecutionItemForWorkflow(Workflow workflow) {
         if (!workflow.commands || workflow.commands.size() < 1) {
             throw new Exception("Workflow is empty")
@@ -1033,7 +1034,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         e.executionState
     }
 
-    @Transactional(propagation = Propagation.NEVER, readOnly = true)
+    @NotTransactional
     public StepExecutionItem itemForWFCmdItem(final WorkflowStep step,final StepExecutionItem handler=null) throws FileNotFoundException {
         if(step instanceof CommandExec || step.instanceOf(CommandExec)){
             CommandExec cmd=step.asType(CommandExec)
