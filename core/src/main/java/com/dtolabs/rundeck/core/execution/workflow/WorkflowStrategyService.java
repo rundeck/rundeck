@@ -25,6 +25,7 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
     private List<ProviderService<WorkflowStrategy>> serviceList;
     private final PluggableProviderService<WorkflowStrategy> pluginService;
     private final Map<String, String> builtinProviderSynonyms = new HashMap<>();
+    private final BaseProviderRegistryService<WorkflowStrategy> builtinService;
 
     public String getName() {
         return SERVICE_NAME;
@@ -48,7 +49,7 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
                 }};
         builtinProviderSynonyms.put("step-first", SequentialWorkflowStrategy.PROVIDER_NAME);
 
-        final ProviderService<WorkflowStrategy> primaryService = ServiceFactory.builtinService(
+        builtinService = ServiceFactory.builtinService(
                 framework,
                 SERVICE_NAME,
                 builtinProviders
@@ -57,7 +58,7 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
         pluginService = ServiceFactory.pluginService(SERVICE_NAME, framework, WorkflowStrategy.class);
 
 
-        serviceList.add(primaryService);
+        serviceList.add(builtinService);
         serviceList.add(pluginService);
     }
 
@@ -155,5 +156,13 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
     @Override
     public WorkflowStrategy createScriptProviderInstance(final ScriptPluginProvider provider) throws PluginException {
         return pluginService.createScriptProviderInstance(provider);
+    }
+
+    public void registerClass(String name, Class<? extends WorkflowStrategy> clazz) {
+        builtinService.registerClass(name, clazz);
+    }
+
+    public void registerInstance(String name, WorkflowStrategy object) {
+        builtinService.registerInstance(name, object);
     }
 }

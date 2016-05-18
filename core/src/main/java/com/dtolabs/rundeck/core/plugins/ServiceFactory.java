@@ -10,7 +10,7 @@ import java.util.Map;
  */
 public class ServiceFactory {
 
-    public static <T> ProviderService<T> builtinService(
+    public static <T> BaseProviderRegistryService<T> builtinService(
             final Framework framework,
             final String serviceName,
             final Map<String, Class<? extends T>> classes

@@ -5,10 +5,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Create rules and a rule engine
@@ -62,6 +59,18 @@ public class Rules {
             }
         };
     }
+
+    /**
+     *
+     * @param condition
+     * @return
+     */
+    public static Set<Condition> conditionSet(final Condition... condition) {
+        HashSet<Condition> conditions = new HashSet<>();
+        conditions.addAll(Arrays.asList(condition));
+        return conditions;
+    }
+
 
     /**
      * Create a single match condition

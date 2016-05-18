@@ -17,4 +17,10 @@ public class Workflows {
                 States.state(WORKFLOW_STATE_KEY, WORKFLOW_STATE_STARTED)
         );
     }
+
+
+    public static WorkflowSystemBuilder builder()
+    {
+        return WorkflowEngineBuilder.builder();
+    }
 }

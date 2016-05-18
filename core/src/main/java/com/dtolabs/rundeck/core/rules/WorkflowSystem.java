@@ -30,6 +30,11 @@ public interface WorkflowSystem {
             final Set<X> operations
     );
 
+    /**
+     * @return true if the previous call to {@link #processOperations(Set)} stopped due to interruption
+     */
+    boolean isInterrupted();
+
 
     /**
      * Return type which contains either a success result, or a failure throwable, and includes the original
