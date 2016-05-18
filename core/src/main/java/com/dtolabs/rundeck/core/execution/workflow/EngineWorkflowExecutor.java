@@ -373,7 +373,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 statusString,
                 null != controlBehavior ? controlBehavior : ControlBehavior.Continue
         );
-//        final Exception orig = exception;
+
         final Map<String, Collection<StepExecutionResult>> nodeFailures = convertFailures(stepFailures);
         return new BaseWorkflowExecutionResult(
                 stepResults,
