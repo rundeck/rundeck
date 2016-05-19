@@ -127,6 +127,45 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
         }
         return workflowStrategy;
     }
+    /**
+     * Get a configured strategy instance
+     *
+     * @param workflow workflow
+     * @param resolver   config resolver
+     *
+     * @return instance with configuration applied
+     *
+     * @throws ExecutionServiceException
+     */
+    public WorkflowStrategy getStrategyForWorkflow(
+            final WorkflowExecutionItem workflow,
+            PropertyResolver resolver
+    )
+            throws ExecutionServiceException
+    {
+
+        String provider = workflow.getWorkflow().getStrategy();
+        String s = builtinProviderSynonyms.get(provider);
+        if (null != s) {
+            provider = s;
+        }
+        WorkflowStrategy workflowStrategy = providerOfType(provider);
+        if (null != resolver) {
+            Description description = DescribableServiceUtil.descriptionForProvider(
+                    true,
+                    workflowStrategy
+            );
+            if (description != null) {
+                Map<String, Object> stringObjectMap = PluginAdapterUtility.configureProperties(
+                        resolver,
+                        description,
+                        workflowStrategy,
+                        PropertyScope.Instance
+                );
+            }
+        }
+        return workflowStrategy;
+    }
 
     public List<Description> listDescriptions() {
         return DescribableServiceUtil.listDescriptions(this);

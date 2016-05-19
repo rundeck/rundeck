@@ -60,6 +60,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def MessageSource messageSource
     def grailsEvents
     def pluginService
+    def executionUtilService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -2803,22 +2804,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def report=validation?.report
         if (!report||report.valid) {
             //validate input values of configured plugin in context of the workflow defintion
-            def workflowItem = executionService.createExecutionItemForWorkflow(workflow)
+            def workflowItem = executionUtilService.createExecutionItemForWorkflow(workflow)
 
-            def workflowStrategy = service.getStrategyForWorkflow(workflowItem, configmap,scheduledExecution.project)
-            def pluginDesc = pluginService.getPluginDescriptor(name, service)
-            if (null == pluginDesc) {
-                return null
-            }
-            def description = pluginDesc.description
-            if (description != null) {
-                def extraConfig = PluginAdapterUtility.configureProperties(
-                        resolver,
-                        description,
-                        workflowStrategy,
-                        PropertyScope.Instance
-                );
-            }
+            def workflowStrategy = service.getStrategyForWorkflow(workflowItem, resolver)
+
             report = workflowStrategy.validate(workflowItem.workflow)
         }
 

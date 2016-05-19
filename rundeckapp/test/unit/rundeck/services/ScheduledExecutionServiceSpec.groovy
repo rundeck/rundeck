@@ -3,6 +3,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategyService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
@@ -43,6 +44,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         }
         service.pluginService=Mock(PluginService)
         service.executionServiceBean=Mock(ExecutionService)
+        service.executionUtilService=Mock(ExecutionUtilService){
+            createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
+        }
         TEST_UUID1
     }
     def "blank email notification"() {
@@ -835,13 +839,19 @@ class ScheduledExecutionServiceSpec extends Specification {
             isClusterModeEnabled()>>enabled
             getServerUUID()>>uuid
             getRundeckFramework()>>Mock(Framework){
-                getWorkflowStrategyService()>>Mock(WorkflowStrategyService)
+                getWorkflowStrategyService()>>Mock(WorkflowStrategyService){
+                    getStrategyForWorkflow(*_)>>Mock(WorkflowStrategy)
+                }
             }
         }
         service.executionServiceBean=Mock(ExecutionService){
             executionsAreActive()>>false
         }
         service.pluginService=Mock(PluginService)
+
+        service.executionUtilService=Mock(ExecutionUtilService){
+            createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
+        }
         uuid
     }
 

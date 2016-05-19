@@ -80,6 +80,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def grailsApplication
     def configurationService
     def grailsEvents
+    def executionUtilService
 
     boolean getExecutionsAreActive(){
         configurationService.executionModeActive
@@ -829,7 +830,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def jobcontext=exportContextForExecution(execution,grailsLinkGenerator)
             loghandler.openStream()
 
-            WorkflowExecutionItem item = createExecutionItemForWorkflow(execution.workflow)
+            WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.workflow)
 
             NodeRecorder recorder = new NodeRecorder();//TODO: use workflow-aware listener for nodes
 
@@ -992,31 +993,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
 
-    /**
-     * Create an WorkflowExecutionItem instance for the given Workflow,
-     * suitable for the ExecutionService layer
-     */
-    @NotTransactional
-    public WorkflowExecutionItem createExecutionItemForWorkflow(Workflow workflow) {
-        if (!workflow.commands || workflow.commands.size() < 1) {
-            throw new Exception("Workflow is empty")
-        }
-
-        def impl = new WorkflowImpl(
-                workflow.commands.collect {
-                    itemForWFCmdItem(
-                            it,
-                            it.errorHandler ? itemForWFCmdItem(it.errorHandler) : null
-                    )
-                },
-                workflow.threadcount,
-                workflow.keepgoing,
-                workflow.strategy ? workflow.strategy : "node-first"
-        )
-        impl.setPluginConfig(workflow.pluginConfigMap)
-        final WorkflowExecutionItemImpl item = new WorkflowExecutionItemImpl(impl)
-        return item
-    }
 
     public static String EXECUTION_RUNNING = "running"
     public static String EXECUTION_SUCCEEDED = "succeeded"
@@ -2604,7 +2580,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 result = createFailure(JobReferenceFailureReason.Unauthorized, msg)
                 return
             }
-            newExecItem = createExecutionItemForWorkflow(se.workflow)
+            newExecItem = executionUtilService.createExecutionItemForWorkflow(se.workflow)
 
             try {
                 newContext = createJobReferenceContext(
