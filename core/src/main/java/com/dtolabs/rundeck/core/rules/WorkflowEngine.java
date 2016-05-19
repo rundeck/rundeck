@@ -64,7 +64,7 @@ public class WorkflowEngine implements WorkflowSystem {
         queueChange(Workflows.getWorkflowStartState());
         final Set<X> pending = new HashSet<>(operations);
         final Set<OperationResult<T, X>> results = Collections.synchronizedSet(new HashSet<OperationResult<T, X>>());
-        final List<ListenableFuture<T>> futures = new ArrayList<>();
+        final List<ListenableFuture<T>> futures = Collections.synchronizedList(new ArrayList<ListenableFuture<T>>());
         boolean completed = false;
         interrupted = false;
         while (!interrupted) {
@@ -220,9 +220,11 @@ public class WorkflowEngine implements WorkflowSystem {
         if (interrupted) {
             event(WorkflowSystemEventType.Interrupted, "Engine interrupted, stopping engine...");
             //attempt to cancel all futures
-            for (ListenableFuture<T> future : futures) {
-                if (!future.isDone()) {
-                    future.cancel(true);
+            synchronized (futures) {
+                for (ListenableFuture<T> future : futures) {
+                    if (!future.isDone()) {
+                        future.cancel(true);
+                    }
                 }
             }
         }
