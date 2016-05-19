@@ -55,13 +55,13 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         this.workflowSystemBuilder = Workflows.builder();
     }
 
-    public static String stepKey(final String key, final int stepNum) {
-        return key.replace("#", Integer.toString(stepNum));
+    public static String stepKey(final String key, final Object stepNum) {
+        return key.replace("#", stepNum.toString());
     }
 
     public static void updateStateWithStepResultData(
             final MutableStateObj state,
-            final int stepNum,
+            final Object identity,
             final Map<String, Object> resultData,
             final Map<String, Object> failureData
     )
@@ -70,7 +70,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         if (null != resultData) {
             for (String s : resultData.keySet()) {
                 stringStringHashMap.put(
-                        stepKey(STEP_DATA_RESULT_KEY_PREFIX + s, stepNum),
+                        stepKey(STEP_DATA_RESULT_KEY_PREFIX + s, identity),
                         resultData.get(s).toString()
                 );
             }
@@ -78,7 +78,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         if (null != failureData) {
             for (String s : failureData.keySet()) {
                 stringStringHashMap.put(
-                        stepKey(STEP_DATA_RESULT_KEY_PREFIX + s, stepNum),
+                        stepKey(STEP_DATA_RESULT_KEY_PREFIX + s, identity),
                         failureData.get(s).toString()
                 );
             }
@@ -269,6 +269,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
             operations.add(new EngineWorkflowStepOperation(
                     stepNum,
+                    cmd.getLabel(),
                     callable(cmd, executionContext, stepNum, wlistener, workflow.isKeepgoing()),
                     stepRunTriggerState,
                     stepSkipTriggerState,

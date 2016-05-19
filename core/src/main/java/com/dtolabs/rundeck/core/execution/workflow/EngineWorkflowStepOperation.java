@@ -11,6 +11,7 @@ import java.util.concurrent.Callable;
  */
 class EngineWorkflowStepOperation implements WorkflowSystem.Operation<EngineWorkflowStepOperationSuccess> {
     int stepNum;
+    String label;
     Set<Condition> startTriggerConditions;
     Set<Condition> skipTriggerConditions;
     private Callable<BaseWorkflowExecutor.StepResultCapture> callable;
@@ -20,6 +21,7 @@ class EngineWorkflowStepOperation implements WorkflowSystem.Operation<EngineWork
 
     EngineWorkflowStepOperation(
             final int stepNum,
+            final String label,
             final Callable<BaseWorkflowExecutor.StepResultCapture> callable,
             final StateObj startTriggerState,
             final StateObj skipTriggerState,
@@ -28,6 +30,7 @@ class EngineWorkflowStepOperation implements WorkflowSystem.Operation<EngineWork
     )
     {
         this.stepNum = stepNum;
+        this.label = label;
         this.callable = callable;
         this.startTriggerState = startTriggerState;
         this.startTriggerConditions = startTriggerConditions;
@@ -76,6 +79,24 @@ class EngineWorkflowStepOperation implements WorkflowSystem.Operation<EngineWork
                 EngineWorkflowExecutor.stepKey(EngineWorkflowExecutor.STEP_STATE_KEY, stepNum),
                 stepResultValue
         );
+        if(label!=null) {
+            stateChanges.updateState(
+                    EngineWorkflowExecutor.stepKey(EngineWorkflowExecutor.STEP_STATE_KEY, "label." + label),
+                    stepResultValue
+            );
+            stateChanges.updateState(
+                    EngineWorkflowExecutor.stepKey(EngineWorkflowExecutor.STEP_COMPLETED_KEY, "label." + label),
+                    EngineWorkflowExecutor.VALUE_TRUE
+            );
+            if (result != null) {
+                EngineWorkflowExecutor.updateStateWithStepResultData(
+                        stateChanges,
+                        "label." + label,
+                        result.getResultData(),
+                        result.getFailureData()
+                );
+            }
+        }
         if (success) {
             stateChanges.updateState(
                     EngineWorkflowExecutor.STEP_ANY_STATE_SUCCESS_KEY,
@@ -165,5 +186,13 @@ class EngineWorkflowStepOperation implements WorkflowSystem.Operation<EngineWork
 
     public boolean isDidRun() {
         return didRun;
+    }
+
+    @Override
+    public String toString() {
+        return "EngineWorkflowStepOperation{" +
+               "stepNum=" + stepNum +
+               ", label='" + label + '\'' +
+               '}';
     }
 }
