@@ -155,7 +155,10 @@ echo "TEST: job/id/executions?status=succeeded should succeed with 1 results"
 runurl="${APIURL}/job/${jobid}/executions"
 params="status=succeeded"
 
-sleep 6
+rd-queue follow -q -e $execid || {
+  errorMsg "Failed to wait for execution $execid to finish"
+  exit 2
+}
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
@@ -406,7 +409,13 @@ else
 fi
 
 # let job finish
-sleep 6
+
+
+
+rd-queue follow -q -e $execid || {
+  errorMsg "Failed to wait for execution $execid to finish"
+  exit 2
+}
 
 ###
 # Test result of /job/ID/executions?status=failed is 1 list
