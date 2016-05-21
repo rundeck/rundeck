@@ -154,6 +154,7 @@ assert_xml_valid(){
     $XMLSTARLET val -w ${1} > /dev/null 2>&1
     if [ 0 != $? ] ; then
         errorMsg "FAIL: Response was not valid xml, file: $1"
+        cat $1
         exit 2
     fi
 
@@ -165,10 +166,12 @@ assert_xml_value(){
     local value=$($XMLSTARLET sel -T -t -v "$2" $3)
     if [ $? != 0 -a -n "$1" ] ; then
         errorMsg "xmlstarlet failed: $!: $value, for $1 $2 $3"
+        cat $3
         exit 2
     fi
     if [ "$1" != "$value" ] ; then
         errorMsg "XPath $2 wrong value, expected $1 was $value (in file $3)"
+        cat $3
         exit 2
     fi
 }
@@ -176,10 +179,12 @@ assert_xml_notblank(){
     local value=$($XMLSTARLET sel -T -t -v "$1" $2)
     if [ $? != 0 ] ; then
         errorMsg "Expected value for XPath $1, but select failed: $! (in file $2)"
+        cat $2
         exit 2
     fi
     if [ "" == "$value" ] ; then
         errorMsg "XPath $1 wrong value, expected (not blank) was $value (in file $2)"
+        cat $2
         exit 2
     fi
 }
@@ -202,6 +207,7 @@ assert_json_value(){
     local expval=$(echo "$1")
     if [ "$expval" != "$propval" ] ; then
         errorMsg "Json query $2 wrong value, expected '$1' was $propval (in file $3)"
+        cat $3
         exit 2
     fi
 }
@@ -224,6 +230,7 @@ assert_json_null(){
     fi
     if [ "null" != "$propval" ] ; then
         errorMsg "Json query $1 wrong value, expected null was $propval (in file $2)"
+        cat $2
         exit 2
     fi
 }
@@ -244,6 +251,7 @@ assert_json_not_null(){
     fi
     if [ "null" == "$propval" ] ; then
         errorMsg "Json query $1 wrong value, expected not null was $propval (in file $2)"
+        cat $2
         exit 2
     fi
 }
