@@ -1,14 +1,15 @@
 package com.dtolabs.rundeck.core.rules;
 
-import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.util.concurrent.*;
 import org.apache.log4j.Logger;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A WorkflowSystem which processes the operations by use of a rule system and a mutable state.
@@ -65,8 +66,11 @@ public class WorkflowEngine implements WorkflowSystem {
         final Set<X> pending = new HashSet<>(operations);
         final Set<OperationResult<T, X>> results = Collections.synchronizedSet(new HashSet<OperationResult<T, X>>());
         final List<ListenableFuture<T>> futures = Collections.synchronizedList(new ArrayList<ListenableFuture<T>>());
-        boolean completed = false;
         interrupted = false;
+        long sleepOrig = 250;
+        long sleepMult = 2;
+        long sleepmax = 1000*5;
+        long sleeptime = sleepOrig;
         while (!interrupted) {
             try {
                 HashMap<String, String> changes = new HashMap<>();
@@ -80,14 +84,15 @@ public class WorkflowEngine implements WorkflowSystem {
                                 WorkflowSystemEventType.EndOfChanges,
                                 "No more state changes expected, finishing workflow."
                         );
-                        completed = true;
                         break;
                     }
                     //otherwise wait for change
-                    StateObj take = stateChangeQueue.poll(30, TimeUnit.SECONDS);
+                    StateObj take = stateChangeQueue.poll(sleeptime, TimeUnit.MILLISECONDS);
                     if (null == take || take.getState().size() < 1) {
+                        sleeptime = Math.min(sleeptime * sleepMult, sleepmax);
                         continue;
                     }
+                    sleeptime = sleepOrig;
                     changes.putAll(take.getState());
                     pollAll(changes);
                 }
@@ -105,7 +110,6 @@ public class WorkflowEngine implements WorkflowSystem {
 
                 if (isWorkflowEndState(state)) {
                     event(WorkflowSystemEventType.WorkflowEndState, "Workflow end state reached.");
-                    completed = true;
                     break;
                 }
 
@@ -213,7 +217,7 @@ public class WorkflowEngine implements WorkflowSystem {
                         )
                 );
             } catch (InterruptedException e) {
-                interrupted=true;
+                interrupted = true;
                 break;
             }
         }
