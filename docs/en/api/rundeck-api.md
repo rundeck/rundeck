@@ -1830,7 +1830,8 @@ One of the following:
 
 Optional parameters:
 
-* `format` : can be "xml" or "yaml" to specify the input format, if multipart of form input is sent. Default is "xml"
+* `fileformat` : can be "xml" or "yaml" to specify the input format, if multipart of form input is sent. Default is "xml"
+    * (deprecated: `format` can be used as well, but this will also force the response format to be XML.)
 * `dupeOption`: A value to indicate the behavior when importing jobs which already exist.  Value can be "skip", "create", or "update". Default is "create".
 * `uuidOption`: Whether to preserve or remove UUIDs from the imported jobs. Allowed values (**since V9**):
     *  `preserve`: Preserve the UUIDs in imported jobs.  This may cause the import to fail if the UUID is already used. (Default value).
