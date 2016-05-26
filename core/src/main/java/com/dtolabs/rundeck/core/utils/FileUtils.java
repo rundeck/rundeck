@@ -21,6 +21,8 @@ import com.dtolabs.rundeck.core.CoreException;
 import java.io.*;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 /**
  * TODO: Consider wrapping {@link org.apache.tools.ant.util.FileUtils}
@@ -36,22 +38,13 @@ public class FileUtils {
      */
     public static void fileCopy(final File src, final File dest, final boolean overwrite) throws IOException {
         if (!dest.exists() || (dest.exists() && overwrite)) {
-            // Create channel on the source
-            final FileInputStream fileInputStream = new FileInputStream(src);
-            try{
-                final FileChannel srcChannel = fileInputStream.getChannel();
-                // Create channel on the destination
-                final FileOutputStream fileOutputStream = new FileOutputStream(dest);
-                // Copy file contents from source to destination
-                try {
-                    final FileChannel dstChannel = fileOutputStream.getChannel();
-                    dstChannel.transferFrom(srcChannel, 0, srcChannel.size());
-                } finally {
-                    // Close the channels
-                    fileOutputStream.close();
-                }
-            }finally{
-                fileInputStream.close();
+            // Create parent directory structure if necessary
+            FileUtils.mkParentDirs(dest);
+
+            if (overwrite) {
+                Files.copy(src.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } else {
+                Files.copy(src.toPath(), dest.toPath());
             }
         }
     }
@@ -69,29 +62,13 @@ public class FileUtils {
             return;
         }
 
-        final FileInputStream fis = new FileInputStream(fromFile);
-        try{
-            int read = 0;
-            final FileOutputStream fos = new FileOutputStream(toFile);
-            try {
-                final byte[] buf = new byte[1024];
-                while (-1 != read) {
-                    read = fis.read(buf);
-                    if (read >= 0) {
-                        fos.write(buf, 0, read);
-                    }
-                }
-            } finally {
-                fos.close();
-            }
-        }finally{
-            fis.close();
-        }
-
+        Files.copy(fromFile.toPath(), toFile.toPath(),
+            StandardCopyOption.REPLACE_EXISTING,
+            StandardCopyOption.COPY_ATTRIBUTES);
     }
 
     /**
-     * Delete a directory recursivley. This method will delete all files and subdirectories.
+     * Delete a directory recursively. This method will delete all files and subdirectories.
      *
      * @param dir Directory to delete
      * @return If no error occurs, true is returned. false otherwise.
@@ -113,12 +90,11 @@ public class FileUtils {
 
     /**
      * Rename a file.
-     * Uses Java's nio library to use a lock and also works around
-     * a windows specific bug in File#renameTo method.
+     * Uses Java's nio library to use a lock.
      * @param file  File to rename
      * @param newPath  Path for new file name
      * @param clazz Class associated with lock
-     * @throws com.dtolabs.rundeck.core.CoreException An CoreException is raised if any underly I/O
+     * @throws com.dtolabs.rundeck.core.CoreException A CoreException is raised if any underlying I/O
      * operation fails.
      */
     public static void fileRename(final File file, final String newPath, final Class clazz) {
@@ -128,29 +104,16 @@ public class FileUtils {
             synchronized (clazz) {
                 FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
                 FileLock lock = channel.lock();
-                try{
-                        FileUtils.copyFileStreams(file, newDestFile);
-                        if(!newDestFile.setLastModified(file.lastModified())){
-                            //ignore
-                        }
-                        String osName = System.getProperty("os.name");
-                        if (!file.renameTo(newDestFile)) {
-                            if (osName.toLowerCase().indexOf("windows") > -1 && newDestFile.exists()) {
-                                //first remove the destFile
-                                if (! newDestFile.delete()) {
-                                    throw new CoreException(
-                                        "Unable to remove dest file on windows: " +  newDestFile.getAbsolutePath());
-                                }
-                                if (!file.renameTo(newDestFile)) {
-                                    throw new CoreException(
-                                        "Unable to move file to dest file on windows: " + file + ", "
-                                        + newDestFile.getAbsolutePath());
-                                }
-                            } else {
-                                throw new CoreException(
-                                    "Unable to move file to dest file: " + file + ", " + newDestFile.getAbsolutePath());
-                            }
-                        }
+                try {
+                    try {
+                        // Create parent directory structure if necessary
+                        FileUtils.mkParentDirs(newDestFile);
+                        Files.move(file.toPath(), newDestFile.toPath(),
+                                StandardCopyOption.REPLACE_EXISTING);
+                    } catch (IOException ioe) {
+                        throw new CoreException("Unable to move file " + file +
+                                " to destination " + newDestFile + ": " + ioe.getMessage());
+                    }
                 } finally {
                     lock.release();
                     channel.close();
@@ -167,51 +130,32 @@ public class FileUtils {
      * Rename a file
      * @param file  File to rename
      * @param newPath  Path for new file name
-     * @throws com.dtolabs.rundeck.core.CoreException An CoreException is raised if any underly I/O
+     * @throws com.dtolabs.rundeck.core.CoreException An CoreException is raised if any underlying I/O
      * operation fails.  
      */
     public static void fileRename(final File file, final String newPath) {
         fileRename(file, newPath, FileUtils.class);
     }
 
-
     /**
-     * Copy one directory to another location (recursively)
-     * @param sourceLocation Source directory
-     * @param targetLocation Target directory
-     * @throws IOException Exception raised if any underlying I/O operation fails
+     * Create parent directory structure of a given file, if it doesn't already
+     * exist.
+     * @param file  File to create directories for
+     * @throws IOException if an I/O error occurs
      */
-    public static void copyDirectory(File sourceLocation, File targetLocation)
-            throws IOException {
-
-        if (sourceLocation.isDirectory()) {
-            if (!targetLocation.isDirectory()) {
-                if(!targetLocation.mkdirs()) {
-                    throw new CoreException("Failed to create target directory: " + targetLocation);
-                }
-            }
-
-            String[] children = sourceLocation.list();
-            for (int i = 0; i < children.length; i++) {
-                copyDirectory(new File(sourceLocation, children[i]),
-                        new File(targetLocation, children[i]));
-            }
-        } else {
-
-            InputStream in = new FileInputStream(sourceLocation);
-            OutputStream out = new FileOutputStream(targetLocation);
-
-            try {
-                // Copy the bits from instream to outstream
-                byte[] buf = new byte[1024];
-                int len;
-                while ((len = in.read(buf)) > 0) {
-                    out.write(buf, 0, len);
-                }
-            } finally {
-                in.close();
-                out.close();
+    public static void mkParentDirs(final File file) throws IOException {
+        // Create parent directory structure if necessary
+        File parentFile = file.getParentFile();
+        if (parentFile == null) {
+            // File was created with a relative path
+            parentFile = file.getAbsoluteFile().getParentFile();
+        }
+        if (parentFile != null && !parentFile.exists()) {
+            if (!parentFile.mkdirs()) {
+                throw new IOException("Unable to create parent directory " +
+                        "structure for file " + file.getAbsolutePath());
             }
         }
     }
+
 }

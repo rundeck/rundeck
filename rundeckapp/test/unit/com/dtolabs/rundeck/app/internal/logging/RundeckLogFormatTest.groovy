@@ -253,6 +253,7 @@ class RundeckLogFormatTest  {
     void testSeekBackSimple(){
         RundeckLogFormat format = new RundeckLogFormat()
         def f = File.createTempFile("log-format-test", ".rdlog")
+        f.deleteOnExit()
 
         def line1 = '^2015-05-15T16:50:57Z|||{node=madmartigan.local|step=1|stepctx=1|user=greg}|testing execution output api-plain line 1^\n'
         def line2 = '^2015-05-15T16:50:57Z|||{node=madmartigan.local|step=1|stepctx=1|user=greg}|line 2^\n'
@@ -276,6 +277,7 @@ class RundeckLogFormatTest  {
     void testSeekBackMeta(){
         RundeckLogFormat format = new RundeckLogFormat()
         def f = File.createTempFile("log-format-test", ".rdlog")
+        f.deleteOnExit()
 
         def line1 = '^2015-05-15T16:50:57Z|||{node=madmartigan.local|step=1|stepctx=1|user=greg}|testing execution output api-plain line 1^\n'
         def line2 = '^2015-05-15T16:50:57Z|nodebegin||{node=madmartigan.local|step=1|stepctx=1|user=greg}|^\n'
@@ -288,6 +290,7 @@ class RundeckLogFormatTest  {
     void testSeekBackFull(){
         RundeckLogFormat format = new RundeckLogFormat()
         def f = File.createTempFile("log-format-test", ".rdlog")
+        f.deleteOnExit()
 
         def part1 = '^text/x-rundeck-log-v2.0^\n' +
                 '^2015-05-15T16:50:57Z|stepbegin||{node=madmartigan.local|step=1|stepctx=1|user=admin}|^\n' +

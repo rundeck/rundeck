@@ -59,6 +59,7 @@ public class LocalFileCopierTest {
     public void testCopyString() throws IOException, FileCopierException {
         LocalFileCopier localFileCopier = new LocalFileCopier(getFramework());
         File temp = File.createTempFile("string-copy", "tmp");
+        temp.deleteOnExit();
         String script = "my script\n";
         String s = localFileCopier.copyScriptContent(null, script, null, temp.getAbsolutePath());
         Assert.assertEquals(temp.getAbsolutePath(), s);
@@ -69,6 +70,7 @@ public class LocalFileCopierTest {
     public void testCopyInputStream() throws IOException, FileCopierException {
         LocalFileCopier localFileCopier = new LocalFileCopier(getFramework());
         File temp = File.createTempFile("string-copy", "tmp");
+        temp.deleteOnExit();
         String script = "my script\n";
         ByteArrayInputStream inputStream = new ByteArrayInputStream(script.getBytes());
         String s = localFileCopier.copyFileStream(null, inputStream, null, temp.getAbsolutePath());
@@ -80,11 +82,13 @@ public class LocalFileCopierTest {
     public void testCopyFile() throws IOException, FileCopierException {
         LocalFileCopier localFileCopier = new LocalFileCopier(getFramework());
         File temp = File.createTempFile("string-copy", "tmp");
+        temp.deleteOnExit();
         String script = "my script\n";
         File inputFile = File.createTempFile(
                 "input",
                 "tmp"
         );
+        inputFile.deleteOnExit();
         FileOutputStream fileOutputStream = new FileOutputStream( inputFile);
         fileOutputStream.write(script.getBytes());
         fileOutputStream.close();

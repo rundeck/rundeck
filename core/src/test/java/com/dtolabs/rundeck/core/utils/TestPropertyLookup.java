@@ -36,6 +36,7 @@ public class TestPropertyLookup extends TestCase {
     public TestPropertyLookup(final String name) throws IOException {
         super(name);
         propertyFile = File.createTempFile("prop1", "properties");
+        propertyFile.deleteOnExit();
         properties1 = new Properties();
         properties1.put("foo", "shizzle");
         properties1.put("bar", "madizzle");
@@ -68,6 +69,7 @@ public class TestPropertyLookup extends TestCase {
 
     public void testExpand() throws IOException {
         final File pFile = File.createTempFile("myprops", "properties");
+        pFile.deleteOnExit();
         final Properties p = new Properties();
         p.put("foo", "shizzler");
         p.put("bar", "${foo}-madizzler");
@@ -81,6 +83,7 @@ public class TestPropertyLookup extends TestCase {
 
     public void testConstructionWithDefaults() throws IOException {
         final File pFile = File.createTempFile("myprops", "properties");
+        pFile.deleteOnExit();
         final Properties p = new Properties();
         p.put("foo", "shizzler");
         p.put("bar", "bizzle");
