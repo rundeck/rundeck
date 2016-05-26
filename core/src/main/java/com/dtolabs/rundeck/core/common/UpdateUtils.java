@@ -33,6 +33,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 /**
  * UpdateUtils provides {@link #updateFileFromUrl(String, String)} to GET a file from remote URL and store it to a file.
@@ -100,23 +102,14 @@ public class UpdateUtils {
      * Rename the file. Handle possible OS specific issues
      */
     private static void moveFile(final File fromFile, final File toFile) throws UpdateException {
-        if (!fromFile.renameTo(toFile)) {
-            final String osName1 = System.getProperty("os.name");
-            if (osName1.toLowerCase().indexOf("windows") > -1 && toFile.exists()) {
-                //first remove the destFile
-                if (!toFile.delete()) {
-                    throw new UpdateException(
-                        "Unable to remove dest file on windows: " + toFile);
-                }
-                if (!fromFile.renameTo(toFile)) {
-                    throw new UpdateException(
-                        "Unable to move temp file to dest file on windows: " + fromFile + ", "
-                        + toFile);
-                }
-            } else {
-                throw new UpdateException(
-                    "Unable to move temp file to dest file: " + fromFile + ", " + toFile);
-            }
+        try {
+            // Create parent directory structure if necessary
+            FileUtils.mkParentDirs(toFile);
+            Files.move(fromFile.toPath(), toFile.toPath(),
+                    StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException ioe) {
+            throw new UpdateException("Unable to move temporary file to destination file: " +
+                    fromFile + " -> " + toFile + ": " + ioe.toString());
         }
     }
 
@@ -188,13 +181,11 @@ public class UpdateUtils {
      * @throws UpdateException on error
      */
     public static void update(final FileUpdater updater, final File destFile) throws UpdateException {
-
         final File lockFile = new File(destFile.getAbsolutePath() + ".lock");
         final File newDestFile = new File(destFile.getAbsolutePath() + ".new");
 
         try {
-
-            //synchronize writing to file within this jvm
+            // synchronize writing to file within this jvm
             synchronized (UpdateUtils.class) {
                 final FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
 
@@ -202,13 +193,10 @@ public class UpdateUtils {
                 final FileLock lock = channel.lock();
                 try {
                     FileUtils.copyFileStreams(destFile, newDestFile);
-                    if (!newDestFile.setLastModified(destFile.lastModified())) {
-                        logger.warn("Unable to set modification time of temp file: " + newDestFile.getAbsolutePath());
-                    }
                     updater.updateFile(newDestFile);
-                    if(newDestFile.isFile() && newDestFile.length()>0){
+                    if (newDestFile.isFile() && newDestFile.length() > 0) {
                         moveFile(newDestFile, destFile);
-                    }else {
+                    } else {
                         throw new UpdateException("Result file was empty or not present: " + newDestFile);
                     }
                 } catch (FileUpdaterException e) {
@@ -219,7 +207,8 @@ public class UpdateUtils {
                 }
             }
         } catch (IOException e) {
-            throw new UpdateException("Unable to get and write file: " + e.getMessage(), e);
+            throw new UpdateException("Unable to get and write file: " +
+                    e.toString(), e);
         }
     }
 
@@ -247,7 +236,7 @@ public class UpdateUtils {
     private static class FileStreamUpdater implements FileUpdater {
         InputStream input;
         public FileStreamUpdater(InputStream input) {
-            this.input=input;
+            this.input = input;
         }
 
         public void updateFile(final File destinationFile) throws FileUpdaterException {

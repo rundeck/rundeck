@@ -73,12 +73,11 @@ public abstract class AbstractBaseTest extends TestCase {
 
     public static void generateProjectResourcesFile(final File source, final IRundeckProject frameworkProject){
         //copy test nodes to resources file
-        File resourcesfile=null;
+        File resourcesfile = null;
         try {
             resourcesfile = File.createTempFile("resources", ".xml");
-            FileUtils.copyFileStreams(
-                    source,
-                                      resourcesfile);
+            resourcesfile.deleteOnExit();
+            FileUtils.copyFileStreams(source, resourcesfile);
         } catch (IOException e) {
             throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
         }
@@ -95,12 +94,11 @@ public abstract class AbstractBaseTest extends TestCase {
     }
     public static Properties generateProjectResourcesFile(final File source){
         //copy test nodes to resources file
-        File resourcesfile=null;
+        File resourcesfile = null;
         try {
             resourcesfile = File.createTempFile("resources", ".xml");
-            FileUtils.copyFileStreams(
-                    source,
-                                      resourcesfile);
+            resourcesfile.deleteOnExit();
+            FileUtils.copyFileStreams(source, resourcesfile);
         } catch (IOException e) {
             throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
         }

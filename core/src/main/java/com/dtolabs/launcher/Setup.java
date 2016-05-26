@@ -220,6 +220,7 @@ public class Setup implements CLIToolLogger {
             throw new RuntimeException("Unable to load required template: " + resource);
         }
         templateFile = File.createTempFile("temp", filename);
+        templateFile.deleteOnExit();
         try {
             return copyToNativeLineEndings(is, templateFile);
         } finally {

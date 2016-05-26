@@ -60,7 +60,9 @@ public class BaseScriptPluginTest {
         final Map<String, Object> data = new HashMap<String, Object>();
         data.put("script-file", "myfile.sh");
         File archiveFile = File.createTempFile("test", "zip");
+        archiveFile.deleteOnExit();
         File basedir = File.createTempFile("test", "dir");
+        basedir.deleteOnExit();
 
         test1 test = new test1(
                 scriptPluginProvider(new PluginMeta(),data, archiveFile, basedir), null);
@@ -76,7 +78,9 @@ public class BaseScriptPluginTest {
         final Map<String, Object> data = new HashMap<String, Object>();
         data.put("script-file", "myfile.sh");
         File archiveFile = File.createTempFile("test", "zip");
+        archiveFile.deleteOnExit();
         File basedir = File.createTempFile("test", "dir");
+        basedir.deleteOnExit();
 
         test1 test = new test1(
                 scriptPluginProvider(new PluginMeta(),data, archiveFile, basedir), null);

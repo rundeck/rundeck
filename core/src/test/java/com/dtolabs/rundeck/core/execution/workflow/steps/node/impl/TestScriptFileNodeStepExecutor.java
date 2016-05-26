@@ -777,6 +777,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             )
             .build();
         final File testScriptFile = File.createTempFile("Testfile", "tmp");
+        testScriptFile.deleteOnExit();
 
         final String testScript =
                 "a script\n" +

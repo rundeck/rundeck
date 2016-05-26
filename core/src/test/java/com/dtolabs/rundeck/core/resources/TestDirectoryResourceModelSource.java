@@ -121,6 +121,7 @@ public class TestDirectoryResourceModelSource extends AbstractBaseTest {
         }
 
         File testfile = File.createTempFile("testfile", "test");
+        testfile.deleteOnExit();
         //set directory to point to a file instead of a directory
         props.setProperty("directory", testfile.getAbsolutePath());
 

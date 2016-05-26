@@ -175,6 +175,7 @@ class BaseGitPluginSpec extends Specification {
         def base = new BaseGitPlugin(config)
 
         def tempdir = File.createTempFile("BaseGitPluginSpec", "-test")
+        tempdir.deleteOnExit()
         tempdir.delete()
         def gitdir = new File(tempdir, 'scm')
         def origindir = new File(tempdir, 'origin')
@@ -203,6 +204,7 @@ class BaseGitPluginSpec extends Specification {
         base.branch = 'master'
 
         def tempdir = File.createTempFile("BaseGitPluginSpec", "-test")
+        tempdir.deleteOnExit()
         tempdir.delete()
         def gitdir = new File(tempdir, 'scm')
         gitdir.mkdir()

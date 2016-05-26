@@ -36,6 +36,7 @@ public class TestPropertyUtil extends TestCase {
     public TestPropertyUtil(final String name) throws IOException {
         super(name);
         propertyFile = File.createTempFile("prop1", "properties");
+        propertyFile.deleteOnExit();
         properties = new Properties();
         properties.put("foo", "shizzle");
         properties.put("bar", "madizzle");

@@ -82,4 +82,41 @@ public class TestFileUtils extends TestCase {
          // clean up
          infile2.delete(); destfile.delete();         
      }
+
+    public void testCreateParentDirForRelativeFile() throws Exception {
+        final File tmpFile = File.createTempFile("test", "rel");
+        tmpFile.delete();
+        final File file = new File(tmpFile, "testDir/tmp");
+        assertFalse("test setup error: file already exists", file.exists());
+        assertFalse("test setup error: directory already exists",
+                file.getAbsoluteFile().getParentFile().exists());
+        FileUtils.mkParentDirs(file);
+        assertFalse("created file as directory",
+                file.getAbsoluteFile().isDirectory());
+        assertTrue("failed to create directory: " +
+                file.getAbsoluteFile().getParentFile().getAbsolutePath(),
+                file.getAbsoluteFile().getParentFile().isDirectory());
+        assertEquals("testDir", file.getAbsoluteFile().getParentFile().getName());
+        // Remove again as it was re-created as a directory
+        file.delete();
+        new File(tmpFile, "testDir").delete();
+        tmpFile.delete();
+    }
+
+    public void testCreateParentDirForAbsoluteFile() throws Exception {
+        final File file = new File("/tmp/testDir/test");
+        assertFalse("test setup error: file already exists", file.exists());
+        assertFalse("test setup error: directory already exists",
+                file.getParentFile().exists());
+        FileUtils.mkParentDirs(file);
+        assertFalse("created file as directory",
+                file.getAbsoluteFile().isDirectory());
+        assertTrue("failed to create directory: " +
+                file.getParentFile().getAbsolutePath(),
+                file.getParentFile().isDirectory());
+        assertEquals("testDir", file.getAbsoluteFile().getParentFile().getName());
+        // clean up
+        file.delete();
+        new File("/tmp/testDir").delete();
+    }
 }

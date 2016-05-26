@@ -311,7 +311,9 @@ public class TestScriptPluginFileCopier {
         final File scriptFile = File.createTempFile("test-scriptfile", "tmp");
         scriptFile.deleteOnExit();
         testProvider.setScriptFile(scriptFile);
-        testProvider.setContentsBasedir(File.createTempFile("test-basedir", "tmp"));
+        final File baseDir = File.createTempFile("test-basedir", "tmp");
+        baseDir.deleteOnExit();
+        testProvider.setContentsBasedir(baseDir);
         testProvider.setMetadata(new HashMap<String, Object>());
         testProvider.setName("test-plugin");
         testProvider.setScriptArgs("");
@@ -385,7 +387,9 @@ public class TestScriptPluginFileCopier {
         final File scriptFile = File.createTempFile("test-scriptfile", "tmp");
         scriptFile.deleteOnExit();
         testProvider.setScriptFile(scriptFile);
-        testProvider.setContentsBasedir(File.createTempFile("test-basedir", "tmp"));
+        final File baseDir = File.createTempFile("test-basedir", "tmp");
+        baseDir.deleteOnExit();
+        testProvider.setContentsBasedir(baseDir);
         testProvider.setMetadata(new HashMap<String, Object>());
         testProvider.setName("test-plugin");
         testProvider.setScriptArgs("");
@@ -460,7 +464,9 @@ public class TestScriptPluginFileCopier {
         final File scriptFile = File.createTempFile("test-scriptfile", "tmp");
         scriptFile.deleteOnExit();
         testProvider.setScriptFile(scriptFile);
-        testProvider.setContentsBasedir(File.createTempFile("test-basedir", "tmp"));
+        final File baseDir = File.createTempFile("test-basedir", "tmp");
+        baseDir.deleteOnExit();
+        testProvider.setContentsBasedir(baseDir);
         testProvider.setMetadata(new HashMap<String, Object>());
         testProvider.setName("test-plugin");
         testProvider.setScriptArgs("");

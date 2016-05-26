@@ -394,6 +394,7 @@ public class TestJobsTool extends AbstractBaseTest {
         centralDispatcher1.loadJobsResult = new ArrayList<IStoredJobLoadResult>();
 
         File test = File.createTempFile("blah", ".xml");
+        test.deleteOnExit();
         tool.run(new String[]{"load", "-f", test.getAbsolutePath()});
         assertFalse("list action was not called", centralDispatcher1.listStoredJobsCalled);
         assertTrue("load action should be called", centralDispatcher1.loadJobsCalled);
@@ -416,6 +417,7 @@ public class TestJobsTool extends AbstractBaseTest {
         centralDispatcher1.loadJobsResult = new ArrayList<IStoredJobLoadResult>();
 
         File test = File.createTempFile("blah", ".xml");
+        test.deleteOnExit();
         tool.run(new String[]{"load", "-f", test.getAbsolutePath(), "-p", "project1"});
         assertFalse("list action was not called", centralDispatcher1.listStoredJobsCalled);
         assertTrue("load action should be called", centralDispatcher1.loadJobsCalled);
@@ -438,6 +440,7 @@ public class TestJobsTool extends AbstractBaseTest {
         centralDispatcher1.loadJobsResult = new ArrayList<IStoredJobLoadResult>();
 
         File test = File.createTempFile("blah", ".xml");
+        test.deleteOnExit();
         tool.run(new String[]{"load", "-f", test.getAbsolutePath(), "-p", "project1", "-r"});
         assertFalse("list action was not called", centralDispatcher1.listStoredJobsCalled);
         assertTrue("load action should be called", centralDispatcher1.loadJobsCalled);
@@ -461,6 +464,7 @@ public class TestJobsTool extends AbstractBaseTest {
         centralDispatcher1.loadJobsResult = new ArrayList<IStoredJobLoadResult>();
 
         File test = File.createTempFile("blah", ".xml");
+        test.deleteOnExit();
         tool.run(new String[]{"load", "-f", test.getAbsolutePath(), "-p", "project1"});
         assertFalse("list action was not called", centralDispatcher1.listStoredJobsCalled);
         assertTrue("load action should be called", centralDispatcher1.loadJobsCalled);

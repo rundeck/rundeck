@@ -370,6 +370,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         
         final File filesrc = new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes2.xml");
         final File tempfile = File.createTempFile("test", ".xml");
+        tempfile.deleteOnExit();
         FileUtils.copyFileStreams(filesrc, tempfile);
         final String providerURL = tempfile.toURI().toURL().toExternalForm();
         

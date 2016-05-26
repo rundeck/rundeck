@@ -217,6 +217,7 @@ class ProjectServiceTests  {
 
         def outfilename = "blahfile.xml"
         File tempoutfile = File.createTempFile("tempout",".txt")
+        tempoutfile.deleteOnExit()
 
         def zipmock=mockFor(ZipBuilder)
         def outwriter = new StringWriter()
@@ -272,7 +273,9 @@ class ProjectServiceTests  {
 
         def outfilename = "blahfile.xml"
         File tempoutfile = File.createTempFile("tempout",".txt")
+        tempoutfile.deleteOnExit()
         File tempoutfile2 = File.createTempFile("tempout",".state.json")
+        tempoutfile2.deleteOnExit()
 
         def zipmock=mockFor(ZipBuilder)
         def outwriter = new StringWriter()

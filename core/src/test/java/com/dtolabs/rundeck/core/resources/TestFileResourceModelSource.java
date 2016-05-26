@@ -381,7 +381,12 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
         assertEquals(1, nodes.getNodes().size());
         assertNotNull(nodes.getNode(getFrameworkInstance().getFrameworkNodeName()));
         assertTrue(testfile.exists());
+
+        // clean up
         testfile.delete();
+        new File(testfile2, "sub/dir").delete();
+        new File(testfile2, "sub").delete();
+        testfile2.delete();
     }
     public void testGetNodesGenerateFileAutomaticallyWithFormatXml() throws Exception {
 
@@ -456,6 +461,7 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
         assertNotNull(iNodeSet.getNode("testnode2"));
 
         File testfile2 = File.createTempFile("testParseFile", ".yaml");
+        testfile2.deleteOnExit();
         //create yaml file
         final BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
             (testfile2))));
