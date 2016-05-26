@@ -27,6 +27,8 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.SelectorUtils;
+import com.dtolabs.rundeck.core.dispatcher.BaseDataContext;
+import com.dtolabs.rundeck.core.dispatcher.DataContext;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
@@ -67,9 +69,10 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
     }
 
     /**
-     * @param status success/failure
+     * @param status       success/failure
      * @param statusString status string
-     * @param behavior control behavior
+     * @param behavior     control behavior
+     *
      * @return result with the given input
      */
     static WorkflowStatusResult workflowResult(boolean status, String statusString, ControlBehavior behavior) {
@@ -88,13 +91,16 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
     /**
      * Executes a step
      *
-     * @param wlistener listener
-     * @param cmd step
+     * @param wlistener        listener
+     * @param cmd              step
      * @param executionContext context
-     * @param stepFailedMap failures
-     * @param stepNum index
+     * @param stepFailedMap    failures
+     * @param stepNum          index
+     *
      * @return result
-     * @deprecated use {@link #executeWorkflowStep(StepExecutionContext, Map, List, boolean, WorkflowExecutionListener, int, StepExecutionItem)}
+     *
+     * @deprecated use {@link #executeWorkflowStep(StepExecutionContext, Map, List, boolean, WorkflowExecutionListener,
+     * int, StepExecutionItem)}
      */
     protected StepExecutionResult executeWorkflowStep(
             WorkflowExecutionListener wlistener,
@@ -102,10 +108,11 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             StepExecutionContext executionContext,
             Map<Integer, StepExecutionResult> stepFailedMap,
             int stepNum
-    ) {
+    )
+    {
 
-        boolean stepSuccess=false;
-        String statusString=null;
+        boolean stepSuccess = false;
+        String statusString = null;
         ControlBehavior controlBehavior = null;
         if (null != wlistener) {
             wlistener.beginWorkflowItem(stepNum, cmd);
@@ -113,22 +120,26 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
 
         //wrap node failed listener (if any) and capture status results
         NodeRecorder stepCaptureFailedNodesListener = new NodeRecorder();
-        StepExecutionContext stepContext = replaceFailedNodesListenerInContext(executionContext,
-                stepCaptureFailedNodesListener);
-        Map<String,NodeStepResult> nodeFailures;
+        StepExecutionContext stepContext = replaceFailedNodesListenerInContext(
+                executionContext,
+                stepCaptureFailedNodesListener
+        );
+        Map<String, NodeStepResult> nodeFailures;
 
         //execute the step item, and store the results
         StepExecutionResult stepResult = null;
 
-        final FlowController stepController=new FlowController();
+        final FlowController stepController = new FlowController();
+        final DataOutput dataOutput = new DataOutput();
 
-        StepExecutionContext controllableContext = withFlowControl(stepContext, stepController);
+        StepExecutionContext controllableContext = withOverride(stepContext, stepController, dataOutput);
 
         stepResult = executeWFItem(controllableContext, stepFailedMap, stepNum, cmd);
         stepSuccess = stepResult.isSuccess();
         nodeFailures = stepCaptureFailedNodesListener.getFailedNodes();
 
-        if(null!=executionContext.getExecutionListener() && null!=executionContext.getExecutionListener().getFailedNodesListener()) {
+        if (null != executionContext.getExecutionListener() &&
+            null != executionContext.getExecutionListener().getFailedNodesListener()) {
             executionContext.getExecutionListener().getFailedNodesListener().matchedNodes(
                     stepCaptureFailedNodesListener.getMatchedNodes());
         }
@@ -136,8 +147,8 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
 
             //TODO: halt execution without running the error-handler?
             stepSuccess = stepController.isSuccess();
-            statusString=stepController.getStatusString();
-            controlBehavior=stepController.getControlBehavior();
+            statusString = stepController.getStatusString();
+            controlBehavior = stepController.getControlBehavior();
             executionContext.getExecutionListener().log(
                     3,
                     controlBehavior +
@@ -148,7 +159,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             );
         }
         try {
-            if(!stepSuccess && cmd instanceof HasFailureHandler) {
+            if (!stepSuccess && cmd instanceof HasFailureHandler) {
                 final HasFailureHandler handles = (HasFailureHandler) cmd;
                 final StepExecutionItem handler = handles.getFailureHandler();
                 if (null != handler) {
@@ -157,11 +168,13 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                     //will throw an exception on failure because keepgoing=false
 
                     NodeRecorder handlerCaptureFailedNodesListener = new NodeRecorder();
-                    StepExecutionContext handlerExecContext = replaceFailedNodesListenerInContext(executionContext,
-                            handlerCaptureFailedNodesListener);
+                    StepExecutionContext handlerExecContext = replaceFailedNodesListenerInContext(
+                            executionContext,
+                            handlerCaptureFailedNodesListener
+                    );
 
                     //if multi-node, determine set of nodes to run handler on: (failed node list only)
-                    if(stepCaptureFailedNodesListener.getMatchedNodes().size()>1) {
+                    if (stepCaptureFailedNodesListener.getMatchedNodes().size() > 1) {
                         HashSet<String> failedNodeList = new HashSet<String>(
                                 stepCaptureFailedNodesListener.getFailedNodes().keySet());
 
@@ -177,19 +190,21 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                     handlerExecContext = addNodeStepFailureContextData(stepResult, handlerExecContext);
 
                     Map<Integer, StepExecutionResult> handlerFailedMap = new HashMap<Integer, StepExecutionResult>();
-                    StepExecutionResult handlerResult = executeWFItem(handlerExecContext,
+                    StepExecutionResult handlerResult = executeWFItem(
+                            handlerExecContext,
                             handlerFailedMap,
                             stepNum,
-                            handler);
+                            handler
+                    );
                     boolean handlerSuccess = handlerResult.isSuccess();
 
-                    boolean useHandlerResults=true;
-                    if(handlerSuccess && handler instanceof HandlerExecutionItem) {
-                        useHandlerResults= ((HandlerExecutionItem) handler).isKeepgoingOnSuccess();
+                    boolean useHandlerResults = true;
+                    if (handlerSuccess && handler instanceof HandlerExecutionItem) {
+                        useHandlerResults = ((HandlerExecutionItem) handler).isKeepgoingOnSuccess();
                     }
-                    if(useHandlerResults){
+                    if (useHandlerResults) {
                         stepSuccess = handlerSuccess;
-                        stepResult=handlerResult;
+                        stepResult = handlerResult;
                         stepFailedMap = handlerFailedMap;
                         nodeFailures = handlerCaptureFailedNodesListener.getFailedNodes();
                     }
@@ -203,11 +218,11 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
 
         //report node failures based on results of step and handler run.
         if (null != executionContext.getExecutionListener() && null != executionContext.getExecutionListener()
-                .getFailedNodesListener()) {
-            if(nodeFailures.size()>0){
+                                                                                       .getFailedNodesListener()) {
+            if (nodeFailures.size() > 0) {
                 executionContext.getExecutionListener().getFailedNodesListener().nodesFailed(
                         nodeFailures);
-            }else if(stepSuccess){
+            } else if (stepSuccess) {
                 executionContext.getExecutionListener().getFailedNodesListener().nodesSucceeded();
             }
 
@@ -220,16 +235,16 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         private String statusString;
         private ControlBehavior controlBehavior;
 
-        public BaseWorkflowStatusResult(boolean status, String statusString,ControlBehavior controlBehavior) {
+        public BaseWorkflowStatusResult(boolean status, String statusString, ControlBehavior controlBehavior) {
             this.status = status;
             this.statusString = statusString;
-            this.controlBehavior=controlBehavior;
+            this.controlBehavior = controlBehavior;
         }
 
         public BaseWorkflowStatusResult(WorkflowStatusResult result) {
             this.status = result.isSuccess();
             this.statusString = result.getStatusString();
-            this.controlBehavior=result.getControlBehavior();
+            this.controlBehavior = result.getControlBehavior();
         }
 
         public boolean isSuccess() {
@@ -244,6 +259,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             return controlBehavior;
         }
     }
+
     static class BaseWorkflowExecutionResult extends BaseWorkflowStatusResult implements WorkflowExecutionResult {
         private final List<StepExecutionResult> results;
         private final Map<String, Collection<StepExecutionResult>> failures;
@@ -305,8 +321,11 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         }
     }
 
-    public final WorkflowExecutionResult executeWorkflow(final StepExecutionContext executionContext,
-                                                         final WorkflowExecutionItem item) {
+    public final WorkflowExecutionResult executeWorkflow(
+            final StepExecutionContext executionContext,
+            final WorkflowExecutionItem item
+    )
+    {
 
         final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
         if (null != wlistener && !StepFirstWorkflowExecutor.isInnerLoop(item)) {
@@ -332,34 +351,42 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         return wlistener;
     }
 
-    public abstract WorkflowExecutionResult executeWorkflowImpl(StepExecutionContext executionContext,
-                                                                WorkflowExecutionItem item);
+    public abstract WorkflowExecutionResult executeWorkflowImpl(
+            StepExecutionContext executionContext,
+            WorkflowExecutionItem item
+    );
 
     /**
      * Execute a workflow item, returns true if the item succeeds.  This method will throw an exception if the workflow
      * item fails and the Workflow is has keepgoing==false.
      *
-     * @param executionContext  context
-     * @param failedMap  List to add any messages if the item fails
-     * @param c          index of the WF item
-     * @param cmd        WF item descriptor
-     * @return true if the execution succeeds, false otherwise
+     * @param executionContext context
+     * @param failedMap        List to add any messages if the item fails
+     * @param c                index of the WF item
+     * @param cmd              WF item descriptor
      *
+     * @return true if the execution succeeds, false otherwise
      */
-    protected StepExecutionResult executeWFItem(final StepExecutionContext executionContext,
-                                                final Map<Integer, StepExecutionResult> failedMap,
-                                                final int c,
-                                                final StepExecutionItem cmd) {
+    protected StepExecutionResult executeWFItem(
+            final StepExecutionContext executionContext,
+            final Map<Integer, StepExecutionResult> failedMap,
+            final int c,
+            final StepExecutionItem cmd
+    )
+    {
 
         if (null != executionContext.getExecutionListener()) {
-            executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
-                                                        c + ": Workflow step executing: " + cmd);
+            executionContext.getExecutionListener().log(
+                    Constants.DEBUG_LEVEL,
+                    c + ": Workflow step executing: " + cmd
+            );
         }
         StepExecutionResult result;
         try {
             result = framework.getExecutionService().executeStep(
-                ExecutionContextImpl.builder(executionContext).stepNumber(c).build(),
-                cmd);
+                    ExecutionContextImpl.builder(executionContext).stepNumber(c).build(),
+                    cmd
+            );
             if (!result.isSuccess()) {
                 failedMap.put(c, result);
             }
@@ -368,50 +395,67 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             failedMap.put(c, result);
         }
         if (null != executionContext.getExecutionListener()) {
-            executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
-                                                        c + ": Workflow step finished, result: " + result);
+            executionContext.getExecutionListener().log(
+                    Constants.DEBUG_LEVEL,
+                    c + ": Workflow step finished, result: " + result
+            );
         }
         return result;
     }
 
 
     /**
-     *
      * Execute the sequence of ExecutionItems within the context, and with the given keepgoing value
-     * @param executionContext context
-     * @param failedMap failures
-     * @param resultList results
+     *
+     * @param executionContext  context
+     * @param failedMap         failures
+     * @param resultList        results
      * @param iWorkflowCmdItems list of steps
-     * @param keepgoing true to keepgoing on step failure
+     * @param keepgoing         true to keepgoing on step failure
+     *
      * @return true if successful
+     *
+     * @deprecated
      */
-    protected WorkflowStatusResult executeWorkflowItemsForNodeSet(final StepExecutionContext executionContext,
-                                                     final Map<Integer, StepExecutionResult> failedMap,
-                                                     final List<StepExecutionResult> resultList,
-                                                     final List<StepExecutionItem> iWorkflowCmdItems,
-                                                     final boolean keepgoing)  {
+    protected WorkflowStatusResult executeWorkflowItemsForNodeSet(
+            final StepExecutionContext executionContext,
+            final Map<Integer, StepExecutionResult> failedMap,
+            final List<StepExecutionResult> resultList,
+            final List<StepExecutionItem> iWorkflowCmdItems,
+            final boolean keepgoing
+    )
+    {
         return executeWorkflowItemsForNodeSet(executionContext, failedMap, resultList, iWorkflowCmdItems, keepgoing,
-                                              executionContext.getStepNumber());
+                                              executionContext.getStepNumber()
+        );
     }
+
     /**
      * Execute the sequence of ExecutionItems within the context, and with the given keepgoing value
-     * @return true if successful
-     * @param executionContext context
-     * @param failedMap failures
-     * @param resultList results
+     *
+     * @param executionContext  context
+     * @param failedMap         failures
+     * @param resultList        results
      * @param iWorkflowCmdItems list of steps
-     * @param keepgoing true to keepgoing on step failure
-     * @param beginStepIndex beginning step index
+     * @param keepgoing         true to keepgoing on step failure
+     * @param beginStepIndex    beginning step index
+     *
+     * @return true if successful
+     *
+     * @deprecated
      */
-    protected WorkflowStatusResult executeWorkflowItemsForNodeSet(final StepExecutionContext executionContext,
-                                                     final Map<Integer, StepExecutionResult> failedMap,
-                                                     final List<StepExecutionResult> resultList,
-                                                     final List<StepExecutionItem> iWorkflowCmdItems,
-                                                     final boolean keepgoing,
-                                                     final int beginStepIndex) {
+    protected WorkflowStatusResult executeWorkflowItemsForNodeSet(
+            final StepExecutionContext executionContext,
+            final Map<Integer, StepExecutionResult> failedMap,
+            final List<StepExecutionResult> resultList,
+            final List<StepExecutionItem> iWorkflowCmdItems,
+            final boolean keepgoing,
+            final int beginStepIndex
+    )
+    {
 
         boolean workflowsuccess = true;
-        String statusString=null;
+        String statusString = null;
         ControlBehavior controlBehavior = null;
         final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
         int c = beginStepIndex;
@@ -427,7 +471,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             );
             statusString = stepResultCapture.getStatusString();
             controlBehavior = stepResultCapture.getControlBehavior();
-            if(!stepResultCapture.isStepSuccess()){
+            if (!stepResultCapture.isStepSuccess()) {
                 workflowsuccess = false;
             }
             if (stepResultCapture.controlBehavior == ControlBehavior.Halt ||
@@ -444,8 +488,9 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
     }
 
     /**
-     * @param stepContext the context
+     * @param stepContext    the context
      * @param stepController a flow control object
+     *
      * @return new context using the flow controller
      */
     private StepExecutionContext withFlowControl(
@@ -456,16 +501,46 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         return new ExecutionContextImpl.Builder(stepContext).flowControl(stepController).build();
     }
 
+    private StepExecutionContext withDataOutput(
+            final StepExecutionContext stepContext,
+            final DataOutput dataOutput
+    )
+    {
+        return new ExecutionContextImpl.Builder(stepContext).outputContext(dataOutput).build();
+    }
+
+    /**
+     * @param stepContext    the context
+     * @param stepController a flow control object
+     *
+     * @return new context using the flow controller
+     */
+    private StepExecutionContext withOverride(
+            final StepExecutionContext stepContext,
+            final FlowController stepController,
+            final DataOutput dataOutput
+    )
+    {
+        return new ExecutionContextImpl.Builder(stepContext).flowControl(stepController)
+                                                            .outputContext(dataOutput)
+                                                            .build();
+    }
+
     /**
      * Add step result failure information to the data context
-     * @param stepResult result
+     *
+     * @param stepResult         result
      * @param handlerExecContext context
+     *
      * @return new context
      */
-    protected StepExecutionContext addStepFailureContextData(StepExecutionResult stepResult,
-                                                           StepExecutionContext handlerExecContext) {
+    protected StepExecutionContext addStepFailureContextData(
+            StepExecutionResult stepResult,
+            StepExecutionContext handlerExecContext
+    )
+    {
         HashMap<String, String>
-        resultData = new HashMap<String, String>();
+                resultData = new HashMap<String, String>();
         if (null != stepResult.getFailureData()) {
             //convert values to string
             for (final Map.Entry<String, Object> entry : stepResult.getFailureData().entrySet()) {
@@ -473,31 +548,36 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             }
         }
         FailureReason reason = stepResult.getFailureReason();
-        if(null== reason){
-            reason= StepFailureReason.Unknown;
+        if (null == reason) {
+            reason = StepFailureReason.Unknown;
         }
         resultData.put("reason", reason.toString());
         String message = stepResult.getFailureMessage();
-        if(null==message) {
+        if (null == message) {
             message = "No message";
         }
         resultData.put("message", message);
         //add to data context
 
         handlerExecContext = ExecutionContextImpl.builder(handlerExecContext).
-            setContext("result", resultData)
-            .build();
+                setContext("result", resultData)
+                                                 .build();
         return handlerExecContext;
     }
 
     /**
      * Add any node-specific step failure information to the node-specific data contexts
+     *
      * @param dispatcherStepResult result
-     * @param handlerExecContext context
+     * @param handlerExecContext   context
+     *
      * @return new context
      */
-    protected StepExecutionContext addNodeStepFailureContextData(StepExecutionResult dispatcherStepResult,
-                                                               StepExecutionContext handlerExecContext) {
+    protected StepExecutionContext addNodeStepFailureContextData(
+            StepExecutionResult dispatcherStepResult,
+            StepExecutionContext handlerExecContext
+    )
+    {
         final Map<String, ? extends NodeStepResult> resultMap;
         if (NodeDispatchStepExecutor.isWrappedDispatcherResult(dispatcherStepResult)) {
             DispatcherResult dispatcherResult = NodeDispatchStepExecutor.extractDispatcherResult(dispatcherStepResult);
@@ -523,7 +603,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             return handlerExecContext;
         }
         ExecutionContextImpl.Builder builder = ExecutionContextImpl.builder(handlerExecContext);
-        if(null!= resultMap){
+        if (null != resultMap) {
             for (final Map.Entry<String, ? extends NodeStepResult> dentry : resultMap.entrySet()) {
                 String nodename = dentry.getKey();
                 NodeStepResult stepResult = dentry.getValue();
@@ -553,13 +633,16 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         return builder.build();
     }
 
-    protected StepExecutionContext replaceFailedNodesListenerInContext(StepExecutionContext executionContext,
-                                                                 FailedNodesListener captureFailedNodesListener) {
-        ExecutionListenerOverride listen=null;
-        if(null!= executionContext.getExecutionListener()) {
+    protected StepExecutionContext replaceFailedNodesListenerInContext(
+            StepExecutionContext executionContext,
+            FailedNodesListener captureFailedNodesListener
+    )
+    {
+        ExecutionListenerOverride listen = null;
+        if (null != executionContext.getExecutionListener()) {
             listen = executionContext.getExecutionListener().createOverride();
         }
-        if(null!=listen){
+        if (null != listen) {
             listen.setFailedNodesListener(captureFailedNodesListener);
         }
 
@@ -569,14 +652,18 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
     /**
      * Convert map of step execution results keyed by step number, to a collection of step execution results
      * keyed by node name
-     * @param failedMap  failures
+     *
+     * @param failedMap failures
+     *
      * @return converted
      */
     protected Map<String, Collection<StepExecutionResult>> convertFailures(
-        final Map<Integer, StepExecutionResult> failedMap) {
+            final Map<Integer, StepExecutionResult> failedMap
+    )
+    {
 
         final Map<String, Collection<StepExecutionResult>> failures
-            = new HashMap<String, Collection<StepExecutionResult>>();
+                = new HashMap<String, Collection<StepExecutionResult>>();
         for (final Map.Entry<Integer, StepExecutionResult> entry : failedMap.entrySet()) {
             final StepExecutionResult o = entry.getValue();
 
@@ -613,9 +700,10 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
     }
 
     /**
-     * @return a failure result with components from an exception
-     * @param node node
+     * @param node              node
      * @param nodeStepException exception
+     *
+     * @return a failure result with components from an exception
      */
     static protected NodeStepResult nodeStepResultFromNodeStepException(
             final INodeEntry node,
@@ -623,10 +711,10 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
     )
     {
         return new NodeStepResultImpl(
-            nodeStepException.getCause(),
-            nodeStepException.getFailureReason(),
-            nodeStepException.getMessage(),
-            node
+                nodeStepException.getCause(),
+                nodeStepException.getFailureReason(),
+                nodeStepException.getMessage(),
+                node
         );
     }
 
@@ -637,30 +725,38 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
      * "secureOption" map values will always be obfuscated. "option" entries that are also in "secureOption"
      * will have their values obfuscated. All other maps within the data context will be added
      * directly to the copy.
+     *
      * @param dataContext data
+     *
      * @return printable data
      */
-    protected Map<String, Map<String, String>> createPrintableDataContext(Map<String, Map<String, String>> dataContext) {
+    protected Map<String, Map<String, String>> createPrintableDataContext(Map<String, Map<String, String>>
+                                                                                  dataContext) {
         return createPrintableDataContext(OPTION_KEY, SECURE_OPTION_KEY, SECURE_OPTION_VALUE, dataContext);
     }
+
     /**
-     *
      * Creates a copy of the given data context with the secure option values obfuscated.
      * This does not modify the original data context.
      *
      * "secureOption" map values will always be obfuscated. "option" entries that are also in "secureOption"
      * will have their values obfuscated. All other maps within the data context will be added
      * directly to the copy.
-     * @param optionKey key
-     * @param secureOptionKey secure key
+     *
+     * @param optionKey         key
+     * @param secureOptionKey   secure key
      * @param secureOptionValue secure value
-     * @param dataContext data
+     * @param dataContext       data
+     *
      * @return printable data
      */
-    protected Map<String, Map<String, String>> createPrintableDataContext(String optionKey,
-                                                                          String secureOptionKey,
-                                                                          String secureOptionValue,
-                                                                          Map<String, Map<String, String>> dataContext) {
+    protected Map<String, Map<String, String>> createPrintableDataContext(
+            String optionKey,
+            String secureOptionKey,
+            String secureOptionValue,
+            Map<String, Map<String, String>> dataContext
+    )
+    {
         Map<String, Map<String, String>> printableContext = new HashMap<String, Map<String, String>>();
         if (dataContext != null) {
             printableContext.putAll(dataContext);
@@ -691,49 +787,57 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
 
     /**
      * Execute a step and handle flow control and error handler.
+     *
      * @param executionContext context
-     * @param failedMap map for placing failure results
-     * @param resultList list of step results
-     * @param keepgoing true if the workflow should keepgoing on error
-     * @param wlistener listener
-     * @param c step number
-     * @param cmd step
+     * @param failedMap        map for placing failure results
+     * @param resultList       list of step results
+     * @param keepgoing        true if the workflow should keepgoing on error
+     * @param wlistener        listener
+     * @param c                step number
+     * @param cmd              step
+     *
      * @return result and flow control
      */
-    public StepResultCapture executeWorkflowStep(final StepExecutionContext executionContext,
-                                                 final Map<Integer, StepExecutionResult> failedMap,
-                                                 final List<StepExecutionResult> resultList,
-                                                 final boolean keepgoing,
-                                                 final WorkflowExecutionListener wlistener,
-                                                 final int c,
-                                                 final StepExecutionItem cmd) {
+    public StepResultCapture executeWorkflowStep(
+            final StepExecutionContext executionContext,
+            final Map<Integer, StepExecutionResult> failedMap,
+            final List<StepExecutionResult> resultList,
+            final boolean keepgoing,
+            final WorkflowExecutionListener wlistener,
+            final int c,
+            final StepExecutionItem cmd
+    )
+    {
         if (null != wlistener) {
             wlistener.beginWorkflowItem(c, cmd);
         }
-        String statusString=null;
-        ControlBehavior controlBehavior=null;
+        String statusString = null;
+        ControlBehavior controlBehavior = null;
 
-        boolean hasHandler= cmd instanceof HasFailureHandler;
+        boolean hasHandler = cmd instanceof HasFailureHandler;
 
         //wrap node failed listener (if any) and capture status results
         NodeRecorder stepCaptureFailedNodesListener = new NodeRecorder();
-        StepExecutionContext stepContext = replaceFailedNodesListenerInContext(executionContext,
-                                                                               stepCaptureFailedNodesListener);
+        StepExecutionContext stepContext = replaceFailedNodesListenerInContext(
+                executionContext,
+                stepCaptureFailedNodesListener
+        );
 
-        final FlowController stepController=new FlowController();
+        final FlowController stepController = new FlowController();
+        final DataOutput outputContext = new DataOutput();
+        StepExecutionContext controllableContext = withOverride(stepContext, stepController, outputContext);
 
-        StepExecutionContext controllableContext = withFlowControl(stepContext, stepController);
-
-        Map<String,NodeStepResult> nodeFailures;
+        Map<String, NodeStepResult> nodeFailures;
 
         //execute the step item, and store the results
-        StepExecutionResult stepResult=null;
+        StepExecutionResult stepResult = null;
         Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<>();
         stepResult = executeWFItem(controllableContext, stepFailedMap, c, cmd);
         boolean stepSuccess = stepResult.isSuccess();
         nodeFailures = stepCaptureFailedNodesListener.getFailedNodes();
 
-        if(null!=executionContext.getExecutionListener() && null!=executionContext.getExecutionListener().getFailedNodesListener()) {
+        if (null != executionContext.getExecutionListener() &&
+            null != executionContext.getExecutionListener().getFailedNodesListener()) {
             executionContext.getExecutionListener().getFailedNodesListener().matchedNodes(
                     stepCaptureFailedNodesListener.getMatchedNodes());
 
@@ -742,8 +846,8 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
 
             //TODO: halt execution without running the error-handler?
             stepSuccess = stepController.isSuccess();
-            statusString=stepController.getStatusString();
-            controlBehavior=stepController.getControlBehavior();
+            statusString = stepController.getStatusString();
+            controlBehavior = stepController.getControlBehavior();
             executionContext.getExecutionListener().log(
                     3,
                     controlBehavior +
@@ -754,7 +858,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             );
         }
         try {
-            if(!stepSuccess && hasHandler) {
+            if (!stepSuccess && hasHandler) {
                 final HasFailureHandler handles = (HasFailureHandler) cmd;
                 final StepExecutionItem handler = handles.getFailureHandler();
                 if (null != handler) {
@@ -763,11 +867,13 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                     //will throw an exception on failure because keepgoing=false
 
                     NodeRecorder handlerCaptureFailedNodesListener = new NodeRecorder();
-                    StepExecutionContext handlerExecContext = replaceFailedNodesListenerInContext(executionContext,
-                                                                                                  handlerCaptureFailedNodesListener);
+                    StepExecutionContext handlerExecContext = replaceFailedNodesListenerInContext(
+                            executionContext,
+                            handlerCaptureFailedNodesListener
+                    );
 
                     //if multi-node, determine set of nodes to run handler on: (failed node list only)
-                    if(stepCaptureFailedNodesListener.getMatchedNodes().size()>1) {
+                    if (stepCaptureFailedNodesListener.getMatchedNodes().size() > 1) {
                         HashSet<String> failedNodeList = new HashSet<String>(
                                 stepCaptureFailedNodesListener.getFailedNodes().keySet());
 
@@ -776,27 +882,32 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
 
                     }
 
-                    if(null!=stepResult) {
-                        //add step failure data to data context
-                        handlerExecContext = addStepFailureContextData(stepResult, handlerExecContext);
+                    //add step failure data to data context
+                    handlerExecContext = addStepFailureContextData(stepResult, handlerExecContext);
 
-                        //extract node-specific failure and set as node-context data
-                        handlerExecContext = addNodeStepFailureContextData(stepResult, handlerExecContext);
-                    }
+                    //extract node-specific failure and set as node-context data
+                    handlerExecContext = addNodeStepFailureContextData(stepResult, handlerExecContext);
+
+                    //result of step
+                    handlerExecContext = addOutputData(outputContext.getOutputContext(), handlerExecContext);
+
                     if (null != wlistener) {
                         wlistener.beginWorkflowItemErrorHandler(c, cmd);
                     }
-                    final FlowController handlerController=new FlowController();
-                    StepExecutionContext handlerControlContext = withFlowControl(
+                    final FlowController handlerController = new FlowController();
+                    StepExecutionContext handlerControlContext = withOverride(
                             handlerExecContext,
-                            handlerController
+                            handlerController,
+                            outputContext
                     );
 
                     Map<Integer, StepExecutionResult> handlerFailedMap = new HashMap<Integer, StepExecutionResult>();
-                    StepExecutionResult handlerResult = executeWFItem(handlerControlContext,
-                                                                      handlerFailedMap,
-                                                                      c,
-                                                                      handler);
+                    StepExecutionResult handlerResult = executeWFItem(
+                            handlerControlContext,
+                            handlerFailedMap,
+                            c,
+                            handler
+                    );
                     boolean handlerSuccess = handlerResult.isSuccess();
 
                     if (null != wlistener) {
@@ -809,10 +920,11 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                         stepSuccess = handlerController.isSuccess();
                         statusString = handlerController.getStatusString();
                         controlBehavior = handlerController.getControlBehavior();
-                        executionContext.getExecutionListener().log(3,
-                                                                    controlBehavior +
-                                                                    " requested with result: " +
-                                                                    (null != statusString ? statusString : stepSuccess)
+                        executionContext.getExecutionListener().log(
+                                3,
+                                controlBehavior +
+                                " requested with result: " +
+                                (null != statusString ? statusString : stepSuccess)
                         );
                     } else {
 
@@ -833,7 +945,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                     }
                 }
             }
-        }catch (RuntimeException t) {
+        } catch (RuntimeException t) {
 //            t.printStackTrace(System.err);
             stepResult = new StepExecutionResultImpl(t, StepFailureReason.Unknown, t.getMessage());
             throw t;
@@ -848,35 +960,53 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         //report node failures based on results of step and handler run.
         if (null != executionContext.getExecutionListener() && null != executionContext.getExecutionListener()
                                                                                        .getFailedNodesListener()) {
-            if(nodeFailures.size()>0){
+            if (nodeFailures.size() > 0) {
                 executionContext.getExecutionListener().getFailedNodesListener().nodesFailed(
                         nodeFailures);
-            }else if(stepSuccess){
+            } else if (stepSuccess) {
                 executionContext.getExecutionListener().getFailedNodesListener().nodesSucceeded();
             }
 
         }
 
-        return new StepResultCapture(stepResult,stepSuccess, statusString, controlBehavior);
+        return new StepResultCapture(
+                stepResult,
+                stepSuccess,
+                statusString,
+                controlBehavior,
+                new BaseDataContext(outputContext.getOutputContext())
+        );
     }
+
+    private StepExecutionContext addOutputData(
+            final Map<String, Map<String, String>> outputContext,
+            final StepExecutionContext handlerExecContext
+    )
+    {
+        return ExecutionContextImpl.builder(handlerExecContext).mergeContext(outputContext).build();
+    }
+
     public static class StepResultCapture {
 
         private StepExecutionResult stepResult;
         private boolean stepSuccess;
         private String statusString;
         private ControlBehavior controlBehavior;
+        private DataContext resultData;
 
         public StepResultCapture(
                 final StepExecutionResult stepResult,
                 final boolean stepSuccess,
                 final String statusString,
-                final ControlBehavior controlBehavior
+                final ControlBehavior controlBehavior,
+                final DataContext resultData
         )
         {
             this.stepResult = stepResult;
             this.stepSuccess = stepSuccess;
             this.statusString = statusString;
             this.controlBehavior = controlBehavior;
+            this.resultData = resultData;
         }
 
         boolean isStepSuccess() {
@@ -897,6 +1027,10 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             return stepResult;
         }
 
+        public DataContext getResultData() {
+            return resultData;
+        }
+
         @Override
         public String toString() {
             return "StepResultCapture{" +
@@ -904,6 +1038,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                    ", stepSuccess=" + stepSuccess +
                    ", statusString='" + statusString + '\'' +
                    ", controlBehavior=" + controlBehavior +
+                   ", resultData=" + resultData +
                    '}';
         }
     }

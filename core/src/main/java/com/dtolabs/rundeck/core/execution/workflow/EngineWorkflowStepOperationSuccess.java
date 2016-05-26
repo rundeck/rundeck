@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
+import com.dtolabs.rundeck.core.dispatcher.DataContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.rules.StateObj;
 import com.dtolabs.rundeck.core.rules.WorkflowSystem;
@@ -7,24 +8,28 @@ import com.dtolabs.rundeck.core.rules.WorkflowSystem;
 /**
  * Successful result of a workflow step operation
  */
-class EngineWorkflowStepOperationSuccess implements WorkflowSystem.OperationSuccess {
+class EngineWorkflowStepOperationSuccess implements WorkflowSystem.OperationSuccess<DataContext> {
     int stepNum;
-    StepExecutionResult result;
+    BaseWorkflowExecutor.StepResultCapture stepResultCapture;
     private StateObj newState;
-    ControlBehavior controlBehavior;
-    String statusString;
 
     EngineWorkflowStepOperationSuccess(
             final int stepNum,
-            final StepExecutionResult result,
-            final StateObj newState, final ControlBehavior controlBehavior, final String statusString
+            final StateObj newState, BaseWorkflowExecutor.StepResultCapture stepResultCapture
     )
     {
+
         this.stepNum = stepNum;
-        this.result = result;
         this.newState = newState;
-        this.controlBehavior = controlBehavior;
-        this.statusString = statusString;
+        this.stepResultCapture = stepResultCapture;
+    }
+
+    @Override
+    public DataContext getResult() {
+        return stepResultCapture.getResultData();
+    }
+    public BaseWorkflowExecutor.StepResultCapture getStepResultCapture() {
+        return stepResultCapture;
     }
 
     @Override
@@ -36,7 +41,7 @@ class EngineWorkflowStepOperationSuccess implements WorkflowSystem.OperationSucc
     public String toString() {
         return "StepSuccess{" +
                "stepNum=" + stepNum +
-               ", result=" + result +
+               ", stepResultCapture=" + stepResultCapture +
                ", newState=" + newState +
                '}';
     }

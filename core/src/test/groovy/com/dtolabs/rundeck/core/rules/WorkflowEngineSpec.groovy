@@ -11,6 +11,7 @@ import java.util.concurrent.Executors
 class WorkflowEngineSpec extends Specification {
     class TestOpSuccess implements WorkflowSystem.OperationSuccess {
         StateObj newState
+        Object result
     }
 
     class TestOperation implements WorkflowSystem.Operation<TestOpSuccess> {
@@ -60,7 +61,7 @@ class WorkflowEngineSpec extends Specification {
         WorkflowEngine engine = new WorkflowEngine(ruleEngine, state, executor)
         Set<WorkflowSystem.Operation<TestOpSuccess>> operations = []
         when:
-        def result = engine.processOperations(operations)
+        def result = engine.processOperations(operations,null)
 
         then:
         result.size() == 0
@@ -83,7 +84,7 @@ class WorkflowEngineSpec extends Specification {
                 new TestOperation()
         ]
         when:
-        def result = engine.processOperations(operations)
+        def result = engine.processOperations(operations,null)
 
         then:
         result.size() == 1
@@ -111,7 +112,7 @@ class WorkflowEngineSpec extends Specification {
                 new TestOperation()
         ]
         when:
-        def result = engine.processOperations(operations)
+        def result = engine.processOperations(operations,null)
 
         then:
         result.size() == 0
@@ -138,7 +139,7 @@ class WorkflowEngineSpec extends Specification {
                 new TestOperation()
         ]
         when:
-        def result = engine.processOperations(operations)
+        def result = engine.processOperations(operations,null)
 
         then:
         result.size() == 0
@@ -176,7 +177,7 @@ class WorkflowEngineSpec extends Specification {
                 ),
         ]
         when:
-        def result = engine.processOperations(operations)
+        def result = engine.processOperations(operations,null)
 
         then:
         result.size() == 2
@@ -221,7 +222,7 @@ class WorkflowEngineSpec extends Specification {
                 ),
         ]
         when:
-        def result = engine.processOperations(operations)
+        def result = engine.processOperations(operations,null)
 
         then:
         result.size() == 1
@@ -263,7 +264,7 @@ class WorkflowEngineSpec extends Specification {
                 ),
         ]
         when:
-        def result = engine.processOperations(operations)
+        def result = engine.processOperations(operations,null)
 
         then:
         result.size() == 1
@@ -302,7 +303,7 @@ class WorkflowEngineSpec extends Specification {
                 ),
         ]
         when:
-        def result = engine.processOperations(operations)
+        def result = engine.processOperations(operations,null)
 
         then:
         result.size() == 1

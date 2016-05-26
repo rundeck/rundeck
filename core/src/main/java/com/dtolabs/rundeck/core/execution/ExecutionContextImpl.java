@@ -32,7 +32,9 @@ import com.dtolabs.rundeck.core.common.NodesSelector;
 import com.dtolabs.rundeck.core.common.OrchestratorConfig;
 import com.dtolabs.rundeck.core.common.SelectorUtils;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.execution.workflow.DataOutput;
 import com.dtolabs.rundeck.core.execution.workflow.FlowControl;
+import com.dtolabs.rundeck.core.execution.workflow.OutputContext;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeExecutionContext;
 import com.dtolabs.rundeck.core.jobs.JobService;
@@ -74,12 +76,14 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private JobService jobService;
     private ProjectNodeService nodeService;
     private FlowControl flowControl;
+    private OutputContext outputContext;
 
     private OrchestratorConfig orchestrator;
     private ExecutionContextImpl() {
-        stepContext = new ArrayList<Integer>();
+        stepContext = new ArrayList<>();
         nodes = new NodeSetImpl();
-        nodeDataContext = new HashMap<String, Map<String, Map<String, String>>>();
+        nodeDataContext = new HashMap<>();
+        outputContext = new DataOutput();
     }
 
     public static Builder builder() {
@@ -122,6 +126,10 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     public void setCharsetEncoding(String charsetEncoding) {
         this.charsetEncoding = charsetEncoding;
     }
+    public OutputContext getOutputContext() {
+        return outputContext;
+    }
+
 
     public static class Builder {
         private ExecutionContextImpl ctx;
@@ -181,11 +189,16 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.stepNumber = original.getStepNumber();
                 ctx.stepContext = original.getStepContext();
                 ctx.flowControl = original.getFlowControl();
+                ctx.outputContext = original.getOutputContext();
             }
         }
 
         public Builder flowControl(FlowControl flowControl) {
             ctx.flowControl = flowControl;
+            return this;
+        }
+        public Builder outputContext(OutputContext outputContext) {
+            ctx.outputContext = outputContext;
             return this;
         }
 
@@ -243,6 +256,15 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
          */
         public Builder setContext(final String key, final Map<String,String> data) {
             return dataContext(DataContextUtils.addContext(key, data, ctx.dataContext));
+        }
+
+        /**
+         * Merge a context data set
+         * @param data data
+         * @return builder
+         */
+        public Builder mergeContext(final Map<String,Map<String,String>> data) {
+            return dataContext(DataContextUtils.merge(ctx.dataContext,data));
         }
 
         /**

@@ -136,7 +136,7 @@ class EngineWorkflowStepOperation implements WorkflowSystem.Operation<EngineWork
             }
         }
 
-        return new EngineWorkflowStepOperationSuccess(stepNum, result, stateChanges, controlBehavior, statusString);
+        return new EngineWorkflowStepOperationSuccess(stepNum, stateChanges, stepResultCapture);
     }
 
     @Override

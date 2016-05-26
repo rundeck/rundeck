@@ -24,6 +24,8 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.execution.ExceptionStatusResult;
+import com.dtolabs.rundeck.core.execution.workflow.DataOutput;
+import com.dtolabs.rundeck.core.execution.workflow.OutputContext;
 
 import java.util.Map;
 

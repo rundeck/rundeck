@@ -2,7 +2,10 @@ package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.dispatcher.BaseDataContext;
+import com.dtolabs.rundeck.core.dispatcher.DataContext;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.MutableDataContext;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
@@ -301,9 +304,23 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 .listener(createListener(executionContext.getExecutionListener()))
                 .build();
 
+        final MutableDataContext sharedContext = new BaseDataContext();
+        WorkflowSystem.SharedData<DataContext> dataContextSharedData = new WorkflowSystem
+                .SharedData<DataContext>()
+        {
+            @Override
+            public void addData(final DataContext item) {
+                sharedContext.merge(item);
+            }
+
+            @Override
+            public DataContext produceNext() {
+                return sharedContext;
+            }
+        };
         Set<WorkflowSystem.OperationResult<EngineWorkflowStepOperationSuccess, EngineWorkflowStepOperation>>
                 operationResults =
-                workflowEngine.processOperations(operations);
+                workflowEngine.processOperations(operations, dataContextSharedData);
 
 
         String statusString = null;
@@ -315,20 +332,21 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 operationResult : operationResults) {
             EngineWorkflowStepOperationSuccess success = operationResult.getSuccess();
             EngineWorkflowStepOperation operation = operationResult.getOperation();
+            Throwable failure = operationResult.getFailure();
+
             if (success != null) {
-                stepExecutionResults.put(success.stepNum, success.result);
-                if (!success.result.isSuccess()) {
-                    stepFailures.put(success.stepNum, success.result);
-                    workflowSuccess = false;
+                StepResultCapture result = success.getStepResultCapture();
+                stepExecutionResults.put(success.stepNum, result.getStepResult());
+                if (!result.getStepResult().isSuccess()) {
+                    stepFailures.put(success.stepNum, result.getStepResult());
                 }
-                stepResults.add(success.result);
-                if (success.controlBehavior != null && success.controlBehavior != ControlBehavior.Continue) {
-                    controlBehavior = success.controlBehavior;
-                    statusString = success.statusString;
+                stepResults.add(result.getStepResult());
+                if (result.getControlBehavior() != null && result.getControlBehavior() != ControlBehavior.Continue) {
+                    controlBehavior = result.getControlBehavior();
+                    statusString = result.getStatusString();
                 }
             } else {
                 workflowSuccess = false;
-                Throwable failure = operationResult.getFailure();
                 StepFailureReason reason = StepFailureReason.Unknown;
 
                 String message = String.format(
@@ -411,7 +429,8 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             final StepExecutionItem cmd,
             final StepExecutionContext executionContext,
             final int i,
-            final WorkflowExecutionListener wlistener, final boolean keepgoing
+            final WorkflowExecutionListener wlistener,
+            final boolean keepgoing
     )
     {
         return new Callable<StepResultCapture>() {
@@ -420,7 +439,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 final Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<Integer, StepExecutionResult>();
                 List<StepExecutionResult> resultList = new ArrayList<>();
                 try {
-                    StepResultCapture stepResultCapture = executeWorkflowStep(
+                    return executeWorkflowStep(
                             executionContext,
                             stepFailedMap,
                             resultList,
@@ -429,7 +448,6 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                             i,
                             cmd
                     );
-                    return stepResultCapture;
                 } catch (Throwable e) {
                     String message = String.format(
                             "Exception while executing step [%d]: [%s]",

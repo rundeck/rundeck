@@ -18,12 +18,13 @@ public interface WorkflowSystem {
      *
      * @return set of results for all processed operations
      */
-    <T extends OperationSuccess, X extends Operation<T>> Set<OperationResult<T, X>> processOperations(
-            final Set<X> operations
+    <D,T extends OperationSuccess<D>, X extends Operation<T>> Set<OperationResult<T, X>> processOperations(
+            final Set<X> operations,
+            final SharedData<D> shared
     );
 
     /**
-     * @return true if the previous call to {@link #processOperations(Set)} stopped due to interruption
+     * @return true if the previous call to {@link #processOperations(Set, SharedData)} stopped due to interruption
      */
     boolean isInterrupted();
 
@@ -44,10 +45,33 @@ public interface WorkflowSystem {
     }
 
     /**
+     * Manages shared data, consumes results of operations, and produces input for subsequent operations
+     *
+     * @param <T> data type
+     */
+    public static interface SharedData<T> {
+        /**
+         * Add a data item
+         *
+         * @param item
+         */
+        void addData(T item);
+
+        /**
+         * produce a data item for input to a subsequent operation
+         *
+         * @return
+         */
+        T produceNext();
+    }
+
+    /**
      * Indicates an operation succeeded, supplies a new set of state data to update the mutable state with
      */
-    public static interface OperationSuccess {
+    public static interface OperationSuccess<T> {
         StateObj getNewState();
+
+        T getResult();
     }
 
     /**

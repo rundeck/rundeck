@@ -56,6 +56,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
+ * @deprecated
  */
 public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
     static final Logger logger = Logger.getLogger(NodeFirstWorkflowExecutor.class.getName());

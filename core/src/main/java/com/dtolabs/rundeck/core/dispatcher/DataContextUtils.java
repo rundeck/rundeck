@@ -269,6 +269,14 @@ public class DataContextUtils {
     }
 
     /**
+     *
+     * @return A new context
+     */
+    public static Map<String, Map<String, String>> context() {
+        return new HashMap<>();
+    }
+
+    /**
      * Indicates that the value of a property reference could not be resolved.
      */
     public static class UnresolvedDataReferenceException extends RuntimeException{
