@@ -272,8 +272,8 @@ public class DataContextUtils {
      *
      * @return A new context
      */
-    public static Map<String, Map<String, String>> context() {
-        return new HashMap<>();
+    public static DataContext context() {
+        return new BaseDataContext();
     }
 
     /**

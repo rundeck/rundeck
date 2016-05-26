@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
+import com.dtolabs.rundeck.core.dispatcher.DataContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.rules.*;
 
@@ -9,12 +10,12 @@ import java.util.concurrent.Callable;
 /**
  * operation for running a step
  */
-class EngineWorkflowStepOperation implements WorkflowSystem.Operation<EngineWorkflowStepOperationSuccess> {
+class EngineWorkflowStepOperation implements WorkflowSystem.Operation<DataContext,EngineWorkflowStepOperationSuccess> {
     int stepNum;
     String label;
     Set<Condition> startTriggerConditions;
     Set<Condition> skipTriggerConditions;
-    private Callable<BaseWorkflowExecutor.StepResultCapture> callable;
+    private WorkflowSystem.SimpleFunction<DataContext,BaseWorkflowExecutor.StepResultCapture> callable;
     private StateObj startTriggerState;
     private StateObj skipTriggerState;
     private boolean didRun = false;
@@ -22,7 +23,7 @@ class EngineWorkflowStepOperation implements WorkflowSystem.Operation<EngineWork
     EngineWorkflowStepOperation(
             final int stepNum,
             final String label,
-            final Callable<BaseWorkflowExecutor.StepResultCapture> callable,
+            final WorkflowSystem.SimpleFunction<DataContext,BaseWorkflowExecutor.StepResultCapture> callable,
             final StateObj startTriggerState,
             final StateObj skipTriggerState,
             final Set<Condition> startTriggerConditions,
@@ -49,9 +50,9 @@ class EngineWorkflowStepOperation implements WorkflowSystem.Operation<EngineWork
     }
 
     @Override
-    public EngineWorkflowStepOperationSuccess call() throws Exception {
+    public EngineWorkflowStepOperationSuccess apply(DataContext context) throws Exception {
         didRun = true;
-        BaseWorkflowExecutor.StepResultCapture stepResultCapture = callable.call();
+        BaseWorkflowExecutor.StepResultCapture stepResultCapture = callable.apply(context);
         StepExecutionResult result = stepResultCapture.getStepResult();
         ControlBehavior controlBehavior = stepResultCapture.getControlBehavior();
         String statusString = stepResultCapture.getStatusString();
@@ -79,7 +80,7 @@ class EngineWorkflowStepOperation implements WorkflowSystem.Operation<EngineWork
                 EngineWorkflowExecutor.stepKey(EngineWorkflowExecutor.STEP_STATE_KEY, stepNum),
                 stepResultValue
         );
-        if(label!=null) {
+        if (label != null) {
             stateChanges.updateState(
                     EngineWorkflowExecutor.stepKey(EngineWorkflowExecutor.STEP_STATE_KEY, "label." + label),
                     stepResultValue

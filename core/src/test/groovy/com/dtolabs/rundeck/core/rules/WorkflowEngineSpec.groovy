@@ -14,7 +14,7 @@ class WorkflowEngineSpec extends Specification {
         Object result
     }
 
-    class TestOperation implements WorkflowSystem.Operation<TestOpSuccess> {
+    class TestOperation implements WorkflowSystem.Operation<Object,TestOpSuccess> {
         Closure<TestOpSuccess> toCall
         Closure<Boolean> shouldRunClos
         private boolean shouldRun
@@ -24,6 +24,7 @@ class WorkflowEngineSpec extends Specification {
         StateObj skipState
         Long id
         boolean hasRun = false
+        Object input = null
 
         @Override
         boolean shouldRun(final StateObj state) {
@@ -45,9 +46,11 @@ class WorkflowEngineSpec extends Specification {
             skipState
         }
 
+
         @Override
-        TestOpSuccess call() throws Exception {
+        TestOpSuccess apply(final Object o) throws Exception {
             hasRun = true
+            input=o
             def result = toCall?.call()
             return result
         }

@@ -518,7 +518,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
     private StepExecutionContext withOverride(
             final StepExecutionContext stepContext,
             final FlowController stepController,
-            final DataOutput dataOutput
+            final OutputContext dataOutput
     )
     {
         return new ExecutionContextImpl.Builder(stepContext).flowControl(stepController)
@@ -824,7 +824,8 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         );
 
         final FlowController stepController = new FlowController();
-        final DataOutput outputContext = new DataOutput();
+        //TODO: output data should be contextualized to the step
+        final DataOutputContextualized outputContext = new DataOutputContextualized("step." + c + ".");
         StepExecutionContext controllableContext = withOverride(stepContext, stepController, outputContext);
 
         Map<String, NodeStepResult> nodeFailures;
@@ -889,7 +890,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                     handlerExecContext = addNodeStepFailureContextData(stepResult, handlerExecContext);
 
                     //result of step
-                    handlerExecContext = addOutputData(outputContext.getOutputContext(), handlerExecContext);
+                    handlerExecContext = addOutputData(outputContext.getDataContext(), handlerExecContext);
 
                     if (null != wlistener) {
                         wlistener.beginWorkflowItemErrorHandler(c, cmd);
@@ -974,7 +975,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                 stepSuccess,
                 statusString,
                 controlBehavior,
-                new BaseDataContext(outputContext.getOutputContext())
+                new BaseDataContext(outputContext.getDataContext())
         );
     }
 

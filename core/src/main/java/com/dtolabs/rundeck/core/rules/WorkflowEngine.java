@@ -6,10 +6,7 @@ import com.google.common.util.concurrent.*;
 import org.apache.log4j.Logger;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * A WorkflowSystem which processes the operations by use of a rule system and a mutable state.
@@ -56,9 +53,9 @@ public class WorkflowEngine implements WorkflowSystem {
 
     public <DAT,
             RES extends OperationSuccess<DAT>,
-            OP extends Operation<RES>
+            OP extends Operation<DAT, RES>
             >
-    Set<OperationResult<RES, OP>> processOperations(final Set<OP> operations, final SharedData<DAT> sharedData) {
+    Set<OperationResult<DAT, RES, OP>> processOperations(final Set<OP> operations, final SharedData<DAT> sharedData) {
 
         event(WorkflowSystemEventType.Begin, "Workflow begin");
         final LinkedBlockingQueue<OperationSuccess<DAT>> stateChangeQueue = new LinkedBlockingQueue<>();
@@ -66,8 +63,9 @@ public class WorkflowEngine implements WorkflowSystem {
         OperationSuccess<DAT> begin = WorkflowEngine.dummyResult(Workflows.getWorkflowStartState());
         stateChangeQueue.add(begin);
         final Set<OP> pending = new HashSet<>(operations);
-        final Set<OperationResult<RES, OP>> results = Collections.synchronizedSet(new HashSet<OperationResult<RES,
-                OP>>());
+        final Set<OperationResult<DAT, RES, OP>> results = Collections.synchronizedSet(
+                new HashSet<OperationResult<DAT, RES, OP>>()
+        );
         final List<ListenableFuture<RES>> futures = Collections.synchronizedList(new ArrayList<ListenableFuture<RES>>
                                                                                          ());
         interrupted = false;
@@ -127,6 +125,7 @@ public class WorkflowEngine implements WorkflowSystem {
 
                 //runnable, should not skip
                 List<OP> shouldrun = runnable.toList();
+                DAT stepData = null != sharedData ? sharedData.produceNext() : null;
 
                 for (final OP operation : shouldrun) {
                     if (shouldskip.contains(operation)) {
@@ -139,7 +138,7 @@ public class WorkflowEngine implements WorkflowSystem {
                             String.format("operation starting: %s", operation),
                             operation
                     );
-                    final ListenableFuture<RES> submit = executorService.submit(operation);
+                    final ListenableFuture<RES> submit = executorService.submit(operationCallable(operation, stepData));
                     synchronized (inProcess) {
                         inProcess.add(operation);
                     }
@@ -164,7 +163,7 @@ public class WorkflowEngine implements WorkflowSystem {
                                     successResult
                             );
                             assert successResult != null;
-                            OperationResult<RES, OP> result = result(successResult, operation);
+                            OperationResult<DAT, RES, OP> result = result(successResult, operation);
                             synchronized (results) {
                                 results.add(result);
                             }
@@ -181,7 +180,7 @@ public class WorkflowEngine implements WorkflowSystem {
                                     String.format("operation failed: %s", t),
                                     t
                             );
-                            OperationResult<RES, OP> result = result(t, operation);
+                            OperationResult<DAT, RES, OP> result = result(t, operation);
                             synchronized (results) {
                                 results.add(result);
                             }
@@ -275,7 +274,21 @@ public class WorkflowEngine implements WorkflowSystem {
         return results;
     }
 
-    static private <T> OperationSuccess<T> dummyResult(final StateObj state){
+    private static <X, Y extends OperationSuccess<X>> Callable<Y> operationCallable(
+            final Operation<X, Y> operation,
+            final X input
+    )
+    {
+
+        return new Callable<Y>() {
+            @Override
+            public Y call() throws Exception {
+                return operation.apply(input);
+            }
+        };
+    }
+
+    static private <T> OperationSuccess<T> dummyResult(final StateObj state) {
         return new OperationSuccess<T>() {
             @Override
             public StateObj getNewState() {
@@ -341,7 +354,9 @@ public class WorkflowEngine implements WorkflowSystem {
     }
 
 
-    private static class WResult<T extends OperationSuccess, X extends Operation<T>> implements OperationResult<T, X> {
+    private static class WResult<D, T extends OperationSuccess<D>, X extends Operation<D, T>> implements
+            OperationResult<D, T, X>
+    {
         final private X operation;
 
         WResult(final X operation, final Throwable throwable) {
@@ -375,14 +390,14 @@ public class WorkflowEngine implements WorkflowSystem {
         }
     }
 
-    private <T extends OperationSuccess, X extends Operation<T>> OperationResult<T, X> result(
+    private <D, T extends OperationSuccess<D>, X extends Operation<D, T>> OperationResult<D, T, X> result(
             final Throwable t, final X operation
     )
     {
         return new WResult<>(operation, t);
     }
 
-    private <T extends OperationSuccess, X extends Operation<T>> OperationResult<T, X> result(
+    private <D, T extends OperationSuccess<D>, X extends Operation<D, T>> OperationResult<D, T, X> result(
             final T successResult, final X operation
     )
     {

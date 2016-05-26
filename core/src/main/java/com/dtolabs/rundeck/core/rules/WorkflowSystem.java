@@ -1,5 +1,7 @@
 package com.dtolabs.rundeck.core.rules;
 
+import com.google.common.base.Function;
+
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -18,7 +20,7 @@ public interface WorkflowSystem {
      *
      * @return set of results for all processed operations
      */
-    <D,T extends OperationSuccess<D>, X extends Operation<T>> Set<OperationResult<T, X>> processOperations(
+    <D, T extends OperationSuccess<D>, X extends Operation<D, T>> Set<OperationResult<D, T, X>> processOperations(
             final Set<X> operations,
             final SharedData<D> shared
     );
@@ -36,7 +38,7 @@ public interface WorkflowSystem {
      * @param <T> success type
      * @param <X> operation type
      */
-    public static interface OperationResult<T extends OperationSuccess, X extends Operation<T>> {
+    public static interface OperationResult<D,T extends OperationSuccess<D>, X extends Operation<D,T>> {
         Throwable getFailure();
 
         T getSuccess();
@@ -75,11 +77,19 @@ public interface WorkflowSystem {
     }
 
     /**
+     * function interface with throwable
+     * @param <X>
+     * @param <Y>
+     */
+    public static interface SimpleFunction<X,Y>{
+        Y apply(X x) throws Exception;
+    }
+    /**
      * An operation which returns a success result object
      *
      * @param <T> result type
      */
-    public static interface Operation<T extends OperationSuccess> extends Callable<T> {
+    public static interface Operation<X, T extends OperationSuccess> extends SimpleFunction<X, T> {
         /**
          * @param state current state
          *

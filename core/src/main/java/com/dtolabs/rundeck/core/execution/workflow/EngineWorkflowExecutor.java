@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.core.dispatcher.BaseDataContext;
 import com.dtolabs.rundeck.core.dispatcher.DataContext;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.dispatcher.MutableDataContext;
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
@@ -18,7 +19,6 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import org.apache.log4j.Logger;
 
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -315,10 +315,11 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
             @Override
             public DataContext produceNext() {
-                return sharedContext;
+                return new BaseDataContext(sharedContext);
             }
         };
-        Set<WorkflowSystem.OperationResult<EngineWorkflowStepOperationSuccess, EngineWorkflowStepOperation>>
+        Set<WorkflowSystem.OperationResult<DataContext, EngineWorkflowStepOperationSuccess,
+                EngineWorkflowStepOperation>>
                 operationResults =
                 workflowEngine.processOperations(operations, dataContextSharedData);
 
@@ -328,8 +329,8 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
 
         boolean workflowSuccess = !workflowEngine.isInterrupted();
-        for (WorkflowSystem.OperationResult<EngineWorkflowStepOperationSuccess, EngineWorkflowStepOperation>
-                operationResult : operationResults) {
+        for (WorkflowSystem.OperationResult<DataContext, EngineWorkflowStepOperationSuccess,
+                EngineWorkflowStepOperation> operationResult : operationResults) {
             EngineWorkflowStepOperationSuccess success = operationResult.getSuccess();
             EngineWorkflowStepOperation operation = operationResult.getOperation();
             Throwable failure = operationResult.getFailure();
@@ -354,6 +355,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                         operation.stepNum,
                         failure.toString()
                 );
+                failure.printStackTrace(System.out);
                 if (failure instanceof CancellationException) {
                     reason = StepFailureReason.Interrupted;
 
@@ -425,7 +427,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         );
     }
 
-    Callable<StepResultCapture> callable(
+    WorkflowSystem.SimpleFunction<DataContext, BaseWorkflowExecutor.StepResultCapture> callable(
             final StepExecutionItem cmd,
             final StepExecutionContext executionContext,
             final int i,
@@ -433,14 +435,22 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             final boolean keepgoing
     )
     {
-        return new Callable<StepResultCapture>() {
+        return new WorkflowSystem.SimpleFunction<DataContext, StepResultCapture>() {
             @Override
-            public StepResultCapture call() {
-                final Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<Integer, StepExecutionResult>();
+            public StepResultCapture apply(final DataContext inputData) {
+                final Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<>();
                 List<StepExecutionResult> resultList = new ArrayList<>();
+                BaseDataContext newDataContext = new BaseDataContext();
+                newDataContext.merge(new BaseDataContext(executionContext.getDataContext()));
+                newDataContext.merge(inputData);
+                StepExecutionContext newContext = ExecutionContextImpl.builder(executionContext)
+                                                                      .dataContext(
+                                                                              newDataContext
+                                                                      )
+                                                                      .build();
                 try {
                     return executeWorkflowStep(
-                            executionContext,
+                            newContext,
                             stepFailedMap,
                             resultList,
                             keepgoing,

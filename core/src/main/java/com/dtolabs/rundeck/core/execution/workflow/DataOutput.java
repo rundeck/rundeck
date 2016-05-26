@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
+import com.dtolabs.rundeck.core.dispatcher.DataContext;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 
 import java.util.HashMap;
@@ -8,8 +9,8 @@ import java.util.Map;
 /**
  * Created by greg on 5/25/16.
  */
-public class DataOutput implements OutputContext {
-    private Map<String, Map<String, String>> outputContext;
+public class DataOutput implements OutputContext,HasDataContext {
+    private DataContext outputContext;
 
     public DataOutput() {
         outputContext = DataContextUtils.context();
@@ -31,7 +32,7 @@ public class DataOutput implements OutputContext {
         DataContextUtils.addContext(key, data, outputContext);
     }
 
-    public Map<String, Map<String, String>> getOutputContext() {
+    public DataContext getDataContext() {
         return outputContext;
     }
 }
