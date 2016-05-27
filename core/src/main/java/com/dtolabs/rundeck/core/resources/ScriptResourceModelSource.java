@@ -153,10 +153,18 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
 
     public INodeSet getNodes() throws ResourceModelSourceException {
         try {
-            return ScriptResourceUtil.executeScript(scriptFile, args,
-                interpreter,
-                ScriptResourceModelSourceFactory.SERVICE_PROVIDER_TYPE, executionDataContext, format, framework, project,
-                logger, interpreterArgsQuoted);
+            return ScriptResourceUtil.executeScript(scriptFile,
+                                                    args,
+                                                    null,
+                                                    interpreter,
+                                                    ScriptResourceModelSourceFactory.SERVICE_PROVIDER_TYPE,
+                                                    executionDataContext,
+                                                    format,
+                                                    framework,
+                                                    project,
+                                                    logger,
+                                                    interpreterArgsQuoted
+            );
         } catch (ResourceModelSourceException e) {
             throw new ResourceModelSourceException(
                 "failed to execute: "+scriptFile+": " + e.getMessage(), e);

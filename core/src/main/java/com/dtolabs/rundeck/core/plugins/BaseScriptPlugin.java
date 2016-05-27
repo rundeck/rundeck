@@ -175,13 +175,14 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
         final ScriptPluginProvider plugin = getProvider();
         final File scriptfile = plugin.getScriptFile();
         final String scriptargs = plugin.getScriptArgs();
+        final String[] scriptargsarray = plugin.getScriptArgsArray();
         final String scriptinterpreter = plugin.getScriptInterpreter();
         final boolean interpreterargsquoted = plugin.getInterpreterArgsQuoted();
 
 
         return getScriptExecHelper().createScriptArgs(
                 localDataContext,
-                scriptargs, null, scriptinterpreter, interpreterargsquoted,
+                scriptargs, scriptargsarray, scriptinterpreter, interpreterargsquoted,
                 scriptfile.getAbsolutePath()
         );
     }
@@ -198,12 +199,15 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
         final String scriptargs = null!=plugin.getScriptArgs()?
                 DataContextUtils.replaceDataReferences(plugin.getScriptArgs(), dataContext) :
                     null;
+        final String[] scriptargsarr = null!=plugin.getScriptArgsArray()?
+                DataContextUtils.replaceDataReferences(plugin.getScriptArgsArray(), dataContext) :
+                    null;
         final String scriptinterpreter = plugin.getScriptInterpreter();
         final boolean interpreterargsquoted = plugin.getInterpreterArgsQuoted();
 
 
         return getScriptExecHelper().createScriptArgList(scriptfile.getAbsolutePath(),
-                scriptargs, null, scriptinterpreter, interpreterargsquoted);
+                scriptargs, scriptargsarr, scriptinterpreter, interpreterargsquoted);
     }
 
     public ScriptExecHelper getScriptExecHelper() {

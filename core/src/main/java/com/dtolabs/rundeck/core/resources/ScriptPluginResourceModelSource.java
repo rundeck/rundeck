@@ -67,6 +67,7 @@ class ScriptPluginResourceModelSource implements ResourceModelSource, Configurab
             return ScriptResourceUtil.executeScript(
                 provider.getScriptFile(),
                 provider.getScriptArgs(),
+                provider.getScriptArgsArray(),
                 provider.getScriptInterpreter(),
                 provider.getName(),
                 executionDataContext,

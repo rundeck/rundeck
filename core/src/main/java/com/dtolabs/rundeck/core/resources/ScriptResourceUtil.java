@@ -36,12 +36,21 @@ import java.util.Map;
  * data.
  */
 class ScriptResourceUtil {
-    public static INodeSet executeScript(final File scriptfile, final String scriptargs, final String scriptinterpreter,
-                                         final String pluginname, final Map<String, Map<String, String>> dataContext,
-                                         final String fileformat, final Framework framework,
-                                         final String project, final Logger logger, final boolean interpreterArgsQuoted) throws
-        ResourceModelSourceException {
-
+    public static INodeSet executeScript(
+            final File scriptfile,
+            final String scriptargs,
+            final String[] scriptargsarray,
+            final String scriptinterpreter,
+            final String pluginname,
+            final Map<String, Map<String, String>> dataContext,
+            final String fileformat,
+            final Framework framework,
+            final String project,
+            final Logger logger,
+            final boolean interpreterArgsQuoted
+    ) throws
+            ResourceModelSourceException
+    {
         /*
         String dirstring = null;
         dirstring = plugin.get
@@ -70,10 +79,29 @@ class ScriptResourceUtil {
         final Process exec;
         try {
             if (null != scriptinterpreter) {
-                exec = execShellScript(logger, workingdir, scriptfile, scriptargs, dataContext, dataContext,
-                    scriptinterpreter, pluginname, interpreterArgsQuoted);
+                exec = execShellScript(
+                        logger,
+                        workingdir,
+                        scriptfile,
+                        scriptargs,
+                        scriptargsarray,
+                        dataContext,
+                        dataContext,
+                        scriptinterpreter,
+                        pluginname,
+                        interpreterArgsQuoted
+                );
             } else {
-                exec = execScript(logger, workingdir, scriptfile, scriptargs, dataContext, dataContext, pluginname);
+                exec = execScript(
+                        logger,
+                        workingdir,
+                        scriptfile,
+                        scriptargs,
+                        scriptargsarray,
+                        dataContext,
+                        dataContext,
+                        pluginname
+                );
             }
         } catch (IOException e) {
             throw new ResourceModelSourceException("Script execution could not start: " + e.getMessage(), e);
@@ -103,12 +131,16 @@ class ScriptResourceUtil {
         }
         logger.debug("[" + pluginname + "]: result code: " + result + ", success: " + success);
         if (null != outthread && null != outthread.getException()) {
-            logger.error("[" + pluginname + "]: stream copy error: " + outthread.getException().getMessage(),
-                outthread.getException());
+            logger.error(
+                    "[" + pluginname + "]: stream copy error: " + outthread.getException().getMessage(),
+                    outthread.getException()
+            );
         }
         if (null != errthread && null != errthread.getException()) {
-            logger.error("[" + pluginname + "]: stream copy error: " + errthread.getException().getMessage(),
-                errthread.getException());
+            logger.error(
+                    "[" + pluginname + "]: stream copy error: " + errthread.getException().getMessage(),
+                    errthread.getException()
+            );
         }
         try {
             if (!success) {
@@ -118,7 +150,8 @@ class ScriptResourceUtil {
             if (destinationTempFile.isFile() && destinationTempFile.length() > 0) {
                 try {
                     return FileResourceModelSource.parseFile(destinationTempFile, fileformat, framework,
-                        project);
+                                                             project
+                    );
                 } catch (ConfigurationException e) {
                     throw new ResourceModelSourceException(e);
                 }
@@ -128,7 +161,7 @@ class ScriptResourceUtil {
         } finally {
             if (!destinationTempFile.delete()) {
                 logger.warn(
-                    "[" + pluginname + "]: could not delete temp file: " + destinationTempFile.getAbsolutePath());
+                        "[" + pluginname + "]: could not delete temp file: " + destinationTempFile.getAbsolutePath());
             }
         }
     }
@@ -140,6 +173,7 @@ class ScriptResourceUtil {
      * @param workingdir     working dir
      * @param scriptfile     file
      * @param scriptargs     arguments to the shell
+     * @param scriptargsarr
      * @param envContext     Environment variable context
      * @param newDataContext context data to replace in the scriptargs
      * @param interpreter    the remote shell script, which will be split on whitespace
@@ -148,14 +182,21 @@ class ScriptResourceUtil {
      * @return process
      * @throws IOException on io error
      */
-    static Process execShellScript(final Logger logger, final File workingdir,
-                                   final File scriptfile, final String scriptargs,
-                                   final Map<String, Map<String, String>> envContext,
-                                   final Map<String, Map<String, String>> newDataContext,
-                                   final String interpreter, final String logName, final boolean interpreterArgsQuoted) throws IOException {
+    static Process execShellScript(
+            final Logger logger,
+            final File workingdir,
+            final File scriptfile,
+            final String scriptargs,
+            final String[] scriptargsarr,
+            final Map<String, Map<String, String>> envContext,
+            final Map<String, Map<String, String>> newDataContext,
+            final String interpreter,
+            final String logName,
+            final boolean interpreterArgsQuoted
+    ) throws IOException {
 
-        final ProcessBuilder processBuilder = buildProcess(workingdir, scriptfile, scriptargs, envContext,
-            newDataContext, interpreter, interpreterArgsQuoted);
+        final ProcessBuilder processBuilder = buildProcess(workingdir, scriptfile, scriptargs, scriptargsarr, envContext,
+                                                           newDataContext, interpreter, interpreterArgsQuoted);
         logger.info("[" + logName + "] executing: " + processBuilder.command());
         return processBuilder.start();
     }
@@ -176,20 +217,62 @@ class ScriptResourceUtil {
                                        final Map<String, Map<String, String>> envContext,
                                        final Map<String, Map<String, String>> newDataContext,
                                        final String interpreter, final boolean interpreterArgsQuoted) {
+        return buildProcess(workingdir,
+                            scriptfile,
+                            scriptargs,
+                            null,
+                            envContext,
+                            newDataContext,
+                            interpreter,
+                            interpreterArgsQuoted);
+    }
+
+    /**
+     * Build a ProcessBuilder to invoke a specified shell command and passing the arguments to the shell.
+     *
+     * @param workingdir            working dir
+     * @param scriptfile            file
+     * @param scriptargs            arguments to the shell
+     * @param envContext            Environment variable context
+     * @param newDataContext        context data to replace in the scriptargs
+     * @param interpreter           the remote shell script, which will be split on whitespace
+     * @param interpreterArgsQuoted if true, quote the file+args as a single argument to the interpreter
+     *
+     * @return process builder
+     */
+    static ProcessBuilder buildProcess(
+            final File workingdir,
+            final File scriptfile,
+            final String scriptargs,
+            final String[] scriptargsarr,
+            final Map<String, Map<String, String>> envContext,
+            final Map<String, Map<String, String>> newDataContext,
+            final String interpreter,
+            final boolean interpreterArgsQuoted
+    )
+    {
         final ArrayList<String> shells = new ArrayList<String>();
         if (null != interpreter) {
             shells.addAll(Arrays.asList(interpreter.split(" ")));
         }
 
         //use script-copy attribute and replace datareferences
-        if (null != scriptargs) {
-            if(interpreterArgsQuoted){
-                final String newargs = DataContextUtils.replaceDataReferences(scriptargs, newDataContext);
+        if (null != scriptargs || null!=scriptargsarr) {
+            if (interpreterArgsQuoted) {
+                final String newargs = null != scriptargs ? DataContextUtils.replaceDataReferences(
+                        scriptargs,
+                        newDataContext
+                ) : DataContextUtils.join(Arrays.asList(DataContextUtils.replaceDataReferences(
+                        scriptargsarr,
+                        newDataContext
+                )), " ");
                 shells.add(scriptfile.getAbsolutePath() + " " + newargs);
-            }else{
+            } else {
                 shells.add(scriptfile.getAbsolutePath());
-                shells.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargs.split(" "),
-                    newDataContext)));
+                shells.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(
+                        null!=scriptargsarr?scriptargsarr:scriptargs.split(" "),
+                        newDataContext
+                )));
             }
         } else {
             shells.add(scriptfile.getAbsolutePath());
@@ -212,17 +295,22 @@ class ScriptResourceUtil {
      * @param workingdir     working dir
      * @param scriptfile     file
      * @param scriptargs     arguments to the shell
+     * @param scriptargsarr
      * @param envContext     Environment variable context
      * @param newDataContext context data to replace in the scriptargs
      * @param logName        name of plugin to use in logging
      * @return process
      */
-    static Process execScript(final Logger logger, final File workingdir, final File scriptfile,
-                              final String scriptargs,
-                              final Map<String, Map<String, String>> envContext,
-                              final Map<String, Map<String, String>> newDataContext,
-                              final String logName) throws IOException {
-        ExecParams execArgs = buildExecParams(scriptfile, scriptargs, envContext, newDataContext);
+    static Process execScript(
+            final Logger logger, final File workingdir, final File scriptfile,
+            final String scriptargs,
+            final String[] scriptargsarr,
+            final Map<String, Map<String, String>> envContext,
+            final Map<String, Map<String, String>> newDataContext,
+            final String logName
+    ) throws IOException
+    {
+        ExecParams execArgs = buildExecParams(scriptfile, scriptargs, scriptargsarr, envContext, newDataContext);
         String[] args = execArgs.getArgs();
         String[] envarr = execArgs.getEnvarr();
         final Runtime runtime = Runtime.getRuntime();
@@ -233,9 +321,17 @@ class ScriptResourceUtil {
     static ExecParams buildExecParams(final File scriptfile, final String scriptargs,
                                       final Map<String, Map<String, String>> envContext,
                                       final Map<String, Map<String, String>> newDataContext) {
+        return buildExecParams(scriptfile, scriptargs, null, envContext, newDataContext);
+    }
+
+    static ExecParams buildExecParams(final File scriptfile, final String scriptargs, final String[] scriptargsarr,
+                                      final Map<String, Map<String, String>> envContext,
+                                      final Map<String, Map<String, String>> newDataContext) {
         final ArrayList<String> list = new ArrayList<String>();
         list.add(scriptfile.getAbsolutePath());
-        if (null != scriptargs && !"".equals(scriptargs)) {
+        if (null != scriptargsarr && scriptargsarr.length > 0) {
+            list.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargsarr, newDataContext)));
+        }else if (null != scriptargs && !"".equals(scriptargs)) {
             list.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargs.split(" "), newDataContext)));
         }
         final String[] args = list.toArray(new String[list.size()]);

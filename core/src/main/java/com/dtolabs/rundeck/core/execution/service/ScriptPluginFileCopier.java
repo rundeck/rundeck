@@ -69,7 +69,7 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
     }
 
     static void validateScriptPlugin(final ScriptPluginProvider plugin) throws PluginException {
-        if (null == plugin.getScriptArgs()) {
+        if (null == plugin.getScriptArgs() && null==plugin.getScriptArgsArray()) {
             throw new PluginException(
                 "no script-args defined for provider: " + plugin);
         }

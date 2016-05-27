@@ -69,11 +69,9 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
                                           final INodeEntry entry)  {
         final ScriptPluginProvider provider = getProvider();
         final String args = provider.getScriptArgs();
-        final String[] argsarr;
+        String[] argsarr = provider.getScriptArgsArray();
         if (null != args) {
             argsarr = args.split(" ");
-        } else {
-            argsarr = null;
         }
 
         return createFileGeneratedScript(
