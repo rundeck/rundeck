@@ -25,9 +25,11 @@
 package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecArgList;
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.utils.ScriptExecHelper;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
@@ -35,7 +37,6 @@ import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -58,35 +59,62 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
 
     /**
      * Runs the script configured for the script plugin and channels the output to two streams.
+     *
      * @param executionContext context
-     * @param outputStream output stream
-     * @param errorStream error stream
-     * @param framework fwlk
-     * @param configuration configuration
+     * @param outputStream     output stream
+     * @param errorStream      error stream
+     * @param framework        fwlk
+     * @param configuration    configuration
+     * @param node             node or null if not a node oriented plugin
+     *
      * @return exit code
+     *
      * @throws IOException          if any IO exception occurs
      * @throws InterruptedException if interrupted while waiting for the command to finish
      */
-    protected int runPluginScript(final PluginStepContext executionContext,
-                                  final PrintStream outputStream,
-                                  final PrintStream errorStream,
-                                  final Framework framework, final Map<String, Object> configuration)
-        throws IOException, InterruptedException {
-        final Map<String, Map<String, String>> localDataContext = createStepItemDataContext(
-            framework,
-            executionContext.getFrameworkProject(),
-            executionContext.getDataContext(),
-            configuration);
-        final String[] finalargs = createScriptArgs(localDataContext);
+    protected int runPluginScript(
+            final PluginStepContext executionContext,
+            final PrintStream outputStream,
+            final PrintStream errorStream,
+            final Framework framework,
+            final Map<String, Object> configuration,
+            final INodeEntry node
+    )
+            throws IOException, InterruptedException, ConfigurationException
+    {
+        Description pluginDesc = getDescription();
+        final Map<String, Map<String, String>> localDataContext = createScriptDataContext(
+                framework,
+                executionContext.getFrameworkProject(),
+                executionContext.getDataContext()
+        );
+        Map<String, Object> instanceData = new HashMap<>(configuration);
+        if (null != node) {
+            instanceData.putAll(loadInstanceDataFromNodeAttributes(node, getDescription()));
+        }
+
+        Map<String, String> data = toStringStringMap(instanceData);
+        loadContentConversionPropertyValues(
+                data,
+                executionContext.getExecutionContext(),
+                pluginDesc.getProperties()
+        );
+
+        final Map<String, Map<String, String>> finalDataContext = DataContextUtils.addContext(
+                "config",
+                data,
+                localDataContext
+        );
+        final String[] finalargs = createScriptArgs(finalDataContext);
 
         executionContext.getLogger().log(3, "[" + getProvider().getName() + "] executing: " + Arrays.asList(
-            finalargs));
+                finalargs));
 
         Map<String, String> envMap = new HashMap<>();
-        if(isMergeEnvVars()){
+        if (isMergeEnvVars()) {
             envMap.putAll(getScriptExecHelper().loadLocalEnvironment());
         }
-        envMap.putAll(DataContextUtils.generateEnvVarsFromContext(localDataContext));
+        envMap.putAll(DataContextUtils.generateEnvVarsFromContext(finalDataContext));
         return getScriptExecHelper().runLocalCommand(
                 finalargs,
                 envMap,

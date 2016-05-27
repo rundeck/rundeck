@@ -75,12 +75,14 @@ class ScriptPluginStepPlugin extends BaseScriptPlugin implements StepPlugin {
         // execution context
         int result = -1;
         try {
-            result = runPluginScript(executionContext, System.out, System.err, getFramework(), config);
+            result = runPluginScript(executionContext, System.out, System.err, getFramework(), config, null);
         } catch (IOException e) {
             throw new StepException(e.getMessage(), StepFailureReason.IOFailure);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new StepException(e.getMessage(), StepFailureReason.Interrupted);
+        } catch (ConfigurationException e) {
+            throw new StepException(e.getMessage(), StepFailureReason.ConfigurationFailure);
         }
         executionContext.getLogger().log(3, "[" + pluginname + "]: result code: " + result);
         if (result != 0) {
