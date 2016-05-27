@@ -2844,7 +2844,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         log.debug("ScheduledExecutionController: upload " + params)
-        def fileformat = params.format ?: 'xml'
+        def fileformat = params.format ?:params.fileformat ?: 'xml'
         def parseresult
         if(request.api_version >= ApiRequestFilters.V14 && request.format=='xml'){
             //xml input
@@ -2891,7 +2891,6 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
         def changeinfo = [user: session.user,method:'apiJobsImport']
-        def Framework framework = frameworkService.getRundeckFramework()
         //nb: loadJobs will get correct project auth context
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
@@ -2914,13 +2913,11 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         withFormat{
             xml{
-
                 apiService.renderSuccessXmlWrap(request,response){
                     renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
                 }
             }
             json{
-
                 apiService.renderSuccessJson(response){
                     renderJobsImportApiJson(jobs, jobsi, errjobs, skipjobs, delegate)
                 }
