@@ -144,12 +144,11 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
         }
 
         public void log(int i, String s) {
-            System.err.println(i + ": " + s);
+
         }
 
         @Override
         public void event(String eventType, String message, Map eventMeta) {
-            System.err.println(eventType + ": " + message);
         }
 
         public FailedNodesListener getFailedNodesListener() {
@@ -235,7 +234,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             if (shouldThrowException) {
                 throw new NodeStepException("testInterpreter test exception",null,iNodeEntry.getNodename());
             }
-            System.out.println("return index: (" + index + ") in size: " + resultList.size());
+//            System.out.println("return index: (" + index + ") in size: " + resultList.size());
             return resultList.get(index++);
         }
     }
@@ -276,7 +275,6 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
     }
 
     public void testExecuteWorkflow() throws Exception {
-        {
             final IRundeckProject frameworkProject = testFramework.getFrameworkProjectMgr().getFrameworkProject(
                 TEST_PROJECT);
             final INodeSet nodes = frameworkProject.getNodeSet();
@@ -285,7 +283,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
 
         }
 
-        {
+    public void testExecuteWorkflow_empty() throws Exception {
             //test empty workflow
             final NodeSet nodeset = new NodeSet();
             final WorkflowImpl workflow = new WorkflowImpl(new ArrayList<StepExecutionItem>(), 1, false,
@@ -323,7 +321,8 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             assertTrue(result.isSuccess());
             assertEquals(0, interpreterMock.executionItemList.size());
         }
-        {
+
+    public void testExecuteWorkflow_undefined_item() throws Exception {
             //test undefined workflow item
             final NodeSet nodeset = new NodeSet();
             final ArrayList<StepExecutionItem> commands = new ArrayList<StepExecutionItem>();
@@ -370,7 +369,8 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                          result.getException().getMessage());
         }
 
-        {
+
+    public void testExecuteWorkflow_scriptExec() throws Exception {
             //test script exec item
             final NodesSelector nodeset = SelectorUtils.singleNode(testFramework.getFrameworkNodeName());
             final ArrayList<StepExecutionItem> commands = new ArrayList<StepExecutionItem>();
@@ -440,7 +440,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             assertEquals("expected " + nodeset + ", but was " + executionContext.getNodeSelector(), nodeset,
                 executionContext.getNodeSelector());
         }
-        {
+    public void testExecuteWorkflow_commandexec() throws Exception {
             //test command exec item
             final NodesSelector nodeset = SelectorUtils.singleNode(testFramework.getFrameworkNodeName());
             final ArrayList<StepExecutionItem> commands = new ArrayList<StepExecutionItem>();
@@ -510,7 +510,6 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             assertEquals(0, executionContext.getLoglevel());
             assertEquals("user1", executionContext.getUser());
             assertEquals(nodeset, executionContext.getNodeSelector());
-        }
     }
     public void testExecuteWorkflowThreeItems() throws Exception{
         {
@@ -1073,7 +1072,6 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             assertEquals(1, result.getResultSet().size());
             assertNotNull(result.getResultSet());
             final List<StepExecutionResult> test1 = result.getResultSet();
-            System.err.println("results: "+test1);
             assertEquals(1, test1.size());
             final int i =0;
             final StepExecutionResult interpreterResult = test1.get(i);
@@ -1970,6 +1968,8 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
         Mockito.doReturn(printableContext).when(strategy).createPrintableDataContext(Mockito.same(dataContext));
         
         WorkflowExecutionItem item = Mockito.mock(WorkflowExecutionItem.class);
+        IWorkflow workflow = Mockito.mock(IWorkflow.class);
+        Mockito.doReturn(workflow).when(item).getWorkflow();
         strategy.executeWorkflowImpl(context, item);
         
         ArgumentCaptor<String> logLineCaptor = ArgumentCaptor.forClass(String.class);
