@@ -25,7 +25,6 @@
 package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
@@ -65,8 +64,6 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
      * @param errorStream      error stream
      * @param framework        fwlk
      * @param configuration    configuration
-     * @param node             node or null if not a node oriented plugin
-     *
      * @return exit code
      *
      * @throws IOException          if any IO exception occurs
@@ -77,8 +74,7 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
             final PrintStream outputStream,
             final PrintStream errorStream,
             final Framework framework,
-            final Map<String, Object> configuration,
-            final INodeEntry node
+            final Map<String, Object> configuration
     )
             throws IOException, InterruptedException, ConfigurationException
     {
@@ -89,9 +85,6 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
                 executionContext.getDataContext()
         );
         Map<String, Object> instanceData = new HashMap<>(configuration);
-        if (null != node) {
-            instanceData.putAll(loadInstanceDataFromNodeAttributes(node, getDescription()));
-        }
 
         Map<String, String> data = toStringStringMap(instanceData);
         loadContentConversionPropertyValues(

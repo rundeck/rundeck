@@ -101,7 +101,7 @@ class BaseScriptPluginSpec extends Specification {
         }
 
         when:
-        def result = plugin.runPluginScript(context, null, null, framework, [:], null)
+        def result = plugin.runPluginScript(context, null, null, framework, [:])
 
 
         then:
@@ -153,7 +153,7 @@ class BaseScriptPluginSpec extends Specification {
         }
 
         when:
-        def result = plugin.runPluginScript(context, null, null, framework, [:], null)
+        def result = plugin.runPluginScript(context, null, null, framework, [:])
 
 
         then:
@@ -171,74 +171,6 @@ class BaseScriptPluginSpec extends Specification {
         null   | false
     }
 
-    @Unroll
-    def "instance node attribute loaded as config data for node step"() {
-        given:
-        def node = new NodeEntryImpl('anode')
-        node.attributes = ['test-attr-val': 'myvalue']
-
-        def pluginMeta = [
-                (BaseScriptPlugin.SETTING_MERGE_ENVIRONMENT): false,
-                config                                      :
-                        [
-                                [
-                                        type            : 'String',
-                                        name            : 'c',
-                                        renderingOptions: [
-                                                (StringRenderingConstants.INSTANCE_SCOPE_NODE_ATTRIBUTE_KEY): 'test-attr-val'
-                                        ]
-                                ]
-                        ]
-        ]
-        File tempFile = File.createTempFile("test", "zip");
-        tempFile.deleteOnExit()
-        File basedir = File.createTempFile("test", "dir");
-        basedir.deleteOnExit()
-
-        ScriptPluginProvider provider = Mock(ScriptPluginProvider) {
-            getName() >> 'test1'
-            getDefaultMergeEnvVars() >> false
-            getMetadata() >> pluginMeta
-            getArchiveFile() >> tempFile
-            getScriptFile() >> tempFile
-            getContentsBasedir() >> basedir
-        }
-        String[] emptyArray = []
-
-        ScriptExecHelper helper = Mock(ScriptExecHelper) {
-            1 * createScriptArgs(_, null, _, null, false, _) >> emptyArray
-        }
-
-        TestScriptPlugin plugin = new TestScriptPlugin(provider, framework)
-
-        plugin.scriptExecHelper = helper
-        PluginStepContext context = Mock(PluginStepContext) {
-            getFrameworkProject() >> PROJECT_NAME
-            getDataContext() >> [:]
-            getLogger() >> Mock(PluginLogger)
-            getExecutionContext() >> Mock(ExecutionContext) {
-                getFramework() >> framework
-                getFrameworkProject() >> PROJECT_NAME
-            }
-        }
-
-        def config = [a: 'b']
-        when:
-        def result = plugin.runPluginScript(context, null, null, framework, config, node)
-
-
-        then:
-        plugin.description.properties.size() == 1
-        plugin.description.properties.get(0).name == 'c'
-        plugin.description.properties.get(
-                0
-        ).renderingOptions == [(StringRenderingConstants.INSTANCE_SCOPE_NODE_ATTRIBUTE_KEY): 'test-attr-val']
-        1 * plugin.scriptExecHelper.runLocalCommand(_, {
-            it.RD_CONFIG_A == 'b' && it.RD_CONFIG_C == 'myvalue'
-        }, _, null, null
-        ) >> 0
-
-    }
 
     @Unroll
     def "key storage value loaded as config data for node step"() {
@@ -297,7 +229,7 @@ class BaseScriptPluginSpec extends Specification {
         def config = [a: 'b', c: 'keys/test']
 
         when:
-        def result = plugin.runPluginScript(context, null, null, framework, config, node)
+        def result = plugin.runPluginScript(context, null, null, framework, config)
 
 
         then:
@@ -372,7 +304,7 @@ class BaseScriptPluginSpec extends Specification {
         def config = [a: 'b', c: 'keys/test']
 
         when:
-        def result = plugin.runPluginScript(context, null, null, framework, config, node)
+        def result = plugin.runPluginScript(context, null, null, framework, config)
 
         then:
         ConfigurationException e = thrown()
@@ -442,7 +374,7 @@ class BaseScriptPluginSpec extends Specification {
         def config = [a: 'b', c: 'keys/test']
 
         when:
-        def result = plugin.runPluginScript(context, null, null, framework, config, node)
+        def result = plugin.runPluginScript(context, null, null, framework, config)
 
         then:
         1 * plugin.scriptExecHelper.runLocalCommand(_, {

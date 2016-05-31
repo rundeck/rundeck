@@ -26,16 +26,21 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.plugins.step.GeneratedScript;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 
 
@@ -66,17 +71,34 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
     @Override
     public GeneratedScript generateScript(final PluginStepContext context,
                                           final Map<String, Object> configuration,
-                                          final INodeEntry entry)  {
+                                          final INodeEntry node
+    ) throws NodeStepException
+    {
         final ScriptPluginProvider provider = getProvider();
-        final String args = provider.getScriptArgs();
-        String[] argsarr = provider.getScriptArgsArray();
-        if (null != args) {
-            argsarr = args.split(" ");
+        Description description = getDescription();
+
+        Map<String, Object> instanceData = new HashMap<>(configuration);
+        Map<String, String> data = toStringStringMap(instanceData);
+        try {
+            loadContentConversionPropertyValues(
+                    data,
+                    context.getExecutionContext(),
+                    description.getProperties()
+            );
+        } catch (ConfigurationException e) {
+            throw new NodeStepException(e.getMessage(), StepFailureReason.ConfigurationFailure, node.getNodename());
         }
+
+        final Map<String, Map<String, String>> finalDataContext = DataContextUtils.addContext(
+                "config",
+                data,
+                context.getDataContext()
+        );
+        final String[] finalargs = createScriptArgs(finalDataContext);
 
         return createFileGeneratedScript(
             provider.getScriptFile(),
-            argsarr,
+            finalargs,
             provider.getScriptInterpreter(),
             provider.getInterpreterArgsQuoted()
         );

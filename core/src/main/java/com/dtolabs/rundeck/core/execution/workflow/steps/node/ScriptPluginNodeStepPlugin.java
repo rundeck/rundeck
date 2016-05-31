@@ -86,8 +86,7 @@ class ScriptPluginNodeStepPlugin extends BaseScriptPlugin implements NodeStepPlu
                     System.out,
                     System.err,
                     getFramework(),
-                    configuration,
-                    node
+                    configuration
             );
         } catch (IOException e) {
             throw new NodeStepException(e.getMessage(),

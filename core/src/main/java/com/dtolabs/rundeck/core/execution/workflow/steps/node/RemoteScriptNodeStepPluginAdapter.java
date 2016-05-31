@@ -30,6 +30,8 @@ import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.plugins.AbstractDescribableScriptPlugin;
+import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver;
@@ -115,7 +117,7 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
 
         //get all plugin config properties, and add to the data context used when executing the remote script
         final Map<String, Object> allconfig = PluginAdapterUtility.mapDescribedProperties(resolver, description);
-        final Map<String, String> stringconfig = new HashMap<String, String>();
+        final Map<String, String> stringconfig = new HashMap<>();
         for (final Map.Entry<String, Object> objectEntry : allconfig.entrySet()) {
             stringconfig.put(objectEntry.getKey(), objectEntry.getValue().toString());
         }
