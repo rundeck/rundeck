@@ -59,6 +59,7 @@ public class TestScriptPluginFileCopier {
         private String name;
         private String service;
         private String scriptArgs;
+        private String[] scriptArgsArray;
         private String scriptInterpreter;
         private File archiveFile;
         private File contentsBasedir;
@@ -84,6 +85,11 @@ public class TestScriptPluginFileCopier {
 
         @Override public String getScriptArgs() {
             return scriptArgs;
+        }
+
+        @Override
+        public String[] getScriptArgsArray() {
+            return scriptArgsArray;
         }
 
         public void setScriptArgs(String scriptArgs) {

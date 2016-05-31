@@ -51,6 +51,15 @@ public class ProviderDef {
         }
         return null;
     }
+    private String[] getStringArray(final String key) {
+        final Object o = pluginData.get(key);
+        if(o instanceof Collection){
+            ArrayList<String> strings = new ArrayList<>((Collection) o);
+            return strings.toArray(new String[strings.size()]);
+        }
+        return null;
+    }
+
 
     public String getName() {
         return getString(META_NAME);
@@ -68,6 +77,10 @@ public class ProviderDef {
     public String getScriptArgs() {
         return getString(META_SCRIPT_ARGS);
     }
+    public String[] getScriptArgsArray() {
+        return getStringArray(META_SCRIPT_ARGS);
+    }
+
     public String getScriptInterpreter() {
         return getString(META_SCRIPT_INTERPRETER);
     }

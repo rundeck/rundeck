@@ -81,7 +81,13 @@ class ScriptPluginNodeStepPlugin extends BaseScriptPlugin implements NodeStepPlu
         // execution context
         int result = -1;
         try {
-            result = runPluginScript(executionContext, System.out, System.err, getFramework(), configuration);
+            result = runPluginScript(
+                    executionContext,
+                    System.out,
+                    System.err,
+                    getFramework(),
+                    configuration
+            );
         } catch (IOException e) {
             throw new NodeStepException(e.getMessage(),
                                         StepFailureReason.IOFailure,
@@ -91,6 +97,8 @@ class ScriptPluginNodeStepPlugin extends BaseScriptPlugin implements NodeStepPlu
             throw new NodeStepException(e.getMessage(),
                                         StepFailureReason.Interrupted,
                                         node.getNodename());
+        } catch (ConfigurationException e) {
+            throw new NodeStepException(e.getMessage(), StepFailureReason.ConfigurationFailure, node.getNodename());
         }
         executionContext.getLogger().log(3, "[" + pluginname + "]: result code: " + result);
         if (result != 0) {

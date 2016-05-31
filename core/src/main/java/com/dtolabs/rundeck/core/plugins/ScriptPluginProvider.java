@@ -60,6 +60,11 @@ public interface ScriptPluginProvider {
     public String getScriptArgs();
 
     /**
+     * @return script args to pass to the file
+     */
+    public String[] getScriptArgsArray();
+
+    /**
      * @return script file to execute
      */
     public File getScriptFile();

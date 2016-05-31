@@ -64,6 +64,9 @@ class ScriptPluginProviderImpl implements ScriptPluginProvider {
     public String getScriptArgs() {
         return plugindef.getScriptArgs();
     }
+    public String[] getScriptArgsArray() {
+        return plugindef.getScriptArgsArray();
+    }
 
     public File getScriptFile() {
         return scriptFile;

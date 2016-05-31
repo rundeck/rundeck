@@ -371,7 +371,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
      * @param context          execution context
      * @param pluginProperties definition of plugin properties
      */
-    private void loadContentConversionPropertyValues(
+    protected void loadContentConversionPropertyValues(
             final Map<String, String> data,
             final ExecutionContext context,
             final List<Property> pluginProperties
@@ -507,7 +507,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
         );
     }
 
-    private static Map<String, String> toStringStringMap(Map input) {
+    protected static Map<String, String> toStringStringMap(Map input) {
         Map<String, String> map = new HashMap<String, String>();
         for (Object o : input.keySet()) {
             map.put(o.toString(), input.get(o) != null ? input.get(o).toString() : "");
