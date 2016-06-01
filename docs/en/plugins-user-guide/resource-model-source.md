@@ -129,7 +129,7 @@ pairs, with both a parser and generator for the same format name.
 
 ### Resource Format Plugins
 
-Rundeck includes two built-in plugins in the core installation:
+Rundeck includes three built-in plugins in the core installation:
 
 `resourcexml`
 
@@ -137,12 +137,12 @@ Rundeck includes two built-in plugins in the core installation:
 
     Supported MIME types:
 
-    * Generator: "text/xml"
-    * Parser: "*/xml"
+    * Generator: `text/xml`
+    * Parser: `*/xml`
 
     Supported File extensions:
 
-    * ".xml"
+    * `.xml`
 
 `resourceyaml`
 
@@ -150,12 +150,12 @@ Rundeck includes two built-in plugins in the core installation:
 
     Supported MIME types:
 
-    * Generator: "text/yaml", "text/x-yaml", "application/yaml", "application/x-yaml"
-    * Parser: "\*/yaml", "\*/x-yaml"
+    * Generator: `text/yaml`, `text/x-yaml`, `application/yaml`, `application/x-yaml`
+    * Parser: `*/yaml`, `*/x-yaml`
 
     Supported File extensions:
 
-    * ".yml", ".yaml"
+    * `.yml`, `.yaml`
 
 `resourcejson`
 
@@ -163,9 +163,9 @@ Rundeck includes two built-in plugins in the core installation:
 
     Supported MIME types:
 
-    * Generator: "application/json", "text/json"
-    * Parser: "application/json", "text/json"
+    * Generator: `application/json`, `text/json`
+    * Parser: `application/json`, `text/json`
 
     Supported File extensions:
 
-    * ".json"
+    * `.json`
