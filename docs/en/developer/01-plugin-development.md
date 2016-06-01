@@ -349,7 +349,8 @@ Required provider entries:
 
 For `ResourceModelSource` service, this additional entry is required:
 
-* `resource-format` - Must be the name of one of the supported [Resource Model Document Formats].
+* `resource-format` - Must be the name of one of the supported 
+[Resource Model Document Formats](../plugins-user-guide/resource-model-source-plugins.html#resource-model-document-formats).
 
 Optional entries:
 
@@ -362,6 +363,12 @@ Optional entries:
      `${interpreter} "${file} ${arg1} ${arg2}..."`. If false,
     the execution will be done by passing the file and args as separate arguments:
      `${interpreter} ${file} ${arg1} ${arg2}...`
+
+* `use-original-extension`: (`true/false`, default `true`), whether to force the 
+  remotely copied script to have the same file extension as the original specified by `script-file`.
+  (Available for `RemoteScriptNodeStep` only.)
+* `script-file-extension`: A file extension to use for the remotely copied script.
+  (Available for `RemoteScriptNodeStep` only.)
 * `mergeEnvironment` - boolean, if true (default for `rundeckPluginVersion: 1.1+`), when the script
   is executed the Environment variables from the Rundeck server
   will be merged with the context environment variables provided to the script.

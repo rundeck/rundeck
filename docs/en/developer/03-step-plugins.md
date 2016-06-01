@@ -209,7 +209,13 @@ Use the service name for the plugin type:
 * `WorkflowNodeStep`
 * `RemoteScriptNodeStep`
 
-For configuration properties, see the [Resource Model Source Plugin - Plugin Properties](resource-model-source-plugin.html#plugin-properties-1).
+For configuration properties, see the [Resource Model Source Plugin - Plugin Properties](model-format-parser-and-generator-plugin.html).
+
+Two additional [provider metadata properties](plugin-development.html#provider-metadata) are available for `RemoteScriptNodeStep` plugins:
+
+* `use-original-extension` - (`true/false`, default `true`), whether to force the remotely 
+  copied script to have the same file extension as the original specified by `script-file`.
+* `script-file-extension` - A file extension to use for the remotely copied script.
 
 To define [property scopes](plugin-annotations.html#property-scopes), 
 add a `scope` entry in the map for a configuration property:

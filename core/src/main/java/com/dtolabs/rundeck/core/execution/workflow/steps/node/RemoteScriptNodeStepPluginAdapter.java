@@ -43,6 +43,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
 import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
+import com.dtolabs.rundeck.plugins.step.FileExtensionGeneratedScript;
 import com.dtolabs.rundeck.plugins.step.GeneratedScript;
 import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
@@ -134,7 +135,7 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
         );
     }
 
-    static NodeStepResult executeRemoteScript(
+    public static NodeStepResult executeRemoteScript(
             final StepExecutionContext context,
             final INodeEntry node,
             final GeneratedScript script,
@@ -162,7 +163,7 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
                     context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
                     context.getFramework(),
                     providerName+"-script",
-                    null,
+                    getFileExtension(script),
                     ident
             );
             final String filepath; //result file path
@@ -186,7 +187,7 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
                     context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
                     context.getFramework(),
                     scriptFile.getName(),
-                    null,
+                    fileScript.getFileExtension(),
                     ident
             );
             try {
@@ -208,6 +209,13 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
                                           "Generated script must have a command or script defined",
                                           node);
         }
+    }
+
+    private static String getFileExtension(final GeneratedScript script) {
+        if(script instanceof FileExtensionGeneratedScript){
+            return ((FileExtensionGeneratedScript) script).getFileExtension();
+        }
+        return null;
     }
 
     private Map<String, Object> getStepConfiguration(StepExecutionItem item) {

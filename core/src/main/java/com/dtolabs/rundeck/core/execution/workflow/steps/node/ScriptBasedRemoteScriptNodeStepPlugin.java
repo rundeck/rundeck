@@ -27,7 +27,6 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
-import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
@@ -51,6 +50,10 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements RemoteScriptNodeStepPlugin {
+
+    public static final String SCRIPT_FILE_EXTENSION_META_KEY = "script-file-extension";
+    public static final String SCRIPT_FILE_USE_EXTENSION_META_KEY = "use-original-file-extension";
+
     ScriptBasedRemoteScriptNodeStepPlugin(final ScriptPluginProvider provider, final Framework framework) {
         super(provider, framework);
     }
@@ -69,9 +72,10 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
     }
 
     @Override
-    public GeneratedScript generateScript(final PluginStepContext context,
-                                          final Map<String, Object> configuration,
-                                          final INodeEntry node
+    public GeneratedScript generateScript(
+            final PluginStepContext context,
+            final Map<String, Object> configuration,
+            final INodeEntry node
     ) throws NodeStepException
     {
         final ScriptPluginProvider provider = getProvider();
@@ -96,19 +100,61 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
         );
         final String[] finalargs = createScriptArgs(finalDataContext);
 
+        boolean useOriginalFileExtension = true;
+        if (provider.getMetadata().containsKey(SCRIPT_FILE_USE_EXTENSION_META_KEY)) {
+            useOriginalFileExtension = getMetaBoolean(
+                    provider,
+                    SCRIPT_FILE_USE_EXTENSION_META_KEY,
+                    useOriginalFileExtension
+            );
+        }
+        String fileExtension = null;
+        if (provider.getMetadata().containsKey(SCRIPT_FILE_EXTENSION_META_KEY)) {
+            Object o = provider.getMetadata().get(SCRIPT_FILE_EXTENSION_META_KEY);
+            if (o instanceof String) {
+                fileExtension = (String) o;
+            }
+        }
+        if (null == fileExtension && useOriginalFileExtension) {
+            fileExtension = getFileExtension(provider.getScriptFile().getName());
+        }
+
         return createFileGeneratedScript(
-            provider.getScriptFile(),
-            finalargs,
-            provider.getScriptInterpreter(),
-            provider.getInterpreterArgsQuoted()
+                provider.getScriptFile(),
+                finalargs,
+                fileExtension,
+                provider.getScriptInterpreter(),
+                provider.getInterpreterArgsQuoted()
         );
     }
 
+    static String getFileExtension(final String name) {
+        int i = name.lastIndexOf(".");
+        if (i > 0 && i < name.length() - 1) {
+            return name.substring(i + 1);
+        }
+        return null;
+    }
 
-    static GeneratedScript createFileGeneratedScript(final File file,
-                                                     final String[] args,
-                                                     final String scriptInterpreter,
-                                                     final boolean interpreterArgsQuoted) {
+    private boolean getMetaBoolean(final ScriptPluginProvider provider, final String key, final boolean defVal) {
+        Object o = provider.getMetadata().get(key);
+        if (o instanceof Boolean) {
+            return (Boolean) o;
+        } else if(o!=null) {
+            return Boolean.parseBoolean(o.toString());
+        }
+        return defVal;
+    }
+
+
+    static GeneratedScript createFileGeneratedScript(
+            final File file,
+            final String[] args,
+            final String fileExtension,
+            final String scriptInterpreter,
+            final boolean interpreterArgsQuoted
+    )
+    {
 
         return new FileBasedGeneratedScript() {
             @Override
@@ -129,6 +175,11 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
             @Override
             public String[] getCommand() {
                 return null;
+            }
+
+            @Override
+            public String getFileExtension() {
+                return fileExtension;
             }
 
             @Override
