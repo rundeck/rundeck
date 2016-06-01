@@ -31,14 +31,22 @@ package com.dtolabs.rundeck.plugins.step;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class GeneratedScriptBuilder implements GeneratedScript {
+public class GeneratedScriptBuilder implements FileExtensionGeneratedScript {
     private String script;
     private String[] args;
     private String[] command;
+    private String fileExtension;
+
 
     private GeneratedScriptBuilder(final String script, final String[] args) {
         this.script = script;
         this.args = args;
+    }
+
+    private GeneratedScriptBuilder(final String script, final String[] args, final String fileExtension) {
+        this.script = script;
+        this.args = args;
+        this.fileExtension = fileExtension;
     }
 
     private GeneratedScriptBuilder(final String[] command) {
@@ -57,24 +65,44 @@ public class GeneratedScriptBuilder implements GeneratedScript {
         return command;
     }
 
+    public String getFileExtension() {
+        return fileExtension;
+    }
+
     /**
      * Create a script
      *
      * @param script the script text
      * @param args   the arguments for the script
-     *               @return the generated script
+     *
+     * @return the generated script
      */
     public static GeneratedScript script(final String script, final String[] args) {
         return new GeneratedScriptBuilder(script, args);
     }
 
     /**
-     * Create a command
+     * Create a script
+     *
+     * @param script        the script text
+     * @param args          the arguments for the script
+     * @param fileExtension file extension
      *
      * @return the generated script
+     */
+    public static GeneratedScript script(final String script, final String[] args, final String fileExtension) {
+        return new GeneratedScriptBuilder(script, args, fileExtension);
+    }
+
+    /**
+     * Create a command
+     *
      * @param command the command and arguments
+     *
+     * @return the generated script
      */
     public static GeneratedScript command(final String... command) {
         return new GeneratedScriptBuilder(command);
     }
+
 }
