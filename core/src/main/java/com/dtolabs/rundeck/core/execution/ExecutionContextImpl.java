@@ -161,6 +161,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.jobService = original.getJobService();
                 ctx.nodeService = original.getNodeService();
                 ctx.orchestrator = original.getOrchestrator();
+                ctx.outputContext = original.getOutputContext();
                 if(original instanceof NodeExecutionContext){
                     NodeExecutionContext original1 = (NodeExecutionContext) original;
                     ctx.nodeDataContext.putAll(original1.getNodeDataContext());
@@ -189,7 +190,6 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.stepNumber = original.getStepNumber();
                 ctx.stepContext = original.getStepContext();
                 ctx.flowControl = original.getFlowControl();
-                ctx.outputContext = original.getOutputContext();
             }
         }
 

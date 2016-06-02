@@ -825,7 +825,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
 
         final FlowController stepController = new FlowController();
         //TODO: output data should be contextualized to the step
-        final DataOutputContextualized outputContext = new DataOutputContextualized("step." + c + ".");
+        final DataOutputContextualized outputContext = new DataOutputContextualized("/step:" + c );
         StepExecutionContext controllableContext = withOverride(stepContext, stepController, outputContext);
 
         Map<String, NodeStepResult> nodeFailures;

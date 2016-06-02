@@ -310,7 +310,9 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         {
             @Override
             public void addData(final DataContext item) {
-                sharedContext.merge(item);
+                if(item!=null) {
+                    sharedContext.merge(item);
+                }
             }
 
             @Override
@@ -441,8 +443,10 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 final Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<>();
                 List<StepExecutionResult> resultList = new ArrayList<>();
                 BaseDataContext newDataContext = new BaseDataContext();
-                newDataContext.merge(new BaseDataContext(executionContext.getDataContext()));
+                newDataContext.merge(DataContextUtils.context(executionContext.getDataContext()));
                 newDataContext.merge(inputData);
+
+                executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Input data context: " + inputData);
                 StepExecutionContext newContext = ExecutionContextImpl.builder(executionContext)
                                                                       .dataContext(
                                                                               newDataContext

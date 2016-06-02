@@ -145,6 +145,9 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
                     3,
                     "[" + pluginname + "]: result code: " + result + ", success: " + (0 == result)
             );
+            if(null!=executionContext.getOutputContext()){
+                executionContext.getOutputContext().addOutput("exec", "exitCode", String.valueOf(result));
+            }
             if (0 != result) {
                 return NodeExecutorResultImpl.createFailure(
                         NodeStepFailureReason.NonZeroResultCode,

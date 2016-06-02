@@ -77,7 +77,7 @@ public class WorkflowEngine implements WorkflowSystem {
             try {
                 HashMap<String, String> changes = new HashMap<>();
                 //load all changes already in the queue
-                pollAll(changes, stateChangeQueue);
+                pollAll(changes, sharedData,stateChangeQueue);
                 if (changes.size() < 1) {
                     //no changes seen, so wait for any change
                     if (inProcess.size() < 1) {
@@ -96,7 +96,10 @@ public class WorkflowEngine implements WorkflowSystem {
                     }
                     sleeptime = sleepOrig;
                     changes.putAll(take.getNewState().getState());
-                    pollAll(changes, stateChangeQueue);
+                    if(null!=sharedData) {
+                        sharedData.addData(take.getResult());
+                    }
+                    pollAll(changes, sharedData, stateChangeQueue);
                 }
                 event(WorkflowSystemEventType.WillProcessStateChange,
                       String.format("saw state changes: %s", changes), changes
@@ -432,14 +435,19 @@ public class WorkflowEngine implements WorkflowSystem {
         return map;
     }
 
-    static private <T> void pollAll(
+    static private <DAT> void pollAll(
             final HashMap<String, String> changes,
-            final LinkedBlockingQueue<OperationSuccess<T>> stateChangeQueue
+            final SharedData<DAT> sharedData,
+            final LinkedBlockingQueue<OperationSuccess<DAT>> stateChangeQueue
     )
     {
-        OperationSuccess task = stateChangeQueue.poll();
+        OperationSuccess<DAT> task = stateChangeQueue.poll();
         while (task != null && task.getNewState() != null) {
             changes.putAll(task.getNewState().getState());
+            DAT result = task.getResult();
+            if(null!=sharedData) {
+                sharedData.addData(result);
+            }
             task = stateChangeQueue.poll();
         }
     }

@@ -27,8 +27,10 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase;
+import com.dtolabs.rundeck.core.execution.workflow.DataOutputContextualized;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
@@ -112,12 +114,20 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                 final NodeStepResult result;
 
                 //execute the step or dispatchable
-                if (null != item) {
-                    result = framework.getExecutionService().executeNodeStep(context, item, node);
-                } else {
-                    result = toDispatch.dispatch(context, node);
+                final DataOutputContextualized outputContext = new DataOutputContextualized("/node:" +
+                                                                                            node.getNodename());
 
+                ExecutionContextImpl nodeDataContext = new ExecutionContextImpl.Builder(context).outputContext(
+                        outputContext).build();
+                if (null != item) {
+                    result = framework.getExecutionService().executeNodeStep(nodeDataContext, item, node);
+                    if (context.getOutputContext() != null) {
+                        outputContext.copyTo(context.getOutputContext());
+                    }
+                } else {
+                    result = toDispatch.dispatch(nodeDataContext, node);
                 }
+
                 resultMap.put(node.getNodename(), result);
                 if (!result.isSuccess()) {
                     success = false;

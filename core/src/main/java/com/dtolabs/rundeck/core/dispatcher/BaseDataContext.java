@@ -27,7 +27,7 @@ public class BaseDataContext implements MutableDataContext {
         }
     }
     public void merge(DataContext context){
-        DataContextUtils.merge(data, context.getData());
+        data=DataContextUtils.merge(data, context.getData());
     }
 
     @Override
@@ -93,5 +93,12 @@ public class BaseDataContext implements MutableDataContext {
     @Override
     public Map<String, Map<String, String>> getData() {
         return data;
+    }
+
+    @Override
+    public String toString() {
+        return "BaseDataContext{" +
+               "data=" + data +
+               '}';
     }
 }

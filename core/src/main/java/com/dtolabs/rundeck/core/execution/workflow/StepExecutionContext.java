@@ -49,8 +49,4 @@ public interface StepExecutionContext extends ExecutionContext {
      */
     public FlowControl getFlowControl();
 
-    /**
-     * @return context for emitting new data
-     */
-    public OutputContext getOutputContext();
 }

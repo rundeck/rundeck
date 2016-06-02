@@ -272,8 +272,15 @@ public class DataContextUtils {
      *
      * @return A new context
      */
-    public static DataContext context() {
+    public static MutableDataContext context() {
         return new BaseDataContext();
+    }
+    /**
+     *
+     * @return A new context
+     */
+    public static MutableDataContext context(Map<String,Map<String,String>> data) {
+        return new BaseDataContext(data);
     }
 
     /**
