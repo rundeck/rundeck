@@ -28,6 +28,12 @@ DAEMON_ARGS="${RDECK_JVM} -cp ${BOOTSTRAP_CP} com.dtolabs.rundeck.RunServer /var
 rundeckd="$DAEMON $DAEMON_ARGS"
 
 start() {
+	status_of_proc -p $PIDFILE $DAEMON $prog >/dev/null
+        RETVAL=$?
+        if [ $RETVAL -eq 0 ]; then
+                echo Already started.
+                return $RETVAL
+        fi
 	echo -n $"Starting $prog: "
 	cd /var/log/rundeck
 	nohup su -s /bin/bash rundeck -c "$rundeckd" &>>/var/log/rundeck/service.log &
