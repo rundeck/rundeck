@@ -20,6 +20,12 @@ servicelog=/var/log/rundeck/service.log
 . /etc/rundeck/profile
 
 start() {
+	status -p $PID_FILE $prog >/dev/null
+ 	RETVAL=$?	
+	if [ $RETVAL -eq 0 ]; then
+		echo Already started.
+		return $RETVAL
+	fi
 	echo -n $"Starting $prog: "
 	if ! touch $servicelog; then
 		echo No access to $servicelog. This usually means you need to be root
