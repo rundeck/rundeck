@@ -27,15 +27,15 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase;
 import com.dtolabs.rundeck.core.execution.workflow.DataOutputContextualized;
+import com.dtolabs.rundeck.core.execution.workflow.OutputContext;
+import com.dtolabs.rundeck.core.execution.workflow.ReadableOutputContext;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -111,19 +111,36 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                     interrupted = true;
                     break;
                 }
-                final NodeStepResult result;
+                NodeStepResult result;
 
                 //execute the step or dispatchable
-                final DataOutputContextualized outputContext = new DataOutputContextualized("/node:" +
-                                                                                            node.getNodename());
+                final ReadableOutputContext outputContext = DataContextUtils.outputContext();
 
-                ExecutionContextImpl nodeDataContext = new ExecutionContextImpl.Builder(context).outputContext(
-                        outputContext).build();
+                ExecutionContextImpl nodeDataContext =
+                        new ExecutionContextImpl.Builder(context).outputContext(outputContext).build();
                 if (null != item) {
                     result = framework.getExecutionService().executeNodeStep(nodeDataContext, item, node);
-                    if (context.getOutputContext() != null) {
-                        outputContext.copyTo(context.getOutputContext());
-                    }
+                    //add as node-specific data
+                    result = NodeStepDataResultImpl.with(result, outputContext.getDataContext());
+//                    if (context.getOutputContext() != null) {
+//
+//                        final DataOutputContextualized nodedata =
+//                                new DataOutputContextualized("/node:" + node.getNodename());
+//                        nodedata.addOutput(outputContext.getDataContext());
+//                        System.err.println("Node dispatch, copy to parent node data context: "+outputContext.getDataContext());
+//                        nodedata.copyTo(context.getOutputContext());
+//                        Map<String, Map<String, Map<String, String>>> nodeDataContext1 = nodeDataContext
+//                                .getNodeDataContext();
+//                        Map<String, Map<String, String>> oldNodeData = nodeDataContext1.get(node.getNodename());
+//                        if(null != oldNodeData){
+//                            nodeDataContext1.put(
+//                                    node.getNodename(),
+//                                    DataContextUtils.merge(oldNodeData, outputContext.getDataContext())
+//                            );
+//                        }else{
+//                            nodeDataContext1.put(node.getNodename(), outputContext.getDataContext());
+//                        }
+//                    }
                 } else {
                     result = toDispatch.dispatch(nodeDataContext, node);
                 }

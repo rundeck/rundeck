@@ -2,10 +2,7 @@ package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.dispatcher.BaseDataContext;
-import com.dtolabs.rundeck.core.dispatcher.DataContext;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
-import com.dtolabs.rundeck.core.dispatcher.MutableDataContext;
+import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
@@ -14,6 +11,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeExecutionContext;
 import com.dtolabs.rundeck.core.rules.*;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import org.apache.log4j.Logger;
@@ -304,23 +302,26 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 .listener(createListener(executionContext.getExecutionListener()))
                 .build();
 
-        final MutableDataContext sharedContext = new BaseDataContext();
-        WorkflowSystem.SharedData<DataContext> dataContextSharedData = new WorkflowSystem
-                .SharedData<DataContext>()
+        DataContext base = new BaseDataContext();
+        final MultiDataContextImpl<String, DataContext> sharedContext = MultiDataContextImpl.withBase(base);
+        WorkflowSystem.SharedData<MultiDataContext<String,DataContext>> dataContextSharedData = new WorkflowSystem
+                .SharedData<MultiDataContext<String,DataContext>>()
         {
             @Override
-            public void addData(final DataContext item) {
+            public void addData(final MultiDataContext<String,DataContext> item) {
                 if(item!=null) {
                     sharedContext.merge(item);
                 }
             }
 
             @Override
-            public DataContext produceNext() {
-                return new BaseDataContext(sharedContext);
+            public MultiDataContext<String,DataContext> produceNext() {
+                MultiDataContextImpl<String, DataContext> next = new MultiDataContextImpl<>();
+                next.merge(sharedContext);
+                return next;
             }
         };
-        Set<WorkflowSystem.OperationResult<DataContext, EngineWorkflowStepOperationSuccess,
+        Set<WorkflowSystem.OperationResult<MultiDataContext<String,DataContext>, EngineWorkflowStepOperationSuccess,
                 EngineWorkflowStepOperation>>
                 operationResults =
                 workflowEngine.processOperations(operations, dataContextSharedData);
@@ -331,7 +332,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
 
         boolean workflowSuccess = !workflowEngine.isInterrupted();
-        for (WorkflowSystem.OperationResult<DataContext, EngineWorkflowStepOperationSuccess,
+        for (WorkflowSystem.OperationResult<MultiDataContext<String,DataContext>, EngineWorkflowStepOperationSuccess,
                 EngineWorkflowStepOperation> operationResult : operationResults) {
             EngineWorkflowStepOperationSuccess success = operationResult.getSuccess();
             EngineWorkflowStepOperation operation = operationResult.getOperation();
@@ -348,6 +349,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                     controlBehavior = result.getControlBehavior();
                     statusString = result.getStatusString();
                 }
+                System.out.println("Step result data: "+result.getResultData());
             } else {
                 workflowSuccess = false;
                 StepFailureReason reason = StepFailureReason.Unknown;
@@ -429,7 +431,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         );
     }
 
-    WorkflowSystem.SimpleFunction<DataContext, BaseWorkflowExecutor.StepResultCapture> callable(
+    WorkflowSystem.SimpleFunction<MultiDataContext<String,DataContext>, BaseWorkflowExecutor.StepResultCapture> callable(
             final StepExecutionItem cmd,
             final StepExecutionContext executionContext,
             final int i,
@@ -437,21 +439,45 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             final boolean keepgoing
     )
     {
-        return new WorkflowSystem.SimpleFunction<DataContext, StepResultCapture>() {
+        return new WorkflowSystem.SimpleFunction<MultiDataContext<String,DataContext>, StepResultCapture>() {
             @Override
-            public StepResultCapture apply(final DataContext inputData) {
+            public StepResultCapture apply(final MultiDataContext<String,DataContext> inputData) {
                 final Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<>();
                 List<StepExecutionResult> resultList = new ArrayList<>();
+
                 BaseDataContext newDataContext = new BaseDataContext();
                 newDataContext.merge(DataContextUtils.context(executionContext.getDataContext()));
-                newDataContext.merge(inputData);
+                if(null!=inputData.getBase()) {
+                    newDataContext.merge(inputData.getBase());
+                }
+                //TODO: merge node results from input multidata
+
+                HashMap<String, Map<String,Map<String,String>>> newNodeData = new HashMap<>();
+
+                Map<String, DataContext> inputNodeData = inputData.getData();
+                if(executionContext instanceof NodeExecutionContext){
+                    NodeExecutionContext nctx = (NodeExecutionContext) executionContext;
+                    Map<String, Map<String, Map<String, String>>> nodeDataContext = nctx.getNodeDataContext();
+                    for (String node : nodeDataContext.keySet()) {
+                        BaseDataContext d = new BaseDataContext();
+                        d.merge(DataContextUtils.context(nodeDataContext.get(node)));
+                        DataContext dataContext = inputNodeData.get(node);
+                        if(null!=dataContext){
+                            d.merge(dataContext);
+                        }
+                        newNodeData.put(node, d);
+                    }
+                } else if (inputNodeData != null) {
+                    newNodeData.putAll(inputNodeData);
+                }
+
 
                 executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Input data context: " + inputData);
-                StepExecutionContext newContext = ExecutionContextImpl.builder(executionContext)
-                                                                      .dataContext(
-                                                                              newDataContext
-                                                                      )
-                                                                      .build();
+                StepExecutionContext newContext =
+                        ExecutionContextImpl.builder(executionContext)
+                                            .dataContext(newDataContext)
+                                            .nodeDataContext(newNodeData)
+                                            .build();
                 try {
                     return executeWorkflowStep(
                             newContext,

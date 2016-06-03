@@ -10,7 +10,7 @@ import java.util.Map;
 /**
  * Created by greg on 5/25/16.
  */
-public class DataOutput implements OutputContext,HasDataContext {
+public class DataOutput implements ReadableOutputContext {
     private MutableDataContext outputContext;
 
     public DataOutput() {

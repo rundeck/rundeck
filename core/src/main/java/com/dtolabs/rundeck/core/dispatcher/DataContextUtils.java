@@ -26,6 +26,8 @@ package com.dtolabs.rundeck.core.dispatcher;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
+import com.dtolabs.rundeck.core.execution.workflow.*;
+import com.dtolabs.rundeck.core.execution.workflow.DataOutput;
 import com.dtolabs.rundeck.core.utils.Converter;
 import org.apache.commons.collections.Predicate;
 import org.apache.tools.ant.taskdefs.ExecTask;
@@ -266,6 +268,14 @@ public class DataContextUtils {
             map.put(entry.getKey(), new HashMap<String, String>(entry.getValue()));
         }
         return map;
+    }
+
+    /**
+     *
+     * @return A new output context
+     */
+    public static ReadableOutputContext outputContext() {
+        return new DataOutput();
     }
 
     /**

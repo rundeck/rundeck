@@ -29,6 +29,8 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.SelectorUtils;
 import com.dtolabs.rundeck.core.dispatcher.BaseDataContext;
 import com.dtolabs.rundeck.core.dispatcher.DataContext;
+import com.dtolabs.rundeck.core.dispatcher.MultiDataContext;
+import com.dtolabs.rundeck.core.dispatcher.MultiDataContextImpl;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
@@ -38,6 +40,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepDataResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
@@ -836,7 +839,29 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         stepResult = executeWFItem(controllableContext, stepFailedMap, c, cmd);
         boolean stepSuccess = stepResult.isSuccess();
         nodeFailures = stepCaptureFailedNodesListener.getFailedNodes();
+        //collect node data results
+        MultiDataContext<String, DataContext> multiData ;
+        if (NodeDispatchStepExecutor.isWrappedDispatcherResult(stepResult)) {
+            //TODO:
+            //TODO: node and step specific data needs to be captured
+            //TODO: but in a way that can be reconstituted for later steps on the same node
+            HashMap<String, DataContext> map = new HashMap<>();
+            DispatcherResult dispatcherResult = NodeDispatchStepExecutor.extractDispatcherResult(stepResult);
+            Map<String, ? extends NodeStepResult> results = dispatcherResult.getResults();
+            System.out.println("Finished step, node results: " + results);
+            for (String node : results.keySet()) {
+                NodeStepResult nodeStepResult = results.get(node);
+                if(nodeStepResult instanceof HasDataContext) {
+                    DataContext dataContext = ((HasDataContext) nodeStepResult).getDataContext();
 
+                    map.put(node, dataContext);
+                }
+            }
+            multiData = new MultiDataContextImpl<>(map);
+        }else{
+            multiData = MultiDataContextImpl.withBase(outputContext.getDataContext());
+        }
+        System.err.println("Finished step, result data context: "+outputContext.getDataContext());
         if (null != executionContext.getExecutionListener() &&
             null != executionContext.getExecutionListener().getFailedNodesListener()) {
             executionContext.getExecutionListener().getFailedNodesListener().matchedNodes(
@@ -975,7 +1000,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                 stepSuccess,
                 statusString,
                 controlBehavior,
-                new BaseDataContext(outputContext.getDataContext())
+                multiData
         );
     }
 
@@ -993,14 +1018,14 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         private boolean stepSuccess;
         private String statusString;
         private ControlBehavior controlBehavior;
-        private DataContext resultData;
+        private MultiDataContext<String,DataContext> resultData;
 
         public StepResultCapture(
                 final StepExecutionResult stepResult,
                 final boolean stepSuccess,
                 final String statusString,
                 final ControlBehavior controlBehavior,
-                final DataContext resultData
+                final MultiDataContext<String,DataContext> resultData
         )
         {
             this.stepResult = stepResult;
@@ -1028,7 +1053,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             return stepResult;
         }
 
-        public DataContext getResultData() {
+        public MultiDataContext<String,DataContext> getResultData() {
             return resultData;
         }
 

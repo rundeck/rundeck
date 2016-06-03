@@ -31,7 +31,7 @@ import java.util.Map;
 
 
 /**
- * StepExecutionResult is ...
+ * StepExecutionResult is result of a step.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */

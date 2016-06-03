@@ -41,7 +41,6 @@ import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
 import com.dtolabs.rundeck.core.storage.StorageTree;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -58,6 +57,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private String user;
     private NodesSelector nodeSet;
     private INodeSet nodes;
+    private INodeEntry singleNodeContext;
     private int threadCount;
     private boolean keepgoing;
     private int loglevel;
@@ -77,12 +77,14 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private ProjectNodeService nodeService;
     private FlowControl flowControl;
     private OutputContext outputContext;
+    private Map<String, OutputContext> nodeOutputContextMap;
 
     private OrchestratorConfig orchestrator;
     private ExecutionContextImpl() {
         stepContext = new ArrayList<>();
         nodes = new NodeSetImpl();
         nodeDataContext = new HashMap<>();
+        nodeOutputContextMap = new HashMap<>();
         outputContext = new DataOutput();
     }
 
@@ -130,6 +132,15 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         return outputContext;
     }
 
+    public INodeEntry getSingleNodeContext() {
+        return singleNodeContext;
+    }
+
+    @Override
+    public Map<String, OutputContext> getNodeOutputContextMap() {
+        return nodeOutputContextMap;
+    }
+
 
     public static class Builder {
         private ExecutionContextImpl ctx;
@@ -165,6 +176,8 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 if(original instanceof NodeExecutionContext){
                     NodeExecutionContext original1 = (NodeExecutionContext) original;
                     ctx.nodeDataContext.putAll(original1.getNodeDataContext());
+                    ctx.nodeOutputContextMap.putAll(original1.getNodeOutputContextMap());
+                    ctx.singleNodeContext = original1.getSingleNodeContext();
                 }
             }
         }
@@ -234,6 +247,12 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             if(setContextData) {
                 //merge in any node-specific data context
                 nodeContextData(node);
+
+                ctx.singleNodeContext=node;
+
+                if (null == ctx.nodeOutputContextMap.get(node.getNodename())) {
+                    ctx.nodeOutputContextMap.put(node.getNodename(), ctx.outputContext);
+                }
 
                 if (null != ctx.nodeDataContext && null != ctx.nodeDataContext.get(node.getNodename())) {
                     ctx.dataContext = DataContextUtils.merge(ctx.dataContext,
@@ -357,6 +376,11 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
         public Builder nodeDataContext(final String nodeName, final Map<String,Map<String,String>> dataContext) {
             ctx.nodeDataContext.put(nodeName, dataContext);
+            return this;
+        }
+
+        public Builder nodeDataContext(Map<String, ? extends Map<String, Map<String, String>>> nodedata) {
+            ctx.nodeDataContext.putAll(nodedata);
             return this;
         }
 

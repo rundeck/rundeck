@@ -32,6 +32,7 @@ import java.util.Map;
 
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -46,12 +47,6 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandBase;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandBase;
@@ -270,6 +265,16 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
 
         public INodeEntry getNode() {
             return node;
+        }
+
+        static testResult extract(NodeStepResult result){
+            while(result instanceof ChainedNodeStepResult){
+                result=((ChainedNodeStepResult)result).getOriginal();
+            }
+            if(result instanceof testResult){
+                return (testResult)result;
+            }
+            return null;
         }
     }
 
@@ -601,9 +606,8 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 final DispatcherResult dr = NodeDispatchStepExecutor.extractDispatcherResult(interpreterResult);
                 assertEquals(1, dr.getResults().size());
                 final NodeStepResult nrs = dr.getResults().values().iterator().next();
-                assertTrue("unexpected class: " + nrs.getClass(),
-                           nrs instanceof testResult);
-                testResult val = (testResult) nrs;
+                testResult val = testResult.extract(nrs);
+                assertNotNull(val);
                 assertTrue(val.isSuccess());
                 assertEquals(i, val.flag);
             }
@@ -744,10 +748,10 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             assertNotNull(executionResult.getResults());
             assertEquals(1, executionResult.getResults().size());
             assertNotNull(executionResult.getResults().get(testnode));
-            final StatusResult testnode1 = executionResult.getResults().get(testnode);
+            final NodeStepResult testnode1 = executionResult.getResults().get(testnode);
             assertNotNull(testnode1);
-            assertTrue(testnode1 instanceof testResult);
-            testResult failResult = (testResult) testnode1;
+            testResult failResult = testResult.extract(testnode1);
+            assertNotNull(failResult);
             assertEquals(1, failResult.flag);
 
             assertNotNull(result.getResultSet());
@@ -758,9 +762,8 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 final DispatcherResult dr = NodeDispatchStepExecutor.extractDispatcherResult(interpreterResult);
                 assertEquals(1, dr.getResults().size());
                 final NodeStepResult nrs = dr.getResults().values().iterator().next();
-                assertTrue("unexpected class: " + nrs.getClass(),
-                           nrs instanceof testResult);
-                testResult val = (testResult) nrs;
+                testResult val = testResult.extract(nrs);
+                assertNotNull(val);
                 assertEquals(i, val.flag);
                 if(0==i){
                     assertTrue(val.isSuccess());
@@ -902,9 +905,8 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 final DispatcherResult dr = NodeDispatchStepExecutor.extractDispatcherResult(interpreterResult);
                 assertEquals(1, dr.getResults().size());
                 final NodeStepResult nrs = dr.getResults().values().iterator().next();
-                assertTrue("unexpected class: " + nrs.getClass(),
-                           nrs instanceof testResult);
-                testResult val = (testResult) nrs;
+                testResult val = testResult.extract(nrs);
+                assertNotNull(val);
                 assertEquals(i, val.flag);
                 if (1 == i) {
                     assertFalse(val.isSuccess());
@@ -1062,10 +1064,10 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             assertNotNull(executionResult.getResults());
             assertEquals(1, executionResult.getResults().size());
             assertNotNull(executionResult.getResults().get(testnode));
-            final StatusResult testnode1 = executionResult.getResults().get(testnode);
+            final NodeStepResult testnode1 = executionResult.getResults().get(testnode);
             assertNotNull(testnode1);
-            assertTrue(testnode1 instanceof testResult);
-            testResult failResult = (testResult) testnode1;
+            testResult failResult = testResult.extract(testnode1);
+            assertNotNull(failResult);
             assertEquals(0, failResult.flag);
 
             assertEquals(1, result.getResultSet().size());
@@ -1077,9 +1079,8 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             final DispatcherResult dr = NodeDispatchStepExecutor.extractDispatcherResult(interpreterResult);
             assertEquals(1, dr.getResults().size());
             final NodeStepResult nrs = dr.getResults().values().iterator().next();
-            assertTrue("unexpected class: " + nrs.getClass(),
-                       nrs instanceof testResult);
-            testResult val = (testResult) nrs;
+            testResult val = testResult.extract(nrs);
+            assertNotNull(val);
             assertEquals(i, val.flag);
             assertFalse(val.isSuccess());
 
@@ -1264,9 +1265,9 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 final DispatcherResult dr = NodeDispatchStepExecutor.extractDispatcherResult(interpreterResult);
                 assertEquals(1, dr.getResults().size());
                 final NodeStepResult nrs = dr.getResults().values().iterator().next();
-                assertTrue("unexpected class: " + nrs.getClass(),
-                           nrs instanceof testResult);
-                testResult val = (testResult) nrs;
+
+                testResult val = testResult.extract(nrs);
+                assertNotNull(val);
                 assertEquals(0, val.flag);
                 assertFalse(val.isSuccess());
 
@@ -1336,9 +1337,9 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 final DispatcherResult dr = NodeDispatchStepExecutor.extractDispatcherResult(interpreterResult);
                 assertEquals(1, dr.getResults().size());
                 final NodeStepResult nrs = dr.getResults().values().iterator().next();
-                assertTrue("unexpected class: " + nrs.getClass(),
-                           nrs instanceof testResult);
-                testResult val = (testResult) nrs;
+
+                testResult val = testResult.extract(nrs);
+                assertNotNull(val);
                 assertEquals(1, val.flag);
                 assertTrue(val.isSuccess());
 
@@ -1493,9 +1494,9 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 final DispatcherResult dr = NodeDispatchStepExecutor.extractDispatcherResult(interpreterResult);
                 assertEquals(1, dr.getResults().size());
                 final NodeStepResult nrs = dr.getResults().values().iterator().next();
-                assertTrue("unexpected class: " + nrs.getClass(),
-                           nrs instanceof testResult);
-                testResult val = (testResult) nrs;
+
+                testResult val = testResult.extract(nrs);
+                assertNotNull(val);
                 assertEquals(0, val.flag);
                 assertTrue(val.isSuccess());
 
@@ -1530,9 +1531,9 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 final DispatcherResult dr = NodeDispatchStepExecutor.extractDispatcherResult(interpreterResult);
                 assertEquals(1, dr.getResults().size());
                 final NodeStepResult nrs = dr.getResults().values().iterator().next();
-                assertTrue("unexpected class: " + nrs.getClass(),
-                           nrs instanceof testResult);
-                testResult val = (testResult) nrs;
+
+                testResult val = testResult.extract(nrs);
+                assertNotNull(val);
                 assertEquals(1, val.flag);
                 assertTrue(val.isSuccess());
 

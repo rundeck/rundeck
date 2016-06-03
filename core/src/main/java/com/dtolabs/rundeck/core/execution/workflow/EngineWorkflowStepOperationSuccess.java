@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.dispatcher.DataContext;
+import com.dtolabs.rundeck.core.dispatcher.MultiDataContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.rules.StateObj;
 import com.dtolabs.rundeck.core.rules.WorkflowSystem;
@@ -8,7 +9,7 @@ import com.dtolabs.rundeck.core.rules.WorkflowSystem;
 /**
  * Successful result of a workflow step operation
  */
-class EngineWorkflowStepOperationSuccess implements WorkflowSystem.OperationSuccess<DataContext> {
+class EngineWorkflowStepOperationSuccess implements WorkflowSystem.OperationSuccess<MultiDataContext<String,DataContext>> {
     int stepNum;
     BaseWorkflowExecutor.StepResultCapture stepResultCapture;
     private StateObj newState;
@@ -25,7 +26,7 @@ class EngineWorkflowStepOperationSuccess implements WorkflowSystem.OperationSucc
     }
 
     @Override
-    public DataContext getResult() {
+    public MultiDataContext<String,DataContext> getResult() {
         return stepResultCapture.getResultData();
     }
     public BaseWorkflowExecutor.StepResultCapture getStepResultCapture() {

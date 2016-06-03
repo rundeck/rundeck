@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.dispatcher.DataContext;
+import com.dtolabs.rundeck.core.dispatcher.MultiDataContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.rules.*;
 
@@ -10,12 +11,12 @@ import java.util.concurrent.Callable;
 /**
  * operation for running a step
  */
-class EngineWorkflowStepOperation implements WorkflowSystem.Operation<DataContext,EngineWorkflowStepOperationSuccess> {
+class EngineWorkflowStepOperation implements WorkflowSystem.Operation<MultiDataContext<String,DataContext>,EngineWorkflowStepOperationSuccess> {
     int stepNum;
     String label;
     Set<Condition> startTriggerConditions;
     Set<Condition> skipTriggerConditions;
-    private WorkflowSystem.SimpleFunction<DataContext,BaseWorkflowExecutor.StepResultCapture> callable;
+    private WorkflowSystem.SimpleFunction<MultiDataContext<String,DataContext>,BaseWorkflowExecutor.StepResultCapture> callable;
     private StateObj startTriggerState;
     private StateObj skipTriggerState;
     private boolean didRun = false;
@@ -23,7 +24,7 @@ class EngineWorkflowStepOperation implements WorkflowSystem.Operation<DataContex
     EngineWorkflowStepOperation(
             final int stepNum,
             final String label,
-            final WorkflowSystem.SimpleFunction<DataContext,BaseWorkflowExecutor.StepResultCapture> callable,
+            final WorkflowSystem.SimpleFunction<MultiDataContext<String,DataContext>,BaseWorkflowExecutor.StepResultCapture> callable,
             final StateObj startTriggerState,
             final StateObj skipTriggerState,
             final Set<Condition> startTriggerConditions,
@@ -50,7 +51,7 @@ class EngineWorkflowStepOperation implements WorkflowSystem.Operation<DataContex
     }
 
     @Override
-    public EngineWorkflowStepOperationSuccess apply(DataContext context) throws Exception {
+    public EngineWorkflowStepOperationSuccess apply(MultiDataContext<String,DataContext> context) throws Exception {
         didRun = true;
         BaseWorkflowExecutor.StepResultCapture stepResultCapture = callable.apply(context);
         StepExecutionResult result = stepResultCapture.getStepResult();
