@@ -597,6 +597,69 @@ class ProjectControllerSpec extends Specification{
         response.status==200
         response.contentType.split(';').contains('application/json')
     }
+    def "project acls GET unsupported format"(){
+        setup:
+        controller.frameworkService=Mock(FrameworkService){
+            1 * existsFrameworkProject('test') >> true
+            1 * getAuthContextForSubject(_) >> null
+            1 * authResourceForProjectAcl('test') >> null
+            1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
+            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                1 * existsFileResource(_) >> true
+                0 * loadFileResource('acls/blah.aclpolicy',_) >> {args->
+                    args[1].write('blah'.bytes)
+                    4
+                }
+            }
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * requireVersion(_,_,11) >> true
+            1 * extractResponseFormat(_,_,_,_) >> {it[3]}
+            1 * renderErrorFormat(_,[status:406,code:'api.error.resource.format.unsupported',args:['jambajuice']])>>{it[0].status=it[1].status}
+            0 * _(*_)
+        }
+        when:
+        params.path='blah.aclpolicy'
+        params.project="test"
+        response.format='jambajuice'
+        def result=controller.apiProjectAcls()
+
+        then:
+        response.status==406
+    }
+    def "project acls GET default format"(){
+        setup:
+        controller.frameworkService=Mock(FrameworkService){
+            1 * existsFrameworkProject('test') >> true
+            1 * getAuthContextForSubject(_) >> null
+            1 * authResourceForProjectAcl('test') >> null
+            1 * authorizeApplicationResourceAny(_,_,[ACTION_READ,ACTION_ADMIN]) >> true
+            1 * getFrameworkProject('test') >> Mock(IRundeckProject){
+                1 * existsFileResource(_) >> true
+                1 * loadFileResource('acls/blah.aclpolicy',_) >> {args->
+                    args[1].write('blah'.bytes)
+                    4
+                }
+            }
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,14) >> true
+            1 * requireVersion(_,_,11) >> true
+            1 * extractResponseFormat(_,_,_,_) >> {it[3]}
+            1 * renderWrappedFileContents('blah','json',_) >> {args-> args[2].success=true}
+            0 * _(*_)
+        }
+        when:
+        params.path='blah.aclpolicy'
+        params.project="test"
+        def result=controller.apiProjectAcls()
+
+        then:
+        response.status==200
+        response.contentType.split(';').contains('application/json')
+        response.json.success==true
+    }
     def "project acls GET xml"(){
         setup:
         controller.frameworkService=Mock(FrameworkService){
