@@ -55,7 +55,7 @@ var ExecutionOptions = {
             return false;
         }
     },
-    addMultivarValue: function(name, inputarea, value,handler) {
+    addMultivarValue: function(name, inputarea, value,handler,placement) {
         var div = new Element('div');
         div.addClassName('optionvaluemulti');
         div.setStyle({'opacity':'0'});
@@ -95,7 +95,10 @@ var ExecutionOptions = {
         $(divwrap).appendChild(inpu);
         $(divwrap).appendChild(inpu2);
         $(div).appendChild(divwrap);
-        $(inputarea).insert({top:div});
+        var place=placement||'top';
+        var doInsert = {};
+        doInsert[place]=div;
+        $(inputarea).insert(doInsert);
         $$('#' + name + '_state span.reqwarning').each(Element.hide);
         Try.these(
             function() {

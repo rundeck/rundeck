@@ -132,7 +132,7 @@
                             <g:javascript>
                                 fireWhenReady('${enc(js:rkey)}varinput', function(){
                                 <g:each in="${newvals}" var="nvalue">
-                                    ExecutionOptions.addMultivarValue('${enc(js:optName)}','${enc(js:rkey)}varinput','${enc(js:nvalue)}');
+                                    ExecutionOptions.addMultivarValue('${enc(js:optName)}','${enc(js:rkey)}varinput','${enc(js:nvalue)}',null,'bottom');
                                 </g:each>
                                 }
                                 );
