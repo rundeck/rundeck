@@ -4,6 +4,7 @@
 //= require knockout-foreachprop
 //= require historyKO
 //= require nodeFiltersKO
+//= require executionOptions
 
 /*
  Manifest for "menu/jobs.gsp" page

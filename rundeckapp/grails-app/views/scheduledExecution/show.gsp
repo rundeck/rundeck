@@ -7,7 +7,6 @@
     <title><g:appTitle/> - <g:enc>${scheduledExecution?.jobName}</g:enc></title>
     <g:javascript library="prototype/effects"/>
     <g:render template="/framework/remoteOptionValuesJS"/>
-    <g:javascript library="executionOptions"/>
     <asset:javascript src="menu/jobs.js"/>
     <g:embedJSON id="jobParams"
                  data="${[ filter: scheduledExecution?.filter, doNodeDispatch:scheduledExecution?.doNodedispatch,project:params.project?:request.project]}"/>
