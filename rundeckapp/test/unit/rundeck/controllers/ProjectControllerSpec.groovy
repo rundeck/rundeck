@@ -34,6 +34,79 @@ class ProjectControllerSpec extends Specification{
     def cleanup(){
 
     }
+    @Unroll
+    def "api project create description #inputDesc"(){
+        given:
+        controller.projectService=Mock(ProjectService)
+        controller.apiService=Mock(ApiService)
+        controller.frameworkService=Mock(FrameworkService)
+        params.project='aproject'
+
+        request.method='POST'
+        request.format='json'
+        request.json=[name:'aproject',description:inputDesc]
+        when:
+
+        def result=controller.apiProjectCreate()
+
+        then:
+        1 * controller.apiService.requireVersion(_, _, 11) >> true
+        1 * controller.apiService.extractResponseFormat(*_) >> 'json'
+        1 * controller.apiService.parseJsonXmlWith(*_) >> { args ->
+            args[2].json.call(args[0].JSON)
+            true
+        }
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.frameworkService.authorizeApplicationResourceTypeAll(*_)>>true
+        1 * controller.frameworkService.existsFrameworkProject('aproject')>>false
+        1 * controller.frameworkService.createFrameworkProject('aproject',{
+            it['project.description']==inputDesc
+        })>>[Mock(IRundeckProject){
+            getName()>>'aproject'
+        },[]]
+        1 * controller.frameworkService.loadProjectProperties(*_)>>([:] as Properties)
+        0 * controller.frameworkService._(*_)
+
+        where:
+        inputDesc       | _
+        'a description' | _
+        null            | _
+    }
+    @Unroll
+    def "api project create validate input json #inputJson"(){
+        given:
+        controller.projectService=Mock(ProjectService)
+        controller.apiService=Mock(ApiService)
+        controller.frameworkService=Mock(FrameworkService)
+        params.project='aproject'
+
+        request.method='POST'
+        request.format='json'
+        request.json=inputJson
+        when:
+
+        def result=controller.apiProjectCreate()
+
+        then:
+        1 * controller.apiService.requireVersion(_, _, 11) >> true
+        1 * controller.apiService.extractResponseFormat(*_) >> 'json'
+        1 * controller.apiService.parseJsonXmlWith(*_) >> { args ->
+            args[2].json.call(args[0].JSON)
+            true
+        }
+        1 * controller.apiService.renderErrorFormat(_, [status: 400, code:'api.error.invalid.request',args: [errMsg], format: 'json'])
+
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.frameworkService.authorizeApplicationResourceTypeAll(*_)>>true
+        0 * controller.frameworkService._(*_)
+
+        where:
+        inputJson                                              | errMsg
+        [name: 'aproject', description: 'xyz', config: 'blah'] | 'json: expected \'config\' to be a Map'
+        [name: 'aproject', description: 12]                    | 'json: expected \'description\' to be a String'
+        [name: [a: 'b'], description: null]                    | 'json: expected \'name\' to be a String'
+        [description: 'monkey']                                | 'json: required \'name\' but it was not found'
+    }
 
     def "api export execution ids string"(){
         given:

@@ -11,6 +11,7 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
+import com.dtolabs.rundeck.util.JsonUtil
 import rundeck.services.ProjectServiceException
 
 import javax.servlet.http.HttpServletRequest
@@ -516,8 +517,8 @@ class ProjectController extends ControllerBase{
         def project = null
         def description = null
         Map config = null
-
         //parse request format
+        String errormsg=''
         def succeeded = apiService.parseJsonXmlWith(request,response, [
                 xml: { xml ->
                     project = xml?.name[0]?.text()
@@ -528,12 +529,30 @@ class ProjectController extends ControllerBase{
                     }
                 },
                 json: { json ->
-                    project = json?.name?.toString()
-                    description = json?.description?.toString()
-                    config = json?.config
+                    def errors = JsonUtil.validateJson(json,[
+                            '!name':String,
+                            description:String,
+                            config:Map
+                    ])
+                    if (errors) {
+                        errormsg += errors.join("; ")
+                        return
+                    }
+                    project = JsonUtil.jsonNull(json?.name)?.toString()
+                    description = JsonUtil.jsonNull(json?.description)?.toString()
+                    config = JsonUtil.jsonNull(json?.config)
                 }
         ])
         if(!succeeded){
+            return
+        }
+        if (errormsg) {
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code: "api.error.invalid.request",
+                    args: [errormsg],
+                    format: respFormat
+            ])
             return
         }
         if( description){
