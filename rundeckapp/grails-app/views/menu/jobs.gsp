@@ -9,7 +9,6 @@
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
     <g:javascript library="prototype/effects"/>
-    <g:javascript library="executionOptions"/>
     <asset:javascript src="menu/jobs.js"/>
     <g:embedJSON id="pageParams" data="${[project:params.project?:request.project]}"/>
     <g:jsMessages code="Node,Node.plural,job.starting.execution"/>
