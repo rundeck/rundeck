@@ -18,7 +18,7 @@ import java.util.Enumeration;
  */
 public class AuthFilter implements Filter {
 
-    private static final transient Logger LOG = Logger.getLogger(GrailsServiceInjectorJobListener.class);
+    private static final transient Logger LOG = Logger.getLogger(AuthFilter.class);
 
 
     public void init(FilterConfig filterConfig) throws ServletException {
