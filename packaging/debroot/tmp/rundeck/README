@@ -1,0 +1,4 @@
+Rundeck temporary directory. The /tmp/rundeck directory is required for
+java.io.File.createTempFile to work correctly with Rundeck's profile.
+This README file is required for the directory to be created under Git.
+DO NOT REMOVE.
