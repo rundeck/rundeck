@@ -236,11 +236,11 @@ var RemoteOptionControl = Class.create({
     * @param id
      */
     setFieldId:function(name,id){
+        if(!$(id)){
+            return;
+        }
         this.ids[name]=id;
         if(this.observing){
-            if(this.observers[name]){
-               this.observers[name].stop();
-            }
             this.observeChangesFor(name);
             var auto=this.doOptionAutoReload(name);
             if (!auto && this.options[name]) {
