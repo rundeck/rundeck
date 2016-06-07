@@ -360,6 +360,14 @@ JSON results can be retrieved by sending the HTTP "Accept" header with a `applic
 
 If an "Accept" header is not specified, then the response will be either the same format as the request content (for POST, or PUT requests), or XML by default.
 
+Some REST client like Dev HTTP Client or Python's urllib2 requiere to add both Content-Type and User-Agent headers in order to get a JSON response, for example:
+
+	GET /api/14/system/info HTTP/1.1
+	X-Rundeck-Auth-Token: E4rNvVRV378knO9dp3d73O0cs1kd0kCd
+	Accept: `application/json` 
+	Content-Type: `application/json`	
+	User-Agent: `curl/7.19.7`
+
 Some endpoints also support using a `format` query parameter to specify the expected output format.
 
 ## Authentication
