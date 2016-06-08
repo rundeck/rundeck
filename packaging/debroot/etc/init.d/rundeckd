@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 #
 # rundeckd    Startup script for the rundeck
 #
@@ -7,90 +7,99 @@
 # pidfile: /var/run/rundeckd.pid
 
 ### BEGIN INIT INFO
-# Provides:		rundeckd
-# Required-Start:	$all
-# Required-Stop:	$local_fs
-# Default-Start: 	2 3 4 5
-# Default-Stop: 	0 1 6
-# Short-Description:	rundeck job automation console
-# Description:		rundeckd services.
+# Provides:             rundeckd
+# Required-Start:       $all
+# Required-Stop:        $local_fs
+# Default-Start:        2 3 4 5
+# Default-Stop:         0 1 6
+# Short-Description:    rundeck job automation console
+# Description:          rundeckd services.
 ### END INIT INFO
 
 # Source function library
 . /lib/lsb/init-functions
 . /etc/rundeck/profile
 
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
 prog="rundeckd"
 RETVAL=0
+USER=rundeck
 PIDFILE=/var/run/$prog.pid
 DAEMON="${JAVA_HOME:-/usr}/bin/java"
 DAEMON_ARGS="${RDECK_JVM} -cp ${BOOTSTRAP_CP} com.dtolabs.rundeck.RunServer /var/lib/rundeck ${RDECK_HTTP_PORT}"
+LOG_SERVICE="/var/log/rundeck/service.log"
 rundeckd="$DAEMON $DAEMON_ARGS"
 
 start() {
-	echo -n $"Starting $prog: "
-	cd /var/log/rundeck
-	nohup su -s /bin/bash rundeck -c "$rundeckd" &>>/var/log/rundeck/service.log &
+  pid=$(pidofproc -p $PIDFILE rundeckd)
+  if [ -n "$pid" ] ; then
+    echo "$prog already running!"
+    exit 0
+  fi
+  if [ ! -f $LOG_SERVICE ]; then
+    touch $LOG_SERVICE && chown rundeck:adm $LOG_SERVICE
+  fi
+  start-stop-daemon --start --quiet --no-close --pidfile $PIDFILE --make-pidfile \
+    --chuid $USER --user $USER --background \
+    --startas $DAEMON -- $DAEMON_ARGS >> /var/log/rundeck/service.log 2>&1 &
+  RETVAL=$?
+  return $RETVAL
 
-	RETVAL=$?
-	PID=$!
-	echo $PID > $PIDFILE
-	if [ $RETVAL -eq 0 ]; then 
-		touch /var/run/$prog
-		log_success_msg
-	else
-		log_failure_msg
-	fi
-	echo
-	return $RETVAL
 }
 
 stop() {
-	echo -n $"Stopping $prog: "
-	killproc -p $PIDFILE "$rundeckd"
-	RETVAL=$?
-	echo
-	[ $RETVAL -eq 0 ] && rm -f /var/run/$prog
-	return $RETVAL
-}
-
-### NOT USED
-reload() {
-	echo -n $"Reloading $prog: "
-	killproc -p $PIDFILE "$rundeckd" -HUP
-	RETVAL=$?
-	echo
-	return $RETVAL
+  if [ -f "$PIDFILE" ]; then
+    start-stop-daemon --stop --pidfile "$PIDFILE" \
+      --user $USER \ --quiet \
+      --retry TERM/30/KILL/10
+    if [ $? -eq 1 ]; then
+      echo "$prog not running but PID exists, cleaning your mess"
+    elif [ $? -eq 3 ]; then
+      pid="$(cat $PIDFILE)"
+      echo >&2 "Failed to stop $prog (pid $pid)"
+      exit 1
+    fi
+    rm -f "$PIDFILE"
+  else
+    echo "$prog not running ..."
+  fi
+  RETVAL=$?
+  return $RETVAL
 }
 
 case "$1" in
-	start)
-		start
-		;;
-	stop)
-		stop
-		;;
-	force-reload)
-		stop
-		start
-		;;
-	restart)
-		stop
-		start
-		;;
-	condrestart)
-		if [ -f /var/run/$prog ]; then
-			stop
-			start
-		fi
-		;;
-	status)
-		status_of_proc -p $PIDFILE $DAEMON $prog
-		RETVAL=$?
-		;;
-	*)
-		echo $"Usage: $0 {start|stop|restart|condrestart|status}"
-		RETVAL=1
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  force-reload)
+    stop
+    start
+    ;;
+  restart)
+    stop
+    case "$?" in
+      0) echo "Restarting $prog ..." ;;
+      1) echo "Error restarting $prog!" ;;
+    esac
+    start
+    ;;
+  condrestart)
+    if [ -f $PIDFILE ]; then
+      stop
+      start
+    fi
+    ;;
+  status)
+    status_of_proc -p $PIDFILE $DAEMON $prog
+    RETVAL=$?
+    ;;
+  *)
+    echo $"Usage: $0 {start|stop|restart|condrestart|status}"
+    RETVAL=1
 esac
 
 exit $RETVAL
+
