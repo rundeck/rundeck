@@ -56,6 +56,9 @@
                 var storageBrowseTarget = storageBrowse.fieldTarget();
                 if(storageBrowse && storageBrowse.selectedPath()){
                     jQuery(storageBrowseTarget).val(storageBrowse.selectedPath());
+                    if(typeof(_storageBrowseSelected)=='function'){
+                        _storageBrowseSelected(storageBrowseTarget,storageBrowse.selectedPath());
+                    }
                     storageBrowse.selectedPath(null);
                 }
             }

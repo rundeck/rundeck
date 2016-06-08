@@ -18,9 +18,13 @@ var ResourceModelConfigControl = Class.create({
     configCount: 0,  /* This element is used by passwordFieldsService to track when resources are deleted.  Do not reuse
      the configCount values after delete.  i.e. if you delete #2 and add a new resource, ensure that it is #3. */
     prefixKey: 'x',
-    initialize: function(pfix) {
+    didChange:function () { },
+    initialize: function(pfix,changeHandler) {
         if(pfix){
             this.prefixKey=pfix;
+        }
+        if(changeHandler){
+            this.didChange=changeHandler;
         }
     },
     addConfigChrome: function (elem, type, prefix, index, edit) {
@@ -76,6 +80,7 @@ var ResourceModelConfigControl = Class.create({
         Event.observe(cancelbutton, 'click', function(e) {
             Event.stop(e);
             self.cancelConfig(top);
+            self.didChange();
         });
         setText(cancelbutton,"Delete");
         cancelbutton.addClassName('btn-danger');
@@ -167,6 +172,7 @@ editConfig: function (elem, type, prefix, index) {
         parameters:params,
         onComplete:function(ajax) {
             if (ajax.request.success()) {
+                self.didChange();
                 self.addConfigChrome(elem, type, prefix, index);
             } else {
                 self.error(ajax);
@@ -203,6 +209,7 @@ addConfig: function(type) {
             parameters:{prefix:prefix,type:type},
             onComplete:function(ajax) {
                 if (ajax.request.success()) {
+                    self.didChange();
                     self.addConfigChrome(content, type, prefix, num + '');
                 } else {
                     self.error(ajax);
