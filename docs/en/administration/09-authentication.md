@@ -592,7 +592,7 @@ Configuration properties:
 
 * `serviceName` - name of the PAM service configuration to use. (Required). Example: "sshd".
 * `useUnixGroups` - true/false. If true, the unix Groups defined for the user will be included as authorization roles. Default: false.
-* `supplementalRoles` - a comma-separated list of additional user roles to add to any authenticated user. Example: 'user,readonly'
+* `supplementalRoles` - a comma-separated list of additional user roles to add to any authenticated user. Example: `'user, readonly'` Note: you must use comma **and a space** for this to work.
 
 
 ### JettyRolePropertyFileLoginModule
