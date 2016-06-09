@@ -621,8 +621,8 @@ Available rendering option keys:
   * `grouping` allowed value: `secondary`, indicates that the specified `groupName` should be shown in a
   collapsed state if no input values in that group have been set. If no `groupName` is set, then the field
   will be displayed under a group with a heading of "More".
-  * `codeSyntaxMode` - if displayType is `CODE`, name of a [ACE editor mode][acejs] supported by Rundeck. One of: "batchfile", "diff", "dockerfile", "golang", "groovy", "html", "java", "javascript", "json", "markdown", "perl", "powershell", "properties", "python", "ruby", "sh", "sql", "xml", "yaml".
-  * `codeSyntaxSelectable` - if displayType is `CODE`, `true/false`: if true, show a select box for choosing from the available syntaxes highlighting modes.
+  * `codeSyntaxMode` - if displayType is `CODE`, name of a [ACE editor mode][acejs] supported by Rundeck. One of: `batchfile`, `diff`, `dockerfile`, `golang`, `groovy`, `html`, `java`, `javscript`, `json`, `markdown`, `perl`, `php`, `powershell`, `properties`, `python`, `ruby`, `sh`, `sql`, `xml`, `yaml`.
+  * `codeSyntaxSelectable` - if displayType is `CODE`, `true/false`: if true, show a select box for choosing from the available syntax highlighting modes.
 
   [acejs]: https://ace.c9.io
 
