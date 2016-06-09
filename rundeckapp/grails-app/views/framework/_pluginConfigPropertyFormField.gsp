@@ -107,7 +107,11 @@
                     id="${fieldid}" rows="10" cols="100" class="${formControlType}"/>
     </g:if>
     <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.CODE, 'CODE']}">
+        <g:set var="syntax" value="${prop.renderingOptions?.(StringRenderingConstants.CODE_SYNTAX_MODE)}"/>
+        <g:set var="syntaxSelectable" value="${prop.renderingOptions?.(StringRenderingConstants.CODE_SYNTAX_SELECTABLE)}"/>
         <g:textArea name="${fieldname}" value="${valueText}"
+            data-ace-session-mode="${syntax}"
+            data-ace-control-syntax="${syntaxSelectable?true:false}"
                     id="${fieldid}" rows="10" cols="100" class="${formControlCodeType}"/>
     </g:elseif>
     <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.PASSWORD, 'PASSWORD']}">
