@@ -28,15 +28,21 @@ Rundeck provides a single console for dispatching commands across many resources
 * Wed Dec 15 2010 Noah Campbell <noahcampbell@gmail.com> 1.0-1
 	- Run the service as the rundeck user.
 
-%pre
-getent group rundeck >/dev/null || groupadd rundeck
-getent passwd rundeck >/dev/null || useradd -d /var/lib/rundeck -m -g rundeck rundeck
-
 %post
 if [ ! -e ~rundeck/.ssh/id_rsa ]; then
 	su -c "ssh-keygen -q -t rsa -C '' -N '' -f ~rundeck/.ssh/id_rsa" rundeck
 fi
-/sbin/chkconfig --add rundeckd
+
+case "$1" in
+    1)
+        # This is an initial install.
+        chkconfig --add rundeckd
+    ;;
+    2)
+        # This is an upgrade.
+        : # Do nothing.
+    ;;
+esac
 
 %preun
 if [ "$1" = 0 ]; then
