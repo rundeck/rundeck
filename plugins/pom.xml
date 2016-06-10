@@ -46,6 +46,7 @@
     <module>script-plugin</module>
     <module>localexec-plugin</module>
     <module>copyfile-plugin</module>
+    <module>filetransfer-plugin</module>
   </modules>
   <dependencies>
     <dependency>

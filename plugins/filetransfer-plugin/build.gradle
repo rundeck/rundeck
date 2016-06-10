@@ -1,0 +1,87 @@
+/**
+ * The Rundeck File Transger plugin build file
+ */
+
+ext.pluginClassNames = 'org.rundeck.plugin.filetransfer.FileTransferNodeStepPlugin'
+ext.pluginName = 'File Transfer Step'
+ext.pluginDescription = 'Transfers a file to/from a node using several network transfer protocols.'
+
+configurations{
+    pluginLibs
+
+    //declare compile to extend from pluginLibs so it inherits the dependencies
+    compile {
+        extendsFrom pluginLibs
+    }
+}
+
+
+dependencies {
+    pluginLibs group: 'commons-net', name: 'commons-net', version: '3.5'
+}
+
+// task to copy plugin libs to output/lib dir
+task copyToLib(type: Copy) {
+    into "$buildDir/output/lib"
+    from configurations.pluginLibs
+}
+
+jar {
+    from "$buildDir/output"
+    manifest {
+        attributes 'Rundeck-Plugin-Classnames': pluginClassNames
+        attributes 'Rundeck-Plugin-Name': pluginName
+        attributes 'Rundeck-Plugin-Description': pluginDescription
+        def libList = configurations.pluginLibs.collect { 'lib/' + it.name }.join(' ')
+        attributes 'Rundeck-Plugin-Libs': "${libList}"
+    }
+}
+
+//set jar task to depend on copyToLib
+jar.dependsOn(copyToLib)
+
+
+task createPom << {
+    pom {
+        project {
+            artifactId 'rundeck-filetransfer-plugin'
+            groupId project.group
+            inceptionYear '2016'
+            packaging 'jar'
+            version version
+            name "RunDeck File Transfer Step Plugin"
+            url 'http://rundeck.org'
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+            parent{
+                groupId project.group
+                artifactId "rundeck-bundled-plugins"
+                version(version)
+            }
+            build{
+                plugins{
+                    plugin{
+                        groupId 'org.apache.maven.plugins'
+                        artifactId 'maven-jar-plugin'
+                        version '2.3.2'
+                        configuration{
+                            archive{
+                              manifestEntries{
+                                'Rundeck-Plugin-Classnames'(pluginClassNames)
+                                  'Rundeck-Plugin-Version'(rundeckPluginVersion)
+                                  'Rundeck-Plugin-Archive'('true')
+                                  'Rundeck-Plugin-File-Version'(version)
+                              }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }.writeTo("pom.xml")
+}

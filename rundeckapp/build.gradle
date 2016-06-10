@@ -60,6 +60,7 @@ dependencies {
             project(':plugins:stub-plugin'),
             project(':plugins:localexec-plugin'),
             project(':plugins:copyfile-plugin'),
+            project(':plugins:filetransfer-plugin'),
             project(':plugins:job-state-plugin'),
             project(':plugins:flow-control-plugin'),
             project(':plugins:jasypt-encryption-plugin'),
