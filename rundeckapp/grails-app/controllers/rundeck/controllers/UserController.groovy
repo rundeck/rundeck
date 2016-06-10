@@ -40,7 +40,9 @@ class UserController extends ControllerBase{
     }
 
     def loggedout(){
-
+        URL url = new URL(grailsApplication.config.grails.serverURL)
+        def hostname = url.getHost()
+        return redirect(url: 'http://' + hostname + ':4180/oauth2/sign_in')
     }
 
     def login = {

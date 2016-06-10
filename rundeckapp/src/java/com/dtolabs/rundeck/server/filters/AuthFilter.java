@@ -31,8 +31,11 @@ public class AuthFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         Enumeration<String> headerNames = httpRequest.getHeaderNames();
 
-        final String forwardedUser = httpRequest.getHeader("X-Forwarded-User");
+        // Todo remove stdout debugs
+        System.out.println("Debug: Spring auth filter");
 
+        final String forwardedUser = httpRequest.getHeader("X-Forwarded-User");
+        System.out.println("User received " + forwardedUser);
         ServletRequest requestModified =
                 new HttpServletRequestWrapper((HttpServletRequest) request) {
                     @Override
@@ -56,6 +59,7 @@ public class AuthFilter implements Filter {
         // Get the roles sent by the proxy and add them onto the request as an attribute for
         // PreauthenticatedAttributeRoleSource
         final String forwardedRoles = httpRequest.getHeader("X-Forwarded-Roles");
+        System.out.println("Roles received: " + forwardedRoles);
         requestModified.setAttribute("REMOTE_USER_GROUPS", forwardedRoles);
 
         filterChain.doFilter(requestModified, response);
