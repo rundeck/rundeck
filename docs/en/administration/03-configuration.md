@@ -92,6 +92,13 @@ The `tokens.properties` file should contain static authentication tokens you wis
 
 The token_strings can be used as Authentication tokens to the [API](../api/index.html#token-authentication).
 
+### Global execution variables
+
+Entries in `framework.properties` in the form `framework.globals.X=Y` Adds a variable `X` available in all execution contexts as `${globals.X}`.
+
+Values can be overridden in the [`project.properties`](#project.properties) configuration for a project.
+
+
 ## log4j.properties
 
 Rundeck uses [log4j] as its application logging facility. This file
@@ -122,6 +129,7 @@ Property                                  Description
 `service.FileCopier.default.provider`     Default script file copier plugin.
 `service.NodeExecutor.default.provider`   Default node executor plugin.
 `resources.source.N...`                   Defines a Resource model source see [Resource Model Sources].
+`project.globals.X`                       [Defines a Project Global variable](#project-global-execution-variables)
 ----------------------------------
 
 Here's an example that configures a File source:
@@ -150,6 +158,11 @@ resources.source.3.type=directory
 ~~~~~~~~~~~~
 
 Additional sources increment the source number. You can reference the project name by using the `${project.name}` context variable.
+
+### Project Global execution variables
+
+Project configuration entries of the form `project.globals.X=Y` Adds a variable `X` available in all execution contexts as `${globals.X}`, and overrides
+any global with the same name defined in [`framework.properties`](#framework.properties).
 
 ## jaas-loginmodule.conf
 
