@@ -42,7 +42,7 @@ def coreJarFile = "core/${target}/rundeck-core-${version}.jar"
 def launcherJarFile = "rundeck-launcher/launcher/${target}/rundeck-launcher-${version}.jar"
 
 //the list of bundled plugins to verify in the war and jar
-def plugins=['script','stub','localexec','copyfile','job-state','flow-control','jasypt-encryption','git','orchestrator']
+def plugins=['script','stub','localexec','copyfile', 'filetransfer', 'job-state','flow-control','jasypt-encryption','git','orchestrator']
 
 //manifest describing expected build results
 def manifest=[
@@ -98,6 +98,7 @@ def manifest=[
     "plugins/stub-plugin/${target}/rundeck-stub-plugin-${version}.jar":[:],
     "plugins/localexec-plugin/${target}/rundeck-localexec-plugin-${version}.jar":[:],
     "plugins/copyfile-plugin/${target}/rundeck-copyfile-plugin-${version}.jar":[:],
+    "plugins/filetransfer-plugin/${target}/rundeck-filetransfer-plugin-${version}.jar":[:],
     "plugins/job-state-plugin/${target}/rundeck-job-state-plugin-${version}.jar":[:],
     "plugins/flow-control-plugin/${target}/rundeck-flow-control-plugin-${version}.jar":[:],
 ]
