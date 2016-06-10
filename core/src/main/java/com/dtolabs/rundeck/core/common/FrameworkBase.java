@@ -293,7 +293,9 @@ public class FrameworkBase implements IFramework{
             }
             else
                 continue;
-
+            if("".equals(varName)){
+                continue;
+            }
             // Copy value into new map.
             curMap.put(varName, propEntry.getValue());
         }

@@ -1175,10 +1175,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         datacontext.put("job",jobcontext?jobcontext:new HashMap<String,String>())
 
         // Put globals in context.
-        if(framework) {
-            Map<String, String> globals = framework.getProjectGlobals(execMap.project);
-            datacontext.put("globals", globals ? globals : new HashMap<>());
-        }
+        Map<String, String> globals = frameworkService.getProjectGlobals(execMap.project);
+        datacontext.put("globals", globals ? globals : new HashMap<>());
 
 
         NodesSelector nodeselector
