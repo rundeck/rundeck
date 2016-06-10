@@ -10,10 +10,10 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandEx
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandExecutionItem
 import com.dtolabs.rundeck.core.utils.NodeSet
+import grails.test.GrailsMock
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.mixin.web.ControllerUnitTestMixin
-import groovy.mock.interceptor.MockFor
 import org.codehaus.groovy.grails.plugins.databinding.DataBindingGrailsPlugin
 import org.grails.plugins.metricsweb.MetricService
 import org.junit.Before
@@ -640,6 +640,9 @@ class ExecutionServiceTests  {
         fcontrol.demand.filterAuthorizedNodes(1..1) {  project, actions, unfiltered, authContext ->
             new NodeSetImpl()
         }
+        fcontrol.demand.getProjectGlobals(1..1) {  project->
+            [:]
+        }
         service.frameworkService=fcontrol.createMock()
         service.storageService=mockWith(StorageService){
             storageTreeWithContext{ctx->
@@ -672,17 +675,7 @@ class ExecutionServiceTests  {
      */
     void testCreateContextDatacontext() {
 
-        def fcontrol = mockFor(FrameworkService, true)
-        fcontrol.demand.parseOptsFromString(1..1) {argString ->
-            [test: 'args']
-        }
-        fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
-            new NodeSetImpl()
-        }
-        fcontrol.demand.filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
-            new NodeSetImpl()
-        }
-        service.frameworkService = fcontrol.createMock()
+        service.frameworkService = makeFrameworkMock([test: 'args']).createMock()
         service.storageService = mockWith(StorageService) {
             storageTreeWithContext { ctx ->
                 null
@@ -723,6 +716,9 @@ class ExecutionServiceTests  {
         fcontrol.demand.filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
             new NodeSetImpl()
         }
+        fcontrol.demand.getProjectGlobals(1..1) {  project->
+            [:]
+        }
         service.frameworkService = fcontrol.createMock()
         service.storageService = mockWith(StorageService) {
             storageTreeWithContext { ctx ->
@@ -756,17 +752,7 @@ class ExecutionServiceTests  {
      */
     void testCreateContextJobData() {
 
-        def fcontrol = mockFor(FrameworkService, true)
-        fcontrol.demand.parseOptsFromString(1..1) {argString ->
-            [test: 'args']
-        }
-        fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
-            new NodeSetImpl()
-        }
-        fcontrol.demand.filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
-            new NodeSetImpl()
-        }
-        service.frameworkService = fcontrol.createMock()
+        service.frameworkService = makeFrameworkMock([test: 'args']).createMock()
         service.storageService = mockWith(StorageService) {
             storageTreeWithContext { ctx ->
                 null
@@ -797,17 +783,7 @@ class ExecutionServiceTests  {
      */
     void testCreateContextJobDataEmptyNodeset() {
 
-        def fcontrol = mockFor(FrameworkService, true)
-        fcontrol.demand.parseOptsFromString(1..1) {argString ->
-            [test: 'args']
-        }
-        fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
-            new NodeSetImpl()
-        }
-        fcontrol.demand.filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
-            new NodeSetImpl()
-        }
-        service.frameworkService = fcontrol.createMock()
+        service.frameworkService = makeFrameworkMock([test: 'args']).createMock()
         service.storageService = mockWith(StorageService) {
             storageTreeWithContext { ctx ->
                 null
@@ -834,17 +810,7 @@ class ExecutionServiceTests  {
      */
     void testCreateContextJobDataNodeInclude() {
 
-        def fcontrol = mockFor(FrameworkService, true)
-        fcontrol.demand.parseOptsFromString(1..1) {argString ->
-            [test: 'args']
-        }
-        fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
-            new NodeSetImpl()
-        }
-        fcontrol.demand.filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
-            new NodeSetImpl()
-        }
-        service.frameworkService = fcontrol.createMock()
+        service.frameworkService = makeFrameworkMock([test: 'args']).createMock()
         service.storageService = mockWith(StorageService) {
             storageTreeWithContext { ctx ->
                 null
@@ -870,6 +836,23 @@ class ExecutionServiceTests  {
             assertEquals("testnode", val.nodeSelector.include.name)
     }
 
+    private GrailsMock makeFrameworkMock(Map argsMap) {
+        def fcontrol = mockFor(FrameworkService, true)
+        fcontrol.demand.parseOptsFromString(1..1) { argString ->
+            argsMap
+        }
+        fcontrol.demand.filterNodeSet(1..1) { fwk, sel, proj ->
+            new NodeSetImpl()
+        }
+        fcontrol.demand.filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
+            new NodeSetImpl()
+        }
+        fcontrol.demand.getProjectGlobals(1..1) { project ->
+            [:]
+        }
+        fcontrol
+    }
+
     /**
      * Test createContext method
      */
@@ -884,6 +867,9 @@ class ExecutionServiceTests  {
         }
         fcontrol.demand.filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
             new NodeSetImpl()
+        }
+        fcontrol.demand.getProjectGlobals(1..1) {  project->
+            [:]
         }
         service.frameworkService = fcontrol.createMock()
         service.storageService = mockWith(StorageService) {
@@ -925,6 +911,9 @@ class ExecutionServiceTests  {
         fcontrol.demand.filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
             new NodeSetImpl()
         }
+        fcontrol.demand.getProjectGlobals(1..1) {  project->
+            [:]
+        }
         service.frameworkService = fcontrol.createMock()
         service.storageService = mockWith(StorageService) {
             storageTreeWithContext { ctx ->
@@ -958,17 +947,7 @@ class ExecutionServiceTests  {
      * Test node keepgoing, threadcount filter values
      */
     void testCreateContextNodeDispatchOptions() {
-        def fcontrol = mockFor(FrameworkService, true)
-        fcontrol.demand.parseOptsFromString(1..1) {argString ->
-            [test: 'args',test3:'something']
-        }
-        fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
-            new NodeSetImpl()
-        }
-        fcontrol.demand.filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
-            new NodeSetImpl()
-        }
-        service.frameworkService = fcontrol.createMock()
+        service.frameworkService = makeFrameworkMock([test: 'args',test3:'something']).createMock()
         service.storageService = mockWith(StorageService) {
             storageTreeWithContext { ctx ->
                 null
@@ -1016,17 +995,7 @@ class ExecutionServiceTests  {
      * Test use of ${option.x} and ${job.y} parameter expansion in node filter tag and name filters.
      */
     void testCreateContextParameterizedFilters() {
-        def fcontrol = mockFor(FrameworkService, true)
-        fcontrol.demand.parseOptsFromString(1..1) {argString ->
-            [test: 'args', test3: 'something']
-        }
-        fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
-            new NodeSetImpl()
-        }
-        fcontrol.demand.filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
-            new NodeSetImpl()
-        }
-        service.frameworkService = fcontrol.createMock()
+        service.frameworkService = makeFrameworkMock([test: 'args',test3:'something']).createMock()
         service.storageService = mockWith(StorageService) {
             storageTreeWithContext { ctx ->
                 null
@@ -1086,17 +1055,7 @@ class ExecutionServiceTests  {
      * Test use of ${option.x} and ${job.y} parameter expansion in node filter tag and name filters.
      */
     void testCreateContextParameterizedAttributeFilters() {
-        def fcontrol = mockFor(FrameworkService, true)
-        fcontrol.demand.parseOptsFromString(1..1) {argString ->
-            [test: 'args', test3: 'something']
-        }
-        fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
-            new NodeSetImpl()
-        }
-        fcontrol.demand.filterAuthorizedNodes(1..1) { project, actions, unfiltered, authContext ->
-            new NodeSetImpl()
-        }
-        service.frameworkService = fcontrol.createMock()
+        service.frameworkService = makeFrameworkMock([test: 'args',test3:'something']).createMock()
         service.storageService = mockWith(StorageService) {
             storageTreeWithContext { ctx ->
                 null
@@ -1132,6 +1091,9 @@ class ExecutionServiceTests  {
     void testCreateContextParameterizedWholeFilter() {
 
         service.frameworkService = mockWith(FrameworkService){
+            getProjectGlobals(1..1) {  project->
+                [:]
+            }
             filterNodeSet(1..1) { fwk, sel, proj ->
                 new NodeSetImpl()
             }
@@ -1645,6 +1607,9 @@ class ExecutionServiceTests  {
             parseOptsFromArray(1..2){String[] args->
                 ['test1':'value']
             }
+            getProjectGlobals(1..1) {  project->
+                [:]
+            }
             filterNodeSet(1..1) { NodesSelector selector, String project ->
                 makeNodeSet(['x','y'])
             }
@@ -1704,6 +1669,9 @@ class ExecutionServiceTests  {
         service.frameworkService=mockWith(FrameworkService){
             parseOptsFromArray(1..2){String[] args->
                 ['test1':'value']
+            }
+            getProjectGlobals(1..1) {  project->
+                [:]
             }
             //called by createContext
             filterNodeSet(1..1) { NodesSelector selector, String project ->
@@ -1794,6 +1762,9 @@ class ExecutionServiceTests  {
                 parseOptsCount++
                 ['test1':'wakeful']
             }
+            getProjectGlobals(1..1) {  project->
+                [:]
+            }
             //called by createContext
             filterNodeSet(1..1) { NodesSelector selector, String project ->
                 makeNodeSet(['x','y'])
@@ -1883,6 +1854,9 @@ class ExecutionServiceTests  {
                     }
                 }
                 opts
+            }
+            getProjectGlobals(1..1) {  project->
+                [:]
             }
             //called by createContext
             filterNodeSet(1..1) { NodesSelector selector, String project ->

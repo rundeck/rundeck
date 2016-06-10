@@ -222,6 +222,7 @@ class ExecutionServiceSpec extends Specification {
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_)
             0 * _(*_)
         }
 
@@ -295,6 +296,7 @@ class ExecutionServiceSpec extends Specification {
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_)
             0 * _(*_)
         }
 
@@ -367,6 +369,7 @@ class ExecutionServiceSpec extends Specification {
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_)
             0 * _(*_)
         }
 

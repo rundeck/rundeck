@@ -37,3 +37,14 @@ framework.ssh.user = @framework.ssh.user@
 # "0" value means wait forever.
 framework.ssh.timeout = 0
 
+
+# ----------------------------------------------------------------
+# System-wide global variables.
+# ----------------------------------------------------------------
+
+# Expands to ${globals.var1}
+#framework.globals.var1 = value1
+
+# Expands to ${globals.var2}
+#framework.globals.var2 = value2
+
