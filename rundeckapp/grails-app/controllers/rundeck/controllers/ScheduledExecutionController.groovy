@@ -593,22 +593,58 @@ class ScheduledExecutionController  extends ControllerBase{
                     if(!valid){
                         result=null
                         err.message="Failed parsing remote option values: ${validationerrors.join('\n')}"
+                        err.code='invalid'
                     }
                 }else if(!err){
                     err.message = "Empty result"
                     err.code='empty'
                 }
-                def model= [optionSelect: opt, values: result, srcUrl: cleanUrl, err: err, fieldPrefix: params.fieldPrefix, selectedvalue: params.selectedvalue]
+                def model= [optionSelect: opt,
+                            values: result,
+                            srcUrl: cleanUrl,
+                            err: err,
+                            fieldPrefix: params.fieldPrefix,
+                            selectedvalue: params.selectedvalue]
                 if(params.extra?.option?.get(opt.name)){
                     model.selectedoptsmap=[(opt.name):params.extra.option.get(opt.name)]
                 }
-                return render(template: "/framework/optionValuesSelect", model: model);
+                withFormat{
+                    html{
+                        return render(template: "/framework/optionValuesSelect", model: model);
+                    }
+                    json{
+                        model.remove('optionSelect')
+                        model.name=opt.name
+                        if(model.err?.exception){
+                            model.err.exception=model.err.exception.toString()
+                        }
+                        render(contentType: 'application/json', text: model as JSON)
+                    }
+                }
+
             } else {
-                return renderErrorFragment("not a url option: " + params.option)
+
+                withFormat{
+                    html{
+                        return renderErrorFragment("not a url option: " + params.option)
+                    }
+                    json{
+                        render(contentType: 'application/json', text: [err:[message:"not a url option: " + params.option]] as JSON)
+                    }
+                }
             }
         }else{
-            return renderErrorFragment("option not found: "+params.option)
+
+            withFormat{
+                html{
+                    return renderErrorFragment("option not found: "+params.option)
+                }
+                json{
+                    render(contentType: 'application/json', text: [err:[message:"option not found: "+params.option]] as JSON)
+                }
+            }
         }
+        System.err.println("format: "+response.format)
 
     }
     static Logger optionsLogger = Logger.getLogger("com.dtolabs.rundeck.remoteservice.http.options")

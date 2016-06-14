@@ -1,36 +1,65 @@
 <%@ page import="grails.util.Environment" %>
 <html>
-  <head>
+<head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <meta name="layout" content="base" />
+    <meta name="layout" content="base"/>
     <meta name="tabpage" content="jobs"/>
     <title><g:appTitle/> - <g:enc>${scheduledExecution?.jobName}</g:enc></title>
     <g:javascript library="prototype/effects"/>
-    <g:render template="/framework/remoteOptionValuesJS"/>
+    %{--<g:render template="/framework/remoteOptionValuesJS"/>--}%
+    <asset:javascript src="menu/joboptions.js"/>
     <asset:javascript src="menu/jobs.js"/>
     <g:embedJSON id="jobParams"
-                 data="${[ filter: scheduledExecution?.filter, doNodeDispatch:scheduledExecution?.doNodedispatch,project:params.project?:request.project]}"/>
-    <g:embedJSON id="pageParams" data="${[project:params.project?:request.project]}"/>
+                 data="${[filter: scheduledExecution?.filter, doNodeDispatch: scheduledExecution?.doNodedispatch, project: params.project
+                         ?:
+                         request.project]}"/>
+    <g:embedJSON id="pageParams" data="${[project: params.project ?: request.project]}"/>
 
-    <g:jsMessages code="Node,Node.plural"/>
-      <script type="text/javascript">
-      var pagehistory;
-      function init(){
-        var params=loadJsonData('jobParams');
-        var jobNodeFilters=initJobNodeFilters(params);
-        ko.applyBindings(jobNodeFilters,document.getElementById('schedExDetails'));
+    <g:jsMessages code="Node,Node.plural,option.value.required"/>
+    <script type="text/javascript">
+        var pagehistory;
+        var joboptions;
+        var remotecontroller;
+        function init() {
+            var params = loadJsonData('jobParams');
+            var jobNodeFilters = initJobNodeFilters(params);
+            ko.applyBindings(jobNodeFilters, document.getElementById('schedExDetails'));
 
-        pagehistory = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
-        ko.applyBindings(pagehistory, document.getElementById('activity_section'));
-        setupActivityLinks('activity_section', pagehistory);
-      }
-      jQuery(init);
+            pagehistory = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
+            ko.applyBindings(pagehistory, document.getElementById('activity_section'));
+            setupActivityLinks('activity_section', pagehistory);
+
+            //setup option edit
+            var joboptiondata = loadJsonData('jobOptionData');
+            joboptions = new JobOptions(joboptiondata);
+            ko.applyBindings(joboptions, document.getElementById('optionSelect'));
+
+            var remoteoptionloader = new RemoteOptionLoader({
+                url: "${createLink(controller:'scheduledExecution',action:'loadRemoteOptionValues',params:[format:'json',id:scheduledExecution.extid])}",
+                fieldPrefix:"extra.option."
+            });
+            remotecontroller = new RemoteOptionController({
+                loader: remoteoptionloader,
+                cyclic:${optionsDependenciesCyclic?true:false}
+
+            });
+            remotecontroller.setupOptions(joboptions);
+
+            remotecontroller.loadData(loadJsonData('remoteOptionData'));
+            if (typeof(_registerJobExecUnloadHandler) == 'function') {
+                _registerJobExecUnloadHandler(remotecontroller.unsubscribeAll);
+            }
+            joboptions.remoteoptions = remotecontroller;
+            remotecontroller.begin();
+
+        }
+        jQuery(init);
     </script>
-  </head>
+</head>
 
-  <body>
-        <tmpl:show scheduledExecution="${scheduledExecution}"  crontab="${crontab}"/>
-  </body>
+<body>
+<tmpl:show scheduledExecution="${scheduledExecution}" crontab="${crontab}"/>
+</body>
 </html>
 
 
