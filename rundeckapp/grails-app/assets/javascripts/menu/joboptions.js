@@ -153,7 +153,7 @@ function Option(data) {
     self.remoteValues = ko.observableArray([]);
     self.remoteError = ko.observable();
 
-    self.selectedOptionValue = ko.observable();
+    self.selectedOptionValue = ko.observable(data.value);
     self.defaultStoragePath = ko.observable(data.defaultStoragePath);
     self.truncateDefaultValue = ko.computed(function () {
         var val = self.defaultValue();

@@ -217,31 +217,26 @@ function RemoteOptionController(data) {
         });
     };
     /**
-     * starts observing all option fields for changes
+     * begin by loading on start values, reloading autoreload values, and then observe
+     * changes.
      */
-    self.observeChanges = function () {
-        //TODO: observe
+    self.begin = function () {
         for (var i = 0; i < self.names.length; i++) {
             var name = self.names[i];
             if (self.loadonstart[name]) {
                 self.loadRemoteOptionValues(name);
             }
         }
-        for (var i = 0; i < self.names.length; i++) {
-            self.observeChangesFor(self.names[i]);
-        }
         self.observing = true;
         for (var i = 0; i < self.names.length; i++) {
             self.doOptionAutoReload(self.names[i]);
         }
+
+        for (var i = 0; i < self.names.length; i++) {
+            self.observeChangesFor(self.names[i]);
+        }
     };
 
-    /**
-     * Setup ko subscriptions and begin autoloading
-     */
-    self.begin = function () {
-        self.observeChanges();
-    };
 }
 
 function RemoteOptionLoader(data) {
