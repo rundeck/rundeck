@@ -105,6 +105,7 @@ function Option(data) {
         });
         return optionVal;
     };
+    self.remoteValues = ko.observableArray([]);
     if (self.multivalued()) {
 
         var testselected = function (val) {
@@ -149,6 +150,24 @@ function Option(data) {
         }
 
         self.multiValueList.subscribe(self.evalMultivalueChange);
+
+        if(self.hasRemote()){
+            //when remote values are loaded, set the multivalue entries with them
+            self.remoteValues.subscribe(function(newval){
+                var temp=[];
+                ko.utils.arrayForEach(newval, function (val) {
+                    var selected = testselected(val.value());
+                    temp.push(self.createMultivalueEntry({
+                        label: val.label(),
+                        value: val.value(),
+                        selected: selected,
+                        editable: false,
+                        multival: true
+                    }));
+                });
+                self.multiValueList(temp);
+            });
+        }
     }
     self.remoteValues = ko.observableArray([]);
     self.remoteError = ko.observable();
