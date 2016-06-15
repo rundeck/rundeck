@@ -10,6 +10,9 @@
     <g:javascript library="pagehistory"/>
     <g:javascript library="prototype/effects"/>
     <asset:javascript src="menu/jobs.js"/>
+    <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
+        <asset:javascript src="menu/joboptionsTest.js"/>
+    </g:if>
     <g:embedJSON id="pageParams" data="${[project:params.project?:request.project]}"/>
     <g:jsMessages code="Node,Node.plural,job.starting.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text"/>
     <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->

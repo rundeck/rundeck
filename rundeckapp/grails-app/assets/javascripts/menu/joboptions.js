@@ -13,8 +13,8 @@ function OptionVal(data) {
     "use strict";
 
     var self = this;
-    self.label = ko.observable(data.label);
-    self.value = ko.observable(data.value);
+    self.label = ko.observable(data.label||null);
+    self.value = ko.observable(data.value||null);
     self.selected = ko.observable(data.selected ? true : false);
     self.editable = ko.observable(data.editable ? true : false);
     self.multival = ko.observable(data.multival ? true : false);
@@ -127,7 +127,7 @@ function Option(data) {
             //add any selectedMultiValues that are not in values list
 
             ko.utils.arrayForEach(self.selectedMultiValues(), function (val) {
-                if (ko.utils.arrayIndexOf(self.values(), val) >= 0) {
+                if (self.values() != null && ko.utils.arrayIndexOf(self.values(), val) >= 0) {
                     return;
                 }
                 self.multiValueList.push(self.createMultivalueEntry({
@@ -139,7 +139,7 @@ function Option(data) {
                 }));
             });
         }
-        if (self.values()) {
+        if (self.values() != null) {
             ko.utils.arrayForEach(self.values(), function (val) {
                 var selected = testselected(val);
                 self.multiValueList.push(self.createMultivalueEntry({
@@ -185,35 +185,50 @@ function Option(data) {
         self.value(self.defaultValue());
     };
     self.hasSingleEnforcedValue = ko.computed(function () {
-        //labelsSet && 1==labelsSet.size() && optionSelect.enforced
-        return self.enforced() && self.values() && self.values().length == 1;
+        return self.enforced()
+            && self.values() != null
+            && self.values().length == 1;
     });
     self.singleEnforcedValue = ko.computed(function () {
-        return self.values() ? self.values()[0] : null;
+        return self.hasSingleEnforcedValue() ? self.values()[0] : null;
     });
     self.hasValue = ko.computed(function () {
         return self.value();
     });
     self.hasValues = ko.computed(function () {
         var values = self.values();
-        return values && values.length > 0;
+        return values != null && values.length > 0;
     });
     self.hasExtended = ko.computed(function () {
-        //hasExtended: !optionSelect.secureInput && (values || optionSelect.values || optionSelect.multivalued)
-        return !self.secureInput() && (self.hasValues() || self.multivalued() || self.hasRemote() && self.remoteValues().length > 0);
+        return !self.secureInput()
+            && (
+                self.hasValues()
+                || self.multivalued()
+                || self.hasRemote() && self.remoteValues().length > 0
+            );
     });
     self.hasTextfield = ko.computed(function () {
-        //!optionSelect.enforced && !optionSelect.multivalued || optionSelect.secureInput || !optionSelect.enforced &&
-        // err
-        return !self.enforced() && !self.multivalued() || self.secureInput() || !self.enforced() && self.hasError();
+        return !self.enforced()
+            && (
+                !self.multivalued()
+                || self.hasError()
+            )
+            || self.secureInput();
     });
     self.showDefaultButton = ko.computed(function () {
-        //!optionSelect.enforced && !optionSelect.multivalued && !optionSelect.secureInput && optionSelect.defaultValue
-        // && !(optionSelect.values.contains(optionSelect.defaultValue))
-        return !self.enforced() && !self.multivalued() && !self.secureInput() && self.defaultValue()
-            && !(self.values() && self.values().indexOf(self.defaultValue()) >= 0 ) &&
-            self.value() != self.defaultValue();
+        return !self.enforced()
+            && !self.multivalued()
+            && !self.secureInput()
+            && self.defaultValue()
+            && !(
+                self.values() != null
+                && self.values().indexOf(self.defaultValue()) >= 0
+            )
+            && self.value() != self.defaultValue();
     });
+    /**
+     * Return the array of option objects to use for displaying the Select input for this option
+     */
     self.selectOptions = ko.computed(function () {
         var arr = [];
         if (!self.enforced() && !self.multivalued()) {
@@ -221,11 +236,11 @@ function Option(data) {
         }
         var remotevalues = self.remoteValues();
         var localvalues = self.values();
-        if (self.hasRemote()) {
+        if (self.hasRemote() && remotevalues!=null) {
             ko.utils.arrayForEach(remotevalues, function (val) {
                 arr.push(val);
             });
-        } else {
+        } else if (localvalues != null) {
             ko.utils.arrayForEach(localvalues, function (val) {
                 arr.push(new OptionVal({label: val, value: val}));
             });
