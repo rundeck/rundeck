@@ -100,7 +100,7 @@
                                            value=""/>
 
                                     <span data-bind="if: !editable()">
-                                        <span data-bind="text: value"></span>
+                                        <span data-bind="text: label"></span>
                                     </span>
                                     <span data-bind="if: editable()">
                                         <input data-bind="value: value" class="form-control"/>
