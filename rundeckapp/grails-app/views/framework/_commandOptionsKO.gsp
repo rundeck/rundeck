@@ -1,4 +1,4 @@
-<%@ page import="grails.converters.deep.JSON; grails.util.Environment" %>
+<%@ page import="java.util.regex.Pattern; grails.converters.deep.JSON; grails.util.Environment" %>
 <%--
 used by _editOptions.gsp template
 --%>
@@ -20,16 +20,23 @@ used by _editOptions.gsp template
                                       def optionSelect = optsmap[it].selopt
                                       def optName = optionSelect.name
                                       return [
-                                              name              : optName,
-                                              required          : optionSelect.required,
-                                              description       : optionSelect.description,
-                                              enforced          : optionSelect.enforced,
-                                              values            : optionSelect.values,
-                                              defaultValue      : optionSelect.defaultValue,
-                                              defaultStoragePath: optionSelect.defaultStoragePath,
-                                              multivalued       : optionSelect.multivalued,
-                                              fieldName         : usePrefix + 'option.' + optName,
-                                              hasValue          : !selectedoptsmap && optionSelect.defaultValue ||
+                                              name               : optName,
+                                              required           : optionSelect.required,
+                                              description        : optionSelect.description,
+                                              descriptionHtml    : optionSelect.description?.decodeMarkdown(),
+                                              enforced           : optionSelect.enforced,
+                                              values             : optionSelect.values,
+                                              defaultValue       : optionSelect.defaultValue,
+                                              defaultStoragePath : optionSelect.defaultStoragePath,
+                                              multivalued        : optionSelect.multivalued,
+                                              defaultMultiValues : optionSelect.listDefaultMultiValues(),
+                                              delimiter          : optionSelect.delimiter,
+                                              selectedMultiValues: selectedoptsmap && selectedoptsmap[optName] && optionSelect.multivalued
+                                                      && optionSelect.delimiter ? selectedoptsmap[optName]?.split(
+                                                      java.util.regex.Pattern.quote(optionSelect.delimiter)
+                                              ) as List : null,
+                                              fieldName          : usePrefix + 'option.' + optName,
+                                              hasValue           : !selectedoptsmap && optionSelect.defaultValue ||
                                                       selectedoptsmap &&
                                                       selectedoptsmap[optName] ||
                                                       !optionSelect.defaultValue &&
@@ -37,15 +44,15 @@ used by _editOptions.gsp template
                                                       &&
                                                       optionSelect.enforced &&
                                                       optionSelect.values,
-                                              hasError          : jobexecOptionErrors ? jobexecOptionErrors[optName] :
+                                              hasError           : jobexecOptionErrors ? jobexecOptionErrors[optName] :
                                                       null,
-                                              hasRemote         : optionSelect.realValuesUrl != null,
-                                              optionDepsMet     : !optiondependencies[optName] || selectedoptsmap &&
+                                              hasRemote          : optionSelect.realValuesUrl != null,
+                                              optionDepsMet      : !optiondependencies[optName] || selectedoptsmap &&
                                                       optiondependencies[optName].every { selectedoptsmap[it] },
-                                              secureInput       : optionSelect.secureInput,
-                                              hasExtended       : !optionSelect.secureInput && (values || optionSelect.values ||
+                                              secureInput        : optionSelect.secureInput,
+                                              hasExtended        : !optionSelect.secureInput && (values || optionSelect.values ||
                                                       optionSelect.multivalued),
-                                              value             : selectedvalue ? selectedvalue :
+                                              value              : selectedvalue ? selectedvalue :
                                                       selectedoptsmap && null != selectedoptsmap[optName] ?
                                                               selectedoptsmap[optName] :
                                                               optionSelect.defaultValue ? optionSelect.defaultValue : ''
@@ -55,7 +62,8 @@ used by _editOptions.gsp template
 <%--
 data for configuring remote option cascading/dependencies
 --%>
-    <g:embedJSON id="remoteOptionData" data="${remoteOptionData}"/>
+    <g:embedJSON id="remoteOptionData"
+                 data="${[options: remoteOptionData, optionsDependenciesCyclic: optionsDependenciesCyclic]}"/>
 
     <div id="_commandOptions" data-bind="foreach: {data: options(), as: 'option' }">
         <div class="form-group " data-bind="
@@ -66,12 +74,13 @@ data for configuring remote option cascading/dependencies
                 <span data-bind="if: loading() && hasRemote()">
                     <g:img file="spinner-gray.gif" width="24px" height="24px"/>
                 </span>
-                <span class="remotestatus" data-bind="if: hasRemote, css: {ok: !remoteError() && remoteValues, error: remoteError()}">
+                <span class="remotestatus"
+                      data-bind="if: hasRemote, css: {ok: !remoteError() && remoteValues, error: remoteError()}">
                 </span>
                 <span data-bind="text: name"></span>
             </label>
 
-            <div class=" col-sm-9" >
+            <div class=" col-sm-9">
 
                 <span class="info note" data-bind="if: !optionDepsMet && hasRemote()">
                     <g:message code="option.remote.dependency.emptyresult"/>
@@ -80,6 +89,7 @@ data for configuring remote option cascading/dependencies
                 <g:render template="/framework/optionValuesSelectKO"/>
 
             </div>
+
             <div class="col-sm-1">
                 <span data-bind="if: required">
                     <span class="reqwarning has_tooltip"
@@ -91,8 +101,8 @@ data for configuring remote option cascading/dependencies
             </div>
 
             <div class="col-sm-10 col-sm-offset-2">
-                %{--<span class="help-block"><g:markdown>${optDescription}</g:markdown></span>--}%
-                <span class="help-block" data-bind="text: description"></span>
+                %{--<span class="help-block" data-bind="text: description"></span>--}%
+                <span class="help-block" data-bind="html: descriptionHtml"></span>
             </div>
 
             <div class="col-sm-10 col-sm-offset-2" data-bind="if: hasError">

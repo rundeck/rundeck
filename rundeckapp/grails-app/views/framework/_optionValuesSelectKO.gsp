@@ -36,6 +36,7 @@
                                  data-bind="value: value, attr: {name: fieldName}"
                                  class="optionvaluesfield  form-control"
                                  value=""
+                                 autocomplete="new-password"
                                  size="40"/>
                 <div data-bind="if: defaultStoragePath">
                     <span class="input-group-addon has_tooltip"
@@ -69,24 +70,7 @@
 
         <div data-bind="css: {'col-sm-4': hasTextfield(), 'col-sm-12': !hasTextfield() }">
 
-            %{--<g:set var="labelsSet" value="${values && values instanceof Map ? values.keySet() :--}%
-            %{--values ? values : optionSelect.values ? optionSelect.values : []}"/>--}%
-            %{--<g:set var="valuesMap" value="${values && values instanceof Map ? values : null}"/>--}%
-            %{-- set of all of the values that will be pre-shown in the multivalue list --}%
-            %{--<g:set var="labelsSetValues" value="${labelsSet?.collect {--}%
-            %{--it instanceof Map ? it.value : it--}%
-            %{--}}"/>--}%
-
             <div data-bind="if: hasSingleEnforcedValue()">
-                %{--<g:set var="selentry" value="${labelsSet.iterator().next()}"/>--}%
-                %{--<g:if test="${selentry instanceof Map}">--}%
-                %{--<g:set var="sellabel" value="${selentry.name}"/>--}%
-                %{--<g:set var="selvalue" value="${selentry.value}"/>--}%
-                %{--</g:if>--}%
-                %{--<g:else>--}%
-                %{--<g:set var="sellabel" value="${selentry}"/>--}%
-                %{--<g:set var="selvalue" value="${valuesMap?valuesMap[sellabel]:sellabel}"/>--}%
-                %{--</g:else>--}%
                 <g:hiddenField
                         data-bind="attr: {name: fieldName}, value: singleEnforcedValue"
                         name="-" value=""/>
@@ -96,105 +80,42 @@
 
             <div data-bind="if:!hasSingleEnforcedValue()">
 
-                %{--<g:if test="${optionSelect.multivalued}">--}%
-                %{--<!-- use checkboxes -->--}%
-                %{--<g:set var="defaultMultiValues" value="${optionSelect.listDefaultMultiValues()}"/>--}%
-                %{--<div class="optionmultiarea " id="${enc(attr: fieldwatchid)}">--}%
-                %{--<g:if test="${selectedoptsmap && selectedoptsmap[optName] &&--}%
-                %{--selectedoptsmap[optName] instanceof String}">--}%
-                %{--%{--}%
-                %{--selectedoptsmap[optName] = selectedoptsmap[optName].split(--}%
-                %{--Pattern.quote(optionSelect.delimiter)--}%
-                %{--) as List--}%
-                %{--}%--}%
-                %{--</g:if>--}%
-                %{--<g:if test="${!optionSelect.enforced}">--}%
-                %{--<%-- variable input text fields --%>--}%
-                %{--<div class="container">--}%
-                %{--<div class="row">--}%
-                %{--<div class="col-sm-12 optionvaluemulti-add">--}%
-                %{--<span class="btn btn-default btn-xs obs_addvar">--}%
-                %{--New Value <i class="glyphicon glyphicon-plus"></i>--}%
-                %{--</span>--}%
-                %{--</div>--}%
-                %{--</div>--}%
-                %{--</div>--}%
+                <div data-bind="if: multivalued">
+                    <!-- use checkboxes -->
+                    <div class="optionmultiarea ">
 
-                %{--<div class="">--}%
-                %{--<div id="${enc(attr: rkey)}varinput" class="">--}%
+                        <div data-bind="if: !enforced()">
+                            <%-- variable input text fields --%>
+                            <div class="container">
+                                <div class="row">
+                                    <div class="col-sm-12 optionvaluemulti-add">
+                                        <span class="btn btn-default btn-xs " data-bind="click: newMultivalueEntry">
+                                            New Value <i class="glyphicon glyphicon-plus"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div data-bind="foreach: multiValueList(), beforeRemove: animateRemove, beforeAdd: animateAdd">
+                            <div class="optionvaluemulti form-inline">
+                                <label>
+                                    <input type="checkbox"
+                                           name="-"
+                                           data-bind="attr: { name: $parent.fieldName }, value: value, checked: selected"
+                                           value=""/>
 
-                %{--</div>--}%
-                %{--</div>--}%
-                %{----}%
-                %{--Determine any new values (via selectedoptsmap) that should be added--}%
-                %{--to the multivalue list, and preselected--}%
-                %{----}%
-                %{--<g:set var="newvals"--}%
-                %{--value="${selectedoptsmap ? labelsSetValues ? selectedoptsmap[optName].findAll {--}%
-                %{--!labelsSetValues.contains(it)--}%
-                %{--} : selectedoptsmap[optName] : null}"/>--}%
-                %{--<g:if test="${newvals}">--}%
-                %{--<g:javascript>--}%
-                %{--fireWhenReady('${enc(js: rkey)}varinput', function(){--}%
-                %{--<g:each in="${newvals}" var="nvalue">--}%
-                %{--ExecutionOptions.addMultivarValue('${enc(js: optName)}','${enc(--}%
-                %{--js: rkey--}%
-                %{--)}varinput','${enc(js: nvalue)}',null,'bottom');--}%
-                %{--</g:each>--}%
-                %{--}--}%
-                %{--);--}%
-                %{--</g:javascript>--}%
-                %{--</g:if>--}%
-                %{--<g:if test="${!labelsSet && !newvals}">--}%
-                %{--<g:javascript>--}%
-                %{--fireWhenReady('${enc(--}%
-                %{--js: rkey--}%
-                %{--)}varinput', function(){ ExecutionOptions.addMultivarValue('${enc(js: optName)}','${enc(--}%
-                %{--js: rkey--}%
-                %{--)}varinput'); } );--}%
-                %{--</g:javascript>--}%
-                %{--</g:if>--}%
-                %{--</g:if>--}%
-                %{--<g:each in="${labelsSet}" var="sellabel">--}%
-                %{--<g:set var="entry"--}%
-                %{--value="${sellabel instanceof Map ? sellabel : [name: sellabel, value: sellabel]}"/>--}%
-                %{--<div class="">--}%
-                %{--<div class="">--}%
-                %{--<div class="optionvaluemulti ">--}%
-                %{--<label>--}%
-                %{--<g:set var="ischecked" value="${selectedvalue && entry.value ==--}%
-                %{--selectedvalue ||--}%
-                %{--(defaultMultiValues ? entry.value in defaultMultiValues :--}%
-                %{--entry.value == optionSelect.defaultValue) ||--}%
-                %{--selectedoptsmap &&--}%
-                %{--entry.value in--}%
-                %{--selectedoptsmap[optName]}"/>--}%
-                %{--<input type="checkbox" name="${enc(attr: realFieldName)}"--}%
-                %{--value="${enc(attr: entry.value)}" ${ischecked ? 'checked' : ''}/>--}%
-                %{--<g:enc>${entry.name}</g:enc>--}%
-                %{--</label>--}%
-                %{--</div>--}%
-                %{--</div>--}%
-                %{--</div>--}%
+                                    <span data-bind="if: !editable()">
+                                        <span data-bind="text: value"></span>
+                                    </span>
+                                    <span data-bind="if: editable()">
+                                        <input data-bind="value: value" class="form-control"/>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                %{--</g:each>--}%
-                %{--</div>--}%
-                %{--<g:javascript>--}%
-                %{--fireWhenReady('${enc(js: fieldwatchid)}', function(){--}%
-                %{--$$('#${enc(js: fieldwatchid)} input[type="checkbox"]').each(function(e){--}%
-                %{--Event.observe(e,'change',ExecutionOptions.multiVarCheckboxChangeWarningHandler.curry('${--}%
-                %{--enc(js: optName)}'));--}%
-                %{--});--}%
-                %{--$$('#${enc(js: fieldwatchid)} .obs_addvar').each(function(e){--}%
-                %{--Event.observe(e,'click', function(evt){--}%
-                %{--var roc=_remoteOptionControl('_commandOptions');--}%
-                %{--ExecutionOptions.addMultivarValue('${enc(js: optName)}','${enc(js: rkey)}varinput',null,roc.observeMultiCheckbox.bind(roc));--}%
-                %{--});--}%
-                %{--});--}%
-                %{--}--}%
-                %{--);--}%
-                %{--</g:javascript>--}%
-                %{--</g:if>--}%
                 <div data-bind="if:!multivalued()">
                     <select class="optionvalues form-control"
                             data-bind="attr: {name: !hasTextfield()?fieldName():'' },
@@ -227,10 +148,10 @@
                 <div class="info note emptyMessage">No values to choose from</div>
             </div>
             <span key="${rkey}_error_detail"
-                        class="text-warning _error_detail" data-bind="text: remoteError().message">
+                  class="text-warning _error_detail" data-bind="text: remoteError().message">
 
             </span>
-%{--TODO expander--}%
+            %{--TODO expander--}%
             <div class="alert alert-warning _error_detail" style="" id="${enc(attr: rkey)}_error_detail">
                 <span data-bind="if: remoteError().exception">
                     <div>Exception: <span data-bind="text: remoteError().exception"></span></div>

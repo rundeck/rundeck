@@ -82,8 +82,7 @@ function RemoteOptionController(data) {
         //stop observing option name if doing so
         // self.stopObserving(name);
         var option = self.options[name];
-        self.loader.loadRemoteOptionValues(option,self.options).then(function (data) {
-            console.log("loaded data",data);
+        self.loader.loadRemoteOptionValues(option, self.options).then(function (data) {
             option.loadRemote(data);
         });
     };
@@ -121,6 +120,8 @@ function RemoteOptionController(data) {
 
                 // determine if we should reload the dependent option
                 // do not reload iff: any its dependencies does not have value, and is required
+
+                //XXX: if skipped, need status
                 for (var j = 0; j < self.dependencies[dependentName].length; j++) {
                     var dependencyName = self.dependencies[dependentName][j];
                     var option = self.options[dependencyName];
@@ -135,33 +136,6 @@ function RemoteOptionController(data) {
             }
         }
     };
-
-    //
-    // self.observeMultiCheckbox = function (name, e) {
-    //     var roc = this;
-    //     if (!$(e)) {
-    //         throw "not found: " + e;
-    //     }
-    //     Element.observe(e, 'change', function (evt, value) {
-    //         roc.optionValueChanged(name, value);
-    //     });
-    // };
-    //
-    // self.setFieldMultiId = function (name, id) {
-    //
-    //     if (self.observing) {
-    //         var found = $(id).select("input[type='checkbox']");
-    //         if (found) {
-    //             found.each(self.observeMultiCheckbox.bind(this, name));
-    //         }
-    //         var auto = self.doOptionAutoReload(name);
-    //         if (!auto && self.options[name]) {
-    //             //if already observing, and value now differs, trigger reload
-    //             self.optionValueChanged(name, '');
-    //         }
-    //     }
-    // };
-
 
     self.doOptionAutoReload = function (name) {
         if (self.autoreload[name]) {
@@ -187,8 +161,13 @@ function RemoteOptionController(data) {
      * @param data
      */
     self.loadData = function (data) {
-        for (var opt in data) {
-            var params = data[opt];
+
+        //XXX: tests cyclic
+        if (data['optionsDependenciesCyclic']) {
+            self.cyclic = data['optionsDependenciesCyclic'];
+        }
+        for (var opt in data.options) {
+            var params = data.options[opt];
             if (params['optionDependencies']) {
                 self.addOptionDependencies(opt, params['optionDependencies']);
             }
@@ -205,11 +184,6 @@ function RemoteOptionController(data) {
                 if (params['optionAutoReload']) {
                     self.setOptionAutoReload(opt, true);
                 }
-                // if (params['fieldMultiId']) {
-                //     self.setFieldMultiId(opt, params['fieldMultiId']);
-                // }
-                // } else {
-                //     self.addLocalOption(opt);
             }
         }
     };
@@ -262,21 +236,22 @@ function RemoteOptionLoader(data) {
     var self = this;
     self.url = data.url;
     self.fieldPrefix = data.fieldPrefix;
+    self.id = data.id;
     //load remote values
-    self.loadRemoteOptionValues = function (opt,options) {
+    self.loadRemoteOptionValues = function (opt, options) {
         opt.loading(true);
-        var params = {option: opt.name(), selectedvalue: opt.value()};
+        var params = {option: opt.name(), selectedvalue: opt.value(), id: self.id};
         //
-        if(null!=options){
-            for(var xopt in options){
-                if(xopt!=opt.name()){
-                    params[self.fieldPrefix+xopt]=options[xopt].value();
+        if (null != options) {
+            for (var xopt in options) {
+                if (xopt != opt.name()) {
+                    params[self.fieldPrefix + xopt] = options[xopt].value();
                 }
             }
         }
         return jQuery.ajax({
             method: 'GET',
-            type:'json',
+            type: 'json',
             url: _genUrl(self.url, params),
             success: function (data, status, jqxhr) {
                 // self.addReloadRemoteOptionValues(opt,data);

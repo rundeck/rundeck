@@ -15,6 +15,17 @@ function OptionVal(data) {
     var self = this;
     self.label = ko.observable(data.label);
     self.value = ko.observable(data.value);
+    self.selected = ko.observable(data.selected ? true : false);
+    self.editable = ko.observable(data.editable ? true : false);
+    self.multival = ko.observable(data.multival ? true : false);
+    self.resultValue = ko.computed(function () {
+        var sel = self.selected();
+        var val = self.value();
+        if (sel && val) {
+            return val;
+        }
+        return sel || val ? "" : null;
+    });
 }
 function Option(data) {
     "use strict";
@@ -22,7 +33,8 @@ function Option(data) {
     var self = this;
     self.name = ko.observable(data.name);
     self.description = ko.observable(data.description);
-    self.loading=ko.observable(false);
+    self.descriptionHtml = ko.observable(data.descriptionHtml);
+    self.loading = ko.observable(false);
     self.required = ko.observable(data.required ? true : false);
     self.enforced = ko.observable(data.enforced ? true : false);
     self.fieldName = ko.observable(data.fieldName);
@@ -34,13 +46,102 @@ function Option(data) {
     self.optionDepsMet = ko.observable(data.optionDepsMet);
     self.secureInput = ko.observable(data.secureInput);
     self.multivalued = ko.observable(data.multivalued);
+    self.delimiter = ko.observable(data.delimiter);
     self.value = ko.observable(data.value);
+    /**
+     * static list of values to choose from
+     */
     self.values = ko.observableArray(data.values);
+    self.defaultValue = ko.observable(data.defaultValue);
+    /**
+     * list of values already selected
+     */
+    self.selectedMultiValues = ko.observableArray(data.selectedMultiValues);
+    /**
+     * list of values chosen as default for multivalued
+     */
+    self.defaultMultiValues = ko.observableArray(data.defaultMultiValues);
+    /**
+     * list of all multivalue strings to choose from
+     */
+    self.multiValueList = ko.observableArray(data.multiValueList);
+    //set up multivaluelist if default/selected values
+    self.evalMultivalueChange = function () {
+        //construct value string from selected multivalue options
+        var str = '';
+
+        var selected = ko.utils.arrayFilter(self.multiValueList(), function (val) {
+            return val.selected() && val.value();
+        });
+        ko.utils.arrayForEach(selected, function (val) {
+            if (str.length > 0) {
+                str += self.delimiter();
+            }
+            str += val.value();
+        });
+        self.value(str);
+    };
+    self.createMultivalueEntry = function (obj) {
+        var optionVal = new OptionVal(obj);
+        optionVal.resultValue.subscribe(function (newval) {
+            if (newval == null) {
+                //remove from parent
+                self.multiValueList.remove(optionVal);
+            } else {
+                self.evalMultivalueChange();
+            }
+        });
+        return optionVal;
+    };
+    if (self.multivalued()) {
+
+        var testselected=function(val){
+            if (self.selectedMultiValues() && self.selectedMultiValues().length>0) {
+                return ko.utils.arrayIndexOf(self.selectedMultiValues(), val) >= 0;
+            } else if (self.defaultMultiValues() && self.defaultMultiValues().length>0) {
+                return ko.utils.arrayIndexOf(self.defaultMultiValues(), val) >= 0;
+            } else if (self.value()) {
+                return  self.value() == val;
+            } else if (self.defaultValue()) {
+                return self.defaultValue() == val;
+            }
+            return false;
+        };
+        if(!self.enforced() && self.selectedMultiValues()){
+            //add any selectedMultiValues that are not in values list
+
+            ko.utils.arrayForEach(self.selectedMultiValues(), function (val) {
+                if(ko.utils.arrayIndexOf(self.values(),val)>=0){
+                    return;
+                }
+                self.multiValueList.push(self.createMultivalueEntry({
+                    label: '_new',
+                    value: val,
+                    selected: testselected(val),
+                    editable: true,
+                    multival: true
+                }));
+            });
+        }
+        if (self.values()) {
+            ko.utils.arrayForEach(self.values(), function (val) {
+                var selected = testselected(val);
+                self.multiValueList.push(self.createMultivalueEntry({
+                    label: '_new',
+                    value: val,
+                    selected: selected,
+                    editable: false,
+                    multival: true
+                }));
+            });
+        }
+
+        self.multiValueList.subscribe(self.evalMultivalueChange);
+    }
     self.remoteValues = ko.observableArray([]);
     self.remoteError = ko.observable();
 
     self.selectedOptionValue = ko.observable();
-    self.defaultValue = ko.observable(data.defaultValue);
     self.defaultStoragePath = ko.observable(data.defaultStoragePath);
     self.truncateDefaultValue = ko.computed(function () {
         var val = self.defaultValue();
@@ -66,7 +167,7 @@ function Option(data) {
     });
     self.hasExtended = ko.computed(function () {
         //hasExtended: !optionSelect.secureInput && (values || optionSelect.values || optionSelect.multivalued)
-        return !self.secureInput() && (self.hasValues() || self.multivalued() || self.hasRemote() && self.remoteValues().length>0);
+        return !self.secureInput() && (self.hasValues() || self.multivalued() || self.hasRemote() && self.remoteValues().length > 0);
     });
     self.hasTextfield = ko.computed(function () {
         //!optionSelect.enforced && !optionSelect.multivalued || optionSelect.secureInput || !optionSelect.enforced &&
@@ -98,6 +199,19 @@ function Option(data) {
         }
         return arr;
     });
+    self.newMultivalueEntry = function () {
+        var arr = self.multiValueList;
+        arr.unshift(self.createMultivalueEntry({
+            label: '_new',
+            value: '',
+            selected: true,
+            editable: true,
+            multival: true
+        }));
+    };
+    self.multivalueOptions = ko.computed(function () {
+
+    });
 
     self.selectedOptionValue.subscribe(function (newval) {
         if (newval && newval.value()) {
@@ -109,33 +223,58 @@ function Option(data) {
      * Option values data loaded from remote JSON request
      * @param data
      */
-    self.loadRemote=function(data){
-        if(data.err && data.err.message){
-            var err=data.err;
-            if(err) {
+    self.loadRemote = function (data) {
+        if (data.err && data.err.message) {
+            var err = data.err;
+            if (err) {
                 err.url = data.srcUrl;
             }
             self.remoteError(err);
             self.remoteValues([]);
-        }else if (data.values) {
+        } else if (data.values) {
             self.remoteError(null);
             var rvalues = [];
-            ko.utils.arrayForEach(data.values,function(val){
-               if(typeof(val)=='object'){
-                   rvalues.push(new OptionVal({label:val.name,value:val.value}));
-               } else if(typeof(val)=='string'){
-                   rvalues.push(new OptionVal({label:val,value:val}));
-               }
+            if(data.selectedvalue){
+                self.value(data.selectedvalue);
+            }
+            var selval;
+            ko.utils.arrayForEach(data.values, function (val) {
+                var optval;
+                if (typeof(val) == 'object') {
+                    optval=new OptionVal({label: val.name, value: val.value});
+                } else if (typeof(val) == 'string') {
+                    optval=new OptionVal({label: val, value: val});
+                }
+                if(optval){
+                    rvalues.push(optval);
+                }
+
+                if(optval.value()==self.value()){
+                    selval=optval;
+                }
             });
             self.remoteValues(rvalues);
+
+            if(selval){
+                self.selectedOptionValue(selval);
+            }
+
         }
+    };
+    self.animateRemove = function (div) {
+        jQuery(div).fadeTo('fast', 0, function () {
+            jQuery(div).remove();
+        });
+    };
+    self.animateAdd = function (div) {
+        jQuery(div).hide().slideDown();
     };
 }
 function JobOptions(data) {
     "use strict";
     var self = this;
     self.options = ko.observableArray();
-    self.remoteoptions=null;
+    self.remoteoptions = null;
     self.mapping = {
         options: {
             key: function (data) {

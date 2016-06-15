@@ -11,7 +11,7 @@
     <g:javascript library="prototype/effects"/>
     <asset:javascript src="menu/jobs.js"/>
     <g:embedJSON id="pageParams" data="${[project:params.project?:request.project]}"/>
-    <g:jsMessages code="Node,Node.plural,job.starting.execution"/>
+    <g:jsMessages code="Node,Node.plural,job.starting.execution,option.value.required"/>
     <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
     <script type="text/javascript">
         /** knockout binding for activity */
@@ -49,7 +49,7 @@
             }
             jQuery('#execDivContent').load(_genUrl(appLinks.scheduledExecutionExecuteFragment, params),function(response,status,xhr){
                 if (status=='success') {
-                    loadedFormSuccess(!!id);
+                    loadedFormSuccess(!!id,id);
                 } else{
                     requestError("executeFragment for [" + id + "]",xhr);
                 }
@@ -86,7 +86,7 @@
                 onFailure: requestError.curry("runJobInline")
             });
         }
-        function loadedFormSuccess(doShow){
+        function loadedFormSuccess(doShow,id){
             if ($('execFormCancelButton')) {
                 Event.observe($('execFormCancelButton'),'click',function(evt) {
                     Event.stop(evt);
@@ -103,6 +103,32 @@
                     return false;
                 },false);
             }
+            //setup option handling
+            //setup option edit
+            var joboptiondata = loadJsonData('jobOptionData');
+            var joboptions = new JobOptions(joboptiondata);
+            ko.applyBindings(joboptions, document.getElementById('optionSelect'));
+
+            var remoteoptionloader = new RemoteOptionLoader({
+                url: "${createLink(controller:'scheduledExecution',action:'loadRemoteOptionValues',params:[format:'json'])}",
+                id:id,
+                fieldPrefix: "extra.option."
+            });
+            var remotecontroller = new RemoteOptionController({
+                loader: remoteoptionloader,
+            });
+            remotecontroller.setupOptions(joboptions);
+
+            remotecontroller.loadData(loadJsonData('remoteOptionData'));
+            if (typeof(_registerJobExecUnloadHandler) == 'function') {
+                _registerJobExecUnloadHandler(remotecontroller.unsubscribeAll);
+            }
+            joboptions.remoteoptions = remotecontroller;
+            remotecontroller.begin();
+
+            jQuery('input').on('keydown', function (evt) {
+                return noenter(evt);
+            });
             if(doShow){
                 jQuery('#execDiv').modal('show');
             }
@@ -477,7 +503,7 @@
         });
     </script>
     <g:javascript library="yellowfade"/>
-    <g:render template="/framework/remoteOptionValuesJS"/>
+    <asset:javascript src="menu/joboptions.js"/>
     <style type="text/css">
     .error{
         color:red;

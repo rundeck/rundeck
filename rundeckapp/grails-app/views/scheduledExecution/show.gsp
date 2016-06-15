@@ -35,23 +35,20 @@
             ko.applyBindings(joboptions, document.getElementById('optionSelect'));
 
             var remoteoptionloader = new RemoteOptionLoader({
-                url: "${createLink(controller:'scheduledExecution',action:'loadRemoteOptionValues',params:[format:'json',id:scheduledExecution.extid])}",
-                fieldPrefix:"extra.option."
+                url: "${createLink(controller:'scheduledExecution',action:'loadRemoteOptionValues',params:[format:'json'])}",
+                id:"${scheduledExecution.extid}",
+                fieldPrefix: "extra.option."
             });
-            remotecontroller = new RemoteOptionController({
-                loader: remoteoptionloader,
-                cyclic:${optionsDependenciesCyclic?true:false}
-
-            });
+            remotecontroller = new RemoteOptionController({ loader: remoteoptionloader});
             remotecontroller.setupOptions(joboptions);
-
             remotecontroller.loadData(loadJsonData('remoteOptionData'));
-            if (typeof(_registerJobExecUnloadHandler) == 'function') {
-                _registerJobExecUnloadHandler(remotecontroller.unsubscribeAll);
-            }
+
             joboptions.remoteoptions = remotecontroller;
             remotecontroller.begin();
 
+            jQuery('input').on('keydown', function (evt) {
+                return noenter(evt);
+            });
         }
         jQuery(init);
     </script>
