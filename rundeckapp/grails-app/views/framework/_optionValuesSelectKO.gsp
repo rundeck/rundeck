@@ -23,11 +23,7 @@
     $Id$
  --%>
 
-<g:set var="rkey" value="${rkey ?: g.rkey()}"/>
-<g:set var="fkey" value="${rkey}"/>
 <div class="row" data-bind="if: option">
-    <g:set var="textcolsize" value="${hasExtended ? '8' : '12'}"/>
-    <g:set var="extcolsize" value="${hasTextfield ? '4' : '12'}"/>
     <%-- Print out the input box for random input --%>
     <div data-bind="if: hasTextfield">
         <div data-bind="css: {'col-sm-8': hasExtended(), 'col-sm-12': !hasExtended() }">
@@ -100,7 +96,6 @@
                             <div class="optionvaluemulti form-inline">
                                 <label>
                                     <input type="checkbox"
-                                           name="-"
                                            data-bind="attr: { name: $parent.fieldName }, value: value, checked: selected"
                                            value=""/>
 
@@ -147,12 +142,11 @@
                 %{--TODO: wrap field contents--}%
                 <div class="info note emptyMessage">No values to choose from</div>
             </div>
-            <span key="${rkey}_error_detail"
-                  class="text-warning _error_detail" data-bind="text: remoteError().message">
+            <span class="text-warning _error_detail" data-bind="text: remoteError().message">
 
             </span>
             %{--TODO expander--}%
-            <div class="alert alert-warning _error_detail" style="" id="${enc(attr: rkey)}_error_detail">
+            <div class="alert alert-warning _error_detail" data-bind="visible: remoteError().exception || remoteError().url">
                 <span data-bind="if: remoteError().exception">
                     <div>Exception: <span data-bind="text: remoteError().exception"></span></div>
                 </span>
