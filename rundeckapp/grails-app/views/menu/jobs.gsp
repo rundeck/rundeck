@@ -14,7 +14,7 @@
         <asset:javascript src="menu/joboptionsTest.js"/>
     </g:if>
     <g:embedJSON id="pageParams" data="${[project:params.project?:request.project]}"/>
-    <g:jsMessages code="Node,Node.plural,job.starting.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text"/>
+    <g:jsMessages code="Node,Node.plural,job.starting.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text,option.select.choose.text"/>
     <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
     <script type="text/javascript">
         /** knockout binding for activity */

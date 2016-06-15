@@ -232,7 +232,7 @@ function Option(data) {
     self.selectOptions = ko.computed(function () {
         var arr = [];
         if (!self.enforced() && !self.multivalued()) {
-            arr.push(new OptionVal({label: "-choose-", value: ''}));
+            arr.push(new OptionVal({label: message('option.select.choose.text'), value: ''}));
         }
         var remotevalues = self.remoteValues();
         var localvalues = self.values();
