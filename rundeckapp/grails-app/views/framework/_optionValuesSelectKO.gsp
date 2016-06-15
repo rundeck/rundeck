@@ -136,12 +136,19 @@
 
 </div>
 
+<div data-bind="if: hasRemote() && remoteValues().length<1">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="text-muted"><g:message code="option.remote.values.empty.info" /></div>
+        </div>
+    </div>
+</div>
+
 <div data-bind="if: remoteError()">
     <div class="row">
         <div class="col-sm-12">
             <div data-bind="if: remoteError().code == 'empty'">
-                %{--TODO: wrap field contents--}%
-                <div class="info note emptyMessage">No values to choose from</div>
+                <div class="text-muted"><g:message code="option.remote.values.empty.info" /></div>
             </div>
             <span class="text-warning _error_detail" data-bind="text: remoteError().message">
 
