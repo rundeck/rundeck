@@ -2492,7 +2492,7 @@ class ScheduledExecutionController  extends ControllerBase{
             log.warn("Cyclic dependency for options for job ${scheduledExecution.extid}: (${toporesult.cycle})")
             model.optionsDependenciesCyclic = true
         }
-        if (!explicitOrdering && toporesult.result) {
+        if (toporesult.result) {
             model.optionordering = toporesult.result
         }
 
