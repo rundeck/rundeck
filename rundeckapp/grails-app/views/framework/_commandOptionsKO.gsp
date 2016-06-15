@@ -19,16 +19,18 @@ used by _editOptions.gsp template
                                   (optionordering ?: optsmap.keySet().sort()).collect {
                                       def optionSelect = optsmap[it].selopt
                                       def optName = optionSelect.name
-                                      def selectedMultiValues=null
-                                      if(selectedoptsmap && selectedoptsmap[optName] && optionSelect.multivalued && optionSelect.delimiter) {
-                                          def value=selectedoptsmap[optName]
-                                          if(value instanceof String) {
+                                      def selectedMultiValues = null
+                                      if (selectedoptsmap && selectedoptsmap[optName] &&
+                                              optionSelect.multivalued &&
+                                              optionSelect.delimiter) {
+                                          def value = selectedoptsmap[optName]
+                                          if (value instanceof String) {
                                               selectedMultiValues = value.split(
                                                       java.util.regex.Pattern.quote(optionSelect.delimiter)
                                               ) as List
 
-                                          }else if(value instanceof Collection){
-                                              selectedMultiValues=value as List
+                                          } else if (value instanceof Collection) {
+                                              selectedMultiValues = value as List
                                           }
                                       }
                                       return [
@@ -100,7 +102,6 @@ data for configuring remote option cascading/dependencies
                 <span class="info note" data-bind="if: !optionDepsMet && hasRemote()">
                     <g:message code="option.remote.dependency.emptyresult"/>
                 </span>
-                %{--<input type="hidden" data-bind="attr: { id: fieldId, name: fieldName }, value: value">--}%
                 <g:render template="/framework/optionValuesSelectKO"/>
 
             </div>
@@ -127,10 +128,10 @@ data for configuring remote option cascading/dependencies
     </div>
 
 
-    <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
-    <div data-bind="foreach: {data: options(), as: 'option' }" class="text-muted">
-        <div><span data-bind="text: option.name"></span>=<span data-bind="text: option.value"></span></div>
-    </div>
+    <g:if test="${grails.util.Environment.current == grails.util.Environment.DEVELOPMENT}">
+        <div data-bind="foreach: {data: options(), as: 'option' }" class="text-muted">
+            <div><span data-bind="text: option.name"></span>=<span data-bind="text: option.value"></span></div>
+        </div>
     </g:if>
 
     <g:if test="${optionsDependenciesCyclic}">
