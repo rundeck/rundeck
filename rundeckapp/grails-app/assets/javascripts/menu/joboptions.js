@@ -226,8 +226,10 @@ function Option(data) {
     });
 
     self.selectedOptionValue.subscribe(function (newval) {
-        if (newval && newval.value()) {
+        if (newval && typeof(newval)=='object' && typeof(newval.value)=='function' && newval.value()) {
             self.value(newval.value());
+        }else if(typeof(newval)=='string'){
+            self.value(newval);
         }
     });
 
@@ -248,6 +250,7 @@ function Option(data) {
             var rvalues = [];
             if(data.selectedvalue){
                 self.value(data.selectedvalue);
+                self.selectedOptionValue(data.selectedvalue);
             }
             var selval;
             ko.utils.arrayForEach(data.values, function (val) {
@@ -266,11 +269,6 @@ function Option(data) {
                 }
             });
             self.remoteValues(rvalues);
-
-            if(selval){
-                self.selectedOptionValue(selval);
-            }
-
         }
     };
     self.animateRemove = function (div) {

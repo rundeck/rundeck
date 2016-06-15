@@ -116,6 +116,7 @@
                             data-bind="attr: {name: !hasTextfield()?fieldName():'' },
                          options: selectOptions,
                          optionsText: 'label',
+                         optionsValue: 'value',
                         value:selectedOptionValue">
                     </select>
 
