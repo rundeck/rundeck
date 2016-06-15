@@ -31,6 +31,7 @@ function Option(data) {
     "use strict";
 
     var self = this;
+    self.remoteLoadCallback = null;
     self.name = ko.observable(data.name);
     self.description = ko.observable(data.description);
     self.descriptionHtml = ko.observable(data.descriptionHtml);
@@ -65,6 +66,17 @@ function Option(data) {
      * list of all multivalue strings to choose from
      */
     self.multiValueList = ko.observableArray(data.multiValueList);
+
+    self.setReloadCallback=function(func){
+        self.remoteLoadCallback=func;
+    };
+
+    self.reloadRemoteValues=function(){
+        if(self.hasRemote() && self.remoteLoadCallback){
+            self.remoteLoadCallback(self.name());
+        }
+    };
+
     //set up multivaluelist if default/selected values
     self.evalMultivalueChange = function () {
         //construct value string from selected multivalue options

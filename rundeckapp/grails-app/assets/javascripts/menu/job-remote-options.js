@@ -54,6 +54,9 @@ function RemoteOptionController(data) {
     self.setupOptions = function (joboptions) {
         ko.utils.arrayForEach(joboptions.options(), function (opt) {
             self.addOption(opt);
+            if(opt.hasRemote()){
+                opt.setReloadCallback(self.reloadOptionIfRequirementsMet);
+            }
         });
     };
     /**
@@ -107,6 +110,32 @@ function RemoteOptionController(data) {
     };
 
     /**
+     * reload the option values for an option if all required dependencies are set
+     * @param name
+     */
+    self.reloadOptionIfRequirementsMet=function(name){
+        var skip = false;
+
+        // reload iff: all of its required dependencies have a value
+        var missing=[];
+        for (var j = 0; j < self.dependencies[name].length; j++) {
+            var dependencyName = self.dependencies[name][j];
+            var option = self.options[dependencyName];
+            if (!option.value() && option.required()) {
+                skip = true;
+                missing.push(dependencyName);
+            }
+        }
+        if (!skip) {
+            self.loadRemoteOptionValues(name);
+        }else if(self.options[name]){
+            self.options[name].remoteError({
+                message: message("options.remote.dependency.missing.required",[name,missing.join(", ")])
+            });
+        }
+    };
+
+    /**
      * notify that a value changed for an option by name, will reload dependents if any
      * @param name
      * @param value
@@ -116,29 +145,7 @@ function RemoteOptionController(data) {
         if (self.dependents[name] && !self.cyclic) {
             for (var i = 0; i < self.dependents[name].length; i++) {
                 var dependentName = self.dependents[name][i];
-                var skip = false;
-
-                // determine if we should reload the dependent option
-                // do not reload iff: any its dependencies does not have value, and is required
-
-                //XXX: if skipped, need status
-                var missing=[];
-                for (var j = 0; j < self.dependencies[dependentName].length; j++) {
-                    var dependencyName = self.dependencies[dependentName][j];
-                    var option = self.options[dependencyName];
-                    if (!option.value() && option.required()) {
-                        skip = true;
-                        missing.push(dependencyName);
-                        // break;
-                    }
-                }
-                if (!skip) {
-                    self.loadRemoteOptionValues(dependentName);
-                }else if(self.options[dependentName]){
-                    self.options[dependentName].remoteError({
-                        message: message("options.remote.dependency.missing.required",[dependentName,missing.join(", ")])
-                    });
-                }
+                self.reloadOptionIfRequirementsMet(dependentName);
             }
         }
     };
