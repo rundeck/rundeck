@@ -53,7 +53,7 @@
         </div>
     </div>
 
-    <div data-bind="if: !hasTextfield() && enforced() && hasError()">
+    <div data-bind="if: !hasTextfield() && enforced() && remoteError()">
         <div data-bind="css: {'col-sm-8': hasExtended(), 'col-sm-12': !hasExtended() }">
             <span class="info note"><g:message code="Execution.option.enforced.values.could.not.be.loaded"/></span>
             <input type="hidden"
