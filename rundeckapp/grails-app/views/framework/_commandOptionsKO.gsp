@@ -45,6 +45,7 @@ used by _editOptions.gsp template
                                               delimiter          : optionSelect.delimiter,
                                               selectedMultiValues: selectedMultiValues,
                                               fieldName          : usePrefix + 'option.' + optName,
+                                              fieldId            : rkey + '_' + optName,
                                               hasValue           : !selectedoptsmap && optionSelect.defaultValue ||
                                                       selectedoptsmap &&
                                                       selectedoptsmap[optName] ||
@@ -79,14 +80,19 @@ data for configuring remote option cascading/dependencies
     css: { 'has-warning': hasError, 'remote': hasRemote }
     ">
             <label class="remoteoptionfield col-sm-2 control-label"
-                   data-bind="attr: { for: fieldId, id: fieldLabelId },click: reloadRemoteValues">
-                <span data-bind="if: loading() && hasRemote()">
-                    <g:img file="spinner-gray.gif" width="16px" height="16px"/>
+                   data-bind="attr: { for: fieldId }">
+                <span data-bind="if: hasRemote(), click: reloadRemoteValues">
+                    <span data-bind="if: loading()">
+                        <g:img file="spinner-gray.gif" width="16px" height="16px"/>
+                    </span>
+                    <span class="remotestatus"
+                          data-bind=" css: {ok: !remoteError() && remoteValues().length>0 && remoteValues, error: remoteError()}">
+                    </span>
+                    <span data-bind="text: name"></span>
                 </span>
-                <span class="remotestatus"
-                      data-bind="if: hasRemote, css: {ok: !remoteError() && remoteValues().length>0 && remoteValues, error: remoteError()}">
+                <span data-bind="if: !hasRemote()">
+                    <span data-bind="text: name"></span>
                 </span>
-                <span data-bind="text: name"></span>
             </label>
 
             <div class=" col-sm-9">

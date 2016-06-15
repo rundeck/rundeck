@@ -29,7 +29,7 @@
         <div data-bind="css: {'col-sm-8': hasExtended(), 'col-sm-12': !hasExtended() }">
             <div data-bind="if: secureInput()">
                 <g:passwordField name="-"
-                                 data-bind="value: value, attr: {name: fieldName}"
+                                 data-bind="value: value, attr: {name: fieldName, id: fieldId}"
                                  class="optionvaluesfield  form-control"
                                  value=""
                                  autocomplete="new-password"
@@ -45,7 +45,7 @@
 
             <div data-bind="if: !secureInput()">
                 <g:textField name="-"
-                             data-bind="value: value, attr: {name: fieldName}"
+                             data-bind="value: value, attr: {name: fieldName, id: fieldId}"
                              class="optionvaluesfield form-control"
                              value=""
                              size="40"/>
@@ -114,7 +114,7 @@
 
                 <div data-bind="if:!multivalued()">
                     <select class="optionvalues form-control"
-                            data-bind="attr: {name: !hasTextfield()?fieldName():'' },
+                            data-bind="attr: {name: !hasTextfield()?fieldName():'', id: !hasTextfield()?fieldId():'' },
                          options: selectOptions,
                          optionsText: 'label',
                          optionsValue: 'value',

@@ -74,6 +74,8 @@ function Option(data) {
     self.reloadRemoteValues = function () {
         if (self.hasRemote() && self.remoteLoadCallback) {
             self.remoteLoadCallback(self.name());
+        }else{
+            return true;
         }
     };
 
