@@ -79,19 +79,20 @@ function Option(data) {
 
     //set up multivaluelist if default/selected values
     self.evalMultivalueChange = function () {
-        //construct value string from selected multivalue options
-        var str = '';
+        if(self.multiValueList().length>0) {
+            //construct value string from selected multivalue options
+            var str = '';
+            var strs=[];
 
-        var selected = ko.utils.arrayFilter(self.multiValueList(), function (val) {
-            return val.selected() && val.value();
-        });
-        ko.utils.arrayForEach(selected, function (val) {
-            if (str.length > 0) {
-                str += self.delimiter();
-            }
-            str += val.value();
-        });
-        self.value(str);
+            var selected = ko.utils.arrayFilter(self.multiValueList(), function (val) {
+                return val.selected() && val.value();
+            });
+            ko.utils.arrayForEach(selected, function (val) {
+                strs.push(val.value());
+            });
+            self.value(strs.join(self.delimiter()));
+            self.selectedMultiValues(strs);
+        }
     };
     self.createMultivalueEntry = function (obj) {
         var optionVal = new OptionVal(obj);
@@ -169,7 +170,6 @@ function Option(data) {
             });
         }
     }
-    self.remoteValues = ko.observableArray([]);
     self.remoteError = ko.observable();
 
     self.selectedOptionValue = ko.observable(data.value);
@@ -291,7 +291,7 @@ function Option(data) {
         }
     };
     self.animateRemove = function (div) {
-        jQuery(div).fadeTo('fast', 0, function () {
+        jQuery(div).fadeTo('slow', 0, function () {
             jQuery(div).remove();
         });
     };
