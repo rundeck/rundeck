@@ -84,7 +84,7 @@ data for configuring remote option cascading/dependencies
                     <g:img file="spinner-gray.gif" width="16px" height="16px"/>
                 </span>
                 <span class="remotestatus"
-                      data-bind="if: hasRemote, css: {ok: !remoteError() && remoteValues, error: remoteError()}">
+                      data-bind="if: hasRemote, css: {ok: !remoteError() && remoteValues().length>0 && remoteValues, error: remoteError()}">
                 </span>
                 <span data-bind="text: name"></span>
             </label>
