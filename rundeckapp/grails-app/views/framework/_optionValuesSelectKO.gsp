@@ -92,6 +92,7 @@
                                 </div>
                             </div>
                         </div>
+
                         <div data-bind="foreach: multiValueList(), beforeRemove: animateRemove, beforeAdd: animateAdd">
                             <div class="optionvaluemulti form-inline">
                                 <label>
@@ -154,7 +155,8 @@
 
             </span>
             %{--TODO expander--}%
-            <div class="alert alert-warning _error_detail" data-bind="visible: remoteError().exception || remoteError().url">
+            <div class="alert alert-warning _error_detail"
+                 data-bind="visible: remoteError().exception || remoteError().url">
                 <span data-bind="if: remoteError().exception">
                     <div>Exception: <span data-bind="text: remoteError().exception"></span></div>
                 </span>
