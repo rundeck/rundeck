@@ -19,6 +19,18 @@ used by _editOptions.gsp template
                                   (optionordering ?: optsmap.keySet().sort()).collect {
                                       def optionSelect = optsmap[it].selopt
                                       def optName = optionSelect.name
+                                      def selectedMultiValues=null
+                                      if(selectedoptsmap && selectedoptsmap[optName] && optionSelect.multivalued && optionSelect.delimiter) {
+                                          def value=selectedoptsmap[optName]
+                                          if(value instanceof String) {
+                                              selectedMultiValues = value.split(
+                                                      java.util.regex.Pattern.quote(optionSelect.delimiter)
+                                              ) as List
+
+                                          }else if(value instanceof Collection){
+                                              selectedMultiValues=value as List
+                                          }
+                                      }
                                       return [
                                               name               : optName,
                                               required           : optionSelect.required,
@@ -31,10 +43,7 @@ used by _editOptions.gsp template
                                               multivalued        : optionSelect.multivalued,
                                               defaultMultiValues : optionSelect.listDefaultMultiValues(),
                                               delimiter          : optionSelect.delimiter,
-                                              selectedMultiValues: selectedoptsmap && selectedoptsmap[optName] && optionSelect.multivalued
-                                                      && optionSelect.delimiter ? selectedoptsmap[optName]?.split(
-                                                      java.util.regex.Pattern.quote(optionSelect.delimiter)
-                                              ) as List : null,
+                                              selectedMultiValues: selectedMultiValues,
                                               fieldName          : usePrefix + 'option.' + optName,
                                               hasValue           : !selectedoptsmap && optionSelect.defaultValue ||
                                                       selectedoptsmap &&
