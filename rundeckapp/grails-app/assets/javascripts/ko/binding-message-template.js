@@ -20,37 +20,8 @@ ko.bindingHandlers.messageTemplate = {
         var pluralize=allBindings.get('messageTemplatePluralize');
         var data=ko.utils.unwrapObservable(valueAccessor());
         var template=jQuery(element).data('ko-message-template');
-        var pluralTemplate=null;
-        if(pluralize){
-            var arr = template.split('|');
-            template = arr[0];
-            pluralTemplate = arr[1];
-        }
-        var values=[];
-        if(typeof(data)!='object'){
-            values=[data];
-        }else if(jQuery.isArray(data)){
-            values=data;
-        }else if(typeof(data)=='object'){
-            values=ko.utils.unwrapObservable(data['value']);
-            if(!jQuery.isArray(values)){
-                values=[values];
-            }
-        }
-        for(var i=0;i<values.length;i++){
-            values[i] = ko.utils.unwrapObservable(values[i]);
-        }
-        if(pluralize && values[0]!=1){
-            template=pluralTemplate;
-        }
-        var text = template.replace(/\{(\d+)\}/g,function(match, g1, offset, string){
-            var val= parseInt(g1);
-            if(val>=0 && val<values.length){
-                return values[val];
-            }else{
-                return string;
-            }
-        });
+        
+        var text = messageTemplate(template,data,pluralize);
         ko.utils.setTextContent(element, text);
     }
 };
