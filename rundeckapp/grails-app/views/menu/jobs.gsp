@@ -11,7 +11,7 @@
     <g:javascript library="prototype/effects"/>
     <asset:javascript src="menu/jobs.js"/>
     <g:embedJSON id="pageParams" data="${[project:params.project?:request.project]}"/>
-    <g:jsMessages code="Node,Node.plural,job.starting.execution,option.value.required"/>
+    <g:jsMessages code="Node,Node.plural,job.starting.execution,option.value.required,options.remote.dependency.missing.required"/>
     <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
     <script type="text/javascript">
         /** knockout binding for activity */

@@ -122,16 +122,22 @@ function RemoteOptionController(data) {
                 // do not reload iff: any its dependencies does not have value, and is required
 
                 //XXX: if skipped, need status
+                var missing=[];
                 for (var j = 0; j < self.dependencies[dependentName].length; j++) {
                     var dependencyName = self.dependencies[dependentName][j];
                     var option = self.options[dependencyName];
                     if (!option.value() && option.required()) {
                         skip = true;
-                        break;
+                        missing.push(dependencyName);
+                        // break;
                     }
                 }
                 if (!skip) {
                     self.loadRemoteOptionValues(dependentName);
+                }else if(self.options[dependentName]){
+                    self.options[dependentName].remoteError({
+                        message: message("options.remote.dependency.missing.required",[dependentName,missing.join(", ")])
+                    });
                 }
             }
         }
