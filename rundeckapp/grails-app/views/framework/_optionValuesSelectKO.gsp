@@ -128,11 +128,14 @@
     </div>
 
     <div data-bind="if: showDefaultButton()">
-        <span class="textbtn textbtn-default"
-              data-bind="attr: { title: defaultValue() }, click: setDefault"
-              title="Click to use default value: xx">
-            default: <span data-bind="text: truncateDefaultValue()"></span>
-        </span>
+        <div class="col-sm-12">
+            <span class="btn btn-sm btn-link"
+                  data-bind="attr: { title: message('option.default.button.title') }, click: setDefault"
+                  title="Click to use default value: xx">
+                <g:icon name="hand-right"/>
+                <span data-bind="messageTemplate: truncateDefaultValue"><g:message code="option.default.button.text"/></span>
+            </span>
+        </div>
     </div>
 
 </div>
