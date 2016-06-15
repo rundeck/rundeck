@@ -74,17 +74,17 @@ function Option(data) {
     self.reloadRemoteValues = function () {
         if (self.hasRemote() && self.remoteLoadCallback) {
             self.remoteLoadCallback(self.name());
-        }else{
+        } else {
             return true;
         }
     };
 
     //set up multivaluelist if default/selected values
     self.evalMultivalueChange = function () {
-        if(self.multiValueList().length>0) {
+        if (self.multiValueList().length > 0) {
             //construct value string from selected multivalue options
             var str = '';
-            var strs=[];
+            var strs = [];
 
             var selected = ko.utils.arrayFilter(self.multiValueList(), function (val) {
                 return val.selected() && val.value();
@@ -154,10 +154,10 @@ function Option(data) {
 
         self.multiValueList.subscribe(self.evalMultivalueChange);
 
-        if(self.hasRemote()){
+        if (self.hasRemote()) {
             //when remote values are loaded, set the multivalue entries with them
-            self.remoteValues.subscribe(function(newval){
-                var temp=[];
+            self.remoteValues.subscribe(function (newval) {
+                var temp = [];
                 ko.utils.arrayForEach(newval, function (val) {
                     var selected = testselected(val.value());
                     temp.push(self.createMultivalueEntry({
@@ -257,10 +257,10 @@ function Option(data) {
             multival: true
         }));
     };
-    self.multivalueOptions = ko.computed(function () {
 
-    });
-
+    /**
+     * When select box chooses an option value, set the value()
+     */
     self.selectedOptionValue.subscribe(function (newval) {
         if (newval && typeof(newval) == 'object' && typeof(newval.value) == 'function' && newval.value()) {
             self.value(newval.value());
@@ -288,7 +288,6 @@ function Option(data) {
                 self.value(data.selectedvalue);
                 self.selectedOptionValue(data.selectedvalue);
             }
-            var selval;
             ko.utils.arrayForEach(data.values, function (val) {
                 var optval;
                 if (typeof(val) == 'object') {
@@ -298,10 +297,6 @@ function Option(data) {
                 }
                 if (optval) {
                     rvalues.push(optval);
-                }
-
-                if (optval.value() == self.value()) {
-                    selval = optval;
                 }
             });
             self.remoteValues(rvalues);

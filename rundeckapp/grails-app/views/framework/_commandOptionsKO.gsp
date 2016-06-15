@@ -48,14 +48,6 @@ used by _editOptions.gsp template
                                               selectedMultiValues: selectedMultiValues,
                                               fieldName          : usePrefix + 'option.' + optName,
                                               fieldId            : rkey + '_' + optName,
-                                              hasValue           : !selectedoptsmap && optionSelect.defaultValue ||
-                                                      selectedoptsmap &&
-                                                      selectedoptsmap[optName] ||
-                                                      !optionSelect.defaultValue &&
-                                                      optionSelect.required
-                                                      &&
-                                                      optionSelect.enforced &&
-                                                      optionSelect.values,
                                               hasError           : jobexecOptionErrors ? jobexecOptionErrors[optName] :
                                                       null,
                                               hasRemote          : optionSelect.realValuesUrl != null,
