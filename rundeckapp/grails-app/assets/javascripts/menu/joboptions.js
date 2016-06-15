@@ -67,12 +67,12 @@ function Option(data) {
      */
     self.multiValueList = ko.observableArray(data.multiValueList);
 
-    self.setReloadCallback=function(func){
-        self.remoteLoadCallback=func;
+    self.setReloadCallback = function (func) {
+        self.remoteLoadCallback = func;
     };
 
-    self.reloadRemoteValues=function(){
-        if(self.hasRemote() && self.remoteLoadCallback){
+    self.reloadRemoteValues = function () {
+        if (self.hasRemote() && self.remoteLoadCallback) {
             self.remoteLoadCallback(self.name());
         }
     };
@@ -107,23 +107,23 @@ function Option(data) {
     };
     if (self.multivalued()) {
 
-        var testselected=function(val){
-            if (self.selectedMultiValues() && self.selectedMultiValues().length>0) {
+        var testselected = function (val) {
+            if (self.selectedMultiValues() && self.selectedMultiValues().length > 0) {
                 return ko.utils.arrayIndexOf(self.selectedMultiValues(), val) >= 0;
-            } else if (self.defaultMultiValues() && self.defaultMultiValues().length>0) {
+            } else if (self.defaultMultiValues() && self.defaultMultiValues().length > 0) {
                 return ko.utils.arrayIndexOf(self.defaultMultiValues(), val) >= 0;
             } else if (self.value()) {
-                return  self.value() == val;
+                return self.value() == val;
             } else if (self.defaultValue()) {
                 return self.defaultValue() == val;
             }
             return false;
         };
-        if(!self.enforced() && self.selectedMultiValues()){
+        if (!self.enforced() && self.selectedMultiValues()) {
             //add any selectedMultiValues that are not in values list
 
             ko.utils.arrayForEach(self.selectedMultiValues(), function (val) {
-                if(ko.utils.arrayIndexOf(self.values(),val)>=0){
+                if (ko.utils.arrayIndexOf(self.values(), val) >= 0) {
                     return;
                 }
                 self.multiValueList.push(self.createMultivalueEntry({
@@ -226,9 +226,9 @@ function Option(data) {
     });
 
     self.selectedOptionValue.subscribe(function (newval) {
-        if (newval && typeof(newval)=='object' && typeof(newval.value)=='function' && newval.value()) {
+        if (newval && typeof(newval) == 'object' && typeof(newval.value) == 'function' && newval.value()) {
             self.value(newval.value());
-        }else if(typeof(newval)=='string'){
+        } else if (typeof(newval) == 'string') {
             self.value(newval);
         }
     });
@@ -248,7 +248,7 @@ function Option(data) {
         } else if (data.values) {
             self.remoteError(null);
             var rvalues = [];
-            if(data.selectedvalue){
+            if (data.selectedvalue) {
                 self.value(data.selectedvalue);
                 self.selectedOptionValue(data.selectedvalue);
             }
@@ -256,16 +256,16 @@ function Option(data) {
             ko.utils.arrayForEach(data.values, function (val) {
                 var optval;
                 if (typeof(val) == 'object') {
-                    optval=new OptionVal({label: val.name, value: val.value});
+                    optval = new OptionVal({label: val.name, value: val.value});
                 } else if (typeof(val) == 'string') {
-                    optval=new OptionVal({label: val, value: val});
+                    optval = new OptionVal({label: val, value: val});
                 }
-                if(optval){
+                if (optval) {
                     rvalues.push(optval);
                 }
 
-                if(optval.value()==self.value()){
-                    selval=optval;
+                if (optval.value() == self.value()) {
+                    selval = optval;
                 }
             });
             self.remoteValues(rvalues);

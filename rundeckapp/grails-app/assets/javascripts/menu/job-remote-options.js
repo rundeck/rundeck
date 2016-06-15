@@ -54,7 +54,7 @@ function RemoteOptionController(data) {
     self.setupOptions = function (joboptions) {
         ko.utils.arrayForEach(joboptions.options(), function (opt) {
             self.addOption(opt);
-            if(opt.hasRemote()){
+            if (opt.hasRemote()) {
                 opt.setReloadCallback(self.reloadOptionIfRequirementsMet);
             }
         });
@@ -113,11 +113,11 @@ function RemoteOptionController(data) {
      * reload the option values for an option if all required dependencies are set
      * @param name
      */
-    self.reloadOptionIfRequirementsMet=function(name){
+    self.reloadOptionIfRequirementsMet = function (name) {
         var skip = false;
 
         // reload iff: all of its required dependencies have a value
-        var missing=[];
+        var missing = [];
         for (var j = 0; j < self.dependencies[name].length; j++) {
             var dependencyName = self.dependencies[name][j];
             var option = self.options[dependencyName];
@@ -128,9 +128,9 @@ function RemoteOptionController(data) {
         }
         if (!skip) {
             self.loadRemoteOptionValues(name);
-        }else if(self.options[name]){
+        } else if (self.options[name]) {
             self.options[name].remoteError({
-                message: message("options.remote.dependency.missing.required",[name,missing.join(", ")])
+                message: message("options.remote.dependency.missing.required", [name, missing.join(", ")])
             });
         }
     };
