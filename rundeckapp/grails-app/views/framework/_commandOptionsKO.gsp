@@ -120,9 +120,13 @@ data for configuring remote option cascading/dependencies
         </div>
     </div>
 
-    <div id="_commandOptions" data-bind="foreach: {data: options(), as: 'option' }">
+
+    <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
+    <div data-bind="foreach: {data: options(), as: 'option' }" class="text-muted">
         <div><span data-bind="text: option.name"></span>=<span data-bind="text: option.value"></span></div>
     </div>
+    </g:if>
+
     <g:if test="${optionsDependenciesCyclic}">
         <g:message code="remote.options.warning.cyclicDependencies"/>
     </g:if>
