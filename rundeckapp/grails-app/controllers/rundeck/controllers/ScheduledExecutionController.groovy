@@ -429,7 +429,7 @@ class ScheduledExecutionController  extends ControllerBase{
      * an option's "valueSrc" property, and renders the optionValuesSelect template
      * using the data.
      */
-    def loadRemoteOptionValues={
+    def loadRemoteOptionValues(){
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
             return
