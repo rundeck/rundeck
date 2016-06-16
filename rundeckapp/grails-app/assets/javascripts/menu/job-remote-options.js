@@ -262,9 +262,9 @@ function RemoteOptionLoader(data) {
                 // self.addReloadRemoteOptionValues(opt,data);
                 opt.loading(false);
             },
-            failure: function (data, status, jqxhr) {
+            error: function (jqxhr, status, message) {
                 opt.loading(false);
-                alert("error: " + status);
+                opt.remoteError({error: "ERROR loading result from Rundeck server: " + status + ": " + message});
             }
         });
     }

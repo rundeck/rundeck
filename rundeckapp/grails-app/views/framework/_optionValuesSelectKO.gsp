@@ -161,11 +161,12 @@
             <div data-bind="if: remoteError().code == 'empty'">
                 <div class="text-muted"><g:message code="option.remote.values.empty.info"/></div>
             </div>
-            <span class="text-warning _error_detail" data-bind="text: remoteError().message">
+            <span class="text-warning" data-bind="text: remoteError().message"></span>
+            <span class="text-danger " data-bind="text: remoteError().error"></span>
 
-            </span>
-            %{--TODO expander--}%
-            <div class="alert alert-warning _error_detail"
+
+
+            <div class="alert alert-warning"
                  data-bind="visible: remoteError().exception || remoteError().url">
                 <span data-bind="if: remoteError().exception">
                     <div>Exception: <span data-bind="text: remoteError().exception"></span></div>
