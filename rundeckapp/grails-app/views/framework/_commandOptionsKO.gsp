@@ -99,9 +99,6 @@ data for configuring remote option cascading/dependencies
 
             <div class=" col-sm-9">
 
-                <span class="info note" data-bind="if: !optionDepsMet && hasRemote()">
-                    <g:message code="option.remote.dependency.emptyresult"/>
-                </span>
                 <g:render template="/framework/optionValuesSelectKO"/>
 
             </div>
@@ -109,7 +106,7 @@ data for configuring remote option cascading/dependencies
             <div class="col-sm-1">
                 <span data-bind="if: required">
                     <span class="reqwarning has_tooltip"
-                          data-bind="attr: {title: hasError()||message('option.value.required') }, visible: !hasValue()"
+                          data-bind="attr: {title: hasError()||message('option.value.required') }, visible: !hasValue(), bootstrapTooltip: true"
                           data-toggle="tooltip">
                         <i class="glyphicon glyphicon-warning-sign"></i>
                     </span>

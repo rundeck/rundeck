@@ -54,12 +54,7 @@
     </div>
 
     <div data-bind="if: !hasTextfield() && enforced() && remoteError()">
-        <div data-bind="css: {'col-sm-8': hasExtended(), 'col-sm-12': !hasExtended() }">
-            <span class="info note"><g:message code="Execution.option.enforced.values.could.not.be.loaded"/></span>
-            <input type="hidden"
-                   data-bind="value: value, attr: {name: fieldName}"
-                   value=""/>
-        </div>
+        <input type="hidden" data-bind="value: value, attr: {name: fieldName}" value=""/>
     </div>
     <%-- The Dropdown list --%>
     <div data-bind="if: hasExtended()">
@@ -147,10 +142,10 @@
 
 </div>
 
-<div data-bind="if: hasRemote() && remoteValues().length<1">
+<div data-bind="if: hasRemote() && remoteValues().length<1 && !remoteError()">
     <div class="row">
         <div class="col-sm-12">
-            <div class="text-muted"><g:message code="option.remote.values.empty.info"/></div>
+            <div class="text-muted"><g:message code="option.remote.dependency.emptyresult"/></div>
         </div>
     </div>
 </div>
@@ -159,15 +154,24 @@
     <div class="row">
         <div class="col-sm-12">
             <div data-bind="if: remoteError().code == 'empty'">
-                <div class="text-muted"><g:message code="option.remote.values.empty.info"/></div>
+                <div class="text-muted"><g:message code="option.remote.dependency.emptyresult"/></div>
             </div>
-            <span class="text-warning" data-bind="text: remoteError().message"></span>
             <span class="text-danger " data-bind="text: remoteError().error"></span>
 
+            <div data-bind="if: remoteError().exception || remoteError().url">
+                <a class="textbtn textbtn-warning "
+                   data-toggle="collapse"
+                   href="#"
+                   data-bind="attr: {href: '#rerr_'+option.name() }">
+                   <span data-bind="text: remoteError().message"></span>
+                    <i class="auto-caret"></i>
+                </a>
+            </div>
+            <div data-bind="if: remoteError().message && !(remoteError().exception || remoteError().url)">
+                <span class="text-warning" data-bind="text: remoteError().message"></span>
+            </div>
 
-
-            <div class="alert alert-warning"
-                 data-bind="visible: remoteError().exception || remoteError().url">
+            <div class="alert alert-warning collapse collapse-expandable" data-bind="attr: {id: 'rerr_'+option.name() }">
                 <span data-bind="if: remoteError().exception">
                     <div>Exception: <span data-bind="text: remoteError().exception"></span></div>
                 </span>

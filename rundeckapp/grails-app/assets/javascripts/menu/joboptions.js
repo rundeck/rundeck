@@ -3,6 +3,7 @@
 //= require knockout-mapping
 //= require knockout-foreachprop
 //= require menu/job-remote-options
+//= require ko/binding-popover
 
 /**
  * Selectable value with name/value pair
