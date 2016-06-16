@@ -39,10 +39,6 @@ function RemoteOptionController(data) {
      */
     self.loadonstart = {};
     /**
-     * field observer frequency (in seconds)
-     */
-    self.observeFreq = 0.5;
-    /**
      * indicates cyclic dependencies
      */
     self.cyclic = false;
@@ -174,8 +170,6 @@ function RemoteOptionController(data) {
      * @param data
      */
     self.loadData = function (data) {
-
-        //XXX: tests cyclic
         if (data['optionsDependenciesCyclic']) {
             self.cyclic = data['optionsDependenciesCyclic'];
         }
@@ -202,8 +196,11 @@ function RemoteOptionController(data) {
     };
 
     self.unsubscribeAll = function () {
-        //XXX
-        console.log("unsubscribeAll not implemented");
+        "use strict";
+        for(var p in self.observers){
+            self.observers[p].dispose();
+        }
+        self.observers={};
     };
     /**
      * starts observing changes for option field by name
