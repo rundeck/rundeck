@@ -59,6 +59,15 @@
                 <i class="glyphicon glyphicon-edit"></i>
                 edit
             </span>
+            <span class="textbtn textbtn-info" onclick="_doReorderOption('${enc(js:option.name)}',{pos:-1});"
+                  title="Move up">
+                <i class="glyphicon glyphicon-arrow-up"></i>
+            </span>
+            <span class="textbtn textbtn-info" onclick="_doReorderOption('${enc(js:option.name)}',{pos:1});"
+                  title="Move down">
+                <i class="glyphicon glyphicon-arrow-down"></i>
+            </span>
+            <span class="dragHandle" title="Drag to reorder"><g:icon name="resize-vertical"/></span>
         </span>
 
         <g:javascript>

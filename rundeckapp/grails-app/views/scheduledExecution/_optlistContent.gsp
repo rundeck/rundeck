@@ -22,10 +22,12 @@
     $Id$
  --%>
 <g:each in="${options}" var="optionsel" status="i">
-    <li id="optli_${i}" class="optEntry ${highlight==optionsel?.name?'dohighlight':''} ${i%2==1?'alternate':''}">
+    <li id="optli_${i}" class="optEntry draggableitem ${highlight==optionsel?.name?'dohighlight':''} ${i%2==1?'alternate':''}"
+        data-opt-index="${i}" data-opt-name="${optionsel?.name}">
         <g:render template="/scheduledExecution/optlistitemContent" model="${[option:optionsel,edit:edit]}"/>
     </li>
 </g:each>
+
 <g:if test="${highlight}">
     <g:javascript>
     fireWhenReady('optli_${options.size()-1}',function(){

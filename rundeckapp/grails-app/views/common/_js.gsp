@@ -61,6 +61,7 @@
         editOptsRenderAll: '${createLink(controller:"editOpts",action:"renderAll",params:projParams)}',
         editOptsRenderSummary: '${createLink(controller:"editOpts",action:"renderSummary",params:projParams)}',
         editOptsRemove: '${createLink(controller:"editOpts",action:"remove",params:projParams)}',
+        editOptsReorder: '${createLink(controller:"editOpts",action:"reorder",params:projParams)}',
         editOptsUndo: '${createLink(controller:"editOpts",action:"undo",params:projParams)}',
         editOptsRedo: '${createLink(controller:"editOpts",action:"redo",params:projParams)}',
         editOptsRevert: '${createLink(controller:"editOpts",action:"revert",params:projParams)}',

@@ -30,7 +30,7 @@
         </div>
     </g:if>
 
-<div class="optslist">
+<div class="optslist" id="optionContent">
     <!--
     header
     -->
@@ -52,6 +52,13 @@
     <ul class="options">
         <g:render template="/scheduledExecution/optlistContent" model="${[options:options,edit:edit]}"/>
     </ul>
+    <div id="optionDropFinal" class="dragdropfinal" data-abs-index="${options?.size()?:1}" data-is-final="true" style="display:none"></div>
+    <g:javascript>
+    jQuery(function(){
+        "use strict";
+        _enableOptDragDrop();
+    });
+</g:javascript>
     <div class="empty note ${error?'error':''}" id="optempty" style="${wdgt.styleVisible(unless:options && options.size()>0)}">
         No Options
     </div>

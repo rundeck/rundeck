@@ -178,7 +178,7 @@ function getCurSEID(){
         font-size:100%;
     }
     /** drag and drop for workflow editor */
-    #workflowDropfinal.ready{
+    .dragdropfinal.ready{
         padding:2px;
         margin-top:3px;
         display:block;
@@ -186,13 +186,13 @@ function getCurSEID(){
         -webkit-border-radius: 3px;
         border-radius: 3px;
     }
-    #workflowContent ol li{
+    .draggableitem{
         padding:0;
     }
-    #workflowContent ol li.hoverActive{
+    .draggableitem.hoverActive{
         border-top: 2px solid blue;
     }
-    #workflowDropfinal.hoverActive{
+    .dragdropfinal.hoverActive{
         border-top: 2px solid blue;
         padding:8px;
 

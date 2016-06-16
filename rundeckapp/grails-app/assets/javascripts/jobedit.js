@@ -209,7 +209,7 @@ function _showWFItemControls() {
     jQuery('#workflowContent').find('span.wfitemcontrols').show();
     jQuery('#wfundoredo,#wfnewbutton').show();
     _updateWFUndoRedo();
-    _enableDragdrop();
+    _enableWFDragdrop();
     _updateEmptyMessage();
 }
 function _hideWFItemControlsAddEH(num){
@@ -356,40 +356,41 @@ function moveDragItem(dragged, droparea) {
 
     _doMoveItem(num, to);
 }
-function _enableDragdrop() {
-    $$('#workflowContent ol>li').each(function(item) {
+function _enableWFDragdrop() {
+    "use strict";
+    _enableDragdrop("#workflowContent ol>li","workflowDropfinal",moveDragItem);
+}
+function _enableDragdrop(select, finalid, callback) {
+    $$(select).each(function (item) {
         new Draggable(
             item,
-        {
-            revert: 'failure',
-            ghosting: false,
-            constraint:'vertical',
-            handle:'dragHandle',
-            scroll: window,
-            onStart:function(d) {
-                $('workflowDropfinal').show();
-            },
-            onEnd:function(d) {
-                $('workflowDropfinal').hide();
+            {
+                revert: 'failure',
+                ghosting: false,
+                constraint: 'vertical',
+                handle: 'dragHandle',
+                scroll: window,
+                onStart: function (d) {
+                    $(finalid).show();
+                },
+                onEnd: function (d) {
+                    $(finalid).hide();
+                }
             }
-        }
-            );
-    });
-
-    $$('#workflowContent ol>li').each(function(item) {
+        );
         Droppables.add(item, {
-            hoverclass: 'hoverActive',
-            onDrop: moveDragItem
-        }
-            );
+                hoverclass: 'hoverActive',
+                onDrop: callback
+            }
+        );
         $(item).addClassName("ready");
     });
-    $$('#workflowDropfinal').each(function(item) {
+    $$('#' + finalid).each(function (item) {
         Droppables.add(item, {
-            hoverclass: 'hoverActive',
-            onDrop: moveDragItem
-        }
-            );
+                hoverclass: 'hoverActive',
+                onDrop: callback
+            }
+        );
         $(item).addClassName("ready");
     });
 }
@@ -433,7 +434,13 @@ function _showOptControls() {
     $('optnewbutton').show();
     _updateOptsUndoRedo();
     _showOptEmptyMessage();
+    _enableOptDragDrop();
     clearHtml('optsload');
+}
+
+function _enableOptDragDrop(){
+    "use strict";
+    _enableDragdrop('#optionContent ul>li','optionDropFinal',_dragReorderOption);
 }
 function _showOptEmptyMessage() {
     var x = $('optionsContent').down('ul li');
@@ -639,6 +646,47 @@ function _doRemoveOption(name, elem,tokendataid) {
             });
         }
     );
+}
+function _dragReorderOption(dragged,drop){
+    "use strict";
+    var optName = jQuery(dragged).data('optName');
+    var toOptName = jQuery(drop).data('optName');
+    var data={};
+    if(!toOptName && jQuery(drop).data('isFinal')){
+        data={end:true};
+    }else{
+        data={before:toOptName};
+    }
+
+
+    _doReorderOption(optName, data);
+
+}
+function _doReorderOption(name,data) {
+    jobWasEdited();
+    var tokendataid = 'reqtoken_undo_opts';
+    var params = {name:name,edit:true};
+    if(data.pos){
+        params['relativePosition']=data.pos;
+    }else if(data.end){
+        params['last']=true;
+    }else if(data.before){
+        params['before']=data.before;
+    }
+    if (getCurSEID()) {
+        params['scheduledExecutionId'] = getCurSEID();
+    }
+    $('optsload').loading();
+    jQuery.ajax({
+        type: "POST",
+        url:_genUrl(appLinks.editOptsReorder,params),
+        beforeSend: _ajaxSendTokens.curry(tokendataid),
+        success:function(data,status,xhr){
+            jQuery('#optionsContent').find('ul').html(data);
+            _showOptControls();
+        }
+    });
+
 }
 
 function _doUndoOptsAction() {
