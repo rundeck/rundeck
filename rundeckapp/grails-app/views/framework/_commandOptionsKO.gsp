@@ -69,6 +69,14 @@ data for configuring remote option cascading/dependencies
     <g:embedJSON id="remoteOptionData"
                  data="${[options: remoteOptionData, optionsDependenciesCyclic: optionsDependenciesCyclic]}"/>
 
+    <g:if test="${optionsDependenciesCyclic}">
+        <div class="row">
+            <div class="col-sm-12 text-warning">
+                <g:message code="remote.options.warning.cyclicDependencies"/>
+            </div>
+        </div>
+    </g:if>
+    
     <div id="_commandOptions" data-bind="foreach: {data: options(), as: 'option' }">
         <div class="form-group " data-bind="
     css: { 'has-warning': hasError, 'remote': hasRemote }
@@ -126,9 +134,6 @@ data for configuring remote option cascading/dependencies
         </div>
     </g:if>
 
-    <g:if test="${optionsDependenciesCyclic}">
-        <g:message code="remote.options.warning.cyclicDependencies"/>
-    </g:if>
     <g:if test="${showDTFormat}">
         <div class="info note help">
 
