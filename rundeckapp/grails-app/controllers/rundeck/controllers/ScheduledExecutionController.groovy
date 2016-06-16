@@ -644,8 +644,6 @@ class ScheduledExecutionController  extends ControllerBase{
                 }
             }
         }
-        System.err.println("format: "+response.format)
-
     }
     static Logger optionsLogger = Logger.getLogger("com.dtolabs.rundeck.remoteservice.http.options")
     private logRemoteOptionStats(stats,jobdata){
