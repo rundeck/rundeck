@@ -159,6 +159,12 @@ function Option(data) {
             //when remote values are loaded, set the multivalue entries with them
             self.remoteValues.subscribe(function (newval) {
                 var temp = [];
+                if(!self.enforced()) {
+                    //preserve the editable values
+                    temp = ko.utils.arrayFilter(self.multiValueList(),function (val) {
+                        return val.editable();
+                    });
+                }
                 ko.utils.arrayForEach(newval, function (val) {
                     var selected = testselected(val.value());
                     temp.push(self.createMultivalueEntry({
