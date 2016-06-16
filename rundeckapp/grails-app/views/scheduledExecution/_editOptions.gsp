@@ -18,8 +18,20 @@
     </div>
 </g:hasErrors>
 <div id="optionSelect">
-    %{--<g:render template="/framework/commandOptions" model="[paramsPrefix:'extra.',selectedargstring:selectedargstring,selectedoptsmap:selectedoptsmap,notfound:commandnotfound,authorized:authorized,optionSelections:scheduledExecution?.options?scheduledExecution.options:null,scheduledExecutionId:scheduledExecution.extid,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]"/>--}%
-    <g:render template="/framework/commandOptionsKO" model="[paramsPrefix:'extra.',selectedargstring:selectedargstring,selectedoptsmap:selectedoptsmap,notfound:commandnotfound,authorized:authorized,optionSelections:scheduledExecution?.options?scheduledExecution.options:null,scheduledExecutionId:scheduledExecution.extid,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]"/>
+    <g:render template="/framework/commandOptionsKO"
+              model="[
+                      paramsPrefix        : 'extra.',
+                      selectedargstring   : selectedargstring,
+                      selectedoptsmap     : selectedoptsmap,
+                      notfound            : commandnotfound,
+                      authorized          : authorized,
+                      optionSelections    : scheduledExecution?.options ? scheduledExecution.options : null,
+                      scheduledExecutionId: scheduledExecution.extid,
+                      jobexecOptionErrors : jobexecOptionErrors,
+                      optiondependencies  : optiondependencies,
+                      dependentoptions    : dependentoptions,
+                      optionordering      : optionordering
+              ]"/>
 </div>
 
 
