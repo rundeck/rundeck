@@ -257,6 +257,13 @@ function Option(data) {
             multival: true
         }));
     };
+    self.multivalueFieldKeydown = function (obj,evt) {
+        var enterKey = !noenter(evt);
+        if (enterKey) {
+            self.newMultivalueEntry()
+        }
+        return !enterKey;
+    };
 
     /**
      * When select box chooses an option value, set the value()
@@ -303,12 +310,14 @@ function Option(data) {
         }
     };
     self.animateRemove = function (div) {
-        jQuery(div).fadeTo('slow', 0, function () {
+        jQuery(div).show().slideUp('fast', 0, function () {
             jQuery(div).remove();
         });
     };
     self.animateAdd = function (div) {
-        jQuery(div).hide().slideDown();
+        jQuery(div).hide().slideDown('fast',function(){
+            jQuery(div).find('input').focus();
+        });
     };
 }
 function JobOptions(data) {

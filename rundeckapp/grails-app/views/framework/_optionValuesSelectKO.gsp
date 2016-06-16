@@ -93,18 +93,24 @@
                             </div>
                         </div>
 
-                        <div data-bind="foreach: multiValueList(), beforeRemove: animateRemove, beforeAdd: animateAdd">
-                            <div class="optionvaluemulti form-inline">
-                                <label>
-                                    <input type="checkbox"
-                                           data-bind="attr: { name: $parent.fieldName }, value: value, checked: selected"
-                                           value=""/>
-
-                                    <span data-bind="if: !editable()">
-                                        <span data-bind="text: label"></span>
+                        <div class="grid"
+                              data-bind="foreach: {data: multiValueList(), beforeRemove: animateRemove, afterAdd: animateAdd }">
+                            <div class="optionvaluemulti ">
+                                <label class="grid-row optionvaluemulti">
+                                    <span class="grid-cell grid-front">
+                                        <input type="checkbox"
+                                               data-bind="attr: { name: $parent.fieldName }, value: value, checked: selected"
+                                               value=""/>
                                     </span>
-                                    <span data-bind="if: editable()">
-                                        <input data-bind="value: value" class="form-control"/>
+                                    <span class="grid-cell grid-rest">
+                                        <!-- ko if: !editable() -->
+                                        <span data-bind="text: label"></span>
+                                        <!-- /ko -->
+
+                                        <!-- ko if: editable() -->
+                                        <input data-bind="value: value, event: { keypress: option.multivalueFieldKeydown }"
+                                               class="form-control "/>
+                                        <!-- /ko -->
                                     </span>
                                 </label>
                             </div>
