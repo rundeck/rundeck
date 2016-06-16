@@ -131,7 +131,7 @@ function Option(data) {
                     return;
                 }
                 self.multiValueList.push(self.createMultivalueEntry({
-                    label: '_new',
+                    label: val,
                     value: val,
                     selected: testselected(val),
                     editable: true,
@@ -143,7 +143,7 @@ function Option(data) {
             ko.utils.arrayForEach(self.values(), function (val) {
                 var selected = testselected(val);
                 self.multiValueList.push(self.createMultivalueEntry({
-                    label: '_new',
+                    label: val,
                     value: val,
                     selected: selected,
                     editable: false,
