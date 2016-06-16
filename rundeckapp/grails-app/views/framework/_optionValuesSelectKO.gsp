@@ -103,7 +103,7 @@
                                         <!-- /ko -->
 
                                         <!-- ko if: editable() -->
-                                        <input data-bind="value: value, event: { keypress: option.multivalueFieldKeydown }"
+                                        <input type="text" data-bind="value: value, event: { keypress: option.multivalueFieldKeydown }"
                                                class="form-control "/>
                                         <!-- /ko -->
                                     </span>
