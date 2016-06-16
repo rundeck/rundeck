@@ -181,7 +181,7 @@ data for configuring remote option cascading/dependencies
         </div>
     </g:if>
 
-    </></g:if>
+</g:if>
 <g:elseif test="${!authorized}">
     <div class="info note">Not authorized to execute chosen job.</div>
     <g:if test="${selectedargstring}"><div>Old value: <g:enc>${selectedargstring}</g:enc></div></g:if>
