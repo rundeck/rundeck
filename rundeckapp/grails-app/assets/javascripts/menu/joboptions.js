@@ -316,7 +316,7 @@ function Option(data) {
     };
     self.animateAdd = function (div) {
         jQuery(div).hide().slideDown('fast',function(){
-            jQuery(div).find('input').focus();
+            jQuery(div).find('input[type=text]').focus();
         });
     };
 }
