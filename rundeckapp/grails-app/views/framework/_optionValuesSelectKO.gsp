@@ -139,7 +139,8 @@
                   data-bind="attr: { title: message('option.default.button.title') }, click: setDefault"
                   title="Click to use default value: xx">
                 <g:icon name="hand-right"/>
-                <span data-bind="messageTemplate: truncateDefaultValue"><g:message code="option.default.button.text"/></span>
+                <span data-bind="messageTemplate: truncateDefaultValue"><g:message
+                        code="option.default.button.text"/></span>
             </span>
         </div>
     </div>
@@ -149,7 +150,7 @@
 <div data-bind="if: hasRemote() && remoteValues().length<1">
     <div class="row">
         <div class="col-sm-12">
-            <div class="text-muted"><g:message code="option.remote.values.empty.info" /></div>
+            <div class="text-muted"><g:message code="option.remote.values.empty.info"/></div>
         </div>
     </div>
 </div>
@@ -158,7 +159,7 @@
     <div class="row">
         <div class="col-sm-12">
             <div data-bind="if: remoteError().code == 'empty'">
-                <div class="text-muted"><g:message code="option.remote.values.empty.info" /></div>
+                <div class="text-muted"><g:message code="option.remote.values.empty.info"/></div>
             </div>
             <span class="text-warning _error_detail" data-bind="text: remoteError().message">
 

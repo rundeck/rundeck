@@ -13,8 +13,8 @@ function OptionVal(data) {
     "use strict";
 
     var self = this;
-    self.label = ko.observable(data.label||null);
-    self.value = ko.observable(data.value||null);
+    self.label = ko.observable(data.label || null);
+    self.value = ko.observable(data.value || null);
     self.selected = ko.observable(data.selected ? true : false);
     self.editable = ko.observable(data.editable ? true : false);
     self.multival = ko.observable(data.multival ? true : false);
@@ -236,7 +236,7 @@ function Option(data) {
         }
         var remotevalues = self.remoteValues();
         var localvalues = self.values();
-        if (self.hasRemote() && remotevalues!=null) {
+        if (self.hasRemote() && remotevalues != null) {
             ko.utils.arrayForEach(remotevalues, function (val) {
                 arr.push(val);
             });
