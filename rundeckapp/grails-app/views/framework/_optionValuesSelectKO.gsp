@@ -73,7 +73,7 @@
 
                 <div data-bind="if: multivalued">
                     <!-- use checkboxes -->
-                    <div class="optionmultiarea ">
+                    <div class="optionmultiarea " data-bind="visible: !enforced() || multiValueList().length>0">
 
                         <div data-bind="if: !enforced()">
                             <%-- variable input text fields --%>
