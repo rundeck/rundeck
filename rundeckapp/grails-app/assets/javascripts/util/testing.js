@@ -114,7 +114,7 @@ var TestHarness = function (name,data) {
                     curPrefix= i + ': ';
                     self[i].call(self, i + ': ');
                 }catch(e){
-                    self.assert(i + ':', null, e);
+                    self.assert('caught error running test: '+e, 'ok', 'exception');
                     console.log("error",e,e.stack);
                 }
             }
