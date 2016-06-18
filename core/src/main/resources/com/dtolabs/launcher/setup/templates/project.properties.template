@@ -17,3 +17,11 @@ project.etc.dir = @rdeck.base@/projects/${project.name}/etc
 #
 project.resources.file = @rdeck.base@/projects/${project.name}/etc/resources.xml
 
+
+# Project-wide global variables (overrides values from framework.globals)
+
+# Expands to ${globals.var1}
+#project.globals.var1 = value1
+
+# Expands to ${globals.var2}
+#project.globals.var2 = value2

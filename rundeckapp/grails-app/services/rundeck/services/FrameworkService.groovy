@@ -1076,4 +1076,8 @@ class FrameworkService implements ApplicationContextAware {
             projectProperties.putAll(Validator.mapProperties(config, desc))
         }
     }
+
+    Map<String, String> getProjectGlobals(final String project) {
+        rundeckFramework.getProjectGlobals(project)
+    }
 }

@@ -463,6 +463,10 @@ class UtilityTagLib{
                         textValue: {
                             return it?"User: ${it}": "Your User Profile"
                         }
+                ],
+                help:[
+                        pattern:/\{\{help\/docs\}\}/,
+                        linkText: helpLinkUrl()
                 ]
         ]
         linkopts.each{k,opts->
@@ -472,6 +476,8 @@ class UtilityTagLib{
                     lparams.id=it[2]
                     def text = opts.textValue?opts.textValue(it[2]):it[1]
                     return g.link(lparams,text)
+                }else if(opts.linkText){
+                    return opts.linkText
                 }else{
 
                     return it[0]

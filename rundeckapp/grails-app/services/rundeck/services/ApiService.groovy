@@ -213,7 +213,8 @@ class ApiService {
      */
     public String extractResponseFormat(HttpServletRequest request, HttpServletResponse response,
                                       ArrayList<String> allowed, String defformat = null) {
-        return ((response.format in allowed) ? response.format : (defformat ?: request.format))
+        def defFormatEval = defformat ?: request.format
+        return ((response.format in allowed) ? response.format : (defFormatEval in allowed?defFormatEval:null))
     }
     /**
      * Require request to be a certain format, returns false if not valid and error response is already sent

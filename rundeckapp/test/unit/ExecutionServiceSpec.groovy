@@ -222,6 +222,7 @@ class ExecutionServiceSpec extends Specification {
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_)
             0 * _(*_)
         }
 
@@ -241,6 +242,58 @@ class ExecutionServiceSpec extends Specification {
         newCtxt.dataContext['secureOption'] == ['test2': '']
         newCtxt.dataContext['option'] == ['test2': '']
         newCtxt.privateDataContext['option'] == ['test1': '']
+    }
+    def "createJobReferenceContext global vars"() {
+        given:
+        def context = ExecutionContextImpl.builder()
+                                          .
+                threadCount(1)
+                                          .
+                keepgoing(false)
+                                          .
+                dataContext(['option': ['monkey': 'wakeful'], 'secureOption': [:], 'job': ['execid': '123']])
+                                          .
+                privateDataContext(['option': [:],])
+                                          .
+                user('aUser')
+                                          .
+                build()
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                )
+        null != se
+        null != se.save()
+
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, 'AProject')
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_)>>['a':'b',c:'d']
+            0 * _(*_)
+        }
+
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+
+        when:
+
+        def newCtxt = service.createJobReferenceContext(
+                se,
+                context,
+                [] as String[],
+                null, null, null, null, null, false
+        )
+
+        then:
+        newCtxt.dataContext['globals'] == [a:'b',c:'d']
     }
 
     def "createJobReferenceContext secure opts default storage path values should be read from storage"() {
@@ -295,6 +348,7 @@ class ExecutionServiceSpec extends Specification {
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_)
             0 * _(*_)
         }
 
@@ -367,6 +421,7 @@ class ExecutionServiceSpec extends Specification {
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_)
             0 * _(*_)
         }
 
@@ -387,6 +442,42 @@ class ExecutionServiceSpec extends Specification {
         newCtxt.dataContext['secureOption'] == ['test2': 'zimbo']
         newCtxt.dataContext['option'] == ['test2': 'zimbo']
         newCtxt.privateDataContext['option'] == ['test1': 'phoenix']
+    }
+
+    def "Create execution context with global vars"() {
+        given:
+
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, 'testproj')
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_) >> [a: 'b', c: 'd']
+            0 * _(*_)
+        }
+        service.storageService = Mock(StorageService) {
+            1 * storageTreeWithContext(_)
+        }
+        service.jobStateService = Mock(JobStateService) {
+            1 * jobServiceWithAuthContext(_)
+        }
+
+        Execution se = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: false
+        )
+
+        when:
+        def val = service.createContext(se, null, null, null, null, null, null)
+        then:
+        val!=null
+        val.nodeSelector==null
+        val.frameworkProject=="testproj"
+        "testuser"==val.user
+        1==val.loglevel
+        !val.executionListener
+        val.dataContext.globals == [a:'b',c:'d']
     }
 
     def "delete execution unauthorized"() {

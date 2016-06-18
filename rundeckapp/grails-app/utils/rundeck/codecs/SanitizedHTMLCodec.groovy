@@ -36,8 +36,9 @@ class SanitizedHTMLCodec {
                 and(new HtmlPolicyBuilder().
                             //allow 'class' attribute on these elements
                             allowElements('em', 'p', 'i', 'b', 'div', 'a', 'span', 'h1', 'h2',
-                                          'h3', 'h4', 'pre', 'code').
+                                          'h3', 'h4', 'pre', 'code','table','tr','td','tbody','th').
                             allowAttributes('class').onElements('p', 'i', 'b', 'div', 'a',
+                        'table',
                                                                 'span', 'h1', 'h2', 'h3', 'h4',
                                                                 'pre', 'code').
                             toFactory()

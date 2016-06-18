@@ -367,8 +367,40 @@ function _setupAceTextareaEditor(textarea,callback){
 
     //create editor
     var editor = ace.edit(generateId(_shadow));
+    editor.$blockScrolling = Infinity;
+    var modes = [
+        //add more mode files in rundeckapp/web-app/js/ace
+        "batchfile",
+        "diff",
+        "dockerfile",
+        "golang",
+        "groovy",
+        "html",
+        "java",
+        "javscript",
+        "json",
+        "markdown",
+        "perl",
+        "php",
+        "powershell",
+        "properties",
+        "python",
+        "ruby",
+        "sh",
+        "sql",
+        "xml",
+        "yaml"
+    ];
+    function setAceSyntaxMode(mode, aceeditor) {
+
+        var allowedMode = modes.indexOf(mode) >= 0 ? mode : null;
+        if (allowedMode) {
+            aceeditor.getSession().setMode("ace/mode/" + (allowedMode || 'sh'));
+        }
+    }
+
+    setAceSyntaxMode(data.aceSessionMode, editor);
     editor.setTheme("ace/theme/chrome");
-    editor.getSession().setMode("ace/mode/"+(data.aceSessionMode?data.aceSessionMode: 'sh'));
     editor.getSession().on('change', function (e) {
         jQuery(textarea).val(editor.getValue());
         if(callback) {
@@ -393,6 +425,33 @@ function _setupAceTextareaEditor(textarea,callback){
         var _ctrls = jQuery('<div></div>')
             .addClass('checkbox ace_text_controls')
             .append(_soft_label)
+            .insertBefore(_shadow);
+    }
+
+    //add syntax dropdown
+    var addSyntaxSelect=data.aceControlSyntax?data.aceControlSyntax:false
+    if(addSyntaxSelect){
+        var sel = jQuery('<select/>')
+            .addClass('form-control')
+            .on('change', function (e) {
+                setAceSyntaxMode(jQuery(this).val(), editor);
+            });
+        sel.append(jQuery('<option/>').attr('value','-').text('-None-'));
+        for(var i=0;i<modes.length;i++ ) {
+            var mode=modes[i];
+            var option = jQuery('<option/>').attr('value',mode).text(mode);
+            sel.append(option);
+            if(mode==data.aceSessionMode){
+                option.attr('selected','true');
+            }
+        }
+        var label = jQuery('<label></label>')
+            .append('Syntax Mode: ')
+            .append(sel)
+            ;
+        var wrap = jQuery('<div></div>')
+            .addClass('ace_text_controls form-inline')
+            .append(label)
             .insertBefore(_shadow);
     }
 }

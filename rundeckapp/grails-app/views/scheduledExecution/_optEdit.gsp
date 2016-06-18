@@ -84,12 +84,14 @@
                 </g:javascript>
             </div>
         </div>
-        <div class="form-group ${hasErrors(bean: option, field: 'defaultValue', 'has-error')}">
+        <div class="form-group ${hasErrors(bean: option, field: 'defaultValue', 'has-error')} opt_keystorage_disabled"
+             style="${wdgt.styleVisible(unless:option?.defaultStoragePath)}">
             <label class="col-sm-2 control-label"><g:message code="form.option.defaultValue.label" /></label>
             <div class="col-sm-10">
                             <input type="text"
                                    class="form-control"
                                    name="defaultValue"
+                                   id="opt_defaultValue"
                                    value="${enc(attr:option?.defaultValue)}"
                                    size="40"
                                    placeholder="Default value"
@@ -139,6 +141,17 @@
                     </span>
                 </div>
 
+                <wdgt:eventHandler for="defaultStoragePath_${storagePathKey}" state="unempty" inline="true" oneway="true" frequency="2" >
+                    <wdgt:action target="enforcedType_none" check="true"/>
+                    <wdgt:action targetSelector=".opt_keystorage_disabled" visible="false"/>
+                    <wdgt:action targetSelector=".opt_keystorage_enabled" visible="true"/>
+                    <wdgt:action targetSelector=".opt_keystorage_enabled" visible="true"/>
+                    <wdgt:action targetSelector="#opt_defaultValue" clear="true"/>
+                </wdgt:eventHandler>
+                <wdgt:eventHandler for="defaultStoragePath_${storagePathKey}" state="empty" inline="true" oneway="true" frequency="2" >
+                    <wdgt:action targetSelector=".opt_keystorage_disabled" visible="true"/>
+                    <wdgt:action targetSelector=".opt_keystorage_enabled" visible="false"/>
+                </wdgt:eventHandler>
             </div>
         </div>
 
@@ -209,10 +222,13 @@
                 <wdgt:action targetSelector=".opt_sec_nexp_enabled" visible="false"/>
                 <wdgt:action targetSelector=".opt_sec_disabled" visible="true"/>
                 <wdgt:action targetSelector=".opt_sec_enabled" visible="false"/>
+                <wdgt:action targetSelector="#defaultStoragePath_${storagePathKey}" clear="true"/>
+                <wdgt:action targetSelector=".opt_keystorage_disabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_keystorage_enabled" visible="false"/>
             </wdgt:eventHandler>
 
         </div>
-        <div class="form-group">
+        <div class="form-group opt_keystorage_disabled" style="${wdgt.styleVisible(unless:option?.defaultStoragePath)}">
             <label class="col-sm-2 control-label"><g:message code="form.option.values.label" /></label>
             <div class="col-sm-10">
                 <g:set var="valueTypeListChecked" value="${!option || !option.realValuesUrl && params.valuesType != 'url' ? true : false}"/>
@@ -295,12 +311,13 @@
                 </wdgt:eventHandler>
             </div>
         </div>
-        <div class="form-group">
+        <div class="form-group opt_keystorage_disabled" style="${wdgt.styleVisible(unless:option?.defaultStoragePath)}">
             <label class="col-sm-2 control-label"><g:message code="form.option.enforcedType.label" /></label>
             <div class="col-sm-10">
                 <div class="radio">
                     <label>
                         <g:radio name="enforcedType" value="none" checked="${!option || !option?.enforced && null==option?.regex}"
+                            id="enforcedType_none"
                                  class="evnonregex"/>
                         <g:message code="none" />
                     </label>
@@ -308,7 +325,9 @@
                 </div>
                 <div class="radio">
                     <label class="${hasErrors(bean:option,field:'enforced','fieldError')}">
-                        <g:radio name="enforcedType" value="enforced" checked="${option?.enforced?true:false}" class="evnonregex"/>
+                        <g:radio name="enforcedType" value="enforced" checked="${option?.enforced?true:false}" class="evnonregex"
+                                 id="enforcedType_enforced"
+                        />
                         <g:message code="form.option.enforced.label" />
                     </label>
                 </div>

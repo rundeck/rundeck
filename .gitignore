@@ -30,6 +30,7 @@ rundeckapp/env.bash
 /rundeckapp/var/tmp/*
 /packaging/dist
 /packaging/rpmdist
+/packaging/debdist
 /docs/*/manpages/man*/*.gz
 /docs/*/manpages/man*/*.1
 /docs/*/manpages/man*/*.5

@@ -183,9 +183,10 @@
                         <option value="">-choose-</option>
                     </g:if>
 
+                    <g:set var="hasselectedval" value="${selectedvalue || selectedoptsmap && selectedoptsmap[optName]}"/>
                     <g:each in="${labelsSet}" var="sellabel">
                         <g:set var="entry" value="${sellabel instanceof Map?sellabel:[name:sellabel,value:sellabel]}"/>
-                        <g:set var="isselected" value="${selectedvalue && entry.value == selectedvalue || entry.value == optionSelect.defaultValue || selectedoptsmap && entry.value == selectedoptsmap[optName]}"/>
+                        <g:set var="isselected" value="${(!hasselectedval && entry.value == optionSelect.defaultValue) || selectedvalue && entry.value == selectedvalue || selectedoptsmap && entry.value == selectedoptsmap[optName]}"/>
                         <option value="${enc(attr:entry.value)}" ${isselected ? 'selected' : ''}><g:enc>${entry.name}</g:enc></option>
                     </g:each>
                 </select>

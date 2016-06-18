@@ -1,6 +1,6 @@
 include Makefile.inc
 
-DIRS = en jp
+DIRS = en
 ifndef VERSION
 VERSION=$(shell grep version.number= ../version.properties | cut -d= -f 2)
 endif
