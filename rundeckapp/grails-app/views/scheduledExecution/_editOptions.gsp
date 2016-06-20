@@ -18,8 +18,20 @@
     </div>
 </g:hasErrors>
 <div id="optionSelect">
-    <g:render template="/framework/commandOptions"
-              model="[paramsPrefix:'extra.',selectedargstring:selectedargstring,selectedoptsmap:selectedoptsmap,notfound:commandnotfound,authorized:authorized,optionSelections:scheduledExecution?.options?scheduledExecution.options:null,scheduledExecutionId:scheduledExecution.extid,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]"/>
+    <g:render template="/framework/commandOptionsKO"
+              model="[
+                      paramsPrefix        : 'extra.',
+                      selectedargstring   : selectedargstring,
+                      selectedoptsmap     : selectedoptsmap,
+                      notfound            : commandnotfound,
+                      authorized          : authorized,
+                      optionSelections    : scheduledExecution?.options ? scheduledExecution.options : null,
+                      scheduledExecutionId: scheduledExecution.extid,
+                      jobexecOptionErrors : jobexecOptionErrors,
+                      optiondependencies  : optiondependencies,
+                      dependentoptions    : dependentoptions,
+                      optionordering      : optionordering
+              ]"/>
 </div>
 
 
@@ -29,15 +41,15 @@
     <div class="col-sm-10">
         <label class="radio-inline">
             <g:radio name="extra.loglevel" value="INFO" checked="${scheduledExecution?.loglevel != 'DEBUG'}"/>
-            Normal
+            <g:message code="loglevel.normal" />
         </label>
         <label class="radio-inline">
             <g:radio name="extra.loglevel" value="DEBUG" checked="${scheduledExecution?.loglevel == 'DEBUG'}"/>
-            Debug
+            <g:message code="loglevel.debug" />
         </label>
 
         <div class="help-block">
-            Debug level produces more output
+            <g:message code="scheduledExecution.property.loglevel.help" />
         </div>
     </div>
 </div>

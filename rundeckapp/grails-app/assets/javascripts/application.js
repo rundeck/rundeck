@@ -1122,18 +1122,65 @@ function _loadMessages(id){
     jQuery.extend(window.Messages,loadJsonData(id));
 }
 /**
+ * expand i18n message template
+ * @param template template of the form "text {0} {1} ..." with placeholders numbered from 0
+ * @param data substitution data, an array, a scalar, or an object containing 'value' entry
+ * @param pluralize if true, treat the template as two templates "singular|plural" separated by | and use the plural
+ *     template if data value {0} is not '1'
+ *
+ * @returns {*|string|XML|void}
+ */
+function messageTemplate(template, data, pluralize) {
+    "use strict";
+    var pluralTemplate = null;
+    if (pluralize) {
+        var arr = template.split('|');
+        template = arr[0];
+        pluralTemplate = arr[1];
+    }
+    var values = [];
+    if (typeof(data) != 'object') {
+        values = [data];
+    } else if (jQuery.isArray(data)) {
+        values = data;
+    } else if (typeof(data) == 'object') {
+        values = data['value'];
+        if (!jQuery.isArray(values)) {
+            values = [values];
+        }
+    }
+    for (var i = 0; i < values.length; i++) {
+        if(typeof(values[i]) == 'function'){
+            values[i] =   values[i]();
+        }
+    }
+    if (pluralize && values[0] != 1) {
+        template = pluralTemplate;
+    }
+    var text = template.replace(/\{(\d+)\}/g, function (match, g1, offset, string) {
+        var val = parseInt(g1);
+        if (val >= 0 && val < values.length) {
+            return values[val];
+        } else {
+            return string;
+        }
+    });
+    return text;
+}
+/**
  * Returns the i18n message for the given code, or the code itself if message is not found.  Requires
  * calling the "g:jsMessages" tag from the taglib to define messages.
  * @param code
+ * @param args template argument values
  * @returns {*}
  */
-function message(code) {
+function message(code,args) {
     if (typeof(window.Messages) == 'object') {
         var msg = Messages[code];
         if(!msg){
             if(typeof(_messageMissingError)=='function'){_messageMissingError ("Message not found: "+code);}
         }
-        return msg ? msg : code;
+        return msg ? args?messageTemplate(msg,args): msg : code;
     } else {
         if(typeof(_messageMissingError)=='function'){_messageMissingError ("Message not found: "+code);}
         return code;

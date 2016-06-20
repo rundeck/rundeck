@@ -429,7 +429,7 @@ class ScheduledExecutionController  extends ControllerBase{
      * an option's "valueSrc" property, and renders the optionValuesSelect template
      * using the data.
      */
-    def loadRemoteOptionValues={
+    def loadRemoteOptionValues(){
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
             return
@@ -593,23 +593,57 @@ class ScheduledExecutionController  extends ControllerBase{
                     if(!valid){
                         result=null
                         err.message="Failed parsing remote option values: ${validationerrors.join('\n')}"
+                        err.code='invalid'
                     }
                 }else if(!err){
                     err.message = "Empty result"
                     err.code='empty'
                 }
-                def model= [optionSelect: opt, values: result, srcUrl: cleanUrl, err: err, fieldPrefix: params.fieldPrefix, selectedvalue: params.selectedvalue]
+                def model= [optionSelect: opt,
+                            values: result,
+                            srcUrl: cleanUrl,
+                            err: err,
+                            fieldPrefix: params.fieldPrefix,
+                            selectedvalue: params.selectedvalue]
                 if(params.extra?.option?.get(opt.name)){
                     model.selectedoptsmap=[(opt.name):params.extra.option.get(opt.name)]
                 }
-                return render(template: "/framework/optionValuesSelect", model: model);
+                withFormat{
+                    html{
+                        return render(template: "/framework/optionValuesSelect", model: model);
+                    }
+                    json{
+                        model.remove('optionSelect')
+                        model.name=opt.name
+                        if(model.err?.exception){
+                            model.err.exception=model.err.exception.toString()
+                        }
+                        render(contentType: 'application/json', text: model as JSON)
+                    }
+                }
+
             } else {
-                return renderErrorFragment("not a url option: " + params.option)
+
+                withFormat{
+                    html{
+                        return renderErrorFragment("not a url option: " + params.option)
+                    }
+                    json{
+                        render(contentType: 'application/json', text: [err:[message:"not a url option: " + params.option]] as JSON)
+                    }
+                }
             }
         }else{
-            return renderErrorFragment("option not found: "+params.option)
-        }
 
+            withFormat{
+                html{
+                    return renderErrorFragment("option not found: "+params.option)
+                }
+                json{
+                    render(contentType: 'application/json', text: [err:[message:"option not found: "+params.option]] as JSON)
+                }
+            }
+        }
     }
     static Logger optionsLogger = Logger.getLogger("com.dtolabs.rundeck.remoteservice.http.options")
     private logRemoteOptionStats(stats,jobdata){
@@ -2451,12 +2485,12 @@ class ScheduledExecutionController  extends ControllerBase{
         model.optionordering = scheduledExecution.options*.name
 
         //topo sort the dependencies
-        def toporesult = toposort(scheduledExecution.options*.name, depopts, optdeps)
+        def toporesult = toposort(model.optionordering, depopts, optdeps)
         if (scheduledExecution.options && !toporesult.result) {
             log.warn("Cyclic dependency for options for job ${scheduledExecution.extid}: (${toporesult.cycle})")
             model.optionsDependenciesCyclic = true
         }
-        if (!explicitOrdering && toporesult.result) {
+        if (toporesult.result) {
             model.optionordering = toporesult.result
         }
 
@@ -2513,7 +2547,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def Map oedges = deepClone(oedgesin)
         def Map iedges = deepClone(iedgesin)
         def l = new ArrayList()
-        def s = new ArrayList(nodes.findAll {!iedges[it]})
+        List s = new ArrayList(nodes.findAll {!iedges[it]})
         while(s){
             def n = s.first()
             s.remove(n)
@@ -2523,12 +2557,16 @@ class ScheduledExecutionController  extends ControllerBase{
             if(oedges[n]){
                 edges.addAll(oedges[n])
             }
+            def k=[] //preserve input order when processing new leaf nodes
             edges.each{p->
                 oedges[n].remove(p)
                 iedges[p].remove(n)
                 if(!iedges[p]){
-                    s<<p
+                    k<<p
                 }
+            }
+            if(k){
+                s.addAll(0,k)
             }
         }
         if (iedges.any {it.value} || oedges.any{it.value}){
