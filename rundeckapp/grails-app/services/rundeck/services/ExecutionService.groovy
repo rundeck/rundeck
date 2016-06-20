@@ -1594,7 +1594,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             Map allowedOptions = input.subMap(['loglevel', 'argString', 'option','_replaceNodeFilters', 'filter', 'retryAttempt']).findAll { it.value != null }
             allowedOptions.putAll(input.findAll { it.key.startsWith('option.') || it.key.startsWith('nodeInclude') || it.key.startsWith('nodeExclude') }.findAll { it.value != null })
-            def Execution e = createExecution(scheduledExecution, authContext, allowedOptions,attempt>0,prevId)
+            def Execution e = createExecution(scheduledExecution, authContext, user, allowedOptions,attempt>0,prevId)
             def timeout = 0
             def eid = scheduledExecutionService.scheduleTempJob(
                     scheduledExecution,
@@ -1616,12 +1616,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
     /**
      * Create execution
-     * @param se
-     * @param user
+     * @param se job
+     * @param authContext auth context
+     * @param runAsUser owner of execution
      * @param input , map of input overrides, allowed keys: loglevel: String, option.*:String, argString: String, node(Include|Exclude).*: String, _replaceNodeFilters:true/false, filter: String, retryAttempt: Integer
-     * @return
+     * @return execution
      */
-    Execution int_createExecution(ScheduledExecution se, UserAndRolesAuthContext authContext, Map input){
+    Execution int_createExecution(
+            ScheduledExecution se,
+            UserAndRolesAuthContext authContext,
+            String runAsUser,
+            Map input
+    ) {
         def props = [:]
 
         se = ScheduledExecution.get(se.id)
@@ -1646,6 +1652,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             props.put(k,se[k])
         }
         props.user = authContext.username
+        if (runAsUser) {
+            props.user = runAsUser
+        }
         if (input && 'true' == input['_replaceNodeFilters']) {
             //remove all existing node filters to replace with input filters
             props = props.findAll {!(it.key =~ /^(filter|node(Include|Exclude).*)$/)}
@@ -1730,7 +1739,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      * @throws ExecutionServiceException
      */
-    def Execution createExecution(ScheduledExecution se, UserAndRolesAuthContext authContext, Map input = [:], boolean retry=false, long prevId=-1) throws ExecutionServiceException {
+    def Execution createExecution(
+            ScheduledExecution se,
+            UserAndRolesAuthContext authContext,
+            String runAsUser,
+            Map input = [:],
+            boolean retry=false,
+            long prevId=-1
+    )
+            throws ExecutionServiceException
+    {
         if (!se.multipleExecutions ) {
             synchronized (this) {
                 //find any currently running executions for this job, and if so, throw exception
@@ -1742,10 +1760,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 if (found && !(retry && prevId && found.size()==1 && found[0].id==prevId)) {
                     throw new ExecutionServiceException('Job "' + se.jobName + '" [' + se.extid + '] is currently being executed (execution [' + found.id + '])','conflict')
                 }
-                return int_createExecution(se,authContext,input)
+                return int_createExecution(se,authContext,runAsUser,input)
             }
         }else{
-            return int_createExecution(se,authContext,input)
+            return int_createExecution(se,authContext,runAsUser,input)
         }
     }
 
