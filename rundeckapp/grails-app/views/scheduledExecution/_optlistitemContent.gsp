@@ -30,11 +30,11 @@
 
         <div id="optdel_${enc(attr:ukey)}" class="panel panel-danger collapse">
             <div class="panel-heading">
-                Delete this option
+                <g:message code="delete.this.option" />
             </div>
 
             <div class="panel-body">
-                Really delete option <g:enc>${option.name}</g:enc>?
+                <g:message code="really.delete.option.0" args="${[option.name]}"/>
             </div>
 
             <g:jsonToken id="reqtoken_del_${ukey}" url="${request.forwardURI}"/>
@@ -52,22 +52,22 @@
             <span class="textbtn textbtn-danger "
                   data-toggle="collapse"
                   data-target="#optdel_${enc(attr:ukey)}"
-                  title="Delete this option.">
+                  title="${message(code:"delete.this.option")}">
                 <i class="glyphicon glyphicon-remove"></i></span>
             <span class="textbtn textbtn-info" onclick="_optedit('${enc(js:option.name)}',$(this).up('li.optEntry'));"
-                  title="Edit this option">
+                  title="${message(code:"edit.this.option")}">
                 <i class="glyphicon glyphicon-edit"></i>
-                edit
+                <g:message code="edit" />
             </span>
             <span class="textbtn textbtn-info" onclick="_doReorderOption('${enc(js:option.name)}',{pos:-1});"
-                  title="Move up">
+                  title="${message(code:"move.up")}">
                 <i class="glyphicon glyphicon-arrow-up"></i>
             </span>
             <span class="textbtn textbtn-info" onclick="_doReorderOption('${enc(js:option.name)}',{pos:1});"
-                  title="Move down">
+                  title="${message(code:"move.down")}">
                 <i class="glyphicon glyphicon-arrow-down"></i>
             </span>
-            <span class="dragHandle" title="Drag to reorder"><g:icon name="resize-vertical"/></span>
+            <span class="dragHandle" title="${message(code:"drag.to.reorder")}"><g:icon name="resize-vertical"/></span>
         </span>
 
         <g:javascript>
