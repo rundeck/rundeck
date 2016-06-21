@@ -10,12 +10,31 @@ import rundeck.services.FrameworkService
 
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
+import java.util.regex.Pattern
 
 class UtilityTagLib{
     def static  daysofweekkey = [Calendar.SUNDAY,Calendar.MONDAY,Calendar.TUESDAY,Calendar.WEDNESDAY,Calendar.THURSDAY,Calendar.FRIDAY,Calendar.SATURDAY];
     def public static daysofweekord = ScheduledExecution.daysofweeklist;
     def public static monthsofyearord = ScheduledExecution.monthsofyearlist;
-	static returnObjectForTags = ['nodeStatusColorStyle','nodeStatusColorCss','logStorageEnabled','executionMode','appTitle','rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','helpLinkParams','parseOptsFromString','relativeDateString','enc','textFirstLine','textRemainingLines']
+    static returnObjectForTags = [
+            'nodeStatusColorStyle',
+            'nodeStatusColorCss',
+            'logStorageEnabled',
+            'executionMode',
+            'appTitle',
+            'rkey',
+            'w3cDateValue',
+            'sortGroupKeys',
+            'helpLinkUrl',
+            'helpLinkParams',
+            'parseOptsFromString',
+            'relativeDateString',
+            'enc',
+            'textFirstLine',
+            'textRemainingLines',
+            'textBeforeLine',
+            'textAfterLine'
+    ]
 
     private static Random rand=new java.util.Random()
     def HMacSynchronizerTokensManager hMacSynchronizerTokensManager
@@ -186,7 +205,7 @@ class UtilityTagLib{
             duration=val
         }
 
-        out << duration 
+        out << duration
     }
 
     def relativeDate = { attrs, body ->
@@ -798,6 +817,25 @@ class UtilityTagLib{
             def split=attrs.text.toString().split(/(\r\n?|\n)/,2)
             if(split.length==2){
                 out << split[1]
+            }
+        }
+    }
+    def textBeforeLine={attrs,body->
+        if(attrs.text && attrs.marker){
+            def split=attrs.text.toString().split("(\n|\r\n)"+Pattern.quote(attrs.marker)+"(\n|\r\n)", 2)
+            out<< (split.length>0?split[0]:attrs.text)
+        }else{
+            out<<attrs.text
+        }
+    }
+    def textAfterLine={attrs,body->
+        if(attrs.text && attrs.marker){
+            def split=attrs.text.toString().split("(\n|\r\n)"+Pattern.quote(attrs.marker)+"(\n|\r\n)",2)
+            if(split.length==2){
+                if(attrs.include){
+                    out<<attrs.marker
+                }
+                out<< split[1]
             }
         }
     }

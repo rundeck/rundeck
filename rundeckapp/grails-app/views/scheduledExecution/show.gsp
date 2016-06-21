@@ -9,6 +9,7 @@
     %{--<g:render template="/framework/remoteOptionValuesJS"/>--}%
     <asset:javascript src="menu/joboptions.js"/>
     <asset:javascript src="menu/jobs.js"/>
+    <asset:javascript src="util/markdeep.js"/>
     <g:embedJSON id="jobParams"
                  data="${[filter: scheduledExecution?.filter, doNodeDispatch: scheduledExecution?.doNodedispatch, project: params.project
                          ?:

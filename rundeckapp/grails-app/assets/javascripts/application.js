@@ -960,7 +960,19 @@ function _initTokenRefresh() {
         }
     });
 }
+
+function _initMarkdeep(){
+    if(typeof(window.markdeep)!='undefined') {
+        jQuery('.markdeep').each(function (i, el) {
+            "use strict";
+            jQuery(el).html(
+                window.markdeep.format(jQuery(el).text(), false)
+            );
+        });
+    }
+}
 (function(){
+    window.markdeepOptions = {mode: 'script',detectMath:false};
     if(typeof(jQuery)=='function'){
         jQuery.ajaxSetup({
             headers: {'x-rundeck-ajax': 'true'}
@@ -975,6 +987,7 @@ function _initTokenRefresh() {
             _initIEPlaceholder();
             _initCollapseExpander();
             _initAnsiToggle();
+            _initMarkdeep();
         });
     }
 })();
