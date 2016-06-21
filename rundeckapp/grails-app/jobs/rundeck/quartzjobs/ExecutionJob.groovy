@@ -266,7 +266,7 @@ class ExecutionJob implements InterruptableJob {
             def rolelist = initMap.scheduledExecution.userRoles
             initMap.authContext = frameworkService.getAuthContextForUserAndRoles(initMap.scheduledExecution.user, rolelist)
             initMap.secureOptsExposed = initMap.executionService.selectSecureOptionInput(initMap.scheduledExecution,[:],true)
-            initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution,initMap.authContext)
+            initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution,initMap.authContext,null)
         }
         if (!initMap.authContext) {
             throw new RuntimeException("authContext could not be determined")
