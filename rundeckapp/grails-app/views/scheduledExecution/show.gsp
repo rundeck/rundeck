@@ -6,7 +6,6 @@
     <meta name="tabpage" content="jobs"/>
     <title><g:appTitle/> - <g:enc>${scheduledExecution?.jobName}</g:enc></title>
     <g:javascript library="prototype/effects"/>
-    %{--<g:render template="/framework/remoteOptionValuesJS"/>--}%
     <asset:javascript src="menu/joboptions.js"/>
     <asset:javascript src="menu/jobs.js"/>
     <g:embedJSON id="jobParams"
