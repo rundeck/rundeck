@@ -19,8 +19,11 @@
 <g:set var="firstline" value="${g.textFirstLine(text: description)}"/>
 <g:if test="${allowHTML && !firstLineOnly}">
     <g:set var="remainingLine" value="${g.textRemainingLines(text: description)}"/>
+    <g:if test="${cutoffMarker}">
+        <g:set var="remainingLine" value="${g.textBeforeLine(text: remainingLine, marker:cutoffMarker)}"/>
+    </g:if>
     <span class="${enc(attr: textCss ?: '')}"><g:enc>${firstline}</g:enc></span>
-    <g:if test="${remainingLine}">
+    <g:if test="${remainingLine?.trim()}">
         <g:if test="${mode=='collapsed' || mode=='expanded'}">
             <span class="expandComponentHolder">
             <g:expander key="desc_${rkey}" open="${mode=='expanded'?'true':'false'}">${moreText?:'More'}</g:expander>

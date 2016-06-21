@@ -1,4 +1,4 @@
-<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants; rundeck.Execution" %>
+<%@ page import="rundeck.ScheduledExecution; com.dtolabs.rundeck.server.authorization.AuthConstants; rundeck.Execution" %>
 <div class="row">
     <g:render template="/scheduledExecution/showHead"
               model="[scheduledExecution: scheduledExecution,
@@ -14,6 +14,8 @@
 <g:set var="runAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_RUN)}"/>
 <g:set var="runEnabled" value="${g.executionMode(is:'active')}"/>
 <g:set var="canRunJob" value="${runAccess && runEnabled}"/>
+<g:set var="extendeddesc" value="${g.textRemainingLines(text: scheduledExecution.description)}"/>
+<g:set var="rundoctext" value="${extendeddesc?g.textAfterLine(text: extendeddesc, marker:ScheduledExecution.RUNBOOK_MARKER):null}"/>
 <div class="row">
     <div class="col-sm-12">
         <ul class="nav nav-tabs">
@@ -33,6 +35,11 @@
             </g:else>
             <li class="${canRunJob ? '' : 'active'}"><a href="#schedExDetails"
                                                         data-toggle="tab"><g:message code="definition"/></a></li>
+            <g:if test="${rundoctext}">
+                <li>
+                    <a href="#rundoc" data-toggle="tab">Runbook</a>
+                </li>
+            </g:if>
         </ul>
 
         <div class="tab-content">
@@ -52,6 +59,13 @@
 
                 </div>
             </div>
+            <g:if test="${rundoctext}">
+                <div id="rundoc" class="tab-pane panel panel-default panel-tab-content">
+                    <div class="panel-body">
+                        <div class="markdeep">${rundoctext}</div>
+                    </div>
+                </div>
+            </g:if>
         </div>
     </div>
 </div>

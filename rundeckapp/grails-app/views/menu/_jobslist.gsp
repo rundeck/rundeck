@@ -1,4 +1,4 @@
-<%@ page import="rundeck.Execution; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="rundeck.ScheduledExecution; rundeck.Execution; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
 <g:set var="ukey" value="${g.rkey()}"/>
         <div class="jobslist ${small?'small':''}">
@@ -119,7 +119,12 @@
                                 </div>
 
                                 <g:render template="/scheduledExecution/description"
-                                          model="[description: scheduledExecution?.description,textCss:'text-muted',mode:'collapsed',rkey:g.rkey()]"/>
+                                          model="[description: scheduledExecution?.description,
+                                                  textCss:'text-muted',
+                                                  mode:'collapsed',
+                                                  rkey:g.rkey(),
+                                                  cutoffMarker: ScheduledExecution.RUNBOOK_MARKER
+                                          ]"/>
 
                             </td>
                             <g:if test="${scheduledExecution.scheduled}">
