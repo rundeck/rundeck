@@ -100,7 +100,7 @@ class ExecutionJobTest extends GroovyTestCase{
         mockes.demand.selectSecureOptionInput(1..1){ ScheduledExecution scheduledExecution, Map params, Boolean exposed = false->
             [test:'input']
         }
-        mockes.demand.createExecution(1..1){ ScheduledExecution se1, UserAndRolesAuthContext auth ->
+        mockes.demand.createExecution(1..1){ ScheduledExecution se1, UserAndRolesAuthContext auth, user ->
             Assert.assertEquals(se.id,se1.id)
             Assert.assertEquals(se.user, auth.username)
             'fakeExecution'
@@ -150,7 +150,7 @@ class ExecutionJobTest extends GroovyTestCase{
         mockes.demand.selectSecureOptionInput(1..1){ ScheduledExecution scheduledExecution, Map params, Boolean exposed = false->
             [test:'input']
         }
-        mockes.demand.createExecution(1..1){ ScheduledExecution se1, UserAndRolesAuthContext auth ->
+        mockes.demand.createExecution(1..1){ ScheduledExecution se1, UserAndRolesAuthContext auth, user ->
             Assert.assertEquals(se.id,se1.id)
             Assert.assertEquals(se.user, auth.username)
             'fakeExecution'
@@ -174,6 +174,7 @@ class ExecutionJobTest extends GroovyTestCase{
         def result=job.initialize(null, contextMock)
 
         Assert.assertEquals(3600L,result.timeout)
+        Assert.assertEquals("fakeExecution",result.execution)
     }
 
     /**
