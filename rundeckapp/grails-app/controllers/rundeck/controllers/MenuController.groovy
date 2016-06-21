@@ -1271,6 +1271,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 isFirstRun:isFirstRun,
                 projectNames: fprojects,
                 execCount:stats.execCount,
+                totalFailedCount:stats.totalFailedCount,
                 recentUsers:stats.recentUsers,
                 recentProjects:stats.recentProjects
         ])
@@ -1303,7 +1304,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def summary=[:]
         def projects = []
         projectNames.each{project->
-            summary[project]=[name: project, execCount: 0, userSummary: [], userCount: 0]
+            summary[project]=[name: project, execCount: 0, failedCount: 0,userSummary: [], userCount: 0]
         }
         long proj2=System.currentTimeMillis()
         def projects2 = Execution.createCriteria().list {
@@ -1321,6 +1322,23 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     summary[val[0].toString()].execCount = val[1]
                     projects << val[0]
                     execCount+=val[1]
+                }
+            }
+        }
+        def totalFailedCount= 0
+        def failedExecs = Execution.createCriteria().list {
+            gt('dateStarted', today)
+            inList('status', ['false', 'failed'])
+            projections {
+                groupProperty('project')
+                count()
+            }
+        }
+        failedExecs.each{val->
+            if(val.size()==2){
+                if(summary[val[0]]) {
+                    summary[val[0].toString()].failedCount = val[1]
+                    totalFailedCount+=val[1]
                 }
             }
         }
@@ -1346,7 +1364,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
         log.debug("loadSummaryProjectStats... ${System.currentTimeMillis()-start}, proj2 ${proj2}, proj3 ${proj3}")
-        [summary:summary,recentUsers:users,recentProjects:projects,execCount:execCount]
+        [summary:summary,recentUsers:users,recentProjects:projects,execCount:execCount,totalFailedCount:totalFailedCount]
     }
 
     def projectNamesAjax() {
@@ -1452,16 +1470,18 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def projects=allsummary.recentProjects
         def users=allsummary.recentUsers
         def execCount=allsummary.execCount
+        def totalFailedCount=allsummary.totalFailedCount
 
         def fwkNode = framework.getFrameworkNodeName()
 
-        render(contentType:'application/json',text:
-                ( [
+        render(contentType: 'application/json', text:
+                ([
                         execCount        : execCount,
+                        totalFailedCount : totalFailedCount,
                         recentUsers      : users,
                         recentProjects   : projects,
                         frameworkNodeName: fwkNode
-                ] )as JSON
+                ]) as JSON
         )
     }
 
