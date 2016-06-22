@@ -311,7 +311,7 @@ class ScheduledExecutionController  extends ControllerBase{
             )
         }
     }
-    def show = {
+    def show () {
         log.debug("ScheduledExecutionController: show : params: " + params)
         def crontab = [:]
         def framework = frameworkService.getRundeckFramework()
@@ -403,7 +403,53 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         dataMap
     }
+    def runbook () {
+        log.debug("ScheduledExecutionController: show : params: " + params)
+        def crontab = [:]
+        def framework = frameworkService.getRundeckFramework()
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
 
+        if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        if (unauthorizedResponse(frameworkService.authorizeProjectJobAll(authContext, scheduledExecution,
+                [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ, 'Job', params.id)) {
+            return
+        }
+
+        if (!params.project || params.project != scheduledExecution.project) {
+            return redirect(controller: 'scheduledExecution', action: 'runbook',
+                    params: [id: params.id, project: scheduledExecution.project])
+        }
+        request.project=scheduledExecution.project
+        crontab = scheduledExecution.timeAndDateAsBooleanMap()
+        //list executions using query params and pagination params
+
+        def total = Execution.countByScheduledExecution(scheduledExecution)
+
+        def remoteClusterNodeUUID=null
+        if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()) {
+            remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
+        }
+
+
+        def dataMap= [
+                scheduledExecution: scheduledExecution,
+                crontab: crontab,
+                params: params,
+                total: total,
+                nextExecution: scheduledExecutionService.nextExecutionTime(scheduledExecution),
+                remoteClusterNodeUUID: remoteClusterNodeUUID,
+                serverNodeUUID: frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null,
+                notificationPlugins: notificationService.listNotificationPlugins(),
+				orchestratorPlugins: orchestratorPluginService.listOrchestratorPlugins(),
+                max: params.int('max') ?: 10,
+                offset: params.int('offset') ?: 0] + _prepareExecute(scheduledExecution, framework,authContext)
+
+
+        dataMap
+    }
 
     /**
      * Sanitize the html text submitted
