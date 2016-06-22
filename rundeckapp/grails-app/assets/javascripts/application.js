@@ -350,6 +350,18 @@ function _applyAce(e,height){
     editor.getSession().setMode("ace/mode/" + (jQuery(e).data('aceSessionMode') || 'sh'));
     editor.setReadOnly(true);
 }
+function _setupMarkdeepPreviewTab(tabid,id,getter){
+    "use strict";
+    jQuery('#'+tabid).on('show.bs.tab', function () {
+        //load markdeep preview
+
+        var el = jQuery('#' + id);
+        el.text('Loading...');
+        window.markdeep.format(getter() + '\n', true,function(t){
+            jQuery(el).html(t);
+        });
+    });
+}
 function _setupAceTextareaEditor(textarea,callback){
     if (_isIe(8)||_isIe(7)||_isIe(6)) {
         return;
@@ -432,7 +444,7 @@ function _setupAceTextareaEditor(textarea,callback){
     editor.getSession().on('change', function (e) {
         jQuery(textarea).val(editor.getValue());
         if(callback) {
-            callback();
+            callback(editor);
         }
         if(checkResize){
             checkResize(editor);
@@ -485,6 +497,7 @@ function _setupAceTextareaEditor(textarea,callback){
             .append(label)
             .insertBefore(_shadow);
     }
+    return editor;
 }
 /**
  * Return true if the event is a keycode for a control key
@@ -991,7 +1004,19 @@ function _initTokenRefresh() {
         }
     });
 }
+/**
+ * Strip text up to first line with '---', return the rest
+ * @param text
+ * @private
+ */
+function _jobDescriptionRunbook(text) {
+    return text.replace(/^(.|[\r\n])*?(\r\n|\n)---(\r\n|\n)/,'');
+}
+function _hasJobDescriptionRunbook(text){
+    "use strict";
 
+    return text != _jobDescriptionRunbook(text);
+}
 /**
  * Apply markdeep formatting to contents of an element
  * @param el

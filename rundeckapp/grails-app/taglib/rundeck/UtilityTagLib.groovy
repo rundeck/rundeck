@@ -33,7 +33,8 @@ class UtilityTagLib{
             'textFirstLine',
             'textRemainingLines',
             'textBeforeLine',
-            'textAfterLine'
+            'textAfterLine',
+            'textHasMarker'
     ]
 
     private static Random rand=new java.util.Random()
@@ -827,6 +828,15 @@ class UtilityTagLib{
         }else{
             out<<attrs.text
         }
+    }
+    def textHasMarker = { attrs, body ->
+        if(attrs.text && attrs.marker){
+            def split=attrs.text.toString().split("(\n|\r\n)"+Pattern.quote(attrs.marker)+"(\n|\r\n)",2)
+            if(split.length==2){
+                return true
+            }
+        }
+        return false
     }
     def textAfterLine={attrs,body->
         if(attrs.text && attrs.marker){

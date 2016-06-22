@@ -7,6 +7,7 @@
             code="ScheduledExecution.page.edit.title"/></title>
     <asset:javascript src="leavePageConfirm.js"/>
     <asset:javascript src="jobEditPage_bundle.js"/>
+    <asset:javascript src="util/markdeep.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
     <g:javascript>
         var workflowEditor = new WorkflowEditor();
