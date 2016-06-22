@@ -406,6 +406,24 @@ class ScheduledExecutionController  extends ControllerBase{
 
 
     /**
+     * Sanitize the html text submitted
+     * @return
+     */
+    def sanitizeHtml(){
+        if(request.JSON.content){
+            return render(contentType: 'application/json'){
+                content= request.JSON.content.toString().encodeAsSanitizedHTML()
+            }
+        }
+        apiService.renderErrorFormat(response, [
+                status: HttpServletResponse.SC_BAD_REQUEST,
+                code: "api.error.invalid.request",
+                args: ["content expected"],
+                format: 'json'
+        ])
+
+    }
+    /**
      * check crontabString parameter if it is a valid crontab, and render any syntax warnings
      */
     def checkCrontab={

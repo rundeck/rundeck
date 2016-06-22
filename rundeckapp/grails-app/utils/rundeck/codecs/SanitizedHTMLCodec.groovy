@@ -16,6 +16,7 @@
 
 package rundeck.codecs
 
+import org.owasp.html.ElementPolicy
 import org.owasp.html.HtmlChangeListener
 import org.owasp.html.HtmlPolicyBuilder
 import org.owasp.html.PolicyFactory
@@ -28,21 +29,79 @@ import org.owasp.html.Sanitizers
  */
 class SanitizedHTMLCodec {
     def grailsApplication
+
+    public static final PolicyFactory SVG = new HtmlPolicyBuilder()
+            .allowElements(
+            'svg',
+            'g',
+            'path',
+            'polygon',
+            'circle',
+            'rect',
+            'text')
+            .allowAttributes('text-anchor', 'x', 'y','style')
+            .onElements('text')
+            .allowAttributes('transform','style')
+            .onElements('g')
+            .allowAttributes('cx','cy','r','class')
+            .onElements('circle')
+            .allowAttributes('points','style','transform')
+            .onElements('polygon')
+            .allowAttributes('d','style')
+            .onElements('path')
+            .allowAttributes('class','xmlns','version','height','width','style')
+            .onElements('svg')
+            .allowAttributes('x','y','height','width','style','fill')
+            .onElements('rect')
+            .toFactory();
     static final PolicyFactory POLICY =
-        Sanitizers.BLOCKS.
-                and(Sanitizers.FORMATTING).
-                and(Sanitizers.IMAGES).
-                and(Sanitizers.LINKS).
-                and(new HtmlPolicyBuilder().
-                            //allow 'class' attribute on these elements
-                            allowElements('em', 'p', 'i', 'b', 'div', 'a', 'span', 'h1', 'h2',
-                                          'h3', 'h4', 'pre', 'code','table','tr','td','tbody','th').
-                            allowAttributes('class').onElements('p', 'i', 'b', 'div', 'a',
-                        'table',
-                                                                'span', 'h1', 'h2', 'h3', 'h4',
-                                                                'pre', 'code').
-                            toFactory()
-                )
+            Sanitizers.BLOCKS.
+                    and(Sanitizers.FORMATTING).
+                    and(Sanitizers.IMAGES).
+                    and(Sanitizers.LINKS).
+                    and(SVG).
+                    and(new HtmlPolicyBuilder()
+                                .allowElements(
+                            'section',
+                            'p',
+                            'i',
+                            'b',
+                            'div',
+                            'a',
+                            'ul','ol','li',
+                            'pre', 'code',
+                            'table', 'tr', 'td', 'tbody', 'th',
+                            'span',
+                            'h1',
+                            'h2',
+                            'h3',
+                            'h4',
+                            'dd','dl','dt',
+                            )
+                                .allowAttributes("name").onElements("a")
+                        //allow 'class' attribute on these elements
+                                .allowAttributes('class').onElements(
+                            'section',
+                            'p',
+                            'i',
+                            'b',
+                            'div',
+                            'a',
+                            'pre', 'code',
+                            'ul','ol','li',
+                            'table', 'tr', 'td', 'th', 'tbody',
+                            'span',
+                            'h1',
+                            'h2',
+                            'h3',
+                            'h4',
+                            'dd','dl','dt',
+                    ).allowAttributes('style').onElements(
+                            'td','th',
+                    )
+
+                                .toFactory()
+                    )
 
     static debugLog = { str ->
         log.debug(str)
@@ -57,7 +116,8 @@ class SanitizedHTMLCodec {
         @Override
         void discardedAttributes(final Object t, final String s, final String... strings) {
             debugLog("HTML Sanitizer audit: Discarding attrs for tag: " + s + ": " +
-                             "attrs: " + (strings as List))
+                             "attrs: " + (strings as List)
+            )
         }
     }
     static encode = { str ->

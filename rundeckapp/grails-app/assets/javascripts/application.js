@@ -992,13 +992,78 @@ function _initTokenRefresh() {
     });
 }
 
+/**
+ * Apply markdeep formatting to contents of an element
+ * @param el
+ * @private
+ */
+function _applyMarkdeep(el){
+    "use strict";
+    if(typeof(window.markdeep)!='undefined') {
+        var text=jQuery(el).text();
+        jQuery(el).text('Loading...');
+        window.markdeep.format(text + '\n', true,function(t,err){
+            if(!err){
+                jQuery(el).html(t);
+            }else{
+                jQuery(el).text('');
+                jQuery(el).append(jQuery('<pre><code></code></pre>').text(text));
+            }
+        });
+    }else{
+        console.log("Markdeep was not loaded");
+    }
+}
+/**
+ * Sanitize HTML content
+ * @param t content
+ * @param callback called with (true/false,sanitizedcontent, errmsg)
+ * @returns {*} promise
+ * @private
+ */
+function _remoteSanitizeHTML(t, callback){
+    "use strict";
+    return jQuery.ajax({
+        url:appLinks.scheduledExecutionSanitizeHtml,
+        method:'POST',
+        dataType:'json',
+        contentType:'application/json',
+        data:JSON.stringify({content:t}),
+        success:function(data,res){
+            callback(true,data.content);
+        },
+        error:function(jqxhr,resp,err){
+            callback(false,null,err);
+        }
+    });
+}
+/**
+ * Initialize markdeep and automatically apply to .markdeep elements
+ * replaces window.markdeep.format with asynchronous version for sanitizing
+ * @private
+ */
 function _initMarkdeep(){
     if(typeof(window.markdeep)!='undefined') {
+        var orig = window.markdeep;
+        window.markdeep = Object.freeze({
+            format: function (t, e, c) {
+                "use strict";
+                _remoteSanitizeHTML(orig.format(t, e), function (suc, sanitized, err) {
+                    if (suc) {
+                        c(sanitized);
+                    }else{
+                        console.log("Error: could not sanitize content: "+err);
+                        c(t,'Failed to sanitize content');
+                    }
+                });
+
+            },
+            formatDiagram: orig.formatDiagram,
+            stylesheet: orig.stylesheet
+        });
         jQuery('.markdeep').each(function (i, el) {
             "use strict";
-            jQuery(el).html(
-                window.markdeep.format(jQuery(el).text()+'\n', false)
-            );
+            _applyMarkdeep(el);
         });
     }
 }
