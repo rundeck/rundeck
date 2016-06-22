@@ -398,6 +398,34 @@ function _setupAceTextareaEditor(textarea,callback){
             aceeditor.getSession().setMode("ace/mode/" + (allowedMode || 'sh'));
         }
     }
+    var checkResize;
+    if(data.aceResizeMax){
+        var heightPx=parseInt(height.replace(/px$/,''));
+        var lineheight=editor.renderer.lineHeight;
+        var checkSize=Math.floor(heightPx/lineheight);
+        var checkSizeMax=parseInt(data.aceResizeMax);
+        if(checkSize<checkSizeMax) {
+
+            var checkSizeInc=5;
+            var pxInc=lineheight;
+            checkResize = function (editor) {
+                "use strict";
+                var lineCount = editor.session.getLength();
+                if (lineCount > checkSize && checkSize < checkSizeMax) {
+                    var diff = Math.min(checkSizeMax-checkSize,lineCount - checkSize);
+                    var increment = Math.max(checkSizeInc,diff);
+                    checkSize += increment;
+                    heightPx += increment*pxInc;
+                    _shadow.css({height: heightPx + 'px'});
+                    editor.resize();
+                }
+            };
+
+            if(data.aceResizeAuto){
+                checkResize(editor);
+            }
+        }
+    }
 
     setAceSyntaxMode(data.aceSessionMode, editor);
     editor.setTheme("ace/theme/chrome");
@@ -405,6 +433,9 @@ function _setupAceTextareaEditor(textarea,callback){
         jQuery(textarea).val(editor.getValue());
         if(callback) {
             callback();
+        }
+        if(checkResize){
+            checkResize(editor);
         }
     });
     if(data.aceAutofocus){
@@ -966,7 +997,7 @@ function _initMarkdeep(){
         jQuery('.markdeep').each(function (i, el) {
             "use strict";
             jQuery(el).html(
-                window.markdeep.format(jQuery(el).text(), false)
+                window.markdeep.format(jQuery(el).text()+'\n', false)
             );
         });
     }

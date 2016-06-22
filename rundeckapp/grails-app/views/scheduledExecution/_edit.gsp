@@ -415,6 +415,8 @@ function getCurSEID(){
                         class="form-control ace_editor"
                         data-ace-session-mode="markdown"
                         data-ace-height="120px"
+                        data-ace-resize-auto="true"
+                        data-ace-resize-max="30"
             />
             <g:hasErrors bean="${scheduledExecution}" field="description">
                 <i class="glyphicon glyphicon-warning-sign text-warning"></i>
