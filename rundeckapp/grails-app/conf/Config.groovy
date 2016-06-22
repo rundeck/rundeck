@@ -124,6 +124,7 @@ log4j={
             debug 'org.apache.commons.httpclient'
             info 'grails.app.services.rundeck.services.ProjectManagerService'
             off 'h2database'
+            //info 'grails.app.utils.rundeck.codecs.SanitizedHTMLCodec'
         }
     }
 }

@@ -103,6 +103,7 @@ class SanitizedHTMLCodec {
                             'h3',
                             'h4',
                             'dd','dl','dt',
+                            'hr'
                             )
                                 .allowAttributes("name").onElements("a")
                         //allow 'class' attribute on these elements
@@ -110,6 +111,8 @@ class SanitizedHTMLCodec {
                             'section',
                             'p',
                             'i',
+                            'em',
+                            'strong',
                             'b',
                             'div',
                             'a',
@@ -122,6 +125,7 @@ class SanitizedHTMLCodec {
                             'h3',
                             'h4',
                             'dd','dl','dt',
+                            'hr'
                     ).allowAttributes('style').onElements(
                             'td','th',
                     )
@@ -130,7 +134,7 @@ class SanitizedHTMLCodec {
                     )
 
     static debugLog = { str ->
-        log.debug(str)
+        log.info(str)
     }
 
     static changeListener = new HtmlChangeListener() {
