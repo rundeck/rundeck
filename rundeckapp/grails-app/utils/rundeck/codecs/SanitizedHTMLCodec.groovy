@@ -19,6 +19,8 @@ package rundeck.codecs
 import org.owasp.html.ElementPolicy
 import org.owasp.html.HtmlChangeListener
 import org.owasp.html.HtmlPolicyBuilder
+import org.owasp.html.HtmlStreamEventProcessor
+import org.owasp.html.HtmlStreamEventReceiver
 import org.owasp.html.PolicyFactory
 import org.owasp.html.Sanitizers
 
@@ -29,6 +31,29 @@ import org.owasp.html.Sanitizers
  */
 class SanitizedHTMLCodec {
     def grailsApplication
+
+    static class AutoClosingEventReceiver implements HtmlStreamEventReceiver {
+        @Delegate
+        HtmlStreamEventReceiver sink
+        Set<String> autoCloseTags = []
+
+
+        @Override
+        void openTag(final String elementName, final List<String> attrs) {
+            sink.openTag(elementName, attrs)
+            if (autoCloseTags.contains(elementName.toLowerCase())) {
+                sink.closeTag(elementName)
+            }
+        }
+    }
+    static class AutoClosingEventProcessor implements HtmlStreamEventProcessor {
+        Set<String> autoCloseTags = []
+
+        @Override
+        HtmlStreamEventReceiver wrap(final HtmlStreamEventReceiver sink) {
+            return new AutoClosingEventReceiver(sink:sink,autoCloseTags: autoCloseTags)
+        }
+    }
 
     public static final PolicyFactory SVG = new HtmlPolicyBuilder()
             .allowElements(
@@ -53,6 +78,7 @@ class SanitizedHTMLCodec {
             .onElements('svg')
             .allowAttributes('x','y','height','width','style','fill')
             .onElements('rect')
+            .withPreprocessor(new AutoClosingEventProcessor(autoCloseTags: ['circle','polygon','path','rect']))
             .toFactory();
     static final PolicyFactory POLICY =
             Sanitizers.BLOCKS.

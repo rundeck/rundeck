@@ -1769,7 +1769,7 @@ function markdeepToHTML(str, elementMode) {
         str = str.rp(PROTECT_REGEXP, expose);
     }
 
-    return '<span class="md">' + entag('p', str) + '</span>';
+    return '<section class="md">' + entag('p', str) + '</section>';
 }
 
 
