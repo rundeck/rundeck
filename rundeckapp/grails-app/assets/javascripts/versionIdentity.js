@@ -279,6 +279,7 @@ var VersionIdentity=function(data){
         glyphicon.append(ispan);
         var nametext= jQuery('<span></span>').text(' '+name+' ');
         var colorpill= jQuery('<span></span>').css({
+            'border':'1px solid transparent',
             'border-image': self.stripeAllBg('90deg',self.versionData['sixes'],20),
             'border-width':'0 0 2px 0',
             'padding': '1px',
