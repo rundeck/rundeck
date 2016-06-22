@@ -1545,7 +1545,7 @@ ansi-bg-default'''))
             out << "<i class=\"glyphicon glyphicon-${attrs.name}\"></i>"
         }else{
             if(Environment.current==Environment.DEVELOPMENT) {
-                throw new Exception("icon name not recognized: ${attrs.name}")
+                throw new Exception("icon name not recognized: ${attrs.name}, suggestions: "+(glyphiconSet.findAll{it.contains(attrs.name)||it=~attrs.name})+"?")
             }
         }
     }
