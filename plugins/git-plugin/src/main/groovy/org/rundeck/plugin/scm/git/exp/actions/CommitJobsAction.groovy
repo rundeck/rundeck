@@ -127,7 +127,7 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
         jobs.each {
             commit1.setOnly(plugin.relativePath(it))
         }
-        pathsToDelete.each {
+        todelete.each {
             commit1.setOnly(it)
         }
         commit = commit1.call()
