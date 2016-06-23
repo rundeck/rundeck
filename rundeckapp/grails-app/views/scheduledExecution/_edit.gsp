@@ -1,4 +1,4 @@
-<%@ page import="rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="rundeck.ScheduledExecution; rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
 <g:jsonToken id="job_edit_tokens" url="${request.forwardURI}"/>
 <div class="list-group">
@@ -408,14 +408,36 @@ function getCurSEID(){
     <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'description', 'has-error')}">
         <label for="description" class="${labelColClass}"><g:message code="scheduledExecution.property.description.label" /></label>
         <div class="${fieldColSize}">
-            <g:textArea name="description"
-                        value="${scheduledExecution?.description}"
-                        cols="80"
-                        rows="3"
-                        class="form-control ace_editor"
-                        data-ace-session-mode="markdown"
-                        data-ace-height="120px"
-            />
+            <ul class="nav nav-tabs">
+
+                <li class="active"><a href="#desceditor" data-toggle="tab">Edit</a></li>
+                <li id="previewrunbook" style="${wdgt.styleVisible(
+                        if: g.textHasMarker(text:scheduledExecution?.description,marker:ScheduledExecution.RUNBOOK_MARKER)
+                )}">
+                    <a href="#descpreview" data-toggle="tab">
+                        <g:message code="job.editor.preview.runbook" />
+                    </a>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+
+                <div class="tab-pane active" id="desceditor">
+                    <g:textArea name="description"
+                                value="${scheduledExecution?.description}"
+                                cols="80"
+                                rows="3"
+                                class="form-control ace_editor _job_description"
+                                data-ace-session-mode="markdown"
+                                data-ace-height="120px"
+                                data-ace-resize-auto="true"
+                                data-ace-resize-max="30"
+                    />
+                </div>
+                <div class="tab-pane panel panel-default panel-tab-content" id="descpreview">
+                    <div class="panel-body" id="descpreview_content"></div>
+                </div>
+            </div>
             <g:hasErrors bean="${scheduledExecution}" field="description">
                 <i class="glyphicon glyphicon-warning-sign text-warning"></i>
             </g:hasErrors>
@@ -427,17 +449,33 @@ function getCurSEID(){
                     <a href="http://en.wikipedia.org/wiki/Markdown" target="_blank" class="text-info">
                         <i class="glyphicon glyphicon-question-sign"></i>
                     </a>
+                    <a href="https://casual-effects.com/markdeep" target="_blank" class="text-info">
+                        Markdeep <i class="glyphicon glyphicon-question-sign"></i>
+                    </a>
                 </g:if>
                 <g:else>
                     <g:message code="ScheduledExecution.property.description.plain.description"/>
                 </g:else>
             </div>
             <g:javascript>
-            jQuery(function(){
-                jQuery('textarea.ace_editor').each(function(){
-                    _addAceTextarea(this);
+                jQuery(function () {
+                    jQuery('textarea.ace_editor._job_description').each(function () {
+                        var editor = _addAceTextarea(this, function (editor) {
+                            "use strict";
+                            //test if a runbook was added, enable preview tab
+                            if (_hasJobDescriptionRunbook(editor.getValue())) {
+                                jQuery('#previewrunbook').show();
+                            }else{
+                                jQuery('#previewrunbook').hide();
+                            }
+                        });
+
+                        _setupMarkdeepPreviewTab('previewrunbook', 'descpreview_content', function () {
+                            return _jobDescriptionRunbook(editor.getValue());
+                        });
+
+                    });
                 });
-            });
             </g:javascript>
         </div>
     </div>

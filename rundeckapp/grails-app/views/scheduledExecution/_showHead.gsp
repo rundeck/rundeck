@@ -7,6 +7,7 @@
         <g:each in="${parts}" var="part" status="i">
             <g:if test="${i != 0}">/</g:if>
             <g:set var="subgroup" value="${parts[0..i].join('/')}"/>
+            <g:if test="${groupBreadcrumbMode!='static'}">
             <g:link controller="menu"
                     action="jobs"
                     class="secondary"
@@ -15,12 +16,17 @@
                     absolute="${absolute ? 'true' : 'false'}">
                 <g:if test="${i==0}"><g:if test="${!noimgs}"><b class="glyphicon glyphicon-folder-close"></b></g:if></g:if>
                 <g:enc>${part}</g:enc></g:link>
+            </g:if>
+            <g:if test="${groupBreadcrumbMode=='static'}">
+                <g:if test="${i==0}"><g:if test="${!noimgs}"><b class="glyphicon glyphicon-folder-close"></b></g:if></g:if>
+                <g:enc>${part}</g:enc>
+            </g:if>
         </g:each>
     </section>
 </g:if>
 <section class="${scheduledExecution.groupPath?'section-space':''}" id="jobInfo_">
     <span class=" h3">
-        <g:link controller="scheduledExecution" action="show"
+        <g:link controller="scheduledExecution" action="${jobAction?:'show'}"
             class="primary"
             params="[project: scheduledExecution.project]"
                 id="${scheduledExecution.extid}"

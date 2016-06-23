@@ -136,8 +136,13 @@ function _wfiaddnew(type,nodestep) {
     });
 }
 
-function _addAceTextarea(textarea){
-    _setupAceTextareaEditor(textarea,function(){jobWasEdited();});
+function _addAceTextarea(textarea,callback){
+    return _setupAceTextareaEditor(textarea, function (e) {
+        jobWasEdited();
+        if (callback) {
+            callback(e);
+        }
+    });
 }
 function _wfisavenew(formelem) {
     jobWasEdited();

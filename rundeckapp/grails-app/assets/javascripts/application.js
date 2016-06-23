@@ -350,6 +350,18 @@ function _applyAce(e,height){
     editor.getSession().setMode("ace/mode/" + (jQuery(e).data('aceSessionMode') || 'sh'));
     editor.setReadOnly(true);
 }
+function _setupMarkdeepPreviewTab(tabid,id,getter){
+    "use strict";
+    jQuery('#'+tabid).on('show.bs.tab', function () {
+        //load markdeep preview
+
+        var el = jQuery('#' + id);
+        el.text('Loading...');
+        window.markdeep.format(getter() + '\n', true,function(t){
+            jQuery(el).html(t);
+        });
+    });
+}
 function _setupAceTextareaEditor(textarea,callback){
     if (_isIe(8)||_isIe(7)||_isIe(6)) {
         return;
@@ -398,13 +410,44 @@ function _setupAceTextareaEditor(textarea,callback){
             aceeditor.getSession().setMode("ace/mode/" + (allowedMode || 'sh'));
         }
     }
+    var checkResize;
+    if(data.aceResizeMax){
+        var heightPx=parseInt(height.replace(/px$/,''));
+        var lineheight=editor.renderer.lineHeight;
+        var checkSize=Math.floor(heightPx/lineheight);
+        var checkSizeMax=parseInt(data.aceResizeMax);
+        if(checkSize<checkSizeMax) {
+
+            var checkSizeInc=5;
+            var pxInc=lineheight;
+            checkResize = function (editor) {
+                "use strict";
+                var lineCount = editor.session.getLength();
+                if (lineCount > checkSize && checkSize < checkSizeMax) {
+                    var diff = Math.min(checkSizeMax-checkSize,lineCount - checkSize);
+                    var increment = Math.max(checkSizeInc,diff);
+                    checkSize += increment;
+                    heightPx += increment*pxInc;
+                    _shadow.css({height: heightPx + 'px'});
+                    editor.resize();
+                }
+            };
+
+            if(data.aceResizeAuto){
+                checkResize(editor);
+            }
+        }
+    }
 
     setAceSyntaxMode(data.aceSessionMode, editor);
     editor.setTheme("ace/theme/chrome");
     editor.getSession().on('change', function (e) {
         jQuery(textarea).val(editor.getValue());
         if(callback) {
-            callback();
+            callback(editor);
+        }
+        if(checkResize){
+            checkResize(editor);
         }
     });
     if(data.aceAutofocus){
@@ -454,6 +497,7 @@ function _setupAceTextareaEditor(textarea,callback){
             .append(label)
             .insertBefore(_shadow);
     }
+    return editor;
 }
 /**
  * Return true if the event is a keycode for a control key
@@ -960,14 +1004,91 @@ function _initTokenRefresh() {
         }
     });
 }
+/**
+ * Strip text up to first line with '---', return the rest
+ * @param text
+ * @private
+ */
+function _jobDescriptionRunbook(text) {
+    return text.replace(/^(.|[\r\n])*?(\r\n|\n)---(\r\n|\n)/,'');
+}
+function _hasJobDescriptionRunbook(text){
+    "use strict";
 
+    return text != _jobDescriptionRunbook(text);
+}
+/**
+ * Apply markdeep formatting to contents of an element
+ * @param el
+ * @private
+ */
+function _applyMarkdeep(el){
+    "use strict";
+    if(typeof(window.markdeep)!='undefined') {
+        var text=jQuery(el).text();
+        jQuery(el).text('Loading...');
+        window.markdeep.format(text + '\n', true,function(t,err){
+            if(!err){
+                jQuery(el).html(t);
+            }else{
+                jQuery(el).text('');
+                jQuery(el).append(jQuery('<pre><code></code></pre>').text(text));
+            }
+        });
+    }else{
+        console.log("Markdeep was not loaded");
+    }
+}
+/**
+ * Sanitize HTML content
+ * @param t content
+ * @param callback called with (true/false,sanitizedcontent, errmsg)
+ * @returns {*} promise
+ * @private
+ */
+function _remoteSanitizeHTML(t, callback){
+    "use strict";
+    return jQuery.ajax({
+        url:appLinks.scheduledExecutionSanitizeHtml,
+        method:'POST',
+        dataType:'json',
+        contentType:'application/json',
+        data:JSON.stringify({content:t}),
+        success:function(data,res){
+            callback(true,data.content);
+        },
+        error:function(jqxhr,resp,err){
+            callback(false,null,err);
+        }
+    });
+}
+/**
+ * Initialize markdeep and automatically apply to .markdeep elements
+ * replaces window.markdeep.format with asynchronous version for sanitizing
+ * @private
+ */
 function _initMarkdeep(){
     if(typeof(window.markdeep)!='undefined') {
+        var orig = window.markdeep;
+        window.markdeep = Object.freeze({
+            format: function (t, e, c) {
+                "use strict";
+                _remoteSanitizeHTML(orig.format(t, e), function (suc, sanitized, err) {
+                    if (suc) {
+                        c(sanitized);
+                    }else{
+                        console.log("Error: could not sanitize content: "+err);
+                        c(t,'Failed to sanitize content');
+                    }
+                });
+
+            },
+            formatDiagram: orig.formatDiagram,
+            stylesheet: orig.stylesheet
+        });
         jQuery('.markdeep').each(function (i, el) {
             "use strict";
-            jQuery(el).html(
-                window.markdeep.format(jQuery(el).text(), false)
-            );
+            _applyMarkdeep(el);
         });
     }
 }
