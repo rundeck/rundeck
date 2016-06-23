@@ -681,7 +681,7 @@ class GitExportPluginSpec extends Specification {
         e.message == "A ${CommitJobsAction.P_MESSAGE} is required".toString()
     }
 
-    def "export job no local changes"() {
+    def "commit job no local changes"() {
         given:
 
         def gitdir = new File(tempdir, 'scm')
@@ -711,7 +711,7 @@ class GitExportPluginSpec extends Specification {
         e.message == 'No changes to local git repo need to be exported'
     }
 
-    def "export missing jobs and paths"() {
+    def "commit missing jobs and paths"() {
         given:
 
         def gitdir = new File(tempdir, 'scm')
