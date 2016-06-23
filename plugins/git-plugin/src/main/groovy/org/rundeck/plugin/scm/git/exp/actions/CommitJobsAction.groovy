@@ -103,6 +103,7 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
         plugin.serializeAll(jobs, plugin.format)
         String commitMessage = input[P_MESSAGE].toString()
         Status status = plugin.git.status().call()
+        int pathcount=0
         //add all changes to index
         if (jobs) {
             AddCommand addCommand = plugin.git.add()
@@ -110,6 +111,7 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
                 addCommand.addFilepattern(plugin.relativePath(it))
             }
             addCommand.call()
+            pathcount+=jobs.size()
         }
         def rmfiles = new HashSet<String>(status.removed + status.missing)
         def todelete = pathsToDelete.intersect(rmfiles)
@@ -119,8 +121,14 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
                 rm.addFilepattern(it)
             }
             rm.call()
+            pathcount+=todelete.size()
         }
 
+        if (!pathcount) {
+            result.success = true
+            result.message = 'No git changes needed'
+            return result
+        }
         CommitCommand commit1 = plugin.git.commit().
                 setMessage(commitMessage).
                 setCommitter(commitIdentName, commitIdentEmail)
