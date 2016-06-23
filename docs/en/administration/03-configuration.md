@@ -106,6 +106,10 @@ defines the logging configuration for the Rundeck server.
 
 [log4j]: http://logging.apache.org/log4j/
 
+## cli-log4j.properties
+
+This file defines the logging configuration for the Commandline tools.
+
 ## profile
 
 Shell environment variables used by the shell tools. This file
