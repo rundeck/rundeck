@@ -83,6 +83,7 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
         }
         if (input[TagAction.P_TAG_NAME]) {
             TagAction.validateTagDoesNotExist(plugin, input[TagAction.P_TAG_NAME])
+            TagAction.validateTagName(plugin, input[TagAction.P_TAG_NAME])
         }
 
         if (!jobs && !pathsToDelete) {

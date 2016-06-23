@@ -775,6 +775,119 @@ class GitExportPluginSpec extends Specification {
         !result.id
         result.message=='No git changes needed'
     }
+    def "commit with invalid tag should fail at validation without committing"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+
+        def userInfo = Mock(ScmUserInfo)
+        def ctxt = Mock(ScmOperationContext) {
+            getUserInfo() >> userInfo
+        }
+
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+        def commit = addCommitFile(gitdir, plugin.git, 'blah-xyz.xml', 'blah')
+        def localfile = new File(gitdir, 'blah-xyz.xml')
+        localfile<<'newtext'
+
+
+        def serializer = Mock(JobSerializer)
+        def jobref = Stub(JobExportReference) {
+            getJobName() >> 'blah'
+            getGroupPath() >> ''
+            getId() >> 'xyz'
+            getVersion() >> 1
+            getJobSerializer() >> serializer
+        }
+        def input = [message: "test", tagName: tagName]
+        when:
+        def result = plugin.export(ctxt, GitExportPlugin.JOB_COMMIT_ACTION_ID, [jobref] as Set, [] as Set, input)
+
+        then:
+        ScmPluginInvalidInput e = thrown()
+        e.report.errors['tagName'] == 'Tag name is not valid: ' + tagName
+        0 * serializer.serialize(*_)
+
+        where:
+        tagName     | _
+        'asdf asdf' | _
+    }
+
+    def "tag action with invalid tag should fail at validation"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+
+        def userInfo = Mock(ScmUserInfo)
+        def ctxt = Mock(ScmOperationContext) {
+            getUserInfo() >> userInfo
+        }
+
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+        def commit = addCommitFile(gitdir, plugin.git, 'blah-xyz.xml', 'blah')
+        def localfile = new File(gitdir, 'blah-xyz.xml')
+//        localfile<<'newtext'
+
+        def input = [message: "test", tagName: tagName]
+        when:
+        def result = plugin.export(ctxt, GitExportPlugin.PROJECT_TAG_ACTION_ID, [] as Set, [] as Set, input)
+
+        then:
+        ScmPluginInvalidInput e = thrown()
+        e.report.errors['tagName'] == 'Tag name is not valid: ' + tagName
+
+        where:
+        tagName     | _
+        'asdf asdf' | _
+    }
+    def "push action with invalid tag should fail at validation"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+
+        def userInfo = Mock(ScmUserInfo)
+        def ctxt = Mock(ScmOperationContext) {
+            getUserInfo() >> userInfo
+        }
+
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+        def commit = addCommitFile(gitdir, plugin.git, 'blah-xyz.xml', 'blah')
+        def localfile = new File(gitdir, 'blah-xyz.xml')
+//        localfile<<'newtext'
+
+        def input = [message: "test", tagName: tagName]
+        when:
+        def result = plugin.export(ctxt, GitExportPlugin.PROJECT_PUSH_ACTION_ID, [] as Set, [] as Set, input)
+
+        then:
+        ScmPluginInvalidInput e = thrown()
+        e.report.errors['tagName'] == 'Tag name is not valid: ' + tagName
+
+        where:
+        tagName     | _
+        'asdf asdf' | _
+    }
     def "commit missing user info"() {
         given:
 
