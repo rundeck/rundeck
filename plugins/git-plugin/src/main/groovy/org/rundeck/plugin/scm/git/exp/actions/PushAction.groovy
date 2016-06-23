@@ -73,6 +73,7 @@ Pushing to remote branch: `${plugin.branch}`"""
 
         Ref tagref
         if (input[TagAction.P_TAG_NAME]) {
+            TagAction.validateTagName(plugin, input[TagAction.P_TAG_NAME])
             tagref = GitUtil.findTag(input[TagAction.P_TAG_NAME], plugin.git)
             if (!tagref) {
                 def tagResult = plugin.export(
