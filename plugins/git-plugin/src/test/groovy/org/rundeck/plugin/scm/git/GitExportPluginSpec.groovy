@@ -742,7 +742,40 @@ class GitExportPluginSpec extends Specification {
         e.message == 'No jobs were selected'
     }
 
-    def "export missing user info"() {
+    def "commit with deleted paths that do not exist in repo"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+
+        def userInfo = Mock(ScmUserInfo)
+        def ctxt = Mock(ScmOperationContext) {
+            getUserInfo() >> userInfo
+        }
+
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+        def commit = addCommitFile(gitdir, plugin.git, 'blah', 'blah')
+        def localfile = new File(gitdir, 'blah')
+        localfile<<'newtext'
+
+
+        def input = [message: "test"]
+        when:
+        def result = plugin.export(ctxt, GitExportPlugin.JOB_COMMIT_ACTION_ID, [] as Set, ['dne'] as Set, input)
+
+        then:
+        result!=null
+        result.success
+        !result.id
+        result.message=='No git changes needed'
+    }
+    def "commit missing user info"() {
         given:
 
         def gitdir = new File(tempdir, 'scm')
