@@ -59,15 +59,37 @@
                 <i class="glyphicon glyphicon-edit"></i>
                 <g:message code="edit" />
             </span>
-            <span class="textbtn textbtn-info" onclick="_doReorderOption('${enc(js:option.name)}',{pos:-1});"
-                  title="${message(code:"move.up")}">
-                <i class="glyphicon glyphicon-arrow-up"></i>
-            </span>
-            <span class="textbtn textbtn-info" onclick="_doReorderOption('${enc(js:option.name)}',{pos:1});"
-                  title="${message(code:"move.down")}">
-                <i class="glyphicon glyphicon-arrow-down"></i>
-            </span>
-            <span class="dragHandle" title="${message(code:"drag.to.reorder")}"><g:icon name="resize-vertical"/></span>
+            <g:set var="canMoveUp" value="${optIndex!=0}"/>
+            <g:set var="canMoveDown" value="${optIndex<optCount-1}"/>
+            <g:if test="${canMoveUp}">
+                <span class="textbtn textbtn-info" onclick="_doReorderOption('${enc(js:option.name)}',{pos:-1});"
+                      title="${message(code:"move.up")}">
+                    <i class="glyphicon glyphicon-arrow-up"></i>
+                </span>
+            </g:if>
+            <g:else>
+                <span class="textbtn textbtn-info disabled" >
+                    <i class="glyphicon glyphicon-arrow-up"></i>
+                </span>
+            </g:else>
+            <g:if test="${canMoveDown}">
+
+                <span class="textbtn textbtn-info" onclick="_doReorderOption('${enc(js:option.name)}',{pos:1});"
+                      title="${message(code:"move.down")}">
+                    <i class="glyphicon glyphicon-arrow-down"></i>
+                </span>
+            </g:if>
+            <g:else>
+                <span class="textbtn textbtn-info disabled" >
+                    <i class="glyphicon glyphicon-arrow-down"></i>
+                </span>
+            </g:else>
+            <g:if test="${canMoveUp || canMoveDown}">
+                <span class="dragHandle" title="${message(code:"drag.to.reorder")}"><g:icon name="resize-vertical"/></span>
+            </g:if>
+            <g:else>
+                <span class="textbtn textbtn-info disabled" ><g:icon name="resize-vertical"/></span>
+            </g:else>
         </span>
 
         <g:javascript>
