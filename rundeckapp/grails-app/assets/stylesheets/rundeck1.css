@@ -887,7 +887,7 @@ tr.link, td.link {
 
 
 span.dragHandle {
-    cursor: move;
+    cursor: ns-resize;
 }
 
 .note.empty {

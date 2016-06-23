@@ -22,7 +22,7 @@ function OptionEditor(data) {
     self.bashVarPrefix= data.bashVarPrefix? data.bashVarPrefix:'';
     self.tobashvar = function (str) {
         return self.bashVarPrefix+"OPTION_" + str.toUpperCase().replace(/[^a-zA-Z0-9_]/g, '_').replace(/[{}$]/, '');
-    }
+    };
     self.bashVarPreview=ko.computed(function(){
        return self.tobashvar(self.name());
     });
