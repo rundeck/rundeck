@@ -170,6 +170,9 @@ function RemoteOptionController(data) {
      * @param data
      */
     self.loadData = function (data) {
+        if(!data){
+            return;
+        }
         if (data['optionsDependenciesCyclic']) {
             self.cyclic = data['optionsDependenciesCyclic'];
         }
