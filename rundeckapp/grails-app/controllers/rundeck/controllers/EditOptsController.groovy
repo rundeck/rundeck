@@ -66,8 +66,20 @@ class EditOptsController {
             flash.error = "name parameter is invalid: ${name}"
             return error.call()
         }
+        def optIndex=editopts.values()*.name.indexOf(name)
 
-        return render(template: "/scheduledExecution/optlistitemContent", model: [options: editopts, option: editopts[name], name: name, scheduledExecutionId: params.scheduledExecutionId, edit: params.edit])
+        return render(
+                template: "/scheduledExecution/optlistitemContent",
+                model: [
+                        optCount            : editopts.size(),
+                        optIndex            : optIndex,
+                        options             : editopts,
+                        option              : editopts[name],
+                        name                : name,
+                        scheduledExecutionId: params.scheduledExecutionId,
+                        edit                : params.edit
+                ]
+        )
     }
 
     /**
@@ -116,8 +128,18 @@ class EditOptsController {
         if (result.undo) {
             _clearRedoStack(params.scheduledExecutionId)
         }
-
-        return render(template: "/scheduledExecution/optlistitemContent", model: [option: editopts[name], name: name, scheduledExecutionId: params.scheduledExecutionId, edit: true])
+        def optIndex=editopts.values()*.name.indexOf(name)
+        return render(
+                template: "/scheduledExecution/optlistitemContent",
+                model: [
+                        optCount: editopts.size(),
+                        optIndex:optIndex,
+                        option: editopts [ name ],
+                        name : name,
+                        scheduledExecutionId: params.scheduledExecutionId,
+                        edit: true
+                ]
+        )
         }.invalidToken{
             request.error = g.message(code: 'request.error.invalidtoken.message')
             return error.call()
