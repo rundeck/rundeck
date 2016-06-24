@@ -12,7 +12,7 @@ class ResolverUtilSpec extends Specification {
     def setup(){
 
     }
-    def teardown(){
+    def cleanup(){
         def framework = AbstractBaseTest.createTestFramework()
         framework.getFrameworkProjectMgr().removeFrameworkProject('ResolverUtilSpec')
     }

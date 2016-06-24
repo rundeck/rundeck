@@ -30,7 +30,7 @@ class NodeFirstWorkflowStrategySpec extends Specification {
         testProject = framework.getFrameworkProjectMgr().createFrameworkProject('NodeFirstWorkflowStrategySpec')
     }
 
-    def teardown() {
+    def cleanup() {
         framework.getFrameworkProjectMgr().removeFrameworkProject('NodeFirstWorkflowStrategySpec')
     }
 

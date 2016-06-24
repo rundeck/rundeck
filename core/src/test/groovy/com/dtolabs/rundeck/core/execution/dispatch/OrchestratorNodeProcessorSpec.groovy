@@ -21,7 +21,7 @@ class OrchestratorNodeProcessorSpec extends Specification {
 
     }
 
-    def teardown() {
+    def cleanup() {
     }
 
     def "no nodes"() {

@@ -21,7 +21,7 @@ class JschNodeExecutorSpec extends Specification {
         testProject = framework.getFrameworkProjectMgr().createFrameworkProject(PROJECT_NAME)
     }
 
-    def teardown() {
+    def cleanup() {
         framework.getFrameworkProjectMgr().removeFrameworkProject(PROJECT_NAME)
     }
 

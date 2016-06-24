@@ -22,7 +22,7 @@ class NodeSSHConnectionInfoSpec extends Specification {
         framework = AbstractBaseTest.createTestFramework()
         testProject=framework.getFrameworkProjectMgr().createFrameworkProject('NodeSSHConnectionInfoTest')
     }
-    def teardown(){
+    def cleanup(){
         framework.getFrameworkProjectMgr().removeFrameworkProject('NodeSSHConnectionInfoTest')
     }
     def "get default authentication type"(){
