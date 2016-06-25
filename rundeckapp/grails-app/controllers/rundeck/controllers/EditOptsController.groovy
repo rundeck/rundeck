@@ -12,6 +12,7 @@ class EditOptsController {
     def static allowedMethods = [
             redo: 'POST',
             remove: 'POST',
+            reorder: 'POST',
             revert: 'POST',
             save: 'POST',
             undo: 'POST',
@@ -65,8 +66,20 @@ class EditOptsController {
             flash.error = "name parameter is invalid: ${name}"
             return error.call()
         }
+        def optIndex=editopts.values()*.name.indexOf(name)
 
-        return render(template: "/scheduledExecution/optlistitemContent", model: [options: editopts, option: editopts[name], name: name, scheduledExecutionId: params.scheduledExecutionId, edit: params.edit])
+        return render(
+                template: "/scheduledExecution/optlistitemContent",
+                model: [
+                        optCount            : editopts.size(),
+                        optIndex            : optIndex,
+                        options             : editopts,
+                        option              : editopts[name],
+                        name                : name,
+                        scheduledExecutionId: params.scheduledExecutionId,
+                        edit                : params.edit
+                ]
+        )
     }
 
     /**
@@ -115,8 +128,18 @@ class EditOptsController {
         if (result.undo) {
             _clearRedoStack(params.scheduledExecutionId)
         }
-
-        return render(template: "/scheduledExecution/optlistitemContent", model: [option: editopts[name], name: name, scheduledExecutionId: params.scheduledExecutionId, edit: true])
+        def optIndex=editopts.values()*.name.indexOf(name)
+        return render(
+                template: "/scheduledExecution/optlistitemContent",
+                model: [
+                        optCount: editopts.size(),
+                        optIndex:optIndex,
+                        option: editopts [ name ],
+                        name : name,
+                        scheduledExecutionId: params.scheduledExecutionId,
+                        edit: true
+                ]
+        )
         }.invalidToken{
             request.error = g.message(code: 'request.error.invalidtoken.message')
             return error.call()
@@ -137,6 +160,48 @@ class EditOptsController {
         def name = params.name
 
         def result = _applyOptionAction(editopts, [action: 'remove', name: name, params: params])
+        def options = new TreeSet()
+        options.addAll(editopts.values())
+        if (result.error) {
+            log.error(result.error)
+            return render(template: "/scheduledExecution/optlistContent", model: [options: options, name: name, scheduledExecutionId: params.scheduledExecutionId, edit: true, error: result.error])
+        }
+        _pushUndoAction(params.scheduledExecutionId, result.undo)
+        if (result.undo) {
+            _clearRedoStack(params.scheduledExecutionId)
+        }
+
+        return render(template: "/scheduledExecution/optlistContent", model: [options: options, name: name, scheduledExecutionId: params.scheduledExecutionId, edit: true])
+        }.invalidToken{
+            request.error = g.message(code: 'request.error.invalidtoken.message')
+            return error.call()
+        }
+    }
+    /**
+     * Reorder an option by name.  params.name required, other params:
+     *
+     * one of:
+     *
+     * * relativePosition: integer indicating relative steps to move
+     * * last: true: move to last position
+     * * before: (option name) move to above another option by name
+     */
+    def reorder () {
+        withForm {
+        if (!params.name) {
+            log.error("name parameter is required")
+            flash.error = "name parameter is required"
+            return error.call()
+        }
+        if (!params.relativePosition && !params.last && !params.before) {
+            log.error("relativePosition, last, or before parameter is required")
+            flash.error = "relativePosition, last, or before parameter is required"
+            return error.call()
+        }
+        def editopts = _getSessionOptions()
+        def name = params.name
+
+        def result = _applyOptionAction(editopts, [action: 'reorder', name: name, params: params])
         def options = new TreeSet()
         options.addAll(editopts.values())
         if (result.error) {
@@ -283,6 +348,44 @@ class EditOptsController {
 
             editopts[name] = option
             result['undo'] = [action: 'remove', name: name]
+        }  else if ('reorder' == input.action) {
+            String name = input.name
+            if (!editopts[name]) {
+                result.error = "No option named ${name} exists"
+                return result
+            }
+
+            List<String> sortedNames = new TreeSet(editopts.values())*.name
+            int oldloc= sortedNames.indexOf(name)
+            int position
+            if(input.params.relativePosition) {
+                //position is relative
+                position = input.params.relativePosition as Integer
+            }else if(input.params.last in [true,'true']) {
+                position = sortedNames.size() - oldloc - 1
+            }else if(input.params.before){
+                position = sortedNames.indexOf(input.params.before) - oldloc
+                if(position>0){
+                    position--
+                }
+            }else{
+                result.error = "Parameter relativePosition,last, or before is required"
+                return result
+            }
+            int newloc = oldloc+position
+            if(newloc<0 || newloc>editopts.size()-1){
+                result.error = "Cannot reorder option ${name} by ${position}: out of bounds"
+                return result
+            }
+            sortedNames.remove(name)
+            sortedNames.add(newloc,name)
+
+            int ndx=1
+            for (String optName : sortedNames) {
+                editopts[optName].sortIndex=ndx
+                ndx++
+            }
+            result['undo'] = [action: 'reorder', name: name, params:[relativePosition:position*-1]]
         } else if ('modify' == input.action) {
             def name = input.name
             if (!editopts[name]) {

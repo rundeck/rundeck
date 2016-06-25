@@ -20,7 +20,7 @@
     <g:else>
         <g:embedJSON data="${[projectNames:projectNames[0..49],projectNamesTotal:projectNames.size()]}" id="projectNamesData"/>
     </g:else>
-    <g:embedJSON data="${[loaded:true,execCount:execCount,recentUsers:recentUsers,recentProjects:recentProjects]}" id="statsData"/>
+    <g:embedJSON data="${[loaded:true,execCount:execCount,totalFailedCount:totalFailedCount,recentUsers:recentUsers,recentProjects:recentProjects]}" id="statsData"/>
     <g:embedJSON data="${[
             pagingInitialMax:grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingInitialMax?:15,
             pagingRepeatMax:grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingRepeatMax?:50,
@@ -85,7 +85,16 @@
 
                     <g:message code="page.home.duration.in.the.last.day" />
 
+
+                <span class="summary-count"
+                      data-bind="css: { 'text-warning': totalFailedCount()>0, 'text-muted': totalFailedCount()<1 }">
+
+                    <span data-bind="messageTemplate: totalFailedCount">
+                        <g:message code="page.home.project.executions.0.failed.parenthetical" />
+                    </span>
                 </span>
+
+            </span>
                 <div data-bind="if: recentProjectsCount()>1">
 
                     <g:message code="in" />
@@ -229,8 +238,21 @@
                                 <span data-bind="messageTemplate: $root.projectForName(project).execCount(), messageTemplatePluralize: true">
                                     <g:message code="Execution" />|<g:message code="Execution.plural" />
                                 </span>
-                                <g:message code="page.home.duration.in.the.last.day" />
-                            </a>
+                                <g:message code="page.home.duration.in.the.last.day" /></a>
+
+                                <span data-bind="if: $root.projectForName(project).failedCount()>0">
+                                    <a data-bind="urlPathParam: project "
+                                       class="text-warning"
+                                       href="${g.createLink(
+                                               controller: "reports",
+                                               action: "index",
+                                               params: [project: '<$>', statFilter: 'fail']
+                                       )}">
+                                        <span data-bind="messageTemplate: $root.projectForName(project).failedCount()">
+                                            <g:message code="page.home.project.executions.0.failed.parenthetical"/>
+                                        </span>
+                                    </a>
+                                </span>
                             <div>
                                 <div data-bind="if: $root.projectForName(project).userCount()>0">
                                     <g:message code="by" />

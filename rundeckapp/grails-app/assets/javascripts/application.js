@@ -350,6 +350,18 @@ function _applyAce(e,height){
     editor.getSession().setMode("ace/mode/" + (jQuery(e).data('aceSessionMode') || 'sh'));
     editor.setReadOnly(true);
 }
+function _setupMarkdeepPreviewTab(tabid,id,getter){
+    "use strict";
+    jQuery('#'+tabid).on('show.bs.tab', function () {
+        //load markdeep preview
+
+        var el = jQuery('#' + id);
+        el.text('Loading...');
+        window.markdeep.format(getter() + '\n', true,function(t){
+            jQuery(el).html(t);
+        });
+    });
+}
 function _setupAceTextareaEditor(textarea,callback){
     if (_isIe(8)||_isIe(7)||_isIe(6)) {
         return;
@@ -398,13 +410,44 @@ function _setupAceTextareaEditor(textarea,callback){
             aceeditor.getSession().setMode("ace/mode/" + (allowedMode || 'sh'));
         }
     }
+    var checkResize;
+    if(data.aceResizeMax){
+        var heightPx=parseInt(height.replace(/px$/,''));
+        var lineheight=editor.renderer.lineHeight;
+        var checkSize=Math.floor(heightPx/lineheight);
+        var checkSizeMax=parseInt(data.aceResizeMax);
+        if(checkSize<checkSizeMax) {
+
+            var checkSizeInc=5;
+            var pxInc=lineheight;
+            checkResize = function (editor) {
+                "use strict";
+                var lineCount = editor.session.getLength();
+                if (lineCount > checkSize && checkSize < checkSizeMax) {
+                    var diff = Math.min(checkSizeMax-checkSize,lineCount - checkSize);
+                    var increment = Math.max(checkSizeInc,diff);
+                    checkSize += increment;
+                    heightPx += increment*pxInc;
+                    _shadow.css({height: heightPx + 'px'});
+                    editor.resize();
+                }
+            };
+
+            if(data.aceResizeAuto){
+                checkResize(editor);
+            }
+        }
+    }
 
     setAceSyntaxMode(data.aceSessionMode, editor);
     editor.setTheme("ace/theme/chrome");
     editor.getSession().on('change', function (e) {
         jQuery(textarea).val(editor.getValue());
         if(callback) {
-            callback();
+            callback(editor);
+        }
+        if(checkResize){
+            checkResize(editor);
         }
     });
     if(data.aceAutofocus){
@@ -454,6 +497,7 @@ function _setupAceTextareaEditor(textarea,callback){
             .append(label)
             .insertBefore(_shadow);
     }
+    return editor;
 }
 /**
  * Return true if the event is a keycode for a control key
@@ -960,7 +1004,96 @@ function _initTokenRefresh() {
         }
     });
 }
+/**
+ * Strip text up to first line with '---', return the rest
+ * @param text
+ * @private
+ */
+function _jobDescriptionRunbook(text) {
+    return text.replace(/^(.|[\r\n])*?(\r\n|\n)---(\r\n|\n)/,'');
+}
+function _hasJobDescriptionRunbook(text){
+    "use strict";
+
+    return text != _jobDescriptionRunbook(text);
+}
+/**
+ * Apply markdeep formatting to contents of an element
+ * @param el
+ * @private
+ */
+function _applyMarkdeep(el){
+    "use strict";
+    if(typeof(window.markdeep)!='undefined') {
+        var text=jQuery(el).text();
+        jQuery(el).text('Loading...');
+        window.markdeep.format(text + '\n', true,function(t,err){
+            if(!err){
+                jQuery(el).html(t);
+            }else{
+                jQuery(el).text('');
+                jQuery(el).append(jQuery('<pre><code></code></pre>').text(text));
+            }
+        });
+    }else{
+        console.log("Markdeep was not loaded");
+    }
+}
+/**
+ * Sanitize HTML content
+ * @param t content
+ * @param callback called with (true/false,sanitizedcontent, errmsg)
+ * @returns {*} promise
+ * @private
+ */
+function _remoteSanitizeHTML(t, callback){
+    "use strict";
+    return jQuery.ajax({
+        url:appLinks.scheduledExecutionSanitizeHtml,
+        method:'POST',
+        dataType:'json',
+        contentType:'application/json',
+        data:JSON.stringify({content:t}),
+        success:function(data,res){
+            callback(true,data.content);
+        },
+        error:function(jqxhr,resp,err){
+            callback(false,null,err);
+        }
+    });
+}
+/**
+ * Initialize markdeep and automatically apply to .markdeep elements
+ * replaces window.markdeep.format with asynchronous version for sanitizing
+ * @private
+ */
+function _initMarkdeep(){
+    if(typeof(window.markdeep)!='undefined') {
+        var orig = window.markdeep;
+        window.markdeep = Object.freeze({
+            format: function (t, e, c) {
+                "use strict";
+                _remoteSanitizeHTML(orig.format(t, e), function (suc, sanitized, err) {
+                    if (suc) {
+                        c(sanitized);
+                    }else{
+                        console.log("Error: could not sanitize content: "+err);
+                        c(t,'Failed to sanitize content');
+                    }
+                });
+
+            },
+            formatDiagram: orig.formatDiagram,
+            stylesheet: orig.stylesheet
+        });
+        jQuery('.markdeep').each(function (i, el) {
+            "use strict";
+            _applyMarkdeep(el);
+        });
+    }
+}
 (function(){
+    window.markdeepOptions = {mode: 'script',detectMath:false};
     if(typeof(jQuery)=='function'){
         jQuery.ajaxSetup({
             headers: {'x-rundeck-ajax': 'true'}
@@ -975,6 +1108,7 @@ function _initTokenRefresh() {
             _initIEPlaceholder();
             _initCollapseExpander();
             _initAnsiToggle();
+            _initMarkdeep();
         });
     }
 })();
@@ -1122,18 +1256,65 @@ function _loadMessages(id){
     jQuery.extend(window.Messages,loadJsonData(id));
 }
 /**
+ * expand i18n message template
+ * @param template template of the form "text {0} {1} ..." with placeholders numbered from 0
+ * @param data substitution data, an array, a scalar, or an object containing 'value' entry
+ * @param pluralize if true, treat the template as two templates "singular|plural" separated by | and use the plural
+ *     template if data value {0} is not '1'
+ *
+ * @returns {*|string|XML|void}
+ */
+function messageTemplate(template, data, pluralize) {
+    "use strict";
+    var pluralTemplate = null;
+    if (pluralize) {
+        var arr = template.split('|');
+        template = arr[0];
+        pluralTemplate = arr[1];
+    }
+    var values = [];
+    if (typeof(data) != 'object') {
+        values = [data];
+    } else if (jQuery.isArray(data)) {
+        values = data;
+    } else if (typeof(data) == 'object') {
+        values = data['value'];
+        if (!jQuery.isArray(values)) {
+            values = [values];
+        }
+    }
+    for (var i = 0; i < values.length; i++) {
+        if(typeof(values[i]) == 'function'){
+            values[i] =   values[i]();
+        }
+    }
+    if (pluralize && values[0] != 1) {
+        template = pluralTemplate;
+    }
+    var text = template.replace(/\{(\d+)\}/g, function (match, g1, offset, string) {
+        var val = parseInt(g1);
+        if (val >= 0 && val < values.length) {
+            return values[val];
+        } else {
+            return string;
+        }
+    });
+    return text;
+}
+/**
  * Returns the i18n message for the given code, or the code itself if message is not found.  Requires
  * calling the "g:jsMessages" tag from the taglib to define messages.
  * @param code
+ * @param args template argument values
  * @returns {*}
  */
-function message(code) {
+function message(code,args) {
     if (typeof(window.Messages) == 'object') {
         var msg = Messages[code];
         if(!msg){
             if(typeof(_messageMissingError)=='function'){_messageMissingError ("Message not found: "+code);}
         }
-        return msg ? msg : code;
+        return msg ? args?messageTemplate(msg,args): msg : code;
     } else {
         if(typeof(_messageMissingError)=='function'){_messageMissingError ("Message not found: "+code);}
         return code;

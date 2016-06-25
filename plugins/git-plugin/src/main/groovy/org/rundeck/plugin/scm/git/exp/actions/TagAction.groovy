@@ -9,6 +9,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmPluginInvalidInput
 import org.eclipse.jgit.lib.Ref
+import org.eclipse.jgit.lib.Repository
 import org.rundeck.plugin.scm.git.BaseAction
 import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
@@ -74,6 +75,7 @@ class TagAction extends BaseAction implements GitExportAction {
             )
         }
         validateTagDoesNotExist( plugin, input[P_TAG_NAME])
+        validateTagName( plugin, input[P_TAG_NAME])
         def commit = plugin.getHead()
         Ref tagref
 
@@ -94,6 +96,14 @@ class TagAction extends BaseAction implements GitExportAction {
         if (found) {
             throw new ScmPluginInvalidInput(
                     Validator.errorReport(P_TAG_NAME, "Tag already exists: ${tag}")
+            )
+        }
+    }
+    static void validateTagName( GitExportPlugin plugin, String tag) {
+        def valid = Repository.isValidRefName("refs/tags/" + tag)
+        if (!valid) {
+            throw new ScmPluginInvalidInput(
+                    Validator.errorReport(P_TAG_NAME, "Tag name is not valid: ${tag}")
             )
         }
     }

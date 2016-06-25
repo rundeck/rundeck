@@ -28,7 +28,7 @@ class DirectoryResourceModelSourceSpec extends Specification {
         directory.mkdirs();
     }
 
-    def teardown() {
+    def cleanup() {
         if(directory.exists()){
             FileUtils.deleteDir(directory)
         }

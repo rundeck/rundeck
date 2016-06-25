@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
 
 class ScheduledExecution extends ExecutionContext {
+    static final String RUNBOOK_MARKER='---'
     Long id
     SortedSet<Option> options
     static hasMany = [executions:Execution,options:Option,notifications:Notification]

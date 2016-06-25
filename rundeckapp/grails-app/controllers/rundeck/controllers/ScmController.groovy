@@ -1185,6 +1185,11 @@ class ScmController extends ControllerBase {
                 }
             }
             def deletedPaths = scmService.deletedExportFilesForProject(project)
+            Map<String, String> renamedJobPaths = scmService.getRenamedJobPathsForProject(params.project)
+            //remove deleted paths that are known to be renamed jobs
+            renamedJobPaths.values().each {
+                deletedPaths.remove(it)
+            }
             def scmStatus = scmService.exportStatusForJobs(jobs)
             def scmFiles = integration == 'export' ? scmService.exportFilePathsMapForJobRefs(
                     scmService.jobRefsForJobs(jobs)
@@ -1205,6 +1210,7 @@ class ScmController extends ControllerBase {
                            report          : report,
                            config          : params.pluginProperties,
                            deletedPaths    : deletedPaths,
+                           renamedJobPaths : renamedJobPaths,
                            selectedPaths   : deletePaths,
                            scmProjectStatus: scmProjectStatus,
                            actionId        : actionId,

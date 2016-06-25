@@ -29,6 +29,7 @@ function Project(data) {
     var self = this;
     self.name = ko.observable(data.name);
     self.execCount = ko.observable(data.execCount || 0);
+    self.failedCount = ko.observable(data.failedCount || 0);
     self.userCount = ko.observable(data.userCount || 0);
     self.description = ko.observable(data.description);
     self.auth = ko.observable(new ProjectAuth());
@@ -60,6 +61,7 @@ function HomeData(data) {
     self.loaded = ko.observable(data.loaded?true:false);
     self.jobCount = ko.observable(0);
     self.execCount = ko.observable(data.execCount||0);
+    self.totalFailedCount = ko.observable(data.totalFailedCount||0);
     self.projectNames = ko.observableArray(data.projectNames || []);
     self.projectNamesTotal = ko.observable(data.projectNamesTotal || 0);
     self.loadedProjectNames = ko.observable(false);

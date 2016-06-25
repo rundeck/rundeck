@@ -72,7 +72,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService = fsvc
         try{
-            svc.createExecution(se,createAuthContext("user1"))
+            svc.createExecution(se,createAuthContext("user1"),null)
             fail("should fail")
         }catch(ExecutionServiceException ex){
             assertTrue(ex.message.contains('is currently being executed'))
@@ -107,7 +107,7 @@ class ExecutionServiceTests  {
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService = fsvc
-        def execution=svc.createExecution(se,createAuthContext("user1"))
+        def execution=svc.createExecution(se,createAuthContext("user1"),null)
         assertNotNull(execution)
     }
     void testCreateExecutionSimple(){
@@ -127,7 +127,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        Execution e2=svc.createExecution(se,createAuthContext("user1"))
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),null)
 
         assertNotNull(e2)
         assertEquals('-a b -c d', e2.argString)
@@ -157,7 +157,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        Execution e2=svc.createExecution(se,createAuthContext("user1"),['extra.option.test':'12'])
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,['extra.option.test':'12'])
 
         assertNotNull(e2)
         assertEquals('-a b -c d', e2.argString)
@@ -223,7 +223,7 @@ class ExecutionServiceTests  {
         svc.frameworkService = fsvc
 
 
-        Execution e2 = svc.createExecution(se,createAuthContext("user1"), [('option.test'): testOptionValue])
+        Execution e2 = svc.createExecution(se,createAuthContext("user1"),null, [('option.test'): testOptionValue])
 
         assertNotNull(e2)
         assertEquals(argString, e2.argString)
@@ -261,7 +261,7 @@ class ExecutionServiceTests  {
 
 
         try{
-            Execution e2 = svc.createExecution(se,createAuthContext("user1"), [('option.test'): testOptionValue])
+            Execution e2 = svc.createExecution(se,createAuthContext("user1"),null, [('option.test'): testOptionValue])
             fail("expected exception")
         }catch (ExecutionServiceException e){
             assertEquals(exceptionMessage,e.message)
@@ -287,7 +287,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        Execution e2=svc.createExecution(se,createAuthContext("user1"),[('_replaceNodeFilters'):"true",filter:'name: monkey'])
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[('_replaceNodeFilters'):"true",filter:'name: monkey'])
 
         assertNotNull(e2)
         assertEquals('name: monkey', e2.filter)
@@ -318,7 +318,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        Execution e2=svc.createExecution(se,createAuthContext("user1"),[('_replaceNodeFilters'):"true",nodeIncludeName: 'monkey'])
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[('_replaceNodeFilters'):"true",nodeIncludeName: 'monkey'])
 
         assertNotNull(e2)
         assertEquals('name: monkey', e2.filter)
@@ -349,7 +349,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        Execution e2=svc.createExecution(se,createAuthContext("user1"),[('_replaceNodeFilters'):"true",nodeIncludeName: ['monkey','banana']])
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[('_replaceNodeFilters'):"true",nodeIncludeName: ['monkey','banana']])
 
         assertNotNull(e2)
         assertEquals('name: monkey,banana', e2.filter)
@@ -424,7 +424,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        Execution e=svc.createExecution(se,createAuthContext("user1"))
+        Execution e=svc.createExecution(se,createAuthContext("user1"),null)
 
         assertNotNull(e)
         assertEquals('-a b -c d',e.argString)
@@ -444,7 +444,7 @@ class ExecutionServiceTests  {
         svc.frameworkService=fsvc
 
             assertNull(se.executions)
-            Execution e=svc.createExecution(se,createAuthContext("user1"),[argString:'-test1 asdf -test2 val2b -test4 asdf4'])
+            Execution e=svc.createExecution(se,createAuthContext("user1"),null,[argString:'-test1 asdf -test2 val2b -test4 asdf4'])
 
             assertNotNull(e)
             assertEquals("secure option value should not be stored",'-test1 asdf -test2 val2b -test3 val3',e.argString)
@@ -463,7 +463,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService = fsvc
         assertNull(se.executions)
-        Execution e=svc.createExecution(se,createAuthContext("user1"),[argString:'-test2 val2b -test4 asdf4'])
+        Execution e=svc.createExecution(se,createAuthContext("user1"),null,[argString:'-test2 val2b -test4 asdf4'])
 
         assertNotNull(e)
         assertEquals("default value should be used",'-test1 val1 -test2 val2b -test3 val3',e.argString)
@@ -482,7 +482,7 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService = fsvc
         assertNull(se.executions)
-        Execution e=svc.createExecution(se,createAuthContext("user1"),[argString:'-test2 val2b -test3 monkey3'])
+        Execution e=svc.createExecution(se,createAuthContext("user1"),null,[argString:'-test2 val2b -test3 monkey3'])
 
         assertNotNull(e)
         assertEquals('-test1 val1 -test2 val2b -test3 monkey3',e.argString)
@@ -506,7 +506,7 @@ class ExecutionServiceTests  {
         svc.messageSource = ms.createMock()
             //enforced value failure on test2
             try {
-                Execution e = svc.createExecution(se,createAuthContext("user1"), [argString: '-test2 val2D -test3 monkey4'])
+                Execution e = svc.createExecution(se,createAuthContext("user1"),null, [argString: '-test2 val2D -test3 monkey4'])
                 fail("shouldn't succeed")
             } catch (ExecutionServiceException e) {
                 assertTrue(e.message,e.message.contains("domain.Option.validation.allowed.invalid"))
@@ -525,7 +525,7 @@ class ExecutionServiceTests  {
         svc.messageSource = ms.createMock()
             //regex failure on test3
             try {
-                Execution e = svc.createExecution(se,createAuthContext("user1"), [argString: '-test2 val2b -test3 monkey4'])
+                Execution e = svc.createExecution(se,createAuthContext("user1"),null, [argString: '-test2 val2b -test3 monkey4'])
                 fail("shouldn't succeed")
             } catch (ExecutionServiceException e) {
                 assertTrue(e.message,e.message.contains("domain.Option.validation.regex.invalid"))

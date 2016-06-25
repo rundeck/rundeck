@@ -76,7 +76,7 @@
                 edit
             </span>
             <g:unless test="${isErrorHandler}">
-                <span class="action dragHandle"  title="Drag to reorder"><g:img file="icon-tiny-drag.png"/></span>
+                <span class="dragHandle"  title="Drag to reorder"><g:icon name="resize-vertical"/></span>
             </g:unless>
         </span>
 

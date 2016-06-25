@@ -83,6 +83,7 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
         }
         if (input[TagAction.P_TAG_NAME]) {
             TagAction.validateTagDoesNotExist(plugin, input[TagAction.P_TAG_NAME])
+            TagAction.validateTagName(plugin, input[TagAction.P_TAG_NAME])
         }
 
         if (!jobs && !pathsToDelete) {
@@ -103,6 +104,7 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
         plugin.serializeAll(jobs, plugin.format)
         String commitMessage = input[P_MESSAGE].toString()
         Status status = plugin.git.status().call()
+        int pathcount=0
         //add all changes to index
         if (jobs) {
             AddCommand addCommand = plugin.git.add()
@@ -110,6 +112,7 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
                 addCommand.addFilepattern(plugin.relativePath(it))
             }
             addCommand.call()
+            pathcount+=jobs.size()
         }
         def rmfiles = new HashSet<String>(status.removed + status.missing)
         def todelete = pathsToDelete.intersect(rmfiles)
@@ -119,15 +122,21 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
                 rm.addFilepattern(it)
             }
             rm.call()
+            pathcount+=todelete.size()
         }
 
+        if (!pathcount) {
+            result.success = true
+            result.message = 'No git changes needed'
+            return result
+        }
         CommitCommand commit1 = plugin.git.commit().
                 setMessage(commitMessage).
                 setCommitter(commitIdentName, commitIdentEmail)
         jobs.each {
             commit1.setOnly(plugin.relativePath(it))
         }
-        pathsToDelete.each {
+        todelete.each {
             commit1.setOnly(it)
         }
         commit = commit1.call()

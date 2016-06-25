@@ -2,7 +2,6 @@ import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
-import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.storage.KeyStorageTree
 import grails.test.mixin.Mock
@@ -10,21 +9,8 @@ import grails.test.mixin.TestFor
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource
-import rundeck.CommandExec
-import rundeck.ExecReport
-import rundeck.Execution
-import rundeck.LogFileStorageRequest
-import rundeck.Option
-import rundeck.ScheduledExecution
-import rundeck.Workflow
-import rundeck.services.ExecutionService
-import rundeck.services.ExecutionServiceException
-import rundeck.services.ExecutionServiceValidationException
-import rundeck.services.FrameworkService
-import rundeck.services.JobStateService
-import rundeck.services.LogFileStorageService
-import rundeck.services.ReportService
-import rundeck.services.StorageService
+import rundeck.*
+import rundeck.services.*
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -74,7 +60,7 @@ class ExecutionServiceSpec extends Specification {
             getUsername()>>'user1'
         }
         when:
-        Execution e2 = service.createExecution(job, authContext, ['extra.option.test': '12'], true, exec2.id)
+        Execution e2 = service.createExecution(job, authContext,null, ['extra.option.test': '12'], true, exec2.id)
 
         then:
         ExecutionServiceException e = thrown()
@@ -114,10 +100,89 @@ class ExecutionServiceSpec extends Specification {
             getUsername()>>'user1'
         }
         when:
-        Execution e2 = service.createExecution(job, authContext, ['extra.option.test': '12'], true, exec.id)
+        Execution e2 = service.createExecution(job, authContext,null, ['extra.option.test': '12'], true, exec.id)
 
         then:
         e2 != null
+    }
+    void "create execution as user"() {
+
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        def authContext = Mock(UserAndRolesAuthContext){
+            getUsername()>>'user1'
+        }
+        when:
+        Execution e2 = service.createExecution(job, authContext,'testuser', ['extra.option.test': '12'])
+
+        then:
+        e2 != null
+        e2.user=='testuser'
+    }
+    void "execute job as user"() {
+
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                user:'test1',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+            authorizeProjectJobAll(*_)>>true
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        service.configurationService=Stub(ConfigurationService){
+            isExecutionModeActive()>>true
+        }
+
+        def authContext = Mock(UserAndRolesAuthContext){
+            getUsername()>>'user1'
+        }
+        when:
+        def result = service.executeJob(job, authContext, 'test2', [:])
+
+        then:
+        1 * service.scheduledExecutionService.scheduleTempJob(job,'test2',authContext,_,[:],[:],0)>>{args->
+            args[3].id
+        }
+        result!=null
+        result.success
+        result.executionId!=null
+        result.name==job.jobName
+        result.execution!=null
+        result.executionId==result.execution.id
+        result.execution.user=='test2'
+
     }
 
     @Unroll
