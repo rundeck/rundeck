@@ -16,6 +16,7 @@ import org.springframework.web.context.WebApplicationContext
 import org.springframework.web.context.support.WebApplicationContextUtils
 
 import javax.servlet.ServletContext
+import java.text.SimpleDateFormat
 
 class BootStrap {
 
@@ -53,8 +54,18 @@ class BootStrap {
              grailsApplication.mainContext.profilerLog.appenderNames = ["loggingAppender", 'miniProfilerAppender']
          }
          long bstart=System.currentTimeMillis()
+         //version info
+         servletContext.setAttribute("version.build",VersionConstants.BUILD)
+         servletContext.setAttribute("version.date",VersionConstants.DATE)
+         servletContext.setAttribute("version.date_string",VersionConstants.DATE_STRING)
+         def shortBuildDate = new SimpleDateFormat("yyyy-MM-dd").format(VersionConstants.DATE)
+         servletContext.setAttribute("version.date_short", shortBuildDate)
+         servletContext.setAttribute("version.number",VersionConstants.VERSION)
+         servletContext.setAttribute("version.ident",VersionConstants.VERSION_IDENT)
          def appname=messageSource.getMessage('main.app.name',null,'',null) ?: messageSource.getMessage('main.app.default.name',null,'',null) ?: 'Rundeck'
-         log.info("Starting ${appname} ${grailsApplication.metadata['build.ident']}...")
+
+         servletContext.setAttribute("app.ident",grailsApplication.metadata['build.ident'])
+         log.info("Starting ${appname} ${servletContext.getAttribute('app.ident')}...")
          /*filterInterceptor.handlers.sort { FilterToHandlerAdapter handler1,
                                            FilterToHandlerAdapter handler2 ->
              FilterConfig filter1 = handler1.filterConfig

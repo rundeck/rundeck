@@ -26,6 +26,9 @@ package com.dtolabs.rundeck.core;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Properties;
 
 /**
@@ -35,6 +38,14 @@ import java.util.Properties;
  * @version $Revision$
  */
 public final class VersionConstants {
+    /**
+     * Date
+     */
+    public final static String DATE_STRING;
+    /**
+     * Date
+     */
+    public final static Date DATE;
     /**
      * Version
      */
@@ -53,12 +64,25 @@ public final class VersionConstants {
         final Properties versionProperties = new Properties();
         try {
             final InputStream resourceAsStream = VersionConstants.class.getClassLoader().getResourceAsStream(
-                "META-INF/com/dtolabs/rundeck/core/application.properties");
+                    "META-INF/com/dtolabs/rundeck/core/application.properties");
             if (null != resourceAsStream) {
                 versionProperties.load(resourceAsStream);
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+        DATE_STRING = versionProperties.getProperty("version.date", "2016-06-25T07:29:23Z");
+        SimpleDateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        Date parse = null;
+        try {
+            parse = iso8601.parse(DATE_STRING);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        if (null != parse) {
+            DATE = parse;
+        } else {
+            DATE = new Date(0);
         }
         VERSION = versionProperties.getProperty("version.number", "UNKNOWN");
         BUILD = versionProperties.getProperty("version.build", "UNKNOWN");
