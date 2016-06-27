@@ -41,7 +41,7 @@
         </g:elseif>
         <g:elseif test="${nodes}">
             <g:set var="selectedNodes"
-                   value="${failedNodes? failedNodes.split(','):selectedNodes!=null? selectedNodes.split(','):null}"/>
+                   value="${failedNodes? failedNodes.split(',').findAll{it}:selectedNodes!=null? selectedNodes.split(',').findAll{it}:null}"/>
             <div class="container">
             <div class="row">
                 <div class="col-sm-12 checkbox">
