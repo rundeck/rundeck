@@ -128,6 +128,7 @@
                         js: user.login
                 )}");});
                     fireWhenReady('${enc(js: rkeytok)}',function(){highlightNew('${enc(js: rkeytok)}');});
+                    fireWhenReady('${enc(js: rkeytok)}',function(){setLanguage('${enc(js: rkeytok)}');});
                 </g:javascript>
             </div>
         </div></div>
