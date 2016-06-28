@@ -312,7 +312,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         } catch (ProviderLoaderException e) {
             assertTrue(e.getCause() instanceof PluginException);
             assertEquals(
-                "Class " + testProvider2.class.getName() + " was not a valid plugin class for service: TestService",
+                "Class " + testProvider2.class.getName() + " was not a valid plugin class for service: TestService. Expected class " + testProvider2.class.getName() + ", with a public constructor with no parameter",
                 e.getCause().getMessage());
 
         }
@@ -379,7 +379,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         } catch (ProviderLoaderException e) {
             assertTrue(e.getCause() instanceof PluginException);
             assertEquals(
-                "Class " + testProvider1.class.getName() + " was not a valid plugin class for service: TestService",
+                "Class " + testProvider1.class.getName() + " was not a valid plugin class for service: TestService. Expected class " + testProvider1.class.getName() + ", with a public constructor with no parameter",
                 e.getCause().getMessage());
         }
     }
@@ -457,7 +457,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
             fail("should fail");
         } catch (PluginException e) {
             assertEquals(
-                "Class " + testProvider2.class.getName() + " was not a valid plugin class for service: TestService",
+                "Class " + testProvider2.class.getName() + " was not a valid plugin class for service: TestService. Expected class " + testProvider2.class.getName() + ", with a public constructor with no parameter",
                 e.getMessage());
         } catch (ProviderCreationException e) {
             fail("unexpected: " + e.getMessage());

@@ -206,8 +206,8 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         final String pluginname = annotation.name();
 
         if (!service.isValidProviderClass(cls)) {
-            throw new PluginException("Class " + cls.getName() + " was not a valid plugin class for service: "
-                    + service.getName());
+            throw new PluginException("Class " + cls.getName() + " was not a valid plugin class for service: " 
+                    + service.getName() + ". Expected class " + cls.getName() + ", with a public constructor with no parameter");
         }
         debug("Succeeded loading plugin " + cls.getName() + " for service: " + service.getName());
         return service.createProviderInstance(cls, pluginname);
