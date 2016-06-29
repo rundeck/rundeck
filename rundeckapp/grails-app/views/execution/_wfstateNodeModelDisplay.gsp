@@ -97,8 +97,8 @@
             <div data-bind="with: currentStep(), visible: !expanded()">
                 <span class="stepident "
                       data-bind="attr: { 'data-execstate': executionState, title: stepctxdesc }">
-                    <i class="rdicon icon-small" data-bind="css: type"></i>
-                    <span data-bind="text: stepident"></span>
+                    <i class="rdicon icon-small" data-bind="css: stepinfo().type"></i>
+                    <span data-bind="text: stepinfo().stepident"></span>
                 </span>
                 <span data-bind="if: ( executionState() == 'WAITING' ) " class="text-muted">
                     (Next up)
@@ -125,8 +125,8 @@
                         <div class="stepident  action col-inset"
                               data-bind="attr: { 'data-execstate': executionState, title: stepctxdesc }, css: { 'auto-caret-container': followingOutput(), active: followingOutput() } ">
                             <i class="auto-caret"></i>
-                            <i class="rdicon icon-small" data-bind="css: type"></i>
-                            <span data-bind="text: stepident"></span>
+                            <i class="rdicon icon-small" data-bind="css: stepinfo().type"></i>
+                            <span data-bind="text: stepinfo().stepident"></span>
                         </div>
                     </div>
 

@@ -33,6 +33,7 @@
       <asset:javascript src="executionState_HistoryKO.js"/>
 
       <g:javascript library="prototype/effects"/>
+      <g:embedJSON id="execInfoJSON" data="${[jobId:scheduledExecution?.extid,execId:execution.id]}"/>
       <g:embedJSON id="workflowDataJSON" data="${execution.workflow.commands*.toMap()}"/>
       <g:embedJSON id="nodeStepPluginsJSON" data="${stepPluginDescriptions.node.collectEntries { [(it.key): [title: it.value.title]] }}"/>
       <g:embedJSON id="wfStepPluginsJSON" data="${stepPluginDescriptions.workflow.collectEntries { [(it.key): [title: it.value.title]] }}"/>
@@ -58,11 +59,11 @@
 
         var activity;
         function init() {
+            var execInfo=loadJsonData('execInfoJSON');
             var workflowData=loadJsonData('workflowDataJSON');
-            workflow = new RDWorkflow(workflowData,{
-                nodeSteppluginDescriptions:loadJsonData('nodeStepPluginsJSON'),
-                wfSteppluginDescriptions:loadJsonData('wfStepPluginsJSON')
-              });
+            RDWorkflow.nodeSteppluginDescriptions=loadJsonData('nodeStepPluginsJSON');
+            RDWorkflow.wfSteppluginDescriptions=loadJsonData('wfStepPluginsJSON');
+            workflow = new RDWorkflow(workflowData);
 
           followControl = new FollowControl('${execution?.id}','outputappendform',{
             parentElement:'commandPerform',
@@ -98,7 +99,13 @@
           nodeflowvm=new NodeFlowViewModel(
             workflow,
             "${enc(js:g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id,params:[format:'json']))}",
-            "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecNodeState', id: execution.id))}"
+            "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecNodeState', id: execution.id))}",
+            {
+                dynamicStepDescriptionDisabled:false,
+                url:appLinks.scheduledExecutionWorkflowJson,
+                id:execInfo.jobId||execInfo.execId,//id of job or execution
+                workflow:execInfo.jobId?null:workflowData
+            }
           );
           flowState = new FlowState('${enc(js:execution?.id)}','flowstate',{
             workflow:workflow,

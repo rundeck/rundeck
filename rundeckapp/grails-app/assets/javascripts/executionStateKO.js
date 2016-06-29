@@ -18,6 +18,411 @@
  */
 
 /**
+ * Info about an indexed step within a particular job
+ * @param parent
+ * @param ndx 0 based index
+ * @param data
+ * @constructor
+ */
+function JobStepInfo(parent,ndx,data){
+    "use strict";
+    var self = this;
+    /**
+     * Owner is a JobWorkflow
+     */
+    self.parent = parent;
+    self.ndx = ndx;
+    self.jobId = ko.observable(data.id);
+    self.ehJobId = ko.observable(data.ehId);
+    self.type = ko.observable(data.type||'.');
+    self.stepident = ko.observable(data.stepident||'(Unknown)');
+}
+
+/**
+ * A job containing a sequence of steps
+ * @param multi multiworkflow object
+ * @param workflow array of JobStepInfo
+ * @param id job id
+ * @constructor
+ */
+function JobWorkflow(multi,workflow,id){
+    "use strict";
+    var self=this;
+    self.id=id;
+    self.multi=multi;
+    self.workflow=workflow||[];
+
+    /**
+     * Insert a step
+     * @param ndx index
+     * @param data step
+     */
+    self.insert=function(ndx,data){
+        self.workflow[ndx]=data;
+    };
+}
+/**
+ * A step in an execution identified by a stepctx string,
+ * which corresponds to a particular job step within the hierarchy
+ * @param stepctx step context string for this step
+ * @param data data
+ * @constructor
+ */
+function WorkflowStepInfo(stepctx,data){
+    "use strict";
+    var self = this;
+    /**
+     * The step context
+     */
+    self.stepctx = stepctx;
+    /**
+     * the job referenced by this step
+     * @type {null}
+     */
+    self.job = data.job;
+    /**
+     * the job referenced by an error handler
+     */
+    self.ehJob = data.ehJob;
+    /**
+     * The JobStepInfo containing the details of the step
+     */
+    self.jobstep = ko.observable();
+    /**
+     * Job ID
+     */
+    self.jobId = ko.observable(data.id);
+    /**
+     * ID of errorhandler Job
+     */
+    self.ehJobId = ko.observable(data.ehId);
+    /**
+     * Step type info
+     */
+    self.type = ko.observable(data.type||'.');
+    /**
+     * Step identity string
+     */
+    self.stepident = ko.observable(data.stepident||'Step: '+stepctx);
+
+    /**
+     * When a JobStepInfo is set for this step, update our details
+     */
+    self.jobstep.subscribe(function(newval){
+        if(newval) {
+            self.type(newval.type());
+            self.stepident(newval.stepident());
+            self.jobId(newval.jobId());
+            self.ehJobId(newval.ehJobId());
+        }
+    });
+}
+/**
+ * Cache of loaded job workflow data, keyed by job ID
+ * @param url remote URL for loading job workflow data
+ * @param data any preloaded data
+ * @constructor
+ */
+function JobWorkflowsCache(url,data){
+    "use strict";
+    var self=this;
+    /**
+     * Remote url
+     */
+    self.url=url;
+    /**
+     * loaded data: ID -> ko.observable(Object)
+     */
+    self.jobs=jQuery.extend({},data);
+    /**
+     * Load remote data for a job ID, add it to the cache
+     * @param id
+     * @returns {*}
+     */
+    self.load=function(id){
+        return jQuery.ajax({
+            url:_genUrl(self.url,{id:id}),
+            method:'GET',
+            contentType:'json',
+            success:function(data){
+                // setTimeout(function(){
+                    self.add(id,data.workflow);
+                // },2000);
+            }
+        });
+    };
+    /**
+     * add job ID data
+     * @param id job ID
+     * @param value data
+     */
+    self.add=function(id,value){
+        if(self.jobs[id] && ko.isObservable(self.jobs[id])){
+            self.jobs[id](value);
+        }else {
+            self.jobs[id] = ko.observable(value);
+        }
+    };
+    /**
+     * One time subscription to observable, will be disposed after first call
+     * @param obs observable
+     * @param then callback
+     */
+    self.tempSubscribe=function(obs,then){
+        var sub;
+        sub=obs.subscribe(function(data){
+            sub.dispose();
+            then(data);
+        });
+    };
+    /**
+     * Get data for an ID
+     * @param id ID
+     * @param then callback for result of data, may be called immediately if data is available
+     */
+    self.getJob=function(id,then){
+        if(self.jobs[id] && ko.isObservable(self.jobs[id]) && self.jobs[id]()){
+            then(self.jobs[id]());
+        }else if(ko.isObservable(self.jobs[id])){
+            self.tempSubscribe(self.jobs[id],then);
+        }else{
+            self.jobs[id]=ko.observable();
+            self.tempSubscribe(self.jobs[id],then);
+            self.load(id);
+        }
+    };
+}
+
+/**
+ * Manage display data for execution workflow steps
+ * @param parent owner is a NodeFlowViewModel
+ * @param data config data: 'dynamicStepDescriptionDisabled' (true/false) if true, do not load any dynamic data.
+ *      'workflow' preloaded top level workflow info
+ *      'id' job/execution ID
+ * @constructor
+ */
+function MultiWorkflow(parent,data){
+    "use strict";
+    var self=this;
+    /**
+     * owner is a NodeFlowViewModel
+     */
+    self.parent=parent;
+    /**
+     * If true, do not load data dynamically
+     */
+    self.dynamicStepDescriptionDisabled=data.dynamicStepDescriptionDisabled;
+    /**
+     * Cache for loaded data
+     * @type {JobWorkflowsCache}
+     */
+    self.cache=new JobWorkflowsCache(data.url,{});
+    /**
+     * JobWorkflow if initial workflow is loaded
+     * @type {JobWorkflow}
+     */
+    self.job=null;
+    /**
+     * ID of job or execution
+     */
+    self.jobId=data.id;
+    /**
+     * Placeholder indicating a JobWorkflow data has or will be loaded. Object: Job ID->JobWorkflow
+     * @type {{}}
+     */
+    self.workflowsets={};
+    /**
+     * context-string-id -> WorkflowStepInfo
+     * @type {{}}
+     */
+    self.stepinfoset={};
+
+    /**
+     * Load or return a JobWorkflow with all workflow data filled in
+     * @param id job ID
+     * @param callback called with the JobWorkflow as a parameter after loading
+     * @returns {JobWorkflow}
+     */
+    self.loadJob=function(id,callback){
+        if(self.workflowsets[id] && self.workflowsets[id].workflow.length>0){
+            //job data was already loaded, so return existing
+            callback(self.workflowsets[id]);
+            return self.workflowsets[id];
+        }
+        //create or retrieve an entry in the workflowsets indicating loading for the job will start
+        self.workflowsets[id] = self.workflowsets[id] || new JobWorkflow(self, [], id);
+        var job = self.workflowsets[id];
+        //ask cache to load or return cached data
+        self.cache.getJob(id,function(data){
+            //if this is the first time loading this data, we need to fill in the workflow for the job
+            var job = self.fillJobWorkflow(id,data);
+            //result will be JobWorkflow
+            callback(job);
+        });
+        return job;
+    };
+
+    /**
+     * Given ID and possible preloaded workflow data, update the job cache
+     * @param id job ID
+     * @param workflow preloaded workflow, or null may cause remote load if not already in the cache
+     */
+    self.updateJobCache=function(id,workflow){
+        if(id && !self.workflowsets[id]){
+            if(workflow) {
+                //if workflow is available, put it in the cache
+                self.cache.add(id, workflow);
+            }
+            self.loadJob(id,function(){});
+        }
+    };
+    /**
+     * Fill in a JobWorkflow's workflow given ID and steps, if not already filled in
+     * @param id job ID
+     * @param steps load workflow step data
+     * @returns {JobWorkflow}
+     */
+    self.fillJobWorkflow=function (id, steps) {
+        "use strict";
+        if(self.workflowsets[id] && self.workflowsets[id].workflow.length>0){
+            //job data was already loaded, so return existing
+            return self.workflowsets[id];
+        }
+        var job = self.workflowsets[id] || new JobWorkflow(self, [], id);
+        self.workflowsets[id] = job;
+
+        for (var x = 0; x < steps.length; x++) {
+            var stepdata={
+                type: _wfTypeForStep(steps[x]),
+                stepident: _wfStringForStep(steps[x]),
+                id:steps[x].jobId
+            };
+            if(steps[x].ehJobId){
+                //errorhandler job id
+                stepdata.ehId=steps[x].ehJobId;
+            }
+
+            job.insert(x,new JobStepInfo(job,x,stepdata));
+
+            if (stepdata.type == 'job') {
+                //load job reference if not already in progress
+                self.updateJobCache(stepdata.id,steps[x].workflow);
+            }
+            //do the same for error handler job reference
+            if (stepdata.ehId) {
+                self.updateJobCache(stepdata.ehId,steps[x].ehWorkflow);
+            }
+        }
+
+        return job;
+    };
+
+    /**
+     * Get stepctx info for a parent job reference, with loaded workflow for the job
+     * @param parentctx
+     * @param callback called with WorkflowStepInfo parameter
+     */
+    self.getParentJobStepInfoForStepctx=function(parentctx,callback){
+        if(parentctx) {
+            //load higher level
+            self.getStepInfoForStepctx(parentctx, function (parentinfo) {
+                if(parentinfo.type()=='job' && parentinfo.jobId()){
+                    //load subjob for this step
+                    self.loadJob(parentinfo.jobId(),function(job){
+                        parentinfo.job=job;
+                        if(parentinfo.ehJobId()) {
+                            self.loadJob(parentinfo.ehJobId(), function (job) {
+                                parentinfo.ehJob = job;
+                                callback(parentinfo);
+                            });
+                        }else {
+                            callback(parentinfo);
+                        }
+                    });
+                }else if(parentinfo.ehJobId()){
+                    self.loadJob(parentinfo.ehJobId(),function(job){
+                        parentinfo.ehJob=job;
+                        callback(parentinfo);
+                    });
+                }else{
+                    console.log("stepctx was not job: "+parentctx,parentinfo);
+                    //callback(stepinfo);
+                }
+            });
+        }else {
+            //parent is top level job
+            self.loadJob(self.jobId, function(job){
+                callback(new WorkflowStepInfo('',{id:self.jobId,type:'job',job:job}));
+            });
+        }
+    };
+    /**
+     * Look up step context info for a context string. If not dynamic, returns the placeholder object,
+     * otherwise looks up step info dynamically and returns WorkflowStepInfo via callback
+     * @param stepctx context string
+     * @param callback called with WorkflowStepInfo
+     * @returns {*} WorkflowStepInfo which may not have loaded contents, or placeholder object
+     */
+    self.getStepInfoForStepctx=function(stepctx,callback){
+        "use strict";
+        if(self.dynamicStepDescriptionDisabled){
+            return {
+                type:self.parent.workflow.contextType(stepctx),
+                stepident:self.parent.workflow.renderContextString(stepctx)
+            };
+        }
+        if(self.stepinfoset[stepctx]){
+
+            var stepinfo = self.stepinfoset[stepctx];
+            if(typeof(callback)=='function' && stepinfo.jobstep()){
+                callback(stepinfo);
+            }else{
+                var remove;
+                remove=stepinfo.jobstep.subscribe(function(newval){
+                    if(newval) {
+                        remove.dispose();
+                        callback(stepinfo);
+                    }
+                });
+            }
+            return stepinfo;
+        }
+        var info = new WorkflowStepInfo(stepctx,{});
+        self.stepinfoset[stepctx] = info;
+        var ctx = RDWorkflow.parseContextId(stepctx);
+        var lastctx=ctx.pop();
+        var ndx = RDWorkflow.workflowIndexForContextId(lastctx);
+
+        //get the parent workflow, and then fill in the current step
+        self.getParentJobStepInfoForStepctx(ctx.join('/'),function(parentjobinfo){
+            //TODO: currently step state context string does not indicate errorHandler, but
+            //in case it does in the future, force use of correct job info
+            var iseh=ctx.length>0?RDWorkflow.isErrorhandlerForContextId(ctx[ctx.length-1]):false;
+            var job = iseh?parentjobinfo.ehJob:(parentjobinfo.job||parentjobinfo.ehJob);
+            var jobstep = job && job.workflow[ndx];
+            info.parent=job;
+            info.jobstep(jobstep);
+
+            if(typeof(callback)=='function'){
+                callback(info);
+            }
+        });
+
+        return info;
+    };
+    /**
+     * Initialize with preloaded data
+     * @param data
+     */
+    self.initialLoad=function(data){
+        //only trigger load if containing a preloaded workflow
+        if(data.workflow) {
+            self.updateJobCache(data.id, data.workflow);
+        }
+    };
+    self.initialLoad(data);
+}
+/**
  * Represents a (node, stepctx) state.
  * @param data state data object
  * @param node RDNode object
@@ -29,9 +434,10 @@ function RDNodeStep(data, node, flow){
     self.node = node;
     self.flow = flow;
     self.stepctx = data.stepctx;
-    self.type = flow.workflow.contextType(data.stepctx);
-    self.stepident = flow.workflow.renderContextString(data.stepctx);
-    self.stepctxdesc = "Workflow Step: " + data.stepctx;
+    self.stepinfo=ko.observable(flow.multiWorkflow.getStepInfoForStepctx(data.stepctx));
+    self.type = ko.observable(flow.workflow.contextType(data.stepctx));
+    self.stepident = ko.observable(flow.workflow.renderContextString(data.stepctx));
+    self.stepctxdesc = ko.observable("Workflow Step: " + data.stepctx);
     self.parameters = ko.observable(data.parameters || null);
     self.followingOutput = ko.observable(false);
     self.outputLineCount = ko.observable(-1);
@@ -294,9 +700,10 @@ function RDNode(name, steps,flow){
     }
 }
 
-function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl){
+function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,mwdata){
     var self=this;
     self.workflow=workflow;
+    self.multiWorkflow=new MultiWorkflow(self,mwdata);
     self.errorMessage=ko.observable();
     self.statusMessage=ko.observable();
     self.stateLoaded=ko.observable(false);
@@ -643,7 +1050,8 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl){
             //var data = model.nodes[node];
 
             var nodeSummary = model.nodeSummaries[node];
-            var nodesteps =null;//= model.steps && model.steps.length>0?self.extractNodeStepStates(node,data,model):null;
+            var nodesteps =null;//= model.steps &&
+                                // model.steps.length>0?self.extractNodeStepStates(node,data,model):null;
             if(!nodesteps && model.nodeSteps && model.nodeSteps[node]){
                 nodesteps=model.nodeSteps[node];
             }
