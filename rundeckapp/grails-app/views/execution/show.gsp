@@ -66,7 +66,7 @@
             workflow = new RDWorkflow(workflowData);
 
           var multiworkflow=new MultiWorkflow(workflow,{
-                dynamicStepDescriptionDisabled:false,
+                dynamicStepDescriptionDisabled:${enc(js:feature.isDisabled(name:'workflowDynamicStepSummaryGUI'))},
                 url:appLinks.scheduledExecutionWorkflowJson,
                 id:execInfo.jobId||execInfo.execId,//id of job or execution
                 workflow:execInfo.jobId?null:workflowData

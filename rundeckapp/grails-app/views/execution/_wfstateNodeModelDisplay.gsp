@@ -97,7 +97,14 @@
             <div data-bind="with: currentStep(), visible: !expanded()">
                 <span class="stepident "
                       data-bind="attr: { 'data-execstate': executionState }">
-                    <span data-bind="template: {name: 'step-info-simple-link', data:stepinfo(), as: 'stepinfo'}"></span>
+
+                    <feature:disabled name="workflowDynamicStepSummaryGUI">
+                        <i class="rdicon icon-small" data-bind="css: stepinfo().type"></i>
+                        <span data-bind="text: stepinfo().stepident"></span>
+                    </feature:disabled>
+                    <feature:enabled name="workflowDynamicStepSummaryGUI">
+                        <span data-bind="template: {name: 'step-info-simple-link', data:stepinfo(), as: 'stepinfo'}"></span>
+                    </feature:enabled>
                 </span>
                 <span data-bind="if: ( executionState() == 'WAITING' ) " class="text-muted">
                     (Next up)
@@ -129,16 +136,23 @@
                               ">
                             <i class="auto-caret"></i>
 
-                            <span data-bind="visible: hovering()">
-                                %{--<span data-bind="if: followingOutput()">--}%
+                            <feature:disabled name="workflowDynamicStepSummaryGUI">
+                                <i class="rdicon icon-small" data-bind="css: stepinfo().type"></i>
+                                <span data-bind="text: stepinfo().stepident"></span>
+                            </feature:disabled>
+                            <feature:enabled name="workflowDynamicStepSummaryGUI">
+                                <span data-bind="visible: hovering()">
+                                    %{--<span data-bind="if: followingOutput()">--}%
                                     <span data-bind="template: { name: 'step-info-parent-path-links', data:stepinfo, as: 'stepinfo' }"></span>
-                                %{--</span>--}%
-                                %{--<span data-bind="if: !followingOutput()">--}%
+                                    %{--</span>--}%
+                                    %{--<span data-bind="if: !followingOutput()">--}%
                                     %{--<span data-bind="template: { name: 'step-info-parent-path', data:stepinfo, as: 'stepinfo' }"></span>--}%
-                                %{--</span>--}%
-                            </span>
+                                    %{--</span>--}%
+                                </span>
 
-                            <span data-bind="template: { name: 'step-info-simple-link', data:stepinfo, as: 'stepinfo' }"></span>
+                                <span data-bind="template: { name: 'step-info-simple-link', data:stepinfo, as: 'stepinfo' }"></span>
+                            </feature:enabled>
+
                         </div>
                     </div>
 

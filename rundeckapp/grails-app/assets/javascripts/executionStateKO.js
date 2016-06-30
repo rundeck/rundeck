@@ -541,10 +541,13 @@ function MultiWorkflow(workflowInfo,data){
     self.getStepInfoForStepctx=function(stepctx,callback){
         "use strict";
         if(self.dynamicStepDescriptionDisabled){
-            return {
-                type:self.workflowInfo.contextType(stepctx),
-                stepident:self.workflowInfo.renderContextString(stepctx)
-            };
+            if(!self.stepinfoset[stepctx]) {
+                self.stepinfoset[stepctx] = new WorkflowStepInfo(self, stepctx, {
+                    type: self.workflowInfo.contextType(stepctx),
+                    stepident: self.workflowInfo.renderContextString(stepctx)
+                });
+            }
+            return self.stepinfoset[stepctx];
         }
         if(self.stepinfoset[stepctx]){
 
