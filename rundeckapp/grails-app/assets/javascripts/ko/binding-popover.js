@@ -25,6 +25,10 @@ ko.bindingHandlers.bootstrapTooltip = {
     init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
         "use strict";
         jQuery(element).tooltip({});
+
+        ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
+            jQuery(element).tooltip("destroy");
+        });
     },
     update: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
         "use strict";
