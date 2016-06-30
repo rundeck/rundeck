@@ -132,6 +132,7 @@ log4j={
 environments{
     development{
         feature.incubator.'*'=true
+        rundeck.feature.'*'.enabled=true
     }
     production{
         //disable feature toggling
