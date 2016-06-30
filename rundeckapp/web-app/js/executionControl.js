@@ -73,7 +73,8 @@ var FollowControl = Class.create({
     smallIconUrl:'/images/icon-small',
     appLinks: null,
     workflow:null,
-    
+    multiworkflow:null,
+
     initialize: function(eid,elem,params){
         this.executionId=eid;
         this.targetElement=elem;
@@ -1140,6 +1141,13 @@ var FollowControl = Class.create({
             sp2.addClassName('stepident');
             setText(sp, contextstr);
             cell.appendChild(sp2);
+            //if dynamic step info available load dynamically
+            if(this.multiworkflow){
+                this.multiworkflow.getStepInfoForStepctx(data['stepctx'],function(info){
+                    "use strict";
+                    setText(sp2,info.stepident());
+                });
+            }
         } else {
             tr.addClassName('console');
             appendHtml(cell," <span class='console'>[console]</span>");
@@ -1261,12 +1269,21 @@ var FollowControl = Class.create({
 //                tdctx.addClassName('repeat');
         }else if(data['stepctx'] && this.workflow){
 
-            var cmdtext= this.workflow.renderContextStepNumber(data['stepctx']) + " " + this.workflow.renderContextString(data['stepctx']);
+            var stepNumText = this.workflow.renderContextStepNumber(data['stepctx']);
+            var cmdtext= stepNumText + " " + this.workflow.renderContextString(data['stepctx']);
             var icon= new Element('i');
-            icon.addClassName('rdicon icon-small '+ this.workflow.contextType(data['stepctx']))
+            icon.addClassName('rdicon icon-small '+ this.workflow.contextType(data['stepctx']));
             tdctx.appendChild(icon);
             tdctx.appendChild(document.createTextNode(" "+cmdtext));
-            tdctx.setAttribute('title', this.workflow.renderContextString(data['stepctx']));
+            tdctx.setAttribute('title', data['stepctx']);
+            if(this.multiworkflow){
+                var td = jQuery(tdctx);
+                var stepinfo=this.multiworkflow.getStepInfoForStepctx(data['stepctx']);
+                td.empty();
+                td.attr('title',null);
+                td.attr('data-bind',"template: {name: 'step-info-extended', data:$data, as: 'stepinfo'}");
+                ko.applyBindings(stepinfo,td[0]);
+            }
         }
         var tddata = $(tr.insertCell(cellndx));
         tddata.addClassName('data');

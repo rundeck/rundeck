@@ -22,7 +22,6 @@
 <span data-bind="with: currentStep()">
     <a class="stepident action textbtn"
           data-bind="attr: { 'data-execstate': executionState, title: stepctxdesc, href: '#'+stepctx+':'+node.name },  click: $root.scrollToOutput">
-        <i class="rdicon icon-small" data-bind="css: stepinfo().type"></i>
-        <span data-bind="text: stepinfo().stepident"></span>
+        <span data-bind="template: {name: 'step-info', data:stepinfo(), as: 'stepinfo'}"></span>
     </a>
 </span>

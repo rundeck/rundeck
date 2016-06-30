@@ -1,6 +1,8 @@
 //= require momentutil
 //= require knockout.min
 //= require knockout-mapping
+//= require ko/binding-popover
+//= require ko/binding-url-path-param
 /*
  Copyright 2014 SimplifyOps Inc, <http://simplifyops.com>
 
@@ -34,8 +36,11 @@ function JobStepInfo(parent,ndx,data){
     self.ndx = ndx;
     self.jobId = ko.observable(data.id);
     self.ehJobId = ko.observable(data.ehId);
-    self.type = ko.observable(data.type||'.');
+    self.type = ko.observable(data.type||'unknown-step-type');
     self.stepident = ko.observable(data.stepident||'(Unknown)');
+    self.ehType = ko.observable(data.ehType);
+    self.ehStepident = ko.observable(data.ehStepident);
+    self.ehKeepgoingOnSuccess = ko.observable(data.ehKeepgoingOnSuccess);
 }
 
 /**
@@ -68,13 +73,18 @@ function JobWorkflow(multi,workflow,id){
  * @param data data
  * @constructor
  */
-function WorkflowStepInfo(stepctx,data){
+function WorkflowStepInfo(multiworkflow,stepctx,data){
     "use strict";
     var self = this;
+    /**
+     * The MultiWorkflow
+     */
+    self.multiworkflow=multiworkflow;
     /**
      * The step context
      */
     self.stepctx = stepctx;
+    self.stepctxArray = ko.observableArray(RDWorkflow.parseContextId(stepctx));
     /**
      * the job referenced by this step
      * @type {null}
@@ -99,12 +109,168 @@ function WorkflowStepInfo(stepctx,data){
     /**
      * Step type info
      */
-    self.type = ko.observable(data.type||'.');
+    self.type = ko.observable(data.type||'unknown-step-type');
+    /**
+     * Step type info
+     */
+    self.ehType = ko.observable(data.ehType);
     /**
      * Step identity string
      */
     self.stepident = ko.observable(data.stepident||'Step: '+stepctx);
+    /**
+     * Error handler step identity
+     */
+    self.ehStepident = ko.observable(data.ehStepident);
+    self.ehKeepgoingOnSuccess = ko.observable(data.ehKeepgoingOnSuccess);
 
+    self.hasParent=ko.pureComputed(function(){
+       return self.stepctxArray().length>1;
+    });
+
+    /**
+     * Return true if this step is a job ref step or has a parent job
+     */
+    self.hasLink=ko.pureComputed(function () {
+        var has = self.hasParent();
+        var isjob = self.type() == 'job';
+        return has || isjob;
+    });
+
+    /**
+     * Return appropriate JobID for linking this step,
+     * for a non-job reference, this is the parent Job ID.
+     * For a
+     */
+    self.linkJobId=ko.pureComputed(function(){
+        if(self.type()=='job'){
+            return self.jobId();
+        }else if(self.hasParent()){
+            return self.parentJobId();
+        }else{
+            return self.multiworkflow.jobId;
+        }
+    });
+    /**
+     * Return the title for linked job
+     */
+    self.linkTitle=ko.pureComputed(function(){
+        if(self.type()=='job'){
+            return self.stepident();
+        }else if(self.hasParent()){
+            return self.parentJobTitle();
+        }else{
+            return 'Current Job';
+        }
+    });
+    self.parentJobId=ko.pureComputed(function(){
+        var has=self.hasParent();
+        var parent=self.parentStepInfo();
+        if(has && parent){
+            if(parent.isErrorhandler()){
+                return parent.ehJobId();
+            }
+            return parent.jobId()||parent.ehJobId();
+        }
+        return null;
+    });
+    self.parentJobTitle=ko.pureComputed(function(){
+        var has=self.hasParent();
+        var parent=self.parentStepInfo();
+        if(has && parent){
+            if(parent.isErrorhandler()){
+                return parent.ehStepident();
+            }
+            return parent.jobId() && parent.stepident() ||parent.ehStepident();
+        }
+        return null;
+    });
+
+    self.parentStepInfo=ko.computed(function(){
+        var ctx=self.stepctxArray();
+        if(ctx.length>1) {
+            var parent = ctx.slice(0, -1).join('/');
+            return self.multiworkflow.getStepInfoForStepctx(parent);
+        }
+        return null;
+    });
+    /**
+     * Step number
+     */
+    self.stepnum=ko.pureComputed(function(){
+        var stepctxArray = self.stepctxArray();
+        if(stepctxArray.length>0){
+            return RDWorkflow.stepNumberForContextId(stepctxArray[stepctxArray.length-1]);
+        }else{
+            return null;
+        }
+    });
+    /**
+     * Step is error handler
+     */
+    self.isErrorhandler=ko.pureComputed(function(){
+        var stepctxArray = self.stepctxArray();
+        if(stepctxArray.length>0){
+            for(var i =0;i<stepctxArray.length;i++){
+                if(RDWorkflow.isErrorhandlerForContextId(stepctxArray[i])){
+                    return true;
+                }
+            }
+        }
+        return false;
+    });
+
+    /**
+     * Computed name like "1. stepident"
+     */
+    self.stepdesc=ko.pureComputed(function(){
+        var num = self.stepnum();
+        if(!num){
+            return null;
+        }
+        return num+". "+self.stepident();
+    });
+    /**
+     * Computed name like "1. stepident"
+     */
+    self.stepdescFull=ko.pureComputed(function(){
+        var num = self.stepnum();
+        if(!num){
+            return null;
+        }
+        var text= self.stepdesc();
+        if(self.isErrorhandler() && self.ehType()){
+            text=text+' ! '+self.ehStepident();
+        }
+        return text;
+    });
+    /**
+     * full context string
+     */
+    self.stepctxString=ko.pureComputed(function(){
+        return self.stepctx;
+    });
+    /**
+     * Clean context string
+     */
+    self.stepctxClean=ko.pureComputed(function(){
+        return 'Workflow step: '+RDWorkflow.cleanContextId(self.stepctx)
+    });
+    /**
+     * Clean context string
+     */
+    self.stepctxPathFull=ko.computed(function(){
+        var ctx=self.stepctxArray();
+        if(ctx.length>1){
+            var obj=self.parentStepInfo();
+            return obj.stepctxPathFull()+' / '
+                    // + ctx[ctx.length-1]
+                    + self.stepdescFull()
+                ;
+        }else{
+            return self.stepdescFull();
+        }
+    });
     /**
      * When a JobStepInfo is set for this step, update our details
      */
@@ -114,6 +280,9 @@ function WorkflowStepInfo(stepctx,data){
             self.stepident(newval.stepident());
             self.jobId(newval.jobId());
             self.ehJobId(newval.ehJobId());
+            self.ehType(newval.ehType());
+            self.ehStepident(newval.ehStepident());
+            self.ehKeepgoingOnSuccess(newval.ehKeepgoingOnSuccess());
         }
     });
 }
@@ -201,13 +370,13 @@ function JobWorkflowsCache(url,data){
  *      'id' job/execution ID
  * @constructor
  */
-function MultiWorkflow(parent,data){
+function MultiWorkflow(workflowInfo,data){
     "use strict";
     var self=this;
     /**
-     * owner is a NodeFlowViewModel
+     * workflowInfo is a RDWorkflow
      */
-    self.parent=parent;
+    self.workflowInfo=workflowInfo;
     /**
      * If true, do not load data dynamically
      */
@@ -297,6 +466,12 @@ function MultiWorkflow(parent,data){
                 stepident: _wfStringForStep(steps[x]),
                 id:steps[x].jobId
             };
+            if(steps[x].errorhandler){
+                //errorhandler info for the job
+                stepdata.ehType=_wfTypeForStep(steps[x].errorhandler);
+                stepdata.ehStepident=_wfStringForStep(steps[x].errorhandler);
+                stepdata.ehKeepgoingOnSuccess=_wfStringForStep(steps[x].errorhandler.keepgoingOnSuccess);
+            }
             if(steps[x].ehJobId){
                 //errorhandler job id
                 stepdata.ehId=steps[x].ehJobId;
@@ -352,7 +527,7 @@ function MultiWorkflow(parent,data){
         }else {
             //parent is top level job
             self.loadJob(self.jobId, function(job){
-                callback(new WorkflowStepInfo('',{id:self.jobId,type:'job',job:job}));
+                callback(new WorkflowStepInfo(self,'',{id:self.jobId,type:'job',job:job}));
             });
         }
     };
@@ -367,8 +542,8 @@ function MultiWorkflow(parent,data){
         "use strict";
         if(self.dynamicStepDescriptionDisabled){
             return {
-                type:self.parent.workflow.contextType(stepctx),
-                stepident:self.parent.workflow.renderContextString(stepctx)
+                type:self.workflowInfo.contextType(stepctx),
+                stepident:self.workflowInfo.renderContextString(stepctx)
             };
         }
         if(self.stepinfoset[stepctx]){
@@ -376,7 +551,7 @@ function MultiWorkflow(parent,data){
             var stepinfo = self.stepinfoset[stepctx];
             if(typeof(callback)=='function' && stepinfo.jobstep()){
                 callback(stepinfo);
-            }else{
+            }else if (typeof(callback)=='function'){
                 var remove;
                 remove=stepinfo.jobstep.subscribe(function(newval){
                     if(newval) {
@@ -387,7 +562,7 @@ function MultiWorkflow(parent,data){
             }
             return stepinfo;
         }
-        var info = new WorkflowStepInfo(stepctx,{});
+        var info = new WorkflowStepInfo(self,stepctx,{});
         self.stepinfoset[stepctx] = info;
         var ctx = RDWorkflow.parseContextId(stepctx);
         var lastctx=ctx.pop();
@@ -395,7 +570,7 @@ function MultiWorkflow(parent,data){
 
         //get the parent workflow, and then fill in the current step
         self.getParentJobStepInfoForStepctx(ctx.join('/'),function(parentjobinfo){
-            //TODO: currently step state context string does not indicate errorHandler, but
+            //TODO: currently node summary state context string does not indicate errorHandler, but
             //in case it does in the future, force use of correct job info
             var iseh=ctx.length>0?RDWorkflow.isErrorhandlerForContextId(ctx[ctx.length-1]):false;
             var job = iseh?parentjobinfo.ehJob:(parentjobinfo.job||parentjobinfo.ehJob);
@@ -440,6 +615,7 @@ function RDNodeStep(data, node, flow){
     self.stepctxdesc = ko.observable("Workflow Step: " + data.stepctx);
     self.parameters = ko.observable(data.parameters || null);
     self.followingOutput = ko.observable(false);
+    self.hovering = ko.observable(false);
     self.outputLineCount = ko.observable(-1);
     self.startTime = ko.observable(data.startTime || null);
     self.updateTime = ko.observable(data.updateTime || null);
@@ -700,10 +876,10 @@ function RDNode(name, steps,flow){
     }
 }
 
-function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,mwdata){
+function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,multiworkflow){
     var self=this;
     self.workflow=workflow;
-    self.multiWorkflow=new MultiWorkflow(self,mwdata);
+    self.multiWorkflow=multiworkflow;
     self.errorMessage=ko.observable();
     self.statusMessage=ko.observable();
     self.stateLoaded=ko.observable(false);
@@ -911,7 +1087,7 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,mwdata){
             nodestep.followingOutput(false);
             self.followingStep(null);
         }
-
+        return true;
     };
     self.scrollTo= function (element,offx,offy) {
         var x = element.x ? element.x : element.offsetLeft,

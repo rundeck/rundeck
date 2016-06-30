@@ -65,6 +65,12 @@
             RDWorkflow.wfSteppluginDescriptions=loadJsonData('wfStepPluginsJSON');
             workflow = new RDWorkflow(workflowData);
 
+          var multiworkflow=new MultiWorkflow(workflow,{
+                dynamicStepDescriptionDisabled:false,
+                url:appLinks.scheduledExecutionWorkflowJson,
+                id:execInfo.jobId||execInfo.execId,//id of job or execution
+                workflow:execInfo.jobId?null:workflowData
+            });
           followControl = new FollowControl('${execution?.id}','outputappendform',{
             parentElement:'commandPerform',
             fileloadId:'fileload',
@@ -74,6 +80,7 @@
             cmdOutputErrorId:'cmdoutputerror',
             outfileSizeId:'outfilesize',
             workflow:workflow,
+            multiworkflow:multiworkflow,
             appLinks:appLinks,
 
             extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${enc(js:enc(url: params.markdown))}&ansicolor=${enc(js:enc(url: params.ansicolor))}",
@@ -100,12 +107,7 @@
             workflow,
             "${enc(js:g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id,params:[format:'json']))}",
             "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecNodeState', id: execution.id))}",
-            {
-                dynamicStepDescriptionDisabled:false,
-                url:appLinks.scheduledExecutionWorkflowJson,
-                id:execInfo.jobId||execInfo.execId,//id of job or execution
-                workflow:execInfo.jobId?null:workflowData
-            }
+            multiworkflow
           );
           flowState = new FlowState('${enc(js:execution?.id)}','flowstate',{
             workflow:workflow,
@@ -626,6 +628,90 @@
             </div>
 
 
+<script type="text/html" id="step-info-simple">
+    %{--Display the lowest level step info: [icon] identity --}%
+        <i class="rdicon icon-small" data-bind="css: stepinfo.type"></i>
+        <span data-bind="text: stepinfo.stepident"></span>
+</script>
+<script type="text/html" id="step-info">
+    %{--wrap step-info-simple in tooltip --}%
+    <span data-bind="attr: {title: stepinfo.stepctxPathFull}, bootstrapTooltip: stepinfo.stepctxPathFull" data-placement="top" data-container='body'>
+        <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
+    </span>
+</script>
+<script type="text/html" id="step-info-simple-link">
+    %{--wrap step-info-simple in tooltip --}%
+    <span data-bind="if: stepinfo.hasLink()">
+        <a data-bind="urlPathParam: stepinfo.linkJobId(), attr: {title: 'Click to view Job: '+stepinfo.linkTitle() }"
+           href="${createLink(
+                controller: 'scheduledExecution',
+                action: 'show',
+                params: [project: execution.project, id: '<$>']
+        )}">
+            <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
+        </a>
+    </span>
+    <span data-bind="if: !stepinfo.hasLink()">
+        <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
+    </span>
+</script>
+<script type="text/html" id="step-info-path">
+    %{-- Display the full step path with icon and identity --}%
+    <span data-bind="if: stepinfo.hasParent()">
+        <span data-bind="with: stepinfo.parentStepInfo()">
+            <span data-bind="template: { name: 'step-info-path', data:$data, as: 'stepinfo' }"></span>
+        </span>
+        <g:icon name="menu-right" css="text-muted"/>
+
+    </span>
+    <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
+</script>
+<script type="text/html" id="step-info-path-links">
+    %{-- Display the full step path with icon and identity --}%
+    <span data-bind="if: stepinfo.hasParent()">
+        <span data-bind="with: stepinfo.parentStepInfo()">
+            <span data-bind="template: { name: 'step-info-path-links', data:$data, as: 'stepinfo' }"></span>
+        </span>
+        <g:icon name="menu-right" css="text-muted"/>
+
+    </span>
+    <span data-bind="template: { name: 'step-info-simple-link', data:stepinfo, as: 'stepinfo' }"></span>
+</script>
+<script type="text/html" id="step-info-parent-path">
+    %{-- Display the full step path with icon and identity --}%
+
+    <span data-bind="if: stepinfo.hasParent()">
+        <span data-bind="with: stepinfo.parentStepInfo()">
+            <span data-bind="template: { name: 'step-info-path', data:$data, as: 'stepinfo' }"></span>
+        </span>
+        <g:icon name="menu-right" css="text-muted"/>
+    </span>
+</script>
+<script type="text/html" id="step-info-parent-path-links">
+    %{-- Display the full step path with icon and identity --}%
+
+    <span data-bind="if: stepinfo.hasParent()">
+        <span data-bind="with: stepinfo.parentStepInfo()">
+            <span data-bind="template: { name: 'step-info-path-links', data:$data, as: 'stepinfo' }"></span>
+        </span>
+        <g:icon name="menu-right" css="text-muted"/>
+    </span>
+</script>
+
+<script type="text/html" id="step-info-path-base">
+    %{-- Display the full step path with icon and identity --}%
+    <span data-bind="template: { name: 'step-info-parent-path', data:stepinfo, as: 'stepinfo' }"></span>
+
+    <span data-bind="template: { name: 'step-info', data:stepinfo, as: 'stepinfo' }"></span>
+</script>
+
+<script type="text/html" id="step-info-extended">
+%{--Display the lowest level extended info:  [icon] number. identity --}%
+    <span data-bind="attr: {title: stepinfo.stepctxPathFull}, bootstrapTooltip: stepinfo.stepctxPathFull" data-placement="top" data-container='body'>
+    <i class="rdicon icon-small" data-bind="css: stepinfo.type"></i>
+    <span data-bind="text: stepinfo.stepdesc"></span>
+    </span>
+</script>
     <div class="row">
         <div class="col-sm-12">
             <div class="tab-content">
