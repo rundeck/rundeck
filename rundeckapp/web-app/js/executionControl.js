@@ -727,7 +727,7 @@ var FollowControl = Class.create({
         }
         if (this.runningcmd.jobcompleted && !this.runningcmd.completed) {
             this.jobFinishStatus(this.runningcmd.jobstatus,this.runningcmd.statusString);
-            var message=null
+            var message=null;
             var percent=null;
             if(this.runningcmd.percent!=null){
                 percent= Math.ceil(this.runningcmd.percent);
@@ -802,6 +802,10 @@ var FollowControl = Class.create({
             } catch(e) {
                 this.appendCmdOutputError("finishDataOutput"+e);
             }
+        }
+        if(this.lineCount == 0) {
+            //show empty message
+            jQuery('#' + this.parentElement+'_empty').show();
         }
     },
     toggleDataBody: function(ctxid) {
