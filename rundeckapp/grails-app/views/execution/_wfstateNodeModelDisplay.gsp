@@ -141,7 +141,7 @@
                                 <span data-bind="text: stepinfo().stepident"></span>
                             </feature:disabled>
                             <feature:enabled name="workflowDynamicStepSummaryGUI">
-                                <span data-bind="visible: hovering()">
+                                <span data-bind="visible: hovering() || followingOutput() ">
                                     %{--<span data-bind="if: followingOutput()">--}%
                                     <span data-bind="template: { name: 'step-info-parent-path-links', data:stepinfo, as: 'stepinfo' }"></span>
                                     %{--</span>--}%
