@@ -14,6 +14,9 @@
   limitations under the License.
   --}%
 <div class="container">
+<script type="text/html" id="node-current-state-simple">
+    <g:render template="nodeCurrentStateSimpleKO"/>
+</script>
 
 <div data-bind="if: !stateLoaded()">
         <div class="row-space-lg row">
@@ -118,8 +121,7 @@
             <div class="col-sm-9">
                 <section data-bind="visible: runningNodes().length > 0, if: runningNodes().length > 0" >
                     <div data-bind="foreach: runningNodes()">
-                        <div>
-                            <g:render template="nodeCurrentStateSimpleKO"/>
+                        <div data-bind="template: {name:'node-current-state-simple',data:$data}">
                         </div>
                     </div>
                 </section>
@@ -134,8 +136,7 @@
             <div class="col-sm-9">
                 <div data-bind="if: failedNodes().length > 0" >
                     <div data-bind="foreach: failedNodes()">
-                        <div>
-                            <g:render template="nodeCurrentStateSimpleKO"/>
+                        <div data-bind="template: {name:'node-current-state-simple',data:$data}">
                         </div>
                     </div>
                 </div>
@@ -152,8 +153,7 @@
                 %{--display up to 5 partial nodes nodes--}%
                 <div data-bind="if:  partialNodes().length > 0" >
                     <div data-bind="foreach: partialNodes()">
-                        <div>
-                            <g:render template="nodeCurrentStateSimpleKO"/>
+                        <div data-bind="template: {name:'node-current-state-simple',data:$data}">
                         </div>
                     </div>
                 </div>

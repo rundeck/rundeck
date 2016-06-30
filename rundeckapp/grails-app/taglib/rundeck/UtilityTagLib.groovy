@@ -1542,7 +1542,7 @@ ansi-bg-default'''))
             attrs.name=attrs.name.substring('glyphicon-'.length())
         }
         if (glyphiconSet.contains(attrs.name)) {
-            out << "<i class=\"glyphicon glyphicon-${attrs.name}\"></i>"
+            out << "<i class=\"glyphicon glyphicon-${attrs.name} ${attrs.css?:''}\"></i>"
         }else{
             if(Environment.current==Environment.DEVELOPMENT) {
                 throw new Exception("icon name not recognized: ${attrs.name}, suggestions: "+(glyphiconSet.findAll{it.contains(attrs.name)||it=~attrs.name})+"?")

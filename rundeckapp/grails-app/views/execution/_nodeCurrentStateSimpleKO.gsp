@@ -22,7 +22,11 @@
 <span data-bind="with: currentStep()">
     <a class="stepident action textbtn"
           data-bind="attr: { 'data-execstate': executionState, title: stepctxdesc, href: '#'+stepctx+':'+node.name },  click: $root.scrollToOutput">
-        <i class="rdicon icon-small" data-bind="css: type"></i>
-        <span data-bind="text: stepident"></span>
+        <feature:disabled name="workflowDynamicStepSummaryGUI">
+            <span data-bind="template: {name: 'step-info-simple', data:stepinfo(), as: 'stepinfo'}"></span>
+        </feature:disabled>
+        <feature:enabled name="workflowDynamicStepSummaryGUI">
+            <span data-bind="template: {name: 'step-info', data:stepinfo(), as: 'stepinfo'}"></span>
+        </feature:enabled>
     </a>
 </span>

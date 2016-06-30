@@ -226,4 +226,15 @@
 <div id="commandPerform" class="commandcontent ansicolor ansicolor-on" style="display:none;  "></div>
 
 <div id="log"></div>
+<div id="commandPerform_empty" style="display: none">
+    <div class="row"><div class="col-sm-12">
+        <div class="well well-nobg inline">
+            <p class="text-muted">
+                <i class="glyphicon glyphicon-info-sign"></i>
+                <em><g:message code="execution.log.no.output"/></em>
+            </p>
+        </div>
+    </div>
+    </div>
+</div>
 </div>

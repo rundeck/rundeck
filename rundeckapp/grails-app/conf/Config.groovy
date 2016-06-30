@@ -132,12 +132,16 @@ log4j={
 environments{
     development{
         feature.incubator.'*'=true
+        rundeck.feature.'*'.enabled=true
     }
     production{
         //disable feature toggling
         feature.incubator.feature = false
         //enable takeover schedule feature
         feature.incubator.jobs = true
+
+        //enable dynamic workflow step descriptions in GUI by default
+        rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
     }
 }
 

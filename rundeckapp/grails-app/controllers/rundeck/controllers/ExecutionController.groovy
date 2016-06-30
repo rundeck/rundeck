@@ -204,13 +204,12 @@ class ExecutionController extends ControllerBase{
         eprev = result ? result[0] : null
         //load plugins for WF steps
         def pluginDescs=[node:[:],workflow:[:]]
-        e.workflow.commands.findAll{it.instanceOf(PluginStep)}.each{PluginStep step->
-            if(!pluginDescs[step.nodeStep?'node':'workflow'][step.type]){
-                def description = frameworkService.getPluginDescriptionForItem(step)
-                if (description) {
-                    pluginDescs[step.nodeStep ? 'node' : 'workflow'][step.type]=description
-                }
-            }
+
+        frameworkService.getNodeStepPluginDescriptions().each{desc->
+            pluginDescs['node'][desc.name]=desc
+        }
+        frameworkService.getStepPluginDescriptions().each{desc->
+            pluginDescs['workflow'][desc.name]=desc
         }
 //        def state = workflowService.readWorkflowStateForExecution(e)
 //        if(!state){

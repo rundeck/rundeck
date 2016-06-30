@@ -105,4 +105,19 @@ class ConfigurationServiceSpec extends Specification {
         true   | true
         false  | false
     }
+
+    void "set boolean"() {
+        given:
+        grailsApplication.config.clear()
+        when:
+        service.setBoolean('something.value', tval)
+        then:
+        service.getBoolean('something.value', false) == tval
+        grailsApplication.config.rundeck.something.value == tval
+
+        where:
+        tval  | _
+        true  | _
+        false | _
+    }
 }
