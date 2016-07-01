@@ -24,6 +24,8 @@ function _wfTypeForStep(step){
             return 'script';
         } else if (step['scriptfile']) {
             return 'scriptfile';
+        } else if (step['scripturl']) {
+            return 'scripturl';
         } else if (step['type']) {//plugin
             if (step['nodeStep'] ) {
                 return 'node-step-plugin plugin';
@@ -50,7 +52,9 @@ function _wfStringForStep(step){
         } else if (step['script']) {
             string = "Script";
         } else if (step['scriptfile']) {
-            string = step['scriptfile'];
+            string = 'File';
+        }else if (step['scripturl']) {
+            string = 'URL';
         } else if (step['type']) {//plugin
             var title = "Plugin " + step['type'];
             if (step['nodeStep'] && RDWorkflow.nodeSteppluginDescriptions && RDWorkflow.nodeSteppluginDescriptions[step['type']]) {
