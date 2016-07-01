@@ -400,6 +400,35 @@ public class TestDataContextUtils extends AbstractBaseTest {
             assertNull(br.readLine());
 
     }
+    public void testReplaceTokensInScriptSlashChars() throws Exception {
+        Framework fwk = getFrameworkInstance();
+        //test content
+        final HashMap<String, Map<String, String>> data = new HashMap<>();
+        HashMap<String, String> testdata = new HashMap<>();
+        testdata.put("data1/data1", "blah");
+        testdata.put("data2/data2", "blee");
+        data.put("test", testdata);
+        File temp = DataContextUtils.replaceTokensInScript("test script some data @test.data1/data1@\n"
+                                                           + "test line 2 some data @test.data2/data2@\n",
+                                                           data,
+                                                           fwk, null
+        );
+        assertNotNull(temp);
+        assertTrue(temp.length() > 0);
+        //test content
+        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(temp)));
+        assertTrue(br.ready());
+        final String line0 = br.readLine();
+        assertNotNull(line0);
+        assertEquals("test script some data blah", line0);
+        assertTrue(br.ready());
+        final String line1 = br.readLine();
+        assertNotNull(line1);
+        assertEquals("test line 2 some data blee", line1);
+        assertFalse(br.ready());
+        assertNull(br.readLine());
+
+    }
 
     public void testReplaceTokensInScript8() throws Exception {
         Framework fwk = getFrameworkInstance();
