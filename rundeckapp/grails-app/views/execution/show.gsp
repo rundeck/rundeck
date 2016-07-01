@@ -34,7 +34,7 @@
 
       <g:javascript library="prototype/effects"/>
       <g:embedJSON id="execInfoJSON" data="${[jobId:scheduledExecution?.extid,execId:execution.id]}"/>
-      <g:embedJSON id="workflowDataJSON" data="${execution.workflow.commands*.toMap()}"/>
+      <g:embedJSON id="workflowDataJSON" data="${workflowTree}"/>
       <g:embedJSON id="nodeStepPluginsJSON" data="${stepPluginDescriptions.node.collectEntries { [(it.key): [title: it.value.title]] }}"/>
       <g:embedJSON id="wfStepPluginsJSON" data="${stepPluginDescriptions.workflow.collectEntries { [(it.key): [title: it.value.title]] }}"/>
       <g:javascript>
@@ -69,7 +69,7 @@
                 dynamicStepDescriptionDisabled:${enc(js:feature.isDisabled(name:'workflowDynamicStepSummaryGUI'))},
                 url:appLinks.scheduledExecutionWorkflowJson,
                 id:execInfo.jobId||execInfo.execId,//id of job or execution
-                workflow:execInfo.jobId?null:workflowData
+                workflow:workflowData
             });
           followControl = new FollowControl('${execution?.id}','outputappendform',{
             parentElement:'commandPerform',

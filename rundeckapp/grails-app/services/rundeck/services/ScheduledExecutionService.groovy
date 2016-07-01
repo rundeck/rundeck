@@ -497,6 +497,59 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return list;
     }
     /**
+     *
+     * @param maxDepth
+     * @param workflow
+     * @return List of maps for each step, descend up to maxDepth following job references
+     */
+    def getWorkflowDescriptionTree(String project,Workflow workflow,maxDepth=3){
+        def jobids=[:]
+        def cmdData={}
+        cmdData={x,WorkflowStep step->
+            def map=step.toMap()
+            if(step instanceof JobExec) {
+                ScheduledExecution refjob = ScheduledExecution.findByProjectAndJobNameAndGroupPath(
+                        project,
+                        step.jobName,
+                        step.jobGroup
+                )
+                if(refjob){
+                    map.jobId=refjob.extid
+                    boolean doload=(null==jobids[map.jobId])
+                    if(doload){
+                        jobids[map.jobId]=[]
+                    }
+                    if(doload && x>0){
+                        map.workflow=jobids[map.jobId]
+                        jobids[map.jobId].addAll(refjob.workflow.commands.collect(cmdData.curry(x-1)))
+                    }
+                }
+            }
+            def eh = step.errorHandler
+
+            if(eh instanceof JobExec) {
+                ScheduledExecution refjob = ScheduledExecution.findByProjectAndJobNameAndGroupPath(
+                        project,
+                        eh.jobName,
+                        eh.jobGroup
+                )
+                if(refjob){
+                    map.ehJobId=refjob.extid
+                    boolean doload=(null==jobids[map.ehJobId])
+                    if(doload){
+                        jobids[map.ehJobId]=[]
+                    }
+                    if(doload && x>0){
+                        map.ehWorkflow=jobids[map.ehJobId]
+                        jobids[map.ehJobId].addAll(refjob.workflow.commands.collect(cmdData.curry(x-1)))
+                    }
+                }
+            }
+            return map
+        }
+        workflow.commands.collect(cmdData.curry(maxDepth))
+    }
+    /**
      * Delete all executions for a job. Return a map with results, as {@link ExecutionService#deleteBulkExecutionIds(java.util.Collection, com.dtolabs.rundeck.core.authorization.AuthContext, java.lang.String)}
      * @param scheduledExecution
      * @param authContext @param var

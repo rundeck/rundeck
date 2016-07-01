@@ -211,14 +211,20 @@ class ExecutionController extends ControllerBase{
         frameworkService.getStepPluginDescriptions().each{desc->
             pluginDescs['workflow'][desc.name]=desc
         }
-//        def state = workflowService.readWorkflowStateForExecution(e)
-//        if(!state){
-////            state= workflowService.previewWorkflowStateForExecution(e)
-//        }
-        return [scheduledExecution: e.scheduledExecution?:null,execution:e, filesize:filesize,
-                nextExecution: e.scheduledExecution?.scheduled ? scheduledExecutionService.nextExecutionTime(e.scheduledExecution) : null,
-                orchestratorPlugins: orchestratorPluginService.listOrchestratorPlugins(),
-                enext: enext, eprev: eprev,stepPluginDescriptions: pluginDescs, ]
+        def workflowTree = scheduledExecutionService.getWorkflowDescriptionTree(e.project, e.workflow, 0)
+        return [
+                scheduledExecution    : e.scheduledExecution ?: null,
+                execution             : e,
+                workflowTree          : workflowTree,
+                filesize              : filesize,
+                nextExecution         : e.scheduledExecution?.scheduled ? scheduledExecutionService.nextExecutionTime(
+                        e.scheduledExecution
+                ) : null,
+                orchestratorPlugins   : orchestratorPluginService.listOrchestratorPlugins(),
+                enext                 : enext,
+                eprev                 : eprev,
+                stepPluginDescriptions: pluginDescs,
+        ]
     }
     def delete = {
         withForm{
