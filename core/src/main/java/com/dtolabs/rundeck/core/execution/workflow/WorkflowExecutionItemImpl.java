@@ -23,13 +23,15 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow;
 
+import com.dtolabs.rundeck.core.execution.BaseExecutionItem;
+
 /**
  * WorkflowExecutionItemImpl is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public class WorkflowExecutionItemImpl implements WorkflowExecutionItem {
+public class WorkflowExecutionItemImpl extends BaseExecutionItem implements WorkflowExecutionItem {
     final private IWorkflow workflow;
 
     public WorkflowExecutionItemImpl(final IWorkflow workflow) {
@@ -45,15 +47,7 @@ public class WorkflowExecutionItemImpl implements WorkflowExecutionItem {
     }
 
     public String getType() {
-        if (NODE_FIRST.equals(getWorkflow().getStrategy())) {
-            return COMMAND_TYPE_NODE_FIRST;
-        } else if (STEP_FIRST.equals(getWorkflow().getStrategy())) {
-            return COMMAND_TYPE_STEP_FIRST;
-        } else if (PARALLEL.equals(getWorkflow().getStrategy())) {
-            return COMMAND_TYPE_PARALLEL;
-        }
-
-        throw new IllegalArgumentException("Invalid workflow strategy: [" + getWorkflow().getStrategy() + "]");
+        return getWorkflow().getStrategy();
     }
 
     @Override

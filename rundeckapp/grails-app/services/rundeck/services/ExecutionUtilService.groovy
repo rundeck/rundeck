@@ -17,8 +17,20 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
+import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItemImpl
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowImpl
+import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
+import com.dtolabs.rundeck.execution.ExecutionItemFactory
+import grails.transaction.NotTransactional
+import rundeck.CommandExec
+import rundeck.JobExec
+import rundeck.PluginStep
+import rundeck.Workflow
+import rundeck.WorkflowStep
 import rundeck.services.logging.ExecutionLogWriter
 
 import static org.apache.tools.ant.util.StringUtils.getStackTrace
@@ -87,4 +99,139 @@ class ExecutionUtilService {
     }
 
 
+    /**
+     * Create an WorkflowExecutionItem instance for the given Workflow,
+     * suitable for the ExecutionService layer
+     */
+    public WorkflowExecutionItem createExecutionItemForWorkflow(Workflow workflow) {
+        if (!workflow.commands || workflow.commands.size() < 1) {
+            throw new Exception("Workflow is empty")
+        }
+
+        def impl = new WorkflowImpl(
+                workflow.commands.collect {
+                    itemForWFCmdItem(
+                            it,
+                            it.errorHandler ? itemForWFCmdItem(it.errorHandler) : null
+                    )
+                },
+                workflow.threadcount,
+                workflow.keepgoing,
+                workflow.strategy ? workflow.strategy : "node-first"
+        )
+        impl.setPluginConfig(workflow.pluginConfigMap)
+        final WorkflowExecutionItemImpl item = new WorkflowExecutionItemImpl(impl)
+        return item
+    }
+
+
+    public StepExecutionItem itemForWFCmdItem(final WorkflowStep step, final StepExecutionItem handler=null) throws FileNotFoundException {
+        if(step instanceof CommandExec || step.instanceOf(CommandExec)){
+            CommandExec cmd=step.asType(CommandExec)
+            if (null != cmd.getAdhocRemoteString()) {
+
+                final List<String> strings = OptsUtil.burst(cmd.getAdhocRemoteString());
+                final String[] args = strings.toArray(new String[strings.size()]);
+
+                return ExecutionItemFactory.createExecCommand(args, handler, !!cmd.keepgoingOnSuccess, step.description);
+            } else if (null != cmd.getAdhocLocalString()) {
+                final String script = cmd.getAdhocLocalString();
+                final String[] args;
+                if (null != cmd.getArgString()) {
+                    final List<String> strings = OptsUtil.burst(cmd.getArgString());
+                    args = strings.toArray(new String[strings.size()]);
+                } else {
+                    args = new String[0];
+                }
+                return ExecutionItemFactory.createScriptFileItem(
+                        cmd.getScriptInterpreter(),
+                        cmd.getFileExtension(),
+                        !!cmd.interpreterArgsQuoted,
+                        script,
+                        args,
+                        handler,
+                        !!cmd.keepgoingOnSuccess,
+                        step.description);
+
+            } else if (null != cmd.getAdhocFilepath()) {
+                final String filepath = cmd.getAdhocFilepath();
+                final String[] args;
+                if (null != cmd.getArgString()) {
+                    final List<String> strings = OptsUtil.burst(cmd.getArgString());
+                    args = strings.toArray(new String[strings.size()]);
+                } else {
+                    args = new String[0];
+                }
+                if(filepath ==~ /^(?i:https?|file):.*$/) {
+                    return ExecutionItemFactory.createScriptURLItem(
+                            cmd.getScriptInterpreter(),
+                            cmd.getFileExtension(),
+                            !!cmd.interpreterArgsQuoted,
+                            filepath,
+                            args,
+                            handler,
+                            !!cmd.keepgoingOnSuccess,
+                            step.description)
+                }else {
+                    return ExecutionItemFactory.createScriptFileItem(
+                            cmd.getScriptInterpreter(),
+                            cmd.getFileExtension(),
+                            !!cmd.interpreterArgsQuoted,
+                            new File(filepath),
+                            args,
+                            handler,
+                            !!cmd.keepgoingOnSuccess,
+                            step.description);
+
+                }
+            }else {
+                throw new IllegalArgumentException("Workflow step type was not expected: "+step);
+            }
+        }else if (step instanceof JobExec || step.instanceOf(JobExec)) {
+            final JobExec jobcmditem = step as JobExec;
+
+            final String[] args;
+            if (null != jobcmditem.getArgString()) {
+                final List<String> strings = OptsUtil.burst(jobcmditem.getArgString());
+                args = strings.toArray(new String[strings.size()]);
+            } else {
+                args = new String[0];
+            }
+
+            return ExecutionItemFactory.createJobRef(
+                    jobcmditem.getJobIdentifier(),
+                    args,
+                    !!jobcmditem.nodeStep,
+                    handler,
+                    !!jobcmditem.keepgoingOnSuccess,
+                    jobcmditem.nodeFilter?:null,
+                    jobcmditem.nodeThreadcount!=null && jobcmditem.nodeThreadcount>=1?jobcmditem.nodeThreadcount:null,
+                    jobcmditem.nodeKeepgoing,
+                    jobcmditem.nodeRankAttribute,
+                    jobcmditem.nodeRankOrderAscending,
+                    step.description
+            )
+        }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
+            final PluginStep stepitem = step as PluginStep
+            if(stepitem.nodeStep) {
+                return ExecutionItemFactory.createPluginNodeStepItem(
+                        stepitem.type,
+                        stepitem.configuration,
+                        !!stepitem.keepgoingOnSuccess,
+                        handler,
+                        step.description
+                )
+            }else {
+                return ExecutionItemFactory.createPluginStepItem(
+                        stepitem.type,
+                        stepitem.configuration,
+                        !!stepitem.keepgoingOnSuccess,
+                        handler,
+                        step.description
+                )
+            }
+        } else {
+            throw new IllegalArgumentException("Workflow step type was not expected: "+step);
+        }
+    }
 }

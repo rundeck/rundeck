@@ -26,10 +26,8 @@ package com.dtolabs.rundeck.core.execution.workflow;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
@@ -45,15 +43,11 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
+ * @deprecated
  */
-public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
+public class StepFirstWorkflowExecutor extends BaseWorkflowExecutor {
 
-    protected static final String DATA_CONTEXT_PREFIX = "data context: ";
-    protected static final String OPTION_KEY = "option";
-    protected static final String SECURE_OPTION_KEY = "secureOption";
-    protected static final String SECURE_OPTION_VALUE = "****";
-    
-    public StepFirstWorkflowStrategy(final Framework framework) {
+    public StepFirstWorkflowExecutor(final Framework framework) {
         super(framework);
     }
 
@@ -95,45 +89,7 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
         );
 
     }
-    
-    /**
-     * Creates a copy of the given data context with the secure option values obfuscated.
-     * This does not modify the original data context.
-     * 
-     * "secureOption" map values will always be obfuscated. "option" entries that are also in "secureOption"
-     * will have their values obfuscated. All other maps within the data context will be added
-     * directly to the copy.
-     * @param dataContext data
-     * @return printable data
-     */
-    protected Map<String, Map<String, String>> createPrintableDataContext(Map<String, Map<String, String>> dataContext) {
-        Map<String, Map<String, String>> printableContext = new HashMap<String, Map<String, String>>();
-        if (dataContext != null) {
-            printableContext.putAll(dataContext);
-            Set<String> secureValues = new HashSet<String>();
-            if (dataContext.containsKey(SECURE_OPTION_KEY)) {
-                Map<String, String> secureOptions = new HashMap<String, String>();
-                secureOptions.putAll(dataContext.get(SECURE_OPTION_KEY));
-                secureValues.addAll(secureOptions.values());
-                for (Map.Entry<String, String> entry : secureOptions.entrySet()) {
-                    entry.setValue(SECURE_OPTION_VALUE);
-                }
-                printableContext.put(SECURE_OPTION_KEY, secureOptions);
-            }
 
-            if (dataContext.containsKey(OPTION_KEY)) {
-                Map<String, String> options = new HashMap<String, String>();
-                options.putAll(dataContext.get(OPTION_KEY));
-                for (Map.Entry<String, String> entry : options.entrySet()) {
-                    if (secureValues.contains(entry.getValue())) {
-                        entry.setValue(SECURE_OPTION_VALUE);
-                    }
-                }
-                printableContext.put(OPTION_KEY, options);
-            }
-        }
-        return printableContext;
-    }
 
     static boolean isInnerLoop(final WorkflowExecutionItem item) {
         return item.getWorkflow() instanceof stepFirstWrapper;
@@ -162,6 +118,11 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
 
         public String getStrategy() {
             return WorkflowExecutionItem.STEP_FIRST;
+        }
+
+        @Override
+        public Map<String, Object> getPluginConfig() {
+            return workflow.getPluginConfig();
         }
 
         @Override

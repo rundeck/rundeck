@@ -34,4 +34,9 @@ public interface StepExecutionItem {
      * @return type of the execution item
      */
     public String getType();
+
+    /**
+     * @return label/id or description of this step
+     */
+    public String getLabel();
 }

@@ -221,6 +221,7 @@ class ExecutionController extends ControllerBase{
                         e.scheduledExecution
                 ) : null,
                 orchestratorPlugins   : orchestratorPluginService.listOrchestratorPlugins(),
+                strategyPlugins       : scheduledExecutionService.getWorkflowStrategyPluginDescriptions(),
                 enext                 : enext,
                 eprev                 : eprev,
                 stepPluginDescriptions: pluginDescs,

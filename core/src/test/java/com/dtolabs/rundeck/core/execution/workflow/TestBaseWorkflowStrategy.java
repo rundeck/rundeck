@@ -39,7 +39,6 @@ import com.dtolabs.rundeck.core.utils.NodeSet;
 import org.apache.tools.ant.BuildListener;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
@@ -79,14 +78,14 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         FileUtils.deleteDir(projectdir);
     }
 
-    public static class testWorkflowStrategy extends BaseWorkflowStrategy {
+    public static class testWorkflowExecutor extends BaseWorkflowExecutor {
         private WorkflowExecutionResult result;
         private int execIndex = 0;
         private List<Object> results;
         private List<Map<String, Object>> inputs;
         private int executeWfItemCalled = 0;
 
-        public testWorkflowStrategy(Framework framework) {
+        public testWorkflowExecutor(Framework framework) {
             super(framework);
             inputs = new ArrayList<Map<String, Object>>();
             results = new ArrayList<Object>();
@@ -184,7 +183,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         //test success 1 item
         final NodeSet nodeset = new NodeSet();
 
-        testWorkflowStrategy strategy = new testWorkflowStrategy(testFramework);
+        testWorkflowExecutor strategy = new testWorkflowExecutor(testFramework);
 
         strategy.getResults().addAll(returnResults);
 
@@ -493,7 +492,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
     }
 
     public void testConvertFailures_wrappedDispatcherResult() throws Exception {
-        testWorkflowStrategy strategy = new testWorkflowStrategy(testFramework);
+        testWorkflowExecutor strategy = new testWorkflowExecutor(testFramework);
 
         HashMap<Integer, StepExecutionResult> failedMap = new
                 HashMap<Integer, StepExecutionResult>();
@@ -516,7 +515,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         assertEquals(stepResult, node1);
     }
     public void testConvertFailures_wrappedDispatcherException_singleNode() throws Exception {
-        testWorkflowStrategy strategy = new testWorkflowStrategy(testFramework);
+        testWorkflowExecutor strategy = new testWorkflowExecutor(testFramework);
 
         HashMap<Integer, StepExecutionResult> failedMap = new
                 HashMap<Integer, StepExecutionResult>();
@@ -762,7 +761,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
     }
 
 
-    static class testWorkflowCmdItem implements NodeStepExecutionItem, HandlerExecutionItem {
+    static class testWorkflowCmdItem extends BaseExecutionItem implements NodeStepExecutionItem, HandlerExecutionItem {
         private String type;
         private String nodeStepType;
         int flag = -1;
@@ -792,7 +791,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         }
     }
 
-    static class testHandlerWorkflowCmdItem implements StepExecutionItem, HasFailureHandler {
+    static class testHandlerWorkflowCmdItem extends BaseExecutionItem implements StepExecutionItem, HasFailureHandler {
         private String type;
         private StepExecutionItem failureHandler;
         int flag = -1;

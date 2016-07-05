@@ -60,12 +60,18 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
         super.tearDown();
 
     }
+    abstract class BaseNodeStepExecutionItem implements NodeStepExecutionItem{
+        @Override
+        public String getLabel() {
+            return null;
+        }
+    }
 
     public void testResetDefaultProviders() throws Exception {
         final NodeStepExecutionService service = NodeStepExecutionService.getInstanceForFramework(
             getFrameworkInstance());
 
-        final NodeStepExecutionItem item = new NodeStepExecutionItem() {
+        final NodeStepExecutionItem item = new BaseNodeStepExecutionItem() {
             public String getType() {
                 return "NodeDispatch";
             }
@@ -75,7 +81,7 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
                 return "exec";
             }
         };
-        final NodeStepExecutionItem item2 = new NodeStepExecutionItem() {
+        final NodeStepExecutionItem item2 = new BaseNodeStepExecutionItem() {
             public String getType() {
                 return "NodeDispatch";
             }
@@ -142,7 +148,7 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
 
         {
             //exec item should return default ExecNodeStepExecutor
-            final NodeStepExecutionItem item = new NodeStepExecutionItem() {
+            final NodeStepExecutionItem item = new BaseNodeStepExecutionItem() {
                 public String getType() {
                     return "NodeDispatch";
                 }
@@ -159,7 +165,7 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
         }
         {
             //script item should return default ScriptFileNodeStepExecutor
-            final NodeStepExecutionItem item = new NodeStepExecutionItem() {
+            final NodeStepExecutionItem item = new BaseNodeStepExecutionItem() {
                 public String getType() {
                     return "NodeDispatch";
                 }
@@ -177,7 +183,7 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
 
         //test invalid provider name
         try {
-            service.getExecutorForExecutionItem(new NodeStepExecutionItem() {
+            service.getExecutorForExecutionItem(new BaseNodeStepExecutionItem() {
                 public String getType() {
                     return "NodeDispatch";
                 }
@@ -196,7 +202,7 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
         }
         //test null provider name
         try {
-            service.getExecutorForExecutionItem(new NodeStepExecutionItem() {
+            service.getExecutorForExecutionItem(new BaseNodeStepExecutionItem() {
                 public String getType() {
                     return "NodeDispatch";
                 }

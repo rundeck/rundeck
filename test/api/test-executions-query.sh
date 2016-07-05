@@ -128,7 +128,7 @@ cat > $DIR/temp.out <<END
       <uuid>api-v5-test-exec-query2</uuid>
       <name>second test for exec query</name>
       <group>api-test/execquery</group>
-      <description>A job to test the executions query API</description>
+      <description>A job to test the executions query API2</description>
       <loglevel>INFO</loglevel>
       <context>
           <project>$xmlproj</project>

@@ -5,8 +5,14 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
+import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.plugins.quartz.listeners.SessionBinderJobListener
@@ -15,7 +21,6 @@ import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
 import org.quartz.*
-import org.quartz.impl.matchers.KeyMatcher
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -54,6 +59,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def MessageSource messageSource
     def grailsEvents
+    def pluginService
+    def executionUtilService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -72,6 +79,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return executionServiceBean
     }
 
+    def getWorkflowStrategyPluginDescriptions(){
+        pluginService.listPlugins(WorkflowStrategy, frameworkService.rundeckFramework.workflowStrategyService).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+    }
 
     def Map finishquery ( query,params,model){
 
@@ -1592,6 +1604,26 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (!validateWorkflow(scheduledExecution.workflow,scheduledExecution)) {
             failed = true
         }
+        //workflow strategy plugin config and validation
+        if (scheduledExecution.workflow && params.workflow?.strategyPlugin?.get(
+                scheduledExecution.workflow.strategy
+        )?.config) {
+            Map configmap = params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config
+            scheduledExecution.workflow.setPluginConfigData(
+                    'WorkflowStrategy',
+                    scheduledExecution.workflow.strategy,
+                    configmap
+            )
+            def report=validateWorkflowStrategyPlugin(
+                    scheduledExecution,
+                    projectProps,
+                    configmap
+            )
+            if(null!=report && !report.valid) {
+                rejectWorkflowStrategyInput(scheduledExecution,params,report)
+                failed = true
+            }
+        }
         if (( params.options || params['_nooptions']) && scheduledExecution.options) {
             def todelete = []
             scheduledExecution.options.each {
@@ -2409,6 +2441,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 cmdi++
             }
         }
+        //TODO: validate workflow plugin
         return valid
     }
 
@@ -2592,6 +2625,38 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             failed = true
         }
 
+        //workflow strategy plugin config and validation
+        if (params.workflow instanceof Map) {
+            Map configmap = params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config
+
+            scheduledExecution.workflow.setPluginConfigData(
+                    'WorkflowStrategy',
+                    scheduledExecution.workflow.strategy,
+                    configmap
+            )
+
+            def report=validateWorkflowStrategyPlugin(scheduledExecution, projectProps, configmap)
+
+            if(null!=report && !report.valid) {
+                rejectWorkflowStrategyInput(scheduledExecution,params,report)
+                failed = true
+            }
+        } else if (params.workflow instanceof Workflow) {
+            scheduledExecution.workflow.pluginConfigMap = params.workflow.pluginConfigMap
+            def report=validateWorkflowStrategyPlugin(
+                    scheduledExecution,
+                    projectProps,
+                    scheduledExecution.workflow.getPluginConfigData(
+                            'WorkflowStrategy',
+                            scheduledExecution.workflow.strategy
+                    )
+            )
+            if(null!=report && !report.valid) {
+                rejectWorkflowStrategyInput(scheduledExecution,params,report)
+                failed = true
+            }
+        }
+
         if (scheduledExecution.argString) {
             try {
                 scheduledExecution.argString.replaceAll(/\$\{DATE:(.*)\}/, { all, tstamp ->
@@ -2705,6 +2770,72 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         failed = failed || !valid
         return [failed: failed, scheduledExecution: scheduledExecution]
+    }
+
+    /**
+     * Validate a workflow strategy plugin input
+     * @param scheduledExecution job
+     * @param projectProps project level properties
+     * @param configmap configuration of the strategy plugin
+     * @param params parameters map
+     * @return true if valid, false otherwise,
+     */
+    private Validator.Report validateWorkflowStrategyPlugin(
+            ScheduledExecution scheduledExecution,
+            Map<String, String> projectProps,
+            Map configmap
+    )
+    {
+
+        def service = frameworkService.rundeckFramework.workflowStrategyService
+        def workflow = new Workflow(scheduledExecution.workflow)
+        workflow.discard()
+        def name = workflow.strategy
+        PropertyResolver resolver = frameworkService.getFrameworkPropertyResolverWithProps(
+                projectProps,
+                configmap
+        )
+        //validate input values wrt to property definitions
+        def validation = pluginService.validatePlugin(name,
+                                                      service,
+                                                      resolver,
+                                                      PropertyScope.Instance
+        )
+        def report=validation?.report
+        if (!report||report.valid) {
+            //validate input values of configured plugin in context of the workflow defintion
+            def workflowItem = executionUtilService.createExecutionItemForWorkflow(workflow)
+
+            def workflowStrategy = service.getStrategyForWorkflow(workflowItem, resolver)
+
+            report = workflowStrategy.validate(workflowItem.workflow)
+        }
+
+        report
+    }
+    private def rejectWorkflowStrategyInput(scheduledExecution,params, report){
+        def name=scheduledExecution.workflow.strategy
+        if (params instanceof Map) {
+            if (!params['strategyValidation']) {
+                params['strategyValidation'] = [:]
+            }
+            if (!params['strategyValidation'][name]) {
+                params['strategyValidation'][name] = [:]
+            }
+            params['strategyValidation'][name] = report
+        }
+        scheduledExecution?.errors.rejectValue('workflow',
+                                               'Workflow.strategy.plugin.config.invalid',
+                                               [name] as Object[],
+                                               "Workflow strategy {0}: Some config values were not valid"
+        )
+
+        scheduledExecution.workflow.errors.rejectValue(
+                'strategy',
+                'scheduledExecution.workflowStrategy.invalidPlugin.message',
+                [name] as Object[],
+                'Invalid Configuration for plugin: {0}'
+        )
     }
 
 }

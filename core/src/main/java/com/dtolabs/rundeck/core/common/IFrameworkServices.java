@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService;
 import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategyService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService;
@@ -36,6 +37,7 @@ public interface IFrameworkServices {
     OrchestratorService getOrchestratorService();
 
     WorkflowExecutionService getWorkflowExecutionService();
+    WorkflowStrategyService getWorkflowStrategyService();
 
     StepExecutionService getStepExecutionService();
 

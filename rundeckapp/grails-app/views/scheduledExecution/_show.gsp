@@ -55,7 +55,7 @@
             <div id="schedExDetails"
                  class="tab-pane panel panel-default panel-tab-content  ${canRunJob ? '' : 'active'}">
                 <div class="panel-body">
-                    <g:render template="/execution/execDetails" model="[execdata: scheduledExecution, showEdit: true, hideOptions: true, knockout: true]"/>
+                    <g:render template="/execution/execDetails" model="[execdata: scheduledExecution, strategyPlugins:strategyPlugins, showEdit: true, hideOptions: true, knockout: true]"/>
 
                 </div>
             </div>

@@ -44,15 +44,19 @@ public class PluginStepExecutionItemImpl implements StepExecutionItem, Configure
     private Map stepConfiguration;
     private boolean keepgoingOnSuccess;
     private StepExecutionItem failureHandler;
+    private String label;
 
-    public PluginStepExecutionItemImpl(final String type,
-                                       final Map stepConfiguration,
-                                       final boolean keepgoingOnSuccess,
-                                       final StepExecutionItem failureHandler) {
+    public PluginStepExecutionItemImpl(
+            final String type,
+            final Map stepConfiguration,
+            final boolean keepgoingOnSuccess,
+            final StepExecutionItem failureHandler, final String label
+    ) {
         this.type = type;
         this.stepConfiguration = stepConfiguration;
         this.keepgoingOnSuccess = keepgoingOnSuccess;
         this.failureHandler = failureHandler;
+        this.label= label;
     }
 
     public Map getStepConfiguration() {
@@ -94,5 +98,14 @@ public class PluginStepExecutionItemImpl implements StepExecutionItem, Configure
                ", keepgoingOnSuccess=" + keepgoingOnSuccess +
                ", hasFailureHandler=" + (null!=failureHandler) +
                '}';
+    }
+
+    @Override
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
     }
 }

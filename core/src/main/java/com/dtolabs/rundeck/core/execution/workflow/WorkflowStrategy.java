@@ -23,14 +23,41 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow;
 
+import com.dtolabs.rundeck.core.plugins.configuration.Validator;
+import com.dtolabs.rundeck.core.rules.RuleEngine;
+
 /**
  * WorkflowStrategy interface performs the workflow execution and returns an ExecutionResult
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public interface WorkflowStrategy extends WorkflowExecutor{
-    public static final String NODE_FIRST = "node-first";
-    public static final String STEP_FIRST = "step-first";
-    public static final String PARALLEL = "parallel";
+public interface WorkflowStrategy {
+    /**
+     * @return appropriate threadcount for step execution, anything 0 or less indicates as many threads as needed
+     */
+    int getThreadCount();
+
+    /**
+     * setup rule engine
+     *
+     * @param ruleEngine
+     */
+    void setup(RuleEngine ruleEngine, StepExecutionContext context, IWorkflow workflow);
+
+    /**
+     * Validate configuration values in the context of the workflow
+     *
+     * @param workflow workflow input
+     *
+     * @return report of any input property validation errors
+     */
+    Validator.Report validate(IWorkflow workflow);
+
+    /**
+     * Profile for the workflow
+     *
+     * @return
+     */
+    WorkflowStrategyProfile getProfile();
 }

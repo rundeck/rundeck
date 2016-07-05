@@ -62,13 +62,15 @@
             ]}"/>
 </g:each>
 <g:set var="defaultGroupName" value="${g.message(code:'plugin.property.secondary.groupName',default:'More')}"/>
-<g:each in="${groupSet.keySet()}" var="group">
+<g:each in="${groupSet.keySet()}" var="group" status="i">
     <g:set var="groupProps" value="${groupSet[group]}"/>
     <g:set var="gkey" value="${g.rkey()}"/>
     <g:set var="hasValue" value="${values && groupProps*.name.find{values[it]}}"/>
     <g:set var="isSecondary" value="${group in secondary}"/>
 
-    <hr/>
+    <g:if test="${i>0 || ungrouped}">
+        <hr/>
+    </g:if>
 
     <div class="form-group">
         <span class="col-sm-12 ">

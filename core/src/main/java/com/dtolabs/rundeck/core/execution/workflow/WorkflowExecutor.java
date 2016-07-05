@@ -33,5 +33,9 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface WorkflowExecutor {
+    String NODE_FIRST = "node-first";
+    String STEP_FIRST = "step-first";
+    String PARALLEL = "parallel";
+
     WorkflowExecutionResult executeWorkflow(StepExecutionContext executionContext, WorkflowExecutionItem item);
 }

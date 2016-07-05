@@ -24,6 +24,8 @@ import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import grails.transaction.NotTransactional
+import grails.transaction.Transactional
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
@@ -33,6 +35,7 @@ import org.rundeck.storage.api.StorageException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.validation.ObjectError
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
@@ -77,6 +80,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def grailsApplication
     def configurationService
     def grailsEvents
+    def executionUtilService
 
     boolean getExecutionsAreActive(){
         configurationService.executionModeActive
@@ -826,7 +830,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def jobcontext=exportContextForExecution(execution,grailsLinkGenerator)
             loghandler.openStream()
 
-            WorkflowExecutionItem item = createExecutionItemForExecutionContext(execution, framework, execution.user)
+            WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.workflow)
 
             NodeRecorder recorder = new NodeRecorder();//TODO: use workflow-aware listener for nodes
 
@@ -988,52 +992,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return levels.indexOf(loglevel)
     }
 
-    /**
-     * Return an appropriate StepExecutionItem object for the stored Execution
-     */
-    public WorkflowExecutionItem createExecutionItemForExecutionContext(ExecutionContext execution, Framework framework, String user=null) {
-        WorkflowExecutionItem item
-        if (execution.workflow) {
-            item = createExecutionItemForWorkflowContext(execution, framework,user)
-        } else {
-            throw new RuntimeException("unsupported job type")
-        }
-        return item
-    }
 
-
-    /**
-     * Return an WorkflowExecutionItem instance for the given workflow Execution,
-     * suitable for the ExecutionService layer
-     */
-    public WorkflowExecutionItem createExecutionItemForWorkflowContext(
-            ExecutionContext execMap,
-            Framework framework,
-            String userName=null
-    )
-    {
-        if (!execMap.workflow.commands || execMap.workflow.commands.size() < 1) {
-            throw new Exception("Workflow is empty")
-        }
-        if (!userName) {
-            userName = execMap.user
-        }
-
-        final WorkflowExecutionItemImpl item = new WorkflowExecutionItemImpl(
-            new WorkflowImpl(
-                    execMap.workflow.commands.collect {
-                        itemForWFCmdItem(
-                                it,
-                                it.errorHandler?itemForWFCmdItem(it.errorHandler):null
-                        )
-                    },
-                    execMap.workflow.threadcount,
-                    execMap.workflow.keepgoing,
-                    execMap.workflow.strategy?execMap.workflow.strategy: "node-first"
-            )
-        )
-        return item
-    }
 
     public static String EXECUTION_RUNNING = "running"
     public static String EXECUTION_SUCCEEDED = "succeeded"
@@ -1051,6 +1010,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         e.executionState
     }
 
+    @NotTransactional
     public StepExecutionItem itemForWFCmdItem(final WorkflowStep step,final StepExecutionItem handler=null) throws FileNotFoundException {
         if(step instanceof CommandExec || step.instanceOf(CommandExec)){
             CommandExec cmd=step.asType(CommandExec)
@@ -1059,8 +1019,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 final List<String> strings = OptsUtil.burst(cmd.getAdhocRemoteString());
                 final String[] args = strings.toArray(new String[strings.size()]);
 
-                return ExecutionItemFactory.createExecCommand(args, handler, !!cmd.keepgoingOnSuccess);
-
+                return ExecutionItemFactory.createExecCommand(args, handler, !!cmd.keepgoingOnSuccess, step.description);
             } else if (null != cmd.getAdhocLocalString()) {
                 final String script = cmd.getAdhocLocalString();
                 final String[] args;
@@ -1077,7 +1036,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         script,
                         args,
                         handler,
-                        !!cmd.keepgoingOnSuccess);
+                        !!cmd.keepgoingOnSuccess,
+                        step.description);
 
             } else if (null != cmd.getAdhocFilepath()) {
                 final String filepath = cmd.getAdhocFilepath();
@@ -1096,7 +1056,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             filepath,
                             args,
                             handler,
-                            !!cmd.keepgoingOnSuccess)
+                            !!cmd.keepgoingOnSuccess,
+                            step.description)
                 }else {
                     return ExecutionItemFactory.createScriptFileItem(
                             cmd.getScriptInterpreter(),
@@ -1105,9 +1066,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             new File(filepath),
                             args,
                             handler,
-                            !!cmd.keepgoingOnSuccess);
+                            !!cmd.keepgoingOnSuccess,
+                            step.description);
 
                 }
+            }else {
+                throw new IllegalArgumentException("Workflow step type was not expected: "+step);
             }
         }else if (step instanceof JobExec || step.instanceOf(JobExec)) {
             final JobExec jobcmditem = step as JobExec;
@@ -1130,14 +1094,27 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     jobcmditem.nodeThreadcount!=null && jobcmditem.nodeThreadcount>=1?jobcmditem.nodeThreadcount:null,
                     jobcmditem.nodeKeepgoing,
                     jobcmditem.nodeRankAttribute,
-                    jobcmditem.nodeRankOrderAscending
+                    jobcmditem.nodeRankOrderAscending,
+                    step.description
             )
         }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
             final PluginStep stepitem = step as PluginStep
-            if(stepitem.nodeStep){
-                return ExecutionItemFactory.createPluginNodeStepItem(stepitem.type, stepitem.configuration, !!stepitem.keepgoingOnSuccess, handler)
-            }else{
-                return ExecutionItemFactory.createPluginStepItem(stepitem.type,stepitem.configuration, !!stepitem.keepgoingOnSuccess,handler)
+            if(stepitem.nodeStep) {
+                return ExecutionItemFactory.createPluginNodeStepItem(
+                        stepitem.type,
+                        stepitem.configuration,
+                        !!stepitem.keepgoingOnSuccess,
+                        handler,
+                        step.description
+                )
+            }else {
+                return ExecutionItemFactory.createPluginStepItem(
+                        stepitem.type,
+                        stepitem.configuration,
+                        !!stepitem.keepgoingOnSuccess,
+                        handler,
+                        step.description
+                )
             }
         } else {
             throw new IllegalArgumentException("Workflow step type was not expected: "+step);
@@ -2603,7 +2580,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 result = createFailure(JobReferenceFailureReason.Unauthorized, msg)
                 return
             }
-            newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
+            newExecItem = executionUtilService.createExecutionItemForWorkflow(se.workflow)
 
             try {
                 newContext = createJobReferenceContext(

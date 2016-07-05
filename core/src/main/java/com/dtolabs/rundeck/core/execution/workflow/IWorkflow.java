@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.execution.workflow;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * IWorkflow is ...
@@ -38,4 +39,5 @@ public interface IWorkflow {
     public int getThreadcount();
     public boolean isKeepgoing();
     public String getStrategy();
+    public Map<String,Object> getPluginConfig();
 }
