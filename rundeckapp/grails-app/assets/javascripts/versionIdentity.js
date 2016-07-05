@@ -219,7 +219,7 @@ var VersionIdentity=function(data){
             }
             span.append(jQuery('<span></span>').addClass('badge badge-default').text(' ' + s));
         } else if (self.versionDate) {
-            var vdate = jQuery('<span></span>').addClass('rundeck-version-date').append(' ' + self.versionDate);
+            var vdate = jQuery('<span></span>').addClass('rundeck-version-date').text(' ' + self.versionDate);
             span.append(vdate);
         }
         jQuery(dom).append(span);
@@ -269,7 +269,7 @@ var VersionIdentity=function(data){
             jQuery(dom).css({ 'background': color, 'color': 'white'}).append(span);
         }
         if (self.versionDate) {
-            var vdate = jQuery('<span></span>').addClass('rundeck-version-date').append(' ' + self.versionDate);
+            var vdate = jQuery('<span></span>').addClass('rundeck-version-date').text(' ' + self.versionDate);
             span.append(vdate);
         }
     };

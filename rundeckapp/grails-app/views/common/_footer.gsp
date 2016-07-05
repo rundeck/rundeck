@@ -17,7 +17,7 @@
 </g:ifServletContextAttributeExists>
 
 
-<g:set var="buildIdent" value="${params.version?:servletContextAttribute(attribute: 'app.ident')}"/>
+<g:set var="buildIdent" value="${servletContextAttribute(attribute: 'app.ident')}"/>
 <g:set var="appId" value="${g.appTitle()}"/>
 <g:set var="versionDisplay" value="inline"/>
 
