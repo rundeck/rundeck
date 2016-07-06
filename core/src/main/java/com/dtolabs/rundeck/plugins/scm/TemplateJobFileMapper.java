@@ -24,6 +24,11 @@ public class TemplateJobFileMapper implements JobFileMapper {
         return new File(baseDir, substitute(pathTemplate, jobReference));
     }
 
+    @Override
+    public String pathForJob(final JobReference jobReference) {
+        return substitute(pathTemplate, jobReference);
+    }
+
     private String substitute(String key, JobReference reference) {
         return substitute(key, asMap(reference));
     }

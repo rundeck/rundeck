@@ -266,12 +266,8 @@ class BaseGitPlugin {
         mapper.fileForJob(job)
     }
 
-    String relativePath(File reference) {
-        reference.absolutePath.substring(workingDir.getAbsolutePath().length() + 1)
-    }
-
     String relativePath(JobReference reference) {
-        relativePath(getLocalFileForJob(reference))
+        mapper.pathForJob(reference)
     }
     /**
      * get RevCommit for HEAD rev of the path

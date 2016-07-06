@@ -9,4 +9,5 @@ import java.io.File;
  */
 public interface JobFileMapper {
     public File fileForJob(JobReference jobReference);
+    public String pathForJob(JobReference jobReference);
 }
