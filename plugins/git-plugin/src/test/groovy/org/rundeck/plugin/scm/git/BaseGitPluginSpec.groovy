@@ -11,6 +11,9 @@ import org.rundeck.plugin.scm.git.config.Common
 import org.rundeck.plugin.scm.git.config.Export
 import spock.lang.Specification
 
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicLong
+
 /**
  * Created by greg on 10/14/15.
  */
@@ -39,7 +42,9 @@ class BaseGitPluginSpec extends Specification {
         Common config = new Common()
         def base = new BaseGitPlugin(config)
         base.mapper = Mock(JobFileMapper)
-        def job = Mock(JobExportReference)
+        def job = Mock(JobExportReference){
+            getVersion()>>1L
+        }
         def outfile = File.createTempFile("BaseGitPluginSpec", "serialize-job.temp")
         outfile.deleteOnExit()
 
@@ -61,12 +66,120 @@ class BaseGitPluginSpec extends Specification {
         'yaml' | _
     }
 
+    def "serialize job with two threads will not write same revision twice"() {
+        given:
+        Common config = new Common()
+        def base = new BaseGitPlugin(config)
+        base.mapper = Mock(JobFileMapper)
+        def job = Mock(JobExportReference){
+            getVersion()>>1L
+        }
+        def job2 = Mock(JobExportReference){
+            getVersion()>>1L
+        }
+        def outfile = File.createTempFile("BaseGitPluginSpec", "serialize-job.temp")
+        outfile.deleteOnExit()
+
+        AtomicLong counter = new AtomicLong(-1)
+        base.fileSerializeRevisionCounter[outfile]=counter
+        AtomicLong serializedCounter=new AtomicLong(0)
+
+        _ * job.getJobSerializer() >> Mock(JobSerializer) {
+            _ * serialize(format, !null)>>{args->
+                serializedCounter.incrementAndGet()
+                args[1].write('data'.bytes)
+            }
+        }
+        _ * job2.getJobSerializer() >> Mock(JobSerializer) {
+            _ * serialize(format, !null)>>{args->
+                serializedCounter.incrementAndGet()
+                args[1].write('data2'.bytes)
+            }
+        }
+        when:
+        def latch = new CountDownLatch(2)
+        synchronized (counter){
+            //grab lock on counter
+            //now start threads which will block at the synchronized block
+            def t1=Thread.start {
+                base.serialize(job, format)
+                latch.countDown()
+            }
+            def t2=Thread.start {
+                base.serialize(job2, format)
+                latch.countDown()
+            }
+        }
+        //wait until they are done
+        latch.await()
+
+        then:
+        2 * base.mapper.fileForJob(_) >> outfile
+
+        1L == serializedCounter.longValue()
+
+
+        where:
+        format | _
+        'xml'  | _
+        'yaml' | _
+    }
+    def "serialize job with two revision will not write older revision"() {
+        given:
+        Common config = new Common()
+        def base = new BaseGitPlugin(config)
+        base.mapper = Mock(JobFileMapper)
+        def job = Mock(JobExportReference){
+            getVersion()>>1L
+        }
+        def newerJob = Mock(JobExportReference){
+            getVersion()>>2L
+        }
+        def outfile = File.createTempFile("BaseGitPluginSpec", "serialize-job.temp")
+        outfile.deleteOnExit()
+
+        AtomicLong counter = new AtomicLong(-1)
+        base.fileSerializeRevisionCounter[outfile]=counter
+        AtomicLong serializedCounter=new AtomicLong(0)
+
+        _ * job.getJobSerializer() >> Mock(JobSerializer) {
+            0 * serialize(format, !null)>>{args->
+                serializedCounter.incrementAndGet()
+                args[1].write('data'.bytes)
+            }
+        }
+        _ * newerJob.getJobSerializer() >> Mock(JobSerializer) {
+            1 * serialize(format, !null)>>{args->
+                serializedCounter.incrementAndGet()
+                args[1].write('data2'.bytes)
+            }
+        }
+        when:
+
+        base.serialize(newerJob, format)
+
+        base.serialize(job, format)
+
+        then:
+        2 * base.mapper.fileForJob(_) >> outfile
+
+        1L == serializedCounter.longValue()
+
+
+        where:
+        format | _
+        'xml'  | _
+        'yaml' | _
+    }
+
     def "serialize job: cannot create parent dir"() {
         given:
         Common config = new Common()
         def base = new BaseGitPlugin(config)
         base.mapper = Mock(JobFileMapper)
-        def job = Mock(JobExportReference)
+        def job = Mock(JobExportReference){
+            getVersion()>>1L
+        }
         def outfile1 = File.createTempFile("BaseGitPluginSpec", "serialize-job.temp")
         outfile1.deleteOnExit()
 
@@ -93,7 +206,9 @@ class BaseGitPluginSpec extends Specification {
         Common config = new Common()
         def base = new BaseGitPlugin(config)
         base.mapper = Mock(JobFileMapper)
-        def job = Mock(JobExportReference)
+        def job = Mock(JobExportReference){
+            getVersion()>>1L
+        }
         def outfile = File.createTempFile("BaseGitPluginSpec", "serialize-job.temp")
         outfile.deleteOnExit()
 
@@ -119,7 +234,9 @@ class BaseGitPluginSpec extends Specification {
         Common config = new Common()
         def base = new BaseGitPlugin(config)
         base.mapper = Mock(JobFileMapper)
-        def job = Mock(JobExportReference)
+        def job = Mock(JobExportReference){
+            getVersion()>>1L
+        }
         def outfile = File.createTempFile("BaseGitPluginSpec", "serialize-job.temp")
         outfile.deleteOnExit()
 
@@ -149,7 +266,9 @@ class BaseGitPluginSpec extends Specification {
         Common config = new Common()
         def base = new BaseGitPlugin(config)
         base.mapper = Mock(JobFileMapper)
-        def job = Mock(JobExportReference)
+        def job = Mock(JobExportReference){
+            getVersion()>>1L
+        }
 
         when:
         def outfile = base.serializeTemp(job, format)
