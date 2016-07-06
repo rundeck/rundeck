@@ -10,6 +10,7 @@ import rundeck.services.scm.ProjectJobChangeListener
 
 @Transactional
 class JobEventsService {
+    def configurationService
     def List<JobChangeListener> listeners = []
 
     def addListener(JobChangeListener plugin) {
@@ -42,7 +43,8 @@ class JobEventsService {
             ScheduledExecution job = null
             String xmlString = null
             String yamlString = null
-            int retry = 10
+            int retry = getJobChangeRetryCountMax()
+            long delay = getJobChangeRetryDelay()
             while (retry > 0) {
                 ScheduledExecution.withNewSession {
                     job = ScheduledExecution.getByIdOrUUID(e.jobReference.id)
@@ -58,17 +60,24 @@ class JobEventsService {
                 if (retry <= 0) {
                     break
                 } else {
-                    Thread.sleep(500)
+                    Thread.sleep(delay)
                     retry--
                 }
             }
             if (!job) {
-                log.warn("JobChanged event: failed to load expected job changes, job data may be out of date")
+                log.error("JobChanged event: failed to load expected job changes, job data may be out of date")
             }
             serializer = new FromStringSerializer([xml: xmlString, yaml: yamlString])
         }
         listeners?.each { listener ->
             listener.jobChangeEvent(e, serializer)
         }
+    }
+
+    private int getJobChangeRetryCountMax() {
+        configurationService.getInteger("JobEventsService.jobChangeRetryCountMax",10)
+    }
+    private long getJobChangeRetryDelay() {
+        configurationService.getLong("JobEventsService.jobChangeRetryDelay",500)
     }
 }
