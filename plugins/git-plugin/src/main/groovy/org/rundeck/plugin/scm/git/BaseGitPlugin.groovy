@@ -30,6 +30,9 @@ import org.rundeck.storage.api.StorageException
 
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.atomic.AtomicLong
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -61,36 +64,102 @@ class BaseGitPlugin {
         }
         config
     }
+    
+    /**
+     * maps output file to an AtomicLong used for synchronization and
+     * only serializing monotonically increasing revision for the job
+     */
+    ConcurrentMap<File, AtomicLong> fileSerializeRevisionCounter = new ConcurrentHashMap<>()
+
+    /**
+     * Get an AtomicLong used for synchronization and comparing
+     * serialized revision number of the file.
+     *
+     * @param outfile the target file
+     * @return atomic long for file serialization revision number
+     */
+    private AtomicLong fileCounterFor(File outfile) {
+        AtomicLong latch = fileSerializeRevisionCounter.get(outfile)
+        if (latch == null) {
+            latch = new AtomicLong(-1)
+            AtomicLong previous = fileSerializeRevisionCounter.putIfAbsent(outfile, latch)
+            if (null != previous) {
+                latch = previous
+            }
+        }
+        latch
+    }
+
+    /**
+     * compareAndSet if the new value is greater than the current value
+     * @param atomic atomic long
+     * @param update the new value
+     * @return
+     */
+    static boolean greaterAndSet(AtomicLong atomic, long update) {
+        while (true) {
+            long cur = atomic.get();
+            if (update <= cur) {
+                return false
+            }
+            //should set if it hasn't changed
+            if (atomic.compareAndSet(cur, update)) {
+                return true;
+            }
+            //otherwise try again
+        }
+    }
 
     def serialize(final JobExportReference job, format, File outfile = null) {
         if (!outfile) {
             outfile = mapper.fileForJob(job)
         }
-        if (!outfile.parentFile.isDirectory()) {
-            if (!outfile.parentFile.mkdirs()) {
-                throw new ScmPluginException(
-                        "Cannot create necessary dirs to serialize file to path: ${outfile.absolutePath}"
-                )
-            }
-        }
-        File temp = new File(outfile.parentFile, outfile.name + ".tmp")
-        try {
-            temp.withOutputStream { out ->
-                job.jobSerializer.serialize(format, out)
-            }
-        }catch(IOException e){
-            throw new ScmPluginException(
-                    "Failed to serialize job ${job}: ${e.message}",
-                    e
-            )
+        AtomicLong counter = fileCounterFor(outfile)
+        logger.debug("Start serialize[${Thread.currentThread().name}]...")
 
+        synchronized (counter) {
+            //other threads serializing the same job must wait until we complete
+            if (greaterAndSet(counter, job.version)) {
+                //only bother writing the file if this rev of Job if it is newer than previously serialized rev
+
+                if (!outfile.parentFile.isDirectory()) {
+                    if (!outfile.parentFile.mkdirs()) {
+                        throw new ScmPluginException(
+                                "Cannot create necessary dirs to serialize file to path: ${outfile.absolutePath}"
+                        )
+                    }
+                }
+
+                File temp = new File(outfile.parentFile, outfile.name + ".tmp${job.version}")
+                Throwable thrown = null
+                try {
+                    temp.withOutputStream { out ->
+                        try {
+                            job.jobSerializer.serialize(format, out)
+                        } catch (Throwable e) {
+                            thrown = e;
+                        }
+                    }
+                } catch (IOException e) {
+                    throw new ScmPluginException("Failed to serialize job ${job}: ${e.message}", e)
+                }
+                if (thrown != null) {
+                    throw new ScmPluginException("Failed to serialize job ${job}: ${thrown.message}", thrown)
+                }
+                if (!temp.exists() || temp.size() < 1) {
+                    throw new ScmPluginException(
+                            "Failed to serialize job, no content was written for job ${job}"
+                    )
+                }
+                logger.debug("Serialized[${Thread.currentThread().name}] ${job} ${format} to ${outfile}")
+
+                Files.move(temp.toPath(), outfile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            } else {
+                //another thread already serialized this or earlier revision of the job, should not
+                logger.debug("SKIP serialize[${Thread.currentThread().name}] for ${job} to ${outfile}")
+            }
         }
-        if (!temp.exists() || temp.size() < 1) {
-            throw new ScmPluginException(
-                    "Failed to serialize job, no content was written for job ${job}"
-            )
-        }
-        Files.move(temp.toPath(), outfile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        logger.debug("Done serialize[${Thread.currentThread().name}]...")
     }
 
     def serializeTemp(final JobExportReference job, format) {
@@ -266,12 +335,8 @@ class BaseGitPlugin {
         mapper.fileForJob(job)
     }
 
-    String relativePath(File reference) {
-        reference.absolutePath.substring(workingDir.getAbsolutePath().length() + 1)
-    }
-
     String relativePath(JobReference reference) {
-        relativePath(getLocalFileForJob(reference))
+        mapper.pathForJob(reference)
     }
     /**
      * get RevCommit for HEAD rev of the path
@@ -417,7 +482,7 @@ class BaseGitPlugin {
             def needsClone=false;
 
             if (found != url) {
-                logger.debug("url differs, re-cloning")
+                logger.debug("url differs, re-cloning ${found}!=${url}")
                 needsClone = true
             }else if (agit.repository.getFullBranch() != "refs/heads/$branch") {
                 //check same branch
