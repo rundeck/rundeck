@@ -15,7 +15,3 @@ rundeck.security.authorization.preauthenticated.delimiter=,
 # Redirect to upstream logout url
 rundeck.security.authorization.preauthenticated.redirectLogout=false
 rundeck.security.authorization.preauthenticated.redirectUrl=/oauth2/sign_in
-
-dataSource.url = jdbc:mysql://localhost:3306/rundeck?autoReconnect=true
-dataSource.username=rundeckuser
-dataSource.password=rundeckpassword
