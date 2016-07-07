@@ -69,7 +69,7 @@ public class AuthorizationFilters implements ApplicationContextAware{
                     Subject subject = createAuthSubject(request)
                     request.subject = subject
                     session.subject = subject
-                } else if(request.remoteUser && session.subject && !grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled in ['true',true])  {
+                } else if(request.remoteUser && session.subject && grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled in ['false',false]) {
                     request.subject = session.subject
                 } else if (request.api_version && !session.user ) {
                     //allow authentication token to be used 
