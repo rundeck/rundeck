@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LogUtil
 
+import java.nio.charset.Charset
 import java.util.concurrent.atomic.AtomicLong
 
 /**
@@ -16,10 +17,12 @@ class LogEventBuffer implements Comparable {
     ByteArrayOutputStream baos
     Long serial
     final static AtomicLong counter = new AtomicLong(0)
+    private Charset charset
 
-    LogEventBuffer(final Map<String, String> context) {
+    LogEventBuffer(final Map<String, String> context, Charset charset = null) {
         serial = counter.incrementAndGet()
         reset(context)
+        this.charset = charset
     }
 
     boolean isEmpty() {
@@ -40,10 +43,11 @@ class LogEventBuffer implements Comparable {
     }
 
     LogEvent createEvent(LogLevel level) {
+        def string = baos?(charset?new String(baos.toByteArray(), (Charset) charset):new String(baos.toByteArray())):''
         return new DefaultLogEvent(
                 loglevel: level,
                 metadata: context ?: [:],
-                message: baos ? new String(baos.toByteArray()) : '',
+                message: string,
                 datetime: time ?: new Date(),
                 eventType: LogUtil.EVENT_TYPE_LOG
         )
