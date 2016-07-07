@@ -185,7 +185,7 @@ class BaseGitPlugin {
         def update = fetchResult.getTrackingRefUpdate("refs/remotes/${REMOTE_NAME}/${this.branch}")
 
         def fetchMessage = update ? update.toString() : "No changes were found"
-        Logger.getLogger(this.class).debug("fetchFromRemote: ${fetchMessage}")
+        getLogger().debug("fetchFromRemote: ${fetchMessage}")
         //make sure tracking is configured for the branch
         if (!remoteTrackingBranch(agit)) {
             agit.repository.config.setString(
