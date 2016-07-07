@@ -12,6 +12,7 @@ import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.treewalk.filter.PathFilterGroup
 import org.rundeck.plugin.scm.git.config.Import
+import org.rundeck.plugin.scm.git.imp.actions.FetchAction
 import org.rundeck.plugin.scm.git.imp.actions.ImportJobs
 import org.rundeck.plugin.scm.git.imp.actions.PullAction
 import org.rundeck.plugin.scm.git.imp.actions.SetupTracking
@@ -24,6 +25,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     public static final String ACTION_INITIALIZE_TRACKING = 'initialize-tracking'
     public static final String ACTION_IMPORT_ALL = 'import-all'
     public static final String ACTION_PULL = 'remote-pull'
+    public static final String ACTION_FETCH = 'remote-fetch'
     boolean inited
     boolean trackedItemsSelected = false
     boolean useTrackingRegex = false
@@ -80,6 +82,12 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                         "Synch incoming changes from Remote"
                 ),
 
+                (ACTION_FETCH)               : new FetchAction(
+                        ACTION_FETCH,
+                        "Fetch Remote Changes",
+                        "Fetch changes from Remote for local comparison"
+                ),
+
         ]
     }
 
@@ -112,7 +120,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     ScmImportSynchState getStatus(ScmOperationContext context) {
-        return getStatusInternal(context, true)
+        return getStatusInternal(context, config.shouldFetchAutomatically())
     }
 
 
@@ -410,6 +418,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 }
                 if (status.state != ImportSynchState.CLEAN) {
                     avail << actions[ACTION_IMPORT_ALL]
+                }
+                if(!config.shouldFetchAutomatically()){
+                    avail << actions[ACTION_FETCH]
                 }
                 return avail
             }
