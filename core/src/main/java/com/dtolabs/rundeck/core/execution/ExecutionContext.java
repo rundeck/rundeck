@@ -112,6 +112,12 @@ public interface ExecutionContext {
     int getLoglevel();
 
     /**
+     *
+     * @return the charset encoding to use for handling output, or null for default
+     */
+    String getCharsetEncoding();
+
+    /**
      * Return data context set
      *
      * @return map of data contexts keyed by name

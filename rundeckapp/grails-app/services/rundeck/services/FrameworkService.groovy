@@ -44,6 +44,7 @@ import rundeck.PluginStep
 import rundeck.ScheduledExecution
 
 import javax.security.auth.Subject
+import java.nio.charset.Charset
 
 /**
  * Interfaces with the core Framework object
@@ -51,6 +52,7 @@ import javax.security.auth.Subject
 class FrameworkService implements ApplicationContextAware {
 
     static transactional = false
+    public static final String REMOTE_CHARSET = 'remote.charset.default'
 
     boolean initialized = false
     private String serverUUID
@@ -1079,5 +1081,16 @@ class FrameworkService implements ApplicationContextAware {
 
     Map<String, String> getProjectGlobals(final String project) {
         rundeckFramework.getProjectGlobals(project)
+    }
+
+    String getDefaultInputCharsetForProject(final String project) {
+        def config = rundeckFramework.getFrameworkProjectMgr().loadProjectConfig(project)
+        String charsetname
+        if(config.hasProperty("project.$REMOTE_CHARSET")) {
+            charsetname=config.getProperty("project.${REMOTE_CHARSET}")
+        }else if (config.hasProperty("framework.$REMOTE_CHARSET")) {
+            charsetname=config.getProperty("framework.$REMOTE_CHARSET")
+        }
+        return charsetname
     }
 }

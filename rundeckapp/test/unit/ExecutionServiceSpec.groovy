@@ -544,6 +544,42 @@ class ExecutionServiceSpec extends Specification {
         !val.executionListener
         val.dataContext.globals == [a:'b',c:'d']
     }
+    def "Create execution context with charset"() {
+        given:
+
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, 'testproj')
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_) >> [:]
+            0 * _(*_)
+        }
+        service.storageService = Mock(StorageService) {
+            1 * storageTreeWithContext(_)
+        }
+        service.jobStateService = Mock(JobStateService) {
+            1 * jobServiceWithAuthContext(_)
+        }
+
+        Execution se = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: false
+        )
+
+        when:
+        def val = service.createContext(se, null, null, null, null, null, null,null,null,null,charset)
+        then:
+        val!=null
+        val.charsetEncoding==charset
+
+        where:
+        charset      | _
+        null         | _
+        'UTF-8'      | _
+        'ISO-8859-1' | _
+    }
 
     def "delete execution unauthorized"() {
         given:
