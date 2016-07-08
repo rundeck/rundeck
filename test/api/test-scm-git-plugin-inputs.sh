@@ -23,15 +23,16 @@ strictHostKeyChecking
 sshPrivateKeyPath
 gitPasswordPath
 format
+fetchAutomatically
 "
-pcount=8
+pcount=9
 
 #/ additional props for export plugin
 exprops="committerName
 committerEmail
 $props
 "
-expcount=10
+expcount=11
 
 test_git_plugin_input_xml(){
 	local integration=$1
