@@ -149,7 +149,7 @@ public class NotificationService implements ApplicationContextAware{
                     //sending notification of a status trigger for the Job
                     def Execution exec = content.execution
                     def mailConfig = n.mailConfiguration()
-                    def destarr=mailConfig.recipients?.split(",") as List
+
                     def configSubject=mailConfig.subject
                     def configAttachLog=mailConfig.attachLog
                     final state = ExecutionService.getExecutionState(exec)
@@ -169,7 +169,6 @@ public class NotificationService implements ApplicationContextAware{
                     def jobMap=exportJobdata(source)
                     Map context = generateContextData(exec, content)
                     def contextMap=[:]
-
                     execMap.projectHref = projUrl
 
                     contextMap['job'] = toStringStringMap(jobMap)
@@ -178,6 +177,21 @@ public class NotificationService implements ApplicationContextAware{
 
                     context = DataContextUtils.merge(context, contextMap)
                     context = DataContextUtils.addContext("notification", [trigger: trigger, eventStatus: statMsg[state]], context)
+
+                    def destarr=[]
+                    def destrecipients=mailConfig.recipients
+                    if(destrecipients){
+                        if(destrecipients.indexOf('${')>=0){
+                            try {
+                                destrecipients=DataContextUtils.replaceDataReferences(destrecipients, context ,null,true)
+                            } catch (DataContextUtils.UnresolvedDataReferenceException e) {
+                                log.error("Cannot send notification email: "+e.message +
+                                                  ", context: user: "+ exec.user+", job: "+source.generateFullName());
+
+                            }
+                        }
+                        destarr = destrecipients.split(', *') as List
+                    }
 
                     //set up templates
                     def subjecttmpl='${notification.eventStatus} [${exec.project}] ${job.group}/${job.name} ${exec' +
@@ -254,7 +268,7 @@ public class NotificationService implements ApplicationContextAware{
                                 sendTo=DataContextUtils.replaceDataReferences(recipient, context ,null,true)
                             } catch (DataContextUtils.UnresolvedDataReferenceException e) {
                                 log.error("Cannot send notification email: "+e.message +
-                                        ", context: user: "+ exec.user+", job: "+source.generateFullName());
+                                                  ", context: user: "+ exec.user+", job: "+source.generateFullName());
                                 return
                             }
                         }
