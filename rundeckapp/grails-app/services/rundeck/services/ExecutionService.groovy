@@ -863,7 +863,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext,true)
             }
             String inputCharset=frameworkService.getDefaultInputCharsetForProject(execution.project)
-            log.error("using charset: "+inputCharset)
 
             StepExecutionContext executioncontext = createContext(execution, null,framework, authContext,
                     execution.user, jobcontext, multiListener, null,extraParams, extraParamsExposed,inputCharset)
