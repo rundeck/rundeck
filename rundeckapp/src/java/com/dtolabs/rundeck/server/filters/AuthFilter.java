@@ -21,10 +21,12 @@ import java.util.Map;
 
 public class AuthFilter implements Filter {
 
-    String preauthentication;
-    String rolesAttribute;
     private static final transient Logger LOG = Logger.getLogger(AuthFilter.class);
 
+    String preauthentication;
+    String rolesAttribute;
+    String userNameHeader;
+    String rolesHeader;
 
     public void init(FilterConfig filterConfig) throws ServletException {
 
@@ -38,6 +40,9 @@ public class AuthFilter implements Filter {
         Map map = grailsApplication.getFlatConfig();
         preauthentication = (String) map.get("rundeck.security.authorization.preauthenticated.enabled");
         rolesAttribute = (String) map.get("rundeck.security.authorization.preauthenticated.attributeName");
+        rolesHeader = (String) map.get("rundeck.security.authorization.preauthenticated.userRolesHeader");
+        userNameHeader = (String) map.get("rundeck.security.authorization.preauthenticated.userNameHeader");
+
     }
 
     public void doFilter(ServletRequest request, ServletResponse response,
@@ -48,7 +53,7 @@ public class AuthFilter implements Filter {
             HttpServletRequest httpRequest = (HttpServletRequest) request;
             Enumeration<String> headerNames = httpRequest.getHeaderNames();
 
-            final String forwardedUser = httpRequest.getHeader("X-Forwarded-User");
+            final String forwardedUser = httpRequest.getHeader(userNameHeader);
             ServletRequest requestModified =
                     new HttpServletRequestWrapper((HttpServletRequest) request) {
                         @Override
@@ -71,9 +76,14 @@ public class AuthFilter implements Filter {
             //
             // Get the roles sent by the proxy and add them onto the request as an attribute for
             // PreauthenticatedAttributeRoleSource
-            final String forwardedRoles = httpRequest.getHeader("X-Forwarded-Roles");
+            final String forwardedRoles = httpRequest.getHeader(rolesHeader);
             requestModified.setAttribute(rolesAttribute, forwardedRoles);
             filterChain.doFilter(requestModified, response);
+
+            LOG.info("Roles header " + rolesHeader);
+            LOG.info("Roles received " + forwardedRoles);
+            LOG.info("User header " + userNameHeader);
+            LOG.info("User / UUID recieved " + forwardedUser);
 
         } else {
             filterChain.doFilter(request, response);
