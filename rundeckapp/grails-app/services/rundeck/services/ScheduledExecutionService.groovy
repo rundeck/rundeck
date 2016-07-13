@@ -404,6 +404,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def rescheduleJob(ScheduledExecution scheduledExecution, wasScheduled, oldJobName, oldJobGroup) {
         if (scheduledExecution.shouldScheduleExecution()) {
+            //verify cluster member is schedule owner
+
             def nextdate = null
             try {
                 nextdate = scheduleJob(scheduledExecution, oldJobName, oldJobGroup);
@@ -1451,11 +1453,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.populateTimeDateFields(params)
             scheduledExecution.user = authContext.username
             scheduledExecution.userRoleList = authContext.roles.join(',')
-            if (frameworkService.isClusterModeEnabled()) {
-                scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
-            } else {
-                scheduledExecution.serverNodeUUID = null
-            }
+
             def genCron = params.crontabString ? params.crontabString : scheduledExecution.generateCrontabExression()
             if (!CronExpression.isValidExpression(genCron)) {
                 failed = true;
@@ -1473,8 +1471,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }
         } else {
+            //update schedule owner, in case disabling schedule on a different node
             //set nextExecution of non-scheduled job to be far in the future so that query results can sort correctly
             scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
+        }
+        if (frameworkService.isClusterModeEnabled()) {
+            scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
+        } else {
+            scheduledExecution.serverNodeUUID = null
         }
 
         def boolean renamed = oldjobname != scheduledExecution.generateJobScheduledName() || oldjobgroup != scheduledExecution.generateJobGroupName()
@@ -2056,11 +2060,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (scheduledExecution.scheduled) {
             scheduledExecution.user = authContext.username
             scheduledExecution.userRoleList = authContext.roles.join(",")
-            if (frameworkService.isClusterModeEnabled()) {
-                scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
-            } else {
-                scheduledExecution.serverNodeUUID = null
-            }
 
             if (scheduledExecution.crontabString && (!CronExpression.isValidExpression(scheduledExecution.crontabString)
                     ||                               !scheduledExecution.parseCrontabString(scheduledExecution.crontabString))) {
@@ -2085,6 +2084,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         } else {
             //set nextExecution of non-scheduled job to be far in the future so that query results can sort correctly
             scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
+        }
+        if (frameworkService.isClusterModeEnabled()) {
+            scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
+        } else {
+            scheduledExecution.serverNodeUUID = null
         }
 
         def boolean renamed = oldjobname != scheduledExecution.generateJobScheduledName() || oldjobgroup != scheduledExecution.generateJobGroupName()
@@ -2432,11 +2436,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (scheduledExecution.scheduled) {
             scheduledExecution.user = userAndRoles.username
             scheduledExecution.userRoleList = userAndRoles.roles.join(',')
-            if (frameworkService.isClusterModeEnabled()) {
-                scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
-            }else{
-                scheduledExecution.serverNodeUUID = null
-            }
 
             scheduledExecution.populateTimeDateFields(params)
 
@@ -2458,6 +2457,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         } else {
             //set nextExecution of non-scheduled job to be far in the future so that query results can sort correctly
             scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
+        }
+        if (frameworkService.isClusterModeEnabled()) {
+            scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
+        }else{
+            scheduledExecution.serverNodeUUID = null
         }
 
         if (scheduledExecution.project && !frameworkService.existsFrameworkProject(scheduledExecution.project)) {
