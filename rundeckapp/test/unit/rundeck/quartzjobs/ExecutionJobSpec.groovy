@@ -58,7 +58,68 @@ class ExecutionJobSpec extends Specification {
                         commands: [new CommandExec(
                                 [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
                         )]
-                )
+                ),
+                scheduled: true,
+                executionEnabled: true,
+                scheduleEnabled: true
+        )
+        se.save(flush:true)
+        def datamap = new JobDataMap(
+                [
+                        scheduledExecutionId: se.id,
+                        executionService    : es,
+                        executionUtilService: eus,
+                        frameworkService    : fs,
+                        bySchedule          : true,
+                        serverUUID          : serverUUID
+                ]
+        )
+        ExecutionJob job = new ExecutionJob()
+        def ajobKey = JobKey.jobKey('jobname', 'jobgroup')
+
+        def quartzScheduler = Mock(Scheduler)
+        def context = Mock(JobExecutionContext) {
+            getJobDetail() >> Mock(JobDetail) {
+                getJobDataMap() >> datamap
+                getKey() >> ajobKey
+            }
+
+            getScheduler() >> quartzScheduler
+        }
+
+        when:
+        job.execute(context)
+
+        then:
+        1 * quartzScheduler.deleteJob(ajobKey)
+
+
+    }
+    def "scheduled job was unscheduled by another cluster node, so should be deleted from quartz scheduler"() {
+        given:
+        def serverUUID = UUID.randomUUID().toString()
+        def jobUUID = UUID.randomUUID().toString()
+        def es = Mock(ExecutionService)
+        def eus = Mock(ExecutionUtilService)
+        def fs = Mock(FrameworkService) {
+            getServerUUID() >> serverUUID
+        }
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                serverNodeUUID: jobUUID,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                scheduled: false,
+                executionEnabled: true,
+                scheduleEnabled: true
         )
         se.save(flush:true)
         def datamap = new JobDataMap(
