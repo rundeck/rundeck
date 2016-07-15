@@ -128,7 +128,8 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
                 argsarr,
                 fileExtension,
                 provider.getScriptInterpreter(),
-                provider.getInterpreterArgsQuoted()
+                provider.getInterpreterArgsQuoted(),
+                configData
         );
     }
 
@@ -156,7 +157,8 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
             final String[] args,
             final String fileExtension,
             final String scriptInterpreter,
-            final boolean interpreterArgsQuoted
+            final boolean interpreterArgsQuoted,
+            final Map<String, String> configData
     )
     {
 
@@ -194,6 +196,11 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
             @Override
             public boolean isInterpreterArgsQuoted() {
                 return interpreterArgsQuoted;
+            }
+
+            @Override
+            public Map<String, String> getConfigData() {
+                return configData;
             }
         };
     }

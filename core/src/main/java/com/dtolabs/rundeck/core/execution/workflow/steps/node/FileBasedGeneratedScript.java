@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.plugins.step.FileExtensionGeneratedScript;
 import com.dtolabs.rundeck.plugins.step.GeneratedScript;
 
 import java.io.File;
+import java.util.Map;
 
 
 /**
@@ -39,4 +40,5 @@ interface FileBasedGeneratedScript extends FileExtensionGeneratedScript{
     public File getScriptFile();
     public String getScriptInterpreter();
     public boolean isInterpreterArgsQuoted();
+    public Map<String, String> getConfigData();
 }

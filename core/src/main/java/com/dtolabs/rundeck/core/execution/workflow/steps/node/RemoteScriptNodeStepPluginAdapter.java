@@ -188,8 +188,13 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
             );
         } else if (script instanceof FileBasedGeneratedScript) {
             final FileBasedGeneratedScript fileScript = (FileBasedGeneratedScript) script;
+            //merge any config context data
+            StepExecutionContext newcontext =
+                    fileScript.getConfigData() != null
+                    ? ExecutionContextImpl.builder(context).mergeContext("config", fileScript.getConfigData()).build()
+                    : context;
             return scriptUtils.executeScriptFile(
-                    context,
+                    newcontext,
                     node,
                     null,
                     fileScript.getScriptFile().getAbsolutePath(),
