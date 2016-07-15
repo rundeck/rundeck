@@ -82,6 +82,24 @@ public interface ScriptExecHelper {
             final boolean interpreterargsquoted,
             final String filepath
     );
+    /**
+     * Generate argument array for invocation without the filepath
+     *
+     * @param localDataContext      data context properties to expand among the args
+     * @param scriptargs            arguments to the script file
+     * @param scriptargsarr         arguments to the script file as an array
+     * @param scriptinterpreter     interpreter invocation for the file, or null to invoke it directly
+     * @param interpreterargsquoted if true, pass the script file and args as a single argument to the interpreter
+     *
+     * @return args
+     */
+    public String[] createScriptArgs(
+            final Map<String, Map<String, String>> localDataContext,
+            final String scriptargs,
+            final String[] scriptargsarr,
+            final String scriptinterpreter,
+            final boolean interpreterargsquoted
+    );
 
     /**
      * Generate argument array for a script file invocation on a specific node

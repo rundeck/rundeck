@@ -191,6 +191,19 @@ public class TestScriptPluginFileCopier {
             return new String[0];
         }
 
+        @Override
+        public String[] createScriptArgs(
+                final Map<String, Map<String, String>> localDataContext,
+                final String scriptargs,
+                final String[] scriptargsarr,
+                final String scriptinterpreter,
+                final boolean interpreterargsquoted
+        )
+        {
+            Assert.fail("Unexpected");
+            return new String[0];
+        }
+
         @Override public String[] createScriptArgs(
                 Map<String, Map<String, String>> localDataContext,
                 INodeEntry node,

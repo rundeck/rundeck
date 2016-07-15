@@ -4,9 +4,11 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.IFrameworkServices
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.execution.ExecArgList
 import com.dtolabs.rundeck.core.execution.ExecutionService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepUtils
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.plugins.step.FileExtensionGeneratedScript
 import com.dtolabs.rundeck.plugins.step.GeneratedScript
@@ -39,16 +41,20 @@ class RemoteScriptNodeStepPluginAdapterSpec extends Specification {
         }
         def node = new NodeEntryImpl('node')
         def script = Mock(FileExtensionGeneratedScript)
+        def adapter = new RemoteScriptNodeStepPluginAdapter(null)
+        adapter.scriptUtils = Mock(ScriptFileNodeStepUtils)
 
         when:
-        def result = RemoteScriptNodeStepPluginAdapter.executeRemoteScript(context, node, script, 'test', '123')
+        def result = adapter.executeRemoteScript(context, node, script, 'test', '123')
 
         then:
         _ * script.getCommand() >> ['a', 'cmd'].toArray()
         1 * framework.frameworkServices.getExecutionService() >> Mock(ExecutionService) {
-            1 * executeCommand(_, _, node)
+            1 * executeCommand(_, {
+                it instanceof ExecArgList && ((ExecArgList) it).asFlatStringList() == ['a', 'cmd']
+            }, node
+            )
         }
-
     }
 
     def "basic script"() {
@@ -62,23 +68,27 @@ class RemoteScriptNodeStepPluginAdapterSpec extends Specification {
         def script = Mock(FileExtensionGeneratedScript) {
             getArgs() >> ['someargs'].toArray()
         }
+        def adapter = new RemoteScriptNodeStepPluginAdapter(null)
+        adapter.scriptUtils = Mock(ScriptFileNodeStepUtils)
+
 
         when:
-        def result = RemoteScriptNodeStepPluginAdapter.executeRemoteScript(context, node, script, 'test', '123')
+        def result = adapter.executeRemoteScript(context, node, script, 'test', '123')
 
         then:
         _ * script.getScript() >> 'a script'
-
+        1 * adapter.scriptUtils.executeRemoteScript(context, framework, node, ['someargs'].toArray(), _) >>
+                Mock(NodeStepResult) {
+                    isSuccess() >> true
+                }
         _ * framework.frameworkServices.getExecutionService() >> Mock(ExecutionService) {
             1 * fileCopyScriptContent(_, _, node, _) >> { args -> args[3] }
-            3 * executeCommand(_, _, node) >> Mock(NodeExecutorResult) {
-                isSuccess() >> true
-            }
+
         }
     }
 
     @Unroll
-    def "basic file based script ext #defaultFileExt"() {
+    def "basic file based script various osfamily"() {
         given:
         File tempFile = File.createTempFile("test", ".script");
         tempFile.deleteOnExit()
@@ -93,25 +103,36 @@ class RemoteScriptNodeStepPluginAdapterSpec extends Specification {
             getArgs() >> ['someargs'].toArray()
             getScriptFile() >> tempFile
         }
+        def adapter = new RemoteScriptNodeStepPluginAdapter(null)
+        adapter.scriptUtils = Mock(ScriptFileNodeStepUtils)
 
         when:
-        def result = RemoteScriptNodeStepPluginAdapter.executeRemoteScript(context, node, script, 'test', '123')
+        def result = adapter.executeRemoteScript(context, node, script, 'test', '123')
 
         then:
 
-        _ * framework.frameworkServices.getExecutionService() >> Mock(ExecutionService) {
-            1 * fileCopyFile(_, _, node, { it.endsWith(defaultFileExt) }) >> { args -> args[3] }
-            count * executeCommand(_, _, node) >> Mock(NodeExecutorResult) {
-                isSuccess() >> true
-            }
-        }
+        1 * adapter.scriptUtils.executeScriptFile(
+                context,
+                node,
+                null,
+                tempFile.getAbsolutePath(),
+                null,
+                null,
+                ['someargs'].toArray(),
+                null,
+                false,
+                _
+        ) >>
+                Mock(NodeStepResult) {
+                    isSuccess() >> true
+                }
         where:
-        osFamily  | defaultFileExt | count
-        'unix'    | '.sh'          | 3
-        'windows' | '.bat'         | 2
+        osFamily  | _
+        'unix'    | _
+        'windows' | _
     }
 
-    def "file based script with file extension"() {
+    def "file based script with options"() {
         given:
         File tempFile = File.createTempFile("test", "script");
         tempFile.deleteOnExit()
@@ -123,21 +144,38 @@ class RemoteScriptNodeStepPluginAdapterSpec extends Specification {
         def node = new NodeEntryImpl('node')
         def script = Mock(FileBasedGeneratedScript) {
             getArgs() >> ['someargs'].toArray()
-            getFileExtension() >> 'myext'
+            getFileExtension() >> fileExt
             getScriptFile() >> tempFile
+            isInterpreterArgsQuoted() >> quoted
+            getScriptInterpreter() >> scriptinterpreter
         }
+        def adapter = new RemoteScriptNodeStepPluginAdapter(null)
+        adapter.scriptUtils = Mock(ScriptFileNodeStepUtils)
 
         when:
-        def result = RemoteScriptNodeStepPluginAdapter.executeRemoteScript(context, node, script, 'test', '123')
+        def result = adapter.executeRemoteScript(context, node, script, 'test', '123')
 
         then:
-
-        _ * framework.frameworkServices.getExecutionService() >> Mock(ExecutionService) {
-            1 * fileCopyFile(_, _, node, { it.endsWith('.myext') }) >> { args -> args[3] }
-            3 * executeCommand(_, _, node) >> Mock(NodeExecutorResult) {
-                isSuccess() >> true
-            }
-        }
+        1 * adapter.scriptUtils.executeScriptFile(
+                context,
+                node,
+                null,
+                tempFile.getAbsolutePath(),
+                null,
+                fileExt,
+                args.toArray(),
+                scriptinterpreter,
+                quoted,
+                _
+        ) >>
+                Mock(NodeStepResult) {
+                    isSuccess() >> true
+                }
+        where:
+        fileExt | args         | scriptinterpreter | quoted
+        'myext' | ['someargs'] | null              | false
+        null    | ['someargs'] | '/bin/bash'       | false
+        null    | ['someargs'] | '/bin/bash'       | true
     }
 
     def "script does not define command or script"() {
@@ -155,7 +193,13 @@ class RemoteScriptNodeStepPluginAdapterSpec extends Specification {
         }
 
         when:
-        def result = RemoteScriptNodeStepPluginAdapter.executeRemoteScript(context, node, script, 'test', '123')
+        def result = new RemoteScriptNodeStepPluginAdapter(null).executeRemoteScript(
+                context,
+                node,
+                script,
+                'test',
+                '123'
+        )
 
         then:
 

@@ -1,26 +1,3 @@
-/*
- * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
-/*
-* BaseFileCopier.java
-* 
-* User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/22/11 2:47 PM
-* 
-*/
 package com.dtolabs.rundeck.core.execution.impl.common;
 
 import com.dtolabs.rundeck.core.common.Framework;
@@ -36,22 +13,19 @@ import com.dtolabs.utils.Streams;
 import org.apache.commons.lang.RandomStringUtils;
 
 import java.io.*;
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * BaseFileCopier provides utility methods for a FileCopier class.
- *
- * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+ * Created by greg on 7/15/16.
  */
-public class BaseFileCopier {
+public class DefaultFileCopierUtil implements FileCopierUtil {
     public static final String FILE_COPY_DESTINATION_DIR = "file-copy-destination-dir";
     public static final String FRAMEWORK_FILE_COPY_DESTINATION_DIR = "framework." + FILE_COPY_DESTINATION_DIR;
     public static final String PROJECT_FILE_COPY_DESTINATION_DIR = "project." + FILE_COPY_DESTINATION_DIR;
     public static final String DEFAULT_WINDOWS_FILE_EXT = ".bat";
     public static final String DEFAULT_UNIX_FILE_EXT = ".sh";
 
-    private FileCopierUtil util = new DefaultFileCopierUtil();
     /**
      * create unique strings
      */
@@ -75,7 +49,8 @@ public class BaseFileCopier {
      * @throws com.dtolabs.rundeck.core.execution.service.FileCopierException
      *          if an IO problem occurs
      */
-    public static File writeScriptTempFile(
+    @Override
+    public  File writeScriptTempFile(
             final ExecutionContext context,
             final File original,
             final InputStream input,
@@ -103,7 +78,8 @@ public class BaseFileCopier {
      * @throws com.dtolabs.rundeck.core.execution.service.FileCopierException
      *          if an IO problem occurs
      */
-    public static File writeScriptTempFile(
+    @Override
+    public  File writeScriptTempFile(
             final ExecutionContext context,
             final File original,
             final InputStream input,
@@ -179,7 +155,8 @@ public class BaseFileCopier {
      * @return the default file extension for a temp file based on the type of node
      * @param node node
      */
-    public static String defaultRemoteFileExtensionForNode(final INodeEntry node){
+    @Override
+    public  String defaultRemoteFileExtensionForNode(final INodeEntry node){
         if (null != node.getOsFamily() && "windows".equalsIgnoreCase(node.getOsFamily().trim())) {
             return DEFAULT_WINDOWS_FILE_EXT;
         } else {
@@ -195,7 +172,8 @@ public class BaseFileCopier {
      * @param fileext  the file extension, if it does not start with a "." one will be prepended
      *                 first. If null, the unmodified filepath will be returned.
      */
-    public static String appendRemoteFileExtension(final String filepath, final String fileext) {
+    @Override
+    public  String appendRemoteFileExtension(final String filepath, final String fileext) {
         if (null == fileext) {
             return filepath;
         }
@@ -217,7 +195,8 @@ public class BaseFileCopier {
      *
      * @return a path to destination dir for the node
      */
-    public static String getRemoteDirForNode(final INodeEntry node) {
+    @Override
+    public  String getRemoteDirForNode(final INodeEntry node) {
         String pathSeparator = "/";
         String remotedir = "/tmp/";
         if (null != node.getOsFamily() && "windows".equalsIgnoreCase(node.getOsFamily().trim())) {
@@ -243,7 +222,8 @@ public class BaseFileCopier {
      *
      * @return a path to destination dir for the node
      */
-    public static String getRemoteDirForNode(
+    @Override
+    public  String getRemoteDirForNode(
             final INodeEntry node,
             final IRundeckProject project,
             final IFramework framework
@@ -300,7 +280,8 @@ public class BaseFileCopier {
      * @return a filepath specifying destination of the file to copy that should be unique for the node and current
      *         date.
      */
-    public static String generateRemoteFilepathForNode(final INodeEntry node, final String scriptfileName) {
+    @Override
+    public  String generateRemoteFilepathForNode(final INodeEntry node, final String scriptfileName) {
         return generateRemoteFilepathForNode(node, scriptfileName, null);
     }
 
@@ -314,7 +295,8 @@ public class BaseFileCopier {
      *
      * @return a filepath specifying destination of the file to copy that should be unique
      */
-    public static String generateRemoteFilepathForNode(
+    @Override
+    public  String generateRemoteFilepathForNode(
             final INodeEntry node,
             final String scriptfileName,
             final String fileExtension
@@ -340,7 +322,8 @@ public class BaseFileCopier {
      * @return a filepath specifying destination of the file to copy that should be unique
      * @deprecated use {@link #generateRemoteFilepathForNode(com.dtolabs.rundeck.core.common.INodeEntry, com.dtolabs.rundeck.core.common.IRundeckProject, com.dtolabs.rundeck.core.common.IFramework, String, String, String)}
      */
-    public static String generateRemoteFilepathForNode(
+    @Override
+    public  String generateRemoteFilepathForNode(
             final INodeEntry node,
             final String scriptfileName,
             final String fileExtension,
@@ -363,7 +346,8 @@ public class BaseFileCopier {
      *
      * @return a filepath specifying destination of the file to copy that should be unique
      */
-    public static String generateRemoteFilepathForNode(
+    @Override
+    public  String generateRemoteFilepathForNode(
             final INodeEntry node,
             final IRundeckProject project,
             final IFramework framework,
@@ -394,7 +378,7 @@ public class BaseFileCopier {
         return remotedir + remoteFilename;
     }
 
-    private static String cleanFileName(String nodename) {
+    private  String cleanFileName(String nodename) {
         return nodename.replaceAll("[^a-zA-Z0-9_.-]", "_");
     }
 
@@ -408,14 +392,17 @@ public class BaseFileCopier {
      * {@link com.dtolabs.rundeck.core.execution.script.ScriptfileUtils#releaseTempFile(java.io.File)}
      * @throws FileCopierException if IOException occurs
      */
-    public static File writeTempFile(ExecutionContext context, File original, InputStream input,
-            String script) throws FileCopierException {
+    @Override
+    public  File writeTempFile(
+            ExecutionContext context, File original, InputStream input,
+            String script
+    ) throws FileCopierException {
         File tempfile = null;
         try {
             tempfile = ScriptfileUtils.createTempFile(context.getFramework());
         } catch (IOException e) {
             throw new FileCopierException("error writing to tempfile: " + e.getMessage(),
-                    StepFailureReason.IOFailure, e);
+                                          StepFailureReason.IOFailure, e);
         }
         return writeLocalFile(original, input, script, tempfile);
     }
@@ -429,7 +416,7 @@ public class BaseFileCopier {
      * @return local file
      * @throws FileCopierException on error
      */
-    protected static File writeLocalFile(
+    protected  File writeLocalFile(
             File original,
             InputStream input,
             String script,
@@ -473,16 +460,8 @@ public class BaseFileCopier {
             return destinationFile;
         } catch (IOException e) {
             throw new FileCopierException("error writing to tempfile: " + e.getMessage(),
-                    StepFailureReason.IOFailure, e);
+                                          StepFailureReason.IOFailure, e);
         }
 
-    }
-
-    public FileCopierUtil getUtil() {
-        return util;
-    }
-
-    public void setUtil(FileCopierUtil util) {
-        this.util = util;
     }
 }
