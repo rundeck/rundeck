@@ -97,7 +97,7 @@ class ScriptBasedRemoteScriptNodeStepPluginSpec extends Specification {
         def result = plugin.generateScript(context, config, node)
         then:
         result != null
-        Arrays.asList(result.args) == [tempFile.absolutePath, 'test', '-blah', 'myvalue']
+        Arrays.asList(result.args) == ['test', '-blah', 'myvalue']
 
 
         1 * storageTree.getResource(keyPath) >> Mock(Resource) {
@@ -151,6 +151,67 @@ class ScriptBasedRemoteScriptNodeStepPluginSpec extends Specification {
         result instanceof FileBasedGeneratedScript
         FileBasedGeneratedScript fileBasedGeneratedScript = result
         fileBasedGeneratedScript.fileExtension == 'myext'
+
+    }
+
+
+    @Unroll
+    def "generateScript with options quoted #isquoted"() {
+        given:
+        File tempFile = File.createTempFile("test", "zip");
+        tempFile.deleteOnExit()
+        File scriptFile = File.createTempFile("test", "sh");
+        scriptFile.deleteOnExit()
+        File basedir = File.createTempFile("test", "dir");
+        basedir.deleteOnExit()
+
+        def pluginMeta = [
+                'script-file-extension': 'myext',
+        ]
+        def provider = Mock(ScriptPluginProvider) {
+            getName() >> 'test1'
+            getDefaultMergeEnvVars() >> false
+            getMetadata() >> pluginMeta
+            getArchiveFile() >> tempFile
+            getScriptFile() >> scriptFile
+            getContentsBasedir() >> basedir
+            getScriptArgs() >> 'a b ${config.alpha} ${node.name}'
+            getScriptInterpreter() >> interpreter
+            getInterpreterArgsQuoted() >> isquoted
+        }
+        def plugin = new ScriptBasedRemoteScriptNodeStepPlugin(provider, framework)
+        def context = Mock(PluginStepContext) {
+            getFrameworkProject() >> PROJECT_NAME
+            getDataContext() >> [
+                    node: [name: 'anode']
+            ]
+            getLogger() >> Mock(PluginLogger)
+            getExecutionContext() >> Mock(ExecutionContext) {
+                getFramework() >> framework
+                getFrameworkProject() >> PROJECT_NAME
+            }
+        }
+
+        def config = [alpha: 'x']
+        def node = new NodeEntryImpl('anode')
+
+        when:
+        def result = plugin.generateScript(context, config, node)
+        then:
+        result != null
+        result instanceof FileBasedGeneratedScript
+        FileBasedGeneratedScript fileBasedGeneratedScript = result
+        fileBasedGeneratedScript.fileExtension == 'myext'
+        fileBasedGeneratedScript.args == expect as String[]
+        fileBasedGeneratedScript.scriptFile == scriptFile
+        fileBasedGeneratedScript.interpreterArgsQuoted == isquoted
+        fileBasedGeneratedScript.scriptInterpreter == interpreter
+        where:
+        isquoted | interpreter        | expect
+        true     | null               | ['a', 'b', 'x', 'anode']
+        false    | null               | ['a', 'b', 'x', 'anode']
+        false    | 'some interpreter' | ['a', 'b', 'x', 'anode']
+        true     | 'some interpreter' | ['a', 'b', 'x', 'anode']
 
     }
 
