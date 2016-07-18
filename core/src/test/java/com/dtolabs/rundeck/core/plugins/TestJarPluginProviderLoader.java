@@ -540,20 +540,30 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         Assert.assertTrue(files2[0].isDirectory());
         File[] files3 = files2[0].listFiles();
         Assert.assertEquals("Expected single cached jar in plugin jar cache", 2, files3.length);
-        Assert.assertTrue("Jar dir should be cache jar file name: "+files3[0].getName(), files3[0].getName().matches("^\\d+-\\d+.*"));
+
+        File cachejarfile = files3[0];
+        File libDir = files3[1];
+        if(files3[0].isDirectory()){
+            libDir = files3[0];
+            cachejarfile = files3[1];
+        }
+
+        Assert.assertTrue("Jar dir should be cache jar file name: " + cachejarfile.getName(), cachejarfile.getName().matches("^\\d+-\\d+.*"));
         Assert.assertTrue(
-                "Jar dir should be cache jar file name: " + files3[0].getName(),
-                files3[0].getName().endsWith(testJar11.getName())
+                "Jar dir should be cache jar file name: " + cachejarfile.getName(),
+                cachejarfile.getName().endsWith(testJar11.getName())
         );
-        Assert.assertTrue(files3[0].isFile());
+        Assert.assertTrue(cachejarfile.isFile());
+
 
         Assert.assertTrue(
                 "Expected cached jar to meet requirements for equivalency against original jar",
-                jarPluginProviderLoader.isEquivalentPluginJar(files3[0])
+                jarPluginProviderLoader.isEquivalentPluginJar(cachejarfile)
         );
-        Assert.assertEquals("Jar dir should be lib dir: " + files3[1].getName(), "lib", files3[1].getName());
-        Assert.assertTrue(files3[1].isDirectory());
-        File[] files4 = files3[1].listFiles();
+        Assert.assertEquals("Jar dir should be lib dir: " + libDir.getName(), "lib", libDir.getName());
+        Assert.assertTrue(libDir.isDirectory());
+
+        File[] files4 = libDir.listFiles();
         Assert.assertEquals("Expected single cached jar in plugin jar cache", 1, files4.length);
         Assert.assertEquals("Expected fakarjar dep: " + files4[0].getName(), "fakejar.jar", files4[0].getName());
 
