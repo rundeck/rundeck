@@ -131,29 +131,36 @@ class BaseGitPlugin {
                 }
 
                 File temp = new File(outfile.parentFile, outfile.name + ".tmp${job.version}")
+                temp.deleteOnExit()
                 Throwable thrown = null
                 try {
-                    temp.withOutputStream { out ->
-                        try {
-                            job.jobSerializer.serialize(format, out)
-                        } catch (Throwable e) {
-                            thrown = e;
+                    try {
+                        temp.withOutputStream { out ->
+                            try {
+                                job.jobSerializer.serialize(format, out)
+                            } catch (Throwable e) {
+                                thrown = e;
+                            }
                         }
+                    } catch (IOException e) {
+                        throw new ScmPluginException("Failed to serialize job ${job}: ${e.message}", e)
                     }
-                } catch (IOException e) {
-                    throw new ScmPluginException("Failed to serialize job ${job}: ${e.message}", e)
-                }
-                if (thrown != null) {
-                    throw new ScmPluginException("Failed to serialize job ${job}: ${thrown.message}", thrown)
-                }
-                if (!temp.exists() || temp.size() < 1) {
-                    throw new ScmPluginException(
-                            "Failed to serialize job, no content was written for job ${job}"
-                    )
-                }
-                logger.debug("Serialized[${Thread.currentThread().name}] ${job} ${format} to ${outfile}")
+                    if (thrown != null) {
+                        throw new ScmPluginException("Failed to serialize job ${job}: ${thrown.message}", thrown)
+                    }
+                    if (!temp.exists() || temp.size() < 1) {
+                        throw new ScmPluginException(
+                                "Failed to serialize job, no content was written for job ${job}"
+                        )
+                    }
+                    logger.debug("Serialized[${Thread.currentThread().name}] ${job} ${format} to ${outfile}")
 
-                Files.move(temp.toPath(), outfile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                    Files.move(temp.toPath(), outfile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                }finally{
+                    if(temp.exists()){
+                        temp.delete()
+                    }
+                }
             } else {
                 //another thread already serialized this or earlier revision of the job, should not
                 logger.debug("SKIP serialize[${Thread.currentThread().name}] for ${job} to ${outfile}")
@@ -185,7 +192,7 @@ class BaseGitPlugin {
         def update = fetchResult.getTrackingRefUpdate("refs/remotes/${REMOTE_NAME}/${this.branch}")
 
         def fetchMessage = update ? update.toString() : "No changes were found"
-        Logger.getLogger(this.class).debug("fetchFromRemote: ${fetchMessage}")
+        getLogger().debug("fetchFromRemote: ${fetchMessage}")
         //make sure tracking is configured for the branch
         if (!remoteTrackingBranch(agit)) {
             agit.repository.config.setString(

@@ -105,6 +105,21 @@ public class ScriptExecUtil {
             @Override
             public String[] createScriptArgs(
                     final Map<String, Map<String, String>> localDataContext,
+                    final String scriptargs,
+                    final String[] scriptargsarr,
+                    final String scriptinterpreter,
+                    final boolean interpreterargsquoted
+            )
+            {
+                return ScriptExecUtil.createScriptArgs(
+                        localDataContext, null, scriptargs, scriptargsarr, scriptinterpreter,
+                        interpreterargsquoted
+                );
+            }
+
+            @Override
+            public String[] createScriptArgs(
+                    final Map<String, Map<String, String>> localDataContext,
                     final INodeEntry node,
                     final String scriptargs,
                     final String[] scriptargsarr,
@@ -361,6 +376,38 @@ public class ScriptExecUtil {
      * @param scriptargsarr         arguments to the script file as an array
      * @param scriptinterpreter     interpreter invocation for the file, or null to invoke it directly
      * @param interpreterargsquoted if true, pass the script file and args as a single argument to the interpreter
+     *
+     * @return args
+     */
+    public static String[] createScriptArgs(
+            final Map<String, Map<String, String>> localDataContext,
+            final INodeEntry node,
+            final String scriptargs,
+            final String[] scriptargsarr,
+            final String scriptinterpreter,
+            final boolean interpreterargsquoted
+    )
+    {
+        return createScriptArgs(
+                localDataContext,
+                node,
+                scriptargs,
+                scriptargsarr,
+                scriptinterpreter,
+                interpreterargsquoted,
+                null
+        );
+    }
+
+    /**
+     * Generate argument array for a script file invocation
+     *
+     * @param localDataContext      data context properties to expand among the args
+     * @param node                  node to use for os-type argument quoting.
+     * @param scriptargs            arguments to the script file
+     * @param scriptargsarr         arguments to the script file as an array
+     * @param scriptinterpreter     interpreter invocation for the file, or null to invoke it directly
+     * @param interpreterargsquoted if true, pass the script file and args as a single argument to the interpreter
      * @param filepath              remote filepath for the script
      *
      * @return args
@@ -371,7 +418,8 @@ public class ScriptExecUtil {
             final String scriptargs,
             final String[] scriptargsarr,
             final String scriptinterpreter,
-            final boolean interpreterargsquoted, final String filepath
+            final boolean interpreterargsquoted,
+            final String filepath
     ) {
         final ArrayList<String> arglist = new ArrayList<String>();
         if (null != scriptinterpreter) {
@@ -379,11 +427,15 @@ public class ScriptExecUtil {
         }
         if (null != scriptinterpreter && interpreterargsquoted) {
             final ArrayList<String> sublist = new ArrayList<String>();
-            sublist.add(filepath);
+            if (filepath != null) {
+                sublist.add(filepath);
+            }
             addQuotedArgs(localDataContext, node, scriptargs, scriptargsarr, sublist, true);
             arglist.add(DataContextUtils.join(sublist, " "));
         } else {
-            arglist.add(filepath);
+            if (filepath != null) {
+                arglist.add(filepath);
+            }
             addQuotedArgs(localDataContext, node, scriptargs, scriptargsarr, arglist, false);
         }
         return arglist.toArray(new String[arglist.size()]);

@@ -2,16 +2,27 @@ package org.rundeck.plugin.scm.git
 
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.util.FileUtils
 import spock.lang.Specification
 
 /**
  * Created by greg on 11/2/15.
  */
 class GitUtilSpec extends Specification {
+    File tempdir
+
+    def setup() {
+        tempdir = File.createTempFile("GitUtilSpec", "-test")
+        tempdir.delete()
+    }
+
+    def cleanup() {
+        if (tempdir.exists()) {
+            FileUtils.delete(tempdir, FileUtils.RECURSIVE)
+        }
+    }
     def "getcommit found"() {
         given:
-        def tempdir = File.createTempFile("GitUtilSpec", "-test")
-        tempdir.delete()
         def origindir = new File(tempdir, 'origin')
         //create a git dir
         Git git = BaseGitPluginSpec.createGit(origindir)
@@ -28,8 +39,6 @@ class GitUtilSpec extends Specification {
     }
     def "getcommit not found"() {
         given:
-        def tempdir = File.createTempFile("GitUtilSpec", "-test")
-        tempdir.delete()
         def origindir = new File(tempdir, 'origin')
         //create a git dir
         Git git = BaseGitPluginSpec.createGit(origindir)

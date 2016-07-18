@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.util.FileUtils
 import org.rundeck.plugin.scm.git.config.Common
 import org.rundeck.plugin.scm.git.config.Export
 import spock.lang.Specification
@@ -18,6 +19,18 @@ import java.util.concurrent.atomic.AtomicLong
  * Created by greg on 10/14/15.
  */
 class BaseGitPluginSpec extends Specification {
+    File tempdir
+
+    def setup() {
+        tempdir = File.createTempFile("BaseGitPluginSpec", "-test")
+        tempdir.delete()
+    }
+
+    def cleanup() {
+        if (tempdir.exists()) {
+            FileUtils.delete(tempdir, FileUtils.RECURSIVE)
+        }
+    }
     def "getSshConfig"() {
         given:
         Common config = new Common(configInput)
@@ -58,6 +71,7 @@ class BaseGitPluginSpec extends Specification {
                 args[1].write('data'.bytes)
             }
         }
+        outfile.text=='data'
 
 
         where:
@@ -293,9 +307,6 @@ class BaseGitPluginSpec extends Specification {
         Common config = new Common()
         def base = new BaseGitPlugin(config)
 
-        def tempdir = File.createTempFile("BaseGitPluginSpec", "-test")
-        tempdir.deleteOnExit()
-        tempdir.delete()
         def gitdir = new File(tempdir, 'scm')
         def origindir = new File(tempdir, 'origin')
         //create a git dir
@@ -322,9 +333,6 @@ class BaseGitPluginSpec extends Specification {
         def base = new BaseGitPlugin(config)
         base.branch = 'master'
 
-        def tempdir = File.createTempFile("BaseGitPluginSpec", "-test")
-        tempdir.deleteOnExit()
-        tempdir.delete()
         def gitdir = new File(tempdir, 'scm')
         gitdir.mkdir()
         def origindir = new File(tempdir, 'origin')

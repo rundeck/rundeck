@@ -11,6 +11,7 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.quartz.ListenerManager
 import org.quartz.Scheduler
+import org.quartz.core.QuartzScheduler
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.Notification
@@ -852,6 +853,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.executionUtilService=Mock(ExecutionUtilService){
             createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
+        service.quartzScheduler = Mock(Scheduler)
         uuid
     }
 
@@ -1397,10 +1399,13 @@ class ScheduledExecutionServiceSpec extends Specification {
         results.scheduledExecution.serverNodeUUID == (enabled?uuid:null)
 
         where:
-        inparams            | enabled
-        [jobName: 'newName']| true
-        [jobName: 'newName']| false
+        inparams                               | enabled
+        [jobName: 'newName']                   | true
+        [jobName: 'newName']                   | false
+        [jobName: 'newName', scheduled: false] | true
+        [jobName: 'newName', scheduled: false] | false
     }
+
     def "do validate cluster mode sets serverNodeUUID when enabled"(){
         given:
         def uuid=setupDoValidate(enabled)
@@ -1413,6 +1418,8 @@ class ScheduledExecutionServiceSpec extends Specification {
         inparams                                                                    | enabled
         [scheduled: true, crontabString: '0 1 1 1 * ? *', useCrontabString: 'true'] | true
         [scheduled: true, crontabString: '0 1 1 1 * ? *', useCrontabString: 'true'] | false
+        [scheduled: false]                                                          | true
+        [scheduled: false]                                                          | false
     }
     def "do update job cluster mode sets serverNodeUUID when enabled"(){
         given:
@@ -1438,9 +1445,11 @@ class ScheduledExecutionServiceSpec extends Specification {
         results.scheduledExecution.jobName == 'newName'
 
         where:
-        inparams            | enabled
-        [jobName: 'newName']| true
-        [jobName: 'newName']| false
+        inparams                               | enabled
+        [jobName: 'newName']                   | true
+        [jobName: 'newName']                   | false
+        [jobName: 'newName', scheduled: false] | true
+        [jobName: 'newName', scheduled: false] | false
     }
 
     def "load jobs with error handlers"(){

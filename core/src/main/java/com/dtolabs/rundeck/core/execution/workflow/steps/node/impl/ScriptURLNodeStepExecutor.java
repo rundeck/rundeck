@@ -30,10 +30,6 @@ import com.dtolabs.rundeck.core.common.UpdateUtils;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdaterBuilder;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
-import com.dtolabs.rundeck.core.execution.ExecArgList;
-import com.dtolabs.rundeck.core.execution.ExecutionService;
-import com.dtolabs.rundeck.core.execution.service.FileCopierException;
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
@@ -42,7 +38,6 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionI
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.utils.Converter;
-import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.util.URIUtil;
@@ -72,6 +67,7 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
 
     private Framework framework;
     URLFileUpdater.httpClientInteraction interaction;
+    private ScriptFileNodeStepUtils scriptUtils = new DefaultScriptFileNodeStepUtils();
 
     public ScriptURLNodeStepExecutor(Framework framework) {
         this.framework = framework;
@@ -90,6 +86,15 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         }
         return Integer.toString(url.hashCode());
     }
+
+    public ScriptFileNodeStepUtils getScriptUtils() {
+        return scriptUtils;
+    }
+
+    public void setScriptUtils(ScriptFileNodeStepUtils scriptUtils) {
+        this.scriptUtils = scriptUtils;
+    }
+
     static enum Reason implements FailureReason{
         /**
          * Failed to download required URL
@@ -108,7 +113,7 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         if (!USE_CACHE) {
             destinationTempFile.deleteOnExit();
         }
-        return ScriptFileNodeStepExecutor.executeScriptFile(
+        return scriptUtils.executeScriptFile(
                 context,
                 node,
                 null,

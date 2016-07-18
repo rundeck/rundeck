@@ -58,8 +58,8 @@ class ScheduledExServiceTests {
     /**
      * utility method to mock a class
      */
-    private <T> T mockWith(Class<T> clazz, Closure clos) {
-        def mock = mockFor(clazz)
+    private <T> T mockWith(Class<T> clazz, loose=false,Closure clos) {
+        def mock = mockFor(clazz,loose)
         mock.demand.with(clos)
         return mock.createMock()
     }
@@ -178,6 +178,7 @@ class ScheduledExServiceTests {
         sec.frameworkService = mockWith(FrameworkService){
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
+            isClusterModeEnabled{->false}
 //            getFrameworkFromUserSession { session, request -> return null }
             existsFrameworkProject { project, framework ->
                 assertEquals 'testProject', project
@@ -199,6 +200,7 @@ class ScheduledExServiceTests {
         }
 
         sec.frameworkService = mockWith(FrameworkService){
+            isClusterModeEnabled{->false}
 //            getFrameworkFromUserSession { session, request -> return null }
             existsFrameworkProject { project, framework ->
                 assertEquals 'testProject', project
@@ -578,26 +580,28 @@ class ScheduledExServiceTests {
             }
         }
         //try to do update of the ScheduledExecution
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.existsFrameworkProject { project, framework ->
-            assertEquals 'testProject', project
-            return true
+        sec.frameworkService = mockWith(FrameworkService,true){
+            getFrameworkFromUserSession { session, request -> return null }
+            existsFrameworkProject { project, framework ->
+                assertEquals 'testProject', project
+                return true
+            }
+            getFrameworkProject { project ->
+                assertEquals 'testProject', project
+                return projectMock
+            }
+            getCommand { project, type, command, framework ->
+                assertEquals 'testProject', project
+                assertEquals 'aType', type
+                assertEquals 'aCommand', command
+                return null
+            }
+            authorizeProjectJobAll { framework, resource, actions, project -> return true }
+            getFrameworkFromUserSession { session, request -> return null }
+            getFrameworkFromUserSession { session, request -> return null }
+            isClusterModeEnabled{->false}
         }
-        fwkControl.demand.getFrameworkProject { project ->
-            assertEquals 'testProject', project
-            return projectMock
-        }
-        fwkControl.demand.getCommand { project, type, command, framework ->
-            assertEquals 'testProject', project
-            assertEquals 'aType', type
-            assertEquals 'aCommand', command
-            return null
-        }
-        fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        sec.frameworkService = fwkControl.createMock()
+
 
         def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah2',
                 workflow: [threadcount: 1, keepgoing: true, strategy: 'node-first',

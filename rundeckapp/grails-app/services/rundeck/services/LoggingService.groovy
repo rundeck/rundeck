@@ -26,6 +26,8 @@ import rundeck.services.logging.NodeCountingLogWriter
 import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.logging.ThresholdLogWriter
 
+import java.nio.charset.Charset
+
 class LoggingService implements ExecutionFileProducer {
 
     public static final String LOG_FILE_FILETYPE = 'rdlog'
@@ -215,10 +217,11 @@ class LoggingService implements ExecutionFileProducer {
             StreamingLogWriter logWriter,
             LogLevel level,
             Contextual listener,
-            LogFlusher flusherWorkflowListener
+            LogFlusher flusherWorkflowListener,
+            Charset charset=null
     )
     {
-        def stream = new ThreadBoundLogOutputStream(logWriter, level, listener)
+        def stream = new ThreadBoundLogOutputStream(logWriter, level, listener, charset)
         flusherWorkflowListener.logOut=stream
         return stream
     }

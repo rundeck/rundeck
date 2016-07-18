@@ -32,12 +32,8 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.Attributes;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
@@ -247,53 +243,59 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
      * opened classloaders that need to be closed upon expiration of this loader
      */
     private Map<File, Closeable> classLoaders = new HashMap<>();
+    private Set<File> cachedFiles = new HashSet<>();
 
     /**
      * @return true if the other jar is a copy of the pluginJar based on names returned by generateCachedJarName
      */
     protected boolean isEquivalentPluginJar(File other) {
-        String name = other.getName();
-        // length of timestamp + 1 for the dash in generateCachedJarName
-        int length = CACHED_JAR_TIMESTAMP_FORMAT.length() + 1;
-        if (name.length() <= length) {
-            log.warn(String.format("%s does not conform to cached plugin jar naming convention.", other));
-            return false;
-        } else {
-            return other.getName().substring(length).equals(pluginJar.getName());
-        }
+        return other.getName().replaceFirst("\\d+-\\d+-", "").equals(pluginJar.getName());
+    }
+
+    static final AtomicLong counter = new AtomicLong(0);
+    /**
+     * @return a generated name for the pluginJar using the last modified timestamp
+     */
+    protected String generateCachedJarIdentity() {
+        Date mtime = new Date(pluginJar.lastModified());
+        return String.format(
+                "%s-%d",
+                cachedJarTimestampFormatter.format(mtime),
+                counter.getAndIncrement()
+        );
     }
 
     /**
      * @return a generated name for the pluginJar using the last modified timestamp
      */
-    protected String generateCachedJarName() {
-        Date mtime = new Date(pluginJar.lastModified());
-        return String.format("%s-%s", cachedJarTimestampFormatter.format(mtime), pluginJar.getName());
+    protected String generateCachedJarName(String ident) {
+        return String.format(
+                "%s-%s",
+                ident,
+                pluginJar.getName()
+        );
+    }
+
+    /**
+     * @return a generated name for the pluginJar using the last modified timestamp
+     */
+    protected File generateCachedJarDir(String ident) {
+        File dir = new File(getFileCacheDir(), ident);
+        if (!dir.mkdirs()) {
+            debug("Could not create dir for cachedjar libs: " + dir);
+        }
+        return dir;
     }
 
     /**
      * Creates a single cached version of the pluginJar located within pluginJarCacheDirectory
      * deleting all existing versions of pluginJar
+     * @param jarName
      */
-    protected File createCachedJar() throws PluginException {
+    protected File createCachedJar(final File dir, final String jarName) throws PluginException {
         File cachedJar;
         try {
-            debug(String.format("Scanning %s for cached versions of %s", pluginJarCacheDirectory, pluginJar));
-            File[] files = pluginJarCacheDirectory.listFiles();
-            if(files == null) {
-                throw new PluginException(
-                        String.format("Plugin jar cache dir is not a directory or cannot be read: %s",
-                                pluginJarCacheDirectory));
-            }
-            for (File f : files) {
-                if (isEquivalentPluginJar(f)) {
-                    debug(String.format("Found %s, deleting...", f));
-                    if (!f.delete()) {
-                        debug(String.format("Could not delete %s", f));
-                    }
-                }
-            }
-            cachedJar = new File(pluginJarCacheDirectory, generateCachedJarName());
+            cachedJar = new File(dir, jarName);
             cachedJar.deleteOnExit();
             FileUtils.fileCopy(pluginJar, cachedJar, true);
         } catch (IOException e) {
@@ -313,15 +315,11 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
             debug("(loadClass) " + classname + ": " + pluginJar);
             return classCache.get(classname);
         }
+        CachedJar cachedJar1 = getCachedJar();
 
-        debug(String.format("Deleting dependency lib cache %s",  getFileCacheDir()));
-        FileUtils.deleteDir(getFileCacheDir());
-        File cachedJar = createCachedJar();
-        debug("loadClass! " + classname + ": " + cachedJar);
-
+        debug("loadClass! " + classname + ": " + cachedJar1.getCachedJar());
         final Class<?> cls;
-
-        final URLClassLoader urlClassLoader = getClassLoader(cachedJar);
+        final URLClassLoader urlClassLoader = cachedJar1.getClassLoader();
         try {
             cls = Class.forName(classname, true, urlClassLoader);
             classCache.put(classname, cls);
@@ -333,45 +331,40 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         return cls;
     }
 
-    private URLClassLoader getClassLoader(final File cachedJar) throws PluginException
-    {
-        ClassLoader parent = JarPluginProviderLoader.class.getClassLoader();
-        // if jar manifest declares secondary lib deps, expand lib into cachedir, and setup classloader to use the libs
-        Collection<File> extlibs = null;
-        try {
-            extlibs = extractDependentLibs();
-        } catch (IOException e) {
-            throw new PluginException("Unable to expand plugin libs: " + e.getMessage(), e);
-        }
-        try {
-            final URL url = cachedJar.toURI().toURL();
-            final URL[] urlarray;
-            if (null != extlibs && extlibs.size() > 0) {
-                final ArrayList<URL> urls = new ArrayList<URL>();
-                urls.add(url);
-                for (final File extlib : extlibs) {
-                    urls.add(extlib.toURI().toURL());
+    private CachedJar cachedJar;
+
+    private synchronized JarPluginProviderLoader.CachedJar getCachedJar() throws PluginException {
+        if (null == cachedJar) {
+            synchronized (this) {
+                if (null == cachedJar) {
+                    String itemIdent = generateCachedJarIdentity();
+                    String jarName = generateCachedJarName(itemIdent);
+                    File dir = generateCachedJarDir(itemIdent);
+                    File cachedJar = createCachedJar(dir, jarName);
+                    cachedFiles.add(dir);
+
+                    // if jar manifest declares secondary lib deps, expand lib into cachedir, and setup classloader
+                    // to use the libs
+                    Collection<File> extlibs = null;
+                    try {
+                        extlibs = extractDependentLibs(dir);
+                    } catch (IOException e) {
+                        throw new PluginException("Unable to expand plugin libs: " + e.getMessage(), e);
+                    }
+                    this.cachedJar = new CachedJar(dir, cachedJar, extlibs);
                 }
-                urlarray = urls.toArray(new URL[urls.size()]);
-            } else {
-                urlarray = new URL[]{url};
             }
-            URLClassLoader loaded = loadLibsFirst
-                                    ? LocalFirstClassLoader.newInstance(urlarray, parent)
-                                    : URLClassLoader.newInstance(urlarray, parent);
-            classLoaders.put(cachedJar, loaded);
-            return loaded;
-        } catch (MalformedURLException e) {
-            throw new PluginException("Error creating classloader for " + cachedJar, e);
         }
+        return cachedJar;
     }
+
 
     /**
      * Extract the dependent libs and return the extracted jar files
      *
      * @return the collection of extracted files
      */
-    private Collection<File> extractDependentLibs() throws IOException {
+    private Collection<File> extractDependentLibs(final File cachedir) throws IOException {
         final Attributes attributes = getMainAttributes();
         if (null == attributes) {
             debug("no manifest attributes");
@@ -382,12 +375,17 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         final String libs = attributes.getValue(RUNDECK_PLUGIN_LIBS);
         if (null != libs) {
             debug("jar libs listed: " + libs + " for file: " + pluginJar);
-
+            if (!cachedir.isDirectory()) {
+                if (!cachedir.mkdirs()) {
+                    debug("Failed to create cachedJar dir for dependent libs: " + cachedir);
+                }
+            }
             final String[] libsarr = libs.split(" ");
-            final File cachedir = getFileCacheDir();
             extractJarContents(libsarr, cachedir);
             for (final String s : libsarr) {
-                files.add(new File(cachedir, s));
+                File libFile = new File(cachedir, s);
+                libFile.deleteOnExit();
+                files.add(libFile);
             }
         } else {
             debug("no jar libs listed in manifest: " + pluginJar);
@@ -490,6 +488,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         debug("expire jar provider loader for: " + pluginJar);
         removeScriptPluginCache();
         classCache.clear();
+        this.cachedJar=null;
         //close loaders
         for (File file : classLoaders.keySet()) {
             try {
@@ -498,6 +497,11 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+        //remove cache files
+        for (File file : cachedFiles) {
+            debug("remove cache dir: " + file);
+            FileUtils.deleteDir(file);
         }
     }
 
@@ -644,5 +648,66 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
             value = mainAttributes.getValue(attribute);
         }
         return value;
+    }
+
+    private class CachedJar {
+        private File dir;
+        private File cachedJar;
+        private Collection<File> depLibs;
+        private URLClassLoader classLoader;
+
+        public File getDir() {
+            return dir;
+        }
+
+        public File getCachedJar() {
+            return cachedJar;
+        }
+
+        public CachedJar(File dir, File cachedJar, Collection<File> depLibs) throws PluginException {
+            this.dir = dir;
+            this.cachedJar = cachedJar;
+            this.depLibs = depLibs;
+        }
+
+        public Collection<File> getDepLibs() {
+            return depLibs;
+        }
+
+        public URLClassLoader getClassLoader() throws PluginException{
+            if(null==classLoader){
+                synchronized (this){
+                    if(null==classLoader){
+                        classLoader = buildClassLoader();
+                    }
+                }
+            }
+            return classLoader;
+        }
+
+        private URLClassLoader buildClassLoader() throws PluginException {
+            ClassLoader parent = JarPluginProviderLoader.class.getClassLoader();
+            try {
+                final URL url = getCachedJar().toURI().toURL();
+                final URL[] urlarray;
+                if (null != getDepLibs() && getDepLibs().size() > 0) {
+                    final ArrayList<URL> urls = new ArrayList<URL>();
+                    urls.add(url);
+                    for (final File extlib : getDepLibs()) {
+                        urls.add(extlib.toURI().toURL());
+                    }
+                    urlarray = urls.toArray(new URL[urls.size()]);
+                } else {
+                    urlarray = new URL[]{url};
+                }
+                URLClassLoader loaded = loadLibsFirst
+                                        ? LocalFirstClassLoader.newInstance(urlarray, parent)
+                                        : URLClassLoader.newInstance(urlarray, parent);
+                classLoaders.put(getCachedJar(), loaded);
+                return loaded;
+            } catch (MalformedURLException e) {
+                throw new PluginException("Error creating classloader for " + cachedJar, e);
+            }
+        }
     }
 }

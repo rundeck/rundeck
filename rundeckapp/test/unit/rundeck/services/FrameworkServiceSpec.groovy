@@ -1,7 +1,10 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.ProjectManager
 import grails.test.mixin.TestFor
 import spock.lang.Specification
 
@@ -32,5 +35,38 @@ class FrameworkServiceSpec extends Specification {
             }
             n
         }
+    }
+
+    def "get default input charset for project"() {
+        given:
+        String project = 'aproject'
+        def manager = Mock(ProjectManager)
+        service.rundeckFramework = Mock(Framework) {
+            getFrameworkProjectMgr() >> manager
+        }
+
+        when:
+        def result = service.getDefaultInputCharsetForProject(project)
+
+
+        then:
+        result == expected
+        1 * manager.loadProjectConfig(project) >> Mock(IRundeckProjectConfig) {
+            hasProperty(('framework.' + FrameworkService.REMOTE_CHARSET)) >> (fwk ? true : false)
+            getProperty(('framework.' + FrameworkService.REMOTE_CHARSET)) >> fwk
+            hasProperty(('project.' + FrameworkService.REMOTE_CHARSET)) >> (proj ? true : false)
+            getProperty(('project.' + FrameworkService.REMOTE_CHARSET)) >> proj
+        }
+
+        where:
+        fwk          | proj         | expected     | _
+        null         | null         | null         | _
+        'UTF-8'      | null         | 'UTF-8'      | _
+        null         | 'UTF-8'      | 'UTF-8'      | _
+        'UTF-8'      | 'UTF-8'      | 'UTF-8'      | _
+        'ISO-8859-2' | 'UTF-8'      | 'UTF-8'      | _
+        'UTF-8'      | 'ISO-8859-2' | 'ISO-8859-2' | _
+
+
     }
 }

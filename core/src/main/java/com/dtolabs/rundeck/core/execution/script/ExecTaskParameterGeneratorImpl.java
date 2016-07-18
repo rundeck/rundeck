@@ -58,7 +58,7 @@ public class ExecTaskParameterGeneratorImpl implements ExecTaskParameterGenerato
         if (!command && null == scriptfile) {
             throw new ExecutionException("Could not determine the command to dispatch");
         }
-        if ("windows".equals(nodeentry.getOsFamily())) {
+        if ("windows".equalsIgnoreCase(nodeentry.getOsFamily())) {
             //TODO: escape args properly for windows
             commandexecutable = "cmd.exe";
             if (command) {
