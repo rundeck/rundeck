@@ -239,6 +239,13 @@ class BootStrap {
          }else{
              log.info("RSS feeds disabled")
          }
+
+         if('true' == grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled){
+             log.info("Preauthentication is enabled")
+         } else {
+             log.info("Preauthentication is disabled")
+         }
+
          if(grailsApplication.config.execution.follow.buffersize){
              servletContext.setAttribute("execution.follow.buffersize",grailsApplication.config.execution.follow.buffersize)
          }else{
