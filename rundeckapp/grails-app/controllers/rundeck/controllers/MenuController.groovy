@@ -1736,7 +1736,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def clusterModeEnabled = frameworkService.isClusterModeEnabled()
         def serverNodeUUID = frameworkService.serverUUID
         withFormat {
-            xml {
+            def xmlresponse= {
                 return apiService.renderSuccessXml(request, response) {
                     delegate.'jobs'(count: results.size()) {
                         results.each { ScheduledExecution se ->
@@ -1761,6 +1761,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     }
                 }
             }
+            xml xmlresponse
             json {
                 return apiService.renderSuccessJson(response) {
                     results.each { ScheduledExecution se ->
@@ -1784,6 +1785,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     }
                 }
             }
+            '*' xmlresponse
         }
     }
     /**
