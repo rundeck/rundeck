@@ -1929,16 +1929,31 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
                 if (opt.required && !optparams[opt.name]) {
 
-
-                    if(opt.defaultStoragePath && !canReadStoragePassword(
-                            authContext,
-                            opt.defaultStoragePath,
-                            false
-                    )){
-                        invalidOpt opt,lookupMessage("domain.Option.validation.required.storageDefault",[opt.name,opt.defaultStoragePath].toArray())
-                        return
-                    }else if(!opt.defaultStoragePath){
+                    if (!opt.defaultStoragePath) {
                         invalidOpt opt,lookupMessage("domain.Option.validation.required",[opt.name].toArray())
+                        return
+                    }
+                    try {
+                        def canread = canReadStoragePassword(
+                                authContext,
+                                opt.defaultStoragePath,
+                                true
+                        )
+
+                        if (!canread) {
+                            invalidOpt opt, lookupMessage(
+                                    "domain.Option.validation.required.storageDefault",
+                                    [opt.name, opt.defaultStoragePath].toArray()
+                            )
+                            return
+                        }
+                    } catch (ExecutionServiceException e1) {
+
+                        invalidOpt opt, lookupMessage(
+                                "domain.Option.validation.required.storageDefault.reason",
+                                [opt.name, opt.defaultStoragePath, e1.cause.message].toArray()
+
+                        )
                         return
                     }
                 }
