@@ -652,7 +652,7 @@ class ExecutionServiceSpec extends Specification {
 
 
         service.logFileStorageService = Mock(LogFileStorageService) {
-            1 * getFileForExecutionFiletype(execution, 'rdlog', true) >> file1
+            1 * getFileForExecutionFiletype(execution, 'rdlog.gz', true) >> file1
             1 * getFileForExecutionFiletype(execution, 'state.json', true) >> file2
             0 * _(*_)
         }
@@ -701,7 +701,7 @@ class ExecutionServiceSpec extends Specification {
         }
 
         service.logFileStorageService = Mock(LogFileStorageService) {
-            1 * getFileForExecutionFiletype(execution, 'rdlog', true) >> file1
+            1 * getFileForExecutionFiletype(execution, 'rdlog.gz', true) >> file1
             1 * getFileForExecutionFiletype(execution, 'state.json', true)
             0 * _(*_)
         }
