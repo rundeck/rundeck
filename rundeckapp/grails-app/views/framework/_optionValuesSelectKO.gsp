@@ -27,20 +27,22 @@
     <%-- Print out the input box for random input --%>
     <div data-bind="if: hasTextfield">
         <div data-bind="css: {'col-sm-8': hasExtended(), 'col-sm-12': !hasExtended() }">
-            <div data-bind="if: secureInput()">
+            <div data-bind="if: secureInput()" class="input-group">
                 <g:passwordField name="-"
                                  data-bind="value: value, attr: {name: fieldName, id: fieldId}"
                                  class="optionvaluesfield  form-control"
                                  value=""
                                  autocomplete="new-password"
                                  size="40"/>
-                <div data-bind="if: defaultStoragePath">
-                    <span class="input-group-addon has_tooltip"
-                          data-placement="left"
+                <!-- ko if: defaultStoragePath -->
+                    <span class=" has_tooltip input-group-addon"
+                        data-bind="bootstrapTooltip: true"
+                          data-placement="bottom"
+                          data-container="body"
                           title="${message(code: "form.option.defaultStoragePath.present.description")}">
                         <g:icon name="lock"/>
                     </span>
-                </div>
+                <!-- /ko -->
             </div>
 
             <div data-bind="if: !secureInput()">

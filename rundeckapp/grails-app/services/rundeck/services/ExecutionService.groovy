@@ -45,6 +45,7 @@ import rundeck.services.logging.LoggingThreshold
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpSession
+import java.nio.charset.Charset
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
@@ -861,9 +862,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
                 loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext,true)
             }
+            String inputCharset=frameworkService.getDefaultInputCharsetForProject(execution.project)
 
             StepExecutionContext executioncontext = createContext(execution, null,framework, authContext,
-                    execution.user, jobcontext, multiListener, null,extraParams, extraParamsExposed)
+                    execution.user, jobcontext, multiListener, null,extraParams, extraParamsExposed,inputCharset)
 
             //ExecutionService handles Job reference steps
             final cis = StepExecutionService.getInstanceForFramework(framework);
@@ -882,10 +884,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //install custom outputstreams for System.out and System.err for this thread and any child threads
             //output will be sent to loghandler instead.
             sysThreadBoundOut.installThreadStream(
-                    loggingService.createLogOutputStream(loghandler, LogLevel.NORMAL, executionListener, logOutFlusher)
+                    loggingService.createLogOutputStream(loghandler, LogLevel.NORMAL, executionListener, logOutFlusher, inputCharset?Charset.forName(inputCharset):null)
             );
             sysThreadBoundErr.installThreadStream(
-                    loggingService.createLogOutputStream(loghandler, LogLevel.ERROR, executionListener, logErrFlusher)
+                    loggingService.createLogOutputStream(loghandler, LogLevel.ERROR, executionListener, logErrFlusher, inputCharset?Charset.forName(inputCharset):null)
             );
             //create service object for the framework and listener
             Thread thread = new WorkflowExecutionServiceThread(framework.getWorkflowExecutionService(),item, executioncontext)
@@ -1156,7 +1158,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     /**
      * Return an StepExecutionItem instance for the given workflow Execution, suitable for the ExecutionService layer
      */
-    public StepExecutionContext createContext(ExecutionContext execMap, StepExecutionContext origContext, Framework framework, AuthContext authContext, String userName = null, Map<String, String> jobcontext, ExecutionListener listener, String[] inputargs=null, Map extraParams=null, Map extraParamsExposed=null) {
+    public StepExecutionContext createContext(
+            ExecutionContext execMap,
+            StepExecutionContext origContext,
+            Framework framework,
+            AuthContext authContext,
+            String userName = null,
+            Map<String, String> jobcontext,
+            ExecutionListener listener,
+            String[] inputargs = null,
+            Map extraParams = null,
+            Map extraParamsExposed = null,
+            String charsetEncoding = null
+    )
+    {
         if (!userName) {
             userName=execMap.user
         }
@@ -1232,6 +1247,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             .nodeSelector(nodeselector)
             .nodes(nodeSet)
             .loglevel(logLevelIntValue(execMap.loglevel))
+            .charsetEncoding(charsetEncoding)
             .dataContext(datacontext)
             .privateDataContext(privatecontext)
             .executionListener(listener)

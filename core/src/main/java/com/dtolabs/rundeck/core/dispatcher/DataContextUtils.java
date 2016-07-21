@@ -235,13 +235,18 @@ public class DataContextUtils {
     }
 
     /**
-     * Merge one context onto another by adding or replacing values.
+     * Merge one context onto another by adding or replacing values in a new map
+     *
      * @param targetContext the target of the merge
-     *                @param newContext context to merge
-     * @return merged data
+     * @param newContext    context to merge
+     *
+     * @return merged data in a new map
      */
-    public static Map<String, Map<String, String>> merge(final Map<String, Map<String, String>> targetContext,
-                                                         final Map<String, Map<String, String>> newContext) {
+    public static Map<String, Map<String, String>> merge(
+            final Map<String, Map<String, String>> targetContext,
+            final Map<String, Map<String, String>> newContext
+    )
+    {
 
         final HashMap<String, Map<String, String>> result = deepCopy(targetContext);
         for (final Map.Entry<String, Map<String, String>> entry : newContext.entrySet()) {

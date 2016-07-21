@@ -17,7 +17,7 @@
 </g:ifServletContextAttributeExists>
 
 
-<g:set var="buildIdent" value="${grailsApplication.metadata['build.ident']}"/>
+<g:set var="buildIdent" value="${servletContextAttribute(attribute: 'app.ident')}"/>
 <g:set var="appId" value="${g.appTitle()}"/>
 <g:set var="versionDisplay" value="inline"/>
 
@@ -38,14 +38,17 @@
                 <g:appTitle/> ${buildIdent}
             </g:link>
 
-            <span class="rundeck-version-identity" data-version-string="${enc(attr: buildIdent)}"
+            <span class="rundeck-version-identity"
+                  data-version-string="${enc(attr: buildIdent)}"
+                  data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
                   data-app-id="${enc(attr: appId)}"></span>
         </g:if>
         <g:if test="${versionDisplay == 'block'}">
             <g:link controller="menu" action="welcome"
                     class="rundeck-version-block link-bare"
-                    data-version-string="${enc(attr: buildIdent)}"
-                    data-app-id="${enc(attr: appId)}">
+                    data-version-string="${buildIdent}"
+                    data-version-date="${servletContextAttribute(attribute: 'version.date_short')}"
+                    data-app-id="${appId}">
             </g:link>
         </g:if>
         

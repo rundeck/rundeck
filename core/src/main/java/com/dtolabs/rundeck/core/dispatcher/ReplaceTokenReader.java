@@ -39,15 +39,11 @@ public class ReplaceTokenReader extends FilterReader {
         tokenCharPredicate = DEFAULT_ALLOWED_PREDICATE;
     }
 
-    private static final char[] ALLOWED_CHARS = ".+-_:".toCharArray();
-    static {
-        Arrays.sort(ALLOWED_CHARS);
-    }
     public static final Predicate DEFAULT_ALLOWED_PREDICATE = new Predicate() {
         @Override
         public boolean evaluate(Object o) {
             Character c = (Character) o;
-            return Character.isLetterOrDigit((int)c) || Arrays.binarySearch(ALLOWED_CHARS, c) >= 0;
+            return !Character.isWhitespace(c);
         }
     };
 

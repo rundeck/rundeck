@@ -451,6 +451,37 @@ class ScheduledExecutionController  extends ControllerBase{
         dataMap
     }
 
+    public def workflowJson (){
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
+
+        if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                session.subject,
+                scheduledExecution.project
+        )
+        if (unauthorizedResponse(
+                frameworkService.authorizeProjectJobAll(
+                        authContext,
+                        scheduledExecution,
+                        [AuthConstants.ACTION_READ],
+                        scheduledExecution.project
+                ),
+                AuthConstants.ACTION_READ, 'Job', params.id
+        )) {
+            return
+        }
+        def maxDepth=3
+        def wfdata=scheduledExecutionService.getWorkflowDescriptionTree(scheduledExecution.project,scheduledExecution.workflow,maxDepth)
+        withFormat {
+            json {
+                render(contentType: 'application/json') {
+                    workflow= wfdata
+                }
+            }
+        }
+    }
     /**
      * Sanitize the html text submitted
      * @return

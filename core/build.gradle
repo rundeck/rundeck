@@ -1,3 +1,5 @@
+import java.text.SimpleDateFormat
+
 /**
  * The Rundeck Core API build file
  **/
@@ -78,8 +80,10 @@ test{
 
 task expandTemplate << {
     ant.delete(file:"$projectDir/src/main/resources/META-INF/com/dtolabs/rundeck/core/application.properties")
+    def datestring=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").format(new Date())
+    println("Building: $version-$buildNum ($datestring)")
     copy{
-        expand('version':version,'version_build':buildNum,'version_ident':version+'-'+buildNum)
+        expand('version':version,'version_build':buildNum,'version_ident':version+'-'+buildNum,date:datestring)
         from "$projectDir/src/main/meta/com/dtolabs/rundeck/core/application.properties"
         into "$projectDir/src/main/resources/META-INF/com/dtolabs/rundeck/core/"
     }   

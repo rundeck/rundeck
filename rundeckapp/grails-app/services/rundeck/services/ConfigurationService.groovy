@@ -13,6 +13,15 @@ class ConfigurationService {
         grailsApplication.config?.rundeck
     }
 
+    public ConfigObject getConfig(String path){
+        def strings = path.split('\\.')
+        def val = appConfig
+        strings.each {
+            val = val?."${it}"
+        }
+        return val;
+    }
+
     void setExecutionModeActive(boolean active) {
         getAppConfig().executionMode = (active ? 'active' : 'passive')
     }
@@ -71,6 +80,21 @@ class ConfigurationService {
             val = val?."${it}"
         }
         booleanValue(defval, val)
+    }
+    /**
+     * Set boolean config value, rundeck.some.property.name, to true/false.
+     * @param property property name
+     * @param val value to set
+     */
+    def setBoolean(String property, boolean val) {
+        def strings = property.split('\\.')
+        def cval = appConfig
+        if(strings.length>1) {
+            strings[0..-2].each {
+                cval = cval.getAt(it)
+            }
+        }
+        cval.putAt(strings[-1],val)
     }
     /**
      * Lookup boolean config value, rundeck.service.component.property, evaluate true/false.

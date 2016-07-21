@@ -1,9 +1,8 @@
 /*
 *= require_self
 *= require rundeck1
-*= require markdeep
 */
-  @import "bootswatch";
+  @import "markdeep";
   @import "nav-links";
 
   @popover-wide-max-width: 500px;
@@ -1446,7 +1445,7 @@ pre.filtererror{
         background-image: url("icon-small-script.png");
       }
 
-      &.scriptfile {
+      &.scriptfile,&.scripturl {
         background-image: url("icon-small-scriptfile.png");
       }
 
@@ -1613,6 +1612,9 @@ pre.filtererror{
   &:after{
     content:'" ';
   }
+}
+.rundeck-version-date{
+  font-style: italic;
 }
 
 /////

@@ -145,6 +145,19 @@ Path can include variable references
     @SelectValues(values = ['xml', 'yaml'])
     String format
 
+    @PluginProperty(
+            title = "Fetch Automatically",
+            description = "Automatically fetch remote changes for local comparison. If false, you can perform it manually",
+            defaultValue = 'true',
+            required = false
+    )
+    @SelectValues(values = ['true', 'false'])
+    String fetchAutomatically
+
+    boolean shouldFetchAutomatically(){
+        return fetchAutomatically in [null,'true']
+    }
+
 
     static List<Property> addDirDefaultValue(List<Property> properties, File basedir) {
         if (null == basedir) {

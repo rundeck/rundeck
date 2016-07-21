@@ -51,6 +51,7 @@ public class BaseFileCopier {
     public static final String DEFAULT_WINDOWS_FILE_EXT = ".bat";
     public static final String DEFAULT_UNIX_FILE_EXT = ".sh";
 
+    private FileCopierUtil util = new DefaultFileCopierUtil();
     /**
      * create unique strings
      */
@@ -475,5 +476,13 @@ public class BaseFileCopier {
                     StepFailureReason.IOFailure, e);
         }
 
+    }
+
+    public FileCopierUtil getUtil() {
+        return util;
+    }
+
+    public void setUtil(FileCopierUtil util) {
+        this.util = util;
     }
 }

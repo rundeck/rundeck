@@ -54,6 +54,15 @@ var TestHarness = function (name,data) {
     };
     self.assert = function (msg, expect, val) {
         total++;
+        if(null==expect && null==val && typeof(msg)!='string'){
+            expect=true;
+            val=msg;
+            msg='(assert)';
+        }else if(null==val && typeof(expect)=='string' && typeof(msg)=='boolean'){
+            val=msg;
+            msg=expect;
+            expect=true;
+        }
         if (!self.compare(expect,val)) {
             failed++;
             var message = "FAIL: " +curPrefix+ msg + ": expected: " + JSON.stringify(expect) + ", was: " + JSON.stringify(val);

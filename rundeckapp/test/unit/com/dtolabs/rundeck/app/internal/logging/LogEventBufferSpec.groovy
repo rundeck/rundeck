@@ -3,6 +3,9 @@ package com.dtolabs.rundeck.app.internal.logging
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LogUtil
 import spock.lang.Specification
+import spock.lang.Unroll
+
+import java.nio.charset.Charset
 
 /**
  * Created by greg on 2/22/16.
@@ -82,5 +85,33 @@ class LogEventBufferSpec extends Specification {
         null          | new Date(123) | 1
         new Date(123) | null          | -1
         null          | null          | 0
+    }
+    static final String multibyteString = 'možnej'
+    static final def isobytes = multibyteString.getBytes('ISO-8859-2')
+
+    @Unroll
+    def "create event with charset #charset"() {
+
+        given:
+        def buff = new LogEventBuffer([:], charset ? Charset.forName(charset) : null)
+        buff.baos.write(bytes)
+
+        when:
+        def log = buff.createEvent(LogLevel.DEBUG)
+
+        then:
+        null != log
+        log.message == result
+        log.message != badresult
+
+        where:
+        charset      | bytes                                  | result                        | badresult
+        'ISO-8859-2' | multibyteString.getBytes('ISO-8859-2') |
+                multibyteString                                                               |
+                new String(isobytes, 'UTF-8')
+        'UTF-8'      | multibyteString.getBytes('ISO-8859-2') | new String(isobytes, 'UTF-8') | multibyteString
+        null         | multibyteString.getBytes()             |
+                multibyteString                                                               |
+                new String(isobytes, 'UTF-8')
     }
 }

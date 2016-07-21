@@ -12,6 +12,7 @@ import org.eclipse.jgit.lib.BranchTrackingStatus
 import org.eclipse.jgit.revwalk.RevCommit
 import org.rundeck.plugin.scm.git.config.Export
 import org.rundeck.plugin.scm.git.exp.actions.CommitJobsAction
+import org.rundeck.plugin.scm.git.exp.actions.FetchAction
 import org.rundeck.plugin.scm.git.exp.actions.PushAction
 import org.rundeck.plugin.scm.git.exp.actions.SynchAction
 import org.rundeck.plugin.scm.git.exp.actions.TagAction
@@ -28,6 +29,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     public static final String PROJECT_PUSH_ACTION_ID = "project-push"
     public static final String PROJECT_TAG_ACTION_ID = "tag-commit"
     public static final String PROJECT_SYNCH_ACTION_ID = "project-synch"
+    public static final String PROJECT_FETCH_ACTION_ID = "project-fetch"
 
 
     String format = SERIALIZE_FORMAT
@@ -64,6 +66,11 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                         PROJECT_SYNCH_ACTION_ID,
                         "Synch with Remote",
                         "Synch incoming changes from Remote"
+                ),
+                (PROJECT_FETCH_ACTION_ID) : new FetchAction(
+                        PROJECT_FETCH_ACTION_ID,
+                        "Fetch Remote Changes",
+                        "Fetch changes from Remote for local comparison"
                 ),
                 (PROJECT_TAG_ACTION_ID)   : new TagAction(
                         PROJECT_TAG_ACTION_ID,
@@ -156,7 +163,9 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             } else if (status.state == SynchState.REFRESH_NEEDED) {
                 //need to fast forward
                 actionRefs PROJECT_SYNCH_ACTION_ID
-            } else {
+            } else if(!config.shouldFetchAutomatically()){
+                actionRefs PROJECT_FETCH_ACTION_ID
+            }else{
                 null
             }
         } else {
@@ -167,7 +176,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     @Override
     ScmExportSynchState getStatus(ScmOperationContext context) {
-        return getStatusInternal(context, true)
+        return getStatusInternal(context, config.shouldFetchAutomatically())
     }
 
 

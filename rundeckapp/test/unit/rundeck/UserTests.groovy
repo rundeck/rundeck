@@ -1,5 +1,7 @@
 package rundeck
 
+import org.springframework.context.support.StaticMessageSource
+
 import static org.junit.Assert.*
 
 import grails.test.mixin.*
@@ -44,4 +46,19 @@ class UserTests {
         user.validate()
         assertFalse(user.errors.allErrors.collect { it.toString() }.join("; "),user.hasErrors())
     }
+	void testMessageForDefaultLocale() {
+		StaticMessageSource messageSource = getMessageSource()
+		messageSource.addMessage("gui.menu.Workflows", Locale.default, "Jobs")
+
+		assert "Jobs" == messageSource.getMessage("gui.menu.Workflows", [] as Object[], Locale.default)
+	}
+	void testMessageForLocale() {
+		def defaultLocale = new Locale("es_419","es_419");
+		java.util.Locale.setDefault(defaultLocale)
+
+		StaticMessageSource messageSource = getMessageSource()
+		messageSource.addMessage("gui.menu.Workflows", defaultLocale, "Trabajosme")
+
+		assert "Trabajosme" == messageSource.getMessage("gui.menu.Workflows", [] as Object[], defaultLocale)
+	}
 }

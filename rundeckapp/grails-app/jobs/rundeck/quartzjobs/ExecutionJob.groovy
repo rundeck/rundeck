@@ -256,7 +256,13 @@ class ExecutionJob implements InterruptableJob {
             if (serverUUID != null && jobDataMap.get("bySchedule")) {
                 //verify scheduled job should be run on this node in cluster mode
                 if (serverUUID!=initMap.scheduledExecution.serverNodeUUID){
-                    initMap.jobShouldNotRun="Job ${initMap.scheduledExecution.extid} will run on server ID ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this server (${serverUUID})."
+                    if(!initMap.scheduledExecution.scheduled){
+                        initMap.jobShouldNotRun="Job ${initMap.scheduledExecution.extid} schedule has been stopped by ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this server (${serverUUID})."
+                    }else if(!initMap.scheduledExecution.shouldScheduleExecution()){
+                        initMap.jobShouldNotRun="Job ${initMap.scheduledExecution.extid} schedule/execution has been disabled by ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this server (${serverUUID})."
+                    }else{
+                        initMap.jobShouldNotRun="Job ${initMap.scheduledExecution.extid} will run on server ID ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this server (${serverUUID})."
+                    }
                     context.getScheduler().deleteJob(context.jobDetail.key)
                     return initMap
                 }

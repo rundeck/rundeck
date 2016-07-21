@@ -96,9 +96,15 @@
         <div class="col-sm-4 ">
             <div data-bind="with: currentStep(), visible: !expanded()">
                 <span class="stepident "
-                      data-bind="attr: { 'data-execstate': executionState, title: stepctxdesc }">
-                    <i class="rdicon icon-small" data-bind="css: type"></i>
-                    <span data-bind="text: stepident"></span>
+                      data-bind="attr: { 'data-execstate': executionState }">
+
+                    <feature:disabled name="workflowDynamicStepSummaryGUI">
+                        <i class="rdicon icon-small" data-bind="css: stepinfo().type"></i>
+                        <span data-bind="text: stepinfo().stepident"></span>
+                    </feature:disabled>
+                    <feature:enabled name="workflowDynamicStepSummaryGUI">
+                        <span data-bind="template: {name: 'step-info-simple-link', data:stepinfo(), as: 'stepinfo'}"></span>
+                    </feature:enabled>
                 </span>
                 <span data-bind="if: ( executionState() == 'WAITING' ) " class="text-muted">
                     (Next up)
@@ -120,13 +126,33 @@
             <div class="wfnodesteps" data-bind="attr: { 'data-node': node.name }">
             <div class=" wfnodestep"
                  data-bind="css: { open: followingOutput() }, attr: { 'data-node': node.name, 'data-stepctx': $data.stepctx }">
-                <div class="row action" data-bind="click: $root.toggleOutputForNodeStep ">
+                <div class="row action" data-bind="click: $root.toggleOutputForNodeStep,
+                               event: { mouseover: function(){hovering(true);}, mouseout: function(){hovering(false);} } ">
                     <div class="col-sm-3 " >
-                        <div class="stepident  action col-inset"
-                              data-bind="attr: { 'data-execstate': executionState, title: stepctxdesc }, css: { 'auto-caret-container': followingOutput(), active: followingOutput() } ">
+                        <div class="stepident action col-inset"
+                              data-bind="
+                              attr: { 'data-execstate': executionState },
+                              css: { 'auto-caret-container': followingOutput(), active: followingOutput() }
+                              ">
                             <i class="auto-caret"></i>
-                            <i class="rdicon icon-small" data-bind="css: type"></i>
-                            <span data-bind="text: stepident"></span>
+
+                            <feature:disabled name="workflowDynamicStepSummaryGUI">
+                                <i class="rdicon icon-small" data-bind="css: stepinfo().type"></i>
+                                <span data-bind="text: stepinfo().stepident"></span>
+                            </feature:disabled>
+                            <feature:enabled name="workflowDynamicStepSummaryGUI">
+                                <span data-bind="visible: hovering() || followingOutput() ">
+                                    %{--<span data-bind="if: followingOutput()">--}%
+                                    <span data-bind="template: { name: 'step-info-parent-path-links', data:stepinfo, as: 'stepinfo' }"></span>
+                                    %{--</span>--}%
+                                    %{--<span data-bind="if: !followingOutput()">--}%
+                                    %{--<span data-bind="template: { name: 'step-info-parent-path', data:stepinfo, as: 'stepinfo' }"></span>--}%
+                                    %{--</span>--}%
+                                </span>
+
+                                <span data-bind="template: { name: 'step-info-simple-link', data:stepinfo, as: 'stepinfo' }"></span>
+                            </feature:enabled>
+
                         </div>
                     </div>
 

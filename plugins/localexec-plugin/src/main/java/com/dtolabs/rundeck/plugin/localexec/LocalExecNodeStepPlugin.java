@@ -24,15 +24,17 @@
 */
 package com.dtolabs.rundeck.plugin.localexec;
 
-import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.common.NodeEntryImpl;
+import com.dtolabs.rundeck.core.common.NodeSetImpl;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.core.utils.OptsUtil;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
@@ -41,9 +43,10 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.OutputStream;
+import java.util.*;
 
 
 /**
@@ -59,9 +62,53 @@ public class LocalExecNodeStepPlugin implements NodeStepPlugin {
     @PluginProperty(title = "Command", description = "The command (runs locally)", required = true)
     private String command;
 
+
+    public enum LocalExecReason implements FailureReason{
+        Unauthorized
+    }
+
+    /**
+     * interface for testing
+     */
+    public interface LocalCommandRunner{
+        int runLocalCommand(
+                final String[] command,
+                final Map<String, String> envMap, final File workingdir,
+                final OutputStream outputStream, final OutputStream errorStream
+        ) throws IOException, InterruptedException;
+    }
+
+    /**
+     * Use ScriptExecUtil
+     */
+    private static class UtilRunner implements LocalCommandRunner {
+        @Override
+        public int runLocalCommand(
+        final String[] command,
+        final Map<String, String> envMap,
+        final File workingdir,
+        final OutputStream outputStream,
+        final OutputStream errorStream
+        ) throws IOException, InterruptedException
+        {
+            return ScriptExecUtil.runLocalCommand(command, envMap, workingdir, outputStream, errorStream);
+        }
+    }
+
+    private LocalCommandRunner runner = new UtilRunner();
+
     @Override
     public void executeNodeStep(PluginStepContext context, Map<String, Object> map, INodeEntry entry)
         throws NodeStepException {
+        //verify run authorization for local node
+        if(!hasLocalNodeRunAuthorization(context)){
+            throw new NodeStepException(
+                    "Not authorized for \"run\" on local node \"" + context.getFramework().getFrameworkNodeName() + "\"",
+                    LocalExecReason.Unauthorized,
+                    entry.getNodename()
+            );
+        }
+
         if(null==command || "".equals(command.trim())) {
             throw new NodeStepException("Command is not set",
                                         StepFailureReason.ConfigurationFailure,
@@ -82,7 +129,7 @@ public class LocalExecNodeStepPlugin implements NodeStepPlugin {
         Map<String, String> env = DataContextUtils.generateEnvVarsFromContext(nodeData);
         final int result;
         try {
-            result = ScriptExecUtil.runLocalCommand(finalCommand, env, null, System.out, System.err);
+            result = runner.runLocalCommand(finalCommand, env, null, System.out, System.err);
             if(result!=0) {
                 Map<String,Object> failureData=new HashMap<>();
                 failureData.put(NodeExecutorResultImpl.FAILURE_DATA_RESULT_CODE, result);
@@ -97,5 +144,37 @@ public class LocalExecNodeStepPlugin implements NodeStepPlugin {
             Thread.currentThread().interrupt();
             throw new NodeStepException(e, StepFailureReason.Interrupted, entry.getNodename());
         }
+    }
+
+    /**
+     * @param context context
+     * @return true if run is authorized for local node
+     */
+    private boolean hasLocalNodeRunAuthorization(final PluginStepContext context)  {
+        NodeEntryImpl frameworkNode = context.getFramework().getFrameworkNodes().createFrameworkNode();
+        NodeSetImpl nodeset = new NodeSetImpl();
+        nodeset.putNode(frameworkNode);
+
+        INodeSet run = context.getFramework().filterAuthorizedNodes(
+                context.getFrameworkProject(),
+                Collections.singleton("run"),
+                nodeset,
+                context.getExecutionContext().getAuthContext()
+        );
+        return run.getNode(frameworkNode.getNodename()) != null;
+    }
+    public LocalCommandRunner getRunner() {
+        return runner;
+    }
+
+    public void setRunner(LocalCommandRunner runner) {
+        this.runner = runner;
+    }
+    public String getCommand() {
+        return command;
+    }
+
+    public void setCommand(String command) {
+        this.command = command;
     }
 }

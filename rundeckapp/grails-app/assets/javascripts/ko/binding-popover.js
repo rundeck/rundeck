@@ -17,11 +17,27 @@ ko.bindingHandlers.bootstrapPopover = {
 
 /**
  * Initializes bootstrap tooltip on the dom element. Usage: &lt;div data-bind="bootstrapTooltip: true" title="blah" &gt;
+ * tip: if the title of the element is bound to an observable, pass the same one as the binding, like
+ * &lt;div data-bind="bootstrapTooltip: mytooltipObservable" title="blah" &gt;, to trigger updates when it changes.
  * @type {{init: ko.bindingHandlers.bootstrapTooltip.init}}
  */
 ko.bindingHandlers.bootstrapTooltip = {
     init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
         "use strict";
         jQuery(element).tooltip({});
+
+        ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
+            jQuery(element).tooltip("destroy");
+        });
+    },
+    update: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+        "use strict";
+        var val = valueAccessor();
+        if(ko.isObservable(val)){
+            val = ko.unwrap(val);
+            jQuery(element).tooltip('destroy');
+            jQuery(element).data('original-title',null);
+            jQuery(element).tooltip({});
+        }
     }
 };

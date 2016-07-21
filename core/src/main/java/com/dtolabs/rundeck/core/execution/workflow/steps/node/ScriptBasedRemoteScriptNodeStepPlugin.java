@@ -39,7 +39,6 @@ import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
 
 
@@ -81,11 +80,10 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
         final ScriptPluginProvider provider = getProvider();
         Description description = getDescription();
 
-        Map<String, Object> instanceData = new HashMap<>(configuration);
-        Map<String, String> data = toStringStringMap(instanceData);
+        Map<String, String> configData = toStringStringMap(configuration);
         try {
             loadContentConversionPropertyValues(
-                    data,
+                    configData,
                     context.getExecutionContext(),
                     description.getProperties()
             );
@@ -95,10 +93,16 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
 
         final Map<String, Map<String, String>> finalDataContext = DataContextUtils.addContext(
                 "config",
-                data,
+                configData,
                 context.getDataContext()
         );
-        final String[] finalargs = createScriptArgs(finalDataContext);
+        //NB: dont generate final args yet, they will be constructed by node dispatch layer
+        final String args = provider.getScriptArgs();
+        String[] argsarr = provider.getScriptArgsArray();
+        if (null != args) {
+            argsarr = args.split(" ");
+        }
+        argsarr = DataContextUtils.replaceDataReferences(argsarr, finalDataContext);
 
         boolean useOriginalFileExtension = true;
         if (provider.getMetadata().containsKey(SCRIPT_FILE_USE_EXTENSION_META_KEY)) {
@@ -121,10 +125,11 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
 
         return createFileGeneratedScript(
                 provider.getScriptFile(),
-                finalargs,
+                argsarr,
                 fileExtension,
                 provider.getScriptInterpreter(),
-                provider.getInterpreterArgsQuoted()
+                provider.getInterpreterArgsQuoted(),
+                configData
         );
     }
 
@@ -152,7 +157,8 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
             final String[] args,
             final String fileExtension,
             final String scriptInterpreter,
-            final boolean interpreterArgsQuoted
+            final boolean interpreterArgsQuoted,
+            final Map<String, String> configData
     )
     {
 
@@ -190,6 +196,11 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
             @Override
             public boolean isInterpreterArgsQuoted() {
                 return interpreterArgsQuoted;
+            }
+
+            @Override
+            public Map<String, String> getConfigData() {
+                return configData;
             }
         };
     }

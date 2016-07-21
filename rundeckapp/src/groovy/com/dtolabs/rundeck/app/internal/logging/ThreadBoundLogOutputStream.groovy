@@ -5,6 +5,8 @@ import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 
+import java.nio.charset.Charset
+
 /**
  * Thread local buffered log output
  * 解决rundeck中文log乱码的问题，此文件在rundeck源文件路径:./rundeckapp/src/groovy/com/dtolabs/rundeck/app/internal/logging/ThreadBoundLogOutputStream.groovy
@@ -16,6 +18,7 @@ class ThreadBoundLogOutputStream extends OutputStream {
     Contextual contextual
     ThreadLocal<LogEventBuffer> buffer = new ThreadLocal<LogEventBuffer>()
     InheritableThreadLocal<LogEventBufferManager> manager = new InheritableThreadLocal<LogEventBufferManager>()
+    InheritableThreadLocal<Charset> charset = new InheritableThreadLocal<Charset>()
 
     /**
      * Create a new thread local buffered stream
@@ -23,10 +26,21 @@ class ThreadBoundLogOutputStream extends OutputStream {
      * @param level loglevel
      * @param contextual source of context
      */
-    ThreadBoundLogOutputStream(StreamingLogWriter logger, LogLevel level, Contextual contextual) {
+    ThreadBoundLogOutputStream(StreamingLogWriter logger, LogLevel level, Contextual contextual, Charset charset=null) {
         this.logger = logger
         this.level = level
         this.contextual = contextual
+        this.charset.set(charset)
+    }
+    /**
+     * Set the charset to use
+     * @param charset new charset
+     * @return previous charset
+     */
+    public Charset setCharset(Charset charset) {
+        Charset prev=this.charset.get()
+        this.charset.set(charset)
+        return prev
     }
 
     /**
@@ -34,7 +48,7 @@ class ThreadBoundLogOutputStream extends OutputStream {
      * @return manager
      */
     public LogEventBufferManager installManager() {
-        def manager = LogEventBufferManager.createManager()
+        def manager = LogEventBufferManager.createManager(charset.get())
         this.manager.set(manager)
         return manager
     }
