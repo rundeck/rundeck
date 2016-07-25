@@ -168,6 +168,8 @@ rundeck.security.authorization.containerPrincipal.enabled=true
 rundeck.security.authorization.container.enabled=true
 rundeck.security.authorization.preauthenticated.enabled=false
 rundeck.security.authorization.preauthenticated.attributeName=null
+rundeck.security.authorization.preauthenticated.userNameHeader=null
+rundeck.security.authorization.preauthenticated.userRolesHeader=null
 rundeck.security.authorization.preauthenticated.delimiter=','
 
 rundeck.web.metrics.servlets.metrics.enabled = true
