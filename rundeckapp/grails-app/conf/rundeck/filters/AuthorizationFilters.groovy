@@ -52,20 +52,24 @@ public class AuthorizationFilters implements ApplicationContextAware{
          */
         loginCheck(controller: 'user', action: '(logout|login|error)', invert: true) {
             before = {
-                if(request.api_version && request.remoteUser && !(grailsApplication.config.rundeck?.security?.apiCookieAccess?.enabled in ['true',true])){
+                if (request.api_version && request.remoteUser && !(grailsApplication.config.rundeck?.security?.apiCookieAccess?.enabled in ['true',true])){
                     //disallow api access via normal login
                     request.invalidApiAuthentication=true
                     return
                 }
                 if (request.remoteUser && session.user!=request.remoteUser) {
                     session.user = request.remoteUser
-                    
 
                     Subject subject=createAuthSubject(request)
                     
                     request.subject = subject
                     session.subject = subject
-                }else if(request.remoteUser && session.subject){
+                } else if(request.remoteUser && session.subject && grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled in ['true',true]){
+                    // Preauthenticated mode is enabled, handle upstream role changes
+                    Subject subject = createAuthSubject(request)
+                    request.subject = subject
+                    session.subject = subject
+                } else if(request.remoteUser && session.subject && grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled in ['false',false]) {
                     request.subject = session.subject
                 } else if (request.api_version && !session.user ) {
                     //allow authentication token to be used 
@@ -101,6 +105,12 @@ public class AuthorizationFilters implements ApplicationContextAware{
                             log.error("Unauthenticated API request");
                         }
                     }
+                } else if (!request.remoteUser && controllerName && !(controllerName in ['assets'])) {
+                    //unauthenticated request to an action
+                    response.status = 403
+                    request.errorCode = 'request.authentication.required'
+                    render(view: '/common/error.gsp')
+                    return false
                 }
             }
         }
