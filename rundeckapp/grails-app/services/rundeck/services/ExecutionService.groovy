@@ -1530,14 +1530,27 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def Execution execution = createExecution(props)
         execution.dateStarted = new Date()
 
-        if(execution.argString =~ /\$\{DATE:(.*)\}/){
+        if(execution.argString =~ /\$\{DATE(.*)\}/){
 
             def newstr = execution.argString
-            try{
-                newstr = execution.argString.replaceAll(/\$\{DATE:(.*)\}/,{ all,tstamp ->
-                    new SimpleDateFormat(tstamp).format(execution.dateStarted)
+            try {
+                newstr = execution.argString.replaceAll(/\$\{DATE(.*?)\}/, { all, tstamp ->
+                    if(tstamp.lastIndexOf(":") == -1){
+                        return all
+                    }
+                    final operator = tstamp.substring(0, tstamp.lastIndexOf(":"))
+                    final fdate = tstamp.substring(tstamp.lastIndexOf(":")+1)
+                    if(operator == ''){
+                        new SimpleDateFormat(fdate).format(execution.dateStarted)
+                    }else{
+                        final number = operator as int
+                        final newDate = execution.dateStarted +number
+                        new SimpleDateFormat(fdate).format(newDate)
+                    }
                 })
-            }catch(IllegalArgumentException e){
+            } catch (IllegalArgumentException e) {
+                log.warn(e)
+            } catch (NumberFormatException e){
                 log.warn(e)
             }
 
@@ -1718,14 +1731,27 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         Execution execution = createExecution(props)
         execution.dateStarted = new Date()
 
-        if (execution.argString =~ /\$\{DATE:(.*)\}/) {
+        if (execution.argString =~ /\$\{DATE(.*)\}/) {
 
             def newstr = execution.argString
             try {
-                newstr = execution.argString.replaceAll(/\$\{DATE:(.*)\}/, { all, tstamp ->
-                    new SimpleDateFormat(tstamp).format(execution.dateStarted)
+                newstr = execution.argString.replaceAll(/\$\{DATE(.*?)\}/, { all, tstamp ->
+                    if(tstamp.lastIndexOf(":") == -1){
+                        return all
+                    }
+                    final operator = tstamp.substring(0, tstamp.lastIndexOf(":"))
+                    final fdate = tstamp.substring(tstamp.lastIndexOf(":")+1)
+                    if(operator == ''){
+                        new SimpleDateFormat(fdate).format(execution.dateStarted)
+                    }else{
+                        final number = operator as int
+                        final newDate = execution.dateStarted +number
+                        new SimpleDateFormat(fdate).format(newDate)
+                    }
                 })
             } catch (IllegalArgumentException e) {
+                log.warn(e)
+            } catch (NumberFormatException e){
                 log.warn(e)
             }
 
