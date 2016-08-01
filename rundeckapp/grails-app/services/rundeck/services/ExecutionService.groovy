@@ -1517,7 +1517,44 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         return execution
     }
+    /**
+     * Expand date format strings in the string, in the form
+     * ${DATE:FORMAT} or ${DATE[+-]#:FORMAT}
+     * @param input
+     * @return string with dates expanded, or original
+     */
+    def expandDateStrings(String input, Date dateStarted){
+        if(input =~ /\$\{DATE((?:[-+]\d+)?:.*?)\}/) {
+            def newstr = input
 
+            try {
+                newstr = input.replaceAll(/\$\{DATE((?:[-+]\d+)?:.*?)\}/) { all, tstamp ->
+                    if (tstamp.lastIndexOf(":") == -1) {
+                        return all
+                    }
+                    final operator = tstamp.substring(0, tstamp.lastIndexOf(":"))
+                    final fdate = tstamp.substring(tstamp.lastIndexOf(":") + 1)
+                    def formatter = new SimpleDateFormat(fdate)
+                    if (operator == '') {
+                        formatter.format(dateStarted)
+                    } else {
+                        final number = operator as int
+                        final newDate = dateStarted + number
+                        formatter.format(newDate)
+                    }
+                }
+
+            } catch (IllegalArgumentException e) {
+                log.warn(e)
+            } catch (NumberFormatException e) {
+                log.warn(e)
+            }
+
+
+            return newstr
+        }
+        return input
+    }
     /**
      * creates an execution with the parameters, and evaluates dynamic buildstamp
      */
@@ -1530,31 +1567,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def Execution execution = createExecution(props)
         execution.dateStarted = new Date()
 
-        if(execution.argString =~ /\$\{DATE(.*)\}/){
-
-            def newstr = execution.argString
-            try {
-                newstr = execution.argString.replaceAll(/\$\{DATE(.*?)\}/, { all, tstamp ->
-                    if(tstamp.lastIndexOf(":") == -1){
-                        return all
-                    }
-                    final operator = tstamp.substring(0, tstamp.lastIndexOf(":"))
-                    final fdate = tstamp.substring(tstamp.lastIndexOf(":")+1)
-                    if(operator == ''){
-                        new SimpleDateFormat(fdate).format(execution.dateStarted)
-                    }else{
-                        final number = operator as int
-                        final newDate = execution.dateStarted +number
-                        new SimpleDateFormat(fdate).format(newDate)
-                    }
-                })
-            } catch (IllegalArgumentException e) {
-                log.warn(e)
-            } catch (NumberFormatException e){
-                log.warn(e)
-            }
-
-
+        def newstr = expandDateStrings(execution.argString, execution.dateStarted)
+        if(newstr!=execution.argString){
             execution.argString=newstr
         }
 
@@ -1731,33 +1745,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         Execution execution = createExecution(props)
         execution.dateStarted = new Date()
 
-        if (execution.argString =~ /\$\{DATE(.*)\}/) {
+        def newstr = expandDateStrings(execution.argString, execution.dateStarted)
 
-            def newstr = execution.argString
-            try {
-                newstr = execution.argString.replaceAll(/\$\{DATE(.*?)\}/, { all, tstamp ->
-                    if(tstamp.lastIndexOf(":") == -1){
-                        return all
-                    }
-                    final operator = tstamp.substring(0, tstamp.lastIndexOf(":"))
-                    final fdate = tstamp.substring(tstamp.lastIndexOf(":")+1)
-                    if(operator == ''){
-                        new SimpleDateFormat(fdate).format(execution.dateStarted)
-                    }else{
-                        final number = operator as int
-                        final newDate = execution.dateStarted +number
-                        new SimpleDateFormat(fdate).format(newDate)
-                    }
-                })
-            } catch (IllegalArgumentException e) {
-                log.warn(e)
-            } catch (NumberFormatException e){
-                log.warn(e)
-            }
-
-
-            execution.argString = newstr
+        if(newstr!=execution.argString){
+            execution.argString=newstr
         }
+
         execution.scheduledExecution=se
         if (workflow && !workflow.save(flush:true)) {
             execution.workflow.errors.allErrors.each { log.error(it.toString()) }
