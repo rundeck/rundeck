@@ -1,53 +1,96 @@
-Release 2.6.8
+Release 2.6.9
 ===========
 
-Date: 2016-06-10
+Date: 2016-08-02
 
-Name: <span style="color: hotpink"><span class="glyphicon glyphicon-pushpin"></span> "cafe bonbon hotpink pushpin"</span>
+Name: <span style="color: indigo"><span class="glyphicon glyphicon-tower"></span> "cafe bonbon indigo tower"</span>
 
 ## Notes
 
-Fixed bugs and an enhancement:
+Notable Enhancements:
 
-* Framework and project global variables. Use `framework.globals.X=Y` or `project.globals.X=Y` in you configuration to expose `${globals.X}` to jobs/executions.
+* Job execution will show more info about the step context in the Monitor/Summary tab (see [#1926](https://github.com/rundeck/rundeck/pull/1926))
+* User Profile page: can select Spanish language manually
+* Job Option editor GUI: order options via drag and drop
+* Extended job description can be rendered as a Runbook tab (see [#1904](https://github.com/rundeck/rundeck/pull/1904))
+* Some support for Oauth/preauth roles via a proxy (see [#1883](https://github.com/rundeck/rundeck/pull/1883))
+
+Bug Fixes:
+
+* dynamic refresh for cascading remote option values
+* A number of SCM/git plugin fixes
+* Plugin jar loading issues
 
 ## Contributors
 
-* Alberto Hormazabal (ahormazabal)
-* Diomidis Spinellis (dspinellis)
+* Alex Honor (ahonor)
+* Dave Brothers (eidolonic)
+* GitHub (web-flow)
 * Greg Schueler (gschueler)
-* shigemk2
+* Jaime Tobar (jtobard)
+* John Stoltenborg (tlots)
+* Miguel A. Fuentes Buchholtz (miguelantonio)
+* Parth Soni (parth-kloudscript)
+* Seth Klein (kindlyseth)
+* variacode95
 
 ## Bug Reporters
 
-* ahonor
-* ddzed15
-* dspinellis
+* ARentz07
+* ajrnz
+* andysteady
+* eblikstad
+* eidolonic
 * gschueler
+* jtobard
 * katanafleet
-* makered
-* remixtj
+* kgeis
+* kincl
+* ltamaster
+* miguelantonio
+* niphlod
+* papagr
+* pdev77b
+* philippevidal80
 * richiereynolds
-* royjenkins
-* shigemk2
+* rophy
+* schast
+* tlots
 
 ## Issues
 
-* [Add framework and project global variables](https://github.com/rundeck/rundeck/pull/1890)
-* [Script plugins for Workflow/Node steps: allow script file extension to be specified](https://github.com/rundeck/rundeck/issues/1869)
-* [Script plugins for Workflow/Node steps: allow key storage automatic read](https://github.com/rundeck/rundeck/issues/1868)
-* [API: /api/17/project/name/jobs/import does not return JSON when ?format=xml is used](https://github.com/rundeck/rundeck/issues/1860)
-* [API: 404 error for /api/17/project/name/run/url](https://github.com/rundeck/rundeck/issues/1859)
-* [API: project create json with null description results in "null"](https://github.com/rundeck/rundeck/issues/1856)
-* ["Run Again" job reverses multi-value arguments](https://github.com/rundeck/rundeck/issues/1851)
-* [Error while reading project acls via API](https://github.com/rundeck/rundeck/issues/1850)
-* [Plugin displayType: CODE supports syntax](https://github.com/rundeck/rundeck/issues/1845)
-* [Cannot delete executions since upgrade to 2.6.6](https://github.com/rundeck/rundeck/issues/1844)
-* [Archive out of date Japanese documentation](https://github.com/rundeck/rundeck/issues/1838)
-* [Fix deadlink quartz](https://github.com/rundeck/rundeck/pull/1836)
-* [option cascading not working at 100% (after upgrading 2.4.2 to 2.6.6)](https://github.com/rundeck/rundeck/issues/1832)
-* [Simple Configuration edit page: should prompt when you navigate away before saving](https://github.com/rundeck/rundeck/issues/1731)
-* [Log storage fails to retrieve remote file if unable to rename temp file](https://github.com/rundeck/rundeck/issues/1702)
-* [Ensure creation of /tmp/rundeck directory](https://github.com/rundeck/rundeck/pull/1664)
-* [Secure Option key Storage Path UI should disable some of the non relevant checkbox/fields](https://github.com/rundeck/rundeck/issues/1605)
-* [When using "Run Again" options revert to their default value.](https://github.com/rundeck/rundeck/issues/1123)
+* [Bug fix: multiple DATE format option values do not work](https://github.com/rundeck/rundeck/pull/1973)
+* [Git Plugin: default import selection to use regex](https://github.com/rundeck/rundeck/issues/1972)
+* [Update Quartz scheduler reference page](https://github.com/rundeck/rundeck/pull/1969)
+* [Secure job option with a default value from keystore is overwritten on job run](https://github.com/rundeck/rundeck/issues/1966)
+* [Improve error message: "Option \<name\> is required, but storage value could not be read."](https://github.com/rundeck/rundeck/issues/1954)
+* [IE 11 issue: Node summary on execution page fails to load](https://github.com/rundeck/rundeck/issues/1953)
+* [Script-based Remote script plugin: incorrect arguments passed](https://github.com/rundeck/rundeck/issues/1947)
+* [Globals Variables to sending Email notification  (list of emails)](https://github.com/rundeck/rundeck/issues/1942)
+* [Weird behaviour during enable/disable jobs scheduling.](https://github.com/rundeck/rundeck/issues/1941)
+* [add a project/global configuration to specify default encoding](https://github.com/rundeck/rundeck/issues/1938)
+* [SCM Export: create/update job causes error: Failed to serialize job, no content was written](https://github.com/rundeck/rundeck/issues/1931)
+* [Enhance execution step summary display](https://github.com/rundeck/rundeck/pull/1926)
+* [new options form: JS error when job has no options](https://github.com/rundeck/rundeck/issues/1914)
+* [Run Job: wrong number of selected nodes shown](https://github.com/rundeck/rundeck/issues/1913)
+* [GUI support for reordering options](https://github.com/rundeck/rundeck/pull/1907)
+* [Extended job description rendered as a Runbook](https://github.com/rundeck/rundeck/pull/1904)
+* [Home page: show stats for failed execution counts](https://github.com/rundeck/rundeck/issues/1903)
+* [Compatiblity Mode in Internet Explorer](https://github.com/rundeck/rundeck/issues/1901)
+* [2.6.8 on windows fails on pluginJars dirs](https://github.com/rundeck/rundeck/issues/1898)
+* [GUI option dynamic refresh broken in 2.6.6 and 2.6.8](https://github.com/rundeck/rundeck/issues/1895)
+* [Error building plugin: Class XXPlugin was not a valid plugin class for service: WorkflowNodeStep](https://github.com/rundeck/rundeck/issues/1894)
+* [Running a job as a different user (asUser parameter)](https://github.com/rundeck/rundeck/issues/1893)
+* [SCM export: invalid tag and renamed job causes "Entry not found by path"](https://github.com/rundeck/rundeck/issues/1885)
+* [Preauthentication filter](https://github.com/rundeck/rundeck/pull/1883)
+* [Context Variable: allow node options containing slash](https://github.com/rundeck/rundeck/issues/1823)
+* [Remote git repositories are checked on every jobs-page load](https://github.com/rundeck/rundeck/issues/1743)
+* [Rundeck local execution is case sensitive on osFamily = "windows"](https://github.com/rundeck/rundeck/issues/1727)
+* [SCM commit JOB in Windows](https://github.com/rundeck/rundeck/issues/1708)
+* [Rundeck i18n - ability to select language in GUI](https://github.com/rundeck/rundeck/issues/1699)
+* [Job set as "execute locally" should not require privilege to rundeck server node](https://github.com/rundeck/rundeck/issues/1459)
+* [Job reference step does not log step descriptions](https://github.com/rundeck/rundeck/issues/1370)
+* [Improve workflow step up/down graphics for usability](https://github.com/rundeck/rundeck/issues/1360)
+* [As a rundeck user, i'd like to have the possibility to sort rundeck job executions option on user interface.](https://github.com/rundeck/rundeck/issues/1002)
+* [Very difficult to trace output to exact job step in rundeck v2.0](https://github.com/rundeck/rundeck/issues/667)
+* [NTH: improve job option ordering to allow GUI drag and drop](https://github.com/rundeck/rundeck/issues/363)
