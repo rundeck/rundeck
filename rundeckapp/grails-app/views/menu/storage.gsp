@@ -159,6 +159,7 @@
 
                                 <div data-bind="if: upload.inputType()=='text' && upload.keyType()=='password' ">
                                     <input name="uploadPassword" type="password" placeholder="Enter a password"
+                                           autocomplete="new-password"
                                         data-bind="value: upload.password"
                                            id="uploadpasswordfield" class="form-control"/>
                                 </div>

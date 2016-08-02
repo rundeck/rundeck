@@ -79,6 +79,7 @@
     </g:if>
     <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.PASSWORD, 'PASSWORD']}">
         <g:passwordField name="${fieldname}" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
+                         autocomplete="new-password"
                     id="${fieldid}" rows="10" cols="100"/>
     </g:elseif>
     <g:else>
