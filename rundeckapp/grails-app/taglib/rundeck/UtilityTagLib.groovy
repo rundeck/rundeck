@@ -487,6 +487,18 @@ class UtilityTagLib{
                 help:[
                         pattern:/\{\{help\/docs\}\}/,
                         linkText: helpLinkUrl()
+                ],
+                app:[
+                        pattern:/\{\{app\/(version|title|ident)?\}\}/,
+                        textValue:{
+                            if(it[1]=='title'){
+                                appTitle()
+                            }else if(it[1]=='version'){
+                                grailsApplication.metadata['app.version']
+                            }else if(it[1]=='ident'){
+                                grailsApplication.metadata['build.ident']
+                            }
+                        }
                 ]
         ]
         linkopts.each{k,opts->
@@ -496,10 +508,11 @@ class UtilityTagLib{
                     lparams.id=it[2]
                     def text = opts.textValue?opts.textValue(it[2]):it[1]
                     return g.link(lparams,text)
+                }else if(opts.textValue){
+                    return opts.textValue(it)?:it[0]
                 }else if(opts.linkText){
                     return opts.linkText
                 }else{
-
                     return it[0]
                 }
             }
