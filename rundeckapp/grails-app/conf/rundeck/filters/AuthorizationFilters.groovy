@@ -50,7 +50,7 @@ public class AuthorizationFilters implements ApplicationContextAware{
         /**
          * Set the session.user to logged in user only when not performing user login/logout 
          */
-        loginCheck(controller: 'user', action: '(logout|login|error)', invert: true) {
+        loginCheck(controller: 'user', action: '(logout|login|error|loggedout)', invert: true) {
             before = {
                 if (request.api_version && request.remoteUser && !(grailsApplication.config.rundeck?.security?.apiCookieAccess?.enabled in ['true',true])){
                     //disallow api access via normal login
