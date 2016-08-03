@@ -131,7 +131,7 @@
         </auth:resourceAllowed>
     </div>
 </div>
-<div data-bind="if: projectCount()<1 && loadedProjectNames()">
+<g:if test="${projectNames.size()<1}">
     <div class="row row-space">
         <div class="col-sm-12">
             <auth:resourceAllowed action="create" kind="project" context="application" has="false">
@@ -167,7 +167,7 @@
             </auth:resourceAllowed>
         </div>
     </div>
-</div>
+</g:if>
 
 <div class="row row-space">
     <div class="col-sm-12">
