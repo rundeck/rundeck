@@ -404,11 +404,8 @@ function _setupAceTextareaEditor(textarea,callback){
         "yaml"
     ];
     function setAceSyntaxMode(mode, aceeditor) {
-
         var allowedMode = modes.indexOf(mode) >= 0 ? mode : null;
-        if (allowedMode) {
-            aceeditor.getSession().setMode("ace/mode/" + (allowedMode || 'sh'));
-        }
+        aceeditor.getSession().setMode("ace/mode/" + (allowedMode || 'sh'));
     }
     var checkResize;
     if(data.aceResizeMax){
