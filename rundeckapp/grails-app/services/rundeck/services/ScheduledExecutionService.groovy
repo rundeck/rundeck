@@ -716,7 +716,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     def scheduleJob(ScheduledExecution se, String oldJobName, String oldGroupName) {
-        if(!executionService.executionsAreActive){
+        if (!executionService.executionsAreActive) {
             log.warn("Attempt to schedule job ${se}, but executions are disabled.")
             return null
         }
@@ -746,45 +746,116 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         log.info("scheduled job. next run: " + nextTime.toString())
         return nextTime
     }
-    def boolean existsJob(String jobname, String groupname){
 
-        def exists=false
+    /**
+     * Schedule a job, ad-hoc.
+     *
+     * The schedule time is required and must be in the future.
+     *
+     * @param   se                  the scheduled execution
+     * @param   user                user running this job
+     * @param   authContext
+     * @param   e                   the execution details
+     * @param   secureOpts
+     * @param   secureOptsExposed
+     * @param   retryAttempt
+     * @param   startTime           the time to start running the job
+     * @return  the scheduled date/time as returned by Quartz, or null if it couldn't be scheduled
+     * @throws  IllegalArgumentException    if the schedule time is not set, or if it is in the past
+     */
+    def Date scheduleAdHocJob(ScheduledExecution se, String user, AuthContext authContext,
+                             Execution e, Map secureOpts = null, Map secureOptsExposed = null,
+                              int retryAttempt = 0, Date startTime) {
+        if (!executionService.executionsAreActive){
+            log.warn("Attempt to schedule job ${se}, but executions are disabled.")
+            return null
+        }
+
+        if (startTime == null) {
+            throw new IllegalArgumentException("Scheduled date and time must be present")
+        }
+
+        java.util.Calendar now   = java.util.Calendar.getInstance()
+        if (startTime.before(now.getTime())) {
+            throw new IllegalArgumentException("Cannot schedule a job in the past")
+        }
+
+        log.debug("ScheduledExecutionService: will schedule job at ${startTime}")
+        def identity = getJobIdent(se, e)
+        def jobDetail = createJobDetail(se, identity.jobname, identity.groupname)
+        jobDetail.getJobDataMap().put("bySchedule", true)
+        jobDetail.getJobDataMap().put("user", user)
+        jobDetail.getJobDataMap().put("authContext", authContext)
+        jobDetail.getJobDataMap().put("executionId", e.id.toString())
+        if (secureOpts) {
+            jobDetail.getJobDataMap().put("secureOpts", secureOpts)
+        }
+        if (secureOptsExposed) {
+            jobDetail.getJobDataMap().put("secureOptsExposed", secureOptsExposed)
+        }
+        jobDetail.getJobDataMap().put("retryAttempt", 0)
+
+        SimpleTrigger trigger = (SimpleTrigger)TriggerBuilder.newTrigger()
+                .withIdentity(identity.jobname, identity.groupname)
+                .startAt(startTime)
+                .build()
+
+        Date nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
+        log.debug("scheduled ad-hoc job. next run: " + nextTime.toString())
+
+        return nextTime
+    }
+
+    def boolean existsJob(String jobName, String groupName){
+        def exists = false
+
         quartzScheduler.getCurrentlyExecutingJobs().each{ def JobExecutionContext jexec ->
-
-            if(jexec.getJobDetail().getName()==jobname && jexec.getJobDetail().getGroup()==groupname){
+            if (jexec.getJobDetail().getName() == jobName && jexec.getJobDetail().getGroup() == groupName) {
                 def job = jexec.getJobInstance()
-                if(job ){
-                    exists=true
+                if (job) {
+                    exists = true
                 }
             }
         }
+
         return exists
     }
-    def boolean interruptJob(String jobname, String groupname){
 
-        def didcancel=false
+    def boolean interruptJob(String jobName, String groupName){
+        def didCancel = false
+
         quartzScheduler.getCurrentlyExecutingJobs().each{ def JobExecutionContext jexec ->
-
-            if(jexec.getJobDetail().getName()==jobname && jexec.getJobDetail().getGroup()==groupname){
+            if (jexec.getJobDetail().getName() == jobName && jexec.getJobDetail().getGroup() == groupName){
                 def job = jexec.getJobInstance()
-                if(job && job instanceof InterruptableJob){
+                if (job && job instanceof InterruptableJob) {
                     job.interrupt()
-                    didcancel=true
+                    didCancel = true
                 }
             }
         }
-        return didcancel
+
+        /** If the job has not started yet, it will not be included in currently executing jobs **/
+        JobKey jobKey = new JobKey(jobName, groupName)
+        if (quartzScheduler.deleteJob(jobKey)) {
+            didCancel = true
+        }
+
+        return didCancel
     }
 
     def Map getJobIdent(ScheduledExecution se, Execution e){
-        if(!se){
-            return [jobname:"TEMP:"+e.user +":"+e.id, groupname:e.user+":run"]
+        def ident = []
+
+        if (!se) {
+            ident = [jobname:"TEMP:"+e.user +":"+e.id, groupname:e.user+":run"]
+        } else if (se.scheduled && e.status != "scheduled") {
+            // For jobs which have fixed schedules
+            ident = [jobname:se.generateJobScheduledName(),groupname:se.generateJobGroupName()]
+        } else {
+            ident = [jobname:"TEMP:"+e.user +":"+se.id+":"+e.id, groupname:e.user+":run:"+se.id]
         }
-        else if(se.scheduled){
-            return [jobname:se.generateJobScheduledName(),groupname:se.generateJobGroupName()]
-        }else{
-            return [jobname:"TEMP:"+e.user +":"+se.id+":"+e.id, groupname:e.user+":run:"+se.id]
-        }
+
+        return ident
     }
 
     /**
@@ -794,8 +865,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                              Execution e, Map secureOpts =null,
                              Map secureOptsExposed =null, int retryAttempt = 0) {
 
-        def quartzjobname="TEMP:" + user + ":" + se.id + ":" + e.id
-        def jobDetail = createJobDetail(se, quartzjobname,user + ":run:" + se.id)
+        def quartzJobName="TEMP:" + user + ":" + se.id + ":" + e.id
+        def jobDetail = createJobDetail(se, quartzJobName,user + ":run:" + se.id)
         jobDetail.getJobDataMap().put("user", user)
         jobDetail.getJobDataMap().put("authContext", authContext)
         jobDetail.getJobDataMap().put("executionId", e.id.toString())
@@ -811,11 +882,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             jobDetail.getJobDataMap().put("retryAttempt", 0)
         }
 
-        def Trigger trigger = TriggerBuilder.newTrigger().startNow().withIdentity(quartzjobname + "Trigger").build()
+        def Trigger trigger = TriggerBuilder.newTrigger().startNow().withIdentity(quartzJobName + "Trigger").build()
 
         def nextTime
         try {
-            log.info("scheduling immediate job run: " + quartzjobname)
+            log.info("scheduling immediate job run: " + quartzJobName)
             nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
         } catch (Exception exc) {
             throw new RuntimeException("caught exception while adding job: " + exc.getMessage(), exc)

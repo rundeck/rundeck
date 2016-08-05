@@ -61,6 +61,12 @@
         <g:set var="_metaTabPage" value="${g.pageProperty(name: 'meta.tabpage')}" scope="page"/>
     </g:ifPageProperty>
 
+    <!-- Placeholder for additional assets in footer -->
+    <g:ifPageProperty name="page.footScripts">
+        <g:pageProperty name="page.footScripts" />
+    </g:ifPageProperty>
+    <!-- END footer assets -->
+
     <g:if test="${pageProperty(name:'meta.rssfeed')}">
         <g:ifServletContextAttribute attribute="RSS_ENABLED" value="true">
             <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="${pageProperty(name:'meta.rssfeed')}"/>

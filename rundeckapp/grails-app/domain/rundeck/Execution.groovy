@@ -135,13 +135,15 @@ class Execution extends ExecutionContext {
     }
 
     public String getExecutionState() {
-        return null == dateCompleted ? ExecutionService.EXECUTION_RUNNING :
-                (status in ['true', 'succeeded']) ? ExecutionService.EXECUTION_SUCCEEDED :
-                        cancelled ? ExecutionService.EXECUTION_ABORTED :
-                                willRetry ? ExecutionService.EXECUTION_FAILED_WITH_RETRY :
-                                        timedOut ? ExecutionService.EXECUTION_TIMEDOUT :
-                                                (status in ['false', 'failed']) ? ExecutionService.EXECUTION_FAILED :
-                                                        isCustomStatusString(status)? ExecutionService.EXECUTION_STATE_OTHER : status.toLowerCase()
+        return cancelled ? ExecutionService.EXECUTION_ABORTED :
+                null != dateStarted && dateStarted.getTime() > System.currentTimeMillis() ? ExecutionService.EXECUTION_SCHEDULED :
+                    null == dateCompleted ? ExecutionService.EXECUTION_RUNNING :
+                        (status in ['true', 'succeeded']) ? ExecutionService.EXECUTION_SUCCEEDED :
+                                cancelled ? ExecutionService.EXECUTION_ABORTED :
+                                        willRetry ? ExecutionService.EXECUTION_FAILED_WITH_RETRY :
+                                                timedOut ? ExecutionService.EXECUTION_TIMEDOUT :
+                                                        (status in ['false', 'failed']) ? ExecutionService.EXECUTION_FAILED :
+                                                                isCustomStatusString(status)? ExecutionService.EXECUTION_STATE_OTHER : status.toLowerCase()
     }
 
     public boolean hasExecutionEnabled() {
@@ -157,7 +159,8 @@ class Execution extends ExecutionContext {
                                                  ExecutionService.EXECUTION_FAILED_WITH_RETRY,
                                                  ExecutionService.EXECUTION_ABORTED,
                                                  ExecutionService.EXECUTION_SUCCEEDED,
-                                                 ExecutionService.EXECUTION_FAILED])
+                                                 ExecutionService.EXECUTION_FAILED,
+                                                 ExecutionService.EXECUTION_SCHEDULED])
     }
 
     // various utility methods helpful to the presentation layer

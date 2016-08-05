@@ -55,7 +55,7 @@
                 <input type="checkbox" value="${enc(attr:rpt.jcExecId)}" name="bulk_edit" class="_defaultInput bulk_edit"/>
             </td>
             </g:if>
-            <g:set var="statusIcon" value="${!execution.dateCompleted ? 'running' : execution.statusSucceeded() ?
+            <g:set var="statusIcon" value="${execution.status == 'scheduled' ? 'time' : !execution.dateCompleted ? 'running' : execution.statusSucceeded() ?
                     'succeed' : execution.cancelled ? 'aborted' :execution.willRetry ? 'failedretry' :execution.timedOut ? 'timedout' :
                     execution.status in ['false','failed']?'fail':'other'}"/>
             <g:set var="statusIcon" value="${[succeeded:'succeed','failed-with-retry':'failedretry',failed:'fail'].get(status)?:status}"/>
@@ -124,10 +124,12 @@
                     <g:unless test="${hideDate}">
                     <span class="timeabs"><g:formatDate date="${it?.dateCompleted}" formatName="jobslist.date.format"/></span>
                     </g:unless>
-                    <span title="<g:relativeDate atDate='${it?.dateStarted}'/> to <g:relativeDate
-                            atDate='${it?.dateCompleted}'/> ">
-                        in <g:relativeDate end="${it?.dateCompleted}" start="${it?.dateStarted}"/>
-                    </span>
+                    <g:if test="${it?.dateStarted?.getTime() < it?.dateCompleted?.getTime()}">
+                        <span title="<g:relativeDate atDate='${it?.dateStarted}'/> to <g:relativeDate
+                                atDate='${it?.dateCompleted}'/> ">
+                            in <g:relativeDate end="${it?.dateCompleted}" start="${it?.dateStarted}"/>
+                        </span>
+                    </g:if>
                 </g:if>
             </td>
 

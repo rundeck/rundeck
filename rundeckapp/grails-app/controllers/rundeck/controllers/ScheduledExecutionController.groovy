@@ -114,8 +114,10 @@ class ScheduledExecutionController  extends ControllerBase{
             flipScheduleEnabledBulk:'POST',
             flipScheduleEnabled:'POST',
             flipExecutionEnabled: 'POST',
+            scheduleJobInline: 'POST',
             runJobInline: 'POST',
             runJobNow: 'POST',
+            runJobLater: 'POST',
             runAdhocInline: 'POST',
             save: 'POST',
             saveAndExec: 'POST',
@@ -2748,7 +2750,48 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
     }
-    public def runJobNow(RunJobCommand runParams, ExtraCommand extra){
+    /**
+     * Schedule job specified by parameters, and return json results
+     */
+    public def scheduleJobInline(RunJobCommand runParams, ExtraCommand extra) {
+        def results = [:]
+        withForm {
+            if ([runParams, extra].any { it.hasErrors() }) {
+                request.errors = [runParams, extra].find { it.hasErrors() }.errors
+                return render(contentType: 'application/json') {
+                    delegate.error='invalid'
+                    delegate.message = "Invalid parameters: " + request.errors.allErrors.collect { g.message(error: it) }.join(", ")
+                }
+            }
+            results = scheduleJob()
+
+            if (results.error == 'invalid') {
+                session.jobexecOptionErrors = results.errors
+                session.selectedoptsmap = results.options
+            }
+        }.invalidToken {
+            results.failed = true
+            results.error = 'request.error.invalidtoken.message'
+            results.message = g.message(code: 'request.error.invalidtoken.message')
+        }
+        return render(contentType: 'application/json') {
+            if (results.failed) {
+                delegate.error = results.error
+                delegate.message = results.message
+            } else {
+                delegate.success = true
+                delegate.id = results.id
+                delegate.href = createLink(controller: "execution", action: "follow", id: results.id)
+                delegate.follow = (params.follow == 'true')
+            }
+        }
+    }
+
+    public def runJobNow(RunJobCommand runParams, ExtraCommand extra) {
+        return prepareJobRun(runParams, extra, true)
+    }
+
+    public def prepareJobRun(RunJobCommand runParams, ExtraCommand extra, boolean runNow) {
         if ([runParams, extra].any{it.hasErrors()}) {
             request.errors= [runParams, extra].find { it.hasErrors() }.errors
             def model = show()
@@ -2756,42 +2799,46 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def results=[:]
         withForm{
-            results = runJob()
-        }.invalidToken{
-            results.error="Invalid request token"
-            results.code= HttpServletResponse.SC_BAD_REQUEST
-            request.errorCode='request.error.invalidtoken.message'
-        }
-        if(results.failed){
-            log.error(results.message)
-            if(results.error=='unauthorized'){
-                return render(view:"/common/execUnauthorized",model:results)
-            }else {
-                def model=show()
-                results.error = results.remove('message')
-                results.jobexecOptionErrors=results.errors
-                results.selectedoptsmap=results.options
-                results.putAll(model)
-                results.options=null
-                return render(view:'show',model:results)
+            if (runNow) {
+				results = runJob()
+            } else {
+                results = scheduleJob()
             }
-        }else if (results.error){
+        }.invalidToken{
+            results.error = "Invalid request token"
+            results.code = HttpServletResponse.SC_BAD_REQUEST
+            request.errorCode = 'request.error.invalidtoken.message'
+        }
+        if (results.failed) {
+            log.error(results.message)
+            if (results.error == 'unauthorized'){
+                return render(view: "/common/execUnauthorized", model: results)
+            }else {
+                def model = show()
+                results.error = results.remove('message')
+                results.jobexecOptionErrors = results.errors
+                results.selectedoptsmap = results.options
+                results.putAll(model)
+                results.options = null
+                return render(view: 'show', model: results)
+            }
+        } else if (results.error){
             log.error(results.error)
-            if(results.code){
+            if (results.code) {
                 response.setStatus (results.code)
             }
             return renderErrorView(results)
-        }else if(params.follow=='true'){
-            redirect(controller:"execution", action:"follow",id:results.id)
-        }else {
+        } else if (params.follow == 'true') {
+            redirect(controller: "execution", action: "follow", id: results.id)
+        } else {
             redirect(controller: "scheduledExecution", action: "show", id: params.id)
         }
     }
+
     private Map runJob () {
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
         if (!scheduledExecution) {
-//            response.setStatus (404)
-            return [error:"No Job found for id: " + params.id,code:404]
+            return [error: "No Job found for id: " + params.id, code: 404]
         }
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
@@ -2828,6 +2875,73 @@ class ScheduledExecutionController  extends ControllerBase{
 //            redirect(controller:"execution", action:"follow",id:result.executionId)
             return [success:true, message:"immediate execution scheduled", id:result.executionId]
         }
+    }
+
+    /**
+     * Run a job at a later time.
+     *
+     * @param   runParams
+     * @param   extra
+     * @return  success or failure result in JSON
+     */
+    public def runJobLater(RunJobCommand runParams, ExtraCommand extra) {
+        // Prepare and schedule
+        return prepareJobRun(runParams, extra, false)
+    }
+
+    /**
+     * Schedule a job for a later time
+     *
+     * @return  the result in JSON
+     */
+    private Map scheduleJob() {
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
+        def UserAndRolesAuthContext authContext =
+                frameworkService.getAuthContextForSubjectAndProject(session.subject,
+                                                scheduledExecution.project)
+        if (!scheduledExecution) {
+            return [error: "Unable to find job with id: " + params.id, code: 404]
+        }
+
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution,
+                [AuthConstants.ACTION_RUN], scheduledExecution.project)) {
+            return [success: false, failed: true, error: 'unauthorized',
+                    message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
+        }
+
+        if (params.extra?.debug == 'true') {
+            params.extra.loglevel='DEBUG'
+        }
+
+        Map inputOpts = [:]
+        // Add any option.* values, or nodeInclude/nodxclude filters
+        if (params.extra) {
+            inputOpts.putAll(params.extra.subMap(['nodeIncludeName', 'loglevel',/*'argString',*/ 'optparams', 'option',
+                                                  '_replaceNodeFilters', 'filter']).findAll { it.value })
+            inputOpts.putAll(params.extra.findAll{it.key.startsWith('option.') || it.key.startsWith('nodeInclude') ||
+                    it.key.startsWith('nodeExclude')}.findAll { it.value })
+        }
+
+        if (params.extra.nodeInclude) {
+            scheduledExecution.nodeInclude = params.extra.nodeInclude
+        }
+        if (params.extra.nodeExclude) {
+            scheduledExecution.nodeExclude = params.extra.nodeExclude
+        }
+        if (params.runAtTime) {
+            inputOpts['runAtTime']  = params.runAtTime
+        }
+
+        def scheduleResult = executionService.scheduleAdHocJob(scheduledExecution,
+                                        authContext, session.user, inputOpts)
+        if (null == scheduleResult) {
+            return [success: false, failed: true, error: 'error',
+                    message: "Unable to schedule job"]
+        }
+
+        log.debug("ScheduledExecutionController: deferred execution scheduled for ${scheduleResult.nextRun}")
+
+        return scheduleResult
     }
 
 
@@ -3121,20 +3235,22 @@ class ScheduledExecutionController  extends ControllerBase{
             response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED)
             return
         }
-        def jobid=params.id
-        def jobAsUser,jobArgString,jobLoglevel,jobFilter
-        if(request.format=='json' ){
+        def jobid = params.id
+        def jobAsUser, jobArgString, jobLoglevel, jobFilter
+        if (request.format == 'json') {
             def data= request.JSON
             jobAsUser = data?.asUser
             jobArgString = data?.argString
             jobLoglevel = data?.loglevel
             jobFilter = data?.filter
-        }else{
+        } else {
             jobAsUser=params.asUser
             jobArgString=params.argString
             jobLoglevel=params.loglevel
         }
+
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
+
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', jobid])) {
             return
         }
@@ -3145,15 +3261,15 @@ class ScheduledExecutionController  extends ControllerBase{
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Run', 'Job ID', jobid]])
         }
-        def username=session.user
-        if(jobAsUser && apiService.requireVersion(request,response,ApiRequestFilters.V5)){
-            //authorize RunAs User
+        def username = session.user
+        if(jobAsUser && apiService.requireVersion(request,response,ApiRequestFilters.V5)) {
+            // authorize RunAs User
             if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUNAS],
                     scheduledExecution.project)) {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                         code: 'api.error.item.unauthorized', args: ['Run as User', 'Job ID', jobid]])
             }
-            username= jobAsUser
+            username = jobAsUser
         }
         def inputOpts = [:]
 
@@ -3163,7 +3279,7 @@ class ScheduledExecutionController  extends ControllerBase{
         if (jobLoglevel) {
             inputOpts["loglevel"] = jobLoglevel
         }
-        //convert api parameters to node filter parameters
+        // convert api parameters to node filter parameters
         def filters = jobFilter?[filter:jobFilter]:FrameworkController.extractApiNodeFilterParams(params)
         if (filters) {
             inputOpts['_replaceNodeFilters']='true'
@@ -3185,18 +3301,29 @@ class ScheduledExecutionController  extends ControllerBase{
             ])
         }
 
-        def result = executionService.executeJob(scheduledExecution, authContext, username, inputOpts)
-        if(!result.success){
-            if(result.error=='unauthorized'){
+        def result
+        if (request.api_version > ApiRequestFilters.V17 && params.runAtTime) {
+            inputOpts["runAtTime"] = params.runAtTime
+            result = executionService.scheduleAdHocJob(scheduledExecution,
+                        authContext, username, inputOpts)
+        }
+
+        if (request.api_version <= ApiRequestFilters.V17 || !params.runAtTime) {
+            result = executionService.executeJob(scheduledExecution,
+                        authContext, username, inputOpts)
+        }
+
+        if (!result.success) {
+            if (result.error == 'unauthorized') {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                         code: 'api.error.item.unauthorized', args: ['Execute', 'Job ID', jobid]])
-            }else if(result.error=='invalid'){
+            } else if (result.error=='invalid') {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                         code: 'api.error.job.options-invalid', args: [result.message]])
-            }else if(result.error=='conflict'){
+            } else if (result.error=='conflict') {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_CONFLICT,
                         code: 'api.error.execution.conflict', args: [result.message]])
-            }else{
+            } else {
                 //failed
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                         code: 'api.error.execution.failed', args: [result.message]])

@@ -23,6 +23,7 @@ import grails.test.mixin.TestFor
 import org.quartz.ListenerManager
 import org.quartz.Scheduler
 import org.quartz.core.QuartzScheduler
+import rundeck.Execution
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.Notification
@@ -40,7 +41,8 @@ import spock.lang.Unroll
  * Created by greg on 6/24/15.
  */
 @TestFor(ScheduledExecutionService)
-@Mock([Workflow, ScheduledExecution, CommandExec, Notification, Option,PluginStep,JobExec,WorkflowStep])
+@Mock([Workflow, ScheduledExecution, CommandExec, Notification, Option, PluginStep, JobExec,
+        WorkflowStep, Execution])
 class ScheduledExecutionServiceSpec extends Specification {
 
     public static final String TEST_UUID1 = 'BB27B7BB-4F13-44B7-B64B-D2435E2DD8C7'
@@ -234,6 +236,80 @@ class ScheduledExecutionServiceSpec extends Specification {
         1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
         1 * service.quartzScheduler.scheduleJob(_, _) >> scheduleDate
         result == scheduleDate
+
+        where:
+        executionsAreActive | scheduleEnabled | executionEnabled | hasSchedule | expectScheduled
+        true                | true            | true             | true        | true
+    }
+
+    @Unroll
+    def "should not scheduleAdHocJob if no date/time"() {
+        given:
+        service.executionServiceBean = Mock(ExecutionService)
+        service.quartzScheduler = Mock(Scheduler) {
+            getListenerManager() >> Mock(ListenerManager)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckBase() >> ''
+        }
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: hasSchedule,
+                        scheduleEnabled: scheduleEnabled,
+                        executionEnabled: executionEnabled,
+                        userRoleList: 'a,b'
+                )
+        ).save()
+
+        when:
+        service.scheduleAdHocJob(job, "user", null, Mock(Execution), [:], [:], 0, null)
+
+        then:
+        1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
+        IllegalArgumentException iae = thrown()
+        iae.getMessage() == "Scheduled date and time must be present"
+
+        where:
+        executionsAreActive | scheduleEnabled | executionEnabled | hasSchedule | expectScheduled
+        true                | true            | true             | true        | true
+    }
+
+    @Unroll
+    def "should not scheduleAdHocJob with time in past"() {
+        given:
+        service.executionServiceBean = Mock(ExecutionService)
+        service.quartzScheduler = Mock(Scheduler) {
+            getListenerManager() >> Mock(ListenerManager)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckBase() >> ''
+        }
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: hasSchedule,
+                        scheduleEnabled: scheduleEnabled,
+                        executionEnabled: executionEnabled,
+                        userRoleList: 'a,b',
+                        crontabString: "42 2 1 1 1 2 1999",
+                        year: "1999",
+                        month: "1",
+                        dayOfMonth: "1",
+                        hour: "1",
+                        minute: "2",
+                        seconds: "42"
+                )
+        ).save()
+
+        Date startTime = new Date()
+        startTime.set(year: 1999, month: 1, dayOfMonth: 1, hourOfDay: 1, minute: 2, seconds: 42)
+
+        when:
+        service.scheduleAdHocJob(job, "user", null, Mock(Execution), [:], [:], 0, startTime)
+
+        then:
+        1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
+        IllegalArgumentException iae = thrown()
+        iae.getMessage() == "Cannot schedule a job in the past"
 
         where:
         executionsAreActive | scheduleEnabled | executionEnabled | hasSchedule | expectScheduled

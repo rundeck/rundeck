@@ -17,8 +17,11 @@
   - limitations under the License.
   --}%
 
-<g:form controller="scheduledExecution" method="post" action="runJobNow" useToken="true"
+<g:form controller="scheduledExecution" method="post" useToken="true"
         params="[project:scheduledExecution.project]" class="form-horizontal" role="form">
+
+<input id='runAtTime' type='hidden' name='runAtTime' value='' />
+
 <div class="panel panel-default panel-tab-content panel-modal-content">
 <g:if test="${!hideHead}">
     <div class="panel-heading">
@@ -290,12 +293,40 @@
                   data-placement="auto right"
             >%{--Extra div because attr disabled will cancel tooltip from showing --}%
                 <button type="submit"
+                        name="_action_runJobNow"
                         id="execFormRunButton"
                         ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
                         class=" btn btn-success">
                     <g:message code="run.job.now" />
                     <b class="glyphicon glyphicon-play"></b>
                 </button>
+                <a tabindex="0" role="button"
+                        id="showScheduler"
+                        ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
+                        class=" btn btn-default"
+                        data-toggle="popover" title="Set start time" data-trigger="click"
+                        data-placement="auto left" data-container="body" data-html="true"
+                        data-trigger="focus" data-content="<div id='scheduler'>
+                                <div class='input-group date' id='datetimepicker'>
+                                    <input type='text' class='form-control' />
+                                    <span class='input-group-addon'>
+                                        <span class='glyphicon glyphicon-calendar'></span>
+                                    </span>
+                                </div>
+                                <div id='dateAlert' class='alert alert-warning alert-block fade' style='display: none'>
+                                    The time must be in the future.
+                                </div>
+                                <button type='submit'
+                                        id='scheduleSubmitButton'
+                                        name='_action_runJobLater'
+                                        class=' btn btn-success schedule-button'>
+                                    <g:message code='schedule.job' />
+                                    <b class='glyphicon glyphicon-time'></b>
+                                </button>
+                            </div>">
+                    <g:message code="run.job.later" />
+                    <b class="glyphicon glyphicon-time"></b>
+                </a>
             </div>
         </div>
         <div class="clearfix">
@@ -327,12 +358,40 @@
                   data-placement="auto right"
             >%{--Extra div because attr disabled will cancel tooltip from showing --}%
                 <button type="submit"
+                        name="_action_runJobNow"
                         id="execFormRunButton"
                         ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
                         class=" btn btn-success">
                     <i class="glyphicon glyphicon-play"></i>
                     <g:message code="run.job.now" />
                 </button>
+                <a tabindex="0" role="button"
+                        id="showScheduler"
+                        ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
+                        class=" btn btn-default"
+                        data-toggle="popover" title="Set start time" data-trigger="click"
+                        data-placement="auto bottom" data-container="#formbuttons" data-html="true"
+                        data-trigger="focus" data-content="<div id='scheduler'>
+                                <div class='input-group date' id='datetimepicker'>
+                                    <input type='text' class='form-control' />
+                                    <span class='input-group-addon'>
+                                        <span class='glyphicon glyphicon-calendar'></span>
+                                    </span>
+                                </div>
+                                <div id='dateAlert' class='alert alert-warning alert-block fade' style='display: none'>
+                                    The time must be in the future.
+                                </div>
+                                <button type='submit'
+                                        id='scheduleAjaxButton'
+                                        class=' btn btn-success schedule-button'>
+                                    <i class='glyphicon glyphicon-time'></i>
+                                    <g:message code='schedule.job' />
+                                </button>
+                            </div>">
+                    <i class="glyphicon glyphicon-time"></i>
+                    <g:message code="run.job.later" />
+                </a>
+
             </div>
             <div class="checkbox-inline">
                 <label>
@@ -351,3 +410,11 @@
 </g:form>
 </div> %{--/.col--}%
 </div> %{--/.row--}%
+
+<content tag="footScripts">
+    <asset:stylesheet src="bootstrap-datetimepicker.min.css" />
+    <asset:javascript src="scheduler.js" />
+</content tag="footScripts">
+
+<asset:stylesheet src="bootstrap-datetimepicker.min.css" />
+<asset:javascript src="scheduler.js" />

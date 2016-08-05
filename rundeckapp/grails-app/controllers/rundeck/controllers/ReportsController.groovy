@@ -477,9 +477,10 @@ class ReportsController extends ControllerBase{
         def model=reportService.getExecutionReports(query,true)
         model = reportService.finishquery(query,params,model)
 
-        def statusMap=[
-                succeed:ExecutionService.EXECUTION_SUCCEEDED,
-                (ExecutionService.EXECUTION_SUCCEEDED):ExecutionService.EXECUTION_SUCCEEDED,
+        def statusMap = [scheduled: ExecutionService.EXECUTION_SCHEDULED,
+            (ExecutionService.EXECUTION_SCHEDULED): ExecutionService.EXECUTION_SCHEDULED,
+            succeed: ExecutionService.EXECUTION_SUCCEEDED,
+            (ExecutionService.EXECUTION_SUCCEEDED): ExecutionService.EXECUTION_SUCCEEDED,
             cancel: ExecutionService.EXECUTION_ABORTED,
             (ExecutionService.EXECUTION_ABORTED): ExecutionService.EXECUTION_ABORTED,
             fail: ExecutionService.EXECUTION_FAILED,

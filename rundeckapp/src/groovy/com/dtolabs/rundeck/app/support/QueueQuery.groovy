@@ -27,10 +27,10 @@ import grails.validation.Validateable
  */
 
 @Validateable
-public class QueueQuery extends ExecQuery{
+public class QueueQuery extends ExecQuery {
     String runningFilter
 
     static constraints = {
-        runningFilter(nullable:true,inList:["running","completed","killed","cancelled" /*,"pattern"*/])
+        runningFilter(nullable:true,inList:["scheduled","running","completed","killed","cancelled" /*,"pattern"*/])
     }
 }
