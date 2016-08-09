@@ -1,3 +1,4 @@
+#!/usr/bin/env groovy
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -14,7 +15,6 @@
  * limitations under the License.
  */
 
-#!/usr/bin/env groovy
 
 //Test the result of the build to verify expected artifacts are created
 
