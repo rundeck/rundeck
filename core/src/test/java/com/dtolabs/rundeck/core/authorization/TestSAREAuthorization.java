@@ -254,12 +254,12 @@ public class TestSAREAuthorization extends TestCase {
         Map<String,String> resource = createJobResource("adhocScript", "foo/bar");
         Subject subject = createSubject("testProjectEnvironment", "admin-environment");
         
-        environment.add(new Attribute(URI.create("http://dtolabs.com/rundeck/env/project"), "Lion"));
+        environment.add(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), "Lion"));
         
         assertTrue("Policy did not match the Lion context.", 
                 authorization.evaluate(resource, subject, "READ", environment).isAuthorized());
         
-        environment.add(new Attribute(URI.create("http://dtolabs.com/rundeck/env/project"), "Tiger"));
+        environment.add(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), "Tiger"));
         
         assertFalse("Policy should not match the Lion context.", 
                 authorization.evaluate(resource, subject, "READ", environment).isAuthorized());
@@ -270,7 +270,7 @@ public class TestSAREAuthorization extends TestCase {
         String action = "READ";
         Subject subject = createSubject("testTimeOfDay", "admin-environment");
         
-        environment.add(new Attribute(URI.create("http://dtolabs.com/rundeck/env/now.gmt"),
+        environment.add(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "now.gmt"),
                 new Date().toGMTString()));
         throw new Exception();
     }
@@ -280,7 +280,7 @@ public class TestSAREAuthorization extends TestCase {
         String action = "READ";
         Subject subject = createSubject("testNodeTarget", "admin-environment");
         
-        environment.add(new Attribute(URI.create("http://dtolabs.com/rundeck/env/target-node-name"),
+        environment.add(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "target-node-name"),
                 "web99.example.com"));
         
         throw new Exception();

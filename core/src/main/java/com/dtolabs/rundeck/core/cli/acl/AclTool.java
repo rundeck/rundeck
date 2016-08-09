@@ -1477,11 +1477,16 @@ public class AclTool extends BaseTool {
                     }
 
                     AuthRequest request = new AuthRequest();
+                    boolean isAppContext = env.equals(
+                            EnvironmentalContext.URI_BASE +
+                            "application:rundeck"
+                    ) || env.equals(
+                            //backwards compatibility for old audit logs
+                            "http://dtolabs.com/rundeck/auth/env/" +
+                            "application:rundeck"
+                    );
                     request.environment =
-                            env.equals(
-                                    EnvironmentalContext.URI_BASE +
-                                    "application:rundeck"
-                            ) ?
+                            isAppContext ?
                             Framework.RUNDECK_APP_ENV :
                             FrameworkProject.authorizationEnvironment(env.substring(env.lastIndexOf(":") + 1));
                     request.actions = new HashSet<>(Arrays.asList(action));
