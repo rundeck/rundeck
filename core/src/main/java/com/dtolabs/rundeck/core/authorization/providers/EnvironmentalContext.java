@@ -37,7 +37,7 @@ public interface EnvironmentalContext {
     /**
      * Base URI for rundeck environment attribute URIs
      */
-    static final String URI_BASE = "http://dtolabs.com/rundeck/env/";
+    static final String URI_BASE = "rundeck:auth:env:";
 
     /**
      * Environmental attribute for the rundeck app

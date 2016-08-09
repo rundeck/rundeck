@@ -144,10 +144,10 @@ class FrameworkServiceTests  {
             }
             Attribute attr = env.iterator().next()
             if (projectName) {
-                assertEquals "http://dtolabs.com/rundeck/env/project", attr.property.toString()
+                assertEquals "rundeck:auth:env:project", attr.property.toString()
                 assertEquals projectName, attr.value
             } else {
-                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
+                assertEquals "rundeck:auth:env:application", attr.property.toString()
                 assertEquals "rundeck", attr.value
             }
             return results
@@ -172,10 +172,10 @@ class FrameworkServiceTests  {
             assertEquals(expectActions[ndx],actions.first())
             Attribute attr = env.iterator().next()
             if (projectName) {
-                assertEquals "http://dtolabs.com/rundeck/env/project", attr.property.toString()
+                assertEquals "rundeck:auth:env:project", attr.property.toString()
                 assertEquals projectName, attr.value
             } else {
-                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
+                assertEquals "rundeck:auth:env:application", attr.property.toString()
                 assertEquals "rundeck", attr.value
             }
             ndx++
@@ -196,10 +196,10 @@ class FrameworkServiceTests  {
             assertEquals 'test', action
             Attribute attr = env.iterator().next()
             if(projectName){
-                assertEquals "http://dtolabs.com/rundeck/env/project", attr.property.toString()
+                assertEquals "rundeck:auth:env:project", attr.property.toString()
                 assertEquals projectName, attr.value
             }else{
-                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
+                assertEquals "rundeck:auth:env:application", attr.property.toString()
                 assertEquals "rundeck", attr.value
             }
             return makeDecision(result,resource,action,env)
