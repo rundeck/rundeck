@@ -3,6 +3,9 @@ package com.dtolabs.rundeck.app.internal.logging
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogEventIterator
 import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
+import rundeck.services.LoggingService
+
+import java.util.zip.GZIPInputStream
 
 /*
  * Copyright 2013 DTO Labs, Inc. (http://dtolabs.com)
@@ -45,10 +48,21 @@ class FSStreamingLogReader implements ReverseSeekingStreamingLogReader {
         this.rundeckLogFormat=rundeckLogFormat
     }
     private void detectLegacyLogFile(){
-        file.withReader('UTF-8') {reader->
+
+        if(file.getName().contains(LoggingService.LOG_FILE_FILETYPE)) {
+            GZIPInputStream gzip = new GZIPInputStream(new FileInputStream(file))
+            InputStreamReader reader = new InputStreamReader(gzip, "UTF-8");
             detectedFormat=RundeckLogFormat.detectFormat(reader.readLine())
-            detected=true
+            if(detectedFormat) {
+                detected=true
+            }
+        } else {
+            file.withReader('UTF-8') {reader->
+                detectedFormat=RundeckLogFormat.detectFormat(reader.readLine())
+                detected=true
+            }
         }
+
     }
     private LogEventIterator detectedIterator(FSFileLineIterator fsiter){
         if(!detected){
@@ -99,9 +113,17 @@ class FSStreamingLogReader implements ReverseSeekingStreamingLogReader {
     }
 
     private LogEventIterator beginFromOffset(long offset) {
-        def raf = new FileInputStream(file)
-        raf.channel.position(offset)
-        def LogEventIterator iterator = detectedIterator(new FSFileLineIterator(raf, encoding))
+        def LogEventIterator iterator
+
+        if(file.getName().contains(LoggingService.LOG_FILE_FILETYPE)) {
+            def inputStream = new GZIPInputStream(new FileInputStream(file))
+            iterator = detectedIterator(new FSFileLineIterator(inputStream, encoding, offset))
+        } else {
+            def raf = new FileInputStream(file)
+            raf.channel.position(offset)
+            iterator = detectedIterator(new FSFileLineIterator(raf, encoding))
+        }
+
         return iterator
     }
 

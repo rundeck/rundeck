@@ -2,6 +2,8 @@ package com.dtolabs.rundeck.app.internal.logging
 
 import com.dtolabs.rundeck.core.logging.OffsetIterator
 
+import java.util.zip.GZIPInputStream
+
 /*
  * Copyright 2013 DTO Labs, Inc. (http://dtolabs.com)
  * 
@@ -31,6 +33,7 @@ import com.dtolabs.rundeck.core.logging.OffsetIterator
  */
 class FSFileLineIterator implements OffsetIterator<String>{
     private FileInputStream raf
+    private GZIPInputStream gzipInputStream
     private InputStreamReader read
     private long offset
     private Queue<String> buffer = new ArrayDeque<String>()
@@ -48,6 +51,19 @@ class FSFileLineIterator implements OffsetIterator<String>{
         }
         readNext()
     }
+
+    public FSFileLineIterator(GZIPInputStream gzipInputStream, String encoding, long offset){
+        this.encoding=encoding
+        this.gzipInputStream=gzipInputStream
+        this.offset=offset
+        if (encoding){
+            read = new InputStreamReader(gzipInputStream, encoding)
+        }else{
+            read = new InputStreamReader(gzipInputStream)
+        }
+        readNext()
+    }
+
     @Override
     boolean hasNext() {
         buffer.size()>0
@@ -60,6 +76,7 @@ class FSFileLineIterator implements OffsetIterator<String>{
         readNext()
         return s
     }
+	
     private void readNext(){
         if(closed){
             throw new IllegalStateException("Stream is closed")

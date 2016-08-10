@@ -39,6 +39,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
+import java.util.zip.GZIPOutputStream
 
 /**
  * Manage execution file storage retrieve and store requests.
@@ -50,7 +51,7 @@ import java.util.concurrent.TimeUnit
  * "storageRequests" blocking queue for storage requests
  * "retrievalRequests" blocking queue for retrieval requests
  */
-class LogFileStorageService implements InitializingBean,ApplicationContextAware{
+class LogFileStorageService implements InitializingBean,ApplicationContextAware{ 
 
     static transactional = false
     static final RundeckLogFormat rundeckLogFormat = new RundeckLogFormat()
@@ -365,7 +366,8 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             }
         }
         //stream log events to file, and when closed submit asynch request to store file if needed
-        def writer = new FSStreamingLogWriter(new FileOutputStream(file), defaultMeta, rundeckLogFormat)
+        def gzos = new GZIPOutputStream(new FileOutputStream(file))
+        def writer = new FSStreamingLogWriter(gzos, defaultMeta, rundeckLogFormat)
         if(filesizeWatcher!=null){
             ValueHolder value={->
                 writer.bytesWritten
@@ -688,6 +690,9 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         if (useStoredPath && execution.outputfilepath) {
             //use previously stored outputfilepath if present, substitute correct filetype
             String path = execution.outputfilepath.replaceAll(/\.([^\.]+)$/,'')
+            if(path.contains(LoggingService.LOG_FILE_FILETYPE_UNCOMPRESSED)) {
+                path = path.replaceAll(/\.([^\.]+)$/,'')
+            }
             return new File(path+'.'+filetype)
         } else{
             return getFileForLocalPath(generateLocalPathForExecutionFile(execution, filetype))

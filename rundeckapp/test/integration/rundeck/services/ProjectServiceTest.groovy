@@ -226,7 +226,7 @@ class ProjectServiceTest extends GroovyTestCase {
         assertTrue resultstatefile.delete()
         def files = [
                 "state.json":resultstatefile,
-                "rdlog":resultoutfile
+                "rdlog.gz":resultoutfile
         ]
         def errs=[]
         def result

@@ -117,7 +117,7 @@ class LoggingServiceTests  {
         }
         lfmock.demand.getFileForExecutionFiletype(1..1) { Execution e2, String filetype, boolean stored ->
             assertEquals(1, e2.id)
-            assertEquals("rdlog", filetype)
+            assertEquals("rdlog.gz", filetype)
             assertEquals(false, stored)
             new File("/test/file/path")
         }
@@ -190,7 +190,7 @@ class LoggingServiceTests  {
         }
         lfmock.demand.getFileForExecutionFiletype(1..1) { Execution e2, String filetype, boolean stored ->
             assertEquals(1, e2.id)
-            assertEquals("rdlog", filetype)
+            assertEquals("rdlog.gz", filetype)
             assertEquals(false, stored)
             new File("/test/file/path")
         }
@@ -229,7 +229,7 @@ class LoggingServiceTests  {
         }
         lfmock.demand.getFileForExecutionFiletype(1..1) { Execution e2, String filetype, boolean stored ->
             assertEquals(1, e2.id)
-            assertEquals("rdlog", filetype)
+            assertEquals("rdlog.gz", filetype)
             assertEquals(false, stored)
             new File("/test/file/path")
         }
@@ -265,7 +265,7 @@ class LoggingServiceTests  {
         }
         lfmock.demand.getFileForExecutionFiletype(1..1) { Execution e2, String filetype, boolean stored ->
             assertEquals(1, e2.id)
-            assertEquals("rdlog", filetype)
+            assertEquals("rdlog.gz", filetype)
             assertEquals(false, stored)
             new File("/test/file/path")
         }
@@ -307,7 +307,7 @@ class LoggingServiceTests  {
         }
         lfmock.demand.getFileForExecutionFiletype(1..1) { Execution e2, String filetype, boolean stored ->
             assertEquals(1, e2.id)
-            assertEquals("rdlog", filetype)
+            assertEquals("rdlog.gz", filetype)
             assertEquals(false, stored)
             new File("/test/file/path")
         }
@@ -396,7 +396,7 @@ class LoggingServiceTests  {
         def lfsvcmock = mockFor(LogFileStorageService)
         lfsvcmock.demand.requestLogFileReader(1..1){Execution e2, String key->
             assert e==e2
-            assert key=='rdlog'
+            assert key=='rdlog.gz'
             test
         }
         service.logFileStorageService=lfsvcmock.createMock()
@@ -421,7 +421,7 @@ class LoggingServiceTests  {
         def lfsvcmock = mockFor(LogFileStorageService)
         lfsvcmock.demand.requestLogFileReader(1..1) { Execution e2, String key ->
             assert e == e2
-            assert key == 'rdlog'
+            assert key == 'rdlog.gz'
             fail("should not be called")
         }
         def pmock = mockFor(PluginService)
@@ -467,7 +467,7 @@ class LoggingServiceTests  {
         def lfsvcmock = mockFor(LogFileStorageService)
         lfsvcmock.demand.requestLogFileReader(1..1) { Execution e2, String key ->
             assert e == e2
-            assert key == 'rdlog'
+            assert key == 'rdlog.gz'
             fail("should not be called")
         }
         def pmock = mockFor(PluginService)
