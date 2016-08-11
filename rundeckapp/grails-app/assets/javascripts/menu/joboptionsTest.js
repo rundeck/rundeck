@@ -407,6 +407,25 @@ jQuery(function () {
                 }
             );
 
+        },
+        multivalued_option_has_default_values_selectedTest: function (pref) {
+            "use strict";
+            var self = this;
+            self.testMatrix(
+                " selectedMultiValues of {0}",
+                [
+                    [{multivalued:true,defaultMultiValues:['a','b'],selectedMultiValues:[]},
+                        ['a','b']],
+                    [{multivalued:true,defaultMultiValues:['a','b'],selectedMultiValues:['x','y']},
+                        ['x','y']]
+                ],
+                function (val) {
+                    var opt = mkopt(val);
+
+                    return opt.selectedMultiValues();
+                }
+            );
+
         }
     });
 
