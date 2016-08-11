@@ -1,7 +1,5 @@
-//= require knockout.min
-//= require knockout-mapping
 /*
- * Copyright 2014 SimplifyOps Inc, <http://simplifyops.com>
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+//= require knockout.min
+//= require knockout-mapping
+
 
 function OptionEditor(data) {
     var self = this;
