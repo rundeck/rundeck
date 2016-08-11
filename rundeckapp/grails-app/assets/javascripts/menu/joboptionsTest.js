@@ -55,69 +55,69 @@ jQuery(function () {
         baseOptionValueTest: function (pref) {
             "use strict";
             var opt = new OptionVal({});
-            this.assert(pref + " option value", null, opt.value());
-            this.assert(pref + " option value", null, opt.label());
-            this.assert(pref + " option value", false, opt.selected());
-            this.assert(pref + " option value", false, opt.editable());
-            this.assert(pref + " option value", false, opt.multival());
+            this.assert(" option value", null, opt.value());
+            this.assert(" option value", null, opt.label());
+            this.assert(" option value", false, opt.selected());
+            this.assert(" option value", false, opt.editable());
+            this.assert(" option value", false, opt.multival());
 
             opt = new OptionVal({label: 'test', value: 'test2', selected: true, editable: true, multival: true});
-            this.assert(pref + " option value", 'test', opt.label());
-            this.assert(pref + " option value", 'test2', opt.value());
-            this.assert(pref + " option value", true, opt.selected());
-            this.assert(pref + " option value", true, opt.editable());
-            this.assert(pref + " option value", true, opt.multival());
+            this.assert(" option value", 'test', opt.label());
+            this.assert(" option value", 'test2', opt.value());
+            this.assert(" option value", true, opt.selected());
+            this.assert(" option value", true, opt.editable());
+            this.assert(" option value", true, opt.multival());
         },
-        optionValueResultValueTest: function (pref) {
+        resultValueTest: function (pref) {
             "use strict";
             var opt = new OptionVal({value: "abc", selected: true});
-            this.assert(pref + " option value", 'abc', opt.resultValue());
+            this.assert(" option value", 'abc', opt.resultValue());
             opt.value('');
-            this.assert(pref + " option value", '', opt.resultValue());
+            this.assert(" option value", '', opt.resultValue());
             opt.value('xxx');
             opt.selected(false);
-            this.assert(pref + " option value", '', opt.resultValue());
+            this.assert(" option value", '', opt.resultValue());
             opt.value('');
-            this.assert(pref + " option value", null, opt.resultValue());
+            this.assert(" option value", null, opt.resultValue());
             opt.value(null);
-            this.assert(pref + " option value", null, opt.resultValue());
+            this.assert(" option value", null, opt.resultValue());
         },
-        baseOption_truncateDefaultValue_Test: function (pref) {
+        truncateDefaultValue_Test: function (pref) {
             "use strict";
             var opt = mkopt();
             opt.defaultValue('short');
-            this.assert(pref + " value", 'short', opt.truncateDefaultValue());
+            this.assert(" value", 'short', opt.truncateDefaultValue());
             opt.defaultValue('long 123456789012345678901234567890123456789012345-----');
-            this.assert(pref + " value", 'long 123456789012345678901234567890123456789012345', opt.truncateDefaultValue());
+            this.assert(" value", 'long 123456789012345678901234567890123456789012345', opt.truncateDefaultValue());
             opt.defaultValue('');
-            this.assert(pref + " value", '', opt.truncateDefaultValue());
+            this.assert(" value", '', opt.truncateDefaultValue());
             opt.defaultValue(null);
-            this.assert(pref + " value", null, opt.truncateDefaultValue());
+            this.assert(" value", null, opt.truncateDefaultValue());
         },
-        baseOption_hasSingleEnforcedValue_Test: function (pref) {
+        hasSingleEnforcedValue_Test: function (pref) {
             "use strict";
             var opt = mkopt();
             opt.enforced(true);
             opt.values(['x']);
-            this.assert(pref + " option", true, opt.hasSingleEnforcedValue());
-            this.assert(pref + " option", 'x', opt.singleEnforcedValue());
+            this.assert(" option", true, opt.hasSingleEnforcedValue());
+            this.assert(" option", 'x', opt.singleEnforcedValue());
             opt.enforced(false);
-            this.assert(pref + " option", false, opt.hasSingleEnforcedValue());
-            this.assert(pref + " option", null, opt.singleEnforcedValue());
+            this.assert(" option", false, opt.hasSingleEnforcedValue());
+            this.assert(" option", null, opt.singleEnforcedValue());
             opt.enforced(true);
             opt.values(['x', 'z']);
-            this.assert(pref + " option", false, opt.hasSingleEnforcedValue());
-            this.assert(pref + " option", null, opt.singleEnforcedValue());
+            this.assert(" option", false, opt.hasSingleEnforcedValue());
+            this.assert(" option", null, opt.singleEnforcedValue());
             opt.values(null);
-            this.assert(pref + " option", false, opt.hasSingleEnforcedValue());
-            this.assert(pref + " option", null, opt.singleEnforcedValue());
+            this.assert(" option", false, opt.hasSingleEnforcedValue());
+            this.assert(" option", null, opt.singleEnforcedValue());
         },
-        baseOption_hasValues_Test: function (pref) {
+        hasValues_Test: function (pref) {
             "use strict";
             var self = this;
             var opt = mkopt();
             self.testMatrix(
-                pref + " hasValues({0})",
+                " hasValues({0})",
                 [
                     [null, false],
                     [[], false],
@@ -131,12 +131,12 @@ jQuery(function () {
             );
 
         },
-        baseOption_hasExtended_Test: function (pref) {
+        hasExtended_Test: function (pref) {
             "use strict";
             var self = this;
             var opt = mkopt();
             self.testMatrix(
-                pref + " hasExtended({0})",
+                " hasExtended({0})",
                 [
                     [{secureInput: true}, false],
                     [{secureInput: false, values: ['a'], multivalued: false, hasRemote: false, remoteValues: []}, true],
@@ -155,12 +155,12 @@ jQuery(function () {
             );
 
         },
-        baseOption_hasTextfield_Test: function (pref) {
+        hasTextfield_Test: function (pref) {
             "use strict";
             var self = this;
             var opt = mkopt();
             self.testMatrix(
-                pref + " hasTextfield({0})",
+                " hasTextfield({0})",
                 [
                     [{enforced: false, multivalued: false, secureInput: false, hasError: false}, true],
                     [{enforced: false, multivalued: true, secureInput: false, hasError: true}, true],
@@ -179,12 +179,12 @@ jQuery(function () {
             );
 
         },
-        baseOption_showDefaultButton_Test: function (pref) {
+        showDefaultButton_Test: function (pref) {
             "use strict";
             var self = this;
             var opt = mkopt();
             self.testMatrix(
-                pref + " showDefaultButton({0})",
+                " showDefaultButton({0})",
                 [
                     [{
                         enforced: true,
@@ -239,12 +239,12 @@ jQuery(function () {
             );
 
         },
-        baseOption_selectOptions_Test: function (pref) {
+        selectOptions_Test: function (pref) {
             "use strict";
             var self = this;
             var opt = mkopt();
             self.testMatrix(
-                pref + " selectOptions({0})",
+                " selectOptions({0})",
                 [
                     [{enforced: false, multivalued: false, remoteValues: null, values: null, hasRemote: false}, ''],
                     [{enforced: false, multivalued: false, remoteValues: null, values: ['x'], hasRemote: false}, ',x'],
@@ -343,12 +343,12 @@ jQuery(function () {
             );
 
         },
-        baseOption_selectedOptionValue_changes_value_Test: function (pref) {
+        selectedOptionValue_changes_value_Test: function (pref) {
             "use strict";
             var self = this;
             var opt = mkopt();
             self.testMatrix(
-                pref + " selectedOptionValue({0})",
+                " selectedOptionValue({0})",
                 [
                     ['', ''],
                     ['a', 'a'],
@@ -364,11 +364,11 @@ jQuery(function () {
             );
 
         },
-        baseOption_loadRemote_json_data_with_values_Test: function (pref) {
+        loadRemote_json_data_with_values_Test: function (pref) {
             "use strict";
             var self = this;
             self.testMatrix(
-                pref + " loadRemote({0})",
+                " loadRemote({0})",
                 [
                     [{values:['x','y'],selectedvalue:'x'}, {value:'x',selectedOptionValue:'x',remoteValues:'x,y'}],
                     [{values:['x','y']}, {value:null,selectedOptionValue:null,remoteValues:'x,y'}],
@@ -387,11 +387,11 @@ jQuery(function () {
             );
 
         },
-        baseOption_loadRemote_json_data_with_error_Test: function (pref) {
+        loadRemote_json_data_with_error_Test: function (pref) {
             "use strict";
             var self = this;
             self.testMatrix(
-                pref + " loadRemote({0})",
+                " loadRemote({0})",
                 [
                     [{err:{message:"blah"},srcUrl:"blee"}, {remoteError:{message:"blah",url:"blee"},remoteValues:''}],
 
