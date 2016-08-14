@@ -1,17 +1,11 @@
-import grails.test.GrailsUnitTestCase
-import grails.test.mixin.Mock
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin
-import rundeck.CommandExec
-import rundeck.Workflow
 /*
- * Copyright 2012 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *        http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,7 +13,13 @@ import rundeck.Workflow
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
+import grails.test.GrailsUnitTestCase
+import grails.test.mixin.Mock
+import grails.test.mixin.TestMixin
+import grails.test.mixin.support.GrailsUnitTestMixin
+import rundeck.CommandExec
+import rundeck.Workflow
 /*
  * WorkflowTests.java
  * 

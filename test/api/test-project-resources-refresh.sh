@@ -163,6 +163,8 @@ echo "OK"
 
 #restore backup props, no provider url
 delete_url_config "project.resources.url"
+delete_url_config "project.resources.allowedURL.0"
+delete_url_config "project.resources.allowedURL.1"
 
 if [ -f $TRES.testbackup ] ; then
     mv $TRES.testbackup $TRES

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -20,7 +36,27 @@ import spock.lang.Unroll
 @TestFor(ExecutionService)
 @Mock([Execution, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest])
 class ExecutionServiceSpec extends Specification {
+    @Unroll
+    def "expand date strings"() {
+        given:
+        def cal = new GregorianCalendar(1970, 0, 14, 8, 20, 30)
+        Date thedate = cal.time
 
+        when:
+        def result = service.expandDateStrings(input, thedate)
+
+        then:
+        result == expected
+        where:
+        input                                          | expected
+        ''                                             | ''
+
+        '${DATE:yyyy-MM-dd}'                           | '1970-01-14'
+        '${DATE:yyyy-MM-dd} blah ${DATE:yyyy-MM-dd}'   | '1970-01-14 blah 1970-01-14'
+        '${DATE:yyyy-MM-dd} blah ${DATE+3:yyyy-MM-dd}' | '1970-01-14 blah 1970-01-17'
+        '${DATE-7:yyyy-MM-dd}'                         | '1970-01-07'
+        'invalid ${DATE-asdf7:yyyy-MM-dd}'             | 'invalid ${DATE-asdf7:yyyy-MM-dd}'
+    }
     void "retry execution otherwise running"() {
 
         given:
@@ -136,6 +172,85 @@ class ExecutionServiceSpec extends Specification {
         then:
         e2 != null
         e2.user=='testuser'
+    }
+
+    void "create execution expand date strings"() {
+
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: argString,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'user1'
+        }
+        when:
+        Execution e2 = service.createExecution(
+                job,
+                authContext,
+                null
+        )
+
+        then:
+        e2 != null
+        e2.argString =~ resultPat
+
+        where:
+        argString                                             | resultPat
+        '-opt1 blah -opt2 ${DATE:yyyy-MM-dd}'                 | /-opt1 blah -opt2 \d{4}-\d{2}-\d{2}/
+        '-opt1 ${DATE+1:yyyy-MM-dd} -opt2 ${DATE:yyyy-MM-dd}' | /-opt1 \d{4}-\d{2}-\d{2} -opt2 \d{4}-\d{2}-\d{2}/
+    }
+
+    void "create execution and prep expand date strings"() {
+
+        given:
+        def params = [
+                project    : 'AProject',
+                groupPath  : 'some/where',
+                description: 'a job',
+                argString  : argString,
+                user       : 'bob',
+                workflow   : new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry      : '1'
+        ]
+
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        when:
+        Execution e2 = service.createExecutionAndPrep(
+                params,
+                null
+        )
+
+        then:
+        e2 != null
+        e2.argString =~ resultPat
+
+        where:
+        argString                                             | resultPat
+        '-opt1 blah -opt2 ${DATE:yyyy-MM-dd}'                 | /-opt1 blah -opt2 \d{4}-\d{2}-\d{2}/
+        '-opt1 ${DATE+1:yyyy-MM-dd} -opt2 ${DATE:yyyy-MM-dd}' | /-opt1 \d{4}-\d{2}-\d{2} -opt2 \d{4}-\d{2}-\d{2}/
     }
     void "execute job as user"() {
 

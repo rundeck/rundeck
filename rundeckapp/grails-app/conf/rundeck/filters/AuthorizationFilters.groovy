@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package rundeck.filters
 
 import org.rundeck.web.infosec.AuthorizationRoleSource
@@ -18,22 +34,6 @@ import javax.servlet.ServletContext
 import javax.servlet.http.HttpServletRequest
 
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
 * AuthorizationFilters.groovy
 *
 * User: greg
@@ -50,22 +50,26 @@ public class AuthorizationFilters implements ApplicationContextAware{
         /**
          * Set the session.user to logged in user only when not performing user login/logout 
          */
-        loginCheck(controller: 'user', action: '(logout|login|error)', invert: true) {
+        loginCheck(controller: 'user', action: '(logout|login|error|loggedout)', invert: true) {
             before = {
-                if(request.api_version && request.remoteUser && !(grailsApplication.config.rundeck?.security?.apiCookieAccess?.enabled in ['true',true])){
+                if (request.api_version && request.remoteUser && !(grailsApplication.config.rundeck?.security?.apiCookieAccess?.enabled in ['true',true])){
                     //disallow api access via normal login
                     request.invalidApiAuthentication=true
                     return
                 }
                 if (request.remoteUser && session.user!=request.remoteUser) {
                     session.user = request.remoteUser
-                    
 
                     Subject subject=createAuthSubject(request)
                     
                     request.subject = subject
                     session.subject = subject
-                }else if(request.remoteUser && session.subject){
+                } else if(request.remoteUser && session.subject && grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled in ['true',true]){
+                    // Preauthenticated mode is enabled, handle upstream role changes
+                    Subject subject = createAuthSubject(request)
+                    request.subject = subject
+                    session.subject = subject
+                } else if(request.remoteUser && session.subject && grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled in ['false',false]) {
                     request.subject = session.subject
                 } else if (request.api_version && !session.user ) {
                     //allow authentication token to be used 
@@ -101,6 +105,12 @@ public class AuthorizationFilters implements ApplicationContextAware{
                             log.error("Unauthenticated API request");
                         }
                     }
+                } else if (!request.remoteUser && controllerName && !(controllerName in ['assets'])) {
+                    //unauthenticated request to an action
+                    response.status = 403
+                    request.errorCode = 'request.authentication.required'
+                    render(view: '/common/error.gsp')
+                    return false
                 }
             }
         }

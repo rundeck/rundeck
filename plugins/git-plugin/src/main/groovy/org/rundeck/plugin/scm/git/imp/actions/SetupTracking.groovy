@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.rundeck.plugin.scm.git.imp.actions
 
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
@@ -35,9 +51,13 @@ class SetupTracking extends BaseAction implements GitImportAction {
     BasicInputView getInputView(final ScmOperationContext context, GitImportPlugin plugin) {
         inputView(id) {
             title "Setup Tracking"
-            description '''Select a static list of Files found in the Repository to be tracked for Job Import.
+            description '''Enter a Regular expression to match potential new repo files that are added.
 
-Or, you can also choose to enter a Regular expression to match potential new repo files that are added.'''
+Or, you can also choose to select a static list of Files found in the Repository to be tracked for Job Import.
+
+Note: If you select Files and do not choose to match via regular expression,
+then new files added to the repo *will not* be available for Job Import, and only those selected
+files will be watched for changes.'''
             buttonTitle "Setup"
             properties([
                     property {
@@ -45,13 +65,16 @@ Or, you can also choose to enter a Regular expression to match potential new rep
                         title "Match a Regular Expression?"
                         description "Check to match all paths that match the regular expression."
                         required false
+                        defaultValue 'true'
                         build()
                     },
                     property {
-                        string FILE_PATTERN
+                        freeSelect FILE_PATTERN
                         title "Regular Expression"
                         description "Enter a regular expression. New paths in the repo matching this expression will also be imported."
                         required false
+                        values '.*\\.xml', '.*\\.yaml'
+                        defaultValue '.*\\.xml'
                         validator({ String pat ->
                             try {
                                 Pattern.compile(pat)

@@ -21,6 +21,7 @@ fi
 xmlargs=$($XMLSTARLET esc "$args")
 xmlproj=$($XMLSTARLET esc "$project")
 xmlhost=$($XMLSTARLET esc $(hostname))
+echo "host is $xmlhost"
 
 #produce job.xml content corresponding to the dispatch request
 cat > $DIR/temp.out <<END
@@ -44,7 +45,7 @@ cat > $DIR/temp.out <<END
       
       <notification>
         <onsuccess>
-        <webhook urls="http://$xmlhost:4441/test?id=\${execution.id}&amp;status=\${execution.status}"/>
+        <webhook urls="http://127.0.0.1:4441/test?id=\${execution.id}&amp;status=\${execution.status}"/>
         </onsuccess>
       </notification>
       
@@ -142,6 +143,8 @@ ps -p $ncpid >/dev/null && kill $ncpid
 echo "TEST: Webhook notification should submit to result"
 
 [ -f $DIR/nc.out ] || fail "expected to see output from netcat"
+
+cat $DIR/nc.out
 
 grep -q "POST /test?id=${execid}&status=succeeded" $DIR/nc.out || fail "didn't see POST data"
 grep -q "Content-Type: text/xml" $DIR/nc.out || fail "didn't see XML content data"
