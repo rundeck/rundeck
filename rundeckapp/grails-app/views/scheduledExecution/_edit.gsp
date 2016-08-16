@@ -156,7 +156,7 @@ function getCurSEID(){
             );
             ko.applyBindings(nodeFilter,jQuery('#nodegroupitem')[0]);
             registerNodeFilters(nodeFilter, '#nodegroupitem');
-
+            nodeSummary.reload();
             jQuery('body').on('click', '.nodefilterlink', function (evt) {
                 evt.preventDefault();
                 handleNodeFilterLink(this);
@@ -403,8 +403,25 @@ function getCurSEID(){
             <script type="text/javascript" src="${resource(dir:'js',file:'yellowfade.js')}"></script>
         </div>
     </div>
+    <g:if test="${clusterMode}">
+        %{--node owner--}%
+        <div class="form-group ${g.hasErrors(bean:scheduledExecution,field:'serverNodeUUID','has-error')}" id="serverNodeUUIDLabel">
+            <label for="serverNodeUUID"
+                   class="required ${enc(attr:labelColClass)}"
+            >
+                <g:message code="scheduledExecution.nodeOwner.label" />
+            </label>
+            <div class="${fieldColHalfSize}">
+                <g:select name="serverNodeUUID" from="${activeNodes}" value="${scheduledExecution?.serverNodeUUID}"
+                          class="form-control input-sm"
+                />
 
-        %{--description--}%
+            </div>
+
+
+        </div>
+    </g:if>
+    %{--description--}%
     <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'description', 'has-error')}">
         <label for="description" class="${labelColClass}"><g:message code="scheduledExecution.property.description.label" /></label>
         <div class="${fieldColSize}">

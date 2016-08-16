@@ -83,6 +83,7 @@ class ScheduledExecutionController  extends ControllerBase{
     def ApiService apiService
     def UserService userService
     def ScmService scmService
+    def MessagingService messagingService
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -1848,13 +1849,19 @@ class ScheduledExecutionController  extends ControllerBase{
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
         def crontab = scheduledExecution.timeAndDateAsBooleanMap()
+        def activeNodes = []
+        if(frameworkService.isClusterModeEnabled()){
+            activeNodes = messagingService.getActiveNodes(frameworkService.serverUUID)
+        }
         return [ scheduledExecution:scheduledExecution, crontab:crontab,params:params,
                 notificationPlugins: notificationService.listNotificationPlugins(),
                 orchestratorPlugins: orchestratorPluginService.listDescriptions(),
                 nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
                 authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
                 nodeStepDescriptions: nodeStepTypes,
-                stepDescriptions:stepTypes]
+                stepDescriptions:stepTypes,
+                activeNodes: activeNodes,
+                clusterMode: frameworkService.isClusterModeEnabled()]
     }
 
 
@@ -2113,11 +2120,17 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
+        def activeNodes = []
+        if(frameworkService.isClusterModeEnabled()){
+            activeNodes = messagingService.getActiveNodes(frameworkService.serverUUID)
+        }
         log.debug("ScheduledExecutionController: create : now returning model data to view...")
         return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],
                 nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes,
                 notificationPlugins: notificationService.listNotificationPlugins(),
-                orchestratorPlugins: orchestratorPluginService.listDescriptions()]
+                orchestratorPlugins: orchestratorPluginService.listDescriptions(),
+                activeNodes: activeNodes,
+                clusterMode: frameworkService.isClusterModeEnabled()]
     }
 
     private clearEditSession(id='_new'){
@@ -3744,7 +3757,13 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
     }
+    def clusterActiveNodes = {
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+        def tree = messagingService.getGroupTree(params.project,authContext)
+        render(template:"/menu/groupTree",model:[jobgroups:tree,jscallback:params.jscallback])
+    }
 }
+
 
 class JobXMLException extends Exception{
 

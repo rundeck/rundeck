@@ -335,6 +335,22 @@
                 </span>
             </td>
         </tr>
+        <tr>
+            <td >
+                <span class="desc"><g:message code="scheduledExecution.property.author.prompt" /></span>
+            </td>
+            <td >
+                <span class="desc"><g:enc>${scheduledExecution.createdBy}</g:enc></span>
+            </td>
+        </tr>
+        <tr>
+            <td >
+                <span class="desc"><g:message code="scheduledExecution.property.modifier.prompt" /></span>
+            </td>
+            <td >
+                <span class="desc"><g:enc>${scheduledExecution.updatedBy}</g:enc></span>
+            </td>
+        </tr>
     </g:if>
 
 </table>

@@ -115,6 +115,7 @@ grails.project.dependency.resolution = {
         //END fix for https://jira.grails.org/browse/GPHIB-30
     }
 }
+
 grails.war.resources = { stagingDir, args ->
     delete(file: "${stagingDir}/WEB-INF/lib/jetty-all-7.6.0.v20120127.jar")
     delete(file: "${stagingDir}/WEB-INF/lib/rundeck-jetty-server-${rundeckVersion}.jar")

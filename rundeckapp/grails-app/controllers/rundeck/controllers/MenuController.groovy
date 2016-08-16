@@ -1756,6 +1756,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                                 group(se.groupPath)
                                 project(se.project)
                                 description(se.description)
+                                author(se.createdBy)
+                                lastModifier(se.updatedBy)
                             }
                         }
                     }
