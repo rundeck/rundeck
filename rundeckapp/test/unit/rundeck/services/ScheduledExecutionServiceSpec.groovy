@@ -53,6 +53,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             isClusterModeEnabled()>>enabled
             getServerUUID()>>TEST_UUID1
         }
+        service.messagingService = Mock(MessagingService)
         TEST_UUID1
     }
     def "blank email notification"() {
@@ -849,6 +850,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             executionsAreActive()>>false
         }
         service.quartzScheduler = Mock(Scheduler)
+        service.messagingService = Mock(MessagingService)
         uuid
     }
 

@@ -1500,7 +1500,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
         }
         if (frameworkService.isClusterModeEnabled()) {
-            //scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
+            if(!scheduledExecution.serverNodeUUID){
+                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+            }
             if(frameworkService.serverUUID == scheduledExecution.serverNodeUUID){
                 scheduledExecution.scheduleOwnerClaimed = true
             }else{
@@ -2117,7 +2119,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
         }
         if (frameworkService.isClusterModeEnabled()) {
-            //scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
+            if(!scheduledExecution.serverNodeUUID){
+                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+            }
             if(frameworkService.serverUUID == scheduledExecution.serverNodeUUID){
                 scheduledExecution.scheduleOwnerClaimed = true
             }else{
@@ -2501,6 +2505,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
         }
         if (frameworkService.isClusterModeEnabled()) {
+            if(!scheduledExecution.serverNodeUUID){
+                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+            }
             //scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
             if(frameworkService.serverUUID == scheduledExecution.serverNodeUUID){
                 scheduledExecution.scheduleOwnerClaimed = true
